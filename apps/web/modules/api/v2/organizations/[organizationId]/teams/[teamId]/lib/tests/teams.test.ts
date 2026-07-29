@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -28,6 +28,10 @@ const mockTeam = {
 };
 
 describe("Teams Lib", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe("getTeam", () => {
     test("returns the team when found", async () => {
       (prisma.team.findUnique as any).mockResolvedValueOnce(mockTeam);

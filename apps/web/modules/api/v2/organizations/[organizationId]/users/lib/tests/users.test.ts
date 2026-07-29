@@ -1,6 +1,6 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type Team, type WorkspaceTeam } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -22,6 +22,10 @@ const mockUser = {
   role: "admin",
   memberships: [{ organizationId: "org456", role: "admin" }],
   teamUsers: [{ team: { name: "Test Team", id: "team123", workspaceTeams: [{ workspaceId: "proj789" }] } }],
+};
+
+type TExistingTeam = Pick<Team, "id" | "name"> & {
+  workspaceTeams: Pick<WorkspaceTeam, "workspaceId">[];
 };
 
 vi.mock("@formbricks/database", () => ({
@@ -52,6 +56,10 @@ vi.mock("@/lib/authzed/team-workspace", () => ({
 }));
 
 describe("Users Lib", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe("getUsers", () => {
     test("returns users with meta on success", async () => {
       const usersArray = [mockUser];
@@ -92,9 +100,11 @@ describe("Users Lib", () => {
 
   describe("createUser", () => {
     test("creates user and revalidates caches", async () => {
-      (prisma.team.findMany as any).mockResolvedValueOnce([
+      const existingTeams = [
         { id: "team123", name: "Test Team", workspaceTeams: [] },
-      ]);
+      ] satisfies TExistingTeam[];
+
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(existingTeams as never);
       (prisma.user.create as any).mockResolvedValueOnce(mockUser);
       const result = await createUser(
         { name: "Test User", email: "test@example.com", role: "member", teams: ["Test Team"] },

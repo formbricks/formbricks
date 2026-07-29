@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { OrganizationRole, Prisma } from "@formbricks/database/prisma";
+import {
+  OrganizationRole,
+  Prisma,
+  type Team,
+  type TeamUser,
+  TeamUserRole,
+} from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { createTeamMembership } from "./team";
@@ -27,6 +33,13 @@ describe("createTeamMembership", () => {
     organizationId: "org1",
   };
   const mockUserId = "user1";
+  const mockTeamUser = {
+    createdAt: new Date(),
+    role: TeamUserRole.contributor,
+    teamId: "team1",
+    updatedAt: new Date(),
+    userId: mockUserId,
+  } satisfies TeamUser;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,11 +47,11 @@ describe("createTeamMembership", () => {
 
   test("creates team memberships and revalidates caches", async () => {
     const mockTeam = {
-      workspaceTeams: [{ workspaceId: "workspace1" }],
-    };
+      id: "team1",
+    } satisfies Pick<Team, "id">;
 
-    vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeam as any);
-    vi.mocked(prisma.teamUser.upsert).mockResolvedValue({} as any);
+    vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeam as never);
+    vi.mocked(prisma.teamUser.upsert).mockResolvedValue(mockTeamUser);
 
     await createTeamMembership(mockInvite, mockUserId);
 
@@ -64,9 +77,11 @@ describe("createTeamMembership", () => {
   });
 
   test("reconciles successfully committed pairs before propagating a later source failure", async () => {
-    vi.mocked(prisma.team.findUnique).mockResolvedValue({ id: "team" } as any);
+    const mockTeam = { id: "team" } satisfies Pick<Team, "id">;
+
+    vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeam as never);
     vi.mocked(prisma.teamUser.upsert)
-      .mockResolvedValueOnce({} as any)
+      .mockResolvedValueOnce(mockTeamUser)
       .mockRejectedValueOnce(new Error("second write failed"));
 
     await expect(createTeamMembership(mockInvite, mockUserId)).rejects.toThrow("second write failed");

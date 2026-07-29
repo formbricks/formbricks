@@ -127,10 +127,12 @@ describe("accountDeletionAfterDelete", () => {
       {
         code: "authzed_internal",
         component: "authzed",
+        errorName: "Error",
         operation: "account_delete_organization_cleanup",
       },
       "Unexpected AuthZed projection failure after source commit"
     );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("sensitive raw error");
     expect(deleteBrevoCustomerByEmail).toHaveBeenCalledWith({ email: "ada@example.com" });
     expect(queueAccountDeletionAuditEvent).toHaveBeenCalledWith({
       oldUser: user,

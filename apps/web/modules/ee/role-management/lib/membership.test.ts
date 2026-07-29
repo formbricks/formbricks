@@ -124,4 +124,35 @@ describe("updateMembership", () => {
       ],
     });
   });
+
+  test("includes memberships added while team roles are being updated in reconciliation", async () => {
+    const mockMembership = {
+      id: "1",
+      userId: "user1",
+      organizationId: "org1",
+      role: "manager" as TOrganizationRole,
+      accepted: true,
+      deprecatedRole: null,
+    };
+    let roleUpdateCompleted = false;
+
+    vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
+    vi.mocked(prisma.teamUser.updateMany).mockImplementation(async () => {
+      roleUpdateCompleted = true;
+      return { count: 2 };
+    });
+    vi.mocked(prisma.teamUser.findMany).mockImplementation(async () =>
+      roleUpdateCompleted ? ([{ teamId: "team1" }, { teamId: "team2" }] as never) : []
+    );
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
+
+    await updateMembership("user1", "org1", { role: "manager" });
+
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [
+        { teamId: "team1", userId: "user1" },
+        { teamId: "team2", userId: "user1" },
+      ],
+    });
+  });
 });

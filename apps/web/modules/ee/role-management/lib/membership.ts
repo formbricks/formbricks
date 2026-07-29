@@ -31,19 +31,6 @@ export const updateMembership = async (
 
     await reconcileOrganizationMembership(organizationId, userId);
 
-    const teamMemberships = await prisma.teamUser.findMany({
-      where: {
-        userId,
-        team: {
-          organizationId,
-        },
-      },
-      select: {
-        teamId: true,
-      },
-    });
-    affectedTeamIds = teamMemberships.map(({ teamId }) => teamId);
-
     if (data.role === "owner" || data.role === "manager") {
       await prisma.teamUser.updateMany({
         where: {
@@ -57,6 +44,19 @@ export const updateMembership = async (
         },
       });
     }
+
+    const teamMemberships = await prisma.teamUser.findMany({
+      where: {
+        userId,
+        team: {
+          organizationId,
+        },
+      },
+      select: {
+        teamId: true,
+      },
+    });
+    affectedTeamIds = teamMemberships.map(({ teamId }) => teamId);
 
     await prisma.membership.findMany({
       where: {

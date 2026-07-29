@@ -8,11 +8,12 @@ export const runPostCommitProjection = async (
 ): Promise<void> => {
   try {
     await projection();
-  } catch {
+  } catch (error) {
     logger.error(
       {
         code: "authzed_internal",
         component: "authzed",
+        errorName: error instanceof Error ? error.name : "NonError",
         operation,
       },
       "Unexpected AuthZed projection failure after source commit"

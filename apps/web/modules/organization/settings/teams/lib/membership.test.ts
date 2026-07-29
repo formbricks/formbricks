@@ -108,12 +108,37 @@ describe("getOrganizationOwnerCount", () => {
 describe("deleteMembership", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.$transaction).mockImplementation(async (transaction) => {
+      if (typeof transaction !== "function") {
+        throw new Error("Expected an interactive transaction");
+      }
+
+      return transaction(prisma as never);
+    });
   });
   test("deletes membership and returns deleted team memberships", async () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
-    vi.mocked(prisma.$transaction).mockResolvedValue([{}, {}]);
     const result = await deleteMembership(userId, organizationId);
     expect(result[0].teamId).toBe(teamId);
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
+    expect(prisma.teamUser.deleteMany).toHaveBeenCalledWith({
+      where: {
+        userId,
+        team: {
+          organizationId,
+        },
+      },
+    });
+    expect(prisma.membership.delete).toHaveBeenCalledWith({
+      where: {
+        userId_organizationId: {
+          organizationId,
+          userId,
+        },
+      },
+    });
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith(organizationId, userId);
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
       teamMemberships: [{ teamId, userId }],

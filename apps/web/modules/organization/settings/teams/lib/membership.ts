@@ -93,33 +93,38 @@ export const deleteMembership = async (
   validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
-    const deletedTeamMemberships = await prisma.teamUser.findMany({
-      where: {
-        userId,
-        team: {
-          organizationId,
-        },
-      },
-    });
-
-    await prisma.$transaction([
-      prisma.teamUser.deleteMany({
-        where: {
-          userId,
-          team: {
-            organizationId,
-          },
-        },
-      }),
-      prisma.membership.delete({
-        where: {
-          userId_organizationId: {
-            organizationId,
+    const deletedTeamMemberships = await prisma.$transaction(
+      async (tx) => {
+        const teamMemberships = await tx.teamUser.findMany({
+          where: {
             userId,
+            team: {
+              organizationId,
+            },
           },
-        },
-      }),
-    ]);
+        });
+
+        await tx.teamUser.deleteMany({
+          where: {
+            userId,
+            team: {
+              organizationId,
+            },
+          },
+        });
+        await tx.membership.delete({
+          where: {
+            userId_organizationId: {
+              organizationId,
+              userId,
+            },
+          },
+        });
+
+        return teamMemberships;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
 
     await reconcileOrganizationMembership(organizationId, userId);
     await runPostCommitProjection("organization_membership_team_cleanup", () =>
