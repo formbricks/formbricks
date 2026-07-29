@@ -38,6 +38,7 @@ import {
   resolveWorkspaceFeedbackTenant,
 } from "./access";
 import {
+  EMBEDDINGS_UNAVAILABLE_DETAIL,
   EMBEDDING_PENDING_DETAIL,
   handleUnexpectedError,
   hubErrorToProblemResponse,
@@ -58,6 +59,7 @@ import {
   ZV3FeedbackRecordSearchFilters,
   ZV3FeedbackRecordSimilarityFilters,
   ZV3FeedbackRecordUpdateBody,
+  conflictingUpdateValueFields,
 } from "./schemas";
 import {
   type TV3FeedbackRecord,
@@ -135,26 +137,30 @@ function buildHubUpdateParams(data: TV3FeedbackRecordUpdateBody): FeedbackRecord
 const DEFAULT_LIST_LIMIT = 50;
 
 /**
- * Map our camelCase filters onto the Hub's query parameters, with the resolved tenant injected.
+ * Map our filters onto the Hub's query parameters, with the resolved tenant injected.
  *
- * Shared by list and count: the Hub documents `/count` as accepting the same parameters as the list
- * endpoint, so the two must agree about what a filter means — otherwise a count could describe a
- * different set of records than the list it is supposed to be counting. `tenant_id` is always ours, never
- * the caller's. Absent filters are left off entirely rather than sent as undefined.
+ * The names now match the Hub's, so this reads as a copy — but it stays a field-by-field allowlist rather
+ * than a spread, for the same reason as the create builder: `tenant_id` is always ours, and nothing a caller
+ * invents can reach the Hub by being named plausibly.
+ *
+ * Shared by list and count: the Hub documents `/count` as accepting the same parameters as the list endpoint,
+ * so the two must agree about what a filter means — otherwise a count could describe a different set of
+ * records than the list it is supposed to be counting. Absent filters are left off entirely rather than sent
+ * as undefined.
  */
 function buildHubFilterParams(
   tenantId: string,
   filters: TV3FeedbackRecordFilters
 ): FeedbackRecordCountParams {
   const params: FeedbackRecordCountParams = { tenant_id: tenantId };
-  if (filters.sourceType) params.source_type = filters.sourceType;
-  if (filters.sourceId) params.source_id = filters.sourceId;
-  if (filters.fieldType) params.field_type = filters.fieldType;
-  if (filters.fieldId) params.field_id = filters.fieldId;
-  if (filters.fieldGroupId) params.field_group_id = filters.fieldGroupId;
-  if (filters.submissionId) params.submission_id = filters.submissionId;
-  if (filters.userId) params.user_id = filters.userId;
-  if (filters.valueId) params.value_id = filters.valueId;
+  if (filters.source_type) params.source_type = filters.source_type;
+  if (filters.source_id) params.source_id = filters.source_id;
+  if (filters.field_type) params.field_type = filters.field_type;
+  if (filters.field_id) params.field_id = filters.field_id;
+  if (filters.field_group_id) params.field_group_id = filters.field_group_id;
+  if (filters.submission_id) params.submission_id = filters.submission_id;
+  if (filters.user_id) params.user_id = filters.user_id;
+  if (filters.value_id) params.value_id = filters.value_id;
   if (filters.since) params.since = filters.since;
   if (filters.until) params.until = filters.until;
   return params;
@@ -750,6 +756,24 @@ export async function updateV3FeedbackRecord({
       return owned.response;
     }
 
+    // Only now can the patch be checked against the record's `field_type` — it is immutable, so it is not in
+    // the body and had to be read first. The Hub does not enforce this, so skipping it would let a patch
+    // build a record create rejects: `value_number` on a `text` record leaves both values set at once.
+    const conflicts = conflictingUpdateValueFields(parsed.data, owned.record.field_type);
+    if (conflicts.length > 0) {
+      log.warn(
+        { statusCode: 422, fieldType: owned.record.field_type },
+        "Feedback record update sets a value field the record's type does not accept"
+      );
+      return problemUnprocessableContent(requestId, "Invalid feedback record update", {
+        invalid_params: conflicts.map(({ name, accepted }) => ({
+          name,
+          reason: `is not valid for a "${owned.record.field_type}" record (expected one of: ${accepted.join(", ")})`,
+        })),
+        instance,
+      });
+    }
+
     const result = await updateFeedbackRecord(feedbackRecordId, buildHubUpdateParams(parsed.data));
     if (result.error || !result.data) {
       // The record was there a moment ago (the guard just read it), so a 404 means it was deleted in
@@ -937,7 +961,9 @@ export async function searchV3FeedbackRecords({
         },
         "Hub semanticSearchFeedbackRecords failed"
       );
-      return hubErrorToProblemResponse(result.error, requestId, instance);
+      return hubErrorToProblemResponse(result.error, requestId, instance, {
+        serviceUnavailableDetail: EMBEDDINGS_UNAVAILABLE_DETAIL,
+      });
     }
 
     return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId);
@@ -1034,7 +1060,9 @@ export async function findSimilarV3FeedbackRecords({
         },
         "Hub findSimilarFeedbackRecords failed"
       );
-      return hubErrorToProblemResponse(result.error, requestId, instance);
+      return hubErrorToProblemResponse(result.error, requestId, instance, {
+        serviceUnavailableDetail: EMBEDDINGS_UNAVAILABLE_DETAIL,
+      });
     }
 
     return similarityMatchesResponse(result.data, resolution, filters.data.minScore, requestId);

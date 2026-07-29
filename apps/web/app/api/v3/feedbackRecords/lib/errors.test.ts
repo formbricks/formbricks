@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { handleUnexpectedError, hubErrorToProblemResponse } from "./errors";
+import { EMBEDDINGS_UNAVAILABLE_DETAIL, handleUnexpectedError, hubErrorToProblemResponse } from "./errors";
 
 vi.mock("server-only", () => ({}));
 
@@ -50,6 +50,47 @@ describe("hubErrorToProblemResponse", () => {
     expect(body.invalid_params[0].name).toBe("field_0");
   });
 
+  /**
+   * The Hub's tenant is our dataset, and the record serializer already renames the field outward — so a
+   * relayed message must not send a caller looking for a `tenant_id` parameter this API does not have. The
+   * fixture is the Hub's verbatim duplicate-create 409, captured from a live instance.
+   */
+  test("renames the Hub's tenant_id to dataset_id in a relayed detail", async () => {
+    const body = await hubErrorToProblemResponse(
+      hubError(409, {
+        problemDetail: "a feedback record with this tenant_id, submission_id, and field_id already exists",
+      }),
+      requestId,
+      instance
+    ).json();
+
+    expect(body.detail).toBe(
+      "a feedback record with this dataset_id, submission_id, and field_id already exists"
+    );
+    expect(body.detail).not.toContain("tenant_id");
+  });
+
+  test("renames tenant_id in relayed invalid_params too, where the Hub also names fields", async () => {
+    const body = await hubErrorToProblemResponse(
+      hubError(400, { invalidParams: [{ name: "tenant_id", reason: "tenant_id is required" }] }),
+      requestId,
+      instance
+    ).json();
+
+    expect(body.invalid_params).toEqual([{ name: "dataset_id", reason: "dataset_id is required" }]);
+  });
+
+  // Word-bounded, so it renames the term without corrupting text that merely contains it.
+  test("leaves lookalike substrings alone", async () => {
+    const body = await hubErrorToProblemResponse(
+      hubError(422, { problemDetail: "my_tenant_identifier and tenant_ids are unaffected" }),
+      requestId,
+      instance
+    ).json();
+
+    expect(body.detail).toBe("my_tenant_identifier and tenant_ids are unaffected");
+  });
+
   // 5xx bodies can carry upstream internals, so nothing from them is ever echoed — only the status is.
   test("never relays a 5xx problem detail", async () => {
     const body = await hubErrorToProblemResponse(
@@ -83,13 +124,31 @@ describe("hubErrorToProblemResponse", () => {
 
   // A 503 means embeddings aren't configured — a deployment-level fact no retry fixes, so it must not be
   // folded into the generic "unavailable" 502 that reads as "try again".
-  test("maps a 503 to an actionable configuration message rather than a 502", async () => {
+  test("maps a 503 to 503 rather than folding it into the generic 502", async () => {
     const response = hubErrorToProblemResponse(hubError(503), requestId, instance);
-    const body = await response.json();
 
     expect(response.status).toBe(503);
-    expect(body.code).toBe("service_unavailable");
+    expect((await response.json()).code).toBe("service_unavailable");
+  });
+
+  test("uses the caller's wording for a 503 when it knows what is unconfigured", async () => {
+    const body = await hubErrorToProblemResponse(hubError(503), requestId, instance, {
+      serviceUnavailableDetail: EMBEDDINGS_UNAVAILABLE_DETAIL,
+    }).json();
+
     expect(body.detail).toContain("EMBEDDING_PROVIDER");
+  });
+
+  /**
+   * The Hub answers 503 for several unrelated unconfigured subsystems, so the default must name none of them:
+   * a plain outage on a list or a create would otherwise tell an operator to go configure embeddings.
+   */
+  test("names no subsystem in a 503 the caller did not explain", async () => {
+    const body = await hubErrorToProblemResponse(hubError(503), requestId, instance).json();
+
+    expect(body.detail).not.toContain("EMBEDDING");
+    expect(body.detail).not.toMatch(/embedding/i);
+    expect(body.detail).toContain("not configured");
   });
 });
 

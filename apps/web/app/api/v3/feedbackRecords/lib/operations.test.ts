@@ -200,7 +200,7 @@ describe("listV3FeedbackRecords", () => {
       error: null,
     });
 
-    const response = await listV3FeedbackRecords({ ...base, sourceType: "survey", fieldType: "text" });
+    const response = await listV3FeedbackRecords({ ...base, source_type: "survey", field_type: "text" });
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -960,14 +960,14 @@ describe("countV3FeedbackRecords", () => {
   test("passes every filter through under the Hub's parameter names", async () => {
     await countV3FeedbackRecords({
       ...base,
-      sourceType: "survey",
-      sourceId: "svy_1",
-      fieldType: "text",
-      fieldId: "q1",
-      fieldGroupId: "grp_1",
-      submissionId: "sub-1",
-      userId: "user-1",
-      valueId: "opt_1",
+      source_type: "survey",
+      source_id: "svy_1",
+      field_type: "text",
+      field_id: "q1",
+      field_group_id: "grp_1",
+      submission_id: "sub-1",
+      user_id: "user-1",
+      value_id: "opt_1",
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
@@ -1013,7 +1013,7 @@ describe("list/count validate their own input", () => {
   test.each([
     ["limit", { limit: 5000 }],
     ["limit", { limit: 0 }],
-    ["sourceType", { sourceType: "x".repeat(256) }],
+    ["source_type", { source_type: "x".repeat(256) }],
   ])("listV3FeedbackRecords rejects an out-of-range %s without calling the Hub", async (_f, override) => {
     const response = await listV3FeedbackRecords({ ...base, ...override });
 
@@ -1022,11 +1022,47 @@ describe("list/count validate their own input", () => {
     expect(listFeedbackRecords).not.toHaveBeenCalled();
   });
 
+  /**
+   * A filter this surface does not have used to be dropped silently, which on a filter fails in the wrong
+   * direction: the query runs unfiltered and the caller is told it succeeded. `userId` is the realistic
+   * mistake — the old spelling of `user_id` — and it must now be a 422 naming the offending key.
+   */
+  test.each([
+    ["the old camelCase spelling", { userId: "user-1" }],
+    ["an outright unknown key", { nonsense: "x" }],
+  ])("listV3FeedbackRecords rejects %s instead of ignoring it", async (_f, override) => {
+    const response = await listV3FeedbackRecords({ ...base, ...(override as object) });
+
+    expect(response.status).toBe(422);
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
   test("countV3FeedbackRecords rejects an out-of-range filter without calling the Hub", async () => {
-    const response = await countV3FeedbackRecords({ ...base, userId: "u".repeat(256) });
+    const response = await countV3FeedbackRecords({ ...base, user_id: "u".repeat(256) });
 
     expect(response.status).toBe(422);
     expect(countFeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe("listV3FeedbackRecords", () => {
+  /**
+   * Listing does not touch the vector index, so a Hub 503 here is an outage or some *other* unconfigured
+   * subsystem. It used to answer with the embeddings message for every operation, which sent an operator
+   * after a setting that has nothing to do with listing records.
+   */
+  test("does not blame embeddings for a 503 on a path that needs none", async () => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: null,
+      error: { status: 503, message: "unavailable", detail: "unavailable" },
+    });
+
+    const response = await listV3FeedbackRecords({ ...base });
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body.detail).not.toMatch(/embedding/i);
+    expect(body.detail).toContain("not configured");
   });
 });
 
@@ -1043,14 +1079,14 @@ describe("listV3FeedbackRecords filters", () => {
       ...base,
       limit: 10,
       cursor: "abc",
-      sourceType: "survey",
-      sourceId: "svy_1",
-      fieldType: "text",
-      fieldId: "q1",
-      fieldGroupId: "grp_1",
-      submissionId: "sub-1",
-      userId: "user-1",
-      valueId: "opt_1",
+      source_type: "survey",
+      source_id: "svy_1",
+      field_type: "text",
+      field_id: "q1",
+      field_group_id: "grp_1",
+      submission_id: "sub-1",
+      user_id: "user-1",
+      value_id: "opt_1",
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
@@ -1275,8 +1311,11 @@ describe("createV3FeedbackRecords", () => {
     });
 
     const response = await createV3FeedbackRecords({ ...base, body: { records: [record(1), record(2)] } });
+    const body = await response.json();
 
     expect(response.status).toBe(503);
+    // A batch create needs no embeddings, so the 503 must not tell an operator to go configure them.
+    expect(body.detail).not.toMatch(/embedding/i);
   });
 
   test("stamps one audit log per created record and leaves failed ones unstamped", async () => {
@@ -1329,6 +1368,57 @@ describe("updateV3FeedbackRecord", () => {
       value_text: "Actually, love it a lot",
     });
     expect((await response.json()).data.value_text).toBe("Actually, love it a lot");
+  });
+
+  /**
+   * The Hub does not check the populated `value_*` against `field_type`, and `field_type` is immutable so it
+   * is not in the patch — without reading the record first, a patch could assemble what create rejects. This
+   * was reproduced against a live Hub: `{value_number, value_id}` on a `text` record returned 200 with text,
+   * number and id all set, leaving no way to tell which value the record means.
+   */
+  test("rejects a value_* field the stored field_type does not accept", async () => {
+    const response = await updateV3FeedbackRecord({
+      ...updateBase,
+      body: { value_number: 99, value_id: "opt-bogus" },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(body.invalid_params).toEqual([
+      { name: "value_number", reason: 'is not valid for a "text" record (expected one of: value_text)' },
+      { name: "value_id", reason: 'is not valid for a "text" record (expected one of: value_text)' },
+    ]);
+    expect(updateFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test("allows the value_* field the stored field_type does accept", async () => {
+    const response = await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "corrected" } });
+
+    expect(response.status).toBe(200);
+    expect(updateFeedbackRecord).toHaveBeenCalledWith(record.id, { value_text: "corrected" });
+  });
+
+  // `value_id` is a legitimate value for a categorical record — the option's stable id — so the check has to
+  // be per-type rather than a blanket ban, or correcting a mis-mapped choice id becomes impossible.
+  test("allows value_id on a categorical record", async () => {
+    const categorical = { ...record, field_type: "categorical", value_id: "opt-1" } as FeedbackRecordData;
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: categorical, error: null });
+    vi.mocked(updateFeedbackRecord).mockResolvedValue({ data: categorical, error: null });
+
+    const response = await updateV3FeedbackRecord({ ...updateBase, body: { value_id: "opt-2" } });
+
+    expect(response.status).toBe(200);
+    expect(updateFeedbackRecord).toHaveBeenCalledWith(record.id, { value_id: "opt-2" });
+  });
+
+  // Non-value fields carry no type contract, so they must not be caught by the cross-check.
+  test("allows non-value fields regardless of field_type", async () => {
+    const response = await updateV3FeedbackRecord({
+      ...updateBase,
+      body: { user_id: "u2", language: "de", metadata: { a: 1 } },
+    });
+
+    expect(response.status).toBe(200);
   });
 
   // Provenance is immutable in the Hub, and the allowlist is what enforces it: these have nowhere to go.

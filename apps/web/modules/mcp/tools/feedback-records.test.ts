@@ -174,7 +174,7 @@ describe("list_feedback_records", () => {
     await tools
       .get("list_feedback_records")!
       .handler(
-        { workspaceId, datasetId: directoryId, limit: 25, sourceType: "survey", fieldType: "text" },
+        { workspaceId, datasetId: directoryId, limit: 25, source_type: "survey", field_type: "text" },
         { authInfo }
       );
 
@@ -183,8 +183,8 @@ describe("list_feedback_records", () => {
         workspaceId,
         datasetId: directoryId,
         limit: 25,
-        sourceType: "survey",
-        fieldType: "text",
+        source_type: "survey",
+        field_type: "text",
       })
     );
   });
@@ -424,10 +424,10 @@ describe("count_feedback_records", () => {
 
     const result = await tools
       .get("count_feedback_records")!
-      .handler({ workspaceId, userId: "user-1", fieldType: "text" }, { authInfo });
+      .handler({ workspaceId, user_id: "user-1", field_type: "text" }, { authInfo });
 
     expect(countV3FeedbackRecords).toHaveBeenCalledWith(
-      expect.objectContaining({ workspaceId, userId: "user-1", fieldType: "text", instance: "/api/mcp" })
+      expect.objectContaining({ workspaceId, user_id: "user-1", field_type: "text", instance: "/api/mcp" })
     );
     expect(result.structuredContent.data.count).toBe(7);
   });

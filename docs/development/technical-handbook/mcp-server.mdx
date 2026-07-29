@@ -727,35 +727,40 @@ Input:
 {
   "cursor": "opaque-cursor-from-previous-response",
   "datasetId": "clfd1234567890123456789012",
-  "fieldGroupId": "grp_1",
-  "fieldId": "q1",
-  "fieldType": "text",
+  "field_group_id": "grp_1",
+  "field_id": "q1",
+  "field_type": "text",
   "limit": 50,
   "since": "2026-01-01T00:00:00Z",
-  "sourceId": "svy_1",
-  "sourceType": "survey",
-  "submissionId": "sub_1",
+  "source_id": "svy_1",
+  "source_type": "survey",
+  "submission_id": "sub_1",
   "until": "2026-12-31T23:59:59Z",
-  "userId": "user_1",
-  "valueId": "opt_1",
+  "user_id": "user_1",
+  "value_id": "opt_1",
   "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
 All filters are optional, match exactly, and combine with AND. They mirror the Hub's own
-`GET /v1/feedback-records` parameters:
+`GET /v1/feedback-records` parameters, and each is named after the record field it filters — so filtering by
+a `user_id` you just read in a response is spelled the same way. An unknown filter key is rejected with a
+422 rather than ignored, since a silently dropped filter would widen the result set without saying so.
 
 | Filter            | Selects                                                              |
 | ----------------- | -------------------------------------------------------------------- |
-| `sourceType`      | a kind of source, e.g. `survey`, `review`, `call_notes`              |
-| `sourceId`        | one survey/form/ticket                                               |
-| `fieldType`       | one field type (`text`, `nps`, `rating`, …)                          |
-| `fieldId`         | all answers to one question                                          |
-| `fieldGroupId`    | one grouped question (ranking, matrix, grid)                         |
-| `submissionId`    | the sibling answers given in one submission                          |
-| `userId`          | everything one end user submitted                                    |
-| `valueId`         | everyone who picked one particular choice                            |
+| `source_type`     | a kind of source, e.g. `survey`, `review`, `call_notes`              |
+| `source_id`       | one survey/form/ticket                                               |
+| `field_type`      | one field type (`text`, `nps`, `rating`, …)                          |
+| `field_id`        | all answers to one question                                          |
+| `field_group_id`  | one grouped question (ranking, matrix, grid)                         |
+| `submission_id`   | the sibling answers given in one submission                          |
+| `user_id`         | everything one end user submitted                                    |
+| `value_id`        | everyone who picked one particular choice                            |
 | `since` / `until` | a `collected_at` range (must fall between 1970-01-01 and 2080-12-31) |
+
+The workspace/dataset/pagination parameters (`workspaceId`, `datasetId`, `limit`, `cursor`) stay camelCase:
+they name nothing in the record.
 
 Output mirrors the Hub feedback-record shape and paginates with `meta.nextCursor`. `meta` also names the
 dataset that was searched, so an empty `data` array unambiguously means that dataset holds no matching
@@ -798,7 +803,7 @@ Input:
 ```json
 {
   "since": "2026-01-01T00:00:00Z",
-  "userId": "user_1",
+  "user_id": "user_1",
   "workspaceId": "clxx1234567890123456789012"
 }
 ```
@@ -933,6 +938,14 @@ overwrites a stored value; the previous one survives only in the audit log), and
 Updatable — the Hub's own mutable set: `value_text`, `value_number`, `value_boolean`, `value_date`,
 `value_id`, `user_id`, `language`, `metadata`. The schema is `.pick()`ed from the create fields, so bounds
 can't drift between creating and correcting a record.
+
+The `value_*` field being set must be one the record's `field_type` accepts — the same table `create` enforces
+(`text` takes `value_text`, `nps`/`rating`/`number` take `value_number`, `categorical` takes `value_text`
+and/or `value_id`, and so on). Because `field_type` is immutable it is not part of the patch, so this is
+checked against the *stored* record and therefore reported after the ownership check, as a 422 naming the
+offending field. Without it a patch could assemble what `create` rejects: putting `value_number` on a `text`
+record would leave both a text and a number set, with nothing to say which one the record means. The Hub does
+not enforce this itself.
 
 **Not** updatable: a record's provenance — `source_type`, `source_id`, `source_name`, `field_id`,
 `field_type`, `field_label`, `field_group_*`, `submission_id`, `collected_at`. Correcting those means

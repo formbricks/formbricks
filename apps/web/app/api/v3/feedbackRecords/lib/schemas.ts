@@ -18,28 +18,39 @@ import { ZHubFieldType } from "@formbricks/types/feedback-source";
  * `openapi.yaml`). Every filter is a plain equality match, combined with AND, and always scoped to the
  * resolved dataset. Length caps mirror the Hub's (1–255); it additionally rejects NULL bytes and relays
  * that as a 400 we pass through.
+ *
+ * Each filter is named after the field it filters, so it matches the snake_case a caller reads back in a
+ * record and sends in a create body: filtering by the `user_id` you just saw in a response is spelled the
+ * same way. Our own parameters — `workspaceId`, `datasetId`, `limit`, `cursor`, `minScore` — stay camelCase,
+ * because they name nothing in the record.
+ *
+ * `.strict()` so a key this surface does not have is an error rather than a silent no-op. On a *filter* the
+ * silent direction is the dangerous one: a dropped `user_id` widens the result set instead of narrowing it,
+ * and the caller cannot tell it happened. This guards the operation contract rather than the MCP boundary —
+ * the SDK validates against its own non-strict copy of the shape and strips unknown keys before an operation
+ * sees them, which is why the names above do more work here than this does.
  */
 const ZFeedbackRecordFilterId = z.string().trim().min(1).max(255);
 
 export const ZV3FeedbackRecordFilters = z.object({
-  sourceType: ZFeedbackRecordFilterId.optional().describe(
+  source_type: ZFeedbackRecordFilterId.optional().describe(
     "Filter by feedback source type, e.g. survey, review, call_notes."
   ),
-  sourceId: ZFeedbackRecordFilterId.optional().describe(
+  source_id: ZFeedbackRecordFilterId.optional().describe(
     "Filter by source id — the survey/form/ticket the feedback came from."
   ),
-  fieldType: ZHubFieldType.optional().describe("Filter by field type."),
-  fieldId: ZFeedbackRecordFilterId.optional().describe("Filter by field id — all answers to one question."),
-  fieldGroupId: ZFeedbackRecordFilterId.optional().describe(
+  field_type: ZHubFieldType.optional().describe("Filter by field type."),
+  field_id: ZFeedbackRecordFilterId.optional().describe("Filter by field id — all answers to one question."),
+  field_group_id: ZFeedbackRecordFilterId.optional().describe(
     "Filter by field group id, which groups related fields of one question (ranking, matrix, grid)."
   ),
-  submissionId: ZFeedbackRecordFilterId.optional().describe(
+  submission_id: ZFeedbackRecordFilterId.optional().describe(
     "Filter by submission id — the sibling records of one logical submission, i.e. the rest of the answers given at the same time."
   ),
-  userId: ZFeedbackRecordFilterId.optional().describe(
+  user_id: ZFeedbackRecordFilterId.optional().describe(
     "Filter by end-user identifier — everything one person submitted."
   ),
-  valueId: ZFeedbackRecordFilterId.optional().describe(
+  value_id: ZFeedbackRecordFilterId.optional().describe(
     "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice."
   ),
   since: z
@@ -58,7 +69,7 @@ export const ZV3FeedbackRecordFilters = z.object({
     .describe(
       "Only records collected at or before this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
     ),
-});
+}).strict();
 export type TV3FeedbackRecordFilters = z.infer<typeof ZV3FeedbackRecordFilters>;
 
 // Listing adds keyset pagination on top of the shared filters (the Hub's cursor/keyset contract).
@@ -264,6 +275,32 @@ export const ZV3FeedbackRecordUpdateBody = ZV3FeedbackRecordUpdateBodyFields.ref
   { message: "at least one field to update is required" }
 );
 export type TV3FeedbackRecordUpdateBody = z.infer<typeof ZV3FeedbackRecordUpdateBody>;
+
+/** The mutable `value_*` fields, derived from the update set so a new one can't be missed below. */
+const UPDATABLE_VALUE_FIELDS = Object.keys(ZV3FeedbackRecordUpdateBodyFields.shape).filter((key) =>
+  key.startsWith("value_")
+) as (keyof typeof ZV3FeedbackRecordUpdateBodyFields.shape)[];
+
+/**
+ * The `value_*` fields a patch sets that this record's type does not accept.
+ *
+ * Create enforces the same `VALUE_FIELD_BY_TYPE` table in its `superRefine`, but update cannot: `field_type`
+ * is immutable and therefore absent from the patch, so the type has to come from the *stored* record — which
+ * means this check can only run after the record has been read. Without it the two paths disagree, and a
+ * patch can assemble a record create would have rejected: putting `value_number` on a `text` record leaves
+ * text and number populated at once, with no way to tell which one the record means.
+ *
+ * The lookup is total — `field_type` is the same closed union the table is keyed by.
+ */
+export function conflictingUpdateValueFields(
+  data: TV3FeedbackRecordUpdateBody,
+  fieldType: z.infer<typeof ZHubFieldType>
+): { name: string; accepted: string[] }[] {
+  const accepted = VALUE_FIELD_BY_TYPE[fieldType];
+  return UPDATABLE_VALUE_FIELDS.filter(
+    (field) => data[field] !== undefined && !accepted.includes(field)
+  ).map((name) => ({ name, accepted }));
+}
 
 /**
  * Batch create. The Hub has no bulk-create endpoint (its only bulk write is the delete-by-user erasure

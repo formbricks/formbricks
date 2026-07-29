@@ -29,6 +29,9 @@ const MAX_RELAYED_DETAIL_LENGTH = 512;
 /**
  * Semantic search and similarity need embeddings, which are optional in the Hub. Our own static message,
  * not the upstream body: it names the setting to change, on both processes that need it.
+ *
+ * Passed explicitly by the two search operations rather than being the 503 default, because those are the
+ * only ones for which it is true — see `GENERIC_SERVICE_UNAVAILABLE_DETAIL`.
  */
 export const EMBEDDINGS_UNAVAILABLE_DETAIL =
   "Semantic search is not available: the feedback service has no embedding model configured. A self-hosting administrator can enable it by setting EMBEDDING_PROVIDER and EMBEDDING_MODEL on both the Hub API and the Hub worker.";
@@ -43,6 +46,14 @@ export const EMBEDDING_PENDING_DETAIL =
   "This feedback record has no embedding, so similar records cannot be found. If it was just created, embeddings are generated in the background — retry in a moment. If it has no text, or its text was cleared by an update, it has no embedding at all and retrying will not help.";
 
 /**
+ * What a 503 says when the caller has not named a cause. Deliberately vague: the Hub answers 503 for
+ * several unrelated unconfigured subsystems, so naming one would be wrong for the rest — a plain Hub outage
+ * on a list or a create must not tell an operator to configure embeddings, which has nothing to do with it.
+ */
+const GENERIC_SERVICE_UNAVAILABLE_DETAIL =
+  "This feature depends on a part of the feedback service that is not configured on this deployment.";
+
+/**
  * Hub statuses whose detail describes the *caller's own* request, and may therefore be echoed: a rejected
  * field value, a duplicate submission, an oversized record.
  *
@@ -53,18 +64,34 @@ export const EMBEDDING_PENDING_DETAIL =
 const RELAYABLE_HUB_STATUSES = new Set([400, 409, 413, 422]);
 
 /**
+ * Translate the Hub's internal vocabulary into this API's, for any upstream text we relay.
+ *
+ * The Hub's tenant *is* our dataset — `serializeV3FeedbackRecord` already renames the field on the way out —
+ * so a relayed message naming `tenant_id` contradicts the rest of the surface and points a caller at a
+ * parameter that does not exist here. Reproduced with a duplicate create, whose Hub 409 reads "a feedback
+ * record with this tenant_id, submission_id, and field_id already exists".
+ *
+ * Word-bounded so it renames the term and nothing else. Applied to every relayed string — detail and
+ * `invalid_params` alike — because the Hub names fields in both.
+ */
+function toApiVocabulary(text: string): string {
+  return text.replace(/\btenant_id\b/g, "dataset_id");
+}
+
+/**
  * The one place that decides what a Hub failure may say to a caller.
  *
  * The Hub owns content rules we deliberately don't duplicate (NULL bytes, its own length limits), so for
- * the statuses above its message is relayed — bounded — because without it an agent cannot correct its own
- * request. Everything else is replaced by a fixed string. Used both for whole-request problem responses and
- * for the per-record failures of a batch write, so neither can drift into leaking more than the other.
+ * the relayable statuses its message is relayed — bounded, and in this API's vocabulary — because without it
+ * an agent cannot correct its own request. Everything else is replaced by a fixed string. Used both for
+ * whole-request problem responses and for the per-record failures of a batch write, so neither can drift
+ * into leaking more than the other.
  */
 export function relayableHubDetail(error: HubError | null, fallback: string): string {
   if (!error?.problemDetail || !RELAYABLE_HUB_STATUSES.has(error.status)) {
     return fallback;
   }
-  return error.problemDetail.slice(0, MAX_RELAYED_DETAIL_LENGTH);
+  return toApiVocabulary(error.problemDetail.slice(0, MAX_RELAYED_DETAIL_LENGTH));
 }
 
 /**
@@ -79,7 +106,14 @@ export function relayableHubDetail(error: HubError | null, fallback: string): st
 export function hubErrorToProblemResponse(
   error: HubError | null,
   requestId: string,
-  instance: string
+  instance: string,
+  options?: {
+    /**
+     * What a Hub 503 means for this operation. Worth passing from any caller that can actually receive one;
+     * the rest get a message that names no subsystem.
+     */
+    serviceUnavailableDetail?: string;
+  }
 ): Response {
   const status = error?.status ?? 0;
   if (status === 429) {
@@ -105,11 +139,15 @@ export function hubErrorToProblemResponse(
     );
   }
 
-  // Embeddings are optional in the Hub, and the search endpoints are the only ones that need them. A
-  // deployment-level "not enabled", not an outage — so it must not collapse into the generic 502 below,
-  // which would read as "retry later" for something no retry can fix.
+  // A deployment-level "not enabled", not an outage — so it must not collapse into the generic 502 below,
+  // which would read as "retry later" for something no retry can fix. What is unconfigured depends on the
+  // operation, so the wording comes from the caller.
   if (status === 503) {
-    return problemServiceUnavailable(requestId, EMBEDDINGS_UNAVAILABLE_DETAIL, instance);
+    return problemServiceUnavailable(
+      requestId,
+      options?.serviceUnavailableDetail ?? GENERIC_SERVICE_UNAVAILABLE_DETAIL,
+      instance
+    );
   }
 
   if (status === 400 || status === 422) {
@@ -118,8 +156,8 @@ export function hubErrorToProblemResponse(
     const invalidParams: InvalidParam[] | undefined = error?.invalidParams
       ?.slice(0, MAX_RELAYED_INVALID_PARAMS)
       .map(({ name, reason }) => ({
-        name: name.slice(0, MAX_RELAYED_DETAIL_LENGTH),
-        reason: reason.slice(0, MAX_RELAYED_DETAIL_LENGTH),
+        name: toApiVocabulary(name.slice(0, MAX_RELAYED_DETAIL_LENGTH)),
+        reason: toApiVocabulary(reason.slice(0, MAX_RELAYED_DETAIL_LENGTH)),
       }));
     const detail = relayableHubDetail(error, "The feedback service rejected the request.");
 
