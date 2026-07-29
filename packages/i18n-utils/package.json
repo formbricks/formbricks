@@ -25,9 +25,9 @@
   "scripts": {
     "go": "vite build --watch --mode dev",
     "clean": "rimraf .turbo node_modules coverage dist",
+    "lint:report": "eslint . --format json --output-file ../../lint-results/i18n-utils.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
     "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",
     "test": "vitest run",
