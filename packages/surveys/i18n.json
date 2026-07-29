@@ -16,6 +16,7 @@
       "fr-FR",
       "hi-IN",
       "hu-HU",
+      "id-ID",
       "it-IT",
       "ja-JP",
       "nl-NL",
@@ -24,8 +25,11 @@
       "ru-RU",
       "sv-SE",
       "tr-TR",
+      "ur-PK",
       "uz-UZ",
-      "zh-Hans-CN"
+      "vi-VN",
+      "zh-Hans-CN",
+      "zh-Hant-TW"
     ]
   },
   "version": 1.8
