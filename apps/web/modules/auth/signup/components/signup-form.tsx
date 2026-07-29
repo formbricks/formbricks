@@ -17,6 +17,7 @@ import {
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
+import { EXISTING_ACCOUNT_NOTICE } from "@/modules/auth/lib/notices";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
@@ -168,6 +169,14 @@ export const SignupForm = ({
         } else {
           toast.error(errorMessage);
         }
+        return;
+      }
+
+      // The address already has an account and this sign-up carried a valid invite for it, so there is
+      // no verification email to wait for — send them to log in, which then completes the invite via
+      // the callback URL. (ENG-2091: this path used to land on "check your inbox" forever.)
+      if (createUserResponse.data.nextStep === "login_to_accept_invite") {
+        router.push(`${loginHref}${loginHref.includes("?") ? "&" : "?"}notice=${EXISTING_ACCOUNT_NOTICE}`);
         return;
       }
 

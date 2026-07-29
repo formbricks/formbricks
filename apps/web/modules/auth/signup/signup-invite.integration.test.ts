@@ -87,7 +87,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       inviteToken,
     });
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
     expect(sendVerificationLinkEmail).toHaveBeenCalledTimes(1);
 
     const user = await prisma.user.findUnique({ where: { email: INVITED_EMAIL }, select: { id: true } });
@@ -116,9 +116,10 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       inviteToken,
     });
 
-    // Enumeration-safe: the response is indistinguishable from a new sign-up...
-    expect(result?.data).toEqual({ success: true });
-    // ...and no verification email is sent, because no account was created.
+    // The caller holds a valid invite for this exact address, so it is safe to tell them the account
+    // exists and send them to log in — rather than to a verification email that never arrives.
+    expect(result?.data).toEqual({ success: true, nextStep: "login_to_accept_invite" });
+    // No verification email is sent, because no account was created.
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
     // Nothing may touch the pre-existing account: this endpoint is unauthenticated and the caller has
@@ -137,6 +138,27 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     // The existing credential is untouched (no password overwrite).
     expect(after?.password).toBe("not-a-real-hash-fixture");
   });
+
+  test("does not disclose an existing account when the invite is for a different address", async () => {
+    const { inviteToken } = await seedInvite(); // invite is for INVITED_EMAIL
+    const otherEmail = "someone.else@corporate-example.com";
+    await prisma.user.create({
+      data: { name: "Someone Else", email: otherEmail, password: "not-a-real-hash-fixture" },
+    });
+    vi.clearAllMocks();
+
+    const result = await createUserAction({
+      name: "Someone Else",
+      email: otherEmail,
+      password: "SomeOtherPassword1!",
+      inviteToken,
+    });
+
+    // The token does not name this address, so it proves nothing about it — fall back to the generic,
+    // enumeration-safe response rather than confirming the account exists.
+    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
+    expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
+  });
 });
 
 describe("plain sign-up (no invite) with an address that already exists", () => {
@@ -152,7 +174,10 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
       password: "AttackerPassword1!",
     });
 
-    expect(result?.data).toEqual({ success: true });
+    // No invite, so nothing is disclosed: the response is byte-identical to a real new sign-up, and
+    // the user lands on the generic "confirm your email" screen (whose copy carries a generic
+    // "already have an account? log in" line). This is the enumeration-safety boundary.
+    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
     // On Formbricks Cloud getIsMultiOrgEnabled() is true, so before the fix this branch created an
     // organization + owner membership on someone else's account, once per request.

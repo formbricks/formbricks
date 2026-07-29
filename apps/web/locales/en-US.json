@@ -58,6 +58,8 @@
       "create_an_account": "Create an account",
       "enter_your_backup_code": "Enter your backup code",
       "enter_your_two_factor_authentication_code": "Enter your two-factor authentication code",
+      "existing_account_invite_description": "Log in with your existing password to accept the invitation. You won't receive a verification email.",
+      "existing_account_invite_title": "You already have an account",
       "forgot_your_password": "Forgot your password?",
       "login_to_your_account": "Log in to your account",
       "login_with_email": "Log in with Email",
@@ -124,8 +126,10 @@
       "user_successfully_created_info": "We have checked for an account associated with {email}. If none existed, we have created one for you. If an account already existed, no changes were made. Please log in below to continue."
     },
     "verification-requested": {
+      "already_have_an_account": "Already have an account?",
       "invalid_email_address": "Invalid email address",
       "invalid_token": "Invalid token ☹️",
+      "log_in": "Log in",
       "new_email_verification_success": "If the address is valid, a verification email has been sent.",
       "no_email_provided": "No email provided",
       "please_confirm_your_email_address": "Please confirm your email address",

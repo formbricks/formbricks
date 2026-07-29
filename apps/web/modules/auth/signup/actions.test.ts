@@ -213,7 +213,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     const ctx = newCtx();
     const result = await createUserAction({ ctx, parsedInput: baseInput } as never);
 
-    expect(result).toEqual({ success: true }); // enumeration-safe: same response as a real signup
+    expect(result).toEqual({ success: true, nextStep: "verify_email" }); // same response as a real signup
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
     expect(updateUser).not.toHaveBeenCalled(); // no locale write on someone else's account
     expect(capturePostHogEvent).not.toHaveBeenCalled();
@@ -229,7 +229,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
     const result = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, nextStep: "verify_email" });
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
   });
 });
@@ -293,7 +293,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
       parsedInput: { ...blockedInput, inviteToken: "invite-jwt-123" },
     } as never);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, nextStep: "verify_email" });
     expect(auth.api.signUpEmail).toHaveBeenCalled();
   });
 
@@ -333,7 +333,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
       parsedInput: { name: "Person", email: "person@acme-corp.com", password: "Password123!" },
     } as never);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, nextStep: "verify_email" });
     expect(auth.api.signUpEmail).toHaveBeenCalled();
   });
 });

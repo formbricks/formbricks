@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -38,6 +39,19 @@ export const VerificationRequestedPage = async ({
             <div className="mt-5">
               <RequestVerificationEmail email={email.toLowerCase()} callbackUrl={resolvedCallbackUrl} />
             </div>
+            {/*
+              A sign-up with an address that already has an account lands here too — the response is
+              deliberately identical for existing and new addresses so it can't be used to enumerate
+              accounts. For that visitor there is no email coming and the resend button above no-ops
+              (it returns early for an already-verified address), so this generic line is their way
+              out. It reveals nothing: every visitor to this page sees it. (ENG-2091)
+            */}
+            <p className="mt-4 text-center text-xs text-slate-500">
+              {t("auth.verification-requested.already_have_an_account")}{" "}
+              <Link href="/auth/login" className="font-semibold text-slate-600 underline">
+                {t("auth.verification-requested.log_in")}
+              </Link>
+            </p>
           </>
         </FormWrapper>
       );
