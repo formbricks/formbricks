@@ -41,6 +41,21 @@ type TParsedGatewayRoute = {
   tenantSource: "query" | "body" | "recordLookup";
 };
 
+/**
+ * Operations that change or destroy records that already exist. A feedback directory is shared by
+ * every workspace it is assigned to and its records carry no workspace of their own, so a workspace
+ * permission cannot tell one workspace's records from another's — a `readWrite` member of workspace B
+ * would otherwise edit or delete records that workspace A's surveys ingested (ENG-1770). These are
+ * restricted to the organization level: owners/managers for people, org-wide write access for API
+ * keys. `create` is deliberately not in this set — adding records to a shared directory is ordinary
+ * workspace work, the same as a CSV import.
+ */
+const RECORD_MUTATING_OPERATIONS = new Set<TFeedbackRecordsGatewayOperation>([
+  "update",
+  "delete",
+  "bulkDelete",
+]);
+
 const apiKeyPermissionWeight: Record<ApiKeyPermission, number> = {
   read: 1,
   write: 2,
@@ -160,7 +175,8 @@ const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | nul
 const hasApiKeyImplicitFeedbackDirectoryAccess = (
   authentication: TAuthenticationApiKey,
   workspaceIds: string[],
-  requiredPermission: TFeedbackRecordsGatewayPermission
+  requiredPermission: TFeedbackRecordsGatewayPermission,
+  isRecordMutation: boolean
 ): boolean => {
   const orgAccessControl = authentication.organizationAccess?.accessControl;
   if (orgAccessControl?.write) {
@@ -168,6 +184,12 @@ const hasApiKeyImplicitFeedbackDirectoryAccess = (
   }
   if (orgAccessControl?.read && requiredPermission === "read") {
     return true;
+  }
+
+  // Changing or deleting existing records needs org-wide write access; a workspace-scoped key cannot
+  // stand in for it, because the records it would reach are not workspace-scoped (ENG-1770).
+  if (isRecordMutation) {
+    return false;
   }
 
   const matchingWeights = authentication.workspacePermissions
@@ -254,8 +276,10 @@ const resolveTenantId = async (
 const authorizeFeedbackRecordsGatewayRequest = async (
   principal: TAuthenticatedGatewayPrincipal,
   feedbackDirectoryId: string,
-  requiredPermission: TFeedbackRecordsGatewayPermission
+  requiredPermission: TFeedbackRecordsGatewayPermission,
+  operation: TFeedbackRecordsGatewayOperation
 ): Promise<{ allowed: true } | { allowed: false }> => {
+  const isRecordMutation = RECORD_MUTATING_OPERATIONS.has(operation);
   const feedbackDirectory = await getFeedbackDirectoryAuthContext(feedbackDirectoryId);
   if (!feedbackDirectory || feedbackDirectory.isArchived) {
     return { allowed: false };
@@ -272,7 +296,8 @@ const authorizeFeedbackRecordsGatewayRequest = async (
     return hasApiKeyImplicitFeedbackDirectoryAccess(
       principal.authentication,
       feedbackDirectory.workspaceIds,
-      requiredPermission
+      requiredPermission,
+      isRecordMutation
     )
       ? { allowed: true }
       : { allowed: false };
@@ -289,11 +314,14 @@ const authorizeFeedbackRecordsGatewayRequest = async (
           type: "organization",
           roles: ["owner", "manager"],
         },
-        ...feedbackDirectory.workspaceIds.map((workspaceId) => ({
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission,
-        })),
+        // Mutating an existing record is owners/managers only, so no workspace-team fallback.
+        ...(isRecordMutation
+          ? []
+          : feedbackDirectory.workspaceIds.map((workspaceId) => ({
+              type: "workspaceTeam" as const,
+              workspaceId,
+              minPermission,
+            }))),
       ],
     });
 
@@ -333,7 +361,8 @@ export const feedbackRecordsGatewayAuthorizer: TGatewayRequestAuthorizer = {
     const authorizationResult = await authorizeFeedbackRecordsGatewayRequest(
       principal,
       tenantResolution.tenantId,
-      route.requiredPermission
+      route.requiredPermission,
+      route.operation
     );
     if (!authorizationResult.allowed) {
       logger.info(

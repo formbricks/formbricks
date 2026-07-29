@@ -32,6 +32,10 @@ export default async function UnifyFeedbackRecordsPage(
 
   const hasAccess = isOwner || isManager || hasReadAccess || hasReadWriteAccess || hasManageAccess;
   const canWrite = isOwner || isManager || hasReadWriteAccess || hasManageAccess;
+  // Records live in a directory shared across workspaces and carry no workspace of their own, so
+  // deleting one is an org-level act — owners and managers only (ENG-1770). Importing is still
+  // workspace work: it only adds records through this workspace's own feedback sources.
+  const canDeleteRecords = isOwner || isManager;
   if (!hasAccess) {
     return notFound();
   }
@@ -138,6 +142,7 @@ export default async function UnifyFeedbackRecordsPage(
       frdMap={frdMap}
       csvSources={csvSources}
       canWrite={canWrite}
+      canDeleteRecords={canDeleteRecords}
     />
   );
 }

@@ -49,7 +49,8 @@ interface FeedbackRecordFormDrawerProps {
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   directories: { id: string; name: string }[];
-  canWrite: boolean;
+  /** Owners/managers only — records are directory-level, not workspace-level (ENG-1770). */
+  canDelete: boolean;
   recordId?: string;
   onSuccess: () => Promise<void> | void;
 }
@@ -59,7 +60,7 @@ export const FeedbackRecordFormDrawer = ({
   onOpenChange,
   workspaceId,
   directories,
-  canWrite,
+  canDelete,
   recordId,
   onSuccess,
 }: Readonly<FeedbackRecordFormDrawerProps>) => {
@@ -124,7 +125,7 @@ export const FeedbackRecordFormDrawer = ({
   }, [form, onOpenChange, open, recordId, t, workspaceId]);
 
   const handleDelete = async () => {
-    if (!recordId) return;
+    if (!recordId || !canDelete) return;
     setIsDeleting(true);
     try {
       const result = await deleteFeedbackRecordAction({ workspaceId, recordId });
@@ -552,7 +553,7 @@ export const FeedbackRecordFormDrawer = ({
           )}
 
           <SheetFooter className="mt-2 sm:justify-between">
-            {canWrite && recordId ? (
+            {canDelete && recordId ? (
               <Button
                 variant="destructive"
                 onClick={() => setIsDeleteDialogOpen(true)}

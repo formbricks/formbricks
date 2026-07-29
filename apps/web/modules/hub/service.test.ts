@@ -19,7 +19,6 @@ import {
   renameTaxonomyNode,
   retrieveFeedbackRecord,
   semanticSearchFeedbackRecords,
-  updateFeedbackRecord,
 } from "./service";
 import type { FeedbackRecordCreateParams } from "./types";
 
@@ -288,34 +287,6 @@ describe("hub service", () => {
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "Network error" });
-    });
-  });
-
-  describe("updateFeedbackRecord", () => {
-    test("returns error when client is null", async () => {
-      vi.mocked(getHubClient).mockReturnValue(null);
-      const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
-      expect(result.data).toBeNull();
-      expect(result.error?.message).toContain("HUB_API_KEY");
-    });
-
-    test("returns data on success", async () => {
-      const updated = { id: "rec-1", value_text: "new" };
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { update: vi.fn().mockResolvedValue(updated) },
-      } as any);
-      const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
-      expect(result.data).toEqual(updated);
-      expect(result.error).toBeNull();
-    });
-
-    test("returns error on throw", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { update: vi.fn().mockRejectedValue(new Error("Forbidden")) },
-      } as any);
-      const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
-      expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({ message: "Forbidden" });
     });
   });
 

@@ -5,8 +5,12 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  assertRecordBelongsToWorkspace,
+  getWorkspaceDirectoryIds,
+} from "@/modules/ee/unify-feedback/lib/access";
 import { deleteFeedbackRecord, retrieveFeedbackRecord } from "@/modules/hub/service";
 import {
   TRetrieveFeedbackRecordAction,
@@ -14,16 +18,21 @@ import {
   ZRetrieveFeedbackRecordAction,
 } from "./types";
 
-const ensureAccess = async (
-  userId: string,
-  workspaceId: string,
-  minPermission: "read" | "readWrite"
-): Promise<void> => {
+const ensureUnifyEnabled = async (workspaceId: string): Promise<string> => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
   const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
   if (!isFeedbackDirectoriesAllowed) {
     throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
   }
+  return organizationId;
+};
+
+/**
+ * Reads are open to the whole workspace: seeing every record in a shared feedback directory is the
+ * point of sharing it.
+ */
+const ensureReadAccess = async (userId: string, workspaceId: string): Promise<void> => {
+  const organizationId = await ensureUnifyEnabled(workspaceId);
   await checkAuthorizationUpdated({
     userId,
     organizationId,
@@ -34,27 +43,37 @@ const ensureAccess = async (
       },
       {
         type: "workspaceTeam",
-        minPermission,
+        minPermission: "read",
         workspaceId,
       },
     ],
   });
 };
 
-const getWorkspaceDirectoryIds = async (workspaceId: string): Promise<Set<string>> => {
-  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
-  return new Set(directories.map((directory) => directory.id));
-};
-
-const assertRecordBelongsToWorkspace = (
-  directoryIds: Set<string>,
-  tenantId: string,
-  recordId: string | null
-): void => {
-  if (!directoryIds.has(tenantId)) {
-    // Same error shape as a genuine "not found" to prevent IDOR via response differences
-    throw new ResourceNotFoundError("Feedback record", recordId);
-  }
+/**
+ * Deleting a record is restricted to organization owners and managers (ENG-1770).
+ *
+ * A record's only tenancy is its feedback directory (the Hub tenant), and a directory is shared by
+ * every workspace it is assigned to — the record itself carries no workspace. A workspace
+ * `readWrite` check therefore cannot tell this workspace's records from another workspace's, so a
+ * member of workspace B could delete records that workspace A's surveys ingested. Until Hub records
+ * carry a workspace, deleting stays with the roles that own org-level data.
+ *
+ * Returns the organization id so callers can attribute the audit event without resolving it again.
+ */
+const ensureDeleteAccess = async (userId: string, workspaceId: string): Promise<string> => {
+  const organizationId = await ensureUnifyEnabled(workspaceId);
+  await checkAuthorizationUpdated({
+    userId,
+    organizationId,
+    access: [
+      {
+        type: "organization",
+        roles: ["owner", "manager"],
+      },
+    ],
+  });
+  return organizationId;
 };
 
 export const retrieveFeedbackRecordAction = authenticatedActionClient
@@ -68,7 +87,7 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
       parsedInput: TRetrieveFeedbackRecordAction;
     }) => {
       const [, workspaceDirectoryIds] = await Promise.all([
-        ensureAccess(ctx.user.id, parsedInput.workspaceId, "read"),
+        ensureReadAccess(ctx.user.id, parsedInput.workspaceId),
         getWorkspaceDirectoryIds(parsedInput.workspaceId),
       ]);
 
@@ -89,27 +108,46 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
 
 export const deleteFeedbackRecordAction = authenticatedActionClient
   .inputSchema(ZDeleteFeedbackRecordAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const [, workspaceDirectoryIds] = await Promise.all([
-      ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite"),
-      getWorkspaceDirectoryIds(parsedInput.workspaceId),
-    ]);
+  .action(
+    withAuditLogging("deleted", "feedbackRecord", async ({ ctx, parsedInput }) => {
+      // Set before the access check so a refused or failed attempt is still attributable.
+      ctx.auditLoggingCtx.feedbackRecordId = parsedInput.recordId;
 
-    const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
-    if (!currentRecordResult.data || currentRecordResult.error) {
-      throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
-    }
+      const [organizationId, workspaceDirectoryIds] = await Promise.all([
+        ensureDeleteAccess(ctx.user.id, parsedInput.workspaceId),
+        getWorkspaceDirectoryIds(parsedInput.workspaceId),
+      ]);
+      ctx.auditLoggingCtx.organizationId = organizationId;
 
-    assertRecordBelongsToWorkspace(
-      workspaceDirectoryIds,
-      currentRecordResult.data.tenant_id,
-      parsedInput.recordId
-    );
+      const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
+      if (!currentRecordResult.data || currentRecordResult.error) {
+        throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
+      }
 
-    const deleteResult = await deleteFeedbackRecord(parsedInput.recordId);
-    if (!deleteResult.data || deleteResult.error) {
-      throw new Error(deleteResult.error?.message || "Failed to delete feedback record");
-    }
+      assertRecordBelongsToWorkspace(
+        workspaceDirectoryIds,
+        currentRecordResult.data.tenant_id,
+        parsedInput.recordId
+      );
 
-    return { recordId: parsedInput.recordId };
-  });
+      const deleteResult = await deleteFeedbackRecord(parsedInput.recordId);
+      if (!deleteResult.data || deleteResult.error) {
+        throw new Error(deleteResult.error?.message || "Failed to delete feedback record");
+      }
+
+      // Identify what was deleted without copying it: the value_* fields are end-user feedback, which
+      // has no business being duplicated into the audit trail.
+      ctx.auditLoggingCtx.oldObject = {
+        id: currentRecordResult.data.id,
+        tenant_id: currentRecordResult.data.tenant_id,
+        submission_id: currentRecordResult.data.submission_id,
+        source_type: currentRecordResult.data.source_type,
+        source_id: currentRecordResult.data.source_id,
+        field_id: currentRecordResult.data.field_id,
+        field_type: currentRecordResult.data.field_type,
+        collected_at: currentRecordResult.data.collected_at,
+      };
+
+      return { recordId: parsedInput.recordId };
+    })
+  );

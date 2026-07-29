@@ -11,7 +11,7 @@ import {
   renameTaxonomyNode,
 } from "@/modules/hub/service";
 import type { FeedbackRecordData, TaxonomyNode, TaxonomyRun } from "@/modules/hub/types";
-import { getSessionUserId, requireUnifyDirectoryAccess } from "./access";
+import { getSessionUserId, requireUnifyDirectoryAccess, requireUnifyDirectoryMutationAccess } from "./access";
 import {
   getV3TaxonomyNodeRecords,
   getV3TaxonomyRun,
@@ -26,6 +26,7 @@ vi.mock("server-only", () => ({}));
 
 vi.mock("./access", () => ({
   requireUnifyDirectoryAccess: vi.fn(),
+  requireUnifyDirectoryMutationAccess: vi.fn(),
   getSessionUserId: vi.fn(),
 }));
 
@@ -96,6 +97,7 @@ const record: FeedbackRecordData = {
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(requireUnifyDirectoryAccess).mockResolvedValue(context);
+  vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(context);
   vi.mocked(getSessionUserId).mockReturnValue("user_1");
 });
 
@@ -287,6 +289,17 @@ describe("triggerV3TaxonomyRun", () => {
     expect(response.status).toBe(401);
     expect(createTaxonomyRun).not.toHaveBeenCalled();
   });
+
+  test("gates on the owners/managers check and skips the Hub call when denied (ENG-1770)", async () => {
+    const denied = new Response("forbidden", { status: 403 });
+    vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(denied);
+
+    const response = await triggerV3TaxonomyRun(runParams);
+
+    expect(response).toBe(denied);
+    expect(requireUnifyDirectoryAccess).not.toHaveBeenCalled();
+    expect(createTaxonomyRun).not.toHaveBeenCalled();
+  });
 });
 
 describe("renameV3TaxonomyNode", () => {
@@ -310,6 +323,17 @@ describe("renameV3TaxonomyNode", () => {
 
     expect(response.status).toBe(502);
   });
+
+  test("gates on the owners/managers check and skips the Hub call when denied (ENG-1770)", async () => {
+    const denied = new Response("forbidden", { status: 403 });
+    vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(denied);
+
+    const response = await renameV3TaxonomyNode({ ...base, nodeId: node.id, label: "Copilot" });
+
+    expect(response).toBe(denied);
+    expect(requireUnifyDirectoryAccess).not.toHaveBeenCalled();
+    expect(renameTaxonomyNode).not.toHaveBeenCalled();
+  });
 });
 
 describe("removeV3TaxonomyNode", () => {
@@ -330,5 +354,16 @@ describe("removeV3TaxonomyNode", () => {
     const response = await removeV3TaxonomyNode({ ...base, nodeId: node.id });
 
     expect(response.status).toBe(502);
+  });
+
+  test("gates on the owners/managers check and skips the Hub call when denied (ENG-1770)", async () => {
+    const denied = new Response("forbidden", { status: 403 });
+    vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(denied);
+
+    const response = await removeV3TaxonomyNode({ ...base, nodeId: node.id });
+
+    expect(response).toBe(denied);
+    expect(requireUnifyDirectoryAccess).not.toHaveBeenCalled();
+    expect(removeTaxonomyNode).not.toHaveBeenCalled();
   });
 });

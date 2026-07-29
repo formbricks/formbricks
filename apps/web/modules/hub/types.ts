@@ -8,7 +8,6 @@ export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParam
   value_id?: string;
 };
 export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams;
-export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
 
 // Hub-derived, read-only translation fields (ENG-1255). The published SDK predates them, so bridge
 // them as optional reads; drop once the SDK ships them. May be null when translation is off/pending.

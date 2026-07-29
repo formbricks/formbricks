@@ -1,7 +1,7 @@
 /**
  * PATCH  /api/v3/unify-feedback/taxonomy/nodes/{nodeId} — rename a taxonomy node.
  * DELETE /api/v3/unify-feedback/taxonomy/nodes/{nodeId} — soft-remove a taxonomy node.
- * Both require readWrite. Session-only.
+ * Both are restricted to organization owners and managers (ENG-1770). Session-only.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { removeV3TaxonomyNode, renameV3TaxonomyNode } from "../../lib/operations";

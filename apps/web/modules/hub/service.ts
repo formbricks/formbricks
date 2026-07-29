@@ -10,7 +10,6 @@ import type {
   FeedbackRecordData,
   FeedbackRecordListParams,
   FeedbackRecordListResponse,
-  FeedbackRecordUpdateParams,
   ListTaxonomyRunsResponse,
   RenameTaxonomyNodeInput,
   SemanticSearchInput,
@@ -74,27 +73,6 @@ export const retrieveFeedbackRecord = async (id: string): Promise<HubFeedbackRec
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, id }, "Hub: retrieveFeedbackRecord failed");
-    return createHubResultFromError(err);
-  }
-};
-
-/**
- * Update a single feedback record in the Hub by id.
- */
-export const updateFeedbackRecord = async (
-  id: string,
-  input: FeedbackRecordUpdateParams
-): Promise<HubFeedbackRecordResult> => {
-  const client = getHubClient();
-  if (!client) {
-    return { data: null, error: { ...NO_CONFIG_ERROR } };
-  }
-
-  try {
-    const data = await client.feedbackRecords.update(id, input);
-    return { data, error: null };
-  } catch (err) {
-    logger.warn({ err, id }, "Hub: updateFeedbackRecord failed");
     return createHubResultFromError(err);
   }
 };
