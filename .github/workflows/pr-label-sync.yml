@@ -1,0 +1,96 @@
+name: PR Label Sync
+
+# Keeps PR labels in sync with declared sections in the PR body (see .github/pull_request_template.md).
+# Generic engine: to drive a new label from a new "## <heading>" section, add one entry to RULES
+# below — no other changes needed.
+#
+# Currently configured:
+#   - "Breaking changes" section (a filled table / any content other than "None") -> `breaking-change`
+#     The Release QA audit filters on this label to compile release notes + the migration guide.
+#
+# Uses pull_request_target because adding a label needs a write-scoped token (incl. fork PRs). This is
+# safe here: the job only reads the PR *body* (data) and never checks out or runs PR code.
+# Note: pull_request_target always runs the workflow definition from the base branch, so changes here
+# take effect once merged to main — they do not self-run on their own introducing PR.
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-label-sync-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  sync-labels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Sync labels from PR body sections
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // A section is "declared" when it holds real content — a filled table or prose —
+            // i.e. it is neither empty nor a bare "None". Reusable default rule predicate.
+            const isDeclared = (content) => !(content === "" || /^none\.?$/i.test(content));
+
+            // Label rules. Add an entry to sync a new label from a new "## <heading>" PR-body section.
+            // `isActive(content)` decides whether the label should be present for the given section text.
+            const RULES = [
+              { heading: "Breaking changes", label: "breaking-change", isActive: isDeclared },
+            ];
+
+            const pr = context.payload.pull_request;
+            // Strip HTML comments so template guidance and example rows never count as content.
+            const body = (pr.body || "").replace(/<!--[\s\S]*?-->/g, "");
+
+            // Content under a "## <heading>" up to the next H2 (or end of body); null when absent.
+            const sectionContent = (heading) => {
+              const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const m = body.match(new RegExp(`^##\\s+${escaped}\\s*$`, "im"));
+              if (!m) return null;
+              const after = body.slice(m.index + m[0].length);
+              const nextH2 = after.search(/^##\s/m);
+              return (nextH2 === -1 ? after : after.slice(0, nextH2)).trim();
+            };
+
+            const current = new Set((pr.labels || []).map((l) => l.name));
+
+            for (const rule of RULES) {
+              const content = sectionContent(rule.heading);
+              if (content === null) {
+                core.info(`[${rule.label}] no "## ${rule.heading}" section found; leaving unchanged.`);
+                continue;
+              }
+              const active = rule.isActive(content);
+              const has = current.has(rule.label);
+              if (active && !has) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  labels: [rule.label],
+                });
+                core.info(`[${rule.label}] added.`);
+              } else if (!active && has) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  name: rule.label,
+                });
+                core.info(`[${rule.label}] removed.`);
+              } else {
+                core.info(`[${rule.label}] already in the correct state.`);
+              }
+            }
