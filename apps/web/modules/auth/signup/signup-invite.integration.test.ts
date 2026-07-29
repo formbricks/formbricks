@@ -142,25 +142,64 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     expect(after?.password).toBe("not-a-real-hash-fixture");
   });
 
-  test("does not disclose an existing account when the invite is for a different address", async () => {
-    const { inviteToken } = await seedInvite(); // invite is for INVITED_EMAIL
-    const otherEmail = "someone.else@corporate-example.com";
-    await prisma.user.create({
-      data: { name: "Someone Else", email: otherEmail, password: "not-a-real-hash-fixture" },
-    });
+  // ENG-2071: an invite binds one address to one role in one organization. Before this, only the
+  // signature was checked, so anyone holding a forwarded invite link could redeem it with an address
+  // of their own and take the invited role — up to owner.
+  test("refuses an invite redeemed with a different address, and creates nothing", async () => {
+    const { inviteToken, organizationId } = await seedInvite(); // invite is for INVITED_EMAIL
+    const attackerEmail = "attacker@other-example.com";
     vi.clearAllMocks();
 
     const result = await createUserAction({
-      name: "Someone Else",
-      email: otherEmail,
-      password: "SomeOtherPassword1!",
+      name: "Attacker",
+      email: attackerEmail,
+      password: "AttackerPassword1!",
       inviteToken,
     });
 
-    // The token does not name this address, so it proves nothing about it — fall back to the generic,
-    // enumeration-safe response rather than confirming the account exists.
-    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
+    // Rejected with the stable code the form maps to the generic invite copy — one code for
+    // expired / revoked / wrong-address, so it can't be used to probe which invites exist.
+    expect(result?.data).toBeUndefined();
+    expect(result?.serverError).toContain("invite_token_invalid");
+
+    // Nothing was written: no account for the attacker, no membership, and the invite survives for
+    // its real recipient.
+    expect(await prisma.user.count({ where: { email: attackerEmail } })).toBe(0);
+    expect(await prisma.membership.count({ where: { organizationId } })).toBe(0);
+    expect(await prisma.invite.count({ where: { email: INVITED_EMAIL } })).toBe(1);
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
+    expect(sendInviteAcceptedEmail).not.toHaveBeenCalled();
+  });
+
+  test("refuses an expired invite even though the token signature is still valid", async () => {
+    const organization = await prisma.organization.create({ data: { name: "Corporate Example" } });
+    const inviter = await prisma.user.create({
+      data: { name: "Inviter", email: "admin2@corporate-example.com" },
+    });
+    const invite = await prisma.invite.create({
+      data: {
+        email: INVITED_EMAIL,
+        organizationId: organization.id,
+        creatorId: inviter.id,
+        role: "owner",
+        expiresAt: new Date(Date.now() - 60_000), // expired a minute ago
+      },
+    });
+    // The JWT itself is minted fresh, so only the DB row's expiry can reject this.
+    const inviteToken = createInviteToken(invite.id, invite.email, { expiresIn: "7d" });
+    vi.clearAllMocks();
+
+    const result = await createUserAction({
+      name: "Invitee",
+      email: INVITED_EMAIL,
+      password: PASSWORD,
+      inviteToken,
+    });
+
+    expect(result?.data).toBeUndefined();
+    expect(result?.serverError).toContain("invite_token_invalid");
+    expect(await prisma.user.count({ where: { email: INVITED_EMAIL } })).toBe(0);
+    expect(await prisma.membership.count({ where: { organizationId: organization.id } })).toBe(0);
   });
 });
 

@@ -167,7 +167,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
         parsedInput: { ...baseInput, inviteToken },
       } as never);
 
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({ success: true, nextStep: "verify_email" });
       expect(auth.api.signUpEmail).toHaveBeenCalled();
       // No invite means no membership grant — the org-creation path handles it instead.
       expect(createMembership).not.toHaveBeenCalled();
@@ -195,10 +195,11 @@ describe("createUserAction — signup verification email callbackURL", () => {
       ).rejects.toThrow(INVITE_TOKEN_INVALID_ERROR_CODE);
 
       expect(createMembership).not.toHaveBeenCalled();
+      // Rejected before the account is written, so a bad token leaves no orphaned user behind.
+      expect(auth.api.signUpEmail).not.toHaveBeenCalled();
     }
   );
 
-  test("treats a duplicate email as already-existed without post-creation side effects", async () => {
   // ENG-2091: with requireEmailVerification + autoSignIn:false, Better Auth does NOT throw on a
   // duplicate — it returns 200 with a SYNTHETIC user (generated id, nothing written). This suite used
   // to mock a rejection, so it asserted a branch that cannot execute in production and stayed green

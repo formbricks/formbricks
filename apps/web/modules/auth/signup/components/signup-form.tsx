@@ -157,6 +157,12 @@ export const SignupForm = ({
         // Personal-email block: surface under the email field rather than as a toast.
         if (errorMessage === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) {
           form.setError("email", { type: "manual", message: t("auth.signup.company_email_required") });
+        } else if (errorMessage === INVITE_TOKEN_INVALID_ERROR_CODE) {
+          // Reachable when the invite expires or is revoked between this page rendering and the form
+          // being submitted. Reuses the existing invite copy rather than naming the specific reason,
+          // matching the server, which returns one code for expired / revoked / wrong-address so it
+          // cannot be used to probe which invites exist.
+          toast.error(t("auth.invite.invite_not_found_description"));
         } else if (errorMessage === PASSWORD_COMPROMISED_ERROR_CODE) {
           // Breached password: surface under the password field with a clear, actionable message.
           form.setError("password", { type: "manual", message: t("auth.password_compromised") });
