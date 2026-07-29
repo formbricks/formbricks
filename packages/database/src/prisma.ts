@@ -59,6 +59,10 @@ export type {
   FeedbackSourceFieldMapping,
   FeedbackDirectory,
   FeedbackDirectoryWorkspace,
+  Workflow,
+  WorkflowVersion,
+  WorkflowRun,
+  WorkflowRunLog,
 } from "../generated/prisma/client";
 // Reaches into the generator's `internal/` path because Prisma 7's
 // `prisma-client` provider does not re-export PrismaClientKnownRequestError
