@@ -125,6 +125,31 @@ export const SignupForm = ({
     resolver: zodResolver(ZSignupInput),
   });
 
+  /**
+   * Map a failed `createUserAction` to where the user should see it: the two field-level rejections go
+   * under the input that caused them, everything else is a toast. Each stable error code exists so the
+   * server can be specific without the message itself being an enumeration signal.
+   */
+  const surfaceSignupError = (errorMessage: string) => {
+    switch (errorMessage) {
+      case SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE:
+        form.setError("email", { type: "manual", message: t("auth.signup.company_email_required") });
+        return;
+      case PASSWORD_COMPROMISED_ERROR_CODE:
+        form.setError("password", { type: "manual", message: t("auth.password_compromised") });
+        return;
+      case INVITE_TOKEN_INVALID_ERROR_CODE:
+        // Reachable when the invite expires or is revoked between this page rendering and the form being
+        // submitted. Reuses the existing invite copy rather than naming the specific reason, matching the
+        // server, which returns one code for expired / revoked / wrong-address so it cannot be used to
+        // probe which invites exist.
+        toast.error(t("auth.invite.invite_not_found_description"));
+        return;
+      default:
+        toast.error(errorMessage);
+    }
+  };
+
   const handleSubmit = async (data: TSignupInput) => {
     try {
       if (isTurnstileConfigured && !turnstileToken) {
@@ -152,29 +177,7 @@ export const SignupForm = ({
 
       if (!createUserResponse?.data) {
         resetTurnstileIfConfigured();
-
-        const errorMessage = getFormattedErrorMessage(createUserResponse);
-        // Personal-email block: surface under the email field rather than as a toast.
-        if (errorMessage === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) {
-          form.setError("email", { type: "manual", message: t("auth.signup.company_email_required") });
-        } else if (errorMessage === INVITE_TOKEN_INVALID_ERROR_CODE) {
-          // Reachable when the invite expires or is revoked between this page rendering and the form
-          // being submitted. Reuses the existing invite copy rather than naming the specific reason,
-          // matching the server, which returns one code for expired / revoked / wrong-address so it
-          // cannot be used to probe which invites exist.
-          toast.error(t("auth.invite.invite_not_found_description"));
-        } else if (errorMessage === PASSWORD_COMPROMISED_ERROR_CODE) {
-          // Breached password: surface under the password field with a clear, actionable message.
-          form.setError("password", { type: "manual", message: t("auth.password_compromised") });
-        } else if (errorMessage === INVITE_TOKEN_INVALID_ERROR_CODE) {
-          // Reachable when the invite expires or is revoked between this page rendering and the form
-          // being submitted. Reuses the existing invite copy rather than naming the specific reason,
-          // matching the server, which returns one code for expired / revoked / wrong-address so it
-          // cannot be used to probe which invites exist.
-          toast.error(t("auth.invite.invite_not_found_description"));
-        } else {
-          toast.error(errorMessage);
-        }
+        surfaceSignupError(getFormattedErrorMessage(createUserResponse));
         return;
       }
 

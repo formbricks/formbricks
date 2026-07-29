@@ -113,7 +113,14 @@ export const signInAuditDatabaseHook: NonNullable<
  * Only the logger needs this: since ENG-2037 (below) Sentry receives a real `Error` object or nothing,
  * never a string built from `message`.
  */
-const EMAIL_IN_MESSAGE = /[\w.!#$%&'*+/=?^`{|}~-]+@([\w-]+(?:\.[\w-]+)+)/g;
+/**
+ * Local part is a negated class that EXCLUDES `@`, so the run can only end where the `@` actually is —
+ * the engine has no ambiguous split to backtrack through. Domain labels likewise exclude `.`. Both are
+ * length-bounded (RFC 5321 limits: 64 for the local part, 63 per label), which caps the work per start
+ * position regardless of input. An enumerated local-part class that included `.` would be
+ * super-linear on a long run with no `@` in it.
+ */
+const EMAIL_IN_MESSAGE = /[^\s@]{1,64}@([\w-]{1,63}(?:\.[\w-]{1,63}){1,8})/g;
 
 export const redactEmailsInLogMessage = (message: unknown): unknown =>
   typeof message === "string" ? message.replace(EMAIL_IN_MESSAGE, "[redacted]@$1") : message;

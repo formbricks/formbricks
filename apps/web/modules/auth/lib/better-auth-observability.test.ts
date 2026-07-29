@@ -64,6 +64,15 @@ describe("redactEmailsInLogMessage (ENG-2091)", () => {
     );
   });
 
+  // The pattern is bounded and its classes exclude the delimiter they end on, so a long run with no
+  // `@` cannot cause super-linear backtracking. Kept as a test so a future "simplification" back to an
+  // enumerated local-part class (which would include `.` and reintroduce the ambiguity) shows up here.
+  test("stays fast on a long address-free run", () => {
+    const started = performance.now();
+    expect(redactEmailsInLogMessage(`${"a.b!c#d$e%f&g'".repeat(4000)}!`)).toContain("a.b!c#d");
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
   test("leaves messages without an address untouched and passes non-strings through", () => {
     expect(redactEmailsInLogMessage("Failed to run background task:")).toBe("Failed to run background task:");
     const err = new Error("boom");
