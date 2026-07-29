@@ -6,8 +6,7 @@ import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { listSurveys } from "@/modules/survey/list/lib/v3-surveys-client";
 
-// Picker needs every survey, so walk the v3 cursor list until exhausted. TODO: a typeahead endpoint
-// would scale better for huge workspaces.
+// Picker needs every survey, so walk the v3 cursor list until exhausted.
 const SURVEY_LIST_PAGE_SIZE = 100;
 // Ceiling so a runaway cursor can't spin forever; covers 2,000 surveys, then the picker truncates.
 const SURVEY_LIST_MAX_PAGES = 20;
