@@ -22,14 +22,6 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
 }));
 
-vi.mock("@/modules/email", () => ({
-  sendVerificationLinkEmail: vi.fn(async () => true),
-  sendPasswordResetLinkEmail: vi.fn(async () => undefined),
-  sendPasswordResetNotifyEmail: vi.fn(async () => undefined),
-  sendDeleteAccountConfirmationEmail: vi.fn(async () => undefined),
-  sendInviteAcceptedEmail: vi.fn(async () => undefined),
-}));
-
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
   identifyPostHogPerson: vi.fn(),
@@ -46,8 +38,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
 });
 
 const EMAIL = "newcomer@corporate-example.com";
-const signUp = () =>
-  createUserAction({ name: "Newcomer", email: EMAIL, password: "Passw0rd!" });
+const signUp = () => createUserAction({ name: "Newcomer", email: EMAIL, password: "Passw0rd!" });
 
 beforeEach(async () => {
   await resetDb();

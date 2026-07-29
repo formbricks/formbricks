@@ -65,9 +65,7 @@ describe("redactEmailsInLogMessage (ENG-2091)", () => {
   });
 
   test("leaves messages without an address untouched and passes non-strings through", () => {
-    expect(redactEmailsInLogMessage("Failed to run background task:")).toBe(
-      "Failed to run background task:"
-    );
+    expect(redactEmailsInLogMessage("Failed to run background task:")).toBe("Failed to run background task:");
     const err = new Error("boom");
     expect(redactEmailsInLogMessage(err)).toBe(err);
     expect(redactEmailsInLogMessage(undefined)).toBeUndefined();

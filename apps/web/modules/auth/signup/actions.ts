@@ -33,7 +33,12 @@ import {
   didVerificationSendFail,
   runWithVerificationSendOutcome,
 } from "@/modules/auth/lib/verification-send-outcome";
-import { type InviteMatch, deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
+import {
+  type InviteMatch,
+  deleteInvite,
+  getInvite,
+  resolveInviteMatch,
+} from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -175,6 +180,11 @@ async function handleInviteAcceptance(
   // being created, anyone holding an invite link — they get forwarded, pasted into tickets, and land in
   // referrer logs — could redeem it with an arbitrary address and take the invited role, which may be
   // manager or owner. `resolveInviteMatch` also enforces the invite's expiry, which this path skipped.
+  //
+  // Deliberately re-checked here even though `createUserAction` already rejected an invalid token
+  // before creating the user: this is the function that performs the grant, so the check belongs
+  // beside it and keeps holding if another caller ever appears. The cost is one extra HMAC verify —
+  // the invite lookup behind it is request-cached, so no second query.
   const inviteMatch = await resolveInviteMatch(inviteToken, user.email);
   if (inviteMatch !== "valid") {
     logger.warn({ inviteMatch }, "Rejected invite acceptance during sign-up");
@@ -311,6 +321,12 @@ const resolveNextStep = ({
 }): TSignUpNextStep => {
   if (outcome.status === "already_existed") {
     // Disclose only to a caller holding a valid invite for this exact address.
+    //
+    // Keyed on `inviteMatch`, not on "was a token supplied" — even though the gate in
+    // `createUserAction` already rejects a supplied-but-invalid token, so the two are equivalent
+    // today. Deriving it from the token alone would make this disclosure depend on a guard living
+    // elsewhere in the function: reorder or relax that guard and this would start confirming account
+    // existence to anyone who supplies any token. The redundancy is the point.
     return inviteMatch === "valid" ? "login_to_accept_invite" : "verify_email";
   }
   return verificationSendFailed ? "verification_send_failed" : "verify_email";

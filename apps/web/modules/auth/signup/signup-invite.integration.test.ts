@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
-import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createInviteToken } from "@/lib/jwt";
+import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/email";
@@ -20,19 +20,6 @@ import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/em
 vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => ({ get: () => undefined, delete: () => undefined })),
   headers: vi.fn(async () => new Headers()),
-}));
-
-// Replaces the harness-wide @/modules/email mock — must keep sendVerificationLinkEmail (the Better
-// Auth callback in auth.ts resolves it through this same module) and add the invite-flow senders.
-// Mirrors integration/setup.ts (which this replaces for this file) plus the invite-flow sender. The
-// boolean senders must resolve `true` — a falsy result means "not sent" and auth.ts treats it as a
-// send failure (ENG-2091).
-vi.mock("@/modules/email", () => ({
-  sendVerificationLinkEmail: vi.fn(async () => true),
-  sendPasswordResetLinkEmail: vi.fn(async () => true),
-  sendPasswordResetNotifyEmail: vi.fn(async () => true),
-  sendDeleteAccountConfirmationEmail: vi.fn(async () => true),
-  sendInviteAcceptedEmail: vi.fn(async () => undefined),
 }));
 
 vi.mock("@/lib/posthog", () => ({
@@ -53,8 +40,22 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
 const INVITED_EMAIL = "invitee@corporate-example.com";
 const PASSWORD = "Passw0rd!";
 
-/** Org + inviter + a live Invite row for INVITED_EMAIL; returns the token the invite email carries. */
-const seedInvite = async (): Promise<{ inviteToken: string; organizationId: string }> => {
+const WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Org + inviter + an Invite row for INVITED_EMAIL; returns the token the invite email carries.
+ *
+ * `expiresAt` is the row's expiry only — the JWT is always minted fresh with its own 7-day `exp`, so
+ * an `expiresAt` in the past produces a structurally valid token whose invite has lapsed. That is the
+ * only way to exercise the DB-side expiry check independently of the token's own.
+ */
+const seedInvite = async ({
+  role = "member",
+  expiresAt = new Date(Date.now() + WEEK_IN_MS),
+}: { role?: "member" | "manager" | "owner"; expiresAt?: Date } = {}): Promise<{
+  inviteToken: string;
+  organizationId: string;
+}> => {
   const organization = await prisma.organization.create({ data: { name: "Corporate Example" } });
   const inviter = await prisma.user.create({
     data: { name: "Inviter", email: "admin@corporate-example.com" },
@@ -64,8 +65,8 @@ const seedInvite = async (): Promise<{ inviteToken: string; organizationId: stri
       email: INVITED_EMAIL,
       organizationId: organization.id,
       creatorId: inviter.id,
-      role: "member",
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      role,
+      expiresAt,
     },
   });
   return {
@@ -172,21 +173,10 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
   });
 
   test("refuses an expired invite even though the token signature is still valid", async () => {
-    const organization = await prisma.organization.create({ data: { name: "Corporate Example" } });
-    const inviter = await prisma.user.create({
-      data: { name: "Inviter", email: "admin2@corporate-example.com" },
+    const { inviteToken, organizationId } = await seedInvite({
+      role: "owner",
+      expiresAt: new Date(Date.now() - 60_000), // lapsed a minute ago
     });
-    const invite = await prisma.invite.create({
-      data: {
-        email: INVITED_EMAIL,
-        organizationId: organization.id,
-        creatorId: inviter.id,
-        role: "owner",
-        expiresAt: new Date(Date.now() - 60_000), // expired a minute ago
-      },
-    });
-    // The JWT itself is minted fresh, so only the DB row's expiry can reject this.
-    const inviteToken = createInviteToken(invite.id, invite.email, { expiresIn: "7d" });
     vi.clearAllMocks();
 
     const result = await createUserAction({
@@ -199,7 +189,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     expect(result?.data).toBeUndefined();
     expect(result?.serverError).toContain("invite_token_invalid");
     expect(await prisma.user.count({ where: { email: INVITED_EMAIL } })).toBe(0);
-    expect(await prisma.membership.count({ where: { organizationId: organization.id } })).toBe(0);
+    expect(await prisma.membership.count({ where: { organizationId } })).toBe(0);
   });
 });
 

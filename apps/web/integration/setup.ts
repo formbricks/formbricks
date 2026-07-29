@@ -30,9 +30,14 @@ vi.mock("server-only", () => ({}));
 // Capture transactional emails instead of sending via SMTP. These resolve `true` because the real
 // senders return Promise<boolean> and a FALSY result means "not sent" — auth.ts treats that as a send
 // failure (ENG-2091), so a mock resolving undefined would fake an outage.
+//
+// Keep this the ONE place the module is mocked for integration tests. A per-file `vi.mock` of the same
+// module replaces this wholesale, so an incomplete copy silently drops senders or gets their return
+// type wrong — which is exactly how the undefined-vs-boolean bug above got in. Add senders here.
 vi.mock("@/modules/email", () => ({
   sendVerificationLinkEmail: vi.fn(async () => true),
   sendPasswordResetLinkEmail: vi.fn(async () => true),
   sendPasswordResetNotifyEmail: vi.fn(async () => true),
   sendDeleteAccountConfirmationEmail: vi.fn(async () => true),
+  sendInviteAcceptedEmail: vi.fn(async () => undefined), // returns void, not boolean
 }));
