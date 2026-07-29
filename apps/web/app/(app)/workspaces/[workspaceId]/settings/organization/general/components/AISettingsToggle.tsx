@@ -101,7 +101,7 @@ export const AISettingsToggle = ({
   return (
     <div className="space-y-4">
       {showInstanceConfigWarning && (
-        <Alert variant="warning">
+        <Alert variant="warning" role="status">
           <AlertDescription>{aiEnablementBlockedMessage}</AlertDescription>
         </Alert>
       )}
@@ -117,7 +117,7 @@ export const AISettingsToggle = ({
       />
 
       {!canEdit && (
-        <Alert variant="warning">
+        <Alert variant="warning" role="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>

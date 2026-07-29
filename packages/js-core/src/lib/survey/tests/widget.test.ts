@@ -508,7 +508,6 @@ describe("widget-file", () => {
 
     // Helper to get the script element passed to document.head.appendChild
     const getAppendedScript = (): Record<string, unknown> => {
-      // eslint-disable-next-line @typescript-eslint/unbound-method -- accessing mock for test assertions
       const appendChildMock = vi.mocked(document.head.appendChild);
       for (const call of appendChildMock.mock.calls) {
         const el = call[0] as unknown as Record<string, unknown>;
@@ -530,7 +529,6 @@ describe("widget-file", () => {
       getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
       widget.setIsSurveyRunning(false);
 
-      // eslint-disable-next-line @typescript-eslint/no-empty-function -- suppress console.error in test
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const renderPromise = widget.renderWidget({
@@ -557,7 +555,6 @@ describe("widget-file", () => {
       getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
       widget.setIsSurveyRunning(false);
 
-      // eslint-disable-next-line @typescript-eslint/no-empty-function -- suppress console.error in test
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       vi.useFakeTimers();
 

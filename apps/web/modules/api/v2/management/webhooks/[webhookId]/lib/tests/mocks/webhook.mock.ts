@@ -15,6 +15,6 @@ export const mockedPrismaWebhookUpdateReturn = {
 };
 
 export const prismaNotFoundError = new Prisma.PrismaClientKnownRequestError("Record does not exist", {
-  code: PrismaErrorType.RecordDoesNotExist,
+  code: PrismaErrorType.RelatedRecordNotFound,
   clientVersion: "PrismaClient 4.0.0",
 });

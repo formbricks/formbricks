@@ -63,9 +63,7 @@ export const GET = withV1ApiWrapper({
           response: responses.forbiddenResponse(error.message),
         };
       }
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
 });
@@ -109,9 +107,7 @@ export const DELETE = withV1ApiWrapper({
         response: responses.successResponse(deletedContactAttributeKey),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "deleted",
@@ -191,9 +187,7 @@ export const PUT = withV1ApiWrapper({
         ),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "updated",

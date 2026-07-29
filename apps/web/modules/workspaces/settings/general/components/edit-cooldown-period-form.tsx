@@ -102,7 +102,7 @@ export const EditCooldownPeriodForm: React.FC<EditCooldownPeriodProps> = ({ work
         </form>
       </FormProvider>
       {isReadOnly && (
-        <Alert variant="warning" className="mt-4">
+        <Alert variant="warning" className="mt-4" role="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>

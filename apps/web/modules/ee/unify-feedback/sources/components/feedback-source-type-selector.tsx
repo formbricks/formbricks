@@ -81,7 +81,7 @@ export function FeedbackSourceTypeSelector({
           );
         })}
       </div>
-      <Alert variant="outbound" size="small">
+      <Alert variant="outbound" size="small" role="status">
         <AlertTitle>{t("workspace.unify.missing_feedback_source_title")}</AlertTitle>
         <AlertButton asChild>
           <Link
