@@ -166,6 +166,13 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
     return t("workspace.settings.billing.payment_method_required");
   }
 
+  // The trial conversion charges synchronously (payment_behavior: "error_if_incomplete"), so a card
+  // that needs 3DS errors out with nothing left for the browser to confirm. Say so instead of
+  // reporting a generic failure.
+  if (serverError === "card_authentication_required") {
+    return t("workspace.settings.billing.payment_authentication_failed");
+  }
+
   return t("common.something_went_wrong_please_try_again");
 };
 
@@ -261,10 +268,13 @@ export const PricingTable = ({
   // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
   // mode "upgrade" = single confirm (tier upgrade / card-backed convert); mode "trial-continue" =
   // the Pro-trial choice modal (pay prorated now to unlock, or keep the free trial).
+  // isTrialConversion narrows the single-confirm copy: converting a trial ends it immediately and
+  // bills a full fresh period, which the mid-cycle-proration wording would misdescribe.
   const [upgradeConfirmation, setUpgradeConfirmation] = useState<{
     plan: Exclude<TStandardPlan, "hobby">;
     interval: TCloudBillingInterval;
     mode: "upgrade" | "trial-continue";
+    isTrialConversion: boolean;
   } | null>(null);
   // Amount Stripe would charge now for the pending confirmation, fetched lazily. amountDue is the NET
   // (after any unused-trial credit); grossAmountDue and trialCreditApplied drive the breakdown copy.
@@ -429,10 +439,16 @@ export const PricingTable = ({
       }
       trialCardDriveRef.current = true;
       const billingUrl = `/organizations/${organizationId}/settings/billing`;
+      // The resync below can take several seconds (bounded retries against Stripe). Without this the
+      // page just sits there looking unchanged and then hard-reloads, which reads as a broken save.
+      // Generic "Saving" rather than the plan-change toast: this flow only stores a card, the plan and
+      // the trial are unchanged, and implying an upgrade here would be wrong.
+      const cardSyncToastId = toast.loading(t("common.saving"));
       void (async () => {
         try {
           await waitForBillingPaymentMethodAction({ organizationId });
         } finally {
+          toast.dismiss(cardSyncToastId);
           // Full reload to the clean URL: strips checkout_success (so a back-nav/refresh can't
           // re-run this) and deterministically re-renders against the now-synced snapshot.
           globalThis.window.location.replace(billingUrl);
@@ -899,7 +915,7 @@ export const PricingTable = ({
     interval: TCloudBillingInterval,
     mode: "upgrade" | "trial-continue"
   ) => {
-    setUpgradeConfirmation({ plan, interval, mode });
+    setUpgradeConfirmation({ plan, interval, mode, isTrialConversion: isTrialing });
     // Fetch the charge to show in the modal. Only the trial-continue (no-card "Continue with Pro")
     // flow nets off the unused-trial credit; the upgrade confirm previews the full price.
     setUpgradePreview(null);
@@ -945,20 +961,26 @@ export const PricingTable = ({
   };
 
   // Primary action of the trial-continue modal: pay the prorated amount now and convert to paid.
+  // Both branches mark the plan's CTA pending before dispatching: the no-card branch skips
+  // handlePlanAction (which owns that state) and would otherwise leave the page looking idle for the
+  // whole round-trip that creates the Checkout session, inviting a second click on a charging action.
   const handleTrialPayNow = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) => {
     if (hasPaymentMethod) {
       void handlePlanAction(plan, interval); // card on file -> convert + credit immediately
-    } else {
-      void redirectToPlanCheckout(plan, interval); // add card -> applySetupCheckoutUpgrade converts
+      return;
     }
+    setIsPlanActionPending(`${plan}-${interval}`);
+    // add card -> applySetupCheckoutUpgrade converts. Cleared once the call settles: on success the
+    // tab is already navigating to Stripe, so what matters is that the error path re-enables the CTA.
+    void redirectToPlanCheckout(plan, interval).finally(() => setIsPlanActionPending(null));
   };
 
-  // Secondary action: keep the free trial. No card on file -> add one (billed at trial end); card
-  // already on file -> nothing changes, stay on the trial.
-  const handleTrialKeepTrial = () => {
-    if (!hasPaymentMethod) {
-      void openTrialPaymentCheckout();
-    }
+  // Secondary action: add a card and keep the free trial (billed at trial end, nothing charged now).
+  // The guard is defensive — the trial-continue modal only opens without a card on file.
+  const handleTrialKeepTrial = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) => {
+    if (hasPaymentMethod) return;
+    setIsPlanActionPending(`${plan}-${interval}`);
+    void openTrialPaymentCheckout().finally(() => setIsPlanActionPending(null));
   };
 
   const closeUpgradeConfirmation = () => {
@@ -1085,12 +1107,41 @@ export const PricingTable = ({
 
   // Upgrade modal body: calculating placeholder, real prorated charge once previewed, or generic fallback.
   const getUpgradeConfirmationBody = () => {
-    if (!upgradeConfirmation) return "";
+    if (!upgradeConfirmation) return null;
     const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
     const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
 
     if (isLoadingUpgradePreview) {
       return t("workspace.settings.billing.confirm_upgrade_calculating");
+    }
+
+    const planCardAmount =
+      planCards.find(
+        (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
+      )?.amount ?? "";
+
+    // A trial conversion is NOT a mid-cycle proration: it ends the trial now and bills a fresh full
+    // period, and the unused trial days are not credited on this path. The generic upgrade copy
+    // ("upgrade to {plan}… for the rest of your current billing period") would misstate both the
+    // reason and the period on what is a payment-consent screen, so it gets its own wording.
+    if (upgradeConfirmation.isTrialConversion) {
+      return upgradePreview ? (
+        <Trans
+          i18nKey="workspace.settings.billing.confirm_trial_convert_body"
+          values={{
+            plan,
+            period,
+            chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+          }}
+          components={{ b: <b /> }}
+        />
+      ) : (
+        <Trans
+          i18nKey="workspace.settings.billing.confirm_trial_convert_body_fallback"
+          values={{ plan, period, fullPrice: planCardAmount }}
+          components={{ b: <b /> }}
+        />
+      );
     }
 
     if (upgradePreview) {
@@ -1101,11 +1152,7 @@ export const PricingTable = ({
       });
     }
 
-    const amount =
-      planCards.find(
-        (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
-      )?.amount ?? "";
-    return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount, period });
+    return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount: planCardAmount, period });
   };
 
   // Primary button label for the trial-continue modal ("Pay $X now"); falls back while previewing.
@@ -1548,8 +1595,9 @@ export const PricingTable = ({
             text: t("workspace.settings.billing.confirm_trial_continue_keep_trial"),
             variant: "secondary",
             onAction: () => {
+              const { plan, interval } = upgradeConfirmation;
               closeUpgradeConfirmation();
-              handleTrialKeepTrial();
+              handleTrialKeepTrial(plan, interval);
             },
           }}
         />

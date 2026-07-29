@@ -8,6 +8,7 @@ import {
   ensureStripeCustomerForOrganization,
   findOrganizationIdByStripeCustomerId,
   getOrganizationBillingWithReadThroughSync,
+  previewImmediateUpgradeCharge,
   reconcileCloudStripeSubscriptionsForOrganization,
   setOrganizationPaymentAttemptError,
   switchOrganizationToCloudPlan,
@@ -168,8 +169,14 @@ vi.mock("./stripe-client", () => ({
 }));
 
 describe("organization-billing", () => {
+  // Simulates the Stripe customer credit balance: a credit is a NEGATIVE balance, so posting a
+  // -4153 balance transaction moves this to -4153. applyUnusedTrialCredit reads the balance back to
+  // confirm the credit really landed before letting the charge run, so the mock has to move.
+  let stripeCustomerBalanceCents = 0;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    stripeCustomerBalanceCents = 0;
     mocks.isCloud = true;
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
     mocks.getCustomCacheKey.mockImplementation(
@@ -183,7 +190,12 @@ describe("organization-billing", () => {
     mocks.customersList.mockResolvedValue({ data: [] });
     // Defaults for the trial-conversion credit path (overridden per-test where relevant).
     mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 8900, currency: "usd" });
-    mocks.customersCreateBalanceTransaction.mockResolvedValue({ id: "cbtxn_test" });
+    mocks.customersCreateBalanceTransaction.mockImplementation(
+      async (_customerId: string, params: { amount: number }) => {
+        stripeCustomerBalanceCents += params.amount;
+        return { id: "cbtxn_test", amount: params.amount };
+      }
+    );
     mocks.prismaMembershipFindFirst.mockResolvedValue(null);
     mocks.productsList.mockResolvedValue({
       data: [
@@ -382,11 +394,14 @@ describe("organization-billing", () => {
     mocks.subscriptionsUpdate.mockResolvedValue({});
     // Default: no card at the customer level either. The payment-method check falls back to the
     // customer default when the subscription has none, so it must always resolve to a customer.
-    mocks.customersRetrieve.mockResolvedValue({
+    // Implementation (not a fixed value) so the credit balance read-back sees live movement.
+    mocks.customersRetrieve.mockImplementation(async () => ({
       id: "cus_1",
       deleted: false,
       invoice_settings: { default_payment_method: null },
-    });
+      currency: "usd",
+      balance: stripeCustomerBalanceCents,
+    }));
   });
 
   test("ensureStripeCustomerForOrganization returns null when org does not exist", async () => {
@@ -1590,6 +1605,193 @@ describe("organization-billing", () => {
     );
     // ...but applies no unused-trial credit.
     expect(mocks.customersCreateBalanceTransaction).not.toHaveBeenCalled();
+  });
+
+  test("switchOrganizationToCloudPlan refuses to charge when the unused-trial credit does not land on the balance", async () => {
+    setupProTrialForCredit(14);
+    // Stripe replaying an idempotency key from an earlier (already-reversed) attempt returns the
+    // original transaction WITHOUT executing it, so the balance never moves. Charging anyway would
+    // bill the full price behind a modal that quoted the discounted one.
+    mocks.customersCreateBalanceTransaction.mockResolvedValue({ id: "cbtxn_replayed", amount: -4153 });
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+        applyTrialCredit: true,
+      })
+    ).rejects.toThrow("trial_credit_unavailable");
+
+    // The conversion must not have run: the trial is intact and nothing was charged.
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({ trial_end: "now" })
+    );
+  });
+
+  test("switchOrganizationToCloudPlan posts the credit in the SUBSCRIPTION's currency, not the catalog price's", async () => {
+    setupProTrialForCredit(14);
+    // Customer balances are per-currency and the invoice is in the subscription's currency, so a
+    // credit posted in the catalog price's default currency would never be applied to the invoice —
+    // full charge AND a stranded credit.
+    const trialEnd = Math.floor(Date.now() / 1000) + 14 * 86_400;
+    const existing = await mocks.subscriptionsList();
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [{ ...existing.data[0], currency: "eur", trial_end: trialEnd }],
+    });
+    mocks.customersRetrieve.mockImplementation(async () => ({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: "pm_sub" },
+      currency: "eur",
+      balance: stripeCustomerBalanceCents,
+    }));
+
+    await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+      applyTrialCredit: true,
+    });
+
+    expect(mocks.customersCreateBalanceTransaction).toHaveBeenCalledWith(
+      "cus_1",
+      expect.objectContaining({ currency: "eur" }),
+      expect.anything()
+    );
+  });
+
+  test("previewImmediateUpgradeCharge nets the credit off the INVOICE total (tax + usage), not the list price", async () => {
+    setupProTrialForCredit(14);
+    // Stripe's preview is the invoice total: $89 base + $16.91 VAT. The credit is computed from the
+    // tax-exclusive list price (round(8900 * 14 / 30) = 4153) — the same basis applyUnusedTrialCredit
+    // uses — and netted off that total, so the quoted amount matches what the card is actually billed.
+    // grossAmountDue stays the LIST price, which is what the modal calls "the {plan} price".
+    mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 10_591, currency: "usd" });
+
+    const preview = await previewImmediateUpgradeCharge({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+      applyTrialCredit: true,
+    });
+
+    expect(preview).toEqual({
+      amountDue: 10_591 - 4153,
+      currency: "usd",
+      grossAmountDue: 8900,
+      trialCreditApplied: 4153,
+    });
+  });
+
+  test("previewImmediateUpgradeCharge falls back to the list price when Stripe cannot preview the invoice", async () => {
+    setupProTrialForCredit(14);
+    // A preview can fail on usage-based line items; the modal still needs a number, so it falls back
+    // to the catalog list price (the copy carries a taxes-at-payment caveat for exactly this case).
+    mocks.invoicesCreatePreview.mockRejectedValue(new Error("cannot preview metered price"));
+
+    const preview = await previewImmediateUpgradeCharge({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+      applyTrialCredit: true,
+    });
+
+    expect(preview).toEqual({
+      amountDue: 8900 - 4153,
+      currency: "usd",
+      grossAmountDue: 8900,
+      trialCreditApplied: 4153,
+    });
+  });
+
+  test("previewImmediateUpgradeCharge does NOT send trial_end for a non-trialing upgrade", async () => {
+    // trial_end re-anchors the billing cycle, so sending it here would preview a full fresh period
+    // while the real update (which sends no trial_end) charges a mid-cycle proration — over-stating
+    // the amount on every ordinary paid upgrade.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_active",
+          status: "active",
+          currency: "usd",
+          billing_cycle_anchor: 1_739_923_200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1_742_515_200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 4500, currency: "usd" });
+
+    const preview = await previewImmediateUpgradeCharge({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "scale",
+      targetInterval: "monthly",
+    });
+
+    expect(preview).toEqual({
+      amountDue: 4500,
+      currency: "usd",
+      grossAmountDue: 4500,
+      trialCreditApplied: 0,
+    });
+    const [previewArgs] = mocks.invoicesCreatePreview.mock.calls[0];
+    expect(previewArgs.subscription_details).not.toHaveProperty("trial_end");
+  });
+
+  test("previewImmediateUpgradeCharge sends trial_end for a trialing subscription (the cycle really does reset)", async () => {
+    setupProTrialForCredit(14);
+
+    await previewImmediateUpgradeCharge({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "scale",
+      targetInterval: "monthly",
+    });
+
+    const [previewArgs] = mocks.invoicesCreatePreview.mock.calls[0];
+    expect(previewArgs.subscription_details).toMatchObject({ trial_end: "now" });
+  });
+
+  test("the unused-trial credit idempotency key includes the amount so a tapered retry cannot collide", async () => {
+    // Same key + different amount is a hard Stripe error that would block the conversion outright;
+    // the amount is part of the key so a retry on a later day gets a fresh one. A same-day
+    // double-submit computes the same amount, so it still deduplicates.
+    setupProTrialForCredit(14);
+    await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+      applyTrialCredit: true,
+    });
+
+    const [, , options] = mocks.customersCreateBalanceTransaction.mock.calls[0];
+    expect(options.idempotencyKey).toContain("-4153");
   });
 
   test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {
@@ -3180,15 +3382,17 @@ describe("computeUnusedTrialCreditCents", () => {
     ).toBe(0);
   });
 
-  test("credit never exceeds the amount being charged (clamped)", () => {
-    // Absurdly long remaining window must not credit more than the full charge.
+  test("credit always leaves a payable amount so the card is still authorized", () => {
+    // An absurdly long remaining window must not credit the whole charge: a fully-credited invoice
+    // settles at $0 without a payment attempt, which would activate a paid plan on a card Stripe
+    // never authorized (the exact hole payment_behavior: "error_if_incomplete" exists to close).
     const credit = computeUnusedTrialCreditCents({
       fullChargeCents: 8900,
       trialEndSeconds: day(365),
       nowSeconds: NOW,
     });
-    expect(credit).toBeLessThanOrEqual(8900);
-    expect(credit).toBe(8900); // capped at the billing-period days -> full charge
+    expect(credit).toBe(8899); // capped at the billing-period days, minus the 1-cent floor
+    expect(8900 - credit).toBeGreaterThan(0);
   });
 
   test("uses a 365-day basis for a yearly interval (does not over-credit against the yearly price)", () => {

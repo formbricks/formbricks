@@ -2337,13 +2337,15 @@ checksums:
     workspace/settings/billing/comparison_section_basic_usage: 16bd8c505c287b38de311ad6a2eaa3e9
     workspace/settings/billing/comparison_section_pro_unlocks: 9064c532bdd5a57b6979575793772b35
     workspace/settings/billing/comparison_section_scale_unlocks: 8d043ca2c2ff294dfc8ee41ab8830b09
-    workspace/settings/billing/confirm_trial_continue_body: 6b3faaf06f2b2623abf01d2d97dbdf3b
-    workspace/settings/billing/confirm_trial_continue_body_fallback: f26dcc2bf8e8de3a4b466ee76c5c6327
+    workspace/settings/billing/confirm_trial_continue_body: 5cdd5f6ad115dc139f546334e05a5b70
+    workspace/settings/billing/confirm_trial_continue_body_fallback: 15eb8b9944dcafd68da3dd71561c8797
     workspace/settings/billing/confirm_trial_continue_description: 8b6f08de65cd4b13b15b973735ccb223
-    workspace/settings/billing/confirm_trial_continue_keep_trial: 24051972cce8eedc5c0130eca7086451
+    workspace/settings/billing/confirm_trial_continue_keep_trial: 41fe4fee641da55a05199bdbbe7158c6
     workspace/settings/billing/confirm_trial_continue_pay_now: 1c1d95c36a21cfb3f321904465b6d13a
     workspace/settings/billing/confirm_trial_continue_pay_now_generic: 2729650780f5a79693b940e68b07cb8e
     workspace/settings/billing/confirm_trial_continue_title: 2518855be25efee6572b9e739ab37ac3
+    workspace/settings/billing/confirm_trial_convert_body: 40c4f2c7d6b8fb9a796c8421e3e3e795
+    workspace/settings/billing/confirm_trial_convert_body_fallback: 4351a47a6f3d577dd345def251f1f71d
     workspace/settings/billing/confirm_upgrade_body: 136720e5ee76ea2888f088201b306603
     workspace/settings/billing/confirm_upgrade_body_with_charge: ff81c2841016a54cd139aa00e3a7539c
     workspace/settings/billing/confirm_upgrade_button: 0c91db4f2f989972d493fed2311cbbc0

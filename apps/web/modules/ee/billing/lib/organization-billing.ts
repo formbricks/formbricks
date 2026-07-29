@@ -665,7 +665,8 @@ export type TUpgradePaymentConfirmation = {
 // we credit the value of the trial days they have NOT used yet against that first invoice, so they
 // pay a reduced amount now and the normal price from the next cycle onward. Each unused day is
 // valued at the plan's daily rate (list price / days in the billing period). The result is clamped
-// to [0, full charge] so a credit can never exceed — or invert — the amount being billed.
+// to [0, full charge - MIN_TRIAL_CONVERSION_CHARGE_CENTS] so a credit can never exceed — or invert —
+// the amount being billed, and can never zero the invoice out (see below).
 //
 // The daily-rate basis MUST match the interval of the price being charged: `fullChargeCents` is the
 // SELECTED interval's list price, so a monthly conversion divides the remaining days by 30 and a
@@ -674,6 +675,15 @@ export const TRIAL_CREDIT_BILLING_PERIOD_DAYS: Record<TCloudBillingInterval, num
   monthly: 30,
   yearly: 365,
 };
+
+// The conversion invoice MUST stay payable. Stripe settles a zero-amount invoice without attempting
+// a charge, so a credit that covered the whole charge would flip the subscription to active paid on a
+// card that was never authorized — exactly the property `payment_behavior: "error_if_incomplete"`
+// exists to enforce (ENG-1968). With a 14-day trial against a 30-day basis the credit tops out near
+// half the charge, so this floor is not reachable today; it is here so the invariant survives a
+// longer `trial_period_days` or a `trial_end` extended by hand in the Stripe dashboard. One cent is
+// enough to force a real authorization.
+const MIN_TRIAL_CONVERSION_CHARGE_CENTS = 1;
 
 export const computeUnusedTrialCreditCents = ({
   fullChargeCents,
@@ -693,11 +703,17 @@ export const computeUnusedTrialCreditCents = ({
   if (remainingDays <= 0) return 0;
   const cappedDays = Math.min(remainingDays, billingPeriodDays);
   const creditCents = Math.round((fullChargeCents * cappedDays) / billingPeriodDays);
-  return Math.max(0, Math.min(creditCents, fullChargeCents));
+  // Leave at least MIN_TRIAL_CONVERSION_CHARGE_CENTS payable so the conversion always authorizes the
+  // card (see the constant's comment) — a fully-credited invoice would settle without a charge.
+  const maxCreditCents = Math.max(0, fullChargeCents - MIN_TRIAL_CONVERSION_CHARGE_CENTS);
+  return Math.max(0, Math.min(creditCents, maxCreditCents));
 };
 
-// Raw (pre-credit) amount the immediate conversion invoice would bill. Shared by the credit
-// calculation and the confirmation-modal preview so the number the user sees matches the charge.
+// Raw (pre-credit) amount the immediate conversion invoice would bill, straight from Stripe — so it
+// includes tax and any metered usage lines, which a catalog list price does not. Shared by the
+// trial-conversion preview and the plain-upgrade preview so the number the user sees matches the
+// charge. Returns null only when Stripe is not configured; it throws if Stripe cannot price the
+// invoice, which callers that need a fallback must catch.
 const previewFullConversionChargeCents = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
   customerId: string,
@@ -713,30 +729,56 @@ const previewFullConversionChargeCents = async (
     subscription_details: {
       items: [...existingDeletions, ...targetItems],
       proration_behavior: "always_invoice",
-      // Ending the trial resets the cycle to now and bills a full period; mirror that here so the
-      // previewed gross matches the real charge before the unused-trial credit is applied.
-      trial_end: "now",
+      // ONLY for a trialing subscription: ending the trial resets the cycle to now and bills a full
+      // period, so the preview has to mirror that. It must NOT be sent otherwise — the real update
+      // for a non-trialing subscription (see updateSubscriptionItemsImmediately) sends no trial_end,
+      // and setting one re-anchors the billing cycle, which would turn a mid-cycle proration preview
+      // into a full-period charge and over-state the amount on every ordinary paid upgrade.
+      ...(subscription.status === "trialing" ? { trial_end: "now" as const } : {}),
     },
   });
   return { amountDue: preview.amount_due, currency: preview.currency };
 };
 
 /**
- * Gross first-charge for converting a trial to paid. Ending a trial resets the cycle and bills a
- * fresh full period at the plan's list (base) price — verified against Stripe. We source that from
- * the catalog rather than an invoice preview because a preview can fail on usage-based line items;
- * the catalog price is what actually gets billed, and it keeps both the credit and the confirmation
- * amount reliable and identical.
+ * The plan's list (base) price — the basis the unused-trial credit is computed against, and the
+ * fallback gross for the confirmation modal when Stripe can't preview the invoice (a preview can
+ * fail on usage-based line items, which is why this exists at all).
+ *
+ * This is deliberately the credit's basis rather than the displayed gross: the credit values unused
+ * trial DAYS at the plan's daily rate, so it must divide a tax-exclusive list price. Deriving it from
+ * a tax-inclusive invoice total would inflate the credit by the tax rate.
+ *
+ * Returns null when the price carries no flat `unit_amount` (e.g. a tiered base price). Callers must
+ * then skip the credit and fall back to amount-less copy — never silently treat it as 0, which would
+ * render "Pay $0.00 now" in a purchase confirmation.
  */
 const getTrialConversionGrossCents = async (
   targetPlan: Exclude<TStandardCloudPlan, "hobby">,
   targetInterval: TCloudBillingInterval
-): Promise<{ cents: number; currency: string }> => {
+): Promise<{ cents: number; currency: string } | null> => {
   const catalogItem = await getCatalogItemForPlan(targetPlan, targetInterval);
+  if (catalogItem.basePrice.unit_amount == null) {
+    logger.error(
+      { targetPlan, targetInterval, priceId: catalogItem.basePrice.id },
+      "Catalog base price has no unit_amount; cannot compute an unused-trial credit"
+    );
+    return null;
+  }
   return {
-    cents: catalogItem.basePrice.unit_amount ?? 0,
+    cents: catalogItem.basePrice.unit_amount,
     currency: catalogItem.basePrice.currency ?? "usd",
   };
+};
+
+// Credit currently sitting on the customer's balance in `currency`, in cents. Stripe models a credit
+// as a NEGATIVE balance and keeps one balance PER CURRENCY, so only the matching bucket counts.
+const getAvailableCreditCents = async (customerId: string, currency: string): Promise<number> => {
+  if (!stripeClient) return 0;
+  const customer = await stripeClient.customers.retrieve(customerId);
+  if (customer.deleted) return 0;
+  const balance = customer.currency === currency ? customer.balance : 0;
+  return balance < 0 ? -balance : 0;
 };
 
 /**
@@ -744,6 +786,13 @@ const getTrialConversionGrossCents = async (
  * returns a reversal function. The caller MUST invoke the reversal if the conversion fails, so a
  * declined/aborted conversion never leaves a stranded credit that would silently discount a future
  * invoice. Returns null when no credit applies (no trial days left, no charge, Stripe disabled).
+ *
+ * Throws OperationNotAllowedError("trial_credit_unavailable") if the credit does not actually land on
+ * the balance. That happens when Stripe replays an idempotency key from a previous attempt that was
+ * already reversed: the API returns the original transaction without executing it, so the balance
+ * stays empty. Charging anyway would bill the FULL price behind a confirmation modal that quoted the
+ * discounted one, so this fails loudly instead. (The key includes the amount, so a retry on a later
+ * day — where the credit has tapered — gets a fresh key and succeeds normally.)
  */
 const applyUnusedTrialCredit = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
@@ -756,20 +805,31 @@ const applyUnusedTrialCredit = async (
 ): Promise<(() => Promise<void>) | null> => {
   if (!stripeClient) return null;
 
-  const gross = await getTrialConversionGrossCents(input.targetPlan, input.targetInterval);
+  const listPrice = await getTrialConversionGrossCents(input.targetPlan, input.targetInterval);
+  if (!listPrice) return null;
 
   const creditCents = computeUnusedTrialCreditCents({
-    fullChargeCents: gross.cents,
+    fullChargeCents: listPrice.cents,
     trialEndSeconds: subscription.trial_end,
     nowSeconds: Math.floor(Date.now() / 1000),
     interval: input.targetInterval,
   });
   if (creditCents <= 0) return null;
 
-  const currency = gross.currency || subscription.currency || "usd";
-  // Idempotency key scoped to this trial: a double-submit cannot double-credit. (A rare retry after
-  // a failed+reversed attempt falls back to charging full, which is the safe direction.)
-  const idempotencyKey = `trial-credit-${subscription.id}-${subscription.trial_end ?? "na"}`;
+  // The invoice is denominated in the SUBSCRIPTION's currency, and customer balances are per-currency
+  // — so the credit has to be posted in that same currency or Stripe will never apply it to the
+  // invoice (the customer would be charged in full AND left holding a stranded credit). The catalog
+  // price's currency is only a fallback: for a multi-currency price it is the default, not
+  // necessarily what this customer is billed in.
+  const currency = subscription.currency || listPrice.currency || "usd";
+  // Idempotency key scoped to this trial AND this amount: a double-submit computes the same amount and
+  // is deduplicated, while a retry on a later day (tapered credit) gets a distinct key instead of
+  // colliding with the first attempt's — a same-key-different-amount request is a hard Stripe error
+  // that would block the conversion entirely.
+  const keySuffix = `${subscription.id}-${subscription.trial_end ?? "na"}-${creditCents}`;
+  // Measured as a delta so an unrelated pre-existing credit on the account can't mask a replayed
+  // (and therefore not-applied) credit.
+  const creditBeforeCents = await getAvailableCreditCents(input.customerId, currency);
   await stripeClient.customers.createBalanceTransaction(
     input.customerId,
     {
@@ -778,15 +838,30 @@ const applyUnusedTrialCredit = async (
       description: "Unused trial days credit",
       metadata: { organizationId: input.organizationId, reason: "trial_conversion_credit" },
     },
-    { idempotencyKey }
+    { idempotencyKey: `trial-credit-${keySuffix}` }
   );
+
+  // Confirm the credit is really on the balance before letting the charge run (see the throw above).
+  const creditAfterCents = await getAvailableCreditCents(input.customerId, currency);
+  if (creditAfterCents - creditBeforeCents < creditCents) {
+    logger.error(
+      {
+        organizationId: input.organizationId,
+        subscriptionId: subscription.id,
+        creditCents,
+        creditBeforeCents,
+        creditAfterCents,
+        currency,
+      },
+      "Unused-trial credit did not land on the customer balance; refusing to charge the full price"
+    );
+    throw new OperationNotAllowedError("trial_credit_unavailable");
+  }
 
   return async () => {
     if (!stripeClient) return;
-    // Idempotent reversal keyed off the SAME trial as the credit. Stripe deduplicates the credit by
-    // its key, so a retried conversion replays the original credit instead of posting a new one; the
-    // reversal MUST be equally idempotent, otherwise a second failed attempt would post a second +credit
-    // against an already-reversed pair and net-DEBIT the customer.
+    // Idempotent reversal keyed off the SAME trial and amount as the credit, so a retried conversion
+    // cannot post a second +credit against an already-reversed pair and net-DEBIT the customer.
     await stripeClient.customers.createBalanceTransaction(
       input.customerId,
       {
@@ -795,9 +870,30 @@ const applyUnusedTrialCredit = async (
         description: "Reverse unused trial days credit (conversion not completed)",
         metadata: { organizationId: input.organizationId, reason: "trial_conversion_credit_reversal" },
       },
-      { idempotencyKey: `trial-credit-reversal-${subscription.id}-${subscription.trial_end ?? "na"}` }
+      { idempotencyKey: `trial-credit-reversal-${keySuffix}` }
     );
   };
+};
+
+// Stripe error codes that mean "this card can't be charged off-session without the cardholder
+// authenticating". With payment_behavior: "error_if_incomplete" the subscription update is rolled
+// back, so there is nothing for the browser to confirm — the only useful outcome is telling the user
+// why, which needs an error distinct from a plain decline.
+const CARD_AUTHENTICATION_ERROR_CODES = new Set([
+  "authentication_required",
+  "subscription_payment_intent_requires_action",
+]);
+
+const toTrialConversionError = (error: unknown): unknown => {
+  const code = (error as { code?: string } | null)?.code;
+  const declineCode = (error as { decline_code?: string } | null)?.decline_code;
+  if (
+    (code && CARD_AUTHENTICATION_ERROR_CODES.has(code)) ||
+    (declineCode && CARD_AUTHENTICATION_ERROR_CODES.has(declineCode))
+  ) {
+    return new OperationNotAllowedError("card_authentication_required");
+  }
+  return error;
 };
 
 const updateSubscriptionItemsImmediately = async (
@@ -828,13 +924,23 @@ const updateSubscriptionItemsImmediately = async (
   // updates (end trial, then change items) double-invoices — ending the trial bills the OLD plan and
   // the item change then bills the new one. error_if_incomplete charges synchronously and throws on
   // a decline, so a bad card blocks the upgrade instead of granting access on an unpaid invoice.
+  //
+  // The trade-off of error_if_incomplete is that a card needing off-session 3DS errors instead of
+  // authenticating: this charge is on-session, but the update is rolled back before the browser could
+  // confirm anything, so there is no PaymentIntent left to complete. Rather than let that surface as
+  // "something went wrong", translate it into a distinct error the UI can explain (see
+  // toTrialConversionError) so the user is told to use a card that doesn't require authentication.
   if (subscription.status === "trialing") {
-    await stripeClient.subscriptions.update(subscription.id, {
-      items: [...existingDeletions, ...targetItems],
-      trial_end: "now",
-      proration_behavior: "always_invoice",
-      payment_behavior: "error_if_incomplete",
-    });
+    try {
+      await stripeClient.subscriptions.update(subscription.id, {
+        items: [...existingDeletions, ...targetItems],
+        trial_end: "now",
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      });
+    } catch (error) {
+      throw toTrialConversionError(error);
+    }
     return { clientSecret: null, requiresAction: false };
   }
 
@@ -1330,19 +1436,43 @@ export const previewImmediateUpgradeCharge = async (input: {
     input.applyTrialCredit === true;
 
   if (isProTrialContinue) {
-    // Reliable path: gross = the plan's list price (what ending the trial bills), credit computed the
-    // exact same way as the real charge in applyUnusedTrialCredit, so the modal amount == the charge.
-    const gross = await getTrialConversionGrossCents(input.targetPlan, input.targetInterval);
+    // The credit is always computed from the plan's LIST price, identically to applyUnusedTrialCredit,
+    // so the modal's credit line matches the balance transaction exactly. Bail out to amount-less copy
+    // if that price can't be resolved rather than quoting a made-up number.
+    const listPrice = await getTrialConversionGrossCents(input.targetPlan, input.targetInterval);
+    if (!listPrice) return null;
+
     const trialCreditApplied = computeUnusedTrialCreditCents({
-      fullChargeCents: gross.cents,
+      fullChargeCents: listPrice.cents,
       trialEndSeconds: subscription.trial_end,
       nowSeconds: Math.floor(Date.now() / 1000),
       interval: input.targetInterval,
     });
+
+    // The amount actually charged is the INVOICE total minus the credit, and the invoice total is not
+    // the list price: ending the trial also bills tax and any metered response usage accrued during
+    // the trial, and the balance credit comes off that full total. Prefer Stripe's own preview for it
+    // (it is the only source that knows the tax), and fall back to the list price if the preview fails
+    // — which it can, on usage-based line items.
+    const invoiceTotal = await previewFullConversionChargeCents(
+      subscription,
+      input.customerId,
+      input.targetPlan,
+      input.targetInterval
+    ).catch((error: unknown) => {
+      logger.warn(
+        { error, organizationId: input.organizationId, targetPlan: input.targetPlan },
+        "Trial-conversion invoice preview failed; falling back to the catalog list price"
+      );
+      return null;
+    });
+
     return {
-      amountDue: Math.max(0, gross.cents - trialCreditApplied),
-      currency: gross.currency,
-      grossAmountDue: gross.cents,
+      amountDue: Math.max(0, (invoiceTotal?.amountDue ?? listPrice.cents) - trialCreditApplied),
+      currency: invoiceTotal?.currency ?? listPrice.currency,
+      // Deliberately the LIST price, not the invoice total: the modal presents this as "the {plan}
+      // price", and the copy reconciles it as list − credit + taxes = amountDue.
+      grossAmountDue: listPrice.cents,
       trialCreditApplied,
     };
   }
