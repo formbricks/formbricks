@@ -115,12 +115,20 @@ export const auth = betterAuth({
     // app-wide static import chain (only loaded when a reset is actually sent).
     sendResetPassword: async ({ user, url }) => {
       const { sendPasswordResetLinkEmail } = await import("@/modules/email");
-      await sendPasswordResetLinkEmail({
+      // Same falsy-return trap as sendVerificationEmail below (ENG-2091): `sendEmail` returns false
+      // without throwing when SMTP isn't configured, and Better Auth ignores the return value — so a
+      // reset that never went out would leave no trace at all. Throwing makes it attributable; the
+      // caller (forgot-password/actions.ts) already catches and still answers generically, so the
+      // enumeration-safe response is unchanged.
+      const sent = await sendPasswordResetLinkEmail({
         email: user.email,
         locale: await getUserLocale(user.id),
         verifyLink: url,
         linkValidityInMinutes: PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
       });
+      if (!sent) {
+        throw new Error("Password reset email was not sent (mailer reported no delivery)");
+      }
     },
     // After a successful reset, send the security notification (parity with the retired
     // completePasswordReset) and audit it. Better Auth already revoked sessions
