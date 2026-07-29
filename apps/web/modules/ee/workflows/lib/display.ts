@@ -1,13 +1,17 @@
 import type { TFunction } from "i18next";
-import type {
-  TWorkflowDefinition,
-  TWorkflowRunLogStatus,
-  TWorkflowRunStatus,
-  TWorkflowStatus,
-  TWorkflowTriggerType,
+import {
+  type TWorkflowDefinition,
+  type TWorkflowRunLogStatus,
+  type TWorkflowRunStatus,
+  type TWorkflowStatus,
+  type TWorkflowTriggerType,
+  getBlankSendEmailContentFields,
 } from "@formbricks/workflows";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
-import type { TWorkflowValidationProblem } from "@/modules/ee/workflows/state/editor";
+import type {
+  TWorkflowNodeFieldFocusRequest,
+  TWorkflowValidationProblem,
+} from "@/modules/ee/workflows/state/editor";
 
 type TBadgeType = "warning" | "success" | "error" | "gray";
 
@@ -101,6 +105,37 @@ export const getWorkflowValidationProblemLocation = (
   // (= trigger_missing) has nothing on the canvas to point at.
   if (problem.field.startsWith("trigger.") && definition.trigger) {
     return getNodeRegistryEntry(definition.trigger).title(definition.trigger, t);
+  }
+
+  return null;
+};
+
+/**
+ * The config field a validation problem should send the user to, or null when the problem has no
+ * single field to fix (a missing trigger, a broken flow shape, an unnamed workflow — those are
+ * fixed on the canvas or in the page title, not in a config form).
+ *
+ * `step_incomplete` deliberately carries a step-level field (`nodes.N.config`) so the problem count
+ * matches the one unfinished step the user perceives; the specific field is resolved here instead,
+ * as the first still-blank required one in form order.
+ */
+export const getWorkflowValidationProblemFocusTarget = (
+  problem: TWorkflowValidationProblem,
+  definition: TWorkflowDefinition | null
+): TWorkflowNodeFieldFocusRequest | null => {
+  if (!definition) return null;
+
+  const nodeMatch = NODE_FIELD_PATTERN.exec(problem.field);
+  if (nodeMatch) {
+    const node = definition.nodes[Number(nodeMatch[1])];
+    if (!node || node.type !== "action") return null;
+    const [firstBlankField] = getBlankSendEmailContentFields(node.config);
+    return firstBlankField ? { nodeId: node.id, field: firstBlankField } : null;
+  }
+
+  // Both trigger config problems (unbound survey, stale endings) start at the survey picker.
+  if (problem.field.startsWith("trigger.config.") && definition.trigger) {
+    return { nodeId: definition.trigger.id, field: "surveyId" };
   }
 
   return null;

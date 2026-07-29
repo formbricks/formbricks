@@ -1,13 +1,19 @@
 "use client";
 
+import { useAtomValue, useSetAtom } from "jotai";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
+import { WorkflowFieldLabel } from "@/modules/ee/workflows/components/inspector/workflow-field";
 import {
   useWorkflowSurveyEndings,
   useWorkflowSurveyOptions,
 } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
+import {
+  clearWorkflowNodeFieldFocusAtom,
+  workflowNodeFieldFocusRequestAtom,
+} from "@/modules/ee/workflows/state/editor";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -35,6 +41,25 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   const workspaceId = params?.workspaceId ?? "";
   const surveyOptionsQuery = useWorkflowSurveyOptions(workspaceId);
   const endingsQuery = useWorkflowSurveyEndings(node.config.surveyId || null);
+  const focusRequest = useAtomValue(workflowNodeFieldFocusRequestAtom);
+  const clearFocusRequest = useSetAtom(clearWorkflowNodeFieldFocusAtom);
+
+  // Jump target for the trigger's survey problems (unbound survey, stale endings) raised by the
+  // validation problems dialog. Both point at the survey picker — the endings list is derived
+  // from it, so it is where the fix starts.
+  useEffect(() => {
+    if (focusRequest?.nodeId !== node.id) return;
+    // One frame late so the inspector's width transition has laid the panel out before we scroll.
+    // The request is cleared inside the frame, not before it: clearing is what re-runs this effect,
+    // and an earlier clear would let the re-run's cleanup cancel the frame before it ever fired.
+    const frame = requestAnimationFrame(() => {
+      const target = document.getElementById("workflow-trigger-survey");
+      target?.focus();
+      target?.scrollIntoView({ block: "nearest" });
+      clearFocusRequest();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusRequest, node.id, clearFocusRequest]);
 
   // Local because "specific with nothing checked yet" is a UI-only state — the config still
   // holds an empty list (= all endings) until the user checks something.
@@ -129,7 +154,9 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   return (
     <div className="flex flex-col gap-4 px-1">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="workflow-trigger-survey">{t("workspace.workflows.trigger_survey_label")}</Label>
+        <WorkflowFieldLabel htmlFor="workflow-trigger-survey" isRequired>
+          {t("workspace.workflows.trigger_survey_label")}
+        </WorkflowFieldLabel>
         <Select
           value={node.config.surveyId || undefined}
           onValueChange={handleSurveyChange}

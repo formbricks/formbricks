@@ -35,6 +35,17 @@ export type TWorkflowNodeData = {
 };
 
 /**
+ * A pending "take me to the field that's wrong" jump, raised by the validation problems dialog and
+ * consumed by whichever config form owns `nodeId`. The form focuses the named control and reveals
+ * that node's field-level errors, then clears the request.
+ */
+export type TWorkflowNodeFieldFocusRequest = {
+  nodeId: string;
+  /** Config key within the node's form, e.g. "to" | "subject" | "body" | "surveyId". */
+  field: string;
+};
+
+/**
  * The editable draft fields exactly as last persisted (or hydrated). Compared against the live
  * draft to derive dirtiness; kept as a client-side snapshot of what was SENT (not the server
  * response) so server-side normalization can never make the editor look permanently dirty.
@@ -54,6 +65,7 @@ type TWorkflowEditorState = {
   /** Epoch ms of the last successful save this session; drives the "Changes saved" flash. */
   lastSavedAt: number | null;
   selectedNodeId: string | null;
+  fieldFocusRequest: TWorkflowNodeFieldFocusRequest | null;
   isInspectorCollapsed: boolean;
   isSnapToCanvasEnabled: boolean;
   isNodeConfigModalOpen: boolean;
@@ -69,6 +81,7 @@ const initialWorkflowEditorState: TWorkflowEditorState = {
   lastSavedDraft: null,
   lastSavedAt: null,
   selectedNodeId: null,
+  fieldFocusRequest: null,
   isInspectorCollapsed: false,
   isSnapToCanvasEnabled: true,
   isNodeConfigModalOpen: false,
@@ -83,6 +96,7 @@ export const workflowNameAtom = atom((get) => get(workflowEditorAtom).workflowNa
 export const workflowDescriptionAtom = atom((get) => get(workflowEditorAtom).workflowDescription);
 export const workflowDefinitionAtom = atom((get) => get(workflowEditorAtom).definition);
 export const selectedWorkflowNodeIdAtom = atom((get) => get(workflowEditorAtom).selectedNodeId);
+export const workflowNodeFieldFocusRequestAtom = atom((get) => get(workflowEditorAtom).fieldFocusRequest);
 
 // ReactFlow's nodes live OUTSIDE the immer-produced editor state on purpose: immer auto-freezes
 // everything it produces, and ReactFlow mutates node internals (measured width/height) inside
@@ -461,6 +475,38 @@ export const openWorkflowNodeConfigModalAtom = atom(null, (get, set, nodeId: str
       // Clicking a node opens the inspector even if the user previously collapsed it —
       // otherwise the config view stays hidden and the click looks broken.
       draft.isInspectorCollapsed = false;
+      // A plain node click is not a jump: drop any request a form never got to consume (e.g. one
+      // aimed at a node whose type has no config form) so it can't fire later out of context.
+      draft.fieldFocusRequest = null;
+    })
+  );
+});
+
+// Jump to a specific field: same panel-opening effect as clicking the node, plus the pending
+// focus request its config form consumes. Raised by the validation problems dialog.
+export const requestWorkflowNodeFieldFocusAtom = atom(
+  null,
+  (get, set, request: TWorkflowNodeFieldFocusRequest) => {
+    set(
+      workflowEditorAtom,
+      produce(get(workflowEditorAtom), (draft) => {
+        draft.selectedNodeId = request.nodeId;
+        draft.isNodeConfigModalOpen = true;
+        draft.isInspectorCollapsed = false;
+        draft.fieldFocusRequest = request;
+      })
+    );
+  }
+);
+
+// Cleared by the form once it has focused the control, so remounting the panel later (e.g. after
+// switching nodes and back) doesn't re-fire a stale jump.
+export const clearWorkflowNodeFieldFocusAtom = atom(null, (get, set) => {
+  if (!get(workflowEditorAtom).fieldFocusRequest) return;
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      draft.fieldFocusRequest = null;
     })
   );
 });

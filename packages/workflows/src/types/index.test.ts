@@ -168,6 +168,18 @@ describe("@formbricks/workflows", () => {
     }
   );
 
+  test("rejects an executable send_email node whose body is only the editor's empty markup", () => {
+    // The rich-text editor serializes a body the user emptied out to its enclosing block rather
+    // than to "", so this has to be rejected as missing — otherwise the workflow enables and
+    // sends a blank email.
+    const definition = createDefinition();
+    const emailNode = definition.nodes[0];
+    if (emailNode.type !== "action") throw new Error("expected send_email node");
+    emailNode.config = { ...emailNode.config, body: '<p class="fb-editor-paragraph"><br></p>' };
+
+    expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(/missing body/);
+  });
+
   test("allows persisting a draft definition whose send_email node is incomplete", () => {
     const definition = createDefinition();
     const emailNode = definition.nodes[0];

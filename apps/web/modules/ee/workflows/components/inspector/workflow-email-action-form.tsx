@@ -2,12 +2,26 @@
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { ArrowRightIcon, EyeOffIcon, MailIcon, TriangleAlertIcon, UserIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TWorkflowSendEmailActionNode } from "@formbricks/workflows";
+import {
+  type TWorkflowSendEmailActionNode,
+  type TWorkflowSendEmailContentField,
+  getBlankSendEmailContentFields,
+} from "@formbricks/workflows";
+import { cn } from "@/lib/cn";
+import {
+  WorkflowFieldError,
+  WorkflowFieldLabel,
+} from "@/modules/ee/workflows/components/inspector/workflow-field";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
-import { openWorkflowNodeConfigModalAtom, workflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  clearWorkflowNodeFieldFocusAtom,
+  openWorkflowNodeConfigModalAtom,
+  workflowDefinitionAtom,
+  workflowNodeFieldFocusRequestAtom,
+} from "@/modules/ee/workflows/state/editor";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import {
   type EmailSendToOption,
@@ -54,6 +68,13 @@ const toEditorHtml = (body: string): string => {
     .join("");
 };
 
+// The DOM ids the focus jump targets. `body` has no input of its own — the Lexical editor owns a
+// contenteditable inside its wrapper — so it is focused through a ref instead.
+const FIELD_INPUT_IDS: Record<Exclude<TWorkflowSendEmailContentField, "body">, string> = {
+  to: "workflow-email-to",
+  subject: "workflow-email-subject",
+};
+
 export const WorkflowEmailActionForm = ({
   node,
   isEditable,
@@ -63,10 +84,68 @@ export const WorkflowEmailActionForm = ({
   const authoringContext = useWorkflowEmailAuthoringContext();
   const definition = useAtomValue(workflowDefinitionAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
+  const focusRequest = useAtomValue(workflowNodeFieldFocusRequestAtom);
+  const clearFocusRequest = useSetAtom(clearWorkflowNodeFieldFocusAtom);
   const [firstRender, setFirstRender] = useState(true);
+
+  // Which required fields may show their error. A freshly added node stays clean until the user
+  // has actually engaged with a field and left it empty (or arrived here from the problems
+  // dialog); flagging an untouched brand-new node would paint three errors on open.
+  const [touchedFields, setTouchedFields] = useState<Partial<Record<TWorkflowSendEmailContentField, true>>>(
+    {}
+  );
+  const markTouched = useCallback(
+    (...fields: TWorkflowSendEmailContentField[]) =>
+      setTouchedFields((current) =>
+        fields.every((field) => current[field])
+          ? current
+          : { ...current, ...Object.fromEntries(fields.map((field) => [field, true as const])) }
+      ),
+    []
+  );
+
+  const bodyWrapperRef = useRef<HTMLDivElement>(null);
+
+  // Stable identity: EditorContentChecker re-registers its update listener whenever this changes.
+  // Non-empty is what earns the body its "touched" flag, so typing-then-clearing shows the error
+  // while a node that arrived empty stays quiet.
+  const handleBodyEmptyChange = useCallback(
+    (isEmpty: boolean) => {
+      if (!isEmpty) markTouched("body");
+    },
+    [markTouched]
+  );
 
   const updateConfig = (next: Partial<TWorkflowSendEmailActionNode["config"]>) =>
     onChange({ ...node, config: { ...node.config, ...next } });
+
+  const invalidFields = new Set(
+    getBlankSendEmailContentFields(node.config).filter((field) => touchedFields[field])
+  );
+
+  // Arriving from the validation problems dialog: reveal every missing field on this node (the
+  // point of the jump is to answer "which field is wrong") and focus the one it pointed at.
+  useEffect(() => {
+    if (focusRequest?.nodeId !== node.id) return;
+    const { field } = focusRequest;
+    markTouched(...getBlankSendEmailContentFields(node.config));
+
+    // One frame late so the inspector's width transition has laid the panel out before we scroll.
+    // The request is cleared inside the frame, not before it: clearing is what re-runs this effect,
+    // and an earlier clear would let the re-run's cleanup cancel the frame before it ever fired.
+    const frame = requestAnimationFrame(() => {
+      const target =
+        field === "body"
+          ? bodyWrapperRef.current?.querySelector<HTMLElement>('[contenteditable="true"]')
+          : document.getElementById(FIELD_INPUT_IDS[field as keyof typeof FIELD_INPUT_IDS]);
+      target?.focus();
+      target?.scrollIntoView({ block: "nearest" });
+      clearFocusRequest();
+    });
+    return () => cancelAnimationFrame(frame);
+    // node.config is read for the reveal only; re-running on each keystroke would re-focus mid-edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest, node.id, clearFocusRequest, markTouched]);
 
   const triggerSurveyId = definition?.trigger?.type === "trigger" ? definition.trigger.config.surveyId : null;
   const survey = resolveBoundTriggerSurvey(authoringContext, definition);
@@ -81,6 +160,9 @@ export const WorkflowEmailActionForm = ({
     previousTriggerSurveyId.current = triggerSurveyId;
     if (node.config.to === "" && node.config.body === "") return;
     updateConfig({ to: "", body: "" });
+    // These two were wiped out from under the user, so their errors are exactly what they need to
+    // see — no interaction required to earn them.
+    markTouched("to", "body");
     // updateConfig/node are intentionally omitted: this reacts to the survey id changing, not to each
     // keystroke in to/body (which would clear them mid-edit).
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -162,7 +244,9 @@ export const WorkflowEmailActionForm = ({
     <div className="flex flex-col gap-4">
       {/* Recipient */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="workflow-email-to">{t("workspace.workflows.email_to_label")}</Label>
+        <WorkflowFieldLabel htmlFor="workflow-email-to" isRequired isInvalid={invalidFields.has("to")}>
+          {t("workspace.workflows.email_to_label")}
+        </WorkflowFieldLabel>
         <p className="text-xs text-slate-500">
           {t("workspace.surveys.edit.follow_ups_modal_action_to_description")}
         </p>
@@ -170,10 +254,20 @@ export const WorkflowEmailActionForm = ({
           <Select
             value={node.config.to || undefined}
             disabled={!isEditable}
+            // A picked recipient can't be un-picked, so closing the dropdown without choosing is
+            // this control's only "touched while still empty" moment.
+            onOpenChange={(isOpen) => {
+              if (!isOpen) markTouched("to");
+            }}
             onValueChange={(value) => updateConfig({ to: value })}>
             <SelectTrigger
               id="workflow-email-to"
-              className="overflow-hidden bg-white text-ellipsis whitespace-nowrap">
+              aria-invalid={invalidFields.has("to")}
+              aria-describedby={invalidFields.has("to") ? "workflow-email-to-error" : undefined}
+              className={cn(
+                "overflow-hidden bg-white text-ellipsis whitespace-nowrap",
+                invalidFields.has("to") && "border-red-500"
+              )}>
               <SelectValue placeholder={t("workspace.workflows.email_to_placeholder")} />
             </SelectTrigger>
             <SelectContent>
@@ -210,6 +304,11 @@ export const WorkflowEmailActionForm = ({
             <p className="text-sm">{t("workspace.surveys.edit.follow_ups_modal_action_to_warning")}</p>
           </div>
         )}
+        {invalidFields.has("to") ? (
+          <WorkflowFieldError id="workflow-email-to-error">
+            {t("workspace.workflows.email_to_required")}
+          </WorkflowFieldError>
+        ) : null}
       </div>
 
       {/* From (read-only) */}
@@ -243,26 +342,49 @@ export const WorkflowEmailActionForm = ({
 
       {/* Subject */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="workflow-email-subject">{t("workspace.workflows.email_subject_label")}</Label>
+        <WorkflowFieldLabel
+          htmlFor="workflow-email-subject"
+          isRequired
+          isInvalid={invalidFields.has("subject")}>
+          {t("workspace.workflows.email_subject_label")}
+        </WorkflowFieldLabel>
         <Input
           id="workflow-email-subject"
           value={node.config.subject}
           disabled={!isEditable}
           placeholder={t("workspace.workflows.email_subject_placeholder")}
+          isInvalid={invalidFields.has("subject")}
+          aria-invalid={invalidFields.has("subject")}
+          aria-describedby={invalidFields.has("subject") ? "workflow-email-subject-error" : undefined}
+          onBlur={() => markTouched("subject")}
           onChange={(event) => updateConfig({ subject: event.target.value })}
         />
+        {invalidFields.has("subject") ? (
+          <WorkflowFieldError id="workflow-email-subject-error">
+            {t("workspace.workflows.email_subject_required")}
+          </WorkflowFieldError>
+        ) : null}
       </div>
 
       {/* Body (recall editor) */}
       {/* The editor defaults to a 2-line min-height (48px); a 4-line body (24px line-height)
           better matches the amount of content an email body usually holds. */}
-      <div className="flex flex-col gap-2 [--editor-min-height:96px]">
-        <Label>{t("workspace.workflows.email_body_label")}</Label>
+      <div className="flex flex-col gap-2 [--editor-min-height:96px]" ref={bodyWrapperRef}>
+        <WorkflowFieldLabel id="workflow-email-body-label" isRequired isInvalid={invalidFields.has("body")}>
+          {t("workspace.workflows.email_body_label")}
+        </WorkflowFieldLabel>
         <Editor
+          // The editor's contenteditable takes its accessible name from this label.
+          id="workflow-email-body-label"
           disableLists
           excludedToolbarItems={["blockType"]}
           getText={() => toEditorHtml(node.config.body)}
           setText={(value: string) => updateConfig({ body: value })}
+          // The editor is the authority on its own emptiness: its serialized value keeps the
+          // enclosing `<p>` even when blank, so "had content at some point" is the only reliable
+          // signal that the user has engaged with this field.
+          onEmptyChange={handleBodyEmptyChange}
+          isInvalid={invalidFields.has("body")}
           firstRender={firstRender}
           setFirstRender={setFirstRender}
           editable={isEditable}
@@ -271,6 +393,11 @@ export const WorkflowEmailActionForm = ({
           elementId={node.id}
           selectedLanguageCode={DEFAULT_LANGUAGE_CODE}
         />
+        {invalidFields.has("body") ? (
+          <WorkflowFieldError id="workflow-email-body-error">
+            {t("workspace.workflows.email_body_required")}
+          </WorkflowFieldError>
+        ) : null}
       </div>
 
       <div className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">

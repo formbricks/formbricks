@@ -119,6 +119,18 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     });
   });
 
+  test("flags an email node whose body is only the editor's empty markup", () => {
+    // The rich-text editor keeps the enclosing block when the body is emptied, so a trim-based
+    // check would clear the flag on a step that has nothing to send.
+    const def = buildDefinition();
+    (def.nodes[0] as { config: { body: string } }).config.body = '<p class="fb-editor-paragraph"><br></p>';
+    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: true, isDraft: true });
+    expect(nodes[1].data.issue).toEqual({
+      severity: "setup",
+      label: "workspace.workflows.node_needs_email_content",
+    });
+  });
+
   test("projects edges with sourceHandle preserved", () => {
     const def = buildDefinition({
       edges: [{ id: "edge-1", source: "trigger-1", target: "action-1", sourceHandle: "then" }],

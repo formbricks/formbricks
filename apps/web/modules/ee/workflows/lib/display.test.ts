@@ -7,6 +7,7 @@ import {
   getWorkflowRunStatusBadge,
   getWorkflowStatusBadge,
   getWorkflowTriggerTypeLabel,
+  getWorkflowValidationProblemFocusTarget,
   getWorkflowValidationProblemLocation,
 } from "./display";
 
@@ -106,6 +107,78 @@ describe("getWorkflowValidationProblemLocation", () => {
     const triggerless = { ...definition, trigger: null } as unknown as TWorkflowDefinition;
     expect(
       getWorkflowValidationProblemLocation(problem("trigger.config.surveyId"), triggerless, t)
+    ).toBeNull();
+  });
+});
+
+describe("getWorkflowValidationProblemFocusTarget", () => {
+  const buildDefinition = (emailConfig: Record<string, string>): TWorkflowDefinition =>
+    ({
+      schemaVersion: 1,
+      entryNodeId: "trigger-1",
+      trigger: {
+        id: "trigger-1",
+        type: "trigger",
+        triggerType: "response.completed",
+        config: { surveyId: "survey-1", endingCardIds: [] },
+      },
+      nodes: [
+        { id: "email-1", type: "action", actionType: "send_email", config: emailConfig },
+        { id: "ifelse-1", type: "if_else", config: {} },
+      ],
+      edges: [],
+    }) as unknown as TWorkflowDefinition;
+
+  const problem = (field: string): TWorkflowValidationProblem => ({ code: "step_incomplete", field });
+
+  test("points a step-level problem at the first blank required field, in form order", () => {
+    const definition = buildDefinition({ to: "", subject: "", body: "" });
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), definition)).toEqual({
+      nodeId: "email-1",
+      field: "to",
+    });
+  });
+
+  test("skips already-filled fields", () => {
+    const definition = buildDefinition({ to: "user@example.com", subject: "", body: "<p>Hi</p>" });
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), definition)).toEqual({
+      nodeId: "email-1",
+      field: "subject",
+    });
+  });
+
+  test("points at a body that only holds the editor's empty markup", () => {
+    const definition = buildDefinition({ to: "user@example.com", subject: "Hi", body: "<p><br></p>" });
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), definition)).toEqual({
+      nodeId: "email-1",
+      field: "body",
+    });
+  });
+
+  test("points trigger config problems at the survey picker", () => {
+    const definition = buildDefinition({ to: "a", subject: "b", body: "c" });
+    for (const field of ["trigger.config.surveyId", "trigger.config.endingCardIds"]) {
+      expect(getWorkflowValidationProblemFocusTarget(problem(field), definition)).toEqual({
+        nodeId: "trigger-1",
+        field: "surveyId",
+      });
+    }
+  });
+
+  test("has no target for problems that aren't fixed in a config form", () => {
+    const definition = buildDefinition({ to: "a", subject: "b", body: "c" });
+    // Nothing blank on the step, an unsupported node type, whole-flow problems, and out-of-range
+    // or trigger-less paths all leave the row passive rather than jumping somewhere arbitrary.
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.1.type"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.9.config"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("name"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("trigger"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("edges"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), null)).toBeNull();
+    const triggerless = { ...definition, trigger: null } as unknown as TWorkflowDefinition;
+    expect(
+      getWorkflowValidationProblemFocusTarget(problem("trigger.config.surveyId"), triggerless)
     ).toBeNull();
   });
 });

@@ -1,6 +1,10 @@
 import { type Edge, type Node, type SnapGrid } from "@xyflow/react";
 import type { TFunction } from "i18next";
-import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
+import {
+  type TWorkflowDefinition,
+  type TWorkflowNode,
+  getBlankSendEmailContentFields,
+} from "@formbricks/workflows";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import type { TWorkflowNodeData, TWorkflowNodeIssue } from "@/modules/ee/workflows/state/editor";
 
@@ -39,8 +43,9 @@ const getWorkflowNodeIssue = (
     return { severity, label: t("workspace.workflows.node_needs_survey") };
   }
   if (node.type === "action" && node.actionType === "send_email" && options.hasBoundSurvey) {
-    // Same completeness rule ZWorkflowExecutableDefinition enforces server-side on enable/test.
-    if (!node.config.to.trim() || !node.config.subject.trim() || !node.config.body.trim()) {
+    // Same completeness rule ZWorkflowExecutableDefinition enforces server-side on enable/test,
+    // including its rich-text handling of the body (see isBlankWorkflowRichText).
+    if (getBlankSendEmailContentFields(node.config).length > 0) {
       return { severity, label: t("workspace.workflows.node_needs_email_content") };
     }
   }
