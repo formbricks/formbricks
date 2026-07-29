@@ -8,6 +8,8 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
 import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { validateInputs } from "../utils/validate";
@@ -118,7 +120,10 @@ export const deleteUser = async (id: string): Promise<TUser> => {
     await prisma.invite.deleteMany({ where: { creatorId: id } });
 
     const deletedUser = await deleteUserById(id);
-    await deleteUserOrganizationRelationships(id);
+    await runPostCommitProjection("user_delete_organization_cleanup", () =>
+      deleteUserOrganizationRelationships(id)
+    );
+    await runPostCommitProjection("user_delete_team_cleanup", () => deleteUserTeamRelationships(id));
     await deleteBrevoCustomerByEmail({ email: deletedUser.email });
 
     return deletedUser;

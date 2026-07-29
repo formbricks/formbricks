@@ -6,6 +6,8 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
@@ -94,6 +96,10 @@ export const updateWorkspace = async (
     throw error;
   }
 
+  await runPostCommitProjection("workspace_update", () =>
+    reconcileTeamWorkspaceRelationships({ workspaceIds: [workspaceId] })
+  );
+
   return updatedWorkspace as TWorkspace;
 };
 
@@ -108,6 +114,7 @@ export const createWorkspace = async (
   }
 
   const { teamIds, ...data } = workspaceInput;
+  let committedWorkspaceId: string | undefined;
 
   try {
     const workspace = await prisma.workspace.create({
@@ -128,6 +135,7 @@ export const createWorkspace = async (
       },
       select: selectWorkspace,
     });
+    committedWorkspaceId = workspace.id;
 
     if (teamIds) {
       await prisma.workspaceTeam.createMany({
@@ -147,6 +155,19 @@ export const createWorkspace = async (
       throw new DatabaseError(error.message);
     }
     throw error;
+  } finally {
+    if (committedWorkspaceId) {
+      const workspaceId = committedWorkspaceId;
+      await runPostCommitProjection("workspace_create", () =>
+        reconcileTeamWorkspaceRelationships({
+          workspaceIds: [workspaceId],
+          workspaceTeamGrants: (teamIds ?? []).map((teamId) => ({
+            teamId,
+            workspaceId,
+          })),
+        })
+      );
+    }
   }
 };
 
@@ -158,6 +179,10 @@ export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> 
       },
       select: selectWorkspace,
     });
+
+    await runPostCommitProjection("workspace_delete", () =>
+      reconcileTeamWorkspaceRelationships({ workspaceIds: [workspaceId] })
+    );
 
     if (workspace) {
       const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);

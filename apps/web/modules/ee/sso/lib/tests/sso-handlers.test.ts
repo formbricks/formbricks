@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Organization } from "@formbricks/database/prisma";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -99,6 +100,9 @@ vi.mock("@/lib/membership/service", () => ({
 
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/locale", () => ({
@@ -794,6 +798,9 @@ describe("handleSsoCallback", () => {
       expect.objectContaining({ projection: "deferred", transaction: expect.anything() })
     );
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith(mockOrganization.id, mockUser.id);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [{ teamId: "team-123", userId: mockUser.id }],
+    });
   });
 
   test("assigns invited SSO users into the resolved organization and syncs notification settings", async () => {

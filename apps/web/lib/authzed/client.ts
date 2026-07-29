@@ -2,7 +2,7 @@ import "server-only";
 import { deadlineInterceptor, v1 } from "@authzed/authzed-node";
 import { env } from "@/lib/env";
 import { type TAuthzedConsistency, isAuthzedEnabled } from "./config";
-import { AUTHZED_REQUEST_TIMEOUT_MS } from "./constants";
+import { AUTHZED_MAX_RELATIONSHIP_UPDATES, AUTHZED_REQUEST_TIMEOUT_MS } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError, mapAuthzedError } from "./errors";
 import { executeAuthzedOperation } from "./retry";
 
@@ -92,8 +92,6 @@ type TAuthzedConfig =
 const globalForAuthzed = globalThis as unknown as {
   formbricksAuthzedClient: TAuthzedClientSingleton | undefined;
 };
-
-const AUTHZED_MAX_RELATIONSHIP_UPDATES = 1_000;
 
 const STABLE_SCHEMA_DIFF_KINDS = {
   caveatAdded: "caveat_added",

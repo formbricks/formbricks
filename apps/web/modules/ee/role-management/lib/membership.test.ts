@@ -5,13 +5,13 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { updateMembership } from "./membership";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     membership: {
       update: vi.fn(),
-      findMany: vi.fn(),
     },
     teamUser: {
       findMany: vi.fn(),
@@ -22,6 +22,9 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
+}));
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 
 describe("updateMembership", () => {
@@ -41,11 +44,8 @@ describe("updateMembership", () => {
 
     const mockTeamMemberships = [{ teamId: "team1" }, { teamId: "team2" }];
 
-    const mockOrganizationMembers = [{ userId: "user1" }, { userId: "user2" }];
-
     vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue(mockTeamMemberships as any);
-    vi.mocked(prisma.membership.findMany).mockResolvedValue(mockOrganizationMembers as any);
 
     const result = await updateMembership("user1", "org1", { role: "owner" });
 
@@ -60,6 +60,12 @@ describe("updateMembership", () => {
       data: { role: "owner" },
     });
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org1", "user1");
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [
+        { teamId: "team1", userId: "user1" },
+        { teamId: "team2", userId: "user1" },
+      ],
+    });
   });
 
   test("should throw ResourceNotFoundError when membership doesn't exist", async () => {
@@ -87,11 +93,8 @@ describe("updateMembership", () => {
 
     const mockTeamMemberships = [{ teamId: "team1" }, { teamId: "team2" }];
 
-    const mockOrganizationMembers = [{ userId: "user1" }, { userId: "user2" }];
-
     vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue(mockTeamMemberships as any);
-    vi.mocked(prisma.membership.findMany).mockResolvedValue(mockOrganizationMembers as any);
 
     const result = await updateMembership("user1", "org1", { role: "manager" });
 
@@ -106,6 +109,42 @@ describe("updateMembership", () => {
       data: {
         role: "admin",
       },
+    });
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [
+        { teamId: "team1", userId: "user1" },
+        { teamId: "team2", userId: "user1" },
+      ],
+    });
+  });
+
+  test("includes memberships added while team roles are being updated in reconciliation", async () => {
+    const mockMembership = {
+      id: "1",
+      userId: "user1",
+      organizationId: "org1",
+      role: "manager" as TOrganizationRole,
+      accepted: true,
+      deprecatedRole: null,
+    };
+    let roleUpdateCompleted = false;
+
+    vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
+    vi.mocked(prisma.teamUser.updateMany).mockImplementation(async () => {
+      roleUpdateCompleted = true;
+      return { count: 2 };
+    });
+    vi.mocked(prisma.teamUser.findMany).mockImplementation(async () =>
+      roleUpdateCompleted ? ([{ teamId: "team1" }, { teamId: "team2" }] as never) : []
+    );
+
+    await updateMembership("user1", "org1", { role: "manager" });
+
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [
+        { teamId: "team1", userId: "user1" },
+        { teamId: "team2", userId: "user1" },
+      ],
     });
   });
 });

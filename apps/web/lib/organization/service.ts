@@ -15,6 +15,8 @@ import {
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
@@ -294,6 +296,11 @@ export const deleteOrganization = async (organizationId: string) => {
             id: true,
           },
         },
+        teams: {
+          select: {
+            id: true,
+          },
+        },
         feedbackDirectories: {
           select: {
             id: true,
@@ -302,7 +309,15 @@ export const deleteOrganization = async (organizationId: string) => {
       },
     });
 
-    await deleteOrganizationRelationships(organizationId);
+    await runPostCommitProjection("organization_delete_relationship_cleanup", () =>
+      deleteOrganizationRelationships(organizationId)
+    );
+    await runPostCommitProjection("organization_delete_team_workspace_cleanup", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamIds: deletedOrganization.teams.map(({ id }) => id),
+        workspaceIds: deletedOrganization.workspaces.map(({ id }) => id),
+      })
+    );
 
     const stripeCustomerId = deletedOrganization.billing?.stripeCustomerId;
     if (IS_FORMBRICKS_CLOUD && stripeCustomerId) {

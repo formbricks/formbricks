@@ -137,15 +137,85 @@ The organization-membership projection boundary covers:
 - organization deletion and both legacy and Better Auth user-deletion
   cascades.
 
-User deletion is intentionally scoped to relationships whose resource type is
-`organization`. Team, workspace, and API-key relationship projection is owned
-by later tickets.
+User deletion removes both organization-role and team-role relationships for
+the deleted user. API-key relationship projection remains owned by a later
+ticket.
 
 The application facade accepts only Formbricks-owned relationship types. It
 supports idempotent `touch`/`delete` batches of at most 1,000 updates and safely
 narrowed bulk deletions. The SDK client, credentials, SDK request/response
 types, and raw errors never cross the facade. Relationship identifiers are
 write-only inputs and never appear in projection results or logs.
+
+## Team membership and workspace-grant projection
+
+PostgreSQL also remains authoritative for team and workspace access. After a
+source mutation commits, Formbricks reconciles the affected graph:
+
+- `Team.organizationId` touches `team#organization@organization`.
+- `TeamUser.role` maps exhaustively to exactly one `team#admin@user` or
+  `team#contributor@user` relationship and deletes the alternate role.
+- `Workspace.organizationId` touches
+  `workspace#organization@organization`.
+- `WorkspaceTeam.permission` maps exhaustively to exactly one
+  `workspace#reader_team`, `workspace#writer_team`, or
+  `workspace#manager_team` relationship with a `team#member` subject, deleting
+  the two alternate grants.
+
+Formbricks never precomputes a user's highest workspace permission. SpiceDB
+unions every team grant at evaluation time, preserving the current
+`read < readWrite < manage` ladder when a user belongs to multiple teams.
+
+Reconciliation deduplicates targets, reads a complete PostgreSQL snapshot, and
+writes logical relationship groups sequentially in requests of at most 1,000
+updates. A role's two updates or a workspace grant's three updates are never
+split across requests. The projector re-reads the source and retries the
+complete snapshot for up to three passes when it changes concurrently.
+
+Team membership writes inside SSO transactions use an explicit deferred mode.
+The enclosing service reconciles only after the outer transaction commits.
+Multi-step nontransactional flows, including invite assignment and workspace
+creation, remember each committed source target and reconcile it in `finally`;
+an AuthZed failure never replaces the original source result.
+
+Deletion cleanup is deliberately two-sided and idempotent:
+
+- a missing team deletes its resource relationships and every workspace grant
+  where that `team#member` is the subject;
+- a missing workspace deletes all relationships on that workspace resource;
+- user deletion removes user-subject relationships from organization and team
+  resources;
+- organization deletion captures its team and workspace IDs before the
+  PostgreSQL cascade, then removes organization, team, workspace, and
+  team-as-subject workspace edges.
+
+Projection covers UI and API team creation/update/deletion, workspace
+creation/deletion, API v2 workspace-team CRUD, invite/signup/SSO team
+assignment, organization-role promotions, membership removal, API v2 nested
+organization-user team changes, and user/organization cascades. Existing
+records are not backfilled here: ENG-1718 remains mandatory before AuthZed
+shadow evaluation or enforcement.
+
+## Resource parent resolution during the current-model migration
+
+The initial migration deliberately does not project one relationship for every
+survey, dashboard, and response. ENG-1738's private shadow evaluator must use
+the existing server-only PostgreSQL resolvers to map:
+
+- a survey or dashboard to its workspace;
+- a response to its survey, then to its workspace.
+
+It then checks the equivalent workspace permission in SpiceDB. This preserves
+the current authorization boundary and avoids adding a high-cardinality
+`response#survey` projection to every response mutation before shadow mode.
+Resolver database failures remain operational errors and missing resources
+remain denials, matching the legacy evaluator.
+
+The `survey#workspace`, `dashboard#workspace`, and `response#survey` relations
+remain in the schema for later resource-level sharing. They must not be queried
+directly until a future projector and ENG-1718 backfill cover those edges.
+Phase 2 direct resource grants must add that projection and repair scope before
+enforcement.
 
 ## Mapping from the current system
 

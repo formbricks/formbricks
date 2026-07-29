@@ -34,6 +34,10 @@ const setupMocks = () => {
     getMembershipByUserIdOrganizationId: vi.fn(),
   }));
 
+  vi.mock("@/lib/authzed/team-workspace", () => ({
+    reconcileTeamWorkspaceRelationships: vi.fn(),
+  }));
+
   vi.mock("@formbricks/logger", () => ({
     logger: {
       error: vi.fn(),
@@ -112,7 +116,10 @@ describe("Team Management", () => {
 
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
 
-        await createDefaultTeamMembership(MOCK_IDS.userId, tx);
+        await createDefaultTeamMembership(MOCK_IDS.userId, {
+          projection: "deferred",
+          transaction: tx,
+        });
 
         expect(getMembershipByUserIdOrganizationId).toHaveBeenCalledWith(
           MOCK_IDS.userId,

@@ -11,6 +11,10 @@ import { validateInputs } from "@/lib/utils/validate";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 
 type TSsoTeamDbClient = PrismaClient | Prisma.TransactionClient;
+type TDeferredSsoTeamProjection = Readonly<{
+  projection: "deferred";
+  transaction: Prisma.TransactionClient;
+}>;
 
 const getDbClient = (tx?: Prisma.TransactionClient): TSsoTeamDbClient => tx ?? prisma;
 
@@ -56,9 +60,10 @@ const getTeam = reactCache(async (teamId: string): Promise<Team> => {
   }
 });
 
-export const createDefaultTeamMembership = async (userId: string, tx?: Prisma.TransactionClient) => {
+export const createDefaultTeamMembership = async (userId: string, options?: TDeferredSsoTeamProjection) => {
   try {
-    const prismaClient = getDbClient(tx);
+    const transaction = options?.transaction;
+    const prismaClient = getDbClient(transaction);
     const defaultTeamId = DEFAULT_TEAM_ID;
 
     if (!defaultTeamId) {
@@ -66,7 +71,7 @@ export const createDefaultTeamMembership = async (userId: string, tx?: Prisma.Tr
       return;
     }
 
-    const defaultTeam = tx
+    const defaultTeam = transaction
       ? await prismaClient.team.findUnique({
           where: {
             id: defaultTeamId,
@@ -82,7 +87,7 @@ export const createDefaultTeamMembership = async (userId: string, tx?: Prisma.Tr
     const organizationMembership = await getMembershipByUserIdOrganizationId(
       userId,
       defaultTeam.organizationId,
-      tx
+      transaction
     );
 
     if (!organizationMembership) {
@@ -99,7 +104,7 @@ export const createDefaultTeamMembership = async (userId: string, tx?: Prisma.Tr
         teamIds: [defaultTeamId],
       },
       userId,
-      tx
+      options
     );
   } catch (error) {
     logger.error(

@@ -2,6 +2,7 @@ import { MOCK_IDS, MOCK_INVITE, MOCK_TEAM_USER } from "./__mocks__/team-mocks";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { OrganizationRole } from "@formbricks/database/prisma";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 import { createTeamMembership, getTeamForOrganization } from "../team";
 
@@ -26,6 +27,10 @@ const setupMocks = () => {
 
   vi.mock("@/lib/membership/service", () => ({
     getMembershipByUserIdOrganizationId: vi.fn(),
+  }));
+
+  vi.mock("@/lib/authzed/team-workspace", () => ({
+    reconcileTeamWorkspaceRelationships: vi.fn(),
   }));
 
   vi.mock("@formbricks/logger", () => ({
@@ -87,6 +92,9 @@ describe("Team Management", () => {
               userId: MOCK_IDS.userId,
             },
           },
+        });
+        expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+          teamMemberships: [{ teamId: MOCK_IDS.teamId, userId: MOCK_IDS.userId }],
         });
       });
     });
@@ -167,6 +175,25 @@ describe("Team Management", () => {
           },
         });
       });
+    });
+
+    test("defers projection when called inside an outer transaction", async () => {
+      const transaction = {
+        team: {
+          findUnique: vi.fn().mockResolvedValue(mockTeamLookup),
+        },
+        teamUser: {
+          upsert: vi.fn().mockResolvedValue(MOCK_TEAM_USER),
+        },
+      } as any;
+
+      await createTeamMembership(MOCK_INVITE, MOCK_IDS.userId, {
+        projection: "deferred",
+        transaction,
+      });
+
+      expect(transaction.teamUser.upsert).toHaveBeenCalled();
+      expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
     });
   });
 

@@ -2,6 +2,8 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Team } from "@formbricks/database/prisma";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/utils";
 import {
   TGetTeamsFilter,
@@ -23,6 +25,10 @@ export const createTeam = async (
         organizationId,
       },
     });
+
+    await runPostCommitProjection("api_v2_team_create", () =>
+      reconcileTeamWorkspaceRelationships({ teamIds: [team.id] })
+    );
 
     return ok(team);
   } catch (error) {
