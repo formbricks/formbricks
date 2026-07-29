@@ -95,8 +95,18 @@ export const TaxonomyControls = ({
           disabled={!canGenerate}
           loading={isGenerating}
           onClick={handleGenerateClick}>
-          {hasActiveTree ? <RefreshCwIcon className="size-4" /> : <PlayIcon className="size-4" />}
-          {hasActiveTree ? t("workspace.unify.taxonomy_regenerate") : t("workspace.unify.taxonomy_generate")}
+          {isGenerating ? (
+            // The Button renders its own spinner while `loading`; show just the label (no Play/Refresh
+            // icon) so we don't end up with a spinner and a static icon side by side.
+            t("workspace.unify.taxonomy_generating")
+          ) : (
+            <>
+              {hasActiveTree ? <RefreshCwIcon className="size-4" /> : <PlayIcon className="size-4" />}
+              {hasActiveTree
+                ? t("workspace.unify.taxonomy_regenerate")
+                : t("workspace.unify.taxonomy_generate")}
+            </>
+          )}
         </Button>
       </div>
 

@@ -1,6 +1,6 @@
 ---
 title: "Feedback Records"
-description: "The normalized unit of feedback inside a Feedback Directory."
+description: "The normalized unit of feedback inside a Feedback Dataset."
 icon: "list-check"
 ---
 
@@ -17,7 +17,7 @@ Every record has the following fields. Required fields must be mapped by every s
 | `source_type` | string | Yes | The kind of source (e.g. `survey`, `csv`, `review`). |
 | `field_id` | string | Yes | Stable identifier for the question/field. |
 | `field_type` | enum | Yes | One of `text`, `categorical`, `nps`, `csat`, `ces`, `rating`, `number`, `boolean`, `date`. |
-| `tenant_id` | string | No | Feedback Directory ID. Set automatically when ingesting. |
+| `tenant_id` | string | No | Feedback Dataset ID. Set automatically when ingesting. |
 | `source_id` | string | No | Reference to the survey/form/ticket/review ID. |
 | `source_name` | string | No | Human-readable source name for display. |
 | `field_label` | string | No | The question text or field label. |
@@ -35,11 +35,11 @@ The right `value_*` field is set based on `field_type`. For example a `nps` fiel
 
 ## Viewing and managing records
 
-Inside a workspace, navigate to **Unify → Feedback Records**. You'll see the latest records across every directory the workspace has access to, sorted by `collected_at`.
+Inside a workspace, navigate to **Unify → Feedback Records**. You'll see the latest records across every dataset the workspace has access to, sorted by `collected_at`.
 
 From the table you can:
 
-- **Filter** by directory, source, field type, or date range.
+- **Filter** by dataset, source, field type, or date range.
 - **Open** a record drawer to see the full field set and metadata.
 - **Edit** values inline for cleanup (e.g. relabel a categorical answer).
 - **Delete** a record.

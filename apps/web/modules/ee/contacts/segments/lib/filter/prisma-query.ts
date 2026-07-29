@@ -14,11 +14,13 @@ import {
   TSegmentFilterValue,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
+  TSegmentSurveyInteractionFilter,
   ZRelativeDateValue,
 } from "@formbricks/types/segment";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
 import { getSegment } from "../segments";
+import { SURVEY_INTERACTION_SEMANTICS, getSurveyInteractionWindowStart } from "./survey-interaction";
 
 // SQL operator mapping for number filters
 const SQL_OPERATORS: Record<string, string> = {
@@ -353,6 +355,35 @@ const buildDeviceFilterWhereClause = (
 };
 
 /**
+ * Builds a Prisma where clause from a survey interaction filter.
+ * "seen" maps to Display rows, "started responding to" maps to Response rows (any),
+ * "completed" maps to Response rows with finished=true. Negative operators wrap the
+ * positive clause in NOT, meaning "no matching interaction within the window".
+ * "any" scope omits the surveyId condition; "specific" scope constrains to the chosen ids.
+ *
+ * Operator semantics and the window boundary come from the shared spec in `survey-interaction.ts`,
+ * which the in-memory evaluator (contact-sync hot path) also uses — keeping the two paths identical.
+ */
+const buildSurveyInteractionFilterWhereClause = (
+  filter: TSegmentSurveyInteractionFilter
+): Prisma.ContactWhereInput => {
+  const { value } = filter;
+  const semantics = SURVEY_INTERACTION_SEMANTICS[filter.qualifier.operator];
+  const windowStart = getSurveyInteractionWindowStart(value, new Date());
+
+  const some = {
+    ...(value.surveyScope === "specific" ? { surveyId: { in: value.surveyIds } } : {}),
+    ...(semantics.requireFinished ? { finished: true } : {}),
+    createdAt: { gte: windowStart },
+  };
+
+  const relationClause: Prisma.ContactWhereInput =
+    semantics.source === "displays" ? { displays: { some } } : { responses: { some } };
+
+  return semantics.negate ? { NOT: relationClause } : relationClause;
+};
+
+/**
  * Builds a Prisma where clause from a segment filter
  */
 const buildSegmentFilterWhereClause = async (
@@ -425,6 +456,8 @@ const processSingleFilter = async (
         workspaceId,
         deviceType
       );
+    case "surveyInteraction":
+      return buildSurveyInteractionFilterWhereClause(filter as TSegmentSurveyInteractionFilter);
     default:
       return {};
   }
@@ -441,41 +474,54 @@ const processFilters = async (
 ): Promise<Prisma.ContactWhereInput> => {
   if (filters.length === 0) return {};
 
-  const query: { AND: Prisma.ContactWhereInput[]; OR: Prisma.ContactWhereInput[] } = {
-    AND: [],
-    OR: [],
-  };
+  // AND-before-OR precedence, identical to the in-memory `combineFilterResults`: consecutive `and`
+  // connectors form one AND group, an `or` connector starts a new group, and the segment matches if
+  // ANY group matches. This produces `{ OR: [{ AND: [...] }, ...] }` rather than a flat
+  // `{ AND: [...], OR: [...] }` (which Prisma would AND together, giving `(A ∧ B) ∧ C` where the
+  // shared boolean evaluator gives `(A ∧ B) ∨ C`). Keeping both paths on the same precedence is the
+  // parity invariant survey-interaction filters rely on.
+  const andGroups: Prisma.ContactWhereInput[][] = [];
+  // `null` marks a started-but-still-empty group so an all-match-all group ("true") is not confused
+  // with "no group yet". An empty `{}` clause means match-all, which is the identity for AND, so it is
+  // dropped from its group; a group that ends up empty is therefore an unconditional match.
+  let currentGroup: Prisma.ContactWhereInput[] | null = null;
 
   for (let i = 0; i < filters.length; i++) {
     const { resource, connector } = filters[i];
-    let whereClause: Prisma.ContactWhereInput;
 
-    // Process the resource based on its type
-    if (isResourceFilter(resource)) {
-      // If it's a single filter, process it directly
-      whereClause = await processSingleFilter(resource, segmentPath, workspaceId, deviceType);
-    } else {
-      // If it's a group of filters, process it recursively
-      whereClause = await processFilters(resource, segmentPath, workspaceId, deviceType);
+    const whereClause = isResourceFilter(resource)
+      ? await processSingleFilter(resource, segmentPath, workspaceId, deviceType)
+      : await processFilters(resource, segmentPath, workspaceId, deviceType);
+
+    // The first filter's connector is `null` and always starts the first group; from then on an `or`
+    // connector opens a new AND group.
+    if (currentGroup === null || (i > 0 && connector === "or")) {
+      if (currentGroup !== null) andGroups.push(currentGroup);
+      currentGroup = [];
     }
 
-    if (Object.keys(whereClause).length === 0) continue;
-    if (filters.length === 1) query.AND = [whereClause];
-    else {
-      if (i === 0) {
-        if (filters[1].connector === "and") query.AND.push(whereClause);
-        else query.OR.push(whereClause);
-      } else {
-        if (connector === "and") query.AND.push(whereClause);
-        else query.OR.push(whereClause);
-      }
+    if (Object.keys(whereClause).length > 0) {
+      currentGroup.push(whereClause);
     }
   }
+  if (currentGroup !== null) andGroups.push(currentGroup);
 
-  return {
-    ...(query.AND.length > 0 ? { AND: query.AND } : {}),
-    ...(query.OR.length > 0 ? { OR: query.OR } : {}),
-  };
+  // Drop groups left empty after match-all clauses were skipped (e.g. a runtime device filter built
+  // without a deviceType, or a missing nested segment — non-constraining at build time). This mirrors
+  // the previous "skip empty clauses" behavior: an empty clause contributes nothing rather than
+  // collapsing an OR branch to match-all. Interaction filters always emit a concrete clause, so their
+  // OR-of-AND precedence is unaffected.
+  const nonEmptyGroups = andGroups.filter((group) => group.length > 0);
+
+  if (nonEmptyGroups.length === 0) return {};
+
+  // Single AND group (no `or` connectors, or a single filter): keep the historical `{ AND: [...] }`
+  // shape so pure-AND / single-filter segments are byte-identical to before — only genuinely mixed
+  // AND/OR segments change shape (from the old flat `{ AND, OR }` to correct OR-of-AND groups).
+  if (nonEmptyGroups.length === 1) return { AND: nonEmptyGroups[0] };
+
+  const groupClauses = nonEmptyGroups.map((group) => (group.length === 1 ? group[0] : { AND: group }));
+  return { OR: groupClauses };
 };
 
 /**

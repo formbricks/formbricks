@@ -29,8 +29,8 @@ export type TSsoProvisioningDecision =
 /**
  * Validates the invite token carried on an SSO callback URL (only consulted when invites aren't
  * skipped). Returns a rejection reason, or null when the invite is valid. Extracted from
- * gateSsoProvisioning so that gate stays under the cognitive-complexity budget — the parity logic
- * (pinned by sso-handlers.test.ts) is unchanged.
+ * gateSsoProvisioning so that gate stays under the cognitive-complexity budget — its behavior is
+ * covered by sso-provisioning.test.ts.
  */
 const validateSsoInviteToken = async (email: string, callbackUrl: string): Promise<string | null> => {
   if (!callbackUrl) return "missing_callback_url";
@@ -60,8 +60,8 @@ const validateSsoInviteToken = async (email: string, callbackUrl: string): Promi
 };
 
 /**
- * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic mirrored
- * from `provisionNewSsoUser` (sso-handlers.ts:254-363).
+ * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
+ * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
  *
  * MUST be called from `databaseHooks.user.create.before`, which Better Auth runs INSIDE the
  * user+account transaction: a `"reject"` there → return `false` → the row rolls back, so no orphan
@@ -69,7 +69,7 @@ const validateSsoInviteToken = async (email: string, callbackUrl: string): Promi
  * `"provision"` decision (resolved org + flags) is carried to the after-hook, which performs the
  * membership writes.
  *
- * Parity invariants (pinned by sso-handlers.test.ts): fresh-instance & multi-org bypass all gates;
+ * Invariants (covered by sso-provisioning.test.ts): fresh-instance & multi-org bypass all gates;
  * single-org + `SKIP_INVITE_FOR_SSO` requires `DEFAULT_TEAM_ID`; otherwise a valid invite token
  * matching the email is required; the assignment org is the default team's org (skip-invite) or the
  * first org; access control without a callback URL is refused.
@@ -137,7 +137,8 @@ export const gateSsoProvisioning = async ({
 };
 
 /**
- * Provisioning WRITES for a newly created SSO user — mirrors provisionNewSsoUser:404-452. Called from
+ * Provisioning WRITES for a newly created SSO user — mirrors the legacy NextAuth SSO provisioning
+ * writes. Called from
  * `databaseHooks.user.create.after` (post-commit), so it CANNOT share Better Auth's user/account
  * transaction (design doc §13). It runs its own transaction and is idempotent + best-effort:
  * `createMembership`/`createDefaultTeamMembership` upsert, and a failure is retried once then logged

@@ -1,10 +1,10 @@
 ---
 title: "Feedback Sources"
-description: "Sources that bring feedback data into a Feedback Directory."
+description: "Sources that bring feedback data into a Feedback Dataset."
 icon: "plug"
 ---
 
-A **Source** defines how external data is mapped into Feedback Records inside a Feedback Directory. Manage them from **Unify → Sources**.
+A **Source** defines how external data is mapped into Feedback Records inside a Feedback Dataset. Manage them from **Unify → Sources**.
 
 ## Source types
 
@@ -12,7 +12,7 @@ Formbricks supports three source types:
 
 ### 1. Formbricks Surveys
 
-Pipe responses from a Formbricks survey directly into a Feedback Directory. Pick a survey, select the questions you want to ingest - that's it. Formbricks automatically maps each question to its `field_type`. Optionally create Feedback Records of existing responses on connect.
+Pipe responses from a Formbricks survey directly into a Feedback Dataset. Pick a survey, select the questions you want to ingest - that's it. Formbricks automatically maps each question to its `field_type`. Optionally create Feedback Records of existing responses on connect.
 
 ### 2. CSV Import
 
@@ -26,7 +26,7 @@ A sample CSV is available from the source creation dialog.
 
 ### 3. API Ingestion
 
-Push records into a directory programmatically from your own systems. Best for server-to-server ingestion. API reference docs are coming soon.
+Push records into a dataset programmatically from your own systems. Best for server-to-server ingestion. API reference docs are coming soon.
 
 ## Field mapping
 
@@ -51,4 +51,4 @@ From the Sources page you can:
 - **Create** a new source for any source type.
 - **Edit** the mapping for an existing source.
 - **Pause** or **resume** ingestion.
-- **Delete** a source. Existing records stay in the directory.
+- **Delete** a source. Existing records stay in the dataset.

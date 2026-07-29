@@ -67,6 +67,7 @@ const getSmiley = ({
   const containerSize = size * 2;
 
   const icon = (
+    // eslint-disable-next-line @next/next/no-img-element -- migration ENG-1677
     <img
       data-testid={faceIcons[iconIdx]}
       src={

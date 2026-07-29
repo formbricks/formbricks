@@ -149,11 +149,46 @@ describe("ssoDatabaseHooks.user.create.before", () => {
     expect(gateSsoProvisioning).toHaveBeenCalledWith({ email: "john.doe@example.com", callbackUrl: "/" });
   });
 
-  test("keeps the provider-supplied name (no fallback) when present", async () => {
+  test("normalizes a clean provider-supplied name (unchanged, no fallback) when present", async () => {
     const result = await runWithSsoRequestContext(() =>
       before({ id: "u1", email: "a@b.com", name: "Ada Lovelace" } as never, callbackCtx as never)
     );
-    expect(result).toEqual({ data: { emailVerified: true, identityProvider: "openid", locale: "en-US" } });
+    expect(result).toEqual({
+      data: { emailVerified: true, identityProvider: "openid", locale: "en-US", name: "Ada Lovelace" },
+    });
+  });
+
+  // ENG-1743: an IdP display name with common punctuation must never fail the sign-in. The provider
+  // name is normalized to a ZUserName-valid form (allowlisted punctuation preserved, the rest collapsed
+  // to a single space), so no `ValidationError: Invalid name format` is thrown from the SSO create path.
+  test.each([
+    { name: "J. Smith", expected: "J. Smith" }, // period preserved
+    { name: "Smith & Co", expected: "Smith & Co" }, // ampersand preserved
+    { name: "Ada  O'Neil", expected: "Ada O'Neil" }, // apostrophe kept, double space collapsed
+    { name: "A/B Corp", expected: "A B Corp" }, // slash (not allowlisted) collapsed to space
+    { name: "José 🎉 Núñez", expected: "José Núñez" }, // emoji stripped, accented letters kept
+  ])("normalizes a punctuated provider name '$name' → '$expected'", async ({ name, expected }) => {
+    const result = await runWithSsoRequestContext(() =>
+      before({ id: "u1", email: "a@b.com", name } as never, callbackCtx as never)
+    );
+    expect(result).toMatchObject({ data: { name: expected } });
+  });
+
+  test("falls back to the email local-part when the provider name normalizes to empty", async () => {
+    const result = await runWithSsoRequestContext(() =>
+      before({ id: "u1", email: "jane.doe@example.com", name: "🎉🎉" } as never, callbackCtx as never)
+    );
+    expect(result).toMatchObject({ data: { name: "jane doe" } });
+  });
+
+  // ENG-1743 edge: if BOTH the provider name and the email local-part normalize to empty (a degenerate
+  // service/machine account), fall back to a constant so the stored name is a valid non-empty
+  // ZUserName — otherwise "" would pass Better Auth's create but throw on the user's first profile save.
+  test("falls back to a constant when the provider name and email local-part both normalize to empty", async () => {
+    const result = await runWithSsoRequestContext(() =>
+      before({ id: "u1", email: "🎉@example.com", name: "🎉🎉" } as never, callbackCtx as never)
+    );
+    expect(result).toMatchObject({ data: { name: "User" } });
   });
 
   test("leaves email/password sign-ups untouched (gate not run)", async () => {

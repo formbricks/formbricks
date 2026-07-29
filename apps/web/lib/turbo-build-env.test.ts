@@ -5,8 +5,8 @@ import { describe, expect, test } from "vitest";
 
 // Guards the coupling between next.config.mjs and turbo.json (see ENG-1663): every env var read in
 // next.config.mjs shapes the build output, so it must be part of Turborepo's cache key. A var that
-// is missing from `build.env` (or filed under `passThroughEnv`) makes Turborepo — including the CI
-// remote cache — replay stale builds when the var's value changes.
+// is missing from `build.env` (or filed under `passThroughEnv`) makes Turborepo — the local cache
+// and the CI build-output cache alike — replay stale builds when the var's value changes.
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const nextConfigPath = path.resolve(here, "..", "next.config.mjs");

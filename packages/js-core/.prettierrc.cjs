@@ -1,18 +1,17 @@
 // packages/js-core/.prettierrc.cjs
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS config file; migration ENG-1677
 const base = require("../config-prettier/prettier-preset");
 
 module.exports = {
-    ...base,
-    plugins: [
-        "@trivago/prettier-plugin-sort-imports",
-    ],
+  ...base,
+  plugins: ["@trivago/prettier-plugin-sort-imports"],
 
-    importOrder: [
-        "^vitest$",                    // 1️⃣ vitest first
-        "<THIRD_PARTY_MODULES>",       // 2️⃣ then other externals
-        "^@/.*$",                      // 3️⃣ then anything under @/  
-        "^\\.\\/__mocks__\\/.*$",      // 4️⃣ then anything under ./__mocks__/
-        "^[./]",                       // 5️⃣ finally all other relative imports
-    ],
-    importOrderSortSpecifiers: true,
+  importOrder: [
+    "^vitest$", // 1️⃣ vitest first
+    "<THIRD_PARTY_MODULES>", // 2️⃣ then other externals
+    "^@/.*$", // 3️⃣ then anything under @/
+    "^\\.\\/__mocks__\\/.*$", // 4️⃣ then anything under ./__mocks__/
+    "^[./]", // 5️⃣ finally all other relative imports
+  ],
+  importOrderSortSpecifiers: true,
 };

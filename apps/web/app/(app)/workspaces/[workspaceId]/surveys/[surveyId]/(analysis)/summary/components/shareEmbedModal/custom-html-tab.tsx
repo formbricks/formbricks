@@ -150,7 +150,7 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: CustomHtml
             {isSaving ? t("common.saving") : t("common.save")}
           </Button>
           {/* Security Warning */}
-          <Alert variant="warning" className="flex items-start gap-2">
+          <Alert variant="warning" className="flex items-start gap-2" role="status">
             <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
             <AlertDescription>{t("workspace.surveys.share.custom_html.security_warning")}</AlertDescription>
           </Alert>

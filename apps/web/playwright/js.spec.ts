@@ -91,7 +91,7 @@ test.describe("JS Package Test", async () => {
 
     await page.locator("#recontactOptionsCardTrigger").click();
     await page.locator('[data-testid="recontact-option-respondMultiple"]').click();
-    await page.locator('[data-testid="waiting-time-option-ignore"]').click();
+    await page.locator('[data-testid="cooldown-period-option-ignore"]').click();
 
     await page.getByRole("button", { name: "Save as draft", exact: true }).click();
     await expect(page.getByText("Changes saved.")).toBeVisible();

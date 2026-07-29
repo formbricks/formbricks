@@ -20,12 +20,17 @@ import {
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
-import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/helper";
+import {
+  assertSurveyInteractionSurveyIds,
+  checkForRecursiveSegmentFilter,
+} from "@/modules/ee/contacts/segments/lib/helper";
 import {
   cloneSegment,
   createSegment,
   deleteSegment,
   getSegment,
+  getSurveyRefsForWorkspace,
+  getSurveyWorkspaceIdMap,
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
@@ -87,6 +92,8 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
       throw new InvalidInputError(errMsg);
     }
 
+    await assertSurveyInteractionSurveyIds(parsedFilters.data, workspaceId);
+
     const segment = await createSegment(parsedInput);
 
     // Set the segmentId in the context to be used in the audit log
@@ -116,6 +123,7 @@ const ZUpdateSegmentAction = z.object({
 export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdateSegmentAction).action(
   withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
+    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -127,12 +135,26 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromSegmentId(parsedInput.segmentId),
+          workspaceId: segmentWorkspaceId,
         },
       ],
     });
 
     await checkAdvancedTargetingPermission(organizationId);
+
+    // ENG-1920: the surveys are connected to the segment by id alone, so ensure every survey
+    // belongs to the segment's workspace — otherwise a caller could re-point another tenant's
+    // survey to their segment. A single batched lookup avoids fanning out a query per survey id
+    // over the caller-controlled array; an unknown id is absent from the map and thus rejected.
+    if (parsedInput.data.surveys && parsedInput.data.surveys.length > 0) {
+      const surveyWorkspaceIdMap = await getSurveyWorkspaceIdMap(parsedInput.data.surveys);
+      const allInSegmentWorkspace = parsedInput.data.surveys.every(
+        (surveyId) => surveyWorkspaceIdMap.get(surveyId) === segmentWorkspaceId
+      );
+      if (!allInSegmentWorkspace) {
+        throw new InvalidInputError("Survey and segment are not in the same workspace");
+      }
+    }
 
     const { filters } = parsedInput.data;
     if (filters) {
@@ -145,6 +167,9 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
       }
 
       await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
+
+      const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
+      await assertSurveyInteractionSurveyIds(parsedFilters.data, segmentWorkspaceId);
     }
 
     const oldObject = await getSegment(parsedInput.segmentId);
@@ -336,4 +361,34 @@ export const getDistinctAttributeValuesAction = authenticatedActionClient
     });
 
     return await getDistinctAttributeValues(parsedInput.attributeKeyId);
+  });
+
+const ZGetSurveysForSegmentFilterAction = z.object({
+  workspaceId: ZId,
+});
+
+export const getSurveysForSegmentFilterAction = authenticatedActionClient
+  .inputSchema(ZGetSurveysForSegmentFilterAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "read",
+          workspaceId: parsedInput.workspaceId,
+        },
+      ],
+    });
+
+    await checkAdvancedTargetingPermission(organizationId);
+
+    return await getSurveyRefsForWorkspace(parsedInput.workspaceId);
   });

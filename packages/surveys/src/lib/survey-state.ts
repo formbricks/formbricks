@@ -9,19 +9,22 @@ export class SurveyState {
   shouldCreateResponseFromState = false;
   responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {}, variables: {} };
   singleUseId: string | null;
+  pinAuthToken: string | null;
 
   constructor(
     surveyId: string,
     singleUseId?: string | null,
     responseId?: string | null,
     userId?: string | null,
-    contactId?: string | null
+    contactId?: string | null,
+    pinAuthToken?: string | null
   ) {
     this.surveyId = surveyId;
     this.userId = userId ?? null;
     this.singleUseId = singleUseId ?? null;
     this.responseId = responseId ?? null;
     this.contactId = contactId ?? null;
+    this.pinAuthToken = pinAuthToken ?? null;
   }
 
   /**
@@ -41,7 +44,8 @@ export class SurveyState {
       this.singleUseId ?? undefined,
       this.responseId ?? undefined,
       this.userId ?? undefined,
-      this.contactId ?? undefined
+      this.contactId ?? undefined,
+      this.pinAuthToken ?? undefined
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;

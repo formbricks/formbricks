@@ -4,12 +4,19 @@ import {
   SURVEY_SCHEDULING_LOCAL_MINUTE,
   SURVEY_SCHEDULING_TIME_ZONE,
 } from "./constants";
-import {
+import { createSurveySchedulingDateUtils, toDateOnlySelection } from "./date-utils";
+
+const defaultConfig = {
+  timeZone: "Europe/Berlin",
+  localHour: 0,
+  localMinute: 0,
+};
+
+const {
+  toCalendarDate,
   getMinimumSurveySchedulingCalendarDate,
   normalizeDateOnlySelectionToSurveySchedulingDateTime,
-  toCalendarDate,
-  toDateOnlySelection,
-} from "./date-utils";
+} = createSurveySchedulingDateUtils(defaultConfig);
 
 describe("survey scheduling date utils", () => {
   test("stores selected dates as noon UTC date-only values", () => {
@@ -66,6 +73,19 @@ describe("survey scheduling date utils", () => {
     expect(minSelectableDate.getMonth()).toBe(3);
     expect(minSelectableDate.getDate()).toBe(17);
     expect(minSelectableDate.getHours()).toBe(12);
+  });
+
+  test("honors a runtime-configured timezone, hour, and minute", () => {
+    const { normalizeDateOnlySelectionToSurveySchedulingDateTime: normalize } =
+      createSurveySchedulingDateUtils({
+        timeZone: "America/New_York",
+        localHour: 18,
+        localMinute: 45,
+      });
+    const storedDate = new Date("2026-01-17T12:00:00.000Z");
+
+    // 2026-01-17 18:45 in America/New_York (EST, UTC-5) is 23:45 UTC.
+    expect(normalize(storedDate)?.toISOString()).toBe("2026-01-17T23:45:00.000Z");
   });
 
   test("documents the default scheduling configuration", () => {

@@ -4,6 +4,7 @@ import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { normalizeUserName } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -45,12 +46,13 @@ export const getSsoProviderFromContext = (
   return match ? match[1] : null;
 };
 
-/** Fallback display name derived from an email local-part (parity `provisionNewSsoUser`:372-377). */
+/**
+ * Fallback display name when the IdP supplies no name: humanize the email local-part (treat `. _ +` as
+ * word separators) and run it through the shared normalizer. The name allowlist lives only in
+ * normalizeUserName (tied to ZUserName), so there is no second name regex here that could drift.
+ */
 const deriveNameFromEmail = (email: string): string =>
-  email
-    .split("@")[0]
-    .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
-    .trim();
+  normalizeUserName(email.split("@")[0].replace(/[._+]+/g, " "));
 
 /**
  * Better Auth `databaseHooks` re-expressing Formbricks' SSO sign-up flow (design doc §13), reusing
@@ -124,7 +126,13 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
             // picture): transformInput drops undefined fields that have no schema default, so this
             // prevents a prisma.user.create validation error on SSO sign-up.
             image: undefined,
-            ...(user.name ? {} : { name: deriveNameFromEmail(user.email) }),
+            // Normalize the IdP-supplied display name to a form ZUserName accepts (ENG-1743): external
+            // provider names are untrusted and may carry punctuation ("J. Smith", "Smith & Co") that
+            // would otherwise persist raw and later break a profile save. Fall back to the email
+            // local-part, then to a constant, so the stored name is always a valid, non-empty
+            // ZUserName — even for degenerate input (emoji-only name + symbol-only email local-part),
+            // which would otherwise re-trigger the ENG-1743 error on the user's first profile save.
+            name: (user.name && normalizeUserName(user.name)) || deriveNameFromEmail(user.email) || "User",
           },
         };
       },
@@ -171,7 +179,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
 
 /**
  * Request hook (`hooks.before`) that re-checks the SSO license on every SSO callback — parity with
- * `handleSsoCallback`'s runtime checks (sso-handlers.ts:492-523). Provider registration is gated by
+ * the legacy NextAuth SSO callback's runtime license checks. Provider registration is gated by
  * `ENTERPRISE_LICENSE_KEY` (broad); this verifies the specific `sso`/`saml` feature flags on every
  * callback. It runs for ALL SSO sign-ins (including existing users, who skip `user.create` and so
  * aren't seen by the databaseHooks gate) and catches a license that changes at runtime. Blocks with
