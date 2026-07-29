@@ -74,5 +74,16 @@ export interface WorkflowApiContext {
     surveyId: string;
     endingCardIds: string[];
   }) => Promise<TriggerSurveyCheck>;
+  /**
+   * Injected recipient allowlist check (the adapter queries the organization's members) so the
+   * package stays user/organization-agnostic. `send_email` actions may address a literal email; to
+   * prevent a workflow from silently forwarding response data to an arbitrary external inbox
+   * (ENG-2029), enable/test confirm every literal recipient belongs to the workspace's organization.
+   * Given the literal recipient emails on a definition, it returns the subset that is NOT allowed.
+   */
+  verifyRecipientsAllowed: (input: {
+    workspaceId: string;
+    emails: string[];
+  }) => Promise<{ disallowedEmails: string[] }>;
   recordAudit?: (detail: WorkflowAuditDetail) => void | Promise<void>;
 }

@@ -22,6 +22,21 @@ properties:
 
       (contact-info elements resolve index [2]) — the same semantics as the
       Follow-ups `to` field.
+
+
+      A **literal** address must belong to a member of this organization.
+      Enabling a workflow whose
+
+      literal recipient is not an organization member returns **422**
+      `workflow_not_executable`, the
+
+      dry run reports a `recipient_not_allowed` problem, and the runner refuses
+      to send to it — so a
+
+      workflow cannot forward response data to an arbitrary external inbox. An
+      element-id `to`
+
+      resolves to the respondent's own address and is never allowlist-checked.
   from:
     type: string
     format: email
