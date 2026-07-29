@@ -14,14 +14,10 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { ListChecksIcon, PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
+import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { TWorkflowTestProblem } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { testWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import {
   WORKFLOW_CANVAS_NODE_TYPE,
   WORKFLOW_CANVAS_SNAP_GRID,
@@ -48,12 +44,12 @@ import {
   workflowFlowNodesAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { Button } from "@/modules/ui/components/button";
-import { WorkflowTestResultDialog } from "../workflow-test-result-dialog";
 import { AddButtonEdge } from "./add-button-edge";
 import { CanvasControls } from "./canvas-controls";
 import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
 import "./workflow-canvas.css";
+import { WorkflowValidationStatus } from "./workflow-validation-status";
 
 const NODE_TYPES: NodeTypes = {
   [WORKFLOW_CANVAS_NODE_TYPE]: WorkflowCanvasNode,
@@ -76,11 +72,9 @@ const INSPECTOR_REFIT_PAN_MS = INSPECTOR_RESIZE_SETTLE_MS / 4;
 
 interface WorkflowCanvasProps {
   isEditable: boolean;
-  /** Workspace write permission. Distinct from `isEditable` (which is also false when enabled). */
-  isReadOnly: boolean;
 }
 
-const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanvasProps>) => {
+const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) => {
   const { t } = useTranslation();
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
@@ -97,17 +91,14 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
   const { fitView } = useReactFlow();
-  // Dry-run testing works in every state except archived (soft-deleted) — the point of a dry
-  // run is validating the setup BEFORE going live. Requires workspace write access: testWorkflow
-  // authorizes with readWrite, so a read-only user would only get a 403. Mirrors the API guard.
-  const isTestable = !isReadOnly && Boolean(workflow) && workflow?.status !== "archived";
-  const [isTesting, setIsTesting] = useState(false);
-  // null = dialog closed; a non-empty array opens the problems dialog (the ok case is a toast).
-  const [testProblems, setTestProblems] = useState<TWorkflowTestProblem[] | null>(null);
   // `isEditable` (canEditDefinition) is the API-side gate. The drag/pointer mode toggle is the
   // user-driven gate layered on top: even when permissions allow editing, the canvas stays
   // non-mutable until the user switches to pointer mode.
   const canMutate = isEditable && !isLocked;
+  // Shared by the picker overlay and the validation chip: while the centered add-trigger picker
+  // is the canvas's main event, the chip would only restate it ("1 problem: no trigger"), so the
+  // two are mutually exclusive by construction.
+  const isTriggerPickerVisible = Boolean(definition && !definition.trigger && isEditable);
 
   // Shared flag owned by the builder page (server context OR workspace survey-list membership),
   // so a just-picked survey clears the node's setup flag immediately.
@@ -193,26 +184,6 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
     );
   }, [canMutate, setDefinition, fitView]);
 
-  const handleRunWorkflow = async () => {
-    // Dry-run the workflow: validate its survey + ending references without running it or causing
-    // side effects. Valid → toast; problems → dialog listing them. The button is disabled unless
-    // the workflow is testable (enabled/disabled), so `workflow` is always present here.
-    if (!workflow || isTesting) return;
-    setIsTesting(true);
-    try {
-      const result = await testWorkflow(workflow.id);
-      if (result.ok) {
-        toast.success(t("workspace.workflows.test_success"));
-      } else {
-        setTestProblems(result.problems);
-      }
-    } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.test_failed")));
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
   // Pan mode is the pan/browse tool: nodes are fully inert (no click, selection, or drag), so
   // switching into it also clears any leftover selection. Pointer mode is the select/inspect
   // tool and is available to everyone — mutations stay gated by status/permissions (canMutate).
@@ -232,18 +203,10 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         // canvas with it. 220px ≈ page chrome above the canvas; kept in sync with loading.tsx.
         "relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-        <Button
-          variant="secondary"
-          onClick={handleRunWorkflow}
-          loading={isTesting}
-          disabled={!isTestable || isTesting}>
-          {t("workspace.workflows.validate")}
-          <ListChecksIcon className="size-4" />
-        </Button>
-        {/* The inspector only ever shows a node's config now, so the collapse toggle is only
-            offered while one is open. */}
-        {isNodeConfigOpen ? (
+      {/* The inspector only ever shows a node's config now, so the collapse toggle is only
+          offered while one is open. */}
+      {isNodeConfigOpen ? (
+        <div className="absolute top-4 right-4 z-10">
           <Button
             variant="outline"
             size="icon"
@@ -257,8 +220,8 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
             onClick={toggleInspector}>
             {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}
@@ -292,7 +255,7 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
       {/* Empty drafts start with no nodes: the centered picker is how the trigger gets added.
           Gated on status-based editability (not the layout lock) — adding nodes is a content
           edit, same as the node config forms. */}
-      {definition && !definition.trigger && isEditable && (
+      {isTriggerPickerVisible && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
           <div className="pointer-events-auto">
             <WorkflowAddTriggerPicker onSelect={addTrigger} />
@@ -306,13 +269,10 @@ const WorkflowCanvasContent = ({ isEditable, isReadOnly }: Readonly<WorkflowCanv
         onPanMode={handlePanMode}
         onPointerMode={handlePointerMode}
       />
-      <WorkflowTestResultDialog
-        open={testProblems !== null}
-        onOpenChange={(open) => {
-          if (!open) setTestProblems(null);
-        }}
-        problems={testProblems ?? []}
-      />
+      {/* Always-on live validation state (replaces the former manual "Validate" dry-run button):
+          a passive badge while valid, a button listing the problems while not. Suppressed while
+          the add-trigger picker is up so a fresh draft isn't greeted with a problem count. */}
+      {!isTriggerPickerVisible && <WorkflowValidationStatus />}
     </div>
   );
 };
