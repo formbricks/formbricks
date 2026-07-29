@@ -468,9 +468,8 @@ const ensureHobbySubscription = async (
   if (!stripeClient) return;
   const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
 
-  // Include subscriptionCount so the key is stable across concurrent calls (same
-  // count → same key → Stripe deduplicates) but changes after a cancellation
-  // (count increases → new key → allows legitimate re-creation).
+  // subscriptionCount in the key: stable across concurrent calls (dedup), but bumps after a
+  // cancellation so re-creation isn't blocked by the old key.
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
@@ -481,10 +480,7 @@ const ensureHobbySubscription = async (
   );
 };
 
-/**
- * Checks whether the given email has already used a Pro trial on any Stripe customer.
- * Searches all customers with that email and inspects their subscription history.
- */
+/** Whether this email has already used a Pro trial, across all Stripe customers sharing it. */
 const hasEmailUsedProTrial = async (email: string, proProductId: string): Promise<boolean> => {
   if (!stripeClient) return false;
 
@@ -590,9 +586,8 @@ export const createPaidPlanCheckoutSession = async (input: {
       address: "auto",
       name: "auto",
     },
-    // Carry the purchased plan so the confirmation page can force a Stripe sync (the read-through
-    // sync only refreshes a >5min-stale snapshot, so a fresh post-checkout snapshot would otherwise
-    // keep serving the old plan) before returning to billing.
+    // Carries the purchased plan so the confirmation page can force a Stripe sync — the read-
+    // through sync only refreshes a >5min-stale snapshot and would otherwise serve the old plan.
     success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1&plan=${input.plan}`,
     cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
     metadata: {
@@ -660,29 +655,21 @@ export type TUpgradePaymentConfirmation = {
   requiresAction: boolean;
 };
 
-// Pro trials can't use the paid-only features (follow-ups, custom links) until the subscription
-// leaves "trialing". A trial user who wants them immediately can convert to paid now; when they do,
-// we credit the value of the trial days they have NOT used yet against that first invoice, so they
-// pay a reduced amount now and the normal price from the next cycle onward. Each unused day is
-// valued at the plan's daily rate (list price / days in the billing period). The result is clamped
-// to [0, full charge - MIN_TRIAL_CONVERSION_CHARGE_CENTS] so a credit can never exceed — or invert —
-// the amount being billed, and can never zero the invoice out (see below).
+// Converting a Pro trial to paid now credits the unused trial days against the first invoice: each
+// day is valued at list price / days-in-period, clamped to [0, charge - MIN_TRIAL_CONVERSION_CHARGE_CENTS]
+// so the credit can't exceed, invert, or zero out the charge (see the constant below).
 //
-// The daily-rate basis MUST match the interval of the price being charged: `fullChargeCents` is the
-// SELECTED interval's list price, so a monthly conversion divides the remaining days by 30 and a
-// yearly conversion by 365. Using 30 for a yearly price would over-credit by ~12x.
+// The days-in-period basis MUST match the charged interval (30 for monthly, 365 for yearly) — using
+// 30 against a yearly price would over-credit by ~12x.
 export const TRIAL_CREDIT_BILLING_PERIOD_DAYS: Record<TCloudBillingInterval, number> = {
   monthly: 30,
   yearly: 365,
 };
 
-// The conversion invoice MUST stay payable. Stripe settles a zero-amount invoice without attempting
-// a charge, so a credit that covered the whole charge would flip the subscription to active paid on a
-// card that was never authorized — exactly the property `payment_behavior: "error_if_incomplete"`
-// exists to enforce (ENG-1968). With a 14-day trial against a 30-day basis the credit tops out near
-// half the charge, so this floor is not reachable today; it is here so the invariant survives a
-// longer `trial_period_days` or a `trial_end` extended by hand in the Stripe dashboard. One cent is
-// enough to force a real authorization.
+// Keeps the invoice payable: Stripe settles a $0 invoice without charging, which would flip the
+// subscription to paid on an unauthorized card — the opposite of what `error_if_incomplete` enforces
+// (ENG-1968). Unreachable with today's 14-day trial / 30-day basis, but guards a longer trial or a
+// manually extended trial_end. 1 cent is enough to force real authorization.
 const MIN_TRIAL_CONVERSION_CHARGE_CENTS = 1;
 
 export const computeUnusedTrialCreditCents = ({
@@ -703,17 +690,14 @@ export const computeUnusedTrialCreditCents = ({
   if (remainingDays <= 0) return 0;
   const cappedDays = Math.min(remainingDays, billingPeriodDays);
   const creditCents = Math.round((fullChargeCents * cappedDays) / billingPeriodDays);
-  // Leave at least MIN_TRIAL_CONVERSION_CHARGE_CENTS payable so the conversion always authorizes the
-  // card (see the constant's comment) — a fully-credited invoice would settle without a charge.
+  // Leaves MIN_TRIAL_CONVERSION_CHARGE_CENTS payable so a fully-credited invoice still authorizes the card.
   const maxCreditCents = Math.max(0, fullChargeCents - MIN_TRIAL_CONVERSION_CHARGE_CENTS);
   return Math.max(0, Math.min(creditCents, maxCreditCents));
 };
 
-// Raw (pre-credit) amount the immediate conversion invoice would bill, straight from Stripe — so it
-// includes tax and any metered usage lines, which a catalog list price does not. Shared by the
-// trial-conversion preview and the plain-upgrade preview so the number the user sees matches the
-// charge. Returns null only when Stripe is not configured; it throws if Stripe cannot price the
-// invoice, which callers that need a fallback must catch.
+// Raw pre-credit invoice amount from Stripe (includes tax and metered usage, unlike the catalog list
+// price). Shared by the trial-conversion and plain-upgrade previews. Returns null only when Stripe
+// isn't configured; throws if Stripe can't price the invoice — callers needing a fallback must catch.
 const previewFullConversionChargeCents = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
   customerId: string,
@@ -729,11 +713,10 @@ const previewFullConversionChargeCents = async (
     subscription_details: {
       items: [...existingDeletions, ...targetItems],
       proration_behavior: "always_invoice",
-      // ONLY for a trialing subscription: ending the trial resets the cycle to now and bills a full
-      // period, so the preview has to mirror that. It must NOT be sent otherwise — the real update
-      // for a non-trialing subscription (see updateSubscriptionItemsImmediately) sends no trial_end,
-      // and setting one re-anchors the billing cycle, which would turn a mid-cycle proration preview
-      // into a full-period charge and over-state the amount on every ordinary paid upgrade.
+      // Only for trialing: ending the trial resets the cycle and bills a full period, so the preview
+      // must mirror that. Never send it otherwise — trial_end re-anchors the billing cycle, which
+      // would turn an ordinary mid-cycle proration into a full-period charge (matches the real update
+      // in updateSubscriptionItemsImmediately, which sends no trial_end when not trialing).
       ...(subscription.status === "trialing" ? { trial_end: "now" as const } : {}),
     },
   });
@@ -741,17 +724,14 @@ const previewFullConversionChargeCents = async (
 };
 
 /**
- * The plan's list (base) price — the basis the unused-trial credit is computed against, and the
- * fallback gross for the confirmation modal when Stripe can't preview the invoice (a preview can
- * fail on usage-based line items, which is why this exists at all).
+ * The plan's list (base) price — the credit's basis and the confirmation-modal fallback gross when
+ * Stripe can't preview the invoice (fails on usage-based line items).
  *
- * This is deliberately the credit's basis rather than the displayed gross: the credit values unused
- * trial DAYS at the plan's daily rate, so it must divide a tax-exclusive list price. Deriving it from
- * a tax-inclusive invoice total would inflate the credit by the tax rate.
+ * Deliberately tax-exclusive: the credit values unused trial days off the list price, and deriving it
+ * from a tax-inclusive invoice total would inflate the credit by the tax rate.
  *
- * Returns null when the price carries no flat `unit_amount` (e.g. a tiered base price). Callers must
- * then skip the credit and fall back to amount-less copy — never silently treat it as 0, which would
- * render "Pay $0.00 now" in a purchase confirmation.
+ * Returns null when the price has no flat `unit_amount` (e.g. tiered) — callers must skip the credit
+ * and fall back to amount-less copy, never treat null as 0 ("Pay $0.00 now").
  */
 const getTrialConversionGrossCents = async (
   targetPlan: Exclude<TStandardCloudPlan, "hobby">,
@@ -771,8 +751,8 @@ const getTrialConversionGrossCents = async (
   };
 };
 
-// Credit currently sitting on the customer's balance in `currency`, in cents. Stripe models a credit
-// as a NEGATIVE balance and keeps one balance PER CURRENCY, so only the matching bucket counts.
+// Credit on the customer balance in `currency`, cents. Stripe stores credit as a NEGATIVE balance
+// per-currency, so only the matching bucket counts.
 const getAvailableCreditCents = async (customerId: string, currency: string): Promise<number> => {
   if (!stripeClient) return 0;
   const customer = await stripeClient.customers.retrieve(customerId);
@@ -782,17 +762,15 @@ const getAvailableCreditCents = async (customerId: string, currency: string): Pr
 };
 
 /**
- * Applies the unused-trial-days credit to the customer balance before a Pro-trial conversion, and
- * returns a reversal function. The caller MUST invoke the reversal if the conversion fails, so a
- * declined/aborted conversion never leaves a stranded credit that would silently discount a future
- * invoice. Returns null when no credit applies (no trial days left, no charge, Stripe disabled).
+ * Applies the unused-trial-days credit to the customer balance and returns a reversal function the
+ * caller MUST invoke on a failed conversion, so a stranded credit never silently discounts a future
+ * invoice. Returns null when no credit applies.
  *
- * Throws OperationNotAllowedError("trial_credit_unavailable") if the credit does not actually land on
- * the balance. That happens when Stripe replays an idempotency key from a previous attempt that was
- * already reversed: the API returns the original transaction without executing it, so the balance
- * stays empty. Charging anyway would bill the FULL price behind a confirmation modal that quoted the
- * discounted one, so this fails loudly instead. (The key includes the amount, so a retry on a later
- * day — where the credit has tapered — gets a fresh key and succeeds normally.)
+ * Throws OperationNotAllowedError("trial_credit_unavailable") if the credit doesn't land — e.g. Stripe
+ * replays an idempotency key from an already-reversed attempt, returning the old transaction without
+ * re-executing it. Charging anyway would bill full price behind a modal quoting the discount, so this
+ * fails loudly instead. (The key includes the amount, so a later-day retry with a tapered credit gets
+ * a fresh key.)
  */
 const applyUnusedTrialCredit = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
@@ -816,19 +794,15 @@ const applyUnusedTrialCredit = async (
   });
   if (creditCents <= 0) return null;
 
-  // The invoice is denominated in the SUBSCRIPTION's currency, and customer balances are per-currency
-  // — so the credit has to be posted in that same currency or Stripe will never apply it to the
-  // invoice (the customer would be charged in full AND left holding a stranded credit). The catalog
-  // price's currency is only a fallback: for a multi-currency price it is the default, not
-  // necessarily what this customer is billed in.
+  // Must post in the subscription's currency (balances are per-currency) or Stripe never applies the
+  // credit — charging in full while stranding it. The catalog price's currency is only a fallback
+  // default, not necessarily what this customer is billed in.
   const currency = subscription.currency || listPrice.currency || "usd";
-  // Idempotency key scoped to this trial AND this amount: a double-submit computes the same amount and
-  // is deduplicated, while a retry on a later day (tapered credit) gets a distinct key instead of
-  // colliding with the first attempt's — a same-key-different-amount request is a hard Stripe error
-  // that would block the conversion entirely.
+  // Key scoped to trial + amount: a double-submit recomputes the same amount and dedups; a later-day
+  // retry (tapered credit) gets a distinct key rather than a same-key-different-amount collision,
+  // which Stripe hard-errors on.
   const keySuffix = `${subscription.id}-${subscription.trial_end ?? "na"}-${creditCents}`;
-  // Measured as a delta so an unrelated pre-existing credit on the account can't mask a replayed
-  // (and therefore not-applied) credit.
+  // Delta measurement: an unrelated pre-existing credit can't mask a replayed (not-applied) one.
   const creditBeforeCents = await getAvailableCreditCents(input.customerId, currency);
   await stripeClient.customers.createBalanceTransaction(
     input.customerId,
@@ -860,8 +834,7 @@ const applyUnusedTrialCredit = async (
 
   return async () => {
     if (!stripeClient) return;
-    // Idempotent reversal keyed off the SAME trial and amount as the credit, so a retried conversion
-    // cannot post a second +credit against an already-reversed pair and net-DEBIT the customer.
+    // Keyed off the same trial+amount as the credit so a retry can't double-reverse and net-debit the customer.
     await stripeClient.customers.createBalanceTransaction(
       input.customerId,
       {
@@ -875,10 +848,8 @@ const applyUnusedTrialCredit = async (
   };
 };
 
-// Stripe error codes that mean "this card can't be charged off-session without the cardholder
-// authenticating". With payment_behavior: "error_if_incomplete" the subscription update is rolled
-// back, so there is nothing for the browser to confirm — the only useful outcome is telling the user
-// why, which needs an error distinct from a plain decline.
+// Codes meaning the card needs cardholder authentication off-session. error_if_incomplete rolls the
+// update back (no PaymentIntent survives to confirm), so the only useful action is a distinct error.
 const CARD_AUTHENTICATION_ERROR_CODES = new Set([
   "authentication_required",
   "subscription_payment_intent_requires_action",
@@ -918,18 +889,14 @@ const updateSubscriptionItemsImmediately = async (
     });
   }
 
-  // Converting a trial must bill the card now, not defer to trial_end (a stolen-card trial would
-  // otherwise keep paid access for the rest of the ~14-day window). End the trial and switch plans
-  // in a SINGLE update so the card is invoiced exactly once for the target plan. Doing it as two
-  // updates (end trial, then change items) double-invoices — ending the trial bills the OLD plan and
-  // the item change then bills the new one. error_if_incomplete charges synchronously and throws on
-  // a decline, so a bad card blocks the upgrade instead of granting access on an unpaid invoice.
+  // Ends the trial and switches plans in a SINGLE update so the card is billed exactly once for the
+  // target plan — two updates would double-invoice (trial-end bills the old plan, item change bills
+  // the new one). error_if_incomplete charges synchronously and throws on decline, so a bad card
+  // blocks the upgrade instead of granting access on an unpaid invoice.
   //
-  // The trade-off of error_if_incomplete is that a card needing off-session 3DS errors instead of
-  // authenticating: this charge is on-session, but the update is rolled back before the browser could
-  // confirm anything, so there is no PaymentIntent left to complete. Rather than let that surface as
-  // "something went wrong", translate it into a distinct error the UI can explain (see
-  // toTrialConversionError) so the user is told to use a card that doesn't require authentication.
+  // Trade-off: a card needing off-session 3DS also errors here (the update rolls back before the
+  // browser can confirm, leaving no PaymentIntent) — translated into a distinct error via
+  // toTrialConversionError so the UI can ask for a non-3DS card.
   if (subscription.status === "trialing") {
     try {
       await stripeClient.subscriptions.update(subscription.id, {
@@ -1170,10 +1137,8 @@ const scheduleSubscriptionPlanChange = async (
 };
 
 /**
- * Whether a payment method has been collected for the subscription. Checks the subscription
- * default first, then falls back to the customer-level default so a card saved on the customer
- * (but not yet attached to the subscription) still counts — this avoids falsely blocking a
- * legitimately card-backed org on a paid switch.
+ * Whether a payment method is on file: subscription default first, falling back to the customer
+ * default so a card saved on the customer but not yet attached to the subscription still counts.
  */
 const hasCollectedPaymentMethod = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
@@ -1196,10 +1161,9 @@ const hasCollectedPaymentMethod = async (
 };
 
 /**
- * Cancels a no-card trial at period end so the org lands on Hobby without ever being converted
- * into a billable schedule. Releases any stray schedule first (a schedule would otherwise rebuild
- * the trial into a billable Pro phase), then sets cancel_at_period_end so Stripe cancels the
- * trialing subscription instead of charging it — no schedule, no card required.
+ * Lets a trial lapse to Hobby without ever becoming billable: releases any stray schedule (which
+ * would otherwise rebuild the trial into a billable Pro phase), then sets cancel_at_period_end so
+ * Stripe cancels the trial instead of charging it.
  */
 const cancelTrialToHobbyAtPeriodEnd = async (
   organizationId: string,
@@ -1238,8 +1202,8 @@ const cancelTrialToHobbyAtPeriodEnd = async (
   return pendingChange;
 };
 
-// Reverses an unused-trial credit best-effort: swallows and logs any failure so it never masks the
-// original conversion error. Extracted so the conversion helper's catch stays flat (Sonar CC).
+// Best-effort credit reversal: swallows/logs failures so they never mask the original conversion
+// error. Extracted to keep the conversion helper's catch flat (Sonar CC).
 const reverseTrialCreditSafely = async (
   reverseTrialCredit: (() => Promise<void>) | null,
   organizationId: string,
@@ -1256,10 +1220,9 @@ const reverseTrialCreditSafely = async (
   }
 };
 
-// Executes an immediate in-place upgrade or a trial-to-paid conversion: applies the unused-trial
-// credit for a same-plan+interval "continue" (reversing it if the charge fails), runs the single
-// Stripe update that bills now, then clears any superseded pending downgrade. Extracted from
-// switchOrganizationToCloudPlan to keep that function within Sonar's cognitive-complexity budget.
+// Immediate upgrade / trial conversion: applies the unused-trial credit for a same-plan+interval
+// "continue" (reversed on failure), bills via a single Stripe update, then clears any pending
+// downgrade. Extracted from switchOrganizationToCloudPlan for Sonar's complexity budget.
 const performImmediateUpgradeOrTrialConversion = async (input: {
   organizationId: string;
   customerId: string;
@@ -1278,10 +1241,8 @@ const performImmediateUpgradeOrTrialConversion = async (input: {
 }> => {
   const { organizationId, customerId, subscription, targetPlan, targetInterval } = input;
 
-  // Converting a Pro trial to the SAME plan+interval being trialed ("continue with Pro"): credit the
-  // unused trial days against this first invoice so the user pays a reduced amount now, unlocks
-  // features immediately, and is billed the full price next cycle. A tier or interval change out of a
-  // trial (e.g. Pro trial -> Scale, or monthly -> yearly) is a genuine change billed in full.
+  // "Continue with Pro" (same plan+interval as the trial) credits unused trial days on this invoice;
+  // a tier or interval change (e.g. Pro -> Scale, monthly -> yearly) is a genuine change billed in full.
   const isProTrialContinue =
     input.isTrialConversion &&
     input.currentPlan === targetPlan &&
@@ -1302,19 +1263,15 @@ const performImmediateUpgradeOrTrialConversion = async (input: {
   try {
     confirmation = await updateSubscriptionItemsImmediately(subscription, targetPlan, targetInterval);
   } catch (error) {
-    // The charge failed (declined card, SCA, etc.) and the subscription stays trialing. Reverse the
-    // credit so it can never strand on the customer balance and silently discount a later invoice.
+    // Charge failed (decline/SCA) and the subscription stays trialing — reverse the credit so it can't strand.
     await reverseTrialCreditSafely(reverseTrialCredit, organizationId, subscription.id);
     throw error;
   }
 
-  // This immediate upgrade / trial conversion supersedes any pending downgrade — e.g. a "Return to
-  // Hobby" scheduled during a no-card trial, which is tracked via cancel_at_period_end (no schedule)
-  // rather than a subscription schedule. Clear it unconditionally: release any schedule, undo
-  // cancel_at_period_end, and null the pending-change snapshot, so a stale "Scheduled" badge can't
-  // survive the upgrade. (updateSubscriptionItemsImmediately already cleared cancel_at_period_end for
-  // the trialing case; repeating it here is safe, and this also nulls the DB snapshot the schedule-
-  // only guard previously skipped.)
+  // Supersedes any pending downgrade (e.g. a no-card-trial "Return to Hobby" via cancel_at_period_end,
+  // no schedule) unconditionally: releases any schedule, undoes cancel_at_period_end, and nulls the
+  // pending-change snapshot so a stale "Scheduled" badge can't survive the upgrade. Safe to repeat
+  // even though updateSubscriptionItemsImmediately already cleared cancel_at_period_end for trialing.
   await clearPendingPlanState(organizationId, subscription);
 
   return {
@@ -1330,9 +1287,8 @@ export const switchOrganizationToCloudPlan = async (input: {
   customerId: string;
   targetPlan: TStandardCloudPlan;
   targetInterval: TCloudBillingInterval;
-  // When true, a same-plan trial conversion credits the unused trial days (the no-card "Continue with
-  // Pro, pay now" perk). A direct card-on-file "Upgrade now" passes false and is billed the full
-  // price, like any other in-place upgrade.
+  // true credits unused trial days on a same-plan conversion (the no-card "Continue with Pro, pay
+  // now" perk); false bills full price like any other in-place upgrade.
   applyTrialCredit?: boolean;
 }): Promise<{
   mode: "immediate" | "scheduled";
@@ -1344,8 +1300,7 @@ export const switchOrganizationToCloudPlan = async (input: {
   const currentPlan = resolveCloudPlanFromSubscription(subscription);
   const currentInterval = resolveSubscriptionInterval(subscription);
 
-  // Non-standard plans (custom, unknown) don't follow the normal tier hierarchy,
-  // so any switch from them to a standard plan should apply immediately.
+  // Non-standard plans (custom, unknown) skip the tier hierarchy — any switch off them applies immediately.
   const isNonStandardCurrentPlan = currentPlan === "custom" || currentPlan === "unknown";
   const isImmediateUpgrade =
     isNonStandardCurrentPlan || CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
@@ -1359,19 +1314,15 @@ export const switchOrganizationToCloudPlan = async (input: {
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
   }
 
-  // A trialing subscription downgrading to Hobby just lets the trial lapse to Hobby (cancel at
-  // period end) — never rebuild it into a schedule. The scheduled path rebuilds phases without the
-  // trial guard, turning phase 1 into a billable Pro phase (charging the trial early) and phase 2
-  // into Hobby; that schedule then also shows a stale hobby "Scheduled" badge that can survive a
-  // later upgrade. Cancelling at period end is correct whether or not a card is on file: a card-
-  // backed trial that opts back to Hobby should still simply not convert to paid.
+  // Trial -> Hobby just lets the trial lapse (cancel_at_period_end) — never build a schedule: the
+  // scheduled path lacks the trial guard, so phase 1 would become a billable Pro phase (charging the
+  // trial early) and leave a stale "Scheduled" badge. Correct regardless of card on file.
   if (subscription.status === "trialing" && input.targetPlan === "hobby") {
     const pendingChange = await cancelTrialToHobbyAtPeriodEnd(input.organizationId, subscription);
     return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
   }
 
-  // A trialing subscription with no payment method must never be converted into a billable paid
-  // subscription: reject the paid switch and route it through the add-card checkout instead.
+  // No card on file: never convert a trial to billable — reject and route through add-card checkout instead.
   if (
     subscription.status === "trialing" &&
     !(await hasCollectedPaymentMethod(subscription, input.customerId))
@@ -1423,10 +1374,9 @@ export const previewImmediateUpgradeCharge = async (input: {
 
   const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
 
-  // Only a Pro-trial "continue" (same plan AND interval being trialed) gets the unused-trial credit,
-  // so the modal must net it off there and nowhere else — matching switchOrganizationToCloudPlan and
-  // the client isCurrentPlanSelection predicate. A trial monthly -> yearly switch is a genuine plan
-  // change, not a "continue", and is previewed (and charged) at full price.
+  // Only a Pro-trial "continue" (same plan AND interval) nets off the credit here, matching
+  // switchOrganizationToCloudPlan and the client's isCurrentPlanSelection predicate — a trial
+  // monthly -> yearly switch is a genuine change, previewed and charged at full price.
   const currentPlan = resolveCloudPlanFromSubscription(subscription);
   const currentInterval = resolveSubscriptionInterval(subscription);
   const isProTrialContinue =
@@ -1436,9 +1386,8 @@ export const previewImmediateUpgradeCharge = async (input: {
     input.applyTrialCredit === true;
 
   if (isProTrialContinue) {
-    // The credit is always computed from the plan's LIST price, identically to applyUnusedTrialCredit,
-    // so the modal's credit line matches the balance transaction exactly. Bail out to amount-less copy
-    // if that price can't be resolved rather than quoting a made-up number.
+    // Computed from the LIST price, identically to applyUnusedTrialCredit, so the modal's credit line
+    // matches the balance transaction. Bail to amount-less copy if the price can't be resolved.
     const listPrice = await getTrialConversionGrossCents(input.targetPlan, input.targetInterval);
     if (!listPrice) return null;
 
@@ -1449,11 +1398,9 @@ export const previewImmediateUpgradeCharge = async (input: {
       interval: input.targetInterval,
     });
 
-    // The amount actually charged is the INVOICE total minus the credit, and the invoice total is not
-    // the list price: ending the trial also bills tax and any metered response usage accrued during
-    // the trial, and the balance credit comes off that full total. Prefer Stripe's own preview for it
-    // (it is the only source that knows the tax), and fall back to the list price if the preview fails
-    // — which it can, on usage-based line items.
+    // Charged amount is INVOICE total minus credit — not the list price, since ending the trial also
+    // bills tax and metered usage. Prefer Stripe's own preview (only source that knows tax); fall back
+    // to the list price if the preview fails (it can, on usage-based line items).
     const invoiceTotal = await previewFullConversionChargeCents(
       subscription,
       input.customerId,
@@ -1523,9 +1470,8 @@ const NO_SETUP_UPGRADE: TSetupCheckoutUpgradeResult = {
 };
 
 /**
- * Client-invoked finalize for a completed setup-mode Checkout upgrade. Attaches the saved
- * card to the customer + subscription synchronously (no dependency on webhook timing) and
- * then applies the upgrade, returning any client_secret so the browser can complete 3DS.
+ * Finalizes a completed setup-mode Checkout upgrade: attaches the saved card synchronously (no
+ * webhook dependency), applies the upgrade, and returns any client_secret for 3DS completion.
  */
 export const applySetupCheckoutUpgrade = async (input: {
   organizationId: string;
@@ -1580,8 +1526,7 @@ export const applySetupCheckoutUpgrade = async (input: {
     customerId,
     targetPlan,
     targetInterval,
-    // This is the "Continue with Pro, pay now" flow (add a card, then convert): credit the unused
-    // trial days. A same-plan conversion here gets the reduced first charge.
+    // "Continue with Pro, pay now" flow (add card, then convert): credit unused trial days.
     applyTrialCredit: true,
   });
 
@@ -1630,10 +1575,7 @@ const ensureOrganizationBillingRecord = async (
   return mapBillingRecord(billing);
 };
 
-/**
- * Finds the email of the organization owner by looking up the membership with role "owner"
- * and joining to the user table.
- */
+/** Organization owner's user info, via the membership with role "owner". */
 const getOrganizationOwner = async (
   organizationId: string
 ): Promise<{ id: string; email: string; name: string | null } | null> => {
@@ -1679,8 +1621,7 @@ export const ensureStripeCustomerForOrganization = async (
 
   const defaultBilling = getDefaultOrganizationBilling();
 
-  // Always create/update the billing record with the resolved Stripe customer ID.
-  // Using upsert so the billing row is created if it doesn't exist yet.
+  // Upsert so the billing row exists and carries the resolved Stripe customer ID.
   await prisma.organizationBilling.upsert({
     where: { organizationId: organization.id },
     create: {
@@ -1828,9 +1769,8 @@ const emitSubscriptionLifecycleEvent = async (input: {
     return;
   }
 
-  // Best-effort: the billing snapshot is already persisted, so a failure here (owner lookup DB blip,
-  // etc.) must not reject the sync — a retried sync would see the new state and detect no transition,
-  // permanently dropping the event. Swallow and log instead.
+  // Best-effort: the snapshot is already persisted, so a failure here must not reject the sync — a
+  // retry would see no transition and permanently drop the event. Swallow and log instead.
   try {
     const owner = await getOrganizationOwner(organizationId);
     if (!owner) {
@@ -1903,9 +1843,8 @@ export const syncOrganizationBillingFromStripe = async (
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const pendingChange = await resolvePendingPlanChange(subscription);
-  // Match the guard in switchOrganizationToCloudPlan / changeBillingPlanAction: a card saved on the
-  // customer (but not yet attached to the subscription) still counts, so the cached flag must not
-  // falsely block a legitimately card-backed org on a paid switch.
+  // Matches the guard in switchOrganizationToCloudPlan: a card on the customer but not yet attached to
+  // the subscription still counts, so the cached flag can't falsely block a card-backed org.
   const hasPaymentMethod = subscription ? await hasCollectedPaymentMethod(subscription, customerId) : false;
 
   const transition = resolveSubscriptionLifecycleTransition(
@@ -1936,9 +1875,8 @@ export const syncOrganizationBillingFromStripe = async (
       hasPaymentMethod,
       features: featureLookupKeys,
       pendingChange,
-      // Clear the payment-failure banner only when this sync reflects a real settlement:
-      // an authoritative webhook event or an observed plan change. A read-through sync
-      // triggered by snapshot staleness must not silently dismiss an unresolved failure.
+      // Clears the payment-failure banner only on a real settlement (webhook event or observed plan
+      // change) — a staleness-triggered read-through sync must not silently dismiss a failure.
       paymentAttemptError:
         event || cloudPlan !== existingStripeSnapshot?.plan
           ? null
@@ -1976,17 +1914,10 @@ export const syncOrganizationBillingFromStripe = async (
 };
 
 /**
- * Optimistically add a feature lookup key to OrganizationBilling.stripe.features.
- *
- * Used immediately after a successful subscription change (e.g. starting a Pro
- * trial) so the next page render sees the feature without waiting for Stripe's
- * entitlements API to propagate.
- *
- * Only the features array is mutated. Every other field on the stripe snapshot
- * (lastSyncedAt, subscriptionStatus, plan, interval, trialEnd, …) is preserved
- * verbatim by spreading the existing snapshot. The subsequent
- * customer.subscription.created webhook re-syncs the full snapshot from Stripe
- * and is expected to converge on the same value in the common case.
+ * Optimistically adds a feature lookup key to stripe.features right after a subscription change
+ * (e.g. starting a trial), so the next render sees it before Stripe's entitlements API propagates.
+ * Only the features array is mutated — everything else is preserved verbatim; the subsequent
+ * customer.subscription.created webhook re-syncs the full snapshot and converges on the same value.
  */
 export const addOptimisticBillingFeature = async (organizationId: string, feature: string): Promise<void> => {
   const billing = await getOrganizationBillingFromDatabase(organizationId);
@@ -2089,9 +2020,8 @@ export const getOrganizationBillingWithReadThroughSync = async (
 };
 
 /**
- * Cleans up a Stripe customer after organization deletion by cancelling all active
- * subscriptions. The customer object is intentionally kept so that trial usage history
- * is preserved — this prevents the same email from claiming a free trial again.
+ * Cancels all active subscriptions after org deletion but keeps the Stripe customer itself, so trial
+ * history is preserved and the same email can't claim a free trial again.
  */
 export const cleanupStripeCustomer = async (stripeCustomerId: string): Promise<void> => {
   if (!stripeClient) return;

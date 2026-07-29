@@ -124,8 +124,8 @@ const ZGetUpgradeChargePreviewAction = z.object({
   organizationId: ZId,
   targetPlan: z.enum(["pro", "scale"]),
   targetInterval: ZCloudBillingInterval,
-  // True only for the no-card "Continue with Pro, pay now" modal, which nets off the unused-trial
-  // credit. The card-on-file "Upgrade now" confirm previews the full price.
+  // True only for no-card "Continue with Pro, pay now" (nets off unused-trial credit);
+  // card-on-file "Upgrade now" previews full price.
   applyTrialCredit: z.boolean().optional(),
 });
 
@@ -392,9 +392,8 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       throw new ResourceNotFoundError("OrganizationBilling", organizationId);
     }
 
-    // Mirror the client rule server-side: a paid plan change requires a collected payment method.
-    // The client routes no-card paid changes through the add-card checkout; this rejects any direct
-    // call that bypasses it (e.g. a trialing no-card org trying to launder into active paid Pro).
+    // Mirror the client rule server-side: paid plan changes require a payment method, rejecting
+    // direct calls that bypass the add-card checkout (e.g. laundering a no-card trial into paid Pro).
     if (parsedInput.targetPlan !== "hobby" && organization.billing.stripe?.hasPaymentMethod !== true) {
       throw new OperationNotAllowedError("payment_method_required");
     }
@@ -404,8 +403,8 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       customerId: organization.billing.stripeCustomerId,
       targetPlan: parsedInput.targetPlan,
       targetInterval: parsedInput.targetInterval,
-      // Direct card-on-file plan change ("Upgrade now"): billed the full price. The unused-trial
-      // credit is exclusive to the no-card "Continue with Pro, pay now" flow (applySetupCheckoutUpgrade).
+      // Card-on-file "Upgrade now": full price. Unused-trial credit is exclusive to the
+      // no-card "Continue with Pro, pay now" flow (applySetupCheckoutUpgrade).
       applyTrialCredit: false,
     });
 
@@ -544,12 +543,9 @@ const ZWaitForBillingPaymentMethodAction = z.object({
   organizationId: ZId,
 });
 
-// A card saved through the setup-mode Checkout (e.g. keeping the trial via "Continue with Pro
-// after trial") is attached to the subscription by the async webhook, and the billing snapshot is
-// cached. A single page refresh races that webhook and can leave the "add a payment method" CTA
-// showing even though a card was just added. Resync (which invalidates the cache) a few times until
-// the payment method reflects, so the page updates without a manual refresh. Reuses the plan-sync
-// cadence above.
+// A card saved via setup-checkout is attached to the subscription by an async webhook, and a single
+// refresh can race it, leaving a stale "add payment method" CTA. Resync (bounded) until it reflects.
+// Reuses the plan-sync cadence above.
 export const waitForBillingPaymentMethodAction = authenticatedActionClient
   .inputSchema(ZWaitForBillingPaymentMethodAction)
   .action(

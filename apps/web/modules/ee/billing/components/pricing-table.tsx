@@ -47,9 +47,8 @@ const BILLING_PENDING_UPGRADE_INTERVAL_KEY = "billingPendingUpgradeInterval";
 // synced plan.
 const BILLING_UPGRADE_RESULT_KEY = "billingUpgradeResult";
 
-// After checkout the plan lands in our DB via an async Stripe webhook (not instant). Poll a Stripe
-// force-sync until the plan reflects, so we can render the new plan without a manual refresh. Bounded
-// so a genuinely stuck upgrade doesn't spin forever.
+// The plan lands in our DB via an async Stripe webhook, not instantly. Poll a force-sync until it
+// reflects so we can render without a manual refresh; bounded so a stuck upgrade doesn't spin forever.
 const UPGRADE_SYNC_POLL_INTERVAL_MS = 1500;
 const UPGRADE_SYNC_POLL_TIMEOUT_MS = 45000;
 
@@ -166,9 +165,8 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
     return t("workspace.settings.billing.payment_method_required");
   }
 
-  // The trial conversion charges synchronously (payment_behavior: "error_if_incomplete"), so a card
-  // that needs 3DS errors out with nothing left for the browser to confirm. Say so instead of
-  // reporting a generic failure.
+  // Trial conversion charges synchronously (payment_behavior: "error_if_incomplete"), so a card
+  // needing 3DS errors out with nothing left to confirm. Say so instead of a generic failure.
   if (serverError === "card_authentication_required") {
     return t("workspace.settings.billing.payment_authentication_failed");
   }
@@ -192,10 +190,10 @@ const canCancelCurrentPaidPlanAtPeriodEnd = (
   pendingChange: TOrganizationStripePendingChange | null
 ) =>
   plan !== "hobby" &&
-  // Any trial (with or without a card) that selects its current paid plan is CONVERTING the trial to
-  // paid ("Upgrade now"), never cancelling it at period end. Excluding only no-card trials here made a
-  // card-backed trial clicking "Upgrade now" fall into the cancel-at-period-end branch, which
-  // scheduled a Hobby downgrade instead of converting — forcing a second click to actually upgrade.
+  // Any trial (with or without a card) selecting its current paid plan is CONVERTING to paid
+  // ("Upgrade now"), never cancelling at period end — excluding only no-card trials here let a
+  // card-backed "Upgrade now" click fall into cancel-at-period-end, scheduling a Hobby downgrade
+  // instead of converting.
   !isTrialing &&
   pendingChange?.targetPlan !== "hobby" &&
   isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
@@ -258,23 +256,21 @@ export const PricingTable = ({
   const searchParams = useSearchParams();
   const upgradeDriveRef = useRef(false);
   const trialCardDriveRef = useRef(false);
-  // Monotonic token guarding the lazy upgrade-charge preview: each openConfirmation bumps it and the
-  // async resolution is ignored unless it still matches, so a stale/previous plan's preview can never
-  // leak into the modal (which would mislabel the "Pay $X now" amount). closeUpgradeConfirmation bumps
-  // it too, so a dismissed modal's in-flight preview is discarded.
+  // Monotonic token guarding the lazy upgrade-charge preview: openConfirmation bumps it so a stale
+  // preview can never leak into the modal (mislabeling the "Pay $X now" amount);
+  // closeUpgradeConfirmation bumps it too, discarding a dismissed modal's in-flight preview.
   const previewRequestRef = useRef(0);
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
-  // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
-  // mode "upgrade" = single confirm (tier upgrade / card-backed convert); mode "trial-continue" =
-  // the Pro-trial choice modal (pay prorated now to unlock, or keep the free trial).
+  // Set when an immediate upgrade charge needs confirmation. mode "upgrade" = single confirm (tier
+  // upgrade / card-backed convert); "trial-continue" = the pay-prorated-now-or-keep-trial choice modal.
   const [upgradeConfirmation, setUpgradeConfirmation] = useState<{
     plan: Exclude<TStandardPlan, "hobby">;
     interval: TCloudBillingInterval;
     mode: "upgrade" | "trial-continue";
   } | null>(null);
-  // Amount Stripe would charge now for the pending confirmation, fetched lazily. amountDue is the NET
-  // (after any unused-trial credit); grossAmountDue and trialCreditApplied drive the breakdown copy.
+  // Amount Stripe would charge now, fetched lazily. amountDue is NET of any unused-trial credit;
+  // grossAmountDue and trialCreditApplied drive the breakdown copy.
   const [upgradePreview, setUpgradePreview] = useState<{
     amountDue: number;
     currency: string;
@@ -292,9 +288,8 @@ export const PricingTable = ({
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
   const canShowSubscriptionButton = hasBillingRights && !!organization.billing.stripeCustomerId;
   const isTrialingWithoutPayment = isTrialing && !hasPaymentMethod;
-  // Trialing with a card on file: selecting a paid plan converts the trial to paid and charges now
-  // (so the user unlocks links/follow-ups immediately instead of waiting out the trial), behind the
-  // charge-confirmation modal so they know they're billed now.
+  // Trialing with a card on file: selecting a paid plan converts the trial and charges now (so the
+  // user unlocks links/follow-ups immediately), behind the confirm modal so they know they're billed.
   const isTrialingWithPayment = isTrialing && hasPaymentMethod;
   const showPlanSelector = !isStripeSetupIncomplete;
   const usageCycleLabel = `${formatDateForDisplay(usageCycleStart, locale, {
@@ -424,30 +419,25 @@ export const PricingTable = ({
     }
 
     if (searchParams.get("upgrade_pending") !== "1") {
-      // Card-only setup checkout (e.g. keeping the trial via "Continue with Pro after trial"):
-      // the card is attached by the async webhook and the read-through billing snapshot won't
-      // re-sync while it's still fresh, so a single router.refresh() races the webhook and can
-      // leave the "add a payment method" CTA showing even though a card was just added. Force a
-      // bounded Stripe resync until the payment method reflects, then hard-reload to the clean URL:
-      // router.refresh() does not reliably refetch the billing snapshot (same reason the immediate
-      // upgrade path reloads), so a full reload is the only deterministic way to drop the CTA.
+      // Card-only setup checkout (e.g. "Continue with Pro after trial"): the webhook attaches the
+      // card asynchronously, so a single router.refresh() can race it and leave the stale "add a
+      // payment method" CTA showing. Force a bounded resync until the card reflects, then hard-reload
+      // (router.refresh() doesn't reliably refetch the billing snapshot) to deterministically drop the CTA.
       if (globalThis.window === undefined || trialCardDriveRef.current) {
         return;
       }
       trialCardDriveRef.current = true;
       const billingUrl = `/organizations/${organizationId}/settings/billing`;
-      // The resync below can take several seconds (bounded retries against Stripe). Without this the
-      // page just sits there looking unchanged and then hard-reloads, which reads as a broken save.
-      // Generic "Saving" rather than the plan-change toast: this flow only stores a card, the plan and
-      // the trial are unchanged, and implying an upgrade here would be wrong.
+      // Resync can take a few seconds; show a loading state so it doesn't read as a broken save.
+      // Generic "Saving" (not the plan-change toast): only the card changes here, not the plan/trial.
       const cardSyncToastId = toast.loading(t("common.saving"));
       void (async () => {
         try {
           await waitForBillingPaymentMethodAction({ organizationId });
         } finally {
           toast.dismiss(cardSyncToastId);
-          // Full reload to the clean URL: strips checkout_success (so a back-nav/refresh can't
-          // re-run this) and deterministically re-renders against the now-synced snapshot.
+          // Full reload strips checkout_success (blocks re-run on back-nav/refresh) and
+          // deterministically re-renders against the now-synced snapshot.
           globalThis.window.location.replace(billingUrl);
         }
       })();
@@ -470,16 +460,15 @@ export const PricingTable = ({
       "hobby"
     > | null;
 
-    // upgradeDriveRef guarantees this runs once; deliberately no `cancelled` cleanup flag — React
-    // StrictMode's mount→unmount→mount in dev would otherwise cancel the real run before it reaches
-    // the reload, leaving the page stale (the bug looks identical to no fix at all).
+    // upgradeDriveRef guarantees a single run; deliberately no `cancelled` cleanup flag — StrictMode's
+    // dev mount→unmount→mount would otherwise cancel the real run before the reload, leaving it stale.
     upgradeDriveRef.current = true;
     // Loading toast at the top of this first post-checkout page, shown while we poll for the plan.
     const toastId = toast.loading(t("workspace.settings.billing.upgrade_checkout_pending"));
     const billingUrl = `/organizations/${organizationId}/settings/billing`;
 
-    // Once the plan is confirmed in our DB, a full reload is the only reliable way to render it
-    // (router.refresh() did not consistently refetch the billing snapshot). Hand the toast across it.
+    // A full reload is the only reliable way to render the confirmed plan (router.refresh() doesn't
+    // consistently refetch the billing snapshot); hand the toast across it.
     const reloadWithToast = (plan: Exclude<TStandardPlan, "hobby"> | null) => {
       if (globalThis.window === undefined) return;
       globalThis.window.sessionStorage.setItem(
@@ -847,10 +836,9 @@ export const PricingTable = ({
           return;
         }
         if (response.data.mode === "immediate") {
-          // Force-sync until the converted plan lands in our DB, then hand the success toast across a
-          // full reload. router.refresh() alone does not reliably refetch the billing snapshot, so the
-          // "current plan" copy keeps showing the trial until a manual refresh; a full reload renders
-          // the just-activated plan deterministically.
+          // Force-sync until the converted plan lands, then hand the success toast across a full
+          // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
+          // plan" would keep showing the trial until a manual refresh.
           await waitForBillingPlanAction({ organizationId, targetPlan: plan });
           if (globalThis.window !== undefined) {
             globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
@@ -870,9 +858,8 @@ export const PricingTable = ({
     }
   };
 
-  // True for any card-on-file path that bills immediately (so it goes behind the confirm modal):
-  // a tier upgrade, or a trial conversion to any paid plan (which ends the trial and charges now,
-  // even for the plan being trialed).
+  // True for any card-on-file path that bills immediately (goes behind the confirm modal): a tier
+  // upgrade, or a trial conversion to any paid plan (ends the trial and charges now).
   const willChargeImmediately = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean => {
     if (plan === "hobby" || !hasPaymentMethod) return false;
     if (isTrialingWithPayment) return true;
@@ -891,17 +878,16 @@ export const PricingTable = ({
     );
   };
 
-  // A no-card trial upgrading to a different paid plan adds a card and is then charged immediately
-  // (redirectToPlanCheckout -> openUpgradeCheckout -> applySetupCheckoutUpgrade). It must go behind
-  // the same confirm modal so the charge is shown up front. Continuing the same trial plan only
-  // saves a card (billed at trial_end, not now), so it is intentionally excluded.
+  // A no-card trial upgrading to a different paid plan adds a card and is charged immediately, so it
+  // must go behind the same confirm modal. Continuing the same trial plan only saves a card (billed
+  // at trial_end, not now), so it's intentionally excluded.
   const willChargeAfterAddingCard = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
     isTrialingWithoutPayment &&
     plan !== "hobby" &&
     !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
 
-  // The Pro-trial "continue" choice: on the plan currently being trialed, the user picks between
-  // paying the prorated amount now (unlock follow-ups/links immediately) and keeping the free trial.
+  // The Pro-trial "continue" choice: on the plan currently trialed, pick between paying the
+  // prorated amount now (unlock immediately) or keeping the free trial.
   const isProTrialContinue = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
     isTrialing &&
     plan !== "hobby" &&
@@ -913,8 +899,8 @@ export const PricingTable = ({
     mode: "upgrade" | "trial-continue"
   ) => {
     setUpgradeConfirmation({ plan, interval, mode });
-    // Fetch the charge to show in the modal. Only the trial-continue (no-card "Continue with Pro")
-    // flow nets off the unused-trial credit; the upgrade confirm previews the full price.
+    // Fetch the charge to show. Only trial-continue (no-card "Continue with Pro") nets off the
+    // unused-trial credit; the upgrade confirm previews the full price.
     setUpgradePreview(null);
     setIsLoadingUpgradePreview(true);
     const requestId = ++previewRequestRef.current;
@@ -944,8 +930,8 @@ export const PricingTable = ({
       void handlePlanAction(plan, interval);
       return;
     }
-    // The two-option "pay prorated now, or keep the free trial" modal is only for a trial WITHOUT a
-    // card yet. Once a card is on file, "Upgrade now" is a normal full-price confirm (below).
+    // The two-option "pay now or keep the trial" modal is only for a trial WITHOUT a card yet. Once
+    // a card is on file, "Upgrade now" is a normal full-price confirm (below).
     if (isProTrialContinue(plan, interval) && !hasPaymentMethod) {
       openConfirmation(plan, interval, "trial-continue");
       return;
@@ -957,18 +943,17 @@ export const PricingTable = ({
     void handlePlanAction(plan, interval);
   };
 
-  // Primary action of the trial-continue modal: pay the prorated amount now and convert to paid.
-  // Both branches mark the plan's CTA pending before dispatching: the no-card branch skips
-  // handlePlanAction (which owns that state) and would otherwise leave the page looking idle for the
-  // whole round-trip that creates the Checkout session, inviting a second click on a charging action.
+  // Primary action of the trial-continue modal: pay prorated now and convert to paid. Both branches
+  // mark the CTA pending before dispatching — the no-card branch skips handlePlanAction (which owns
+  // that state) and would otherwise look idle during the Checkout round-trip, inviting a double-click.
   const handleTrialPayNow = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) => {
     if (hasPaymentMethod) {
       void handlePlanAction(plan, interval); // card on file -> convert + credit immediately
       return;
     }
     setIsPlanActionPending(`${plan}-${interval}`);
-    // add card -> applySetupCheckoutUpgrade converts. Cleared once the call settles: on success the
-    // tab is already navigating to Stripe, so what matters is that the error path re-enables the CTA.
+    // add card -> applySetupCheckoutUpgrade converts. On success the tab is already navigating to
+    // Stripe, so what matters is that the error path re-enables the CTA.
     void redirectToPlanCheckout(plan, interval).finally(() => setIsPlanActionPending(null));
   };
 
@@ -1117,12 +1102,10 @@ export const PricingTable = ({
         (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
       )?.amount ?? "";
 
-    // NOTE: this copy is deliberately period-neutral ("charged {chargeNow} now") because the same
-    // modal covers two different charges: a mid-cycle proration for an ordinary upgrade, and a full
-    // fresh period for a trial conversion (which also ends the trial immediately and does not credit
-    // the unused days). The previous wording — "for the rest of your current billing period" — was
-    // false for the trial conversion, on a payment-consent screen. Spelling the trial case out needs
-    // its own string; see the i18n note in the PR description.
+    // Deliberately period-neutral ("charged {chargeNow} now"): the same modal covers a mid-cycle
+    // proration (ordinary upgrade) and a full fresh period (trial conversion, no credit for unused
+    // days). The old "rest of your billing period" wording was false for trial conversions on a
+    // payment-consent screen.
     if (upgradePreview) {
       return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
         plan,
@@ -1152,8 +1135,8 @@ export const PricingTable = ({
 
     const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
     const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
-    // Fallback gross price from the plan card; used only when no live preview is available. The plan
-    // card only carries the selected interval, so it can miss (interpolating "") — hence guarded.
+    // Fallback gross price from the plan card, used only without a live preview; guarded since the
+    // card only carries the selected interval and can miss (interpolating "").
     const planCardFullPrice =
       planCards.find(
         (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
@@ -1189,8 +1172,7 @@ export const PricingTable = ({
     );
   };
 
-  // Plan columns for the comparison table (test variant), reusing the same CTA state as the cards.
-  // Shared CTA/plan-state derivation used by both the comparison table and the card grid.
+  // Shared CTA/plan-state derivation, reused by both the comparison table and the card grid.
   const getPlanCtaState = (planCard: TPlanCardData) => {
     const isCurrentSelection = isCurrentPlanSelection(
       planCard.plan,
@@ -1222,9 +1204,8 @@ export const PricingTable = ({
     const isSecondaryPlanCta = isCancelAtPeriodEndCta || isSwitchAtPeriodEndCtaForCard;
     const isDisabled =
       !hasBillingRights ||
-      // A current-selection button is inert only when it's genuinely the active plan. During a trial
-      // (with or without a card) the plan being trialed is still actionable — it opens the
-      // pay-now-or-keep-trial choice — so don't disable it.
+      // A current-selection button is inert only when genuinely the active plan — during a trial
+      // (with or without a card) the trialed plan stays actionable, opening the pay-now-or-keep-trial choice.
       (isCurrentSelection && !isTrialing && !isCancelAtPeriodEndCta) ||
       isPendingSelection ||
       isStripeSetupIncomplete;
