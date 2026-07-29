@@ -405,6 +405,8 @@ model Survey {
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
+  embeddedData                    EmbeddedData[]
+  embeddedDataLinks               SurveyEmbeddedData[]
   showLanguageSwitch              Boolean?
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
@@ -617,6 +619,7 @@ model Workspace {
   clickOutsideClose           Boolean                      @default(true)
   overlay                     SurveyOverlay                @default(none)
   languages                   Language[]
+  embeddedData                EmbeddedData[]
   /// [Logo]
   logo                        Json?
   workspaceTeams              WorkspaceTeam[]
@@ -1141,6 +1144,88 @@ model SurveyLanguage {
 
   @@id([languageId, surveyId])
   @@index([surveyId])
+}
+
+/// Where an Embedded Data field's value comes from.
+/// `computed` is set by survey logic, `ingested` arrives from a URL param or the SDK, and
+/// `reserved` is auto-captured system metadata. Reserved fields are never stored as rows —
+/// they are a static catalog in code — but the value exists so every layer shares one type.
+enum EmbeddedDataSource {
+  computed
+  ingested
+  reserved
+}
+
+/// The declared type of an Embedded Data field's value.
+enum EmbeddedDataType {
+  string
+  number
+  boolean
+  date
+}
+
+/// Defines one Embedded Data field: the extra context stored on a response that isn't an
+/// answer to a question (brand, plan, page type, a computed score, ...).
+///
+/// A field is either **local** — bespoke to a single survey, which is how existing variables
+/// and hidden fields are migrated — or **shared**, meaning it is part of the workspace library
+/// and can be linked by many surveys. Those states move together:
+/// `isLocal = true` <=> `surveyId` is set <=> `key` is null.
+///
+/// @property key - Library name, unique per workspace and immutable. Null for local fields
+/// @property name - Human-readable display label
+/// @property source - Where the value comes from (computed | ingested)
+/// @property dataType - Declared value type, used for coercion at ingest
+/// @property defaultValue - Initial value (computed) or fallback when nothing arrives (ingested)
+/// @property locked - Ingested only: ignore external writes and use the default instead
+/// @property isLocal - True when the field belongs to one survey rather than the shared library
+/// @property survey - The owning survey for a local field; cascades so nothing is orphaned
+model EmbeddedData {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @updatedAt @map(name: "updated_at")
+  key         String?
+  name        String
+  description String?
+
+  source       EmbeddedDataSource
+  dataType     EmbeddedDataType   @default(string)
+  /// [EmbeddedDataDefaultValue]
+  defaultValue Json?
+  locked       Boolean            @default(false)
+  isLocal      Boolean            @default(true)
+
+  survey      Survey?              @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId    String?
+  workspace   Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  surveyLinks SurveyEmbeddedData[]
+
+  // Only shared fields carry a key, and Postgres treats NULLs as distinct, so any number of
+  // local fields can coexist in a workspace while the library itself stays de-duplicated.
+  @@unique([workspaceId, key])
+  @@index([workspaceId])
+  @@index([surveyId])
+}
+
+/// Links a survey to an Embedded Data field and records the key that field's value is stored
+/// under inside that survey.
+///
+/// @property storageKey - The key the value lives under: a cuid for computed fields, the field
+/// name for ingested ones. Migrated fields keep their original key, which is what lets existing
+/// recall tokens, logic conditions and stored responses keep resolving untouched.
+model SurveyEmbeddedData {
+  id             String       @id @default(cuid())
+  survey         Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId       String
+  embeddedData   EmbeddedData @relation(fields: [embeddedDataId], references: [id], onDelete: Cascade)
+  embeddedDataId String
+  storageKey     String
+
+  @@unique([surveyId, embeddedDataId])
+  @@unique([surveyId, storageKey])
+  @@index([surveyId])
+  @@index([embeddedDataId])
 }
 
 /// Represents a team within an organization.
