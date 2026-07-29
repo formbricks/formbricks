@@ -256,7 +256,7 @@ export const SurveyDropDownMenu = ({
                   setIsDropDownOpen(false);
                   setDeleteDialogOpen(true);
                 }}>
-                {t("workspace.surveys.delete_forever")}
+                {t("common.delete")}
               </DropdownMenuItem>
             )}
             {!isArchived && canManageSurvey && (

@@ -71,7 +71,7 @@ test.describe("Survey archive @slow", () => {
     await page.keyboard.press("Escape");
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible();
 
-    // Archived card exposes only Restore and Delete forever.
+    // Archived card exposes only Restore and Delete.
     await page.locator("[data-testid='survey-dropdown-trigger']").click();
     await expect(page.getByTestId("restore-survey")).toBeVisible();
     await expect(page.getByTestId("delete-survey-forever")).toBeVisible();
