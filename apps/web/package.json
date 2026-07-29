@@ -142,7 +142,7 @@
     "react-hot-toast": "2.6.0",
     "react-i18next": "16.5.8",
     "react-turnstile": "1.1.5",
-    "react-use": "17.6.0",
+    "react-use": "17.6.1",
     "recharts": "2.15.3",
     "redis": "4.7.1",
     "sanitize-html": "2.17.4",

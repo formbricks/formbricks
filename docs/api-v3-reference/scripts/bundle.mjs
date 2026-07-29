@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
 
 // Fallback pin for environments without the workspace install. Keep in sync with the
 // @redocly/cli entry in the root package.json devDependencies (the preferred, lockfile-pinned path).
-const REDOCLY_NPX_FALLBACK = "@redocly/cli@1.34.3";
+const REDOCLY_NPX_FALLBACK = "@redocly/cli@1.34.17";
 const here = dirname(fileURLToPath(import.meta.url));
 const srcRoot = resolve(here, "../src/openapi.yml");
 const artifact = resolve(here, "../openapi.yml");
