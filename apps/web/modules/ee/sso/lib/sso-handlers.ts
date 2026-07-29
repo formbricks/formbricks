@@ -201,28 +201,24 @@ const findLegacyExactMatch = async ({
     select: LINKED_SSO_LOOKUP_SELECT,
   });
 
-const provisionNewSsoUser = async ({
+type TSsoContextLogger = ReturnType<typeof logger.withContext>;
+
+const getSsoUserName = ({
   user,
-  account,
   provider,
-  callbackUrl,
   contextLogger,
 }: {
   user: TUser;
-  account: Account;
   provider: IdentityProvider;
-  callbackUrl: string;
-  contextLogger: ReturnType<typeof logger.withContext>;
+  contextLogger: TSsoContextLogger;
 }) => {
-  let userName = user.name;
-
   if (provider === "openid") {
     const oidcUser = user as TUser & TOidcNameFields;
-    if (oidcUser.name) {
-      userName = oidcUser.name;
-    } else if (oidcUser.given_name || oidcUser.family_name) {
+    let userName = oidcUser.name;
+
+    if (!userName && (oidcUser.given_name || oidcUser.family_name)) {
       userName = `${oidcUser.given_name} ${oidcUser.family_name}`;
-    } else if (oidcUser.preferred_username) {
+    } else if (!userName && oidcUser.preferred_username) {
       userName = oidcUser.preferred_username;
     }
 
@@ -235,15 +231,16 @@ const provisionNewSsoUser = async ({
       },
       "Extracted OIDC user name"
     );
+
+    return userName;
   }
 
   if (provider === "saml") {
     const samlUser = user as TUser & TSamlNameFields;
-    if (samlUser.name) {
-      userName = samlUser.name;
-    } else if (samlUser.firstName || samlUser.lastName) {
-      userName = `${samlUser.firstName} ${samlUser.lastName}`;
-    }
+    const userName =
+      samlUser.name ||
+      (samlUser.firstName || samlUser.lastName ? `${samlUser.firstName} ${samlUser.lastName}` : null);
+
     contextLogger.debug(
       {
         hasName: !!samlUser.name,
@@ -252,123 +249,151 @@ const provisionNewSsoUser = async ({
       },
       "Extracted SAML user name"
     );
+
+    return userName;
   }
 
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const isFirstUser = await getIsFreshInstance();
+  return user.name;
+};
 
-  contextLogger.debug(
-    {
-      isMultiOrgEnabled,
-      isFirstUser,
-      skipInviteForSso: SKIP_INVITE_FOR_SSO,
-      hasDefaultTeamId: !!DEFAULT_TEAM_ID,
-    },
-    "License and instance configuration checked"
-  );
-
-  if (!isFirstUser && !isMultiOrgEnabled && SKIP_INVITE_FOR_SSO && !DEFAULT_TEAM_ID) {
-    contextLogger.error(
-      { reason: "missing_default_team_id" },
-      "SSO callback rejected: AUTH_SKIP_INVITE_FOR_SSO is enabled but AUTH_SSO_DEFAULT_TEAM_ID is not configured. Refusing to auto-provision new SSO user into an arbitrary organization."
+const validateSsoInvite = async ({
+  callbackUrl,
+  email,
+  contextLogger,
+}: {
+  callbackUrl: string;
+  email: string;
+  contextLogger: TSsoContextLogger;
+}): Promise<boolean> => {
+  if (!callbackUrl) {
+    contextLogger.debug(
+      { reason: "missing_callback_url" },
+      "SSO callback rejected: missing callback URL for invite validation"
     );
     return false;
   }
 
-  if (!isFirstUser && !SKIP_INVITE_FOR_SSO && !isMultiOrgEnabled) {
-    if (!callbackUrl) {
+  try {
+    const isValidCallbackUrl = new URL(callbackUrl);
+    const inviteToken = isValidCallbackUrl.searchParams.get("token") || "";
+    const source = isValidCallbackUrl.searchParams.get("source") || "";
+
+    if (source === "signin" && !inviteToken) {
       contextLogger.debug(
-        { reason: "missing_callback_url" },
-        "SSO callback rejected: missing callback URL for invite validation"
+        { reason: "signin_without_invite_token" },
+        "SSO callback rejected: signin without invite token"
       );
       return false;
     }
 
-    try {
-      const isValidCallbackUrl = new URL(callbackUrl);
-      const inviteToken = isValidCallbackUrl.searchParams.get("token") || "";
-      const source = isValidCallbackUrl.searchParams.get("source") || "";
-
-      if (source === "signin" && !inviteToken) {
-        contextLogger.debug(
-          { reason: "signin_without_invite_token" },
-          "SSO callback rejected: signin without invite token"
-        );
-        return false;
-      }
-
-      const { email, inviteId } = verifyInviteToken(inviteToken);
-      if (email !== user.email) {
-        contextLogger.debug(
-          { reason: "invite_email_mismatch", inviteId },
-          "SSO callback rejected: invite token email mismatch"
-        );
-        return false;
-      }
-
-      const isValidInviteToken = await getIsValidInviteToken(inviteId);
-      if (!isValidInviteToken) {
-        contextLogger.debug(
-          { reason: "invalid_invite_token", inviteId },
-          "SSO callback rejected: invalid or expired invite token"
-        );
-        return false;
-      }
-      contextLogger.debug({ inviteId }, "Invite token validation successful");
-    } catch (err) {
+    const { email: inviteEmail, inviteId } = verifyInviteToken(inviteToken);
+    if (inviteEmail !== email) {
       contextLogger.debug(
-        {
-          reason: "invite_token_validation_error",
-          error: err instanceof Error ? err.message : "unknown_error",
-        },
-        "SSO callback rejected: invite token validation failed"
+        { reason: "invite_email_mismatch", inviteId },
+        "SSO callback rejected: invite token email mismatch"
       );
-      contextLogger.error(err, "Invalid callbackUrl");
       return false;
     }
-  }
 
-  let organization: Organization | null = null;
+    const isValidInviteToken = await getIsValidInviteToken(inviteId);
+    if (!isValidInviteToken) {
+      contextLogger.debug(
+        { reason: "invalid_invite_token", inviteId },
+        "SSO callback rejected: invalid or expired invite token"
+      );
+      return false;
+    }
 
-  if (!isFirstUser && !isMultiOrgEnabled) {
+    contextLogger.debug({ inviteId }, "Invite token validation successful");
+    return true;
+  } catch (err) {
     contextLogger.debug(
       {
-        assignmentStrategy: SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID ? "default_team" : "first_organization",
+        reason: "invite_token_validation_error",
+        error: err instanceof Error ? err.message : "unknown_error",
       },
-      "Determining organization assignment"
+      "SSO callback rejected: invite token validation failed"
     );
-    if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
-      organization = await getOrganizationByTeamId(DEFAULT_TEAM_ID);
-    } else {
-      organization = await getFirstOrganization();
-    }
+    contextLogger.error(err, "Invalid callbackUrl");
+    return false;
+  }
+};
 
-    if (!organization) {
-      contextLogger.debug(
-        { reason: "no_organization_found" },
-        "SSO callback rejected: no organization found for assignment"
-      );
-      return false;
-    }
+type TSsoOrganizationAssignment = Readonly<{
+  isValid: boolean;
+  organization: Organization | null;
+}>;
 
-    const isAccessControlAllowed = await getAccessControlPermission(organization.id);
-    if (!isAccessControlAllowed && !callbackUrl) {
-      contextLogger.debug(
-        {
-          reason: "insufficient_role_permissions",
-          organizationId: organization.id,
-          isAccessControlAllowed,
-        },
-        "SSO callback rejected: insufficient role management permissions"
-      );
-      return false;
-    }
+const getSsoOrganizationAssignment = async ({
+  isFirstUser,
+  isMultiOrgEnabled,
+  callbackUrl,
+  contextLogger,
+}: {
+  isFirstUser: boolean;
+  isMultiOrgEnabled: boolean;
+  callbackUrl: string;
+  contextLogger: TSsoContextLogger;
+}): Promise<TSsoOrganizationAssignment> => {
+  if (isFirstUser || isMultiOrgEnabled) {
+    return { isValid: true, organization: null };
   }
 
+  contextLogger.debug(
+    {
+      assignmentStrategy: SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID ? "default_team" : "first_organization",
+    },
+    "Determining organization assignment"
+  );
+
+  const organization =
+    SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID
+      ? await getOrganizationByTeamId(DEFAULT_TEAM_ID)
+      : await getFirstOrganization();
+
+  if (!organization) {
+    contextLogger.debug(
+      { reason: "no_organization_found" },
+      "SSO callback rejected: no organization found for assignment"
+    );
+    return { isValid: false, organization: null };
+  }
+
+  const isAccessControlAllowed = await getAccessControlPermission(organization.id);
+  if (!isAccessControlAllowed && !callbackUrl) {
+    contextLogger.debug(
+      {
+        reason: "insufficient_role_permissions",
+        organizationId: organization.id,
+        isAccessControlAllowed,
+      },
+      "SSO callback rejected: insufficient role management permissions"
+    );
+    return { isValid: false, organization: null };
+  }
+
+  return { isValid: true, organization };
+};
+
+const createSsoUserProfile = async ({
+  user,
+  userName,
+  account,
+  provider,
+  organization,
+  contextLogger,
+}: {
+  user: TUser;
+  userName: string | null;
+  account: Account;
+  provider: IdentityProvider;
+  organization: Organization | null;
+  contextLogger: TSsoContextLogger;
+}) => {
   contextLogger.debug({ hasUserName: !!userName, identityProvider: provider }, "Creating new SSO user");
   const matchedLocale = await findMatchingLocale();
 
-  const userProfile = await prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx) => {
     const createdUser = await createUser(
       {
         name:
@@ -403,61 +428,135 @@ const provisionNewSsoUser = async ({
       tx,
     });
 
-    if (organization) {
-      contextLogger.debug(
-        { newUserId: createdUser.id, organizationId: organization.id, role: "member" },
-        "Assigning user to organization"
-      );
-      await createMembership(
-        organization.id,
-        createdUser.id,
-        { role: "member", accepted: true },
-        { projection: "deferred", transaction: tx }
-      );
-
-      if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
-        contextLogger.debug(
-          { newUserId: createdUser.id, defaultTeamId: DEFAULT_TEAM_ID },
-          "Creating default team membership"
-        );
-        await createDefaultTeamMembership(createdUser.id, {
-          projection: "deferred",
-          transaction: tx,
-        });
-      }
-
-      const updatedNotificationSettings: TUserNotificationSettings = {
-        ...createdUser.notificationSettings,
-        alert: {
-          ...createdUser.notificationSettings?.alert,
-        },
-        unsubscribedOrganizationIds: Array.from(
-          new Set([...(createdUser.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
-        ),
-      };
-
-      await updateUser(
-        createdUser.id,
-        {
-          notificationSettings: updatedNotificationSettings,
-        },
-        tx
-      );
+    if (!organization) {
+      return createdUser;
     }
+
+    contextLogger.debug(
+      { newUserId: createdUser.id, organizationId: organization.id, role: "member" },
+      "Assigning user to organization"
+    );
+    await createMembership(
+      organization.id,
+      createdUser.id,
+      { role: "member", accepted: true },
+      { projection: "deferred", transaction: tx }
+    );
+
+    if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
+      contextLogger.debug(
+        { newUserId: createdUser.id, defaultTeamId: DEFAULT_TEAM_ID },
+        "Creating default team membership"
+      );
+      await createDefaultTeamMembership(createdUser.id, {
+        projection: "deferred",
+        transaction: tx,
+      });
+    }
+
+    const updatedNotificationSettings: TUserNotificationSettings = {
+      ...createdUser.notificationSettings,
+      alert: {
+        ...createdUser.notificationSettings?.alert,
+      },
+      unsubscribedOrganizationIds: Array.from(
+        new Set([...(createdUser.notificationSettings?.unsubscribedOrganizationIds || []), organization.id])
+      ),
+    };
+
+    await updateUser(
+      createdUser.id,
+      {
+        notificationSettings: updatedNotificationSettings,
+      },
+      tx
+    );
 
     return createdUser;
   });
+};
+
+const reconcileSsoUserMemberships = async (organization: Organization, userId: string): Promise<void> => {
+  await reconcileOrganizationMembership(organization.id, userId);
+
+  if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
+    const defaultTeamId = DEFAULT_TEAM_ID;
+    await runPostCommitProjection("legacy_sso_default_team_membership_create", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamMemberships: [{ teamId: defaultTeamId, userId }],
+      })
+    );
+  }
+};
+
+const provisionNewSsoUser = async ({
+  user,
+  account,
+  provider,
+  callbackUrl,
+  contextLogger,
+}: {
+  user: TUser;
+  account: Account;
+  provider: IdentityProvider;
+  callbackUrl: string;
+  contextLogger: TSsoContextLogger;
+}) => {
+  const userName = getSsoUserName({ user, provider, contextLogger });
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const isFirstUser = await getIsFreshInstance();
+
+  contextLogger.debug(
+    {
+      isMultiOrgEnabled,
+      isFirstUser,
+      skipInviteForSso: SKIP_INVITE_FOR_SSO,
+      hasDefaultTeamId: !!DEFAULT_TEAM_ID,
+    },
+    "License and instance configuration checked"
+  );
+
+  if (!isFirstUser && !isMultiOrgEnabled && SKIP_INVITE_FOR_SSO && !DEFAULT_TEAM_ID) {
+    contextLogger.error(
+      { reason: "missing_default_team_id" },
+      "SSO callback rejected: AUTH_SKIP_INVITE_FOR_SSO is enabled but AUTH_SSO_DEFAULT_TEAM_ID is not configured. Refusing to auto-provision new SSO user into an arbitrary organization."
+    );
+    return false;
+  }
+
+  if (!isFirstUser && !SKIP_INVITE_FOR_SSO && !isMultiOrgEnabled) {
+    const isValidInvite = await validateSsoInvite({
+      callbackUrl,
+      email: user.email,
+      contextLogger,
+    });
+    if (!isValidInvite) {
+      return false;
+    }
+  }
+
+  const organizationAssignment = await getSsoOrganizationAssignment({
+    isFirstUser,
+    isMultiOrgEnabled,
+    callbackUrl,
+    contextLogger,
+  });
+  if (!organizationAssignment.isValid) {
+    return false;
+  }
+  const { organization } = organizationAssignment;
+
+  const userProfile = await createSsoUserProfile({
+    user,
+    userName,
+    account,
+    provider,
+    organization,
+    contextLogger,
+  });
 
   if (organization) {
-    await reconcileOrganizationMembership(organization.id, userProfile.id);
-    if (SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID) {
-      const defaultTeamId = DEFAULT_TEAM_ID;
-      await runPostCommitProjection("legacy_sso_default_team_membership_create", () =>
-        reconcileTeamWorkspaceRelationships({
-          teamMemberships: [{ teamId: defaultTeamId, userId: userProfile.id }],
-        })
-      );
-    }
+    await reconcileSsoUserMemberships(organization, userProfile.id);
   }
 
   contextLogger.debug(
@@ -479,11 +578,6 @@ const provisionNewSsoUser = async ({
       { isMultiOrgEnabled, newUserId: userProfile.id },
       "Multi-org enabled, skipping organization assignment"
     );
-    return true;
-  }
-
-  if (organization) {
-    return true;
   }
 
   return true;

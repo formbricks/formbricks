@@ -90,9 +90,9 @@ const normalizeTargets = (targets: TTeamWorkspaceProjectionTargets): TNormalized
   }
 
   return {
-    teamIds: [...teamIds].sort(),
+    teamIds: [...teamIds].sort((left, right) => left.localeCompare(right)),
     teamMemberships,
-    workspaceIds: [...workspaceIds].sort(),
+    workspaceIds: [...workspaceIds].sort((left, right) => left.localeCompare(right)),
     workspaceTeamGrants,
   };
 };
