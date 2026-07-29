@@ -294,9 +294,21 @@ const UPDATABLE_VALUE_FIELDS = Object.keys(ZV3FeedbackRecordUpdateBodyFields.sha
  */
 export function conflictingUpdateValueFields(
   data: TV3FeedbackRecordUpdateBody,
-  fieldType: z.infer<typeof ZHubFieldType>
+  fieldType: string | undefined
 ): { name: string; accepted: string[] }[] {
-  const accepted = VALUE_FIELD_BY_TYPE[fieldType];
+  const accepted = VALUE_FIELD_BY_TYPE[fieldType as keyof typeof VALUE_FIELD_BY_TYPE] as
+    | string[]
+    | undefined;
+
+  // Typed loosely and guarded on purpose: `field_type` arrives from a remote service, and this codebase
+  // already treats it as possibly absent (`TV3FeedbackRecord.field_type` is optional, and the serializer
+  // copies it only when present). With no table to check against there is nothing to judge, so the patch is
+  // let through — refusing it would turn a legitimate update into an error over a field the caller cannot
+  // set anyway.
+  if (!accepted) {
+    return [];
+  }
+
   return UPDATABLE_VALUE_FIELDS.filter(
     (field) => data[field] !== undefined && !accepted.includes(field)
   ).map((name) => ({ name, accepted }));

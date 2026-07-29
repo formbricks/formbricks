@@ -91,7 +91,9 @@ export function relayableHubDetail(error: HubError | null, fallback: string): st
   if (!error?.problemDetail || !RELAYABLE_HUB_STATUSES.has(error.status)) {
     return fallback;
   }
-  return toApiVocabulary(error.problemDetail.slice(0, MAX_RELAYED_DETAIL_LENGTH));
+  // Rewritten before slicing, not after: `dataset_id` is a character longer than `tenant_id`, so a
+  // slice-then-rewrite could push the result past the cap it is supposed to enforce.
+  return toApiVocabulary(error.problemDetail).slice(0, MAX_RELAYED_DETAIL_LENGTH);
 }
 
 /**
@@ -156,8 +158,8 @@ export function hubErrorToProblemResponse(
     const invalidParams: InvalidParam[] | undefined = error?.invalidParams
       ?.slice(0, MAX_RELAYED_INVALID_PARAMS)
       .map(({ name, reason }) => ({
-        name: toApiVocabulary(name.slice(0, MAX_RELAYED_DETAIL_LENGTH)),
-        reason: toApiVocabulary(reason.slice(0, MAX_RELAYED_DETAIL_LENGTH)),
+        name: toApiVocabulary(name).slice(0, MAX_RELAYED_DETAIL_LENGTH),
+        reason: toApiVocabulary(reason).slice(0, MAX_RELAYED_DETAIL_LENGTH),
       }));
     const detail = relayableHubDetail(error, "The feedback service rejected the request.");
 

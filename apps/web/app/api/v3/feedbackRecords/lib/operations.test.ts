@@ -1391,6 +1391,24 @@ describe("updateV3FeedbackRecord", () => {
     expect(updateFeedbackRecord).not.toHaveBeenCalled();
   });
 
+  /**
+   * `field_type` comes from a remote service and the record DTO treats it as optional, so the cross-check
+   * must not turn its absence into a failed update — it used to throw here, which surfaced as a generic 500
+   * on an otherwise valid patch.
+   */
+  test("lets the patch through when the Hub returned no field_type to check against", async () => {
+    const { field_type: _dropped, ...typeless } = record;
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({
+      data: typeless as FeedbackRecordData,
+      error: null,
+    });
+
+    const response = await updateV3FeedbackRecord({ ...updateBase, body: { value_number: 99 } });
+
+    expect(response.status).toBe(200);
+    expect(updateFeedbackRecord).toHaveBeenCalledWith(record.id, { value_number: 99 });
+  });
+
   test("allows the value_* field the stored field_type does accept", async () => {
     const response = await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "corrected" } });
 

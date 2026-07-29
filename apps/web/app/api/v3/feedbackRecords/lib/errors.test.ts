@@ -70,6 +70,22 @@ describe("hubErrorToProblemResponse", () => {
     expect(body.detail).not.toContain("tenant_id");
   });
 
+  /**
+   * The rewrite lengthens the string (`dataset_id` is a character longer), so it has to happen before the
+   * slice — otherwise the cap this module exists to enforce is quietly exceeded by however many times the
+   * Hub said `tenant_id`.
+   */
+  test("stays within the relay cap even when the rewrite lengthens the text", async () => {
+    const body = await hubErrorToProblemResponse(
+      hubError(409, { problemDetail: "tenant_id ".repeat(200) }),
+      requestId,
+      instance
+    ).json();
+
+    expect(body.detail.length).toBeLessThanOrEqual(512);
+    expect(body.detail).not.toContain("tenant_id");
+  });
+
   test("renames tenant_id in relayed invalid_params too, where the Hub also names fields", async () => {
     const body = await hubErrorToProblemResponse(
       hubError(400, { invalidParams: [{ name: "tenant_id", reason: "tenant_id is required" }] }),
