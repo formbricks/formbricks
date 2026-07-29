@@ -13,15 +13,18 @@ export {
   enqueueSurveySchedulingJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
+  removeRecurringSurveyArchivePurgeJobSchedule,
   removeRecurringSurveySchedulingJobSchedule,
   scheduleResponsePipelineJobAt,
   scheduleSurveySchedulingJobAt,
   scheduleTestLogJobAt,
   upsertRecurringResponsePipelineJobSchedule,
+  upsertRecurringSurveyArchivePurgeJobSchedule,
   upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
+export { processSurveyArchivePurgeJob } from "./processors/survey-archive-purge";
 export { processSurveySchedulingJob } from "./processors/survey-scheduling";
 export { processTestLogJob } from "./processors/test-log";
 export { startJobsRuntime } from "./runtime";
@@ -47,12 +50,14 @@ export type {
 export {
   ZResponsePipelineEvent,
   ZResponsePipelineJobData,
+  ZSurveyArchivePurgeJobData,
   ZSurveySchedulingJobData,
   ZTestLogJobData,
 } from "./types";
 export type {
   TResponsePipelineEvent,
   TResponsePipelineJobData,
+  TSurveyArchivePurgeJobData,
   TSurveySchedulingJobData,
   TTestLogJobData,
 } from "./types";

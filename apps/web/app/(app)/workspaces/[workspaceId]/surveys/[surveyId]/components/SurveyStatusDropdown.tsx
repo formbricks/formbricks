@@ -1,5 +1,6 @@
 "use client";
 
+import { ArchiveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -46,11 +47,40 @@ export const SurveyStatusDropdown = () => {
     }
   };
 
+  // Archived surveys are read-only. Render the same status-select control (so it reads as a natural
+  // status) with "Archived" as the value, but disabled — the status can't change while archived.
+  if (survey.archivedAt) {
+    return (
+      <Select value="archived" disabled>
+        <SelectTrigger className="w-[170px] bg-white md:w-[200px]">
+          <SelectValue>
+            <div className="flex items-center">
+              <div className="rounded-full bg-slate-300 p-1">
+                <ArchiveIcon className="size-3 text-slate-600" />
+              </div>
+              <span className="ml-2 text-sm text-slate-700">{t("common.archived")}</span>
+            </div>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="bg-white">
+          <SelectItem value="archived">
+            <div className="flex w-full items-center justify-center gap-2">
+              <div className="rounded-full bg-slate-300 p-1">
+                <ArchiveIcon className="size-3 text-slate-600" />
+              </div>
+              {t("common.archived")}
+            </div>
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    );
+  }
+
   return (
     <>
       {survey.status === "draft" ? (
         <div className="flex items-center">
-          <p className="text-sm italic text-slate-600">{t("common.draft")}</p>
+          <p className="text-sm text-slate-600 italic">{t("common.draft")}</p>
         </div>
       ) : (
         <Select

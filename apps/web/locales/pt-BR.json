@@ -180,6 +180,7 @@
     "app_survey": "Pesquisa de App",
     "appearance": "Aparência",
     "apply_filters": "Aplicar filtros",
+    "archive": "Arquivar",
     "archived": "Arquivado",
     "are_you_sure": "Certeza?",
     "attributes": "atributos",
@@ -2921,6 +2922,12 @@
       },
       "all_set_time_to_create_first_survey": "Tá tudo pronto! Hora de criar sua primeira pesquisa",
       "alphabetical": "alfabético",
+      "archive": "Arquivar",
+      "archive_survey": "Arquivar esta pesquisa?",
+      "archive_survey_description": "Você pode restaurá-la a qualquer momento nos próximos 30 dias.",
+      "archive_survey_description_in_progress": "Ela vai parar de coletar respostas imediatamente.",
+      "archive_survey_warning": "Esta pesquisa e todas as suas respostas serão excluídas permanentemente após 30 dias.",
+      "archiving_survey": "Arquivando pesquisa...",
       "change_status": "Alterar status",
       "copy_survey": "Copiar pesquisa",
       "copy_survey_description": "Escolha um espaço de trabalho para copiar esta pesquisa.",
@@ -3515,7 +3522,9 @@
         "your_web_app": "Sua aplicação web",
         "zip": "Fecho éclair"
       },
+      "error_archiving_survey": "Não foi possível arquivar a pesquisa, tente novamente",
       "error_deleting_survey": "Ocorreu um erro ao excluir a pesquisa",
+      "error_restoring_survey": "Não foi possível restaurar a pesquisa, tente novamente",
       "error_updating_status": "Ocorreu um erro ao atualizar o status da pesquisa",
       "featured_templates": {
         "churn_description": "Descubra por que as pessoas cancelam suas assinaturas.",
@@ -3577,6 +3586,8 @@
         "this_response_is_in_progress": "Essa resposta está em andamento.",
         "zip_post_code": "CEP / Código postal"
       },
+      "restore": "Restaurar",
+      "restoring_survey": "Restaurando pesquisa...",
       "search_by_survey_name": "Buscar pelo nome da pesquisa",
       "share": {
         "anonymous_links": {
@@ -3708,6 +3719,7 @@
       },
       "status_updated_successfully": "Status da pesquisa atualizado com sucesso",
       "status_updating": "Atualizando status da pesquisa...",
+      "stop_and_archive": "Parar e arquivar",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtro adicionado para respostas onde a resposta da pergunta {questionIdx} é {filterComboBoxValue} - {filterValue}",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta {questionIdx} foi pulada",
@@ -3827,8 +3839,10 @@
         "your_survey_is_public": "Sua pesquisa está no ar",
         "youre_not_plugged_in_yet": "Você ainda não tá conectado!"
       },
+      "survey_archived_successfully": "Pesquisa arquivada",
       "survey_deleted_successfully": "Pesquisa deletada com sucesso!",
       "survey_duplicated_successfully": "Pesquisa duplicada com sucesso.",
+      "survey_restored_successfully": "Pesquisa restaurada",
       "templates": {
         "all_channels": "Todos os canais",
         "all_industries": "Todas as indústrias",

@@ -952,6 +952,10 @@ export const ZSurveyBase = z.object({
     .date()
     .nullish()
     .transform((value) => value ?? null),
+  // Soft-delete marker (ENG-1042). Optional (no transform) so it stays non-required on the inferred
+  // TSurvey type — existing survey literals/payloads that omit it keep compiling and validating.
+  // Reads populate it from the DB so archived state is available to the editor/summary surfaces.
+  archivedAt: z.coerce.date().nullish(),
   autoComplete: z
     .number()
     .min(1, {
@@ -3843,6 +3847,9 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     workspaceOverwrites: true,
     languages: true,
     followUps: true,
+    // archivedAt is owned exclusively by the archive/restore flows; a create must never set it,
+    // otherwise a caller could POST an already-archived, purge-eligible survey.
+    archivedAt: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -3891,6 +3898,9 @@ export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
     workspaceOverwrites: true,
     languages: true,
     followUps: true,
+    // archivedAt is owned exclusively by the archive/restore flows; a create must never set it,
+    // otherwise a caller could POST an already-archived, purge-eligible survey.
+    archivedAt: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -4380,6 +4390,9 @@ export const ZSurveyFilterCriteria = z.object({
     })
     .optional(),
   sortBy: z.enum(["createdAt", "updatedAt", "name", "relevance"]).optional(),
+  // When true, include archived surveys (archivedAt not null) in results.
+  // When false/undefined, archived surveys are excluded (hidden by default).
+  includeArchived: z.boolean().optional(),
 });
 
 export type TSurveyFilterCriteria = z.infer<typeof ZSurveyFilterCriteria>;

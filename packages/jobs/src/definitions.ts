@@ -1,9 +1,15 @@
 import { JOB_NAMES } from "@/src/constants";
 import { type AnyBackgroundJobDefinition, toAnyBackgroundJobDefinition } from "@/src/contracts";
 import { processResponsePipelineJob } from "@/src/processors/response-pipeline";
+import { processSurveyArchivePurgeJob } from "@/src/processors/survey-archive-purge";
 import { processSurveySchedulingJob } from "@/src/processors/survey-scheduling";
 import { processTestLogJob } from "@/src/processors/test-log";
-import { ZResponsePipelineJobData, ZSurveySchedulingJobData, ZTestLogJobData } from "@/src/types";
+import {
+  ZResponsePipelineJobData,
+  ZSurveyArchivePurgeJobData,
+  ZSurveySchedulingJobData,
+  ZTestLogJobData,
+} from "@/src/types";
 
 export const backgroundJobDefinitions = {
   [JOB_NAMES.responsePipeline]: toAnyBackgroundJobDefinition({
@@ -15,6 +21,11 @@ export const backgroundJobDefinitions = {
     handle: processSurveySchedulingJob,
     name: JOB_NAMES.surveyScheduling,
     schema: ZSurveySchedulingJobData,
+  }),
+  [JOB_NAMES.surveyArchivePurge]: toAnyBackgroundJobDefinition({
+    handle: processSurveyArchivePurgeJob,
+    name: JOB_NAMES.surveyArchivePurge,
+    schema: ZSurveyArchivePurgeJobData,
   }),
   [JOB_NAMES.testLog]: toAnyBackgroundJobDefinition({
     handle: processTestLogJob,

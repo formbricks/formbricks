@@ -25,6 +25,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         workspaceId: true,
         createdBy: true,
         status: true,
+        archivedAt: true,
 
         // Survey configuration
         welcomeCard: true,
