@@ -402,6 +402,16 @@ export const importHistoricalResponsesAction = authenticatedActionClient
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
 
+      // The authorization above covers the feedback source's workspace, not this survey — and the
+      // import reads every response of `surveyId` and copies them into the source's feedback
+      // directory. Without this check any caller with readWrite on one workspace could name a survey
+      // from another organization and exfiltrate its responses into their own directory. Survey ids
+      // are public (they appear in `/s/<surveyId>` links), so the id is not a secret. The picker only
+      // ever offers surveys from this workspace (`getSurveysForUnifyAction` → `getSurveys(workspaceId)`).
+      if (survey.workspaceId !== parsedInput.workspaceId) {
+        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+      }
+
       return importHistoricalResponses(feedbackSource, survey);
     }
   );
