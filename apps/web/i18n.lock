@@ -4037,6 +4037,7 @@ checksums:
     workspace/workflows/test_problem_ending_card_not_found: 2a288324d1a1c0c96dfb24ec7df1111b
     workspace/workflows/test_problem_generic: 74440165343f47662547a903237df811
     workspace/workflows/test_problem_not_executable: 181e882b51b31ca871e2028af80ccc14
+    workspace/workflows/test_problem_recipient_not_allowed: 12217ed160b4e8d89ae484599918c408
     workspace/workflows/test_problem_survey_not_found: 9e13808eb7af204ab95f276ca079de1e
     workspace/workflows/test_problems_description: 37be3906bffaee0b9ef17b7c0e539b04
     workspace/workflows/test_problems_title: 73142b32a51d802b163270e2989fd7b9

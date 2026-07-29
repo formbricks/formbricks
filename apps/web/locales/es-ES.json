@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Un final seleccionado ya no existe en la encuesta conectada.",
       "test_problem_generic": "Este flujo de trabajo tiene un problema de configuración.",
       "test_problem_not_executable": "Los pasos de este flujo de trabajo no son válidos o no están conectados correctamente. Abre el editor y arregla el flujo.",
+      "test_problem_recipient_not_allowed": "Un paso de send_email envía un correo a alguien que no es miembro de esta organización. Usa la dirección de correo de un miembro.",
       "test_problem_survey_not_found": "La encuesta conectada ya no existe en este espacio de trabajo.",
       "test_problems_description": "Soluciona estos problemas antes de que este flujo de trabajo pueda ejecutarse:",
       "test_problems_title": "El flujo de trabajo tiene problemas",

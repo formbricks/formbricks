@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Een geselecteerd eindscherm bestaat niet meer in de gekoppelde enquête.",
       "test_problem_generic": "Deze workflow heeft een configuratieprobleem.",
       "test_problem_not_executable": "De stappen van deze workflow zijn niet geldig of niet goed gekoppeld. Open de editor en herstel de flow.",
+      "test_problem_recipient_not_allowed": "Een send_email-stap stuurt naar iemand die geen lid is van deze organisatie. Gebruik het e-mailadres van een lid.",
       "test_problem_survey_not_found": "De gekoppelde enquête bestaat niet meer in deze workspace.",
       "test_problems_description": "Los deze problemen op voordat deze workflow kan worden uitgevoerd:",
       "test_problems_title": "Workflow heeft problemen",

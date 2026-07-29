@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Une fin sélectionnée n'existe plus dans le questionnaire connecté.",
       "test_problem_generic": "Ce workflow a un problème de configuration.",
       "test_problem_not_executable": "Les étapes de ce workflow ne sont pas valides ou ne sont pas connectées correctement. Ouvre l'éditeur et corrige le flux.",
+      "test_problem_recipient_not_allowed": "Une étape send_email envoie un email à quelqu'un qui n'est pas membre de cette organisation. Utilise l'adresse email d'un membre.",
       "test_problem_survey_not_found": "Le questionnaire connecté n'existe plus dans cet espace de travail.",
       "test_problems_description": "Corrige ces problèmes avant que ce workflow puisse s'exécuter :",
       "test_problems_title": "Le workflow présente des problèmes",

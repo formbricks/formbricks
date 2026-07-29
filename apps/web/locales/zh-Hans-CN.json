@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "所选的结束页面在已连接的调查问卷中已不存在。",
       "test_problem_generic": "此工作流存在配置问题。",
       "test_problem_not_executable": "此工作流的步骤无效或未正确连接。请打开编辑器并修复流程。",
+      "test_problem_recipient_not_allowed": "send_email 步骤发送给了不是本组织成员的人员。请使用成员的电子邮件地址。",
       "test_problem_survey_not_found": "已连接的调查问卷在此工作区中已不存在。",
       "test_problems_description": "修复以下问题后,此工作流才能运行:",
       "test_problems_title": "工作流存在问题",

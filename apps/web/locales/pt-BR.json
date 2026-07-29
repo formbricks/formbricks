@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Um final selecionado não existe mais na pesquisa conectada.",
       "test_problem_generic": "Este fluxo de trabalho tem um problema de configuração.",
       "test_problem_not_executable": "As etapas deste fluxo de trabalho não são válidas ou não estão conectadas corretamente. Abra o editor e corrija o fluxo.",
+      "test_problem_recipient_not_allowed": "Uma etapa send_email envia para alguém que não é membro desta organização. Use o endereço de email de um membro.",
       "test_problem_survey_not_found": "A pesquisa conectada não existe mais neste espaço de trabalho.",
       "test_problems_description": "Corrija esses problemas antes que este fluxo de trabalho possa ser executado:",
       "test_problems_title": "O fluxo de trabalho tem problemas",

@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Un final selectat nu mai există în sondajul conectat.",
       "test_problem_generic": "Acest flux de lucru are o problemă de configurare.",
       "test_problem_not_executable": "Pașii acestui flux de lucru nu sunt valizi sau conectați corect. Deschide editorul și corectează fluxul.",
+      "test_problem_recipient_not_allowed": "Un pas send_email trimite către cineva care nu este membru al acestei organizații. Folosește adresa de email a unui membru.",
       "test_problem_survey_not_found": "Sondajul conectat nu mai există în acest spațiu de lucru.",
       "test_problems_description": "Rezolvă aceste probleme înainte ca acest flux de lucru să poată rula:",
       "test_problems_title": "Fluxul de lucru are probleme",

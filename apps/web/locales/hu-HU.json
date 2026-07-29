@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Egy kiválasztott befejezés már nem létezik a csatlakoztatott felmérésben.",
       "test_problem_generic": "Ennek a munkafolyamatnak konfigurációs problémája van.",
       "test_problem_not_executable": "Ennek a munkafolyamatnak a lépései nem érvényesek vagy nincsenek megfelelően összekapcsolva. Nyissa meg a szerkesztőt, és javítsa ki a folyamatot.",
+      "test_problem_recipient_not_allowed": "Egy send_email lépés olyan személynek küld üzenetet, aki nem tagja ennek a szervezetnek. Használjon egy tag e-mail címét.",
       "test_problem_survey_not_found": "A csatlakoztatott felmérés már nem létezik ebben a munkaterületen.",
       "test_problems_description": "Javítsa ki ezeket a problémákat, mielőtt ez a munkafolyamat futhatna:",
       "test_problems_title": "A munkafolyamatnak problémái vannak",

@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Seçilen bir bitiş artık bağlı ankette mevcut değil.",
       "test_problem_generic": "Bu iş akışında bir yapılandırma sorunu var.",
       "test_problem_not_executable": "Bu iş akışının adımları geçerli değil veya doğru şekilde bağlanmamış. Düzenleyiciyi aç ve akışı düzelt.",
+      "test_problem_recipient_not_allowed": "Bir send_email adımı, bu organizasyonun üyesi olmayan birine gönderiyor. Bir üyenin e-posta adresini kullan.",
       "test_problem_survey_not_found": "Bağlı anket artık bu çalışma alanında mevcut değil.",
       "test_problems_description": "Bu iş akışının çalışabilmesi için şu sorunları çöz:",
       "test_problems_title": "İş akışında sorunlar var",

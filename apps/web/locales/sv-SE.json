@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Ett valt avslut finns inte längre i den anslutna enkäten.",
       "test_problem_generic": "Det här arbetsflödet har ett konfigurationsproblem.",
       "test_problem_not_executable": "Det här arbetsflödets steg är inte giltiga eller korrekt anslutna. Öppna redigeraren och åtgärda flödet.",
+      "test_problem_recipient_not_allowed": "Ett send_email-steg skickar till någon som inte är medlem i den här organisationen. Använd en medlems e-postadress.",
       "test_problem_survey_not_found": "Den anslutna enkäten finns inte längre i den här arbetsytan.",
       "test_problems_description": "Åtgärda dessa problem innan arbetsflödet kan köras:",
       "test_problems_title": "Arbetsflödet har problem",

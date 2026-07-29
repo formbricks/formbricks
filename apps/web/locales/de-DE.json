@@ -4199,6 +4199,7 @@
       "test_problem_ending_card_not_found": "Ein ausgewähltes Ende existiert in der verknüpften Umfrage nicht mehr.",
       "test_problem_generic": "Dieser Workflow hat ein Konfigurationsproblem.",
       "test_problem_not_executable": "Die Schritte dieses Workflows sind nicht gültig oder nicht korrekt verbunden. Öffne den Editor und behebe den Ablauf.",
+      "test_problem_recipient_not_allowed": "Ein send_email-Schritt sendet an jemanden, der kein Mitglied dieser Organisation ist. Verwende die E-Mail-Adresse eines Mitglieds.",
       "test_problem_survey_not_found": "Die verknüpfte Umfrage existiert in diesem Workspace nicht mehr.",
       "test_problems_description": "Behebe diese Probleme, bevor dieser Workflow ausgeführt werden kann:",
       "test_problems_title": "Workflow hat Probleme",

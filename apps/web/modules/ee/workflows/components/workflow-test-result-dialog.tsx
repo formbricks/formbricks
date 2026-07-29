@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import type { TWorkflowTestProblem } from "@formbricks/workflows";
+import type { TWorkflowTestProblem, TWorkflowTestProblemCode } from "@formbricks/workflows";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -33,10 +33,11 @@ export const WorkflowTestResultDialog = ({
 
   // Localize each problem by its machine-readable `code` rather than rendering the API's English
   // `message`. Inline literal t() calls so the translation-key scanner detects the keys.
-  const problemMessages: Record<string, string> = {
+  const problemMessages: Record<TWorkflowTestProblemCode, string> = {
     definition_not_executable: t("workspace.workflows.test_problem_not_executable"),
     survey_not_found: t("workspace.workflows.test_problem_survey_not_found"),
     ending_card_not_found: t("workspace.workflows.test_problem_ending_card_not_found"),
+    recipient_not_allowed: t("workspace.workflows.test_problem_recipient_not_allowed"),
   };
 
   return (
