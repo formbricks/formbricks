@@ -16,6 +16,7 @@ import {
   ZWorkflowExecutableDefinition,
   ZWorkflowRunData,
   ZWorkflowTriggerRunPayload,
+  isLiteralEmailRecipient,
   planExecutableSteps,
 } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
@@ -26,7 +27,6 @@ import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { sendEmail } from "@/modules/email";
 import {
   buildSurveyResponseEmailHtml,
-  isLiteralEmailRecipient,
   resolveResponseRecipient,
 } from "@/modules/email/lib/survey-response-email";
 
@@ -151,8 +151,9 @@ interface RunEmailContext {
   logoUrl: string;
   /**
    * Lowercased allowlist of the organization's member emails. A literal `to` recipient must be in
-   * this set to receive response data (ENG-2029); loaded once per run. Empty when the organization
-   * can't be resolved, which fails closed — a literal external recipient is then rejected.
+   * this set to receive response data (ENG-2029); loaded once per run, and only when the run
+   * actually has a literal recipient to check. Empty when the organization can't be resolved (or
+   * when no step needs it), which fails closed — a literal external recipient is then rejected.
    */
   allowedRecipientEmails: Set<string>;
 }
@@ -443,10 +444,14 @@ const claimRun = async (
  * Loads the survey/response/branding context a run's emails render against. Uses the same loaders the
  * response-pipeline job uses (worker-safe, no request scope). Missing survey or response is
  * unrecoverable for this run and fails it.
+ *
+ * `steps` is taken (already planned by the caller) only to decide whether the recipient allowlist is
+ * needed at all — see `allowedRecipientEmails` below.
  */
 const loadRunEmailContext = async (
   triggerPayload: TWorkflowTriggerRunPayload,
-  workspaceId: string
+  workspaceId: string,
+  steps: TWorkflowExecutableStep[]
 ): Promise<RunEmailContext> => {
   const [response, survey] = await Promise.all([
     getResponse(triggerPayload.responseId),
@@ -475,11 +480,15 @@ const loadRunEmailContext = async (
 
   const organization = await getOrganizationByWorkspaceId(workspaceId);
   const logoUrl = organization?.whitelabel?.logoUrl ?? "";
+  // Only literal `to` recipients are allowlist-checked, so the member query is skipped entirely for
+  // the common respondent-field-only run rather than paying an unbounded lookup on every response.
   // Fail closed: no resolvable organization means an empty allowlist, so a literal external
   // recipient is rejected rather than allowed through unchecked.
-  const allowedRecipientEmails = organization
-    ? await getOrganizationMemberEmails(organization.id)
-    : new Set<string>();
+  const needsRecipientAllowlist = steps.some((step) => isLiteralEmailRecipient(step.node.config.to));
+  const allowedRecipientEmails =
+    needsRecipientAllowlist && organization
+      ? await getOrganizationMemberEmails(organization.id)
+      : new Set<string>();
 
   return { survey, response, logoUrl, allowedRecipientEmails };
 };
@@ -525,7 +534,7 @@ const executeClaimedRun = async (
   const definition = resolveExecutableDefinition(run);
   const steps = planExecutableSteps(definition);
 
-  const emailContext = await loadRunEmailContext(triggerPayload, workspaceId);
+  const emailContext = await loadRunEmailContext(triggerPayload, workspaceId, steps);
   const outcome = await runSteps(steps, run.id, emailContext, logContext);
 
   if (outcome.bail) {

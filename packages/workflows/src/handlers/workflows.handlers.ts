@@ -141,10 +141,20 @@ const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition
   return [...emails];
 };
 
+/** Dotted path the recipient-allowlist failure is reported against, by both `enable` and `testWorkflow`. */
+const DISALLOWED_RECIPIENT_FIELD = "definition.nodes.config.to";
+
+/** Short 422 `detail` for a recipient-allowlist failure, so UI surfacing only `detail` still names the cause. */
+const DISALLOWED_RECIPIENT_DETAIL = "A send_email recipient is not a member of this organization.";
+
+/** Per-recipient explanation, shared so enable's `invalid_params` and test's `problems` never diverge. */
+const disallowedRecipientMessage = (email: string): string =>
+  `Recipient ${email} is not a member of this organization. A send_email action may only address an organization member or a respondent field.`;
+
 const buildDisallowedRecipientParams = (disallowedEmails: string[]): WorkflowInvalidParam[] =>
   disallowedEmails.map((email) => ({
-    name: "definition.nodes.config.to",
-    reason: `Recipient ${email} is not a member of this organization. A send_email action may only address an organization member or a respondent field.`,
+    name: DISALLOWED_RECIPIENT_FIELD,
+    reason: disallowedRecipientMessage(email),
   }));
 
 /** Map a failed trigger-survey check to field-level `invalid_params` on the definition's trigger config. */
@@ -430,7 +440,13 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
           emails: literalRecipients,
         });
         if (disallowedEmails.length > 0) {
-          throw new WorkflowNotExecutableError(buildDisallowedRecipientParams(disallowedEmails));
+          // Pass an explicit `detail`: the editor's error mapper surfaces only `detail` and drops
+          // `invalid_params`, so the default "definition is not executable" would hide the one thing
+          // the author needs to fix. The per-field reasons stay for API/MCP callers.
+          throw new WorkflowNotExecutableError(
+            buildDisallowedRecipientParams(disallowedEmails),
+            DISALLOWED_RECIPIENT_DETAIL
+          );
         }
       }
 
@@ -484,7 +500,8 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
    * effects occur — this is a pure pre-flight check the author can use before enabling. Unlike
    * `enable`, problems are *collected* (not thrown on the first one) so every issue is reported in
    * one pass; an `ok: false` result is still a 200 (the request succeeded; the workflow is just not
-   * ready). Reuses the same executability + survey checks as `enable`.
+   * ready). Reuses the same executability + survey + recipient-allowlist checks as `enable`, so a
+   * dry run that reports no problems is exactly the set of conditions under which enable succeeds.
    */
   async testWorkflow({ ctx, params }) {
     try {
@@ -534,6 +551,24 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
             field: "definition.trigger.config.endingCardIds",
             message: `Ending card ${endingCardId} does not exist on the survey.`,
           });
+        }
+
+        // Recipient allowlist (ENG-2029): the same gate `enable` enforces, collected here as a
+        // problem instead of thrown. The dry run exists to surface exactly this before going live —
+        // without it a workflow addressing an external inbox tests green and then hard-fails enable.
+        const literalRecipients = collectLiteralRecipientEmails(executable.data);
+        if (literalRecipients.length > 0) {
+          const { disallowedEmails } = await ctx.verifyRecipientsAllowed({
+            workspaceId: loaded.workspaceId,
+            emails: literalRecipients,
+          });
+          for (const email of disallowedEmails) {
+            problems.push({
+              code: "recipient_not_allowed",
+              field: DISALLOWED_RECIPIENT_FIELD,
+              message: disallowedRecipientMessage(email),
+            });
+          }
         }
       }
 

@@ -153,10 +153,6 @@ export const buildSurveyResponseEmailHtml = async ({
 /** Outcome of resolving a `to` value (literal email or question/hidden-field id) against a response. */
 export type ResolveRecipientResult = { ok: true; email: string } | { ok: false; error: string };
 
-// Re-exported from `@formbricks/workflows` so the enable-time gate and this send-time path share a
-// single literal-vs-field classifier that cannot drift (ENG-2029).
-export { isLiteralEmailRecipient } from "@formbricks/workflows";
-
 /**
  * Resolves an email recipient from a `to` value the same way survey Follow-Ups do:
  *  - if `to` is itself a valid email, use it directly (teammate/user address);

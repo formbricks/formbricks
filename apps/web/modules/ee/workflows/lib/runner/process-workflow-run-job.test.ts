@@ -396,6 +396,39 @@ describe("processWorkflowRunJob", () => {
     expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "jane@example.com" }));
   });
 
+  test("does not query the member allowlist when no step has a literal recipient", async () => {
+    // The allowlist only gates literal addresses, so the common respondent-field run must not pay an
+    // unbounded membership query on every completed response.
+    mockGetResponse.mockResolvedValue({
+      ...mockResponse,
+      data: { contact: ["Jane", "Doe", "jane@example.com", "+1"] },
+    });
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("contact") },
+      workflow: { definition: makeDefinition("contact") },
+    });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockGetOrganizationMemberEmails).not.toHaveBeenCalled();
+    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "jane@example.com" }));
+  });
+
+  test("queries the member allowlist once when a step has a literal recipient", async () => {
+    mockGetOrganizationMemberEmails.mockResolvedValue(new Set(["teammate@example.com"]));
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("teammate@example.com") },
+      workflow: { definition: makeDefinition("teammate@example.com") },
+    });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockGetOrganizationMemberEmails).toHaveBeenCalledTimes(1);
+    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "teammate@example.com" }));
+  });
+
   test("resolves a contact-info array `to` using index [2]", async () => {
     mockGetResponse.mockResolvedValue({
       ...mockResponse,

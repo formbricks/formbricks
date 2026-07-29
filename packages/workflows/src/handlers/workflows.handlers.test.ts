@@ -550,9 +550,15 @@ describe("enable", () => {
       emails: ["support@example.com"],
     });
     expect(res.status).toBe(422);
-    const body = await readJson<{ code: string; invalid_params: { name: string }[] }>(res);
+    const body = await readJson<{
+      code: string;
+      detail: string;
+      invalid_params: { name: string }[];
+    }>(res);
     expect(body.code).toBe("workflow_not_executable");
     expect(body.invalid_params.map((p) => p.name)).toContain("definition.nodes.config.to");
+    // `detail` must name the cause on its own: the editor's error mapper surfaces only `detail`.
+    expect(body.detail).toBe("A send_email recipient is not a member of this organization.");
     expect(service.enableWorkflow).not.toHaveBeenCalled();
   });
 
@@ -647,7 +653,7 @@ describe("disable", () => {
 });
 
 interface TestResultBody {
-  data: { workflowId: string; ok: boolean; problems: { code: string; field: string }[] };
+  data: { workflowId: string; ok: boolean; problems: { code: string; field: string; message: string }[] };
 }
 
 describe("testWorkflow", () => {
@@ -761,6 +767,56 @@ describe("testWorkflow", () => {
     expect(body.data.ok).toBe(false);
     const problem = body.data.problems.find((p) => p.code === "ending_card_not_found");
     expect(problem?.field).toBe("definition.trigger.config.endingCardIds");
+  });
+
+  test("reports a non-member literal recipient as a problem instead of testing green (ENG-2029)", async () => {
+    // Default definition's send_email targets a literal address (support@example.com).
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: ["support@example.com"] });
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(verifyRecipientsAllowed).toHaveBeenCalledWith({ workspaceId, emails: ["support@example.com"] });
+    expect(res.status).toBe(200);
+    const body = await readJson<TestResultBody>(res);
+    expect(body.data.ok).toBe(false);
+    const problem = body.data.problems.find((p) => p.code === "recipient_not_allowed");
+    expect(problem?.field).toBe("definition.nodes.config.to");
+    expect(problem?.message).toContain("support@example.com");
+  });
+
+  test("skips the recipient check for a respondent-field recipient", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({
+        status: "draft",
+        definition: {
+          ...definition,
+          nodes: [
+            {
+              ...definition.nodes[0],
+              config: { ...definition.nodes[0].config, to: "email-question-id" },
+            },
+          ],
+        },
+      })
+    );
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    expect(verifyRecipientsAllowed).not.toHaveBeenCalled();
+    expect((await readJson<TestResultBody>(res)).data.ok).toBe(true);
+  });
+
+  test("skips the recipient check when the definition is not executable", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({ status: "enabled", definition: { ...definition, nodes: [], edges: [] } })
+    );
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    expect(verifyRecipientsAllowed).not.toHaveBeenCalled();
   });
 
   test("returns 403 for an unknown workflow without checking the survey", async () => {
