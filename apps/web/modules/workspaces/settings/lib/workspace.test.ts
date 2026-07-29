@@ -53,6 +53,12 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+// ENG-1922: createWorkspace's org-scope guard queries team.findMany({ select: { id: true } }).
+// Model exactly that projection for the mock — a single localized assertion instead of scattered
+// `any` casts, so the fixture can't silently drift from the query's shape.
+const mockOrgTeams = (...ids: string[]) =>
+  ids.map((id) => ({ id })) as unknown as Awaited<ReturnType<typeof prisma.team.findMany>>;
+
 const expectNoFrdSideEffects = () => {
   expect(prisma.feedbackDirectory.upsert).not.toHaveBeenCalled();
   expect(prisma.feedbackDirectory.findFirst).not.toHaveBeenCalled();
@@ -134,7 +140,7 @@ describe("workspace lib", () => {
   describe("createWorkspace", () => {
     test("creates workspace with team links and no FRD side-effects", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p2" };
-      vi.mocked(prisma.team.findMany).mockResolvedValueOnce([{ id: "t1" }] as any);
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
 
@@ -153,7 +159,7 @@ describe("workspace lib", () => {
     // ENG-1922: a caller must not link a team from another organization to their workspace.
     test("rejects teamIds that belong to another organization", async () => {
       // Foreign team: the org-scoped lookup returns nothing.
-      vi.mocked(prisma.team.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams());
 
       await expect(
         createWorkspace("org1", { name: "Workspace 1", teamIds: ["foreign-team"] })
@@ -172,7 +178,7 @@ describe("workspace lib", () => {
     // not partially linked.
     test("rejects when only some teamIds belong to the organization", async () => {
       // Only t1 is in the org; the org-scoped lookup omits the foreign id.
-      vi.mocked(prisma.team.findMany).mockResolvedValueOnce([{ id: "t1" }] as any);
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
 
       await expect(
         createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "foreign-team"] })

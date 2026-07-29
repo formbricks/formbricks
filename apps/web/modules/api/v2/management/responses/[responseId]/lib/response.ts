@@ -141,6 +141,116 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
   }
 };
 
+// A rejected foreign key and a nonexistent one must be indistinguishable, so every failure below
+// is the same generic 404 — anything more specific would be a cross-tenant existence oracle.
+const notFound = (field: string): ApiErrorResponseV2 => ({
+  type: "not_found",
+  details: [{ field, issue: "not found" }],
+});
+
+/** The response's own tenant anchor, loaded once and shared by the FK checks below. */
+type ResponseTenantAnchor = {
+  surveyId: string;
+  contactId: string | null;
+  survey: { workspaceId: string };
+};
+
+/** Rejects a contact that is not in the response's own workspace. */
+const validateContactScope = async (
+  contactId: string,
+  workspaceId: string,
+  prismaClient: Prisma.TransactionClient | typeof prisma
+): Promise<ApiErrorResponseV2 | null> => {
+  const contact = await prismaClient.contact.findUnique({
+    where: { id: contactId, workspaceId },
+    select: { id: true },
+  });
+
+  return contact ? null : notFound("contactId");
+};
+
+/**
+ * Rejects a display that belongs to another workspace or survey, or that is already claimed by a
+ * different response or contact. A ValidationError from the lookup means the id was malformed, which
+ * is reported as not-found for the same reason as above.
+ */
+const validateDisplayScope = async (
+  displayId: string,
+  responseId: string,
+  anchor: ResponseTenantAnchor,
+  effectiveContactId: string | null,
+  prismaClient: Prisma.TransactionClient | typeof prisma
+): Promise<ApiErrorResponseV2 | null> => {
+  let display: Awaited<ReturnType<typeof getDisplayForResponseValidation>>;
+  try {
+    display = await getDisplayForResponseValidation(displayId, prismaClient);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return notFound("displayId");
+    }
+    throw error;
+  }
+
+  const isUsable =
+    display !== null &&
+    display.workspaceId === anchor.survey.workspaceId &&
+    display.surveyId === anchor.surveyId &&
+    (display.responseId === null || display.responseId === responseId) &&
+    (display.contactId === null || display.contactId === effectiveContactId);
+
+  return isUsable ? null : notFound("displayId");
+};
+
+/**
+ * ENG-1923: contactId and displayId are caller-supplied FKs mass-assigned into the update in
+ * updateResponse. When either is present, verify it belongs to this response's own workspace/survey
+ * before persisting — a caller authorized on this response must not be able to re-point it at
+ * another tenant's contact or display (cross-tenant BOLA). surveyId is not updatable (omitted from
+ * the schema), so the response's workspace anchor is stable.
+ *
+ * Returns null when there is nothing to reject. When neither FK is supplied the tenant lookup is
+ * skipped entirely; a missing response is still surfaced as a 404 by the update's
+ * PrismaClientKnownRequestError handler.
+ */
+const validateResponseLinkScope = async (
+  responseId: string,
+  responseInput: z.infer<typeof ZResponseUpdateSchema>,
+  prismaClient: Prisma.TransactionClient | typeof prisma
+): Promise<ApiErrorResponseV2 | null> => {
+  if (!responseInput.contactId && !responseInput.displayId) {
+    return null;
+  }
+
+  const anchor = await prismaClient.response.findUnique({
+    where: { id: responseId },
+    select: { surveyId: true, contactId: true, survey: { select: { workspaceId: true } } },
+  });
+  if (!anchor) {
+    return notFound("response");
+  }
+
+  if (responseInput.contactId) {
+    const contactError = await validateContactScope(
+      responseInput.contactId,
+      anchor.survey.workspaceId,
+      prismaClient
+    );
+    if (contactError) {
+      return contactError;
+    }
+  }
+
+  if (!responseInput.displayId) {
+    return null;
+  }
+
+  // An explicit contactId in this same update wins over the stored one, including an explicit null.
+  const effectiveContactId =
+    responseInput.contactId !== undefined ? responseInput.contactId : anchor.contactId;
+
+  return validateDisplayScope(responseInput.displayId, responseId, anchor, effectiveContactId, prismaClient);
+};
+
 export const updateResponse = async (
   responseId: string,
   responseInput: z.infer<typeof ZResponseUpdateSchema>,
@@ -149,51 +259,9 @@ export const updateResponse = async (
   try {
     const prismaClient = tx ?? prisma;
 
-    // ENG-1923: contactId and displayId are caller-supplied FKs mass-assigned into the update
-    // below. Verify each belongs to this response's own workspace/survey before persisting — a
-    // caller authorized on this response must not be able to re-point it at another tenant's
-    // contact or display (cross-tenant BOLA). surveyId is not updatable (omitted from the schema),
-    // so the response's workspace anchor is stable. Foreign and nonexistent ids fail identically
-    // (404, generic) — no cross-tenant existence oracle.
-    const existingResponse = await prismaClient.response.findUnique({
-      where: { id: responseId },
-      select: { surveyId: true, contactId: true, survey: { select: { workspaceId: true } } },
-    });
-    if (!existingResponse) {
-      return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
-    }
-    const workspaceId = existingResponse.survey.workspaceId;
-
-    if (responseInput.contactId) {
-      const contact = await prismaClient.contact.findUnique({
-        where: { id: responseInput.contactId, workspaceId },
-        select: { id: true },
-      });
-      if (!contact) {
-        return err({ type: "not_found", details: [{ field: "contactId", issue: "not found" }] });
-      }
-    }
-
-    if (responseInput.displayId) {
-      const effectiveContactId =
-        responseInput.contactId !== undefined ? responseInput.contactId : existingResponse.contactId;
-      try {
-        const display = await getDisplayForResponseValidation(responseInput.displayId, prismaClient);
-        const displayValid =
-          display !== null &&
-          display.workspaceId === workspaceId &&
-          display.surveyId === existingResponse.surveyId &&
-          (display.responseId === null || display.responseId === responseId) &&
-          (display.contactId === null || display.contactId === effectiveContactId);
-        if (!displayValid) {
-          return err({ type: "not_found", details: [{ field: "displayId", issue: "not found" }] });
-        }
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          return err({ type: "not_found", details: [{ field: "displayId", issue: "not found" }] });
-        }
-        throw error;
-      }
+    const linkScopeError = await validateResponseLinkScope(responseId, responseInput, prismaClient);
+    if (linkScopeError) {
+      return err(linkScopeError);
     }
 
     const updatedResponse = await prismaClient.response.update({

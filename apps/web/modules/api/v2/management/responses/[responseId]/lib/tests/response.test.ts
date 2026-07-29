@@ -462,6 +462,23 @@ describe("Response Lib", () => {
       }
     });
 
+    // ENG-1923 perf: when the update sets no contact/display link (both null) there is no FK to
+    // validate, so the tenant lookup is skipped entirely — a missing response is still surfaced as
+    // a 404 by the update's Prisma handler. Guards against reintroducing an unconditional
+    // round-trip when neither link is being (re)assigned.
+    test("skips the tenant lookup when neither contactId nor displayId is set", async () => {
+      const inputWithoutLinks = { ...responseInput, contactId: null, displayId: null };
+      vi.mocked(prisma.response.update).mockResolvedValue(response);
+
+      const result = await updateResponse(responseId, inputWithoutLinks);
+
+      expect(result.ok).toBe(true);
+      expect(prisma.response.findUnique).not.toHaveBeenCalled();
+      expect(prisma.contact.findUnique).not.toHaveBeenCalled();
+      expect(getDisplayForResponseValidation).not.toHaveBeenCalled();
+      expect(prisma.response.update).toHaveBeenCalledTimes(1);
+    });
+
     test("return an error when prisma.response.update throws", async () => {
       vi.mocked(prisma.response.update).mockRejectedValue(new Error("Update failed"));
       const result = await updateResponse(responseId, responseInput);
