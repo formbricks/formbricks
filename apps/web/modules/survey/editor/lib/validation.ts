@@ -262,7 +262,11 @@ export const isSurveyValid = (
   survey: TSurvey,
   selectedLanguageCode: string,
   t: TFunction,
-  responseCount?: number
+  /**
+   * Completed responses only — `survey.autoComplete` is a limit on completions, so partial
+   * starts must not count towards it.
+   */
+  finishedResponseCount?: number
 ) => {
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
   if (questionWithEmptyFallback) {
@@ -284,16 +288,16 @@ export const isSurveyValid = (
   }
 
   // Response limit validation
-  if (survey.autoComplete !== null && responseCount !== undefined) {
+  if (survey.autoComplete !== null && finishedResponseCount !== undefined) {
     if (survey.autoComplete === 0) {
       toast.error(t("workspace.surveys.edit.response_limit_can_t_be_set_to_0"));
       return false;
     }
 
-    if (survey.autoComplete <= responseCount) {
+    if (survey.autoComplete <= finishedResponseCount) {
       toast.error(
         t("workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
-          responseCount,
+          responseCount: finishedResponseCount,
         }),
         {
           id: "response-limit-error",

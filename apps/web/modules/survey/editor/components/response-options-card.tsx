@@ -26,7 +26,7 @@ import { Slider } from "@/modules/ui/components/slider";
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((prev: TSurvey) => TSurvey)) => void;
-  responseCount: number;
+  finishedResponseCount: number;
   isSpamProtectionAllowed: boolean;
   surveySchedulingConfig: TSurveySchedulingConfig;
   locale: TUserLocale;
@@ -35,7 +35,7 @@ interface ResponseOptionsCardProps {
 export const ResponseOptionsCard = ({
   localSurvey,
   setLocalSurvey,
-  responseCount,
+  finishedResponseCount,
   isSpamProtectionAllowed,
   surveySchedulingConfig,
   locale,
@@ -245,7 +245,7 @@ export const ResponseOptionsCard = ({
       const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey = { ...localSurvey, autoComplete: Math.max(25, responseCount + 5) };
+      const updatedSurvey = { ...localSurvey, autoComplete: Math.max(25, finishedResponseCount + 5) };
       setLocalSurvey(updatedSurvey);
     }
   };
@@ -266,10 +266,10 @@ export const ResponseOptionsCard = ({
       return;
     }
 
-    if (Number.parseInt(e.target.value) <= responseCount) {
+    if (Number.parseInt(e.target.value) <= finishedResponseCount) {
       toast.error(
         t("workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
-          responseCount,
+          responseCount: finishedResponseCount,
         }),
         {
           id: "response-limit-error",
@@ -423,7 +423,7 @@ export const ResponseOptionsCard = ({
                       <Input
                         autoFocus
                         type="number"
-                        min={responseCount ? (responseCount + 1).toString() : "1"}
+                        min={finishedResponseCount ? (finishedResponseCount + 1).toString() : "1"}
                         id="autoCompleteResponses"
                         value={localSurvey.autoComplete?.toString()}
                         onChange={handleInputResponse}

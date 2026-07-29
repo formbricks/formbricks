@@ -39,6 +39,7 @@ interface SurveyMenuBarProps {
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
   workspace: Workspace;
   responseCount: number;
+  finishedResponseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
@@ -56,6 +57,7 @@ export const SurveyMenuBar = ({
   setInvalidElements,
   workspace,
   responseCount,
+  finishedResponseCount,
   selectedLanguageCode,
   isCxMode,
   locale,
@@ -408,7 +410,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
       if (!isSurveyValidResult) {
         setIsSurveySaving(false);
         return false;
@@ -492,7 +494,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
       if (!isSurveyValidResult) {
         isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
@@ -550,7 +552,7 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
       if (!isSurveyValidResult) {
         isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
