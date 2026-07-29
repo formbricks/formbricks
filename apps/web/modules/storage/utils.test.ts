@@ -520,6 +520,134 @@ describe("storage utils", () => {
       expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
     });
 
+    // ENG-1981 review (Anshuman): file URLs uploaded before #8044 are only 4 parts
+    // (/storage/{prefix}/private/{file}) and never recorded a survey/element. A management caller
+    // replaying such a stored response (backfills, re-imports, two-way integrations) must still
+    // validate the URL — but only when {prefix} is a storage namespace the workspace owns, so
+    // cross-tenant deletion stays closed. legacyOwnedStoragePrefixes carries the owned prefixes
+    // (workspace id + Workspace.legacyEnvironmentId); it is empty for the client widget path.
+    describe("legacy 4-part URLs (management replay of pre-#8044 responses)", () => {
+      const legacyEnvironmentId = "env_legacy_abc";
+
+      test("accepts a legacy URL whose prefix is the workspace id (Formbricks 5 shape)", () => {
+        const responseData = {
+          [elementId]: [`/storage/${workspaceId}/private/resume--fid--u1.pdf`],
+        };
+
+        expect(
+          validateClientFileUploads({
+            data: responseData,
+            workspaceId,
+            surveyId,
+            blocks,
+            legacyOwnedStoragePrefixes: [workspaceId, legacyEnvironmentId],
+          })
+        ).toBe(true);
+      });
+
+      test("accepts a legacy URL whose prefix is the workspace's legacyEnvironmentId (pre-Formbricks 5 shape)", () => {
+        const responseData = {
+          [elementId]: [`/storage/${legacyEnvironmentId}/private/resume--fid--u1.pdf`],
+        };
+
+        expect(
+          validateClientFileUploads({
+            data: responseData,
+            workspaceId,
+            surveyId,
+            blocks,
+            legacyOwnedStoragePrefixes: [workspaceId, legacyEnvironmentId],
+          })
+        ).toBe(true);
+      });
+
+      test("accepts an app-origin absolute legacy URL whose prefix is owned", () => {
+        const absoluteUrl = resolveStorageUrl(
+          `/storage/${legacyEnvironmentId}/private/resume--fid--u1.pdf`,
+          "private"
+        );
+        const responseData = { [elementId]: [absoluteUrl] };
+
+        expect(
+          validateClientFileUploads({
+            data: responseData,
+            workspaceId,
+            surveyId,
+            blocks,
+            legacyOwnedStoragePrefixes: [workspaceId, legacyEnvironmentId],
+          })
+        ).toBe(true);
+      });
+
+      test("rejects a legacy URL whose prefix belongs to another tenant (cross-tenant, ENG-1981)", () => {
+        // The prefix is the only part that decides whose file a later cleanup deletes, so a legacy
+        // URL naming a prefix this workspace does not own must never validate.
+        const responseData = {
+          [elementId]: [`/storage/env_other_tenant/private/resume--fid--u1.pdf`],
+        };
+
+        expect(
+          validateClientFileUploads({
+            data: responseData,
+            workspaceId,
+            surveyId,
+            blocks,
+            legacyOwnedStoragePrefixes: [workspaceId, legacyEnvironmentId],
+          })
+        ).toBe(false);
+      });
+
+      test("rejects a legacy public URL even when the prefix is owned (file-upload answers are private)", () => {
+        const responseData = {
+          [elementId]: [`/storage/${workspaceId}/public/resume--fid--u1.pdf`],
+        };
+
+        expect(
+          validateClientFileUploads({
+            data: responseData,
+            workspaceId,
+            surveyId,
+            blocks,
+            legacyOwnedStoragePrefixes: [workspaceId, legacyEnvironmentId],
+          })
+        ).toBe(false);
+      });
+
+      test("rejects a legacy URL when no owned prefixes are supplied (client widget path stays strict)", () => {
+        const responseData = {
+          [elementId]: [`/storage/${workspaceId}/private/resume--fid--u1.pdf`],
+        };
+
+        expect(
+          validateClientFileUploads({
+            data: responseData,
+            workspaceId,
+            surveyId,
+            blocks,
+            legacyOwnedStoragePrefixes: [],
+          })
+        ).toBe(false);
+      });
+
+      test("still accepts the current scoped 8-part shape when owned prefixes are supplied", () => {
+        const responseData = {
+          [elementId]: [
+            `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
+          ],
+        };
+
+        expect(
+          validateClientFileUploads({
+            data: responseData,
+            workspaceId,
+            surveyId,
+            blocks,
+            legacyOwnedStoragePrefixes: [workspaceId, legacyEnvironmentId],
+          })
+        ).toBe(true);
+      });
+    });
+
     describe("questions-only surveys (legacy shape passed by all four management routes)", () => {
       const questions = [
         {

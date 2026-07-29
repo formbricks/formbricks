@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { Response } from "@formbricks/database/prisma";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -104,6 +105,9 @@ export const POST = async (request: Request) =>
           surveyId: body.surveyId,
           blocks: surveyQuestions.data.blocks,
           questions: surveyQuestions.data.questions,
+          // Management callers replay stored responses whose file URLs may predate the scoped shape;
+          // accept those against a prefix this workspace owns (ENG-1981 review).
+          legacyOwnedStoragePrefixes: await getWorkspaceLegacyStoragePrefixes(workspaceId),
         })
       ) {
         return handleApiError(

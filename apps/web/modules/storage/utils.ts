@@ -264,37 +264,66 @@ const isScopedPrivateUploadUrl = ({
   workspaceId,
   surveyId,
   elementId,
+  legacyOwnedStoragePrefixes = [],
 }: {
   fileUrl: string;
   workspaceId: string;
   surveyId: string;
   elementId: string;
+  // Storage prefixes this workspace owns for pre-#8044 file URLs (its own id and, when set, its
+  // Workspace.legacyEnvironmentId). Empty for the client widget, which only ever emits the scoped
+  // shape below; passed by the management routes so replayed old responses still validate.
+  legacyOwnedStoragePrefixes?: string[];
 }): boolean => {
   const segments = getStorageUrlPathSegments(fileUrl);
 
-  if (segments?.length !== 8) return false;
+  if (!segments) return false;
 
-  const [
-    storageSegment,
-    storageWorkspaceId,
-    accessType,
-    surveysSegment,
-    storageSurveyId,
-    elementsSegment,
-    storageElementId,
-    fileName,
-  ] = segments;
+  // Current (post-#8044) fully-scoped shape:
+  // /storage/{workspaceId}/private/surveys/{surveyId}/elements/{elementId}/{file}  -> 8 parts
+  if (segments.length === 8) {
+    const [
+      storageSegment,
+      storageWorkspaceId,
+      accessType,
+      surveysSegment,
+      storageSurveyId,
+      elementsSegment,
+      storageElementId,
+      fileName,
+    ] = segments;
 
-  return (
-    storageSegment === "storage" &&
-    storageWorkspaceId === workspaceId &&
-    accessType === "private" &&
-    surveysSegment === "surveys" &&
-    storageSurveyId === surveyId &&
-    elementsSegment === "elements" &&
-    storageElementId === elementId &&
-    Boolean(fileName)
-  );
+    return (
+      storageSegment === "storage" &&
+      storageWorkspaceId === workspaceId &&
+      accessType === "private" &&
+      surveysSegment === "surveys" &&
+      storageSurveyId === surveyId &&
+      elementsSegment === "elements" &&
+      storageElementId === elementId &&
+      Boolean(fileName)
+    );
+  }
+
+  // Legacy shapes uploaded before #8044 (pre-Formbricks-5 environment-id prefix, or the Formbricks-5
+  // workspace-id prefix) never recorded a survey or element, so they are only 4 parts:
+  // /storage/{prefix}/private/{file}. A read-then-write of such a response (backfills, re-imports,
+  // two-way integrations) must still validate — but only when {prefix} is a storage namespace THIS
+  // workspace owns, so cross-tenant deletion stays closed (the prefix is the only part that decides
+  // whose file a later cleanup deletes). Survey/element binding is unavailable here because the old
+  // URL never carried it.
+  if (segments.length === 4 && legacyOwnedStoragePrefixes.length > 0) {
+    const [storageSegment, storagePrefix, accessType, fileName] = segments;
+
+    return (
+      storageSegment === "storage" &&
+      accessType === "private" &&
+      legacyOwnedStoragePrefixes.includes(storagePrefix) &&
+      Boolean(fileName)
+    );
+  }
+
+  return false;
 };
 
 export const validateClientFileUploads = ({
@@ -303,12 +332,17 @@ export const validateClientFileUploads = ({
   surveyId,
   blocks,
   questions,
+  legacyOwnedStoragePrefixes,
 }: {
   data?: TResponseData;
   workspaceId: string;
   surveyId: string;
   blocks?: TSurveyBlock[] | null;
   questions?: TSurveyQuestion[] | null;
+  // Passed by the management routes (see getWorkspaceLegacyEnvironmentId) so a replayed old response
+  // whose file URL predates the scoped shape still validates against a prefix the workspace owns.
+  // Omitted by the client widget path, which stays strict on the scoped shape.
+  legacyOwnedStoragePrefixes?: string[];
 }): boolean => {
   if (!data) return true;
 
@@ -328,6 +362,7 @@ export const validateClientFileUploads = ({
           workspaceId,
           surveyId,
           elementId: fileUploadConfig.id,
+          legacyOwnedStoragePrefixes,
         })
       ) {
         return false;

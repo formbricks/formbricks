@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
@@ -170,6 +171,11 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
           surveyId: existingResponse.data.surveyId,
           blocks: questionsResponse.data.blocks,
           questions: questionsResponse.data.questions,
+          // Management callers replay stored responses whose file URLs may predate the scoped shape;
+          // accept those against a prefix this workspace owns (ENG-1981 review).
+          legacyOwnedStoragePrefixes: await getWorkspaceLegacyStoragePrefixes(
+            workspaceIdResult.data.workspaceId
+          ),
         })
       ) {
         return handleApiError(
