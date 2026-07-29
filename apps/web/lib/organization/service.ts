@@ -14,6 +14,7 @@ import {
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -301,6 +302,11 @@ export const deleteOrganization = async (organizationId: string) => {
             id: true,
           },
         },
+        apiKeys: {
+          select: {
+            id: true,
+          },
+        },
         feedbackDirectories: {
           select: {
             id: true,
@@ -316,6 +322,11 @@ export const deleteOrganization = async (organizationId: string) => {
       reconcileTeamWorkspaceRelationships({
         teamIds: deletedOrganization.teams.map(({ id }) => id),
         workspaceIds: deletedOrganization.workspaces.map(({ id }) => id),
+      })
+    );
+    await runPostCommitProjection("organization_delete_api_key_cleanup", () =>
+      reconcileApiKeyRelationships({
+        apiKeyIds: deletedOrganization.apiKeys.map(({ id }) => id),
       })
     );
 
