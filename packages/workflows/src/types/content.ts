@@ -1,7 +1,8 @@
-// Anything between angle brackets. Deliberately permissive: the editor's serializer un-escapes
-// `&lt;`/`&gt;` back into literal angle brackets, so the stored body is not guaranteed well-formed
-// HTML and a stricter parser would be no more accurate here.
-const HTML_TAG_PATTERN = /<[^>]*>/g;
+// An opening or closing tag: `<` (or `</`) followed by a tag NAME, so the pattern can't swallow
+// visible text that merely contains an angle bracket. The gate matters because the editor's
+// serializer un-escapes `&lt;`/`&gt;` back into literal brackets before storing — without it a body
+// of "<3" strips down to nothing and reads as blank.
+const HTML_TAG_PATTERN = /<\/?[a-zA-Z][^>]*>/g;
 
 // Entities the editor emits for whitespace. They carry no visible content but survive tag removal.
 const HTML_WHITESPACE_ENTITY_PATTERN = /&nbsp;|&#160;|&#xa0;/gi;
@@ -17,6 +18,12 @@ const HTML_WHITESPACE_ENTITY_PATTERN = /&nbsp;|&#160;|&#xa0;/gi;
  * Recall tokens survive this check: `RecallNode.exportDOM` writes the
  * `#recall:<id>/fallback:<value>#` token as the element's text content, so a body consisting only
  * of a recall token is correctly treated as filled.
+ *
+ * Known limit: because the stored value is not guaranteed well-formed HTML (see the un-escaping
+ * above), a body whose ONLY visible text is an unclosed bracket immediately followed by a letter
+ * (`<b`) still reads as blank. Resolving that needs the editor to persist an unambiguous
+ * representation rather than lossy HTML; until then this errs toward "blank", which nags the author
+ * for more content instead of sending an empty email.
  */
 export const isBlankWorkflowRichText = (value: string): boolean =>
   value.replaceAll(HTML_TAG_PATTERN, "").replaceAll(HTML_WHITESPACE_ENTITY_PATTERN, " ").trim().length === 0;

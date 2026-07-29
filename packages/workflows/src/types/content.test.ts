@@ -26,6 +26,14 @@ describe("isBlankWorkflowRichText", () => {
     expect(isBlankWorkflowRichText('<p><span style="font-weight: bold">x</span></p>')).toBe(false);
   });
 
+  test("treats visible text containing an angle bracket as filled", () => {
+    // The serializer un-escapes `&lt;`/`&gt;` before storing, so these brackets are real content.
+    // Stripping anything bracket-shaped would read them as empty and block enabling.
+    expect(isBlankWorkflowRichText("<p><3</p>")).toBe(false);
+    expect(isBlankWorkflowRichText("<p>5 < 6</p>")).toBe(false);
+    expect(isBlankWorkflowRichText("<p>a > b</p>")).toBe(false);
+  });
+
   test("treats a recall-token-only body as filled", () => {
     // RecallNode.exportDOM writes the token as the element's text content, so a body that is
     // nothing but a recall reference must not be mistaken for an empty one.

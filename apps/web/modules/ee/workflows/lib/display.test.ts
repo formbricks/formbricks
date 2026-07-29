@@ -155,25 +155,39 @@ describe("getWorkflowValidationProblemFocusTarget", () => {
     });
   });
 
-  test("points trigger config problems at the survey picker", () => {
+  test("routes each trigger config problem to the control that owns it", () => {
     const definition = buildDefinition({ to: "a", subject: "b", body: "c" });
-    for (const field of ["trigger.config.surveyId", "trigger.config.endingCardIds"]) {
-      expect(getWorkflowValidationProblemFocusTarget(problem(field), definition)).toEqual({
-        nodeId: "trigger-1",
-        field: "surveyId",
-      });
-    }
+    expect(getWorkflowValidationProblemFocusTarget(problem("trigger.config.surveyId"), definition)).toEqual({
+      nodeId: "trigger-1",
+      field: "surveyId",
+    });
+    // A stale ending is a problem with the endings list, not the survey it came from.
+    expect(
+      getWorkflowValidationProblemFocusTarget(problem("trigger.config.endingCardIds"), definition)
+    ).toEqual({ nodeId: "trigger-1", field: "endingCardIds" });
+  });
+
+  test("ignores non-config paths on an action node", () => {
+    // Only `step_incomplete`'s exact `nodes.N.config` path resolves to a content field. A problem
+    // reported elsewhere on the same action node (a shape issue, an unsupported type) must not
+    // silently jump to "the first blank field", which the message never mentioned.
+    const definition = buildDefinition({ to: "", subject: "", body: "" });
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.type"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.label"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config.to"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0"), definition)).toBeNull();
   });
 
   test("has no target for problems that aren't fixed in a config form", () => {
     const definition = buildDefinition({ to: "a", subject: "b", body: "c" });
-    // Nothing blank on the step, an unsupported node type, whole-flow problems, and out-of-range
-    // or trigger-less paths all leave the row passive rather than jumping somewhere arbitrary.
+    // Nothing blank on the step, a non-action node, whole-flow problems, and out-of-range or
+    // trigger-less paths all leave the row passive rather than jumping somewhere arbitrary.
     expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), definition)).toBeNull();
-    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.1.type"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.1.config"), definition)).toBeNull();
     expect(getWorkflowValidationProblemFocusTarget(problem("nodes.9.config"), definition)).toBeNull();
     expect(getWorkflowValidationProblemFocusTarget(problem("name"), definition)).toBeNull();
     expect(getWorkflowValidationProblemFocusTarget(problem("trigger"), definition)).toBeNull();
+    expect(getWorkflowValidationProblemFocusTarget(problem("trigger.config"), definition)).toBeNull();
     expect(getWorkflowValidationProblemFocusTarget(problem("edges"), definition)).toBeNull();
     expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), null)).toBeNull();
     const triggerless = { ...definition, trigger: null } as unknown as TWorkflowDefinition;

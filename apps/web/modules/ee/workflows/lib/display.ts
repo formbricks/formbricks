@@ -110,6 +110,18 @@ export const getWorkflowValidationProblemLocation = (
   return null;
 };
 
+// Exactly the step-level path `step_incomplete` reports at — deliberately not the looser
+// NODE_FIELD_PATTERN above. A problem somewhere else on an action node (a shape issue at
+// `nodes.N.label`, an unsupported `nodes.N.type`) must not resolve to "the first blank content
+// field", which would land the user on a field the message never mentioned.
+const NODE_CONFIG_FIELD_PATTERN = /^nodes\.(\d+)\.config$/;
+
+// Which trigger config path maps to which control in the trigger form.
+const TRIGGER_CONFIG_FIELD_TARGETS: Record<string, string> = {
+  "trigger.config.surveyId": "surveyId",
+  "trigger.config.endingCardIds": "endingCardIds",
+};
+
 /**
  * The config field a validation problem should send the user to, or null when the problem has no
  * single field to fix (a missing trigger, a broken flow shape, an unnamed workflow — those are
@@ -125,7 +137,7 @@ export const getWorkflowValidationProblemFocusTarget = (
 ): TWorkflowNodeFieldFocusRequest | null => {
   if (!definition) return null;
 
-  const nodeMatch = NODE_FIELD_PATTERN.exec(problem.field);
+  const nodeMatch = NODE_CONFIG_FIELD_PATTERN.exec(problem.field);
   if (nodeMatch) {
     const node = definition.nodes[Number(nodeMatch[1])];
     if (!node || node.type !== "action") return null;
@@ -133,9 +145,11 @@ export const getWorkflowValidationProblemFocusTarget = (
     return firstBlankField ? { nodeId: node.id, field: firstBlankField } : null;
   }
 
-  // Both trigger config problems (unbound survey, stale endings) start at the survey picker.
-  if (problem.field.startsWith("trigger.config.") && definition.trigger) {
-    return { nodeId: definition.trigger.id, field: "surveyId" };
+  // A stale ending is a problem with the endings list, not with the survey itself — sending it to
+  // the survey picker would imply the wrong fix.
+  const triggerField = TRIGGER_CONFIG_FIELD_TARGETS[problem.field];
+  if (triggerField && definition.trigger) {
+    return { nodeId: definition.trigger.id, field: triggerField };
   }
 
   return null;
