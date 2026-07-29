@@ -10,6 +10,7 @@ import {
   auditPasswordReset,
   betterAuthLogger,
   getSignInAuthMethod,
+  redactEmailsInLogMessage,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
@@ -48,6 +49,30 @@ vi.mock("./utils", () => ({
   logAuthAttempt: vi.fn(),
   shouldLogAuthFailure: vi.fn(),
 }));
+
+describe("redactEmailsInLogMessage (ENG-2091)", () => {
+  test("strips the local part from Better Auth's duplicate-sign-up message, keeping the domain", () => {
+    // The real message from better-auth's sign-up.mjs, logged at `info` on every duplicate sign-up.
+    expect(
+      redactEmailsInLogMessage("Sign-up attempt for existing email: alice.smith+tag@corporate.example.com")
+    ).toBe("Sign-up attempt for existing email: [redacted]@corporate.example.com");
+  });
+
+  test("redacts every address in a message, not just the first", () => {
+    expect(redactEmailsInLogMessage("linking a@x.com to b@y.co.uk")).toBe(
+      "linking [redacted]@x.com to [redacted]@y.co.uk"
+    );
+  });
+
+  test("leaves messages without an address untouched and passes non-strings through", () => {
+    expect(redactEmailsInLogMessage("Failed to run background task:")).toBe(
+      "Failed to run background task:"
+    );
+    const err = new Error("boom");
+    expect(redactEmailsInLogMessage(err)).toBe(err);
+    expect(redactEmailsInLogMessage(undefined)).toBeUndefined();
+  });
+});
 
 describe("getSignInAuthMethod (signedIn audit allow-list)", () => {
   test.each([
