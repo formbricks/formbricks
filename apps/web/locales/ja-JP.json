@@ -2915,7 +2915,6 @@
       "copy_survey_success": "アンケートを正常にコピーしました",
       "copy_survey_target_workspaces_label": "コピー先のワークスペース",
       "copy_to": "コピー先...",
-      "delete_forever": "完全に削除",
       "delete_survey_and_responses_warning": "本当にこのフォームとすべての回答を削除しますか？",
       "edit": {
         "activate_translations": "翻訳を有効化",

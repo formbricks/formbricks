@@ -2915,7 +2915,6 @@
       "copy_survey_success": "Anket başarıyla kopyalandı",
       "copy_survey_target_workspaces_label": "Hedef çalışma alanları",
       "copy_to": "Şuraya kopyala...",
-      "delete_forever": "Kalıcı olarak sil",
       "delete_survey_and_responses_warning": "Bu anketi ve tüm yanıtlarını silmek istediğinden emin misin?",
       "edit": {
         "activate_translations": "Çevirileri etkinleştir",

@@ -2915,7 +2915,6 @@
       "copy_survey_success": "Umfrage erfolgreich kopiert",
       "copy_survey_target_workspaces_label": "Ziel-Workspaces",
       "copy_to": "Kopieren nach...",
-      "delete_forever": "Endgültig löschen",
       "delete_survey_and_responses_warning": "Bist Du sicher, dass Du diese Umfrage und alle ihre Antworten löschen möchtest?",
       "edit": {
         "activate_translations": "Übersetzungen aktivieren",

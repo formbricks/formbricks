@@ -2915,7 +2915,6 @@
       "copy_survey_success": "Survey copied successfully",
       "copy_survey_target_workspaces_label": "Target workspaces",
       "copy_to": "Copy to...",
-      "delete_forever": "Delete forever",
       "delete_survey_and_responses_warning": "Are you sure you want to delete this survey and all of its responses?",
       "edit": {
         "activate_translations": "Activate translations",

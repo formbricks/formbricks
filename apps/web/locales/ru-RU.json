@@ -2915,7 +2915,6 @@
       "copy_survey_success": "Опрос успешно скопирован",
       "copy_survey_target_workspaces_label": "Целевые рабочие пространства",
       "copy_to": "Копировать в...",
-      "delete_forever": "Удалить навсегда",
       "delete_survey_and_responses_warning": "Вы уверены, что хотите удалить этот опрос и все его ответы?",
       "edit": {
         "activate_translations": "Активировать переводы",

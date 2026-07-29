@@ -2915,7 +2915,6 @@
       "copy_survey_success": "Undersökningen kopierades",
       "copy_survey_target_workspaces_label": "Målarbetsytor",
       "copy_to": "Kopiera till...",
-      "delete_forever": "Radera permanent",
       "delete_survey_and_responses_warning": "Är du säker på att du vill ta bort denna enkät och alla dess svar?",
       "edit": {
         "activate_translations": "Aktivera översättningar",

@@ -2915,7 +2915,6 @@
       "copy_survey_success": "问卷复制成功",
       "copy_survey_target_workspaces_label": "目标工作区",
       "copy_to": "复制到...",
-      "delete_forever": "永久删除",
       "delete_survey_and_responses_warning": "您 确定 要 删除 此 调查 及 所有 回复 吗？",
       "edit": {
         "activate_translations": "激活翻译",
