@@ -10,7 +10,7 @@
     "dev": "email dev --port 3456",
     "build": "pnpm typecheck",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --fix --ext .ts,.tsx",
+    "lint": "eslint src --fix",
     "clean": "rimraf .turbo node_modules dist"
   },
   "dependencies": {
@@ -27,7 +27,7 @@
     "@types/react": "19.2.14",
     "autoprefixer": "10.4.27",
     "clsx": "2.1.1",
-    "postcss": "8.5.14",
+    "postcss": "8.5.18",
     "tailwind-merge": "3.5.0",
     "tailwindcss": "3.4.19",
     "typescript": "5.9.3"

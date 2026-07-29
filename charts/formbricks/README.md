@@ -59,7 +59,11 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
 - The generated app secret supplies `CUBEJS_API_SECRET` by default. If you disable generated secrets,
   provide it through your existing secret management flow.
 - Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.
-- Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store before running multiple Cube replicas.
+- The bundled single-replica Cube has no external pre-aggregations and defaults
+  `cube.env.CUBEJS_EXTERNAL_DEFAULT` to `false`, so it does not require Cube Store. If you add external
+  pre-aggregations, configure Cube Store before overriding this value to `true`.
+- Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store
+  and switch cache and queue storage away from memory before running multiple Cube replicas.
 - Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
 
 ## Hub worker and self-hosted embeddings

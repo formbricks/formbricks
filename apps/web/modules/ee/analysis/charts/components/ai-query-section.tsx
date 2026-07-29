@@ -68,7 +68,7 @@ export function AIQuerySection({
 
   if (!isAIAvailable) {
     return (
-      <Alert>
+      <Alert role="status">
         <AlertTitle>{t("workspace.analysis.charts.ai_chart_generation")}</AlertTitle>
         <AlertDescription>{aiUnavailableMessage}</AlertDescription>
         {aiUnavailableAction && (

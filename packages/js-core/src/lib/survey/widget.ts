@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- Required for error logging */
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID } from "@/lib/common/constants";
 import { Logger } from "@/lib/common/logger";

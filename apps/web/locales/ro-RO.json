@@ -2471,6 +2471,7 @@
         "payment_error_contact_support": "Te rugăm să contactezi <supportLink>hola@formbricks.com</supportLink> pentru asistență.",
         "payment_error_failed_invoice": "Plata nu a putut fi finalizată.",
         "payment_error_requires_action": "Plata necesită autentificare suplimentară.",
+        "payment_method_required": "Adaugă o metodă de plată pentru a trece la un plan plătit.",
         "pending_change_removed": "Schimbarea de plan programată a fost anulată.",
         "pending_plan_badge": "Programat",
         "pending_plan_change_description": "Abonamentul tău va trece la {plan} pe {date}.",

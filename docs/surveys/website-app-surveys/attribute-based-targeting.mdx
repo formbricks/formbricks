@@ -1,16 +1,16 @@
 ---
-title: "Advanced Targeting"
-description: "Advanced Targeting allows you to show surveys to a specific segment of your users. You can target surveys based on user attributes, device type, and more. This helps you get more relevant insights while keeping survey fatigue at a minimum. After the initial setup, you can target any segment without touching code."
+title: "Attribute-based Targeting"
+description: "Attribute-based Targeting allows you to show surveys to a specific segment of your users. You can target surveys based on user attributes, device type, and more. This helps you get more relevant insights while keeping survey fatigue at a minimum. After the initial setup, you can target any segment without touching code."
 icon: "bullseye"
 ---
 
 <Note>
-  Advanced Targeting is part of the [Enterprise Edition](/self-hosting/advanced/license). 
+  Attribute-based Targeting is part of the [Enterprise Edition](/self-hosting/advanced/license). 
 </Note>
 
-### When to use Advanced Targeting?
+### When to use Attribute-based Targeting?
 
-Advanced Targeting helps you achieve a number of goals:
+Attribute-based Targeting helps you achieve a number of goals:
 
 1. **Relevance**: Keep survey content relevant to respondents.
 
@@ -18,7 +18,7 @@ Advanced Targeting helps you achieve a number of goals:
 
 3. **Statistical Relevance:** When surveying a smaller subset of users, statistical relevance is reached with a lot less responses.
 
-## How does Advanced Targeting work?
+## How does Attribute-based Targeting work?
 
 <Steps>
   <Step title="Create Segment">
@@ -29,7 +29,7 @@ Advanced Targeting helps you achieve a number of goals:
   </Step>
 
   <Step title="Configure Segment based on attributes">
-    In the Segment editor, you can configure your Segment with a combination of Attributes, Segments and Devices. If a user matches either or all of the criteria, they become part of the Segment. See [Segment Configuration](/surveys/website-app-surveys/advanced-targeting#segment-configuration) below.
+    In the Segment editor, you can configure your Segment with a combination of Attributes, Segments, Devices, and Survey Interactions. If a user matches either or all of the criteria, they become part of the Segment. See [Segment Configuration](/surveys/website-app-surveys/attribute-based-targeting#segment-configuration) below.
   </Step>
 
   <Step title="Create a survey of type Website & App">
@@ -48,7 +48,7 @@ Advanced Targeting helps you achieve a number of goals:
 
 ### Segment Configuration
 
-There are three means to move Contacts in or out of Segments: **Attributes**, other **Segments** and **Devices**:
+There are four means to move Contacts in or out of Segments: **Attributes**, other **Segments**, **Devices**, and [**Survey Interactions**](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments):
 
 1. **Attributes**: If the value of a specific attribute matches, the user becomes part of the Segment.
 
@@ -64,4 +64,6 @@ There are three means to move Contacts in or out of Segments: **Attributes**, ot
 
    ![Devices filter](/images/surveys/website-app-surveys/targeting/device-filter.webp "Devices filter")
 
-4. **Filter Groups:** You can group any of the above conditions in group and connect them logically with `AND` or `OR`. This allows for maximum granularity.
+4. **Survey Interactions**: Include or exclude Contacts based on whether they have seen, started, or completed a survey within a recent time window. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments) for details and use cases like per-survey cooldowns and follow-up funnels.
+
+5. **Filter Groups:** You can group any of the above conditions in group and connect them logically with `AND` or `OR`. This allows for maximum granularity.

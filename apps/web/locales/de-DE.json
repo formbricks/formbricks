@@ -2471,6 +2471,7 @@
         "payment_error_contact_support": "Bitte kontaktiere <supportLink>hola@formbricks.com</supportLink> für Unterstützung.",
         "payment_error_failed_invoice": "Die Zahlung konnte nicht abgeschlossen werden.",
         "payment_error_requires_action": "Die Zahlung erfordert eine zusätzliche Authentifizierung.",
+        "payment_method_required": "Füge eine Zahlungsmethode hinzu, um zu einem kostenpflichtigen Tarif zu wechseln.",
         "pending_change_removed": "Geplante Planänderung entfernt.",
         "pending_plan_badge": "Geplant",
         "pending_plan_change_description": "Dein Plan wechselt am {date} zu {plan}.",
