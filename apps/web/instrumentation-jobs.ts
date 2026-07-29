@@ -2,12 +2,15 @@ import {
   type JobHandlerOverrides,
   type JobsRuntimeHandle,
   type TResponsePipelineJobData,
+  type TSurveyArchivePurgeJobData,
   type TSurveySchedulingJobData,
   type TWorkflowRunJobData,
   type TWorkflowRunReconcileJobData,
+  removeRecurringSurveyArchivePurgeJobSchedule,
   removeRecurringSurveySchedulingJobSchedule,
   removeRecurringWorkflowRunReconcileJobSchedule,
   startJobsRuntime,
+  upsertRecurringSurveyArchivePurgeJobSchedule,
   upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringWorkflowRunReconcileJobSchedule,
 } from "@formbricks/jobs";
@@ -21,6 +24,13 @@ import {
   WORKFLOW_RUN_RECONCILE_SCHEDULE_ID,
 } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
+import {
+  SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
+  SURVEY_ARCHIVE_PURGE_DAILY_SCHEDULE_ID,
+  SURVEY_ARCHIVE_PURGE_GLOBAL_SCOPE,
+  SURVEY_ARCHIVE_PURGE_TIME_ZONE,
+} from "@/modules/survey/archive/lib/constants";
+import { processSurveyArchivePurgeJob } from "@/modules/survey/archive/lib/process-survey-archive-purge-job";
 import {
   SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
   SURVEY_SCHEDULING_DAILY_SCHEDULE_ID,
@@ -43,6 +53,7 @@ type TJobsRuntimeGlobal = typeof globalThis & {
 const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 const RESPONSE_PIPELINE_JOB_NAME = "response-pipeline.process";
 const SURVEY_SCHEDULING_JOB_NAME = "survey-scheduling.reconcile";
+const SURVEY_ARCHIVE_PURGE_JOB_NAME = "survey-archive-purge.process";
 const WORKFLOW_RUN_JOB_NAME = "workflow-run.process";
 const WORKFLOW_RUN_RECONCILE_JOB_NAME = "workflow-run.reconcile";
 
@@ -51,6 +62,9 @@ const responsePipelineJobHandler: NonNullable<JobHandlerOverrides[string]> = asy
 };
 const surveySchedulingJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processSurveySchedulingJob(data as TSurveySchedulingJobData, context);
+};
+const surveyArchivePurgeJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
+  await processSurveyArchivePurgeJob(data as TSurveyArchivePurgeJobData, context);
 };
 const workflowRunJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processWorkflowRunJob(data as TWorkflowRunJobData, context);
@@ -77,6 +91,28 @@ const registerSurveySchedulingSchedule = async (): Promise<void> => {
     },
     {
       scope: SURVEY_SCHEDULING_GLOBAL_SCOPE,
+    }
+  );
+};
+
+const registerSurveyArchivePurgeSchedule = async (): Promise<void> => {
+  await removeRecurringSurveyArchivePurgeJobSchedule({
+    scheduleId: SURVEY_ARCHIVE_PURGE_DAILY_SCHEDULE_ID,
+    scope: SURVEY_ARCHIVE_PURGE_GLOBAL_SCOPE,
+  });
+
+  await upsertRecurringSurveyArchivePurgeJobSchedule(
+    {
+      scheduleId: SURVEY_ARCHIVE_PURGE_DAILY_SCHEDULE_ID,
+      scope: SURVEY_ARCHIVE_PURGE_GLOBAL_SCOPE,
+    },
+    {
+      cronPattern: SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
+      kind: "cron",
+      timeZone: SURVEY_ARCHIVE_PURGE_TIME_ZONE,
+    },
+    {
+      scope: SURVEY_ARCHIVE_PURGE_GLOBAL_SCOPE,
     }
   );
 };
@@ -172,6 +208,7 @@ export const registerRecurringJobs = async (): Promise<void> => {
 
   globalForJobsRuntime.formbricksJobsRecurringRegistration = (async () => {
     await registerSurveySchedulingSchedule();
+    await registerSurveyArchivePurgeSchedule();
     await registerWorkflowRunReconcileSchedule();
     clearRecurringJobsRetryTimeout();
     globalForJobsRuntime.formbricksJobsRecurringRegistered = true;
@@ -211,12 +248,14 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
         ...runtimeOptions.jobHandlerOverrides,
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
+        [SURVEY_ARCHIVE_PURGE_JOB_NAME]: surveyArchivePurgeJobHandler,
         [WORKFLOW_RUN_JOB_NAME]: workflowRunJobHandler,
         [WORKFLOW_RUN_RECONCILE_JOB_NAME]: workflowRunReconcileJobHandler,
       }
     : {
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
+        [SURVEY_ARCHIVE_PURGE_JOB_NAME]: surveyArchivePurgeJobHandler,
         [WORKFLOW_RUN_JOB_NAME]: workflowRunJobHandler,
         [WORKFLOW_RUN_RECONCILE_JOB_NAME]: workflowRunReconcileJobHandler,
       };

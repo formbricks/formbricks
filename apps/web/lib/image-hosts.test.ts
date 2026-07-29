@@ -40,4 +40,19 @@ describe("isExternalImageSrc", () => {
   test("does not include the deployment domain in the optimizable host allowlist", () => {
     expect(OPTIMIZABLE_IMAGE_HOSTS).not.toContain("app.formbricks.com");
   });
+
+  test("treats an allowlisted public host over plain http as external (protocol mismatches remotePatterns' https)", () => {
+    expect(isExternalImageSrc("http://images.unsplash.com/photo-1.jpg")).toBe(true);
+    expect(isExternalImageSrc("http://avatars.githubusercontent.com/u/1")).toBe(true);
+  });
+
+  test("treats an allowlisted loopback host over https as external (protocol mismatches remotePatterns' http)", () => {
+    expect(isExternalImageSrc("https://localhost:3000/x.png")).toBe(true);
+    expect(isExternalImageSrc("https://127.0.0.1:3000/x.png")).toBe(true);
+  });
+
+  test("treats an allowlisted loopback host over http as optimizable", () => {
+    expect(isExternalImageSrc("http://localhost:3000/x.png")).toBe(false);
+    expect(isExternalImageSrc("http://127.0.0.1:3000/x.png")).toBe(false);
+  });
 });

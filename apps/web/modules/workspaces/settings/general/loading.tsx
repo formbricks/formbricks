@@ -14,8 +14,8 @@ export const GeneralSettingsLoading = () => {
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: t("workspace.general.recontact_waiting_time"),
-      description: t("workspace.general.recontact_waiting_time_settings_description"),
+      title: t("workspace.general.recontact_cooldown_period"),
+      description: t("workspace.general.recontact_cooldown_period_settings_description"),
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {

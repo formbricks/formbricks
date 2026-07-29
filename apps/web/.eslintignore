@@ -1,7 +1,0 @@
-node_modules/
-.next/
-public/
-playwright/
-dist/
-coverage/
-vendor/

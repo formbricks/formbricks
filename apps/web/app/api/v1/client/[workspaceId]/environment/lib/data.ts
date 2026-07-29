@@ -9,6 +9,7 @@ import {
   TJsWorkspaceStateSurvey,
   TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
+import { type TBaseFilters, buildSurveyInteractionRefreshMap } from "@formbricks/types/segment";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -106,6 +107,10 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
           where: {
             type: "app",
             status: "inProgress",
+            // Never ship archived surveys to SDK clients (belt-and-suspenders: archiving forces a
+            // survey out of "inProgress", so this can't currently match, but keep it explicit so an
+            // archived app survey can never be synced or triggered by a code action).
+            archivedAt: null,
           },
           orderBy: {
             createdAt: "desc",
@@ -202,6 +207,36 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       },
     };
 
+    // Per-survey gate for the SDK's post-interaction segment refresh. Reverse-indexes every
+    // `surveyInteraction` filter used by a live app survey onto the survey(s) it references, so the SDK
+    // learns — per survey, per event (display / response / finish) — whether interacting with it can
+    // change any live survey's membership, and skips the heavy `/user` refetch otherwise.
+    const surveysWithFilters = workspaceData.surveys.map((survey) => ({
+      id: survey.id,
+      segmentFilters: (Array.isArray(survey.segment?.filters)
+        ? (survey.segment.filters as unknown as TBaseFilters)
+        : null) as TBaseFilters | null,
+    }));
+
+    // Nested `userIsIn` / `userIsNotIn` filters can hide an interaction filter inside a referenced
+    // segment, and those affect membership at runtime too — so resolve them. Load the workspace's
+    // segments once (a small, indexed query behind the 60s workspace-state cache) only when some
+    // survey actually has filters; the common no-targeting case pays nothing.
+    let segmentFiltersById: Map<string, TBaseFilters> | null = null;
+    if (surveysWithFilters.some((survey) => (survey.segmentFilters?.length ?? 0) > 0)) {
+      const workspaceSegments = await prisma.segment.findMany({
+        where: { workspaceId },
+        select: { id: true, filters: true },
+      });
+      segmentFiltersById = new Map(
+        workspaceSegments.map((segment) => [segment.id, segment.filters as unknown as TBaseFilters])
+      );
+    }
+
+    const { refreshBySurveyId, hasAny } = buildSurveyInteractionRefreshMap(surveysWithFilters, (segmentId) =>
+      segmentFiltersById?.get(segmentId)
+    );
+
     const transformedSurveys = workspaceData.surveys.map((survey) => {
       const realHasFilters =
         Array.isArray(survey.segment?.filters) && (survey.segment.filters as unknown[]).length > 0;
@@ -242,10 +277,15 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
         segment: null,
       });
 
+      // Only attach the per-survey refresh gate when the workspace actually uses interaction
+      // targeting — otherwise it's dead weight on every survey in the response.
+      const interactionRefresh = hasAny ? refreshBySurveyId[survey.id] : undefined;
+
       return {
         ...transformed,
         name: "[deprecated] survey name omitted from public API - will be removed soon",
         segment: sanitizedSegment,
+        ...(interactionRefresh ? { interactionRefresh } : {}),
       };
     });
 

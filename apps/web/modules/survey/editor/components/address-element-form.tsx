@@ -82,7 +82,6 @@ export const AddressElementForm = ({
       .every((field) => !field.required);
 
     updateElement(elementIdx, { required: !allFieldsAreOptional });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [element.addressLine1, element.addressLine2, element.city, element.state, element.zip, element.country]);
 
   const [parent] = useAutoAnimate();

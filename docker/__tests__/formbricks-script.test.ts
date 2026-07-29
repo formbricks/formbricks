@@ -62,6 +62,15 @@ afterEach(() => {
   }
 });
 
+describe("docker/docker-compose.yml Cube configuration", () => {
+  test("disables external pre-aggregations by default while allowing an operator override", () => {
+    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
+    const cubeBlock = getServiceBlock(composeContents, "cube");
+
+    expect(cubeBlock).toContain("      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}");
+  });
+});
+
 describe("docker/formbricks.sh Traefik label injection", () => {
   test("adds HTTPS Traefik labels to the formbricks service only", () => {
     const composePath = writeDockerComposeTemplate();

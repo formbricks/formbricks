@@ -7,6 +7,7 @@ export const JOB_NAMES = {
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
   surveyScheduling: "survey-scheduling.reconcile",
+  surveyArchivePurge: "survey-archive-purge.process",
   workflowRun: "workflow-run.process",
   workflowRunReconcile: "workflow-run.reconcile",
 } as const;

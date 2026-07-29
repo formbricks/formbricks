@@ -154,6 +154,19 @@ describe("Dashboard Service", () => {
         name: "DatabaseError",
       });
     });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      vi.mocked(prisma.dashboard.create).mockRejectedValue(new Error("boom"));
+      const { createDashboard } = await import("./dashboards");
+
+      await expect(
+        createDashboard({
+          workspaceId: mockWorkspaceId,
+          name: "Test",
+          createdBy: mockUserId,
+        })
+      ).rejects.toThrow("boom");
+    });
   });
 
   describe("updateDashboard", () => {
@@ -205,6 +218,34 @@ describe("Dashboard Service", () => {
         name: "InvalidInputError",
       });
     });
+
+    test("throws DatabaseError on other Prisma errors", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxDashboard.update.mockRejectedValue(makePrismaError("P2010"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { updateDashboard } = await import("./dashboards");
+
+      await expect(
+        updateDashboard(mockDashboardId, mockWorkspaceId, { name: "Updated" })
+      ).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxDashboard.update.mockRejectedValue(new Error("boom"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { updateDashboard } = await import("./dashboards");
+
+      await expect(updateDashboard(mockDashboardId, mockWorkspaceId, { name: "Updated" })).rejects.toThrow(
+        "boom"
+      );
+    });
   });
 
   describe("deleteDashboard", () => {
@@ -245,6 +286,16 @@ describe("Dashboard Service", () => {
       await expect(deleteDashboard(mockDashboardId, mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      mockTxDashboard.findFirst.mockRejectedValue(new Error("boom"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { deleteDashboard } = await import("./dashboards");
+
+      await expect(deleteDashboard(mockDashboardId, mockWorkspaceId)).rejects.toThrow("boom");
     });
   });
 
@@ -368,6 +419,16 @@ describe("Dashboard Service", () => {
         name: "DatabaseError",
       });
     });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      mockTxDashboard.findFirst.mockRejectedValue(new Error("boom"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { duplicateDashboard } = await import("./dashboards");
+
+      await expect(duplicateDashboard(mockDashboardId, mockWorkspaceId, mockUserId)).rejects.toThrow("boom");
+    });
   });
 
   describe("getDashboard", () => {
@@ -422,6 +483,13 @@ describe("Dashboard Service", () => {
         name: "DatabaseError",
       });
     });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      vi.mocked(prisma.dashboard.findFirst).mockRejectedValue(new Error("boom"));
+      const { getDashboard } = await import("./dashboards");
+
+      await expect(getDashboard(mockDashboardId, mockWorkspaceId)).rejects.toThrow("boom");
+    });
   });
 
   describe("getDashboards", () => {
@@ -464,6 +532,13 @@ describe("Dashboard Service", () => {
       await expect(getDashboards(mockWorkspaceId)).rejects.toMatchObject({
         name: "DatabaseError",
       });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      vi.mocked(prisma.dashboard.findMany).mockRejectedValue(new Error("boom"));
+      const { getDashboards } = await import("./dashboards");
+
+      await expect(getDashboards(mockWorkspaceId)).rejects.toThrow("boom");
     });
 
     test("returns containsChart per dashboard when chartId is provided", async () => {
@@ -590,6 +665,18 @@ describe("Dashboard Service", () => {
       ).rejects.toMatchObject({
         name: "DatabaseError",
       });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      mockTxDashboard.findFirst.mockRejectedValue(new Error("boom"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { updateWidgetLayouts } = await import("./dashboards");
+
+      await expect(updateWidgetLayouts(mockDashboardId, mockWorkspaceId, widgetUpdates)).rejects.toThrow(
+        "boom"
+      );
     });
   });
 
@@ -730,6 +817,50 @@ describe("Dashboard Service", () => {
       ).rejects.toMatchObject({
         name: "InvalidInputError",
       });
+    });
+
+    test("throws DatabaseError on other Prisma errors", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: null } });
+      mockTxWidget.findMany.mockResolvedValue([]);
+      mockTxWidget.create.mockRejectedValue(makePrismaError("P2010"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await expect(
+        addChartToDashboard({
+          dashboardId: mockDashboardId,
+          chartId: mockChartId,
+          workspaceId: mockWorkspaceId,
+          layout: mockLayout,
+        })
+      ).rejects.toMatchObject({
+        name: "DatabaseError",
+      });
+    });
+
+    test("rethrows non-Prisma errors unchanged", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.aggregate.mockResolvedValue({ _max: { order: null } });
+      mockTxWidget.findMany.mockResolvedValue([]);
+      mockTxWidget.create.mockRejectedValue(new Error("boom"));
+      vi.mocked(prisma.$transaction).mockImplementation((cb: any) =>
+        cb({ dashboard: mockTxDashboard, chart: mockTxChart, dashboardWidget: mockTxWidget })
+      );
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await expect(
+        addChartToDashboard({
+          dashboardId: mockDashboardId,
+          chartId: mockChartId,
+          workspaceId: mockWorkspaceId,
+          layout: mockLayout,
+        })
+      ).rejects.toThrow("boom");
     });
   });
 

@@ -103,6 +103,34 @@ describe("User Management", () => {
         })
       ).rejects.toThrow(InvalidInputError);
     });
+
+    test("throws DatabaseError on a non-unique Prisma error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: "P2010",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.user.create).mockRejectedValueOnce(errToThrow);
+
+      await expect(
+        createUser({
+          email: mockUser.email,
+          name: mockUser.name,
+          locale: mockUser.locale,
+        })
+      ).rejects.toMatchObject({ name: "DatabaseError" });
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.user.create).mockRejectedValueOnce(new Error("boom"));
+
+      await expect(
+        createUser({
+          email: mockUser.email,
+          name: mockUser.name,
+          locale: mockUser.locale,
+        })
+      ).rejects.toThrow("boom");
+    });
   });
 
   describe("updateUser", () => {
@@ -118,12 +146,18 @@ describe("User Management", () => {
 
     test("throws ResourceNotFoundError when user doesn't exist", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
-        code: PrismaErrorType.RecordDoesNotExist,
+        code: PrismaErrorType.RecordNotFound,
         clientVersion: "0.0.1",
       });
       vi.mocked(prisma.user.update).mockRejectedValueOnce(errToThrow);
 
       await expect(updateUser(mockUser.id, mockUpdateData)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.user.update).mockRejectedValueOnce(new Error("boom"));
+
+      await expect(updateUser(mockUser.id, mockUpdateData)).rejects.toThrow("boom");
     });
   });
 
@@ -144,6 +178,26 @@ describe("User Management", () => {
       expect(result).toEqual(previousLastLoginAt);
     });
 
+    test("locks with FOR NO KEY UPDATE, not FOR UPDATE (sign-in FK deadlock, ENG-2038)", async () => {
+      const queryRaw = vi.fn().mockResolvedValue([{ id: mockUser.id, lastLoginAt: null }]);
+      vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+        callback({
+          $queryRaw: queryRaw,
+          user: {
+            update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }),
+          },
+        } as any)
+      );
+
+      await updateUserLastLoginAt(mockUser.email);
+
+      // $queryRaw is a tagged template: the first call arg is the array of string literals.
+      const sql = (queryRaw.mock.calls[0][0] as string[]).join(" ").replace(/\s+/g, " ");
+      expect(sql).toContain("FOR NO KEY UPDATE");
+      // FOR UPDATE conflicts with the FK FOR KEY SHARE lock — a revert must fail this test.
+      expect(sql).not.toContain("FOR UPDATE");
+    });
+
     test("throws ResourceNotFoundError when user doesn't exist", async () => {
       vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
         callback({
@@ -155,6 +209,59 @@ describe("User Management", () => {
       );
 
       await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("throws ResourceNotFoundError on a RecordNotFound Prisma error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: PrismaErrorType.RecordNotFound,
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.$transaction).mockRejectedValueOnce(errToThrow);
+
+      await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("boom"));
+
+      await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow("boom");
+    });
+
+    test("retries on a deadlock (P2034) and succeeds on the next attempt (ENG-2038)", async () => {
+      const previousLastLoginAt = new Date("2025-04-16T10:00:00.000Z");
+      const deadlock = new Prisma.PrismaClientKnownRequestError("deadlock", {
+        code: "P2034",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.$transaction)
+        .mockRejectedValueOnce(deadlock)
+        .mockImplementationOnce(async (callback) =>
+          callback({
+            $queryRaw: vi.fn().mockResolvedValue([{ id: mockUser.id, lastLoginAt: previousLastLoginAt }]),
+            user: { update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }) },
+          } as any)
+        );
+
+      const result = await updateUserLastLoginAt(mockUser.email);
+
+      expect(result).toEqual(previousLastLoginAt);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    });
+
+    test("gives up after the max attempts when a deadlock persists", async () => {
+      // A driver-adapter deadlock surfaces as a plain Error with this message (the ENG-2038 shape).
+      vi.mocked(prisma.$transaction).mockRejectedValue(new Error("deadlock detected"));
+
+      await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow("deadlock detected");
+      expect(prisma.$transaction).toHaveBeenCalledTimes(3);
+    });
+
+    test("does not retry a non-deadlock error", async () => {
+      vi.mocked(prisma.$transaction).mockRejectedValue(new Error("boom"));
+
+      await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow("boom");
+      // Non-deadlock errors propagate on the first attempt — no retry.
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -181,6 +288,16 @@ describe("User Management", () => {
       vi.mocked(prisma.user.findFirst).mockRejectedValueOnce(new Error("Database error"));
 
       await expect(getUserByEmail(mockEmail)).rejects.toThrow();
+    });
+
+    test("throws DatabaseError on a known Prisma request error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: "P2010",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.user.findFirst).mockRejectedValueOnce(errToThrow);
+
+      await expect(getUserByEmail(mockEmail)).rejects.toMatchObject({ name: "DatabaseError" });
     });
   });
 
@@ -212,6 +329,16 @@ describe("User Management", () => {
       vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error("Database error"));
 
       await expect(getUser(mockUserId)).rejects.toThrow();
+    });
+
+    test("throws DatabaseError on a known Prisma request error", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: "P2010",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(errToThrow);
+
+      await expect(getUser(mockUserId)).rejects.toMatchObject({ name: "DatabaseError" });
     });
   });
 });

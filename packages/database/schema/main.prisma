@@ -382,6 +382,7 @@ model Survey {
   delay               Int                     @default(0)
   publishOn           DateTime?
   closeOn             DateTime?
+  archivedAt          DateTime?
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
   segmentId           String?
@@ -422,6 +423,7 @@ model Survey {
   @@index([segmentId])
   @@index([status, publishOn])
   @@index([status, closeOn])
+  @@index([archivedAt])
 }
 
 /// Represents a quota configuration for a survey.
@@ -887,12 +889,16 @@ model VerificationToken {
 /// User.backupCodes columns (kept until cutover). `secret` and `backupCodes` are encrypted
 /// at rest by Better Auth using BETTER_AUTH_SECRET.
 model TwoFactor {
-  id          String  @id @default(cuid())
-  secret      String
-  backupCodes String
-  userId      String
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  verified    Boolean @default(true)
+  id                      String    @id @default(cuid())
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean   @default(true)
+  /// Better Auth 1.6.23+ two-factor brute-force lockout: consecutive failed verification attempts.
+  failedVerificationCount Int       @default(0)
+  /// Better Auth 1.6.23+ two-factor brute-force lockout: set once failedVerificationCount trips the limit.
+  lockedUntil             DateTime?
 
   @@unique([userId])
 }

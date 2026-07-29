@@ -19,6 +19,7 @@ import {
   createSegment,
   deleteSegment,
   evaluateSegment,
+  getExistingWorkspaceSurveyIds,
   getSegment,
   getSegments,
   getSegmentsByAttributeKey,
@@ -196,6 +197,27 @@ describe("Segment Service Tests", () => {
       const result = await getSurveyWorkspaceIdMap(["missing"]);
 
       expect(result.size).toBe(0);
+    });
+  });
+
+  describe("getExistingWorkspaceSurveyIds", () => {
+    test("returns only the referenced ids that belong to the workspace, scoped by workspaceId", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey_known" }] as any);
+
+      const result = await getExistingWorkspaceSurveyIds("ws_1", ["survey_known", "survey_foreign"]);
+
+      expect(result).toEqual(new Set(["survey_known"]));
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: { workspaceId: "ws_1", id: { in: ["survey_known", "survey_foreign"] } },
+        select: { id: true },
+      });
+    });
+
+    test("short-circuits to an empty set without querying when no ids are given", async () => {
+      const result = await getExistingWorkspaceSurveyIds("ws_1", []);
+
+      expect(result.size).toBe(0);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
     });
   });
 

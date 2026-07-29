@@ -8,6 +8,7 @@ import {
   getUserWorkspaces,
   getUserWorkspacesByOrganizationIds,
   getWorkspace,
+  getWorkspaceLegacyStoragePrefixes,
   getWorkspaces,
 } from "./service";
 
@@ -466,5 +467,51 @@ describe("Workspace Service", () => {
     vi.mocked(prisma.workspace.findMany).mockRejectedValue(prismaError);
 
     await expect(getWorkspaces(organizationId)).rejects.toThrow(DatabaseError);
+  });
+
+  describe("getWorkspaceLegacyStoragePrefixes", () => {
+    test("returns both the workspace id and its legacyEnvironmentId when set", async () => {
+      const workspaceId = createId();
+      const legacyEnvironmentId = createId();
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        id: workspaceId,
+        legacyEnvironmentId,
+      } as unknown as Workspace);
+
+      await expect(getWorkspaceLegacyStoragePrefixes(workspaceId)).resolves.toEqual([
+        workspaceId,
+        legacyEnvironmentId,
+      ]);
+    });
+
+    test("returns only the workspace id when legacyEnvironmentId is null", async () => {
+      const workspaceId = createId();
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        id: workspaceId,
+        legacyEnvironmentId: null,
+      } as unknown as Workspace);
+
+      await expect(getWorkspaceLegacyStoragePrefixes(workspaceId)).resolves.toEqual([workspaceId]);
+    });
+
+    test("returns an empty array when the workspace does not exist", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
+
+      await expect(getWorkspaceLegacyStoragePrefixes(createId())).resolves.toEqual([]);
+    });
+
+    test("throws ValidationError for an invalid workspace id", async () => {
+      await expect(getWorkspaceLegacyStoragePrefixes("not-a-cuid")).rejects.toThrow(ValidationError);
+    });
+
+    test("throws DatabaseError when prisma throws", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.workspace.findUnique).mockRejectedValue(prismaError);
+
+      await expect(getWorkspaceLegacyStoragePrefixes(createId())).rejects.toThrow(DatabaseError);
+    });
   });
 });
