@@ -18,6 +18,7 @@ const SECONDARY_API_KEY_WORKSPACE_ID = "application-api-key-secondary";
 const READER_API_KEY_ID = "application-api-key-reader";
 const WRITER_API_KEY_ID = "application-api-key-writer";
 const MANAGER_API_KEY_ID = "application-api-key-manager";
+const COMBINED_ACCESS_API_KEY_ID = "application-api-key-combined-access";
 const API_KEY_ORGANIZATION_RELATIONS = ["api_key_reader", "api_key_writer"] as const;
 const API_KEY_WORKSPACE_RELATIONS = ["manager", "reader", "writer"] as const;
 
@@ -84,10 +85,10 @@ const createWorkspaceGrantUpdates = (
 
 const createApiKeyOrganizationAccessUpdates = (
   apiKeyId: string,
-  selectedRelation?: (typeof API_KEY_ORGANIZATION_RELATIONS)[number]
+  selectedRelations: ReadonlyArray<(typeof API_KEY_ORGANIZATION_RELATIONS)[number]> = []
 ): ReadonlyArray<TAuthzedRelationshipUpdate> =>
   API_KEY_ORGANIZATION_RELATIONS.map((relation) => ({
-    operation: relation === selectedRelation ? "touch" : "delete",
+    operation: selectedRelations.includes(relation) ? "touch" : "delete",
     relationship: {
       relation,
       resource: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
@@ -178,14 +179,16 @@ const deleteManagerTeamProjection = async (client: TAuthzedClient): Promise<void
 
 const seedApiKeyProjection = async (client: TAuthzedClient): Promise<void> => {
   await client.writeRelationships([
-    ...[READER_API_KEY_ID, WRITER_API_KEY_ID, MANAGER_API_KEY_ID].map((apiKeyId) => ({
-      operation: "touch" as const,
-      relationship: {
-        relation: "organization",
-        resource: { objectId: apiKeyId, objectType: "api_key" },
-        subject: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
-      },
-    })),
+    ...[READER_API_KEY_ID, WRITER_API_KEY_ID, MANAGER_API_KEY_ID, COMBINED_ACCESS_API_KEY_ID].map(
+      (apiKeyId) => ({
+        operation: "touch" as const,
+        relationship: {
+          relation: "organization",
+          resource: { objectId: apiKeyId, objectType: "api_key" },
+          subject: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
+        },
+      })
+    ),
     {
       operation: "touch",
       relationship: {
@@ -202,9 +205,13 @@ const seedApiKeyProjection = async (client: TAuthzedClient): Promise<void> => {
         subject: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
       },
     },
-    ...createApiKeyOrganizationAccessUpdates(READER_API_KEY_ID, "api_key_reader"),
-    ...createApiKeyOrganizationAccessUpdates(WRITER_API_KEY_ID, "api_key_writer"),
+    ...createApiKeyOrganizationAccessUpdates(READER_API_KEY_ID, ["api_key_reader"]),
+    ...createApiKeyOrganizationAccessUpdates(WRITER_API_KEY_ID, ["api_key_writer"]),
     ...createApiKeyOrganizationAccessUpdates(MANAGER_API_KEY_ID),
+    ...createApiKeyOrganizationAccessUpdates(COMBINED_ACCESS_API_KEY_ID, [
+      "api_key_reader",
+      "api_key_writer",
+    ]),
     ...createApiKeyWorkspaceUpdates(READER_API_KEY_ID, PRIMARY_API_KEY_WORKSPACE_ID, "reader"),
     ...createApiKeyWorkspaceUpdates(WRITER_API_KEY_ID, PRIMARY_API_KEY_WORKSPACE_ID, "writer"),
     ...createApiKeyWorkspaceUpdates(MANAGER_API_KEY_ID, PRIMARY_API_KEY_WORKSPACE_ID, "manager"),

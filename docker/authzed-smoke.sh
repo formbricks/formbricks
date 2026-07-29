@@ -272,6 +272,14 @@ jq --exit-status '.status == "projected"' <<<"${api_key_seed}" >/dev/null
     api_key:application-api-key-writer --consistency-full
 )" == *"true"* ]]
 [[ "$(
+  zed permission check organization:application-api-key-organization read_access \
+    api_key:application-api-key-combined-access --consistency-full
+)" == *"true"* ]]
+[[ "$(
+  zed permission check organization:application-api-key-organization manage_access \
+    api_key:application-api-key-combined-access --consistency-full
+)" == *"true"* ]]
+[[ "$(
   zed permission check workspace:application-api-key-primary read \
     api_key:application-api-key-reader --consistency-full
 )" == *"true"* ]]
@@ -478,6 +486,10 @@ jq --exit-status '.status == "projected"' <<<"${restored_projection}" >/dev/null
 [[ "$(
   zed permission check organization:application-api-key-organization manage_access \
     api_key:application-api-key-writer --consistency-full
+)" == *"true"* ]]
+[[ "$(
+  zed permission check organization:application-api-key-organization manage_access \
+    api_key:application-api-key-combined-access --consistency-full
 )" == *"true"* ]]
 [[ "$(
   zed permission check workspace:application-api-key-primary manage \

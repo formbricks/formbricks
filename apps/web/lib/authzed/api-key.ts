@@ -13,7 +13,7 @@ import { deleteRelationshipsInBoundedBatches, packRelationshipUpdateGroups } fro
 const ORGANIZATION_ACCESS_RELATIONS = {
   read: "api_key_reader",
   write: "api_key_writer",
-} as const;
+} as const satisfies Record<keyof TOrganizationAccessSnapshot, string>;
 
 const WORKSPACE_RELATIONS = {
   [ApiKeyPermission.manage]: "manager",
