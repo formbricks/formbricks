@@ -33,6 +33,7 @@ import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from ".
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
+import { markVerificationSendFailed } from "./verification-send-outcome";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
@@ -151,13 +152,35 @@ export const auth = betterAuth({
     // before ownership is proven; also enumeration-safe).
     autoSignInAfterVerification: true,
     expiresIn: 60 * 60, // 1 hour
+    // ENG-2091: a failed send must never present as a successful one. Two ways it can hide:
+    //  1. a THROW — on the sign-up path Better Auth calls this through `runInBackgroundOrAwait`, whose
+    //     catch only logs, so sign-up still resolves 200. (The resend endpoint awaits it directly and
+    //     does propagate, which is why rethrowing below is what makes THAT path truthful.)
+    //  2. a FALSY RETURN — `sendEmail` returns false without throwing when SMTP isn't configured, and
+    //     Better Auth ignores the return value entirely. Silent on every path.
+    // So: treat both as failures, make them attributable, and record the outcome for the sign-up
+    // action to read (Better Auth swallows the error, so the request scope is the only channel back).
     sendVerificationEmail: async ({ user, url }) => {
       const { sendVerificationLinkEmail } = await import("@/modules/email");
-      await sendVerificationLinkEmail({
-        email: user.email,
-        locale: await getUserLocale(user.id),
-        verifyLink: url,
-      });
+      try {
+        const sent = await sendVerificationLinkEmail({
+          email: user.email,
+          locale: await getUserLocale(user.id),
+          verifyLink: url,
+        });
+        if (!sent) {
+          throw new Error("Verification email was not sent (mailer reported no delivery)");
+        }
+      } catch (error) {
+        markVerificationSendFailed();
+        // Domain only — never the address, the token, or the verify URL (all three are sensitive and
+        // the URL grants account access).
+        logger.error(
+          { error, userId: user.id, emailDomain: user.email.split("@")[1] },
+          "Failed to send verification email"
+        );
+        throw error;
+      }
     },
     // Re-home the "token" provider's Brevo-on-first-verification side effect (better-auth-email-verification.ts).
     afterEmailVerification: createBrevoCustomerAfterEmailVerification,

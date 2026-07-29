@@ -29,7 +29,11 @@ import {
   runWithSignupRequestContext,
 } from "@/modules/auth/lib/signup-request-context";
 import { updateUser } from "@/modules/auth/lib/user";
-import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
+import {
+  didVerificationSendFail,
+  runWithVerificationSendOutcome,
+} from "@/modules/auth/lib/verification-send-outcome";
+import { type InviteMatch, deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -289,6 +293,29 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
   });
 }
 
+/** Where the sign-up form should send the user next. */
+type TSignUpNextStep = "verify_email" | "login_to_accept_invite" | "verification_send_failed";
+
+/**
+ * Decide the next screen. Kept as a pure function so the disclosure rules are readable in one place
+ * and unit-testable without driving the whole action (ENG-2091).
+ */
+const resolveNextStep = ({
+  outcome,
+  inviteMatch,
+  verificationSendFailed,
+}: {
+  outcome: TSignUpOutcome;
+  inviteMatch: InviteMatch;
+  verificationSendFailed: boolean;
+}): TSignUpNextStep => {
+  if (outcome.status === "already_existed") {
+    // Disclose only to a caller holding a valid invite for this exact address.
+    return inviteMatch === "valid" ? "login_to_accept_invite" : "verify_email";
+  }
+  return verificationSendFailed ? "verification_send_failed" : "verify_email";
+};
+
 /**
  * Provisioning that must only ever follow a real account creation. Takes the `"created"` outcome
  * rather than a bare user so an `"already_existed"` sign-up cannot reach it (ENG-2091).
@@ -336,14 +363,19 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
     // sign-up that went through this action apart from a direct POST to Better Auth's native
     // /sign-up/email endpoint (which bypasses the action and is re-checked in the hook).
-    const outcome = await runWithSignupRequestContext(() => {
-      markSignupDomainAllowed();
-      return signUpUserSafely(
-        parsedInput.email,
-        parsedInput.name,
-        parsedInput.password,
-        parsedInput.userLocale
-      );
+    // The verification-send scope wraps the sign-up so a swallowed send failure inside Better Auth is
+    // still observable here (see verification-send-outcome.ts).
+    const { outcome, verificationSendFailed } = await runWithVerificationSendOutcome(async () => {
+      const signUpOutcome = await runWithSignupRequestContext(() => {
+        markSignupDomainAllowed();
+        return signUpUserSafely(
+          parsedInput.email,
+          parsedInput.name,
+          parsedInput.password,
+          parsedInput.userLocale
+        );
+      });
+      return { outcome: signUpOutcome, verificationSendFailed: didVerificationSendFail() };
     });
 
     // Everything below is provisioning + analytics for a NEW account. On "already_existed" the response
@@ -416,10 +448,11 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       // Every other case gets "verify_email", identical for new and existing addresses, so a plain
       // sign-up stays enumeration-safe. That screen's copy carries a generic "already have an account?
       // log in" line instead (ENG-2091).
-      nextStep:
-        outcome.status === "already_existed" && inviteMatch === "valid"
-          ? ("login_to_accept_invite" as const)
-          : ("verify_email" as const),
+      //
+      // "verification_send_failed" only ever follows a real creation, so it leaks nothing: the account
+      // exists and we know the email did not go out. Pointing the user at resend beats telling them to
+      // watch an inbox nothing was sent to.
+      nextStep: resolveNextStep({ outcome, inviteMatch, verificationSendFailed }),
     };
   })
 );

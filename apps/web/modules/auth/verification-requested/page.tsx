@@ -6,13 +6,15 @@ import { getEmailFromEmailToken } from "@/lib/jwt";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
+import { VERIFICATION_SEND_FAILED_PARAM } from "@/modules/auth/lib/verification-links";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { VerificationMessage } from "@/modules/auth/verification-requested/components/verification-message";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 
 export const VerificationRequestedPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ token: string; callbackUrl?: string | string[] }>;
+  searchParams: Promise<{ token: string; callbackUrl?: string | string[]; sendFailed?: string }>;
 }) => {
   const t = await getTranslate();
   const params = await searchParams;
@@ -21,6 +23,9 @@ export const VerificationRequestedPage = async ({
     searchParamCallbackUrl: callbackUrl,
     webAppUrl: WEBAPP_URL,
   });
+  // Set by the sign-up form when the account was created but the mailer failed (ENG-2091). Compared
+  // against a literal, never echoed.
+  const sendFailed = params[VERIFICATION_SEND_FAILED_PARAM] === "1";
   try {
     const email = getEmailFromEmailToken(token);
     const parsedEmail = ZUserEmail.safeParse(email);
@@ -31,7 +36,16 @@ export const VerificationRequestedPage = async ({
             <h1 className="mb-4 text-center text-lg leading-2 font-semibold text-slate-900">
               {t("auth.verification-requested.please_confirm_your_email_address")}
             </h1>
-            <VerificationMessage email={email} />
+            {sendFailed ? (
+              <Alert variant="warning" className="text-left" role="status">
+                <AlertTitle>{t("auth.verification-requested.send_failed_title")}</AlertTitle>
+                <AlertDescription>
+                  <p>{t("auth.verification-requested.send_failed_description")}</p>
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <VerificationMessage email={email} />
+            )}
             <hr className="my-4" />
             <p className="text-center text-xs text-slate-500">
               {t("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")}

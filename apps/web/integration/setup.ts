@@ -27,10 +27,12 @@ process.env.PASSWORD_HIBP_CHECK_DISABLED ??= "1";
 // server-only is a Next.js build guard; no-op it under vitest.
 vi.mock("server-only", () => ({}));
 
-// Capture transactional emails instead of sending via SMTP.
+// Capture transactional emails instead of sending via SMTP. These resolve `true` because the real
+// senders return Promise<boolean> and a FALSY result means "not sent" — auth.ts treats that as a send
+// failure (ENG-2091), so a mock resolving undefined would fake an outage.
 vi.mock("@/modules/email", () => ({
-  sendVerificationLinkEmail: vi.fn(async () => undefined),
-  sendPasswordResetLinkEmail: vi.fn(async () => undefined),
-  sendPasswordResetNotifyEmail: vi.fn(async () => undefined),
-  sendDeleteAccountConfirmationEmail: vi.fn(async () => undefined),
+  sendVerificationLinkEmail: vi.fn(async () => true),
+  sendPasswordResetLinkEmail: vi.fn(async () => true),
+  sendPasswordResetNotifyEmail: vi.fn(async () => true),
+  sendDeleteAccountConfirmationEmail: vi.fn(async () => true),
 }));

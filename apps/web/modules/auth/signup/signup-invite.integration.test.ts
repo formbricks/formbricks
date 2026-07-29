@@ -24,11 +24,14 @@ vi.mock("next/headers", () => ({
 
 // Replaces the harness-wide @/modules/email mock — must keep sendVerificationLinkEmail (the Better
 // Auth callback in auth.ts resolves it through this same module) and add the invite-flow senders.
+// Mirrors integration/setup.ts (which this replaces for this file) plus the invite-flow sender. The
+// boolean senders must resolve `true` — a falsy result means "not sent" and auth.ts treats it as a
+// send failure (ENG-2091).
 vi.mock("@/modules/email", () => ({
-  sendVerificationLinkEmail: vi.fn(async () => undefined),
-  sendPasswordResetLinkEmail: vi.fn(async () => undefined),
-  sendPasswordResetNotifyEmail: vi.fn(async () => undefined),
-  sendDeleteAccountConfirmationEmail: vi.fn(async () => undefined),
+  sendVerificationLinkEmail: vi.fn(async () => true),
+  sendPasswordResetLinkEmail: vi.fn(async () => true),
+  sendPasswordResetNotifyEmail: vi.fn(async () => true),
+  sendDeleteAccountConfirmationEmail: vi.fn(async () => true),
   sendInviteAcceptedEmail: vi.fn(async () => undefined),
 }));
 
