@@ -278,6 +278,9 @@ export const PricingTable = ({
     trialCreditApplied?: number;
   } | null>(null);
   const [isLoadingUpgradePreview, setIsLoadingUpgradePreview] = useState(false);
+  // A Pro trial returning to Hobby switches immediately (server ends the trial now), so it's gated
+  // behind a confirmation dialog. Paid plans still schedule the downgrade for period end (no dialog).
+  const [isHobbyDowngradeConfirmOpen, setIsHobbyDowngradeConfirmOpen] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<TCloudBillingInterval>(
     currentBillingInterval ?? "monthly"
   );
@@ -927,6 +930,12 @@ export const PricingTable = ({
   // Gate any charge-now action behind a confirmation modal; everything else runs as before.
   const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
     if (plan === "hobby") {
+      // Returning to Hobby from a Pro trial switches immediately — confirm before ending the trial.
+      // A paid plan just schedules the downgrade for period end, so it needs no dialog.
+      if (isTrialing) {
+        setIsHobbyDowngradeConfirmOpen(true);
+        return;
+      }
       void handlePlanAction(plan, interval);
       return;
     }
@@ -955,14 +964,6 @@ export const PricingTable = ({
     // add card -> applySetupCheckoutUpgrade converts. On success the tab is already navigating to
     // Stripe, so what matters is that the error path re-enables the CTA.
     void redirectToPlanCheckout(plan, interval).finally(() => setIsPlanActionPending(null));
-  };
-
-  // Secondary action: add a card and keep the free trial (billed at trial end, nothing charged now).
-  // The guard is defensive — the trial-continue modal only opens without a card on file.
-  const handleTrialKeepTrial = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) => {
-    if (hasPaymentMethod) return;
-    setIsPlanActionPending(`${plan}-${interval}`);
-    void openTrialPaymentCheckout().finally(() => setIsPlanActionPending(null));
   };
 
   const closeUpgradeConfirmation = () => {
@@ -1040,7 +1041,11 @@ export const PricingTable = ({
     );
 
     if (isCurrentSelection && isTrialingWithoutPayment) {
-      return t("workspace.settings.billing.continue_with_plan_after_trial");
+      // Clicking this pays the prorated amount now and unlocks the features excluded from the trial
+      // (follow-ups, custom links) — so it's "unlock all Pro features", not "continue after trial".
+      return t("workspace.settings.billing.unlock_all_plan_features", {
+        plan: getCurrentCloudPlanLabel(plan, t),
+      });
     }
 
     if (isTrialingWithoutPayment && plan === "hobby") {
@@ -1551,15 +1556,6 @@ export const PricingTable = ({
             closeUpgradeConfirmation();
             handleTrialPayNow(plan, interval);
           }}
-          secondaryButton={{
-            text: t("workspace.settings.billing.confirm_trial_continue_keep_trial"),
-            variant: "secondary",
-            onAction: () => {
-              const { plan, interval } = upgradeConfirmation;
-              closeUpgradeConfirmation();
-              handleTrialKeepTrial(plan, interval);
-            },
-          }}
         />
       )}
 
@@ -1581,6 +1577,27 @@ export const PricingTable = ({
             const { plan, interval } = upgradeConfirmation;
             closeUpgradeConfirmation();
             void handlePlanAction(plan, interval);
+          }}
+        />
+      )}
+
+      {isHobbyDowngradeConfirmOpen && (
+        <ConfirmationModal
+          open
+          setOpen={(value) => {
+            if (!value) setIsHobbyDowngradeConfirmOpen(false);
+          }}
+          title={t("workspace.settings.billing.confirm_hobby_downgrade_title")}
+          description={t("workspace.settings.billing.confirm_hobby_downgrade_description")}
+          body={t("workspace.settings.billing.confirm_hobby_downgrade_body", {
+            plan: getCurrentCloudPlanLabel(currentCloudPlan, t),
+          })}
+          buttonText={t("workspace.settings.billing.downgrade_to_hobby")}
+          buttonVariant="destructive"
+          cancelButtonText={t("common.cancel")}
+          onConfirm={() => {
+            setIsHobbyDowngradeConfirmOpen(false);
+            void handlePlanAction("hobby", "monthly");
           }}
         />
       )}

@@ -1161,14 +1161,16 @@ const hasCollectedPaymentMethod = async (
 };
 
 /**
- * Lets a trial lapse to Hobby without ever becoming billable: releases any stray schedule (which
- * would otherwise rebuild the trial into a billable Pro phase), then sets cancel_at_period_end so
- * Stripe cancels the trial instead of charging it.
+ * A Pro trial opting back to Hobby switches immediately: end the trial now and move to the free
+ * Hobby plan in a single update. Hobby is free, so proration_behavior "none" keeps the switch
+ * charge-free and no card is required. Scheduling instead (the paid-plan path) would strand the user
+ * on a paid trial they explicitly left. Any stray schedule/cancel flag is cleared first so it can't
+ * rebuild the Pro phase, and the pending-change snapshot is nulled.
  */
-const cancelTrialToHobbyAtPeriodEnd = async (
+const switchTrialToHobbyImmediately = async (
   organizationId: string,
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
-): Promise<TOrganizationStripePendingChange> => {
+): Promise<void> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
   }
@@ -1181,25 +1183,35 @@ const cancelTrialToHobbyAtPeriodEnd = async (
     });
   }
 
+  // cancel_at_period_end isn't a pending-update attribute, so clear it in a separate plain update first.
+  if (subscription.cancel_at_period_end) {
+    await stripeClient.subscriptions.update(subscription.id, {
+      cancel_at_period_end: false,
+    });
+  }
+
+  const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
+  const existingDeletions = subscription.items.data.map((item) => ({
+    id: item.id,
+    deleted: true as const,
+  }));
+
+  // trial_end "now" ends the trial and activates Hobby immediately; proration_behavior "none" keeps
+  // the switch free (no early trial charge on the outgoing Pro items).
+  //
+  // The Pro trial was created with trial_settings.end_behavior.missing_payment_method "cancel"
+  // (createProTrialSubscription), so ending the trial on a no-card org would CANCEL the subscription
+  // instead of leaving it on Hobby — stranding a canceled subscriptionId that then breaks the next
+  // upgrade. Hobby is free, so override to "create_invoice": the trial ends into an active $0 Hobby
+  // subscription with no payment method required.
   await stripeClient.subscriptions.update(subscription.id, {
-    cancel_at_period_end: true,
+    items: [...existingDeletions, ...hobbyItems],
+    trial_end: "now",
+    proration_behavior: "none",
+    trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
   });
 
-  const effectiveAt =
-    resolvePendingChangeEffectiveAt(subscription) ??
-    (subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null) ??
-    new Date().toISOString();
-
-  const pendingChange: TOrganizationStripePendingChange = {
-    type: "plan_change",
-    targetPlan: "hobby",
-    targetInterval: "monthly",
-    effectiveAt,
-  };
-
-  await updatePendingPlanChangeSnapshot(organizationId, pendingChange);
-
-  return pendingChange;
+  await updatePendingPlanChangeSnapshot(organizationId, null);
 };
 
 // Best-effort credit reversal: swallows/logs failures so they never mask the original conversion
@@ -1314,12 +1326,13 @@ export const switchOrganizationToCloudPlan = async (input: {
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
   }
 
-  // Trial -> Hobby just lets the trial lapse (cancel_at_period_end) — never build a schedule: the
-  // scheduled path lacks the trial guard, so phase 1 would become a billable Pro phase (charging the
-  // trial early) and leave a stale "Scheduled" badge. Correct regardless of card on file.
+  // Trial -> Hobby switches immediately to the free Hobby plan (no schedule, no charge): the user
+  // opted out of the paid trial, so there's nothing to keep them on until period end. Scheduling here
+  // would also be unsafe — the scheduled path lacks the trial guard, so phase 1 would become a
+  // billable Pro phase (charging the trial early). Correct regardless of card on file.
   if (subscription.status === "trialing" && input.targetPlan === "hobby") {
-    const pendingChange = await cancelTrialToHobbyAtPeriodEnd(input.organizationId, subscription);
-    return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
+    await switchTrialToHobbyImmediately(input.organizationId, subscription);
+    return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
   }
 
   // No card on file: never convert a trial to billable — reject and route through add-card checkout instead.

@@ -951,7 +951,7 @@ describe("organization-billing", () => {
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
   });
 
-  test("switchOrganizationToCloudPlan cancels a no-card trial at period end on downgrade instead of building a billable schedule", async () => {
+  test("switchOrganizationToCloudPlan switches a no-card trial to Hobby immediately on downgrade instead of scheduling", async () => {
     mocks.subscriptionsList.mockResolvedValue({
       data: [
         {
@@ -1010,42 +1010,42 @@ describe("organization-billing", () => {
     });
 
     expect(result).toEqual({
-      mode: "scheduled",
-      pendingChange: {
-        type: "plan_change",
-        targetPlan: "hobby",
-        targetInterval: "monthly",
-        effectiveAt: new Date(1742515200 * 1000).toISOString(),
-      },
+      mode: "immediate",
+      pendingChange: null,
       clientSecret: null,
       requiresAction: false,
     });
-    // The trial is cancelled at period end — never rebuilt into a billable schedule.
+    // The trial ends now and the subscription moves straight to the free Hobby items — no schedule,
+    // no cancel_at_period_end, no charge.
     expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", {
+      items: [
+        { id: "si_pro_base", deleted: true },
+        { price: "price_hobby_monthly", quantity: 1 },
+      ],
+      trial_end: "now",
+      proration_behavior: "none",
+      trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
+    });
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
       cancel_at_period_end: true,
     });
     expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
     expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
+    // Any prior pending downgrade snapshot is nulled — the switch is applied immediately.
     expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
       where: { organizationId: "org_1" },
       data: {
         stripe: expect.objectContaining({
-          pendingChange: {
-            type: "plan_change",
-            targetPlan: "hobby",
-            targetInterval: "monthly",
-            effectiveAt: new Date(1742515200 * 1000).toISOString(),
-          },
+          pendingChange: null,
         }),
       },
     });
   });
 
-  test("switchOrganizationToCloudPlan cancels a CARD-BACKED trial at period end on downgrade instead of building a billable Pro->Hobby schedule", async () => {
-    // A card-backed trial opting back to Hobby must also just lapse to Hobby (cancel at period end),
-    // never build a schedule whose phase 1 is a billable Pro phase and phase 2 is Hobby — that
-    // schedule charges the trial early and leaves a stale hobby "Scheduled" badge that survives a
-    // later upgrade.
+  test("switchOrganizationToCloudPlan switches a CARD-BACKED trial to Hobby immediately on downgrade instead of scheduling", async () => {
+    // A card-backed trial opting back to Hobby also switches immediately to the free Hobby plan —
+    // never build a schedule whose phase 1 is a billable Pro phase (charging the trial early), and
+    // never leave the user on the paid trial they explicitly left.
     mocks.subscriptionsList.mockResolvedValue({
       data: [
         {
@@ -1098,10 +1098,19 @@ describe("organization-billing", () => {
       targetInterval: "monthly",
     });
 
-    expect(result.mode).toBe("scheduled");
-    expect(result.pendingChange?.targetPlan).toBe("hobby");
-    // Cancelled at period end, NOT rebuilt into a schedule.
+    expect(result.mode).toBe("immediate");
+    expect(result.pendingChange).toBeNull();
+    // Switched to the free Hobby items now, NOT scheduled or cancelled at period end.
     expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", {
+      items: [
+        { id: "si_pro_base", deleted: true },
+        { price: "price_hobby_monthly", quantity: 1 },
+      ],
+      trial_end: "now",
+      proration_behavior: "none",
+      trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
+    });
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
       cancel_at_period_end: true,
     });
     expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
@@ -1173,7 +1182,7 @@ describe("organization-billing", () => {
     expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
   });
 
-  test("switchOrganizationToCloudPlan releases a stray schedule before cancelling a no-card trial on downgrade", async () => {
+  test("switchOrganizationToCloudPlan releases a stray schedule before switching a no-card trial to Hobby on downgrade", async () => {
     mocks.subscriptionsList.mockResolvedValue({
       data: [
         {
@@ -1230,14 +1239,20 @@ describe("organization-billing", () => {
       targetInterval: "monthly",
     });
 
-    expect(result.mode).toBe("scheduled");
+    expect(result.mode).toBe("immediate");
     // The stray schedule (which would otherwise rebuild the trial into a billable Pro phase) is
-    // released first, then the trial is cancelled at period end — never converted to a schedule.
+    // released first, then the trial ends and moves straight to the free Hobby items.
     expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_trial", {
       preserve_cancel_date: false,
     });
     expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", {
-      cancel_at_period_end: true,
+      items: [
+        { id: "si_pro_base", deleted: true },
+        { price: "price_hobby_monthly", quantity: 1 },
+      ],
+      trial_end: "now",
+      proration_behavior: "none",
+      trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
     });
     expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
     expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
@@ -1398,9 +1413,9 @@ describe("organization-billing", () => {
   });
 
   test("switchOrganizationToCloudPlan clears a pending hobby downgrade when converting a card-backed trial to paid", async () => {
-    // A no-card trial that scheduled "Return to Hobby" tracks the downgrade via cancel_at_period_end
-    // (no schedule). Adding a card and upgrading to paid Pro must supersede that pending downgrade,
-    // otherwise the Hobby card keeps showing a stale "Scheduled" badge after the upgrade.
+    // A trial carrying a pending downgrade tracked via cancel_at_period_end (no schedule). Adding a
+    // card and upgrading to paid Pro must supersede that pending downgrade, otherwise the Hobby card
+    // keeps showing a stale "Scheduled" badge after the upgrade.
     mocks.subscriptionsList.mockResolvedValue({
       data: [
         {
