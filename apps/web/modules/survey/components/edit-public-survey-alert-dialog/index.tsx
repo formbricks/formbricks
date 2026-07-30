@@ -11,6 +11,9 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 
+/** Stable identity for each footer button, so state doesn't hinge on translated labels. */
+type ActionId = "primary" | "secondary" | "close";
+
 interface EditPublicSurveyAlertDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -33,14 +36,16 @@ export const EditPublicSurveyAlertDialog = ({
   const { t } = useTranslation();
   // Track which action is running so the spinner shows on the clicked button,
   // regardless of whether the async action is the primary or secondary one.
-  const [pendingLabel, setPendingLabel] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<ActionId | null>(null);
   const actions = [] as Array<{
+    id: ActionId;
     label?: string;
     onClick: () => void | Promise<void>;
     variant: React.ComponentProps<typeof Button>["variant"];
   }>;
   if (secondaryButtonAction) {
     actions.push({
+      id: "secondary",
       label: secondaryButtonText,
       onClick: secondaryButtonAction,
       variant: "secondary",
@@ -48,6 +53,7 @@ export const EditPublicSurveyAlertDialog = ({
   }
   if (primaryButtonAction) {
     actions.push({
+      id: "primary",
       label: primaryButtonText,
       onClick: primaryButtonAction,
       variant: "default",
@@ -55,6 +61,7 @@ export const EditPublicSurveyAlertDialog = ({
   }
   if (actions.length === 0) {
     actions.push({
+      id: "close",
       label: secondaryButtonText ?? t("common.close"),
       onClick: () => setOpen(false),
       variant: "default",
@@ -78,14 +85,14 @@ export const EditPublicSurveyAlertDialog = ({
         </DialogBody>
 
         <DialogFooter>
-          {actions.map(({ label, onClick, variant }) => (
+          {actions.map(({ id, label, onClick, variant }) => (
             <Button
-              key={label}
+              key={id}
               variant={variant}
-              loading={isLoading && pendingLabel === label}
-              disabled={isLoading && pendingLabel !== label}
+              loading={isLoading && pendingAction === id}
+              disabled={isLoading && pendingAction !== id}
               onClick={() => {
-                setPendingLabel(label ?? null);
+                setPendingAction(id);
                 void onClick();
               }}>
               {label}

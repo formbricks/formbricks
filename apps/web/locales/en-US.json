@@ -3011,7 +3011,7 @@
         "card_width_for_link_surveys": "Card width for Link Surveys",
         "cardless": "Cardless",
         "casual": "Casual",
-        "caution_edit_duplicate": "Duplicate survey",
+        "caution_edit_duplicate": "Duplicate & edit",
         "caution_edit_published_survey": "Edit a published survey?",
         "caution_explanation_intro": "We understand you might still want to make changes. Here is what happens if you do:",
         "caution_explanation_new_responses_separated": "Responses before the change may not or only partially be included in the survey summary.",
