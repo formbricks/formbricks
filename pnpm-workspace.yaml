@@ -122,6 +122,22 @@ overrides:
   # are devDependency-only (eslint, prettier plugins and @redocly/cli, all via minimatch) and never run
   # against untrusted input, so the residual risk is accepted until their consumers move to
   # brace-expansion@5 — a pin cannot close it.
+  # Re-checked 2026-07-30: minimatch@10.2.6 (published 2026-07-27) now depends on brace-expansion
+  # ^5.0.8, which would close the redocly/vite-plugin-dts paths that resolve through our minimatch@10
+  # pin above — but the release is not yet 3 days old (our minimumReleaseAge cooldown), and it's high
+  # (not Urgent/Critical), so it isn't eligible for the pin yet. Bump the minimatch@10 override to
+  # 10.2.6 once it clears cooldown; the eslint (minimatch@3) and glob (minimatch@5/9) paths still have
+  # no brace-expansion@5-compatible release to move to.
+  #
+  # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider, moderate): access tokens can be issued for
+  # unauthorized audiences via unbound resource indicators. This is a live gap, not theoretical — the
+  # MCP OAuth provider config sets `validAudiences` (apps/web/modules/auth/lib/mcp-oauth-provider-options.ts).
+  # The fix first shipped in 1.7.0-beta.4 (2026-06-10) and is still only on the beta/rc channels
+  # (1.7.0-rc.2 as of 2026-07-30); there is no patched 1.6.x or stable 1.7.0 release to pin to. Adopting
+  # it means moving the whole better-auth stack (better-auth, @better-auth/core, @better-auth/oauth-provider)
+  # off latest onto a release candidate for a security-critical auth path, which is a materially bigger
+  # and riskier change than a version pin. Per policy we only bypass the cooldown for Urgent/Critical;
+  # this is Moderate, so it stays tracked here — bump to the 1.7.0 stable release once it ships.
 
 autoInstallPeers: true
 linkWorkspacePackages: true
