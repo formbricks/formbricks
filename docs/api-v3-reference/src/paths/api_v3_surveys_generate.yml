@@ -179,7 +179,9 @@ post:
                 code: ai_features_not_enabled
                 requestId: req_123
     '422':
-      description: AI generated an invalid payload after schema and v3 create validation
+      description: >-
+        AI generated an invalid payload after schema and v3 create validation,
+        or the generation stopped because the output token limit was reached
       content:
         application/problem+json:
           schema:
@@ -198,6 +200,16 @@ post:
                 invalid_params:
                   - name: generatedSurvey.blocks
                     reason: Too small
+            aiOutputTooLong:
+              summary: Output token limit reached
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: >-
+                  The generated survey exceeded the AI output token limit.
+                  Simplify the prompt or split it into smaller surveys.
+                code: ai_output_too_long
+                requestId: req_123
     '429':
       $ref: ../components/responses/V3TooManyRequests.yml
     '500':
