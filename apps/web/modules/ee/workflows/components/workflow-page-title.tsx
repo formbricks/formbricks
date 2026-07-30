@@ -66,7 +66,10 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   // settled, and the draft is flushed right away rather than waiting out the autosave debounce,
   // which turns the header's "Changes saved" pill into the confirmation.
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key !== "Enter") return;
+    // An IME (Japanese/Chinese/Korean) uses Enter to accept the highlighted candidate, so
+    // committing there would blur mid-composition and persist a half-typed name. The synthetic
+    // event doesn't carry isComposing; the native one does.
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
     event.preventDefault();
     // The PATCH contract requires a name, so an empty field keeps focus for an in-place fix;
     // save() is still called either way because it owns both the error and the success feedback.
