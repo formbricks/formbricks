@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
-import { WEBAPP_URL } from "@/lib/constants";
+import { IS_SMTP_CONFIGURED, WEBAPP_URL } from "@/lib/constants";
 import { getEmailFromEmailToken } from "@/lib/jwt";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
-import { VERIFICATION_SEND_FAILED_PARAM } from "@/modules/auth/lib/verification-links";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { VerificationMessage } from "@/modules/auth/verification-requested/components/verification-message";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -14,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/ale
 export const VerificationRequestedPage = async ({
   searchParams,
 }: Readonly<{
-  searchParams: Promise<{ token: string; callbackUrl?: string | string[]; sendFailed?: string }>;
+  searchParams: Promise<{ token: string; callbackUrl?: string | string[] }>;
 }>) => {
   const t = await getTranslate();
   const params = await searchParams;
@@ -23,9 +22,13 @@ export const VerificationRequestedPage = async ({
     searchParamCallbackUrl: callbackUrl,
     webAppUrl: WEBAPP_URL,
   });
-  // Set by the sign-up form when the account was created but the mailer failed (ENG-2091). Compared
-  // against a literal, never echoed.
-  const sendFailed = params[VERIFICATION_SEND_FAILED_PARAM] === "1";
+  // No mailer configured means nothing was sent and nothing ever will be, so say so rather than
+  // pointing the visitor at an inbox (ENG-2091). Derived from server config, NOT from what happened to
+  // this request: a per-request outcome would only be knowable for an address we just created, which
+  // would make this screen differ by whether the account already existed (ENG-2099). A transient send
+  // failure on a configured mailer is logged and reported to Sentry instead, and the resend button
+  // below surfaces it directly — that endpoint propagates the error rather than swallowing it.
+  const sendFailed = !IS_SMTP_CONFIGURED;
   // Carry the callback (for an invite sign-up, `/invite?token=…`) into the log-in link below, so a
   // visitor who already has an account can log in and land straight back on the invite. Present for
   // every invited visitor, not just those with an account — the link must not vary with that

@@ -33,28 +33,22 @@ describe("verification link helpers", () => {
     );
   });
 
-  // ENG-2091: the flag tells the verification-requested page the account was created but the mailer
-  // failed, so it shows "we couldn't send it" instead of "check your inbox".
-  test("flags a failed send, alongside the callback URL", () => {
-    expect(buildVerificationRequestedPath({ token: "abc123", sendFailed: true })).toBe(
-      "/auth/verification-requested?token=abc123&sendFailed=1"
-    );
-    expect(
-      buildVerificationRequestedPath({
-        token: "abc123",
-        callbackUrl: "http://localhost:3000/invite?token=invite-token",
-        sendFailed: true,
-      })
-    ).toBe(
-      "/auth/verification-requested?token=abc123&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Finvite%3Ftoken%3Dinvite-token&sendFailed=1"
-    );
-  });
+  // ENG-2099: nothing about what happened to one address may ride along in this path. The
+  // verification-requested page decides its "we couldn't send it" copy from IS_SMTP_CONFIGURED, which is
+  // the same for every visitor — a per-sign-up flag here would have made the URL an account-existence
+  // signal, since a send is only ever attempted for an address that was actually created.
+  test("carries nothing beyond the token, callback URL, and purpose", () => {
+    const path = buildVerificationRequestedPath({
+      token: "abc123",
+      callbackUrl: "http://localhost:3000/invite?token=invite-token",
+      purpose: "sso_recovery",
+    });
 
-  test("omits the flag when the send succeeded, so the happy-path URL is unchanged", () => {
-    // The page compares against the literal "1"; an explicit `false` must not emit the param at all.
-    expect(buildVerificationRequestedPath({ token: "abc123", sendFailed: false })).toBe(
-      "/auth/verification-requested?token=abc123"
-    );
+    expect([...new URL(path, WEBAPP_URL).searchParams.keys()].toSorted()).toEqual([
+      "callbackUrl",
+      "purpose",
+      "token",
+    ]);
   });
 
   test("builds absolute verification links that preserve a valid callback URL", () => {

@@ -196,9 +196,6 @@ export const SignupForm = ({
         : buildVerificationRequestedPath({
             token,
             callbackUrl: inviteToken ? returnToUrl : undefined,
-            // The account was created but the verification email did not go out. Tell the user that
-            // and point them at resend, instead of at an inbox nothing was sent to (ENG-2091).
-            sendFailed: createUserResponse.data.nextStep === "verification_send_failed",
           });
 
       router.push(url);

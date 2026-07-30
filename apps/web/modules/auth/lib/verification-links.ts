@@ -5,29 +5,20 @@ export const VERIFICATION_REQUEST_PURPOSES = ["email_verification", "sso_recover
 export type TVerificationRequestPurpose = (typeof VERIFICATION_REQUEST_PURPOSES)[number];
 const DEFAULT_VERIFICATION_REQUEST_PURPOSE: TVerificationRequestPurpose = "email_verification";
 
-/** Query flag telling the verification-requested page that the send failed (ENG-2091). */
-export const VERIFICATION_SEND_FAILED_PARAM = "sendFailed";
-
 export const buildVerificationRequestedPath = ({
   token,
   callbackUrl,
   purpose = DEFAULT_VERIFICATION_REQUEST_PURPOSE,
-  sendFailed = false,
 }: {
   token: string;
   callbackUrl?: string | null;
   purpose?: TVerificationRequestPurpose;
-  sendFailed?: boolean;
 }): string => {
   const verificationRequestedUrl = new URL("/auth/verification-requested", RELATIVE_URL_BASE);
   verificationRequestedUrl.searchParams.set("token", token);
 
   if (callbackUrl) {
     verificationRequestedUrl.searchParams.set("callbackUrl", callbackUrl);
-  }
-
-  if (sendFailed) {
-    verificationRequestedUrl.searchParams.set(VERIFICATION_SEND_FAILED_PARAM, "1");
   }
 
   if (purpose !== DEFAULT_VERIFICATION_REQUEST_PURPOSE) {

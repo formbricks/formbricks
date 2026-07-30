@@ -92,7 +92,7 @@ describe("invite sign-up when the existing account is SSO-only (real Postgres)",
     });
 
     // Same indistinguishable response as the credential case (ENG-2099).
-    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
+    expect(result?.data).toEqual({ success: true });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
     // Critically: no credential account may be created for an SSO-only user by an unauthenticated
@@ -124,7 +124,7 @@ describe("invite sign-up when the existing account is SSO-only (real Postgres)",
     });
 
     // Enumeration-safe: no invite, so the generic screen — identical to a brand-new address.
-    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
+    expect(result?.data).toEqual({ success: true });
     expect(await prisma.account.count({ where: { userId: ssoUser.id } })).toBe(0);
     expect(await prisma.organization.count()).toBe(orgsBefore);
     expect(await prisma.membership.count({ where: { userId: ssoUser.id } })).toBe(0);

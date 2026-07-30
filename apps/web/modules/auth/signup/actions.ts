@@ -29,10 +29,6 @@ import {
   runWithSignupRequestContext,
 } from "@/modules/auth/lib/signup-request-context";
 import { updateUser } from "@/modules/auth/lib/user";
-import {
-  didVerificationSendFail,
-  runWithVerificationSendOutcome,
-} from "@/modules/auth/lib/verification-send-outcome";
 import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
@@ -298,34 +294,6 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
   });
 }
 
-/** Where the sign-up form should send the user next. */
-type TSignUpNextStep = "verify_email" | "verification_send_failed";
-
-/**
- * Decide the next screen.
- *
- * Deliberately does NOT branch on whether the address already had an account (ENG-2099): an earlier
- * version of this fix sent that case to the login page, which made the response a lookup — invite an
- * address, run the invite sign-up, and read which screen came back told you whether it was registered.
- * Both cases now land on the verification-requested screen, whose copy is already conditional ("if
- * there is an account associated with …") and which carries a generic "have an account? log in" link
- * with the invite callback attached. So the existing-account visitor still has a way out of the dead
- * end this ticket started from, without the response distinguishing them from a new one.
- *
- * `verification_send_failed` only ever follows a real creation, and is reached only when the mailer
- * actually failed — it says nothing about the address.
- */
-const resolveNextStep = ({
-  outcome,
-  verificationSendFailed,
-}: {
-  outcome: TSignUpOutcome;
-  verificationSendFailed: boolean;
-}): TSignUpNextStep => {
-  if (outcome.status === "already_existed") return "verify_email";
-  return verificationSendFailed ? "verification_send_failed" : "verify_email";
-};
-
 /**
  * Provisioning that must only ever follow a real account creation. Takes the `"created"` outcome
  * rather than a bare user so an `"already_existed"` sign-up cannot reach it (ENG-2091).
@@ -373,19 +341,14 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
     // sign-up that went through this action apart from a direct POST to Better Auth's native
     // /sign-up/email endpoint (which bypasses the action and is re-checked in the hook).
-    // The verification-send scope wraps the sign-up so a swallowed send failure inside Better Auth is
-    // still observable here (see verification-send-outcome.ts).
-    const { outcome, verificationSendFailed } = await runWithVerificationSendOutcome(async () => {
-      const signUpOutcome = await runWithSignupRequestContext(() => {
-        markSignupDomainAllowed();
-        return signUpUserSafely(
-          parsedInput.email,
-          parsedInput.name,
-          parsedInput.password,
-          parsedInput.userLocale
-        );
-      });
-      return { outcome: signUpOutcome, verificationSendFailed: didVerificationSendFail() };
+    const outcome = await runWithSignupRequestContext(() => {
+      markSignupDomainAllowed();
+      return signUpUserSafely(
+        parsedInput.email,
+        parsedInput.name,
+        parsedInput.password,
+        parsedInput.userLocale
+      );
     });
 
     // Everything below is provisioning + analytics for a NEW account. On "already_existed" the response
@@ -444,11 +407,12 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       ctx.auditLoggingCtx.newObject = user;
     }
 
+    // Deliberately invariant: the response never varies with whether the address already had an
+    // account, nor with what happened to the verification email. Both would make it a lookup
+    // (ENG-2099). The verification-requested screen the form lands on is phrased conditionally and
+    // carries a log-in link, so the existing-account visitor still has a way out.
     return {
       success: true,
-      // Where the form should send the user. Decided server-side so the rule lives with the data.
-      // Never varies with whether the address already had an account — see resolveNextStep.
-      nextStep: resolveNextStep({ outcome, verificationSendFailed }),
     };
   })
 );

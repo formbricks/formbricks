@@ -85,6 +85,13 @@ export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
 
 export const SMTP_HOST = env.SMTP_HOST;
 export const SMTP_PORT = env.SMTP_PORT;
+
+/**
+ * Whether the mailer can actually send. `sendEmail` returns `false` without throwing when this is
+ * false, which callers must treat as a failure (ENG-2091) — so it lives here next to the values it
+ * derives from rather than being recomputed per call site.
+ */
+export const IS_SMTP_CONFIGURED = Boolean(env.SMTP_HOST && env.SMTP_PORT);
 export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1" || env.SMTP_PORT === "465";
 export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;

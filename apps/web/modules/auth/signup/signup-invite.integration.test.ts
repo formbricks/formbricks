@@ -91,7 +91,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       inviteToken,
     });
 
-    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
+    expect(result?.data).toEqual({ success: true });
     expect(sendVerificationLinkEmail).toHaveBeenCalledTimes(1);
 
     const user = await prisma.user.findUnique({ where: { email: INVITED_EMAIL }, select: { id: true } });
@@ -124,7 +124,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     // routed this case to login, which turned the invite flow into an account-existence lookup. The
     // verification-requested screen it lands on says "if there is an account associated with …" and
     // carries an unconditional log-in link, so this visitor still has a way out.
-    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
+    expect(result?.data).toEqual({ success: true });
     // No verification email is sent, because no account was created.
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
@@ -145,34 +145,48 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     expect(after?.password).toBe("not-a-real-hash-fixture");
   });
 
-  // ENG-2099: the invite sign-up response must not be usable as an account-existence lookup. This is
-  // the invariant, asserted directly rather than inferred from the two tests above — anyone who can
-  // send an invite can run this comparison, so a future change that reintroduces a differential (a
-  // different nextStep, status, or error) has to fail here.
-  test("returns a byte-identical response whether or not the address already has an account", async () => {
-    const { inviteToken: tokenForNew } = await seedInvite();
-    const brandNew = await createUserAction({
-      name: "Invitee",
-      email: INVITED_EMAIL,
-      password: PASSWORD,
-      inviteToken: tokenForNew,
-    });
+  /**
+   * ENG-2099: the invite sign-up response must not be usable as an account-existence lookup. Asserted
+   * directly rather than inferred from the two tests above — anyone who can send an invite can run this
+   * comparison, so a future change that reintroduces a differential (an extra response field, a
+   * different status, or an error) has to fail here.
+   *
+   * Crossed with the mailer state on purpose. The first version of this fix returned a distinct
+   * `verification_send_failed` step, which reads as address-independent — but Better Auth only attempts a
+   * send for an address it actually created, so during a mail outage that step appeared for a fresh
+   * address and never for one already taken. Comparing existence under a HEALTHY mailer, as this test
+   * originally did, could never see that; the sibling `signup-verification-send` file pins the other
+   * axis. Neither covers the corner on its own.
+   */
+  const MAILER_STATES = [
+    { name: "healthy mailer", mailerReturns: true },
+    { name: "mail outage", mailerReturns: false },
+  ];
 
-    await resetDb();
-    const { inviteToken: tokenForExisting } = await seedInvite();
-    await prisma.user.create({
-      data: { name: "Invitee", email: INVITED_EMAIL, password: "not-a-real-hash-fixture" },
-    });
-    const existing = await createUserAction({
-      name: "Invitee",
-      email: INVITED_EMAIL,
-      password: PASSWORD,
-      inviteToken: tokenForExisting,
-    });
+  test.each(MAILER_STATES)(
+    "returns a byte-identical response whether or not the address exists ($name)",
+    async ({ mailerReturns }) => {
+      const signUp = async (seedExistingAccount: boolean) => {
+        await resetDb();
+        const { inviteToken } = await seedInvite();
+        if (seedExistingAccount) {
+          await prisma.user.create({
+            data: { name: "Invitee", email: INVITED_EMAIL, password: "not-a-real-hash-fixture" },
+          });
+        }
+        vi.mocked(sendVerificationLinkEmail).mockResolvedValue(mailerReturns);
+        const result = await createUserAction({
+          name: "Invitee",
+          email: INVITED_EMAIL,
+          password: PASSWORD,
+          inviteToken,
+        });
+        return { data: result?.data, serverError: result?.serverError };
+      };
 
-    expect(existing?.data).toEqual(brandNew?.data);
-    expect(existing?.serverError).toEqual(brandNew?.serverError);
-  });
+      expect(await signUp(true)).toEqual(await signUp(false));
+    }
+  );
 
   // ENG-2071: an invite binds one address to one role in one organization. Before this, only the
   // signature was checked, so anyone holding a forwarded invite link could redeem it with an address
@@ -240,7 +254,7 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
     // No invite, so nothing is disclosed: the response is byte-identical to a real new sign-up, and
     // the user lands on the generic "confirm your email" screen (whose copy carries a generic
     // "already have an account? log in" line). This is the enumeration-safety boundary.
-    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
+    expect(result?.data).toEqual({ success: true });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
     // On Formbricks Cloud getIsMultiOrgEnabled() is true, so before the fix this branch created an
     // organization + owner membership on someone else's account, once per request.

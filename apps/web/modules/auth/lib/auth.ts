@@ -33,7 +33,6 @@ import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from ".
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
-import { markVerificationSendFailed } from "./verification-send-outcome";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
@@ -166,8 +165,11 @@ export const auth = betterAuth({
     //     does propagate, which is why rethrowing below is what makes THAT path truthful.)
     //  2. a FALSY RETURN — `sendEmail` returns false without throwing when SMTP isn't configured, and
     //     Better Auth ignores the return value entirely. Silent on every path.
-    // So: treat both as failures, make them attributable, and record the outcome for the sign-up
-    // action to read (Better Auth swallows the error, so the request scope is the only channel back).
+    // So: treat both as failures and make them attributable — log with the user id, and rethrow so the
+    // paths that DO propagate (resend, sign-in resend) fail loudly instead of claiming success.
+    // Deliberately NOT surfaced in the sign-up response: that response must not vary by what happened to
+    // one address, or it becomes an account-existence oracle (ENG-2099). The verification-requested
+    // screen derives its "nothing was sent" state from IS_SMTP_CONFIGURED instead.
     sendVerificationEmail: async ({ user, url }) => {
       const { sendVerificationLinkEmail } = await import("@/modules/email");
       try {
@@ -180,7 +182,6 @@ export const auth = betterAuth({
           throw new Error("Verification email was not sent (mailer reported no delivery)");
         }
       } catch (error) {
-        markVerificationSendFailed();
         // Domain only — never the address, the token, or the verify URL (all three are sensitive and
         // the URL grants account access).
         logger.error(
