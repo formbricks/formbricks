@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import {
   hasWorkflowSaveFailedAtom,
+  isWorkflowDirtyAtom,
+  isWorkflowSavingAtom,
   workflowLastSavedAtAtom,
   workflowSaveErrorAtom,
 } from "@/modules/ee/workflows/state/editor";
@@ -22,17 +24,20 @@ const PILL_CLASSES = {
 } as const;
 
 /**
- * Autosave status pill: a quiet "Auto-save on" that flashes green "Changes saved" for a moment after
- * each successful save, and turns red for as long as a save is outstanding. Autosaves are silent —
- * they never toast — so the failed state is the only report the user gets, and it has to persist
- * until a save actually lands rather than fade like a toast (ENG-1970). The caller hides the pill
- * when autosave can't act at all (read-only, archived).
+ * Autosave status pill. Reports the draft's actual state rather than the fact that autosave is
+ * armed: "Saving…" from the first keystroke until the debounced PATCH lands, then "All changes
+ * saved" — flashing green for a moment to acknowledge the save. It turns red for as long as a save
+ * is outstanding: autosaves are silent — they never toast — so the failed state is the only report
+ * the user gets, and it has to persist until a save actually lands rather than fade like a toast
+ * (ENG-1970). The caller hides the pill when autosave can't act at all (read-only, archived).
  */
 export const WorkflowAutoSaveIndicator = () => {
   const { t } = useTranslation();
   const lastSavedAt = useAtomValue(workflowLastSavedAtAtom);
   const hasFailed = useAtomValue(hasWorkflowSaveFailedAtom);
   const saveError = useAtomValue(workflowSaveErrorAtom);
+  const isDirty = useAtomValue(isWorkflowDirtyAtom);
+  const isSaving = useAtomValue(isWorkflowSavingAtom);
   const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
@@ -42,16 +47,19 @@ export const WorkflowAutoSaveIndicator = () => {
     return () => clearTimeout(timer);
   }, [lastSavedAt]);
 
-  // An outstanding failure outranks the flash: a save that succeeded three seconds ago is not the
-  // headline when the one after it didn't.
+  // An outstanding failure outranks everything else: a save that succeeded three seconds ago is not
+  // the headline when the one after it didn't, and a draft waiting out the debounce behind a failed
+  // one has no business claiming it is on its way. Below that, dirty covers the debounce window
+  // before the request goes out, so the pill never reads "saved" while the user is still typing.
   let state: keyof typeof PILL_CLASSES = "idle";
-  let label = t("workspace.workflows.autosave_on");
+  let label = t("workspace.workflows.all_changes_saved");
   if (hasFailed) {
     state = "failed";
     label = t("workspace.workflows.autosave_failed");
+  } else if (isDirty || isSaving) {
+    label = t("workspace.workflows.saving_changes");
   } else if (showSaved) {
     state = "saved";
-    label = t("workspace.workflows.changes_saved");
   }
 
   // A rejected draft has a reason worth quoting; an unreachable one has nothing to quote. The

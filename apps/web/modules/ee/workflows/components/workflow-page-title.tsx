@@ -11,11 +11,22 @@ import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-bu
 import { getWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import { workflowKeys } from "@/modules/ee/workflows/lib/query";
 import { setWorkflowNameAtom, workflowAtom, workflowNameAtom } from "@/modules/ee/workflows/state/editor";
+import { Skeleton } from "@/modules/ui/components/skeleton";
 
 interface WorkflowPageTitleProps {
   workflowId: string;
   isReadOnly: boolean;
 }
+
+// The layout renders PageHeader server-side while the workflow is still being fetched client-side.
+// Without a placeholder the h1 collapses to an empty row, so the title area reads as blank and the
+// tabs below jump once the name arrives. h-9 matches the text-3xl line box the name will occupy.
+const WorkflowPageTitleSkeleton = () => (
+  <span className="flex h-9 items-center gap-x-3">
+    <Skeleton className="h-7 w-64 rounded-md" />
+    <Skeleton className="h-7 w-24 rounded-full" />
+  </span>
+);
 
 // Prefers the atom state hydrated by the builder. On a fresh load of a sub-route like /runs the
 // builder never mounts to hydrate the atom, so fetch the name directly; the query stays disabled
@@ -40,10 +51,14 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   // Actions and atom state only — the builder page owns the load and the debounced autosave.
   const { save } = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
 
+  // Scoped to sub-routes like /runs, where no builder mounts to hydrate the atom. On the edit tab
+  // this used to race the builder's own load: whichever landed first won, and the query usually
+  // did — painting the plain-text title, then swapping in the editable one a moment later.
+  // Waiting for the single source keeps the header still and drops a duplicate GET.
   const { data } = useQuery({
     queryKey: workflowKeys.detail(workflowId),
     queryFn: ({ signal }) => getWorkflow(workflowId, signal),
-    enabled: !workflow?.name,
+    enabled: segment !== null && !workflow?.name,
   });
 
   // Only the edit tab mounts the builder that hydrates (and saves) the draft name; metadata is
@@ -64,7 +79,7 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
 
   // Enter commits the rename instead of doing nothing: the field blurs so the title reads as
   // settled, and the draft is flushed right away rather than waiting out the autosave debounce,
-  // which turns the header's "Changes saved" pill into the confirmation.
+  // which turns the header's "All changes saved" pill into the confirmation.
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     // An IME (Japanese/Chinese/Korean) uses Enter to accept the highlighted candidate, so
     // committing there would blur mid-composition and persist a half-typed name. The synthetic
@@ -78,7 +93,7 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   };
 
   const resolved = workflow ?? data;
-  if (!resolved) return null;
+  if (!resolved) return <WorkflowPageTitleSkeleton />;
 
   // flex-wrap keeps the badge inline next to the name and pushes it below on narrow widths.
   return (
@@ -94,11 +109,18 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
           // Approximates content sizing where field-sizing is unsupported (Firefox/Safari).
           size={Math.max(workflowName.length, 12)}
           className={cn(
-            "-mx-2 -my-1 min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1",
+            "-mx-2 -my-1 min-w-0 rounded-md bg-transparent px-2 py-1",
             "text-3xl font-bold text-slate-800 placeholder:text-slate-400",
             // Sizes to its content where supported; the max keeps long names from pushing the CTA out.
             "[field-sizing:content] max-w-[28rem]",
-            "hover:border-slate-200 focus:border-slate-300 focus:ring-2 focus:ring-brand-dark focus:ring-offset-2 focus:outline-none"
+            // Dashed hover/focus box, matching the dashboard's editable title
+            // (see dashboard-page-header.tsx): slate while hovered, brand while editing.
+            "border border-dashed border-transparent transition-colors",
+            "hover:border-slate-300 focus:border-brand-dark",
+            // Same specificity means source order decides, and Tailwind emits hover last — without
+            // this the border drops back to slate when the pointer rests on a focused field.
+            "focus:hover:border-brand-dark",
+            "focus:ring-0 focus:outline-none"
           )}
         />
       ) : (

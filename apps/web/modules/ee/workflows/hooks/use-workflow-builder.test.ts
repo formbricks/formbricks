@@ -334,6 +334,31 @@ describe("autosave", () => {
     await waitFor(() => expect(result.current.isDirty).toBe(false));
   });
 
+  test("collapses a typing burst into one save carrying the final value", { timeout: 15000 }, async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockResolvedValue(apiWorkflow);
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    // Keystrokes spaced under the debounce window: each one must restart the timer rather than
+    // queue its own PATCH.
+    for (const name of ["N", "Na", "Nam", "Name"]) {
+      act(() => {
+        store.set(setWorkflowNameAtom, name);
+      });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    expect(updateWorkflow).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+    // The first PATCH carries "Name" either way — save() reads the store, not the timer's closure —
+    // so settle past a full debounce window: an uncancelled timer would land its own call here.
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+    expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "Name" }));
+  });
+
   test("does not autosave for read-only viewers", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
 
