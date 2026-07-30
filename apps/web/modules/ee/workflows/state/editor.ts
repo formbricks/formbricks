@@ -139,6 +139,12 @@ export const isWorkflowDirtyAtom = atom((get) => {
   );
 });
 
+// True when the last autosave for the CURRENT draft came back unpersisted. The autosave effect
+// deliberately refuses to retry an unchanged failed draft (see useWorkflowBuilder), so nothing is
+// in flight and nothing is coming — shared state because the header pill that reports it lives
+// outside the page-level builder that owns the autosave.
+export const hasWorkflowAutosaveFailedAtom = atom<boolean>(false);
+
 export type TWorkflowValidity = {
   /** The workflow has a non-empty name (required by the PATCH contract). */
   isNameValid: boolean;

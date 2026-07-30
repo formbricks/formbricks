@@ -4250,6 +4250,7 @@
       "unarchive": "Aus Archiv wiederherstellen",
       "unarchive_failed": "Workflow konnte nicht wiederhergestellt werden. Bitte versuche es erneut.",
       "unarchive_success": "Workflow wiederhergestellt.",
+      "unsaved_changes": "Nicht gespeicherte Änderungen",
       "upgrade_prompt_description": "Automatisiere antwortgesteuerte Aufgaben mit Triggern, Filtern und Aktionen.",
       "upgrade_prompt_title": "Upgrade durchführen, um Workflows freizuschalten",
       "validation_failed": "Workflow-Validierung fehlgeschlagen.",

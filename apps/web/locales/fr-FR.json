@@ -4250,6 +4250,7 @@
       "unarchive": "Désarchiver",
       "unarchive_failed": "Échec de la désarchivage du workflow. Réessaye.",
       "unarchive_success": "Workflow désarchivé.",
+      "unsaved_changes": "Modifications non enregistrées",
       "upgrade_prompt_description": "Automatise les tâches pilotées par les réponses avec des déclencheurs, des filtres et des actions.",
       "upgrade_prompt_title": "Passe à la version supérieure pour débloquer les Workflows",
       "validation_failed": "La validation du workflow a échoué.",

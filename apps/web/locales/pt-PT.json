@@ -4250,6 +4250,7 @@
       "unarchive": "Desarquivar",
       "unarchive_failed": "Falha ao desarquivar o fluxo de trabalho. Por favor, tenta novamente.",
       "unarchive_success": "Fluxo de trabalho desarquivado.",
+      "unsaved_changes": "Alterações não guardadas",
       "upgrade_prompt_description": "Automatiza tarefas orientadas por respostas com acionadores, filtros e ações.",
       "upgrade_prompt_title": "Faz upgrade para desbloquear Fluxos de Trabalho",
       "validation_failed": "A validação do workflow falhou.",

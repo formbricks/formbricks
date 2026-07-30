@@ -17,6 +17,7 @@ import {
 } from "@/modules/ee/workflows/lib/api-client";
 import { workflowDefinitionToFlowNodes } from "@/modules/ee/workflows/lib/definition-to-flow";
 import {
+  hasWorkflowAutosaveFailedAtom,
   hydrateWorkflowEditorAtom,
   isWorkflowDirtyAtom,
   isWorkflowSavingAtom,
@@ -75,6 +76,7 @@ export const useWorkflowBuilder = ({
   const isTransitioning = useAtomValue(isWorkflowTransitioningAtom);
   const setIsSaving = useSetAtom(setWorkflowSavingAtom);
   const setIsTransitioning = useSetAtom(setWorkflowTransitioningAtom);
+  const setHasAutosaveFailed = useSetAtom(hasWorkflowAutosaveFailedAtom);
 
   const [isLoading, setIsLoading] = useState(loadOnMount);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -135,20 +137,23 @@ export const useWorkflowBuilder = ({
   // Resolves true only when the draft was actually persisted.
   const save = useCallback(
     async ({ silent = false }: { silent?: boolean } = {}): Promise<boolean> => {
-      // Don't overlap with an in-flight save or lifecycle transition; a save landing during an
-      // enable/disable can clobber the transitioned status (and vice versa).
-      if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return false;
-
       const state = store.get(workflowEditorAtom);
       const currentWorkflow = state.workflow;
       const currentDefinition = state.definition;
       if (!currentWorkflow || !currentDefinition) return false;
 
+      // Validated ahead of the overlap guard below so an explicit save always explains a missing
+      // name. Behind it, clearing the name while a save or transition was in flight returned
+      // silently — and a title rename committed with Enter would look like it did nothing.
       const trimmedName = state.workflowName.trim();
       if (!trimmedName) {
         if (!silent) toast.error(t("workspace.workflows.name_required"));
         return false;
       }
+
+      // Don't overlap with an in-flight save or lifecycle transition; a save landing during an
+      // enable/disable can clobber the transitioned status (and vice versa).
+      if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return false;
 
       const trimmedDescription = state.workflowDescription.trim() || null;
       const payload: TPatchWorkflowInput = { name: trimmedName, description: trimmedDescription };
@@ -204,6 +209,13 @@ export const useWorkflowBuilder = ({
   const failedAutosaveSignatureRef = useRef<string | null>(null);
   const draftSignature = JSON.stringify({ workflowName, workflowDescription, definition });
 
+  // Any edit supersedes an earlier failure — the effect below gets a new signature and tries
+  // again. Declared first so a signature change clears the flag before the retry is armed.
+  useEffect(() => {
+    if (!loadOnMount || isReadOnly) return;
+    setHasAutosaveFailed(false);
+  }, [loadOnMount, isReadOnly, draftSignature, setHasAutosaveFailed]);
+
   // Autosave: the page-level instance (loadOnMount) persists any dirty draft shortly after the
   // user stops editing. Effect deps include the draft fields themselves so each keystroke resets
   // the timer (debounce), and isSaving so a save finishing re-arms it when edits piled up
@@ -217,6 +229,9 @@ export const useWorkflowBuilder = ({
     const timeoutHandle = setTimeout(() => {
       void save({ silent: true }).then((saved) => {
         failedAutosaveSignatureRef.current = saved ? null : draftSignature;
+        // Mirrored into shared state so the header pill can stop reporting a save in progress:
+        // this exact draft is now parked until the user changes or saves it themselves.
+        setHasAutosaveFailed(!saved);
       });
     }, WORKFLOW_AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timeoutHandle);

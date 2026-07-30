@@ -6,7 +6,7 @@ import { Provider, createStore } from "jotai";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TWorkflowResource } from "@formbricks/workflows";
-import { setWorkflowNameAtom } from "@/modules/ee/workflows/state/editor";
+import { hasWorkflowAutosaveFailedAtom, setWorkflowNameAtom } from "@/modules/ee/workflows/state/editor";
 import { useWorkflowBuilder } from "./use-workflow-builder";
 
 const toastSuccess = vi.fn();
@@ -149,6 +149,34 @@ describe("save", () => {
     expect(updateWorkflow).not.toHaveBeenCalled();
   });
 
+  test("reports a missing name even while another save is in flight", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    // Never settles, so the first save stays in flight and the overlap guard stays armed.
+    updateWorkflow.mockReturnValue(new Promise(() => undefined));
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    await act(async () => {
+      void result.current.save();
+    });
+    await waitFor(() => expect(result.current.isSaving).toBe(true));
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      store.set(setWorkflowNameAtom, "   ");
+    });
+    await act(async () => {
+      await expect(result.current.save()).resolves.toBe(false);
+    });
+
+    // The overlap guard must not swallow the validation message: the title field commits with
+    // Enter, so a silent refusal here reads as "Enter did nothing" all over again.
+    expect(toastError).toHaveBeenCalledWith("workspace.workflows.name_required");
+    // Still no second PATCH — the guard's actual job is intact.
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+  });
+
   test("PATCHes via API", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     updateWorkflow.mockResolvedValue(apiWorkflow);
@@ -271,6 +299,10 @@ describe("autosave", () => {
     expect(updateWorkflow).not.toHaveBeenCalled();
 
     await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+    // The first PATCH carries "Name" either way — save() reads the store, not the timer's closure —
+    // so settle past a full debounce window: an uncancelled timer would land its own call here.
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
     expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "Name" }));
   });
 
@@ -327,10 +359,16 @@ describe("autosave", () => {
     await new Promise((resolve) => setTimeout(resolve, 2500));
     expect(updateWorkflow).toHaveBeenCalledTimes(1);
 
-    // …but a further edit produces a fresh attempt.
+    // …and the parked draft is published as such, so the header pill stops reporting a save in
+    // progress for a request that is neither in flight nor coming.
+    expect(store.get(hasWorkflowAutosaveFailedAtom)).toBe(true);
+    expect(result.current.isDirty).toBe(true);
+
+    // …but a further edit produces a fresh attempt, and clears the parked flag with it.
     act(() => {
       store.set(setWorkflowNameAtom, "Doomed edit, take two");
     });
+    await waitFor(() => expect(store.get(hasWorkflowAutosaveFailedAtom)).toBe(false));
     await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2), { timeout: 4000 });
   });
 

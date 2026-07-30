@@ -4250,6 +4250,7 @@
       "unarchive": "Dearchiveren",
       "unarchive_failed": "Dearchiveren van de workflow is mislukt. Probeer het opnieuw.",
       "unarchive_success": "Workflow gedearchiveerd.",
+      "unsaved_changes": "Niet-opgeslagen wijzigingen",
       "upgrade_prompt_description": "Automatiseer taken op basis van reacties met triggers, filters en acties.",
       "upgrade_prompt_title": "Upgrade om Workflows te ontgrendelen",
       "validation_failed": "Workflowvalidatie mislukt.",

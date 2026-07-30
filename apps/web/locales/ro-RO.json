@@ -4250,6 +4250,7 @@
       "unarchive": "Dezarhivează",
       "unarchive_failed": "Nu s-a putut dezarhiva workflow-ul. Te rugăm să încerci din nou.",
       "unarchive_success": "Workflow dezarhivat.",
+      "unsaved_changes": "Modificări nesalvate",
       "upgrade_prompt_description": "Automatizează sarcinile bazate pe răspunsuri cu declanșatori, filtre și acțiuni.",
       "upgrade_prompt_title": "Treci la un plan superior pentru a debloca Fluxurile de lucru",
       "validation_failed": "Validarea fluxului de lucru a eșuat.",

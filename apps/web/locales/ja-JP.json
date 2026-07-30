@@ -4250,6 +4250,7 @@
       "unarchive": "アーカイブを解除",
       "unarchive_failed": "ワークフローのアーカイブ解除に失敗しました。もう一度お試しください。",
       "unarchive_success": "ワークフローのアーカイブを解除しました。",
+      "unsaved_changes": "未保存の変更",
       "upgrade_prompt_description": "トリガー、フィルター、アクションを使用して、レスポンス駆動型のタスクを自動化します。",
       "upgrade_prompt_title": "アップグレードしてワークフローを利用する",
       "validation_failed": "ワークフローの検証に失敗しました。",

@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { PencilIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { type KeyboardEvent, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { WorkflowStatusPill } from "@/modules/ee/workflows/components/workflow-status-pill";
+import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { getWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import { workflowKeys } from "@/modules/ee/workflows/lib/query";
 import { setWorkflowNameAtom, workflowAtom, workflowNameAtom } from "@/modules/ee/workflows/state/editor";
@@ -33,8 +34,9 @@ const WorkflowPageTitleSkeleton = () => (
 // once the atom carries a name, so the builder page never double-fetches.
 //
 // On the edit tab the title doubles as the name editor: it binds to the draft atom and is
-// persisted by the page-level autosave. A workflow arriving from the dialog-less
-// create flow (?new=1) gets the title focused and selected so the user names it immediately.
+// persisted by the page-level autosave, with Enter committing it immediately. A workflow arriving
+// from the dialog-less create flow (?new=1) gets the title focused and selected so the user names
+// it immediately.
 export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowPageTitleProps>) => {
   const { t } = useTranslation();
   const segment = useSelectedLayoutSegment();
@@ -47,6 +49,8 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAutoFocusedRef = useRef(false);
   const isNew = searchParams.get("new") === "1";
+  // Actions and atom state only — the builder page owns the load and the debounced autosave.
+  const { save } = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
 
   // Scoped to sub-routes like /runs, where no builder mounts to hydrate the atom. On the edit tab
   // this used to race the builder's own load: whichever landed first won, and the query usually
@@ -74,6 +78,21 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }, [isNew, isEditable, searchParams, router, pathname]);
 
+  // Enter commits the rename instead of doing nothing: the field blurs so the title reads as
+  // settled, and the draft is flushed right away rather than waiting out the autosave debounce,
+  // which turns the header's "All changes saved" pill into the confirmation.
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    // An IME (Japanese/Chinese/Korean) uses Enter to accept the highlighted candidate, so
+    // committing there would blur mid-composition and persist a half-typed name. The synthetic
+    // event doesn't carry isComposing; the native one does.
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    // The PATCH contract requires a name, so an empty field keeps focus for an in-place fix;
+    // save() is still called either way because it owns both the error and the success feedback.
+    if (workflowName.trim()) inputRef.current?.blur();
+    void save();
+  };
+
   const resolved = workflow ?? data;
   if (!resolved) return <WorkflowPageTitleSkeleton />;
 
@@ -98,6 +117,7 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
             ref={inputRef}
             value={workflowName}
             onChange={(event) => setWorkflowName(event.target.value)}
+            onKeyDown={handleKeyDown}
             aria-label={t("common.workflow_name")}
             placeholder={t("common.workflow_name")}
             // Approximates content sizing where field-sizing is unsupported (Firefox/Safari).

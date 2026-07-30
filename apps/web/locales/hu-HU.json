@@ -4250,6 +4250,7 @@
       "unarchive": "Archiválás visszavonása",
       "unarchive_failed": "A munkafolyamat archiválásának visszavonása sikertelen volt. Kérjük, próbálja meg újra.",
       "unarchive_success": "A munkafolyamat archiválása visszavonva.",
+      "unsaved_changes": "Mentetlen módosítások",
       "upgrade_prompt_description": "Automatizáljon válaszalapú feladatokat triggerekkel, szűrőkkel és műveletekkel.",
       "upgrade_prompt_title": "Frissítsen a Munkafolyamatok feloldásához",
       "validation_failed": "A munkafolyamat érvényesítése sikertelen volt.",

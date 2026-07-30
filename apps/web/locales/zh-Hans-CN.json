@@ -4250,6 +4250,7 @@
       "unarchive": "取消归档",
       "unarchive_failed": "取消归档工作流失败。请重试。",
       "unarchive_success": "工作流已取消归档。",
+      "unsaved_changes": "未保存的更改",
       "upgrade_prompt_description": "通过触发器、筛选器和操作自动执行响应驱动的任务。",
       "upgrade_prompt_title": "升级以解锁工作流功能",
       "validation_failed": "工作流验证失败。",

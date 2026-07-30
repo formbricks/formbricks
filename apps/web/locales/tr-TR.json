@@ -4250,6 +4250,7 @@
       "unarchive": "Arşivden çıkar",
       "unarchive_failed": "İş akışı arşivden çıkarılamadı. Lütfen tekrar deneyin.",
       "unarchive_success": "İş akışı arşivden çıkarıldı.",
+      "unsaved_changes": "Kaydedilmemiş değişiklikler",
       "upgrade_prompt_description": "Tetikleyiciler, filtreler ve eylemlerle yanıt odaklı görevleri otomatikleştir.",
       "upgrade_prompt_title": "İş Akışlarının kilidini açmak için yükselt",
       "validation_failed": "İş akışı doğrulaması başarısız oldu.",

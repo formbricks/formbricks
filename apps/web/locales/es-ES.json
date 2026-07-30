@@ -4250,6 +4250,7 @@
       "unarchive": "Desarchivar",
       "unarchive_failed": "No se pudo desarchivar el flujo de trabajo. Por favor, inténtalo de nuevo.",
       "unarchive_success": "Flujo de trabajo desarchivado.",
+      "unsaved_changes": "Cambios sin guardar",
       "upgrade_prompt_description": "Automatiza tareas impulsadas por respuestas con activadores, filtros y acciones.",
       "upgrade_prompt_title": "Mejora tu plan para desbloquear Workflows",
       "validation_failed": "Falló la validación del flujo de trabajo.",

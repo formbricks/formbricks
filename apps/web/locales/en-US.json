@@ -4250,6 +4250,7 @@
       "unarchive": "Unarchive",
       "unarchive_failed": "Failed to unarchive the workflow. Please try again.",
       "unarchive_success": "Workflow unarchived.",
+      "unsaved_changes": "Unsaved changes",
       "upgrade_prompt_description": "Automate response-driven tasks with triggers, filters, and actions.",
       "upgrade_prompt_title": "Upgrade to unlock Workflows",
       "validation_failed": "Workflow validation failed.",

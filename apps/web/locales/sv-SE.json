@@ -4250,6 +4250,7 @@
       "unarchive": "Återställ",
       "unarchive_failed": "Det gick inte att återställa arbetsflödet. Försök igen.",
       "unarchive_success": "Arbetsflödet har återställts.",
+      "unsaved_changes": "Osparade ändringar",
       "upgrade_prompt_description": "Automatisera svardrivna uppgifter med triggers, filter och åtgärder.",
       "upgrade_prompt_title": "Uppgradera för att låsa upp Arbetsflöden",
       "validation_failed": "Validering av arbetsflöde misslyckades.",
