@@ -58,7 +58,7 @@ describe("updateMembership", () => {
 
   test("should throw ResourceNotFoundError when membership doesn't exist", async () => {
     const error = new Prisma.PrismaClientKnownRequestError("Record does not exist", {
-      code: PrismaErrorType.RecordDoesNotExist,
+      code: PrismaErrorType.RecordNotFound,
       clientVersion: "1.0.0",
     });
 

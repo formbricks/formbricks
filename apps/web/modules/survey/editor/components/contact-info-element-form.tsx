@@ -78,8 +78,6 @@ export const ContactInfoElementForm = ({
       .every((field) => !field.required);
 
     updateElement(elementIdx, { required: !allFieldsAreOptional });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [element.firstName, element.lastName, element.email, element.phone, element.company]);
 
   const [parent] = useAutoAnimate();

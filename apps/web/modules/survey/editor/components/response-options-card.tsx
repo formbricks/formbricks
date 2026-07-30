@@ -474,7 +474,7 @@ export const ResponseOptionsCard = ({
                     <p className="mx-2 text-xs text-slate-500">Strict</p>
                   </div>
                 </div>
-                <Alert variant="warning" size="default" className="w-fill mt-2 text-sm">
+                <Alert variant="warning" size="default" className="w-fill mt-2 text-sm" role="status">
                   <AlertTitle>{t("workspace.surveys.edit.spam_protection_note")}</AlertTitle>
                 </Alert>
               </div>

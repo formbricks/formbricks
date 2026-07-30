@@ -1,12 +1,12 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { DEFAULT_LOCALE } from "@/lib/constants";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 
@@ -91,7 +91,7 @@ export const updateWorkspace = async (
       select: selectWorkspace,
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -143,10 +143,10 @@ export const createWorkspace = async (
 
     return workspace;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A workspace with this name already exists in your organization");
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("A workspace with this name already exists in your organization");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -173,7 +173,7 @@ export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> 
 
     return workspace;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
 

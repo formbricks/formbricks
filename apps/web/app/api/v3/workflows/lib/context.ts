@@ -11,6 +11,8 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
+import { getOrganizationMemberEmails } from "@/lib/organization/service";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -90,6 +92,22 @@ const buildRecordAudit =
     }
   };
 
+/**
+ * Recipient allowlist for `send_email` actions. Injected so `@formbricks/workflows` stays
+ * organization-agnostic: given literal recipient emails, returns the subset that does NOT belong to
+ * the workspace's organization. Enable/test use it to block a workflow from silently forwarding
+ * response data to an arbitrary external inbox (ENG-2029). Emails are compared case-insensitively.
+ */
+const verifyRecipientsAllowed: WorkflowApiContext["verifyRecipientsAllowed"] = async ({
+  workspaceId,
+  emails,
+}) => {
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+  const memberEmails = await getOrganizationMemberEmails(organizationId);
+  const disallowedEmails = emails.filter((email) => !memberEmails.has(normalizeEmailForComparison(email)));
+  return { disallowedEmails };
+};
+
 export const buildWorkflowApiContext = (
   authentication: TV3Authentication,
   requestId: string,
@@ -125,5 +143,6 @@ export const buildWorkflowApiContext = (
     return authorized;
   },
   verifyTriggerSurvey,
+  verifyRecipientsAllowed,
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
 });

@@ -82,6 +82,7 @@ export const ZWorkflowTestProblemCode = z.enum([
   "definition_not_executable",
   "survey_not_found",
   "ending_card_not_found",
+  "recipient_not_allowed",
 ]);
 export type TWorkflowTestProblemCode = z.infer<typeof ZWorkflowTestProblemCode>;
 
@@ -99,7 +100,11 @@ export type TWorkflowTestProblem = z.infer<typeof ZWorkflowTestProblem>;
 export const ZWorkflowTestResult = z
   .object({
     workflowId: z.cuid2(),
-    ok: z.boolean().describe("True when the definition is executable and every trigger reference resolves."),
+    ok: z
+      .boolean()
+      .describe(
+        "True when the definition is executable, every trigger reference resolves, and every literal send_email recipient is an organization member."
+      ),
     problems: z
       .array(ZWorkflowTestProblem)
       .describe("Every problem found, so all issues can be fixed at once. Empty when ok is true."),

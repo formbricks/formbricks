@@ -39,6 +39,29 @@ jobs:
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/cube-deployment.yaml > "$render_dir/cube-default.yaml"
+          grep -A1 'name: CUBEJS_EXTERNAL_DEFAULT' "$render_dir/cube-default.yaml" \
+            | grep -q 'value: "false"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set-string cube.env.CUBEJS_EXTERNAL_DEFAULT=true \
+            --show-only templates/cube-deployment.yaml > "$render_dir/cube-external.yaml"
+          grep -A1 'name: CUBEJS_EXTERNAL_DEFAULT' "$render_dir/cube-external.yaml" \
+            | grep -q 'value: "true"'
+
+          if helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set cube.replicas=2 \
+            --show-only templates/cube-deployment.yaml > "$render_dir/cube-invalid.yaml" 2>&1; then
+            echo "Expected the in-memory Cube configuration with multiple replicas to fail" >&2
+            exit 1
+          fi
+          grep -q 'CUBEJS_CACHE_AND_QUEUE_DRIVER=memory is only supported when cube.replicas=1' \
+            "$render_dir/cube-invalid.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
             --show-only templates/migration-job.yaml > "$render_dir/default.yaml"
 
           grep -q 'packages/database/dist/scripts/wait-for-database.js' "$render_dir/default.yaml"

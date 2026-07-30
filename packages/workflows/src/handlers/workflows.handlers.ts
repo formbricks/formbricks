@@ -21,10 +21,11 @@ import {
   toProblemResponse,
   validateOutput,
 } from "../errors";
+import { isLiteralEmailRecipient } from "../recipients";
 import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
-import { ZWorkflowExecutableDefinition } from "../types/document";
+import { type TWorkflowExecutableDefinition, ZWorkflowExecutableDefinition } from "../types/document";
 import { redactWorkflowDefinitionPII } from "./audit-redaction";
 import type { TriggerSurveyCheck, WorkflowApiAccess, WorkflowApiContext } from "./context";
 import { parseListWorkflowRunsQuery, parseListWorkflowsQuery } from "./parse-list-query";
@@ -118,6 +119,43 @@ const recordAuditSafely = async (
     ctx.logger.error({ error }, "Failed to record workflow audit detail");
   }
 };
+
+/**
+ * The literal email recipients configured on a definition's `send_email` actions. A `to` that is
+ * itself a valid email is a literal recipient and must be allowlisted (ENG-2029); a `to` that is a
+ * survey element id resolves to the respondent's own address at send time and is always allowed, so
+ * it is excluded here. Deduplicated so the same address is checked once.
+ */
+const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition): string[] => {
+  const emails = new Set<string>();
+  for (const node of definition.nodes) {
+    // `send_email` is the only action type today, so `type === "action"` already narrows to its
+    // config (which carries `to`); revisit this guard if another action type is added.
+    if (node.type === "action") {
+      const { to } = node.config;
+      if (isLiteralEmailRecipient(to)) {
+        emails.add(to);
+      }
+    }
+  }
+  return [...emails];
+};
+
+/** Dotted path the recipient-allowlist failure is reported against, by both `enable` and `testWorkflow`. */
+const DISALLOWED_RECIPIENT_FIELD = "definition.nodes.config.to";
+
+/** Short 422 `detail` for a recipient-allowlist failure, so UI surfacing only `detail` still names the cause. */
+const DISALLOWED_RECIPIENT_DETAIL = "A send_email recipient is not a member of this organization.";
+
+/** Per-recipient explanation, shared so enable's `invalid_params` and test's `problems` never diverge. */
+const disallowedRecipientMessage = (email: string): string =>
+  `Recipient ${email} is not a member of this organization. A send_email action may only address an organization member or a respondent field.`;
+
+const buildDisallowedRecipientParams = (disallowedEmails: string[]): WorkflowInvalidParam[] =>
+  disallowedEmails.map((email) => ({
+    name: DISALLOWED_RECIPIENT_FIELD,
+    reason: disallowedRecipientMessage(email),
+  }));
 
 /** Map a failed trigger-survey check to field-level `invalid_params` on the definition's trigger config. */
 const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidParam[] => {
@@ -391,6 +429,27 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
       }
 
+      // Recipient allowlist: a send_email action addressing a literal email may only target an
+      // organization member — otherwise enabling the workflow would let it forward response data to
+      // an arbitrary external inbox on every completed response (ENG-2029). Respondent-field
+      // recipients resolve at send time and are not checked here.
+      const literalRecipients = collectLiteralRecipientEmails(executable.data);
+      if (literalRecipients.length > 0) {
+        const { disallowedEmails } = await ctx.verifyRecipientsAllowed({
+          workspaceId: loaded.workspaceId,
+          emails: literalRecipients,
+        });
+        if (disallowedEmails.length > 0) {
+          // Pass an explicit `detail`: the editor's error mapper surfaces only `detail` and drops
+          // `invalid_params`, so the default "definition is not executable" would hide the one thing
+          // the author needs to fix. The per-field reasons stay for API/MCP callers.
+          throw new WorkflowNotExecutableError(
+            buildDisallowedRecipientParams(disallowedEmails),
+            DISALLOWED_RECIPIENT_DETAIL
+          );
+        }
+      }
+
       const updated = await service.enableWorkflow(
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
         { definition: executable.data, publishedBy: ctx.userId }
@@ -441,7 +500,8 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
    * effects occur — this is a pure pre-flight check the author can use before enabling. Unlike
    * `enable`, problems are *collected* (not thrown on the first one) so every issue is reported in
    * one pass; an `ok: false` result is still a 200 (the request succeeded; the workflow is just not
-   * ready). Reuses the same executability + survey checks as `enable`.
+   * ready). Reuses the same executability + survey + recipient-allowlist checks as `enable`, so a
+   * dry run that reports no problems is exactly the set of conditions under which enable succeeds.
    */
   async testWorkflow({ ctx, params }) {
     try {
@@ -491,6 +551,24 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
             field: "definition.trigger.config.endingCardIds",
             message: `Ending card ${endingCardId} does not exist on the survey.`,
           });
+        }
+
+        // Recipient allowlist (ENG-2029): the same gate `enable` enforces, collected here as a
+        // problem instead of thrown. The dry run exists to surface exactly this before going live —
+        // without it a workflow addressing an external inbox tests green and then hard-fails enable.
+        const literalRecipients = collectLiteralRecipientEmails(executable.data);
+        if (literalRecipients.length > 0) {
+          const { disallowedEmails } = await ctx.verifyRecipientsAllowed({
+            workspaceId: loaded.workspaceId,
+            emails: literalRecipients,
+          });
+          for (const email of disallowedEmails) {
+            problems.push({
+              code: "recipient_not_allowed",
+              field: DISALLOWED_RECIPIENT_FIELD,
+              message: disallowedRecipientMessage(email),
+            });
+          }
         }
       }
 

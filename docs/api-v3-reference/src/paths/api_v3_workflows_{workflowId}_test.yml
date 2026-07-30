@@ -3,9 +3,10 @@ post:
   summary: Dry-run (validate) a workflow
   description: >
     Validates a workflow without running it or causing any side effect. It checks that the
-    workflow's current definition is executable and that the trigger's referenced survey and ending
-    cards still exist in the workspace. **No** workflow run is created and **no** email or webhook is
-    sent.
+    workflow's current definition is executable, that the trigger's referenced survey and ending
+    cards still exist in the workspace, and that every `send_email` action addressing a *literal*
+    email address targets a member of this organization. **No** workflow run is created and **no**
+    email or webhook is sent.
 
 
     The response is always `200` with `{ data: { workflowId, ok, problems } }`. `data.ok` is `true`
@@ -63,6 +64,19 @@ post:
                     - code: ending_card_not_found
                       field: definition.trigger.config.endingCardIds
                       message: Ending card clending000000000000000000 does not exist on the survey.
+            recipientNotAllowed:
+              summary: A send_email action addresses a non-member literal recipient
+              value:
+                data:
+                  workflowId: clworkflow0000000000000000
+                  ok: false
+                  problems:
+                    - code: recipient_not_allowed
+                      field: definition.nodes.config.to
+                      message: >-
+                        Recipient outsider@external.example is not a member of this organization. A
+                        send_email action may only address an organization member or a respondent
+                        field.
     '401':
       $ref: ../components/responses/V3Unauthorized.yml
     '403':

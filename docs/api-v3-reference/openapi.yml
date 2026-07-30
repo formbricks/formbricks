@@ -118,10 +118,12 @@ paths:
                 - inProgress
                 - paused
                 - completed
+                - archived
           style: form
           explode: true
           description: |
             Survey status filter. Repeat the parameter (`filter[status][in]=draft&filter[status][in]=inProgress`) or use comma-separated values (`filter[status][in]=draft,inProgress`). Invalid values → **400**.
+            `archived` is a pseudo-status: it does not match a real survey status but includes archived (soft-deleted) surveys in the result set. Archived surveys are otherwise excluded from the default list.
         - in: query
           name: filter[type][in]
           schema:
@@ -174,6 +176,7 @@ paths:
                       - limit
                       - nextCursor
                       - totalCount
+                      - hasArchived
                     properties:
                       limit:
                         type: integer
@@ -188,6 +191,11 @@ paths:
                           - 'null'
                         minimum: 0
                         description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
+                      hasArchived:
+                        type:
+                          - boolean
+                          - 'null'
+                        description: '`true` when the workspace has at least one archived (soft-deleted) survey. Computed only on the first page (same gate as `totalCount`); `null` when `includeTotalCount=false`.'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -849,6 +857,7 @@ paths:
                       workspaceId: clseedworkspace000000000
                       createdAt: '2026-05-18T09:24:54.014Z'
                       updatedAt: '2026-05-18T09:24:54.014Z'
+                      archivedAt: null
                       name: CSAT Survey
                       type: link
                       status: inProgress
@@ -888,6 +897,7 @@ paths:
                       workspaceId: clseedworkspace000000000
                       createdAt: '2026-05-18T09:24:54.014Z'
                       updatedAt: '2026-05-18T09:24:54.014Z'
+                      archivedAt: null
                       name: CSAT Survey
                       type: link
                       status: inProgress
@@ -1036,11 +1046,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '422':
-          description: 'Unprocessable Content — the patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).'
+          description: |-
+            Unprocessable Content — the request cannot be processed against stored state. Two cases:
+            1. The target survey is archived (soft-deleted) and therefore read-only; restore it before editing. The `invalid_params` entry reports `name: archivedAt` with the reason `This survey is archived. Restore it before editing.`
+            2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+              examples:
+                archived:
+                  summary: Survey is archived (restore before editing)
+                  value:
+                    type: about:blank
+                    title: Unprocessable Content
+                    status: 422
+                    detail: Survey is archived
+                    code: unprocessable_content
+                    requestId: req_clsv1234567890123456789012
+                    invalid_params:
+                      - name: archivedAt
+                        reason: This survey is archived. Restore it before editing.
+                invalidReference:
+                  summary: Cross-reference validation failed
+                  value:
+                    type: about:blank
+                    title: Unprocessable Content
+                    status: 422
+                    detail: Survey document failed validation
+                    code: unprocessable_content
+                    requestId: req_clsv1234567890123456789012
+                    invalid_params:
+                      - name: blocks[0].logic[0].target
+                        reason: References a block that does not exist in the survey.
+                        code: invalid_reference
+                        identifier: e0tfwzqk63op37y14z95qq3k
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -1074,6 +1114,166 @@ paths:
               schema:
                 type: string
               example: private, no-store
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/surveys/{surveyId}/archive:
+    post:
+      operationId: archiveSurveyV3
+      summary: Archive a survey
+      description: |
+        Archives (soft-deletes) a survey by id. Archived surveys are hidden from the default list, stop collecting responses, and become read-only until restored — a subsequent `PATCH` returns **422**. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. Session cookie or x-api-key.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      responses:
+        '200':
+          description: Survey archived successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                      - status
+                      - archivedAt
+                    properties:
+                      id:
+                        type: string
+                        description: Survey identifier.
+                      status:
+                        type: string
+                        enum:
+                          - draft
+                          - inProgress
+                          - paused
+                          - completed
+                        description: Current survey status.
+                      archivedAt:
+                        type:
+                          - string
+                          - 'null'
+                        format: date-time
+                        description: Soft-delete/archive marker (ISO 8601). A timestamp after archiving; `null` when the survey is active.
+              examples:
+                archived:
+                  summary: Survey archived
+                  value:
+                    data:
+                      id: clsv1234567890123456789012
+                      status: paused
+                      archivedAt: '2026-05-18T09:24:54.014Z'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+  /api/v3/surveys/{surveyId}/restore:
+    post:
+      operationId: restoreSurveyV3
+      summary: Restore a survey
+      description: |
+        Restores a previously archived (soft-deleted) survey by id, clearing its archive marker so it reappears in the default list and becomes editable again. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. Session cookie or x-api-key.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      responses:
+        '200':
+          description: Survey restored successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                      - status
+                      - archivedAt
+                    properties:
+                      id:
+                        type: string
+                        description: Survey identifier.
+                      status:
+                        type: string
+                        enum:
+                          - draft
+                          - inProgress
+                          - paused
+                          - completed
+                        description: Current survey status.
+                      archivedAt:
+                        type:
+                          - string
+                          - 'null'
+                        format: date-time
+                        description: Soft-delete/archive marker (ISO 8601). `null` after restoring; a timestamp while the survey is archived.
+              examples:
+                restored:
+                  summary: Survey restored
+                  value:
+                    data:
+                      id: clsv1234567890123456789012
+                      status: paused
+                      archivedAt: null
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -1629,8 +1829,10 @@ paths:
 
         Enabling validates that the definition is executable — the trigger has exactly one outgoing
         edge (trigger-only drafts cannot be enabled), the graph is acyclic, every node is
-        reachable from the trigger, only Scope 1 node types are present, and the referenced survey
-        and ending cards still exist — and then snapshots an immutable workflow version. Runs
+        reachable from the trigger, only Scope 1 node types are present, the referenced survey
+        and ending cards still exist, and every `send_email` action addressing a *literal* email address
+        targets a member of this organization (an element-id `to` resolves to the respondent's own
+        address and is exempt) — and then snapshots an immutable workflow version. Runs
         reference that snapshot via `workflowVersionId`, so later draft edits never change what an
         enabled workflow executes. Validation failures return **422** with code
         `workflow_not_executable` and structured `invalid_params`; calling enable in a state other
@@ -1759,7 +1961,7 @@ paths:
       operationId: testWorkflowV3
       summary: Dry-run (validate) a workflow
       description: |
-        Validates a workflow without running it or causing any side effect. It checks that the workflow's current definition is executable and that the trigger's referenced survey and ending cards still exist in the workspace. **No** workflow run is created and **no** email or webhook is sent.
+        Validates a workflow without running it or causing any side effect. It checks that the workflow's current definition is executable, that the trigger's referenced survey and ending cards still exist in the workspace, and that every `send_email` action addressing a *literal* email address targets a member of this organization. **No** workflow run is created and **no** email or webhook is sent.
 
         The response is always `200` with `{ data: { workflowId, ok, problems } }`. `data.ok` is `true` when the workflow would execute; otherwise `data.problems` lists every issue found — each with a machine-readable `code` and the offending `field` — so they can be fixed in a single pass.
 
@@ -1811,6 +2013,16 @@ paths:
                         - code: ending_card_not_found
                           field: definition.trigger.config.endingCardIds
                           message: Ending card clending000000000000000000 does not exist on the survey.
+                recipientNotAllowed:
+                  summary: A send_email action addresses a non-member literal recipient
+                  value:
+                    data:
+                      workflowId: clworkflow0000000000000000
+                      ok: false
+                      problems:
+                        - code: recipient_not_allowed
+                          field: definition.nodes.config.to
+                          message: Recipient outsider@external.example is not a member of this organization. A send_email action may only address an organization member or a respondent field.
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
@@ -2028,6 +2240,7 @@ components:
         - publishOn
         - createdAt
         - updatedAt
+        - archivedAt
         - responseCount
         - creator
       properties:
@@ -2057,6 +2270,12 @@ components:
         updatedAt:
           type: string
           format: date-time
+        archivedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
         publishOn:
           type:
             - string
@@ -3874,6 +4093,7 @@ components:
         - workspaceId
         - createdAt
         - updatedAt
+        - archivedAt
         - name
         - type
         - status
@@ -3896,6 +4116,12 @@ components:
         updatedAt:
           type: string
           format: date-time
+        archivedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
         name:
           type: string
         type:
@@ -4500,6 +4726,12 @@ components:
             Recipient: either a literal email address (e.g. a teammate) or the element id of a
             survey question / hidden field whose answer contains the respondent's email address
             (contact-info elements resolve index [2]) — the same semantics as the Follow-ups `to` field.
+
+            A **literal** address must belong to a member of this organization. Enabling a workflow whose
+            literal recipient is not an organization member returns **422** `workflow_not_executable`, the
+            dry run reports a `recipient_not_allowed` problem, and the runner refuses to send to it — so a
+            workflow cannot forward response data to an arbitrary external inbox. An element-id `to`
+            resolves to the respondent's own address and is never allowlist-checked.
         from:
           type: string
           format: email
@@ -4919,7 +5151,8 @@ components:
           example: clworkflow0000000000000000
         ok:
           type: boolean
-          description: True when the definition is executable and every trigger reference resolves.
+          description: |
+            True when the definition is executable, every trigger reference resolves, and every literal `send_email` recipient is an organization member.
         problems:
           type: array
           description: Every problem found, so all issues can be fixed at once. Empty when `ok` is true.
@@ -4936,6 +5169,7 @@ components:
                   - definition_not_executable
                   - survey_not_found
                   - ending_card_not_found
+                  - recipient_not_allowed
                 description: Machine-readable problem category.
               field:
                 type: string

@@ -297,7 +297,7 @@ export const BulkInviteTab = ({
         </div>
 
         {!isAccessControlAllowed && (
-          <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50">
+          <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50" role="status">
             <AlertDescription className="ml-2">
               <p className="text-sm">
                 <strong>{t("common.warning")}: </strong>

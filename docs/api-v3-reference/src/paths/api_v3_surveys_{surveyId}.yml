@@ -93,6 +93,7 @@ get:
                   workspaceId: clseedworkspace000000000
                   createdAt: '2026-05-18T09:24:54.014Z'
                   updatedAt: '2026-05-18T09:24:54.014Z'
+                  archivedAt: null
                   name: CSAT Survey
                   type: link
                   status: inProgress
@@ -132,6 +133,7 @@ get:
                   workspaceId: clseedworkspace000000000
                   createdAt: '2026-05-18T09:24:54.014Z'
                   updatedAt: '2026-05-18T09:24:54.014Z'
+                  archivedAt: null
                   name: CSAT Survey
                   type: link
                   status: inProgress
@@ -320,7 +322,13 @@ patch:
             $ref: ../components/schemas/Problem.yml
     '422':
       description: >-
-        Unprocessable Content — the patched document passed schema validation but failed a
+        Unprocessable Content — the request cannot be processed against stored state. Two cases:
+
+        1. The target survey is archived (soft-deleted) and therefore read-only; restore it before
+        editing. The `invalid_params` entry reports `name: archivedAt` with the reason
+        `This survey is archived. Restore it before editing.`
+
+        2. The patched document passed schema validation but failed a
         cross-reference check that requires stored state to detect: an undeclared locale key used in
         content, a duplicate stable id, an immutable element-id change on a published survey, a
         dangling logic/jump reference, an invalid media URL, a
@@ -333,6 +341,33 @@ patch:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
+          examples:
+            archived:
+              summary: Survey is archived (restore before editing)
+              value:
+                type: about:blank
+                title: Unprocessable Content
+                status: 422
+                detail: Survey is archived
+                code: unprocessable_content
+                requestId: req_clsv1234567890123456789012
+                invalid_params:
+                  - name: archivedAt
+                    reason: This survey is archived. Restore it before editing.
+            invalidReference:
+              summary: Cross-reference validation failed
+              value:
+                type: about:blank
+                title: Unprocessable Content
+                status: 422
+                detail: Survey document failed validation
+                code: unprocessable_content
+                requestId: req_clsv1234567890123456789012
+                invalid_params:
+                  - name: blocks[0].logic[0].target
+                    reason: References a block that does not exist in the survey.
+                    code: invalid_reference
+                    identifier: e0tfwzqk63op37y14z95qq3k
     '429':
       $ref: ../components/responses/V3TooManyRequests.yml
     '500':

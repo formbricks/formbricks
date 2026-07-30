@@ -77,7 +77,7 @@ export const executeRecaptcha = async (
     await loadRecaptchaScript(recaptchaSiteKey);
 
     // Check if grecaptcha is available
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- grecaptcha is a global variable and may not be defined
+
     if (!window.grecaptcha) {
       logger.debug("reCAPTCHA API not available");
       return null;

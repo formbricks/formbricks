@@ -2,9 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { hashSecret } from "@/lib/crypto";
-// eslint-disable-next-line import/first
 import { auth } from "@/modules/auth/lib/auth";
-// eslint-disable-next-line import/first -- must import after the vi.mock above is registered
 import * as auditHandler from "@/modules/ee/audit-logs/lib/handler";
 
 // Capture audit emission without running the real background audit logging (DB writes via setImmediate).

@@ -233,7 +233,7 @@ export function CreateChartView({
                 </div>
               </div>
             ) : (
-              <Alert variant="error" size="small">
+              <Alert variant="error" size="small" role="status">
                 <div>
                   <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
                   {workspace?.organizationId && (

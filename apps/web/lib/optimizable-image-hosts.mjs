@@ -15,6 +15,12 @@
  * It therefore contains only *universal* provider hosts that real features rely on and that are
  * identical on every deployment.
  */
+// Loopback hosts are only ever reachable over plain HTTP (local development); every other
+// allowlisted host is a public provider only ever reachable over HTTPS. Exported so both
+// `next.config.mjs` (remotePatterns protocol) and `lib/image-hosts.ts` (runtime protocol check)
+// agree on which hosts are loopback instead of each keeping their own copy.
+export const LOOPBACK_HOSTS = ["localhost", "127.0.0.1"];
+
 export const OPTIMIZABLE_IMAGE_HOSTS = [
   // OAuth profile avatars
   "avatars.githubusercontent.com",
@@ -23,6 +29,5 @@ export const OPTIMIZABLE_IMAGE_HOSTS = [
   // survey editor's Unsplash background picker
   "images.unsplash.com",
   // local development
-  "localhost",
-  "127.0.0.1",
+  ...LOOPBACK_HOSTS,
 ];

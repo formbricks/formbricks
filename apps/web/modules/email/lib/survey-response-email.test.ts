@@ -105,6 +105,16 @@ describe("buildSurveyResponseEmailHtml", () => {
     mockResolveStorageUrl.mockImplementation((url: string) => `https://cdn.example.com/${url}`);
   });
 
+  const sanitizedBodyOf = (html: string): Promise<string> => {
+    mockParseRecallInfo.mockReturnValue(html);
+    return buildSurveyResponseEmailHtml({
+      body: "irrelevant",
+      survey,
+      response,
+      attachResponseData: false,
+    }).then(() => mockRenderFollowUpEmail.mock.calls[0][0].body as string);
+  };
+
   test("sanitizes the recall-parsed body before rendering (drops disallowed markup)", async () => {
     mockParseRecallInfo.mockReturnValue('<p>Hi Jane</p><script>alert("x")</script><img src=x>');
 
@@ -124,6 +134,67 @@ describe("buildSurveyResponseEmailHtml", () => {
     expect(rendered.body).toBe("<p>Hi Jane</p>");
     expect(rendered.body).not.toContain("<script>");
     expect(rendered.body).not.toContain("<img");
+  });
+
+  // Lists used to be stripped while their items were kept, so "1. Banana / 2. Mango" arrived as
+  // "BananaMango" on a single line.
+  test("keeps ordered list structure and numbering", async () => {
+    const body = await sanitizedBodyOf(
+      '<p class="fb-editor-paragraph">What I eat in a day</p>' +
+        '<ol class="fb-editor-list-ol" start="2">' +
+        '<li value="2" class="fb-editor-listitem"><span>Banana</span></li>' +
+        '<li value="3" class="fb-editor-listitem"><span>Mango</span></li>' +
+        "</ol>"
+    );
+
+    expect(body).toBe(
+      '<p class="fb-editor-paragraph">What I eat in a day</p>' +
+        '<ol class="fb-editor-list-ol" start="2">' +
+        '<li value="2" class="fb-editor-listitem"><span>Banana</span></li>' +
+        '<li value="3" class="fb-editor-listitem"><span>Mango</span></li>' +
+        "</ol>"
+    );
+  });
+
+  test("keeps unordered and nested list structure", async () => {
+    const body = await sanitizedBodyOf("<ul><li>Fruit<ul><li>Banana</li></ul></li><li>Bread</li></ul>");
+
+    expect(body).toBe("<ul><li>Fruit<ul><li>Banana</li></ul></li><li>Bread</li></ul>");
+  });
+
+  test("keeps inline formatting and links inside list items", async () => {
+    const body = await sanitizedBodyOf(
+      "<ul><li><b><strong>bold</strong></b> <i><em>italic</em></i><br />" +
+        '<a href="https://formbricks.com">link</a></li></ul>'
+    );
+
+    expect(body).toBe(
+      "<ul><li><b><strong>bold</strong></b> <i><em>italic</em></i><br />" +
+        '<a href="https://formbricks.com">link</a></li></ul>'
+    );
+  });
+
+  test("keeps http(s) links but drops other schemes, inline styles and event handlers", async () => {
+    const body = await sanitizedBodyOf(
+      '<p style="color:red" onclick="steal()">' +
+        '<a href="https://formbricks.com" target="_blank" rel="noopener">ok</a>' +
+        '<a href="javascript:alert(1)">bad</a>' +
+        "</p>"
+    );
+
+    expect(body).toBe(
+      '<p><a href="https://formbricks.com" target="_blank" rel="noopener">ok</a><a>bad</a></p>'
+    );
+  });
+
+  test("still discards embedded, scripted and layout markup", async () => {
+    const body = await sanitizedBodyOf(
+      "<script>alert(1)</script><style>p{}</style><iframe src=x></iframe>" +
+        '<img src="x" onerror="alert(1)" /><table><tr><td>cell</td></tr></table>'
+    );
+
+    expect(body).not.toMatch(/<(script|style|iframe|img|table|tr|td)\b/);
+    expect(body).not.toContain("onerror");
   });
 
   test("omits response data / variables / hidden fields when attachResponseData is off", async () => {

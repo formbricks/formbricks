@@ -14,10 +14,16 @@ post:
     edge (trigger-only drafts cannot be enabled), the graph is acyclic, every
     node is
 
-    reachable from the trigger, only Scope 1 node types are present, and the
+    reachable from the trigger, only Scope 1 node types are present, the
     referenced survey
 
-    and ending cards still exist — and then snapshots an immutable workflow
+    and ending cards still exist, and every `send_email` action addressing a
+    *literal* email address
+
+    targets a member of this organization (an element-id `to` resolves to the
+    respondent's own
+
+    address and is exempt) — and then snapshots an immutable workflow
     version. Runs
 
     reference that snapshot via `workflowVersionId`, so later draft edits never

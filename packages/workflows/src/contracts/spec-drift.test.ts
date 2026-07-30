@@ -10,6 +10,7 @@ import {
   ZWorkflowRunListItem,
   ZWorkflowRunResource,
   ZWorkflowRunSummary,
+  ZWorkflowTestProblemCode,
   ZWorkflowTestResult,
 } from "./index";
 
@@ -119,6 +120,15 @@ describe("resource shapes", () => {
     expect([...((yamlSchema.required as string[] | undefined) ?? [])].sort()).toEqual(
       schemaKeys(ZWorkflowTestResult)
     );
+  });
+
+  test("WorkflowTestResult problem codes match the shared enum", async () => {
+    const yamlSchema = await loadYaml("components/schemas/WorkflowTestResult.yml");
+    // The problem-code enum is inlined on `problems.items` rather than a named component, so it is
+    // reached by path instead of loaded as its own schema file.
+    const problems = (yamlSchema.properties as Record<string, { items: Record<string, unknown> }>).problems;
+    const code = (problems.items.properties as Record<string, { enum: string[] }>).code;
+    expect(code.enum).toEqual([...ZWorkflowTestProblemCode.options]);
   });
 });
 

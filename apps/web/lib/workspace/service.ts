@@ -130,6 +130,34 @@ export const getWorkspace = reactCache(async (workspaceId: string): Promise<TWor
   }
 });
 
+// Storage prefixes a workspace owns for pre-#8044 file URLs: its own id and, when present, the
+// environment id it was migrated from (old storage was keyed by environment id, mirrored by
+// `legacyEnvironmentId ?? workspaceId`). The management routes pass these to validateClientFileUploads
+// so a replayed legacy response validates without reopening cross-tenant deletion. See ENG-1981.
+export const getWorkspaceLegacyStoragePrefixes = reactCache(
+  async (workspaceId: string): Promise<string[]> => {
+    validateInputs([workspaceId, ZId]);
+
+    try {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { id: true, legacyEnvironmentId: true },
+      });
+
+      if (!workspace) return [];
+
+      return [workspace.id, workspace.legacyEnvironmentId].filter((prefix): prefix is string =>
+        Boolean(prefix)
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 export const getOrganizationWorkspacesCount = reactCache(async (organizationId: string): Promise<number> => {
   validateInputs([organizationId, ZId]);
 

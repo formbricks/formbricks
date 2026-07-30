@@ -28,6 +28,25 @@ import { stripeClient } from "./stripe-client";
 import { CLOUD_PLAN_LEVEL, type TCloudStripePlan, getCloudPlanFromProduct } from "./stripe-plan";
 
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
+// Single-flight lock TTL for the stale read-through Stripe sync: long enough to cover a few Stripe
+// round-trips + the write, short enough that a crashed holder can't block refreshes for long. The
+// lock is released by expiry (no explicit unlock), matching the license-fetch pattern.
+const BILLING_SYNC_LOCK_TTL_MS = 30 * 1000;
+// Hard deadline for the read-through sync, strictly below the lock TTL. This runs on a hot render
+// path, so if Stripe is slow we stop waiting and serve the cached snapshot instead of blocking the
+// request. Because the OrganizationBilling write is idempotent (Stripe is the source of truth;
+// last-write-wins on a single row), a sync that finishes after the deadline — or after the lease
+// expires — can't corrupt data or deadlock, so a lease heartbeat isn't needed.
+const BILLING_SYNC_DEADLINE_MS = 20 * 1000;
+
+/** A promise that rejects after `ms`, with a canceller so the timer never outlives the race. */
+const rejectAfter = (ms: number, message: string): { promise: Promise<never>; cancel: () => void } => {
+  let timer: ReturnType<typeof setTimeout>;
+  const promise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return { promise, cancel: () => clearTimeout(timer) };
+};
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set<string>(["trialing", "active", "past_due", "unpaid", "paused"]);
 
 const ORGANIZATION_BILLING_SELECT = {
@@ -910,6 +929,75 @@ const scheduleSubscriptionPlanChange = async (
   return pendingChange;
 };
 
+/**
+ * Whether a payment method has been collected for the subscription. Checks the subscription
+ * default first, then falls back to the customer-level default so a card saved on the customer
+ * (but not yet attached to the subscription) still counts — this avoids falsely blocking a
+ * legitimately card-backed org on a paid switch.
+ */
+const hasCollectedPaymentMethod = async (
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  customerId: string
+): Promise<boolean> => {
+  if (subscription.default_payment_method != null) {
+    return true;
+  }
+
+  if (!stripeClient) {
+    return false;
+  }
+
+  const customer = await stripeClient.customers.retrieve(customerId);
+  if (customer.deleted) {
+    return false;
+  }
+
+  return customer.invoice_settings?.default_payment_method != null;
+};
+
+/**
+ * Cancels a no-card trial at period end so the org lands on Hobby without ever being converted
+ * into a billable schedule. Releases any stray schedule first (a schedule would otherwise rebuild
+ * the trial into a billable Pro phase), then sets cancel_at_period_end so Stripe cancels the
+ * trialing subscription instead of charging it — no schedule, no card required.
+ */
+const cancelTrialToHobbyAtPeriodEnd = async (
+  organizationId: string,
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
+): Promise<TOrganizationStripePendingChange> => {
+  if (!stripeClient) {
+    throw new Error("Stripe is not configured");
+  }
+
+  if (subscription.schedule) {
+    const scheduleId =
+      typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
+    await stripeClient.subscriptionSchedules.release(scheduleId, {
+      preserve_cancel_date: false,
+    });
+  }
+
+  await stripeClient.subscriptions.update(subscription.id, {
+    cancel_at_period_end: true,
+  });
+
+  const effectiveAt =
+    resolvePendingChangeEffectiveAt(subscription) ??
+    (subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null) ??
+    new Date().toISOString();
+
+  const pendingChange: TOrganizationStripePendingChange = {
+    type: "plan_change",
+    targetPlan: "hobby",
+    targetInterval: "monthly",
+    effectiveAt,
+  };
+
+  await updatePendingPlanChangeSnapshot(organizationId, pendingChange);
+
+  return pendingChange;
+};
+
 export const switchOrganizationToCloudPlan = async (input: {
   organizationId: string;
   customerId: string;
@@ -934,6 +1022,23 @@ export const switchOrganizationToCloudPlan = async (input: {
 
   if (isSameSelection) {
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
+  }
+
+  // A trialing subscription with no payment method must never be converted into a billable
+  // subscription. The scheduled path rebuilds phases without the trial guard, ending the trial and
+  // turning phase 1 into a billable Pro phase; undoing that pending change would then leave the org
+  // on active paid Pro with no card. So special-case it: a downgrade cancels the trial (landing on
+  // Hobby, no card), and any paid switch is rejected and routed through the add-card checkout.
+  if (
+    subscription.status === "trialing" &&
+    !(await hasCollectedPaymentMethod(subscription, input.customerId))
+  ) {
+    if (input.targetPlan === "hobby") {
+      const pendingChange = await cancelTrialToHobbyAtPeriodEnd(input.organizationId, subscription);
+      return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
+    }
+
+    throw new OperationNotAllowedError("payment_method_required");
   }
 
   if (isImmediateUpgrade) {
@@ -1412,6 +1517,10 @@ export const syncOrganizationBillingFromStripe = async (
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const pendingChange = await resolvePendingPlanChange(subscription);
+  // Match the guard in switchOrganizationToCloudPlan / changeBillingPlanAction: a card saved on the
+  // customer (but not yet attached to the subscription) still counts, so the cached flag must not
+  // falsely block a legitimately card-backed org on a paid switch.
+  const hasPaymentMethod = subscription ? await hasCollectedPaymentMethod(subscription, customerId) : false;
 
   const transition = resolveSubscriptionLifecycleTransition(
     existingStripeSnapshot,
@@ -1438,7 +1547,7 @@ export const syncOrganizationBillingFromStripe = async (
       interval: billingInterval,
       subscriptionStatus,
       subscriptionId: subscription?.id ?? null,
-      hasPaymentMethod: subscription?.default_payment_method != null,
+      hasPaymentMethod,
       features: featureLookupKeys,
       pendingChange,
       // Clear the payment-failure banner only when this sync reflects a real settlement:
@@ -1584,9 +1693,31 @@ export const getOrganizationBillingWithReadThroughSync = async (
     return cachedBilling;
   }
 
+  // Single-flight the stale refresh: withCache does NOT dedupe concurrent callers, so without this a
+  // burst of requests for the same org (e.g. the post-login workspace layout render) would each run
+  // the Stripe sync + OrganizationBilling write — a thundering herd and a deadlock surface (ENG-2038).
+  // Only the lock winner refreshes; everyone else (incl. the Redis-unavailable case) serves the
+  // already-cached snapshot, which is at most one stale cycle old — acceptable for billing display.
+  const lockResult = await cache.tryLock(
+    createCacheKey.organization.billingSyncLock(organizationId),
+    "1",
+    BILLING_SYNC_LOCK_TTL_MS
+  );
+  if (!(lockResult.ok && lockResult.data === true)) {
+    return cachedBilling;
+  }
+
   try {
-    const syncedBilling = await syncOrganizationBillingFromStripe(organizationId);
-    return syncedBilling ?? cachedBilling;
+    const syncPromise = syncOrganizationBillingFromStripe(organizationId);
+    // Guard against an unhandled rejection if the sync settles after the deadline already won the race.
+    syncPromise.catch(() => undefined);
+    const deadline = rejectAfter(BILLING_SYNC_DEADLINE_MS, "billing sync exceeded deadline");
+    try {
+      const syncedBilling = await Promise.race([syncPromise, deadline.promise]);
+      return syncedBilling ?? cachedBilling;
+    } finally {
+      deadline.cancel();
+    }
   } catch (error) {
     logger.warn({ error, organizationId }, "Failed to refresh billing snapshot from Stripe");
     return cachedBilling;

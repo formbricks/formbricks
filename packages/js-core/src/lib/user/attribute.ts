@@ -17,7 +17,6 @@ import { type NetworkError, type Result, okVoid } from "@/types/error";
  */
 export const setAttributes = async (
   attributes: Record<string, string | number | Date>
-  // eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
 ): Promise<Result<void, NetworkError>> => {
   // Normalize values: convert Date to ISO string, preserve numbers as numbers
   const normalizedAttributes: Record<string, string | number> = {};

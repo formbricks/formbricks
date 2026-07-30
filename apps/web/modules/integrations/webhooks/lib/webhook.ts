@@ -95,7 +95,7 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.RelatedRecordDoesNotExist
+      error.code === PrismaErrorType.RecordNotFound
     ) {
       throw new ResourceNotFoundError("Webhook", id);
     }

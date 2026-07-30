@@ -5,12 +5,11 @@ import { ZResponseCompletedTriggerConfig, ZWorkflowResponseCompletedTriggerNode 
 export * from "./enum";
 export * from "./response-completed";
 
-const WORKFLOW_TRIGGER_CONFIG_SCHEMAS = {
-  [WORKFLOW_TRIGGERS.RESPONSE_COMPLETED]: ZResponseCompletedTriggerConfig,
-} as const;
+interface TWorkflowTriggerConfigSchemas {
+  [WORKFLOW_TRIGGERS.RESPONSE_COMPLETED]: typeof ZResponseCompletedTriggerConfig;
+}
 
-type TWorkflowTriggerConfigSchema =
-  (typeof WORKFLOW_TRIGGER_CONFIG_SCHEMAS)[keyof typeof WORKFLOW_TRIGGER_CONFIG_SCHEMAS];
+type TWorkflowTriggerConfigSchema = TWorkflowTriggerConfigSchemas[keyof TWorkflowTriggerConfigSchemas];
 export type TWorkflowTriggerConfig = z.infer<TWorkflowTriggerConfigSchema>;
 
 export const ZWorkflowTriggerNode = z.discriminatedUnion("triggerType", [

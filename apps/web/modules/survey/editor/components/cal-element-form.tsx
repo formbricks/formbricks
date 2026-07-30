@@ -44,8 +44,6 @@ export const CalElementForm = ({
     } else {
       updateElement(elementIdx, { calHost: element.calHost ?? "cal.com" });
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCalHostEnabled]);
 
   return (

@@ -458,6 +458,7 @@ services:
       CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}
       CUBEJS_JWT_AUDIENCE: ${CUBEJS_JWT_AUDIENCE:-formbricks-cube}
       CUBEJS_DEFAULT_API_SCOPES: meta,data
+      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
     volumes:
       - ./cube/cube.js:/cube/conf/cube.js:ro

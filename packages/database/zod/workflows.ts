@@ -1,4 +1,3 @@
-import type { Workflow, WorkflowRun, WorkflowRunLog, WorkflowVersion } from "@prisma/client";
 import { z } from "zod";
 import {
   ZWorkflowDefinition,
@@ -12,6 +11,7 @@ import {
   ZWorkflowTriggerRunPayload,
   ZWorkflowTriggerType,
 } from "@formbricks/workflows";
+import type { Workflow, WorkflowRun, WorkflowRunLog, WorkflowVersion } from "../src/prisma";
 
 export const ZWorkflow = z.object({
   id: z.cuid2().describe("The ID of the workflow"),
@@ -56,6 +56,10 @@ export const ZWorkflowRun = z.object({
   ),
   data: ZWorkflowRunData.describe("The workflow run data"),
   error: z.string().nullable().describe("The workflow run error"),
+  dispatchedAt: z.coerce
+    .date()
+    .nullable()
+    .describe("The date and time the workflow run was handed off to the queue"),
   startedAt: z.coerce.date().nullable().describe("The date and time the workflow run started"),
   finishedAt: z.coerce.date().nullable().describe("The date and time the workflow run finished"),
 }) satisfies z.ZodType<WorkflowRun>;

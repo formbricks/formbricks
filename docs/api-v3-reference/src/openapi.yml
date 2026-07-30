@@ -174,6 +174,10 @@ paths:
     $ref: paths/api_v3_surveys_validate.yml
   /api/v3/surveys/{surveyId}:
     $ref: paths/api_v3_surveys_{surveyId}.yml
+  /api/v3/surveys/{surveyId}/archive:
+    $ref: paths/api_v3_surveys_{surveyId}_archive.yml
+  /api/v3/surveys/{surveyId}/restore:
+    $ref: paths/api_v3_surveys_{surveyId}_restore.yml
   /api/v3/workflows:
     $ref: paths/api_v3_workflows.yml
   /api/v3/workflows/runs:

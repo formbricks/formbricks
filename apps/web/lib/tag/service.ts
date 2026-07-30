@@ -1,11 +1,10 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
+import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { TagError } from "../../modules/workspaces/settings/types/tag";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -62,13 +61,11 @@ export const createTag = async (
 
     return ok(tag);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        return err({
-          code: TagError.TAG_NAME_ALREADY_EXISTS,
-          message: "Tag with this name already exists",
-        });
-      }
+    if (isUniqueConstraintError(error)) {
+      return err({
+        code: TagError.TAG_NAME_ALREADY_EXISTS,
+        message: "Tag with this name already exists",
+      });
     }
     return err({
       code: TagError.UNEXPECTED_ERROR,

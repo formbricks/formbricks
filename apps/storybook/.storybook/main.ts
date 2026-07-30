@@ -11,6 +11,7 @@ const __dirname = dirname(__filename);
  * This function is used to resolve the absolute path of a package.
  * It is needed in projects that use Yarn PnP or are set up within a monorepo.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Storybook boilerplate; the return value feeds differently-typed addon/framework fields (migration ENG-1677)
 function getAbsolutePath(value: string): any {
   return dirname(require.resolve(join(value, "package.json")));
 }

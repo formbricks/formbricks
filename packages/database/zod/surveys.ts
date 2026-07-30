@@ -1,7 +1,5 @@
-/* eslint-disable import/no-relative-packages -- Need to import from parent package */
 import { z } from "zod";
 import { ZOverlay } from "../../types/common";
-// eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
 import { ZLogo } from "../../types/styling";
 import { ZSurveyBlocks } from "../../types/surveys/blocks";
 import {
