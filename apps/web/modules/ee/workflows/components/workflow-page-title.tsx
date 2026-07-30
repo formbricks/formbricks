@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PencilIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
 import { type KeyboardEvent, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -54,8 +53,8 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
 
   // Scoped to sub-routes like /runs, where no builder mounts to hydrate the atom. On the edit tab
   // this used to race the builder's own load: whichever landed first won, and the query usually
-  // did — painting the plain-text title, then swapping in the editor (and its pencil) a moment
-  // later. Waiting for the single source keeps the header still and drops a duplicate GET.
+  // did — painting the plain-text title, then swapping in the editable one a moment later.
+  // Waiting for the single source keeps the header still and drops a duplicate GET.
   const { data } = useQuery({
     queryKey: workflowKeys.detail(workflowId),
     queryFn: ({ signal }) => getWorkflow(workflowId, signal),
@@ -100,43 +99,30 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   return (
     <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
       {isEditable ? (
-        // The label wraps the field so the whole box — pencil included — reads and behaves as one
-        // control: the border lives here, and clicking anywhere in it focuses the input.
-        <label
+        <input
+          ref={inputRef}
+          value={workflowName}
+          onChange={(event) => setWorkflowName(event.target.value)}
+          onKeyDown={handleKeyDown}
+          aria-label={t("common.workflow_name")}
+          placeholder={t("common.workflow_name")}
+          // Approximates content sizing where field-sizing is unsupported (Firefox/Safari).
+          size={Math.max(workflowName.length, 12)}
           className={cn(
-            "group -mx-2 -my-1 inline-flex min-w-0 items-center gap-2 rounded-md px-2 py-1",
+            "-mx-2 -my-1 min-w-0 rounded-md bg-transparent px-2 py-1",
+            "text-3xl font-bold text-slate-800 placeholder:text-slate-400",
+            // Sizes to its content where supported; the max keeps long names from pushing the CTA out.
+            "[field-sizing:content] max-w-[28rem]",
             // Dashed hover/focus box, matching the dashboard's editable title
             // (see dashboard-page-header.tsx): slate while hovered, brand while editing.
             "border border-dashed border-transparent transition-colors",
-            "focus-within:border-brand-dark hover:border-slate-300",
+            "hover:border-slate-300 focus:border-brand-dark",
             // Same specificity means source order decides, and Tailwind emits hover last — without
             // this the border drops back to slate when the pointer rests on a focused field.
-            "focus-within:hover:border-brand-dark"
-          )}>
-          <input
-            ref={inputRef}
-            value={workflowName}
-            onChange={(event) => setWorkflowName(event.target.value)}
-            onKeyDown={handleKeyDown}
-            aria-label={t("common.workflow_name")}
-            placeholder={t("common.workflow_name")}
-            // Approximates content sizing where field-sizing is unsupported (Firefox/Safari).
-            size={Math.max(workflowName.length, 12)}
-            className={cn(
-              "min-w-0 border-0 bg-transparent p-0",
-              "text-3xl font-bold text-slate-800 placeholder:text-slate-400",
-              // Sizes to its content where supported; the max keeps long names from pushing the CTA out.
-              "[field-sizing:content] max-w-[26rem]",
-              "focus:ring-0 focus:outline-none"
-            )}
-          />
-          {/* Standing (not hover-only) affordance that the name is editable. Kept small and muted
-              so it stays quieter than the status badge sitting right next to it. */}
-          <PencilIcon
-            aria-hidden="true"
-            className="size-4 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600"
-          />
-        </label>
+            "focus:hover:border-brand-dark",
+            "focus:ring-0 focus:outline-none"
+          )}
+        />
       ) : (
         <span className="min-w-0">{resolved.name}</span>
       )}
