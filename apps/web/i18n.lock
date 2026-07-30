@@ -4015,7 +4015,7 @@ checksums:
     workspace/workflows/archive_workflow_description: 06e437998a762e504d7d0101b0c53565
     workspace/workflows/auto_layout: 553d4f054655684130a8b5bc8f800bf0
     workspace/workflows/autosave_failed: 5d9b22b31b83828d5eeaeae87d2b6d14
-    workspace/workflows/autosave_failed_tooltip: f1f1084a63217d030a40b967fcdf9838
+    workspace/workflows/autosave_failed_tooltip: f4cb6255fd863b741275a7ff6d2701c6
     workspace/workflows/autosave_failed_tooltip_rejected: 5f90aa698c936629a7b959520dc9358e
     workspace/workflows/autosave_on: 1524d466830b00c5d727c701db404963
     workspace/workflows/changes_saved: 17b24e05aa888579a43a22d411f83b60

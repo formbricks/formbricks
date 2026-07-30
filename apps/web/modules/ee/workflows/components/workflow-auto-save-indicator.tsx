@@ -54,11 +54,11 @@ export const WorkflowAutoSaveIndicator = () => {
     label = t("workspace.workflows.changes_saved");
   }
 
-  // A rejected draft has a reason worth quoting. An unreachable one has nothing to quote, so the
-  // generic copy names what actually re-attempts the save — the next edit. Deliberately not "we'll
-  // retry when you're back online": that only holds for a genuine disconnect, and the same
-  // "unreachable" bucket also catches 5xx, DNS and the mutation timeout, where no `online` event is
-  // ever coming and the promise would sit there unfulfilled (raised in review of ENG-1970).
+  // A rejected draft has a reason worth quoting; an unreachable one has nothing to quote. The
+  // generic copy is deliberately not "we'll retry when you're back online": that only holds for a
+  // genuine disconnect, and the same "unreachable" bucket also catches 5xx, DNS and the mutation
+  // timeout, where no `online` event is ever coming and the promise would sit there unfulfilled
+  // (raised in review of ENG-1970).
 
   const tooltipContent = saveError?.detail
     ? t("workspace.workflows.autosave_failed_tooltip_rejected", { detail: saveError.detail })

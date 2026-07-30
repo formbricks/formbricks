@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Archiveren verbergt de workflow uit de lijst. Je kunt deze later herstellen.",
       "auto_layout": "Automatische indeling",
       "autosave_failed": "Opslaan mislukt",
-      "autosave_failed_tooltip": "Je laatste wijzigingen konden niet worden opgeslagen. Controleer je verbinding — je volgende bewerking probeert het opnieuw. Houd dit tabblad open zodat niets verloren gaat.",
+      "autosave_failed_tooltip": "Je laatste wijzigingen konden niet worden opgeslagen. Controleer je verbinding en probeer het opnieuw.",
       "autosave_failed_tooltip_rejected": "Je laatste wijzigingen konden niet worden opgeslagen: {detail}",
       "autosave_on": "Automatisch opslaan aan",
       "changes_saved": "Wijzigingen opgeslagen",

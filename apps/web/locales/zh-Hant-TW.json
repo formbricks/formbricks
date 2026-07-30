@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "封存會將工作流程從列表中隱藏,你之後可以還原它。",
       "auto_layout": "自動排版",
       "autosave_failed": "儲存失敗",
-      "autosave_failed_tooltip": "無法儲存你的最新變更。請檢查你的網路連線，下次編輯時會再次嘗試儲存。請保持此分頁開啟，以免遺失任何內容。",
+      "autosave_failed_tooltip": "無法儲存你的最新變更。請檢查你的連線並再試一次。",
       "autosave_failed_tooltip_rejected": "無法儲存你的最新變更：{detail}",
       "autosave_on": "自動儲存已開啟",
       "changes_saved": "變更已儲存",

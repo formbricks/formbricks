@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Arşivleme, iş akışını listeden gizler. Daha sonra geri yükleyebilirsiniz.",
       "auto_layout": "Otomatik düzen",
       "autosave_failed": "Kaydetme başarısız oldu",
-      "autosave_failed_tooltip": "Son değişiklikleriniz kaydedilemedi. Bağlantını kontrol et — bir sonraki düzenleme tekrar deneyecek. Hiçbir şey kaybolmaması için bu sekmeyi açık tut.",
+      "autosave_failed_tooltip": "Son değişiklikleriniz kaydedilemedi. Bağlantınızı kontrol edin ve tekrar deneyin.",
       "autosave_failed_tooltip_rejected": "Son değişiklikleriniz kaydedilemedi: {detail}",
       "autosave_on": "Otomatik kaydetme açık",
       "changes_saved": "Değişiklikler kaydedildi",

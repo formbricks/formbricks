@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Archivar oculta el flujo de trabajo de la lista. Puedes restaurarlo más tarde.",
       "auto_layout": "Diseño automático",
       "autosave_failed": "Error al guardar",
-      "autosave_failed_tooltip": "No se pudieron guardar tus últimos cambios. Revisa tu conexión — tu próxima edición lo intentará de nuevo. Mantén esta pestaña abierta para que no se pierda nada.",
+      "autosave_failed_tooltip": "No se pudieron guardar tus últimos cambios. Comprueba tu conexión e inténtalo de nuevo.",
       "autosave_failed_tooltip_rejected": "No se pudieron guardar tus últimos cambios: {detail}",
       "autosave_on": "Autoguardado activado",
       "changes_saved": "Cambios guardados",

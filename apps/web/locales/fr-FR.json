@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "L'archivage masque le workflow de la liste. Tu pourras le restaurer plus tard.",
       "auto_layout": "Disposition automatique",
       "autosave_failed": "Échec de l'enregistrement",
-      "autosave_failed_tooltip": "Tes dernières modifications n'ont pas pu être enregistrées. Vérifie ta connexion — ta prochaine modification réessaiera. Garde cet onglet ouvert pour ne rien perdre.",
+      "autosave_failed_tooltip": "Tes dernières modifications n'ont pas pu être enregistrées. Vérifie ta connexion et réessaie.",
       "autosave_failed_tooltip_rejected": "Tes dernières modifications n'ont pas pu être enregistrées : {detail}",
       "autosave_on": "Sauvegarde auto activée",
       "changes_saved": "Modifications enregistrées",

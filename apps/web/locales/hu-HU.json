@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Az archiválás elrejti a munkafolyamatot a listából. Később visszaállíthatja.",
       "auto_layout": "Automatikus elrendezés",
       "autosave_failed": "A mentés sikertelen volt",
-      "autosave_failed_tooltip": "A legutóbbi módosításait nem sikerült menteni. Ellenőrizze a kapcsolatát — a következő szerkesztésnél újra megpróbáljuk. Tartsa nyitva ezt a lapot, hogy semmi ne vesszen el.",
+      "autosave_failed_tooltip": "A legutóbbi módosításait nem sikerült elmenteni. Kérem, ellenőrizze a kapcsolatot, és próbálja újra.",
       "autosave_failed_tooltip_rejected": "A legutóbbi módosításokat nem sikerült menteni: {detail}",
       "autosave_on": "Automatikus mentés bekapcsolva",
       "changes_saved": "Módosítások mentve",

@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Arquivar oculta o fluxo de trabalho da lista. Podes restaurá-lo mais tarde.",
       "auto_layout": "Disposição automática",
       "autosave_failed": "Falha ao guardar",
-      "autosave_failed_tooltip": "Não foi possível guardar as tuas últimas alterações. Verifica a tua ligação — a próxima edição tentará novamente. Mantém este separador aberto para não perderes nada.",
+      "autosave_failed_tooltip": "Não foi possível guardar as tuas últimas alterações. Verifica a tua ligação e tenta novamente.",
       "autosave_failed_tooltip_rejected": "Não foi possível guardar as tuas últimas alterações: {detail}",
       "autosave_on": "Gravação automática ativa",
       "changes_saved": "Alterações guardadas",

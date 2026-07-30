@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "アーカイブすると、ワークフローがリストに表示されなくなります。後で復元できます。",
       "auto_layout": "自動レイアウト",
       "autosave_failed": "保存に失敗しました",
-      "autosave_failed_tooltip": "最新の変更を保存できませんでした。接続を確認してください。次回の編集時に再試行されます。データが失われないよう、このタブを開いたままにしてください。",
+      "autosave_failed_tooltip": "最新の変更を保存できませんでした。接続を確認して、もう一度お試しください。",
       "autosave_failed_tooltip_rejected": "最新の変更を保存できませんでした: {detail}",
       "autosave_on": "自動保存オン",
       "changes_saved": "変更を保存しました",
