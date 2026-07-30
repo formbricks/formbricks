@@ -9,6 +9,7 @@ import type { TWorkflowResource } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   hasWorkflowSaveFailedAtom,
+  hydrateWorkflowEditorAtom,
   isWorkflowDirtyAtom,
   setWorkflowNameAtom,
   workflowNameAtom,
@@ -43,6 +44,9 @@ const disableWorkflow = vi.fn();
 const archiveWorkflow = vi.fn();
 const unarchiveWorkflow = vi.fn();
 vi.mock("@/modules/ee/workflows/lib/api-client", () => ({
+  // Real value, not a stub: the deferred-flush hard stop is derived from it, and an undefined here
+  // would make that setTimeout fire immediately and cancel the wait under test.
+  MUTATION_TIMEOUT_MS: 15_000,
   getWorkflow: (...args: unknown[]) => getWorkflow(...args),
   updateWorkflow: (...args: unknown[]) => updateWorkflow(...args),
   enableWorkflow: (...args: unknown[]) => enableWorkflow(...args),
@@ -492,6 +496,54 @@ describe("autosave", () => {
     });
 
     await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2));
+  });
+
+  // Pins the guarantee, not one mechanism: today the deferred flush self-terminates because
+  // hydrating another workflow clears isSaving and yields a clean draft. If that ever stops being
+  // true, a flush armed for one workflow could PATCH another — this test is the fence.
+  test("never lets a deferred flush PATCH a workflow it was not armed for", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    let releaseFirstSave: () => void = () => undefined;
+    updateWorkflow
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseFirstSave = () => resolve(apiWorkflow);
+          })
+      )
+      .mockResolvedValue(apiWorkflow);
+
+    const store = createStore();
+    const { result, unmount } = renderBuilder({ workflowId: "wf-api", isReadOnly: false }, store);
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "In flight");
+    });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Typed during the save");
+    });
+    unmount();
+
+    // The layout (and this store) outlive the editor page, so a different workflow can land here
+    // before the pending write settles.
+    act(() => {
+      store.set(hydrateWorkflowEditorAtom, {
+        workflow: { ...apiWorkflow, id: "wf-other", name: "Another workflow" },
+        flowNodes: [],
+      });
+      store.set(setWorkflowNameAtom, "Edited on the other workflow");
+    });
+
+    await act(async () => {
+      releaseFirstSave();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+    expect(updateWorkflow).not.toHaveBeenCalledWith("wf-other", expect.anything());
   });
 
   test("keeps an unsaved draft when the same workflow re-mounts", async () => {

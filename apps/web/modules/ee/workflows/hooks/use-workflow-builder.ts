@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { type TPatchWorkflowInput, ZWorkflowDefinition } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
+  MUTATION_TIMEOUT_MS,
   archiveWorkflow,
   disableWorkflow,
   enableWorkflow,
@@ -306,7 +307,13 @@ export const useWorkflowBuilder = ({
       // re-arm the debounce, so firing now would drop those edits silently, even fully online.
       // Wait for the write to settle instead, then send what is still unsaved. Subscribing to the
       // store rather than the promise keeps save() untouched, and the store belongs to the
-      // surrounding layout so it outlives this page; the mutation timeout bounds the wait.
+      // surrounding layout so it outlives this page.
+      //
+      // This store survives navigating between workflows, but the wait cannot leak across one: the
+      // first write that clears isSaving/isTransitioning unsubscribes, and hydrating another
+      // workflow is itself such a write (hydrate rebuilds from initialWorkflowEditorState, so
+      // isSaving resets to false and the fresh draft reads clean). Hence no workflow-id guard here
+      // — it would be unreachable.
       const unsubscribe = store.sub(workflowEditorAtom, () => {
         const current = store.get(workflowEditorAtom);
         if (current.isSaving || current.isTransitioning) return;
@@ -315,6 +322,10 @@ export const useWorkflowBuilder = ({
         if (!store.get(isWorkflowDirtyAtom)) return;
         void save({ silent: true });
       });
+      // The mutation timeout bounds the request, not this listener: a write that somehow never
+      // settles would otherwise pin the subscription — and the unmounted page it closes over — for
+      // the rest of the session. Give up a little after the request itself would have.
+      setTimeout(unsubscribe, MUTATION_TIMEOUT_MS + WORKFLOW_AUTOSAVE_DELAY_MS);
     };
   });
   useEffect(() => () => flushOnUnmountRef.current(), []);
