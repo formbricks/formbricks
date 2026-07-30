@@ -58,8 +58,6 @@
       "create_an_account": "建立帳戶",
       "enter_your_backup_code": "輸入您的備份碼",
       "enter_your_two_factor_authentication_code": "輸入您的雙重驗證碼",
-      "existing_account_invite_description": "請使用註冊時所用的方式登入以接受邀請。您不會收到驗證電子郵件。",
-      "existing_account_invite_title": "您已有帳戶",
       "forgot_your_password": "忘記密碼？",
       "login_to_your_account": "登入您的帳戶",
       "login_with_email": "使用電子郵件登入",

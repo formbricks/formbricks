@@ -4,12 +4,13 @@ import { test } from "./lib/fixtures";
 
 /**
  * ENG-2091: an invitee who already has a Formbricks account used to be sent to "please confirm your
- * email address" for a verification email that is never sent (Better Auth answers a duplicate address
- * with a synthetic 200 and skips the send), in front of a resend button that no-ops for an
- * already-verified address — and their invite was consumed on the way, so logging in afterwards
+ * email address" for a verification email that is never sent, in front of a resend button that no-ops
+ * for an already-verified address — and their invite was consumed on the way, so logging in afterwards
  * showed "Invite Not Found".
  *
- * They should land on the login page instead, with the invite still pending.
+ * The invite must now survive and the screen must offer a way out. Deliberately the same screen a new
+ * address gets: routing this case elsewhere would make the response an account-existence lookup
+ * (ENG-2099).
  */
 test.describe("Invite sign-up with an address that already has an account @slow", async () => {
   test("routes to login with the invite intact", async ({ page, users, browser }) => {
@@ -56,9 +57,14 @@ test.describe("Invite sign-up with an address that already has an account @slow"
       await inviteePage.fill('input[name="password"]', "SomeOtherPassword1!");
       await inviteePage.press('input[name="password"]', "Enter");
 
-      // Sent to log in — not to a verification screen for an email that never arrives.
-      await inviteePage.waitForURL(/\/auth\/login\?.*notice=existing_account_invite/);
-      await expect(inviteePage.getByText("You already have an account")).toBeVisible();
+      // Lands on the verification-requested screen — the SAME screen a brand-new address gets, so the
+      // response can't be used to tell whether the account exists (ENG-2099). The copy is conditional
+      // ("if there is an account associated with …") and the log-in link below it is this visitor's way
+      // out, carrying the invite callback so logging in returns them to the invite.
+      await inviteePage.waitForURL(/\/auth\/(verification-requested|signup-without-verification-success)/);
+      const loginLink = inviteePage.getByRole("link", { name: "Log in" });
+      await expect(loginLink).toBeVisible();
+      await expect(loginLink).toHaveAttribute("href", /callbackUrl=.*invite/);
     } finally {
       await inviteeContext.close();
     }

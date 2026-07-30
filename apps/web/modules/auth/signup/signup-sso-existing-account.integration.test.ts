@@ -76,7 +76,7 @@ beforeEach(async () => {
 });
 
 describe("invite sign-up when the existing account is SSO-only (real Postgres)", () => {
-  test("is detected as already-existing and routed to login, not to a verification email", async () => {
+  test("is detected as already-existing, and nothing is written to the SSO account", async () => {
     const ssoUser = await seedSsoUser();
     const { inviteToken, organizationId } = await seedInviteFor(SSO_EMAIL);
     // No credential account for this user — the precondition that distinguishes this from the
@@ -91,8 +91,8 @@ describe("invite sign-up when the existing account is SSO-only (real Postgres)",
       inviteToken,
     });
 
-    // Same outcome as the credential case: told to log in, which is where the SSO buttons live.
-    expect(result?.data).toEqual({ success: true, nextStep: "login_to_accept_invite" });
+    // Same indistinguishable response as the credential case (ENG-2099).
+    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
     // Critically: no credential account may be created for an SSO-only user by an unauthenticated

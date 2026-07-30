@@ -58,8 +58,6 @@
       "create_an_account": "Skapa ett konto",
       "enter_your_backup_code": "Ange din reservkod",
       "enter_your_two_factor_authentication_code": "Ange din tvåfaktorsautentiseringskod",
-      "existing_account_invite_description": "Logga in med samma metod som du registrerade dig med för att acceptera inbjudan. Du kommer inte att få något verifieringsmeddelande.",
-      "existing_account_invite_title": "Du har redan ett konto",
       "forgot_your_password": "Glömt ditt lösenord?",
       "login_to_your_account": "Logga in på ditt konto",
       "login_with_email": "Logga in med e-post",

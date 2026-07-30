@@ -58,8 +58,6 @@
       "create_an_account": "Hesap oluştur",
       "enter_your_backup_code": "Yedek kodunuzu girin",
       "enter_your_two_factor_authentication_code": "İki faktörlü doğrulama kodunuzu girin",
-      "existing_account_invite_description": "Daveti kabul etmek için kaydolurken kullandığınız yöntemle giriş yapın. Doğrulama email'i almayacaksınız.",
-      "existing_account_invite_title": "Zaten bir hesabınız var",
       "forgot_your_password": "Şifrenizi mi unuttunuz?",
       "login_to_your_account": "Hesabınıza giriş yapın",
       "login_with_email": "Email ile giriş yap",

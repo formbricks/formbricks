@@ -58,8 +58,6 @@
       "create_an_account": "Créer un compte",
       "enter_your_backup_code": "Entrez votre code de sauvegarde",
       "enter_your_two_factor_authentication_code": "Entrez votre code d'authentification à deux facteurs.",
-      "existing_account_invite_description": "Connectez-vous avec la méthode utilisée lors de votre inscription pour accepter l'invitation. Vous ne recevrez pas d'email de vérification.",
-      "existing_account_invite_title": "Vous avez déjà un compte",
       "forgot_your_password": "Mot de passe oublié ?",
       "login_to_your_account": "Connectez-vous à votre compte",
       "login_with_email": "Se connecter avec un e-mail",

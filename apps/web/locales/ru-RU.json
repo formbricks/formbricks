@@ -58,8 +58,6 @@
       "create_an_account": "Создать аккаунт",
       "enter_your_backup_code": "Введите резервный код",
       "enter_your_two_factor_authentication_code": "Введите код двухфакторной аутентификации",
-      "existing_account_invite_description": "Войдите тем же способом, которым регистрировались, чтобы принять приглашение. Письмо с подтверждением не будет отправлено.",
-      "existing_account_invite_title": "У вас уже есть аккаунт",
       "forgot_your_password": "Забыли пароль?",
       "login_to_your_account": "Войдите в свой аккаунт",
       "login_with_email": "Войти по email",

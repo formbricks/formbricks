@@ -26,6 +26,13 @@ export const VerificationRequestedPage = async ({
   // Set by the sign-up form when the account was created but the mailer failed (ENG-2091). Compared
   // against a literal, never echoed.
   const sendFailed = params[VERIFICATION_SEND_FAILED_PARAM] === "1";
+  // Carry the callback (for an invite sign-up, `/invite?token=…`) into the log-in link below, so a
+  // visitor who already has an account can log in and land straight back on the invite. Present for
+  // every invited visitor, not just those with an account — the link must not vary with that
+  // (ENG-2099), which is why it isn't conditional on anything.
+  const loginHref = resolvedCallbackUrl
+    ? `/auth/login?callbackUrl=${encodeURIComponent(resolvedCallbackUrl)}`
+    : "/auth/login";
   try {
     const email = getEmailFromEmailToken(token);
     const parsedEmail = ZUserEmail.safeParse(email);
@@ -54,15 +61,16 @@ export const VerificationRequestedPage = async ({
               <RequestVerificationEmail email={email.toLowerCase()} callbackUrl={resolvedCallbackUrl} />
             </div>
             {/*
-              A sign-up with an address that already has an account lands here too — the response is
-              deliberately identical for existing and new addresses so it can't be used to enumerate
-              accounts. For that visitor there is no email coming and the resend button above no-ops
-              (it returns early for an already-verified address), so this generic line is their way
-              out. It reveals nothing: every visitor to this page sees it. (ENG-2091)
+              Every visitor sees this, including one whose address already has an account — for them no
+              email is coming and the resend button above no-ops, so this link is the way out. It is
+              deliberately unconditional: making it depend on whether the account exists would turn this
+              page into an account-existence lookup (ENG-2099). The message above is already phrased
+              conditionally ("if there is an account associated with …"), so neither case is told
+              anything untrue.
             */}
             <p className="mt-4 text-center text-xs text-slate-500">
               {t("auth.signup.have_an_account")}{" "}
-              <Link href="/auth/login" className="font-semibold text-slate-600 underline">
+              <Link href={loginHref} className="font-semibold text-slate-600 underline">
                 {t("auth.signup.log_in")}
               </Link>
             </p>

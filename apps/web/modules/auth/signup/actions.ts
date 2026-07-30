@@ -33,12 +33,7 @@ import {
   didVerificationSendFail,
   runWithVerificationSendOutcome,
 } from "@/modules/auth/lib/verification-send-outcome";
-import {
-  type InviteMatch,
-  deleteInvite,
-  getInvite,
-  resolveInviteMatch,
-} from "@/modules/auth/signup/lib/invite";
+import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -304,31 +299,30 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
 }
 
 /** Where the sign-up form should send the user next. */
-type TSignUpNextStep = "verify_email" | "login_to_accept_invite" | "verification_send_failed";
+type TSignUpNextStep = "verify_email" | "verification_send_failed";
 
 /**
- * Decide the next screen. Kept as a pure function so the disclosure rules are readable in one place
- * and unit-testable without driving the whole action (ENG-2091).
+ * Decide the next screen.
+ *
+ * Deliberately does NOT branch on whether the address already had an account (ENG-2099): an earlier
+ * version of this fix sent that case to the login page, which made the response a lookup — invite an
+ * address, run the invite sign-up, and read which screen came back told you whether it was registered.
+ * Both cases now land on the verification-requested screen, whose copy is already conditional ("if
+ * there is an account associated with …") and which carries a generic "have an account? log in" link
+ * with the invite callback attached. So the existing-account visitor still has a way out of the dead
+ * end this ticket started from, without the response distinguishing them from a new one.
+ *
+ * `verification_send_failed` only ever follows a real creation, and is reached only when the mailer
+ * actually failed — it says nothing about the address.
  */
 const resolveNextStep = ({
   outcome,
-  inviteMatch,
   verificationSendFailed,
 }: {
   outcome: TSignUpOutcome;
-  inviteMatch: InviteMatch;
   verificationSendFailed: boolean;
 }): TSignUpNextStep => {
-  if (outcome.status === "already_existed") {
-    // Disclose only to a caller holding a valid invite for this exact address.
-    //
-    // Keyed on `inviteMatch`, not on "was a token supplied" — even though the gate in
-    // `createUserAction` already rejects a supplied-but-invalid token, so the two are equivalent
-    // today. Deriving it from the token alone would make this disclosure depend on a guard living
-    // elsewhere in the function: reorder or relax that guard and this would start confirming account
-    // existence to anyone who supplies any token. The redundancy is the point.
-    return inviteMatch === "valid" ? "login_to_accept_invite" : "verify_email";
-  }
+  if (outcome.status === "already_existed") return "verify_email";
   return verificationSendFailed ? "verification_send_failed" : "verify_email";
 };
 
@@ -452,23 +446,9 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
 
     return {
       success: true,
-      // Where the form should send the user. Decided server-side so the disclosure rule lives with the
-      // data rather than in the client.
-      //
-      // "login_to_accept_invite" is only ever returned when the address already has an account AND the
-      // caller presented a VALID invite for that exact address — a signed JWT naming it, delivered to
-      // it. Telling that caller the account exists reveals nothing they don't already hold, and it is
-      // the only way out of the dead end they were previously left in: routed to "check your inbox" for
-      // an email that is never sent, in front of a resend button that no-ops for a verified address.
-      //
-      // Every other case gets "verify_email", identical for new and existing addresses, so a plain
-      // sign-up stays enumeration-safe. That screen's copy carries a generic "already have an account?
-      // log in" line instead (ENG-2091).
-      //
-      // "verification_send_failed" only ever follows a real creation, so it leaks nothing: the account
-      // exists and we know the email did not go out. Pointing the user at resend beats telling them to
-      // watch an inbox nothing was sent to.
-      nextStep: resolveNextStep({ outcome, inviteMatch, verificationSendFailed }),
+      // Where the form should send the user. Decided server-side so the rule lives with the data.
+      // Never varies with whether the address already had an account — see resolveNextStep.
+      nextStep: resolveNextStep({ outcome, verificationSendFailed }),
     };
   })
 );

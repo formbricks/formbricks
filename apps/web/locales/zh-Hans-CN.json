@@ -58,8 +58,6 @@
       "create_an_account": "创建一个帐户",
       "enter_your_backup_code": "输入 你的 备用代码",
       "enter_your_two_factor_authentication_code": "输入 你的 双因素 认证 代码",
-      "existing_account_invite_description": "请使用注册时所用的方式登录以接受邀请。您不会收到验证邮件。",
-      "existing_account_invite_title": "您已有账户",
       "forgot_your_password": "忘记你的密码？",
       "login_to_your_account": "登录您的账户",
       "login_with_email": "使用邮箱登录",

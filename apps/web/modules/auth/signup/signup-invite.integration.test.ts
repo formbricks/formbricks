@@ -120,9 +120,11 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       inviteToken,
     });
 
-    // The caller holds a valid invite for this exact address, so it is safe to tell them the account
-    // exists and send them to log in — rather than to a verification email that never arrives.
-    expect(result?.data).toEqual({ success: true, nextStep: "login_to_accept_invite" });
+    // ENG-2099: the response must be indistinguishable from a brand-new address — an earlier version
+    // routed this case to login, which turned the invite flow into an account-existence lookup. The
+    // verification-requested screen it lands on says "if there is an account associated with …" and
+    // carries an unconditional log-in link, so this visitor still has a way out.
+    expect(result?.data).toEqual({ success: true, nextStep: "verify_email" });
     // No verification email is sent, because no account was created.
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
@@ -141,6 +143,35 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     expect(after?.locale).toBe("de-DE");
     // The existing credential is untouched (no password overwrite).
     expect(after?.password).toBe("not-a-real-hash-fixture");
+  });
+
+  // ENG-2099: the invite sign-up response must not be usable as an account-existence lookup. This is
+  // the invariant, asserted directly rather than inferred from the two tests above — anyone who can
+  // send an invite can run this comparison, so a future change that reintroduces a differential (a
+  // different nextStep, status, or error) has to fail here.
+  test("returns a byte-identical response whether or not the address already has an account", async () => {
+    const { inviteToken: tokenForNew } = await seedInvite();
+    const brandNew = await createUserAction({
+      name: "Invitee",
+      email: INVITED_EMAIL,
+      password: PASSWORD,
+      inviteToken: tokenForNew,
+    });
+
+    await resetDb();
+    const { inviteToken: tokenForExisting } = await seedInvite();
+    await prisma.user.create({
+      data: { name: "Invitee", email: INVITED_EMAIL, password: "not-a-real-hash-fixture" },
+    });
+    const existing = await createUserAction({
+      name: "Invitee",
+      email: INVITED_EMAIL,
+      password: PASSWORD,
+      inviteToken: tokenForExisting,
+    });
+
+    expect(existing?.data).toEqual(brandNew?.data);
+    expect(existing?.serverError).toEqual(brandNew?.serverError);
   });
 
   // ENG-2071: an invite binds one address to one role in one organization. Before this, only the

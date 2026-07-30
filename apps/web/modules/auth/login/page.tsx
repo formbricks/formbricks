@@ -18,7 +18,6 @@ import {
   getSearchParamString,
   resolveAuthCallbackUrl,
 } from "@/modules/auth/lib/callback-url";
-import { parseAuthNotice } from "@/modules/auth/lib/notices";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
@@ -43,8 +42,6 @@ export const LoginPage = async ({
     searchParamsProps,
   ]);
   const oauthError = getSearchParamString(searchParams.error);
-  // Narrowed to a known value here — never echoed — see modules/auth/lib/notices.ts.
-  const notice = parseAuthNotice(getSearchParamString(searchParams.notice));
 
   const resolvedCallbackUrl =
     resolveAuthCallbackUrl({
@@ -71,7 +68,6 @@ export const LoginPage = async ({
           isSsoEnabled={isSsoEnabled}
           samlSsoEnabled={samlSsoEnabled}
           oauthError={oauthError}
-          notice={notice}
           prefilledEmail={getSearchParamString(searchParams.email)}
           inviteToken={inviteToken}
           resolvedCallbackPath={resolvedCallbackPath}

@@ -46,8 +46,6 @@ checksums:
     auth/login/create_an_account: bc53a57281d2701563f94f3169518028
     auth/login/enter_your_backup_code: f2a6905ea0e8d2b4093b5773d72df88b
     auth/login/enter_your_two_factor_authentication_code: 07a020191cd54ee4a0aa1aa4ddc166bf
-    auth/login/existing_account_invite_description: 0d71000a921b4774d1bb1111f739dc7e
-    auth/login/existing_account_invite_title: a33f023c3fec003e3a8288e0c2d2ed38
     auth/login/forgot_your_password: 0baf970b4598f1af36623b714410dfae
     auth/login/login_to_your_account: 88f0beb509622ce2f3a22128a9ec9ba5
     auth/login/login_with_email: 8596217b9cec74845ebfe02d6d82e67a

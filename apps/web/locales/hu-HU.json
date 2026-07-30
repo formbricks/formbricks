@@ -58,8 +58,6 @@
       "create_an_account": "Fiók létrehozása",
       "enter_your_backup_code": "Visszaszerzési kód megadása",
       "enter_your_two_factor_authentication_code": "Kétfaktoros hitelesítési kód megadása",
-      "existing_account_invite_description": "Jelentkezzen be azzal a módszerrel, amellyel regisztrált, a meghívó elfogadásához. Nem fog ellenőrző e-mailt kapni.",
-      "existing_account_invite_title": "Már van fiókja",
       "forgot_your_password": "Elfelejtette a jelszavát?",
       "login_to_your_account": "Jelentkezzen be a fiókjába",
       "login_with_email": "Bejelentkezés e-mail-címmel",

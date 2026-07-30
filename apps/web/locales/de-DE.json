@@ -58,8 +58,6 @@
       "create_an_account": "Konto erstellen",
       "enter_your_backup_code": "Gib deinen Backup-Code ein",
       "enter_your_two_factor_authentication_code": "Gib deinen Zwei-Faktor-Authentifizierungscode ein",
-      "existing_account_invite_description": "Melde dich mit der Methode an, mit der du dich registriert hast, um die Einladung anzunehmen. Du erhältst keine Bestätigungs-E-Mail.",
-      "existing_account_invite_title": "Du hast bereits ein Konto",
       "forgot_your_password": "Passwort vergessen?",
       "login_to_your_account": "Melde dich bei deinem Konto an",
       "login_with_email": "Mit E-Mail anmelden",

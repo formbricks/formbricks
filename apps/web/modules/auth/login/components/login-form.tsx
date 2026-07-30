@@ -12,7 +12,6 @@ import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import { authClient } from "@/modules/auth/lib/auth-client";
-import { EXISTING_ACCOUNT_NOTICE, type TAuthNotice } from "@/modules/auth/lib/notices";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
@@ -50,7 +49,6 @@ interface LoginFormProps {
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   oauthError?: string;
-  notice?: TAuthNotice | null;
   prefilledEmail?: string;
   inviteToken?: string | null;
   resolvedCallbackPath: string;
@@ -70,7 +68,6 @@ export const LoginForm = ({
   isSsoEnabled,
   samlSsoEnabled,
   oauthError,
-  notice,
   prefilledEmail,
   inviteToken,
   resolvedCallbackPath,
@@ -200,15 +197,6 @@ export const LoginForm = ({
             <AlertTitle>{t("auth.login.oauth_account_not_linked_title")}</AlertTitle>
             <AlertDescription>
               <p>{t("auth.login.oauth_account_not_linked_description")}</p>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {notice === EXISTING_ACCOUNT_NOTICE && (
-          <Alert variant="info" className="mb-4 text-left" role="status">
-            <AlertTitle>{t("auth.login.existing_account_invite_title")}</AlertTitle>
-            <AlertDescription>
-              <p>{t("auth.login.existing_account_invite_description")}</p>
             </AlertDescription>
           </Alert>
         )}
