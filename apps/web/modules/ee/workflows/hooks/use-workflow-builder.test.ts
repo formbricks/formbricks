@@ -9,7 +9,9 @@ import type { TWorkflowResource } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   hasWorkflowSaveFailedAtom,
+  isWorkflowDirtyAtom,
   setWorkflowNameAtom,
+  workflowNameAtom,
   workflowSaveErrorAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { useWorkflowBuilder } from "./use-workflow-builder";
@@ -73,8 +75,13 @@ const apiWorkflow = {
   definition: { trigger: { id: "trigger-1" }, nodes: [], edges: [] },
 } as unknown as TWorkflowResource;
 
-const renderBuilder = (args: Parameters<typeof useWorkflowBuilder>[0]) => {
-  const store = createStore();
+// Pass `injectedStore` to simulate a remount: the real store lives in the (detail) layout, so it
+// survives the editor page unmounting on an edit ↔ runs tab switch.
+const renderBuilder = (
+  args: Parameters<typeof useWorkflowBuilder>[0],
+  injectedStore?: ReturnType<typeof createStore>
+) => {
+  const store = injectedStore ?? createStore();
   const wrapper = ({ children }: { children: ReactNode }) => createElement(Provider, { store }, children);
   return { store, ...renderHook(() => useWorkflowBuilder(args), { wrapper }) };
 };
@@ -446,6 +453,91 @@ describe("autosave", () => {
       "wf-api",
       expect.objectContaining({ name: "Edited just before leaving" })
     );
+  });
+
+  test("flushes edits typed during an in-flight save instead of dropping them", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    let releaseFirstSave: () => void = () => undefined;
+    updateWorkflow
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseFirstSave = () => resolve(apiWorkflow);
+          })
+      )
+      .mockResolvedValue(apiWorkflow);
+
+    const { result, store, unmount } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    // Autosave fires for the first edit and its PATCH stays open (a slow network, up to the 15s
+    // mutation timeout).
+    act(() => {
+      store.set(setWorkflowNameAtom, "In flight");
+    });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+
+    // The user keeps typing while that write is open, then navigates away.
+    act(() => {
+      store.set(setWorkflowNameAtom, "Typed during the save");
+    });
+    unmount();
+
+    // Still only the open write: save() refuses to overlap it, and this is the window where the
+    // newer edits used to be dropped with no error at all, fully online.
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      releaseFirstSave();
+    });
+
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2));
+  });
+
+  test("keeps an unsaved draft when the same workflow re-mounts", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValue(offlineError());
+    const store = createStore();
+
+    const first = renderBuilder({ workflowId: "wf-api", isReadOnly: false }, store);
+    await waitFor(() => expect(first.result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Survives the tab switch");
+    });
+    await waitFor(() => expect(store.get(hasWorkflowSaveFailedAtom)).toBe(true), { timeout: 4000 });
+    first.unmount();
+
+    // Coming back to the edit tab: same workflow, same store, a fresh page instance that refetches.
+    const second = renderBuilder({ workflowId: "wf-api", isReadOnly: false }, store);
+
+    // No skeleton over work that never left — the editor already holds this workflow.
+    expect(second.result.current.isLoading).toBe(false);
+
+    await waitFor(() => expect(getWorkflow).toHaveBeenCalledTimes(2));
+    // Hydrating here would rebuild from initialWorkflowEditorState and re-seed lastSavedDraft from
+    // the server, destroying the draft AND making it read clean.
+    expect(store.get(workflowNameAtom)).toBe("Survives the tab switch");
+    expect(store.get(isWorkflowDirtyAtom)).toBe(true);
+    second.unmount();
+  });
+
+  test("re-hydrates on remount when the draft is clean", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    const store = createStore();
+
+    const first = renderBuilder({ workflowId: "wf-api", isReadOnly: false }, store);
+    await waitFor(() => expect(first.result.current.workflow?.id).toBe("wf-api"));
+    first.unmount();
+
+    // Nothing local to protect, so a remount must still pick up changes made elsewhere.
+    getWorkflow.mockResolvedValue({ ...apiWorkflow, name: "Renamed on the server", status: "enabled" });
+    const second = renderBuilder({ workflowId: "wf-api", isReadOnly: false }, store);
+
+    await waitFor(() => expect(store.get(workflowNameAtom)).toBe("Renamed on the server"));
+    expect(second.result.current.isEnabled).toBe(true);
+    expect(store.get(isWorkflowDirtyAtom)).toBe(false);
+    second.unmount();
   });
 });
 

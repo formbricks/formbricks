@@ -50,9 +50,12 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Only the edit tab gets the lifecycle controls — the runs tab is read-only.
-  if (segment !== null) return null;
   if (!workflow) return null;
+  // Only the edit tab gets the lifecycle controls — the runs tab is read-only. An unresolved save
+  // failure is the exception: the unmount flush can fail during the very tab switch that lands the
+  // user here, and the editor is no longer mounted to report it, so the pill has to follow them.
+  const isEditTab = segment === null;
+  if (!isEditTab && !hasSaveFailed) return null;
 
   const isArchived = workflow.status === "archived";
   const isActive = workflow.status === "enabled";
@@ -91,77 +94,82 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
         </span>
       )}
       {/* Lifecycle as a status dropdown (same shape as the surveys list "New survey" menu): the
-          button reads the current state, the menu holds the transitions available from it. */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="sm" loading={builder.isTransitioning} disabled={isReadOnly || isBusy}>
-            {getWorkflowStatusBadge(workflow.status, t).label}
-            <ChevronDownIcon />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
-          {isArchived ? (
-            <>
-              <DropdownMenuItem
-                icon={<ArchiveRestoreIcon className="size-4" />}
-                onSelect={() => void builder.unarchive()}>
-                {t("common.unarchive")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                icon={<TrashIcon className="size-4" />}
-                className="text-red-600 focus:text-red-600"
-                onSelect={() => setIsDeleteDialogOpen(true)}>
-                {t("common.delete")}
-              </DropdownMenuItem>
-            </>
-          ) : (
-            <>
-              {isActive ? (
-                <DropdownMenuItem
-                  icon={<CirclePauseIcon className="size-4" />}
-                  onSelect={() => void builder.disable()}>
-                  {t("common.disable")}
-                </DropdownMenuItem>
+          button reads the current state, the menu holds the transitions available from it. Edit tab
+          only — on the runs tab the pill above is carrying a save failure and nothing else. */}
+      {isEditTab && (
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" loading={builder.isTransitioning} disabled={isReadOnly || isBusy}>
+                {getWorkflowStatusBadge(workflow.status, t).label}
+                <ChevronDownIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {isArchived ? (
+                <>
+                  <DropdownMenuItem
+                    icon={<ArchiveRestoreIcon className="size-4" />}
+                    onSelect={() => void builder.unarchive()}>
+                    {t("common.unarchive")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    icon={<TrashIcon className="size-4" />}
+                    className="text-red-600 focus:text-red-600"
+                    onSelect={() => setIsDeleteDialogOpen(true)}>
+                    {t("common.delete")}
+                  </DropdownMenuItem>
+                </>
               ) : (
-                // Enabling requires a workflow the server would accept; the readiness hint next
-                // to the Save button says what is still missing.
-                <DropdownMenuItem
-                  icon={<CirclePlayIcon className="size-4" />}
-                  disabled={!validity.isReady}
-                  onSelect={() => void builder.enable()}>
-                  {t("common.enable")}
-                </DropdownMenuItem>
+                <>
+                  {isActive ? (
+                    <DropdownMenuItem
+                      icon={<CirclePauseIcon className="size-4" />}
+                      onSelect={() => void builder.disable()}>
+                      {t("common.disable")}
+                    </DropdownMenuItem>
+                  ) : (
+                    // Enabling requires a workflow the server would accept; the readiness hint next
+                    // to the Save button says what is still missing.
+                    <DropdownMenuItem
+                      icon={<CirclePlayIcon className="size-4" />}
+                      disabled={!validity.isReady}
+                      onSelect={() => void builder.enable()}>
+                      {t("common.enable")}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    icon={<ArchiveIcon className="size-4" />}
+                    onSelect={() => setIsArchiveModalOpen(true)}>
+                    {t("common.archive")}
+                  </DropdownMenuItem>
+                </>
               )}
-              <DropdownMenuItem
-                icon={<ArchiveIcon className="size-4" />}
-                onSelect={() => setIsArchiveModalOpen(true)}>
-                {t("common.archive")}
-              </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-      <ConfirmationModal
-        open={isArchiveModalOpen}
-        setOpen={setIsArchiveModalOpen}
-        title={t("workspace.workflows.archive_confirm_title")}
-        body={t("workspace.workflows.archive_confirm_body")}
-        buttonText={t("common.archive")}
-        buttonVariant="destructive"
-        buttonLoading={builder.isTransitioning}
-        isButtonDisabled={isReadOnly || builder.isTransitioning}
-        onConfirm={handleArchiveConfirm}
-        Icon={ArchiveIcon}
-      />
-      <DeleteDialog
-        open={isDeleteDialogOpen}
-        setOpen={setIsDeleteDialogOpen}
-        deleteWhat={workflow.name}
-        onDelete={() => void handleDelete()}
-        isDeleting={isDeleting}
-        text={t("workspace.workflows.delete_workflow_confirmation", { name: workflow.name })}
-      />
+          <ConfirmationModal
+            open={isArchiveModalOpen}
+            setOpen={setIsArchiveModalOpen}
+            title={t("workspace.workflows.archive_confirm_title")}
+            body={t("workspace.workflows.archive_confirm_body")}
+            buttonText={t("common.archive")}
+            buttonVariant="destructive"
+            buttonLoading={builder.isTransitioning}
+            isButtonDisabled={isReadOnly || builder.isTransitioning}
+            onConfirm={handleArchiveConfirm}
+            Icon={ArchiveIcon}
+          />
+          <DeleteDialog
+            open={isDeleteDialogOpen}
+            setOpen={setIsDeleteDialogOpen}
+            deleteWhat={workflow.name}
+            onDelete={() => void handleDelete()}
+            isDeleting={isDeleting}
+            text={t("workspace.workflows.delete_workflow_confirmation", { name: workflow.name })}
+          />
+        </>
+      )}
     </div>
   );
 };

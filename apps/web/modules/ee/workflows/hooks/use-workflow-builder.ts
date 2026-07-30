@@ -80,15 +80,26 @@ export const useWorkflowBuilder = ({
   const draftSignature = useAtomValue(workflowDraftSignatureAtom);
   const setSaveError = useSetAtom(setWorkflowSaveErrorAtom);
 
-  const [isLoading, setIsLoading] = useState(loadOnMount);
+  const [isFetching, setIsFetching] = useState(loadOnMount);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // "Loading" means there is nothing correct to render yet, not merely that a request is in flight.
+  // On a remount for the same workflow (the edit ↔ runs tab round-trip) the store still holds it, so
+  // the editor stays on screen rather than flashing a skeleton over work that never left.
+  const isLoading = isFetching && workflow?.id !== workflowId;
 
   // Reload on workflowId change; abort in-flight fetches when the page navigates away.
   useEffect(() => {
     if (!loadOnMount) return;
     const controller = new AbortController();
-    setIsLoading(true);
+    setIsFetching(true);
     setLoadError(null);
+
+    /**
+     * Whether the editor already holds unsaved edits for the workflow being fetched. Re-read at each
+     * use rather than captured: a draft can be saved (or newly edited) while the fetch is in flight.
+     */
+    const holdsUnsavedDraft = () =>
+      store.get(workflowEditorAtom).workflow?.id === workflowId && store.get(isWorkflowDirtyAtom);
 
     getWorkflow(workflowId, controller.signal)
       .then((loadedWorkflow) => {
@@ -104,6 +115,15 @@ export const useWorkflowBuilder = ({
           toast.error(message);
           return;
         }
+        // Remounting the editor over an unsaved draft would destroy it: hydrate rebuilds from
+        // initialWorkflowEditorState and re-seeds lastSavedDraft from the server, so the edits
+        // vanish AND stop reading dirty — no toast, no pill, nothing to notice. Refresh only the
+        // server-owned snapshot (setWorkflowAtom leaves the editable draft alone by design) and let
+        // the autosave effect retry the draft it can still see.
+        if (holdsUnsavedDraft()) {
+          setWorkflow(loadedWorkflow);
+          return;
+        }
         hydrateEditor({
           workflow: loadedWorkflow,
           flowNodes: workflowDefinitionToFlowNodes(loadedWorkflow.definition, t),
@@ -117,11 +137,11 @@ export const useWorkflowBuilder = ({
       })
       .finally(() => {
         if (controller.signal.aborted) return;
-        setIsLoading(false);
+        setIsFetching(false);
       });
 
     return () => controller.abort();
-  }, [workspaceId, workflowId, hydrateEditor, t, loadOnMount]);
+  }, [workspaceId, workflowId, hydrateEditor, setWorkflow, store, t, loadOnMount]);
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";
@@ -276,7 +296,25 @@ export const useWorkflowBuilder = ({
       const state = store.get(workflowEditorAtom);
       if (!state.workflow || state.workflow.status === "archived") return;
       if (!store.get(isWorkflowDirtyAtom)) return;
-      void save({ silent: true });
+
+      if (!state.isSaving && !state.isTransitioning) {
+        void save({ silent: true });
+        return;
+      }
+      // A write is already in flight, carrying the snapshot taken when it started — anything typed
+      // since is only in the draft. save() refuses to overlap it and there is no render left to
+      // re-arm the debounce, so firing now would drop those edits silently, even fully online.
+      // Wait for the write to settle instead, then send what is still unsaved. Subscribing to the
+      // store rather than the promise keeps save() untouched, and the store belongs to the
+      // surrounding layout so it outlives this page; the mutation timeout bounds the wait.
+      const unsubscribe = store.sub(workflowEditorAtom, () => {
+        const current = store.get(workflowEditorAtom);
+        if (current.isSaving || current.isTransitioning) return;
+        unsubscribe();
+        // The in-flight write may have persisted exactly what was pending.
+        if (!store.get(isWorkflowDirtyAtom)) return;
+        void save({ silent: true });
+      });
     };
   });
   useEffect(() => () => flushOnUnmountRef.current(), []);
