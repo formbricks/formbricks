@@ -217,6 +217,9 @@ export const reconcileApiKeyRelationships = async (
       return 0;
     }
 
+    // Workspace scopes are immutable today, so current snapshots contain every workspace that needs
+    // reconciliation. If scope removal is added, callers must also target pre-change workspace IDs
+    // so stale subject-side grants are deleted.
     const observedWorkspaceIds = new Map(apiKeyIds.map((apiKeyId) => [apiKeyId, new Set<string>()]));
 
     for (let pass = 1; pass <= AUTHZED_MAX_RECONCILIATION_PASSES; pass++) {
