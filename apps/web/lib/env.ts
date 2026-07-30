@@ -277,8 +277,9 @@ const parsedEnv = createEnv({
       .or(z.string().refine((str) => str === "")),
     IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
-    CHATWOOT_WEBSITE_TOKEN: z.string().optional(),
-    CHATWOOT_BASE_URL: z.url().optional(),
+    PLAIN_APP_ID: z.string().optional(),
+    PLAIN_CHAT_HMAC_SECRET: z.string().optional(),
+    PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID: z.string().optional(),
     // Formbricks-in-Formbricks: dogfood in-app surveys. Points at the Formbricks
     // instance that hosts the surveys (defaults to Formbricks Cloud). When
     // FORMBRICKS_WORKSPACE_ID is set, the survey widget is mounted in the app.
@@ -452,8 +453,9 @@ const parsedEnv = createEnv({
     IMPRINT_URL: process.env.IMPRINT_URL,
     IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
-    CHATWOOT_WEBSITE_TOKEN: process.env.CHATWOOT_WEBSITE_TOKEN,
-    CHATWOOT_BASE_URL: process.env.CHATWOOT_BASE_URL,
+    PLAIN_APP_ID: process.env.PLAIN_APP_ID,
+    PLAIN_CHAT_HMAC_SECRET: process.env.PLAIN_CHAT_HMAC_SECRET,
+    PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID: process.env.PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID,
     FORMBRICKS_WORKSPACE_ID: process.env.FORMBRICKS_WORKSPACE_ID,
     FORMBRICKS_APP_URL: process.env.FORMBRICKS_APP_URL,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,

@@ -1,13 +1,15 @@
-import { ChatwootWidget } from "@/app/chatwoot/components/chatwoot-widget";
 import { FormbricksProvider } from "@/app/formbricks/components/formbricks-provider";
+import { PlainChat } from "@/app/plain/components/plain-chat";
+import { getIsActiveCustomer } from "@/app/plain/lib/customer";
+import { computePlainEmailHash } from "@/app/plain/lib/identity";
 import { PostHogIdentify } from "@/app/posthog/PostHogIdentify";
 import {
-  CHATWOOT_BASE_URL,
-  CHATWOOT_WEBSITE_TOKEN,
   FORMBRICKS_APP_URL,
   FORMBRICKS_WORKSPACE_ID,
-  IS_CHATWOOT_CONFIGURED,
   IS_FORMBRICKS_SURVEYS_CONFIGURED,
+  IS_PLAIN_CHAT_CONFIGURED,
+  PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID,
+  PLAIN_APP_ID,
   POSTHOG_KEY,
 } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
@@ -25,19 +27,30 @@ const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) 
     return <ClientLogout />;
   }
 
+  // Resolve the paying-customer label server-side so Plain applies it to threads
+  // from init time. Only queried when a label is configured to avoid extra work.
+  const plainActiveCustomerLabelTypeId =
+    IS_PLAIN_CHAT_CONFIGURED &&
+    PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID &&
+    user &&
+    (await getIsActiveCustomer(user.id))
+      ? PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID
+      : null;
+
   return (
     <>
       <NoMobileOverlay />
       {POSTHOG_KEY && user && (
         <PostHogIdentify posthogKey={POSTHOG_KEY} userId={user.id} email={user.email} name={user.name} />
       )}
-      {IS_CHATWOOT_CONFIGURED && (
-        <ChatwootWidget
+      {IS_PLAIN_CHAT_CONFIGURED && PLAIN_APP_ID && (
+        <PlainChat
+          appId={PLAIN_APP_ID}
           userEmail={user?.email}
           userName={user?.name}
           userId={user?.id}
-          chatwootWebsiteToken={CHATWOOT_WEBSITE_TOKEN}
-          chatwootBaseUrl={CHATWOOT_BASE_URL}
+          emailHash={user?.email ? computePlainEmailHash(user.email) : null}
+          activeCustomerLabelTypeId={plainActiveCustomerLabelTypeId}
         />
       )}
       {IS_FORMBRICKS_SURVEYS_CONFIGURED && FORMBRICKS_WORKSPACE_ID && (

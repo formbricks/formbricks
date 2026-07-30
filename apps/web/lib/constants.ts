@@ -203,9 +203,9 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "zh-Hant-TW",
 ];
 
-export const CHATWOOT_WEBSITE_TOKEN = env.CHATWOOT_WEBSITE_TOKEN;
-export const CHATWOOT_BASE_URL = env.CHATWOOT_BASE_URL || "https://app.chatwoot.com";
-export const IS_CHATWOOT_CONFIGURED = Boolean(env.CHATWOOT_WEBSITE_TOKEN);
+export const PLAIN_APP_ID = env.PLAIN_APP_ID;
+export const PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID = env.PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID;
+export const IS_PLAIN_CHAT_CONFIGURED = Boolean(env.PLAIN_APP_ID);
 
 // Formbricks-in-Formbricks: in-app surveys served by a Formbricks instance
 // (defaults to Formbricks Cloud). The widget only mounts when a workspace id is set.
