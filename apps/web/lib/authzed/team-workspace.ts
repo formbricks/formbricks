@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { TeamUserRole, WorkspaceTeamPermission } from "@formbricks/database/prisma";
+import type { TeamUserRole, WorkspaceTeamPermission } from "@formbricks/database/prisma";
 import {
   type TAuthzedClient,
   type TAuthzedRelationshipFilter,
@@ -14,17 +14,7 @@ import {
   runBestEffortProjection,
 } from "./projection";
 import { deleteRelationshipsInBoundedBatches, packRelationshipUpdateGroups } from "./relationship-batches";
-
-const TEAM_RELATIONS = {
-  [TeamUserRole.admin]: "admin",
-  [TeamUserRole.contributor]: "contributor",
-} as const satisfies Record<TeamUserRole, string>;
-
-const WORKSPACE_TEAM_RELATIONS = {
-  [WorkspaceTeamPermission.manage]: "manager_team",
-  [WorkspaceTeamPermission.read]: "reader_team",
-  [WorkspaceTeamPermission.readWrite]: "writer_team",
-} as const satisfies Record<WorkspaceTeamPermission, string>;
+import { TEAM_RELATIONS, WORKSPACE_TEAM_RELATIONS } from "./relationship-map";
 
 const TEAM_RELATION_NAMES = Object.values(TEAM_RELATIONS);
 const WORKSPACE_TEAM_RELATION_NAMES = Object.values(WORKSPACE_TEAM_RELATIONS);

@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { ApiKeyPermission } from "@formbricks/database/prisma";
+import type { ApiKeyPermission } from "@formbricks/database/prisma";
 import { type TAuthzedRelationshipFilter, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
@@ -9,27 +9,17 @@ import {
   runBestEffortProjection,
 } from "./projection";
 import { deleteRelationshipsInBoundedBatches, packRelationshipUpdateGroups } from "./relationship-batches";
-
-const ORGANIZATION_ACCESS_RELATIONS = {
-  read: "api_key_reader",
-  write: "api_key_writer",
-} as const satisfies Record<keyof TOrganizationAccessSnapshot, string>;
-
-const WORKSPACE_RELATIONS = {
-  [ApiKeyPermission.manage]: "manager",
-  [ApiKeyPermission.read]: "reader",
-  [ApiKeyPermission.write]: "writer",
-} as const satisfies Record<ApiKeyPermission, string>;
+import {
+  ORGANIZATION_ACCESS_RELATIONS,
+  type TOrganizationAccessSnapshot,
+  WORKSPACE_API_KEY_RELATIONS as WORKSPACE_RELATIONS,
+  normalizeOrganizationAccess,
+} from "./relationship-map";
 
 const WORKSPACE_RELATION_NAMES = Object.values(WORKSPACE_RELATIONS);
 
 export type TApiKeyProjectionTargets = Readonly<{
   apiKeyIds?: ReadonlyArray<string>;
-}>;
-
-type TOrganizationAccessSnapshot = Readonly<{
-  read: boolean;
-  write: boolean;
 }>;
 
 type TApiKeyWorkspaceSnapshot = Readonly<{
@@ -45,20 +35,6 @@ type TApiKeySnapshot = ReadonlyArray<
     organizationId: string;
   }>
 >;
-
-const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const normalizeOrganizationAccess = (value: unknown): TOrganizationAccessSnapshot => {
-  if (!isRecord(value) || !isRecord(value.accessControl)) {
-    return { read: false, write: false };
-  }
-
-  return {
-    read: value.accessControl.read === true,
-    write: value.accessControl.write === true,
-  };
-};
 
 const normalizeTargets = (targets: TApiKeyProjectionTargets): ReadonlyArray<string> =>
   [...new Set(targets.apiKeyIds ?? [])].sort((left, right) => left.localeCompare(right));

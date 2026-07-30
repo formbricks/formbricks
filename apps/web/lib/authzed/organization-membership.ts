@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { OrganizationRole } from "@formbricks/database/prisma";
+import type { OrganizationRole } from "@formbricks/database/prisma";
 import { getAuthzedClient } from "./client";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
@@ -8,15 +8,9 @@ import {
   type TAuthzedProjectionResult,
   runBestEffortProjection,
 } from "./projection";
+import { ORGANIZATION_RELATIONS } from "./relationship-map";
 
 export type { TAuthzedProjectionResult } from "./projection";
-
-const ORGANIZATION_RELATIONS = {
-  [OrganizationRole.billing]: "billing",
-  [OrganizationRole.manager]: "manager",
-  [OrganizationRole.member]: "member",
-  [OrganizationRole.owner]: "owner",
-} as const satisfies Record<OrganizationRole, string>;
 
 const ORGANIZATION_RELATION_NAMES = Object.values(ORGANIZATION_RELATIONS);
 type TOrganizationMembershipState = OrganizationRole | null;
