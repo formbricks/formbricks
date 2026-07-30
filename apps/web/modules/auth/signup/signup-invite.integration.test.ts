@@ -22,10 +22,22 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
 }));
 
-vi.mock("@/lib/posthog", () => ({
-  capturePostHogEvent: vi.fn(),
-  identifyPostHogPerson: vi.fn(),
-  groupIdentifyPostHog: vi.fn(),
+/**
+ * Cloud-shaped instance: public sign-up open and multi-org licensed. That is the environment ENG-2091
+ * was reported in, and stating it here does two things. It satisfies the closed-instance gate added in
+ * #8681 — these are the only uninvited sign-ups in the suite, and the DB is not empty, so the
+ * fresh-instance branch that lets them through elsewhere does not apply. And it makes the
+ * organization assertions meaningful: with multi-org off, `handleOrganizationCreation` returns early
+ * and "no organization was created" would pass whether or not the fix is present.
+ */
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  SIGNUP_ENABLED: true,
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsMultiOrgEnabled: vi.fn(async () => true),
 }));
 
 vi.mock("@/modules/ee/mailing/lib/mailing-subscription", () => ({

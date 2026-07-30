@@ -145,6 +145,13 @@ export const SignupForm = ({
         toast.error(t("auth.invite.invite_not_found_description"));
         return;
       default:
+        // SIGNUP_DISABLED_ERROR_CODE lands here (#8681). CodeRabbit is right that a real user can see
+        // it — sign-up can be open when this page renders and closed before submit, the same
+        // render-then-revoke race that makes the invite branch above user-facing — so it should be
+        // translated rather than shown as a raw code. Deferred there because adding an en-US string
+        // needs the 14 target locales populated too, and doing it without that reddens
+        // `scan-translations`; tracked as a follow-up. (This PR hand-writes such strings with their
+        // i18n.lock checksums, so that route is open to whoever picks the follow-up up.)
         toast.error(errorMessage);
     }
   };

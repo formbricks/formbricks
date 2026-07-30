@@ -545,3 +545,110 @@ describe("recall utility functions", () => {
     });
   });
 });
+
+describe("parseRecallInfo — escapeValues", () => {
+  const recall = (id: string) => `#recall:${id}/fallback:none#`;
+
+  // Regression: the recalled value is a respondent's answer, i.e. data, and must never become markup.
+  // Sanitizing the combined string afterwards cannot help — an allowlist that legitimately permits
+  // `<a href>` in the survey author's body passes an anchor spliced in from an answer just the same.
+  test("escapes HTML in a substituted response value when asked to", () => {
+    const result = parseRecallInfo(
+      `Hi ${recall("q1")}`,
+      { q1: '<a href="https://evil.tld">Action required</a>' },
+      undefined,
+      false,
+      "en-US",
+      undefined,
+      true
+    );
+
+    expect(result).not.toContain("<a href");
+    expect(result).toContain("&lt;a href=&quot;https://evil.tld&quot;&gt;");
+  });
+
+  test("escapes the ampersand first so escaping cannot be undone", () => {
+    const result = parseRecallInfo(
+      recall("q1"),
+      { q1: "&lt;script&gt;alert(1)&lt;/script&gt;" },
+      undefined,
+      false,
+      "en-US",
+      undefined,
+      true
+    );
+
+    expect(result).toBe("&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;");
+  });
+
+  // Matrix and address answers arrive as records, which would coerce to "[object Object]" if handed
+  // straight to String().
+  test("stringifies a record-shaped answer by joining its filled entries", () => {
+    const result = parseRecallInfo(
+      recall("q1"),
+      { q1: { "Row 1": "Yes", "Row 2": "", "Row 3": "No" } },
+      undefined,
+      false,
+      "en-US",
+      undefined,
+      true
+    );
+
+    expect(result).toBe("Yes, No");
+  });
+
+  test("escapes a record-shaped answer's entries too", () => {
+    const result = parseRecallInfo(
+      recall("q1"),
+      { q1: { street: "<script>alert(1)</script>" } },
+      undefined,
+      false,
+      "en-US",
+      undefined,
+      true
+    );
+
+    expect(result).toBe("&lt;script&gt;alert(1)&lt;/script&gt;");
+  });
+
+  test("leaves the author's surrounding markup untouched", () => {
+    const result = parseRecallInfo(
+      `<p>Thanks <b>${recall("q1")}</b></p>`,
+      { q1: "Ada" },
+      undefined,
+      false,
+      "en-US",
+      undefined,
+      true
+    );
+
+    expect(result).toBe("<p>Thanks <b>Ada</b></p>");
+  });
+
+  // Default stays off: the React callers escape for themselves, so escaping here would double-escape.
+  test("does not escape by default", () => {
+    const result = parseRecallInfo(recall("q1"), { q1: "5 > 3 & rising" });
+
+    expect(result).toBe("5 > 3 & rising");
+  });
+
+  // Regression: stringifyRecallValue used to run only inside the escapeValues branch, so the default
+  // path cast a record-shaped answer straight to string and rendered "[object Object]". Every caller
+  // outside the follow-up-email flow takes that default. Raised by CodeRabbit on #8681.
+  test("stringifies a record-shaped answer on the default (unescaped) path", () => {
+    const result = parseRecallInfo(recall("q1"), { q1: { "Row 1": "Yes", "Row 2": "No" } });
+
+    expect(result).not.toContain("[object Object]");
+    expect(result).toContain("Yes");
+    expect(result).toContain("No");
+  });
+
+  test("stringifies a record-shaped answer identically whether or not values are escaped", () => {
+    const data = { q1: { "Row 1": "Yes" } };
+
+    const plain = parseRecallInfo(recall("q1"), data);
+    const escaped = parseRecallInfo(recall("q1"), data, undefined, false, undefined, undefined, true);
+
+    expect(plain).toBe(escaped);
+  });
+});

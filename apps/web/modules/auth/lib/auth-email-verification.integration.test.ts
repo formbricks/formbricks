@@ -25,9 +25,6 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
 });
 
 // Spy capturePostHogEvent (the other afterEmailVerification side effect) without hitting PostHog.
-vi.mock("@/lib/posthog", () => ({
-  capturePostHogEvent: vi.fn(),
-}));
 
 /**
  * Integration coverage for email verification + password reset (ENG-1054) against a real Postgres.

@@ -7,15 +7,27 @@ import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   InvalidInputError,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   UnknownError,
 } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import {
+  IS_FORMBRICKS_CLOUD,
+  IS_TURNSTILE_CONFIGURED,
+  SIGNUP_ENABLED,
+  TURNSTILE_SECRET_KEY,
+} from "@/lib/constants";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent, groupIdentifyPostHog, identifyPostHogPerson } from "@/lib/posthog";
+import {
+  capturePostHogEvent,
+  getEmailDomain,
+  groupIdentifyPostHog,
+  identifyPostHogPerson,
+} from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -29,7 +41,12 @@ import {
   runWithSignupRequestContext,
 } from "@/modules/auth/lib/signup-request-context";
 import { updateUser } from "@/modules/auth/lib/user";
-import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
+import {
+  type InviteMatch,
+  deleteInvite,
+  getInvite,
+  resolveInviteMatch,
+} from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -204,7 +221,10 @@ async function handleInviteAcceptance(
   try {
     const invitedOrganization = await getOrganization(invite.organizationId);
     if (invitedOrganization) {
-      groupIdentifyPostHog("organization", invitedOrganization.id, { name: invitedOrganization.name });
+      groupIdentifyPostHog("organization", invitedOrganization.id, {
+        name: invitedOrganization.name,
+        email_domain: getEmailDomain(invite.creator.email),
+      });
     }
   } catch (error) {
     logger.warn({ error, organizationId: invite.organizationId }, "Failed to identify org group in PostHog");
@@ -264,7 +284,10 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     name: DEFAULT_WORKSPACE_NAME,
   });
 
-  groupIdentifyPostHog("organization", organization.id, { name: organization.name });
+  groupIdentifyPostHog("organization", organization.id, {
+    name: organization.name,
+    email_domain: getEmailDomain(user.email),
+  });
   groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
 
   capturePostHogEvent(
@@ -319,6 +342,34 @@ async function handlePostUserCreation(
   // requireEmailVerification config and the callbackURL chosen in signUpUserSafely.
 }
 
+/**
+ * The two sign-up gates that used to live only in `signup/page.tsx`, enforced here so a direct POST to
+ * this action cannot walk around them. Extracted from `createUserAction` to keep that function within
+ * the cognitive-complexity budget.
+ */
+async function assertSignupPolicyAllows(
+  inviteToken: string | undefined,
+  inviteMatch: InviteMatch
+): Promise<void> {
+  // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
+  // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
+  if (inviteToken && inviteMatch !== "valid") {
+    logger.warn({ inviteMatch }, "Rejected sign-up with an unusable invite token");
+    throw new InvalidInputError(INVITE_TOKEN_INVALID_ERROR_CODE);
+  }
+
+  const isPublicSignupOpen = SIGNUP_ENABLED && (await getIsMultiOrgEnabled());
+  if (isPublicSignupOpen || inviteMatch === "valid") {
+    return;
+  }
+
+  // Closed instance and no invite: the only remaining legitimate case is the initial administrator
+  // during fresh-instance setup, who has no invite to present.
+  if (!(await getIsFreshInstance())) {
+    throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
+  }
+}
+
 export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
   withAuditLogging("created", "user", async ({ ctx, parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
@@ -331,12 +382,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     const inviteToken = parsedInput.inviteToken?.trim() || undefined;
     const inviteMatch = await resolveInviteMatch(inviteToken, parsedInput.email);
 
-    // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
-    // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
-    if (inviteToken && inviteMatch !== "valid") {
-      logger.warn({ inviteMatch }, "Rejected sign-up with an unusable invite token");
-      throw new InvalidInputError(INVITE_TOKEN_INVALID_ERROR_CODE);
-    }
+    await assertSignupPolicyAllows(inviteToken, inviteMatch);
 
     // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
@@ -375,7 +421,11 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
       const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
 
-      identifyPostHogPerson(user.id, { email: user.email, name: user.name });
+      identifyPostHogPerson(user.id, {
+        email: user.email,
+        name: user.name,
+        email_domain: getEmailDomain(user.email),
+      });
       capturePostHogEvent(
         user.id,
         "user_signed_up",
@@ -383,7 +433,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           // Spread attribution first so trusted, server-computed props always win on a name clash.
           ...attributionProperties,
           auth_provider: "credentials",
-          email_domain: user.email.split("@")[1],
+          email_domain: getEmailDomain(user.email),
           signup_source: inviteToken ? "invite" : "direct",
           invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
         },

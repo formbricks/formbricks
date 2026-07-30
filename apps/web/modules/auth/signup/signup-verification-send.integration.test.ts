@@ -23,12 +23,6 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
 }));
 
-vi.mock("@/lib/posthog", () => ({
-  capturePostHogEvent: vi.fn(),
-  identifyPostHogPerson: vi.fn(),
-  groupIdentifyPostHog: vi.fn(),
-}));
-
 vi.mock("@/modules/ee/mailing/lib/mailing-subscription", () => ({
   subscribeUserToMailingList: vi.fn(async () => undefined),
 }));

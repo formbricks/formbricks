@@ -50,18 +50,37 @@ export const sendFollowUpEmail = async ({
   // Falls back to DEFAULT_LOCALE when the respondent locale wasn't captured at submission.
   const t = await getTranslate(locale ?? DEFAULT_LOCALE);
 
-  // Process body: parse recall tags and sanitize HTML
-  const processedBody = sanitizeHtml(parseRecallInfo(body, response.data, response.variables), {
-    allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br"],
-    allowedAttributes: {
-      a: ["href", "rel", "target"],
-      "*": ["dir", "class"],
-    },
-    allowedSchemes: ["http", "https"],
-    allowedSchemesByTag: {
-      a: ["http", "https"],
-    },
-  });
+  // Process body: parse recall tags and sanitize HTML.
+  // Recall values are escaped as they are substituted (the last argument). The body is author-written
+  // HTML and the sanitizer below legitimately allows `<a href>`, so it cannot distinguish that markup
+  // from markup a respondent smuggled in through an open-text answer — an anonymous respondent could
+  // otherwise place an arbitrary clickable link, with text of their choosing, into a Formbricks-branded
+  // email delivered to the survey owner.
+  const processedBody = sanitizeHtml(
+    // Same resolved locale the translations above use, not a hardcoded "en-US": recall values include
+    // date answers, which parseRecallInfo formats per locale, so pinning it here would render US dates
+    // in an otherwise correctly localized email.
+    parseRecallInfo(
+      body,
+      response.data,
+      response.variables,
+      false,
+      locale ?? DEFAULT_LOCALE,
+      undefined,
+      true
+    ),
+    {
+      allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br"],
+      allowedAttributes: {
+        a: ["href", "rel", "target"],
+        "*": ["dir", "class"],
+      },
+      allowedSchemes: ["http", "https"],
+      allowedSchemesByTag: {
+        a: ["http", "https"],
+      },
+    }
+  );
 
   // Process response data
   // Resolve relative storage URLs to absolute URLs for email rendering

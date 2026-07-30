@@ -92,6 +92,8 @@
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
         "email": "View your email address",
+        "feedback_records_read": "Read feedback records",
+        "feedback_records_write": "Create feedback records",
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",
@@ -2662,7 +2664,8 @@
         "unify_feedback_inbox": "Birleşik Geri Bildirim Kutusu",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Formbricks'in tüm gücünü ortaya çıkarın.",
         "white_glove_onboarding": "Kapsamlı başlangıç desteği",
-        "whitelabel_email_follow_ups": "Beyaz etiketli e-posta takipleri"
+        "whitelabel_email_follow_ups": "Beyaz etiketli e-posta takipleri",
+        "workflows": "Workflows"
       },
       "feedback_directories": {
         "archive": "Arşivle",

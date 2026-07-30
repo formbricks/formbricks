@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
+  SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -48,6 +50,7 @@ vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
   groupIdentifyPostHog: vi.fn(),
   identifyPostHogPerson: vi.fn(),
+  getEmailDomain: (email: string) => email.split("@")[1]?.toLowerCase() || undefined,
 }));
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   ensureCloudStripeSetupForOrganization: vi.fn(),
@@ -62,6 +65,7 @@ vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace:
 const constantsOverrides = vi.hoisted(() => ({
   IS_FORMBRICKS_CLOUD: false,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false,
+  SIGNUP_ENABLED: true,
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -74,7 +78,12 @@ vi.mock("@/lib/constants", () => ({
   get SIGNUP_DOMAIN_CHECK_ON_INVITES() {
     return constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES;
   },
+  get SIGNUP_ENABLED() {
+    return constantsOverrides.SIGNUP_ENABLED;
+  },
 }));
+
+vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
@@ -106,6 +115,8 @@ describe("createUserAction — signup verification email callbackURL", () => {
     vi.resetAllMocks();
     constantsOverrides.IS_FORMBRICKS_CLOUD = false;
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
+    constantsOverrides.SIGNUP_ENABLED = true;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
@@ -222,6 +233,55 @@ describe("createUserAction — signup verification email callbackURL", () => {
     expect(ctx.auditLoggingCtx.userId).toBe("");
   });
 
+  // Regression: signup/page.tsx requires a valid invite once public sign-up is closed, but the action
+  // itself enforced nothing — so anyone could POST it and create an account on a closed instance.
+  describe("closed instance policy", () => {
+    beforeEach(() => {
+      constantsOverrides.SIGNUP_ENABLED = false;
+      vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    });
+
+    test("rejects an uninvited signup and creates no user", async () => {
+      await expect(createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never)).rejects.toThrow(
+        SIGNUP_DISABLED_ERROR_CODE
+      );
+      expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+    });
+
+    test("still allows the first administrator during fresh-instance setup", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+
+      const result = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(auth.api.signUpEmail).toHaveBeenCalled();
+    });
+
+    test("still allows a signup backed by a valid matching invite", async () => {
+      vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+      vi.mocked(verifyInviteToken).mockReturnValue({
+        inviteId: "invite-1",
+        email: "ada@example.com",
+      } as never);
+      vi.mocked(getInvite).mockResolvedValue({
+        id: "invite-1",
+        organizationId: "org-1",
+        role: "member",
+        teamIds: null,
+        creator: { name: "Owner", email: "owner@example.com", locale: "en-US" },
+      } as never);
+
+      const result = await createUserAction({
+        ctx: newCtx(),
+        parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
+      } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(createMembership).toHaveBeenCalled();
+    });
+  });
+
   // The catch branch is still live: flipping EMAIL_VERIFICATION_DISABLED / autoSignIn makes Better Auth
   // throw USER_ALREADY_EXISTS instead of answering synthetically, so both signals must classify.
   test("treats a thrown duplicate as already-existed too", async () => {
@@ -231,6 +291,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     const result = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
 
     expect(result).toEqual({ success: true });
+    // already-existed short-circuits handlePostUserCreation + mailing-list subscription.
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
   });
 });
@@ -254,6 +315,8 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    constantsOverrides.SIGNUP_ENABLED = true;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);

@@ -216,6 +216,13 @@ export const PASSWORD_COMPROMISED_ERROR_CODE = "password_compromised";
  */
 export const INVITE_TOKEN_INVALID_ERROR_CODE = "invite_token_invalid";
 
+/**
+ * Stable, locale-independent marker used when a sign-up is rejected because the instance has public
+ * sign-up closed (`SIGNUP_DISABLED`, or multi-org disabled) and the caller presented neither a valid
+ * invite nor a fresh instance to bootstrap.
+ */
+export const SIGNUP_DISABLED_ERROR_CODE = "signup_disabled";
+
 export interface ApiErrorResponse {
   code:
     | "not_found"
