@@ -15,7 +15,12 @@ import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } fr
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent, groupIdentifyPostHog, identifyPostHogPerson } from "@/lib/posthog";
+import {
+  capturePostHogEvent,
+  getEmailDomain,
+  groupIdentifyPostHog,
+  identifyPostHogPerson,
+} from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -159,7 +164,10 @@ async function handleInviteAcceptance(
   try {
     const invitedOrganization = await getOrganization(invite.organizationId);
     if (invitedOrganization) {
-      groupIdentifyPostHog("organization", invitedOrganization.id, { name: invitedOrganization.name });
+      groupIdentifyPostHog("organization", invitedOrganization.id, {
+        name: invitedOrganization.name,
+        email_domain: getEmailDomain(invite.creator.email),
+      });
     }
   } catch (error) {
     logger.warn({ error, organizationId: invite.organizationId }, "Failed to identify org group in PostHog");
@@ -219,7 +227,10 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     name: DEFAULT_WORKSPACE_NAME,
   });
 
-  groupIdentifyPostHog("organization", organization.id, { name: organization.name });
+  groupIdentifyPostHog("organization", organization.id, {
+    name: organization.name,
+    email_domain: getEmailDomain(user.email),
+  });
   groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
 
   capturePostHogEvent(
@@ -322,7 +333,11 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
       const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
 
-      identifyPostHogPerson(user.id, { email: user.email, name: user.name });
+      identifyPostHogPerson(user.id, {
+        email: user.email,
+        name: user.name,
+        email_domain: getEmailDomain(user.email),
+      });
       capturePostHogEvent(
         user.id,
         "user_signed_up",
@@ -330,7 +345,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           // Spread attribution first so trusted, server-computed props always win on a name clash.
           ...attributionProperties,
           auth_provider: "credentials",
-          email_domain: user.email.split("@")[1],
+          email_domain: getEmailDomain(user.email),
           signup_source: inviteToken ? "invite" : "direct",
           invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
         },

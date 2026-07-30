@@ -46,6 +46,7 @@ vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
   groupIdentifyPostHog: vi.fn(),
   identifyPostHogPerson: vi.fn(),
+  getEmailDomain: (email: string) => email.split("@")[1]?.toLowerCase() || undefined,
 }));
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   ensureCloudStripeSetupForOrganization: vi.fn(),
