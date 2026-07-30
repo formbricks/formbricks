@@ -18,8 +18,22 @@ import {
 
 const WORKSPACE_RELATION_NAMES = Object.values(WORKSPACE_RELATIONS);
 
+export type TApiKeyWorkspaceProjectionTarget = Readonly<{
+  apiKeyId: string;
+  workspaceId: string;
+}>;
+
 export type TApiKeyProjectionTargets = Readonly<{
   apiKeyIds?: ReadonlyArray<string>;
+  /**
+   * Workspace scopes to reconcile even if PostgreSQL no longer grants them.
+   *
+   * Workspace targets are otherwise discovered from the key's current grants, so a scope revoked
+   * outside a mutation hook leaves an unreachable relationship: it is absent from the snapshot, so
+   * nothing names it, so nothing deletes it. Naming a pair here seeds it as a target, and an absent
+   * grant then deletes all three workspace relations. Each named key is implied as a target.
+   */
+  apiKeyWorkspaceGrants?: ReadonlyArray<TApiKeyWorkspaceProjectionTarget>;
 }>;
 
 type TApiKeyWorkspaceSnapshot = Readonly<{
@@ -36,8 +50,29 @@ type TApiKeySnapshot = ReadonlyArray<
   }>
 >;
 
-const normalizeTargets = (targets: TApiKeyProjectionTargets): ReadonlyArray<string> =>
-  [...new Set(targets.apiKeyIds ?? [])].sort((left, right) => left.localeCompare(right));
+type TNormalizedTargets = Readonly<{
+  apiKeyIds: ReadonlyArray<string>;
+  /** Workspace IDs to reconcile per API key, independent of what the source snapshot grants. */
+  seededWorkspaceIds: ReadonlyMap<string, ReadonlySet<string>>;
+}>;
+
+const normalizeTargets = (targets: TApiKeyProjectionTargets): TNormalizedTargets => {
+  const apiKeyIds = new Set(targets.apiKeyIds ?? []);
+  const seededWorkspaceIds = new Map<string, Set<string>>();
+
+  for (const { apiKeyId, workspaceId } of targets.apiKeyWorkspaceGrants ?? []) {
+    // A named grant implies its key, so a caller repairing one stale scope need not also list the key.
+    apiKeyIds.add(apiKeyId);
+    const workspaceIds = seededWorkspaceIds.get(apiKeyId) ?? new Set<string>();
+    workspaceIds.add(workspaceId);
+    seededWorkspaceIds.set(apiKeyId, workspaceIds);
+  }
+
+  return {
+    apiKeyIds: [...apiKeyIds].sort((left, right) => left.localeCompare(right)),
+    seededWorkspaceIds,
+  };
+};
 
 const readSnapshot = async (apiKeyIds: ReadonlyArray<string>): Promise<TApiKeySnapshot> => {
   const apiKeys = await prisma.apiKey.findMany({
@@ -188,15 +223,18 @@ export const reconcileApiKeyRelationships = async (
   targets: TApiKeyProjectionTargets
 ): Promise<TAuthzedProjectionResult> =>
   runBestEffortProjection("reconcile_api_key_relationships", "api_key", async () => {
-    const apiKeyIds = normalizeTargets(targets);
+    const { apiKeyIds, seededWorkspaceIds } = normalizeTargets(targets);
     if (apiKeyIds.length === 0) {
       return 0;
     }
 
-    // Workspace scopes are immutable today, so current snapshots contain every workspace that needs
-    // reconciliation. If scope removal is added, callers must also target pre-change workspace IDs
-    // so stale subject-side grants are deleted.
-    const observedWorkspaceIds = new Map(apiKeyIds.map((apiKeyId) => [apiKeyId, new Set<string>()]));
+    // Workspace scopes are immutable today, so a current snapshot contains every workspace a normal
+    // projection needs. A scope that disappeared anyway — removed outside a mutation hook, or by a
+    // future edit path — is invisible to the snapshot, which is what `apiKeyWorkspaceGrants` is for:
+    // seeded targets are reconciled regardless, then extended by whatever each pass observes.
+    const observedWorkspaceIds = new Map(
+      apiKeyIds.map((apiKeyId) => [apiKeyId, new Set<string>(seededWorkspaceIds.get(apiKeyId) ?? [])])
+    );
 
     for (let pass = 1; pass <= AUTHZED_MAX_RECONCILIATION_PASSES; pass++) {
       const sourceSnapshot = await readSnapshot(apiKeyIds);

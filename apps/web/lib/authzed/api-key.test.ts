@@ -464,4 +464,77 @@ describe("API key relationship projection", () => {
     expect(serializedLog).not.toContain("private-api-key");
     expect(serializedLog).not.toContain("raw-sdk-message");
   });
+
+  describe("explicitly named workspace scopes", () => {
+    const workspaceUpdatesFor = (workspaceId: string) =>
+      clientMocks.writeRelationships.mock.calls
+        .flatMap(([updates]) => updates)
+        .filter(
+          ({ relationship }) =>
+            relationship.resource.objectType === "workspace" && relationship.resource.objectId === workspaceId
+        );
+
+    test("deletes a scope the source no longer grants", async () => {
+      // A revoked scope is absent from the snapshot, so without being named nothing would target it
+      // and the stale relationship would survive indefinitely.
+      setStableSnapshot({ permission: null });
+
+      await expect(
+        reconcileApiKeyRelationships({
+          apiKeyIds: [API_KEY_ID],
+          apiKeyWorkspaceGrants: [{ apiKeyId: API_KEY_ID, workspaceId: "revoked-workspace" }],
+        })
+      ).resolves.toEqual({ passes: 1, status: "projected" });
+
+      const updates = workspaceUpdatesFor("revoked-workspace");
+      expect(updates).toHaveLength(3);
+      expect(updates.every(({ operation }) => operation === "delete")).toBe(true);
+    });
+
+    test("still touches the granted permission when the source does hold the scope", async () => {
+      setStableSnapshot({ permission: "write", workspaceId: "granted-workspace" });
+
+      await reconcileApiKeyRelationships({
+        apiKeyIds: [API_KEY_ID],
+        apiKeyWorkspaceGrants: [{ apiKeyId: API_KEY_ID, workspaceId: "granted-workspace" }],
+      });
+
+      // Naming a target must not force a delete: the decision still comes from the source snapshot.
+      const updates = workspaceUpdatesFor("granted-workspace");
+      expect(updates).toHaveLength(3);
+      expect(updates.filter(({ operation }) => operation === "touch")).toHaveLength(1);
+      expect(updates).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            operation: "touch",
+            relationship: expect.objectContaining({ relation: "writer" }),
+          }),
+        ])
+      );
+    });
+
+    test("implies the API key so a caller repairing one scope need not also name the key", async () => {
+      setStableSnapshot({ permission: null });
+
+      await reconcileApiKeyRelationships({
+        apiKeyWorkspaceGrants: [{ apiKeyId: API_KEY_ID, workspaceId: "revoked-workspace" }],
+      });
+
+      expect(prisma.apiKey.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: [API_KEY_ID] } } })
+      );
+      expect(workspaceUpdatesFor("revoked-workspace")).toHaveLength(3);
+    });
+
+    test("reconciles both a named scope and one discovered from the source", async () => {
+      setStableSnapshot({ permission: "read", workspaceId: "granted-workspace" });
+
+      await reconcileApiKeyRelationships({
+        apiKeyWorkspaceGrants: [{ apiKeyId: API_KEY_ID, workspaceId: "revoked-workspace" }],
+      });
+
+      expect(workspaceUpdatesFor("granted-workspace")).toHaveLength(3);
+      expect(workspaceUpdatesFor("revoked-workspace")).toHaveLength(3);
+    });
+  });
 });
