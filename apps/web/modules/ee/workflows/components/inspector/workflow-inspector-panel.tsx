@@ -21,15 +21,16 @@ export const WorkflowInspectorPanel = ({ isEditingNode }: Readonly<WorkflowInspe
   const isVisible = isNodeConfigOpen && !isCollapsed;
 
   return (
-    // No bottom padding: the panel is capped at the canvas height and scrolls its own content, so
-    // padding here would push the column past the canvas and reintroduce page-level overflow.
+    // Stretches to the editor row's height (no `self-start`) so the panel inside can fill it and
+    // scroll its own content. No bottom padding either: both would make this column taller than the
+    // canvas beside it and push the page into overflow.
     <div
       aria-hidden={!isVisible}
       className={cn(
-        "shrink-0 overflow-hidden transition-[width,opacity] duration-150 ease-in-out",
+        "min-h-0 shrink-0 overflow-hidden transition-[width,opacity] duration-150 ease-in-out",
         isVisible ? "w-[360px] opacity-100" : "w-0 opacity-0"
       )}>
-      <div className="flex w-[360px] flex-col gap-3 self-start">
+      <div className="flex h-full w-[360px] flex-col gap-3">
         <WorkflowNodeConfigPanel isEditable={isEditingNode} />
       </div>
     </div>

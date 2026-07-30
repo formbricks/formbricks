@@ -3,8 +3,6 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
-import { cn } from "@/lib/cn";
-import { WORKFLOW_EDITOR_COLUMN_MAX_HEIGHT_CLASS } from "@/modules/ee/workflows/lib/editor-layout";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
   selectedWorkflowNodeIdAtom,
@@ -68,16 +66,12 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   };
 
   return (
-    // Capped at the canvas's height and scrolled internally: a config form taller than the canvas
-    // must not grow the page. Without the cap the app shell's scroll container overflows and a
-    // window-level scrollbar appears — one that cannot help, since the canvas is a fixed-height
-    // overflow-hidden box, so scrolling the page only reveals blank space beside it. The header
-    // stays put while the fields scroll under it.
-    <aside
-      className={cn(
-        "flex w-[360px] shrink-0 flex-col self-start overflow-hidden rounded-lg border border-slate-200 bg-white",
-        WORKFLOW_EDITOR_COLUMN_MAX_HEIGHT_CLASS
-      )}>
+    // Fills the editor row's height and scrolls its fields internally, so a config form longer than
+    // the row can't grow the page. A page-level scrollbar would be useless here anyway: the canvas
+    // beside it clips rather than scrolls, so scrolling the page only reveals blank space. `min-h-0`
+    // is what allows the shrink; without it the flex item would be floored at its content height.
+    // The header sits outside the scrolling area and stays put.
+    <aside className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
       <header className="flex shrink-0 items-center border-b border-slate-200 px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</h2>
       </header>

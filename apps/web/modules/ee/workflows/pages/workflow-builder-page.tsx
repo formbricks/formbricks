@@ -71,12 +71,14 @@ export const WorkflowBuilderPage = ({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    // Claims the height the page layout hands down (`min-h-0` so it may shrink below its content
+    // rather than push the page taller), and both columns stretch to fill it.
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <WorkflowEmailAuthoringProvider value={emailAuthoringContext}>
-        {/* Canvas and inspector heights are independent: the canvas owns a fixed viewport-based
-            height while the inspector grows with its content (the page scrolls past the canvas
-            when a config form runs long). No stretch alignment ties one to the other. */}
-        <section className="flex items-start gap-4">
+        {/* Canvas and inspector share one height, derived from this row rather than computed from
+            the viewport. Each owns its own overflow: the canvas clips (it pans), the inspector
+            scrolls — so however long a config form runs, the page itself never grows. */}
+        <section className="flex min-h-0 flex-1 gap-4">
           <WorkflowCanvas isEditable={builder.canEditDefinition} />
           <WorkflowInspectorPanel isEditingNode={builder.canEditDefinition} />
         </section>

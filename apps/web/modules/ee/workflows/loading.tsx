@@ -1,8 +1,6 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { cn } from "@/lib/cn";
-import { WORKFLOW_EDITOR_COLUMN_HEIGHT_CLASS } from "@/modules/ee/workflows/lib/editor-layout";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
 export const RunsTableSkeleton = () => (
@@ -58,14 +56,11 @@ export const WorkflowBuilderBodyLoading = () => {
   const showInspector = searchParams.has("node");
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start gap-4">
-        {/* Shares the canvas' fixed height so hydration doesn't shift. */}
-        <div
-          className={cn(
-            "relative min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white",
-            WORKFLOW_EDITOR_COLUMN_HEIGHT_CLASS
-          )}>
+    // Same flex sizing as the loaded editor (see workflow-builder-page), so the canvas occupies the
+    // same box before and after hydration and nothing shifts.
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex min-h-0 flex-1 gap-4">
+        <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <Skeleton className="h-9 w-20 rounded-md" />
             <Skeleton className="size-9 rounded-md" />
@@ -78,7 +73,7 @@ export const WorkflowBuilderBodyLoading = () => {
           </div>
         </div>
         {showInspector ? (
-          <aside className="w-[360px] shrink-0 rounded-lg border border-slate-200 bg-white">
+          <aside className="min-h-0 w-[360px] shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
             {/* Mirrors the node config panel: title bar + a few form fields. */}
             <div className="border-b border-slate-200 px-4 py-3">
               <Skeleton className="h-4 w-32 rounded-md" />

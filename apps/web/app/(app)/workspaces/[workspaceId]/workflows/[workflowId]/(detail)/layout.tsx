@@ -35,7 +35,11 @@ const WorkflowDetailLayout = async (
 
   return (
     <WorkflowEditorProvider>
-      <PageContentWrapper>
+      {/* The editor fills the shell's scroll area instead of scrolling inside it: `h-full` pins this
+          wrapper to that container's height and the flex column hands whatever is left below the
+          header to the canvas + inspector row, which scroll internally. Height is therefore derived,
+          never assumed — the alternative is subtracting a hardcoded guess at the chrome above. */}
+      <PageContentWrapper className="flex h-full flex-col">
         <PageHeader
           pageTitle={<WorkflowPageTitle workflowId={params.workflowId} isReadOnly={isReadOnly} />}
           cta={<WorkflowHeaderCta workflowId={params.workflowId} isReadOnly={isReadOnly} />}>
