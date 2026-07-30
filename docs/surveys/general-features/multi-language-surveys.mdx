@@ -76,22 +76,24 @@ Beyond the content you translate yourself, every survey ships with a set of buil
 - Offline, retry, and "sending responses" notices
 - Attribution and helper labels like "Powered by" and "Required"
 
-These built-in strings are currently provided in **19 languages**:
+These built-in strings are currently provided in **23 languages**:
 
 | Language | Code | Language | Code |
 | --- | --- | --- | --- |
 | English (base) | `en-US` | Italian | `it-IT` |
 | Arabic | `ar-EG` | Japanese | `ja-JP` |
 | Chinese (Simplified) | `zh-Hans-CN` | Portuguese (Brazil) | `pt-BR` |
-| Danish | `da-DK` | Romanian | `ro-RO` |
-| Dutch | `nl-NL` | Russian | `ru-RU` |
-| Estonian | `et-EE` | Spanish | `es-ES` |
-| French | `fr-FR` | Swedish | `sv-SE` |
-| German | `de-DE` | Turkish | `tr-TR` |
+| Chinese (Traditional) | `zh-Hant-TW` | Romanian | `ro-RO` |
+| Danish | `da-DK` | Russian | `ru-RU` |
+| Dutch | `nl-NL` | Spanish | `es-ES` |
+| Estonian | `et-EE` | Swedish | `sv-SE` |
+| French | `fr-FR` | Turkish | `tr-TR` |
+| German | `de-DE` | Urdu | `ur-PK` |
 | Hindi | `hi-IN` | Uzbek | `uz-UZ` |
-| Hungarian | `hu-HU` | | |
+| Hungarian | `hu-HU` | Vietnamese | `vi-VN` |
+| Indonesian | `id-ID` | | |
 
-Formbricks matches the survey's active language to the closest available bundle — for example, `de-AT` and `de` both use the German bundle, and `pt-PT` uses `pt-BR`. If a language has no matching bundle, your translated survey content is still shown as usual, but these built-in interface strings fall back to English.
+Formbricks matches the survey's active language to the closest available bundle — for example, `de-AT` and `de` both use the German bundle, and `pt-PT` uses `pt-BR`. Writing script is preserved when matching, so `zh-Hant` and `zh-TW` resolve to the Traditional Chinese bundle rather than the Simplified one. If a language has no matching bundle, your translated survey content is still shown as usual, but these built-in interface strings fall back to English.
 
 <Note>
   Don't see your language? These interface translations live in the open-source `@formbricks/surveys` package. You can add a new one by contributing a locale file on [GitHub](https://github.com/formbricks/formbricks).
