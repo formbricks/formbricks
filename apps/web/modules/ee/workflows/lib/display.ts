@@ -8,9 +8,10 @@ import {
   getBlankSendEmailContentFields,
 } from "@formbricks/workflows";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
-import type {
-  TWorkflowNodeFieldFocusRequest,
-  TWorkflowValidationProblem,
+import {
+  type TWorkflowNodeFieldFocusRequest,
+  type TWorkflowValidationProblem,
+  workflowProblemFields,
 } from "@/modules/ee/workflows/state/editor";
 
 type TBadgeType = "warning" | "success" | "error" | "gray";
@@ -110,16 +111,12 @@ export const getWorkflowValidationProblemLocation = (
   return null;
 };
 
-// Exactly the step-level path `step_incomplete` reports at — deliberately not the looser
-// NODE_FIELD_PATTERN above. A problem somewhere else on an action node (a shape issue at
-// `nodes.N.label`, an unsupported `nodes.N.type`) must not resolve to "the first blank content
-// field", which would land the user on a field the message never mentioned.
-const NODE_CONFIG_FIELD_PATTERN = /^nodes\.(\d+)\.config$/;
-
-// Which trigger config path maps to which control in the trigger form.
+// Which trigger config path maps to which control in the trigger form. Keyed off the shared
+// builders, so a renamed path is a compile error here rather than a jump that silently stops
+// resolving at runtime.
 const TRIGGER_CONFIG_FIELD_TARGETS: Record<string, string> = {
-  "trigger.config.surveyId": "surveyId",
-  "trigger.config.endingCardIds": "endingCardIds",
+  [workflowProblemFields.triggerSurveyId]: "surveyId",
+  [workflowProblemFields.triggerEndingCardIds]: "endingCardIds",
 };
 
 /**
@@ -137,9 +134,12 @@ export const getWorkflowValidationProblemFocusTarget = (
 ): TWorkflowNodeFieldFocusRequest | null => {
   if (!definition) return null;
 
-  const nodeMatch = NODE_CONFIG_FIELD_PATTERN.exec(problem.field);
-  if (nodeMatch) {
-    const node = definition.nodes[Number(nodeMatch[1])];
+  // Only the exact step-level path `step_incomplete` reports at resolves to a content field. A
+  // problem elsewhere on an action node (a shape issue at `nodes.N.label`, an unsupported
+  // `nodes.N.type`) must not land the user on a field its message never mentioned.
+  const nodeIndex = workflowProblemFields.parseNodeConfigIndex(problem.field);
+  if (nodeIndex !== null) {
+    const node = definition.nodes[nodeIndex];
     // Covers an out-of-range index too: `undefined?.type` is undefined, which is not "action".
     if (node?.type !== "action") return null;
     const [firstBlankField] = getBlankSendEmailContentFields(node.config);

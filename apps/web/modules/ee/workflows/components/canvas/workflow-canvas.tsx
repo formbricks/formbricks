@@ -27,6 +27,7 @@ import {
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
 } from "@/modules/ee/workflows/lib/definition-to-flow";
+import { WORKFLOW_EDITOR_COLUMN_HEIGHT_CLASS } from "@/modules/ee/workflows/lib/editor-layout";
 import {
   type TWorkflowNodeData,
   addWorkflowTriggerAtom,
@@ -200,8 +201,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     <div
       className={cn(
         // Fixed viewport-based height (not self-stretch): a tall inspector must not stretch the
-        // canvas with it. 220px ≈ page chrome above the canvas; kept in sync with loading.tsx.
-        "relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
+        // canvas with it. The height itself is shared with the inspector's cap so the two columns
+        // agree on the editor's vertical budget; kept in sync with loading.tsx.
+        "relative min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white",
+        WORKFLOW_EDITOR_COLUMN_HEIGHT_CLASS
       )}>
       {/* The inspector only ever shows a node's config now, so the collapse toggle is only
           offered while one is open. */}

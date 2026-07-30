@@ -1,6 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/cn";
+import { WORKFLOW_EDITOR_COLUMN_HEIGHT_CLASS } from "@/modules/ee/workflows/lib/editor-layout";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
 export const RunsTableSkeleton = () => (
@@ -58,8 +60,12 @@ export const WorkflowBuilderBodyLoading = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-4">
-        {/* Mirrors the canvas' fixed height in workflow-canvas.tsx so hydration doesn't shift. */}
-        <div className="relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
+        {/* Shares the canvas' fixed height so hydration doesn't shift. */}
+        <div
+          className={cn(
+            "relative min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white",
+            WORKFLOW_EDITOR_COLUMN_HEIGHT_CLASS
+          )}>
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <Skeleton className="h-9 w-20 rounded-md" />
             <Skeleton className="size-9 rounded-md" />

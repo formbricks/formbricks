@@ -51,6 +51,12 @@ export type TextEditorProps = {
   editable?: boolean;
   onEmptyChange?: (isEmpty: boolean) => void;
   isInvalid?: boolean;
+  /**
+   * Id of the element describing an invalid state (an inline error message). Forwarded to the
+   * contenteditable alongside `aria-invalid`, so the editor announces its error like a native input
+   * does — `isInvalid` alone only paints the border red.
+   */
+  ariaDescribedBy?: string;
   localSurvey?: TSurvey;
   elementId?: string;
   selectedLanguageCode?: string;
@@ -144,6 +150,8 @@ export const Editor = (props: TextEditorProps) => {
                     style={{ height: props.height }}
                     className="editor-input"
                     aria-labelledby={props.id}
+                    aria-invalid={props.isInvalid ? true : undefined}
+                    aria-describedby={props.ariaDescribedBy}
                     dir="auto"
                   />
                 }

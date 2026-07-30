@@ -3,6 +3,8 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
+import { cn } from "@/lib/cn";
+import { WORKFLOW_EDITOR_COLUMN_MAX_HEIGHT_CLASS } from "@/modules/ee/workflows/lib/editor-layout";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
   selectedWorkflowNodeIdAtom,
@@ -66,12 +68,21 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   };
 
   return (
-    <aside className="w-[360px] shrink-0 self-start rounded-lg border border-slate-200 bg-white">
-      <div className="flex flex-col gap-3">
-        <header className="flex items-center border-b border-slate-200 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</h2>
-        </header>
-        <div className="flex flex-col gap-3 px-3 pb-4">
+    // Capped at the canvas's height and scrolled internally: a config form taller than the canvas
+    // must not grow the page. Without the cap the app shell's scroll container overflows and a
+    // window-level scrollbar appears — one that cannot help, since the canvas is a fixed-height
+    // overflow-hidden box, so scrolling the page only reveals blank space beside it. The header
+    // stays put while the fields scroll under it.
+    <aside
+      className={cn(
+        "flex w-[360px] shrink-0 flex-col self-start overflow-hidden rounded-lg border border-slate-200 bg-white",
+        WORKFLOW_EDITOR_COLUMN_MAX_HEIGHT_CLASS
+      )}>
+      <header className="flex shrink-0 items-center border-b border-slate-200 px-4 py-3">
+        <h2 className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</h2>
+      </header>
+      <div className="scroll-bar min-h-0 flex-1 overflow-y-auto">
+        <div className="flex flex-col gap-3 px-3 pt-3 pb-4">
           {!isEditable && (
             <Alert variant="info" size="small">
               <AlertDescription>{t("workspace.workflows.edit_blocked_active")}</AlertDescription>

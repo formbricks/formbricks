@@ -15,13 +15,9 @@ import {
   WorkflowFieldLabel,
 } from "@/modules/ee/workflows/components/inspector/workflow-field";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
+import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
-import {
-  clearWorkflowNodeFieldFocusAtom,
-  openWorkflowNodeConfigModalAtom,
-  workflowDefinitionAtom,
-  workflowNodeFieldFocusRequestAtom,
-} from "@/modules/ee/workflows/state/editor";
+import { openWorkflowNodeConfigModalAtom, workflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import {
   type EmailSendToOption,
@@ -76,8 +72,6 @@ export const WorkflowEmailActionForm = ({
   const authoringContext = useWorkflowEmailAuthoringContext();
   const definition = useAtomValue(workflowDefinitionAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
-  const focusRequest = useAtomValue(workflowNodeFieldFocusRequestAtom);
-  const clearFocusRequest = useSetAtom(clearWorkflowNodeFieldFocusAtom);
   const [firstRender, setFirstRender] = useState(true);
 
   // Which required fields may show their error. A freshly added node stays clean until the user
@@ -117,27 +111,14 @@ export const WorkflowEmailActionForm = ({
 
   // Arriving from the validation problems dialog: reveal every missing field on this node (the
   // point of the jump is to answer "which field is wrong") and focus the one it pointed at.
-  useEffect(() => {
-    if (focusRequest?.nodeId !== node.id) return;
-    const { field } = focusRequest;
-    markTouched(...getBlankSendEmailContentFields(node.config));
-
-    // One frame late so the inspector's width transition has laid the panel out before we scroll.
-    // The request is cleared inside the frame, not before it: clearing is what re-runs this effect,
-    // and an earlier clear would let the re-run's cleanup cancel the frame before it ever fired.
-    const frame = requestAnimationFrame(() => {
-      const target =
-        field === "body"
-          ? bodyWrapperRef.current?.querySelector<HTMLElement>('[contenteditable="true"]')
-          : document.getElementById(FIELD_INPUT_IDS[field as keyof typeof FIELD_INPUT_IDS]);
-      target?.focus();
-      target?.scrollIntoView({ block: "nearest" });
-      clearFocusRequest();
-    });
-    return () => cancelAnimationFrame(frame);
-    // node.config is read for the reveal only; re-running on each keystroke would re-focus mid-edit.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusRequest, node.id, clearFocusRequest, markTouched]);
+  useWorkflowNodeFieldFocus({
+    nodeId: node.id,
+    onRequest: () => markTouched(...getBlankSendEmailContentFields(node.config)),
+    resolveElement: (field) =>
+      field === "body"
+        ? bodyWrapperRef.current?.querySelector<HTMLElement>('[contenteditable="true"]')
+        : document.getElementById(FIELD_INPUT_IDS[field as keyof typeof FIELD_INPUT_IDS]),
+  });
 
   const triggerSurveyId = definition?.trigger?.type === "trigger" ? definition.trigger.config.surveyId : null;
   const survey = resolveBoundTriggerSurvey(authoringContext, definition);
@@ -283,6 +264,7 @@ export const WorkflowEmailActionForm = ({
           // signal that the user has engaged with this field.
           onEmptyChange={handleBodyEmptyChange}
           isInvalid={invalidFields.has("body")}
+          ariaDescribedBy={invalidFields.has("body") ? "workflow-email-body-error" : undefined}
           firstRender={firstRender}
           setFirstRender={setFirstRender}
           editable={isEditable}

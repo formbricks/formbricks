@@ -2,7 +2,7 @@
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
@@ -10,16 +10,15 @@ import {
   WorkflowFieldError,
   WorkflowFieldLabel,
 } from "@/modules/ee/workflows/components/inspector/workflow-field";
+import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
 import { reconcileEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
 import {
   useWorkflowSurveyEndings,
   useWorkflowSurveyOptions,
 } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
 import {
-  clearWorkflowNodeFieldFocusAtom,
   hasBoundTriggerSurveyAtom,
   prunedTriggerEndingCardIdsAtom,
-  workflowNodeFieldFocusRequestAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
@@ -47,8 +46,6 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   const surveyOptionsQuery = useWorkflowSurveyOptions(workspaceId);
   const triggerSurveyId = node.config.surveyId || null;
   const endingsQuery = useWorkflowSurveyEndings(triggerSurveyId);
-  const focusRequest = useAtomValue(workflowNodeFieldFocusRequestAtom);
-  const clearFocusRequest = useSetAtom(clearWorkflowNodeFieldFocusAtom);
   const hasBoundSurvey = useAtomValue(hasBoundTriggerSurveyAtom);
 
   // An unbound survey restated inline, so a jump from the problems dialog lands on a control that
@@ -63,22 +60,13 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
 
   // Jump target for the trigger's problems, raised by the validation problems dialog: an unbound
   // survey goes to the picker, an ending problem to the scope select it belongs to.
-  useEffect(() => {
-    if (focusRequest?.nodeId !== node.id) return;
-    const { field } = focusRequest;
-    // One frame late so the inspector's width transition has laid the panel out before we scroll.
-    // The request is cleared inside the frame, not before it: clearing is what re-runs this effect,
-    // and an earlier clear would let the re-run's cleanup cancel the frame before it ever fired.
-    const frame = requestAnimationFrame(() => {
-      const target = document.getElementById(
+  useWorkflowNodeFieldFocus({
+    nodeId: node.id,
+    resolveElement: (field) =>
+      document.getElementById(
         field === "endingCardIds" ? "workflow-trigger-ending-scope" : "workflow-trigger-survey"
-      );
-      target?.focus();
-      target?.scrollIntoView({ block: "nearest" });
-      clearFocusRequest();
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [focusRequest, node.id, clearFocusRequest]);
+      ),
+  });
 
   // Only an authority once the query has SETTLED for the current survey; null until then, so a
   // pending fetch never reads as "no endings" and the stored ids are taken at face value.

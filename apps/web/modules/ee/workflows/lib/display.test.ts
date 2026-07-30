@@ -1,7 +1,11 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
-import type { TWorkflowValidationProblem } from "@/modules/ee/workflows/state/editor";
+import {
+  type TWorkflowValidationProblem,
+  deriveTriggerEndingProblems,
+  deriveWorkflowValidation,
+} from "@/modules/ee/workflows/state/editor";
 import {
   getWorkflowRunLogStatusBadge,
   getWorkflowRunStatusBadge,
@@ -108,6 +112,77 @@ describe("getWorkflowValidationProblemLocation", () => {
     expect(
       getWorkflowValidationProblemLocation(problem("trigger.config.surveyId"), triggerless, t)
     ).toBeNull();
+  });
+});
+
+describe("problem field paths stay shared between producer and consumer", () => {
+  // The producer (deriveWorkflowValidation) and this consumer both go through
+  // workflowProblemFields. Feeding the producer's OWN output back in proves the round trip, so a
+  // renamed path can't compile on one side and silently stop resolving on the other.
+  const definition = {
+    schemaVersion: 1,
+    entryNodeId: "trigger-1",
+    trigger: {
+      id: "trigger-1",
+      type: "trigger",
+      triggerType: "response.completed",
+      config: { surveyId: "survey-1", endingCardIds: [] },
+    },
+    nodes: [
+      {
+        id: "email-1",
+        type: "action",
+        actionType: "send_email",
+        // Otherwise valid so the schema reaches its content check: an incomplete config shape fails
+        // the discriminated union at `nodes.0` and reports as definition_invalid instead.
+        config: {
+          to: "",
+          from: "team@example.com",
+          replyTo: [],
+          subject: "",
+          body: "",
+          attachResponseData: false,
+        },
+      },
+    ],
+    edges: [{ id: "e1", source: "trigger-1", target: "email-1" }],
+  } as unknown as TWorkflowDefinition;
+
+  test("a step_incomplete problem the producer emitted resolves to a field", () => {
+    const { problems } = deriveWorkflowValidation({
+      workflowName: "wf",
+      definition,
+      hasBoundTriggerSurvey: true,
+    });
+    const stepProblem = problems.find((p) => p.code === "step_incomplete");
+    expect(stepProblem).toBeDefined();
+    expect(getWorkflowValidationProblemFocusTarget(stepProblem!, definition)).toEqual({
+      nodeId: "email-1",
+      field: "to",
+    });
+  });
+
+  test("an unbound-survey problem the producer emitted resolves to the survey picker", () => {
+    const { problems } = deriveWorkflowValidation({
+      workflowName: "wf",
+      definition,
+      hasBoundTriggerSurvey: false,
+    });
+    const surveyProblem = problems.find((p) => p.code === "trigger_survey_unbound");
+    expect(surveyProblem).toBeDefined();
+    expect(getWorkflowValidationProblemFocusTarget(surveyProblem!, definition)).toEqual({
+      nodeId: "trigger-1",
+      field: "surveyId",
+    });
+  });
+
+  test("a stale-ending problem the producer emitted resolves to the endings control", () => {
+    const [endingProblem] = deriveTriggerEndingProblems(["gone"], ["kept"]);
+    expect(endingProblem).toBeDefined();
+    expect(getWorkflowValidationProblemFocusTarget(endingProblem, definition)).toEqual({
+      nodeId: "trigger-1",
+      field: "endingCardIds",
+    });
   });
 });
 
