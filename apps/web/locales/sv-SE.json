@@ -124,14 +124,14 @@
       "user_successfully_created_info": "Vi har kontrollerat om det finns ett konto kopplat till {email}. Om inget fanns har vi skapat ett åt dig. Om ett konto redan fanns gjordes inga ändringar. Vänligen logga in nedan för att fortsätta."
     },
     "verification-requested": {
+      "email_not_configured_description": "Den här Formbricks-instansen har ingen e-postserver konfigurerad, så ingen verifieringslänk kunde skickas. Kontakta din administratör.",
+      "email_not_configured_title": "E-post är inte konfigurerad",
       "invalid_email_address": "Ogiltig e-postadress",
       "invalid_token": "Ogiltig token ☹️",
       "new_email_verification_success": "Om adressen är giltig har ett verifieringsmeddelande skickats.",
       "no_email_provided": "Ingen e-post angiven",
       "please_confirm_your_email_address": "Vänligen bekräfta din e-postadress",
       "resend_verification_email": "Skicka verifieringsmeddelande igen",
-      "send_failed_description": "Ditt konto skapades, men verifieringsmeddelandet kunde inte skickas. Försök igen nedan eller kontakta supporten om det fortsätter att misslyckas.",
-      "send_failed_title": "Vi kunde inte skicka ditt verifieringsmeddelande",
       "verification_email_resent_successfully": "Verifieringsmeddelande skickat! Kontrollera din inkorg.",
       "verification_email_successfully_sent_info": "Om det finns ett konto kopplat till {email} har vi skickat en verifieringslänk till den adressen. Kontrollera din inkorg för att slutföra registreringen.",
       "you_didnt_receive_an_email_or_your_link_expired": "Fick du ingen e-post eller har din länk gått ut?"

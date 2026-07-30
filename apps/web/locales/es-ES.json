@@ -124,14 +124,14 @@
       "user_successfully_created_info": "Hemos comprobado si existe una cuenta asociada con {email}. Si no existía ninguna, hemos creado una para ti. Si ya existía una cuenta, no se realizaron cambios. Por favor, inicia sesión a continuación para continuar."
     },
     "verification-requested": {
+      "email_not_configured_description": "Esta instancia de Formbricks no tiene un servidor de correo configurado, por lo que no se pudo enviar ningún enlace de verificación. Ponte en contacto con tu administrador.",
+      "email_not_configured_title": "El correo electrónico no está configurado",
       "invalid_email_address": "Dirección de correo electrónico no válida",
       "invalid_token": "Token no válido ☹️",
       "new_email_verification_success": "Si la dirección es válida, se ha enviado un correo electrónico de verificación.",
       "no_email_provided": "No se proporcionó correo electrónico",
       "please_confirm_your_email_address": "Por favor, confirma tu dirección de correo electrónico",
       "resend_verification_email": "Reenviar correo de verificación",
-      "send_failed_description": "Tu cuenta se ha creado, pero no se pudo enviar el correo de verificación. Inténtalo de nuevo abajo o contacta con soporte si el problema persiste.",
-      "send_failed_title": "No pudimos enviar tu correo de verificación",
       "verification_email_resent_successfully": "¡Correo de verificación enviado! Por favor, revisa tu bandeja de entrada.",
       "verification_email_successfully_sent_info": "Si hay una cuenta asociada con {email}, hemos enviado un enlace de verificación a esa dirección. Por favor, revisa tu bandeja de entrada para completar el registro.",
       "you_didnt_receive_an_email_or_your_link_expired": "¿No recibiste un correo electrónico o tu enlace expiró?"

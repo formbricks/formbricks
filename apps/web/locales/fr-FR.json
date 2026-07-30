@@ -124,14 +124,14 @@
       "user_successfully_created_info": "Nous avons vérifié s'il existait un compte associé à {email}. Si aucun n'existait, nous en avons créé un pour vous. Si un compte existait déjà, aucune modification n'a été apportée. Veuillez vous connecter ci-dessous pour continuer."
     },
     "verification-requested": {
+      "email_not_configured_description": "Cette instance Formbricks n'a pas de serveur email configuré, aucun lien de vérification n'a donc pu être envoyé. Veuillez contacter votre administrateur.",
+      "email_not_configured_title": "L'email n'est pas configuré",
       "invalid_email_address": "Adresse e-mail invalide",
       "invalid_token": "Jeton non valide ☹️",
       "new_email_verification_success": "Si l'adresse est valide, un email de vérification a été envoyé.",
       "no_email_provided": "Aucun e-mail fourni",
       "please_confirm_your_email_address": "Veuillez confirmer votre adresse e-mail.",
       "resend_verification_email": "Renvoyer l'email de vérification",
-      "send_failed_description": "Votre compte a été créé, mais l'email de vérification n'a pas pu être envoyé. Réessayez ci-dessous ou contactez le support si le problème persiste.",
-      "send_failed_title": "Nous n'avons pas pu envoyer votre email de vérification",
       "verification_email_resent_successfully": "E-mail de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
       "verification_email_successfully_sent_info": "Si un compte est associé à {email}, nous avons envoyé un lien de vérification à cette adresse. Veuillez vérifier votre boîte de réception pour terminer l'inscription.",
       "you_didnt_receive_an_email_or_your_link_expired": "Vous n'avez pas reçu d'email ou votre lien a expiré ?"

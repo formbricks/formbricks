@@ -124,14 +124,14 @@
       "user_successfully_created_info": "Wir haben nach einem Konto gesucht, das mit {email} verknüpft ist. Falls keines existierte, haben wir eines für dich erstellt. Falls bereits ein Konto vorhanden war, wurden keine Änderungen vorgenommen. Bitte melde dich unten an, um fortzufahren."
     },
     "verification-requested": {
+      "email_not_configured_description": "Für diese Formbricks-Instanz ist kein E-Mail-Server eingerichtet, daher konnte kein Bestätigungslink gesendet werden. Bitte wende dich an deinen Administrator.",
+      "email_not_configured_title": "E-Mail ist nicht konfiguriert",
       "invalid_email_address": "Ungültige E-Mail-Adresse",
       "invalid_token": "Ungültiger Token ☹️",
       "new_email_verification_success": "Falls die Adresse gültig ist, wurde eine Bestätigungs-E-Mail versendet.",
       "no_email_provided": "Keine E-Mail-Adresse angegeben",
       "please_confirm_your_email_address": "Bitte bestätige deine E-Mail-Adresse",
       "resend_verification_email": "Bestätigungs-E-Mail erneut senden",
-      "send_failed_description": "Dein Konto wurde erstellt, aber die Bestätigungs-E-Mail konnte nicht gesendet werden. Versuche es unten erneut oder kontaktiere den Support, wenn es weiterhin fehlschlägt.",
-      "send_failed_title": "Wir konnten deine Bestätigungs-E-Mail nicht senden",
       "verification_email_resent_successfully": "Bestätigungs-E-Mail versendet! Bitte überprüfe deinen Posteingang.",
       "verification_email_successfully_sent_info": "Falls ein Konto mit {email} verknüpft ist, haben wir einen Bestätigungslink an diese Adresse gesendet. Bitte überprüfe Deinen Posteingang, um die Registrierung abzuschließen.",
       "you_didnt_receive_an_email_or_your_link_expired": "Du hast keine E-Mail erhalten oder Dein Link ist abgelaufen?"

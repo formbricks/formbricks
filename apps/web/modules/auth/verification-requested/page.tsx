@@ -28,7 +28,11 @@ export const VerificationRequestedPage = async ({
   // would make this screen differ by whether the account already existed (ENG-2099). A transient send
   // failure on a configured mailer is logged and reported to Sentry instead, and the resend button
   // below surfaces it directly — that endpoint propagates the error rather than swallowing it.
-  const sendFailed = !IS_SMTP_CONFIGURED;
+  //
+  // The copy therefore talks about the instance, never about this visitor's account: on an instance with
+  // no mailer this renders for everyone, including someone whose address already had an account and for
+  // whom nothing was created. It also does not send them to the resend button, which cannot work here.
+  const mailerNotConfigured = !IS_SMTP_CONFIGURED;
   // Carry the callback (for an invite sign-up, `/invite?token=…`) into the log-in link below, so a
   // visitor who already has an account can log in and land straight back on the invite. Present for
   // every invited visitor, not just those with an account — the link must not vary with that
@@ -46,11 +50,11 @@ export const VerificationRequestedPage = async ({
             <h1 className="mb-4 text-center text-lg leading-2 font-semibold text-slate-900">
               {t("auth.verification-requested.please_confirm_your_email_address")}
             </h1>
-            {sendFailed ? (
+            {mailerNotConfigured ? (
               <Alert variant="warning" className="text-left" role="status">
-                <AlertTitle>{t("auth.verification-requested.send_failed_title")}</AlertTitle>
+                <AlertTitle>{t("auth.verification-requested.email_not_configured_title")}</AlertTitle>
                 <AlertDescription>
-                  <p>{t("auth.verification-requested.send_failed_description")}</p>
+                  <p>{t("auth.verification-requested.email_not_configured_description")}</p>
                 </AlertDescription>
               </Alert>
             ) : (
@@ -67,9 +71,10 @@ export const VerificationRequestedPage = async ({
               Every visitor sees this, including one whose address already has an account — for them no
               email is coming and the resend button above no-ops, so this link is the way out. It is
               deliberately unconditional: making it depend on whether the account exists would turn this
-              page into an account-existence lookup (ENG-2099). The message above is already phrased
-              conditionally ("if there is an account associated with …"), so neither case is told
-              anything untrue.
+              page into an account-existence lookup (ENG-2099). Neither case is told anything untrue,
+              because both messages above are careful not to assert that an account was created — the
+              usual one is conditional ("if there is an account associated with …") and the no-mailer one
+              only talks about the instance.
             */}
             <p className="mt-4 text-center text-xs text-slate-500">
               {t("auth.signup.have_an_account")}{" "}

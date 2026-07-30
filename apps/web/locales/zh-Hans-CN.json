@@ -124,14 +124,14 @@
       "user_successfully_created_info": "我们已检查与 {email} 相关联的账户。如果没有，我们已为您创建一个。如果已有账户，则未作任何更改。请在下面登录以继续。"
     },
     "verification-requested": {
+      "email_not_configured_description": "此 Formbricks 实例未配置邮件服务器，因此无法发送验证链接。请联系您的管理员。",
+      "email_not_configured_title": "邮件未配置",
       "invalid_email_address": "无效 的 电子 邮件 地址",
       "invalid_token": "无效的 token ☹️",
       "new_email_verification_success": "如果 地址 有效，验证 电子邮件 已发送。",
       "no_email_provided": "未提供 邮箱",
       "please_confirm_your_email_address": "请 确认您的 电子邮件地址",
       "resend_verification_email": "重新 发送 验证 邮件",
-      "send_failed_description": "您的账户已创建，但验证邮件发送失败。请在下方重试，如果问题持续存在，请联系支持团队。",
-      "send_failed_title": "无法发送验证邮件",
       "verification_email_resent_successfully": "验证 电子邮件 已 发送！请 检查 您的 收件箱。",
       "verification_email_successfully_sent_info": "如果有一个 账户 与 {email} 相关 联，我们已将 验证 链接 发送到该 地址 。请查看您的 收件箱 以完成 注册 。",
       "you_didnt_receive_an_email_or_your_link_expired": "您 没 有 收 到 电 子 邮 件 或者 链接 已 过 期 ?"

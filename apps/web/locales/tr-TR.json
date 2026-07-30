@@ -124,14 +124,14 @@
       "user_successfully_created_info": "{email} ile ilişkili bir hesap kontrol ettik. Yoksa sizin için bir tane oluşturduk. Zaten bir hesap varsa, herhangi bir değişiklik yapılmadı. Devam etmek için lütfen aşağıdan giriş yapın."
     },
     "verification-requested": {
+      "email_not_configured_description": "Bu Formbricks örneğinde yapılandırılmış bir email sunucusu yok, bu nedenle doğrulama bağlantısı gönderilemedi. Lütfen yöneticinizle iletişime geçin.",
+      "email_not_configured_title": "Email yapılandırılmamış",
       "invalid_email_address": "Geçersiz email adresi",
       "invalid_token": "Geçersiz token ☹️",
       "new_email_verification_success": "Adres geçerliyse bir doğrulama email'i gönderildi.",
       "no_email_provided": "Email sağlanmadı",
       "please_confirm_your_email_address": "Lütfen email adresinizi onaylayın",
       "resend_verification_email": "Doğrulama email'ini tekrar gönder",
-      "send_failed_description": "Hesabınız oluşturuldu ancak doğrulama email'i gönderilemedi. Aşağıdan tekrar deneyin veya sorun devam ederse destek ekibiyle iletişime geçin.",
-      "send_failed_title": "Doğrulama email'inizi gönderemedik",
       "verification_email_resent_successfully": "Doğrulama email'i gönderildi! Lütfen gelen kutunuzu kontrol edin.",
       "verification_email_successfully_sent_info": "{email} ile ilişkili bir hesap varsa, o adrese bir doğrulama bağlantısı gönderdik. Kayıt işlemini tamamlamak için lütfen gelen kutunuzu kontrol edin.",
       "you_didnt_receive_an_email_or_your_link_expired": "Email almadınız mı veya bağlantınızın süresi mi doldu?"

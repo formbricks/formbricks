@@ -93,7 +93,10 @@ async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): 
  */
 type TSignUpOutcome =
   | { status: "created"; user: TCreatedUser }
-  | { status: "already_existed"; user: TCreatedUser | undefined };
+  // Carries no user on purpose. Nothing downstream may act on a pre-existing account, so not handing
+  // one out is the cheapest way to keep it that way — there is no object to accidentally thread into a
+  // side effect later.
+  | { status: "already_existed" };
 
 async function signUpUserSafely(
   email: string,
@@ -124,9 +127,8 @@ async function signUpUserSafely(
     }
     // Enumeration-safe: a duplicate email resolves to "already existed", not a surfaced error.
     // Reachable only when Better Auth is configured to THROW on a duplicate — see the id check below.
-    const existing = await getUserByEmail(normalizedEmail);
-    if (existing) {
-      return { status: "already_existed", user: existing };
+    if (await getUserByEmail(normalizedEmail)) {
+      return { status: "already_existed" };
     }
     throw error;
   }
@@ -147,7 +149,7 @@ async function signUpUserSafely(
   // only fires under a configuration that makes Better Auth throw USER_ALREADY_EXISTS instead, which
   // is why both signals are kept.
   if (user.id !== signedUpUserId) {
-    return { status: "already_existed", user };
+    return { status: "already_existed" };
   }
 
   // signUpEmail can't carry the chosen locale (not a Better Auth field), so apply it afterwards — only

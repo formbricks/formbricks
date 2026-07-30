@@ -124,14 +124,14 @@
       "user_successfully_created_info": "入力されたメールアドレス ({email}) に関連するアカウントをチェックしました。アカウントが存在しない場合、作成されました。すでに存在する場合、変更はありません。続行するには、以下のログインフォームからログインしてください。"
     },
     "verification-requested": {
+      "email_not_configured_description": "この Formbricks インスタンスにはメールサーバーが設定されていないため、確認リンクを送信できませんでした。管理者にお問い合わせください。",
+      "email_not_configured_title": "メールが設定されていません",
       "invalid_email_address": "無効なメールアドレスです",
       "invalid_token": "無効なトークンです ☹️",
       "new_email_verification_success": "アドレスが有効であれば、確認メールが送信されました。",
       "no_email_provided": "メールアドレスが提供されていません",
       "please_confirm_your_email_address": "メールアドレスを確認してください",
       "resend_verification_email": "確認メールを再送信",
-      "send_failed_description": "アカウントは作成されましたが、確認メールの送信に失敗しました。下から再試行するか、問題が続く場合はサポートにお問い合わせください。",
-      "send_failed_title": "確認メールを送信できませんでした",
       "verification_email_resent_successfully": "確認メールを送信しました！受信トレイを確認してください。",
       "verification_email_successfully_sent_info": "もし {email} に関連するアカウントがあれば、確認リンクがそのアドレスに送信されました。受信トレイを確認してサインアップを完了してください。",
       "you_didnt_receive_an_email_or_your_link_expired": "メールを受け取っていないか、リンクが期限切れですか？"

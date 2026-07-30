@@ -124,14 +124,14 @@
       "user_successfully_created_info": "Ellenőriztük, hogy létezik-e a(z) {email} címhez rendelt fiók. Ha nem létezett, akkor létrehoztunk egyet Önnek. Ha a fiók már létezett, akkor nem történt változtatás. Jelentkezzen be lent a folytatáshoz."
     },
     "verification-requested": {
+      "email_not_configured_description": "Ehhez a Formbricks-példányhoz nincs beállítva e-mail-kiszolgáló, ezért nem sikerült ellenőrző hivatkozást küldeni. Kérjük, vegye fel a kapcsolatot a rendszergazdával.",
+      "email_not_configured_title": "Az e-mail nincs beállítva",
       "invalid_email_address": "Érvénytelen e-mail-cím",
       "invalid_token": "Érvénytelen token ☹️",
       "new_email_verification_success": "Ha a cím érvényes, akkor egy ellenőrző e-mail került elküldésre.",
       "no_email_provided": "Nincs e-mail-cím megadva",
       "please_confirm_your_email_address": "Erősítse meg az e-mail-címét",
       "resend_verification_email": "Ellenőrző e-mail újraküldése",
-      "send_failed_description": "A fiókja létrejött, de az ellenőrző e-mail elküldése nem sikerült. Próbálja újra alább, vagy vegye fel a kapcsolatot a támogatással, ha a hiba továbbra is fennáll.",
-      "send_failed_title": "Nem tudtuk elküldeni az ellenőrző e-mailt",
       "verification_email_resent_successfully": "Az ellenőrző e-mail elküldve! Nézze meg a beérkezett üzeneteit.",
       "verification_email_successfully_sent_info": "Ha létezik a(z) {email} címhez rendelt fiók, akkor elküldtünk egy ellenőrző hivatkozást arra a címre. Nézze meg a beérkezett üzeneteit a regisztráció befejezéséhez.",
       "you_didnt_receive_an_email_or_your_link_expired": "Nem kapott e-mailt vagy a hivatkozása lejárt?"

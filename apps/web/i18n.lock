@@ -102,14 +102,14 @@ checksums:
     auth/signup/title: 96addc349f834eaa5d14c786d5478b1c
     auth/signup_without_verification_success/user_successfully_created: e7ee262de26fdbd500023d9fb1982cf9
     auth/signup_without_verification_success/user_successfully_created_info: 0502de5e7ef8594cc65cf890f13f9fcc
+    auth/verification-requested/email_not_configured_description: bea45846d6b8bd77c7118bf9cde12021
+    auth/verification-requested/email_not_configured_title: 544c22243fe09611f559c33a7d3e105a
     auth/verification-requested/invalid_email_address: b2d9f25626f2d15c7c63e0281bccc247
     auth/verification-requested/invalid_token: 9008919416c117067e95efda0024655d
     auth/verification-requested/new_email_verification_success: d76f50ad638163a1cb964a191bcf7176
     auth/verification-requested/no_email_provided: 3ec84e76a2b1010343b32450adbf6db9
     auth/verification-requested/please_confirm_your_email_address: 73aa4a257a4ccbfed94d888a9e265533
     auth/verification-requested/resend_verification_email: bd0e6492ef0f3dd61eb1e2ba20f3e147
-    auth/verification-requested/send_failed_description: 3ae9eb5edd73fcfa287cf9a8344c3deb
-    auth/verification-requested/send_failed_title: 6b3a753fa548df8ebc8187e4ffa082e5
     auth/verification-requested/verification_email_resent_successfully: ef61258c14559afcd00252f90e6876fb
     auth/verification-requested/verification_email_successfully_sent_info: 2a98caf0d12239699cd3f6bbc987b941
     auth/verification-requested/you_didnt_receive_an_email_or_your_link_expired: cab28d1246e22c11d0c3ce907d55c983

@@ -102,7 +102,6 @@ export const signInAuditDatabaseHook: NonNullable<
 };
 
 /**
-/**
  * Better Auth embeds user email addresses in some log messages — `sign-up.mjs` logs
  * `Sign-up attempt for existing email: <address>` on every duplicate sign-up, at `info`. Today
  * `level: "warn"` suppresses that one, so nothing leaks; but the level is exactly what someone would
