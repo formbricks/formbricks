@@ -38,15 +38,17 @@ export type TAuthzedRelationshipObservation = Readonly<{
 /**
  * Read every relationship matching `filter`, at a single consistent revision.
  *
- * The first page resolves fully consistently and its revision pins every later page, so the result
- * is one coherent view rather than a stitched-together sequence of independently-resolved pages.
+ * Every page is requested with identical parameters and the cursor carries the revision it was issued
+ * at, so the pages of one drain describe one view. SpiceDB enforces the identical-parameters rule by
+ * rejecting a cursor presented with any other argument changed — which is why nothing here varies the
+ * consistency requirement between pages.
  *
  * Throws rather than returning a partial result when:
  *
  * - the match exceeds `AUTHZED_MAX_OBSERVED_RELATIONSHIPS_PER_UNIT` (`authzed_limit_exceeded`), which
  *   also bounds the loop, since every continued iteration must have consumed a full page;
- * - the pinned revision ages out of the datastore's garbage-collection window mid-drain, which
- *   SpiceDB reports as a snapshot-expired failure and the facade maps to a non-retryable error;
+ * - a later page reports a different revision than the first, meaning the pages do not describe one
+ *   view and the observation is torn;
  * - any page fails for the usual operational reasons.
  *
  * Callers are expected to treat a throw as "this unit could not be observed" and continue with other
@@ -62,8 +64,6 @@ export const readAllRelationships = async (
 
   do {
     const page = await client.readRelationships({
-      // Absent on the first call so SpiceDB resolves the latest revision and hands it back.
-      ...(snapshot ? { atSnapshot: snapshot } : {}),
       ...(cursor ? { cursor } : {}),
       filter,
       limit: AUTHZED_MAX_RELATIONSHIP_READS,
@@ -78,8 +78,19 @@ export const readAllRelationships = async (
       });
     }
 
+    // The cursor is supposed to hold the revision steady. Verifying it turns a silent torn read — the
+    // failure that would make a pruning caller delete live relationships — into a loud one.
+    if (snapshot !== null && page.snapshot !== null && page.snapshot.token !== snapshot.token) {
+      throw new AuthzedError({
+        attempts: 0,
+        code: AUTHZED_ERROR_CODES.ABORTED,
+        operation: "read_all_relationships",
+        retryable: true,
+      });
+    }
+
     relationships.push(...page.relationships);
-    snapshot = page.snapshot;
+    snapshot = page.snapshot ?? snapshot;
     cursor = page.cursor ?? undefined;
   } while (cursor);
 

@@ -64,10 +64,37 @@ export type TAuthzedBackfillRequest = Readonly<{
   scope: TAuthzedBackfillScope;
 }>;
 
+/**
+ * PostgreSQL reads the orchestrator needs.
+ *
+ * Injected rather than imported so the orchestrator can be driven against a real SpiceDB without a
+ * database — which is how the compose smoke test exercises the observation, classification, and prune
+ * paths end to end. Note these are reads only; the mutation capability stays separate, so injecting
+ * them does not weaken the dry-run guarantee.
+ */
+export type TAuthzedBackfillSource = Readonly<{
+  findMissingSourceRefs: (
+    refs: ReadonlyArray<TAuthzedSourceRef>
+  ) => Promise<ReadonlyArray<TAuthzedSourceRef>>;
+  organizationExists: (organizationId: string) => Promise<boolean>;
+  readOrganizationIdPage: (
+    page: Readonly<{ afterOrganizationId?: string; limit?: number }>
+  ) => Promise<ReadonlyArray<string>>;
+  readOrganizationSource: (organizationId: string) => Promise<TAuthzedOrganizationSource>;
+}>;
+
+export const defaultBackfillSource: TAuthzedBackfillSource = {
+  findMissingSourceRefs,
+  organizationExists,
+  readOrganizationIdPage,
+  readOrganizationSource,
+};
+
 export type TAuthzedBackfillDependencies = Readonly<{
   apply: TAuthzedBackfillApply;
   /** Read-only slice of the facade. Deliberately not the whole client. */
   client: Pick<TAuthzedClient, "readRelationships">;
+  source?: TAuthzedBackfillSource;
 }>;
 
 export type TAuthzedBackfillCounters = Readonly<{
@@ -288,7 +315,7 @@ export const runAuthzedBackfill = async (
   request: TAuthzedBackfillRequest,
   dependencies: TAuthzedBackfillDependencies
 ): Promise<TAuthzedBackfillResult> => {
-  const { apply, client } = dependencies;
+  const { apply, client, source: sourceReads = defaultBackfillSource } = dependencies;
   const isPruning = request.prune && request.mode === "apply";
 
   let failed = 0;
@@ -331,7 +358,7 @@ export const runAuthzedBackfill = async (
 
     let source: TAuthzedOrganizationSource;
     try {
-      source = await readOrganizationSource(organizationId);
+      source = await sourceReads.readOrganizationSource(organizationId);
     } catch (error) {
       recordFailure(organizationId, error);
       return;
@@ -354,7 +381,7 @@ export const runAuthzedBackfill = async (
         }
         completedAtSnapshot = observation.snapshot ?? completedAtSnapshot;
 
-        const missing = await findMissingSourceRefs(summary.sourceRefs);
+        const missing = await sourceReads.findMissingSourceRefs(summary.sourceRefs);
         orphaned += missing.length;
         for (const ref of missing) {
           if (orphans.length < MAX_REPORTED_ENTRIES) {
@@ -422,7 +449,7 @@ export const runAuthzedBackfill = async (
     ignored += summary.ignored;
     unmanaged.push(...summary.unmanaged.slice(0, MAX_REPORTED_ENTRIES - unmanaged.length));
 
-    const missing = await findMissingSourceRefs(summary.sourceRefs);
+    const missing = await sourceReads.findMissingSourceRefs(summary.sourceRefs);
     orphaned += missing.length;
     orphans.push(...missing.slice(0, MAX_REPORTED_ENTRIES - orphans.length));
 
@@ -447,14 +474,14 @@ export const runAuthzedBackfill = async (
 
   if (request.scope.kind === "organization") {
     const { organizationId } = request.scope;
-    if (!(await organizationExists(organizationId))) {
+    if (!(await sourceReads.organizationExists(organizationId))) {
       throw new Error("Organization not found");
     }
     await processOrganization(organizationId);
   } else {
     let afterOrganizationId = request.scope.afterOrganizationId;
     for (;;) {
-      const organizationIds = await readOrganizationIdPage({
+      const organizationIds = await sourceReads.readOrganizationIdPage({
         afterOrganizationId,
         limit: AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
       });

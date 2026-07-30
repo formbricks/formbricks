@@ -47,7 +47,7 @@ describe("readAllRelationships", () => {
     });
   });
 
-  test("pins every later page to the first page's revision and threads the cursor", async () => {
+  test("threads the cursor and varies nothing else between pages", async () => {
     readRelationships.mockResolvedValueOnce(fullPage("first", "cursor-1")).mockResolvedValueOnce({
       cursor: null,
       relationships: [relationship("last")],
@@ -59,15 +59,29 @@ describe("readAllRelationships", () => {
     expect(observation.relationships).toHaveLength(AUTHZED_MAX_RELATIONSHIP_READS + 1);
     expect(observation.snapshot).toEqual({ token: "revision-1" });
 
-    // Page 1 resolves the revision; page 2 must not resolve its own, or a concurrent write could
-    // hide a relationship from both pages and the caller would read it as absent.
-    expect(readRelationships.mock.calls[0][0]).not.toHaveProperty("atSnapshot");
+    // SpiceDB rejects a cursor presented alongside any other changed argument, so the second request
+    // must differ from the first by the cursor alone.
+    expect(readRelationships.mock.calls[0][0]).toEqual({
+      filter,
+      limit: AUTHZED_MAX_RELATIONSHIP_READS,
+    });
     expect(readRelationships.mock.calls[1][0]).toEqual({
-      atSnapshot: { token: "revision-1" },
       cursor: { token: "cursor-1" },
       filter,
       limit: AUTHZED_MAX_RELATIONSHIP_READS,
     });
+  });
+
+  test("abandons the read when a later page reports a different revision", async () => {
+    // The cursor is supposed to hold the revision steady. If it ever did not, the pages would describe
+    // different views and a pruning caller could delete a relationship that merely moved between them.
+    readRelationships.mockResolvedValueOnce(fullPage("first", "cursor-1")).mockResolvedValueOnce({
+      cursor: null,
+      relationships: [relationship("last")],
+      snapshot: { token: "revision-2" },
+    });
+
+    await expect(readAllRelationships(client, filter)).rejects.toThrow(AUTHZED_ERROR_CODES.ABORTED);
   });
 
   test("stops on a full page that offers no cursor", async () => {
@@ -99,9 +113,9 @@ describe("readAllRelationships", () => {
     expect(readRelationships).toHaveBeenCalledTimes(pagesToExceed + 1);
   });
 
-  test("propagates a mid-drain snapshot expiry instead of reporting what it read so far", async () => {
-    // SpiceDB rejects `atExactSnapshot` once the revision leaves the GC window. Returning the pages
-    // already read would tell a pruning caller that the unread relationships do not exist.
+  test("propagates a mid-drain failure instead of reporting what it read so far", async () => {
+    // Returning the pages already read would tell a pruning caller that the unread relationships do
+    // not exist.
     readRelationships.mockResolvedValueOnce(fullPage("first", "cursor-1")).mockRejectedValueOnce(
       new AuthzedError({
         attempts: 1,

@@ -95,10 +95,13 @@ export type TAuthzedRelationshipReadFilter = Readonly<{
 
 export type TAuthzedRelationshipQuery = Readonly<{
   /**
-   * Revision to read at. Omit on the first page to resolve fully consistently; pass the previous
-   * page's `snapshot` on every subsequent page so the whole read observes one revision.
+   * Resume position from a previous page.
+   *
+   * The cursor carries the revision it was issued at, so continuing with one keeps the whole read on a
+   * single consistent view. SpiceDB enforces this by rejecting a cursor presented alongside *any* other
+   * changed argument — including a changed consistency requirement — so every page of one read must be
+   * issued with identical parameters.
    */
-  atSnapshot?: TAuthzedSnapshot;
   cursor?: TAuthzedReadCursor;
   filter: TAuthzedRelationshipReadFilter;
   limit: number;
@@ -108,7 +111,7 @@ export type TAuthzedRelationshipPage = Readonly<{
   /** Resume position, or `null` when the page was short and the read is exhausted. */
   cursor: TAuthzedReadCursor | null;
   relationships: ReadonlyArray<TAuthzedRelationship>;
-  /** Revision this page was read at. Thread it back through `atSnapshot` to pin later pages. */
+  /** Revision this page was read at. Constant across the pages of one cursored read. */
   snapshot: TAuthzedSnapshot | null;
 }>;
 
@@ -287,9 +290,7 @@ const validateRelationshipQuery = (query: TAuthzedRelationshipQuery): void => {
   const limitValid =
     Number.isSafeInteger(query.limit) && query.limit >= 1 && query.limit <= AUTHZED_MAX_RELATIONSHIP_READS;
 
-  const tokensValid =
-    (query.atSnapshot === undefined || isNonEmpty(query.atSnapshot.token)) &&
-    (query.cursor === undefined || isNonEmpty(query.cursor.token));
+  const tokensValid = query.cursor === undefined || isNonEmpty(query.cursor.token);
 
   if (!isNonEmpty(filter.resourceType) || !optionalFieldsValid || !limitValid || !tokensValid) {
     throw invalidReadRequest();
@@ -419,21 +420,16 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
       return executeAuthzedOperation("read_relationships", async () => {
         const { filter } = query;
         const responses = await sdkClient.promises.readRelationships({
-          // The first page resolves fully consistently so reconciliation observes the latest write,
-          // matching `diffSchema`: the application's configurable permission-check consistency is
-          // never used for operational verification. Later pages pin that exact revision instead, so
-          // the whole read is one consistent view — resolving each page independently would let a
-          // concurrent write hide a relationship from every page, and tooling would then treat a live
-          // relationship as orphaned. Note `atExactSnapshot` fails once the revision ages out of the
-          // datastore's GC window, which callers must surface as an incomplete read.
-          consistency: query.atSnapshot
-            ? {
-                requirement: {
-                  atExactSnapshot: { token: query.atSnapshot.token },
-                  oneofKind: "atExactSnapshot",
-                },
-              }
-            : { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+          // Fully consistent so reconciliation observes the latest write, matching `diffSchema`: the
+          // application's configurable permission-check consistency is never used for operational
+          // verification.
+          //
+          // The same requirement is sent on every page rather than pinning the first page's revision on
+          // later ones. SpiceDB rejects a cursor presented with any other changed argument, consistency
+          // included, and it does not need the help: the cursor already carries the revision it was
+          // issued at, so a cursored read stays on one revision. Substituting `atExactSnapshot` would
+          // both break the cursor and expose the read to snapshot expiry for no benefit.
+          consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
           optionalCursor: query.cursor ? { token: query.cursor.token } : undefined,
           optionalLimit: query.limit,
           relationshipFilter: {
@@ -456,8 +452,8 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
         const lastResponse = responses.at(-1);
         const readAt = lastResponse?.readAt?.token;
 
-        // Without a revision on a non-empty page there is nothing to pin later pages to, so a
-        // multi-page read could not be made consistent. Refuse rather than silently degrade.
+        // A non-empty page always carries the revision it was read at. Without it a caller cannot tell
+        // whether successive pages describe the same view, so refuse rather than silently degrade.
         if (lastResponse && !readAt) {
           throw new AuthzedError({
             attempts: 0,
@@ -474,7 +470,7 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
           // only then is a cursor meaningful.
           cursor: responses.length === query.limit && afterResultCursor ? { token: afterResultCursor } : null,
           relationships: responses.map(toFacadeRelationship),
-          snapshot: query.atSnapshot ?? (readAt ? { token: readAt } : null),
+          snapshot: readAt ? { token: readAt } : null,
         };
       });
     },

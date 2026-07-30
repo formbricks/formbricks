@@ -384,28 +384,24 @@ describe("AuthZed client facade", () => {
       expect(retryMocks.execute).toHaveBeenCalledWith("read_relationships", expect.any(Function));
     });
 
-    test("pins later pages to the supplied revision instead of resolving them independently", async () => {
+    test("continues a cursored read without altering any other argument", async () => {
       sdkMocks.readRelationships.mockResolvedValue([
-        readResponse(membershipRelationship, { readAt: { token: "ignored-revision" } }),
+        readResponse(membershipRelationship, { readAt: { token: "revision-1" } }),
       ]);
 
       const page = await getAuthzedClient().readRelationships({
-        atSnapshot: { token: "pinned-revision" },
         cursor: { token: "resume-here" },
         filter: { resourceType: "organization" },
         limit: 250,
       });
 
-      // The pinned revision is echoed back unchanged so a multi-page read keeps one consistent view.
-      expect(page.snapshot).toEqual({ token: "pinned-revision" });
+      // SpiceDB rejects a cursor presented with any other changed argument, and the cursor already
+      // carries the revision it was issued at — so the consistency requirement must stay put rather
+      // than being swapped for an explicit snapshot on later pages.
+      expect(page.snapshot).toEqual({ token: "revision-1" });
       expect(sdkMocks.readRelationships).toHaveBeenCalledWith(
         expect.objectContaining({
-          consistency: {
-            requirement: {
-              atExactSnapshot: { token: "pinned-revision" },
-              oneofKind: "atExactSnapshot",
-            },
-          },
+          consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
           optionalCursor: { token: "resume-here" },
         })
       );
@@ -505,10 +501,6 @@ describe("AuthZed client facade", () => {
         },
       ],
       ["a blank cursor", { cursor: { token: "" }, filter: { resourceType: "organization" }, limit: 10 }],
-      [
-        "a blank snapshot",
-        { atSnapshot: { token: "" }, filter: { resourceType: "organization" }, limit: 10 },
-      ],
     ])("rejects %s before reaching the SDK", async (_label, query) => {
       await expect(getAuthzedClient().readRelationships(query)).rejects.toThrow(
         AUTHZED_ERROR_CODES.INVALID_REQUEST
