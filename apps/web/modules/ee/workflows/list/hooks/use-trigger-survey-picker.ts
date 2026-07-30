@@ -6,13 +6,9 @@ import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { listSurveys } from "@/modules/survey/list/lib/v3-surveys-client";
 
-// Trigger picker needs every survey in the workspace, not just the first page. Walk the v3
-// cursor-paginated list until exhausted. A typeahead-driven endpoint would scale better for
-// huge workspaces — track that as a follow-up.
+// Picker needs every survey, so walk the v3 cursor list until exhausted.
 const SURVEY_LIST_PAGE_SIZE = 100;
-// Hard ceiling so a runaway/looping cursor can't spin forever (and to bound first-open latency
-// for very large workspaces). At 100/page this covers 2,000 surveys; beyond that the picker is
-// truncated — the typeahead-endpoint follow-up is the real fix.
+// Ceiling so a runaway cursor can't spin forever; covers 2,000 surveys, then the picker truncates.
 const SURVEY_LIST_MAX_PAGES = 20;
 
 interface TWorkflowSurveyOption {
@@ -25,11 +21,9 @@ interface TWorkflowSurveyEnding {
   label: string;
 }
 
-// The v3 survey endpoint serializes i18n strings into a language-keyed map
-// (e.g. `headline = { "en-US": "Thanks!" }`), so the canonical `ZSurveyEndings` shape
-// (`headline.default`) doesn't apply. Read the survey's `defaultLanguage` from the response
-// and look up the headline value under that key, falling back to any other string value if
-// the default slot is missing. HTML is stripped so the trigger dropdown renders plain text.
+// The v3 survey endpoint serializes i18n strings as a language-keyed map (e.g.
+// `headline = { "en-US": "Thanks!" }`), not the canonical `headline.default` shape — so read the
+// value under the survey's `defaultLanguage` (falling back to any string), stripped to plain text.
 interface RawEnding {
   id?: string;
   type?: unknown;
@@ -104,7 +98,10 @@ export const useWorkflowSurveyEndings = (surveyId: string | null | undefined) =>
   const query = useQuery({
     queryKey: ["workflow-trigger", "survey-endings", surveyId],
     enabled: Boolean(surveyId),
-    queryFn: async ({ signal }) => {
+    queryFn: async ({ signal }): Promise<{ surveyId: string | null; endings: TWorkflowSurveyEnding[] }> => {
+      // Unreachable (`enabled` gates on a truthy id); keeps the resolved id non-optional for callers.
+      if (!surveyId) return { surveyId: null, endings: [] };
+
       const response = await fetch(`/api/v3/surveys/${surveyId}`, {
         method: "GET",
         cache: "no-store",
@@ -120,12 +117,22 @@ export const useWorkflowSurveyEndings = (surveyId: string | null | undefined) =>
         typeof body.data.defaultLanguage === "string" && body.data.defaultLanguage.length > 0
           ? body.data.defaultLanguage
           : "default";
-      if (!isEndingArray(body.data.endings)) return [];
+      // Throw on a malformed shape rather than returning an empty list: a "successful" empty result
+      // is indistinguishable from "all endings deleted" and would trigger a destructive auto-prune.
+      if (!isEndingArray(body.data.endings)) {
+        throw new Error(`Unexpected survey endings response shape for survey ${surveyId}`);
+      }
       const endings: TWorkflowSurveyEnding[] = body.data.endings
         .filter((raw): raw is RawEnding & { id: string } => typeof raw.id === "string" && raw.id.length > 0)
         .map((raw) => ({ id: raw.id, label: endingDisplayLabel(raw, defaultLanguage) }));
-      return endings;
+      return { surveyId, endings };
     },
   });
-  return { ...query, endings: query.data ?? [] };
+  return {
+    ...query,
+    endings: query.data?.endings ?? [],
+    // The survey the cached endings belong to. Callers pruning stored ids must check it — reading a
+    // previous survey's (or unsettled) response as the current one would delete a valid selection.
+    resolvedSurveyId: query.data?.surveyId ?? null,
+  };
 };

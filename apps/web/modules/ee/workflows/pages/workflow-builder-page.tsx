@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { WorkflowCanvas } from "@/modules/ee/workflows/components/canvas/workflow-canvas";
 import { WorkflowInspectorPanel } from "@/modules/ee/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowEmailAuthoringProvider } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
+import { useReconcileTriggerEndingCards } from "@/modules/ee/workflows/hooks/use-reconcile-trigger-ending-cards";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { useWorkflowNodeUrlSync } from "@/modules/ee/workflows/hooks/use-workflow-node-url-sync";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
@@ -49,6 +50,10 @@ export const WorkflowBuilderPage = ({
       (triggerSurveyId !== null && surveyOptions.some((option) => option.id === triggerSurveyId));
     setHasBoundTriggerSurvey(isBound);
   }, [emailAuthoringContext, definition, surveyOptions, setHasBoundTriggerSurvey]);
+
+  // Prune trigger ending-card ids whose endings were deleted. On the page (not the trigger form) so
+  // the canvas summary and enable gate stay correct without opening the inspector.
+  useReconcileTriggerEndingCards({ definition, isEditable: builder.canEditDefinition });
 
   // Deep-link the inspected node (?node=…) once the editor is hydrated.
   useWorkflowNodeUrlSync({ isEnabled: Boolean(builder.workflow) });

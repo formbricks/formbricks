@@ -100,6 +100,12 @@ export const isWorkflowTransitioningAtom = atom((get) => get(workflowEditorAtom)
 // flashes as broken before the page syncs it.
 export const hasBoundTriggerSurveyAtom = atom<boolean>(true);
 
+// Trigger ending-card ids the reconcile dropped this session (see useReconcileTriggerEndingCards).
+// Client-only, not part of the definition: it records that the user's "specific endings" intent was
+// emptied by now-deleted ids — which an empty `endingCardIds` ("all endings") can't express — so the
+// trigger form keeps "specific" scope and asks for a fresh pick.
+export const prunedTriggerEndingCardIdsAtom = atom<string[]>([]);
+
 const toSavedDraft = (state: TWorkflowEditorState): TWorkflowSavedDraft => ({
   workflowName: state.workflowName.trim(),
   workflowDescription: state.workflowDescription.trim(),
@@ -377,6 +383,8 @@ export const hydrateWorkflowEditorAtom = atom(
     // Optimistic default until the builder page re-syncs it from the authoring context;
     // without the reset, a previous workflow's "unbound" state would flash on the next one.
     set(hasBoundTriggerSurveyAtom, true);
+    // Same reasoning: a previous workflow's pruned ids must not leak into this one's trigger form.
+    set(prunedTriggerEndingCardIdsAtom, []);
     // Set outside the produce below so the nodes stay unfrozen (see workflowFlowNodesAtom).
     set(workflowFlowNodesAtom, flowNodes);
     set(
