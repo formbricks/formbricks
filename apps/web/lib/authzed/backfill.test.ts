@@ -442,6 +442,98 @@ describe("scope and observation completeness", () => {
   });
 });
 
+describe("full-scope orphan sweep", () => {
+  const ghostWorkspace = {
+    relation: "organization",
+    resource: { objectId: "ghost-ws", objectType: "workspace" },
+    subject: { objectId: "gone-org", objectType: "organization" },
+  };
+
+  beforeEach(() => {
+    vi.mocked(source.readOrganizationIdPage).mockResolvedValueOnce([]).mockResolvedValue([]);
+    readRelationships.mockResolvedValue({
+      cursor: null,
+      relationships: [ghostWorkspace],
+      snapshot: { token: "revision-1" },
+    });
+    vi.mocked(source.findMissingSourceRefs).mockResolvedValue([
+      { kind: "workspace", workspaceId: "ghost-ws" },
+    ]);
+  });
+
+  test("finds a resource unreachable from any organization and reports it", async () => {
+    // A workspace whose organization is also gone cannot be reached by enumerating organizations, which
+    // is the whole reason the full sweep filters by resource type instead.
+    const result = await runAuthzedBackfill(request({ scope: { kind: "all" } }), dependencies);
+
+    expect(result.counters.orphaned).toBe(1);
+    expect(result.counters.pruned).toBe(0);
+    expect(result.orphanScope).toBe("all");
+    expect(result.status).toBe("drifted");
+  });
+
+  test("hands the orphan to a reconciler as a target when pruning", async () => {
+    const result = await runAuthzedBackfill(request({ prune: true, scope: { kind: "all" } }), dependencies);
+
+    expect(result.counters.pruned).toBe(1);
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith({ workspaceIds: ["ghost-ws"] });
+    expect(result.status).toBe("reconciled");
+  });
+
+  test("prunes nothing when the sweep's orphan count exceeds the cap", async () => {
+    vi.mocked(source.findMissingSourceRefs).mockResolvedValue([
+      { kind: "workspace", workspaceId: "ghost-1" },
+      { kind: "workspace", workspaceId: "ghost-2" },
+    ]);
+
+    const result = await runAuthzedBackfill(
+      request({ maxPrune: 1, prune: true, scope: { kind: "all" } }),
+      dependencies
+    );
+
+    expect(result.counters.pruned).toBe(0);
+    expect(result.counters.skipped).toBe(1);
+    expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalled();
+  });
+
+  test("records a prune failure against no organization, since the resource has none", async () => {
+    apply.reconcileTeamWorkspace.mockResolvedValue({
+      attempts: 3,
+      code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+      retryable: true,
+      status: "failed",
+    });
+
+    const result = await runAuthzedBackfill(request({ prune: true, scope: { kind: "all" } }), dependencies);
+
+    expect(result.counters.pruned).toBe(0);
+    expect(result.failures[0]).toEqual({
+      code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+      organizationId: "",
+      retryable: true,
+    });
+    expect(result.status).toBe("failed");
+  });
+
+  test("marks the report truncated when the sweep itself fails", async () => {
+    readRelationships.mockRejectedValue(
+      new AuthzedError({
+        attempts: 0,
+        code: AUTHZED_ERROR_CODES.LIMIT_EXCEEDED,
+        operation: "read_all_relationships",
+        retryable: false,
+      })
+    );
+
+    const result = await runAuthzedBackfill(request({ prune: true, scope: { kind: "all" } }), dependencies);
+
+    expect(result.truncated).toBe(true);
+    expect(result.counters.pruned).toBe(0);
+    expect(result.failures[0]).toMatchObject({ code: AUTHZED_ERROR_CODES.LIMIT_EXCEEDED });
+    expect(result.status).toBe("failed");
+  });
+});
+
 describe("chunking", () => {
   test("splits a large target list so no reconciler receives an unbounded query", async () => {
     const memberships = Array.from({ length: AUTHZED_BACKFILL_TARGET_CHUNK_SIZE + 1 }, (_unused, index) => ({
