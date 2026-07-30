@@ -7,13 +7,13 @@ import {
   type TAuthzedRelationshipUpdate,
   getAuthzedClient,
 } from "./client";
-import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES, AUTHZED_MAX_RELATIONSHIP_UPDATES } from "./constants";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionUnstableError,
   type TAuthzedProjectionResult,
   runBestEffortProjection,
 } from "./projection";
+import { deleteRelationshipsInBoundedBatches, packRelationshipUpdateGroups } from "./relationship-batches";
 
 const TEAM_RELATIONS = {
   [TeamUserRole.admin]: "admin",
@@ -192,40 +192,6 @@ const createWorkspaceTeamUpdates = (
     },
   }));
 
-const packUpdateGroups = (
-  groups: ReadonlyArray<ReadonlyArray<TAuthzedRelationshipUpdate>>
-): ReadonlyArray<ReadonlyArray<TAuthzedRelationshipUpdate>> => {
-  const batches: TAuthzedRelationshipUpdate[][] = [];
-  let batch: TAuthzedRelationshipUpdate[] = [];
-
-  for (const group of groups) {
-    if (batch.length > 0 && batch.length + group.length > AUTHZED_MAX_RELATIONSHIP_UPDATES) {
-      batches.push(batch);
-      batch = [];
-    }
-    batch.push(...group);
-  }
-
-  if (batch.length > 0) {
-    batches.push(batch);
-  }
-
-  return batches;
-};
-
-const deleteRelationshipsInBoundedBatches = async (
-  client: TAuthzedClient,
-  filters: ReadonlyArray<TAuthzedRelationshipFilter>
-): Promise<void> => {
-  for (let start = 0; start < filters.length; start += AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES) {
-    await Promise.all(
-      filters
-        .slice(start, start + AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES)
-        .map((filter) => client.deleteRelationships(filter))
-    );
-  }
-};
-
 const writeSnapshot = async (
   client: TAuthzedClient,
   targets: TNormalizedTargets,
@@ -256,7 +222,7 @@ const writeSnapshot = async (
     updateGroups.push([...createWorkspaceTeamUpdates(target, grant?.permission ?? null)]);
   }
 
-  for (const batch of packUpdateGroups(updateGroups)) {
+  for (const batch of packRelationshipUpdateGroups(updateGroups)) {
     await client.writeRelationships(batch);
   }
 

@@ -138,8 +138,8 @@ The organization-membership projection boundary covers:
   cascades.
 
 User deletion removes both organization-role and team-role relationships for
-the deleted user. API-key relationship projection remains owned by a later
-ticket.
+the deleted user. API-key projection is described separately below because API
+keys are independent authorization subjects rather than user-owned role edges.
 
 The application facade accepts only Formbricks-owned relationship types. It
 supports idempotent `touch`/`delete` batches of at most 1,000 updates and safely
@@ -195,6 +195,49 @@ assignment, organization-role promotions, membership removal, API v2 nested
 organization-user team changes, and user/organization cascades. Existing
 records are not backfilled here: ENG-1718 remains mandatory before AuthZed
 shadow evaluation or enforcement.
+
+## API-key scope projection
+
+PostgreSQL remains authoritative for API-key ownership and access. After API
+key creation commits, Formbricks reconciles:
+
+- `ApiKey.organizationId` to `api_key#organization@organization`;
+- `organizationAccess.accessControl.read` to
+  `organization#api_key_reader@api_key`;
+- `organizationAccess.accessControl.write` to
+  `organization#api_key_writer@api_key`;
+- `ApiKeyWorkspace.permission` (`read`, `write`, or `manage`) to exactly one
+  `workspace#reader`, `workspace#writer`, or `workspace#manager` relationship
+  whose subject is the API key.
+
+The organization-access flags are independent. Missing, malformed, or
+non-boolean JSON values are treated as `false`, matching the current evaluator.
+Each workspace scope touches its selected relation and deletes the other two,
+so repeating a write is idempotent and a lower permission removes any stale
+higher grant.
+
+API-key scopes are selected during creation and are not editable today. Label
+and `lastUsedAt` updates do not affect authorization and therefore do not
+project. There is no separate revoked state in the current data model: deleting
+an API key is revocation.
+
+Deletion cleanup removes every relationship on the API-key resource and every
+organization or workspace relationship where the API key is the subject.
+Organization deletion captures API-key IDs before PostgreSQL cascades and then
+performs the same idempotent cleanup. Workspace deletion is already covered by
+the workspace projector, which deletes every relationship on the missing
+workspace resource.
+
+The projector reads only IDs, organization access, and workspace permissions;
+it never reads or logs plaintext keys, hashes, lookup hashes, creator metadata,
+or usage timestamps. Reconciliation uses the same post-commit, best-effort,
+three-pass convergence and bounded batching contract as organization, team,
+and workspace projection.
+
+Existing API keys are not backfilled by mutation hooks. ENG-1718 must perform
+authoritative backfill and repair before API-key shadow evaluation or
+enforcement is enabled. Routing API-key principals through the central
+interface remains ENG-1731, and SpiceDB comparison/cutover remains ENG-1738.
 
 ## Resource parent resolution during the current-model migration
 

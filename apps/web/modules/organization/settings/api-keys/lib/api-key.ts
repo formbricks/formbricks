@@ -7,6 +7,8 @@ import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { CONTROL_HASH } from "@/lib/constants";
 import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
@@ -138,6 +140,10 @@ export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
       },
     });
 
+    await runPostCommitProjection("api_key_delete_relationship_reconciliation", () =>
+      reconcileApiKeyRelationships({ apiKeyIds: [id] })
+    );
+
     return deletedApiKeyData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -197,6 +203,10 @@ export const createApiKey = async (
         apiKeyWorkspaces: true,
       },
     });
+
+    await runPostCommitProjection("api_key_create_relationship_reconciliation", () =>
+      reconcileApiKeyRelationships({ apiKeyIds: [result.id] })
+    );
 
     // Return the new v2 format: fbk_{secret}
     return { ...result, actualKey: `fbk_${secret}` };

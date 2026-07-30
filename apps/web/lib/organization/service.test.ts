@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -45,6 +46,9 @@ vi.mock("@/lib/user/service", () => ({
 
 vi.mock("@/lib/authzed/organization-membership", () => ({
   deleteOrganizationRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/api-key", () => ({
+  reconcileApiKeyRelationships: vi.fn(),
 }));
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
@@ -367,6 +371,7 @@ describe("Organization Service", () => {
         memberships: [],
         workspaces: [],
         teams: [],
+        apiKeys: [{ id: "api-key-1" }],
         feedbackDirectories: [],
       } as any);
 
@@ -376,6 +381,9 @@ describe("Organization Service", () => {
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
         teamIds: [],
         workspaceIds: [],
+      });
+      expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({
+        apiKeyIds: ["api-key-1"],
       });
       if (IS_FORMBRICKS_CLOUD) {
         expect(cleanupStripeCustomer).toHaveBeenCalledWith("cus_123");
@@ -391,6 +399,7 @@ describe("Organization Service", () => {
         memberships: [],
         workspaces: [{ id: "workspace-1" }],
         teams: [{ id: "team-1" }],
+        apiKeys: [{ id: "api-key-1" }, { id: "api-key-2" }],
         feedbackDirectories: [{ id: "frd_1" }, { id: "frd_2" }],
       } as any);
 
@@ -402,6 +411,9 @@ describe("Organization Service", () => {
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
         teamIds: ["team-1"],
         workspaceIds: ["workspace-1"],
+      });
+      expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({
+        apiKeyIds: ["api-key-1", "api-key-2"],
       });
     });
   });

@@ -12,14 +12,27 @@ const ALICE_ID = "application-graph-alice";
 const BOB_ID = "application-graph-bob";
 const TEAM_RELATIONS = ["admin", "contributor"] as const;
 const WORKSPACE_TEAM_RELATIONS = ["manager_team", "reader_team", "writer_team"] as const;
+const API_KEY_ORGANIZATION_ID = "application-api-key-organization";
+const PRIMARY_API_KEY_WORKSPACE_ID = "application-api-key-primary";
+const SECONDARY_API_KEY_WORKSPACE_ID = "application-api-key-secondary";
+const READER_API_KEY_ID = "application-api-key-reader";
+const WRITER_API_KEY_ID = "application-api-key-writer";
+const MANAGER_API_KEY_ID = "application-api-key-manager";
+const COMBINED_ACCESS_API_KEY_ID = "application-api-key-combined-access";
+const API_KEY_ORGANIZATION_RELATIONS = ["api_key_reader", "api_key_writer"] as const;
+const API_KEY_WORKSPACE_RELATIONS = ["manager", "reader", "writer"] as const;
 
 type TSmokeCommand =
   | "delete"
+  | "delete-api-key"
   | "delete-manager-team"
   | "delete-workspace"
+  | "downgrade-api-key-manager"
   | "downgrade-manager-grant"
   | "remove-alice-memberships"
+  | "remove-api-key-scope"
   | "remove-reader-grant"
+  | "seed-api-key"
   | "seed-team-workspace"
   | "set-billing"
   | "set-owner";
@@ -30,11 +43,15 @@ const writeResult = (result: object): void => {
 
 const isSmokeCommand = (value: string | undefined): value is TSmokeCommand =>
   value === "delete" ||
+  value === "delete-api-key" ||
   value === "delete-manager-team" ||
   value === "delete-workspace" ||
+  value === "downgrade-api-key-manager" ||
   value === "downgrade-manager-grant" ||
   value === "remove-alice-memberships" ||
+  value === "remove-api-key-scope" ||
   value === "remove-reader-grant" ||
+  value === "seed-api-key" ||
   value === "seed-team-workspace" ||
   value === "set-billing" ||
   value === "set-owner";
@@ -63,6 +80,33 @@ const createWorkspaceGrantUpdates = (
       relation,
       resource: { objectId: GRAPH_WORKSPACE_ID, objectType: "workspace" },
       subject: { objectId: teamId, objectType: "team", relation: "member" },
+    },
+  }));
+
+const createApiKeyOrganizationAccessUpdates = (
+  apiKeyId: string,
+  selectedRelations: ReadonlyArray<(typeof API_KEY_ORGANIZATION_RELATIONS)[number]> = []
+): ReadonlyArray<TAuthzedRelationshipUpdate> =>
+  API_KEY_ORGANIZATION_RELATIONS.map((relation) => ({
+    operation: selectedRelations.includes(relation) ? "touch" : "delete",
+    relationship: {
+      relation,
+      resource: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
+      subject: { objectId: apiKeyId, objectType: "api_key" },
+    },
+  }));
+
+const createApiKeyWorkspaceUpdates = (
+  apiKeyId: string,
+  workspaceId: string,
+  selectedRelation?: (typeof API_KEY_WORKSPACE_RELATIONS)[number]
+): ReadonlyArray<TAuthzedRelationshipUpdate> =>
+  API_KEY_WORKSPACE_RELATIONS.map((relation) => ({
+    operation: relation === selectedRelation ? "touch" : "delete",
+    relationship: {
+      relation,
+      resource: { objectId: workspaceId, objectType: "workspace" },
+      subject: { objectId: apiKeyId, objectType: "api_key" },
     },
   }));
 
@@ -133,6 +177,63 @@ const deleteManagerTeamProjection = async (client: TAuthzedClient): Promise<void
   });
 };
 
+const seedApiKeyProjection = async (client: TAuthzedClient): Promise<void> => {
+  await client.writeRelationships([
+    ...[READER_API_KEY_ID, WRITER_API_KEY_ID, MANAGER_API_KEY_ID, COMBINED_ACCESS_API_KEY_ID].map(
+      (apiKeyId) => ({
+        operation: "touch" as const,
+        relationship: {
+          relation: "organization",
+          resource: { objectId: apiKeyId, objectType: "api_key" },
+          subject: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
+        },
+      })
+    ),
+    {
+      operation: "touch",
+      relationship: {
+        relation: "organization",
+        resource: { objectId: PRIMARY_API_KEY_WORKSPACE_ID, objectType: "workspace" },
+        subject: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
+      },
+    },
+    {
+      operation: "touch",
+      relationship: {
+        relation: "organization",
+        resource: { objectId: SECONDARY_API_KEY_WORKSPACE_ID, objectType: "workspace" },
+        subject: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
+      },
+    },
+    ...createApiKeyOrganizationAccessUpdates(READER_API_KEY_ID, ["api_key_reader"]),
+    ...createApiKeyOrganizationAccessUpdates(WRITER_API_KEY_ID, ["api_key_writer"]),
+    ...createApiKeyOrganizationAccessUpdates(MANAGER_API_KEY_ID),
+    ...createApiKeyOrganizationAccessUpdates(COMBINED_ACCESS_API_KEY_ID, [
+      "api_key_reader",
+      "api_key_writer",
+    ]),
+    ...createApiKeyWorkspaceUpdates(READER_API_KEY_ID, PRIMARY_API_KEY_WORKSPACE_ID, "reader"),
+    ...createApiKeyWorkspaceUpdates(WRITER_API_KEY_ID, PRIMARY_API_KEY_WORKSPACE_ID, "writer"),
+    ...createApiKeyWorkspaceUpdates(MANAGER_API_KEY_ID, PRIMARY_API_KEY_WORKSPACE_ID, "manager"),
+    ...createApiKeyWorkspaceUpdates(MANAGER_API_KEY_ID, SECONDARY_API_KEY_WORKSPACE_ID, "reader"),
+  ]);
+};
+
+const deleteWriterApiKeyProjection = async (client: TAuthzedClient): Promise<void> => {
+  await client.deleteRelationships({
+    resourceId: WRITER_API_KEY_ID,
+    resourceType: "api_key",
+  });
+  await client.deleteRelationships({
+    resourceType: "organization",
+    subject: { objectId: WRITER_API_KEY_ID, objectType: "api_key" },
+  });
+  await client.deleteRelationships({
+    resourceType: "workspace",
+    subject: { objectId: WRITER_API_KEY_ID, objectType: "api_key" },
+  });
+};
+
 const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeCommand): Promise<void> => {
   switch (command) {
     case "delete":
@@ -142,6 +243,22 @@ const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeComman
       return;
     case "seed-team-workspace":
       await seedTeamWorkspaceProjection(client);
+      return;
+    case "seed-api-key":
+      await seedApiKeyProjection(client);
+      return;
+    case "downgrade-api-key-manager":
+      await client.writeRelationships(
+        createApiKeyWorkspaceUpdates(MANAGER_API_KEY_ID, PRIMARY_API_KEY_WORKSPACE_ID, "writer")
+      );
+      return;
+    case "remove-api-key-scope":
+      await client.writeRelationships(
+        createApiKeyWorkspaceUpdates(MANAGER_API_KEY_ID, SECONDARY_API_KEY_WORKSPACE_ID)
+      );
+      return;
+    case "delete-api-key":
+      await deleteWriterApiKeyProjection(client);
       return;
     case "downgrade-manager-grant":
       await client.writeRelationships(createWorkspaceGrantUpdates(MANAGER_TEAM_ID, "reader_team"));
