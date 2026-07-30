@@ -558,6 +558,69 @@ describe("chunking", () => {
     expect(apply.reconcileMemberships).not.toHaveBeenCalled();
     expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalled();
     expect(apply.reconcileApiKeys).not.toHaveBeenCalled();
-    expect(apply.reconcileMemberships).not.toHaveBeenCalled();
+  });
+
+  test("passes every list a reconciler understands in one call", async () => {
+    // A reconciler reads one PostgreSQL snapshot covering all the lists it was given, so splitting them
+    // would multiply the snapshot reads and verification passes for no benefit.
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      apiKeyIds: ["key-1"],
+      apiKeyWorkspaceGrants: [{ apiKeyId: "key-1", workspaceId: "ws-1" }],
+      teamIds: ["team-1"],
+      teamMemberships: [{ teamId: "team-1", userId: "user-1" }],
+      workspaceIds: ["ws-1"],
+      workspaceTeamGrants: [{ teamId: "team-1", workspaceId: "ws-1" }],
+    });
+
+    await runAuthzedBackfill(request(), dependencies);
+
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledTimes(1);
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith({
+      teamIds: ["team-1"],
+      teamMemberships: [{ teamId: "team-1", userId: "user-1" }],
+      workspaceIds: ["ws-1"],
+      workspaceTeamGrants: [{ teamId: "team-1", workspaceId: "ws-1" }],
+    });
+    expect(apply.reconcileApiKeys).toHaveBeenCalledTimes(1);
+    expect(apply.reconcileApiKeys).toHaveBeenCalledWith({
+      apiKeyIds: ["key-1"],
+      apiKeyWorkspaceGrants: [{ apiKeyId: "key-1", workspaceId: "ws-1" }],
+    });
+  });
+
+  test("omits an empty list from a combined call rather than sending it", async () => {
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      teamIds: ["team-1"],
+    });
+
+    await runAuthzedBackfill(request(), dependencies);
+
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith({ teamIds: ["team-1"] });
+  });
+
+  test("bounds each list independently, so call count follows the longest list", async () => {
+    const teamMemberships = Array.from(
+      { length: AUTHZED_BACKFILL_TARGET_CHUNK_SIZE + 1 },
+      (_unused, index) => ({ teamId: "team-1", userId: `user-${index}` })
+    );
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      teamIds: ["team-1"],
+      teamMemberships,
+    });
+
+    await runAuthzedBackfill(request(), dependencies);
+
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledTimes(2);
+    // The short list is exhausted by the first call and must not be resent.
+    expect(apply.reconcileTeamWorkspace.mock.calls[0][0]).toEqual({
+      teamIds: ["team-1"],
+      teamMemberships: teamMemberships.slice(0, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE),
+    });
+    expect(apply.reconcileTeamWorkspace.mock.calls[1][0]).toEqual({
+      teamMemberships: teamMemberships.slice(AUTHZED_BACKFILL_TARGET_CHUNK_SIZE),
+    });
   });
 });

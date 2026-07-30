@@ -13,7 +13,11 @@ import {
   readOrganizationSource,
 } from "./backfill-source";
 import type { TAuthzedClient, TAuthzedRelationship } from "./client";
-import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE } from "./constants";
+import {
+  AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
+  AUTHZED_BACKFILL_TARGET_CHUNK_SIZE,
+  AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES,
+} from "./constants";
 import { AuthzedError } from "./errors";
 import type { TOrganizationMembershipProjectionTargets } from "./organization-membership";
 import type { TAuthzedProjectionResult } from "./projection";
@@ -132,14 +136,6 @@ export type TAuthzedBackfillResult = Readonly<{
 /** Entries reported individually before the list is capped and only counters remain accurate. */
 const MAX_REPORTED_ENTRIES = 100;
 
-const chunk = <TItem>(items: ReadonlyArray<TItem>, size: number): ReadonlyArray<ReadonlyArray<TItem>> => {
-  const chunks: TItem[][] = [];
-  for (let start = 0; start < items.length; start += size) {
-    chunks.push(items.slice(start, start + size));
-  }
-  return chunks;
-};
-
 const toErrorCode = (error: unknown): Readonly<{ code: string; retryable: boolean }> =>
   error instanceof AuthzedError
     ? { code: error.code, retryable: error.retryable }
@@ -231,17 +227,42 @@ const mergeTargets = (left: TReconcileTargets, right: TReconcileTargets): TRecon
  * sweep. `"disabled"` counts as a failure rather than a success — otherwise a run against an instance
  * with AuthZed switched off would report every organization as reconciled.
  */
-const runChunked = async <TItem, TTargets>(
+/**
+ * Run one reconciler over chunked targets, stopping at the first chunk that does not project.
+ *
+ * A reconciler accepts several target lists at once and reads one PostgreSQL snapshot covering all of
+ * them, so every list it understands is passed in a single call. Splitting them would multiply the
+ * snapshot reads and the verification passes for no benefit.
+ *
+ * Chunking bounds each list independently, because each becomes its own `OR` clause in the snapshot
+ * query. Call *i* takes chunk *i* of every list, so the number of calls is set by the longest list
+ * rather than by their total.
+ *
+ * Returns `null` when every list was empty, so nothing reaches a reconciler — the write facade rejects
+ * an empty update batch.
+ */
+const runChunked = async <TTargets extends Readonly<Record<string, ReadonlyArray<unknown>>>>(
   reconcile: (targets: TTargets) => Promise<TAuthzedProjectionResult>,
-  items: ReadonlyArray<TItem>,
-  buildTargets: (chunkItems: ReadonlyArray<TItem>) => TTargets
+  targets: TTargets
 ): Promise<TAuthzedProjectionResult | null> => {
-  if (items.length === 0) {
+  const entries = Object.entries(targets).filter(([, items]) => items.length > 0);
+  if (entries.length === 0) {
     return null;
   }
 
-  for (const chunkItems of chunk(items, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE)) {
-    const result = await reconcile(buildTargets(chunkItems));
+  const chunkCount = Math.max(
+    ...entries.map(([, items]) => Math.ceil(items.length / AUTHZED_BACKFILL_TARGET_CHUNK_SIZE))
+  );
+
+  for (let index = 0; index < chunkCount; index++) {
+    const start = index * AUTHZED_BACKFILL_TARGET_CHUNK_SIZE;
+    const chunkTargets = Object.fromEntries(
+      entries
+        .map(([key, items]) => [key, items.slice(start, start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE)])
+        .filter(([, items]) => (items as ReadonlyArray<unknown>).length > 0)
+    ) as TTargets;
+
+    const result = await reconcile(chunkTargets);
     if (result.status !== "projected") {
       return result;
     }
@@ -250,27 +271,28 @@ const runChunked = async <TItem, TTargets>(
   return { passes: 1, status: "projected" };
 };
 
-/** Reconcile every target list, reporting the first that did not project. */
+/**
+ * Reconcile every target list, reporting the first reconciler that did not project.
+ *
+ * One call per reconciler rather than one per list: each reads a single snapshot covering everything it
+ * was given, so this is three snapshot reads for an organization instead of seven.
+ */
 const reconcileTargets = async (
   apply: TAuthzedBackfillApply,
   targets: TReconcileTargets
 ): Promise<TAuthzedProjectionResult | undefined> => {
   const outcomes = [
-    await runChunked(apply.reconcileMemberships, targets.memberships, (memberships) => ({ memberships })),
-    await runChunked(apply.reconcileTeamWorkspace, targets.teamIds, (teamIds) => ({ teamIds })),
-    await runChunked(apply.reconcileTeamWorkspace, targets.workspaceIds, (workspaceIds) => ({
-      workspaceIds,
-    })),
-    await runChunked(apply.reconcileTeamWorkspace, targets.teamMemberships, (teamMemberships) => ({
-      teamMemberships,
-    })),
-    await runChunked(apply.reconcileTeamWorkspace, targets.workspaceTeamGrants, (workspaceTeamGrants) => ({
-      workspaceTeamGrants,
-    })),
-    await runChunked(apply.reconcileApiKeys, targets.apiKeyIds, (apiKeyIds) => ({ apiKeyIds })),
-    await runChunked(apply.reconcileApiKeys, targets.apiKeyWorkspaceGrants, (apiKeyWorkspaceGrants) => ({
-      apiKeyWorkspaceGrants,
-    })),
+    await runChunked(apply.reconcileMemberships, { memberships: targets.memberships }),
+    await runChunked(apply.reconcileTeamWorkspace, {
+      teamIds: targets.teamIds,
+      teamMemberships: targets.teamMemberships,
+      workspaceIds: targets.workspaceIds,
+      workspaceTeamGrants: targets.workspaceTeamGrants,
+    }),
+    await runChunked(apply.reconcileApiKeys, {
+      apiKeyIds: targets.apiKeyIds,
+      apiKeyWorkspaceGrants: targets.apiKeyWorkspaceGrants,
+    }),
   ];
 
   return outcomes.find(
@@ -302,10 +324,24 @@ const observeOrganizationResources = async (
   const relationships: TAuthzedRelationship[] = [];
   let snapshot: string | null = null;
 
-  for (const filter of filters) {
-    const observation = await readAllRelationships(client, filter);
-    relationships.push(...observation.relationships);
-    snapshot = observation.snapshot?.token ?? snapshot;
+  // Bounded windows rather than one read at a time: an organization with many workspaces would
+  // otherwise cost that many sequential round trips. The bound is the same one that caps parallel
+  // relationship deletes, so this cannot outrun the connection budget the rest of the module assumes.
+  //
+  // Each filter resolves its own revision, which is fine: an observation is only ever used to name the
+  // source record a relationship implies, and the reconciler re-reads PostgreSQL before acting on it.
+  // Nothing here compares two resources against each other.
+  for (let start = 0; start < filters.length; start += AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES) {
+    const observations = await Promise.all(
+      filters
+        .slice(start, start + AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES)
+        .map((filter) => readAllRelationships(client, filter))
+    );
+
+    for (const observation of observations) {
+      relationships.push(...observation.relationships);
+      snapshot = observation.snapshot?.token ?? snapshot;
+    }
   }
 
   return { relationships, snapshot };
