@@ -561,11 +561,14 @@ describe("workflowDraftSignatureAtom", () => {
     expect(renamed).not.toBe(hydrated);
 
     store.set(setWorkflowDescriptionAtom, "Edited");
-    expect(store.get(workflowDraftSignatureAtom)).not.toBe(renamed);
+    const described = store.get(workflowDraftSignatureAtom);
+    expect(described).not.toBe(renamed);
 
-    // Untrimmed on purpose: this identifies a draft, it does not decide dirtiness.
+    // Untrimmed on purpose: this identifies a draft, it does not decide dirtiness. Compared against
+    // the signature taken immediately before the whitespace edit — comparing against `renamed`
+    // would pass on the description edit alone and pin nothing about trimming.
     store.set(setWorkflowNameAtom, "Renamed ");
-    expect(store.get(workflowDraftSignatureAtom)).not.toBe(renamed);
+    expect(store.get(workflowDraftSignatureAtom)).not.toBe(described);
   });
 });
 
