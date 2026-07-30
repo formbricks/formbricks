@@ -31,7 +31,8 @@ export const VerificationRequestedPage = async ({
   //
   // The copy therefore talks about the instance, never about this visitor's account: on an instance with
   // no mailer this renders for everyone, including someone whose address already had an account and for
-  // whom nothing was created. It also does not send them to the resend button, which cannot work here.
+  // whom nothing was created. The resend button is hidden in that state too — it cannot work — leaving
+  // the log-in link as the only offered action.
   const mailerNotConfigured = !IS_SMTP_CONFIGURED;
   // Carry the callback (for an invite sign-up, `/invite?token=…`) into the log-in link below, so a
   // visitor who already has an account can log in and land straight back on the invite. Present for
@@ -61,12 +62,21 @@ export const VerificationRequestedPage = async ({
               <VerificationMessage email={email} />
             )}
             <hr className="my-4" />
-            <p className="text-center text-xs text-slate-500">
-              {t("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")}
-            </p>
-            <div className="mt-5">
-              <RequestVerificationEmail email={email.toLowerCase()} callbackUrl={resolvedCallbackUrl} />
-            </div>
+            {/*
+              Hidden when there is no mailer: resending cannot work, so offering it would contradict the
+              message above telling the visitor to contact their administrator. Gated on server config,
+              which is the same for every visitor, so this does not reintroduce a differential (ENG-2099).
+            */}
+            {!mailerNotConfigured && (
+              <>
+                <p className="text-center text-xs text-slate-500">
+                  {t("auth.verification-requested.you_didnt_receive_an_email_or_your_link_expired")}
+                </p>
+                <div className="mt-5">
+                  <RequestVerificationEmail email={email.toLowerCase()} callbackUrl={resolvedCallbackUrl} />
+                </div>
+              </>
+            )}
             {/*
               Every visitor sees this, including one whose address already has an account — for them no
               email is coming and the resend button above no-ops, so this link is the way out. It is

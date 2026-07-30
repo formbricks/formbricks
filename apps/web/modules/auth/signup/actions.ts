@@ -106,6 +106,10 @@ async function signUpUserSafely(
 ): Promise<TSignUpOutcome> {
   const normalizedEmail = email.toLowerCase();
 
+  // Assigned on every path that does not throw; `undefined` is only in the type because TS cannot see
+  // that across the try/catch. If it ever were undefined — Better Auth changing its response shape —
+  // the id comparison below fails and the request is treated as already-existed, so no side effect
+  // runs against an account we cannot attribute. Degrading that way is the safe direction.
   let signedUpUserId: string | undefined;
   try {
     // Better Auth-native signup: creates the User + a bcrypt credential Account (via the password hook
