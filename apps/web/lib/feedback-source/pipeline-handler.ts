@@ -6,9 +6,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { getFeedbackSourcesBySurveyId, updateFeedbackSource } from "./service";
 import { transformResponseToFeedbackRecords } from "./transform";
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown error";
+import { getErrorMessage } from "./utils";
 
 const logFailedRecords = (
   feedbackSourceId: string,

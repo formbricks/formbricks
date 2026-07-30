@@ -7,11 +7,12 @@ import type {
   TSegmentDeviceFilter,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
+  TSegmentSurveyInteractionFilter,
 } from "@formbricks/types/segment";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getExistingWorkspaceSurveyIds, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyTargeting } from "./schemas";
@@ -115,7 +116,7 @@ const V3_TARGETING_DEVICE_VALUES = ["phone", "desktop"] as const;
 // whose identifier can never match) and `invalidDeviceValue` (a device filter whose value isn't a
 // known device).
 type TV3TargetingFilterReference = {
-  kind: "attributeKey" | "segment" | "unsupportedPersonIdentifier" | "invalidDeviceValue";
+  kind: "attributeKey" | "segment" | "survey" | "unsupportedPersonIdentifier" | "invalidDeviceValue";
   value: string;
   path: string;
 };
@@ -201,6 +202,19 @@ function collectV3TargetingFilterReferences(
         ];
         return deviceIssues.filter((issue): issue is TV3TargetingFilterReference => issue !== null);
       }
+      case "surveyInteraction": {
+        // Only "specific" scope references surveys; "any" scope matches all surveys and needs no
+        // reference check. Each referenced survey id must resolve within the workspace.
+        const { value } = resource as TSegmentSurveyInteractionFilter;
+        if (value.surveyScope !== "specific") {
+          return [];
+        }
+        return value.surveyIds.map((surveyId, surveyIndex) => ({
+          kind: "survey" as const,
+          value: surveyId,
+          path: `${resourcePath}.value.surveyIds.${surveyIndex}`,
+        }));
+      }
       default:
         return [];
     }
@@ -268,6 +282,25 @@ export async function assertV3SurveyTargetingFilterReferences(
       invalidParams.push({
         name: reference.path,
         reason: `Segment '${reference.value}' was not found in this workspace`,
+        code: "invalid_reference",
+        identifier: reference.value,
+      });
+    }
+  }
+
+  const surveyRefs = references.filter((ref) => ref.kind === "survey");
+  if (surveyRefs.length > 0) {
+    // Scope to the workspace's own surveys so a survey-interaction filter cannot reference another
+    // workspace's survey. Look up by the exact referenced ids (not the picker's bounded recent list)
+    // so a valid survey in a large workspace isn't wrongly rejected for being outside that window.
+    const knownSurveyIds = await getExistingWorkspaceSurveyIds(
+      workspaceId,
+      surveyRefs.map((ref) => ref.value)
+    );
+    for (const reference of surveyRefs.filter((ref) => !knownSurveyIds.has(ref.value))) {
+      invalidParams.push({
+        name: reference.path,
+        reason: `Survey '${reference.value}' was not found in this workspace`,
         code: "invalid_reference",
         identifier: reference.value,
       });

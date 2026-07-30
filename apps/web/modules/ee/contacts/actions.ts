@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributesInput } from "@formbricks/types/contact-attribute";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -14,6 +14,7 @@ import {
   getWorkspaceIdFromContactId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createContactsFromCSV, deleteContact, getContact, getContacts } from "./lib/contacts";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
 import {
@@ -32,10 +33,11 @@ export const getContactsAction = authenticatedActionClient
   .inputSchema(ZGetContactsAction)
   .action(async ({ ctx, parsedInput }) => {
     const workspaceId = parsedInput.workspaceId;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -48,6 +50,11 @@ export const getContactsAction = authenticatedActionClient
         },
       ],
     });
+
+    const isContactsEnabled = await getIsContactsEnabled(organizationId);
+    if (!isContactsEnabled) {
+      throw new OperationNotAllowedError("Contacts are not enabled for this organization");
+    }
 
     return getContacts(workspaceId, parsedInput.offset, parsedInput.searchValue);
   });

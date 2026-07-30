@@ -20,6 +20,8 @@ export const getSurveys = reactCache(async (workspaceId: string): Promise<TSurve
         status: {
           not: "completed",
         },
+        // Archived surveys must not be selectable as integration targets.
+        archivedAt: null,
       },
       select: selectSurvey,
       orderBy: {

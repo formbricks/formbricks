@@ -2,7 +2,6 @@ export class TimeoutStack {
   private static instance: TimeoutStack | null = null;
   private timeouts: { event: string; timeoutId: number }[] = [];
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function -- Empty constructor is intentional
   private constructor() {}
 
   // Retrieve the singleton instance of TimeoutStack

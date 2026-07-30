@@ -10,6 +10,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
+  EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
   RATE_LIMITING_DISABLED,
@@ -90,7 +91,12 @@ export const auth = betterAuth({
   socialProviders: ssoSocialProviders,
 
   emailAndPassword: {
-    enabled: true,
+    // EMAIL_AUTH_DISABLED=1 has to switch the credential endpoints off here, not just hide the form on
+    // the login/signup pages (its only other use). Hardcoding `true` left
+    // POST /api/auth/sign-in/email live on an instance the operator had configured as SSO-only, so any
+    // account that still carried a password could sign in around the IdP — and around whatever the IdP
+    // enforces, such as MFA, conditional access, or deprovisioning.
+    enabled: EMAIL_AUTH_ENABLED,
     // Matches ZUserPassword (min 8 / max 128); the upper+digit composition rule stays enforced
     // by ZUserPassword at the app layer (deferred policy modernization → design doc §10.6).
     minPasswordLength: 8,

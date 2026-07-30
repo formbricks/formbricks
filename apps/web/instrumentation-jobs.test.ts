@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 const mockStartJobsRuntime = vi.fn();
 const mockRemoveRecurringSurveySchedulingJobSchedule = vi.fn();
 const mockUpsertRecurringSurveySchedulingJobSchedule = vi.fn();
+const mockRemoveRecurringSurveyArchivePurgeJobSchedule = vi.fn();
+const mockUpsertRecurringSurveyArchivePurgeJobSchedule = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
@@ -10,6 +12,7 @@ const mockGetJobsQueueingConfig = vi.fn();
 const mockGetJobsWorkerBootstrapConfig = vi.fn();
 const mockProcessResponsePipelineJob = vi.fn();
 const mockProcessSurveySchedulingJob = vi.fn();
+const mockProcessSurveyArchivePurgeJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
 const slowTest = (name: string, fn: () => Promise<void>): void => {
@@ -18,8 +21,10 @@ const slowTest = (name: string, fn: () => Promise<void>): void => {
 
 vi.mock("@formbricks/jobs", () => ({
   removeRecurringSurveySchedulingJobSchedule: mockRemoveRecurringSurveySchedulingJobSchedule,
+  removeRecurringSurveyArchivePurgeJobSchedule: mockRemoveRecurringSurveyArchivePurgeJobSchedule,
   startJobsRuntime: mockStartJobsRuntime,
   upsertRecurringSurveySchedulingJobSchedule: mockUpsertRecurringSurveySchedulingJobSchedule,
+  upsertRecurringSurveyArchivePurgeJobSchedule: mockUpsertRecurringSurveyArchivePurgeJobSchedule,
 }));
 
 vi.mock("@/lib/jobs/config", () => ({
@@ -44,12 +49,22 @@ vi.mock("@/modules/survey/scheduling/lib/process-survey-scheduling-job", () => (
   processSurveySchedulingJob: mockProcessSurveySchedulingJob,
 }));
 
+vi.mock("@/modules/survey/archive/lib/process-survey-archive-purge-job", () => ({
+  processSurveyArchivePurgeJob: mockProcessSurveyArchivePurgeJob,
+}));
+
 describe("instrumentation-jobs", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
     vi.useFakeTimers();
     mockRemoveRecurringSurveySchedulingJobSchedule.mockResolvedValue(true);
+    mockRemoveRecurringSurveyArchivePurgeJobSchedule.mockResolvedValue(true);
+    mockUpsertRecurringSurveyArchivePurgeJobSchedule.mockResolvedValue({
+      id: "archive-purge-schedule-1",
+      name: "survey-archive-purge.process",
+      queueName: "background-jobs",
+    });
     mockGetJobsQueueingConfig.mockReturnValue({
       enabled: false,
       redisUrl: null,
@@ -108,6 +123,7 @@ describe("instrumentation-jobs", () => {
       jobHandlerOverrides: {
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
+        "survey-archive-purge.process": expect.any(Function),
         "test-log.process": mockExistingOverride,
       },
       redisUrl: "redis://localhost:6379",
@@ -276,6 +292,8 @@ describe("instrumentation-jobs", () => {
       const { registerRecurringJobs } = await import("./instrumentation-jobs");
       const { SURVEY_SCHEDULING_DAILY_CRON_PATTERN, SURVEY_SCHEDULING_TIME_ZONE } =
         await import("@/modules/survey/scheduling/lib/constants");
+      const { SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN, SURVEY_ARCHIVE_PURGE_TIME_ZONE } =
+        await import("@/modules/survey/archive/lib/constants");
 
       await registerRecurringJobs();
       await registerRecurringJobs();
@@ -296,6 +314,26 @@ describe("instrumentation-jobs", () => {
           cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
           kind: "cron",
           timeZone: SURVEY_SCHEDULING_TIME_ZONE,
+        },
+        {
+          scope: "global",
+        }
+      );
+      expect(mockRemoveRecurringSurveyArchivePurgeJobSchedule).toHaveBeenCalledTimes(1);
+      expect(mockRemoveRecurringSurveyArchivePurgeJobSchedule).toHaveBeenCalledWith({
+        scheduleId: "daily-survey-archive-purge",
+        scope: "global",
+      });
+      expect(mockUpsertRecurringSurveyArchivePurgeJobSchedule).toHaveBeenCalledTimes(1);
+      expect(mockUpsertRecurringSurveyArchivePurgeJobSchedule).toHaveBeenCalledWith(
+        {
+          scheduleId: "daily-survey-archive-purge",
+          scope: "global",
+        },
+        {
+          cronPattern: SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
+          kind: "cron",
+          timeZone: SURVEY_ARCHIVE_PURGE_TIME_ZONE,
         },
         {
           scope: "global",

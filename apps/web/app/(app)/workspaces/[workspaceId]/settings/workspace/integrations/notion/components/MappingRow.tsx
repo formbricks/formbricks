@@ -73,7 +73,6 @@ const MappingErrorMessage = ({
       default:
         return null;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error, col, elem, t]);
 
   if (!error) return null;

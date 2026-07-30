@@ -16,7 +16,7 @@ import {
 } from "@/lib/oauth/integration-state";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
 import { getSession } from "@/modules/auth/lib/session";
 
 const getGoogleSheetsRedirectUrl = (workspaceId: string) =>
@@ -97,7 +97,7 @@ export const GET = async (req: Request) => {
   }
 
   const workspaceId = oauthState.workspaceId;
-  const canUserAccessWorkspace = await hasUserWorkspaceAccess(session.user.id, workspaceId);
+  const canUserAccessWorkspace = await canUserWriteWorkspaceIntegrations(session.user.id, workspaceId);
   if (!canUserAccessWorkspace) {
     return responses.unauthorizedResponse();
   }

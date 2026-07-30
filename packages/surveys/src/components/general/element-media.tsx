@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { isSafeMediaUrl } from "@formbricks/survey-ui";
 import { ExpandIcon } from "@/components/icons/expand-icon";
 import { ImageDownIcon } from "@/components/icons/image-down-icon";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,10 @@ const getVideoUrlWithParams = (videoUrl: string): string => {
   return videoUrl;
 };
 
+/** Validated media URL, or `undefined` when it must not reach a `src`/`href`. */
+const asSafeMediaUrl = (url: string | undefined): string | undefined =>
+  url && isSafeMediaUrl(url) ? url : undefined;
+
 interface ElementMediaProps {
   imgUrl?: string;
   videoUrl?: string;
@@ -28,7 +33,13 @@ interface ElementMediaProps {
 
 export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }: ElementMediaProps) {
   const { t } = useTranslation();
-  const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
+  // Every sink is validated, not just the href. `ZStorageUrl` now rejects unsafe schemes on write, but
+  // this component renders survey JSON straight from the API, and rows written before that validation
+  // can still carry a `javascript:`/`data:` URL. An unsafe value in `<iframe src>` executes; in
+  // `<img src>` it does not, but neither should reach the DOM from stored data.
+  const safeVideoUrl = asSafeMediaUrl(videoUrl ? getVideoUrlWithParams(videoUrl) : undefined);
+  const safeImgUrl = asSafeMediaUrl(imgUrl);
+  const safeHref = asSafeMediaUrl(imgUrl ?? convertToEmbedUrl(videoUrl ?? ""));
   const [isLoading, setIsLoading] = useState(true);
 
   return (
@@ -36,10 +47,10 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }:
       {isLoading ? (
         <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
       ) : null}
-      {imgUrl ? (
+      {safeImgUrl ? (
         <img
-          key={imgUrl}
-          src={imgUrl}
+          key={safeImgUrl}
+          src={safeImgUrl}
           alt={altText}
           className={cn("rounded-custom mx-auto max-h-[40dvh] object-contain", isLoading ? "opacity-0" : "")}
           onLoad={() => {
@@ -50,11 +61,11 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }:
           }}
         />
       ) : null}
-      {videoUrlWithParams ? (
+      {safeVideoUrl ? (
         <div className="relative">
           <div className="rounded-custom bg-black">
             <iframe
-              src={videoUrlWithParams}
+              src={safeVideoUrl}
               title={t("common.question_video")}
               frameBorder="0"
               className={cn("rounded-custom aspect-video w-full", isLoading ? "opacity-0" : "")}
@@ -71,7 +82,7 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }:
         </div>
       ) : null}
       <a
-        href={imgUrl ? imgUrl : convertToEmbedUrl(videoUrl ?? "")}
+        href={safeHref}
         target="_blank"
         rel="noreferrer"
         aria-label={t("common.open_in_new_tab")}

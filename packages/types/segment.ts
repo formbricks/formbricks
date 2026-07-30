@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZId } from "./common";
 
 // The segment filter has operators, these are all the types of operators that can be used
 export const BASE_OPERATORS = [
@@ -77,8 +78,29 @@ export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
 // operators for device filters
 export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
 
+// operators for survey interaction filters
+export const SURVEY_INTERACTION_OPERATORS = [
+  "haveCompleted",
+  "haveNotCompleted",
+  "haveSeen",
+  "haveNotSeen",
+  "haveStartedRespondingTo",
+] as const;
+
+export const ZSurveyInteractionOperator = z.enum(SURVEY_INTERACTION_OPERATORS);
+export type TSurveyInteractionOperator = z.infer<typeof ZSurveyInteractionOperator>;
+
+// time units allowed for the survey interaction window (subset of TIME_UNITS, no "years")
+export const SURVEY_INTERACTION_TIME_UNITS = ["days", "weeks", "months"] as const;
+export const ZSurveyInteractionTimeUnit = z.enum(SURVEY_INTERACTION_TIME_UNITS);
+export type TSurveyInteractionTimeUnit = z.infer<typeof ZSurveyInteractionTimeUnit>;
+
 // all operators
-export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS] as const;
+export const ALL_OPERATORS = [
+  ...ATTRIBUTE_OPERATORS,
+  ...SEGMENT_OPERATORS,
+  ...SURVEY_INTERACTION_OPERATORS,
+] as const;
 
 export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
 export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
@@ -112,18 +134,41 @@ export const ZRelativeDateValue = z.object({
 });
 export type TRelativeDateValue = z.infer<typeof ZRelativeDateValue>;
 
+// Structured value for survey interaction filters. Defined here (before ZSegmentFilterValue) so it
+// can be part of the shared filter-value union that generic helpers like updateFilterValue operate on.
+// The base object is kept separate from the refined schema so the exported TYPE is inferred from a
+// plain ZodObject (spreadable in consumers); the refinement only adds runtime validation and does not
+// change the output shape.
+const ZSegmentSurveyInteractionFilterValueBase = z.object({
+  surveyScope: z.enum(["any", "specific"]),
+  // Bounded to cap the payload from an untrusted client (no unbounded array). 100 surveys is far
+  // beyond any realistic single-filter selection. Ownership is still enforced at write time by
+  // assertSurveyInteractionSurveyIds (checks the ids exist in the workspace).
+  surveyIds: z.array(ZId).max(100),
+  within: z.object({
+    amount: z.number().int().min(1).max(999),
+    unit: ZSurveyInteractionTimeUnit,
+  }),
+});
+export const ZSegmentSurveyInteractionFilterValue = ZSegmentSurveyInteractionFilterValueBase.refine(
+  (value) => value.surveyScope === "any" || value.surveyIds.length > 0,
+  { error: "Select at least one survey" }
+);
+export type TSegmentSurveyInteractionFilterValue = z.infer<typeof ZSegmentSurveyInteractionFilterValueBase>;
+
 export const ZSegmentFilterValue = z.union([
   z.string(),
   z.number(),
   ZRelativeDateValue,
   z.tuple([z.string(), z.string()]), // for "isBetween" operator
+  ZSegmentSurveyInteractionFilterValue,
 ]);
 export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 
 // Each filter has a qualifier, which usually contains the operator for evaluating the filter.
 // Attribute filter -> root will always have type "attribute"
 export const ZSegmentAttributeFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("attribute"),
     contactAttributeKey: z.string(),
@@ -137,7 +182,7 @@ export type TSegmentAttributeFilter = z.infer<typeof ZSegmentAttributeFilter>;
 
 // Person filter -> root will always have type "person"
 export const ZSegmentPersonFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("person"),
     personIdentifier: z.string(),
@@ -151,7 +196,7 @@ export type TSegmentPersonFilter = z.infer<typeof ZSegmentPersonFilter>;
 
 // Segment filter -> root will always have type "segment"
 export const ZSegmentSegmentFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("segment"),
     segmentId: z.string(),
@@ -165,7 +210,7 @@ export type TSegmentSegmentFilter = z.infer<typeof ZSegmentSegmentFilter>;
 
 // Device filter -> root will always have type "device"
 export const ZSegmentDeviceFilter = z.object({
-  id: z.cuid2(),
+  id: ZId,
   root: z.object({
     type: z.literal("device"),
     deviceType: z.string(),
@@ -178,12 +223,39 @@ export const ZSegmentDeviceFilter = z.object({
 
 export type TSegmentDeviceFilter = z.infer<typeof ZSegmentDeviceFilter>;
 
+// Survey interaction filter -> root will always have type "surveyInteraction".
+// Behavioral targeting evaluated against the contact's Display/Response relations.
+// The structured value (ZSegmentSurveyInteractionFilterValue) is defined above with the shared
+// filter-value union.
+export const ZSegmentSurveyInteractionFilter = z.object({
+  id: ZId,
+  root: z.object({
+    type: z.literal("surveyInteraction"),
+  }),
+  value: ZSegmentSurveyInteractionFilterValue,
+  qualifier: z.object({
+    operator: ZSurveyInteractionOperator,
+  }),
+});
+export type TSegmentSurveyInteractionFilter = z.infer<typeof ZSegmentSurveyInteractionFilter>;
+
 // A segment filter is a union of all the different filter types
 export const ZSegmentFilter = z
-  .union([ZSegmentAttributeFilter, ZSegmentPersonFilter, ZSegmentSegmentFilter, ZSegmentDeviceFilter])
+  .union([
+    ZSegmentAttributeFilter,
+    ZSegmentPersonFilter,
+    ZSegmentSegmentFilter,
+    ZSegmentDeviceFilter,
+    ZSegmentSurveyInteractionFilter,
+  ])
   // we need to refine the filter to make sure that the filter is valid
   .refine(
     (filter) => {
+      // survey interaction filters carry a structured value validated by their own schema
+      if (filter.root.type === "surveyInteraction") {
+        return true;
+      }
+
       // if the operator is an arithmentic operator, the value must be a number
       if (
         ARITHMETIC_OPERATORS.includes(filter.qualifier.operator as (typeof ARITHMETIC_OPERATORS)[number]) &&
@@ -234,6 +306,11 @@ export const ZSegmentFilter = z
     (filter) => {
       const { value, qualifier } = filter;
       const { operator } = qualifier;
+
+      // survey interaction filters carry a structured value validated by their own schema
+      if (filter.root.type === "surveyInteraction") {
+        return true;
+      }
 
       // if the operator is "isSet" or "isNotSet", the value doesn't matter
       if (operator === "isSet" || operator === "isNotSet") {
@@ -292,7 +369,7 @@ export type TBaseFilters = TBaseFilter[];
 
 export const ZBaseFilter: z.ZodType<TBaseFilter> = z.lazy(() =>
   z.object({
-    id: z.cuid2(),
+    id: ZId,
     connector: ZSegmentConnector,
     resource: z.union([ZSegmentFilter, ZBaseFilters]),
   })
@@ -324,7 +401,7 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
   .array(
     z.object({
-      id: z.cuid2(),
+      id: ZId,
       connector: ZSegmentConnector,
       resource: z.union([ZSegmentFilter, z.lazy(() => ZSegmentFilters)]),
     })
@@ -343,7 +420,7 @@ export const ZSegment = z.object({
   description: z.string().nullable(),
   isPrivate: z.boolean().prefault(true),
   filters: ZSegmentFilters,
-  workspaceId: z.cuid2(),
+  workspaceId: ZId,
   createdAt: z.date(),
   updatedAt: z.date(),
   surveys: z.array(z.string()),
@@ -355,6 +432,101 @@ export const ZJsWorkspaceStateSegment = z.object({
   hasFilters: z.boolean(),
 });
 export type TJsWorkspaceStateSegment = z.infer<typeof ZJsWorkspaceStateSegment>;
+
+/**
+ * Per-survey gate for the SDK's post-interaction segment refresh. Each flag says whether interacting
+ * with THIS survey via that event can change some live survey's segment membership:
+ *   - `onDisplay`  — a `Display` is created (drives `have seen` / `have not seen`)
+ *   - `onResponse` — a `Response` is created (drives `have started responding to`)
+ *   - `onFinished` — the response is finished (drives `have completed` / `have not completed`)
+ */
+export interface TSurveyInteractionRefresh {
+  onDisplay: boolean;
+  onResponse: boolean;
+  onFinished: boolean;
+}
+
+/**
+ * Maps each survey-interaction operator to the SDK callback whose event can flip a membership that
+ * depends on it. Negative operators map to the SAME source as their positive counterpart — the event
+ * flips the membership in the opposite direction, but a refresh is needed either way.
+ */
+const SURVEY_INTERACTION_OPERATOR_SOURCE: Record<
+  TSurveyInteractionOperator,
+  keyof TSurveyInteractionRefresh
+> = {
+  haveSeen: "onDisplay",
+  haveNotSeen: "onDisplay",
+  haveStartedRespondingTo: "onResponse",
+  haveCompleted: "onFinished",
+  haveNotCompleted: "onFinished",
+};
+
+/**
+ * Reverse-indexes the `surveyInteraction` filters used across a workspace's live app surveys onto the
+ * surveys they REFERENCE, so the SDK knows — per survey, per event — whether an interaction can change
+ * any live survey's membership, and can skip the heavy post-interaction `/user` refetch otherwise.
+ *
+ * The flag belongs on the referenced (target) survey, not the survey that owns the filter: it is the
+ * Display/Response of the *target* that flips membership. `deliveredSurveyIds` is the set the SDK can
+ * actually render (and thus fire callbacks for), so bits are only ever set on surveys in that set —
+ * `any` scope therefore sets the source bit on every delivered survey.
+ *
+ * `resolveSegmentFilters` resolves a nested `userIsIn` / `userIsNotIn` segment reference to its filter
+ * tree (returns `undefined` for unknown / foreign / deleted segments, mirroring runtime evaluation),
+ * so interaction filters hiding inside a referenced segment are not missed. A per-walk `visited` set
+ * guards against segment-reference cycles.
+ */
+export const buildSurveyInteractionRefreshMap = (
+  surveys: { id: string; segmentFilters: TBaseFilters | null }[],
+  resolveSegmentFilters: (segmentId: string) => TBaseFilters | undefined
+): { refreshBySurveyId: Record<string, TSurveyInteractionRefresh>; hasAny: boolean } => {
+  const deliveredSurveyIds = surveys.map((survey) => survey.id);
+  const deliveredSurveyIdSet = new Set(deliveredSurveyIds);
+  const refreshBySurveyId: Record<string, TSurveyInteractionRefresh> = {};
+  for (const id of deliveredSurveyIds) {
+    refreshBySurveyId[id] = { onDisplay: false, onResponse: false, onFinished: false };
+  }
+
+  let hasAny = false;
+
+  const applyLeaf = (filter: TSegmentSurveyInteractionFilter): void => {
+    const source = SURVEY_INTERACTION_OPERATOR_SOURCE[filter.qualifier.operator];
+    const targetIds = filter.value.surveyScope === "specific" ? filter.value.surveyIds : deliveredSurveyIds;
+    for (const targetId of targetIds) {
+      // Only surveys the SDK can render carry a bit; a target outside the delivered set can't fire a
+      // callback, so no refresh is possible (or needed) for it.
+      if (!deliveredSurveyIdSet.has(targetId)) continue;
+      refreshBySurveyId[targetId][source] = true;
+      hasAny = true;
+    }
+  };
+
+  const walk = (filters: TBaseFilters, visited: Set<string>): void => {
+    for (const group of filters) {
+      const { resource } = group;
+      if (Array.isArray(resource)) {
+        walk(resource, visited);
+      } else if (resource.root.type === "surveyInteraction") {
+        applyLeaf(resource as TSegmentSurveyInteractionFilter);
+      } else if (resource.root.type === "segment") {
+        const { segmentId } = resource.root;
+        if (visited.has(segmentId)) continue;
+        visited.add(segmentId);
+        const nested = resolveSegmentFilters(segmentId);
+        if (nested) walk(nested, visited);
+      }
+    }
+  };
+
+  for (const survey of surveys) {
+    if (survey.segmentFilters) {
+      walk(survey.segmentFilters, new Set<string>());
+    }
+  }
+
+  return { refreshBySurveyId, hasAny };
+};
 
 export const ZSegmentCreateInput = z.object({
   workspaceId: z.string(),
@@ -397,4 +569,15 @@ export interface TEvaluateSegmentUserData {
   userId: string;
   attributes: TEvaluateSegmentUserAttributeData;
   deviceType: "phone" | "desktop";
+  /**
+   * Optional interaction history for evaluating `surveyInteraction` filters in the in-process
+   * `evaluateSegment` path. When a segment contains a `surveyInteraction` filter and this is not
+   * provided, `evaluateSegment` throws rather than silently dropping the filter (which would corrupt
+   * membership). The contact-sync hot path and the Prisma preview path do not use this field — they
+   * evaluate interaction filters against loaded relations / the database directly.
+   */
+  interactionData?: {
+    displays: { surveyId: string; createdAt: Date }[];
+    responses: { surveyId: string; createdAt: Date; finished: boolean }[];
+  };
 }

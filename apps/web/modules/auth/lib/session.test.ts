@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock the Better Auth instance so the test never loads the real auth.ts graph (Redis/prisma/etc.).
-const { getSessionMock } = vi.hoisted(() => ({ getSessionMock: vi.fn() }));
+const { getSessionMock, findUniqueMock } = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
+  findUniqueMock: vi.fn(),
+}));
 
 vi.mock("@/modules/auth/lib/auth", () => ({
   auth: { api: { getSession: getSessionMock } },
+}));
+
+vi.mock("@formbricks/database", () => ({
+  prisma: { user: { findUnique: findUniqueMock } },
 }));
 
 // `next/headers` and `server-only` are stubbed globally in vitestSetup; the mocked
@@ -17,6 +24,8 @@ describe("getSession — Better Auth DAL (ENG-1054)", () => {
   beforeEach(() => {
     vi.resetModules();
     getSessionMock.mockReset();
+    findUniqueMock.mockReset();
+    findUniqueMock.mockResolvedValue({ isActive: true });
   });
 
   test("returns null when Better Auth has no session", async () => {
@@ -50,5 +59,34 @@ describe("getSession — Better Auth DAL (ENG-1054)", () => {
     });
     const getSession = await importGetSession();
     await expect(getSession()).resolves.toMatchObject({ expires: "2026-07-01T00:00:00.000Z" });
+  });
+
+  // Regression: `rejectInactiveUserOnSessionCreate` only gates session creation, and Better Auth
+  // serves the user from Redis + a 5-minute cookie cache — so without a live read a user deactivated
+  // after signing in kept full access for the life of a rolling 1-day session.
+  test("returns null when the user has been deactivated since signing in", async () => {
+    getSessionMock.mockResolvedValue({
+      session: { expiresAt: new Date("2026-07-01T00:00:00.000Z") },
+      user: { id: "user_abc123", email: "user@example.com", name: "Ada Lovelace" },
+    });
+    findUniqueMock.mockResolvedValue({ isActive: false });
+
+    const getSession = await importGetSession();
+    await expect(getSession()).resolves.toBeNull();
+    expect(findUniqueMock).toHaveBeenCalledWith({
+      where: { id: "user_abc123" },
+      select: { isActive: true },
+    });
+  });
+
+  test("returns null when the session's user row no longer exists", async () => {
+    getSessionMock.mockResolvedValue({
+      session: { expiresAt: new Date("2026-07-01T00:00:00.000Z") },
+      user: { id: "deleted_user", email: "gone@example.com", name: "Gone" },
+    });
+    findUniqueMock.mockResolvedValue(null);
+
+    const getSession = await importGetSession();
+    await expect(getSession()).resolves.toBeNull();
   });
 });

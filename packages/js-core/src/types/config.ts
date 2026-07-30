@@ -69,6 +69,8 @@ export interface TWorkspaceStateSurvey {
   endings: TJsonObject[];
   autoClose: number | null;
   status: "draft" | "inProgress" | "paused" | "completed";
+  // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
+  // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).
   recontactDays: number | null;
   displayLimit: number | null;
   displayOption: "displayOnce" | "displayMultiple" | "displaySome" | "respondMultiple";
@@ -94,9 +96,19 @@ export interface TWorkspaceStateSurvey {
   segment?: { id: string; hasFilters: boolean };
   displayPercentage: number | null;
   styling?: TSurveyStyling;
+  // Per-survey gate for the post-interaction segment refresh: whether an interaction with THIS survey
+  // (display / response / finish) can change any live survey's membership. Absent for workspaces
+  // without interaction targeting, where no refresh is ever needed.
+  interactionRefresh?: {
+    onDisplay: boolean;
+    onResponse: boolean;
+    onFinished: boolean;
+  };
 }
 
 export interface TWorkspaceStateSettings {
+  // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
+  // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).
   recontactDays: number;
   clickOutsideClose: boolean;
   overlay: "none" | "light" | "dark";

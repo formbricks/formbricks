@@ -292,7 +292,9 @@ describe("handleErrorResponse", () => {
   });
 
   test("returns 409 conflict for UniqueConstraintError", async () => {
-    const { response } = handleErrorResponse(new UniqueConstraintError("Action with name foo already exists"));
+    const { response } = handleErrorResponse(
+      new UniqueConstraintError("Action with name foo already exists")
+    );
     expect(response.status).toBe(409);
     const body = await response.json();
     expect(body.code).toBe("conflict");

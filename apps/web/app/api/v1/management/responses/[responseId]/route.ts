@@ -8,9 +8,10 @@ import { TApiV1Authentication, THandlerParams, withV1ApiWrapper } from "@/app/li
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
 type TUncheckedResponseUpdate = Record<string, unknown> & {
@@ -138,9 +139,22 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      if (!validateFileUploads(responseUpdate.data, result.survey.questions)) {
+      if (
+        !validateClientFileUploads({
+          data: responseUpdate.data,
+          workspaceId: result.survey.workspaceId,
+          surveyId: result.survey.id,
+          blocks: result.survey.blocks,
+          questions: result.survey.questions,
+          // Management callers replay stored responses whose file URLs may predate the scoped shape;
+          // accept those against a prefix this workspace owns (ENG-1981 review).
+          legacyOwnedStoragePrefixes: await getWorkspaceLegacyStoragePrefixes(result.survey.workspaceId),
+        })
+      ) {
         return {
-          response: responses.badRequestResponse("Invalid file upload response"),
+          response: responses.badRequestResponse(
+            "Invalid file upload response: each file URL must reference a file uploaded to this survey's file-upload element"
+          ),
         };
       }
 
