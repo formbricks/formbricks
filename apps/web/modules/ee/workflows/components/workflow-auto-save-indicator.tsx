@@ -64,12 +64,20 @@ export const WorkflowAutoSaveIndicator = () => {
       shouldRender={hasFailed}
       tooltipContent={tooltipContent}
       className="max-w-64 text-center">
+      {/* A live region because this pill is the whole report: autosave never toasts, so a failure
+          that is only a colour change is a failure nobody is told about. Polite, not assertive —
+          it should not interrupt someone mid-edit. The detail rides along as screen-reader-only
+          text rather than an aria-label, so the announcement carries it too; the tooltip that
+          shows it visually is hover-only. */}
       <span
+        role="status"
+        aria-live="polite"
         className={cn(
           "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors duration-300",
           PILL_CLASSES[state]
         )}>
         {label}
+        {hasFailed ? <span className="sr-only">. {tooltipContent}</span> : null}
       </span>
     </TooltipRenderer>
   );
