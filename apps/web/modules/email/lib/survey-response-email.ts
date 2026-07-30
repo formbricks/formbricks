@@ -21,12 +21,19 @@ import { resolveStorageUrl } from "@/modules/storage/utils";
  * Sanitize a recall-templated body the same way the survey Follow-Ups email does. Recall tags are
  * expanded against the response first, then only a narrow HTML allowlist survives — so
  * respondent-controlled recall values cannot inject markup or non-http(s) schemes.
+ *
+ * `ul`/`ol`/`li` are on the list because `sanitize-html` drops a disallowed tag but keeps its text:
+ * without them the Body editor's list buttons produced items run together on one line, unnumbered.
  */
 const sanitizeBody = (body: string, response: TResponse): string =>
   sanitizeHtml(parseRecallInfo(body, response.data, response.variables), {
-    allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br"],
+    allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br", "ul", "ol", "li"],
     allowedAttributes: {
       a: ["href", "rel", "target"],
+      // Lexical numbers list items explicitly; keep both so an `<ol>` that starts at something other
+      // than 1 keeps its numbering instead of restarting.
+      ol: ["start"],
+      li: ["value"],
       "*": ["dir", "class"],
     },
     allowedSchemes: ["http", "https"],
