@@ -2,7 +2,11 @@ import "server-only";
 import { deadlineInterceptor, v1 } from "@authzed/authzed-node";
 import { env } from "@/lib/env";
 import { type TAuthzedConsistency, isAuthzedEnabled } from "./config";
-import { AUTHZED_MAX_RELATIONSHIP_UPDATES, AUTHZED_REQUEST_TIMEOUT_MS } from "./constants";
+import {
+  AUTHZED_MAX_RELATIONSHIP_READS,
+  AUTHZED_MAX_RELATIONSHIP_UPDATES,
+  AUTHZED_REQUEST_TIMEOUT_MS,
+} from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError, mapAuthzedError } from "./errors";
 import { executeAuthzedOperation } from "./retry";
 
@@ -59,10 +63,70 @@ export type TAuthzedRelationshipFilter =
         subject: TAuthzedSubjectFilter;
       }>);
 
+/** An opaque SpiceDB revision. Formbricks-owned wrapper: the SDK's ZedToken never crosses the facade. */
+export type TAuthzedSnapshot = Readonly<{
+  token: string;
+}>;
+
+/** An opaque resume position within a relationship read. */
+export type TAuthzedReadCursor = Readonly<{
+  token: string;
+}>;
+
+/**
+ * Filter for reading relationships.
+ *
+ * Unlike `TAuthzedRelationshipFilter` this is a plain object rather than a union, so a
+ * `resourceType`-only sweep is expressible. That asymmetry is deliberate and load-bearing: **reads
+ * may sweep an entire resource type, deletes may never**. Because `resourceId` here is
+ * `string | undefined`, this type satisfies neither branch of the delete filter's union, so passing
+ * a read filter to `deleteRelationships` is a compile error and an unbounded mass delete stays
+ * inexpressible.
+ *
+ * `optionalResourceIdPrefix` is deliberately not surfaced: Formbricks object IDs are unprefixed
+ * cuids, so it could never narrow anything, and unused surface on a frozen facade is a liability.
+ */
+export type TAuthzedRelationshipReadFilter = Readonly<{
+  relation?: string;
+  resourceId?: string;
+  resourceType: string;
+  subject?: TAuthzedSubjectFilter;
+}>;
+
+export type TAuthzedRelationshipQuery = Readonly<{
+  /**
+   * Revision to read at. Omit on the first page to resolve fully consistently; pass the previous
+   * page's `snapshot` on every subsequent page so the whole read observes one revision.
+   */
+  atSnapshot?: TAuthzedSnapshot;
+  cursor?: TAuthzedReadCursor;
+  filter: TAuthzedRelationshipReadFilter;
+  limit: number;
+}>;
+
+export type TAuthzedRelationshipPage = Readonly<{
+  /** Resume position, or `null` when the page was short and the read is exhausted. */
+  cursor: TAuthzedReadCursor | null;
+  relationships: ReadonlyArray<TAuthzedRelationship>;
+  /** Revision this page was read at. Thread it back through `atSnapshot` to pin later pages. */
+  snapshot: TAuthzedSnapshot | null;
+}>;
+
 export type TAuthzedClient = Readonly<{
   consistency: TAuthzedConsistency;
   deleteRelationships: (filter: TAuthzedRelationshipFilter) => Promise<void>;
   diffSchema: (schemaText: string) => Promise<TAuthzedSchemaDiff>;
+  /**
+   * Read one page of raw relationships.
+   *
+   * **Operational use only — never for permission logic.** AuthZed's guidance is explicit that
+   * checks and ID listing must go through `Check`, `CheckBulk`, `LookupResources`, and
+   * `LookupSubjects`; reading raw relationships to decide access reimplements the permission graph
+   * in application code and silently diverges from the schema. This exists so operational tooling
+   * can observe what SpiceDB actually holds and reconcile it against PostgreSQL. It is deliberately
+   * not re-exported from `./index`.
+   */
+  readRelationships: (query: TAuthzedRelationshipQuery) => Promise<TAuthzedRelationshipPage>;
   readSchema: () => Promise<TAuthzedSchema>;
   systemKey: string;
   writeRelationships: (updates: ReadonlyArray<TAuthzedRelationshipUpdate>) => Promise<void>;
@@ -199,6 +263,88 @@ const validateRelationshipFilter = (filter: TAuthzedRelationshipFilter): void =>
   }
 };
 
+const invalidReadRequest = (): AuthzedError =>
+  new AuthzedError({
+    attempts: 0,
+    code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+    operation: "read_relationships",
+    retryable: false,
+  });
+
+const validateRelationshipQuery = (query: TAuthzedRelationshipQuery): void => {
+  const { filter } = query;
+  const optionalFieldsValid =
+    (filter.relation === undefined || isNonEmpty(filter.relation)) &&
+    (filter.resourceId === undefined || isNonEmpty(filter.resourceId)) &&
+    (filter.subject === undefined ||
+      (isNonEmpty(filter.subject.objectType) &&
+        isNonEmpty(filter.subject.objectId) &&
+        (filter.subject.relation === undefined || isNonEmpty(filter.subject.relation))));
+
+  // A limit is mandatory and must be positive: SpiceDB treats `optionalLimit: 0` as *unlimited*,
+  // which under the channel-wide deadline is a guaranteed timeout and an unbounded allocation,
+  // because the promisified streaming call buffers every message before it resolves.
+  const limitValid =
+    Number.isSafeInteger(query.limit) && query.limit >= 1 && query.limit <= AUTHZED_MAX_RELATIONSHIP_READS;
+
+  const tokensValid =
+    (query.atSnapshot === undefined || isNonEmpty(query.atSnapshot.token)) &&
+    (query.cursor === undefined || isNonEmpty(query.cursor.token));
+
+  if (!isNonEmpty(filter.resourceType) || !optionalFieldsValid || !limitValid || !tokensValid) {
+    throw invalidReadRequest();
+  }
+};
+
+/**
+ * Convert one streamed response into a facade relationship.
+ *
+ * Strict by design. Every field below is optional in the generated SDK types, and a missing one
+ * would yield a relationship that compares unequal to the tuple Formbricks wrote — which reconciling
+ * tooling would classify as orphaned and delete. Failing loudly is the only safe reading.
+ */
+const toFacadeRelationship = (response: v1.ReadRelationshipsResponse): TAuthzedRelationship => {
+  const relationship = response.relationship;
+  const resource = relationship?.resource;
+  const subject = relationship?.subject?.object;
+
+  if (!relationship || !resource || !subject) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INTERNAL,
+      operation: "read_relationships",
+      retryable: false,
+    });
+  }
+
+  // Formbricks never writes caveated or expiring relationships and the facade cannot represent
+  // them, so dropping the qualifier would misreport the tuple. Their presence means something other
+  // than Formbricks is writing to this SpiceDB, which must stop reconciling tooling outright rather
+  // than let it delete relationships it does not understand.
+  if (relationship.optionalCaveat !== undefined || relationship.optionalExpiresAt !== undefined) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.UNSUPPORTED,
+      operation: "read_relationships",
+      retryable: false,
+    });
+  }
+
+  const subjectRelation = relationship.subject?.optionalRelation;
+
+  return {
+    relation: relationship.relation,
+    resource: { objectId: resource.objectId, objectType: resource.objectType },
+    subject: {
+      objectId: subject.objectId,
+      objectType: subject.objectType,
+      // Normalize the wire's empty string back to `undefined` so a subject-relation tuple such as
+      // `workspace:x#reader_team@team:y#member` round-trips equal to the update that wrote it.
+      ...(subjectRelation ? { relation: subjectRelation } : {}),
+    },
+  };
+};
+
 const createAuthzedClient = (): TAuthzedClientSingleton => {
   const config = getAuthzedConfig();
 
@@ -267,6 +413,71 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
           differenceKinds: Object.freeze(differenceKinds),
         };
       }),
+    readRelationships: async (query) => {
+      validateRelationshipQuery(query);
+
+      return executeAuthzedOperation("read_relationships", async () => {
+        const { filter } = query;
+        const responses = await sdkClient.promises.readRelationships({
+          // The first page resolves fully consistently so reconciliation observes the latest write,
+          // matching `diffSchema`: the application's configurable permission-check consistency is
+          // never used for operational verification. Later pages pin that exact revision instead, so
+          // the whole read is one consistent view — resolving each page independently would let a
+          // concurrent write hide a relationship from every page, and tooling would then treat a live
+          // relationship as orphaned. Note `atExactSnapshot` fails once the revision ages out of the
+          // datastore's GC window, which callers must surface as an incomplete read.
+          consistency: query.atSnapshot
+            ? {
+                requirement: {
+                  atExactSnapshot: { token: query.atSnapshot.token },
+                  oneofKind: "atExactSnapshot",
+                },
+              }
+            : { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+          optionalCursor: query.cursor ? { token: query.cursor.token } : undefined,
+          optionalLimit: query.limit,
+          relationshipFilter: {
+            optionalRelation: filter.relation ?? "",
+            optionalResourceId: filter.resourceId ?? "",
+            optionalResourceIdPrefix: "",
+            optionalSubjectFilter: filter.subject
+              ? {
+                  optionalRelation: filter.subject.relation
+                    ? { relation: filter.subject.relation }
+                    : undefined,
+                  optionalSubjectId: filter.subject.objectId,
+                  subjectType: filter.subject.objectType,
+                }
+              : undefined,
+            resourceType: filter.resourceType,
+          },
+        });
+
+        const lastResponse = responses.at(-1);
+        const readAt = lastResponse?.readAt?.token;
+
+        // Without a revision on a non-empty page there is nothing to pin later pages to, so a
+        // multi-page read could not be made consistent. Refuse rather than silently degrade.
+        if (lastResponse && !readAt) {
+          throw new AuthzedError({
+            attempts: 0,
+            code: AUTHZED_ERROR_CODES.INTERNAL,
+            operation: "read_relationships",
+            retryable: false,
+          });
+        }
+
+        const afterResultCursor = lastResponse?.afterResultCursor?.token;
+
+        return {
+          // A short page means the filter is exhausted. Only a full page can have more behind it, and
+          // only then is a cursor meaningful.
+          cursor: responses.length === query.limit && afterResultCursor ? { token: afterResultCursor } : null,
+          relationships: responses.map(toFacadeRelationship),
+          snapshot: query.atSnapshot ?? (readAt ? { token: readAt } : null),
+        };
+      });
+    },
     readSchema: async () => {
       const schemaText = await executeAuthzedOperation("read_schema", async () => {
         try {

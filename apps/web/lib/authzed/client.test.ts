@@ -12,6 +12,7 @@ describe("AuthZed client facade", () => {
     sdkMocks.deleteRelationships.mockReset();
     sdkMocks.diffSchema.mockReset();
     sdkMocks.newClient.mockReset();
+    sdkMocks.readRelationships.mockReset();
     sdkMocks.readSchema.mockReset();
     sdkMocks.writeRelationships.mockReset();
     sdkMocks.writeSchema.mockReset();
@@ -27,6 +28,7 @@ describe("AuthZed client facade", () => {
       promises: {
         deleteRelationships: sdkMocks.deleteRelationships,
         diffSchema: sdkMocks.diffSchema,
+        readRelationships: sdkMocks.readRelationships,
         readSchema: sdkMocks.readSchema,
         writeRelationships: sdkMocks.writeRelationships,
         writeSchema: sdkMocks.writeSchema,
@@ -101,6 +103,7 @@ describe("AuthZed client facade", () => {
       "consistency",
       "deleteRelationships",
       "diffSchema",
+      "readRelationships",
       "readSchema",
       "systemKey",
       "writeRelationships",
@@ -325,6 +328,254 @@ describe("AuthZed client facade", () => {
         },
         resourceType: "organization",
       },
+    });
+  });
+
+  describe("readRelationships", () => {
+    const readResponse = (
+      relationship: Record<string, unknown>,
+      overrides: Record<string, unknown> = {}
+    ) => ({
+      afterResultCursor: { token: "private-cursor" },
+      readAt: { token: "private-revision" },
+      relationship,
+      ...overrides,
+    });
+
+    const membershipRelationship = {
+      relation: "owner",
+      resource: { objectId: "org-1", objectType: "organization" },
+      subject: { object: { objectId: "user-1", objectType: "user" }, optionalRelation: "" },
+    };
+
+    test("resolves the first page fully consistently and returns a pinnable revision", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([readResponse(membershipRelationship)]);
+
+      await expect(
+        getAuthzedClient().readRelationships({
+          filter: { resourceType: "organization" },
+          limit: 250,
+        })
+      ).resolves.toEqual({
+        // A short page exhausts the filter, so no cursor is offered even though SpiceDB sent one.
+        cursor: null,
+        relationships: [
+          {
+            relation: "owner",
+            resource: { objectId: "org-1", objectType: "organization" },
+            subject: { objectId: "user-1", objectType: "user" },
+          },
+        ],
+        snapshot: { token: "private-revision" },
+      });
+
+      expect(sdkMocks.readRelationships).toHaveBeenCalledWith({
+        consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+        optionalCursor: undefined,
+        optionalLimit: 250,
+        relationshipFilter: {
+          optionalRelation: "",
+          optionalResourceId: "",
+          optionalResourceIdPrefix: "",
+          optionalSubjectFilter: undefined,
+          resourceType: "organization",
+        },
+      });
+      expect(retryMocks.execute).toHaveBeenCalledWith("read_relationships", expect.any(Function));
+    });
+
+    test("pins later pages to the supplied revision instead of resolving them independently", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([
+        readResponse(membershipRelationship, { readAt: { token: "ignored-revision" } }),
+      ]);
+
+      const page = await getAuthzedClient().readRelationships({
+        atSnapshot: { token: "pinned-revision" },
+        cursor: { token: "resume-here" },
+        filter: { resourceType: "organization" },
+        limit: 250,
+      });
+
+      // The pinned revision is echoed back unchanged so a multi-page read keeps one consistent view.
+      expect(page.snapshot).toEqual({ token: "pinned-revision" });
+      expect(sdkMocks.readRelationships).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consistency: {
+            requirement: {
+              atExactSnapshot: { token: "pinned-revision" },
+              oneofKind: "atExactSnapshot",
+            },
+          },
+          optionalCursor: { token: "resume-here" },
+        })
+      );
+    });
+
+    test("offers a resume cursor only when the page is full", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([
+        readResponse(membershipRelationship),
+        readResponse(membershipRelationship),
+      ]);
+
+      await expect(
+        getAuthzedClient().readRelationships({
+          filter: { resourceType: "organization" },
+          limit: 2,
+        })
+      ).resolves.toMatchObject({ cursor: { token: "private-cursor" } });
+    });
+
+    test("returns an exhausted empty page without a revision", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([]);
+
+      await expect(
+        getAuthzedClient().readRelationships({
+          filter: { resourceType: "organization" },
+          limit: 250,
+        })
+      ).resolves.toEqual({ cursor: null, relationships: [], snapshot: null });
+    });
+
+    test("preserves a subject relation so team-member grants round-trip", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([
+        readResponse({
+          relation: "reader_team",
+          resource: { objectId: "ws-1", objectType: "workspace" },
+          subject: { object: { objectId: "team-1", objectType: "team" }, optionalRelation: "member" },
+        }),
+      ]);
+
+      const page = await getAuthzedClient().readRelationships({
+        filter: { resourceType: "workspace", subject: { objectId: "team-1", objectType: "team" } },
+        limit: 250,
+      });
+
+      expect(page.relationships[0].subject).toEqual({
+        objectId: "team-1",
+        objectType: "team",
+        relation: "member",
+      });
+    });
+
+    test("narrows the SDK filter for every supported field", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([]);
+
+      await getAuthzedClient().readRelationships({
+        filter: {
+          relation: "reader_team",
+          resourceId: "ws-1",
+          resourceType: "workspace",
+          subject: { objectId: "team-1", objectType: "team", relation: "member" },
+        },
+        limit: 10,
+      });
+
+      expect(sdkMocks.readRelationships).toHaveBeenCalledWith(
+        expect.objectContaining({
+          relationshipFilter: {
+            optionalRelation: "reader_team",
+            optionalResourceId: "ws-1",
+            optionalResourceIdPrefix: "",
+            optionalSubjectFilter: {
+              optionalRelation: { relation: "member" },
+              optionalSubjectId: "team-1",
+              subjectType: "team",
+            },
+            resourceType: "workspace",
+          },
+        })
+      );
+    });
+
+    test.each([
+      ["a missing resource type", { filter: { resourceType: "" }, limit: 10 }],
+      // SpiceDB reads `optionalLimit: 0` as unlimited, which would breach the channel deadline and
+      // buffer without bound, so an unset or non-positive limit must never reach the wire.
+      ["an unlimited read", { filter: { resourceType: "organization" }, limit: 0 }],
+      ["a negative limit", { filter: { resourceType: "organization" }, limit: -1 }],
+      ["a fractional limit", { filter: { resourceType: "organization" }, limit: 1.5 }],
+      ["a limit above the page bound", { filter: { resourceType: "organization" }, limit: 251 }],
+      ["a blank relation", { filter: { relation: "", resourceType: "organization" }, limit: 10 }],
+      ["a blank resource id", { filter: { resourceId: "", resourceType: "organization" }, limit: 10 }],
+      [
+        "an incomplete subject filter",
+        {
+          filter: { resourceType: "workspace", subject: { objectId: "", objectType: "team" } },
+          limit: 10,
+        },
+      ],
+      ["a blank cursor", { cursor: { token: "" }, filter: { resourceType: "organization" }, limit: 10 }],
+      [
+        "a blank snapshot",
+        { atSnapshot: { token: "" }, filter: { resourceType: "organization" }, limit: 10 },
+      ],
+    ])("rejects %s before reaching the SDK", async (_label, query) => {
+      await expect(getAuthzedClient().readRelationships(query)).rejects.toThrow(
+        AUTHZED_ERROR_CODES.INVALID_REQUEST
+      );
+      expect(sdkMocks.readRelationships).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["relationship", {}],
+      ["resource", { relation: "owner", subject: membershipRelationship.subject }],
+      ["subject object", { relation: "owner", resource: membershipRelationship.resource, subject: {} }],
+    ])(
+      "refuses a response missing its %s rather than reporting a malformed relationship",
+      async (_label, relationship) => {
+        sdkMocks.readRelationships.mockResolvedValue([readResponse(relationship)]);
+
+        await expect(
+          getAuthzedClient().readRelationships({
+            filter: { resourceType: "organization" },
+            limit: 250,
+          })
+        ).rejects.toThrow(AUTHZED_ERROR_CODES.INTERNAL);
+      }
+    );
+
+    test("refuses a non-empty page that carries no revision to pin", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([
+        readResponse(membershipRelationship, { readAt: undefined }),
+      ]);
+
+      await expect(
+        getAuthzedClient().readRelationships({
+          filter: { resourceType: "organization" },
+          limit: 250,
+        })
+      ).rejects.toThrow(AUTHZED_ERROR_CODES.INTERNAL);
+    });
+
+    test.each(["optionalCaveat", "optionalExpiresAt"])(
+      "refuses a relationship qualified by %s that the facade cannot represent",
+      async (qualifier) => {
+        sdkMocks.readRelationships.mockResolvedValue([
+          readResponse({ ...membershipRelationship, [qualifier]: { anything: true } }),
+        ]);
+
+        await expect(
+          getAuthzedClient().readRelationships({
+            filter: { resourceType: "organization" },
+            limit: 250,
+          })
+        ).rejects.toThrow(AUTHZED_ERROR_CODES.UNSUPPORTED);
+      }
+    );
+
+    test("routes reads through the resilience pipeline so transient failures are mapped there", async () => {
+      // Error sanitization belongs to `executeAuthzedOperation` (covered in retry.test.ts); the
+      // facade's own contract is that it opts this operation into that pipeline rather than calling
+      // the SDK bare.
+      sdkMocks.readRelationships.mockRejectedValue(
+        Object.assign(new Error("private-endpoint-detail"), { code: status.UNAVAILABLE })
+      );
+
+      await expect(
+        getAuthzedClient().readRelationships({ filter: { resourceType: "organization" }, limit: 250 })
+      ).rejects.toThrow();
+
+      expect(retryMocks.execute).toHaveBeenCalledWith("read_relationships", expect.any(Function));
     });
   });
 });

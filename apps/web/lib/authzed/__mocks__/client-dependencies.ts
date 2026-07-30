@@ -6,6 +6,7 @@ export const sdkMocks = {
   deleteRelationships: vi.fn(),
   diffSchema: vi.fn(),
   newClient: vi.fn(),
+  readRelationships: vi.fn(),
   readSchema: vi.fn(),
   writeRelationships: vi.fn(),
   writeSchema: vi.fn(),
