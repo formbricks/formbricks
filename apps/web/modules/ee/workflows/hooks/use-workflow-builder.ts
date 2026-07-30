@@ -50,8 +50,9 @@ interface UseWorkflowBuilderArgs {
 }
 
 // Long enough to batch a typing burst into one PATCH, short enough that edits are on the server
-// before the user reaches for Test or navigates away.
-const WORKFLOW_AUTOSAVE_DELAY_MS = 2000;
+// before the user reaches for Test or navigates away. Each edit restarts the window, so a save
+// only goes out once the user has paused for this long.
+const WORKFLOW_AUTOSAVE_DELAY_MS = 1000;
 
 export const useWorkflowBuilder = ({
   workspaceId,
