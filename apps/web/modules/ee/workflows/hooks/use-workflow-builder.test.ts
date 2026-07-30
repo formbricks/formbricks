@@ -6,8 +6,16 @@ import { Provider, createStore } from "jotai";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TWorkflowResource } from "@formbricks/workflows";
-import { setWorkflowNameAtom } from "@/modules/ee/workflows/state/editor";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
+import {
+  hasWorkflowSaveFailedAtom,
+  setWorkflowNameAtom,
+  workflowSaveErrorAtom,
+} from "@/modules/ee/workflows/state/editor";
 import { useWorkflowBuilder } from "./use-workflow-builder";
+
+// What a dropped connection actually throws — the string this must never put in front of a user.
+const offlineError = () => new TypeError("NetworkError when attempting to fetch resource.");
 
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
@@ -97,13 +105,13 @@ describe("load", () => {
     expect(getWorkflow).toHaveBeenCalledWith("wf-api", expect.any(AbortSignal));
   });
 
-  test("surfaces load error via toast and loadError", async () => {
-    getWorkflow.mockRejectedValue(new Error("boom"));
+  test("surfaces load error via toast and loadError, without leaking the raw message", async () => {
+    getWorkflow.mockRejectedValue(offlineError());
 
     const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
 
-    await waitFor(() => expect(result.current.loadError).toBe("boom"));
-    expect(toastError).toHaveBeenCalled();
+    await waitFor(() => expect(result.current.loadError).toBe("workspace.workflows.load_failed"));
+    expect(toastError).toHaveBeenCalledWith("workspace.workflows.load_failed");
   });
 
   test("skips load when loadOnMount is false", () => {
@@ -166,9 +174,9 @@ describe("save", () => {
     expect(routerRefresh).toHaveBeenCalled();
   });
 
-  test("save reports a failure toast", async () => {
+  test("reports a transport failure with friendly copy, not the browser's message", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
-    updateWorkflow.mockRejectedValue(new Error("save kaboom"));
+    updateWorkflow.mockRejectedValue(offlineError());
 
     const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
     await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
@@ -177,8 +185,37 @@ describe("save", () => {
       await result.current.save();
     });
 
-    expect(toastError).toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("workspace.workflows.save_failed");
     expect(routerRefresh).not.toHaveBeenCalled();
+  });
+
+  test("surfaces the server's detail when the API rejects the draft", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValue(new V3ApiError({ status: 422, detail: "Definition is invalid." }));
+
+    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    await act(async () => {
+      await result.current.save();
+    });
+
+    expect(toastError).toHaveBeenCalledWith("Definition is invalid.");
+  });
+
+  test("does not flag a failed state for a draft that never left the client", async () => {
+    getWorkflow.mockResolvedValue({ ...apiWorkflow, name: "  " });
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow).toBeTruthy());
+
+    await act(async () => {
+      await result.current.save({ silent: true });
+    });
+
+    // "Save failed" means the server refused it. An unfinished draft is the validation UI's job.
+    expect(updateWorkflow).not.toHaveBeenCalled();
+    expect(store.get(workflowSaveErrorAtom)).toBeNull();
   });
 });
 
@@ -212,18 +249,23 @@ describe("silent save (autosave mode)", () => {
     expect(toastError).not.toHaveBeenCalled();
   });
 
-  test("still surfaces API failures with a toast", async () => {
+  test("records a silent failure as persistent state instead of a toast", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
-    updateWorkflow.mockRejectedValue(new Error("save kaboom"));
+    updateWorkflow.mockRejectedValue(offlineError());
 
-    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
     await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
 
     await act(async () => {
       await result.current.save({ silent: true });
     });
 
-    expect(toastError).toHaveBeenCalled();
+    // A toast here would fade before the user noticed it; the header pill reads the state instead
+    // and stays failed until a save lands.
+    expect(toastError).not.toHaveBeenCalled();
+    expect(store.get(workflowSaveErrorAtom)).toEqual(
+      expect.objectContaining({ kind: "unreachable", detail: null })
+    );
   });
 });
 
@@ -313,6 +355,79 @@ describe("autosave", () => {
     await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2), { timeout: 4000 });
   });
 
+  test("retries the failed draft when connectivity returns", { timeout: 15000 }, async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValue(offlineError());
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Edited while offline");
+    });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+    await waitFor(() => expect(store.get(workflowSaveErrorAtom)?.kind).toBe("unreachable"));
+
+    // The guard holds the identical draft back while nothing has changed…
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+
+    // …until the browser reports it is back online, which clears the guard and re-arms the debounce
+    // without the user having to touch anything.
+    updateWorkflow.mockResolvedValue(apiWorkflow);
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2), { timeout: 4000 });
+    await waitFor(() => expect(store.get(workflowSaveErrorAtom)).toBeNull());
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  test("does not retry a rejected draft when connectivity returns", { timeout: 15000 }, async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValue(new V3ApiError({ status: 422, detail: "Definition is invalid." }));
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Rejected edit");
+    });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
+    await waitFor(() => expect(store.get(workflowSaveErrorAtom)?.kind).toBe("rejected"));
+
+    // Being back online says nothing about a draft the API actively refused; re-sending it would
+    // just fail again on every network flap.
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+    expect(store.get(workflowSaveErrorAtom)?.detail).toBe("Definition is invalid.");
+  });
+
+  test("clears the failed state once a save succeeds", { timeout: 15000 }, async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValueOnce(offlineError()).mockResolvedValue(apiWorkflow);
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "First attempt");
+    });
+    await waitFor(() => expect(store.get(hasWorkflowSaveFailedAtom)).toBe(true), { timeout: 4000 });
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Second attempt");
+    });
+    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(2), { timeout: 4000 });
+
+    await waitFor(() => expect(store.get(workflowSaveErrorAtom)).toBeNull());
+    expect(store.get(hasWorkflowSaveFailedAtom)).toBe(false);
+    expect(result.current.isDirty).toBe(false);
+  });
+
   test("flushes a dirty draft on unmount instead of dropping the debounce window", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     updateWorkflow.mockResolvedValue(apiWorkflow);
@@ -390,7 +505,7 @@ describe("transition", () => {
 
   test("API failure surfaces a failure toast", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
-    archiveWorkflow.mockRejectedValue(new Error("nope"));
+    archiveWorkflow.mockRejectedValue(offlineError());
 
     const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
     await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
@@ -399,6 +514,24 @@ describe("transition", () => {
       await result.current.archive();
     });
 
-    expect(toastError).toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("workspace.workflows.archive_failed");
+  });
+
+  test("blocks enable with a toast when the pre-flight flush fails", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    updateWorkflow.mockRejectedValue(offlineError());
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    act(() => {
+      store.set(setWorkflowNameAtom, "Renamed but unsaveable");
+    });
+    await act(() => result.current.enable());
+
+    // Enabling would publish a definition other than the one on screen. The flush is silent, so
+    // without this toast the click would look like it did nothing at all.
+    expect(enableWorkflow).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("workspace.workflows.enable_blocked_unsaved_changes");
   });
 });

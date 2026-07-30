@@ -18,7 +18,11 @@ import { WorkflowAutoSaveIndicator } from "@/modules/ee/workflows/components/wor
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { deleteWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import { getWorkflowStatusBadge } from "@/modules/ee/workflows/lib/display";
-import { workflowAtom, workflowValidityAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  hasWorkflowSaveFailedAtom,
+  workflowAtom,
+  workflowValidityAtom,
+} from "@/modules/ee/workflows/state/editor";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -40,6 +44,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const segment = useSelectedLayoutSegment();
   const workflow = useAtomValue(workflowAtom);
   const validity = useAtomValue(workflowValidityAtom);
+  const hasSaveFailed = useAtomValue(hasWorkflowSaveFailedAtom);
   const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -75,8 +80,10 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
     <div className="flex items-center gap-3">
       {/* The definition is the workflow's real content: while it can't change (enabled, archived,
           or a read-only member) the editor is effectively read-only, so say that instead of
-          advertising an autosave that has nothing to act on. */}
-      {builder.canEditDefinition ? (
+          advertising an autosave that has nothing to act on. An outstanding save failure still wins,
+          because name/description autosave keeps running while a workflow is enabled — a failed
+          rename would otherwise hide behind a "Read-only" pill. */}
+      {builder.canEditDefinition || hasSaveFailed ? (
         <WorkflowAutoSaveIndicator />
       ) : (
         <span className="inline-flex cursor-default items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
