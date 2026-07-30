@@ -4,6 +4,7 @@ import { performance } from "node:perf_hooks";
 import { logger } from "@formbricks/logger";
 import { AUTHZED_MAX_ATTEMPTS, AUTHZED_RETRY_BASE_DELAYS_MS, AUTHZED_RETRY_JITTER_RATIO } from "./constants";
 import { mapAuthzedError } from "./errors";
+import { recordAuthzedRequestFailure, recordAuthzedRequestRetry } from "./metrics";
 
 type TAuthzedRetryDependencies = Readonly<{
   now: () => number;
@@ -62,6 +63,11 @@ export const executeAuthzedOperation = async <T>(
           },
           "AuthZed request failed"
         );
+        recordAuthzedRequestFailure({
+          code: authzedError.code,
+          operation,
+          retryable: authzedError.retryable,
+        });
         throw authzedError;
       }
 
@@ -79,6 +85,9 @@ export const executeAuthzedOperation = async <T>(
         },
         "AuthZed request retry scheduled"
       );
+      // Retries that still succeed never reach the failure counter, so without this a degraded SpiceDB
+      // is invisible until it starts dropping writes outright.
+      recordAuthzedRequestRetry({ code: authzedError.code, operation });
       await dependencies.sleep(retryDelayMs);
     }
   }

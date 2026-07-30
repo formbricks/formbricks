@@ -251,6 +251,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: 1.26.0
         version: 1.26.0(zod@4.3.6)
+      '@opentelemetry/api':
+        specifier: 1.9.0
+        version: 1.9.0
       '@opentelemetry/auto-instrumentations-node':
         specifier: 0.75.0
         version: 0.75.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.0))
