@@ -2662,7 +2662,8 @@
         "unify_feedback_inbox": "Caixa de Entrada de Feedback Unificada",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Liberta todo o poder do Formbricks.",
         "white_glove_onboarding": "Onboarding personalizado",
-        "whitelabel_email_follow_ups": "Follow-ups por e-mail sem marca"
+        "whitelabel_email_follow_ups": "Follow-ups por e-mail sem marca",
+        "workflows": "Workflows"
       },
       "feedback_directories": {
         "archive": "Arquivar",

@@ -2562,6 +2562,7 @@ checksums:
     workspace/settings/enterprise/unlock_the_full_power_of_formbricks_free_for_30_days: a96f8df102a5d1f0367f3f82ac1f344b
     workspace/settings/enterprise/white_glove_onboarding: 79d5f04ad3decd659e63f5cf61628ea0
     workspace/settings/enterprise/whitelabel_email_follow_ups: 4d62c861b60c5dceb6ad72cd5d1186d7
+    workspace/settings/enterprise/workflows: b0c9c8615a9ba7d9cb73e767290a7f72
     workspace/settings/feedback_directories/archive: fa813ab3074103e5daad07462af25789
     workspace/settings/feedback_directories/archive_directory: c2b39feb0962b93f883a4bac6ffadd1e
     workspace/settings/feedback_directories/archive_not_allowed: 929b16f54260e321b0ebf5d458499d60

@@ -2662,7 +2662,8 @@
         "unify_feedback_inbox": "统一反馈收件箱",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "解锁 Formbricks 的全部功能。",
         "white_glove_onboarding": "专属引导服务",
-        "whitelabel_email_follow_ups": "白标电子邮件跟进"
+        "whitelabel_email_follow_ups": "白标电子邮件跟进",
+        "workflows": "Workflows"
       },
       "feedback_directories": {
         "archive": "归档",
