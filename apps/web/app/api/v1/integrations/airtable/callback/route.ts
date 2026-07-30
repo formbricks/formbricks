@@ -12,7 +12,7 @@ import {
 } from "@/lib/oauth/integration-state";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -144,7 +144,10 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    const canUserAccessWorkspace = await canUserWriteWorkspaceIntegrations(
+      authentication.user.id,
+      workspaceId
+    );
     if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),

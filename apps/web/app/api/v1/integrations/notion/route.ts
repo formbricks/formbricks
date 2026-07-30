@@ -7,7 +7,7 @@ import {
   NOTION_REDIRECT_URI,
 } from "@/lib/constants";
 import { createIntegrationOAuthState } from "@/lib/oauth/integration-state";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -23,7 +23,10 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    const canUserAccessWorkspace = await canUserWriteWorkspaceIntegrations(
+      authentication.user.id,
+      workspaceId
+    );
     if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),

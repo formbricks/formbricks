@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "./video";
+import {
+  checkForLoomUrl,
+  checkForVimeoUrl,
+  checkForYoutubeUrl,
+  convertToEmbedUrl,
+  isSafeMediaUrl,
+} from "./video";
 
 describe("checkForYoutubeUrl", () => {
   test("returns true for valid YouTube URLs with https", () => {
@@ -171,4 +177,30 @@ describe("convertToEmbedUrl", () => {
       expect(convertToEmbedUrl("")).toBeUndefined();
     });
   });
+});
+
+describe("isSafeMediaUrl", () => {
+  // Regression: these values come from an editable survey field and used to be rendered straight into
+  // an anchor `href`, where a `javascript:` URL executes on click.
+  test.each([
+    "javascript:alert(document.domain)",
+    "JavaScript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox(1)",
+    "not a url",
+    "",
+    // Protocol-relative: a browser resolves these against the page's scheme and lands on the
+    // attacker's origin, so they are not the "relative storage path" the leading slash suggests.
+    "//attacker.example/file",
+    String.raw`/\attacker.example/file`,
+  ])("rejects %s", (url) => {
+    expect(isSafeMediaUrl(url)).toBe(false);
+  });
+
+  test.each(["https://www.youtube.com/embed/abc", "http://example.com/a.png", "/storage/ws_1/private/a.png"])(
+    "accepts %s",
+    (url) => {
+      expect(isSafeMediaUrl(url)).toBe(true);
+    }
+  );
 });
