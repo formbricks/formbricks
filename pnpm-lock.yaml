@@ -31,13 +31,6 @@ overrides:
 importers:
 
   .:
-    dependencies:
-      react:
-        specifier: 19.2.6
-        version: 19.2.6
-      react-dom:
-        specifier: 19.2.6
-        version: 19.2.6(react@19.2.6)
     devDependencies:
       '@axe-core/playwright':
         specifier: 4.11.3
