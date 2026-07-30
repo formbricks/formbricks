@@ -5,27 +5,39 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import {
-  hasWorkflowAutosaveFailedAtom,
+  hasWorkflowSaveFailedAtom,
   isWorkflowDirtyAtom,
   isWorkflowSavingAtom,
   workflowLastSavedAtAtom,
+  workflowSaveErrorAtom,
 } from "@/modules/ee/workflows/state/editor";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 const SAVED_FLASH_MS = 3000;
+
+// Same palette as Badge's "success" / "error" / "gray" types, which is what the survey editor's
+// equivalent pill matches.
+const PILL_CLASSES = {
+  failed: "border-red-200 bg-red-100 text-red-800",
+  saved: "border-green-600 bg-green-50 text-green-800",
+  idle: "border-slate-200 bg-slate-100 text-slate-600",
+} as const;
 
 /**
  * Autosave status pill. Reports the draft's actual state rather than the fact that autosave is
  * armed: "Saving…" from the first keystroke until the debounced PATCH lands, then "All changes
- * saved" — briefly in green to acknowledge the save. A draft the autosave gave up on reads
- * "Unsaved changes" instead. The caller hides the pill when autosave can't act (read-only,
- * archived).
+ * saved" — flashing green for a moment to acknowledge the save. It turns red for as long as a save
+ * is outstanding: autosaves are silent — they never toast — so the failed state is the only report
+ * the user gets, and it has to persist until a save actually lands rather than fade like a toast
+ * (ENG-1970). The caller hides the pill when autosave can't act at all (read-only, archived).
  */
 export const WorkflowAutoSaveIndicator = () => {
   const { t } = useTranslation();
   const lastSavedAt = useAtomValue(workflowLastSavedAtAtom);
+  const hasFailed = useAtomValue(hasWorkflowSaveFailedAtom);
+  const saveError = useAtomValue(workflowSaveErrorAtom);
   const isDirty = useAtomValue(isWorkflowDirtyAtom);
   const isSaving = useAtomValue(isWorkflowSavingAtom);
-  const hasAutosaveFailed = useAtomValue(hasWorkflowAutosaveFailedAtom);
   const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
@@ -35,44 +47,51 @@ export const WorkflowAutoSaveIndicator = () => {
     return () => clearTimeout(timer);
   }, [lastSavedAt]);
 
-  // A failed autosave is only stuck while the draft it failed on is still the current one and
-  // nothing is in flight: a manual retry (Enter in the title) is a real request to report, and if
-  // it lands the draft stops being dirty and the pill settles on its own.
-  const isStuck = hasAutosaveFailed && isDirty && !isSaving;
-  // Dirty covers the debounce window before the request goes out, so the pill never claims
-  // "saved" while the user is still typing.
-  const isPending = !isStuck && (isDirty || isSaving);
+  // An outstanding failure outranks everything else: a save that succeeded three seconds ago is not
+  // the headline when the one after it didn't, and a draft waiting out the debounce behind a failed
+  // one has no business claiming it is on its way. Below that, dirty covers the debounce window
+  // before the request goes out, so the pill never reads "saved" while the user is still typing.
+  let state: keyof typeof PILL_CLASSES = "idle";
+  let label = t("workspace.workflows.all_changes_saved");
+  if (hasFailed) {
+    state = "failed";
+    label = t("workspace.workflows.autosave_failed");
+  } else if (isDirty || isSaving) {
+    label = t("workspace.workflows.saving_changes");
+  } else if (showSaved) {
+    state = "saved";
+  }
 
-  const getStatus = () => {
-    if (isStuck) {
-      return {
-        label: t("workspace.workflows.unsaved_changes"),
-        className: "border-amber-200 bg-amber-100 text-amber-800",
-      };
-    }
-    if (isPending) {
-      return {
-        label: t("workspace.workflows.saving_changes"),
-        className: "border-slate-200 bg-slate-100 text-slate-600",
-      };
-    }
-    return {
-      label: t("workspace.workflows.all_changes_saved"),
-      className: showSaved
-        ? "border-green-600 bg-green-50 text-green-800"
-        : "border-slate-200 bg-slate-100 text-slate-600",
-    };
-  };
+  // A rejected draft has a reason worth quoting; an unreachable one has nothing to quote. The
+  // generic copy is deliberately not "we'll retry when you're back online": that only holds for a
+  // genuine disconnect, and the same "unreachable" bucket also catches 5xx, DNS and the mutation
+  // timeout, where no `online` event is ever coming and the promise would sit there unfulfilled
+  // (raised in review of ENG-1970).
 
-  const status = getStatus();
+  const tooltipContent = saveError?.detail
+    ? t("workspace.workflows.autosave_failed_tooltip_rejected", { detail: saveError.detail })
+    : t("workspace.workflows.autosave_failed_tooltip");
 
   return (
-    <span
-      className={cn(
-        "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors duration-300",
-        status.className
-      )}>
-      {status.label}
-    </span>
+    <TooltipRenderer
+      shouldRender={hasFailed}
+      tooltipContent={tooltipContent}
+      className="max-w-64 text-center">
+      {/* A live region because this pill is the whole report: autosave never toasts, so a failure
+          that is only a colour change is a failure nobody is told about. Polite, not assertive —
+          it should not interrupt someone mid-edit. The detail rides along as screen-reader-only
+          text rather than an aria-label, so the announcement carries it too; the tooltip that
+          shows it visually is hover-only. */}
+      <span
+        role="status"
+        aria-live="polite"
+        className={cn(
+          "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors duration-300",
+          PILL_CLASSES[state]
+        )}>
+        {label}
+        {hasFailed ? <span className="sr-only">. {tooltipContent}</span> : null}
+      </span>
+    </TooltipRenderer>
   );
 };
