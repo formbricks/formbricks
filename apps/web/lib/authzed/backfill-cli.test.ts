@@ -131,6 +131,15 @@ describe("parseAuthzedBackfillCommand", () => {
     ],
     ["a non-numeric prune cap", ["--max-prune=lots"]],
     ["a zero prune cap", ["--max-prune=0"]],
+    // Silently taking the first would let an operator who typed a value twice act on a different value
+    // than the one they last wrote.
+    ["a repeated prune cap", ["--max-prune=1", "--max-prune=400"]],
+    [
+      "a repeated organization",
+      [`--organization-id=${ORGANIZATION_ID}`, `--organization-id=${OTHER_ORGANIZATION_ID}`],
+    ],
+    ["a repeated endpoint", [`--expected-endpoint=${ENDPOINT}`, "--expected-endpoint=other:50051"]],
+    ["a repeated scope", ["--scope=all", "--scope=all"]],
   ])("refuses %s", (_label, args) => {
     expect(parseAuthzedBackfillCommand(args)).toBeUndefined();
   });

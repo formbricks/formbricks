@@ -80,6 +80,9 @@ const defaultDependencies: TAuthzedBackfillCliDependencies = {
 const CUID_PATTERN = /^[a-z0-9]{20,40}$/;
 const POSITIVE_INTEGER_PATTERN = /^[1-9][0-9]{0,6}$/;
 
+const countFlag = (args: ReadonlyArray<string>, name: string): number =>
+  args.filter((arg) => arg.startsWith(`--${name}=`)).length;
+
 const readFlag = (args: ReadonlyArray<string>, name: string): string | undefined => {
   const prefix = `--${name}=`;
   return args.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
@@ -118,6 +121,13 @@ export const parseAuthzedBackfillCommand = (
   const mode = args.includes("--apply") ? "apply" : "dry_run";
   const prune = args.includes("--prune");
   const confirmed = args.includes("--confirm-prune");
+  // A repeated flag is an error rather than a silent first-wins: on a command that removes
+  // relationships, an operator who typed a value twice deserves to be told which one would have
+  // applied instead of finding out afterwards.
+  if (flagNames.some((name) => countFlag(args, name) > 1)) {
+    return undefined;
+  }
+
   const organizationId = readFlag(args, "organization-id");
   const afterOrganizationId = readFlag(args, "after-organization-id");
   const expectedEndpoint = readFlag(args, "expected-endpoint");
