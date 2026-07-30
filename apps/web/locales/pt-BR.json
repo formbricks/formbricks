@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Arquivar oculta o fluxo de trabalho da lista. Você pode restaurá-lo depois.",
       "auto_layout": "Layout automático",
       "autosave_failed": "Falha ao salvar",
-      "autosave_failed_tooltip": "Suas últimas alterações não puderam ser salvas. Vamos tentar novamente quando sua conexão voltar — mantenha esta aba aberta.",
+      "autosave_failed_tooltip": "Suas últimas alterações não puderam ser salvas. Verifique sua conexão — sua próxima edição tentará novamente. Mantenha esta aba aberta para não perder nada.",
       "autosave_failed_tooltip_rejected": "Suas últimas alterações não puderam ser salvas: {detail}",
       "autosave_on": "Salvamento automático ativado",
       "changes_saved": "Alterações salvas",

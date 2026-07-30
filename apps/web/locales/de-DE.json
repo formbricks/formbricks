@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Beim Archivieren wird der Workflow aus der Liste ausgeblendet. Du kannst ihn später wiederherstellen.",
       "auto_layout": "Auto-Layout",
       "autosave_failed": "Speichern fehlgeschlagen",
-      "autosave_failed_tooltip": "Deine letzten Änderungen konnten nicht gespeichert werden. Wir versuchen es erneut, sobald deine Verbindung wiederhergestellt ist — lass diesen Tab geöffnet.",
+      "autosave_failed_tooltip": "Deine letzten Änderungen konnten nicht gespeichert werden. Prüfe deine Verbindung – bei deiner nächsten Bearbeitung wird es erneut versucht. Lass diesen Tab offen, damit nichts verloren geht.",
       "autosave_failed_tooltip_rejected": "Deine letzten Änderungen konnten nicht gespeichert werden: {detail}",
       "autosave_on": "Auto-Speichern aktiviert",
       "changes_saved": "Änderungen gespeichert",

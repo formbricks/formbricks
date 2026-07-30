@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Arkivering döljer arbetsflödet från listan. Du kan återställa det senare.",
       "auto_layout": "Automatisk layout",
       "autosave_failed": "Sparande misslyckades",
-      "autosave_failed_tooltip": "Dina senaste ändringar kunde inte sparas. Vi försöker igen när din anslutning är tillbaka — håll den här fliken öppen.",
+      "autosave_failed_tooltip": "Dina senaste ändringar kunde inte sparas. Kolla din anslutning — nästa redigering försöker igen. Håll den här fliken öppen så att inget går förlorat.",
       "autosave_failed_tooltip_rejected": "Dina senaste ändringar kunde inte sparas: {detail}",
       "autosave_on": "Automatisk sparning på",
       "changes_saved": "Ändringar sparade",

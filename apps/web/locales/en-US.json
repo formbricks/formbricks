@@ -4177,7 +4177,7 @@
       "archive_workflow_description": "Archiving hides the workflow from the list. You can restore it later.",
       "auto_layout": "Auto layout",
       "autosave_failed": "Save failed",
-      "autosave_failed_tooltip": "Your latest changes couldn't be saved. We'll retry when your connection is back — keep this tab open.",
+      "autosave_failed_tooltip": "Your latest changes couldn't be saved. Check your connection — your next edit will try again. Keep this tab open so nothing is lost.",
       "autosave_failed_tooltip_rejected": "Your latest changes couldn't be saved: {detail}",
       "autosave_on": "Auto-save on",
       "changes_saved": "Changes saved",
