@@ -5,13 +5,37 @@ import {
 } from "@/modules/ui/components/editor/lib/example-theme";
 import { suppressNestedListMarkers } from "./preview-email-template-styles";
 
-describe("suppressNestedListMarkers", () => {
-  test("adds an inline marker suppression to a nested-list wrapper li", () => {
-    const html = `<ul><li class="${NESTED_LIST_ITEM_CLASS}"><ul><li>child</li></ul></li></ul>`;
+const marker = `style="${NESTED_LIST_ITEM_MARKER_STYLE}"`;
 
-    expect(suppressNestedListMarkers(html)).toBe(
-      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" style="${NESTED_LIST_ITEM_MARKER_STYLE}"><ul><li>child</li></ul></li></ul>`
-    );
+describe("suppressNestedListMarkers", () => {
+  test.each([
+    [
+      "a nested-list wrapper li",
+      `<ul><li class="${NESTED_LIST_ITEM_CLASS}"><ul><li>child</li></ul></li></ul>`,
+      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" ${marker}><ul><li>child</li></ul></li></ul>`,
+    ],
+    [
+      "the nested class among multiple classes, whatever the attribute order",
+      `<ol><li value="2" class="fb-editor-listitem ${NESTED_LIST_ITEM_CLASS}"><ol></ol></li></ol>`,
+      `<ol><li value="2" class="fb-editor-listitem ${NESTED_LIST_ITEM_CLASS}" ${marker}><ol></ol></li></ol>`,
+    ],
+    [
+      "a wrapper li without dropping its ordered-list value",
+      `<ol><li class="${NESTED_LIST_ITEM_CLASS}" value="3"><ol></ol></li></ol>`,
+      `<ol><li class="${NESTED_LIST_ITEM_CLASS}" value="3" ${marker}><ol></ol></li></ol>`,
+    ],
+    [
+      "a wrapper li by appending to its existing style instead of replacing it",
+      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" style="text-align: center"><ul></ul></li></ul>`,
+      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" style="text-align: center;${NESTED_LIST_ITEM_MARKER_STYLE}"><ul></ul></li></ul>`,
+    ],
+    [
+      "a wrapper li with single-quoted attributes",
+      `<ul><li class='${NESTED_LIST_ITEM_CLASS}'><ul></ul></li></ul>`,
+      `<ul><li class='${NESTED_LIST_ITEM_CLASS}' ${marker}><ul></ul></li></ul>`,
+    ],
+  ])("suppresses the marker on %s", (_case, html, expected) => {
+    expect(suppressNestedListMarkers(html)).toBe(expected);
   });
 
   test.each([
@@ -26,36 +50,6 @@ describe("suppressNestedListMarkers", () => {
     ["html without list items", "<p>hello <strong>world</strong></p>"],
   ])("leaves %s untouched", (_case, html) => {
     expect(suppressNestedListMarkers(html)).toBe(html);
-  });
-
-  test("matches the nested class among multiple classes regardless of attribute order", () => {
-    const html = `<ol><li value="2" class="fb-editor-listitem ${NESTED_LIST_ITEM_CLASS}"><ol></ol></li></ol>`;
-
-    expect(suppressNestedListMarkers(html)).toBe(
-      `<ol><li value="2" class="fb-editor-listitem ${NESTED_LIST_ITEM_CLASS}" style="${NESTED_LIST_ITEM_MARKER_STYLE}"><ol></ol></li></ol>`
-    );
-  });
-
-  test("preserves the value attribute on ordered-list items", () => {
-    const html = `<ol><li class="${NESTED_LIST_ITEM_CLASS}" value="3"><ol></ol></li></ol>`;
-
-    expect(suppressNestedListMarkers(html)).toContain('value="3"');
-  });
-
-  test("appends to an existing style attribute instead of replacing it", () => {
-    const html = `<ul><li class="${NESTED_LIST_ITEM_CLASS}" style="text-align: center"><ul></ul></li></ul>`;
-
-    expect(suppressNestedListMarkers(html)).toBe(
-      `<ul><li class="${NESTED_LIST_ITEM_CLASS}" style="text-align: center;${NESTED_LIST_ITEM_MARKER_STYLE}"><ul></ul></li></ul>`
-    );
-  });
-
-  test("handles single-quoted attributes", () => {
-    const html = `<ul><li class='${NESTED_LIST_ITEM_CLASS}'><ul></ul></li></ul>`;
-
-    expect(suppressNestedListMarkers(html)).toBe(
-      `<ul><li class='${NESTED_LIST_ITEM_CLASS}' style="${NESTED_LIST_ITEM_MARKER_STYLE}"><ul></ul></li></ul>`
-    );
   });
 
   test("is idempotent when applied twice", () => {
