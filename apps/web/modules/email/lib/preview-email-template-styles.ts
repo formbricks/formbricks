@@ -2,6 +2,10 @@ import type { CSSProperties } from "react";
 import type { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
+import {
+  NESTED_LIST_ITEM_CLASS,
+  NESTED_LIST_ITEM_MARKER_STYLE,
+} from "@/modules/ui/components/editor/lib/example-theme";
 
 export interface PreviewEmailStyleTokens {
   accentBackgroundColor: string;
@@ -77,8 +81,6 @@ const RICH_TEXT_LIST_ITEM_TAG_REGEX = /<li\b([^>]*)>/gi;
 const RICH_TEXT_STYLE_ATTRIBUTE_REGEX = /\sstyle=(["'])(.*?)\1/i;
 const RICH_TEXT_STYLE_ATTRIBUTE_REPLACE_REGEX = /\sstyle=(["'])(.*?)\1/gi;
 const RICH_TEXT_CLASS_ATTRIBUTE_REGEX = /\sclass=(["'])(.*?)\1/i;
-const NESTED_LIST_ITEM_CLASS = "fb-editor-nested-listitem";
-const NESTED_LIST_ITEM_MARKER_STYLE = "list-style-type:none";
 
 export const importantStyle = (value: string): string => `${value} !important`;
 
@@ -100,9 +102,9 @@ export const normalizeRichTextSpacing = (html: string): string =>
   });
 
 /**
- * Lexical wraps a nested list in a structural <li class="fb-editor-nested-listitem"> that must not
- * show its own bullet/number. Email clients ignore the app stylesheets, so the suppression is
- * inlined per list item (best effort: legacy Outlook's Word engine ignores list-style-type).
+ * Lexical wraps a nested list in a structural <li> (NESTED_LIST_ITEM_CLASS) that must not show its
+ * own bullet/number. Email clients ignore the app stylesheets, so the suppression is inlined per
+ * list item (best effort: legacy Outlook's Word engine ignores list-style-type).
  */
 export const suppressNestedListMarkers = (html: string): string =>
   html.replaceAll(RICH_TEXT_LIST_ITEM_TAG_REGEX, (tag: string, attributes: string = "") => {

@@ -61,6 +61,20 @@ const clearEditor = async (input: ReturnType<typeof editorField>["input"]): Prom
   await input.press("Backspace");
 };
 
+/** Deepest chain of nested lists in the editor: 1 for a flat list, 2 after one Tab, and so on. */
+const listNestingDepth = async (input: ReturnType<typeof editorField>["input"]): Promise<number> =>
+  input.evaluate((editor) => {
+    const depthOf = (item: Element): number => {
+      let depth = 0;
+      for (let node = item.parentElement; node && node !== editor; node = node.parentElement) {
+        if (node.tagName === "UL" || node.tagName === "OL") depth++;
+      }
+      return depth;
+    };
+
+    return Math.max(0, ...Array.from(editor.querySelectorAll("li"), depthOf));
+  });
+
 test.describe("Survey editor rich text editor Tab behavior", () => {
   test("Tab nests a bullet list item and Shift+Tab flattens it back", async ({ page, users }) => {
     await gotoFreshSurveyEditorWelcomeCard(page, users);
@@ -90,6 +104,14 @@ test.describe("Survey editor rich text editor Tab behavior", () => {
     await expect(input).toBeFocused();
     await expect(input.locator("li ul li")).toHaveCount(0);
     await expect(input.locator("ul > li")).toHaveText(["First item", "Second item"]);
+
+    // Each further Tab nests one more level until MAX_INDENT (7 levels). Past the ceiling the
+    // plugin still swallows the key, so focus stays in the editor instead of escaping mid-list.
+    for (let press = 0; press < 10; press++) {
+      await input.press("Tab");
+    }
+    await expect(input).toBeFocused();
+    await expect.poll(() => listNestingDepth(input)).toBe(7);
   });
 
   test("Tab in plain text moves focus out of the editor (no keyboard trap)", async ({ page, users }) => {
