@@ -4014,6 +4014,9 @@ checksums:
     workspace/workflows/archive_workflow_confirmation: 83f351c186e67a3c5308af82bf971d65
     workspace/workflows/archive_workflow_description: 06e437998a762e504d7d0101b0c53565
     workspace/workflows/auto_layout: 553d4f054655684130a8b5bc8f800bf0
+    workspace/workflows/autosave_failed: 5d9b22b31b83828d5eeaeae87d2b6d14
+    workspace/workflows/autosave_failed_tooltip: f4cb6255fd863b741275a7ff6d2701c6
+    workspace/workflows/autosave_failed_tooltip_rejected: 5f90aa698c936629a7b959520dc9358e
     workspace/workflows/autosave_on: 1524d466830b00c5d727c701db404963
     workspace/workflows/changes_saved: 17b24e05aa888579a43a22d411f83b60
     workspace/workflows/collapse_inspector: d3bd60a39c7d42e98c78df07c756ac22
@@ -4040,6 +4043,7 @@ checksums:
     workspace/workflows/email_subject_placeholder: 9cd2b8d4de6fb9daade571497bc39864
     workspace/workflows/email_to_label: fc84f35b3c44796dfcdd4b096c9b8d3d
     workspace/workflows/email_to_placeholder: 1323bfdf1926a863c93bc0b37ae61218
+    workspace/workflows/enable_blocked_unsaved_changes: 07fc359db9158b09d612f4f0e0e2df5e
     workspace/workflows/enable_failed: 997437c65cc018c4d3cf7622e043d48d
     workspace/workflows/enable_success: 384d5e80e013c74f8e092f41ed5bae5c
     workspace/workflows/expand_inspector: 8d05989d5b8c5b6012b5c3e2651c0a92

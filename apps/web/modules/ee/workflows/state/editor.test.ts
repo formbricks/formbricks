@@ -11,6 +11,7 @@ import {
   deriveTriggerEndingProblems,
   deriveWorkflowValidation,
   hasBoundTriggerSurveyAtom,
+  hasWorkflowSaveFailedAtom,
   hydrateWorkflowEditorAtom,
   insertSendEmailAfterEdgeAtom,
   isCanvasLockedAtom,
@@ -28,6 +29,7 @@ import {
   setWorkflowDefinitionAtom,
   setWorkflowDescriptionAtom,
   setWorkflowNameAtom,
+  setWorkflowSaveErrorAtom,
   setWorkflowSavingAtom,
   setWorkflowSnapToCanvasEnabledAtom,
   setWorkflowTransitioningAtom,
@@ -35,8 +37,12 @@ import {
   workflowAtom,
   workflowDefinitionAtom,
   workflowDescriptionAtom,
+  workflowDraftSignatureAtom,
+  workflowEditorAtom,
   workflowFlowNodesAtom,
+  workflowLastSavedAtAtom,
   workflowNameAtom,
+  workflowSaveErrorAtom,
   workflowValidationProblemsAtom,
   workflowValidityAtom,
 } from "./editor";
@@ -494,6 +500,75 @@ describe("isWorkflowDirtyAtom + markWorkflowDraftSavedAtom", () => {
         : current
     );
     expect(store.get(isWorkflowDirtyAtom)).toBe(true);
+  });
+});
+
+describe("workflow save error", () => {
+  const saveError = { draftSignature: "sig", kind: "unreachable", detail: null } as const;
+
+  test("a successful save clears the failed state in the same write as lastSavedAt", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(setWorkflowNameAtom, "Renamed");
+    store.set(setWorkflowSaveErrorAtom, saveError);
+
+    expect(store.get(hasWorkflowSaveFailedAtom)).toBe(true);
+
+    store.set(markWorkflowDraftSavedAtom, {
+      workflowName: "Renamed",
+      workflowDescription: "Desc",
+      definition,
+    });
+
+    expect(store.get(workflowSaveErrorAtom)).toBeNull();
+    expect(store.get(workflowLastSavedAtAtom)).not.toBeNull();
+    expect(store.get(hasWorkflowSaveFailedAtom)).toBe(false);
+  });
+
+  test("reverting the draft clears the alarm without a save", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(setWorkflowNameAtom, "Renamed");
+    store.set(setWorkflowSaveErrorAtom, saveError);
+
+    expect(store.get(hasWorkflowSaveFailedAtom)).toBe(true);
+
+    // Nothing is unsaved any more, so nothing should still read "Save failed".
+    store.set(setWorkflowNameAtom, workflow.name);
+    expect(store.get(hasWorkflowSaveFailedAtom)).toBe(false);
+    expect(store.get(workflowSaveErrorAtom)).toEqual(saveError);
+  });
+
+  test("a redundant clear does not churn editor state", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    const before = store.get(workflowEditorAtom);
+
+    store.set(setWorkflowSaveErrorAtom, null);
+
+    expect(store.get(workflowEditorAtom)).toBe(before);
+  });
+});
+
+describe("workflowDraftSignatureAtom", () => {
+  test("changes with any editable field and is stable otherwise", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    const hydrated = store.get(workflowDraftSignatureAtom);
+
+    store.set(setWorkflowNameAtom, "Renamed");
+    const renamed = store.get(workflowDraftSignatureAtom);
+    expect(renamed).not.toBe(hydrated);
+
+    store.set(setWorkflowDescriptionAtom, "Edited");
+    const described = store.get(workflowDraftSignatureAtom);
+    expect(described).not.toBe(renamed);
+
+    // Untrimmed on purpose: this identifies a draft, it does not decide dirtiness. Compared against
+    // the signature taken immediately before the whitespace edit — comparing against `renamed`
+    // would pass on the description edit alone and pin nothing about trimming.
+    store.set(setWorkflowNameAtom, "Renamed ");
+    expect(store.get(workflowDraftSignatureAtom)).not.toBe(described);
   });
 });
 
