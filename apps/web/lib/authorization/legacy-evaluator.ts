@@ -4,7 +4,6 @@ import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags, getUserManagementAccess } from "@/lib/membership/utils";
 import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
-import { hasOrganizationAccess, hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import {
   AUTHORIZATION_PERMISSION_MAP,
   type TAuthorizationAction,
@@ -13,6 +12,10 @@ import {
   type TAuthorizationResourceType,
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
+import {
+  hasApiKeyOrganizationAccessLegacy,
+  hasApiKeyWorkspacePermissionLegacy,
+} from "./legacy-api-key-access";
 import { type LegacyWorkspaceAction, hasUserWorkspaceAccessForActionLegacy } from "./legacy-workspace-access";
 import {
   getApiKeyAuthById,
@@ -96,7 +99,7 @@ const canWorkspaceScoped = async (
   if (actor.type === "apiKey") {
     const auth = await getApiKeyAuthById(actor.id);
     if (!auth) return false;
-    return hasPermission(auth.workspacePermissions, workspaceId, method);
+    return hasApiKeyWorkspacePermissionLegacy(auth.workspacePermissions, workspaceId, method);
   }
 
   return rejectUnknownActor(actor);
@@ -142,9 +145,9 @@ const canOrganization = async (
     switch (permission) {
       case "read":
       case "read_access":
-        return hasOrganizationAccess(auth, OrganizationAccessType.Read);
+        return hasApiKeyOrganizationAccessLegacy(auth, OrganizationAccessType.Read);
       case "manage_access":
-        return hasOrganizationAccess(auth, OrganizationAccessType.Write);
+        return hasApiKeyOrganizationAccessLegacy(auth, OrganizationAccessType.Write);
       default:
         // write / manage / manage_billing / manage_api_keys are user-only today.
         return false;
@@ -184,10 +187,10 @@ const canTeam = async (actor: TAuthorizationActor, permission: string, teamId: s
 
     switch (permission) {
       case "read":
-        return hasOrganizationAccess(auth, OrganizationAccessType.Read);
+        return hasApiKeyOrganizationAccessLegacy(auth, OrganizationAccessType.Read);
       case "manage":
       case "delete":
-        return hasOrganizationAccess(auth, OrganizationAccessType.Write);
+        return hasApiKeyOrganizationAccessLegacy(auth, OrganizationAccessType.Write);
       default:
         return false;
     }

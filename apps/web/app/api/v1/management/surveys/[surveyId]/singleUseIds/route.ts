@@ -4,7 +4,7 @@ import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { generateSurveySingleUseLinkParamsList } from "@/lib/utils/single-use-surveys";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = withV1ApiWrapper({
   handler: async ({
@@ -24,7 +24,7 @@ export const GET = withV1ApiWrapper({
           response: responses.notFoundResponse("Survey", params.surveyId),
         };
       }
-      if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "GET")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, survey.workspaceId, "GET"))) {
         return {
           response: responses.unauthorizedResponse(),
         };

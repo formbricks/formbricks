@@ -318,3 +318,30 @@ describe("legacyEvaluator — hardening", () => {
     );
   });
 });
+
+describe("legacyEvaluator — revoked or deleted API keys", () => {
+  // The evaluator resolves the key's scopes from storage on every decision, so a key that
+  // has been revoked or deleted since it authenticated can no longer authorize anything.
+  test("a key that no longer exists cannot authorize any resource", async () => {
+    vi.mocked(getApiKeyAuthById).mockResolvedValue(null);
+    vi.mocked(getSurveyWorkspaceId).mockResolvedValue("ws1");
+    vi.mocked(getTeamOrganizationId).mockResolvedValue("org1");
+
+    await expect(can(API_KEY, "workspace.read", { type: "workspace", id: "ws1" })).resolves.toBe(false);
+    await expect(can(API_KEY, "survey.read", { type: "survey", id: "s1" })).resolves.toBe(false);
+    await expect(can(API_KEY, "organization.read", { type: "organization", id: "org1" })).resolves.toBe(
+      false
+    );
+    await expect(can(API_KEY, "team.read", { type: "team", id: "t1" })).resolves.toBe(false);
+  });
+
+  test("a key scoped to another organization cannot authorize this one", async () => {
+    vi.mocked(getApiKeyAuthById).mockResolvedValue(apiKeyAuth({ organizationId: "other-org" }));
+    vi.mocked(getTeamOrganizationId).mockResolvedValue("org1");
+
+    await expect(can(API_KEY, "organization.read", { type: "organization", id: "org1" })).resolves.toBe(
+      false
+    );
+    await expect(can(API_KEY, "team.read", { type: "team", id: "t1" })).resolves.toBe(false);
+  });
+});

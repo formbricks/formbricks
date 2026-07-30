@@ -30,7 +30,13 @@ export const GET = async (
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { params } }) => {
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Read)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Read
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "organizationId", issue: "unauthorized" }],
@@ -62,7 +68,13 @@ export const DELETE = async (
         auditLog.targetId = params.teamId;
       }
 
-      if (!hasOrganizationIdAndAccess(params.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params.organizationId,
+          authentication,
+          OrganizationAccessType.Write
+        ))
+      ) {
         return handleApiError(
           request,
           {
@@ -116,7 +128,13 @@ export const PUT = (
         auditLog.targetId = params.teamId;
       }
 
-      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+      if (
+        !(await hasOrganizationIdAndAccess(
+          params!.organizationId,
+          authentication,
+          OrganizationAccessType.Write
+        ))
+      ) {
         return handleApiError(
           request,
           {

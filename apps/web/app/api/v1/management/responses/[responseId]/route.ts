@@ -9,7 +9,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./lib/response";
 
@@ -37,7 +37,7 @@ async function fetchAndAuthorizeResponse(
     return { error: responses.notFoundResponse("Survey", response.surveyId, true) };
   }
 
-  if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, requiredPermission)) {
+  if (!(await hasApiKeyWorkspaceAccess(authentication, survey.workspaceId, requiredPermission))) {
     return { error: responses.unauthorizedResponse() };
   }
 

@@ -8,7 +8,6 @@ import {
   UniqueConstraintError,
 } from "@formbricks/types/errors";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { authenticateRequest, handleErrorResponse } from "./auth";
 
 vi.mock("@/modules/organization/settings/api-keys/lib/api-key", () => ({
@@ -49,48 +48,6 @@ describe("getApiKeyWithPermissions", () => {
     const result = await getApiKeyWithPermissions("invalid-key");
 
     expect(result).toBeNull();
-  });
-});
-
-describe("hasPermission", () => {
-  const permissions: TAPIKeyWorkspacePermission[] = [
-    {
-      permission: "manage",
-      workspaceId: "workspace-1",
-      workspaceName: "Workspace 1",
-    },
-    {
-      permission: "write",
-      workspaceId: "workspace-2",
-      workspaceName: "Workspace 2",
-    },
-    {
-      permission: "read",
-      workspaceId: "workspace-3",
-      workspaceName: "Workspace 3",
-    },
-  ];
-
-  test("returns true for manage permission with any method", () => {
-    expect(hasPermission(permissions, "workspace-1", "GET")).toBe(true);
-    expect(hasPermission(permissions, "workspace-1", "POST")).toBe(true);
-    expect(hasPermission(permissions, "workspace-1", "DELETE")).toBe(true);
-  });
-
-  test("handles write permission correctly", () => {
-    expect(hasPermission(permissions, "workspace-2", "GET")).toBe(true);
-    expect(hasPermission(permissions, "workspace-2", "POST")).toBe(true);
-    expect(hasPermission(permissions, "workspace-2", "DELETE")).toBe(false);
-  });
-
-  test("handles read permission correctly", () => {
-    expect(hasPermission(permissions, "workspace-3", "GET")).toBe(true);
-    expect(hasPermission(permissions, "workspace-3", "POST")).toBe(false);
-    expect(hasPermission(permissions, "workspace-3", "DELETE")).toBe(false);
-  });
-
-  test("returns false for non-existent workspace", () => {
-    expect(hasPermission(permissions, "workspace-4", "GET")).toBe(false);
   });
 });
 

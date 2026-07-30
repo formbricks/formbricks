@@ -43,7 +43,7 @@ export const POST = async (request: NextRequest) =>
       body: ZContactAttributeKeyCreateInput,
     },
     bodyTransform: async (body, auth) => {
-      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "POST");
+      const resolved = await resolveBodyIdsV2(body, auth, "POST");
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },

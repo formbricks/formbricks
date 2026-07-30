@@ -1,8 +1,8 @@
-import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
+import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -17,7 +17,7 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
  */
 export const resolveBodyIdsV2 = async (
   body: { workspaceId?: string; environmentId?: string },
-  permissions: TAPIKeyWorkspacePermission[],
+  authentication: TAuthenticationApiKey,
   method: HttpMethod
 ): Promise<Result<{ workspaceId: string }, ApiErrorResponseV2>> => {
   const rawId = body.workspaceId ?? body.environmentId;
@@ -31,7 +31,7 @@ export const resolveBodyIdsV2 = async (
       });
     }
 
-    if (!hasPermission(permissions, workspace.id, method)) {
+    if (!(await hasApiKeyWorkspaceAccess(authentication, workspace.id, method))) {
       return err({ type: "forbidden" });
     }
 

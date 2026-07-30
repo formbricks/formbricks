@@ -11,7 +11,7 @@ import { getResponseForPipeline } from "@/modules/api/v2/management/responses/[r
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
 
@@ -78,7 +78,7 @@ export const POST = async (request: Request) =>
 
       const { workspaceId } = workspaceIdResult.data;
 
-      if (!hasPermission(authentication.workspacePermissions, workspaceId, "POST")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))) {
         return handleApiError(
           request,
           {

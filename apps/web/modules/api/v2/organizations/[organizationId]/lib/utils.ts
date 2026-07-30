@@ -1,18 +1,18 @@
 import { logger } from "@formbricks/logger";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { hasOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
-export const hasOrganizationIdAndAccess = (
+export const hasOrganizationIdAndAccess = async (
   paramOrganizationId: string,
   authentication: TAuthenticationApiKey,
   accessType: OrganizationAccessType
-): boolean => {
+): Promise<boolean> => {
   if (paramOrganizationId !== authentication.organizationId) {
     logger.error("Organization ID from params does not match the authenticated organization ID");
 
     return false;
   }
 
-  return hasOrganizationAccess(authentication, accessType);
+  return hasApiKeyOrganizationAccess(authentication, accessType);
 };

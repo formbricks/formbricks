@@ -19,7 +19,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
@@ -88,7 +88,7 @@ export const POST = withV1ApiWrapper({
       surveyInput = normaliseProjectOverwritesToWorkspace(surveyInput);
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(surveyInput, authentication.workspacePermissions, "POST");
+      const resolved = await resolveBodyIds(surveyInput, authentication, "POST");
       if (!resolved.ok) return { response: resolved.response };
       surveyInput = resolved.body;
 
@@ -108,7 +108,7 @@ export const POST = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.workspacePermissions, workspaceId, "POST")
+        !(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

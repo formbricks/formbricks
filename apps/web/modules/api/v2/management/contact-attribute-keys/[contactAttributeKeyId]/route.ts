@@ -13,7 +13,7 @@ import {
   ZContactAttributeKeyUpdateSchema,
 } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = async (
   request: NextRequest,
@@ -34,7 +34,7 @@ export const GET = async (
         return handleApiError(request, res.error as ApiErrorResponseV2);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, res.data.workspaceId, "GET")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, res.data.workspaceId, "GET"))) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "environment", issue: "unauthorized" }],
@@ -68,7 +68,7 @@ export const PUT = async (
       if (!res.ok) {
         return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
-      if (!hasPermission(authentication.workspacePermissions, res.data.workspaceId, "PUT")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, res.data.workspaceId, "PUT"))) {
         return handleApiError(
           request,
           {
@@ -141,7 +141,7 @@ export const DELETE = async (
         return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, res.data.workspaceId, "DELETE")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, res.data.workspaceId, "DELETE"))) {
         return handleApiError(
           request,
           {

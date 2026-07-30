@@ -9,7 +9,7 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses, getResponsesByWorkspaceIds } from "./lib/response";
 
@@ -34,7 +34,7 @@ export const GET = withV1ApiWrapper({
             response: responses.notFoundResponse("Survey", surveyId, true),
           };
         }
-        if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, "GET")) {
+        if (!(await hasApiKeyWorkspaceAccess(authentication, survey.workspaceId, "GET"))) {
           return {
             response: responses.unauthorizedResponse(),
           };
@@ -107,7 +107,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(jsonInput, authentication.workspacePermissions, "POST");
+      const resolved = await resolveBodyIds(jsonInput, authentication, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZResponseInput.safeParse(resolved.body);
@@ -125,7 +125,7 @@ export const POST = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.workspacePermissions, responseInput.workspaceId, "POST")
+        !(await hasApiKeyWorkspaceAccess(authentication, responseInput.workspaceId, "POST"))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

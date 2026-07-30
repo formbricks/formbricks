@@ -64,7 +64,7 @@ vi.mock("@/modules/api/v2/management/lib/helper", () => ({
 }));
 
 vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
-  hasPermission: mockHasPermission,
+  hasApiKeyWorkspaceAccess: mockHasPermission,
 }));
 
 vi.mock("@/modules/storage/utils", () => ({

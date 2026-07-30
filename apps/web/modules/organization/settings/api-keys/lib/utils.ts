@@ -1,84 +1,68 @@
+import "server-only";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
-import { TAPIKeyWorkspacePermission, TAuthenticationApiKey } from "@formbricks/types/auth";
+import type { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { can } from "@/lib/authorization";
+import type { LegacyApiKeyMethod } from "@/lib/authorization/legacy-api-key-access";
 
-// Permission level required for different HTTP methods
-const methodPermissionMap = {
-  GET: "read", // Read operations need at least read permission
-  POST: "write", // Create operations need at least write permission
-  PUT: "write", // Update operations need at least write permission
-  PATCH: "write", // Partial update operations need at least write permission
-  DELETE: "manage", // Delete operations need manage permission
-};
+/**
+ * Compatibility wrappers that route API-key authorization through the central
+ * Formbricks authorization interface.
+ *
+ * These replaced the former synchronous `hasPermission` / `hasOrganizationAccess`
+ * helpers. They were renamed rather than made async in place on purpose: a boolean
+ * guard such as `if (!hasPermission(...))` keeps compiling when the `await` is
+ * forgotten, and `!Promise` is always false — which would silently authorize.
+ * Renaming turns every unmigrated call site into a compile error instead.
+ *
+ * Note that only the identifiers on `authentication` (`apiKeyId`, and the owning
+ * `organizationId`) are read. The key's effective scopes are resolved from storage
+ * on each decision rather than taken from the passed-in snapshot, so a key that has
+ * been revoked, deleted or narrowed since it authenticated stops authorizing.
+ */
 
-// Check if API key has sufficient permission for the requested workspace and method
-export const hasPermission = (
-  permissions: TAPIKeyWorkspacePermission[],
+export type { LegacyApiKeyMethod } from "@/lib/authorization/legacy-api-key-access";
+
+/** HTTP method → workspace action, preserving the current API-key ladder. */
+const METHOD_WORKSPACE_ACTION = {
+  GET: "workspace.read",
+  POST: "workspace.write",
+  PUT: "workspace.write",
+  PATCH: "workspace.write",
+  DELETE: "workspace.manage",
+} as const satisfies Record<LegacyApiKeyMethod, "workspace.read" | "workspace.write" | "workspace.manage">;
+
+/**
+ * Whether an API key may act on `workspaceId` at the level `method` requires.
+ *
+ * Compatibility surface only: new authorization-sensitive code must call `can` or
+ * `assertCan` with a semantic action and resource instead of adding callers here.
+ * The remaining callers are removed under ENG-1737.
+ */
+export const hasApiKeyWorkspaceAccess = async (
+  authentication: TAuthenticationApiKey,
   workspaceId: string,
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
-): boolean => {
-  if (!permissions) return false;
+  method: LegacyApiKeyMethod
+): Promise<boolean> =>
+  can({ type: "apiKey", id: authentication.apiKeyId }, METHOD_WORKSPACE_ACTION[method], {
+    type: "workspace",
+    id: workspaceId,
+  });
 
-  // Find the workspace permission entry for this workspace
-  const workspacePermission = permissions.find((permission) => permission.workspaceId === workspaceId);
-
-  if (!workspacePermission) return false;
-
-  // Get required permission level for this method
-  const requiredPermission = methodPermissionMap[method];
-
-  // Check if the API key has sufficient permission
-  switch (workspacePermission.permission) {
-    case "manage":
-      // Manage permission can do everything
-      return true;
-    case "write":
-      // Write permission can do write and read operations
-      return requiredPermission === "write" || requiredPermission === "read";
-    case "read":
-      // Read permission can only do read operations
-      return requiredPermission === "read";
-    default:
-      return false;
-  }
-};
-
-// Check if API key has sufficient permission for the requested workspace and method.
-export const hasWorkspacePermission = (
-  permissions: TAPIKeyWorkspacePermission[],
-  workspaceId: string,
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
-): boolean => {
-  if (!permissions) return false;
-
-  const workspacePermission = permissions.find((p) => p.workspaceId === workspaceId);
-  if (!workspacePermission) return false;
-
-  const requiredPermission = methodPermissionMap[method];
-
-  switch (workspacePermission.permission) {
-    case "manage":
-      return true;
-    case "write":
-      return requiredPermission === "write" || requiredPermission === "read";
-    case "read":
-      return requiredPermission === "read";
-    default:
-      return false;
-  }
-};
-
-export const hasOrganizationAccess = (
+/**
+ * Whether an API key holds organization access-control rights. `Write` maps to the
+ * access-management action, `Read` to the access-read action, matching the current
+ * `accessControl.read` / `accessControl.write` behavior (write implies read).
+ *
+ * Compatibility surface only: new authorization-sensitive code must call `can` or
+ * `assertCan` with a semantic action and resource instead of adding callers here.
+ * The remaining callers are removed under ENG-1737.
+ */
+export const hasApiKeyOrganizationAccess = async (
   authentication: TAuthenticationApiKey,
   accessType: OrganizationAccessType
-): boolean => {
-  const organizationAccess = authentication.organizationAccess?.accessControl;
-
-  switch (accessType) {
-    case OrganizationAccessType.Read:
-      return organizationAccess?.read === true || organizationAccess?.write === true;
-    case OrganizationAccessType.Write:
-      return organizationAccess?.write === true;
-    default:
-      return false;
-  }
-};
+): Promise<boolean> =>
+  can(
+    { type: "apiKey", id: authentication.apiKeyId },
+    accessType === OrganizationAccessType.Write ? "organization.manage_access" : "organization.read_access",
+    { type: "organization", id: authentication.organizationId }
+  );

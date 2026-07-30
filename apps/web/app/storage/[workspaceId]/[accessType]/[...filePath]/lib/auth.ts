@@ -3,7 +3,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
 import { getSession } from "@/modules/auth/lib/session";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const authorizePrivateDownload = async (
   request: NextRequest,
@@ -40,7 +40,7 @@ export const authorizePrivateDownload = async (
     });
   }
 
-  if (!hasPermission(auth.workspacePermissions, workspaceId, action)) {
+  if (!(await hasApiKeyWorkspaceAccess(auth, workspaceId, action))) {
     return err({
       unauthorized: true,
     });

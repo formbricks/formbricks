@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
 import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { checkAuth } from "./utils";
 
 // Create mock response objects
@@ -15,7 +15,7 @@ vi.mock("@/lib/workspace/auth", () => ({
 }));
 
 vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
-  hasPermission: vi.fn(),
+  hasApiKeyWorkspaceAccess: vi.fn(),
 }));
 
 vi.mock("@/app/lib/api/response", () => ({
@@ -60,15 +60,11 @@ describe("checkAuth", () => {
       },
     };
 
-    vi.mocked(hasPermission).mockReturnValue(false);
+    vi.mocked(hasApiKeyWorkspaceAccess).mockReturnValue(false);
 
     const result = await checkAuth(mockAuthentication, workspaceId);
 
-    expect(hasPermission).toHaveBeenCalledWith(
-      mockAuthentication.workspacePermissions,
-      "workspace-123",
-      "POST"
-    );
+    expect(hasApiKeyWorkspaceAccess).toHaveBeenCalledWith(mockAuthentication, "workspace-123", "POST");
     expect(responses.unauthorizedResponse).toHaveBeenCalled();
     expect(result).toBe(mockUnauthorizedResponse);
   });
@@ -90,15 +86,11 @@ describe("checkAuth", () => {
       },
     };
 
-    vi.mocked(hasPermission).mockReturnValue(true);
+    vi.mocked(hasApiKeyWorkspaceAccess).mockReturnValue(true);
 
     const result = await checkAuth(mockAuthentication, workspaceId);
 
-    expect(hasPermission).toHaveBeenCalledWith(
-      mockAuthentication.workspacePermissions,
-      "workspace-123",
-      "POST"
-    );
+    expect(hasApiKeyWorkspaceAccess).toHaveBeenCalledWith(mockAuthentication, "workspace-123", "POST");
     expect(result).toBeUndefined();
   });
 

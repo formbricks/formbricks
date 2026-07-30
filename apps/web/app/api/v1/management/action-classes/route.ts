@@ -7,7 +7,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { createActionClass } from "@/lib/actionClass/service";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { getActionClasses } from "./lib/action-classes";
 
 export const GET = withV1ApiWrapper({
@@ -61,7 +61,7 @@ export const POST = withV1ApiWrapper({
       }
 
       // Validate workspace-level permission
-      const resolved = await resolveBodyIds(actionClassInput, authentication.workspacePermissions, "POST");
+      const resolved = await resolveBodyIds(actionClassInput, authentication, "POST");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZActionClassInput.safeParse(resolved.body);
@@ -77,7 +77,7 @@ export const POST = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.workspacePermissions, inputValidation.data.workspaceId, "POST")
+        !(await hasApiKeyWorkspaceAccess(authentication, inputValidation.data.workspaceId, "POST"))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

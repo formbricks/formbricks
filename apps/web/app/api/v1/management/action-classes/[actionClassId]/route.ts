@@ -8,7 +8,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 const fetchAndAuthorizeActionClass = async (
   authentication: TAuthenticationApiKey,
@@ -22,7 +22,7 @@ const fetchAndAuthorizeActionClass = async (
   }
 
   // Check if API key has permission to access this workspace with appropriate permissions
-  if (!hasPermission(authentication.workspacePermissions, actionClass.workspaceId, method)) {
+  if (!(await hasApiKeyWorkspaceAccess(authentication, actionClass.workspaceId, method))) {
     throw new Error("Unauthorized");
   }
 
@@ -100,7 +100,7 @@ export const PUT = withV1ApiWrapper({
       }
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
-      const resolved = await resolveBodyIds(actionClassUpdate, authentication.workspacePermissions, "PUT");
+      const resolved = await resolveBodyIds(actionClassUpdate, authentication, "PUT");
       if (!resolved.ok) return { response: resolved.response };
 
       const inputValidation = ZActionClassInput.safeParse(resolved.body);
@@ -115,7 +115,7 @@ export const PUT = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !hasPermission(authentication.workspacePermissions, inputValidation.data.workspaceId, "PUT")
+        !(await hasApiKeyWorkspaceAccess(authentication, inputValidation.data.workspaceId, "PUT"))
       ) {
         return { response: responses.unauthorizedResponse() };
       }
