@@ -239,6 +239,7 @@ checksums:
     common/duplicate_copy_number: 083cfffd294672043dcbcc4c3dfeac6a
     common/e_commerce: b9584e7d0449a6d1b0c182d7ff14061e
     common/edit: eee7f39ff90b18852afc1671f21fbaa9
+    common/editor: 15d1c1521efc08cd482f7ac9e1df0acf
     common/elements: 8cb054d952b341e5965284860d532bc7
     common/email: e7f34943a0c2fb849db1839ff6ef5cb5
     common/enable: 463972a7a95f50f3105d09b92508f2cd
@@ -4006,6 +4007,7 @@ checksums:
     workspace/workflows/add_action: 66fefc4dd6a7b939c2224272cf0d2669
     workspace/workflows/add_trigger: c905d42a09d57b725c9dbad1837ad981
     workspace/workflows/add_trigger_description: 4a99aa50c2d2ed4c1a5f8379d9277766
+    workspace/workflows/all_changes_saved: 1aeb862fc41b69307e3acc682b41818b
     workspace/workflows/alphabetical: 5fcfeff9c5fd28714f0a390e0ddaaaee
     workspace/workflows/archive_confirm_body: faab86aaacb71d5b5dd7b63c00f534c3
     workspace/workflows/archive_confirm_title: 2ddbf492c023f8fef2df49a008afbcd4
@@ -4015,9 +4017,9 @@ checksums:
     workspace/workflows/archive_workflow_confirmation: 83f351c186e67a3c5308af82bf971d65
     workspace/workflows/archive_workflow_description: 06e437998a762e504d7d0101b0c53565
     workspace/workflows/auto_layout: 553d4f054655684130a8b5bc8f800bf0
-    workspace/workflows/autosave_on: 1524d466830b00c5d727c701db404963
-    workspace/workflows/autosave_saving: ee98ff32f9a585a9108c8cd961d6077e
-    workspace/workflows/changes_saved: 17b24e05aa888579a43a22d411f83b60
+    workspace/workflows/autosave_failed: 5d9b22b31b83828d5eeaeae87d2b6d14
+    workspace/workflows/autosave_failed_tooltip: f4cb6255fd863b741275a7ff6d2701c6
+    workspace/workflows/autosave_failed_tooltip_rejected: 5f90aa698c936629a7b959520dc9358e
     workspace/workflows/collapse_inspector: d3bd60a39c7d42e98c78df07c756ac22
     workspace/workflows/create_failed: b67532a43f2b040b3738ffba1d3c0ce7
     workspace/workflows/delete_failed: df67d2e7a4952b19c8371e592ea03c65
@@ -4045,6 +4047,7 @@ checksums:
     workspace/workflows/email_to_label: fc84f35b3c44796dfcdd4b096c9b8d3d
     workspace/workflows/email_to_placeholder: 1323bfdf1926a863c93bc0b37ae61218
     workspace/workflows/email_to_required: d29dd2c5bdebdde1047f4baae12269a4
+    workspace/workflows/enable_blocked_unsaved_changes: 07fc359db9158b09d612f4f0e0e2df5e
     workspace/workflows/enable_failed: 997437c65cc018c4d3cf7622e043d48d
     workspace/workflows/enable_success: 384d5e80e013c74f8e092f41ed5bae5c
     workspace/workflows/expand_inspector: 8d05989d5b8c5b6012b5c3e2651c0a92
@@ -4071,6 +4074,7 @@ checksums:
     workspace/workflows/response_completed_description: 2b7facad97819a57c830e16bcf8dd582
     workspace/workflows/save_failed: 959fe0d656afa7990c9fc476f2a4c7bf
     workspace/workflows/save_success: 95ac20f8626471d0372614fb0831e016
+    workspace/workflows/saving_changes: ee98ff32f9a585a9108c8cd961d6077e
     workspace/workflows/search_by_workflow_name: 9ce39ab494b1fa76252aa9bee55d22f8
     workspace/workflows/send_email: 0ef83c0bb40de25921a9ee7fa05babec
     workspace/workflows/send_email_description: a05ecd60166cdb3e3667e674afae556b

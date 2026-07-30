@@ -56,6 +56,25 @@ export type TWorkflowSavedDraft = {
   definition: TWorkflowDefinition | null;
 };
 
+/**
+ * The last save the server did not accept. Persistent by design: a failed autosave has no other
+ * channel to report into (silent saves don't toast), so this is what the header pill reads to stay
+ * red until a save succeeds. It doubles as the autosave no-retry guard — the effect refuses to
+ * re-send `draftSignature`, so a broken draft can't loop one PATCH per debounce window.
+ */
+export type TWorkflowSaveError = {
+  /** The exact draft that failed, as produced by workflowDraftSignatureAtom. */
+  draftSignature: string;
+  /**
+   * "unreachable" = no response at all (offline, DNS, the 15s AbortSignal.timeout). Worth an
+   * automatic retry once the browser reports it is back online.
+   * "rejected" = the API answered with a problem document. Reconnecting changes nothing.
+   */
+  kind: "unreachable" | "rejected";
+  /** Server-authored RFC 9457 detail, safe to show. Only populated for "rejected". */
+  detail: string | null;
+};
+
 type TWorkflowEditorState = {
   workflow: TWorkflowResource | null;
   workflowName: string;
@@ -64,6 +83,7 @@ type TWorkflowEditorState = {
   lastSavedDraft: TWorkflowSavedDraft | null;
   /** Epoch ms of the last successful save this session; drives the "Changes saved" flash. */
   lastSavedAt: number | null;
+  saveError: TWorkflowSaveError | null;
   selectedNodeId: string | null;
   fieldFocusRequest: TWorkflowNodeFieldFocusRequest | null;
   isInspectorCollapsed: boolean;
@@ -80,6 +100,7 @@ const initialWorkflowEditorState: TWorkflowEditorState = {
   definition: null,
   lastSavedDraft: null,
   lastSavedAt: null,
+  saveError: null,
   selectedNodeId: null,
   fieldFocusRequest: null,
   isInspectorCollapsed: false,
@@ -134,6 +155,10 @@ export const markWorkflowDraftSavedAtom = atom(null, (get, set, savedDraft: TWor
     produce(get(workflowEditorAtom), (draft) => {
       draft.lastSavedDraft = savedDraft;
       draft.lastSavedAt = Date.now();
+      // Cleared in the same write as lastSavedAt so the pill can never render the failed state and
+      // the "Changes saved" flash across two commits. Covers every save path at once: autosave,
+      // the unmount flush and the pre-transition flush all land here on success.
+      draft.saveError = null;
     })
   );
 });
@@ -152,6 +177,28 @@ export const isWorkflowDirtyAtom = atom((get) => {
     JSON.stringify(current.definition) !== JSON.stringify(state.lastSavedDraft.definition)
   );
 });
+
+// Identity of the current editable draft. Derived (rather than recomputed per render by each
+// consumer) so the value save() records as failed and the value the autosave effect compares
+// against are the same string by construction. Raw, untrimmed: this identifies a draft, it does not
+// decide dirtiness — isWorkflowDirtyAtom above owns that and trims.
+export const workflowDraftSignatureAtom = atom((get) => {
+  const state = get(workflowEditorAtom);
+  return JSON.stringify({
+    workflowName: state.workflowName,
+    workflowDescription: state.workflowDescription,
+    definition: state.definition,
+  });
+});
+
+export const workflowSaveErrorAtom = atom((get) => get(workflowEditorAtom).saveError);
+
+// Drives the header pill's failed state. Gated on dirtiness so reverting the draft back to what was
+// last persisted clears the alarm: nothing is unsaved, so nothing should read "Save failed". Retry
+// semantics are unaffected — the autosave effect guards on the raw signature, not this flag.
+export const hasWorkflowSaveFailedAtom = atom(
+  (get) => get(workflowEditorAtom).saveError !== null && get(isWorkflowDirtyAtom)
+);
 
 export type TWorkflowValidity = {
   /** The workflow has a non-empty name (required by the PATCH contract). */
@@ -383,6 +430,18 @@ export const canEditWorkflowDefinitionAtom = atom((get) => {
 export const canMutateCanvasAtom = atom(
   (get) => get(canEditWorkflowDefinitionAtom) && !get(isCanvasLockedAtom)
 );
+
+export const setWorkflowSaveErrorAtom = atom(null, (get, set, saveError: TWorkflowSaveError | null) => {
+  // Bail when nothing changes so a redundant clear (e.g. an `online` event with no failure pending)
+  // doesn't produce a new state object and re-render every editor subscriber.
+  if (get(workflowEditorAtom).saveError === saveError) return;
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      draft.saveError = saveError;
+    })
+  );
+});
 
 export const setWorkflowSavingAtom = atom(null, (get, set, isSaving: boolean) => {
   set(

@@ -15,7 +15,7 @@ const JSON_HEADERS = { "Content-Type": "application/json" };
 
 // Bound mutation calls so a stalled request can't leave the editor's save/transition spinner
 // stuck indefinitely; the rejection surfaces as the normal save/lifecycle error toast.
-const MUTATION_TIMEOUT_MS = 15_000;
+export const MUTATION_TIMEOUT_MS = 15_000;
 
 async function readWorkflowResponse(response: Response): Promise<TWorkflowResource> {
   if (!response.ok) {

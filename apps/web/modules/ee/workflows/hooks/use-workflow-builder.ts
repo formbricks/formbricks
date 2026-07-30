@@ -5,9 +5,15 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { type TPatchWorkflowInput, ZWorkflowDefinition } from "@formbricks/workflows";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
+  type TPatchWorkflowInput,
+  type TWorkflowDefinition,
+  type TWorkflowResource,
+  ZWorkflowDefinition,
+} from "@formbricks/workflows";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
+import {
+  MUTATION_TIMEOUT_MS,
   archiveWorkflow,
   disableWorkflow,
   enableWorkflow,
@@ -15,6 +21,7 @@ import {
   unarchiveWorkflow,
   updateWorkflow,
 } from "@/modules/ee/workflows/lib/api-client";
+import { classifyWorkflowSaveError, getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error";
 import { workflowDefinitionToFlowNodes } from "@/modules/ee/workflows/lib/definition-to-flow";
 import {
   hydrateWorkflowEditorAtom,
@@ -23,13 +30,14 @@ import {
   isWorkflowTransitioningAtom,
   markWorkflowDraftSavedAtom,
   setWorkflowAtom,
+  setWorkflowSaveErrorAtom,
   setWorkflowSavingAtom,
   setWorkflowTransitioningAtom,
   workflowAtom,
   workflowDefinitionAtom,
-  workflowDescriptionAtom,
+  workflowDraftSignatureAtom,
   workflowEditorAtom,
-  workflowNameAtom,
+  workflowSaveErrorAtom,
 } from "@/modules/ee/workflows/state/editor";
 
 interface UseWorkflowBuilderArgs {
@@ -53,6 +61,46 @@ interface UseWorkflowBuilderArgs {
 // before the user reaches for Test or navigates away.
 const WORKFLOW_AUTOSAVE_DELAY_MS = 2000;
 
+/** Why a draft can't be sent at all. Distinct from a save the API refused — nothing was attempted. */
+type TInvalidWorkflowDraft = { code: "name_required" | "definition"; detail?: string };
+
+/**
+ * Builds the PATCH body for the current draft, or reports why it can't be sent. Lifted out of save()
+ * so the wire-format rules sit in one place and save() stays inside the cognitive-complexity budget.
+ */
+const buildWorkflowPatch = (state: {
+  workflow: TWorkflowResource;
+  workflowName: string;
+  workflowDescription: string;
+  definition: TWorkflowDefinition;
+}):
+  | { patch: TPatchWorkflowInput; trimmedName: string; trimmedDescription: string | null }
+  | { invalid: TInvalidWorkflowDraft } => {
+  const trimmedName = state.workflowName.trim();
+  if (!trimmedName) return { invalid: { code: "name_required" } };
+
+  const trimmedDescription = state.workflowDescription.trim() || null;
+  const patch: TPatchWorkflowInput = { name: trimmedName, description: trimmedDescription };
+
+  // Only include the definition in the PATCH when the API will accept it. Sending it while the
+  // workflow is enabled would return a 422; disable first.
+  if (state.workflow.status !== "enabled") {
+    const parsedDefinition = ZWorkflowDefinition.safeParse(state.definition);
+    if (!parsedDefinition.success) {
+      return { invalid: { code: "definition", detail: parsedDefinition.error.issues[0]?.message } };
+    }
+    patch.definition = parsedDefinition.data;
+  }
+
+  return { patch, trimmedName, trimmedDescription };
+};
+
+const describeInvalidDraft = (invalid: TInvalidWorkflowDraft, t: (key: string) => string): string => {
+  if (invalid.code === "name_required") return t("workspace.workflows.name_required");
+  // Zod's first issue is the most specific thing we can say; fall back when it carries no message.
+  return invalid.detail ?? t("workspace.workflows.validation_failed");
+};
+
 export const useWorkflowBuilder = ({
   workspaceId,
   workflowId,
@@ -64,8 +112,6 @@ export const useWorkflowBuilder = ({
   const store = useStore();
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
-  const workflowName = useAtomValue(workflowNameAtom);
-  const workflowDescription = useAtomValue(workflowDescriptionAtom);
   const isDirty = useAtomValue(isWorkflowDirtyAtom);
   const hydrateEditor = useSetAtom(hydrateWorkflowEditorAtom);
   const setWorkflow = useSetAtom(setWorkflowAtom);
@@ -74,16 +120,32 @@ export const useWorkflowBuilder = ({
   const isTransitioning = useAtomValue(isWorkflowTransitioningAtom);
   const setIsSaving = useSetAtom(setWorkflowSavingAtom);
   const setIsTransitioning = useSetAtom(setWorkflowTransitioningAtom);
+  // Subscribed (not read through the store) on purpose: clearing the save error has to re-run the
+  // autosave effect below, which is what lets the `online` listener re-arm a retry.
+  const saveError = useAtomValue(workflowSaveErrorAtom);
+  const draftSignature = useAtomValue(workflowDraftSignatureAtom);
+  const setSaveError = useSetAtom(setWorkflowSaveErrorAtom);
 
-  const [isLoading, setIsLoading] = useState(loadOnMount);
+  const [isFetching, setIsFetching] = useState(loadOnMount);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // "Loading" means there is nothing correct to render yet, not merely that a request is in flight.
+  // On a remount for the same workflow (the edit ↔ runs tab round-trip) the store still holds it, so
+  // the editor stays on screen rather than flashing a skeleton over work that never left.
+  const isLoading = isFetching && workflow?.id !== workflowId;
 
   // Reload on workflowId change; abort in-flight fetches when the page navigates away.
   useEffect(() => {
     if (!loadOnMount) return;
     const controller = new AbortController();
-    setIsLoading(true);
+    setIsFetching(true);
     setLoadError(null);
+
+    /**
+     * Whether the editor already holds unsaved edits for the workflow being fetched. Re-read at each
+     * use rather than captured: a draft can be saved (or newly edited) while the fetch is in flight.
+     */
+    const holdsUnsavedDraft = () =>
+      store.get(workflowEditorAtom).workflow?.id === workflowId && store.get(isWorkflowDirtyAtom);
 
     getWorkflow(workflowId, controller.signal)
       .then((loadedWorkflow) => {
@@ -99,6 +161,15 @@ export const useWorkflowBuilder = ({
           toast.error(message);
           return;
         }
+        // Remounting the editor over an unsaved draft would destroy it: hydrate rebuilds from
+        // initialWorkflowEditorState and re-seeds lastSavedDraft from the server, so the edits
+        // vanish AND stop reading dirty — no toast, no pill, nothing to notice. Refresh only the
+        // server-owned snapshot (setWorkflowAtom leaves the editable draft alone by design) and let
+        // the autosave effect retry the draft it can still see.
+        if (holdsUnsavedDraft()) {
+          setWorkflow(loadedWorkflow);
+          return;
+        }
         hydrateEditor({
           workflow: loadedWorkflow,
           flowNodes: workflowDefinitionToFlowNodes(loadedWorkflow.definition, t),
@@ -106,17 +177,17 @@ export const useWorkflowBuilder = ({
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
-        const message = getV3ApiErrorMessage(error, t("workspace.workflows.load_failed"));
+        const message = getWorkflowApiErrorMessage(error, t("workspace.workflows.load_failed"));
         setLoadError(message);
         toast.error(message);
       })
       .finally(() => {
         if (controller.signal.aborted) return;
-        setIsLoading(false);
+        setIsFetching(false);
       });
 
     return () => controller.abort();
-  }, [workspaceId, workflowId, hydrateEditor, t, loadOnMount]);
+  }, [workspaceId, workflowId, hydrateEditor, setWorkflow, store, t, loadOnMount]);
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";
@@ -134,41 +205,40 @@ export const useWorkflowBuilder = ({
   // Resolves true only when the draft was actually persisted.
   const save = useCallback(
     async ({ silent = false }: { silent?: boolean } = {}): Promise<boolean> => {
-      // Don't overlap with an in-flight save or lifecycle transition; a save landing during an
-      // enable/disable can clobber the transitioned status (and vice versa).
-      if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return false;
-
       const state = store.get(workflowEditorAtom);
       const currentWorkflow = state.workflow;
       const currentDefinition = state.definition;
       if (!currentWorkflow || !currentDefinition) return false;
 
-      const trimmedName = state.workflowName.trim();
-      if (!trimmedName) {
-        if (!silent) toast.error(t("workspace.workflows.name_required"));
+      // Built ahead of the overlap guard below so an explicit save always explains why it did
+      // nothing. Behind it, clearing the name while a save or transition was in flight returned
+      // silently — and a title rename committed with Enter would look like it did nothing.
+      const built = buildWorkflowPatch({
+        workflow: currentWorkflow,
+        workflowName: state.workflowName,
+        workflowDescription: state.workflowDescription,
+        definition: currentDefinition,
+      });
+      // An unsendable draft is not a failed save: nothing was attempted, so no saveError is
+      // recorded, and a silent autosave stays quiet because the editor already surfaces validation
+      // problems live via workflowValidityAtom.
+      if ("invalid" in built) {
+        if (!silent) toast.error(describeInvalidDraft(built.invalid, t));
         return false;
       }
+      const { patch, trimmedName, trimmedDescription } = built;
 
-      const trimmedDescription = state.workflowDescription.trim() || null;
-      const payload: TPatchWorkflowInput = { name: trimmedName, description: trimmedDescription };
+      // Don't overlap with an in-flight save or lifecycle transition; a save landing during an
+      // enable/disable can clobber the transitioned status (and vice versa).
+      if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return false;
 
-      // Only include the definition in the PATCH when the API will accept it. Sending it while
-      // the workflow is enabled would return a 422; disable first.
-      if (currentWorkflow.status !== "enabled") {
-        const parsedDefinition = ZWorkflowDefinition.safeParse(currentDefinition);
-        if (!parsedDefinition.success) {
-          if (!silent) {
-            const issue = parsedDefinition.error.issues[0];
-            toast.error(issue?.message ?? t("workspace.workflows.validation_failed"));
-          }
-          return false;
-        }
-        payload.definition = parsedDefinition.data;
-      }
+      // Read before the await so a failure records the draft that was actually sent, not whatever
+      // the user has typed by the time the request comes back.
+      const attemptedSignature = store.get(workflowDraftSignatureAtom);
 
       setIsSaving(true);
       try {
-        const savedWorkflow = await updateWorkflow(currentWorkflow.id, payload);
+        const savedWorkflow = await updateWorkflow(currentWorkflow.id, patch);
         setWorkflow(savedWorkflow);
         // Snapshot the EDITOR STATE captured at send time (not re-read, so edits that landed
         // while the PATCH was in flight still count as dirty). Deliberately the raw
@@ -188,43 +258,76 @@ export const useWorkflowBuilder = ({
         if (!silent) toast.success(t("workspace.workflows.save_success"));
         return true;
       } catch (error) {
-        toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.save_failed")));
+        // Persistent state instead of a toast that fades before the user notices (ENG-1970): the
+        // header pill reads this and stays failed until a save lands. Written here rather than from
+        // the autosave effect's callback so it batches with the setIsSaving(false) below — the
+        // effect then re-runs seeing both, with no reliance on microtask-vs-render ordering.
+        // Doubles as the effect's no-retry guard, keeping a broken draft from looping one PATCH per
+        // debounce window.
+        setSaveError({
+          draftSignature: attemptedSignature,
+          kind: classifyWorkflowSaveError(error),
+          detail: error instanceof V3ApiError ? error.detail : null,
+        });
+        if (!silent) toast.error(getWorkflowApiErrorMessage(error, t("workspace.workflows.save_failed")));
         return false;
       } finally {
         setIsSaving(false);
       }
     },
-    [store, setWorkflow, markDraftSaved, setIsSaving, router, t]
+    [store, setWorkflow, markDraftSaved, setIsSaving, setSaveError, router, t]
   );
 
-  // Draft signature of the last autosave that FAILED. The autosave effect refuses to retry the
-  // exact same draft: without this, a persistent API failure would loop PATCH + error toast once
-  // per debounce window forever. Any further edit produces a new signature and a fresh attempt.
-  const failedAutosaveSignatureRef = useRef<string | null>(null);
-  const draftSignature = JSON.stringify({ workflowName, workflowDescription, definition });
-
   // Autosave: the page-level instance (loadOnMount) persists any dirty draft shortly after the
-  // user stops editing. Effect deps include the draft fields themselves so each keystroke resets
-  // the timer (debounce), and isSaving so a save finishing re-arms it when edits piled up
-  // mid-flight. Silent mode keeps validation noise out of the way while the user is mid-edit.
+  // user stops editing. Effect deps include the draft signature so each keystroke resets the timer
+  // (debounce), and isSaving so a save finishing re-arms it when edits piled up mid-flight.
+  // Silent mode keeps validation noise out of the way while the user is mid-edit; a failure is
+  // reported by the header pill instead (see save()).
   useEffect(() => {
     if (!loadOnMount || isReadOnly) return;
     if (!isDirty || isSaving || isTransitioning) return;
     if (!workflow || workflow.status === "archived") return;
-    if (failedAutosaveSignatureRef.current === draftSignature) return;
+    // Never re-send a draft the server already refused: without this a persistent API failure would
+    // loop one PATCH per debounce window forever. Any further edit changes the signature, and a
+    // reconnect clears the error outright (below) — either way the next attempt is a fresh one.
+    if (saveError?.draftSignature === draftSignature) return;
 
-    const timeoutHandle = setTimeout(() => {
-      void save({ silent: true }).then((saved) => {
-        failedAutosaveSignatureRef.current = saved ? null : draftSignature;
-      });
-    }, WORKFLOW_AUTOSAVE_DELAY_MS);
+    const timeoutHandle = setTimeout(() => void save({ silent: true }), WORKFLOW_AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timeoutHandle);
-  }, [loadOnMount, isReadOnly, isDirty, isSaving, isTransitioning, workflow, draftSignature, save]);
+  }, [
+    loadOnMount,
+    isReadOnly,
+    isDirty,
+    isSaving,
+    isTransitioning,
+    workflow,
+    draftSignature,
+    saveError,
+    save,
+  ]);
+
+  // Reconnecting is the one event worth retrying on its own: the guard above deliberately refuses to
+  // re-send the same draft, so an offline failure would otherwise sit there until the user happened
+  // to type again. Clearing the error re-arms the debounced effect, which re-checks
+  // dirty/archived/transitioning itself — no retry logic lives here. Only "unreachable" qualifies;
+  // being back online says nothing about a draft the API actively rejected. navigator.onLine is a
+  // nudge, never what the pill reads: a wrong "online" costs exactly one PATCH, which then either
+  // succeeds or records the failure again.
+  useEffect(() => {
+    if (!loadOnMount || isReadOnly) return;
+    const handleOnline = () => {
+      if (store.get(workflowSaveErrorAtom)?.kind !== "unreachable") return;
+      setSaveError(null);
+    };
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [loadOnMount, isReadOnly, store, setSaveError]);
 
   // Flush on unmount: the debounce window above means the freshest edits may not be persisted
   // yet when the user navigates away (tab switch, back navigation). Routed through a ref (kept
   // current after every render) so the empty-dep cleanup runs at unmount only, never on
-  // re-renders. Fire-and-forget: there is no UI left to report into.
+  // re-renders. The result isn't awaited, but it isn't lost either: save() records a failure into
+  // the editor store, which outlives this page whenever the surrounding layout does.
   const flushOnUnmountRef = useRef<() => void>(() => undefined);
   // Deliberately dependency-less: refreshes the closure on every commit. Writing the ref here
   // rather than during render keeps it out of the render phase.
@@ -234,7 +337,35 @@ export const useWorkflowBuilder = ({
       const state = store.get(workflowEditorAtom);
       if (!state.workflow || state.workflow.status === "archived") return;
       if (!store.get(isWorkflowDirtyAtom)) return;
-      void save({ silent: true });
+
+      if (!state.isSaving && !state.isTransitioning) {
+        void save({ silent: true });
+        return;
+      }
+      // A write is already in flight, carrying the snapshot taken when it started — anything typed
+      // since is only in the draft. save() refuses to overlap it and there is no render left to
+      // re-arm the debounce, so firing now would drop those edits silently, even fully online.
+      // Wait for the write to settle instead, then send what is still unsaved. Subscribing to the
+      // store rather than the promise keeps save() untouched, and the store belongs to the
+      // surrounding layout so it outlives this page.
+      //
+      // This store survives navigating between workflows, but the wait cannot leak across one: the
+      // first write that clears isSaving/isTransitioning unsubscribes, and hydrating another
+      // workflow is itself such a write (hydrate rebuilds from initialWorkflowEditorState, so
+      // isSaving resets to false and the fresh draft reads clean). Hence no workflow-id guard here
+      // — it would be unreachable.
+      const unsubscribe = store.sub(workflowEditorAtom, () => {
+        const current = store.get(workflowEditorAtom);
+        if (current.isSaving || current.isTransitioning) return;
+        unsubscribe();
+        // The in-flight write may have persisted exactly what was pending.
+        if (!store.get(isWorkflowDirtyAtom)) return;
+        void save({ silent: true });
+      });
+      // The mutation timeout bounds the request, not this listener: a write that somehow never
+      // settles would otherwise pin the subscription — and the unmounted page it closes over — for
+      // the rest of the session. Give up a little after the request itself would have.
+      setTimeout(unsubscribe, MUTATION_TIMEOUT_MS + WORKFLOW_AUTOSAVE_DELAY_MS);
     };
   });
   useEffect(() => () => flushOnUnmountRef.current(), []);
@@ -264,10 +395,14 @@ export const useWorkflowBuilder = ({
       // particular validates the persisted definition, not the local draft.
       if (store.get(isWorkflowDirtyAtom)) {
         const flushed = await save({ silent: true });
-        // Enabling after a failed flush would publish a definition other than the one on screen,
-        // right after the save-failure toast. Bail; the other transitions don't publish the
-        // definition, so a stale metadata draft doesn't block them.
-        if (!flushed && operation === "enable") return;
+        // Enabling after a failed flush would publish a definition other than the one on screen.
+        // Bail with a toast of its own — the flush is silent, so without this the click would look
+        // like it did nothing. The other transitions don't publish the definition, so a stale
+        // metadata draft doesn't block them.
+        if (!flushed && operation === "enable") {
+          toast.error(t("workspace.workflows.enable_blocked_unsaved_changes"));
+          return;
+        }
       }
 
       // One dispatch table keeps the API call + i18n keys aligned per operation; the scanner can
@@ -302,7 +437,7 @@ export const useWorkflowBuilder = ({
         setWorkflow(transitioned);
         toast.success(op.success());
       } catch (error) {
-        toast.error(getV3ApiErrorMessage(error, op.failure()));
+        toast.error(getWorkflowApiErrorMessage(error, op.failure()));
       } finally {
         setIsTransitioning(false);
       }

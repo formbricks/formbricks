@@ -22,7 +22,7 @@ export const WorkflowSecondaryNavigation = ({
   const navigation = [
     {
       id: "builder",
-      label: t("common.edit"),
+      label: t("common.editor"),
       href: `/workspaces/${workspaceId}/workflows/${workflowId}`,
     },
     {
