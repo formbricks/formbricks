@@ -57,14 +57,22 @@ test.describe("Invite sign-up with an address that already has an account @slow"
       await inviteePage.fill('input[name="password"]', "SomeOtherPassword1!");
       await inviteePage.press('input[name="password"]', "Enter");
 
-      // Lands on the verification-requested screen — the SAME screen a brand-new address gets, so the
-      // response can't be used to tell whether the account exists (ENG-2099). The copy is conditional
-      // ("if there is an account associated with …") and the log-in link below it is this visitor's way
-      // out, carrying the invite callback so logging in returns them to the invite.
+      // Lands on the SAME success screen a brand-new address gets, so the response can't be used to tell
+      // whether the account exists (ENG-2099) — which of the two it is depends only on
+      // EMAIL_VERIFICATION_DISABLED (CI runs with it on), never on the address.
       await inviteePage.waitForURL(/\/auth\/(verification-requested|signup-without-verification-success)/);
+
+      // Either way there must be a way out, because for this visitor no email is coming and the resend
+      // button no-ops on an already-verified address. That link is the whole point of the fix: before it,
+      // the screen was a dead end and the invite had already been consumed.
       const loginLink = inviteePage.getByRole("link", { name: "Log in" });
       await expect(loginLink).toBeVisible();
-      await expect(loginLink).toHaveAttribute("href", /callbackUrl=.*invite/);
+      if (inviteePage.url().includes("verification-requested")) {
+        // On the verification screen the link also carries the invite callback, so logging in lands the
+        // visitor back on the invite instead of the app root. The no-verification screen shares a plain
+        // "Log in" button with the other auth flows and has no callback to carry.
+        await expect(loginLink).toHaveAttribute("href", /callbackUrl=.*invite/);
+      }
     } finally {
       await inviteeContext.close();
     }
