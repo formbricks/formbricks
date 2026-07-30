@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
+  SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { getUserByEmail } from "@/lib/user/service";
@@ -61,6 +63,7 @@ vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace:
 const constantsOverrides = vi.hoisted(() => ({
   IS_FORMBRICKS_CLOUD: false,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false,
+  SIGNUP_ENABLED: true,
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -73,7 +76,12 @@ vi.mock("@/lib/constants", () => ({
   get SIGNUP_DOMAIN_CHECK_ON_INVITES() {
     return constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES;
   },
+  get SIGNUP_ENABLED() {
+    return constantsOverrides.SIGNUP_ENABLED;
+  },
 }));
+
+vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
@@ -105,6 +113,8 @@ describe("createUserAction — signup verification email callbackURL", () => {
     vi.resetAllMocks();
     constantsOverrides.IS_FORMBRICKS_CLOUD = false;
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
+    constantsOverrides.SIGNUP_ENABLED = true;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
@@ -194,6 +204,55 @@ describe("createUserAction — signup verification email callbackURL", () => {
     }
   );
 
+  // Regression: signup/page.tsx requires a valid invite once public sign-up is closed, but the action
+  // itself enforced nothing — so anyone could POST it and create an account on a closed instance.
+  describe("closed instance policy", () => {
+    beforeEach(() => {
+      constantsOverrides.SIGNUP_ENABLED = false;
+      vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    });
+
+    test("rejects an uninvited signup and creates no user", async () => {
+      await expect(createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never)).rejects.toThrow(
+        SIGNUP_DISABLED_ERROR_CODE
+      );
+      expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+    });
+
+    test("still allows the first administrator during fresh-instance setup", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+
+      const result = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(auth.api.signUpEmail).toHaveBeenCalled();
+    });
+
+    test("still allows a signup backed by a valid matching invite", async () => {
+      vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+      vi.mocked(verifyInviteToken).mockReturnValue({
+        inviteId: "invite-1",
+        email: "ada@example.com",
+      } as never);
+      vi.mocked(getInvite).mockResolvedValue({
+        id: "invite-1",
+        organizationId: "org-1",
+        role: "member",
+        teamIds: null,
+        creator: { name: "Owner", email: "owner@example.com", locale: "en-US" },
+      } as never);
+
+      const result = await createUserAction({
+        ctx: newCtx(),
+        parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
+      } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(createMembership).toHaveBeenCalled();
+    });
+  });
+
   test("treats a duplicate email as already-existed without post-creation side effects", async () => {
     vi.mocked(auth.api.signUpEmail).mockRejectedValue(new Error("user already exists"));
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
@@ -225,6 +284,8 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    constantsOverrides.SIGNUP_ENABLED = true;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);

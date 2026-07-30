@@ -39,7 +39,13 @@ const DAY_IN_SECONDS = 60 * 60 * 24;
 // `__Secure-`/Secure cookies require HTTPS — on http://localhost the browser drops them and the
 // session can't persist. Gate on the configured URL scheme (parity with NextAuth's URL-based
 // useSecureCookies default) instead of hardcoding true, so local/dev over http works.
-const USE_SECURE_COOKIES = (env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? "").startsWith("https://");
+//
+// WEBAPP_URL is part of the chain because all three vars are optional: a deployment that sets only
+// WEBAPP_URL=https://… — the primary documented variable — would otherwise fall through to "" and
+// serve the session cookie without `Secure`, letting a downgrade to plaintext HTTP leak it.
+const USE_SECURE_COOKIES = (env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? env.WEBAPP_URL ?? "").startsWith(
+  "https://"
+);
 
 /** Resolve a user's locale for transactional emails (Better Auth's callback user omits it). */
 export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
