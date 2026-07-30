@@ -36,6 +36,8 @@ export const ZAuditAction = z.enum([
   "created",
   "updated",
   "deleted",
+  "archived",
+  "restored",
   "signedIn",
   "merged",
   "verificationEmailSent",

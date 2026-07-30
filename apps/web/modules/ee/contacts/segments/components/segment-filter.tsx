@@ -33,6 +33,7 @@ import {
   type TSegmentOperator,
   type TSegmentPersonFilter,
   type TSegmentSegmentFilter,
+  type TSegmentSurveyInteractionFilter,
   isDateOperator,
 } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
@@ -67,34 +68,41 @@ import {
 import { AddFilterModal } from "./add-filter-modal";
 import { AttributeValueInput } from "./attribute-value-input";
 import { DateFilterValue } from "./date-filter-value";
+import { SurveyInteractionFilter } from "./survey-interaction-filter";
 
-interface TSegmentFilterProps {
+// Props shared by every leaf filter component. The dispatcher-only props (workspace segments, attribute
+// keys, add-filter callback) live on TSegmentFilterProps so individual leaves don't declare props they
+// never use.
+export interface TBaseFilterProps {
   connector: TSegmentConnector;
   resource: TSegmentFilter;
   segment: TSegment;
-  segments: TSegment[];
-  contactAttributeKeys: TContactAttributeKey[];
   setSegment: (segment: TSegment) => void;
-  handleAddFilterBelow: (resourceId: string, filter: TBaseFilter) => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
 }
 
-function SegmentFilterItemConnector({
+interface TSegmentFilterProps extends TBaseFilterProps {
+  segments: TSegment[];
+  contactAttributeKeys: TContactAttributeKey[];
+  handleAddFilterBelow: (resourceId: string, filter: TBaseFilter) => void;
+}
+
+export function SegmentFilterItemConnector({
   connector,
   segment,
   setSegment,
   filterId,
   viewOnly,
-}: {
+}: Readonly<{
   connector: TSegmentConnector;
   segment: TSegment;
   setSegment: (segment: TSegment) => void;
   filterId: string;
   viewOnly?: boolean;
-}) {
+}>) {
   const { t } = useTranslation();
   const updateLocalSurvey = (newConnector: TSegmentConnector) => {
     const updatedSegment = structuredClone(segment);
@@ -131,21 +139,21 @@ function SegmentFilterItemConnector({
   );
 }
 
-function SegmentFilterItemContextMenu({
+export function SegmentFilterItemContextMenu({
   filterId,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
   onMoveFilter,
   viewOnly,
-}: {
+}: Readonly<{
   filterId: string;
   onAddFilterBelow: () => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
-}) {
+}>) {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2">
@@ -201,7 +209,8 @@ function SegmentFilterItemContextMenu({
   );
 }
 
-type TAttributeSegmentFilterProps = TSegmentFilterProps & {
+type TAttributeSegmentFilterProps = TBaseFilterProps & {
+  contactAttributeKeys: TContactAttributeKey[];
   onAddFilterBelow: () => void;
   resource: TSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
@@ -218,7 +227,7 @@ function AttributeSegmentFilter({
   setSegment,
   contactAttributeKeys,
   viewOnly,
-}: TAttributeSegmentFilterProps) {
+}: Readonly<TAttributeSegmentFilterProps>) {
   const { contactAttributeKey } = resource.root;
   const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
@@ -386,7 +395,7 @@ function AttributeSegmentFilter({
         }}
         value={attrKeyValue}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-2">
@@ -443,7 +452,7 @@ function AttributeSegmentFilter({
   );
 }
 
-type TPersonSegmentFilterProps = TSegmentFilterProps & {
+type TPersonSegmentFilterProps = TBaseFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentPersonFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
@@ -460,7 +469,7 @@ function PersonSegmentFilter({
   segment,
   setSegment,
   viewOnly,
-}: TPersonSegmentFilterProps) {
+}: Readonly<TPersonSegmentFilterProps>) {
   const { personIdentifier } = resource.root;
   const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
@@ -553,7 +562,7 @@ function PersonSegmentFilter({
         }}
         value={personIdentifier}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-1 lowercase">
@@ -623,7 +632,8 @@ function PersonSegmentFilter({
   );
 }
 
-type TSegmentSegmentFilterProps = TSegmentFilterProps & {
+type TSegmentSegmentFilterProps = TBaseFilterProps & {
+  segments: TSegment[];
   onAddFilterBelow: () => void;
   resource: TSegmentSegmentFilter;
 };
@@ -638,7 +648,7 @@ function SegmentSegmentFilter({
   segments,
   setSegment,
   viewOnly,
-}: TSegmentSegmentFilterProps) {
+}: Readonly<TSegmentSegmentFilterProps>) {
   const { segmentId } = resource.root;
   const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
@@ -705,7 +715,7 @@ function SegmentSegmentFilter({
         }}
         value={currentSegment?.id}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
+          className="flex w-auto items-center justify-center bg-white whitespace-nowrap"
           hideArrow>
           <div className="flex items-center gap-1">
             <Users2Icon className="size-4 text-sm" />
@@ -736,7 +746,7 @@ function SegmentSegmentFilter({
   );
 }
 
-type TDeviceFilterProps = TSegmentFilterProps & {
+type TDeviceFilterProps = TBaseFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentDeviceFilter;
 };
@@ -750,7 +760,7 @@ function DeviceFilter({
   segment,
   setSegment,
   viewOnly,
-}: TDeviceFilterProps) {
+}: Readonly<TDeviceFilterProps>) {
   const { value } = resource;
   const { t } = useTranslation();
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
@@ -862,7 +872,7 @@ export function SegmentFilter({
   onDeleteFilter,
   onMoveFilter,
   viewOnly = false,
-}: TSegmentFilterProps) {
+}: Readonly<TSegmentFilterProps>) {
   const { t } = useTranslation();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const updateFilterValueInSegment = (filterId: string, newValue: TSegmentFilterValue) => {
@@ -897,14 +907,12 @@ export function SegmentFilter({
           <AttributeSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             resource={resource as TSegmentAttributeFilter}
             segment={segment}
-            segments={segments}
             setSegment={setSegment}
             updateValueInLocalSurvey={updateFilterValueInSegment}
             viewOnly={viewOnly}
@@ -918,16 +926,13 @@ export function SegmentFilter({
       return (
         <>
           <PersonSegmentFilter
-            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             resource={resource as TSegmentPersonFilter}
             segment={segment}
-            segments={segments}
             setSegment={setSegment}
             updateValueInLocalSurvey={updateFilterValueInSegment}
             viewOnly={viewOnly}
@@ -941,9 +946,7 @@ export function SegmentFilter({
       return (
         <>
           <SegmentSegmentFilter
-            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
@@ -963,16 +966,32 @@ export function SegmentFilter({
       return (
         <>
           <DeviceFilter
-            contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             resource={resource as TSegmentDeviceFilter}
             segment={segment}
-            segments={segments}
+            setSegment={setSegment}
+            viewOnly={viewOnly}
+          />
+
+          {filterModal}
+        </>
+      );
+
+    case "surveyInteraction":
+      return (
+        <>
+          <SurveyInteractionFilter
+            connector={connector}
+            onAddFilterBelow={onAddFilterBelow}
+            onCreateGroup={onCreateGroup}
+            onDeleteFilter={onDeleteFilter}
+            onMoveFilter={onMoveFilter}
+            resource={resource as TSegmentSurveyInteractionFilter}
+            segment={segment}
             setSegment={setSegment}
             viewOnly={viewOnly}
           />

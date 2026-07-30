@@ -84,10 +84,11 @@ RUN --mount=type=secret,id=database_url \
 #
 FROM base AS runner
 
-# Upgrade Alpine system packages to pick up security patches, update npm to the patched 11.x line, then create user
-# Note: npm is updated in the runtime image so any bundled transitive packages scanned from the base image are patched
+# Upgrade Alpine system packages, remove build-only npm tooling from the runtime image, then create user.
+# The application and startup migrations run directly with Node.js; npm and npx are only needed in the installer.
 RUN apk update && apk upgrade --no-cache \
-    && npm install --ignore-scripts -g npm@11.17.0 \
+    && rm -rf /usr/local/lib/node_modules/npm \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 

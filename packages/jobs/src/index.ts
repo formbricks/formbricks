@@ -14,21 +14,24 @@ export {
   enqueueTestLogJob,
   enqueueWorkflowRunJob,
   getBackgroundJobProducer,
+  removeRecurringSurveyArchivePurgeJobSchedule,
   removeRecurringSurveySchedulingJobSchedule,
   removeRecurringWorkflowRunReconcileJobSchedule,
   scheduleResponsePipelineJobAt,
   scheduleSurveySchedulingJobAt,
   scheduleTestLogJobAt,
   upsertRecurringResponsePipelineJobSchedule,
+  upsertRecurringSurveyArchivePurgeJobSchedule,
   upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
   upsertRecurringWorkflowRunReconcileJobSchedule,
 } from "./queue";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
-export { processWorkflowRunJob } from "./processors/workflow-run";
-export { processWorkflowRunReconcileJob } from "./processors/workflow-run-reconcile";
+export { processSurveyArchivePurgeJob } from "./processors/survey-archive-purge";
 export { processSurveySchedulingJob } from "./processors/survey-scheduling";
 export { processTestLogJob } from "./processors/test-log";
+export { processWorkflowRunJob } from "./processors/workflow-run";
+export { processWorkflowRunReconcileJob } from "./processors/workflow-run-reconcile";
 export { startJobsRuntime } from "./runtime";
 export {
   ZBackgroundJobScheduleIdentity,
@@ -52,6 +55,7 @@ export type {
 export {
   ZResponsePipelineEvent,
   ZResponsePipelineJobData,
+  ZSurveyArchivePurgeJobData,
   ZSurveySchedulingJobData,
   ZTestLogJobData,
   ZWorkflowRunJobData,
@@ -60,6 +64,7 @@ export {
 export type {
   TResponsePipelineEvent,
   TResponsePipelineJobData,
+  TSurveyArchivePurgeJobData,
   TSurveySchedulingJobData,
   TTestLogJobData,
   TWorkflowRunJobData,

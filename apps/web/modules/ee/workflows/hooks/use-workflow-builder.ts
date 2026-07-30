@@ -223,16 +223,20 @@ export const useWorkflowBuilder = ({
 
   // Flush on unmount: the debounce window above means the freshest edits may not be persisted
   // yet when the user navigates away (tab switch, back navigation). Routed through a ref (kept
-  // current every render) so the empty-dep cleanup runs at unmount only, never on re-renders.
-  // Fire-and-forget: there is no UI left to report into.
+  // current after every render) so the empty-dep cleanup runs at unmount only, never on
+  // re-renders. Fire-and-forget: there is no UI left to report into.
   const flushOnUnmountRef = useRef<() => void>(() => undefined);
-  flushOnUnmountRef.current = () => {
-    if (!loadOnMount || isReadOnly) return;
-    const state = store.get(workflowEditorAtom);
-    if (!state.workflow || state.workflow.status === "archived") return;
-    if (!store.get(isWorkflowDirtyAtom)) return;
-    void save({ silent: true });
-  };
+  // Deliberately dependency-less: refreshes the closure on every commit. Writing the ref here
+  // rather than during render keeps it out of the render phase.
+  useEffect(() => {
+    flushOnUnmountRef.current = () => {
+      if (!loadOnMount || isReadOnly) return;
+      const state = store.get(workflowEditorAtom);
+      if (!state.workflow || state.workflow.status === "archived") return;
+      if (!store.get(isWorkflowDirtyAtom)) return;
+      void save({ silent: true });
+    };
+  });
   useEffect(() => () => flushOnUnmountRef.current(), []);
 
   // Warn on hard refresh / tab close while edits are unsaved: unlike SPA navigation, a page

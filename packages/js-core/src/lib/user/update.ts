@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- required for logging errors */
 import { ApiClient } from "@/lib/common/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";

@@ -86,7 +86,7 @@ export const ManageIntegration = ({
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
       {showReconnectButton && (
-        <Alert variant="warning" size="small" className="mb-4 w-full">
+        <Alert variant="warning" size="small" className="mb-4 w-full" role="status">
           <AlertDescription>{t("workspace.integrations.reconnect_button_description")}</AlertDescription>
           <AlertButton onClick={handleAirtableAuthorization}>
             {t("workspace.integrations.reconnect_button")}

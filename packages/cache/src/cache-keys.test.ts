@@ -38,6 +38,11 @@ describe("@formbricks/cache cacheKeys", () => {
         expect(key).toBe("fb:org:org-123:billing");
       });
 
+      test("should create organization billing-sync-lock key scoped to the org", () => {
+        const key = createCacheKey.organization.billingSyncLock("org-123");
+        expect(key).toBe("fb:org:org-123:billing-sync-lock");
+      });
+
       test("should handle complex organization IDs", () => {
         const key = createCacheKey.organization.billing("org-enterprise-team_123");
         expect(key).toBe("fb:org:org-enterprise-team_123:billing");

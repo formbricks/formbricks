@@ -1,0 +1,39 @@
+---
+title: "Cooldown Period"
+description: "The Cooldown Period is a workspace-wide guard that limits how often a user sees any survey, preventing survey fatigue across all your App Surveys."
+icon: "hourglass-half"
+---
+
+The Cooldown Period is a universal blocker that makes sure no user sees too many surveys in a short time. It is measured **across all surveys** in a workspace, which is especially helpful when several teams use Formbricks at the same time. It is one layer of the full display logic — see [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic) for how it combines with targeting, Recontact Options, and triggers.
+
+<Note>The default Cooldown Period is 7 days.</Note>
+
+## Workspace Cooldown Period
+
+To adjust the workspace-wide Cooldown Period:
+
+1. Open **Settings → Workspace → General**.
+2. Find the **Cooldown Period (across surveys)** section.
+3. Set the interval, in days.
+
+After a user sees *any* survey, no survey will be shown to them again until the Cooldown Period has elapsed.
+
+## Overriding the Cooldown Period for a survey
+
+In the Survey Editor, under **Settings → Visibility & Recontact**, each survey chooses how it interacts with the workspace Cooldown Period:
+
+- **Use Cooldown Period** *(default)* — the survey follows the workspace configuration and only shows if no other survey appeared during that period.
+- **Ignore Cooldown Period** — the survey can show whenever its conditions are met, even if another survey was shown recently.
+- **Set custom Cooldown Period** — override the workspace value for this survey only.
+
+## How the Cooldown Period is measured
+
+<Warning>
+  The Cooldown Period is measured from the last time the user saw **any** survey — not from the last time they saw *this* survey. A per-survey value therefore changes the *length* of the gap, not what resets it: a frequently-shown survey keeps pushing back a less-frequent one.
+</Warning>
+
+To run a survey on its **own** schedule regardless of other surveys — for example an NPS survey every 3 months — don't rely on the Cooldown Period alone. Target it with an [interaction-based segment](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments) such as *have not seen this survey within 3 months*, which is evaluated per survey. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments) for the full recipe.
+
+---
+
+Still struggling or is something not working as expected? [Join us in GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!

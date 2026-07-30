@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method -- required for mocking */
 // config.test.ts
 import { type Mock, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";

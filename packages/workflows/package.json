@@ -19,7 +19,7 @@
   "scripts": {
     "build": "vite build && publint",
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint . --ext .js,.ts",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"

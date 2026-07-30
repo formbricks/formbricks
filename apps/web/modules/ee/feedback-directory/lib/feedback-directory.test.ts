@@ -208,6 +208,13 @@ describe("FeedbackDirectory Service", () => {
 
       await expect(getFeedbackDirectoryDetails(mockDirectoryId)).rejects.toThrow(DatabaseError);
     });
+
+    test("re-throws unexpected errors", async () => {
+      const error = new Error("Unexpected error");
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockRejectedValueOnce(error);
+
+      await expect(getFeedbackDirectoryDetails(mockDirectoryId)).rejects.toThrow(error);
+    });
   });
 
   describe("getFeedbackDirectoryAuthContext", () => {
@@ -255,6 +262,13 @@ describe("FeedbackDirectory Service", () => {
       vi.mocked(prisma.feedbackDirectory.findUnique).mockRejectedValueOnce(prismaError);
 
       await expect(getFeedbackDirectoryAuthContext(mockDirectoryId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("re-throws unexpected errors", async () => {
+      const error = new Error("Unexpected error");
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockRejectedValueOnce(error);
+
+      await expect(getFeedbackDirectoryAuthContext(mockDirectoryId)).rejects.toThrow(error);
     });
   });
 

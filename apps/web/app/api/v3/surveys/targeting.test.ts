@@ -5,7 +5,7 @@ import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-k
 import { DatabaseError } from "@formbricks/types/errors";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getExistingWorkspaceSurveyIds, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyTargeting } from "./schemas";
@@ -36,6 +36,7 @@ vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
 
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   getSegments: vi.fn(),
+  getExistingWorkspaceSurveyIds: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -204,6 +205,21 @@ const mockSegments = (ids: string[]): void => {
   );
 };
 
+const surveyInteractionNode = (id: string, surveyScope: "any" | "specific", surveyIds: string[]) => ({
+  id,
+  connector: null,
+  resource: {
+    id: `${id}_res`,
+    root: { type: "surveyInteraction" },
+    qualifier: { operator: "haveSeen" },
+    value: { surveyScope, surveyIds, within: { amount: 1, unit: "months" } },
+  },
+});
+
+const mockSurveyRefs = (ids: string[]): void => {
+  vi.mocked(getExistingWorkspaceSurveyIds).mockResolvedValueOnce(new Set(ids));
+};
+
 describe("assertV3SurveyTargetingFilterReferences", () => {
   test("performs no workspace lookup when filters need none", async () => {
     const validDeviceOnly = [deviceFilterNode("f1", "phone")] as unknown as TFilterTree;
@@ -352,6 +368,40 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
           reason: "Segment 'seg_other_workspace' was not found in this workspace",
           code: "invalid_reference",
           identifier: "seg_other_workspace",
+        },
+      ],
+    });
+  });
+
+  test("skips the survey lookup for an any-scope survey interaction filter", async () => {
+    const filters = [surveyInteractionNode("f1", "any", [])] as unknown as TFilterTree;
+
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
+    expect(getExistingWorkspaceSurveyIds).not.toHaveBeenCalled();
+  });
+
+  test("resolves a specific-scope survey interaction filter against workspace surveys", async () => {
+    mockSurveyRefs(["survey_known"]);
+    const filters = [surveyInteractionNode("f1", "specific", ["survey_known"])] as unknown as TFilterTree;
+
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
+    // Validated by the exact referenced ids (unbounded), not the picker's recent-window list.
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["survey_known"]);
+  });
+
+  test("rejects a survey interaction filter referencing an unknown or foreign survey", async () => {
+    mockSurveyRefs(["survey_known"]);
+    const filters = [
+      surveyInteractionNode("f1", "specific", ["survey_known", "survey_foreign"]),
+    ] as unknown as TFilterTree;
+
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).rejects.toMatchObject({
+      invalidParams: [
+        {
+          name: "targeting.filters.0.resource.value.surveyIds.1",
+          reason: "Survey 'survey_foreign' was not found in this workspace",
+          code: "invalid_reference",
+          identifier: "survey_foreign",
         },
       ],
     });

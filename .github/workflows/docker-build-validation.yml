@@ -12,10 +12,6 @@ on:
 permissions:
   contents: read
 
-env:
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
 jobs:
   validate-docker-build:
     name: Validate Docker Build
@@ -77,6 +73,19 @@ jobs:
             hub_api_key=build-time-placeholder
             cubejs_api_url=http://localhost:4000
             cubejs_api_secret=build-time-placeholder
+
+      - name: Verify Runtime Image Excludes npm
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --rm --entrypoint sh "formbricks-test:$GITHUB_SHA" -c '
+            set -eu
+            test ! -d /usr/local/lib/node_modules/npm
+            ! command -v npm >/dev/null 2>&1
+            ! command -v npx >/dev/null 2>&1
+            node --version
+          '
 
       - name: Reject Invalid Environment Before Database Setup
         shell: bash

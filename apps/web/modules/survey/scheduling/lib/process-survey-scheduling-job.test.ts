@@ -89,6 +89,7 @@ describe("processSurveySchedulingJob", () => {
           not: null,
         },
         status: "paused",
+        archivedAt: null,
       },
     });
     expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledTimes(1);
@@ -163,6 +164,7 @@ describe("processSurveySchedulingJob", () => {
           not: null,
         },
         status: "inProgress",
+        archivedAt: null,
       },
     });
     expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledTimes(1);

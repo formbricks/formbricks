@@ -1,16 +1,17 @@
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getSurvey } from "@/lib/survey/service";
+import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
+import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses, getResponsesByWorkspaceIds } from "./lib/response";
 
 export const GET = withV1ApiWrapper({
@@ -54,12 +55,7 @@ export const GET = withV1ApiWrapper({
         ),
       };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      throw error;
+      return handleApiError(error);
     }
   },
 });
@@ -137,9 +133,26 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      if (!validateFileUploads(responseInput.data, surveyResult.survey.questions)) {
+      if (
+        !validateClientFileUploads({
+          data: responseInput.data,
+          // Survey-authoritative workspace id (validateSurvey already asserts it equals the
+          // request-body workspaceId); binds the file-upload scope check to the resolved survey.
+          workspaceId: surveyResult.survey.workspaceId,
+          surveyId: surveyResult.survey.id,
+          blocks: surveyResult.survey.blocks,
+          questions: surveyResult.survey.questions,
+          // Management callers replay stored responses whose file URLs may predate the scoped shape;
+          // accept those against a prefix this workspace owns (ENG-1981 review).
+          legacyOwnedStoragePrefixes: await getWorkspaceLegacyStoragePrefixes(
+            surveyResult.survey.workspaceId
+          ),
+        })
+      ) {
         return {
-          response: responses.badRequestResponse("Invalid file upload response"),
+          response: responses.badRequestResponse(
+            "Invalid file upload response: each file URL must reference a file uploaded to this survey's file-upload element"
+          ),
         };
       }
 
@@ -165,54 +178,33 @@ export const POST = withV1ApiWrapper({
         responseInput.updatedAt = responseInput.createdAt;
       }
 
-      try {
-        const response = await createResponseWithQuotaEvaluation(responseInput);
-        if (auditLog) {
-          auditLog.targetId = response.id;
-          auditLog.newObject = response;
-        }
+      const response = await createResponseWithQuotaEvaluation(responseInput);
+      if (auditLog) {
+        auditLog.targetId = response.id;
+        auditLog.newObject = response;
+      }
 
+      await sendToPipeline({
+        event: "responseCreated",
+        workspaceId: surveyResult.survey.workspaceId,
+        surveyId: response.surveyId,
+        response: response,
+      });
+
+      if (response.finished) {
         await sendToPipeline({
-          event: "responseCreated",
+          event: "responseFinished",
           workspaceId: surveyResult.survey.workspaceId,
           surveyId: response.surveyId,
           response: response,
         });
-
-        if (response.finished) {
-          await sendToPipeline({
-            event: "responseFinished",
-            workspaceId: surveyResult.survey.workspaceId,
-            surveyId: response.surveyId,
-            response: response,
-          });
-        }
-
-        return {
-          response: responses.successResponse(response, true),
-        };
-      } catch (error) {
-        logger.error({ error, url: req.url }, "Error in POST /api/v1/management/responses");
-
-        if (error instanceof InvalidInputError) {
-          return {
-            response: responses.badRequestResponse(error.message),
-          };
-        }
-
-        return {
-          response: responses.internalServerErrorResponse(
-            error instanceof Error ? error.message : "Unknown error occurred"
-          ),
-        };
       }
+
+      return {
+        response: responses.successResponse(response, true),
+      };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.badRequestResponse("An unexpected error occurred while creating the response"),
-        };
-      }
-      throw error;
+      return handleApiError(error);
     }
   },
   action: "created",
