@@ -505,6 +505,12 @@ describe("Response Lib", () => {
           details: [{ field: "contactId", issue: "not found" }],
         });
       }
+      // The lookup itself must be workspace-scoped: asserting only the rejection would still pass
+      // if the `workspaceId` filter were dropped, since the mock returns null either way.
+      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
+        where: { id: responseInput.contactId, workspaceId: responseWorkspaceId },
+        select: { id: true },
+      });
       expect(prisma.response.update).not.toHaveBeenCalled();
     });
 
@@ -540,6 +546,28 @@ describe("Response Lib", () => {
           type: "not_found",
           details: [{ field: "displayId", issue: "not found" }],
         });
+      }
+      expect(prisma.response.update).not.toHaveBeenCalled();
+    });
+
+    // ENG-1923: the anti-enumeration property itself. A display that exists but belongs to another
+    // tenant and one that does not exist at all must be reported identically, or the endpoint
+    // becomes a cross-tenant existence oracle. Asserting each rejection separately would not catch
+    // a later change that made one of them more specific.
+    test("reports a foreign and a nonexistent displayId identically (ENG-1923)", async () => {
+      vi.mocked(getDisplayForResponseValidation).mockResolvedValue({
+        ...validDisplay,
+        workspaceId: "another-workspace",
+      });
+      const foreign = await updateResponse(responseId, responseInput);
+
+      vi.mocked(getDisplayForResponseValidation).mockResolvedValue(null);
+      const missing = await updateResponse(responseId, responseInput);
+
+      expect(foreign.ok).toBe(false);
+      expect(missing.ok).toBe(false);
+      if (!foreign.ok && !missing.ok) {
+        expect(missing.error).toEqual(foreign.error);
       }
       expect(prisma.response.update).not.toHaveBeenCalled();
     });
