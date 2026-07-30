@@ -3332,7 +3332,7 @@
         "respect_global_waiting_time": "Use Cooldown Period",
         "respect_global_waiting_time_description": "This survey follows the Cooldown Period set in the workspace’s configuration. It only shows if no other survey has appeared during that period.",
         "response_limit_can_t_be_set_to_0": "Response limit cannot be set to 0",
-        "response_limit_needs_to_exceed_number_of_received_responses": "Response limit needs to exceed the number of completed responses ({responseCount}).",
+        "response_limit_needs_to_exceed_number_of_received_responses": "Response limit needs to exceed number of received responses ({responseCount}).",
         "response_limits_redirections_and_more": "Response limits, redirections and more.",
         "response_options": "Response Options",
         "reverse_order_occasionally": "Reverse order occasionally",
