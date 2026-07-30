@@ -168,6 +168,34 @@ describe("save", () => {
     expect(updateWorkflow).not.toHaveBeenCalled();
   });
 
+  test("reports a missing name even while another save is in flight", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+    // Never settles, so the first save stays in flight and the overlap guard stays armed.
+    updateWorkflow.mockReturnValue(new Promise(() => undefined));
+
+    const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    await act(async () => {
+      void result.current.save();
+    });
+    await waitFor(() => expect(result.current.isSaving).toBe(true));
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      store.set(setWorkflowNameAtom, "   ");
+    });
+    await act(async () => {
+      await expect(result.current.save()).resolves.toBe(false);
+    });
+
+    // The overlap guard must not swallow the validation message: the title field commits with
+    // Enter, so a silent refusal here reads as "Enter did nothing" all over again.
+    expect(toastError).toHaveBeenCalledWith("workspace.workflows.name_required");
+    // Still no second PATCH — the guard's actual job is intact.
+    expect(updateWorkflow).toHaveBeenCalledTimes(1);
+  });
+
   test("PATCHes via API", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     updateWorkflow.mockResolvedValue(apiWorkflow);

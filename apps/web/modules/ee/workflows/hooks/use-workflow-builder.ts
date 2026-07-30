@@ -205,19 +205,14 @@ export const useWorkflowBuilder = ({
   // Resolves true only when the draft was actually persisted.
   const save = useCallback(
     async ({ silent = false }: { silent?: boolean } = {}): Promise<boolean> => {
-      // Don't overlap with an in-flight save or lifecycle transition; a save landing during an
-      // enable/disable can clobber the transitioned status (and vice versa).
-      if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return false;
-
       const state = store.get(workflowEditorAtom);
       const currentWorkflow = state.workflow;
       const currentDefinition = state.definition;
       if (!currentWorkflow || !currentDefinition) return false;
 
-      // Read before the await so a failure records the draft that was actually sent, not whatever
-      // the user has typed by the time the request comes back.
-      const attemptedSignature = store.get(workflowDraftSignatureAtom);
-
+      // Built ahead of the overlap guard below so an explicit save always explains why it did
+      // nothing. Behind it, clearing the name while a save or transition was in flight returned
+      // silently — and a title rename committed with Enter would look like it did nothing.
       const built = buildWorkflowPatch({
         workflow: currentWorkflow,
         workflowName: state.workflowName,
@@ -232,6 +227,14 @@ export const useWorkflowBuilder = ({
         return false;
       }
       const { patch, trimmedName, trimmedDescription } = built;
+
+      // Don't overlap with an in-flight save or lifecycle transition; a save landing during an
+      // enable/disable can clobber the transitioned status (and vice versa).
+      if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return false;
+
+      // Read before the await so a failure records the draft that was actually sent, not whatever
+      // the user has typed by the time the request comes back.
+      const attemptedSignature = store.get(workflowDraftSignatureAtom);
 
       setIsSaving(true);
       try {
