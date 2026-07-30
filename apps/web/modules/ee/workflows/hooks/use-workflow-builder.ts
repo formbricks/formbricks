@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { type TPatchWorkflowInput, ZWorkflowDefinition } from "@formbricks/workflows";
+import {
+  type TPatchWorkflowInput,
+  type TWorkflowDefinition,
+  type TWorkflowResource,
+  ZWorkflowDefinition,
+} from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   MUTATION_TIMEOUT_MS,
@@ -55,6 +60,46 @@ interface UseWorkflowBuilderArgs {
 // Long enough to batch a typing burst into one PATCH, short enough that edits are on the server
 // before the user reaches for Test or navigates away.
 const WORKFLOW_AUTOSAVE_DELAY_MS = 2000;
+
+/** Why a draft can't be sent at all. Distinct from a save the API refused — nothing was attempted. */
+type TInvalidWorkflowDraft = { code: "name_required" | "definition"; detail?: string };
+
+/**
+ * Builds the PATCH body for the current draft, or reports why it can't be sent. Lifted out of save()
+ * so the wire-format rules sit in one place and save() stays inside the cognitive-complexity budget.
+ */
+const buildWorkflowPatch = (state: {
+  workflow: TWorkflowResource;
+  workflowName: string;
+  workflowDescription: string;
+  definition: TWorkflowDefinition;
+}):
+  | { patch: TPatchWorkflowInput; trimmedName: string; trimmedDescription: string | null }
+  | { invalid: TInvalidWorkflowDraft } => {
+  const trimmedName = state.workflowName.trim();
+  if (!trimmedName) return { invalid: { code: "name_required" } };
+
+  const trimmedDescription = state.workflowDescription.trim() || null;
+  const patch: TPatchWorkflowInput = { name: trimmedName, description: trimmedDescription };
+
+  // Only include the definition in the PATCH when the API will accept it. Sending it while the
+  // workflow is enabled would return a 422; disable first.
+  if (state.workflow.status !== "enabled") {
+    const parsedDefinition = ZWorkflowDefinition.safeParse(state.definition);
+    if (!parsedDefinition.success) {
+      return { invalid: { code: "definition", detail: parsedDefinition.error.issues[0]?.message } };
+    }
+    patch.definition = parsedDefinition.data;
+  }
+
+  return { patch, trimmedName, trimmedDescription };
+};
+
+const describeInvalidDraft = (invalid: TInvalidWorkflowDraft, t: (key: string) => string): string => {
+  if (invalid.code === "name_required") return t("workspace.workflows.name_required");
+  // Zod's first issue is the most specific thing we can say; fall back when it carries no message.
+  return invalid.detail ?? t("workspace.workflows.validation_failed");
+};
 
 export const useWorkflowBuilder = ({
   workspaceId,
@@ -173,32 +218,24 @@ export const useWorkflowBuilder = ({
       // the user has typed by the time the request comes back.
       const attemptedSignature = store.get(workflowDraftSignatureAtom);
 
-      const trimmedName = state.workflowName.trim();
-      if (!trimmedName) {
-        if (!silent) toast.error(t("workspace.workflows.name_required"));
+      const built = buildWorkflowPatch({
+        workflow: currentWorkflow,
+        workflowName: state.workflowName,
+        workflowDescription: state.workflowDescription,
+        definition: currentDefinition,
+      });
+      // An unsendable draft is not a failed save: nothing was attempted, so no saveError is
+      // recorded, and a silent autosave stays quiet because the editor already surfaces validation
+      // problems live via workflowValidityAtom.
+      if ("invalid" in built) {
+        if (!silent) toast.error(describeInvalidDraft(built.invalid, t));
         return false;
       }
-
-      const trimmedDescription = state.workflowDescription.trim() || null;
-      const payload: TPatchWorkflowInput = { name: trimmedName, description: trimmedDescription };
-
-      // Only include the definition in the PATCH when the API will accept it. Sending it while
-      // the workflow is enabled would return a 422; disable first.
-      if (currentWorkflow.status !== "enabled") {
-        const parsedDefinition = ZWorkflowDefinition.safeParse(currentDefinition);
-        if (!parsedDefinition.success) {
-          if (!silent) {
-            const issue = parsedDefinition.error.issues[0];
-            toast.error(issue?.message ?? t("workspace.workflows.validation_failed"));
-          }
-          return false;
-        }
-        payload.definition = parsedDefinition.data;
-      }
+      const { patch, trimmedName, trimmedDescription } = built;
 
       setIsSaving(true);
       try {
-        const savedWorkflow = await updateWorkflow(currentWorkflow.id, payload);
+        const savedWorkflow = await updateWorkflow(currentWorkflow.id, patch);
         setWorkflow(savedWorkflow);
         // Snapshot the EDITOR STATE captured at send time (not re-read, so edits that landed
         // while the PATCH was in flight still count as dirty). Deliberately the raw
