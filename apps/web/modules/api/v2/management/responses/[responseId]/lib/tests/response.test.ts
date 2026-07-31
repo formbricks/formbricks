@@ -532,6 +532,26 @@ describe("Response Lib", () => {
       expect(prisma.response.update).not.toHaveBeenCalled();
     });
 
+    // ENG-1923: the tenant guard must not reject legitimate same-tenant edits. contactId and
+    // displayId are required-nullable in ZResponseUpdateSchema, so every PUT carries both — clearing
+    // the contact while keeping the response's own display is an ordinary update, even though that
+    // display still records the previous contact. Tenant isolation comes from workspace + survey +
+    // self-link; a display↔contact match rule would 404 this case, reported against the wrong field.
+    test("allows clearing contactId while keeping the response's own displayId (ENG-1923)", async () => {
+      vi.mocked(getDisplayForResponseValidation).mockResolvedValue({
+        ...validDisplay,
+        contactId: responseInput.contactId, // display still points at the contact being unlinked
+      });
+      vi.mocked(prisma.response.update).mockResolvedValue(response);
+
+      const result = await updateResponse(responseId, { ...responseInput, contactId: null });
+
+      expect(result.ok).toBe(true);
+      // No contact lookup is needed when the caller is clearing the link.
+      expect(prisma.contact.findUnique).not.toHaveBeenCalled();
+      expect(prisma.response.update).toHaveBeenCalledTimes(1);
+    });
+
     test("rejects a displayId already linked to a different response (ENG-1923)", async () => {
       vi.mocked(getDisplayForResponseValidation).mockResolvedValue({
         ...validDisplay,

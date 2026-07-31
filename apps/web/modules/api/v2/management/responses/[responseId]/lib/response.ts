@@ -148,10 +148,12 @@ const notFound = (field: string): ApiErrorResponseV2 => ({
   details: [{ field, issue: "not found" }],
 });
 
+/** Either the request-scoped transaction client or the shared one — both satisfy these reads. */
+type ResponseDbClient = Prisma.TransactionClient | typeof prisma;
+
 /** The response's own tenant anchor, loaded once and shared by the FK checks below. */
 type ResponseTenantAnchor = {
   surveyId: string;
-  contactId: string | null;
   survey: { workspaceId: string };
 };
 
@@ -159,7 +161,7 @@ type ResponseTenantAnchor = {
 const validateContactScope = async (
   contactId: string,
   workspaceId: string,
-  prismaClient: Prisma.TransactionClient | typeof prisma
+  prismaClient: ResponseDbClient
 ): Promise<ApiErrorResponseV2 | null> => {
   const contact = await prismaClient.contact.findUnique({
     where: { id: contactId, workspaceId },
@@ -171,15 +173,22 @@ const validateContactScope = async (
 
 /**
  * Rejects a display that belongs to another workspace or survey, or that is already claimed by a
- * different response or contact. A ValidationError from the lookup means the id was malformed, which
- * is reported as not-found for the same reason as above.
+ * different response. A ValidationError from the lookup means the id was malformed, which is reported
+ * as not-found for the same reason as above.
+ *
+ * Deliberately does NOT require the display's contact to match the response's: the display is already
+ * pinned to this response's workspace and survey, and a caller-supplied contactId is separately
+ * scoped to the same workspace by validateContactScope, so a contact rule adds no tenant isolation
+ * here. It would instead reject legitimate same-tenant edits — clearing contactId while keeping the
+ * response's own display, or moving the response to another contact in the same workspace — and,
+ * because the errors are deliberately uniform, report them as an undiagnosable 404 on displayId.
+ * (assertDisplayOwnership enforces it on the create path, where a fresh display has no prior owner.)
  */
 const validateDisplayScope = async (
   displayId: string,
   responseId: string,
   anchor: ResponseTenantAnchor,
-  effectiveContactId: string | null,
-  prismaClient: Prisma.TransactionClient | typeof prisma
+  prismaClient: ResponseDbClient
 ): Promise<ApiErrorResponseV2 | null> => {
   let display: Awaited<ReturnType<typeof getDisplayForResponseValidation>>;
   try {
@@ -195,8 +204,7 @@ const validateDisplayScope = async (
     display !== null &&
     display.workspaceId === anchor.survey.workspaceId &&
     display.surveyId === anchor.surveyId &&
-    (display.responseId === null || display.responseId === responseId) &&
-    (display.contactId === null || display.contactId === effectiveContactId);
+    (display.responseId === null || display.responseId === responseId);
 
   return isUsable ? null : notFound("displayId");
 };
@@ -215,7 +223,7 @@ const validateDisplayScope = async (
 const validateResponseLinkScope = async (
   responseId: string,
   responseInput: z.infer<typeof ZResponseUpdateSchema>,
-  prismaClient: Prisma.TransactionClient | typeof prisma
+  prismaClient: ResponseDbClient
 ): Promise<ApiErrorResponseV2 | null> => {
   if (!responseInput.contactId && !responseInput.displayId) {
     return null;
@@ -223,7 +231,7 @@ const validateResponseLinkScope = async (
 
   const anchor = await prismaClient.response.findUnique({
     where: { id: responseId },
-    select: { surveyId: true, contactId: true, survey: { select: { workspaceId: true } } },
+    select: { surveyId: true, survey: { select: { workspaceId: true } } },
   });
   if (!anchor) {
     return notFound("response");
@@ -244,11 +252,7 @@ const validateResponseLinkScope = async (
     return null;
   }
 
-  // An explicit contactId in this same update wins over the stored one, including an explicit null.
-  const effectiveContactId =
-    responseInput.contactId !== undefined ? responseInput.contactId : anchor.contactId;
-
-  return validateDisplayScope(responseInput.displayId, responseId, anchor, effectiveContactId, prismaClient);
+  return validateDisplayScope(responseInput.displayId, responseId, anchor, prismaClient);
 };
 
 export const updateResponse = async (

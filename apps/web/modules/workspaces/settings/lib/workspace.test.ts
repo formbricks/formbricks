@@ -31,6 +31,7 @@ const baseWorkspace: TWorkspace = {
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     workspace: {
       update: vi.fn(),
       create: vi.fn(),
@@ -84,6 +85,9 @@ vi.mock("@/modules/storage/service", () => ({
 describe("workspace lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // createWorkspace runs its ownership check and both writes in one transaction. Hand the callback
+    // the same prisma mock so assertions stay on `prisma.*` and a rollback surfaces as a throw.
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
   });
 
   describe("updateWorkspace", () => {
@@ -172,6 +176,22 @@ describe("workspace lib", () => {
       // ...and the workspace and the join rows must never be written.
       expect(prisma.workspace.create).not.toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
+      // The rejection is logged for security observability, naming only tenant ids (no PII).
+      expect(logger.warn).toHaveBeenCalledWith(
+        { organizationId: "org1", foreignTeamIds: ["foreign-team"] },
+        expect.stringContaining("Rejected cross-organization team assignment")
+      );
+    });
+
+    // ENG-1922: the rejection log must not fire when every team is in the caller's organization.
+    test("does not log a cross-organization warning on the happy path", async () => {
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p3" } as any);
+      vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
+
+      await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
+
+      expect(logger.warn).not.toHaveBeenCalled();
     });
 
     // ENG-1922: a mix of own-org and foreign teamIds must be rejected wholesale (count mismatch),
