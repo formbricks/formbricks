@@ -128,6 +128,8 @@
       "user_successfully_created_info": "Am verificat pentru un cont asociat cu {email}. Dacă nu a existat niciunul, am creat unul pentru tine. Dacă un cont deja exista, nu s-au făcut modificări. Vă rugăm să vă conectați mai jos pentru a continua."
     },
     "verification-requested": {
+      "email_not_configured_description": "Această instanță Formbricks nu are un server de email configurat, așa că nu a putut fi trimis niciun link de verificare. Vă rugăm să contactați administratorul.",
+      "email_not_configured_title": "Emailul nu este configurat",
       "invalid_email_address": "Adresa de email invalidă",
       "invalid_token": "Token invalid ☹️",
       "new_email_verification_success": "Dacă adresa este validă, un email de verificare a fost trimis.",

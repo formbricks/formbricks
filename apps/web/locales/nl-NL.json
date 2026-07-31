@@ -128,6 +128,8 @@
       "user_successfully_created_info": "We hebben gecontroleerd of er een account is gekoppeld aan {email}. Als er geen bestond, hebben we er een voor u gemaakt. Als er al een account bestond, zijn er geen wijzigingen aangebracht. Log hieronder in om verder te gaan."
     },
     "verification-requested": {
+      "email_not_configured_description": "Voor deze Formbricks-instantie is geen e-mailserver ingesteld, waardoor er geen verificatielink kon worden verzonden. Neem contact op met uw beheerder.",
+      "email_not_configured_title": "E-mail is niet geconfigureerd",
       "invalid_email_address": "Ongeldig e-mailadres",
       "invalid_token": "Ongeldig token ☹️",
       "new_email_verification_success": "Als het adres geldig is, is er een verificatie-e-mail verzonden.",

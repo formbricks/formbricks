@@ -128,6 +128,8 @@
       "user_successfully_created_info": "{email} ile ilişkili bir hesap kontrol ettik. Yoksa sizin için bir tane oluşturduk. Zaten bir hesap varsa, herhangi bir değişiklik yapılmadı. Devam etmek için lütfen aşağıdan giriş yapın."
     },
     "verification-requested": {
+      "email_not_configured_description": "Bu Formbricks örneğinde yapılandırılmış bir email sunucusu yok, bu nedenle doğrulama bağlantısı gönderilemedi. Lütfen yöneticinizle iletişime geçin.",
+      "email_not_configured_title": "Email yapılandırılmamış",
       "invalid_email_address": "Geçersiz email adresi",
       "invalid_token": "Geçersiz token ☹️",
       "new_email_verification_success": "Adres geçerliyse bir doğrulama email'i gönderildi.",

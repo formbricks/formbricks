@@ -128,6 +128,8 @@
       "user_successfully_created_info": "我們已檢查與 {email} 相關聯的帳戶。如果不存在，我們已為您建立一個。如果帳戶已存在，則未進行任何更改。請在下方登入以繼續。"
     },
     "verification-requested": {
+      "email_not_configured_description": "此 Formbricks 實例未設定電子郵件伺服器，因此無法發送驗證連結。請聯絡您的管理員。",
+      "email_not_configured_title": "電子郵件未設定",
       "invalid_email_address": "無效的電子郵件地址",
       "invalid_token": "無效的權杖 ☹️",
       "new_email_verification_success": "如果地址有效，驗證電子郵件已發送。",

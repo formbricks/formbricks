@@ -128,6 +128,8 @@
       "user_successfully_created_info": "我们已检查与 {email} 相关联的账户。如果没有，我们已为您创建一个。如果已有账户，则未作任何更改。请在下面登录以继续。"
     },
     "verification-requested": {
+      "email_not_configured_description": "此 Formbricks 实例未配置邮件服务器，因此无法发送验证链接。请联系您的管理员。",
+      "email_not_configured_title": "邮件未配置",
       "invalid_email_address": "无效 的 电子 邮件 地址",
       "invalid_token": "无效的 token ☹️",
       "new_email_verification_success": "如果 地址 有效，验证 电子邮件 已发送。",

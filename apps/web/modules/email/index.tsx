@@ -25,6 +25,7 @@ import {
   DEBUG,
   IMPRINT_ADDRESS,
   IMPRINT_URL,
+  IS_SMTP_CONFIGURED,
   MAIL_FROM,
   MAIL_FROM_NAME,
   PRIVACY_URL,
@@ -52,7 +53,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
-export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
+export { IS_SMTP_CONFIGURED };
 
 const legalProps: TEmailTemplateLegalProps = {
   privacyUrl: PRIVACY_URL || undefined,

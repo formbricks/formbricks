@@ -128,6 +128,8 @@
       "user_successfully_created_info": "Vi har kontrollerat om det finns ett konto kopplat till {email}. Om inget fanns har vi skapat ett åt dig. Om ett konto redan fanns gjordes inga ändringar. Vänligen logga in nedan för att fortsätta."
     },
     "verification-requested": {
+      "email_not_configured_description": "Den här Formbricks-instansen har ingen e-postserver konfigurerad, så ingen verifieringslänk kunde skickas. Kontakta din administratör.",
+      "email_not_configured_title": "E-post är inte konfigurerad",
       "invalid_email_address": "Ogiltig e-postadress",
       "invalid_token": "Ogiltig token ☹️",
       "new_email_verification_success": "Om adressen är giltig har ett verifieringsmeddelande skickats.",

@@ -128,6 +128,8 @@
       "user_successfully_created_info": "Verificámos a existência de uma conta associada a {email}. Se não existia, criámos uma para si. Se já existia uma conta, não foram feitas alterações. Por favor, inicie sessão abaixo para continuar."
     },
     "verification-requested": {
+      "email_not_configured_description": "Esta instância do Formbricks não tem um servidor de email configurado, pelo que não foi possível enviar qualquer link de verificação. Por favor, contacte o seu administrador.",
+      "email_not_configured_title": "O email não está configurado",
       "invalid_email_address": "Endereço de email inválido",
       "invalid_token": "Token inválido ☹️",
       "new_email_verification_success": "Se o endereço for válido, um email de verificação foi enviado.",

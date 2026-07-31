@@ -233,6 +233,13 @@ export const withAuditLogging = <
       return result;
     }
 
+    // The handler ran fine but reported that the audited thing did not actually happen, so `action`
+    // here would be a false record (see AuditLoggingCtx.suppressEvent). Deliberately gated on success:
+    // a failure is always audited, so this cannot be used to hide one.
+    if (status === "success" && auditLoggingCtx.suppressEvent) {
+      return result;
+    }
+
     setImmediate(async () => {
       try {
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;

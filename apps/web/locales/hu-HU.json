@@ -128,6 +128,8 @@
       "user_successfully_created_info": "Ellenőriztük, hogy létezik-e a(z) {email} címhez rendelt fiók. Ha nem létezett, akkor létrehoztunk egyet Önnek. Ha a fiók már létezett, akkor nem történt változtatás. Jelentkezzen be lent a folytatáshoz."
     },
     "verification-requested": {
+      "email_not_configured_description": "Ehhez a Formbricks-példányhoz nincs beállítva e-mail-kiszolgáló, ezért nem sikerült ellenőrző hivatkozást küldeni. Kérjük, vegye fel a kapcsolatot a rendszergazdával.",
+      "email_not_configured_title": "Az e-mail nincs beállítva",
       "invalid_email_address": "Érvénytelen e-mail-cím",
       "invalid_token": "Érvénytelen token ☹️",
       "new_email_verification_success": "Ha a cím érvényes, akkor egy ellenőrző e-mail került elküldésre.",

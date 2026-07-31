@@ -106,6 +106,8 @@ checksums:
     auth/signup/title: 96addc349f834eaa5d14c786d5478b1c
     auth/signup_without_verification_success/user_successfully_created: e7ee262de26fdbd500023d9fb1982cf9
     auth/signup_without_verification_success/user_successfully_created_info: 0502de5e7ef8594cc65cf890f13f9fcc
+    auth/verification-requested/email_not_configured_description: bea45846d6b8bd77c7118bf9cde12021
+    auth/verification-requested/email_not_configured_title: 544c22243fe09611f559c33a7d3e105a
     auth/verification-requested/invalid_email_address: b2d9f25626f2d15c7c63e0281bccc247
     auth/verification-requested/invalid_token: 9008919416c117067e95efda0024655d
     auth/verification-requested/new_email_verification_success: d76f50ad638163a1cb964a191bcf7176

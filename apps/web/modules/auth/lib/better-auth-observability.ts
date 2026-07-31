@@ -102,6 +102,29 @@ export const signInAuditDatabaseHook: NonNullable<
 };
 
 /**
+ * Better Auth embeds user email addresses in some log messages — `sign-up.mjs` logs
+ * `Sign-up attempt for existing email: <address>` on every duplicate sign-up, at `info`. Today
+ * `level: "warn"` suppresses that one, so nothing leaks; but the level is exactly what someone would
+ * raise while debugging a sign-up problem, and doing so would start writing customer addresses into
+ * our logs. Redacting here rather than relying on the level means raising it stays safe. The domain is
+ * kept — it is the part that carries diagnostic value. (ENG-2091)
+ *
+ * Only the logger needs this: since ENG-2037 (below) Sentry receives a real `Error` object or nothing,
+ * never a string built from `message`.
+ */
+/**
+ * Local part is a negated class that EXCLUDES `@`, so the run can only end where the `@` actually is —
+ * the engine has no ambiguous split to backtrack through. Domain labels likewise exclude `.`. Both are
+ * length-bounded (RFC 5321 limits: 64 for the local part, 63 per label), which caps the work per start
+ * position regardless of input. An enumerated local-part class that included `.` would be
+ * super-linear on a long run with no `@` in it.
+ */
+const EMAIL_IN_MESSAGE = /[^\s@]{1,64}@([\w-]{1,63}(?:\.[\w-]{1,63}){1,8})/g;
+
+export const redactEmailsInLogMessage = (message: unknown): unknown =>
+  typeof message === "string" ? message.replace(EMAIL_IN_MESSAGE, "[redacted]@$1") : message;
+
+/**
  * Route Better Auth's logger to @formbricks/logger and capture GENUINE internal faults to Sentry in
  * production — replaces auth.ts's placeholder logger (and the route's Sentry.captureException on auth
  * failures).
@@ -121,12 +144,15 @@ export const signInAuditDatabaseHook: NonNullable<
  * logger, so handled rejections remain visible in logs — they just don't page via Sentry.
  */
 export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
+  // Kept at "warn" so Better Auth's own info/debug chatter stays out of production logs. Raising it is
+  // now safe from a PII standpoint — see redactEmailsInLogMessage above.
   level: "warn",
   disableColors: true,
   log: (level, message, ...args) => {
     const contextLogger = logger.withContext({ source: "better-auth" });
+    const safeMessage = redactEmailsInLogMessage(message);
     if (level === "error") {
-      contextLogger.error(message);
+      contextLogger.error(safeMessage);
       if (SENTRY_DSN && IS_PRODUCTION) {
         // BA usually passes the Error as a trailing arg, but a couple of sites pass it as `message`.
         const cause = [...args, message].find((arg): arg is Error => arg instanceof Error);
@@ -137,9 +163,9 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
         }
       }
     } else if (level === "warn") {
-      contextLogger.warn(message);
+      contextLogger.warn(safeMessage);
     } else {
-      contextLogger.info(message);
+      contextLogger.info(safeMessage);
     }
   },
 };

@@ -128,6 +128,8 @@
       "user_successfully_created_info": "入力されたメールアドレス ({email}) に関連するアカウントをチェックしました。アカウントが存在しない場合、作成されました。すでに存在する場合、変更はありません。続行するには、以下のログインフォームからログインしてください。"
     },
     "verification-requested": {
+      "email_not_configured_description": "この Formbricks インスタンスにはメールサーバーが設定されていないため、確認リンクを送信できませんでした。管理者にお問い合わせください。",
+      "email_not_configured_title": "メールが設定されていません",
       "invalid_email_address": "無効なメールアドレスです",
       "invalid_token": "無効なトークンです ☹️",
       "new_email_verification_success": "アドレスが有効であれば、確認メールが送信されました。",
