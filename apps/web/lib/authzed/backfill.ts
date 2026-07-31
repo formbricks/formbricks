@@ -179,12 +179,21 @@ export type TAuthzedBackfillResult = Readonly<{
   scope: "all" | "organization" | "workspace";
   status: "drifted" | "failed" | "reconciled";
   /**
-   * Set when an observation was abandoned, so the counts are a floor rather than a total.
+   * Set when the counters are not exact. Either way, re-run before concluding anything.
    *
-   * Deliberately narrow: it does *not* mean the `orphans` / `failures` / `mismatchedParents` lists hit
-   * their reporting cap. Those stay capped at 100 entries with the counters carrying the true totals,
-   * and conflating the two would make a merely-verbose run look like an incomplete one — which matters,
-   * because this flag forces a non-clean status.
+   * Two causes, and they err in opposite directions, so neither "floor" nor "total" describes the
+   * counts on its own:
+   *
+   * - **an observation was abandoned** mid-read, so fewer relationships were seen than exist and the
+   *   counts are a floor. Fail-safe for pruning: fewer orphans found means fewer deleted.
+   * - **the sweep's deduplication bound was exceeded**, so a record implied by two pages beyond that
+   *   point is counted twice and the counts may over-report. Also safe, because a run with that many
+   *   orphans is orders of magnitude past the prune cap and so deletes nothing.
+   *
+   * Deliberately narrow in one respect: it does *not* mean the `orphans` / `failures` /
+   * `mismatchedParents` lists hit their reporting cap. Those stay capped at 100 entries with the
+   * counters carrying the true totals, and conflating the two would make a merely-verbose run look like
+   * an incomplete one — which matters, because this flag forces a non-clean status.
    */
   truncated: boolean;
   unmanaged: ReadonlyArray<Readonly<{ objectId: string; objectType: string; relation: string }>>;
