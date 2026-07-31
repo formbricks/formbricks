@@ -135,8 +135,12 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
           )}
         </dl>
 
+        {/* Default size, not `small`: the small variant truncates title and description to a single
+            line, which cut this warning off mid-sentence ("…Only continue if you started this c…").
+            It is the one thing on the page telling the user how to judge the redirect target, so it
+            has to be readable in full. */}
         {isLocalhostHost(redirectHost) && (
-          <Alert variant="warning" size="small" className="mt-6" role="status">
+          <Alert variant="warning" className="mt-6" role="status">
             <AlertTitle>{t("auth.oauth.localhost_redirect_warning")}</AlertTitle>
             <AlertDescription>{t("auth.oauth.localhost_redirect_warning_description")}</AlertDescription>
           </Alert>
