@@ -105,6 +105,7 @@ export const ContactDataView = ({
     if (isResettingSearch.current) {
       isResettingSearch.current = false;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounced search must fire only on searchValue change; `fetchContactsFromStart` is recreated each render and would re-trigger the search
   }, [searchValue]);
 
   useEffect(() => {

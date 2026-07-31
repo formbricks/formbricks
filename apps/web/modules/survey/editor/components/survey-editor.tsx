@@ -132,7 +132,7 @@ export const SurveyEditor = ({
         setActiveElementId(firstBlock.elements?.[0]?.id);
       }
     }
-  }, [survey]);
+  }, [survey, localSurvey]);
 
   useEffect(() => {
     const listener = () => {
@@ -158,6 +158,7 @@ export const SurveyEditor = ({
     if (firstBlock) {
       setActiveElementId(firstBlock.elements[0]?.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally resets active element only when the survey type changes, not on every block edit
   }, [localSurvey?.type]);
 
   useEffect(() => {

@@ -110,7 +110,7 @@ export const AddIntegrationModal = ({
         type: dbProperties[fieldKey].type,
       })) || []
     );
-  }, [selectedDatabase?.id]);
+  }, [selectedDatabase]);
 
   const elementItems = useMemo(() => {
     const mappedElements = selectedSurvey
@@ -155,7 +155,7 @@ export const AddIntegrationModal = ({
     }));
 
     return [...mappedElements, ...variables, ...hiddenFields, ...Metadata, ...createdAt, ...personAttributes];
-  }, [selectedSurvey?.id, contactAttributeKeys]);
+  }, [contactAttributeKeys, elements, selectedSurvey, t]);
 
   useEffect(() => {
     if (selectedIntegration) {
