@@ -291,6 +291,9 @@ export const PricingTable = ({
   // Trialing with a card on file: selecting a paid plan converts the trial and charges now (so the
   // user unlocks links/follow-ups immediately), behind the confirm modal so they know they're billed.
   const isTrialingWithPayment = isTrialing && hasPaymentMethod;
+  // The paid plan being trialed (Pro today) — the trial banner's pay-now CTA targets it.
+  const trialedPaidPlan =
+    isTrialing && (currentCloudPlan === "pro" || currentCloudPlan === "scale") ? currentCloudPlan : null;
   const showPlanSelector = !isStripeSetupIncomplete;
   const usageCycleLabel = `${formatDateForDisplay(usageCycleStart, locale, {
     year: "numeric",
@@ -672,25 +675,6 @@ export const PricingTable = ({
     toast.error(t("common.something_went_wrong_please_try_again"));
   };
 
-  const openTrialPaymentCheckout = async () => {
-    try {
-      persistOrganizationId();
-      const response = await createTrialPaymentCheckoutAction({ organizationId });
-      if (response?.serverError) {
-        toast.error(getActionErrorMessage(response.serverError, t));
-        return;
-      }
-      if (response?.data && typeof response.data === "string") {
-        navigateToExternalUrl(response.data);
-        return;
-      }
-      toast.error(t("common.something_went_wrong_please_try_again"));
-    } catch (error) {
-      console.error("Failed to create setup checkout session:", error);
-      toast.error(t("common.something_went_wrong_please_try_again"));
-    }
-  };
-
   const openUpgradeCheckout = async (
     plan: Exclude<TStandardPlan, "hobby">,
     interval: TCloudBillingInterval
@@ -786,14 +770,6 @@ export const PricingTable = ({
 
     try {
       if (!hasPaymentMethod && plan !== "hobby") {
-        if (
-          isTrialingWithoutPayment &&
-          isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval)
-        ) {
-          await openTrialPaymentCheckout();
-          return;
-        }
-
         await redirectToPlanCheckout(plan, interval);
         return;
       }
@@ -1001,7 +977,7 @@ export const PricingTable = ({
       currentBillingInterval
     );
 
-    if (isCurrentSelection && isTrialingWithoutPayment) return "continue_with_plan_after_trial";
+    if (isCurrentSelection && isTrialingWithoutPayment) return "unlock_all_plan_features";
     if (isTrialingWithoutPayment && plan === "hobby") return "downgrade_to_hobby";
     // Trial + card: any paid plan converts the trial and charges now (even the trialed plan itself),
     // so it reads as an upgrade rather than "current plan".
@@ -1037,7 +1013,7 @@ export const PricingTable = ({
     );
 
     if (isCurrentSelection && isTrialingWithoutPayment) {
-      // Clicking this pays the prorated amount now and unlocks the features excluded from the trial
+      // Clicking this pays the full plan price now and unlocks the features excluded from the trial
       // (follow-ups, custom links) — so it's "unlock all Pro features", not "continue after trial".
       return t("workspace.settings.billing.unlock_all_plan_features", {
         plan: getCurrentCloudPlanLabel(plan, t),
@@ -1337,9 +1313,16 @@ export const PricingTable = ({
           ) : (
             <TrialAlert trialDaysRemaining={trialDaysRemaining} className="max-w-5xl">
               <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
-              {hasBillingRights && (
-                <AlertButton onClick={() => void openTrialPaymentCheckout()}>
-                  {t("workspace.settings.billing.continue_with_plan_after_trial")}
+              {hasBillingRights && trialedPaidPlan && (
+                // Same flow as the plan card's "Unlock all {plan} features" CTA: the pay-now confirm
+                // modal (add-card checkout + immediate full-price conversion) — no add-card-only path.
+                <AlertButton
+                  onClick={() =>
+                    openConfirmation(trialedPaidPlan, currentBillingInterval ?? "monthly", "trial-continue")
+                  }>
+                  {t("workspace.settings.billing.unlock_all_plan_features", {
+                    plan: getCurrentCloudPlanLabel(trialedPaidPlan, t),
+                  })}
                 </AlertButton>
               )}
             </TrialAlert>

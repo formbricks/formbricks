@@ -2355,7 +2355,6 @@ checksums:
     workspace/settings/billing/contact_sales_cta: 5dc274e84dd0ac81892fe67bf66360fd
     workspace/settings/billing/contact_sales_description: c79ce0fe56b31adcca9c888bdd4fcd52
     workspace/settings/billing/contact_sales_title: 94537da970ffef6210bba8fcecb74a8c
-    workspace/settings/billing/continue_with_plan_after_trial: 96f01459c998341b8467fe239e890875
     workspace/settings/billing/current_plan_badge: 27f172f76ac28e72cb062f80002b0ad5
     workspace/settings/billing/current_plan_cta: 53ac259fd40a361274861ee7c7498424
     workspace/settings/billing/custom_plan_description: 53faa38123cc74e5adc7e59630641d66
@@ -2454,7 +2453,7 @@ checksums:
     workspace/settings/billing/switch_at_period_end: 9c91b2287886e077a0571efab8908623
     workspace/settings/billing/switch_plan_now: dad56622a1916fe5d1a2bda5b0393194
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
-    workspace/settings/billing/trial_alert_description: e8c20d27d8cd41690db0373463c2eacb
+    workspace/settings/billing/trial_alert_description: 4f694feaba87b853e6296f89847a99b9
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
     workspace/settings/billing/trial_cancels_automatically: a6805d9b040b561f50e6deae244a600b
     workspace/settings/billing/trial_ending_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
@@ -2465,7 +2464,7 @@ checksums:
     workspace/settings/billing/trial_warning_200_title: 804fae1197fba14b15e2d697e62f34cd
     workspace/settings/billing/trial_warning_250_description: 8142e4b105b47443895a315e4b4a156e
     workspace/settings/billing/trial_warning_250_title: 93d34846276f30d6b394a8a3a626a291
-    workspace/settings/billing/trial_warning_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
+    workspace/settings/billing/trial_warning_add_payment_method: 5e6879babc7acb05a258de64fef57262
     workspace/settings/billing/trial_warning_remind_me_later: a12f38fb4352c31ca0d43c05303b7257
     workspace/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     workspace/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
