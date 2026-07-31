@@ -19,7 +19,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     {
       title: "List workspaces",
       description:
-        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey and feedback-record tools.",
+        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow and feedback-record tools.",
       inputSchema: ZMcpListWorkspacesInput.shape,
       annotations: {
         readOnlyHint: true,

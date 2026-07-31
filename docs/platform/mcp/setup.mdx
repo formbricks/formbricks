@@ -125,7 +125,7 @@ to connect again.
 Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
 silently in the background for up to **30 days** (the refresh window). After that — or after you
 revoke — the client re-runs the sign-in and consent flow. Approving the write scopes
-(`surveys:write`, `feedbackRecords:write`) is re-confirmed periodically for safety.
+(`surveys:write`, `workflows:write`, `feedbackRecords:write`) is re-confirmed periodically for safety.
 
 ## Troubleshooting
 
