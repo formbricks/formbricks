@@ -362,6 +362,12 @@ record identifiers, a revision captured *after* the run's own writes (so shadow
 evaluation can use it as an `at_least_as_fresh` floor — `null` for a dry run,
 which wrote nothing to be fresh relative to), and a `truncated` flag.
 
+That JSON is the whole diagnostic: like the other AuthZed commands, this one runs
+at `LOG_LEVEL=fatal` so stdout stays a single parseable line. Each entry in
+`failures` therefore carries `attempts` alongside the sanitized code, because
+"failed once" and "exhausted the retry budget" call for different reactions and
+the logs that would otherwise distinguish them are suppressed.
+
 Drift is reported in both directions:
 
 - `missing` — records PostgreSQL holds that SpiceDB has no relationship for. This

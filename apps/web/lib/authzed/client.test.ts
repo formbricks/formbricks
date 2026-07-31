@@ -315,7 +315,10 @@ describe("AuthZed client facade", () => {
   });
 
   test("translates a resource-scoped bulk delete through the resilience pipeline", async () => {
-    sdkMocks.deleteRelationships.mockResolvedValue({ deletedAt: { token: "private-revision" } });
+    sdkMocks.deleteRelationships.mockResolvedValue({
+      deletedAt: { token: "private-revision" },
+      deletionProgress: 1,
+    });
 
     await expect(
       getAuthzedClient().deleteRelationships({
@@ -339,8 +342,25 @@ describe("AuthZed client facade", () => {
     expect(retryMocks.execute).toHaveBeenCalledWith("delete_relationships", expect.any(Function));
   });
 
+  test("refuses to report a partial deletion as a success", async () => {
+    // The one facade call that destroys access. An unlimited, non-partial delete should always come
+    // back COMPLETE, so PARTIAL means a server-side cap or a changed default is quietly leaving
+    // relationships behind — and reporting that as done would leave a half-revoked graph.
+    sdkMocks.deleteRelationships.mockResolvedValue({
+      deletedAt: { token: "private-revision" },
+      deletionProgress: 2,
+    });
+
+    await expect(
+      getAuthzedClient().deleteRelationships({ resourceId: "org-1", resourceType: "organization" })
+    ).rejects.toMatchObject({ code: AUTHZED_ERROR_CODES.INTERNAL, retryable: true });
+  });
+
   test("translates a subject-scoped bulk delete without broadening the resource filter", async () => {
-    sdkMocks.deleteRelationships.mockResolvedValue({ deletedAt: { token: "private-revision" } });
+    sdkMocks.deleteRelationships.mockResolvedValue({
+      deletedAt: { token: "private-revision" },
+      deletionProgress: 1,
+    });
 
     await expect(
       getAuthzedClient().deleteRelationships({

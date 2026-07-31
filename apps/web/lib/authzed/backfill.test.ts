@@ -164,7 +164,7 @@ describe("per-unit failure isolation", () => {
     expect(result.counters.reconciled).toBe(2);
     expect(result.counters.failed).toBe(1);
     expect(result.failures).toEqual([
-      { code: "authzed_internal", organizationId: "org-2", retryable: false },
+      { attempts: 1, code: "authzed_internal", organizationId: "org-2", retryable: false },
     ]);
     expect(result.status).toBe("failed");
   });
@@ -191,6 +191,7 @@ describe("per-unit failure isolation", () => {
     expect(result.counters.failed).toBe(1);
     expect(result.counters.reconciled).toBe(1);
     expect(result.failures[0]).toEqual({
+      attempts: 3,
       code: AUTHZED_ERROR_CODES.UNAVAILABLE,
       organizationId: "org-1",
       retryable: true,
@@ -710,7 +711,7 @@ describe("workspace scope", () => {
     // The empty string is the sweep's marker for an orphan with no organization left, so a workspace that
     // still has a row must not report it.
     expect(result.failures).toEqual([
-      { code: AUTHZED_ERROR_CODES.UNAVAILABLE, organizationId: "org-1", retryable: true },
+      { attempts: 1, code: AUTHZED_ERROR_CODES.UNAVAILABLE, organizationId: "org-1", retryable: true },
     ]);
   });
 });
@@ -904,6 +905,7 @@ describe("full-scope orphan sweep", () => {
 
     expect(result.counters.pruned).toBe(0);
     expect(result.failures[0]).toEqual({
+      attempts: 3,
       code: AUTHZED_ERROR_CODES.UNAVAILABLE,
       organizationId: "",
       retryable: true,

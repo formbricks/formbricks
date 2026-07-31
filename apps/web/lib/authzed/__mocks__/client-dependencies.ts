@@ -35,6 +35,13 @@ vi.mock("@authzed/authzed-node", () => ({
       INSECURE_PLAINTEXT_CREDENTIALS: 2,
       SECURE: 0,
     },
+    // Mirrors the real enum. A mock that omitted it would make the facade's completeness assertion
+    // throw a TypeError instead of exercising it.
+    DeleteRelationshipsResponse_DeletionProgress: {
+      COMPLETE: 1,
+      PARTIAL: 2,
+      UNSPECIFIED: 0,
+    },
     NewClient: sdkMocks.newClient,
     RelationshipUpdate_Operation: {
       DELETE: 3,

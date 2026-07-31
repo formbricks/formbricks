@@ -1,6 +1,7 @@
 import "server-only";
 import type { TApiKeyProjectionTargets } from "./api-key";
 import {
+  type TAuthzedObservationSummary,
   type TAuthzedParentEdge,
   type TAuthzedSourceRef,
   findUnprojectedSourceRefs,
@@ -145,6 +146,14 @@ export type TAuthzedBackfillCounters = Readonly<{
 }>;
 
 export type TAuthzedBackfillFailure = Readonly<{
+  /**
+   * How many attempts stood behind this failure.
+   *
+   * Carried because the commands run at `LOG_LEVEL=fatal` to keep stdout a single JSON line, so this
+   * object is the operator's only diagnostic. Without it, "failed once" and "exhausted the retry
+   * budget" — a blip versus an outage — are indistinguishable in the report.
+   */
+  attempts: number;
   code: string;
   organizationId: string;
   retryable: boolean;
@@ -202,10 +211,10 @@ export type TAuthzedBackfillResult = Readonly<{
 /** Entries reported individually before the list is capped and only counters remain accurate. */
 const MAX_REPORTED_ENTRIES = 100;
 
-const toErrorCode = (error: unknown): Readonly<{ code: string; retryable: boolean }> =>
+const toErrorCode = (error: unknown): Readonly<{ attempts: number; code: string; retryable: boolean }> =>
   error instanceof AuthzedError
-    ? { code: error.code, retryable: error.retryable }
-    : { code: "authzed_internal", retryable: false };
+    ? { attempts: error.attempts, code: error.code, retryable: error.retryable }
+    : { attempts: 1, code: "authzed_internal", retryable: false };
 
 /** The seven target lists the three reconcilers accept between them. */
 type TReconcileTargets = Readonly<{
@@ -541,9 +550,9 @@ const recordProjectionFailure = (
   state.failed++;
   pushCapped(state.failures, [
     result.status === "failed"
-      ? { code: result.code, organizationId, retryable: result.retryable }
-      : // `disabled` reaching here means AuthZed was switched off mid-run.
-        { code: "authzed_disabled", organizationId, retryable: false },
+      ? { attempts: result.attempts, code: result.code, organizationId, retryable: result.retryable }
+      : // `disabled` reaching here means AuthZed was switched off mid-run; nothing was attempted.
+        { attempts: 0, code: "authzed_disabled", organizationId, retryable: false },
   ]);
 };
 
@@ -553,16 +562,39 @@ const recordMismatchedParents = (state: TRunState, edges: ReadonlyArray<TAuthzed
 };
 
 /**
- * Decide which observed refs, if any, may be handed to a reconciler as prune targets.
+ * Record the classification tallies an observation implies, and verify the organizations its resources
+ * claim to belong to.
  *
- * Shared by both narrow scopes. A count over the budget prunes *nothing* for that unit: a large orphan
- * count is a symptom — wrong endpoint, wrong database, a restore in progress — not a big cleanup job,
- * so the run degrades into a loud report instead of a partly-destroyed graph.
+ * Shared by all three observation paths — the two narrow scopes and each page of the sweep — because
+ * this half is identical regardless of how the relationships were reached.
  */
-const selectPrunableRefs = (
+const recordObservationSummary = async (
   ctx: TRunContext,
-  missingRefs: ReadonlyArray<TAuthzedSourceRef>
-): ReadonlyArray<TAuthzedSourceRef> => {
+  summary: TAuthzedObservationSummary
+): Promise<void> => {
+  ctx.state.ignored += summary.ignored;
+  pushCapped(ctx.state.unmanaged, summary.unmanaged);
+  recordMismatchedParents(ctx.state, await ctx.sourceReads.findMismatchedParentEdges(summary.parentEdges));
+};
+
+/**
+ * Record the orphans a narrow-scope observation found, and decide which of them may be pruned.
+ *
+ * A count over the budget prunes *nothing* for that unit: a large orphan count is a symptom — wrong
+ * endpoint, wrong database, a restore in progress — not a big cleanup job, so the run degrades into a
+ * loud report instead of a partly-destroyed graph.
+ *
+ * The sweep deliberately does not use this. It streams, so it has to deduplicate across pages before it
+ * can count, and it decides the budget against the whole sweep rather than against one unit.
+ */
+const recordScopedOrphans = async (
+  ctx: TRunContext,
+  summary: TAuthzedObservationSummary
+): Promise<ReadonlyArray<TAuthzedSourceRef>> => {
+  const missingRefs = await ctx.sourceReads.findMissingSourceRefs(summary.sourceRefs);
+  ctx.state.orphaned += missingRefs.length;
+  pushCapped(ctx.state.orphans, missingRefs);
+
   if (missingRefs.length > ctx.maxPrune) {
     ctx.state.skipped++;
 
@@ -597,15 +629,9 @@ const observeOrganization = async (
     return [];
   }
 
-  state.ignored += summary.ignored;
-  pushCapped(state.unmanaged, summary.unmanaged);
-  recordMismatchedParents(state, await ctx.sourceReads.findMismatchedParentEdges(summary.parentEdges));
+  await recordObservationSummary(ctx, summary);
 
-  const missingRefs = await ctx.sourceReads.findMissingSourceRefs(summary.sourceRefs);
-  state.orphaned += missingRefs.length;
-  pushCapped(state.orphans, missingRefs);
-
-  return selectPrunableRefs(ctx, missingRefs);
+  return recordScopedOrphans(ctx, summary);
 };
 
 const processOrganization = async (ctx: TRunContext, organizationId: string): Promise<void> => {
@@ -689,9 +715,7 @@ const tallySweepPage = async (
 ): Promise<ReadonlyArray<TAuthzedSourceRef>> => {
   const { state } = ctx;
   const summary = summarizeObservation(relationships);
-  state.ignored += summary.ignored;
-  pushCapped(state.unmanaged, summary.unmanaged);
-  recordMismatchedParents(state, await ctx.sourceReads.findMismatchedParentEdges(summary.parentEdges));
+  await recordObservationSummary(ctx, summary);
 
   const fresh: TAuthzedSourceRef[] = [];
   for (const ref of await ctx.sourceReads.findMissingSourceRefs(summary.sourceRefs)) {
@@ -803,26 +827,19 @@ const observeWorkspace = async (
   workspaceId: string,
   source: TAuthzedWorkspaceSource
 ): Promise<ReadonlyArray<TAuthzedSourceRef>> => {
-  const { state } = ctx;
   const observation = await readAllRelationships(ctx.client, {
     resourceId: workspaceId,
     resourceType: "workspace",
   });
   const summary = summarizeObservation(observation.relationships);
-  state.ignored += summary.ignored;
-  pushCapped(state.unmanaged, summary.unmanaged);
-  recordMismatchedParents(state, await ctx.sourceReads.findMismatchedParentEdges(summary.parentEdges));
+  await recordObservationSummary(ctx, summary);
 
-  state.missingCount += findUnprojectedSourceRefs(
+  ctx.state.missingCount += findUnprojectedSourceRefs(
     toWorkspaceSourceRefs(source, workspaceId),
     summary.sourceRefs
   ).length;
 
-  const missingRefs = await ctx.sourceReads.findMissingSourceRefs(summary.sourceRefs);
-  state.orphaned += missingRefs.length;
-  pushCapped(state.orphans, missingRefs);
-
-  return selectPrunableRefs(ctx, missingRefs);
+  return recordScopedOrphans(ctx, summary);
 };
 
 /**

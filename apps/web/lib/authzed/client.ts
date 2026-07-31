@@ -386,7 +386,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
       validateRelationshipFilter(filter);
 
       await executeAuthzedOperation("delete_relationships", async () => {
-        await sdkClient.promises.deleteRelationships({
+        const response = await sdkClient.promises.deleteRelationships({
           optionalAllowPartialDeletions: false,
           optionalLimit: 0,
           optionalPreconditions: [],
@@ -406,6 +406,20 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
             resourceType: filter.resourceType,
           },
         });
+
+        // Asserted rather than assumed. An unlimited, non-partial delete should always report
+        // `COMPLETE`, but this is the one call in the facade that destroys access, and "SpiceDB said it
+        // only got part way and we carried on believing it finished" is the failure that leaves a
+        // half-revoked graph while the caller reports success. A server-side cap or a change in SDK
+        // defaults would surface here instead of silently.
+        if (response.deletionProgress !== v1.DeleteRelationshipsResponse_DeletionProgress.COMPLETE) {
+          throw new AuthzedError({
+            attempts: 1,
+            code: AUTHZED_ERROR_CODES.INTERNAL,
+            operation: "delete_relationships",
+            retryable: true,
+          });
+        }
       });
     },
     diffSchema: async (schemaText) =>
