@@ -92,6 +92,8 @@
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
         "email": "View your email address",
+        "feedback_records_read": "Read feedback records",
+        "feedback_records_write": "Create feedback records",
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",
@@ -2690,7 +2692,8 @@
         "unify_feedback_inbox": "Unify Feedback Inbox",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Unlock the full power of Formbricks.",
         "white_glove_onboarding": "White-glove onboarding",
-        "whitelabel_email_follow_ups": "Whitelabel email follow-ups"
+        "whitelabel_email_follow_ups": "Whitelabel email follow-ups",
+        "workflows": "Workflows"
       },
       "feedback_directories": {
         "archive": "Archive",
@@ -2922,6 +2925,7 @@
         "ai_not_available": "AI survey creation is not available.",
         "ai_not_enabled": "AI smart tools are disabled for this organization.",
         "ai_not_in_plan": "AI survey creation is not available on your current plan.",
+        "ai_output_too_long": "This prompt asks for more than the AI can generate in one go. Simplify it or split it into smaller surveys.",
         "card_description": "Describe what you want to learn and create a draft survey.",
         "card_title": "Create with AI",
         "characters": "{count}/{max}",

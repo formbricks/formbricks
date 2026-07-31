@@ -70,6 +70,28 @@ export const createResponse = async (
   } = responseInput;
 
   try {
+    // `displayId` is caller-supplied and was connected without any ownership check. Display↔Response is
+    // one-to-one, so naming another workspace's display either failed outright or moved that display
+    // onto this response, corrupting the other tenant's display and completion counts. A display always
+    // belongs to one survey, so matching it against this survey is the tightest check available.
+    if (displayId) {
+      const display = await (tx ?? prisma).display.findUnique({
+        where: { id: displayId },
+        select: { surveyId: true },
+      });
+
+      // Uniform not-found for "does not exist" and "exists but belongs elsewhere". Distinguishing the
+      // two would confirm that a display id is real, making this endpoint a cross-tenant existence
+      // oracle — the same reason the historical-response import raises not-found rather than forbidden
+      // (#8679). Matches the shape the sibling handlers already return for a foreign display.
+      if (display?.surveyId !== surveyId) {
+        return err({
+          type: "not_found",
+          details: [{ field: "display", issue: "not found" }],
+        });
+      }
+    }
+
     let contact: { id: string; attributes: TContactAttributes } | null = null;
 
     // If userId is provided, look up the contact by userId

@@ -10,6 +10,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
+  EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
   RATE_LIMITING_DISABLED,
@@ -38,7 +39,13 @@ const DAY_IN_SECONDS = 60 * 60 * 24;
 // `__Secure-`/Secure cookies require HTTPS — on http://localhost the browser drops them and the
 // session can't persist. Gate on the configured URL scheme (parity with NextAuth's URL-based
 // useSecureCookies default) instead of hardcoding true, so local/dev over http works.
-const USE_SECURE_COOKIES = (env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? "").startsWith("https://");
+//
+// WEBAPP_URL is part of the chain because all three vars are optional: a deployment that sets only
+// WEBAPP_URL=https://… — the primary documented variable — would otherwise fall through to "" and
+// serve the session cookie without `Secure`, letting a downgrade to plaintext HTTP leak it.
+const USE_SECURE_COOKIES = (env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? env.WEBAPP_URL ?? "").startsWith(
+  "https://"
+);
 
 /** Resolve a user's locale for transactional emails (Better Auth's callback user omits it). */
 export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
@@ -90,7 +97,12 @@ export const auth = betterAuth({
   socialProviders: ssoSocialProviders,
 
   emailAndPassword: {
-    enabled: true,
+    // EMAIL_AUTH_DISABLED=1 has to switch the credential endpoints off here, not just hide the form on
+    // the login/signup pages (its only other use). Hardcoding `true` left
+    // POST /api/auth/sign-in/email live on an instance the operator had configured as SSO-only, so any
+    // account that still carried a password could sign in around the IdP — and around whatever the IdP
+    // enforces, such as MFA, conditional access, or deprovisioning.
+    enabled: EMAIL_AUTH_ENABLED,
     // Matches ZUserPassword (min 8 / max 128); the upper+digit composition rule stays enforced
     // by ZUserPassword at the app layer (deferred policy modernization → design doc §10.6).
     minPasswordLength: 8,

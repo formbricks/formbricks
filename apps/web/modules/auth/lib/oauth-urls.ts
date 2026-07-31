@@ -49,6 +49,8 @@ export const MCP_OAUTH_SCOPES = [
   "surveys:write",
   "workflows:read",
   "workflows:write",
+  "feedbackRecords:read",
+  "feedbackRecords:write",
 ] as const;
 
 export const MCP_RESOURCE_SCOPES = [
@@ -56,6 +58,8 @@ export const MCP_RESOURCE_SCOPES = [
   "surveys:write",
   "workflows:read",
   "workflows:write",
+  "feedbackRecords:read",
+  "feedbackRecords:write",
 ] as const;
 
 // Scopes advertised in the RFC 9728 protected-resource metadata. MCP clients derive their

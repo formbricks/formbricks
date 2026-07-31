@@ -92,6 +92,8 @@
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
         "email": "View your email address",
+        "feedback_records_read": "Read feedback records",
+        "feedback_records_write": "Create feedback records",
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",
@@ -2690,7 +2692,8 @@
         "unify_feedback_inbox": "Egyesített visszajelzési postaláda",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Használja ki a Formbricks teljes erejét.",
         "white_glove_onboarding": "Prémium bevezetés",
-        "whitelabel_email_follow_ups": "Whitelabel e-mail követések"
+        "whitelabel_email_follow_ups": "Whitelabel e-mail követések",
+        "workflows": "Workflows"
       },
       "feedback_directories": {
         "archive": "Archiválás",
@@ -2922,6 +2925,7 @@
         "ai_not_available": "Az AI kérdőív-készítés nem elérhető.",
         "ai_not_enabled": "Az AI intelligens eszközök le vannak tiltva ezen szervezet számára.",
         "ai_not_in_plan": "Az AI kérdőív-készítés nem elérhető az Ön jelenlegi csomagjában.",
+        "ai_output_too_long": "Ez a felkérés többet kér, mint amennyit a mesterséges intelligencia egyszerre képes generálni. Kérem, egyszerűsítse le, vagy ossza fel kisebb felmérésekre.",
         "card_description": "Írja le, hogy mit szeretne megtudni, és hozzon létre egy kérdőívtervezetet.",
         "card_title": "Készítsen AI-val",
         "characters": "{count}/{max}",

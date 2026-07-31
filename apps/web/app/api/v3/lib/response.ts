@@ -169,9 +169,27 @@ export function problemUnprocessableContent(
   });
 }
 
+export function problemConflict(requestId: string, detail: string, instance?: string): Response {
+  return problemResponse(409, "Conflict", detail, requestId, {
+    code: "conflict",
+    instance,
+  });
+}
+
 export function problemBadGateway(requestId: string, detail: string, instance?: string): Response {
   return problemResponse(502, "Bad Gateway", detail, requestId, {
     code: "bad_gateway",
+    instance,
+  });
+}
+
+/**
+ * 503 for a capability that is not enabled on this deployment (as opposed to a transient outage, which
+ * is a 502). `detail` should say what to configure — a bare "unavailable" is not actionable.
+ */
+export function problemServiceUnavailable(requestId: string, detail: string, instance?: string): Response {
+  return problemResponse(503, "Service Unavailable", detail, requestId, {
+    code: "service_unavailable",
     instance,
   });
 }

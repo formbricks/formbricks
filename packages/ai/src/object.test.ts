@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { AIOutputTokenLimitError } from "./errors";
 import { generateObject } from "./object";
 import type { TGenerateObjectOptions } from "./types";
 
@@ -95,5 +96,36 @@ describe("generateObject", () => {
 
     expect(response.headers.get("content-type")).toBe("application/json; charset=utf-8");
     await expect(response.json()).resolves.toEqual(generated.output);
+  });
+
+  test("throws AIOutputTokenLimitError when the generation stops at the output token limit", async () => {
+    const schema = { type: "object" } as unknown as TGenerateObjectOptions<{ title: string }>["schema"];
+    mocks.generateText.mockResolvedValueOnce({
+      finishReason: "length",
+      usage: {
+        inputTokens: 1200,
+        outputTokens: 3000,
+        totalTokens: 4200,
+        outputTokenDetails: { textTokens: 336, reasoningTokens: 2664 },
+      },
+      // Mirrors the AI SDK, whose `output` getter throws when the generation did not finish with
+      // "stop" — and proves generateObject never reads it on the "length" path.
+      get output(): never {
+        throw new Error("result.output must not be read when the output token limit was reached");
+      },
+    });
+
+    const promise = generateObject<{ title: string }>({
+      schema,
+      prompt: "Generate a survey",
+      maxOutputTokens: 3000,
+    });
+
+    await expect(promise).rejects.toBeInstanceOf(AIOutputTokenLimitError);
+    await expect(promise).rejects.toHaveProperty("details", {
+      maxOutputTokens: 3000,
+      outputTokens: 3000,
+      reasoningTokens: 2664,
+    });
   });
 });

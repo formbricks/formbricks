@@ -21,6 +21,26 @@ auto-links. No ticket? Say why. Closing a GitHub issue? Add "Fixes #123". -->
 
 <!-- REQUIRED for any UI change: attach before/after screenshots or a recording. No visual proof → sent back. -->
 
+## Breaking changes
+
+<!-- REQUIRED. Does this PR change a public contract in a way that could break existing integrations or
+self-hosted setups? Count as breaking: API/SDK request or response shape (renamed, removed, or retyped
+fields, or changed values like `EN` → `en-US`), removed/renamed endpoints or routes, changed webhook
+payloads, changed defaults, new/removed/renamed env vars or config, and DB migrations that need manual
+action. If YES:
+  1. Add the `breaking-change` label to this PR.
+  2. Fill the table below — one row per change. This text feeds the GitHub release notes and the
+     self-hoster migration guide, so write it for an external integrator, not for the team.
+If there are no breaking changes, leave "None" below. -->
+
+None
+
+<!-- Delete "None" above and use this table when there IS a breaking change:
+| Change | Before | After | Who's affected | Action required |
+| --- | --- | --- | --- | --- |
+| `language` field on responses | `EN`, `DE` | `en-US`, `de-DE` | API v1 consumers | Map the new BCP-47 locale codes in your integration |
+-->
+
 ## QA / Test Plan
 
 <!--

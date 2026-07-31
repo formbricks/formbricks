@@ -298,6 +298,20 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       const token = jwt.sign({ email: "test@example.com" }, TEST_NEXTAUTH_SECRET);
       await testMissingSecretsError(getEmailFromEmailToken, [token]);
     });
+
+    test("should reject a link survey token minted for another flow", () => {
+      const token = createTokenForLinkSurvey("test-survey-id", mockUser.email);
+      expect(() => getEmailFromEmailToken(token)).toThrow("Invalid token");
+    });
+
+    test("should reject an expired email-display token", () => {
+      const token = jwt.sign(
+        { email: `encrypted_${mockUser.email}`, purpose: "email_display" },
+        TEST_NEXTAUTH_SECRET,
+        { expiresIn: "-1s" }
+      );
+      expect(() => getEmailFromEmailToken(token)).toThrow();
+    });
   });
 
   describe("verifyTokenForLinkSurvey", () => {
@@ -306,6 +320,43 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       const token = createTokenForLinkSurvey(surveyId, mockUser.email);
       const verifiedEmail = verifyTokenForLinkSurvey(token, surveyId);
       expect(verifiedEmail).toBe(mockUser.email);
+    });
+
+    // Regression: every token in this module is signed with NEXTAUTH_SECRET, so a token minted for a
+    // different flow must not pass as a verified email. `createEmailToken` is reachable through an
+    // unauthenticated server action for any registered address, so accepting it here bypassed the
+    // link-survey email gate for arbitrary people.
+    test("should reject an email-display token as a link survey verification token", () => {
+      const token = createEmailToken(mockUser.email);
+      expect(verifyTokenForLinkSurvey(token, "test-survey-id")).toBeNull();
+    });
+
+    test("should reject an invite token as a link survey verification token", () => {
+      const token = createInviteToken("invite-id", mockUser.email);
+      expect(verifyTokenForLinkSurvey(token, "test-survey-id")).toBeNull();
+    });
+
+    test("should reject a token with no surveyId claim signed with the plain secret", () => {
+      const token = jwt.sign({ email: `encrypted_${mockUser.email}` }, TEST_NEXTAUTH_SECRET);
+      expect(verifyTokenForLinkSurvey(token, "test-survey-id")).toBeNull();
+    });
+
+    test("should reject a link survey token whose purpose is for another flow", () => {
+      const token = jwt.sign(
+        { email: `encrypted_${mockUser.email}`, surveyId: "test-survey-id", purpose: "email_display" },
+        TEST_NEXTAUTH_SECRET
+      );
+      expect(verifyTokenForLinkSurvey(token, "test-survey-id")).toBeNull();
+    });
+
+    test("should reject an expired link survey token", () => {
+      const surveyId = "test-survey-id";
+      const token = jwt.sign(
+        { email: `encrypted_${mockUser.email}`, surveyId, purpose: "link_survey_email_verification" },
+        TEST_NEXTAUTH_SECRET,
+        { expiresIn: "-1s" }
+      );
+      expect(verifyTokenForLinkSurvey(token, surveyId)).toBeNull();
     });
 
     test("should return null for invalid token", () => {

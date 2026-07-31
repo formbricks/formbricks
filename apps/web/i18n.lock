@@ -77,6 +77,8 @@ checksums:
     auth/oauth/revoke: be57685a85b6dfeaeb6eab4e9560b520
     auth/oauth/revoke_confirmation: 9f2ef40fac22fe48e39d81de2b677345
     auth/oauth/scopes/email: c28cf6b6c6221b0045539a5f7712230f
+    auth/oauth/scopes/feedback_records_read: 720898c950af227bb3be529a64e3bc38
+    auth/oauth/scopes/feedback_records_write: 2c620b5bfeaef1580d27e30a971a93a8
     auth/oauth/scopes/offline_access: 5086c8bd3685a21f691d81d50dc0a4e0
     auth/oauth/scopes/openid: 557e91a8b41497cf95b1434aefcb72ea
     auth/oauth/scopes/profile: ea073dc28851ee1a00365047be103d50
@@ -2590,6 +2592,7 @@ checksums:
     workspace/settings/enterprise/unlock_the_full_power_of_formbricks_free_for_30_days: a96f8df102a5d1f0367f3f82ac1f344b
     workspace/settings/enterprise/white_glove_onboarding: 79d5f04ad3decd659e63f5cf61628ea0
     workspace/settings/enterprise/whitelabel_email_follow_ups: 4d62c861b60c5dceb6ad72cd5d1186d7
+    workspace/settings/enterprise/workflows: b0c9c8615a9ba7d9cb73e767290a7f72
     workspace/settings/feedback_directories/archive: fa813ab3074103e5daad07462af25789
     workspace/settings/feedback_directories/archive_directory: c2b39feb0962b93f883a4bac6ffadd1e
     workspace/settings/feedback_directories/archive_not_allowed: 929b16f54260e321b0ebf5d458499d60
@@ -2807,6 +2810,7 @@ checksums:
     workspace/surveys/ai_create/ai_not_available: 840b27ce9b718b487cea62e9768cc904
     workspace/surveys/ai_create/ai_not_enabled: 13df84ae47d35dfa6e86ffa62f29c75d
     workspace/surveys/ai_create/ai_not_in_plan: a059bf0be5d6ef524c1a4212b32a0c8b
+    workspace/surveys/ai_create/ai_output_too_long: 3be34ddb7af610421d806827ae04f3d7
     workspace/surveys/ai_create/card_description: 3917eefc745d2bfec15d25ac343bbb64
     workspace/surveys/ai_create/card_title: 5d8c659f559f1343bb23fd191a6556ad
     workspace/surveys/ai_create/characters: 94b5a8b5c869a7e9bc031f59de56de44

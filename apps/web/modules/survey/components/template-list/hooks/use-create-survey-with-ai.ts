@@ -51,6 +51,10 @@ export const useCreateSurveyWithAI = ({
         if (error.code === "ai_generated_payload_invalid") {
           return t("workspace.surveys.ai_create.generated_payload_invalid");
         }
+
+        if (error.code === "ai_output_too_long") {
+          return t("workspace.surveys.ai_create.ai_output_too_long");
+        }
       }
 
       return getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
