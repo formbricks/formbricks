@@ -76,7 +76,9 @@ describe("registerScopedTool", () => {
     expect((result.structuredContent as ScopeErrorContent).error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      // The missing scope must be in the body: this result reaches the client as a JSON-RPC payload
+      // with no headers, so the WWW-Authenticate challenge cannot tell it what to re-authorize for.
+      detail: "OAuth token does not include the required MCP scope: surveys:write",
       requestId: "req_denied",
     });
   });
@@ -92,5 +94,9 @@ describe("registerScopedTool", () => {
 
     expect(handler).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
+    // Every required scope is listed, not just the first one that failed.
+    expect((result.structuredContent as ScopeErrorContent).error.detail).toContain(
+      "surveys:read surveys:write"
+    );
   });
 });

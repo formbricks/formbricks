@@ -465,10 +465,12 @@ describe("MCP scope enforcement (ENG-1967)", () => {
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
+  // Shared by the read and write cases below, which require different scopes; the detail names the
+  // missing one, so match its prefix here and assert the exact scope in guard-scopes.test.ts.
   const INSUFFICIENT_SCOPE = {
     status: 403,
     code: "forbidden",
-    detail: "OAuth token does not include the required MCP scope",
+    detail: expect.stringContaining("OAuth token does not include the required MCP scope:"),
   };
 
   // Every mutating tool + a representative valid input for it.

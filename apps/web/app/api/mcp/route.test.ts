@@ -485,7 +485,7 @@ describe("POST /api/mcp", () => {
     expect(message.result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      detail: expect.stringContaining("OAuth token does not include the required MCP scope:"),
       requestId: "req_read_only",
     });
   });
@@ -528,7 +528,9 @@ describe("POST /api/mcp", () => {
     expect(message.result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      // The refusal names the scope the client must obtain, since a JSON-RPC tool result carries no
+      // WWW-Authenticate header for it to read.
+      detail: "OAuth token does not include the required MCP scope: workflows:write",
       requestId: "req_wf_read_only",
     });
     // The scope gate must fire BEFORE any mutation side effect: no audit log is built or queued for a

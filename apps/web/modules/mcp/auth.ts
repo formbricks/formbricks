@@ -418,9 +418,20 @@ export function hasAnyMcpScope(authInfo: AuthInfo | undefined, allowedScopes: re
   return allowedScopes.some((scope) => scopes.includes(scope));
 }
 
+/**
+ * The scopes are named in `detail`, not only in the `WWW-Authenticate` challenge, because the tool path
+ * cannot carry a header: `guardMcpScopes` hands this Response to `responseToMcpToolResult`, which
+ * serializes the JSON body into a JSON-RPC result and drops every header. Without them in the body a
+ * client that is refused a tool call learns only "some scope is missing" and cannot re-authorize for the
+ * right one. The challenge is still set for the transport-level 403, where the header does reach clients.
+ */
 export function createMcpInsufficientScopeResponse(requestId: string, scopes: string[]): Response {
   return withInsufficientScopeChallenge(
-    problemForbidden(requestId, "OAuth token does not include the required MCP scope", "/api/mcp"),
+    problemForbidden(
+      requestId,
+      `OAuth token does not include the required MCP scope: ${scopes.join(" ")}`,
+      "/api/mcp"
+    ),
     scopes
   );
 }
