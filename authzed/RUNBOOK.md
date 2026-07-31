@@ -45,7 +45,7 @@ All four carry only bounded attributes — never an organization, user, or relat
 | Metric | Attributes | Read it as |
 | --- | --- | --- |
 | `formbricks_authzed_projection_total` | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`. |
-| `formbricks_authzed_projection_duration_ms` | same | Projection latency. It sits on the request path, so a rise here is user-visible. |
+| `formbricks_authzed_projection_duration_seconds` | same | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement. |
 | `formbricks_authzed_request_failures_total` | `operation`, `code`, `retryable` | Requests that exhausted their retry budget. **Each one is a dropped relationship.** |
 | `formbricks_authzed_request_retries_total` | `operation`, `code` | Retries scheduled. Elevated but not failing = degraded, not down. |
 
@@ -141,6 +141,27 @@ code, and the run exits `1`. Re-running is the fix — successful units simply r
 **`truncated: true`** means an observation was abandoned mid-read. Treat the orphan counts as a floor,
 not a total, and re-run before concluding anything.
 
+### Reading the drift counters
+
+- **`missing`** — records PostgreSQL holds that SpiceDB has no relationship for. What an empty or stale
+  SpiceDB looks like. Step 2 fixes it. Note it compares *records*, not relations: a membership stored as
+  `owner` in PostgreSQL but `member` in SpiceDB counts as present, and step 2 converges it regardless by
+  writing the current value.
+- **`orphaned`** — relationships whose source record is gone. Only step 3 removes them.
+- **`mismatchedParents`** — **treat as a security finding, not routine drift.** A resource is attached to
+  an organization PostgreSQL says does not own it. `organization` is a relation, so the edge is *additive*:
+  every owner and manager of the named organization has access to that resource through
+  `organization->manage`, and no PostgreSQL row explains it. The backfill reports these and deliberately
+  never removes them, because deleting a parent edge means deleting a relation the resource legitimately
+  needs one of. Confirm the true owner in PostgreSQL, then remove the wrong edge by hand:
+
+  ```bash
+  zed relationship delete <childType>:<childId> organization organization:<wrongOrganizationId>
+  ```
+
+  Then re-run step 2 to confirm the correct edge is present, and work out how it was written — nothing in
+  Formbricks creates one.
+
 ## 4. Before you prune
 
 `--prune` is the only destructive mode, and the guards are deliberately inconvenient.
@@ -210,7 +231,7 @@ sum(rate(formbricks_authzed_projection_total{status="disabled"}[15m])) > 0
 # for: 30m
 
 # Warning: projection latency is on the request path.
-histogram_quantile(0.95, sum(rate(formbricks_authzed_projection_duration_ms_bucket[5m])) by (le)) > 500
+histogram_quantile(0.95, sum(rate(formbricks_authzed_projection_duration_seconds_bucket[5m])) by (le)) > 0.5
 # for: 15m
 ```
 

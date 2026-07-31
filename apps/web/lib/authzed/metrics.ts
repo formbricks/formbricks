@@ -28,9 +28,18 @@ const projectionTotal = meter.createCounter("formbricks_authzed_projection_total
   description: "AuthZed relationship projections by outcome",
 });
 
-const projectionDuration = meter.createHistogram("formbricks_authzed_projection_duration_ms", {
+/**
+ * Seconds, and no unit in the instrument name.
+ *
+ * OpenTelemetry's semantic conventions prescribe seconds for durations, and its Prometheus translation
+ * appends the unit as a name suffix — so `..._duration_ms` with `unit: "ms"` would export as
+ * `..._duration_ms_milliseconds` through the OTLP path while the JS Prometheus exporter appends nothing,
+ * leaving the two exporters this app configures side by side disagreeing on the metric's name. Naming it
+ * without a unit and measuring in seconds yields `..._duration_seconds` from both.
+ */
+const projectionDuration = meter.createHistogram("formbricks_authzed_projection_duration", {
   description: "Duration of AuthZed relationship projections",
-  unit: "ms",
+  unit: "s",
 });
 
 /**
@@ -63,7 +72,13 @@ export const recordAuthzedProjection = ({
 }: TAuthzedProjectionMetric): void => {
   const attributes = { operation, projection, status };
   projectionTotal.add(1, attributes);
-  projectionDuration.record(durationMs, attributes);
+
+  // `disabled` short-circuits before any work, so its duration is a structural zero rather than a
+  // measurement. Recording it would drag the latency distribution of every quantile toward zero on a
+  // deployment that has AuthZed switched off — and latency is the signal the runbook calls user-visible.
+  if (status !== "disabled") {
+    projectionDuration.record(durationMs / 1000, attributes);
+  }
 };
 
 export type TAuthzedRequestFailureMetric = Readonly<{

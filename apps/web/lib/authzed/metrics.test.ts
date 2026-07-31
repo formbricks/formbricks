@@ -37,28 +37,42 @@ beforeEach(() => {
 });
 
 describe("recordAuthzedProjection", () => {
-  test.each(["projected", "failed", "disabled"] as const)(
-    "records a %s outcome with its duration",
-    (status) => {
-      recordAuthzedProjection({
-        durationMs: 42,
-        operation: "reconcile_organization_memberships",
-        projection: "organization_membership",
-        status,
-      });
+  test.each(["projected", "failed"] as const)("records a %s outcome and its duration", (status) => {
+    recordAuthzedProjection({
+      durationMs: 4200,
+      operation: "reconcile_organization_memberships",
+      projection: "organization_membership",
+      status,
+    });
 
-      const attributes = {
-        operation: "reconcile_organization_memberships",
-        projection: "organization_membership",
-        status,
-      };
-      expect(counter("formbricks_authzed_projection_total").add).toHaveBeenCalledWith(1, attributes);
-      expect(histogram("formbricks_authzed_projection_duration_ms").record).toHaveBeenCalledWith(
-        42,
-        attributes
-      );
-    }
-  );
+    const attributes = {
+      operation: "reconcile_organization_memberships",
+      projection: "organization_membership",
+      status,
+    };
+    expect(counter("formbricks_authzed_projection_total").add).toHaveBeenCalledWith(1, attributes);
+    // Seconds, per the OpenTelemetry duration convention.
+    expect(histogram("formbricks_authzed_projection_duration").record).toHaveBeenCalledWith(4.2, attributes);
+  });
+
+  test("counts a disabled projection but keeps its structural zero out of the latency histogram", () => {
+    recordAuthzedProjection({
+      durationMs: 0,
+      operation: "reconcile_api_key_relationships",
+      projection: "api_key",
+      status: "disabled",
+    });
+
+    expect(counter("formbricks_authzed_projection_total").add).toHaveBeenCalledOnce();
+    expect(histogram("formbricks_authzed_projection_duration").record).not.toHaveBeenCalled();
+  });
+
+  test("names the duration instrument without a unit suffix", () => {
+    // `..._duration_ms` with `unit: "ms"` exports as `..._duration_ms_milliseconds` through OTLP while
+    // the Prometheus exporter appends nothing — the two would disagree on the name.
+    expect(histograms.has("formbricks_authzed_projection_duration")).toBe(true);
+    expect(histograms.has("formbricks_authzed_projection_duration_ms")).toBe(false);
+  });
 });
 
 describe("recordAuthzedRequestFailure", () => {
