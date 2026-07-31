@@ -1064,6 +1064,12 @@ export const PricingTable = ({
       : t("workspace.settings.billing.switch_at_period_end");
   };
 
+  // List price for the plan/interval being confirmed, straight from the catalog — NOT from the
+  // rendered planCards, which are built from the interval TOGGLE (selectedInterval) and miss
+  // (interpolating "") when the modal's interval differs from the toggle.
+  const getCatalogPlanAmount = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) =>
+    formatMoney(billingCatalog[plan][interval].currency, billingCatalog[plan][interval].unitAmount, locale);
+
   // Upgrade modal body: calculating placeholder, real prorated charge once previewed, or generic fallback.
   const getUpgradeConfirmationBody = () => {
     if (!upgradeConfirmation) return null;
@@ -1074,10 +1080,7 @@ export const PricingTable = ({
       return t("workspace.settings.billing.confirm_upgrade_calculating");
     }
 
-    const planCardAmount =
-      planCards.find(
-        (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
-      )?.amount ?? "";
+    const planCardAmount = getCatalogPlanAmount(upgradeConfirmation.plan, upgradeConfirmation.interval);
 
     // Deliberately period-neutral ("charged {chargeNow} now"): the same modal covers a mid-cycle
     // proration (ordinary upgrade) and a full fresh period (trial conversion). The old "rest of your
@@ -1111,12 +1114,7 @@ export const PricingTable = ({
 
     const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
     const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
-    // List price from the plan card; guarded since the card only carries the selected interval and
-    // can miss (interpolating "").
-    const planCardFullPrice =
-      planCards.find(
-        (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
-      )?.amount ?? "";
+    const fullPrice = getCatalogPlanAmount(upgradeConfirmation.plan, upgradeConfirmation.interval);
 
     if (upgradePreview) {
       return (
@@ -1125,7 +1123,7 @@ export const PricingTable = ({
           values={{
             plan,
             period,
-            fullPrice: planCardFullPrice,
+            fullPrice,
             chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
           }}
           components={{ b: <b /> }}
@@ -1135,7 +1133,7 @@ export const PricingTable = ({
     return (
       <Trans
         i18nKey="workspace.settings.billing.confirm_trial_continue_body_fallback"
-        values={{ plan, period, fullPrice: planCardFullPrice }}
+        values={{ plan, period, fullPrice }}
         components={{ b: <b /> }}
       />
     );
@@ -1305,15 +1303,15 @@ export const PricingTable = ({
       <div className="flex max-w-6xl flex-col gap-4">
         {trialDaysRemaining !== null && (
           // One banner for every trial, card on file or not: features stay locked until paid, so the
-          // only action is the pay-now confirm modal (same flow as the plan card's CTA). The old
+          // only action is the pay-now confirm modal. Routed through requestPlanAction so the banner
+          // picks the SAME modal mode as the plan card CTA (trial-continue without a card, upgrade
+          // confirm with one) — identical payment-consent copy for the same conversion. The old
           // card-backed "You're all set, continues automatically" variant contradicted that model.
           <TrialAlert trialDaysRemaining={trialDaysRemaining} className="max-w-5xl">
             <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
             {hasBillingRights && trialedPaidPlan && (
               <AlertButton
-                onClick={() =>
-                  openConfirmation(trialedPaidPlan, currentBillingInterval ?? "monthly", "trial-continue")
-                }>
+                onClick={() => requestPlanAction(trialedPaidPlan, currentBillingInterval ?? "monthly")}>
                 {t("workspace.settings.billing.unlock_all_plan_features", {
                   plan: getCurrentCloudPlanLabel(trialedPaidPlan, t),
                 })}

@@ -501,6 +501,25 @@ const ZWaitForBillingPlanAction = z.object({
 const BILLING_PLAN_SYNC_ATTEMPTS = 5;
 const BILLING_PLAN_SYNC_DELAY_MS = 1200;
 
+// Bounded resync poll shared by the wait actions: re-read a value off the freshly synced billing
+// record until the predicate holds or the attempts run out (webhook-written fields race a single
+// refresh). Keeps both actions on the same attempt count and delay.
+const pollBillingSync = async <T>(
+  organizationId: string,
+  read: (billing: Awaited<ReturnType<typeof syncOrganizationBillingFromStripe>>) => T,
+  isDone: (value: T) => boolean
+): Promise<T> => {
+  let value = read(null);
+  for (let attempt = 0; attempt < BILLING_PLAN_SYNC_ATTEMPTS; attempt++) {
+    value = read(await syncOrganizationBillingFromStripe(organizationId));
+    if (isDone(value)) break;
+    if (attempt < BILLING_PLAN_SYNC_ATTEMPTS - 1) {
+      await new Promise((resolve) => setTimeout(resolve, BILLING_PLAN_SYNC_DELAY_MS));
+    }
+  }
+  return value;
+};
+
 export const waitForBillingPlanAction = authenticatedActionClient
   .inputSchema(ZWaitForBillingPlanAction)
   .action(
@@ -517,15 +536,11 @@ export const waitForBillingPlanAction = authenticatedActionClient
         ],
       });
 
-      let plan: string | null = null;
-      for (let attempt = 0; attempt < BILLING_PLAN_SYNC_ATTEMPTS; attempt++) {
-        const billing = await syncOrganizationBillingFromStripe(organizationId);
-        plan = billing?.stripe?.plan ?? null;
-        if (plan === targetPlan) break;
-        if (attempt < BILLING_PLAN_SYNC_ATTEMPTS - 1) {
-          await new Promise((resolve) => setTimeout(resolve, BILLING_PLAN_SYNC_DELAY_MS));
-        }
-      }
+      const plan = await pollBillingSync(
+        organizationId,
+        (billing) => billing?.stripe?.plan ?? null,
+        (value) => value === targetPlan
+      );
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       return { plan };
@@ -555,15 +570,11 @@ export const waitForBillingPaymentMethodAction = authenticatedActionClient
         ],
       });
 
-      let hasPaymentMethod = false;
-      for (let attempt = 0; attempt < BILLING_PLAN_SYNC_ATTEMPTS; attempt++) {
-        const billing = await syncOrganizationBillingFromStripe(organizationId);
-        hasPaymentMethod = billing?.stripe?.hasPaymentMethod === true;
-        if (hasPaymentMethod) break;
-        if (attempt < BILLING_PLAN_SYNC_ATTEMPTS - 1) {
-          await new Promise((resolve) => setTimeout(resolve, BILLING_PLAN_SYNC_DELAY_MS));
-        }
-      }
+      const hasPaymentMethod = await pollBillingSync(
+        organizationId,
+        (billing) => billing?.stripe?.hasPaymentMethod === true,
+        (value) => value
+      );
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       return { hasPaymentMethod };
