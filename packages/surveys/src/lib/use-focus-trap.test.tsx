@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { type ComponentChildren } from "preact";
+import { useEffect, useRef } from "preact/hooks";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { useFocusTrap } from "./use-focus-trap";
 
@@ -42,6 +43,64 @@ const FocusTrapUnmountFixture = ({
     ) : null}
   </>
 );
+
+// Mimics a host page that runs its own focus manager (another focus trap, a modal from the embedding
+// app) and pushes focus back out every time it lands inside the survey.
+const CompetingFocusManagerFixture = ({
+  onCompetingRedirect,
+  reactAsynchronously = false,
+}: {
+  onCompetingRedirect: () => void;
+  reactAsynchronously?: boolean;
+}) => {
+  const focusTrapRef = useFocusTrap<HTMLDivElement>({ enabled: true });
+  const outsideButtonRef = useRef<HTMLButtonElement>(null);
+  const onCompetingRedirectRef = useRef(onCompetingRedirect);
+
+  useEffect(() => {
+    onCompetingRedirectRef.current = onCompetingRedirect;
+  }, [onCompetingRedirect]);
+
+  useEffect(() => {
+    const takeFocusOut = () => {
+      const outsideButton = outsideButtonRef.current;
+      if (!outsideButton) return;
+
+      onCompetingRedirectRef.current();
+      outsideButton.focus();
+    };
+
+    const handleFocusIn = (event: FocusEvent) => {
+      const container = focusTrapRef.current;
+      const target = event.target as HTMLElement | null;
+
+      if (!container || !target) return;
+      if (!container.contains(target)) return;
+
+      if (reactAsynchronously) {
+        setTimeout(takeFocusOut, 0);
+        return;
+      }
+
+      takeFocusOut();
+    };
+
+    document.addEventListener("focusin", handleFocusIn);
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, [focusTrapRef, reactAsynchronously]);
+
+  return (
+    <>
+      <button>Host page button</button>
+      <button ref={outsideButtonRef}>Competing manager target</button>
+      <div ref={focusTrapRef} tabIndex={-1}>
+        <button>Survey action</button>
+      </div>
+    </>
+  );
+};
 
 describe("useFocusTrap", () => {
   afterEach(() => {
@@ -249,6 +308,65 @@ describe("useFocusTrap", () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(screen.getByRole("button", { name: "Enabled action" }));
     });
+  });
+
+  test("gives up instead of recursing when the page fights it for focus", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const onCompetingRedirect = vi.fn();
+
+    render(<CompetingFocusManagerFixture onCompetingRedirect={onCompetingRedirect} />);
+
+    const trappedButton = screen.getByRole("button", { name: "Survey action" });
+    const hostPageButton = screen.getByRole("button", { name: "Host page button" });
+    const trapContainer = trappedButton.parentElement as HTMLElement;
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(trappedButton);
+    });
+
+    // Every round the trap pulls focus back in and the competing manager takes it straight out again.
+    // Before the guards this recursed until "Maximum call stack size exceeded".
+    for (let round = 0; round < 5; round++) {
+      hostPageButton.focus();
+      await Promise.resolve();
+    }
+
+    expect(onCompetingRedirect.mock.calls.length).toBeLessThan(20);
+    expect(warnSpy).toHaveBeenCalled();
+    expect(trapContainer.contains(document.activeElement)).toBe(false);
+
+    warnSpy.mockRestore();
+  });
+
+  test("stops the focus tug-of-war when the page fights back asynchronously", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const onCompetingRedirect = vi.fn();
+
+    render(<CompetingFocusManagerFixture onCompetingRedirect={onCompetingRedirect} reactAsynchronously />);
+
+    const trappedButton = screen.getByRole("button", { name: "Survey action" });
+    const hostPageButton = screen.getByRole("button", { name: "Host page button" });
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(trappedButton);
+    });
+
+    // An async competing manager cannot overflow the stack, but it can keep the two sides swapping
+    // focus forever. The trap has to run out of redirect budget and back off.
+    hostPageButton.focus();
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
+    const redirectsOnBackoff = onCompetingRedirect.mock.calls.length;
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+
+    expect(onCompetingRedirect.mock.calls.length).toBe(redirectsOnBackoff);
+
+    warnSpy.mockRestore();
   });
 
   test("does not move focus when inactive", async () => {
