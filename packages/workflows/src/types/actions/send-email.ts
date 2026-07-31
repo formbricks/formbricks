@@ -16,7 +16,19 @@ import { WORKFLOW_ACTIONS } from "./enum";
  *  - `subject`: used verbatim (recall is not applied to the subject).
  *  - `from`: vestigial seed value, NOT the actual sender. Emails always send from the deployment
  *    `MAIL_FROM` (parity with Follow-ups); `from` is only used to derive the stable Message-ID domain.
+ *
+ * One deliberate divergence from that parity: `subject` and `body` are length-bounded here and
+ * unbounded in Follow-ups. Nothing else caps them — the persisted schema is permissive so authors can
+ * save work in progress — so without these the only ceiling is the 16MB proxy body cap, and every
+ * consumer that walks the body (the blankness predicate, recall expansion, sanitization) inherits it.
+ * The limits sit far above any body a person would write; Follow-ups is left alone because tightening
+ * it would have to reckon with already-stored surveys.
  */
+// Gmail clips a message past ~102KB, so a body larger than this cannot render intact anyway.
+const MAX_BODY_LENGTH = 100_000;
+// RFC 5322's maximum line length, and ~13x what a client will actually display.
+const MAX_SUBJECT_LENGTH = 998;
+
 export const ZWorkflowSendEmailActionConfig = z.object({
   to: z
     .string()
@@ -25,8 +37,8 @@ export const ZWorkflowSendEmailActionConfig = z.object({
     ),
   from: z.email(),
   replyTo: z.array(z.email()),
-  subject: z.string(),
-  body: z.string(),
+  subject: z.string().max(MAX_SUBJECT_LENGTH),
+  body: z.string().max(MAX_BODY_LENGTH),
   attachResponseData: z.boolean(),
   includeVariables: z.boolean().optional(),
   includeHiddenFields: z.boolean().optional(),

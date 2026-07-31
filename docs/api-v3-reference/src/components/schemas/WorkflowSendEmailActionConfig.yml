@@ -2,6 +2,12 @@ type: object
 description: >-
   Send-email action with 1:1 field parity to survey Follow-ups
   (`ZSurveyFollowUpAction`).
+
+
+  `to`, `subject` and `body` accept an empty string on create and update, so an
+  author can save an unfinished draft. Completeness is enforced when the workflow
+  has to run: enabling it returns **422** `workflow_not_executable` naming each
+  blank field, and the dry run reports them as problems.
 required:
   - to
   - from
@@ -12,7 +18,6 @@ required:
 properties:
   to:
     type: string
-    minLength: 1
     description: >
       Recipient: either a literal email address (e.g. a teammate) or the element
       id of a
@@ -47,13 +52,14 @@ properties:
       format: email
   subject:
     type: string
-    minLength: 1
+    maxLength: 998
     description: >
       Email subject. Used verbatim (recall tokens are not expanded in the
-      subject), the same as Follow-ups.
+      subject), the same as Follow-ups. Capped at RFC 5322's maximum line
+      length.
   body:
     type: string
-    minLength: 1
+    maxLength: 100000
     description: >
       Email body as HTML with recall tokens (`#recall:[elementId]/fallback:x#`).
       Recall tokens

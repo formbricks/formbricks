@@ -2,7 +2,16 @@
 // visible text that merely contains an angle bracket. The gate matters because the editor's
 // serializer un-escapes `&lt;`/`&gt;` back into literal brackets before storing — without it a body
 // of "<3" strips down to nothing and reads as blank.
-const HTML_TAG_PATTERN = /<\/?[a-zA-Z][^>]*>/g;
+//
+// The body of the tag excludes `<` as well as `>`, which matters for two reasons:
+//   1. It keeps matching linear. With `[^>]*`, an unterminated `<A` repeated n times makes the
+//      engine rescan to end-of-string from every `<`, i.e. O(n²) — 200KB of `<A<A…` took ~28s in a
+//      single pass, blocking the whole event loop, and the executable schema runs this on a stored
+//      body an API client controls (CodeQL js/polynomial-redos). Excluding `<` lets a failed match
+//      stop at the next `<` instead, which is linear.
+//   2. A tag genuinely cannot contain `<` — the HTML spec makes it a parse error — so this also
+//      stops a stray `<b` in visible text from consuming the real `</p>` that follows it.
+const HTML_TAG_PATTERN = /<\/?[a-zA-Z][^<>]*>/g;
 
 // Entities the editor emits for whitespace. They carry no visible content but survive tag removal.
 const HTML_WHITESPACE_ENTITY_PATTERN = /&nbsp;|&#160;|&#xa0;/gi;
@@ -20,10 +29,13 @@ const HTML_WHITESPACE_ENTITY_PATTERN = /&nbsp;|&#160;|&#xa0;/gi;
  * of a recall token is correctly treated as filled.
  *
  * Known limit: because the stored value is not guaranteed well-formed HTML (see the un-escaping
- * above), a body whose ONLY visible text is an unclosed bracket immediately followed by a letter
- * (`<b`) still reads as blank. Resolving that needs the editor to persist an unambiguous
- * representation rather than lossy HTML; until then this errs toward "blank", which nags the author
- * for more content instead of sending an empty email.
+ * above), tag detection is a regex rather than a parse, so a `<` inside an attribute value
+ * (`<p title="a<b"></p>`) ends the tag early and leaves the rest of the markup looking like visible
+ * text — an empty body then reads as filled. The editor cannot produce that: it emits only fixed
+ * `class`/`dir`/`style` attributes plus a link `href`, and a link carries text of its own. An API
+ * client can, since `body` is a free string, and the cost is one author sending themselves an empty
+ * email. Resolving it properly needs the editor to persist an unambiguous representation rather than
+ * lossy HTML.
  */
 export const isBlankWorkflowRichText = (value: string): boolean =>
   value.replaceAll(HTML_TAG_PATTERN, "").replaceAll(HTML_WHITESPACE_ENTITY_PATTERN, " ").trim().length === 0;

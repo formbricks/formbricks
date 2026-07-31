@@ -180,6 +180,25 @@ describe("@formbricks/workflows", () => {
     expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(/missing body/);
   });
 
+  test.each([
+    { field: "subject", limit: 998 },
+    { field: "body", limit: 100_000 },
+  ] as const)("bounds the length of a send_email $field, drafts included", ({ field, limit }) => {
+    // The bound belongs to the persisted schema, not just the executable one: a draft is what an
+    // oversized body would be stored as, and every later consumer walks it.
+    const atLimit = createDefinition();
+    const withinNode = atLimit.nodes[0];
+    if (withinNode.type !== "action") throw new Error("expected send_email node");
+    withinNode.config = { ...withinNode.config, [field]: "a".repeat(limit) };
+    expect(ZWorkflowDefinition.parse(atLimit).nodes).toHaveLength(1);
+
+    const overLimit = createDefinition();
+    const overNode = overLimit.nodes[0];
+    if (overNode.type !== "action") throw new Error("expected send_email node");
+    overNode.config = { ...overNode.config, [field]: "a".repeat(limit + 1) };
+    expect(() => ZWorkflowDefinition.parse(overLimit)).toThrow();
+  });
+
   test("allows persisting a draft definition whose send_email node is incomplete", () => {
     const definition = createDefinition();
     const emailNode = definition.nodes[0];
