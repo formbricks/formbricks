@@ -82,12 +82,26 @@ describe("useTaxonomyRun", () => {
     }
   });
 
-  test("stops polling once the run is gone (404), instead of asking forever", async () => {
+  /**
+   * A run reaped by the orphan cleaner, or a stale id after a regenerate. Both were treated as "status
+   * unknown" before, so the interval kept firing at ~12 requests a minute while the UI showed "generating".
+   *
+   * Run under both retry policies on purpose: the suite's default is `retry: false`, but the provider that
+   * actually ships (`topics-subtopics/query-client-provider.tsx`) uses `retry: 1`, and React Query only
+   * commits the error once retries are exhausted — so only the second case proves the poll terminates in the
+   * configuration users get.
+   *
+   * The request count is asserted as an equality rather than an upper bound: "no more than N" would also
+   * hold at zero requests, so a hook that never fetched at all — a broken fixture, `enabled` off — would
+   * pass while proving nothing.
+   */
+  test.each([
+    { policy: "with retries disabled", retry: false as const, expected: 1 },
+    { policy: "under the app's retry: 1 policy", retry: 1, expected: 2 },
+  ])("stops polling once the run is gone (404), $policy", async ({ retry, expected }) => {
     vi.useFakeTimers();
     try {
       const fetchMock = vi.mocked(global.fetch);
-      // A run reaped by the orphan cleaner, or a stale id after a regenerate. Treated as "unknown status"
-      // before, so the interval kept firing at ~12 requests a minute while the UI showed "generating".
       fetchMock.mockResolvedValue(
         new Response(JSON.stringify({ title: "Not Found", status: 404, code: "not_found" }), {
           status: 404,
@@ -96,19 +110,20 @@ describe("useTaxonomyRun", () => {
       );
 
       renderHook(() => useTaxonomyRun({ workspaceId: "w", directoryId: "d", runId: "run-1" }), {
-        wrapper: createWrapper(createQueryClient()),
+        wrapper: createWrapper(new QueryClient({ defaultOptions: { queries: { retry } } })),
       });
 
+      // Long enough for any retry to have been made (React Query's first retry delay is 1s).
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(2000);
       });
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(expected);
 
-      // Several intervals later there must still be exactly the one request.
+      // Six intervals' worth of time later, still nothing: the poll is stopped, not merely slowed.
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(20000);
+        await vi.advanceTimersByTimeAsync(30000);
       });
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(expected);
     } finally {
       vi.useRealTimers();
     }
