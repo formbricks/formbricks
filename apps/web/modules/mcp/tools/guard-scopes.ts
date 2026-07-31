@@ -2,12 +2,7 @@ import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { McpServer, ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodRawShape } from "zod";
-import {
-  createMcpInsufficientScopeResponse,
-  getMcpRequestId,
-  hasAnyMcpScope,
-  hasMcpScopes,
-} from "../auth";
+import { createMcpInsufficientScopeResponse, getMcpRequestId, hasAnyMcpScope, hasMcpScopes } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 
 /**

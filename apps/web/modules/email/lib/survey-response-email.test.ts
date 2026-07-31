@@ -125,10 +125,18 @@ describe("buildSurveyResponseEmailHtml", () => {
       attachResponseData: false,
     });
 
+    // The trailing `true` is `escapeValues`: recall values are escaped as they are substituted. The
+    // allowlist below permits `<a href>` for author-written body HTML, so without escaping a
+    // respondent could smuggle a clickable link through an open-text answer into an owner-facing
+    // email. The locale is passed explicitly so recalled date answers aren't formatted as en-US.
     expect(mockParseRecallInfo).toHaveBeenCalledWith(
       "#recall:name/fallback:there#",
       response.data,
-      response.variables
+      response.variables,
+      false,
+      "en-US",
+      undefined,
+      true
     );
     const rendered = mockRenderFollowUpEmail.mock.calls[0][0];
     expect(rendered.body).toBe("<p>Hi Jane</p>");

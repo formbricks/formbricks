@@ -260,7 +260,7 @@ describe("authenticateMcpRequest", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.authInfo.scopes).toEqual(["surveys:read", "feedbackRecords:read"]);
+      expect(result.authInfo.scopes).toEqual(["surveys:read", "workflows:read", "feedbackRecords:read"]);
     }
   });
 
@@ -379,7 +379,7 @@ describe("authenticateMcpRequest", () => {
       expect(result.response.status).toBe(403);
       expect(result.response.headers.get("WWW-Authenticate")).toContain('error="insufficient_scope"');
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write feedbackRecords:read feedbackRecords:write"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();
