@@ -1,7 +1,7 @@
 import { configMocks, envMock, retryMocks, sdkMocks } from "./__mocks__/client-dependencies";
 import { status } from "@grpc/grpc-js";
 import { beforeEach, describe, expect, test } from "vitest";
-import { closeAuthzedClient, getAuthzedClient } from "./client";
+import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 describe("AuthZed client facade", () => {
@@ -112,6 +112,42 @@ describe("AuthZed client facade", () => {
     expect(first).not.toHaveProperty("token");
     expect(first).not.toHaveProperty("promises");
     expect(first).not.toHaveProperty("close");
+  });
+
+  test("gives a bulk-configured process the long deadline on every call it makes", () => {
+    // The deadline belongs to the channel, and every projector reaches the channel through
+    // `getAuthzedClient()` rather than being handed one — so a command that both sweeps and writes gets
+    // the bulk deadline on its writes too. That is the intent: the alternative is a sweep that dies on
+    // its first slow page.
+    configureAuthzedClientForBulkWork();
+
+    getAuthzedClient();
+
+    expect(sdkMocks.deadlineInterceptor).toHaveBeenCalledWith(30_000);
+    expect(sdkMocks.newClient).toHaveBeenCalledWith(
+      envMock.AUTHZED_TOKEN,
+      envMock.AUTHZED_ENDPOINT,
+      2,
+      undefined,
+      { interceptors: [{ timeoutMs: 30_000 }] }
+    );
+  });
+
+  test("refuses to widen the deadline once a client exists, rather than silently leaving it short", () => {
+    getAuthzedClient();
+
+    expect(() => configureAuthzedClientForBulkWork()).toThrow(AuthzedError);
+    expect(() => configureAuthzedClientForBulkWork()).toThrow(AUTHZED_ERROR_CODES.FAILED_PRECONDITION);
+  });
+
+  test("forgets the bulk deadline on close, so it cannot leak into a later client", () => {
+    configureAuthzedClientForBulkWork();
+    getAuthzedClient();
+
+    closeAuthzedClient();
+    getAuthzedClient();
+
+    expect(sdkMocks.deadlineInterceptor).toHaveBeenLastCalledWith(1_000);
   });
 
   test("closes, resets, and reconstructs the internal client", () => {

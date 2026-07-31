@@ -167,6 +167,7 @@ type TAuthzedConfig =
 
 const globalForAuthzed = globalThis as unknown as {
   formbricksAuthzedClient: TAuthzedClientSingleton | undefined;
+  formbricksAuthzedRequestTimeoutMs: number | undefined;
 };
 
 const STABLE_SCHEMA_DIFF_KINDS = {
@@ -554,23 +555,39 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
   };
 };
 
-/** The shared request-path client. Deadline sized for a single cheap call. */
-export const getAuthzedClient = (): TAuthzedClient => {
-  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient(AUTHZED_REQUEST_TIMEOUT_MS);
+/**
+ * Widen this process's channel deadline to the bulk one, before any client exists.
+ *
+ * The deadline belongs to the channel, not to a call — the SDK's promisified streaming wrappers accept
+ * no per-call options at all — and every projector reaches the channel through `getAuthzedClient()`
+ * rather than being handed one. So "a separate client for bulk work" is not expressible: a command that
+ * both sweeps and writes would need one channel at two deadlines.
+ *
+ * It is a property of the *process* instead. A request-serving process wants the short deadline on
+ * everything, because a projection that hangs holds a user's request open; a command-line process wants
+ * the long one on everything, because a page of relationships legitimately takes longer than a single
+ * `Check`. Command entry points call this first, and it refuses to run once a client exists — silently
+ * leaving the short deadline in place would strand the sweep on its first slow page, which is precisely
+ * the failure this replaced.
+ */
+export const configureAuthzedClientForBulkWork = (): void => {
+  if (globalForAuthzed.formbricksAuthzedClient) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+      operation: "configure_authzed_client_for_bulk_work",
+      retryable: false,
+    });
+  }
 
-  return globalForAuthzed.formbricksAuthzedClient.facade;
+  globalForAuthzed.formbricksAuthzedRequestTimeoutMs = AUTHZED_BULK_REQUEST_TIMEOUT_MS;
 };
 
-/**
- * A client for administrative work: bulk reads and wide deletes.
- *
- * The deadline is a property of the channel, not of a call — the SDK's promisified streaming wrappers
- * accept no per-call options at all — so a longer deadline means a separate client. It replaces the
- * singleton for the lifetime of the process, which is fine because nothing that needs the request-path
- * deadline runs in a command-line process; `closeAuthzedClient` tears it down either way.
- */
-export const getAuthzedBulkClient = (): TAuthzedClient => {
-  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient(AUTHZED_BULK_REQUEST_TIMEOUT_MS);
+/** The shared client. Deadline sized for a single cheap call unless the process asked for bulk work. */
+export const getAuthzedClient = (): TAuthzedClient => {
+  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient(
+    globalForAuthzed.formbricksAuthzedRequestTimeoutMs ?? AUTHZED_REQUEST_TIMEOUT_MS
+  );
 
   return globalForAuthzed.formbricksAuthzedClient.facade;
 };
@@ -578,4 +595,5 @@ export const getAuthzedBulkClient = (): TAuthzedClient => {
 export const closeAuthzedClient = (): void => {
   globalForAuthzed.formbricksAuthzedClient?.close();
   globalForAuthzed.formbricksAuthzedClient = undefined;
+  globalForAuthzed.formbricksAuthzedRequestTimeoutMs = undefined;
 };

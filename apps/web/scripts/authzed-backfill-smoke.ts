@@ -70,8 +70,12 @@ const run = async (): Promise<void> => {
   let closeClient: (() => void) | undefined;
 
   try {
-    const { closeAuthzedClient, getAuthzedClient } = await import("../lib/authzed/client");
+    const { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } =
+      await import("../lib/authzed/client");
     closeClient = closeAuthzedClient;
+    // The same widening the CLI performs. Without it this exercises the sweep against the request-path
+    // deadline, so the one test that runs the sweep for real would not be running what operators run.
+    configureAuthzedClientForBulkWork();
     const client = getAuthzedClient();
 
     if (command === "seed") {

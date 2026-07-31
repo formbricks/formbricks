@@ -7,7 +7,7 @@ import {
   type TAuthzedBackfillResult,
   runAuthzedBackfill,
 } from "./backfill";
-import { closeAuthzedClient, getAuthzedBulkClient } from "./client";
+import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError, type TAuthzedErrorCode, mapAuthzedError } from "./errors";
@@ -74,7 +74,14 @@ const defaultDependencies: TAuthzedBackfillCliDependencies = {
   closeClient: closeAuthzedClient,
   isEnabled: isAuthzedEnabled,
   resolveEndpoint: () => env.AUTHZED_ENDPOINT,
-  run: (request, apply) => runAuthzedBackfill(request, { apply, client: getAuthzedBulkClient() }),
+  // Widened before the first client is built, so the reconcilers this hands to the orchestrator — which
+  // reach the channel through `getAuthzedClient()` themselves — write under the same bulk deadline the
+  // sweep reads under.
+  run: (request, apply) => {
+    configureAuthzedClientForBulkWork();
+
+    return runAuthzedBackfill(request, { apply, client: getAuthzedClient() });
+  },
   writeOutput: (output) => process.stdout.write(output),
 };
 
