@@ -803,7 +803,7 @@ export const ElementsView = ({
       setActiveElementId(elementWithEmptyFallback.id);
       toast.error(t("workspace.surveys.edit.fallback_missing"));
     }
-  }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode]);
+  }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode, t]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

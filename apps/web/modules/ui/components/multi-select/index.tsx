@@ -70,6 +70,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         setSelected(newSelected);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- syncs the `value` prop into local state; `selected` is only read for comparison, depending on it would re-run on every user selection
   }, [value, options]);
 
   // Sync user-initiated selected changes to parent via onChange (deferred to avoid render issues)
@@ -124,7 +125,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         input.blur();
       }
     },
-    [onChange, disabled]
+    [disabled]
   );
 
   const selectableOptions = React.useMemo(() => {

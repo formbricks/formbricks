@@ -109,7 +109,7 @@ export const ManageTranslationsModal = ({
       if (!aEmpty && bEmpty) return 1;
       return 0;
     });
-  }, [strings, missingFirst]);
+  }, [strings, missingFirst, isDraftEmpty]);
 
   // Merge draft translations into localSurvey so that the recall dropdown
   // can see in-progress translations (e.g. translated headlines).

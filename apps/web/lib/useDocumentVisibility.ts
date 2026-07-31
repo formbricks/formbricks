@@ -14,5 +14,6 @@ export const useDocumentVisibility = (onVisible: () => void) => {
     return () => {
       document.removeEventListener("visibilitychange", listener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- subscribe once on mount; onVisible may be recreated each render and must not re-subscribe the listener
   }, []);
 };
