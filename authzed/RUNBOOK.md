@@ -162,6 +162,12 @@ not a total, and re-run before concluding anything.
   Then re-run step 2 to confirm the correct edge is present, and work out how it was written — nothing in
   Formbricks creates one.
 
+  **Only `--scope=all` can find one.** The escalation is an edge on *another* tenant's resource naming
+  the organization you are investigating, and a `--organization-id` run reads only the resources
+  PostgreSQL says that organization owns — so it never reads the offending resource. A single-tenant run
+  reporting `mismatchedParents: 0` means "none among this tenant's own resources", **not** "this tenant
+  is not being targeted". Investigating a suspected escalation means a full sweep.
+
 ## 4. Before you prune
 
 `--prune` is the only destructive mode, and the guards are deliberately inconvenient.
@@ -179,7 +185,9 @@ not a total, and re-run before concluding anything.
 not hold. What `--prune` adds is permission to reconcile records observed *only* in SpiceDB.
 
 **A large orphan count is a symptom, not a workload.** Exceeding the per-run cap (500, lowerable with
-`--max-prune`, never raisable) prunes *nothing* for that unit and reports it. Before raising your
+`--max-prune`, never raisable) prunes *nothing* — not a capped subset — and reports it. Every unit,
+the streamed whole-deployment sweep included, counts its orphans to completion before deleting any of
+them, so the cap aborts before the first delete rather than part-way through. Before raising your
 expectations, check: right endpoint? right database? a restore in progress? `--scope=all` on a SpiceDB
 shared with another installation?
 

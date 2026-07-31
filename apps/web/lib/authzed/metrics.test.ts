@@ -52,7 +52,10 @@ describe("recordAuthzedProjection", () => {
     };
     expect(counter("formbricks_authzed_projection_total").add).toHaveBeenCalledWith(1, attributes);
     // Seconds, per the OpenTelemetry duration convention.
-    expect(histogram("formbricks_authzed_projection_duration").record).toHaveBeenCalledWith(4.2, attributes);
+    expect(histogram("formbricks_authzed_projection_duration_seconds").record).toHaveBeenCalledWith(
+      4.2,
+      attributes
+    );
   });
 
   test("counts a disabled projection but keeps its structural zero out of the latency histogram", () => {
@@ -64,13 +67,18 @@ describe("recordAuthzedProjection", () => {
     });
 
     expect(counter("formbricks_authzed_projection_total").add).toHaveBeenCalledOnce();
-    expect(histogram("formbricks_authzed_projection_duration").record).not.toHaveBeenCalled();
+    expect(histogram("formbricks_authzed_projection_duration_seconds").record).not.toHaveBeenCalled();
   });
 
-  test("names the duration instrument without a unit suffix", () => {
-    // `..._duration_ms` with `unit: "ms"` exports as `..._duration_ms_milliseconds` through OTLP while
-    // the Prometheus exporter appends nothing — the two would disagree on the name.
-    expect(histograms.has("formbricks_authzed_projection_duration")).toBe(true);
+  test("names the duration instrument so both exporters produce the series the runbook queries", () => {
+    // The two exporters configured side by side derive the series name differently: the Prometheus
+    // exporter appends only `_total` and emits the unit as a comment, while OTLP's translation appends
+    // the unit unless the name already carries it. `_seconds` is the one spelling both agree on — and
+    // the runbook's histogram_quantile query names exactly this series.
+    expect(histograms.has("formbricks_authzed_projection_duration_seconds")).toBe(true);
+    // The unit-less name would export as `..._duration` on a scrape, matching nothing the runbook asks
+    // for; `_ms` was the original defect.
+    expect(histograms.has("formbricks_authzed_projection_duration")).toBe(false);
     expect(histograms.has("formbricks_authzed_projection_duration_ms")).toBe(false);
   });
 });

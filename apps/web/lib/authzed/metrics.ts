@@ -29,15 +29,19 @@ const projectionTotal = meter.createCounter("formbricks_authzed_projection_total
 });
 
 /**
- * Seconds, and no unit in the instrument name.
+ * Seconds, with the unit spelled out in the instrument name.
  *
- * OpenTelemetry's semantic conventions prescribe seconds for durations, and its Prometheus translation
- * appends the unit as a name suffix — so `..._duration_ms` with `unit: "ms"` would export as
- * `..._duration_ms_milliseconds` through the OTLP path while the JS Prometheus exporter appends nothing,
- * leaving the two exporters this app configures side by side disagreeing on the metric's name. Naming it
- * without a unit and measuring in seconds yields `..._duration_seconds` from both.
+ * The semantic conventions prescribe seconds for durations, which rules out the `_ms` this started as.
+ * The unit belongs in the *name* as well because the two exporters this app configures side by side
+ * derive the series name differently: `@opentelemetry/exporter-prometheus` appends only `_total`, to
+ * monotonic sums, and emits the unit as a `# UNIT` comment rather than a suffix, while OTLP's Prometheus
+ * translation appends the unit — skipping it when the name already carries it. Naming it `_seconds` is
+ * therefore the one spelling both paths agree on, and the runbook's alert queries can name a single
+ * series. Leaving the unit out of the name would export `..._duration` on a scrape and
+ * `..._duration_seconds` through a collector, which is how the runbook's histogram query came to match
+ * nothing on the scrape path.
  */
-const projectionDuration = meter.createHistogram("formbricks_authzed_projection_duration", {
+const projectionDuration = meter.createHistogram("formbricks_authzed_projection_duration_seconds", {
   description: "Duration of AuthZed relationship projections",
   unit: "s",
 });
