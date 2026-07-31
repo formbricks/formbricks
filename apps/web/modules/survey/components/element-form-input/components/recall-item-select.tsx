@@ -19,6 +19,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyHiddenFields, TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
@@ -137,13 +138,15 @@ export const RecallItemSelect = ({
   }, [elementId, elements, recallItemIds, selectedLanguageCode]);
 
   const filteredRecallItems: TSurveyRecallItem[] = useMemo(() => {
+    const query = searchValue.trim().toLowerCase();
+    if (!query) return [...surveyElementRecallItems, ...hiddenFieldRecallItems, ...variableRecallItems];
+
+    // Match the label's text content, not the label itself: an element's label is its raw headline HTML
+    // (`<p class="fb-editor-paragraph">…`), so comparing against it made every query for question text
+    // miss. `includes` rather than `startsWith` so a query also matches mid-headline words, and so it
+    // still matches items whose displayed label is elided by the truncation below.
     return [...surveyElementRecallItems, ...hiddenFieldRecallItems, ...variableRecallItems].filter(
-      (recallItems) => {
-        if (searchValue.trim() === "") return true;
-        else {
-          return recallItems.label.toLowerCase().startsWith(searchValue.toLowerCase());
-        }
-      }
+      (recallItem) => getTextContent(recallItem.label).toLowerCase().includes(query)
     );
   }, [surveyElementRecallItems, hiddenFieldRecallItems, variableRecallItems, searchValue]);
 
