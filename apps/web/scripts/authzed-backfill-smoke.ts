@@ -1,4 +1,6 @@
 import "server-only";
+import type { TAuthzedBackfillSource } from "../lib/authzed/backfill";
+import type { TAuthzedOrganizationSource } from "../lib/authzed/backfill-source";
 import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "./authzed-schema-results";
 
 /**
@@ -52,7 +54,9 @@ const writeResult = (result: object): void => {
   process.stdout.write(`${JSON.stringify(result)}\n`);
 };
 
-const emptySource = {
+// Annotated rather than cast: adding a field to the source types must break this at compile time, not
+// at runtime inside the CI smoke job.
+const emptySource: TAuthzedOrganizationSource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
   invalidApiKeyWorkspaceGrants: [],
@@ -140,9 +144,9 @@ const run = async (): Promise<void> => {
 
     // Every relationship the harness seeded is absent from PostgreSQL by construction, so reporting
     // each observed record as missing is both honest and the fullest exercise of the orphan path.
-    const source = {
+    const source: TAuthzedBackfillSource = {
       findMismatchedParentEdges: async () => [],
-      findMissingSourceRefs: async (refs: ReadonlyArray<unknown>) => refs,
+      findMissingSourceRefs: async (refs) => refs,
       organizationExists: async () => true,
       readOrganizationIdPage: async () => [],
       readOrganizationSource: async () => emptySource,
@@ -152,7 +156,7 @@ const run = async (): Promise<void> => {
         workspaceExists: false,
         workspaceTeamGrants: [],
       }),
-    } as unknown as Parameters<typeof runAuthzedBackfill>[1]["source"];
+    };
 
     const handedOver: unknown[] = [];
     const record = async (targets: unknown) => {

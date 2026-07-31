@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type TAuthzedBackfillRequest, runAuthzedBackfill } from "./backfill";
 import * as source from "./backfill-source";
 import type { TAuthzedOrganizationSource } from "./backfill-source";
-import { AUTHZED_BACKFILL_TARGET_CHUNK_SIZE, AUTHZED_MAX_RELATIONSHIP_READS } from "./constants";
+import {
+  AUTHZED_BACKFILL_TARGET_CHUNK_SIZE,
+  AUTHZED_MAX_RELATIONSHIP_READS,
+  AUTHZED_MAX_TRACKED_ORPHAN_REFS,
+} from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 vi.mock("./backfill-source", () => ({
@@ -817,6 +821,28 @@ describe("full-scope orphan sweep", () => {
     expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalledWith(
       expect.objectContaining({ workspaceIds: expect.arrayContaining(["ghost-ws"]) })
     );
+    expect(result.status).toBe("drifted");
+  });
+
+  test("reports truncated rather than growing the dedupe set without bound", async () => {
+    // The dedupe set is the one structure in a streaming sweep that grows with the store. Past its
+    // bound the sweep keeps counting and says so, instead of holding a key for every record on the
+    // heap — and a run this far past the prune cap deletes nothing on the strength of it anyway.
+    const ghosts = Array.from({ length: AUTHZED_MAX_TRACKED_ORPHAN_REFS + 1 }, (_unused, index) => ({
+      kind: "workspace" as const,
+      workspaceId: `ghost-${index}`,
+    }));
+    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) =>
+      Promise.resolve(refs.length > 0 ? ghosts : [])
+    );
+
+    const result = await runAuthzedBackfill(request({ prune: true, scope: { kind: "all" } }), dependencies);
+
+    expect(result.counters.orphaned).toBe(AUTHZED_MAX_TRACKED_ORPHAN_REFS + 1);
+    expect(result.truncated).toBe(true);
+    // Far past the cap, so nothing is deleted and the run degrades into a report.
+    expect(result.counters.pruned).toBe(0);
+    expect(result.counters.skipped).toBe(1);
     expect(result.status).toBe("drifted");
   });
 

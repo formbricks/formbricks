@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
   getManagedResourceTypes,
-  isManagedResourceType,
   isUnprojectedResourceType,
   summarizeObservation,
   toSourceRef,
@@ -132,7 +131,7 @@ describe("toSourceRef", () => {
 
 describe("resource type classification", () => {
   test.each(["api_key", "organization", "team", "workspace"])("treats %s as managed", (resourceType) => {
-    expect(isManagedResourceType(resourceType)).toBe(true);
+    expect(getManagedResourceTypes()).toContain(resourceType);
     expect(isUnprojectedResourceType(resourceType)).toBe(false);
   });
 
@@ -141,8 +140,9 @@ describe("resource type classification", () => {
     (resourceType) => {
       // These exist in the schema for later resource-level sharing. Pruning them would delete
       // relationships a future projector is expected to own.
+      // No type may be both: managed means the sweep reads it and may prune what it finds.
       expect(isUnprojectedResourceType(resourceType)).toBe(true);
-      expect(isManagedResourceType(resourceType)).toBe(false);
+      expect(getManagedResourceTypes()).not.toContain(resourceType);
     }
   );
 

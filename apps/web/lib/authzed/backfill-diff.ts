@@ -160,9 +160,6 @@ const MANAGED_RESOURCE_TYPES: ReadonlyArray<string> = Object.keys(SOURCE_REF_RES
   left.localeCompare(right)
 );
 
-export const isManagedResourceType = (resourceType: string): boolean =>
-  MANAGED_RESOURCE_TYPES.includes(resourceType);
-
 export const getManagedResourceTypes = (): ReadonlyArray<string> => MANAGED_RESOURCE_TYPES;
 
 /** Name the source record an observed relationship implies, or `null` if it names none. */
