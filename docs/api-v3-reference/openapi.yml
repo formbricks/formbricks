@@ -4752,11 +4752,13 @@ components:
         subject:
           type: string
           minLength: 1
+          maxLength: 998
           description: |
-            Email subject. Used verbatim (recall tokens are not expanded in the subject), the same as Follow-ups.
+            Email subject. Used verbatim (recall tokens are not expanded in the subject), the same as Follow-ups. Capped at RFC 5322's maximum line length.
         body:
           type: string
           minLength: 1
+          maxLength: 100000
           description: |
             Email body as HTML with recall tokens (`#recall:[elementId]/fallback:x#`). Recall tokens
             are expanded against the response, the result is sanitized to a narrow HTML allowlist,

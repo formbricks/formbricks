@@ -34,6 +34,22 @@ describe("isBlankWorkflowRichText", () => {
     expect(isBlankWorkflowRichText("<p>a > b</p>")).toBe(false);
   });
 
+  test("treats an unclosed tag-shaped bracket in visible text as filled", () => {
+    // `<b` is visible text the user typed, and the `</p>` after it is a real tag. A tag body that
+    // allowed `<` would match `<b c</p>` as one tag and strip the sentence down to "a".
+    expect(isBlankWorkflowRichText("<p><b</p>")).toBe(false);
+    expect(isBlankWorkflowRichText("<p>a <b c</p>")).toBe(false);
+  });
+
+  test("strips tags in linear time", () => {
+    // Guards the `[^<>]*` tag body against regressing to `[^>]*`, which rescans to end-of-string
+    // from every `<` and turns this input into ~28s of blocked event loop. The budget is four orders
+    // of magnitude above the ~1ms this takes, so it fails only on a genuine complexity regression.
+    const start = performance.now();
+    expect(isBlankWorkflowRichText("<A".repeat(100_000))).toBe(false);
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
+
   test("treats a recall-token-only body as filled", () => {
     // RecallNode.exportDOM writes the token as the element's text content, so a body that is
     // nothing but a recall reference must not be mistaken for an empty one.
