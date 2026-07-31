@@ -212,9 +212,12 @@ export function withMcpResponseHeaders(response: Response, requestId: string): R
 
 function withOAuthChallenge(response: Response, scope = MCP_CHALLENGE_SCOPE): Response {
   const headers = new Headers(response.headers);
+  // Comma-separated auth-params, per the `#auth-param` list grammar in RFC 9110 §11.6.1 (as used by
+  // RFC 6750 and RFC 9728). Space-separated, a strict parser reads the whole tail as one malformed
+  // param and misses `resource_metadata` — the pointer MCP clients follow to discover this server.
   headers.set(
     "WWW-Authenticate",
-    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}" scope="${scope}"`
+    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}", scope="${scope}"`
   );
 
   return new Response(response.body, {

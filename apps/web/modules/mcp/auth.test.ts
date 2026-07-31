@@ -346,8 +346,10 @@ describe("authenticateMcpRequest", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.response.status).toBe(401);
-      expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/api/mcp"'
+      // Auth-params are comma-separated (RFC 9110 `#auth-param`), so a strict client parser can read
+      // `resource_metadata` out of the challenge instead of choking on the whole tail.
+      expect(result.response.headers.get("WWW-Authenticate")).toBe(
+        'Bearer resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/api/mcp", scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
       );
       expect(await result.response.json()).toMatchObject({
         detail: "Invalid OAuth access token",
@@ -439,8 +441,10 @@ describe("authenticateMcpRequest", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.response.status).toBe(401);
-      expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/api/mcp"'
+      // Auth-params are comma-separated (RFC 9110 `#auth-param`), so a strict client parser can read
+      // `resource_metadata` out of the challenge instead of choking on the whole tail.
+      expect(result.response.headers.get("WWW-Authenticate")).toBe(
+        'Bearer resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/api/mcp", scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
       );
       expect(await result.response.json()).toMatchObject({
         detail: "Invalid OAuth access token",

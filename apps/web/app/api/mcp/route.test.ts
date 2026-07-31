@@ -171,7 +171,7 @@ describe("POST /api/mcp", () => {
     expect(response.status).toBe(401);
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
     expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp", scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
     );
     expect(applyIPRateLimit).toHaveBeenCalled();
   });
@@ -445,7 +445,7 @@ describe("POST /api/mcp", () => {
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
     expect(applyIPRateLimit).toHaveBeenCalled();
     expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp", scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
     );
   });
 
