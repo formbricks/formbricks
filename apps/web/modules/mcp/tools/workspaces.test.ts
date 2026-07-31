@@ -25,6 +25,7 @@ const readAuthInfo = {
 
 const writeOnlyAuthInfo = { ...readAuthInfo, scopes: ["surveys:write"] };
 const feedbackReadAuthInfo = { ...readAuthInfo, scopes: ["feedbackRecords:read"] };
+const workflowReadAuthInfo = { ...readAuthInfo, scopes: ["workflows:read"] };
 
 function createToolServer() {
   const tools = new Map<
@@ -95,6 +96,20 @@ describe("registerWorkspaceTools", () => {
     );
 
     const result = await tools.get("list_workspaces")!.handler({}, { authInfo: feedbackReadAuthInfo });
+
+    expect(listV3Workspaces).toHaveBeenCalled();
+    expect(result.isError).toBeUndefined();
+  });
+
+  // Same for the workflow tools: auth.ts admits a token holding only workflows:read, so it must be
+  // able to resolve the workspaceId every workflow tool requires.
+  test("allows a workflows-only token to discover workspaces", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(listV3Workspaces).mockResolvedValue(
+      successListResponse([], { nextCursor: null, totalCount: 0 }, { requestId: "req_tool" })
+    );
+
+    const result = await tools.get("list_workspaces")!.handler({}, { authInfo: workflowReadAuthInfo });
 
     expect(listV3Workspaces).toHaveBeenCalled();
     expect(result.isError).toBeUndefined();
