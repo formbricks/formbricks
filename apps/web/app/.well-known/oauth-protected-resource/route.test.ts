@@ -46,6 +46,8 @@ describe("OAuth protected resource metadata", () => {
       scopes_supported: [
         "surveys:read",
         "surveys:write",
+        "workflows:read",
+        "workflows:write",
         "feedbackRecords:read",
         "feedbackRecords:write",
         "offline_access",

@@ -53,10 +53,19 @@ vi.mock("@/modules/auth/lib/oauth-urls", () => ({
     "offline_access",
     "surveys:read",
     "surveys:write",
+    "workflows:read",
+    "workflows:write",
     "feedbackRecords:read",
     "feedbackRecords:write",
   ],
-  MCP_RESOURCE_SCOPES: ["surveys:read", "surveys:write", "feedbackRecords:read", "feedbackRecords:write"],
+  MCP_RESOURCE_SCOPES: [
+    "surveys:read",
+    "surveys:write",
+    "workflows:read",
+    "workflows:write",
+    "feedbackRecords:read",
+    "feedbackRecords:write",
+  ],
   getAuthIssuerUrl: vi.fn(() => "https://app.example.com/api/auth"),
   getMcpOrigin: vi.fn(() => "https://app.example.com"),
   getMcpProtectedResourceMetadataUrl: vi.fn(
@@ -117,7 +126,7 @@ describe("authenticateMcpRequest", () => {
       // The challenge must advertise every resource scope so clients request them at consent and can
       // reach the write tools (advertising only read is why write was unreachable — ENG-1055 QA).
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write feedbackRecords:read feedbackRecords:write"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
       );
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
@@ -251,7 +260,7 @@ describe("authenticateMcpRequest", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.authInfo.scopes).toEqual(["surveys:read", "feedbackRecords:read"]);
+      expect(result.authInfo.scopes).toEqual(["surveys:read", "workflows:read", "feedbackRecords:read"]);
     }
   });
 
@@ -370,7 +379,7 @@ describe("authenticateMcpRequest", () => {
       expect(result.response.status).toBe(403);
       expect(result.response.headers.get("WWW-Authenticate")).toContain('error="insufficient_scope"');
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write feedbackRecords:read feedbackRecords:write"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();

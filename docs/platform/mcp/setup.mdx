@@ -94,7 +94,7 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
     Codex opens the browser to Formbricks, registers itself, and you **approve** on the consent
     screen. For read-only access, restrict the scopes:
     ```bash
-    codex mcp login formbricks --scopes surveys:read,feedbackRecords:read,offline_access
+    codex mcp login formbricks --scopes surveys:read,workflows:read,feedbackRecords:read,offline_access
     ```
     Scope groups are independent — request only the ones you need (for example
     `feedbackRecords:read,offline_access` for feedback data alone).
@@ -125,7 +125,7 @@ to connect again.
 Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
 silently in the background for up to **30 days** (the refresh window). After that — or after you
 revoke — the client re-runs the sign-in and consent flow. Approving the write scopes
-(`surveys:write`, `feedbackRecords:write`) is re-confirmed periodically for safety.
+(`surveys:write`, `workflows:write`, `feedbackRecords:write`) is re-confirmed periodically for safety.
 
 ## Troubleshooting
 
@@ -143,8 +143,8 @@ revoke — the client re-runs the sign-in and consent flow. Approving the write 
   </Accordion>
   <Accordion title="invalid_scope during sign-in">
     The client requested a scope it isn't registered for. Reconnect from scratch so it re-registers
-    with the scopes the server advertises (`surveys:read`, `surveys:write`, `feedbackRecords:read`,
-    `feedbackRecords:write`, `offline_access`).
+    with the scopes the server advertises (`surveys:read`, `surveys:write`, `workflows:read`,
+    `workflows:write`, `feedbackRecords:read`, `feedbackRecords:write`, `offline_access`).
   </Accordion>
   <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
     Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same
@@ -154,8 +154,11 @@ revoke — the client re-runs the sign-in and consent flow. Approving the write 
     incorrect base URL (see below) also causes repeated redirects.
   </Accordion>
   <Accordion title="A tool call fails even though you're connected">
-    Scopes don't override your workspace role. Creating, editing, or deleting surveys requires
-    `write` or `manage` permission on that workspace — ask a workspace owner/manager to grant it.
+    Scopes don't override your workspace role. Creating, editing, or deleting surveys or workflows
+    requires `write` or `manage` permission on that workspace — ask a workspace owner/manager to grant
+    it. `test_workflow` also needs `write`/`manage` even though it's a read-scoped dry-run, because it
+    evaluates the live workflow definition. A `:write` tool likewise 403s if your token was only granted
+    the matching `:read` scope; reconnect and approve write access.
   </Accordion>
   <Accordion title="Self-hosted: the browser can't complete sign-in / redirects fail">
     OAuth discovery and redirects are built from your configured base URL. Serve Formbricks from a

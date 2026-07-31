@@ -63,10 +63,13 @@ const legalProps: TEmailTemplateLegalProps = {
 
 interface SendEmailDataProps {
   to: string;
+  from?: string;
   replyTo?: string;
   subject: string;
   text?: string;
   html: string;
+  /** Optional RFC 5322 Message-ID; nodemailer emits it as the `Message-ID` header. */
+  messageId?: string;
 }
 
 export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &
@@ -101,7 +104,11 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
     const emailDefaults = {
       from: `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
     };
-    await transporter.sendMail({ ...emailDefaults, ...emailData });
+    await transporter.sendMail({
+      ...emailDefaults,
+      ...emailData,
+      from: emailData.from ?? emailDefaults.from,
+    });
 
     return true;
   } catch (error) {
@@ -338,14 +345,11 @@ export const sendResponseFinishedEmail = async (
 
   await sendEmail({
     to: email,
-    subject: personEmail
-      ? t("emails.response_finished_email_subject_with_email", {
-          personEmail,
-          surveyName: survey.name,
-        })
-      : t("emails.response_finished_email_subject", {
-          surveyName: survey.name,
-        }),
+    // Never put the respondent's email address in the subject — it's PII that ends up in
+    // notification previews and mailbox lists; replying still reaches them via replyTo.
+    subject: t("emails.response_finished_email_subject", {
+      surveyName: survey.name,
+    }),
     replyTo: personEmail?.toString() ?? MAIL_FROM,
     html,
   });

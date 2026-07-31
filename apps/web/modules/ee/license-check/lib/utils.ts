@@ -31,7 +31,13 @@ const getCustomPlanFeaturePermission = async (
   organizationId: string,
   featureKey: keyof Pick<
     TEnterpriseLicenseFeatures,
-    "accessControl" | "quotas" | "contacts" | "aiSmartTools" | "feedbackDirectories" | "dashboards"
+    | "accessControl"
+    | "quotas"
+    | "contacts"
+    | "aiSmartTools"
+    | "feedbackDirectories"
+    | "dashboards"
+    | "workflows"
   >
 ): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) {
@@ -42,6 +48,7 @@ const getCustomPlanFeaturePermission = async (
       aiSmartTools: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS,
       feedbackDirectories: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES,
       dashboards: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS,
+      workflows: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.WORKFLOWS,
     };
     const lookupKey = featureLookupKeyMap[featureKey];
     if (lookupKey) {
@@ -157,6 +164,10 @@ export const getIsFeedbackDirectoriesEnabled = async (organizationId: string): P
 
 export const getIsDashboardsEnabled = async (organizationId: string): Promise<boolean> => {
   return getCustomPlanFeaturePermission(organizationId, "dashboards");
+};
+
+export const getIsWorkflowsEnabled = async (organizationId: string): Promise<boolean> => {
+  return getCustomPlanFeaturePermission(organizationId, "workflows");
 };
 
 export const getBulkInvitePermission = async (organizationId: string): Promise<boolean> => {

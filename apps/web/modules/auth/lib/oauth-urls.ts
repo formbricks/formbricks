@@ -47,6 +47,8 @@ export const MCP_OAUTH_SCOPES = [
   "offline_access",
   "surveys:read",
   "surveys:write",
+  "workflows:read",
+  "workflows:write",
   "feedbackRecords:read",
   "feedbackRecords:write",
 ] as const;
@@ -54,6 +56,8 @@ export const MCP_OAUTH_SCOPES = [
 export const MCP_RESOURCE_SCOPES = [
   "surveys:read",
   "surveys:write",
+  "workflows:read",
+  "workflows:write",
   "feedbackRecords:read",
   "feedbackRecords:write",
 ] as const;

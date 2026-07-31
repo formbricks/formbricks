@@ -95,13 +95,14 @@ function isOriginAllowed(request: NextRequest): boolean {
 }
 
 function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
-  const scopes = new Set(["surveys:read", "feedbackRecords:read"]);
+  const scopes = new Set(["surveys:read", "workflows:read", "feedbackRecords:read"]);
   if (
     authentication.workspacePermissions.some(
       (permission) => permission.permission === "write" || permission.permission === "manage"
     )
   ) {
     scopes.add("surveys:write");
+    scopes.add("workflows:write");
     scopes.add("feedbackRecords:write");
   }
 

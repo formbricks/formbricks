@@ -1,0 +1,183 @@
+{
+  "edges": [
+    {
+      "id": "trigger-send-email",
+      "source": "trigger",
+      "target": "send-email",
+      "targetHandle": "input"
+    },
+    {
+      "id": "send-email-condition",
+      "source": "send-email",
+      "sourceHandle": "next",
+      "target": "condition",
+      "targetHandle": "input"
+    },
+    {
+      "id": "condition-then",
+      "source": "condition",
+      "sourceHandle": "then",
+      "target": "then-email",
+      "targetHandle": "input"
+    },
+    {
+      "id": "condition-else",
+      "source": "condition",
+      "sourceHandle": "else",
+      "target": "else-email",
+      "targetHandle": "input"
+    }
+  ],
+  "entryNodeId": "trigger",
+  "nodes": [
+    {
+      "actionType": "send_email",
+      "config": {
+        "attachResponseData": true,
+        "body": "<p>Hi #recall:cm9zr4mps000008l8name/fallback:there#, we received your response.</p>",
+        "from": "noreply@example.com",
+        "includeHiddenFields": true,
+        "includeVariables": true,
+        "replyTo": ["support@example.com"],
+        "subject": "Thanks for your response",
+        "to": "cm9zr4mps000008l8email"
+      },
+      "id": "send-email",
+      "label": "Send thank you email",
+      "type": "action",
+      "ui": {
+        "collapsed": false,
+        "position": {
+          "x": 320,
+          "y": 0
+        }
+      }
+    },
+    {
+      "config": {
+        "condition": {
+          "conditions": [
+            {
+              "id": "email-exists",
+              "left": {
+                "fallback": "",
+                "path": "response.email"
+              },
+              "operator": "exists"
+            },
+            {
+              "conditions": [
+                {
+                  "id": "score-high",
+                  "left": {
+                    "path": "response.score"
+                  },
+                  "operator": "greaterThan",
+                  "right": 8
+                },
+                {
+                  "id": "plan-match",
+                  "left": {
+                    "path": "response.plan"
+                  },
+                  "operator": "equals",
+                  "right": {
+                    "fallback": "free",
+                    "path": "contact.plan"
+                  }
+                },
+                {
+                  "id": "not-internal",
+                  "left": {
+                    "path": "response.email"
+                  },
+                  "operator": "notContains",
+                  "right": "@example.org"
+                }
+              ],
+              "connector": "or",
+              "id": "nested-group"
+            }
+          ],
+          "connector": "and",
+          "id": "root-group"
+        }
+      },
+      "id": "condition",
+      "label": "Qualified response",
+      "type": "if_else",
+      "ui": {
+        "collapsed": true,
+        "position": {
+          "x": 640,
+          "y": 0
+        }
+      }
+    },
+    {
+      "actionType": "send_email",
+      "config": {
+        "attachResponseData": true,
+        "body": "<p>Thanks for sharing a qualified response, #recall:cm9zr4mps000008l8name/fallback:there#.</p>",
+        "from": "noreply@example.com",
+        "includeHiddenFields": false,
+        "includeVariables": false,
+        "replyTo": ["support@example.com"],
+        "subject": "Qualified response",
+        "to": "notifications@example.com"
+      },
+      "id": "then-email",
+      "label": "Send qualified email",
+      "type": "action",
+      "ui": {
+        "collapsed": false,
+        "position": {
+          "x": 960,
+          "y": -120
+        }
+      }
+    },
+    {
+      "actionType": "send_email",
+      "config": {
+        "attachResponseData": false,
+        "body": "<p>Thanks for your response.</p>",
+        "from": "noreply@example.com",
+        "includeHiddenFields": false,
+        "includeVariables": false,
+        "replyTo": ["support@example.com"],
+        "subject": "Thanks",
+        "to": "cm9zr4mps000008l8email"
+      },
+      "id": "else-email",
+      "label": "Send fallback email",
+      "type": "action",
+      "ui": {
+        "collapsed": false,
+        "position": {
+          "x": 960,
+          "y": 120
+        }
+      }
+    }
+  ],
+  "schemaVersion": 1,
+  "trigger": {
+    "config": {
+      "endingCardIds": ["cm9zr4q7i000108l84gozfggr"],
+      "surveyId": "cm9zr4mps000008l8btfy1vtz"
+    },
+    "id": "trigger",
+    "label": "Survey response completed",
+    "triggerType": "response.completed",
+    "type": "trigger",
+    "ui": {
+      "collapsed": false,
+      "color": "blue",
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  }
+}
