@@ -62,17 +62,16 @@ test.describe("Invite sign-up with an address that already has an account @slow"
       // EMAIL_VERIFICATION_DISABLED (CI runs with it on), never on the address.
       await inviteePage.waitForURL(/\/auth\/(verification-requested|signup-without-verification-success)/);
 
-      // Either way there must be a way out, because for this visitor no email is coming and the resend
-      // button no-ops on an already-verified address. That link is the whole point of the fix: before it,
-      // the screen was a dead end and the invite had already been consumed.
+      // There must be a way out, because for this visitor no email is coming and the resend button
+      // no-ops on an already-verified address. That link is the whole point of the fix: before it, the
+      // screen was a dead end and the invite had already been consumed.
+      //
+      // Asserted unconditionally on BOTH screens: the callback used to be carried only on the
+      // verification-requested one, which left the verification-disabled path — the self-hosted default
+      // and what CI runs here — dropping the visitor at the app root with no way back to the invite.
       const loginLink = inviteePage.getByRole("link", { name: "Log in" });
       await expect(loginLink).toBeVisible();
-      if (inviteePage.url().includes("verification-requested")) {
-        // On the verification screen the link also carries the invite callback, so logging in lands the
-        // visitor back on the invite instead of the app root. The no-verification screen shares a plain
-        // "Log in" button with the other auth flows and has no callback to carry.
-        await expect(loginLink).toHaveAttribute("href", /callbackUrl=.*invite/);
-      }
+      await expect(loginLink).toHaveAttribute("href", /callbackUrl=.*invite/);
     } finally {
       await inviteeContext.close();
     }

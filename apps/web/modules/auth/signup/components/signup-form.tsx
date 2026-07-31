@@ -17,7 +17,10 @@ import {
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
-import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
+import {
+  buildSignupWithoutVerificationSuccessPath,
+  buildVerificationRequestedPath,
+} from "@/modules/auth/lib/verification-links";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
@@ -198,12 +201,13 @@ export const SignupForm = ({
         return;
       }
 
+      // Both branches carry the invite callback. The verification-disabled branch is the default for
+      // self-hosted, so omitting it there left invited users with an existing account unable to reach
+      // the invite from the screen they land on (ENG-2091, raised in review).
+      const callbackUrl = inviteToken ? returnToUrl : undefined;
       const url = emailVerificationDisabled
-        ? `/auth/signup-without-verification-success?token=${token}`
-        : buildVerificationRequestedPath({
-            token,
-            callbackUrl: inviteToken ? returnToUrl : undefined,
-          });
+        ? buildSignupWithoutVerificationSuccessPath({ token, callbackUrl })
+        : buildVerificationRequestedPath({ token, callbackUrl });
 
       router.push(url);
     } catch (e: any) {
