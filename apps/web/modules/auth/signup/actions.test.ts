@@ -9,10 +9,12 @@ import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
+import { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
 import { auth } from "@/modules/auth/lib/auth";
 import { updateUser } from "@/modules/auth/lib/user";
 import { getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { createUserAction } from "./actions";
@@ -109,7 +111,9 @@ describe("createUserAction — signup verification email callbackURL", () => {
   // so an uninvited sign-up arrives with an empty string rather than undefined.
   const baseInput = { name: "Ada", email: "Ada@Example.com", password: "Password123!", inviteToken: "" };
 
-  const newCtx = () => ({ auditLoggingCtx: { organizationId: "", userId: "" } });
+  const newCtx = (): { auditLoggingCtx: AuditLoggingCtx } => ({
+    auditLoggingCtx: { organizationId: "", userId: "", ipAddress: UNKNOWN_DATA },
+  });
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -135,6 +139,18 @@ describe("createUserAction — signup verification email callbackURL", () => {
     expect(auth.api.signUpEmail).toHaveBeenCalledWith({
       body: { email: "ada@example.com", password: "Password123!", name: "Ada", callbackURL: undefined },
     });
+  });
+
+  // The other half of the suppression guard below: a REAL creation must still be audited. Without this,
+  // a bug that set the flag unconditionally would silence every `created` event and no test would notice.
+  test("audits a real creation — the suppression flag is not set on the created path", async () => {
+    const ctx = newCtx();
+
+    const result = await createUserAction({ ctx, parsedInput: baseInput } as never);
+
+    expect(result).toEqual({ success: true });
+    expect(ctx.auditLoggingCtx.suppressEvent).toBeUndefined();
+    expect(ctx.auditLoggingCtx.userId).toBe(createdUser.id);
   });
 
   test("does not point the verification callback at /invite for invite signups (ENG-1527)", async () => {
@@ -229,8 +245,11 @@ describe("createUserAction — signup verification email callbackURL", () => {
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
     expect(updateUser).not.toHaveBeenCalled(); // no locale write on someone else's account
     expect(capturePostHogEvent).not.toHaveBeenCalled();
-    // No `created` audit attribution for an account that was not created (S1).
+    // No `created` audit attribution for an account that was not created (S1) — and no `created` event
+    // at all: withAuditLogging cannot tell this branch apart from a real creation, so the handler has to
+    // say so explicitly or a false creation record is written.
     expect(ctx.auditLoggingCtx.userId).toBe("");
+    expect(ctx.auditLoggingCtx.suppressEvent).toBe(true);
   });
 
   // Regression: signup/page.tsx requires a valid invite once public sign-up is closed, but the action
@@ -310,7 +329,9 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
     password: "Password123!",
     inviteToken: "",
   };
-  const newCtx = () => ({ auditLoggingCtx: { organizationId: "", userId: "" } });
+  const newCtx = (): { auditLoggingCtx: AuditLoggingCtx } => ({
+    auditLoggingCtx: { organizationId: "", userId: "", ipAddress: UNKNOWN_DATA },
+  });
 
   beforeEach(() => {
     vi.resetAllMocks();

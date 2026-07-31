@@ -455,12 +455,17 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       // Inside the "created" branch: an audit record claiming a user was created must only exist when
       // one was. Previously this ran unconditionally, so a duplicate sign-up wrote a `created` event
       // attributed to the PRE-EXISTING user and carrying their object (ENG-2091 / S1).
-      // Note: withAuditLogging is wrapped around the whole action, so the already-existed path still
-      // emits a `created` event with targetId UNKNOWN_DATA and no newObject. That records an attempt
-      // without falsely attributing it; suppressing it entirely would mean restructuring the wrapper
-      // (and losing its failure-path auditing), which is out of scope here.
       ctx.auditLoggingCtx.userId = user.id;
       ctx.auditLoggingCtx.newObject = user;
+    } else {
+      // No account was created, so no `created` event may be written. Attribution alone is not enough:
+      // `withAuditLogging` wraps the whole action with a fixed action name and cannot see which branch
+      // ran, so without this it still logged a SUCCESSFUL `created` for an UNKNOWN_DATA target — a false
+      // creation record on audit-enabled deployments (raised by @BhagyaAmarasinghe in review).
+      //
+      // The response stays byte-identical either way (ENG-2099) — this changes only what we record, and
+      // only on the success path, so a genuine failure is still audited.
+      ctx.auditLoggingCtx.suppressEvent = true;
     }
 
     // Deliberately invariant: the response never varies with whether the address already had an
