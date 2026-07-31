@@ -352,8 +352,9 @@ pnpm authzed:backfill --apply --after-organization-id=<cuid>
 
 Exit codes match `authzed:schema`: `0` reconciled, `2` drift remains, `1` failed
 or misused. The result is one line of JSON carrying counters, the offending
-record identifiers, the revision the last observation was taken at, and a
-`truncated` flag.
+record identifiers, a revision captured *after* the run's own writes (so shadow
+evaluation can use it as an `at_least_as_fresh` floor — `null` for a dry run,
+which wrote nothing to be fresh relative to), and a `truncated` flag.
 
 Drift is reported in both directions:
 

@@ -140,6 +140,16 @@ export type TAuthzedBackfillFailure = Readonly<{
 }>;
 
 export type TAuthzedBackfillResult = Readonly<{
+  /**
+   * A revision SpiceDB was at *after* this run finished writing, or `null`.
+   *
+   * Captured by one read issued once all work is done, so it genuinely post-dates the run's own writes
+   * and can serve as an `at_least_as_fresh` floor for shadow evaluation. Taking it from the observation
+   * reads instead would have pre-dated them, which is the opposite of a freshness floor.
+   *
+   * `null` for a dry run (nothing was written, so there is nothing to be fresh relative to), for an empty
+   * store, and if the closing read fails — never a stale value dressed up as a fresh one.
+   */
   completedAtSnapshot: string | null;
   counters: TAuthzedBackfillCounters;
   failures: ReadonlyArray<TAuthzedBackfillFailure>;
@@ -157,7 +167,14 @@ export type TAuthzedBackfillResult = Readonly<{
   orphans: ReadonlyArray<TAuthzedSourceRef>;
   scope: "all" | "organization" | "workspace";
   status: "drifted" | "failed" | "reconciled";
-  /** Set when any observation was abandoned, so the report must not be read as complete. */
+  /**
+   * Set when an observation was abandoned, so the counts are a floor rather than a total.
+   *
+   * Deliberately narrow: it does *not* mean the `orphans` / `failures` / `mismatchedParents` lists hit
+   * their reporting cap. Those stay capped at 100 entries with the counters carrying the true totals,
+   * and conflating the two would make a merely-verbose run look like an incomplete one — which matters,
+   * because this flag forces a non-clean status.
+   */
   truncated: boolean;
   unmanaged: ReadonlyArray<Readonly<{ objectId: string; objectType: string; relation: string }>>;
 }>;
@@ -302,7 +319,8 @@ const runChunked = async <TTargets extends Readonly<Record<string, ReadonlyArray
   reconcile: (targets: TTargets) => Promise<TAuthzedProjectionResult>,
   targets: TTargets
 ): Promise<TAuthzedProjectionResult | null> => {
-  const entries = Object.entries(targets).filter(([, items]) => items.length > 0);
+  type TEntry = readonly [keyof TTargets & string, ReadonlyArray<unknown>];
+  const entries = (Object.entries(targets) as ReadonlyArray<TEntry>).filter(([, items]) => items.length > 0);
   if (entries.length === 0) {
     return null;
   }
@@ -313,11 +331,16 @@ const runChunked = async <TTargets extends Readonly<Record<string, ReadonlyArray
 
   for (let index = 0; index < chunkCount; index++) {
     const start = index * AUTHZED_BACKFILL_TARGET_CHUNK_SIZE;
-    const chunkTargets = Object.fromEntries(
-      entries
-        .map(([key, items]) => [key, items.slice(start, start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE)])
-        .filter(([, items]) => (items as ReadonlyArray<unknown>).length > 0)
-    ) as TTargets;
+    // Built by narrowing a full target object rather than assembling a partial one and asserting the
+    // type. Every field of the reconcilers' target types is optional, so an assertion would silently
+    // keep compiling if one ever became required — and the missing list would only surface at runtime.
+    const chunkTargets: TTargets = { ...targets };
+    for (const [key, items] of entries) {
+      (chunkTargets as Record<string, ReadonlyArray<unknown>>)[key] = items.slice(
+        start,
+        start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE
+      );
+    }
 
     const result = await reconcile(chunkTargets);
     if (result.status !== "projected") {
@@ -338,23 +361,32 @@ const reconcileTargets = async (
   apply: TAuthzedBackfillApply,
   targets: TReconcileTargets
 ): Promise<TAuthzedProjectionResult | undefined> => {
-  const outcomes = [
-    await runChunked(apply.reconcileMemberships, { memberships: targets.memberships }),
-    await runChunked(apply.reconcileTeamWorkspace, {
-      teamIds: targets.teamIds,
-      teamMemberships: targets.teamMemberships,
-      workspaceIds: targets.workspaceIds,
-      workspaceTeamGrants: targets.workspaceTeamGrants,
-    }),
-    await runChunked(apply.reconcileApiKeys, {
-      apiKeyIds: targets.apiKeyIds,
-      apiKeyWorkspaceGrants: targets.apiKeyWorkspaceGrants,
-    }),
+  // Stops at the first reconciler that does not project. Continuing would spend two more three-attempt
+  // retry budgets against an instance already known to be unreachable, and the unit is failed either way.
+  const steps = [
+    () => runChunked(apply.reconcileMemberships, { memberships: targets.memberships }),
+    () =>
+      runChunked(apply.reconcileTeamWorkspace, {
+        teamIds: targets.teamIds,
+        teamMemberships: targets.teamMemberships,
+        workspaceIds: targets.workspaceIds,
+        workspaceTeamGrants: targets.workspaceTeamGrants,
+      }),
+    () =>
+      runChunked(apply.reconcileApiKeys, {
+        apiKeyIds: targets.apiKeyIds,
+        apiKeyWorkspaceGrants: targets.apiKeyWorkspaceGrants,
+      }),
   ];
 
-  return outcomes.find(
-    (outcome): outcome is TAuthzedProjectionResult => outcome !== null && outcome.status !== "projected"
-  );
+  for (const step of steps) {
+    const outcome = await step();
+    if (outcome !== null && outcome.status !== "projected") {
+      return outcome;
+    }
+  }
+
+  return undefined;
 };
 
 /**
@@ -490,7 +522,6 @@ export const runAuthzedBackfill = async (
             unmanaged.push(ref);
           }
         }
-        completedAtSnapshot = observation.snapshot ?? completedAtSnapshot;
 
         // The direction an applying run converges by writing, and the only one a report can speak to.
         const unprojected = findUnprojectedSourceRefs(toSourceRefs(source), summary.sourceRefs);
@@ -581,7 +612,7 @@ export const runAuthzedBackfill = async (
       });
 
     for (const resourceType of getManagedResourceTypes()) {
-      const snapshot = await forEachRelationshipPage(client, { resourceType }, async (relationships) => {
+      await forEachRelationshipPage(client, { resourceType }, async (relationships) => {
         if (capExceeded) {
           return;
         }
@@ -618,8 +649,6 @@ export const runAuthzedBackfill = async (
 
         pruned += missingRefs.length;
       });
-
-      completedAtSnapshot = snapshot?.token ?? completedAtSnapshot;
     }
   };
 
@@ -651,7 +680,6 @@ export const runAuthzedBackfill = async (
       const summary = summarizeObservation(observation.relationships);
       ignored += summary.ignored;
       unmanaged.push(...summary.unmanaged.slice(0, Math.max(0, MAX_REPORTED_ENTRIES - unmanaged.length)));
-      completedAtSnapshot = observation.snapshot?.token ?? completedAtSnapshot;
 
       recordMismatchedParents(await sourceReads.findMismatchedParentEdges(summary.parentEdges));
 
@@ -773,6 +801,21 @@ export const runAuthzedBackfill = async (
     } catch (error) {
       truncated = true;
       recordFailure("", error);
+    }
+  }
+
+  // Taken last, so it post-dates every write this run made. Any managed type answers: the revision is a
+  // property of the datastore, not of the filter.
+  if (request.mode === "apply" && failed === 0) {
+    try {
+      const closing = await client.readRelationships({
+        filter: { resourceType: "organization" },
+        limit: 1,
+      });
+      completedAtSnapshot = closing.snapshot?.token ?? null;
+    } catch {
+      // A freshness floor that might pre-date the writes is worse than none at all.
+      completedAtSnapshot = null;
     }
   }
 

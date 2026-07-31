@@ -257,8 +257,14 @@ export const runAuthzedBackfillCli = async (
       command.expectedEndpoint !== undefined &&
       command.expectedEndpoint !== dependencies.resolveEndpoint()
     ) {
-      // The operator named an instance other than the configured one. Refuse rather than guess.
-      result = invalidRequest();
+      // The operator named an instance other than the configured one. Refuse rather than guess — and
+      // report a distinct code, because "you aimed this at the wrong SpiceDB" and "you mistyped a flag"
+      // want very different reactions.
+      result = {
+        code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+        retryable: false,
+        status: "failed",
+      };
       exitCode = 1;
     } else {
       result = await dependencies.run(

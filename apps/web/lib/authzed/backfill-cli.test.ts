@@ -201,8 +201,10 @@ describe("runAuthzedBackfillCli", () => {
     ).resolves.toBe(1);
 
     expect(dependencies.run).not.toHaveBeenCalled();
+    // A distinct code from a mistyped flag: aiming the destructive path at the wrong instance is a very
+    // different mistake, and the operator should be able to tell which one happened.
     expect(dependencies.writeOutput).toHaveBeenCalledWith(
-      `${JSON.stringify({ code: AUTHZED_ERROR_CODES.INVALID_REQUEST, retryable: false, status: "failed" })}\n`
+      `${JSON.stringify({ code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION, retryable: false, status: "failed" })}\n`
     );
   });
 

@@ -382,7 +382,9 @@ describe("pruning", () => {
     expect(result.status).toBe("reconciled");
     // Handed over as a target, never as a delete instruction: the reconciler re-reads PostgreSQL and
     // decides, so a team recreated in the meantime is written rather than deleted.
-    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith({ teamIds: ["ghost-team"] });
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ teamIds: ["ghost-team"] })
+    );
   });
 
   test("prunes nothing for a unit whose orphan count exceeds the cap", async () => {
@@ -448,11 +450,13 @@ describe("scope and observation completeness", () => {
     // A resource whose row is already gone is unreachable from its organization, so this scope must not
     // claim completeness.
     expect(result.orphanScope).toBe("known_resources");
+    // The trailing organization read is the closing freshness capture, not an observation.
     expect(readRelationships.mock.calls.map(([query]) => query.filter)).toEqual([
       { resourceId: "org-1", resourceType: "organization" },
       { resourceId: "team-1", resourceType: "team" },
       { resourceId: "ws-1", resourceType: "workspace" },
       { resourceId: "key-1", resourceType: "api_key" },
+      { resourceType: "organization" },
     ]);
   });
 
@@ -467,23 +471,62 @@ describe("scope and observation completeness", () => {
       { resourceType: "organization" },
       { resourceType: "team" },
       { resourceType: "workspace" },
+      // The closing freshness capture, which wants one relationship rather than a page.
+      { resourceType: "organization" },
     ]);
     expect(
-      readRelationships.mock.calls.every(([query]) => query.limit === AUTHZED_MAX_RELATIONSHIP_READS)
+      readRelationships.mock.calls
+        .slice(0, -1)
+        .every(([query]) => query.limit === AUTHZED_MAX_RELATIONSHIP_READS)
     ).toBe(true);
   });
 
-  test("reports the revision the observation completed at", async () => {
+  test("reports a revision captured after the run's own writes", async () => {
+    // The point of the field: shadow evaluation uses it as an `at_least_as_fresh` floor, so a revision
+    // read *before* the writes would be the exact opposite of a floor. Ordering is what is asserted here.
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({ ...emptySource, teamIds: ["team-1"] });
+    let written = false;
+    apply.reconcileTeamWorkspace.mockImplementation(async () => {
+      written = true;
+      return PROJECTED;
+    });
+    readRelationships.mockImplementation(() =>
+      Promise.resolve({
+        cursor: null,
+        relationships: [],
+        snapshot: { token: written ? "after-writes" : "before-writes" },
+      })
+    );
+
+    const result = await runAuthzedBackfill(request(), dependencies);
+
+    expect(result.completedAtSnapshot).toBe("after-writes");
+  });
+
+  test("reports no revision for a dry run, which wrote nothing to be fresh relative to", async () => {
     readRelationships.mockResolvedValue({
       cursor: null,
       relationships: [],
       snapshot: { token: "revision-42" },
     });
 
+    const result = await runAuthzedBackfill(request({ mode: "dry_run" }), dependencies);
+
+    expect(result.completedAtSnapshot).toBeNull();
+  });
+
+  test("reports no revision rather than a stale one when the closing read fails", async () => {
+    // No teams or workspaces, so the observation is a single organization read and the second call is the
+    // closing capture — which is the one that has to fail for this to test what it claims.
+    readRelationships
+      .mockResolvedValueOnce({ cursor: null, relationships: [], snapshot: { token: "observed" } })
+      .mockRejectedValue(new Error("connection reset"));
+
     const result = await runAuthzedBackfill(request(), dependencies);
 
-    // Handed to shadow evaluation as a freshness floor once the graph is known good.
-    expect(result.completedAtSnapshot).toBe("revision-42");
+    // A floor that might pre-date the writes is worse than no floor at all.
+    expect(result.completedAtSnapshot).toBeNull();
+    expect(result.counters.reconciled).toBe(1);
   });
 
   test("counts deliberately unprojected relationships as ignored, never orphaned", async () => {
@@ -580,7 +623,9 @@ describe("full-scope orphan sweep", () => {
     const result = await runAuthzedBackfill(request({ prune: true, scope: { kind: "all" } }), dependencies);
 
     expect(result.counters.pruned).toBe(1);
-    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith({ workspaceIds: ["ghost-ws"] });
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceIds: ["ghost-ws"] })
+    );
     expect(result.status).toBe("reconciled");
   });
 
@@ -693,7 +738,10 @@ describe("chunking", () => {
     });
   });
 
-  test("omits an empty list from a combined call rather than sending it", async () => {
+  test("passes an empty list through untouched rather than asserting a narrowed object type", async () => {
+    // Chunking builds each call by narrowing a full target object, so lists with nothing in them arrive
+    // as `[]`. Every reconciler treats that as a no-op, and it is what lets the chunker avoid a type
+    // assertion that would silently keep compiling if a target field ever became required.
     vi.mocked(source.readOrganizationSource).mockResolvedValue({
       ...emptySource,
       teamIds: ["team-1"],
@@ -701,7 +749,12 @@ describe("chunking", () => {
 
     await runAuthzedBackfill(request(), dependencies);
 
-    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith({ teamIds: ["team-1"] });
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith({
+      teamIds: ["team-1"],
+      teamMemberships: [],
+      workspaceIds: [],
+      workspaceTeamGrants: [],
+    });
   });
 
   test("bounds each list independently, so call count follows the longest list", async () => {
@@ -719,11 +772,13 @@ describe("chunking", () => {
 
     expect(apply.reconcileTeamWorkspace).toHaveBeenCalledTimes(2);
     // The short list is exhausted by the first call and must not be resent.
-    expect(apply.reconcileTeamWorkspace.mock.calls[0][0]).toEqual({
+    expect(apply.reconcileTeamWorkspace.mock.calls[0][0]).toMatchObject({
       teamIds: ["team-1"],
       teamMemberships: teamMemberships.slice(0, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE),
     });
-    expect(apply.reconcileTeamWorkspace.mock.calls[1][0]).toEqual({
+    // The short list is exhausted by the first call, so the second must not resend it.
+    expect(apply.reconcileTeamWorkspace.mock.calls[1][0]).toMatchObject({
+      teamIds: [],
       teamMemberships: teamMemberships.slice(AUTHZED_BACKFILL_TARGET_CHUNK_SIZE),
     });
   });
