@@ -33,6 +33,45 @@ export interface CartesianChartProps {
   tooltipHideLabel?: boolean;
 }
 
+/** Max width (px) a single x-axis label may occupy before wrapping. Keeps long question labels
+ * from bleeding into neighbouring data points. */
+const X_AXIS_TICK_WIDTH = 140;
+/** Vertical space reserved for the (wrapped, up to 3-line) x-axis labels. */
+const X_AXIS_HEIGHT = 56;
+
+/** Recharts renders default ticks as SVG `<text>`, which cannot wrap. This custom tick uses a
+ * `foreignObject` so long labels (e.g. full survey questions) wrap within a fixed max-width,
+ * stay centred under their data point, and clamp to 3 lines with the full text on hover. */
+function WrappingXAxisTick({
+  x,
+  y,
+  payload,
+  formatter,
+}: Readonly<{
+  x?: number;
+  y?: number;
+  payload?: { value?: unknown };
+  formatter: (value: unknown) => string;
+}>) {
+  const label = formatter(payload?.value);
+  return (
+    <foreignObject
+      x={(x ?? 0) - X_AXIS_TICK_WIDTH / 2}
+      y={(y ?? 0) + 4}
+      width={X_AXIS_TICK_WIDTH}
+      height={X_AXIS_HEIGHT}
+      // Let the tooltip cursor win the pointer; the label is decorative.
+      style={{ overflow: "visible", pointerEvents: "none" }}>
+      <div
+        title={label}
+        className="text-muted-foreground line-clamp-3 text-center text-xs leading-tight"
+        style={{ textWrap: "pretty" }}>
+        {label}
+      </div>
+    </foreignObject>
+  );
+}
+
 export function CartesianChart({
   data,
   xAxisKey,
@@ -49,6 +88,7 @@ export function CartesianChart({
   tooltipHideLabel,
 }: Readonly<CartesianChartProps>) {
   const yScale = computeYAxis(data, dataKeys, zeroBaseline);
+  const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
 
   return (
     <div className="h-full min-h-64 w-full">
@@ -63,8 +103,11 @@ export function CartesianChart({
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tick={hasCategoryAxis}
-            tickFormatter={xAxisTickFormatter ?? formatXAxisTick}
+            // Label every data point (default recharts hides overlapping ticks, which dropped
+            // long question labels on area/line charts) and wrap each label within a max-width.
+            interval={hasCategoryAxis ? 0 : undefined}
+            height={hasCategoryAxis ? X_AXIS_HEIGHT : undefined}
+            tick={hasCategoryAxis ? <WrappingXAxisTick formatter={tickFormatter} /> : false}
           />
           <YAxis
             tickLine={false}
