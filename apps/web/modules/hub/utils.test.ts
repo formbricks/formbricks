@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createHubResultFromError, getErrorProblem } from "./utils";
+import { NO_CONFIG_ERROR, createHubResultFromError, getErrorProblem, isHubNotConfigured } from "./utils";
 
 /**
  * The Hub SDK exposes the parsed problem body as `error` on its API errors. These cover the duck-typed
@@ -63,5 +63,24 @@ describe("createHubResultFromError", () => {
         problemDetail: "cursor is not valid",
       },
     });
+  });
+});
+
+describe("isHubNotConfigured", () => {
+  test("is true only for the NO_CONFIG sentinel", () => {
+    expect(isHubNotConfigured({ ...NO_CONFIG_ERROR })).toBe(true);
+  });
+
+  test("is false for a connection failure, which also has no status", () => {
+    // The SDK reports a dead socket / timeout without a status, so `getErrorStatus` returns 0 for it
+    // too. That is an upstream fault (502), not "the integration is switched off" (503).
+    const connectionFailure = createHubResultFromError(new Error("Connection error.")).error;
+
+    expect(connectionFailure?.status).toBe(0);
+    expect(isHubNotConfigured(connectionFailure!)).toBe(false);
+  });
+
+  test("is false for a Hub error with a status", () => {
+    expect(isHubNotConfigured({ status: 503, message: "Service Unavailable", detail: "" })).toBe(false);
   });
 });
