@@ -506,26 +506,40 @@ export const runAuthzedBackfill = async (
 
     invalid += source.invalidWorkspaceTeamGrants.length;
 
-    // Observed per organization when the scope names one, and also whenever nothing is going to be
-    // written: a dry run has to *detect* the drift an applying run would simply converge, or it would
-    // report a clean bill of health for a SpiceDB that is missing everything. An applying full sweep
-    // skips this, because its writes fix that direction and the global sweep covers the other one.
+    // Two reasons to observe an organization's own resources, and they have different owners.
+    //
+    // A narrow scope has no global sweep behind it, so the observation owns everything it finds. A full
+    // scope *does* have one, and the sweep sees strictly more — so here the observation exists only to
+    // compute the direction the sweep cannot: records PostgreSQL holds that SpiceDB is missing. Counting
+    // orphans on both paths would report every stale relationship twice, and the default invocation is
+    // exactly that combination (dry run, full scope).
+    //
+    // An applying full scope skips the observation entirely: its writes converge the missing direction
+    // anyway, and paying a read per resource to report what is about to be fixed is waste.
+    const ownsOrphanAccounting = request.scope.kind !== "all";
+    const needsMissingCheck = request.mode === "dry_run";
     let repairRefs: ReadonlyArray<TAuthzedSourceRef> = [];
     let prunableRefs: ReadonlyArray<TAuthzedSourceRef> = [];
-    if (request.scope.kind === "organization" || request.mode === "dry_run") {
+    if (ownsOrphanAccounting || needsMissingCheck) {
       try {
         const observation = await observeOrganizationResources(client, organizationId, source);
         const summary = summarizeObservation(observation.relationships);
+
+        if (needsMissingCheck) {
+          // The direction an applying run converges by writing, and the only one a report can speak to.
+          missingCount += findUnprojectedSourceRefs(toSourceRefs(source), summary.sourceRefs).length;
+        }
+
+        if (!ownsOrphanAccounting) {
+          return;
+        }
+
         ignored += summary.ignored;
         for (const ref of summary.unmanaged) {
           if (unmanaged.length < MAX_REPORTED_ENTRIES) {
             unmanaged.push(ref);
           }
         }
-
-        // The direction an applying run converges by writing, and the only one a report can speak to.
-        const unprojected = findUnprojectedSourceRefs(toSourceRefs(source), summary.sourceRefs);
-        missingCount += unprojected.length;
 
         recordMismatchedParents(await sourceReads.findMismatchedParentEdges(summary.parentEdges));
 

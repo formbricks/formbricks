@@ -73,6 +73,18 @@ export const forEachRelationshipPage = async (
       });
     }
 
+    // A cursor that does not advance would spin here forever, and a command that hangs with no output
+    // and no exit code is the worst thing to hand an operator. Termination is not ours to guarantee —
+    // it depends on the server — so assert it rather than assume it.
+    if (cursor !== undefined && page.cursor?.token === cursor.token) {
+      throw new AuthzedError({
+        attempts: 0,
+        code: AUTHZED_ERROR_CODES.INTERNAL,
+        operation: "for_each_relationship_page",
+        retryable: false,
+      });
+    }
+
     snapshot = page.snapshot ?? snapshot;
     cursor = page.cursor ?? undefined;
 

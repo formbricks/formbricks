@@ -313,6 +313,56 @@ describe("detecting records SpiceDB is missing", () => {
   });
 });
 
+describe("counting each finding once", () => {
+  const ghostTeam = {
+    relation: "organization",
+    resource: { objectId: "ghost-team", objectType: "team" },
+    subject: { objectId: "org-1", objectType: "organization" },
+  };
+
+  beforeEach(() => {
+    vi.mocked(source.readOrganizationIdPage).mockResolvedValueOnce(["org-1"]).mockResolvedValue([]);
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      teamIds: ["ghost-team"],
+    });
+    // The orphan is reachable two ways: from org-1's own team list, and from the `team` type sweep.
+    readRelationships.mockImplementation(({ filter }) =>
+      Promise.resolve(
+        filter.resourceType === "team"
+          ? { cursor: null, relationships: [ghostTeam], snapshot: { token: "revision-1" } }
+          : emptyPage
+      )
+    );
+    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) =>
+      Promise.resolve(refs.filter((ref) => ref.kind === "team" && ref.teamId === "ghost-team"))
+    );
+  });
+
+  test.each([
+    ["the default run, which is a dry run over every organization", { kind: "all" } as const],
+    ["a single organization", { kind: "organization", organizationId: "org-1" } as const],
+  ])("counts one orphaned relationship once in %s", async (_label, scope) => {
+    // A full scope observes per organization *and* sweeps globally. Only one of them may own the orphan
+    // accounting, or every stale relationship is reported twice — and inflated counts both mislead an
+    // operator and eat the prune budget twice over.
+    const result = await runAuthzedBackfill(request({ mode: "dry_run", scope }), dependencies);
+
+    expect(result.counters.orphaned).toBe(1);
+  });
+
+  test("still reports the missing direction on a full-scope dry run", async () => {
+    // The whole reason the per-organization observation runs at all under a full scope.
+    const result = await runAuthzedBackfill(
+      request({ mode: "dry_run", scope: { kind: "all" } }),
+      dependencies
+    );
+
+    expect(result.counters.missing).toBe(0);
+    expect(result.status).toBe("drifted");
+  });
+});
+
 describe("detecting a cross-tenant parent edge", () => {
   const foreignParent = {
     relation: "organization",

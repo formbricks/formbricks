@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TAuthzedRelationship, TAuthzedRelationshipPage } from "./client";
 import { AUTHZED_MAX_OBSERVED_RELATIONSHIPS_PER_UNIT, AUTHZED_MAX_RELATIONSHIP_READS } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
-import { readAllRelationships } from "./relationship-reads";
+import { forEachRelationshipPage, readAllRelationships } from "./relationship-reads";
 
 const relationship = (objectId: string): TAuthzedRelationship => ({
   relation: "owner",
@@ -159,5 +159,55 @@ describe("readAllRelationships", () => {
     for (const call of readRelationships.mock.calls) {
       expect(call[0].filter).toBe(narrowed);
     }
+  });
+});
+
+describe("forEachRelationshipPage", () => {
+  test("streams every page without accumulating them", async () => {
+    readRelationships.mockResolvedValueOnce(fullPage("first", "cursor-1")).mockResolvedValueOnce({
+      cursor: null,
+      relationships: [relationship("last")],
+      snapshot: { token: "revision-1" },
+    });
+    const pageSizes: number[] = [];
+
+    const snapshot = await forEachRelationshipPage(client, filter, async (relationships) => {
+      pageSizes.push(relationships.length);
+    });
+
+    expect(pageSizes).toEqual([AUTHZED_MAX_RELATIONSHIP_READS, 1]);
+    expect(snapshot).toEqual({ token: "revision-1" });
+  });
+
+  test("aborts on a cursor that does not advance rather than spinning forever", async () => {
+    // Termination depends on the server returning a cursor that moves. A command that hangs with no
+    // output and no exit code is worse for an operator than one that fails loudly.
+    readRelationships.mockResolvedValue(fullPage("stuck", "same-cursor"));
+
+    await expect(forEachRelationshipPage(client, filter, async () => {})).rejects.toThrow(
+      AUTHZED_ERROR_CODES.INTERNAL
+    );
+  });
+
+  test("propagates a callback failure so a partial stream cannot look complete", async () => {
+    readRelationships.mockResolvedValueOnce(fullPage("first", "cursor-1"));
+
+    await expect(
+      forEachRelationshipPage(client, filter, async () => {
+        throw new Error("classification failed");
+      })
+    ).rejects.toThrow("classification failed");
+  });
+
+  test("aborts when a later page reports a different revision", async () => {
+    readRelationships.mockResolvedValueOnce(fullPage("first", "cursor-1")).mockResolvedValueOnce({
+      cursor: null,
+      relationships: [relationship("last")],
+      snapshot: { token: "revision-2" },
+    });
+
+    await expect(forEachRelationshipPage(client, filter, async () => {})).rejects.toThrow(
+      AUTHZED_ERROR_CODES.ABORTED
+    );
   });
 });
