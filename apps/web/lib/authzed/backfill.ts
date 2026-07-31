@@ -606,7 +606,11 @@ export const runAuthzedBackfill = async (
     // deployment, so accumulating one would hold the whole store in memory and — worse — trip the
     // per-unit observation bound, turning the only mode that can remove stale relationships into one
     // that fails permanently on exactly the deployments that need it.
-    let capExceeded = false;
+    // Halting pruning is not the same as halting the sweep. Once the budget is spent — or a prune fails
+    // — reading continues so the reported orphan total stays the *true* magnitude rather than wherever
+    // the run happened to stop. That number is the whole diagnostic: "500 orphans" and "half a million"
+    // call for very different reactions, and the second is what says you aimed at the wrong database.
+    let pruningHalted = false;
 
     // Streaming means each page is classified on its own, so a record implied by relationships on two
     // different resource types would be counted twice. Exactly one kind is ambiguous that way: an API key
@@ -627,10 +631,6 @@ export const runAuthzedBackfill = async (
 
     for (const resourceType of getManagedResourceTypes()) {
       await forEachRelationshipPage(client, { resourceType }, async (relationships) => {
-        if (capExceeded) {
-          return;
-        }
-
         const summary = summarizeObservation(relationships);
         ignored += summary.ignored;
         unmanaged.push(...summary.unmanaged.slice(0, Math.max(0, MAX_REPORTED_ENTRIES - unmanaged.length)));
@@ -641,15 +641,15 @@ export const runAuthzedBackfill = async (
         orphaned += missingRefs.length;
         orphans.push(...missingRefs.slice(0, Math.max(0, MAX_REPORTED_ENTRIES - orphans.length)));
 
-        // The cap is a run-wide budget, not a per-page one: once the total would exceed it, stop pruning
-        // for the rest of the run rather than letting a page-sized slice through each time.
-        if (pruned + missingRefs.length > maxPrune) {
-          capExceeded = true;
-          skipped++;
+        if (pruningHalted || !isPruning || missingRefs.length === 0) {
           return;
         }
 
-        if (!isPruning || missingRefs.length === 0) {
+        // A run-wide budget, not a per-page one: once the total would exceed it nothing more is pruned,
+        // rather than letting a page-sized slice through on every page.
+        if (pruned + missingRefs.length > maxPrune) {
+          pruningHalted = true;
+          skipped++;
           return;
         }
 
@@ -657,7 +657,7 @@ export const runAuthzedBackfill = async (
         if (failure) {
           // Attributed to no organization: a fully orphaned resource has none left to attribute it to.
           recordProjectionFailure("", failure);
-          capExceeded = true;
+          pruningHalted = true;
           return;
         }
 

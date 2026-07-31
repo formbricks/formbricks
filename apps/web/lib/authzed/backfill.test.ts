@@ -679,6 +679,43 @@ describe("full-scope orphan sweep", () => {
     expect(result.status).toBe("reconciled");
   });
 
+  test("keeps counting after the cap is spent, so the reported total is the real magnitude", async () => {
+    // The count is the diagnostic. Stopping at the cap would report 2 when there are 4, and "a few" versus
+    // "far more than expected" are what tell an operator whether they aimed at the wrong database.
+    readRelationships.mockImplementation(({ cursor, filter }) =>
+      Promise.resolve(
+        filter.resourceType === "workspace" && cursor === undefined
+          ? {
+              cursor: { token: "page-2" },
+              relationships: [ghostWorkspace, ghostWorkspace],
+              snapshot: { token: "revision-1" },
+            }
+          : filter.resourceType === "workspace"
+            ? {
+                cursor: null,
+                relationships: [ghostWorkspace, ghostWorkspace],
+                snapshot: { token: "revision-1" },
+              }
+            : emptyPage
+      )
+    );
+    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) =>
+      Promise.resolve(refs.length > 0 ? [{ kind: "workspace", workspaceId: "ghost-ws" }] : [])
+    );
+
+    const result = await runAuthzedBackfill(
+      request({ maxPrune: 1, prune: true, scope: { kind: "all" } }),
+      dependencies
+    );
+
+    // Two pages, each yielding one orphan. The budget of one is spent on the first; the second exceeds
+    // it and halts pruning — but both are still counted, which is the point.
+    expect(result.counters.orphaned).toBe(2);
+    expect(result.counters.pruned).toBe(1);
+    // Reported once, not once per page.
+    expect(result.counters.skipped).toBe(1);
+  });
+
   test("prunes nothing when the sweep's orphan count exceeds the cap", async () => {
     vi.mocked(source.findMissingSourceRefs).mockResolvedValue([
       { kind: "workspace", workspaceId: "ghost-1" },
