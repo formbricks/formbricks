@@ -24,6 +24,8 @@ const readAuthInfo = {
 };
 
 const writeOnlyAuthInfo = { ...readAuthInfo, scopes: ["surveys:write"] };
+const feedbackReadAuthInfo = { ...readAuthInfo, scopes: ["feedbackRecords:read"] };
+const workflowReadAuthInfo = { ...readAuthInfo, scopes: ["workflows:read"] };
 
 function createToolServer() {
   const tools = new Map<
@@ -75,7 +77,7 @@ describe("registerWorkspaceTools", () => {
     });
   });
 
-  test("returns an insufficient-scope error without surveys:read (and skips the operation)", async () => {
+  test("returns an insufficient-scope error without any read scope (and skips the operation)", async () => {
     const { tools } = createToolServer();
 
     const result = await tools.get("list_workspaces")!.handler({}, { authInfo: writeOnlyAuthInfo });
@@ -83,5 +85,33 @@ describe("registerWorkspaceTools", () => {
     expect(listV3Workspaces).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
     expect(result.structuredContent.error).toMatchObject({ status: 403 });
+  });
+
+  // Workspace discovery is the prerequisite for the feedback-record tools too, so a token scoped only
+  // to feedbackRecords:read must be able to resolve its workspaceId.
+  test("allows a feedbackRecords-only token to discover workspaces", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(listV3Workspaces).mockResolvedValue(
+      successListResponse([], { nextCursor: null, totalCount: 0 }, { requestId: "req_tool" })
+    );
+
+    const result = await tools.get("list_workspaces")!.handler({}, { authInfo: feedbackReadAuthInfo });
+
+    expect(listV3Workspaces).toHaveBeenCalled();
+    expect(result.isError).toBeUndefined();
+  });
+
+  // Same for the workflow tools: auth.ts admits a token holding only workflows:read, so it must be
+  // able to resolve the workspaceId every workflow tool requires.
+  test("allows a workflows-only token to discover workspaces", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(listV3Workspaces).mockResolvedValue(
+      successListResponse([], { nextCursor: null, totalCount: 0 }, { requestId: "req_tool" })
+    );
+
+    const result = await tools.get("list_workspaces")!.handler({}, { authInfo: workflowReadAuthInfo });
+
+    expect(listV3Workspaces).toHaveBeenCalled();
+    expect(result.isError).toBeUndefined();
   });
 });

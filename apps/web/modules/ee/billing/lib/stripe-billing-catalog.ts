@@ -118,6 +118,14 @@ const getPriceKind = (price: Stripe.Price): TStripePriceKind | null => {
     return metadataKind;
   }
 
+  // A metered price explicitly tagged with a different kind (e.g. "workflow_runs") is a separate
+  // metered product, not part of the base/responses plan catalog. Exclude it here so the usage_type
+  // fallback below can't misclassify it as "responses" and collide with the real responses price on
+  // the same plan/interval (ENG-1936). Full catalog wiring for such kinds is added separately.
+  if (metadataKind) {
+    return null;
+  }
+
   if (price.recurring?.usage_type === "licensed") {
     return "base";
   }

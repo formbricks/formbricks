@@ -127,8 +127,8 @@ describe("authorizeEnvoyRequest", () => {
       type: "apiKey",
       apiKeyId: "key_1",
       organizationId: "org_1",
-      organizationAccess: { accessControl: { read: true, write: true } },
-      workspacePermissions: [],
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Linked", permission: "manage" }],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -241,8 +241,8 @@ describe("authorizeEnvoyRequest", () => {
       type: "apiKey",
       apiKeyId: "key_1",
       organizationId: "org_1",
-      organizationAccess: { accessControl: { read: true, write: false } },
-      workspacePermissions: [],
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Linked", permission: "read" }],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -391,6 +391,46 @@ describe("authorizeEnvoyRequest", () => {
     expect(response.status).toBe(200);
   });
 
+  test("denies a cross-org API key even with a matching workspace permission (ENG-1980)", async () => {
+    // The directory belongs to org_2; the key belongs to org_1 but carries a workspace permission
+    // whose workspaceId collides with one linked to the org_2 directory. Access must be denied by the
+    // key-belongs-to-directory-org check — this is the exact cross-tenant path ENG-1980 closed.
+    // Wiring-level guard: if authorizeFeedbackRecordsGatewayRequest ever passed the key's own
+    // organizationId (instead of the directory's) into the org check, that check turns into a
+    // tautology and this returns 200; the direct unit test on the pure function can't catch it.
+    mockGetFeedbackDirectoryAuthContext.mockResolvedValue({
+      organizationId: "org_2",
+      workspaceIds: ["workspace_1"],
+      isArchived: false,
+    });
+    mockGetIsFeedbackDirectoriesEnabled.mockResolvedValue(true);
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [
+        {
+          workspaceId: "workspace_1",
+          workspaceName: "Workspace 1",
+          permission: "manage",
+        },
+      ],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        headers: {
+          "x-api-key": "fbk_test",
+        },
+      })
+    );
+
+    expect(response.status).toBe(403);
+    expect(mockGetIsFeedbackDirectoriesEnabled).toHaveBeenCalledWith("org_2");
+  });
+
   test("returns 403 when API key has read-only workspace permission for a write op", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
@@ -453,7 +493,7 @@ describe("authorizeEnvoyRequest", () => {
     expect(response.status).toBe(403);
   });
 
-  test("allows API key with org-level read access for a read op even without workspace match", async () => {
+  test("denies an API key with only org-level access and no workspace match (org access does not grant feedback data)", async () => {
     mockGetFeedbackDirectoryAuthContext.mockResolvedValue({
       organizationId: "org_1",
       workspaceIds: [],
@@ -476,7 +516,7 @@ describe("authorizeEnvoyRequest", () => {
       })
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(403);
   });
 
   test("returns 403 when unify feedback entitlement is disabled", async () => {

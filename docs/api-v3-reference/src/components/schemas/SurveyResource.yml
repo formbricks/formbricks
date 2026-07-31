@@ -4,6 +4,7 @@ required:
   - workspaceId
   - createdAt
   - updatedAt
+  - archivedAt
   - name
   - type
   - status
@@ -26,6 +27,13 @@ properties:
   updatedAt:
     type: string
     format: date-time
+  archivedAt:
+    type:
+      - string
+      - 'null'
+    format: date-time
+    description: >-
+      Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
   name:
     type: string
   type:

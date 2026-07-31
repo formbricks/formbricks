@@ -19,6 +19,7 @@ vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
   isCloud: true,
   getBillingCacheKey: vi.fn(),
+  getBillingSyncLockKey: vi.fn(),
   getCustomCacheKey: vi.fn(),
   prismaOrganizationFindUnique: vi.fn(),
   prismaOrganizationBillingFindUnique: vi.fn(),
@@ -28,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   cacheWithCache: vi.fn(),
   cacheWithCacheNullable: vi.fn(),
   cacheDel: vi.fn(),
+  cacheTryLock: vi.fn(),
   loggerWarn: vi.fn(),
   getCloudPlanFromProduct: vi.fn(),
   customersCreate: vi.fn(),
@@ -70,6 +72,7 @@ vi.mock("@formbricks/cache", () => ({
   createCacheKey: {
     organization: {
       billing: mocks.getBillingCacheKey,
+      billingSyncLock: mocks.getBillingSyncLockKey,
     },
     custom: mocks.getCustomCacheKey,
   },
@@ -97,6 +100,7 @@ vi.mock("@/lib/cache", () => ({
     withCache: mocks.cacheWithCache,
     withCacheNullable: mocks.cacheWithCacheNullable,
     del: mocks.cacheDel,
+    tryLock: mocks.cacheTryLock,
   },
 }));
 
@@ -167,12 +171,17 @@ describe("organization-billing", () => {
     vi.clearAllMocks();
     mocks.isCloud = true;
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
+    mocks.getBillingSyncLockKey.mockImplementation(
+      (organizationId: string) => `org:${organizationId}:billing-sync-lock`
+    );
     mocks.getCustomCacheKey.mockImplementation(
       (namespace: string, identifier: string, subresource?: string) =>
         [namespace, identifier, subresource].filter(Boolean).join(":")
     );
     mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
     mocks.cacheWithCacheNullable.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
+    // Default: the read-through single-flight lock is acquired, so stale-sync tests exercise the sync.
+    mocks.cacheTryLock.mockResolvedValue({ ok: true, data: true });
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
@@ -749,6 +758,7 @@ describe("organization-billing", () => {
       data: [
         { id: "ent_0", lookup_key: "workspace-limit-5" },
         { id: "ent_00", lookup_key: "responses-included-2000" },
+        { id: "ent_000", lookup_key: "workflow-runs-included-1000" },
         { id: "ent_1", lookup_key: "custom-links-in-surveys" },
         { id: "ent_2", lookup_key: "custom-links-in-surveys" },
         { id: "ent_3", lookup_key: null },
@@ -766,12 +776,18 @@ describe("organization-billing", () => {
           workspaces: 5,
           monthly: {
             responses: 2000,
+            workflowRuns: 1000,
           },
         },
         stripe: expect.objectContaining({
           plan: "pro",
           subscriptionId: "sub_1",
-          features: ["workspace-limit-5", "responses-included-2000", "custom-links-in-surveys"],
+          features: [
+            "workspace-limit-5",
+            "responses-included-2000",
+            "workflow-runs-included-1000",
+            "custom-links-in-surveys",
+          ],
           lastSyncedEventId: "evt_new",
           lastStripeEventCreatedAt: expect.any(String),
           lastSyncedAt: expect.any(String),
@@ -783,9 +799,72 @@ describe("organization-billing", () => {
     expect(result?.stripe?.features).toEqual([
       "workspace-limit-5",
       "responses-included-2000",
+      "workflow-runs-included-1000",
       "custom-links-in-surveys",
     ]);
+    expect(result?.limits?.monthly?.workflowRuns).toBe(1000);
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
+  });
+
+  test("syncOrganizationBillingFromStripe clears a stale workflowRuns limit when the entitlement is absent (downgrade is not sticky)", async () => {
+    // Previous limits carry the Scale-era included volume; the new subscription has no
+    // workflow-runs entitlement (absence is the normal state on plans without workflows).
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        workspaces: 3,
+        monthly: {
+          responses: 1500,
+          workflowRuns: 1000,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          items: {
+            data: [
+              {
+                price: {
+                  metadata: {},
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
+                  recurring: { usage_type: "licensed", interval: "year" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.entitlementsList.mockResolvedValue({
+      data: [
+        { id: "ent_0", lookup_key: "workspace-limit-5" },
+        { id: "ent_00", lookup_key: "responses-included-2000" },
+      ],
+      has_more: false,
+    });
+
+    const result = await syncOrganizationBillingFromStripe("org_1", { id: "evt_new", created: 1739923300 });
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          limits: {
+            workspaces: 5,
+            monthly: {
+              responses: 2000,
+              workflowRuns: null,
+            },
+          },
+        }),
+      })
+    );
+    expect(result?.limits?.monthly?.workflowRuns).toBeNull();
   });
 
   test("createPaidPlanCheckoutSession rejects mixed-interval yearly checkout", async () => {
@@ -1939,6 +2018,7 @@ describe("organization-billing", () => {
           workspaces: 5,
           monthly: {
             responses: null,
+            workflowRuns: null,
           },
         },
         stripe: expect.objectContaining({
@@ -2027,6 +2107,7 @@ describe("organization-billing", () => {
           workspaces: 3,
           monthly: {
             responses: 1500,
+            workflowRuns: null,
           },
         },
         stripe: expect.objectContaining({
@@ -2407,6 +2488,69 @@ describe("organization-billing", () => {
       { error: expect.any(Error), organizationId: "org_1" },
       "Failed to refresh billing snapshot from Stripe"
     );
+  });
+
+  test("getOrganizationBillingWithReadThroughSync serves cached and skips sync when another process holds the lock", async () => {
+    const cachedBilling = {
+      stripeCustomerId: "cus_1",
+      stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+    };
+    mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
+    // Lock NOT acquired (another request/process is already syncing this org).
+    mocks.cacheTryLock.mockResolvedValue({ ok: true, data: false });
+
+    const result = await getOrganizationBillingWithReadThroughSync("org_1");
+
+    expect(result).toEqual(cachedBilling);
+    // Single-flight: no Stripe sync + no OrganizationBilling write happen in the loser.
+    expect(mocks.subscriptionsList).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+    // Lock is scoped to this org so it can't gate a different tenant's sync.
+    expect(mocks.cacheTryLock).toHaveBeenCalledWith("org:org_1:billing-sync-lock", "1", 30_000);
+  });
+
+  test("getOrganizationBillingWithReadThroughSync serves cached and skips sync when the lock backend is unavailable", async () => {
+    const cachedBilling = {
+      stripeCustomerId: "cus_1",
+      stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+    };
+    mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
+    // Redis unavailable → tryLock returns an error Result; treat as "not acquired", serve cached.
+    mocks.cacheTryLock.mockResolvedValue({ ok: false, error: { code: "RedisConnectionError" } });
+
+    const result = await getOrganizationBillingWithReadThroughSync("org_1");
+
+    expect(result).toEqual(cachedBilling);
+    expect(mocks.subscriptionsList).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+  });
+
+  test("getOrganizationBillingWithReadThroughSync stops waiting at the deadline and serves cached (never overruns the lease)", async () => {
+    vi.useFakeTimers();
+    try {
+      const cachedBilling = {
+        stripeCustomerId: "cus_1",
+        // Fixed old timestamp so staleness doesn't depend on the fake clock.
+        stripe: { lastSyncedAt: new Date("2020-01-01T00:00:00.000Z").toISOString() },
+      };
+      mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
+      // Sync hangs on its first DB read → it would run past the 20s deadline (which is < the 30s lease).
+      mocks.prismaOrganizationBillingFindUnique.mockReturnValue(new Promise(() => {}));
+
+      const resultPromise = getOrganizationBillingWithReadThroughSync("org_1");
+      await vi.advanceTimersByTimeAsync(20_000 + 1);
+      const result = await resultPromise;
+
+      expect(result).toEqual(cachedBilling);
+      // Deadline fired before any write, so the request returns without blocking or writing.
+      expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+      expect(mocks.loggerWarn).toHaveBeenCalledWith(
+        { error: expect.any(Error), organizationId: "org_1" },
+        "Failed to refresh billing snapshot from Stripe"
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("getOrganizationBillingWithReadThroughSync bypasses Redis cache in self-hosted mode", async () => {

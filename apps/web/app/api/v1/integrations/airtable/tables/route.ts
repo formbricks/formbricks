@@ -3,7 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getAirtableToken, getTables } from "@/lib/airtable/service";
 import { getIntegrationByType } from "@/lib/integration/service";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { canUserReadWorkspaceIntegrations } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -28,7 +28,10 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    const canUserAccessWorkspace = await canUserReadWorkspaceIntegrations(
+      authentication.user.id,
+      workspaceId
+    );
     if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),

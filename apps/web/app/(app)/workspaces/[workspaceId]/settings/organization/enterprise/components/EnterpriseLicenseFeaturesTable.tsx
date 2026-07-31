@@ -91,6 +91,11 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
       labelKey: t("workspace.settings.general.ai_smart_tools_enabled"),
       docsUrl: "https://formbricks.com/docs/self-hosting/configuration/ai",
     },
+    {
+      key: "workflows",
+      labelKey: t("workspace.settings.enterprise.workflows"),
+      docsUrl: "https://formbricks.com/docs/workflows/overview",
+    },
   ];
 };
 

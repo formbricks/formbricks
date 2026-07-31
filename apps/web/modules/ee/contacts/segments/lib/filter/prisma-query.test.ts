@@ -1908,4 +1908,67 @@ describe("survey interaction filters", () => {
 
     expect(clause.NOT.responses.some.finished).toBe(true);
   });
+  describe("cross-workspace nested segments", () => {
+    // Regression: getSegment looks up by id alone and segmentId comes from a caller-authored filter
+    // tree, so another workspace's segment could be nested and its filters evaluated against contacts
+    // the caller controls — probing seeded values against membership reveals the other team's rules.
+    const nestedFilters: TBaseFilters = [
+      {
+        id: "nested_filter_1",
+        connector: null,
+        resource: {
+          id: "attr_secret",
+          root: { type: "attribute" as const, contactAttributeKey: "plan" },
+          value: "enterprise",
+          qualifier: { operator: "equals" },
+        },
+      },
+    ];
+
+    const buildForeignSegment = (workspaceId: string): TSegmentWithSurveyRefs => ({
+      id: "foreign-segment-id",
+      filters: nestedFilters,
+      workspaceId,
+      title: "Another team's segment",
+      description: null,
+      isPrivate: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      surveys: [],
+      activeSurveys: [],
+      inactiveSurveys: [],
+    });
+
+    const nestingFilters: TBaseFilters = [
+      {
+        id: "filter_1",
+        connector: null,
+        resource: {
+          id: "segment_1",
+          root: { type: "segment" as const, segmentId: "foreign-segment-id" },
+          value: "",
+          qualifier: { operator: "userIsIn" },
+        },
+      },
+    ];
+
+    test("does not apply the filters of a segment from another workspace", async () => {
+      vi.mocked(getSegment).mockResolvedValue(buildForeignSegment("someone-elses-workspace"));
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, nestingFilters, mockWorkspaceId);
+
+      expect(result.ok).toBe(true);
+      // The foreign segment resolves to {}, so nothing from its filter tree leaks into the query.
+      expect(JSON.stringify(result)).not.toContain("enterprise");
+    });
+
+    test("still applies the filters of a segment in the same workspace", async () => {
+      vi.mocked(getSegment).mockResolvedValue(buildForeignSegment(mockWorkspaceId));
+
+      const result = await segmentFilterToPrismaQuery(mockSegmentId, nestingFilters, mockWorkspaceId);
+
+      expect(result.ok).toBe(true);
+      expect(JSON.stringify(result)).toContain("enterprise");
+    });
+  });
 });

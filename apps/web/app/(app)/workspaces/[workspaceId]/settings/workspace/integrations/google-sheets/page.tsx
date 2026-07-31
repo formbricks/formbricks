@@ -9,6 +9,7 @@ import {
   GOOGLE_SHEETS_REDIRECT_URL,
   WEBAPP_URL,
 } from "@/lib/constants";
+import { redactIntegrationCredentials } from "@/lib/integration/redact-credentials";
 import { getIntegrations } from "@/lib/integration/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -46,7 +47,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           isEnabled={isEnabled}
           workspaceId={workspace.id}
           surveys={surveys}
-          googleSheetIntegration={googleSheetIntegration}
+          googleSheetIntegration={redactIntegrationCredentials(googleSheetIntegration)}
           webAppUrl={WEBAPP_URL}
           locale={locale ?? DEFAULT_LOCALE}
         />

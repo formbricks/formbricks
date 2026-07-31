@@ -3,18 +3,10 @@
   font-size: 14px;
 }
 
-.editor li {
-  padding-left: 1.28571429em;
-  text-indent: -1.28571429em;
-}
-
-.editor ul {
-  list-style: disc inside;
-}
-
-.editor ol {
-  list-style: decimal inside;
-}
+/*
+ * List rendering lives in styles-editor-frontend.css, which the survey runtime injects too, so the
+ * editor and the respondent view stay in sync. Editor-only list rules would re-introduce the drift.
+ */
 
 .editor-container {
   border-radius: 6px;
@@ -44,6 +36,10 @@
 
 .editor-input {
   height: auto;
+  /* Fill the wrapper's min-height so a click anywhere in the visible box focuses the editor —
+     with height:auto alone, the area below the last line belongs to .editor-inner and clicks
+     there land outside the contentEditable. */
+  min-height: var(--editor-min-height, 48px);
   font-size: 14px;
   position: relative;
   tab-size: 1;

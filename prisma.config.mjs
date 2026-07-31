@@ -14,7 +14,7 @@ import "dotenv/config";
 // CLI at all.
 
 export default {
-  schema: "packages/database/schema.prisma",
+  schema: "packages/database/schema",
   migrations: {
     // This points at the GENERATED, git-ignored scratch dir — NOT the checked-in
     // source of truth `packages/database/migration` (singular). That directory is

@@ -33,5 +33,5 @@ function lintStagedFiles(files) {
 export default {
   "(apps|packages)/**/*.{js,ts,jsx,tsx,mjs}": ["prettier --write", lintStagedFiles],
   "*.json": ["prettier --write"],
-  "packages/database/schema.prisma": ["prisma format"],
+  "packages/database/schema/**/*.prisma": ["prisma format"],
 };

@@ -1,9 +1,19 @@
 import { JOB_NAMES } from "@/src/constants";
 import { type AnyBackgroundJobDefinition, toAnyBackgroundJobDefinition } from "@/src/contracts";
 import { processResponsePipelineJob } from "@/src/processors/response-pipeline";
+import { processSurveyArchivePurgeJob } from "@/src/processors/survey-archive-purge";
 import { processSurveySchedulingJob } from "@/src/processors/survey-scheduling";
 import { processTestLogJob } from "@/src/processors/test-log";
-import { ZResponsePipelineJobData, ZSurveySchedulingJobData, ZTestLogJobData } from "@/src/types";
+import { processWorkflowRunJob } from "@/src/processors/workflow-run";
+import { processWorkflowRunReconcileJob } from "@/src/processors/workflow-run-reconcile";
+import {
+  ZResponsePipelineJobData,
+  ZSurveyArchivePurgeJobData,
+  ZSurveySchedulingJobData,
+  ZTestLogJobData,
+  ZWorkflowRunJobData,
+  ZWorkflowRunReconcileJobData,
+} from "@/src/types";
 
 export const backgroundJobDefinitions = {
   [JOB_NAMES.responsePipeline]: toAnyBackgroundJobDefinition({
@@ -16,10 +26,25 @@ export const backgroundJobDefinitions = {
     name: JOB_NAMES.surveyScheduling,
     schema: ZSurveySchedulingJobData,
   }),
+  [JOB_NAMES.surveyArchivePurge]: toAnyBackgroundJobDefinition({
+    handle: processSurveyArchivePurgeJob,
+    name: JOB_NAMES.surveyArchivePurge,
+    schema: ZSurveyArchivePurgeJobData,
+  }),
   [JOB_NAMES.testLog]: toAnyBackgroundJobDefinition({
     handle: processTestLogJob,
     name: JOB_NAMES.testLog,
     schema: ZTestLogJobData,
+  }),
+  [JOB_NAMES.workflowRun]: toAnyBackgroundJobDefinition({
+    handle: processWorkflowRunJob,
+    name: JOB_NAMES.workflowRun,
+    schema: ZWorkflowRunJobData,
+  }),
+  [JOB_NAMES.workflowRunReconcile]: toAnyBackgroundJobDefinition({
+    handle: processWorkflowRunReconcileJob,
+    name: JOB_NAMES.workflowRunReconcile,
+    schema: ZWorkflowRunReconcileJobData,
   }),
 } as const satisfies Record<string, AnyBackgroundJobDefinition>;
 

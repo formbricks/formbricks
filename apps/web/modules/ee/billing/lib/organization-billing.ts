@@ -28,6 +28,25 @@ import { stripeClient } from "./stripe-client";
 import { CLOUD_PLAN_LEVEL, type TCloudStripePlan, getCloudPlanFromProduct } from "./stripe-plan";
 
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
+// Single-flight lock TTL for the stale read-through Stripe sync: long enough to cover a few Stripe
+// round-trips + the write, short enough that a crashed holder can't block refreshes for long. The
+// lock is released by expiry (no explicit unlock), matching the license-fetch pattern.
+const BILLING_SYNC_LOCK_TTL_MS = 30 * 1000;
+// Hard deadline for the read-through sync, strictly below the lock TTL. This runs on a hot render
+// path, so if Stripe is slow we stop waiting and serve the cached snapshot instead of blocking the
+// request. Because the OrganizationBilling write is idempotent (Stripe is the source of truth;
+// last-write-wins on a single row), a sync that finishes after the deadline — or after the lease
+// expires — can't corrupt data or deadlock, so a lease heartbeat isn't needed.
+const BILLING_SYNC_DEADLINE_MS = 20 * 1000;
+
+/** A promise that rejects after `ms`, with a canceller so the timer never outlives the race. */
+const rejectAfter = (ms: number, message: string): { promise: Promise<never>; cancel: () => void } => {
+  let timer: ReturnType<typeof setTimeout>;
+  const promise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return { promise, cancel: () => clearTimeout(timer) };
+};
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set<string>(["trialing", "active", "past_due", "unpaid", "paused"]);
 
 const ORGANIZATION_BILLING_SELECT = {
@@ -52,6 +71,9 @@ export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+      // No included workflow runs by default — the Scale entitlement grants the volume, and
+      // self-hosted gates workflows by the boolean license feature rather than metering.
+      workflowRuns: null,
     },
   },
   stripeCustomerId: null,
@@ -1307,6 +1329,10 @@ const resolveEntitlementDrivenLimits = (
 ) => {
   const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
   const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
+  const workflowRunsIncludedFromEntitlements = parseEntitlementLimit(
+    featureLookupKeys,
+    "workflow-runs-included-"
+  );
 
   const workspacesLimit =
     workspaceLimitFromEntitlements === undefined
@@ -1332,10 +1358,18 @@ const resolveEntitlementDrivenLimits = (
     );
   }
 
+  // Absent workflow-runs entitlement resolves to null, NOT the previous value: unlike workspaces/
+  // responses (present on every plan, so absence signals a bad read worth preserving against), this
+  // entitlement only exists on plans with workflows — absence is the normal state, and preserving
+  // would keep a stale included volume forever after a downgrade. A transient bad read self-heals
+  // on the next sync; `unlimited` still parses to null upstream.
+  const workflowRunsIncludedLimit = workflowRunsIncludedFromEntitlements ?? null;
+
   return {
     workspaces: workspacesLimit,
     monthly: {
       responses: responsesIncludedLimit,
+      workflowRuns: workflowRunsIncludedLimit,
     },
   };
 };
@@ -1659,9 +1693,31 @@ export const getOrganizationBillingWithReadThroughSync = async (
     return cachedBilling;
   }
 
+  // Single-flight the stale refresh: withCache does NOT dedupe concurrent callers, so without this a
+  // burst of requests for the same org (e.g. the post-login workspace layout render) would each run
+  // the Stripe sync + OrganizationBilling write — a thundering herd and a deadlock surface (ENG-2038).
+  // Only the lock winner refreshes; everyone else (incl. the Redis-unavailable case) serves the
+  // already-cached snapshot, which is at most one stale cycle old — acceptable for billing display.
+  const lockResult = await cache.tryLock(
+    createCacheKey.organization.billingSyncLock(organizationId),
+    "1",
+    BILLING_SYNC_LOCK_TTL_MS
+  );
+  if (!(lockResult.ok && lockResult.data === true)) {
+    return cachedBilling;
+  }
+
   try {
-    const syncedBilling = await syncOrganizationBillingFromStripe(organizationId);
-    return syncedBilling ?? cachedBilling;
+    const syncPromise = syncOrganizationBillingFromStripe(organizationId);
+    // Guard against an unhandled rejection if the sync settles after the deadline already won the race.
+    syncPromise.catch(() => undefined);
+    const deadline = rejectAfter(BILLING_SYNC_DEADLINE_MS, "billing sync exceeded deadline");
+    try {
+      const syncedBilling = await Promise.race([syncPromise, deadline.promise]);
+      return syncedBilling ?? cachedBilling;
+    } finally {
+      deadline.cancel();
+    }
   } catch (error) {
     logger.warn({ error, organizationId }, "Failed to refresh billing snapshot from Stripe");
     return cachedBilling;

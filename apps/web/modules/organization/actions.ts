@@ -7,7 +7,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
@@ -53,7 +53,10 @@ export const createOrganizationAction = authenticatedActionClient
         name: DEFAULT_WORKSPACE_NAME,
       });
 
-      groupIdentifyPostHog("organization", newOrganization.id, { name: newOrganization.name });
+      groupIdentifyPostHog("organization", newOrganization.id, {
+        name: newOrganization.name,
+        email_domain: getEmailDomain(ctx.user.email),
+      });
       groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
 
       capturePostHogEvent(

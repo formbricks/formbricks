@@ -14,6 +14,7 @@ import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
+import { VERIFIED_EMAIL_RESPONSE_KEY } from "@/modules/survey/link/lib/verify-email-gate";
 import { updateResponseWithQuotaEvaluation } from "./response";
 import { getValidatedResponseUpdateInput } from "./validated-response-update-input";
 
@@ -221,6 +222,13 @@ export const putResponseHandler = async ({
         surveyId: survey.id,
       }),
     };
+  }
+
+  // The update payload carries no `meta`, so there is no token to re-verify here. The address was
+  // established authoritatively from the verification token when the response was created, so drop any
+  // client-supplied value rather than letting an update overwrite it with an arbitrary address.
+  if (survey.isVerifyEmailEnabled && responseUpdateInput.data) {
+    delete responseUpdateInput.data[VERIFIED_EMAIL_RESPONSE_KEY];
   }
 
   const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput, workspaceId);

@@ -196,6 +196,7 @@ const baseSurveyProperties = {
   autoComplete: 7,
   publishOn: null,
   closeOn: null,
+  archivedAt: null,
   redirectUrl: "https://github.com/formbricks/formbricks",
   recontactDays: 3,
   displayLimit: 3,

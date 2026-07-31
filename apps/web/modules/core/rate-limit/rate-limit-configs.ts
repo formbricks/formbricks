@@ -5,6 +5,7 @@ export const rateLimitConfigs = {
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
+    emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
   },
 
   // API endpoints - higher limits for legitimate usage
@@ -47,6 +48,7 @@ export const rateLimitConfigs = {
       namespace: "action:validate-survey-pin",
     }, // 10 per minute — prevents brute-force PIN guessing
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
+    unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
     inviteMember: { interval: 3600 * 24, allowedPerInterval: 20, namespace: "action:invite-member" }, // 20 per day  — bounds invite-spam abuse
     bulkInviteMembers: {
       interval: 3600 * 24,

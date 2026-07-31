@@ -13,7 +13,7 @@ export const getPublishedLinkSurveys = reactCache(
   async (workspaceId: string): Promise<PublishedLinkSurvey[]> => {
     try {
       const surveys = await prisma.survey.findMany({
-        where: { workspaceId, status: "inProgress", type: "link" },
+        where: { workspaceId, status: "inProgress", type: "link", archivedAt: null },
         select: {
           id: true,
           name: true,

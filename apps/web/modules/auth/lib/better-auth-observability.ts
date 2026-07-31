@@ -102,9 +102,23 @@ export const signInAuditDatabaseHook: NonNullable<
 };
 
 /**
- * Route Better Auth's logger to @formbricks/logger and capture errors to Sentry in production —
- * replaces auth.ts's placeholder logger (and the route's Sentry.captureException on auth failures).
- * Normal auth failures (wrong password) log at `warn`, so only genuine internal errors reach Sentry.
+ * Route Better Auth's logger to @formbricks/logger and capture GENUINE internal faults to Sentry in
+ * production — replaces auth.ts's placeholder logger (and the route's Sentry.captureException on auth
+ * failures).
+ *
+ * Sentry gating (ENG-2037): Better Auth logs many EXPECTED, handled rejections at `error` level, so
+ * "capture everything at error" floods Sentry with non-actionable noise. Two shapes dominate:
+ *   1. OAuth callback rejections logged as a bare string code (`logger.error("account_not_linked")`,
+ *      `"unable_to_create_user"`, `"unable_to_get_user_info"`, … via `redirectOnError`) — no Error
+ *      object; these are client-facing redirects, e.g. our blocked-domain / SSO provisioning gate
+ *      returning `false`. These were the top volume in Sentry (FORMBRICKS-16Q).
+ *   2. Credential-path rejections thrown as a Better Auth `APIError` (`FAILED_TO_CREATE_USER`,
+ *      `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`, invalid-input codes) — a 4xx-equivalent response, not a
+ *      server fault.
+ * Neither is an actionable error, so we capture ONLY a real `Error` that is NOT an `APIError` (the
+ * genuinely-exceptional class: DB/adapter faults, misconfig, unexpected throws — including the
+ * `deadlock detected` DriverAdapterError we watch for ENG-2038). Everything still reaches the local
+ * logger, so handled rejections remain visible in logs — they just don't page via Sentry.
  */
 export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
   level: "warn",
@@ -116,7 +130,11 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
       if (SENTRY_DSN && IS_PRODUCTION) {
         // BA usually passes the Error as a trailing arg, but a couple of sites pass it as `message`.
         const cause = [...args, message].find((arg): arg is Error => arg instanceof Error);
-        Sentry.captureException(cause ?? new Error(`[better-auth] ${String(message)}`));
+        // Skip handled rejections: a bare string code (no Error) or a client-facing APIError. Capture
+        // only genuine internal faults so Sentry stays actionable (see the reason-split above).
+        if (cause && !isAPIError(cause)) {
+          Sentry.captureException(cause);
+        }
       }
     } else if (level === "warn") {
       contextLogger.warn(message);

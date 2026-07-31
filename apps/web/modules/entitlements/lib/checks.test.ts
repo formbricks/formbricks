@@ -27,7 +27,7 @@ const baseContext: TOrganizationEntitlementsContext = {
   organizationId: "org1",
   source: "cloud_stripe",
   features: ["rbac", "spam-protection"],
-  limits: { workspaces: 3, monthlyResponses: 500 },
+  limits: { workspaces: 3, monthlyResponses: 500, monthlyWorkflowRuns: null },
   licenseStatus: "no-license",
   licenseFeatures: null,
   stripeCustomerId: "cus_1",
@@ -145,6 +145,26 @@ describe("hasOrganizationEntitlementWithLicenseGuard", () => {
     expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "ai-smart-tools")).toBe(false);
   });
 
+  test("returns true when license active and workflows mapped feature enabled", async () => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      features: ["workflows"],
+      licenseStatus: "active",
+      licenseFeatures: { workflows: true } as TOrganizationEntitlementsContext["licenseFeatures"],
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "workflows")).toBe(true);
+  });
+
+  test("returns false when license active but workflows mapped feature disabled", async () => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      features: ["workflows"],
+      licenseStatus: "active",
+      licenseFeatures: { workflows: false } as TOrganizationEntitlementsContext["licenseFeatures"],
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "workflows")).toBe(false);
+  });
+
   test("returns true when license active and feature has no license mapping", async () => {
     mockGetContext.mockResolvedValue({
       ...baseContext,
@@ -172,6 +192,7 @@ describe("getOrganizationEntitlementLimits", () => {
     expect(await getOrganizationEntitlementLimits("org1")).toEqual({
       workspaces: 3,
       monthlyResponses: 500,
+      monthlyWorkflowRuns: null,
     });
   });
 });

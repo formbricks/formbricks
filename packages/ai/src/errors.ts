@@ -24,6 +24,27 @@ export class AIConfigurationError extends Error {
   }
 }
 
+export interface AIOutputTokenLimitErrorDetails {
+  maxOutputTokens?: number;
+  outputTokens?: number;
+  reasoningTokens?: number;
+}
+
+/**
+ * Thrown when a generation ends because the model hit the output token limit (finish reason
+ * "length") before completing its response, so no valid structured output exists. Lives here so
+ * apps can branch on a package-owned error with plain token counts instead of AI SDK internals.
+ */
+export class AIOutputTokenLimitError extends Error {
+  details: AIOutputTokenLimitErrorDetails;
+
+  constructor(details: AIOutputTokenLimitErrorDetails = {}) {
+    super("AI generation stopped because the output token limit was reached");
+    this.name = "AIOutputTokenLimitError";
+    this.details = details;
+  }
+}
+
 export interface AIProviderErrorInfo {
   /** Provider returned HTTP 429 — quota / rate limit exhausted. */
   isQuotaExhausted: boolean;
