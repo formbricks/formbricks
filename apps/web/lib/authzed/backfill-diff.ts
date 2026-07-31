@@ -152,10 +152,13 @@ const SOURCE_REF_RESOLVERS = {
 /**
  * Resource types Formbricks projects today and may therefore reconcile.
  *
- * Sorted so the sweep's order is deterministic and two runs over unchanged state produce identical
- * output.
+ * Sorted explicitly, with a comparator, for two reasons: the sweep's order must not depend on how the
+ * resolver literal above happens to be written, and it must be identical between runs so two passes
+ * over unchanged state produce identical output.
  */
-const MANAGED_RESOURCE_TYPES: ReadonlyArray<string> = Object.keys(SOURCE_REF_RESOLVERS).sort();
+const MANAGED_RESOURCE_TYPES: ReadonlyArray<string> = Object.keys(SOURCE_REF_RESOLVERS).sort((left, right) =>
+  left.localeCompare(right)
+);
 
 export const isManagedResourceType = (resourceType: string): boolean =>
   MANAGED_RESOURCE_TYPES.includes(resourceType);
