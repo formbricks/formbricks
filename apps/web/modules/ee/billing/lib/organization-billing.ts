@@ -490,9 +490,8 @@ const ensureHobbySubscription = async (
   if (!stripeClient) return;
   const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
 
-  // Include subscriptionCount so the key is stable across concurrent calls (same
-  // count → same key → Stripe deduplicates) but changes after a cancellation
-  // (count increases → new key → allows legitimate re-creation).
+  // subscriptionCount in the key: stable across concurrent calls (dedup), but bumps after a
+  // cancellation so re-creation isn't blocked by the old key.
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
@@ -503,10 +502,7 @@ const ensureHobbySubscription = async (
   );
 };
 
-/**
- * Checks whether the given email has already used a Pro trial on any Stripe customer.
- * Searches all customers with that email and inspects their subscription history.
- */
+/** Whether this email has already used a Pro trial, across all Stripe customers sharing it. */
 const hasEmailUsedProTrial = async (email: string, proProductId: string): Promise<boolean> => {
   if (!stripeClient) return false;
 
@@ -612,9 +608,8 @@ export const createPaidPlanCheckoutSession = async (input: {
       address: "auto",
       name: "auto",
     },
-    // Carry the purchased plan so the confirmation page can force a Stripe sync (the read-through
-    // sync only refreshes a >5min-stale snapshot, so a fresh post-checkout snapshot would otherwise
-    // keep serving the old plan) before returning to billing.
+    // Carries the purchased plan so the confirmation page can force a Stripe sync — the read-
+    // through sync only refreshes a >5min-stale snapshot and would otherwise serve the old plan.
     success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1&plan=${input.plan}`,
     cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
     metadata: {
@@ -682,6 +677,53 @@ export type TUpgradePaymentConfirmation = {
   requiresAction: boolean;
 };
 
+// Invoice amount from Stripe (includes tax and metered usage, unlike the catalog list price). Shared
+// by the trial-conversion and plain-upgrade previews. Returns null only when Stripe isn't configured;
+// throws if Stripe can't price the invoice — callers needing a fallback must catch.
+const previewFullConversionChargeCents = async (
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  customerId: string,
+  targetPlan: Exclude<TStandardCloudPlan, "hobby">,
+  targetInterval: TCloudBillingInterval
+): Promise<{ amountDue: number; currency: string } | null> => {
+  if (!stripeClient) return null;
+  const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
+  const existingDeletions = subscription.items.data.map((item) => ({ id: item.id, deleted: true as const }));
+  const preview = await stripeClient.invoices.createPreview({
+    customer: customerId,
+    subscription: subscription.id,
+    subscription_details: {
+      items: [...existingDeletions, ...targetItems],
+      proration_behavior: "always_invoice",
+      // Only for trialing: ending the trial resets the cycle and bills a full period, so the preview
+      // must mirror that. Never send it otherwise — trial_end re-anchors the billing cycle, which
+      // would turn an ordinary mid-cycle proration into a full-period charge (matches the real update
+      // in updateSubscriptionItemsImmediately, which sends no trial_end when not trialing).
+      ...(subscription.status === "trialing" ? { trial_end: "now" as const } : {}),
+    },
+  });
+  return { amountDue: preview.amount_due, currency: preview.currency };
+};
+
+// Codes meaning the card needs cardholder authentication off-session. error_if_incomplete rolls the
+// update back (no PaymentIntent survives to confirm), so the only useful action is a distinct error.
+const CARD_AUTHENTICATION_ERROR_CODES = new Set([
+  "authentication_required",
+  "subscription_payment_intent_requires_action",
+]);
+
+const toTrialConversionError = (error: unknown): unknown => {
+  const code = (error as { code?: string } | null)?.code;
+  const declineCode = (error as { decline_code?: string } | null)?.decline_code;
+  if (
+    (code && CARD_AUTHENTICATION_ERROR_CODES.has(code)) ||
+    (declineCode && CARD_AUTHENTICATION_ERROR_CODES.has(declineCode))
+  ) {
+    return new OperationNotAllowedError("card_authentication_required");
+  }
+  return error;
+};
+
 const updateSubscriptionItemsImmediately = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
   targetPlan: TStandardCloudPlan,
@@ -702,6 +744,28 @@ const updateSubscriptionItemsImmediately = async (
     await stripeClient.subscriptions.update(subscription.id, {
       cancel_at_period_end: false,
     });
+  }
+
+  // Ends the trial and switches plans in a SINGLE update so the card is billed exactly once for the
+  // target plan — two updates would double-invoice (trial-end bills the old plan, item change bills
+  // the new one). error_if_incomplete charges synchronously and throws on decline, so a bad card
+  // blocks the upgrade instead of granting access on an unpaid invoice.
+  //
+  // Trade-off: a card needing off-session 3DS also errors here (the update rolls back before the
+  // browser can confirm, leaving no PaymentIntent) — translated into a distinct error via
+  // toTrialConversionError so the UI can ask for a non-3DS card.
+  if (subscription.status === "trialing") {
+    try {
+      await stripeClient.subscriptions.update(subscription.id, {
+        items: [...existingDeletions, ...targetItems],
+        trial_end: "now",
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      });
+    } catch (error) {
+      throw toTrialConversionError(error);
+    }
+    return { clientSecret: null, requiresAction: false };
   }
 
   const updated = await stripeClient.subscriptions.update(subscription.id, {
@@ -930,10 +994,8 @@ const scheduleSubscriptionPlanChange = async (
 };
 
 /**
- * Whether a payment method has been collected for the subscription. Checks the subscription
- * default first, then falls back to the customer-level default so a card saved on the customer
- * (but not yet attached to the subscription) still counts — this avoids falsely blocking a
- * legitimately card-backed org on a paid switch.
+ * Whether a payment method is on file: subscription default first, falling back to the customer
+ * default so a card saved on the customer but not yet attached to the subscription still counts.
  */
 const hasCollectedPaymentMethod = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
@@ -956,15 +1018,16 @@ const hasCollectedPaymentMethod = async (
 };
 
 /**
- * Cancels a no-card trial at period end so the org lands on Hobby without ever being converted
- * into a billable schedule. Releases any stray schedule first (a schedule would otherwise rebuild
- * the trial into a billable Pro phase), then sets cancel_at_period_end so Stripe cancels the
- * trialing subscription instead of charging it — no schedule, no card required.
+ * A Pro trial opting back to Hobby switches immediately: end the trial now and move to the free
+ * Hobby plan in a single update. Hobby is free, so proration_behavior "none" keeps the switch
+ * charge-free and no card is required. Scheduling instead (the paid-plan path) would strand the user
+ * on a paid trial they explicitly left. Any stray schedule/cancel flag is cleared first so it can't
+ * rebuild the Pro phase, and the pending-change snapshot is nulled.
  */
-const cancelTrialToHobbyAtPeriodEnd = async (
+const switchTrialToHobbyImmediately = async (
   organizationId: string,
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
-): Promise<TOrganizationStripePendingChange> => {
+): Promise<void> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
   }
@@ -977,25 +1040,68 @@ const cancelTrialToHobbyAtPeriodEnd = async (
     });
   }
 
+  // cancel_at_period_end isn't a pending-update attribute, so clear it in a separate plain update first.
+  if (subscription.cancel_at_period_end) {
+    await stripeClient.subscriptions.update(subscription.id, {
+      cancel_at_period_end: false,
+    });
+  }
+
+  const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
+  const existingDeletions = subscription.items.data.map((item) => ({
+    id: item.id,
+    deleted: true as const,
+  }));
+
+  // trial_end "now" ends the trial and activates Hobby immediately; proration_behavior "none" keeps
+  // the switch free (no early trial charge on the outgoing Pro items).
+  //
+  // The Pro trial was created with trial_settings.end_behavior.missing_payment_method "cancel"
+  // (createProTrialSubscription), so ending the trial on a no-card org would CANCEL the subscription
+  // instead of leaving it on Hobby — stranding a canceled subscriptionId that then breaks the next
+  // upgrade. Hobby is free, so override to "create_invoice": the trial ends into an active $0 Hobby
+  // subscription with no payment method required.
   await stripeClient.subscriptions.update(subscription.id, {
-    cancel_at_period_end: true,
+    items: [...existingDeletions, ...hobbyItems],
+    trial_end: "now",
+    proration_behavior: "none",
+    trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
   });
 
-  const effectiveAt =
-    resolvePendingChangeEffectiveAt(subscription) ??
-    (subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null) ??
-    new Date().toISOString();
+  await updatePendingPlanChangeSnapshot(organizationId, null);
+};
 
-  const pendingChange: TOrganizationStripePendingChange = {
-    type: "plan_change",
-    targetPlan: "hobby",
-    targetInterval: "monthly",
-    effectiveAt,
+// Immediate upgrade / trial conversion: bills the full target-plan price via a single Stripe update,
+// then clears any pending downgrade. Extracted from switchOrganizationToCloudPlan for Sonar's
+// complexity budget.
+const performImmediateUpgradeOrTrialConversion = async (input: {
+  organizationId: string;
+  customerId: string;
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>;
+  targetPlan: TStandardCloudPlan;
+  targetInterval: TCloudBillingInterval;
+}): Promise<{
+  mode: "immediate";
+  pendingChange: null;
+  clientSecret: string | null;
+  requiresAction: boolean;
+}> => {
+  const { organizationId, subscription, targetPlan, targetInterval } = input;
+
+  const confirmation = await updateSubscriptionItemsImmediately(subscription, targetPlan, targetInterval);
+
+  // Supersedes any pending downgrade (e.g. a no-card-trial "Return to Hobby" via cancel_at_period_end,
+  // no schedule) unconditionally: releases any schedule, undoes cancel_at_period_end, and nulls the
+  // pending-change snapshot so a stale "Scheduled" badge can't survive the upgrade. Safe to repeat
+  // even though updateSubscriptionItemsImmediately already cleared cancel_at_period_end for trialing.
+  await clearPendingPlanState(organizationId, subscription);
+
+  return {
+    mode: "immediate",
+    pendingChange: null,
+    clientSecret: confirmation.clientSecret,
+    requiresAction: confirmation.requiresAction,
   };
-
-  await updatePendingPlanChangeSnapshot(organizationId, pendingChange);
-
-  return pendingChange;
 };
 
 export const switchOrganizationToCloudPlan = async (input: {
@@ -1013,51 +1119,45 @@ export const switchOrganizationToCloudPlan = async (input: {
   const currentPlan = resolveCloudPlanFromSubscription(subscription);
   const currentInterval = resolveSubscriptionInterval(subscription);
 
-  // Non-standard plans (custom, unknown) don't follow the normal tier hierarchy,
-  // so any switch from them to a standard plan should apply immediately.
+  // Non-standard plans (custom, unknown) skip the tier hierarchy — any switch off them applies immediately.
   const isNonStandardCurrentPlan = currentPlan === "custom" || currentPlan === "unknown";
   const isImmediateUpgrade =
     isNonStandardCurrentPlan || CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
   const isSameSelection = currentPlan === input.targetPlan && currentInterval === input.targetInterval;
+  // Converting an active trial to any paid plan is a real state change even when the plan/interval
+  // match what is being trialed (trial Pro -> paid Pro): it ends the trial and bills the card now.
+  const isTrialConversion = subscription.status === "trialing" && input.targetPlan !== "hobby";
 
-  if (isSameSelection) {
+  // A same plan+interval selection is a no-op — except a trial conversion, which must still charge.
+  if (isSameSelection && !isTrialConversion) {
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
   }
 
-  // A trialing subscription with no payment method must never be converted into a billable
-  // subscription. The scheduled path rebuilds phases without the trial guard, ending the trial and
-  // turning phase 1 into a billable Pro phase; undoing that pending change would then leave the org
-  // on active paid Pro with no card. So special-case it: a downgrade cancels the trial (landing on
-  // Hobby, no card), and any paid switch is rejected and routed through the add-card checkout.
+  // Trial -> Hobby switches immediately to the free Hobby plan (no schedule, no charge): the user
+  // opted out of the paid trial, so there's nothing to keep them on until period end. Scheduling here
+  // would also be unsafe — the scheduled path lacks the trial guard, so phase 1 would become a
+  // billable Pro phase (charging the trial early). Correct regardless of card on file.
+  if (subscription.status === "trialing" && input.targetPlan === "hobby") {
+    await switchTrialToHobbyImmediately(input.organizationId, subscription);
+    return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
+  }
+
+  // No card on file: never convert a trial to billable — reject and route through add-card checkout instead.
   if (
     subscription.status === "trialing" &&
     !(await hasCollectedPaymentMethod(subscription, input.customerId))
   ) {
-    if (input.targetPlan === "hobby") {
-      const pendingChange = await cancelTrialToHobbyAtPeriodEnd(input.organizationId, subscription);
-      return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
-    }
-
     throw new OperationNotAllowedError("payment_method_required");
   }
 
-  if (isImmediateUpgrade) {
-    const confirmation = await updateSubscriptionItemsImmediately(
+  if (isImmediateUpgrade || isTrialConversion) {
+    return performImmediateUpgradeOrTrialConversion({
+      organizationId: input.organizationId,
+      customerId: input.customerId,
       subscription,
-      input.targetPlan,
-      input.targetInterval
-    );
-
-    if (subscription.schedule) {
-      await clearPendingPlanState(input.organizationId, subscription);
-    }
-
-    return {
-      mode: "immediate",
-      pendingChange: null,
-      clientSecret: confirmation.clientSecret,
-      requiresAction: confirmation.requiresAction,
-    };
+      targetPlan: input.targetPlan,
+      targetInterval: input.targetInterval,
+    });
   }
 
   const pendingChange = await scheduleSubscriptionPlanChange(
@@ -1069,34 +1169,37 @@ export const switchOrganizationToCloudPlan = async (input: {
   return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
 };
 
-// Previews the invoice an immediate in-place upgrade would generate; mirrors updateSubscriptionItemsImmediately so the amount matches the real charge (estimate — final invoice is authoritative).
+// Previews the invoice an immediate upgrade or trial conversion would generate; mirrors
+// updateSubscriptionItemsImmediately so the amount matches the real charge (estimate — final invoice
+// is authoritative). Returns null when Stripe can't price the invoice (it can fail on usage-based
+// line items) — the modal then falls back to amount-less copy, never a fabricated number.
 export const previewImmediateUpgradeCharge = async (input: {
   organizationId: string;
   customerId: string;
   targetPlan: Exclude<TStandardCloudPlan, "hobby">;
   targetInterval: TCloudBillingInterval;
-}): Promise<{ amountDue: number; currency: string } | null> => {
+}): Promise<{
+  amountDue: number;
+  currency: string;
+} | null> => {
   if (!stripeClient) {
     return null;
   }
 
   const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
-  const targetItems = await getCatalogItemsForPlan(input.targetPlan, input.targetInterval);
-  const existingDeletions = subscription.items.data.map((item) => ({
-    id: item.id,
-    deleted: true as const,
-  }));
 
-  const preview = await stripeClient.invoices.createPreview({
-    customer: input.customerId,
-    subscription: subscription.id,
-    subscription_details: {
-      items: [...existingDeletions, ...targetItems],
-      proration_behavior: "always_invoice",
-    },
+  return await previewFullConversionChargeCents(
+    subscription,
+    input.customerId,
+    input.targetPlan,
+    input.targetInterval
+  ).catch((error: unknown) => {
+    logger.warn(
+      { error, organizationId: input.organizationId, targetPlan: input.targetPlan },
+      "Upgrade invoice preview failed; the confirmation modal falls back to amount-less copy"
+    );
+    return null;
   });
-
-  return { amountDue: preview.amount_due, currency: preview.currency };
 };
 
 export const undoPendingOrganizationPlanChange = async (
@@ -1128,9 +1231,8 @@ const NO_SETUP_UPGRADE: TSetupCheckoutUpgradeResult = {
 };
 
 /**
- * Client-invoked finalize for a completed setup-mode Checkout upgrade. Attaches the saved
- * card to the customer + subscription synchronously (no dependency on webhook timing) and
- * then applies the upgrade, returning any client_secret so the browser can complete 3DS.
+ * Finalizes a completed setup-mode Checkout upgrade: attaches the saved card synchronously (no
+ * webhook dependency), applies the upgrade, and returns any client_secret for 3DS completion.
  */
 export const applySetupCheckoutUpgrade = async (input: {
   organizationId: string;
@@ -1232,10 +1334,7 @@ const ensureOrganizationBillingRecord = async (
   return mapBillingRecord(billing);
 };
 
-/**
- * Finds the email of the organization owner by looking up the membership with role "owner"
- * and joining to the user table.
- */
+/** Organization owner's user info, via the membership with role "owner". */
 const getOrganizationOwner = async (
   organizationId: string
 ): Promise<{ id: string; email: string; name: string | null } | null> => {
@@ -1281,8 +1380,7 @@ export const ensureStripeCustomerForOrganization = async (
 
   const defaultBilling = getDefaultOrganizationBilling();
 
-  // Always create/update the billing record with the resolved Stripe customer ID.
-  // Using upsert so the billing row is created if it doesn't exist yet.
+  // Upsert so the billing row exists and carries the resolved Stripe customer ID.
   await prisma.organizationBilling.upsert({
     where: { organizationId: organization.id },
     create: {
@@ -1442,9 +1540,8 @@ const emitSubscriptionLifecycleEvent = async (input: {
     return;
   }
 
-  // Best-effort: the billing snapshot is already persisted, so a failure here (owner lookup DB blip,
-  // etc.) must not reject the sync — a retried sync would see the new state and detect no transition,
-  // permanently dropping the event. Swallow and log instead.
+  // Best-effort: the snapshot is already persisted, so a failure here must not reject the sync — a
+  // retry would see no transition and permanently drop the event. Swallow and log instead.
   try {
     const owner = await getOrganizationOwner(organizationId);
     if (!owner) {
@@ -1517,9 +1614,8 @@ export const syncOrganizationBillingFromStripe = async (
   const subscriptionStatus = resolveSubscriptionStatus(subscription);
   const usageCycleAnchor = resolveUsageCycleAnchor(subscription);
   const pendingChange = await resolvePendingPlanChange(subscription);
-  // Match the guard in switchOrganizationToCloudPlan / changeBillingPlanAction: a card saved on the
-  // customer (but not yet attached to the subscription) still counts, so the cached flag must not
-  // falsely block a legitimately card-backed org on a paid switch.
+  // Matches the guard in switchOrganizationToCloudPlan: a card on the customer but not yet attached to
+  // the subscription still counts, so the cached flag can't falsely block a card-backed org.
   const hasPaymentMethod = subscription ? await hasCollectedPaymentMethod(subscription, customerId) : false;
 
   const transition = resolveSubscriptionLifecycleTransition(
@@ -1550,9 +1646,8 @@ export const syncOrganizationBillingFromStripe = async (
       hasPaymentMethod,
       features: featureLookupKeys,
       pendingChange,
-      // Clear the payment-failure banner only when this sync reflects a real settlement:
-      // an authoritative webhook event or an observed plan change. A read-through sync
-      // triggered by snapshot staleness must not silently dismiss an unresolved failure.
+      // Clears the payment-failure banner only on a real settlement (webhook event or observed plan
+      // change) — a staleness-triggered read-through sync must not silently dismiss a failure.
       paymentAttemptError:
         event || cloudPlan !== existingStripeSnapshot?.plan
           ? null
@@ -1590,17 +1685,10 @@ export const syncOrganizationBillingFromStripe = async (
 };
 
 /**
- * Optimistically add a feature lookup key to OrganizationBilling.stripe.features.
- *
- * Used immediately after a successful subscription change (e.g. starting a Pro
- * trial) so the next page render sees the feature without waiting for Stripe's
- * entitlements API to propagate.
- *
- * Only the features array is mutated. Every other field on the stripe snapshot
- * (lastSyncedAt, subscriptionStatus, plan, interval, trialEnd, …) is preserved
- * verbatim by spreading the existing snapshot. The subsequent
- * customer.subscription.created webhook re-syncs the full snapshot from Stripe
- * and is expected to converge on the same value in the common case.
+ * Optimistically adds a feature lookup key to stripe.features right after a subscription change
+ * (e.g. starting a trial), so the next render sees it before Stripe's entitlements API propagates.
+ * Only the features array is mutated — everything else is preserved verbatim; the subsequent
+ * customer.subscription.created webhook re-syncs the full snapshot and converges on the same value.
  */
 export const addOptimisticBillingFeature = async (organizationId: string, feature: string): Promise<void> => {
   const billing = await getOrganizationBillingFromDatabase(organizationId);
@@ -1725,9 +1813,8 @@ export const getOrganizationBillingWithReadThroughSync = async (
 };
 
 /**
- * Cleans up a Stripe customer after organization deletion by cancelling all active
- * subscriptions. The customer object is intentionally kept so that trial usage history
- * is preserved — this prevents the same email from claiming a free trial again.
+ * Cancels all active subscriptions after org deletion but keeps the Stripe customer itself, so trial
+ * history is preserved and the same email can't claim a free trial again.
  */
 export const cleanupStripeCustomer = async (stripeCustomerId: string): Promise<void> => {
   if (!stripeClient) return;
