@@ -124,9 +124,6 @@ const ZGetUpgradeChargePreviewAction = z.object({
   organizationId: ZId,
   targetPlan: z.enum(["pro", "scale"]),
   targetInterval: ZCloudBillingInterval,
-  // True only for no-card "Continue with Pro, pay now" (nets off unused-trial credit);
-  // card-on-file "Upgrade now" previews full price.
-  applyTrialCredit: z.boolean().optional(),
 });
 
 // Read-only proration preview for the upgrade confirmation modal; no audit logging since it mutates nothing.
@@ -159,7 +156,6 @@ export const getUpgradeChargePreviewAction = authenticatedActionClient
       customerId: organization.billing.stripeCustomerId,
       targetPlan: parsedInput.targetPlan,
       targetInterval: parsedInput.targetInterval,
-      applyTrialCredit: parsedInput.applyTrialCredit ?? false,
     });
   });
 
@@ -403,9 +399,6 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       customerId: organization.billing.stripeCustomerId,
       targetPlan: parsedInput.targetPlan,
       targetInterval: parsedInput.targetInterval,
-      // Card-on-file "Upgrade now": full price. Unused-trial credit is exclusive to the
-      // no-card "Continue with Pro, pay now" flow (applySetupCheckoutUpgrade).
-      applyTrialCredit: false,
     });
 
     // Skip when SCA is pending: the plan is unchanged until the client confirms payment,

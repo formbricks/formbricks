@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   addOptimisticBillingFeature,
   applySetupCheckoutUpgrade,
-  computeUnusedTrialCreditCents,
   createPaidPlanCheckoutSession,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
@@ -37,7 +36,6 @@ const mocks = vi.hoisted(() => ({
   checkoutSessionsRetrieve: vi.fn(),
   invoicesRetrieve: vi.fn(),
   invoicesCreatePreview: vi.fn(),
-  customersCreateBalanceTransaction: vi.fn(),
   productsList: vi.fn(),
   productsRetrieve: vi.fn(),
   subscriptionsList: vi.fn(),
@@ -131,7 +129,6 @@ vi.mock("./stripe-client", () => ({
       list: mocks.customersList,
       retrieve: mocks.customersRetrieve,
       update: mocks.customersUpdate,
-      createBalanceTransaction: mocks.customersCreateBalanceTransaction,
     },
     products: {
       list: mocks.productsList,
@@ -169,14 +166,8 @@ vi.mock("./stripe-client", () => ({
 }));
 
 describe("organization-billing", () => {
-  // Simulates the Stripe customer credit balance: a credit is a NEGATIVE balance, so posting a
-  // -4153 balance transaction moves this to -4153. applyUnusedTrialCredit reads the balance back to
-  // confirm the credit really landed before letting the charge run, so the mock has to move.
-  let stripeCustomerBalanceCents = 0;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    stripeCustomerBalanceCents = 0;
     mocks.isCloud = true;
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
     mocks.getCustomCacheKey.mockImplementation(
@@ -188,14 +179,8 @@ describe("organization-billing", () => {
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
-    // Defaults for the trial-conversion credit path (overridden per-test where relevant).
+    // Default upgrade-preview invoice total (overridden per-test where relevant).
     mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 8900, currency: "usd" });
-    mocks.customersCreateBalanceTransaction.mockImplementation(
-      async (_customerId: string, params: { amount: number }) => {
-        stripeCustomerBalanceCents += params.amount;
-        return { id: "cbtxn_test", amount: params.amount };
-      }
-    );
     mocks.prismaMembershipFindFirst.mockResolvedValue(null);
     mocks.productsList.mockResolvedValue({
       data: [
@@ -394,14 +379,12 @@ describe("organization-billing", () => {
     mocks.subscriptionsUpdate.mockResolvedValue({});
     // Default: no card at the customer level either. The payment-method check falls back to the
     // customer default when the subscription has none, so it must always resolve to a customer.
-    // Implementation (not a fixed value) so the credit balance read-back sees live movement.
-    mocks.customersRetrieve.mockImplementation(async () => ({
+    mocks.customersRetrieve.mockResolvedValue({
       id: "cus_1",
       deleted: false,
       invoice_settings: { default_payment_method: null },
       currency: "usd",
-      balance: stripeCustomerBalanceCents,
-    }));
+    });
   });
 
   test("ensureStripeCustomerForOrganization returns null when org does not exist", async () => {
@@ -1337,8 +1320,6 @@ describe("organization-billing", () => {
     expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
       cancel_at_period_end: true,
     });
-    // A tier change out of a trial (Pro trial -> Scale) is a full upgrade: no unused-trial credit.
-    expect(mocks.customersCreateBalanceTransaction).not.toHaveBeenCalled();
   });
 
   test("switchOrganizationToCloudPlan converts a card-backed trial to the same paid plan instead of treating it as a no-op", async () => {
@@ -1494,7 +1475,7 @@ describe("organization-billing", () => {
   });
 
   // Shared fixture: a card-backed Pro trial with `remaining` days left on the trial.
-  const setupProTrialForCredit = (remainingDays: number) => {
+  const setupCardBackedProTrial = (remainingDays: number) => {
     const trialEnd = Math.floor(Date.now() / 1000) + remainingDays * 86_400;
     mocks.subscriptionsList.mockResolvedValue({
       data: [
@@ -1543,38 +1524,35 @@ describe("organization-billing", () => {
     mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 8900, currency: "usd" });
   };
 
-  test("switchOrganizationToCloudPlan credits unused trial days when a card-backed Pro trial converts to Pro", async () => {
-    setupProTrialForCredit(14); // 14 days left -> credit = round(8900 * 14 / 30) = 4153
+  test("switchOrganizationToCloudPlan bills the FULL price when a card-backed Pro trial converts to Pro", async () => {
+    setupCardBackedProTrial(14);
 
     const result = await switchOrganizationToCloudPlan({
       organizationId: "org_1",
       customerId: "cus_1",
       targetPlan: "pro",
       targetInterval: "monthly",
-      applyTrialCredit: true,
     });
 
     expect(result.mode).toBe("immediate");
-    // Credit applied once, negative (a credit), with a per-trial idempotency key.
-    expect(mocks.customersCreateBalanceTransaction).toHaveBeenCalledWith(
-      "cus_1",
-      expect.objectContaining({ amount: -4153, currency: "usd" }),
-      expect.objectContaining({ idempotencyKey: expect.stringContaining("trial-credit-sub_trial") })
-    );
-    // The conversion still ran.
+    // Single update: ends the trial and charges the full plan price synchronously; no credits,
+    // coupons, or balance mutations ride along.
     expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
       "sub_trial",
-      expect.objectContaining({ trial_end: "now", payment_behavior: "error_if_incomplete" })
+      expect.objectContaining({
+        trial_end: "now",
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      })
     );
-    // No reversal (positive) balance transaction on the success path.
-    const positive = mocks.customersCreateBalanceTransaction.mock.calls.filter(
-      ([, args]: [string, { amount: number }]) => args.amount > 0
+    const [, updateArgs] = mocks.subscriptionsUpdate.mock.calls.find(
+      ([id, args]: [string, { trial_end?: string }]) => id === "sub_trial" && args.trial_end === "now"
     );
-    expect(positive).toHaveLength(0);
+    expect(updateArgs.discounts).toBeUndefined();
   });
 
-  test("switchOrganizationToCloudPlan reverses the unused-trial credit when the conversion charge fails", async () => {
-    setupProTrialForCredit(14);
+  test("a declined conversion charge propagates and leaves the trial intact", async () => {
+    setupCardBackedProTrial(14);
     mocks.subscriptionsUpdate.mockRejectedValueOnce(new Error("card_declined"));
 
     await expect(
@@ -1583,108 +1561,21 @@ describe("organization-billing", () => {
         customerId: "cus_1",
         targetPlan: "pro",
         targetInterval: "monthly",
-        applyTrialCredit: true,
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow("card_declined");
 
-    const calls = mocks.customersCreateBalanceTransaction.mock.calls;
-    // Applied -4153, then reversed +4153 -> net zero, so no credit can strand on the balance.
-    expect(calls.some(([, a]: [string, { amount: number }]) => a.amount === -4153)).toBe(true);
-    expect(calls.some(([, a]: [string, { amount: number }]) => a.amount === 4153)).toBe(true);
-
-    // The reversal MUST carry its own idempotency key (distinct from the credit's) so a retried
-    // conversion can't post a second +credit against an already-reversed pair and net-debit the
-    // customer. The credit key is `trial-credit-...`; the reversal is `trial-credit-reversal-...`.
-    const reversalCall = calls.find(([, a]: [string, { amount: number }]) => a.amount === 4153);
-    expect(reversalCall?.[2]).toEqual(
-      expect.objectContaining({ idempotencyKey: expect.stringContaining("trial-credit-reversal-sub_trial") })
+    // error_if_incomplete rolls the whole update back server-side; exactly one conversion attempt,
+    // no follow-up mutations to clean anything up.
+    const conversionUpdates = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([id, args]: [string, { trial_end?: string }]) => id === "sub_trial" && args.trial_end === "now"
     );
+    expect(conversionUpdates).toHaveLength(1);
   });
 
-  test("switchOrganizationToCloudPlan does NOT credit a card-on-file Pro-trial upgrade (applyTrialCredit omitted)", async () => {
-    setupProTrialForCredit(14);
-
-    const result = await switchOrganizationToCloudPlan({
-      organizationId: "org_1",
-      customerId: "cus_1",
-      targetPlan: "pro",
-      targetInterval: "monthly",
-      // no applyTrialCredit -> "Upgrade now" with a card on file is billed the full price.
-    });
-
-    expect(result.mode).toBe("immediate");
-    // Still converts (ends the trial, charges now)...
-    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
-      "sub_trial",
-      expect.objectContaining({ trial_end: "now", payment_behavior: "error_if_incomplete" })
-    );
-    // ...but applies no unused-trial credit.
-    expect(mocks.customersCreateBalanceTransaction).not.toHaveBeenCalled();
-  });
-
-  test("switchOrganizationToCloudPlan refuses to charge when the unused-trial credit does not land on the balance", async () => {
-    setupProTrialForCredit(14);
-    // Stripe replaying an idempotency key from an earlier (already-reversed) attempt returns the
-    // original transaction WITHOUT executing it, so the balance never moves. Charging anyway would
-    // bill the full price behind a modal that quoted the discounted one.
-    mocks.customersCreateBalanceTransaction.mockResolvedValue({ id: "cbtxn_replayed", amount: -4153 });
-
-    await expect(
-      switchOrganizationToCloudPlan({
-        organizationId: "org_1",
-        customerId: "cus_1",
-        targetPlan: "pro",
-        targetInterval: "monthly",
-        applyTrialCredit: true,
-      })
-    ).rejects.toThrow("trial_credit_unavailable");
-
-    // The conversion must not have run: the trial is intact and nothing was charged.
-    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith(
-      "sub_trial",
-      expect.objectContaining({ trial_end: "now" })
-    );
-  });
-
-  test("switchOrganizationToCloudPlan posts the credit in the SUBSCRIPTION's currency, not the catalog price's", async () => {
-    setupProTrialForCredit(14);
-    // Customer balances are per-currency and the invoice is in the subscription's currency, so a
-    // credit posted in the catalog price's default currency would never be applied to the invoice —
-    // full charge AND a stranded credit.
-    const trialEnd = Math.floor(Date.now() / 1000) + 14 * 86_400;
-    const existing = await mocks.subscriptionsList();
-    mocks.subscriptionsList.mockResolvedValue({
-      data: [{ ...existing.data[0], currency: "eur", trial_end: trialEnd }],
-    });
-    mocks.customersRetrieve.mockImplementation(async () => ({
-      id: "cus_1",
-      deleted: false,
-      invoice_settings: { default_payment_method: "pm_sub" },
-      currency: "eur",
-      balance: stripeCustomerBalanceCents,
-    }));
-
-    await switchOrganizationToCloudPlan({
-      organizationId: "org_1",
-      customerId: "cus_1",
-      targetPlan: "pro",
-      targetInterval: "monthly",
-      applyTrialCredit: true,
-    });
-
-    expect(mocks.customersCreateBalanceTransaction).toHaveBeenCalledWith(
-      "cus_1",
-      expect.objectContaining({ currency: "eur" }),
-      expect.anything()
-    );
-  });
-
-  test("previewImmediateUpgradeCharge nets the credit off the INVOICE total (tax + usage), not the list price", async () => {
-    setupProTrialForCredit(14);
-    // Stripe's preview is the invoice total: $89 base + $16.91 VAT. The credit is computed from the
-    // tax-exclusive list price (round(8900 * 14 / 30) = 4153) — the same basis applyUnusedTrialCredit
-    // uses — and netted off that total, so the quoted amount matches what the card is actually billed.
-    // grossAmountDue stays the LIST price, which is what the modal calls "the {plan} price".
+  test("previewImmediateUpgradeCharge quotes Stripe's full invoice total for a trial conversion", async () => {
+    setupCardBackedProTrial(14);
+    // Stripe's preview is authoritative: full plan price + tax ($89 + $16.91 VAT), exactly what the
+    // card is charged at conversion.
     mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 10_591, currency: "usd" });
 
     const preview = await previewImmediateUpgradeCharge({
@@ -1692,21 +1583,15 @@ describe("organization-billing", () => {
       customerId: "cus_1",
       targetPlan: "pro",
       targetInterval: "monthly",
-      applyTrialCredit: true,
     });
 
-    expect(preview).toEqual({
-      amountDue: 10_591 - 4153,
-      currency: "usd",
-      grossAmountDue: 8900,
-      trialCreditApplied: 4153,
-    });
+    expect(preview).toEqual({ amountDue: 10_591, currency: "usd" });
   });
 
-  test("previewImmediateUpgradeCharge falls back to the list price when Stripe cannot preview the invoice", async () => {
-    setupProTrialForCredit(14);
-    // A preview can fail on usage-based line items; the modal still needs a number, so it falls back
-    // to the catalog list price (the copy carries a taxes-at-payment caveat for exactly this case).
+  test("previewImmediateUpgradeCharge returns null when Stripe cannot preview the invoice", async () => {
+    setupCardBackedProTrial(14);
+    // A preview can fail on usage-based line items; the modal falls back to amount-less copy rather
+    // than showing a fabricated number.
     mocks.invoicesCreatePreview.mockRejectedValue(new Error("cannot preview metered price"));
 
     const preview = await previewImmediateUpgradeCharge({
@@ -1714,15 +1599,9 @@ describe("organization-billing", () => {
       customerId: "cus_1",
       targetPlan: "pro",
       targetInterval: "monthly",
-      applyTrialCredit: true,
     });
 
-    expect(preview).toEqual({
-      amountDue: 8900 - 4153,
-      currency: "usd",
-      grossAmountDue: 8900,
-      trialCreditApplied: 4153,
-    });
+    expect(preview).toBeNull();
   });
 
   test("previewImmediateUpgradeCharge does NOT send trial_end for a non-trialing upgrade", async () => {
@@ -1771,15 +1650,13 @@ describe("organization-billing", () => {
     expect(preview).toEqual({
       amountDue: 4500,
       currency: "usd",
-      grossAmountDue: 4500,
-      trialCreditApplied: 0,
     });
     const [previewArgs] = mocks.invoicesCreatePreview.mock.calls[0];
     expect(previewArgs.subscription_details).not.toHaveProperty("trial_end");
   });
 
   test("previewImmediateUpgradeCharge sends trial_end for a trialing subscription (the cycle really does reset)", async () => {
-    setupProTrialForCredit(14);
+    setupCardBackedProTrial(14);
 
     await previewImmediateUpgradeCharge({
       organizationId: "org_1",
@@ -1790,23 +1667,6 @@ describe("organization-billing", () => {
 
     const [previewArgs] = mocks.invoicesCreatePreview.mock.calls[0];
     expect(previewArgs.subscription_details).toMatchObject({ trial_end: "now" });
-  });
-
-  test("the unused-trial credit idempotency key includes the amount so a tapered retry cannot collide", async () => {
-    // Same key + different amount is a hard Stripe error that would block the conversion outright;
-    // the amount is part of the key so a retry on a later day gets a fresh one. A same-day
-    // double-submit computes the same amount, so it still deduplicates.
-    setupProTrialForCredit(14);
-    await switchOrganizationToCloudPlan({
-      organizationId: "org_1",
-      customerId: "cus_1",
-      targetPlan: "pro",
-      targetInterval: "monthly",
-      applyTrialCredit: true,
-    });
-
-    const [, , options] = mocks.customersCreateBalanceTransaction.mock.calls[0];
-    expect(options.idempotencyKey).toContain("-4153");
   });
 
   test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {
@@ -3347,87 +3207,5 @@ describe("organization-billing", () => {
 
     expect(result.targetPlan).toBeNull();
     expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
-  });
-});
-
-describe("computeUnusedTrialCreditCents", () => {
-  const NOW = 1_800_000_000; // fixed reference "now" in seconds
-  const day = (n: number) => NOW + n * 86_400;
-
-  test("credits the unused trial days at the daily rate (14/30 of the charge)", () => {
-    // round(8900 * 14 / 30) = 4153
-    expect(
-      computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(14), nowSeconds: NOW })
-    ).toBe(4153);
-  });
-
-  test("credits less as fewer trial days remain", () => {
-    const c7 = computeUnusedTrialCreditCents({
-      fullChargeCents: 8900,
-      trialEndSeconds: day(7),
-      nowSeconds: NOW,
-    });
-    const c14 = computeUnusedTrialCreditCents({
-      fullChargeCents: 8900,
-      trialEndSeconds: day(14),
-      nowSeconds: NOW,
-    });
-    expect(c7).toBeLessThan(c14);
-    expect(c7).toBe(2077); // round(8900 * 7 / 30)
-  });
-
-  test("no credit when the trial has already ended", () => {
-    expect(
-      computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: day(-1), nowSeconds: NOW })
-    ).toBe(0);
-    expect(
-      computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: NOW, nowSeconds: NOW })
-    ).toBe(0);
-  });
-
-  test("no credit without a trial end or a positive charge", () => {
-    expect(
-      computeUnusedTrialCreditCents({ fullChargeCents: 8900, trialEndSeconds: null, nowSeconds: NOW })
-    ).toBe(0);
-    expect(
-      computeUnusedTrialCreditCents({ fullChargeCents: 0, trialEndSeconds: day(14), nowSeconds: NOW })
-    ).toBe(0);
-    expect(
-      computeUnusedTrialCreditCents({ fullChargeCents: -100, trialEndSeconds: day(14), nowSeconds: NOW })
-    ).toBe(0);
-  });
-
-  test("credit always leaves a payable amount so the card is still authorized", () => {
-    // An absurdly long remaining window must not credit the whole charge: a fully-credited invoice
-    // settles at $0 without a payment attempt, which would activate a paid plan on a card Stripe
-    // never authorized (the exact hole payment_behavior: "error_if_incomplete" exists to close).
-    const credit = computeUnusedTrialCreditCents({
-      fullChargeCents: 8900,
-      trialEndSeconds: day(365),
-      nowSeconds: NOW,
-    });
-    expect(credit).toBe(8899); // capped at the billing-period days, minus the 1-cent floor
-    expect(8900 - credit).toBeGreaterThan(0);
-  });
-
-  test("uses a 365-day basis for a yearly interval (does not over-credit against the yearly price)", () => {
-    // 14 unused trial days against an 89,000-cent yearly price: round(89000 * 14 / 365) = 3414.
-    // The default (monthly, /30) basis would wrongly credit round(89000 * 14 / 30) = 41,533 — ~12x.
-    const yearly = computeUnusedTrialCreditCents({
-      fullChargeCents: 89_000,
-      trialEndSeconds: day(14),
-      nowSeconds: NOW,
-      interval: "yearly",
-    });
-    expect(yearly).toBe(3414);
-
-    const monthly = computeUnusedTrialCreditCents({
-      fullChargeCents: 89_000,
-      trialEndSeconds: day(14),
-      nowSeconds: NOW,
-      interval: "monthly",
-    });
-    expect(monthly).toBe(41_533);
-    expect(yearly).toBeLessThan(monthly);
   });
 });

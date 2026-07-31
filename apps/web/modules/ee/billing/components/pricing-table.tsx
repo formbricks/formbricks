@@ -269,13 +269,10 @@ export const PricingTable = ({
     interval: TCloudBillingInterval;
     mode: "upgrade" | "trial-continue";
   } | null>(null);
-  // Amount Stripe would charge now, fetched lazily. amountDue is NET of any unused-trial credit;
-  // grossAmountDue and trialCreditApplied drive the breakdown copy.
+  // Amount Stripe would charge now (full price incl. tax), fetched lazily for the confirm modal.
   const [upgradePreview, setUpgradePreview] = useState<{
     amountDue: number;
     currency: string;
-    grossAmountDue?: number;
-    trialCreditApplied?: number;
   } | null>(null);
   const [isLoadingUpgradePreview, setIsLoadingUpgradePreview] = useState(false);
   // A Pro trial returning to Hobby switches immediately (server ends the trial now), so it's gated
@@ -889,8 +886,8 @@ export const PricingTable = ({
     plan !== "hobby" &&
     !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
 
-  // The Pro-trial "continue" choice: on the plan currently trialed, pick between paying the
-  // prorated amount now (unlock immediately) or keeping the free trial.
+  // The Pro-trial "continue" choice: on the plan currently trialed, pick between paying the full
+  // price now (unlock immediately) or keeping the free trial.
   const isProTrialContinue = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
     isTrialing &&
     plan !== "hobby" &&
@@ -902,8 +899,7 @@ export const PricingTable = ({
     mode: "upgrade" | "trial-continue"
   ) => {
     setUpgradeConfirmation({ plan, interval, mode });
-    // Fetch the charge to show. Only trial-continue (no-card "Continue with Pro") nets off the
-    // unused-trial credit; the upgrade confirm previews the full price.
+    // Fetch the full charge to show — every conversion and upgrade is billed at full price.
     setUpgradePreview(null);
     setIsLoadingUpgradePreview(true);
     const requestId = ++previewRequestRef.current;
@@ -911,7 +907,6 @@ export const PricingTable = ({
       organizationId,
       targetPlan: plan,
       targetInterval: interval,
-      applyTrialCredit: mode === "trial-continue",
     })
       .then((response) => {
         if (previewRequestRef.current !== requestId) return;
@@ -952,12 +947,13 @@ export const PricingTable = ({
     void handlePlanAction(plan, interval);
   };
 
-  // Primary action of the trial-continue modal: pay prorated now and convert to paid. Both branches
-  // mark the CTA pending before dispatching — the no-card branch skips handlePlanAction (which owns
-  // that state) and would otherwise look idle during the Checkout round-trip, inviting a double-click.
+  // Primary action of the trial-continue modal: pay the full price now and convert to paid. Both
+  // branches mark the CTA pending before dispatching — the no-card branch skips handlePlanAction
+  // (which owns that state) and would otherwise look idle during the Checkout round-trip, inviting a
+  // double-click.
   const handleTrialPayNow = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) => {
     if (hasPaymentMethod) {
-      void handlePlanAction(plan, interval); // card on file -> convert + credit immediately
+      void handlePlanAction(plan, interval); // card on file -> convert immediately
       return;
     }
     setIsPlanActionPending(`${plan}-${interval}`);
@@ -1108,9 +1104,8 @@ export const PricingTable = ({
       )?.amount ?? "";
 
     // Deliberately period-neutral ("charged {chargeNow} now"): the same modal covers a mid-cycle
-    // proration (ordinary upgrade) and a full fresh period (trial conversion, no credit for unused
-    // days). The old "rest of your billing period" wording was false for trial conversions on a
-    // payment-consent screen.
+    // proration (ordinary upgrade) and a full fresh period (trial conversion). The old "rest of your
+    // billing period" wording was false for trial conversions on a payment-consent screen.
     if (upgradePreview) {
       return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
         plan,
@@ -1140,29 +1135,22 @@ export const PricingTable = ({
 
     const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
     const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
-    // Fallback gross price from the plan card, used only without a live preview; guarded since the
-    // card only carries the selected interval and can miss (interpolating "").
+    // List price from the plan card; guarded since the card only carries the selected interval and
+    // can miss (interpolating "").
     const planCardFullPrice =
       planCards.find(
         (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
       )?.amount ?? "";
 
     if (upgradePreview) {
-      // Prefer the preview's gross (the exact basis the credit is netted off), so the "full price ...
-      // minus credit = pay now" breakdown always reconciles regardless of the plan-card lookup.
-      const fullPrice =
-        upgradePreview.grossAmountDue !== undefined
-          ? formatMoney(upgradePreview.currency, upgradePreview.grossAmountDue, locale)
-          : planCardFullPrice;
       return (
         <Trans
           i18nKey="workspace.settings.billing.confirm_trial_continue_body"
           values={{
             plan,
             period,
-            fullPrice,
+            fullPrice: planCardFullPrice,
             chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
-            credit: formatMoney(upgradePreview.currency, upgradePreview.trialCreditApplied ?? 0, locale),
           }}
           components={{ b: <b /> }}
         />
