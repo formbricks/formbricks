@@ -92,6 +92,8 @@
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
         "email": "View your email address",
+        "feedback_records_read": "Read feedback records",
+        "feedback_records_write": "Create feedback records",
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",
@@ -2691,7 +2693,8 @@
         "unify_feedback_inbox": "統一回饋收件匣",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "解鎖 Formbricks 的完整功能。",
         "white_glove_onboarding": "專屬引導服務",
-        "whitelabel_email_follow_ups": "白標電子郵件追蹤"
+        "whitelabel_email_follow_ups": "白標電子郵件追蹤",
+        "workflows": "Workflows"
       },
       "feedback_directories": {
         "archive": "封存",
@@ -2923,6 +2926,7 @@
         "ai_not_available": "AI 問卷建立功能目前無法使用。",
         "ai_not_enabled": "此組織已停用 AI 智慧工具。",
         "ai_not_in_plan": "你目前的方案不包含 AI 問卷建立功能。",
+        "ai_output_too_long": "這個提示要求的內容超過 AI 一次能生成的範圍。請簡化提示或將其拆分為多個較小的問卷。",
         "card_description": "描述你想了解的內容,即可建立問卷草稿。",
         "card_title": "使用 AI 建立",
         "characters": "{count}/{max}",

@@ -43,10 +43,6 @@
     "api:v3:check": "node docs/api-v3-reference/scripts/bundle.mjs --check",
     "dev:setup": "bash scripts/setup-dev-env.sh"
   },
-  "dependencies": {
-    "react": "19.2.6",
-    "react-dom": "19.2.6"
-  },
   "devDependencies": {
     "@axe-core/playwright": "4.11.3",
     "@azure/playwright": "1.1.5",

@@ -92,6 +92,8 @@
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
         "email": "View your email address",
+        "feedback_records_read": "Read feedback records",
+        "feedback_records_write": "Create feedback records",
         "offline_access": "Keep access with refresh tokens",
         "openid": "Identify you with OpenID Connect",
         "profile": "View your profile",
@@ -2691,7 +2693,8 @@
         "unify_feedback_inbox": "Bandeja de Entrada de Comentarios Unificada",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloquea todo el potencial de Formbricks.",
         "white_glove_onboarding": "Incorporación personalizada",
-        "whitelabel_email_follow_ups": "Seguimientos por correo de marca blanca"
+        "whitelabel_email_follow_ups": "Seguimientos por correo de marca blanca",
+        "workflows": "Workflows"
       },
       "feedback_directories": {
         "archive": "Archivar",
@@ -2923,6 +2926,7 @@
         "ai_not_available": "La creación de encuestas con IA no está disponible.",
         "ai_not_enabled": "Las herramientas inteligentes de IA están desactivadas para esta organización.",
         "ai_not_in_plan": "La creación de encuestas con IA no está disponible en tu plan actual.",
+        "ai_output_too_long": "Este prompt solicita más de lo que la IA puede generar de una sola vez. Simplifícalo o divídelo en encuestas más pequeñas.",
         "card_description": "Describe lo que quieres aprender y crea un borrador de encuesta.",
         "card_title": "Crear con IA",
         "characters": "{count}/{max}",

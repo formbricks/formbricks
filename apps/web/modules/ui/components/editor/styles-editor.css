@@ -3,18 +3,10 @@
   font-size: 14px;
 }
 
-.editor li {
-  padding-left: 1.28571429em;
-  text-indent: -1.28571429em;
-}
-
-.editor ul {
-  list-style: disc inside;
-}
-
-.editor ol {
-  list-style: decimal inside;
-}
+/*
+ * List rendering lives in styles-editor-frontend.css, which the survey runtime injects too, so the
+ * editor and the respondent view stay in sync. Editor-only list rules would re-introduce the drift.
+ */
 
 .editor-container {
   border-radius: 6px;

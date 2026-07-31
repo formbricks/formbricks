@@ -48,6 +48,8 @@ describe("OAuth protected resource metadata", () => {
         "surveys:write",
         "workflows:read",
         "workflows:write",
+        "feedbackRecords:read",
+        "feedbackRecords:write",
         "offline_access",
       ],
       bearer_methods_supported: ["header"],

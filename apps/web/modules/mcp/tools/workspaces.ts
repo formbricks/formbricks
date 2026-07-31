@@ -7,19 +7,19 @@ import { registerScopedTool } from "./guard-scopes";
 import { type TMcpListWorkspacesInput, ZMcpListWorkspacesInput } from "./schemas";
 
 export function registerWorkspaceTools(server: McpServer): void {
-  // list_workspaces is the workspaceId-discovery prerequisite for BOTH the survey and workflow tools.
-  // It gates on surveys:read because that is the mandatory MCP baseline read scope: auth.ts rejects any
-  // token that lacks it, and every issued token carries it (API keys always include surveys:read +
-  // workflows:read; DCR clients default to the full advertised set). So workflows:* is always granted
-  // alongside surveys:read — a workflows-only token is intentionally unsupported (see the handbook).
-  // Supporting one would require relaxing the auth.ts baseline to "any resource read scope" (follow-up).
+  // list_workspaces is the workspaceId-discovery prerequisite for the survey, workflow AND
+  // feedback-record tools, so it gates on ANY resource read scope rather than a single one. auth.ts's
+  // baseline is now "at least one resource scope" (MCP_MINIMUM_SCOPES), so a workflows-only or
+  // feedbackRecords-only token is a legitimate client and must still be able to discover its
+  // workspaceId. The result is derived from the caller's own memberships/key grants, so admitting any
+  // read scope exposes nothing extra.
   registerScopedTool(
     server,
     "list_workspaces",
     {
       title: "List workspaces",
       description:
-        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey tools.",
+        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow and feedback-record tools.",
       inputSchema: ZMcpListWorkspacesInput.shape,
       annotations: {
         readOnlyHint: true,
@@ -28,7 +28,7 @@ export function registerWorkspaceTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:read"],
+    { anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read"] },
     async (_input: TMcpListWorkspacesInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
       const response = await listV3Workspaces({

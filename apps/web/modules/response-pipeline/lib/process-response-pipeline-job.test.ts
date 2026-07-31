@@ -10,6 +10,7 @@ const {
   mockDispatcherDestroy,
   mockEnqueueResponseCompletedWorkflowRuns,
   mockGetIntegrations,
+  mockGetFinishedResponseCountBySurveyId,
   mockGetResponseCountBySurveyId,
   mockHandleIntegrations,
   mockLoggerError,
@@ -36,6 +37,7 @@ const {
     mockDispatcherDestroy: dispatcherDestroy,
     mockEnqueueResponseCompletedWorkflowRuns: vi.fn(),
     mockGetIntegrations: vi.fn(),
+    mockGetFinishedResponseCountBySurveyId: vi.fn(),
     mockGetResponseCountBySurveyId: vi.fn(),
     mockHandleIntegrations: vi.fn(),
     mockLoggerError: vi.fn(),
@@ -105,6 +107,10 @@ vi.mock("@/lib/integration/service", () => ({
 
 vi.mock("@/lib/response/service", () => ({
   getResponseCountBySurveyId: mockGetResponseCountBySurveyId,
+}));
+
+vi.mock("@/modules/survey/lib/response", () => ({
+  getFinishedResponseCountBySurveyId: mockGetFinishedResponseCountBySurveyId,
 }));
 
 vi.mock("./posthog", () => ({
@@ -220,7 +226,8 @@ describe("processResponsePipelineJob", () => {
     mockGetIntegrations.mockResolvedValue([]);
     mockPrismaWebhookFindMany.mockResolvedValue([]);
     mockPrismaUserFindMany.mockResolvedValue([]);
-    mockGetResponseCountBySurveyId.mockResolvedValue(1);
+    mockGetResponseCountBySurveyId.mockResolvedValue(7);
+    mockGetFinishedResponseCountBySurveyId.mockResolvedValue(1);
     mockHandleIntegrations.mockResolvedValue(undefined);
     mockValidateAndResolveWebhookUrl.mockResolvedValue({ ip: "93.184.216.34", family: 4 });
     mockDispatcherDestroy.mockResolvedValue(undefined);
@@ -449,7 +456,9 @@ describe("processResponsePipelineJob", () => {
       "workspace_123",
       expect.objectContaining({ id: "survey_123" }),
       baseData.response,
-      1
+      // The notification email deliberately reports the *total* response count, not the
+      // completed-only count the response limit uses.
+      7
     );
     expect(mockPrismaSurveyUpdate).toHaveBeenCalledWith({
       data: {
@@ -470,6 +479,142 @@ describe("processResponsePipelineJob", () => {
       })
     );
     expect(mockSendTelemetryEvents).not.toHaveBeenCalled();
+  });
+
+  test("only counts finished responses towards the auto-complete response limit", async () => {
+    // Total responses (starts) far exceed the limit, but finished responses do not.
+    mockGetResponseCountBySurveyId.mockResolvedValue(500);
+    mockGetFinishedResponseCountBySurveyId.mockResolvedValue(3);
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      autoComplete: 5,
+    });
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    // The auto-complete decision must be based on finished responses only.
+    expect(mockGetFinishedResponseCountBySurveyId).toHaveBeenCalledWith("survey_123");
+    // 3 finished responses < limit of 5 → the survey must stay open.
+    expect(mockPrismaSurveyUpdate).not.toHaveBeenCalled();
+  });
+
+  test("auto-completes the survey once finished responses reach the limit", async () => {
+    mockGetFinishedResponseCountBySurveyId.mockResolvedValue(5);
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      autoComplete: 5,
+    });
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockPrismaSurveyUpdate).toHaveBeenCalledWith({
+      data: {
+        status: "completed",
+      },
+      where: {
+        id: "survey_123",
+      },
+    });
+  });
+
+  test("does not count finished responses when no response limit is set", async () => {
+    // The default survey fixture has autoComplete: null.
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockGetFinishedResponseCountBySurveyId).not.toHaveBeenCalled();
+    expect(mockPrismaSurveyUpdate).not.toHaveBeenCalled();
+  });
+
+  test("does not re-close a survey that is already completed", async () => {
+    mockGetFinishedResponseCountBySurveyId.mockResolvedValue(50);
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      autoComplete: 5,
+      status: "completed",
+    });
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockGetFinishedResponseCountBySurveyId).not.toHaveBeenCalled();
+    expect(mockPrismaSurveyUpdate).not.toHaveBeenCalled();
+    expect(mockQueueAuditEventWithoutRequest).not.toHaveBeenCalled();
+  });
+
+  test("does not count total responses when nobody subscribes to notifications", async () => {
+    // No user has response notifications enabled, so nothing consumes the total count.
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockPrismaUserFindMany).toHaveBeenCalled();
+    expect(mockGetResponseCountBySurveyId).not.toHaveBeenCalled();
+    expect(mockSendResponseFinishedEmail).not.toHaveBeenCalled();
+  });
+
+  test("skips auto-complete when the finished response count cannot be loaded", async () => {
+    const countError = new Error("count offline");
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      autoComplete: 1,
+    });
+    mockGetFinishedResponseCountBySurveyId.mockRejectedValue(countError);
+
+    await expect(
+      processResponsePipelineJob(
+        {
+          ...baseData,
+          event: "responseFinished",
+        },
+        baseContext
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        autoCompleteThreshold: 1,
+        err: countError,
+      }),
+      "Response pipeline survey auto-complete skipped because the finished response count could not be loaded"
+    );
+    expect(mockPrismaSurveyUpdate).not.toHaveBeenCalled();
   });
 
   test("logs responseFinished side-effect failures without failing the job", async () => {
@@ -689,6 +834,13 @@ describe("processResponsePipelineJob", () => {
         url: "https://example.com/webhook",
       },
     ]);
+    // The total count is only looked up when a notification recipient consumes it.
+    mockPrismaUserFindMany.mockResolvedValue([
+      {
+        email: "owner@example.com",
+        locale: "en",
+      },
+    ]);
     mockGetResponseCountBySurveyId.mockRejectedValue(responseCountError);
 
     await expect(
@@ -710,6 +862,7 @@ describe("processResponsePipelineJob", () => {
       }),
       "Response pipeline response count lookup failed"
     );
+    expect(mockSendResponseFinishedEmail).not.toHaveBeenCalled();
   });
 
   test("logs telemetry failures without failing the responseCreated job", async () => {

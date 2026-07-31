@@ -94,8 +94,10 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
     Codex opens the browser to Formbricks, registers itself, and you **approve** on the consent
     screen. For read-only access, restrict the scopes:
     ```bash
-    codex mcp login formbricks --scopes surveys:read,workflows:read,offline_access
+    codex mcp login formbricks --scopes surveys:read,workflows:read,feedbackRecords:read,offline_access
     ```
+    Scope groups are independent — request only the ones you need (for example
+    `feedbackRecords:read,offline_access` for feedback data alone).
   </Step>
   <Step title="Verify">
     ```bash
@@ -122,8 +124,8 @@ to connect again.
 
 Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
 silently in the background for up to **30 days** (the refresh window). After that — or after you
-revoke — the client re-runs the sign-in and consent flow. Approving `surveys:write` is re-confirmed
-periodically for safety.
+revoke — the client re-runs the sign-in and consent flow. Approving the write scopes
+(`surveys:write`, `workflows:write`, `feedbackRecords:write`) is re-confirmed periodically for safety.
 
 ## Troubleshooting
 
@@ -142,7 +144,7 @@ periodically for safety.
   <Accordion title="invalid_scope during sign-in">
     The client requested a scope it isn't registered for. Reconnect from scratch so it re-registers
     with the scopes the server advertises (`surveys:read`, `surveys:write`, `workflows:read`,
-    `workflows:write`, `offline_access`).
+    `workflows:write`, `feedbackRecords:read`, `feedbackRecords:write`, `offline_access`).
   </Accordion>
   <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
     Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same

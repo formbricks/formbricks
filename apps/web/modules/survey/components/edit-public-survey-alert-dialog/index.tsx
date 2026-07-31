@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -9,6 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+
+/** Stable identity for each footer button, so state doesn't hinge on translated labels. */
+type ActionId = "primary" | "secondary" | "close";
 
 interface EditPublicSurveyAlertDialogProps {
   open: boolean;
@@ -30,31 +34,34 @@ export const EditPublicSurveyAlertDialog = ({
   secondaryButtonText,
 }: EditPublicSurveyAlertDialogProps) => {
   const { t } = useTranslation();
+  // Track which action is running so the spinner shows on the clicked button,
+  // regardless of whether the async action is the primary or secondary one.
+  const [pendingAction, setPendingAction] = useState<ActionId | null>(null);
   const actions = [] as Array<{
+    id: ActionId;
     label?: string;
     onClick: () => void | Promise<void>;
-    disabled?: boolean;
-    loading?: boolean;
     variant: React.ComponentProps<typeof Button>["variant"];
   }>;
   if (secondaryButtonAction) {
     actions.push({
+      id: "secondary",
       label: secondaryButtonText,
       onClick: secondaryButtonAction,
-      disabled: isLoading,
       variant: "secondary",
     });
   }
   if (primaryButtonAction) {
     actions.push({
+      id: "primary",
       label: primaryButtonText,
       onClick: primaryButtonAction,
-      loading: isLoading,
       variant: "default",
     });
   }
   if (actions.length === 0) {
     actions.push({
+      id: "close",
       label: secondaryButtonText ?? t("common.close"),
       onClick: () => setOpen(false),
       variant: "default",
@@ -78,8 +85,16 @@ export const EditPublicSurveyAlertDialog = ({
         </DialogBody>
 
         <DialogFooter>
-          {actions.map(({ label, onClick, loading, variant, disabled }) => (
-            <Button key={label} variant={variant} onClick={onClick} loading={loading} disabled={disabled}>
+          {actions.map(({ id, label, onClick, variant }) => (
+            <Button
+              key={id}
+              variant={variant}
+              loading={isLoading && pendingAction === id}
+              disabled={isLoading && pendingAction !== id}
+              onClick={() => {
+                setPendingAction(id);
+                void onClick();
+              }}>
               {label}
             </Button>
           ))}

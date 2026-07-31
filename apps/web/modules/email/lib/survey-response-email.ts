@@ -22,25 +22,45 @@ import { resolveStorageUrl } from "@/modules/storage/utils";
  * expanded against the response first, then only a narrow HTML allowlist survives — so
  * respondent-controlled recall values cannot inject markup or non-http(s) schemes.
  *
+ * Recall values are escaped as they are substituted (`escapeValues`). The allowlist below legitimately
+ * permits `<a href>` for author-written body HTML, so the sanitizer cannot tell that markup apart from
+ * markup a respondent smuggled in through an open-text answer — without escaping, an anonymous
+ * respondent could place an arbitrary clickable link into a Formbricks-branded email sent to the
+ * survey owner.
+ *
  * `ul`/`ol`/`li` are on the list because `sanitize-html` drops a disallowed tag but keeps its text:
  * without them the Body editor's list buttons produced items run together on one line, unnumbered.
  */
-const sanitizeBody = (body: string, response: TResponse): string =>
-  sanitizeHtml(parseRecallInfo(body, response.data, response.variables), {
-    allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br", "ul", "ol", "li"],
-    allowedAttributes: {
-      a: ["href", "rel", "target"],
-      // Lexical numbers list items explicitly; keep both so an `<ol>` that starts at something other
-      // than 1 keeps its numbering instead of restarting.
-      ol: ["start"],
-      li: ["value"],
-      "*": ["dir", "class"],
-    },
-    allowedSchemes: ["http", "https"],
-    allowedSchemesByTag: {
-      a: ["http", "https"],
-    },
-  });
+const sanitizeBody = (body: string, response: TResponse, locale?: TUserLocale): string =>
+  sanitizeHtml(
+    // Pass the resolved locale rather than letting it default to "en-US": recall values include date
+    // answers, which parseRecallInfo formats per locale, so defaulting would render US dates in an
+    // otherwise correctly localized email.
+    parseRecallInfo(
+      body,
+      response.data,
+      response.variables,
+      false,
+      locale ?? DEFAULT_LOCALE,
+      undefined,
+      true
+    ),
+    {
+      allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br", "ul", "ol", "li"],
+      allowedAttributes: {
+        a: ["href", "rel", "target"],
+        // Lexical numbers list items explicitly; keep both so an `<ol>` that starts at something other
+        // than 1 keeps its numbering instead of restarting.
+        ol: ["start"],
+        li: ["value"],
+        "*": ["dir", "class"],
+      },
+      allowedSchemes: ["http", "https"],
+      allowedSchemesByTag: {
+        a: ["http", "https"],
+      },
+    }
+  );
 
 const buildResponseData = (
   survey: TSurvey,
@@ -144,7 +164,7 @@ export const buildSurveyResponseEmailHtml = async ({
   const t = await getTranslate(locale ?? DEFAULT_LOCALE);
 
   return renderFollowUpEmail({
-    body: sanitizeBody(body, response),
+    body: sanitizeBody(body, response, locale),
     responseData: buildResponseData(survey, response, attachResponseData),
     variables: buildVariables(survey, response, attachResponseData, includeVariables),
     hiddenFields: buildHiddenFields(survey, response, attachResponseData, includeHiddenFields),

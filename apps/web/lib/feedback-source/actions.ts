@@ -20,6 +20,7 @@ import {
   getOrganizationIdFromFeedbackSourceId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
@@ -275,6 +276,12 @@ export const getResponseCountAction = authenticatedActionClient
       parsedInput: z.infer<typeof ZGetResponseCountAction>;
     }): Promise<number> => {
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+
+      // Authorize against the survey's own workspace, not the caller-supplied one: the workspaceTeam
+      // check only proves team access to whatever workspace the caller names, so passing a workspace
+      // they do have access to would otherwise return the response count for any survey in the org.
+      const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -286,7 +293,7 @@ export const getResponseCountAction = authenticatedActionClient
           {
             type: "workspaceTeam",
             minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
+            workspaceId: surveyWorkspaceId,
           },
         ],
       });
