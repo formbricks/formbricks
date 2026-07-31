@@ -15,6 +15,8 @@ describe("sanitizeFollowUpBody", () => {
     expect(sanitized).toMatch(/<ol\b/);
     expect(sanitized).toMatch(/<li\b[^>]*>.*First step.*<\/li>/);
     expect(sanitized).toMatch(/<li\b[^>]*>.*Second step.*<\/li>/);
+    // The editor's list classes carry the email's list styling, so `class` has to survive too.
+    expect(sanitized).toContain('class="fb-editor-list-ol"');
   });
 
   test("keeps the numbering of a list that does not start at 1", () => {

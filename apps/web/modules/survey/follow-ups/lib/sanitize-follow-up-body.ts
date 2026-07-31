@@ -23,7 +23,9 @@ const FOLLOW_UP_BODY_SANITIZE_CONFIG = {
   // because their values aren't http(s) URLs. Declaring them URI-safe exempts them from that check
   // while leaving `href` — the only URL-bearing attribute here — fully checked.
   ADD_URI_SAFE_ATTR: ["rel", "dir", "start"],
-} as const;
+  // Deliberately not `as const`: DOMPurify's `Config` takes mutable `string[]`, so readonly tuples
+  // don't satisfy it. (`isomorphic-dompurify` doesn't re-export `Config` to annotate against.)
+};
 
 export const sanitizeFollowUpBody = (body: string): string =>
   DOMpurify.sanitize(body, FOLLOW_UP_BODY_SANITIZE_CONFIG);
