@@ -76,7 +76,11 @@ query covers all of them:
 | `errorName` | post-commit boundary only | Error *class* name when a projector itself threw. |
 
 ```
+# Projections that failed — the drift signal. `status` is on projection outcomes only, which is what
+# this wants: a request-layer failure inside a projection surfaces here too.
 component:"authzed" AND status:"failed"
+
+# Any AuthZed failure of one kind, at either layer.
 component:"authzed" AND errorCode:"authzed_unavailable"
 ```
 
@@ -156,8 +160,12 @@ pnpm authzed:backfill --apply --after-organization-id=<cuid>
 **Per-unit failures.** One organization failing does not abort the sweep; it lands in `failures` with a
 code, and the run exits `1`. Re-running is the fix — successful units simply re-converge.
 
-**`truncated: true`** means an observation was abandoned mid-read. Treat the orphan counts as a floor,
-not a total, and re-run before concluding anything.
+**`truncated: true`** means the counters are not exact, from one of two causes that err in opposite
+directions. Either an observation was abandoned mid-read, so fewer relationships were seen than exist
+and the counts are a floor — or the sweep's deduplication bound was exceeded, so records implied by
+more than one page beyond that point are counted twice and the counts may over-report. The second only
+happens at a scale orders of magnitude past the prune cap, so nothing is deleted on the strength of it.
+Either way, re-run before concluding anything.
 
 ### Reading the drift counters
 
