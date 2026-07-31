@@ -2340,8 +2340,8 @@ checksums:
     workspace/settings/billing/confirm_hobby_downgrade_body: 9d890ad7c73f7c19b7ddb2c58a5193bd
     workspace/settings/billing/confirm_hobby_downgrade_description: 263d21901fbb5741bc31f2dbcaacfce1
     workspace/settings/billing/confirm_hobby_downgrade_title: ec0ad17a5e1c6823634ef7c383d94bd5
-    workspace/settings/billing/confirm_trial_continue_body: 6507861e2757b4e51af8ce2151b3b8f1
-    workspace/settings/billing/confirm_trial_continue_body_fallback: ceb8c873896661bc20cc009c3be92f36
+    workspace/settings/billing/confirm_trial_continue_body: b5c3ed4d94b0ee2521e688f010479694
+    workspace/settings/billing/confirm_trial_continue_body_fallback: 6e2a07e8420c93bb378c531e0fb2ba01
     workspace/settings/billing/confirm_trial_continue_description: 802d3a25618fa1922fdb5ffca0594817
     workspace/settings/billing/confirm_trial_continue_pay_now: 1c1d95c36a21cfb3f321904465b6d13a
     workspace/settings/billing/confirm_trial_continue_pay_now_generic: 2729650780f5a79693b940e68b07cb8e
@@ -2453,7 +2453,7 @@ checksums:
     workspace/settings/billing/switch_at_period_end: 9c91b2287886e077a0571efab8908623
     workspace/settings/billing/switch_plan_now: dad56622a1916fe5d1a2bda5b0393194
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
-    workspace/settings/billing/trial_alert_description: 4f694feaba87b853e6296f89847a99b9
+    workspace/settings/billing/trial_alert_description: bd1374047e8bde3771cec7a8cfc45c42
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
     workspace/settings/billing/trial_cancels_automatically: a6805d9b040b561f50e6deae244a600b
     workspace/settings/billing/trial_ending_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
