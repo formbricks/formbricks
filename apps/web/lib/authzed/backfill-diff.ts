@@ -166,7 +166,14 @@ export type TAuthzedParentEdge = Readonly<{
 }>;
 
 /** Stable identity for deduplication and ordering. Field order is fixed by the union's key order. */
-const sourceRefKey = (ref: TAuthzedSourceRef): string => JSON.stringify(ref);
+/**
+ * A stable identity for one source record, used to deduplicate and to diff.
+ *
+ * `JSON.stringify` over a literal whose keys are written in a fixed order in `toSourceRef` and
+ * `toSourceRefs`. Two refs for the same record must serialize identically, so both constructors keep
+ * their key order aligned — the test asserting round-trip equality of every kind is what holds that.
+ */
+export const sourceRefKey = (ref: TAuthzedSourceRef): string => JSON.stringify(ref);
 
 /** The parent edge an observed relationship asserts, if it asserts one. */
 const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | null => {

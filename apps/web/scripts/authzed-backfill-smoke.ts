@@ -25,10 +25,20 @@ import { INVALID_CONFIGURATION_RESULT, INVALID_REQUEST_RESULT } from "./authzed-
  *   report             dry run: detect orphans, hand over nothing
  *   prune              apply + prune: hand the orphans to the reconcilers
  *   prune-capped       apply + prune with a cap of 1, which must hand over nothing
+ *   prune-page-capped  apply + prune with a cap above one page but below the total, which must also
+ *                      hand over nothing — the case a per-page cap check would have part-pruned
  *   cleanup            remove the seeded relationships
  */
 
-const COMMANDS = ["seed", "observe", "report", "prune", "prune-capped", "cleanup"] as const;
+const COMMANDS = [
+  "seed",
+  "observe",
+  "report",
+  "prune",
+  "prune-capped",
+  "prune-page-capped",
+  "cleanup",
+] as const;
 type TCommand = (typeof COMMANDS)[number];
 
 const isCommand = (value: string | undefined): value is TCommand =>
@@ -45,6 +55,7 @@ const writeResult = (result: object): void => {
 const emptySource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
+  invalidApiKeyWorkspaceGrants: [],
   invalidWorkspaceTeamGrants: [],
   memberships: [],
   teamIds: [],
@@ -137,6 +148,7 @@ const run = async (): Promise<void> => {
       readOrganizationSource: async () => emptySource,
       readWorkspaceSource: async () => ({
         apiKeyWorkspaceGrants: [],
+        organizationId: null,
         workspaceExists: false,
         workspaceTeamGrants: [],
       }),
@@ -149,9 +161,12 @@ const run = async (): Promise<void> => {
     };
 
     const applying = command !== "report";
+    // 280 sits above one read page (250) and below the seeded total, so a cap enforced per page would
+    // prune the first page and stop. Only a cap decided against the whole sweep hands over nothing.
+    const maxPruneFor: Record<string, number> = { "prune-capped": 1, "prune-page-capped": 280 };
     const result = await runAuthzedBackfill(
       {
-        maxPrune: command === "prune-capped" ? 1 : 500,
+        maxPrune: maxPruneFor[command] ?? 500,
         mode: applying ? "apply" : "dry_run",
         prune: applying,
         scope: { kind: "all" },

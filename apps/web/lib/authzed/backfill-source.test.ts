@@ -7,6 +7,7 @@ import {
   organizationExists,
   readOrganizationIdPage,
   readOrganizationSource,
+  readWorkspaceSource,
 } from "./backfill-source";
 import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE } from "./constants";
 
@@ -18,7 +19,7 @@ vi.mock("@formbricks/database", () => ({
     organization: { count: vi.fn(), findMany: vi.fn() },
     team: { findMany: vi.fn() },
     teamUser: { findMany: vi.fn() },
-    workspace: { findMany: vi.fn() },
+    workspace: { findMany: vi.fn(), findUnique: vi.fn() },
     workspaceTeam: { findMany: vi.fn() },
   },
 }));
@@ -29,6 +30,7 @@ const setEmptySource = (): void => {
   vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.team.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.workspace.findMany).mockResolvedValue([] as never);
+  vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null as never);
   vi.mocked(prisma.apiKey.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.teamUser.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([] as never);
@@ -115,12 +117,13 @@ describe("readOrganizationSource", () => {
       { team: { organizationId: ORGANIZATION_ID }, teamId: "team-1", workspaceId: "ws-1" },
     ] as never);
     vi.mocked(prisma.apiKeyWorkspace.findMany).mockResolvedValue([
-      { apiKeyId: "key-1", workspaceId: "ws-1" },
+      { apiKeyId: "key-1", workspace: { organizationId: ORGANIZATION_ID }, workspaceId: "ws-1" },
     ] as never);
 
     await expect(readOrganizationSource(ORGANIZATION_ID)).resolves.toEqual({
       apiKeyIds: ["key-1"],
       apiKeyWorkspaceGrants: [{ apiKeyId: "key-1", workspaceId: "ws-1" }],
+      invalidApiKeyWorkspaceGrants: [],
       invalidWorkspaceTeamGrants: [],
       memberships: [{ organizationId: ORGANIZATION_ID, userId: "user-1" }],
       teamIds: ["team-1"],
@@ -144,12 +147,53 @@ describe("readOrganizationSource", () => {
     expect(source.invalidWorkspaceTeamGrants).toEqual([{ teamId: "foreign-team", workspaceId: "ws-1" }]);
   });
 
+  test("separates a cross-organization API-key workspace grant instead of projecting it", async () => {
+    // Keyed off the key's organization, so a grant can name a workspace another organization owns. That
+    // workspace is outside this unit's observation, so projecting the grant would leave the unit
+    // reporting a missing record forever — it can never be seen and so never converges.
+    vi.mocked(prisma.apiKeyWorkspace.findMany).mockResolvedValue([
+      { apiKeyId: "key-1", workspace: { organizationId: ORGANIZATION_ID }, workspaceId: "own-ws" },
+      { apiKeyId: "key-1", workspace: { organizationId: "other-org" }, workspaceId: "foreign-ws" },
+    ] as never);
+
+    const source = await readOrganizationSource(ORGANIZATION_ID);
+
+    expect(source.apiKeyWorkspaceGrants).toEqual([{ apiKeyId: "key-1", workspaceId: "own-ws" }]);
+    expect(source.invalidApiKeyWorkspaceGrants).toEqual([{ apiKeyId: "key-1", workspaceId: "foreign-ws" }]);
+  });
+
+  test("reads a workspace's owning organization so a failure can be attributed to a tenant", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      organizationId: ORGANIZATION_ID,
+    } as never);
+    vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([
+      { teamId: "team-1", workspaceId: "ws-1" },
+    ] as never);
+
+    await expect(readWorkspaceSource("ws-1")).resolves.toEqual({
+      apiKeyWorkspaceGrants: [],
+      organizationId: ORGANIZATION_ID,
+      workspaceExists: true,
+      workspaceTeamGrants: [{ teamId: "team-1", workspaceId: "ws-1" }],
+    });
+  });
+
+  test("reports a workspace with no row as absent rather than failing", async () => {
+    // The case most worth repairing: the row is gone and its relationships are what should be removed.
+    // Its grants are still read, because those rows can outlive the workspace.
+    const source = await readWorkspaceSource("ghost-ws");
+
+    expect(source.workspaceExists).toBe(false);
+    expect(source.organizationId).toBeNull();
+  });
+
   test("returns empty target lists for an organization with no records", async () => {
     const source = await readOrganizationSource(ORGANIZATION_ID);
 
     expect(source).toEqual({
       apiKeyIds: [],
       apiKeyWorkspaceGrants: [],
+      invalidApiKeyWorkspaceGrants: [],
       invalidWorkspaceTeamGrants: [],
       memberships: [],
       teamIds: [],

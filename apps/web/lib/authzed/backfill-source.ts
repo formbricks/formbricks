@@ -37,6 +37,12 @@ export type TAuthzedOrganizationSource = Readonly<{
   apiKeyIds: ReadonlyArray<string>;
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
   /**
+   * API-key workspace grants whose key and workspace belong to different organizations.
+   *
+   * Same treatment as `invalidWorkspaceTeamGrants`: reported, never projected, never pruned.
+   */
+  invalidApiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  /**
    * Workspace-team grants whose team and workspace belong to different organizations.
    *
    * Formbricks never creates one, and it would break the closed-unit invariant, so these are reported
@@ -53,6 +59,14 @@ export type TAuthzedOrganizationSource = Readonly<{
 /** The grants attached to one workspace, for the narrower workspace repair scope. */
 export type TAuthzedWorkspaceSource = Readonly<{
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  /**
+   * The owning organization, or `null` when the workspace has no row.
+   *
+   * Read so a failure in this scope can be attributed to a tenant. Without it every workspace-scoped
+   * failure reports the empty string, which is also the sweep's marker for a genuinely unattributable
+   * orphan — leaving the two indistinguishable in the output.
+   */
+  organizationId: string | null;
   /** Reported rather than enforced: a missing workspace is a valid repair target, not an error. */
   workspaceExists: boolean;
   workspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
@@ -91,8 +105,8 @@ export const organizationExists = async (organizationId: string): Promise<boolea
  * organization ID is not needed to reach them, because the caller supplies the workspace ID directly.
  */
 export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzedWorkspaceSource> => {
-  const [workspaceCount, workspaceTeams, apiKeyWorkspaces] = await Promise.all([
-    prisma.workspace.count({ where: { id: workspaceId } }),
+  const [workspace, workspaceTeams, apiKeyWorkspaces] = await Promise.all([
+    prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
     prisma.workspaceTeam.findMany({
       where: { workspaceId },
       select: { teamId: true, workspaceId: true },
@@ -107,7 +121,10 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
 
   return {
     apiKeyWorkspaceGrants: apiKeyWorkspaces,
-    workspaceExists: workspaceCount > 0,
+    organizationId: workspace?.organizationId ?? null,
+    // Truthiness rather than `!== null`, so a row is required to claim existence rather than merely the
+    // absence of one particular falsy value.
+    workspaceExists: Boolean(workspace),
     workspaceTeamGrants: workspaceTeams,
   };
 };
@@ -150,7 +167,13 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       }),
       prisma.apiKeyWorkspace.findMany({
         where: { apiKey: { organizationId } },
-        select: { apiKeyId: true, workspaceId: true },
+        // Keyed off the *key's* organization, so the workspace's is read to detect a grant that crosses
+        // organizations — the same check `workspaceTeam` above performs, and for the same reason.
+        select: {
+          apiKeyId: true,
+          workspace: { select: { organizationId: true } },
+          workspaceId: true,
+        },
         orderBy: [{ apiKeyId: "asc" }, { workspaceId: "asc" }],
       }),
     ]);
@@ -166,9 +189,26 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     }
   }
 
+  // A grant whose workspace belongs to another organization is unreachable from this one: the
+  // observation only reads workspaces this organization owns, so an expected relationship naming a
+  // foreign workspace could never be seen and the unit would report drift that no run can converge.
+  // Excluded from the targets for the same reason as the workspace-team case — never projected, never
+  // pruned, only reported.
+  const apiKeyWorkspaceGrants: TAuthzedApiKeyWorkspaceTarget[] = [];
+  const invalidApiKeyWorkspaceGrants: TAuthzedApiKeyWorkspaceTarget[] = [];
+  for (const grant of apiKeyWorkspaces) {
+    const target = { apiKeyId: grant.apiKeyId, workspaceId: grant.workspaceId };
+    if (grant.workspace.organizationId === organizationId) {
+      apiKeyWorkspaceGrants.push(target);
+    } else {
+      invalidApiKeyWorkspaceGrants.push(target);
+    }
+  }
+
   return {
     apiKeyIds: apiKeys.map(({ id }) => id),
-    apiKeyWorkspaceGrants: apiKeyWorkspaces,
+    apiKeyWorkspaceGrants,
+    invalidApiKeyWorkspaceGrants,
     invalidWorkspaceTeamGrants,
     memberships: memberships.map(({ userId }) => ({ organizationId, userId })),
     teamIds: teams.map(({ id }) => id),

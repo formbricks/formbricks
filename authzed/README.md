@@ -342,6 +342,12 @@ pnpm authzed:backfill
 pnpm authzed:backfill --apply --organization-id=<cuid>
 pnpm authzed:backfill --apply --workspace-id=<cuid>
 
+# Remove the relationships of a workspace whose row is gone. This is a prune —
+# every relationship on that workspace goes, team and API-key grants included —
+# so it takes the prune flags rather than --apply alone.
+pnpm authzed:backfill --apply --prune --confirm-prune --workspace-id=<cuid> \
+  --expected-endpoint=<host:port>
+
 # Converge everything, then remove relationships PostgreSQL no longer holds.
 pnpm authzed:backfill --apply --prune --confirm-prune --scope=all \
   --expected-endpoint=<host:port>
@@ -372,6 +378,13 @@ Drift is reported in both directions:
   for a human. Any non-zero count here is a privilege-escalation finding, not
   routine drift.
 
+  **Only `--scope=all` can find one.** The escalation is an edge on *another*
+  tenant's resource that names the organization under investigation, and a
+  single-organization run reads only the resources PostgreSQL says that
+  organization owns — so the offending resource is never read. A
+  `--organization-id` run reporting `mismatchedParents: 0` therefore means "none
+  among this tenant's own resources", not "this tenant is not being targeted".
+
 A dry run over the whole deployment checks both directions per organization,
 which costs a read per resource. An applying run skips the `missing` check —
 its writes converge that direction anyway — and detects orphans with a single
@@ -398,8 +411,11 @@ Guards on the destructive path:
   not usable for this** — it is a stable namespace and defaults to the same value
   everywhere, so it cannot tell staging from production;
 - exceeding the per-run prune cap (default 500, lowerable via `--max-prune`, never
-  raisable) prunes *nothing* for that unit. A large orphan count is a symptom —
-  wrong endpoint, wrong database, a restore in progress — not a big cleanup job;
+  raisable) prunes *nothing* — not a capped subset. Every unit, the streamed sweep
+  included, counts its orphans to completion before deleting any of them, so the
+  cap aborts before the first delete rather than part-way through. A large orphan
+  count is a symptom — wrong endpoint, wrong database, a restore in progress — not
+  a big cleanup job;
 - `survey`, `dashboard`, and `response` relationships are classified ignored, and
   anything outside the vocabulary is reported but never touched.
 

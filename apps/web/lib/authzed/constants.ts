@@ -56,5 +56,25 @@ export const AUTHZED_BACKFILL_TARGET_CHUNK_SIZE = 200;
  * A large orphan count is a symptom — wrong endpoint, wrong database, a mid-restore SpiceDB — not a
  * big cleanup job. Exceeding the cap prunes nothing for that unit so the run degrades into a loud
  * report instead of a partly-destroyed authorization graph. Operators may lower it, never raise it.
+ *
+ * "Nothing" is the whole point, and it is why every unit — the streaming sweep included — counts its
+ * orphans to completion before deleting any of them. A cap enforced per page would let the pages that
+ * fit through and halt on the one that did not, leaving the graph partly destroyed by exactly the
+ * mistake the cap exists to catch.
  */
 export const AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN = 500;
+
+/**
+ * Distinct orphaned records the global sweep tracks to keep its count exact.
+ *
+ * The sweep streams, so one record can be implied by relationships on more than one page: a user who
+ * holds both `member` and `owner` is two tuples, and SpiceDB returns them grouped by relation rather
+ * than adjacently, so they straddle a page boundary in any organization larger than a page. Counting
+ * that record twice would inflate the total, and the total is the diagnostic.
+ *
+ * Bounded because this set is the one structure in a streaming sweep that grows with the store. Past the
+ * bound the sweep keeps counting and reports `truncated`: a total that may double-count is far better
+ * than an unbounded heap, and a run with this many orphans is already three orders of magnitude past the
+ * prune cap, so nothing is deleted on the strength of it.
+ */
+export const AUTHZED_MAX_TRACKED_ORPHAN_REFS = 50_000;

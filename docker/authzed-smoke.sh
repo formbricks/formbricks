@@ -534,6 +534,15 @@ jq --exit-status '.status == "drifted" and .orphaned >= 300 and .pruned == 0 and
 backfill_capped="$(authzed_backfill "${AUTHZED_TOKEN}" prune-capped)"
 jq --exit-status '.pruned == 0 and .skipped == 1 and .handedOverCount == 0' <<<"${backfill_capped}" >/dev/null
 
+# The cap has to be decided against the whole sweep, not per page. 280 is above one 250-relationship
+# page and below the seeded total, so a per-page check would delete the first page and halt on the
+# second — revoking a cap's worth of live access on a run aimed at the wrong database, where the guard
+# exists to revoke none. This is the multi-page case; the assertion above only exceeds the cap on page
+# one, so it cannot distinguish the two.
+backfill_page_capped="$(authzed_backfill "${AUTHZED_TOKEN}" prune-page-capped)"
+jq --exit-status '.pruned == 0 and .skipped == 1 and .handedOverCount == 0 and .orphaned >= 300' \
+  <<<"${backfill_page_capped}" >/dev/null
+
 backfill_prune="$(authzed_backfill "${AUTHZED_TOKEN}" prune)"
 jq --exit-status \
   '.status == "reconciled" and .pruned >= 300 and .handedOverCount > 0 and .truncated == false' \
@@ -556,7 +565,7 @@ backfill_repeated="$(authzed_backfill "${AUTHZED_TOKEN}" report)"
 [[ "${backfill_repeated}" == "${backfill_after_cleanup}" ]]
 
 service_logs="$(compose logs --no-color postgres authzed-db-bootstrap spicedb-migrate spicedb)"
-application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${api_key_seed}${downgraded_api_key}${removed_api_key_scope}${deleted_api_key}${idempotent_deleted_api_key}${team_workspace_seed}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${persisted_team_workspace_seed}${persisted_api_key_seed}${unavailable_health}${unavailable_projection}${restored_health}${restored_projection}${persisted_schema_check}${refused_backfill_driver}${backfill_seed}${backfill_observation}${backfill_report}${backfill_capped}${backfill_prune}${backfill_cleanup}${backfill_after_cleanup}${backfill_repeated}"
+application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${api_key_seed}${downgraded_api_key}${removed_api_key_scope}${deleted_api_key}${idempotent_deleted_api_key}${team_workspace_seed}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${persisted_team_workspace_seed}${persisted_api_key_seed}${unavailable_health}${unavailable_projection}${restored_health}${restored_projection}${persisted_schema_check}${refused_backfill_driver}${backfill_seed}${backfill_observation}${backfill_report}${backfill_capped}${backfill_page_capped}${backfill_prune}${backfill_cleanup}${backfill_after_cleanup}${backfill_repeated}"
 if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${WRONG_AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* || \

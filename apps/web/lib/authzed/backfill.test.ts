@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type TAuthzedBackfillRequest, runAuthzedBackfill } from "./backfill";
 import * as source from "./backfill-source";
+import type { TAuthzedOrganizationSource } from "./backfill-source";
 import { AUTHZED_BACKFILL_TARGET_CHUNK_SIZE, AUTHZED_MAX_RELATIONSHIP_READS } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
@@ -24,9 +25,12 @@ const dependencies = { apply, client: { readRelationships } };
 
 const PROJECTED = { passes: 1, status: "projected" } as const;
 
-const emptySource = {
+// Annotated, so adding a field to the source type is a compile error here rather than a pile of
+// `undefined.length` failures at runtime.
+const emptySource: TAuthzedOrganizationSource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
+  invalidApiKeyWorkspaceGrants: [],
   invalidWorkspaceTeamGrants: [],
   memberships: [],
   teamIds: [],
@@ -57,6 +61,7 @@ beforeEach(() => {
   vi.mocked(source.findMismatchedParentEdges).mockResolvedValue([]);
   vi.mocked(source.readWorkspaceSource).mockResolvedValue({
     apiKeyWorkspaceGrants: [],
+    organizationId: "org-1",
     workspaceExists: true,
     workspaceTeamGrants: [],
   });
@@ -635,6 +640,77 @@ describe("scope and observation completeness", () => {
   });
 });
 
+describe("workspace scope", () => {
+  const missingWorkspace = (): void => {
+    vi.mocked(source.readWorkspaceSource).mockResolvedValue({
+      apiKeyWorkspaceGrants: [],
+      organizationId: null,
+      workspaceExists: false,
+      workspaceTeamGrants: [],
+    });
+  };
+
+  test("does not remove a missing workspace's relationships without permission to prune", async () => {
+    // Naming a workspace with no row is what removes *every* relationship on it — team grants and
+    // API-key grants included. That is a prune, so it needs the prune flags rather than happening as a
+    // side effect of `--apply` on a stale ID.
+    missingWorkspace();
+
+    const result = await runAuthzedBackfill(
+      request({ scope: { kind: "workspace", workspaceId: "ghost-ws" } }),
+      dependencies
+    );
+
+    expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceIds: ["ghost-ws"] })
+    );
+    expect(result.counters.pruned).toBe(0);
+  });
+
+  test("removes a missing workspace's relationships when pruning is permitted", async () => {
+    missingWorkspace();
+
+    await runAuthzedBackfill(
+      request({ prune: true, scope: { kind: "workspace", workspaceId: "ghost-ws" } }),
+      dependencies
+    );
+
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceIds: ["ghost-ws"] })
+    );
+  });
+
+  test("still projects the parent edge of a workspace that exists", async () => {
+    // The same target list drives the write when the row is present, so gating it on pruning must not
+    // stop an existing workspace's own parent edge from being projected.
+    await runAuthzedBackfill(request({ scope: { kind: "workspace", workspaceId: "ws-1" } }), dependencies);
+
+    expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceIds: ["ws-1"] })
+    );
+  });
+
+  test("attributes a failure to the owning organization rather than to no tenant", async () => {
+    apply.reconcileTeamWorkspace.mockResolvedValue({
+      attempts: 1,
+      code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+      retryable: true,
+      status: "failed",
+    });
+
+    const result = await runAuthzedBackfill(
+      request({ scope: { kind: "workspace", workspaceId: "ws-1" } }),
+      dependencies
+    );
+
+    // The empty string is the sweep's marker for an orphan with no organization left, so a workspace that
+    // still has a row must not report it.
+    expect(result.failures).toEqual([
+      { code: AUTHZED_ERROR_CODES.UNAVAILABLE, organizationId: "org-1", retryable: true },
+    ]);
+  });
+});
+
 describe("full-scope orphan sweep", () => {
   const ghostWorkspace = {
     relation: "organization",
@@ -679,28 +755,62 @@ describe("full-scope orphan sweep", () => {
     expect(result.status).toBe("reconciled");
   });
 
-  test("keeps counting after the cap is spent, so the reported total is the real magnitude", async () => {
-    // The count is the diagnostic. Stopping at the cap would report 2 when there are 4, and "a few" versus
-    // "far more than expected" are what tell an operator whether they aimed at the wrong database.
+  test("prunes nothing at all when a later page pushes the total past the cap", async () => {
+    // The cap is an abort-before-delete guard, so it has to be decided against the *whole* sweep. Enforced
+    // per page it would delete every page that fit and stop at the one that did not — so a run aimed at
+    // the wrong database would revoke a cap's worth of live access instead of revoking none.
+    const secondGhost = {
+      relation: "organization",
+      resource: { objectId: "ghost-ws-2", objectType: "workspace" },
+      subject: { objectId: "gone-org", objectType: "organization" },
+    };
     readRelationships.mockImplementation(({ cursor, filter }) =>
       Promise.resolve(
-        filter.resourceType === "workspace" && cursor === undefined
-          ? {
-              cursor: { token: "page-2" },
-              relationships: [ghostWorkspace, ghostWorkspace],
-              snapshot: { token: "revision-1" },
-            }
-          : filter.resourceType === "workspace"
+        filter.resourceType !== "workspace"
+          ? emptyPage
+          : cursor === undefined
             ? {
-                cursor: null,
-                relationships: [ghostWorkspace, ghostWorkspace],
+                cursor: { token: "page-2" },
+                relationships: [ghostWorkspace],
                 snapshot: { token: "revision-1" },
               }
-            : emptyPage
+            : { cursor: null, relationships: [secondGhost], snapshot: { token: "revision-1" } }
       )
     );
-    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) =>
-      Promise.resolve(refs.length > 0 ? [{ kind: "workspace", workspaceId: "ghost-ws" }] : [])
+    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) => Promise.resolve(refs));
+
+    const result = await runAuthzedBackfill(
+      request({ maxPrune: 1, prune: true, scope: { kind: "all" } }),
+      dependencies
+    );
+
+    // Both counted — the total is the diagnostic, and it is what says how far off the run is.
+    expect(result.counters.orphaned).toBe(2);
+    // The first page fit the budget of one. It is still not deleted.
+    expect(result.counters.pruned).toBe(0);
+    expect(result.counters.skipped).toBe(1);
+    expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceIds: expect.arrayContaining(["ghost-ws"]) })
+    );
+    expect(result.status).toBe("drifted");
+  });
+
+  test("counts a record implied by two pages once", async () => {
+    // SpiceDB returns alternate relations on one resource grouped by relation rather than adjacently, so
+    // the tuples implying a single record straddle a page boundary in any tenant larger than a page.
+    // Counting it twice would inflate the total that the cap is compared against.
+    readRelationships.mockImplementation(({ cursor, filter }) =>
+      Promise.resolve(
+        filter.resourceType !== "workspace"
+          ? emptyPage
+          : cursor === undefined
+            ? {
+                cursor: { token: "page-2" },
+                relationships: [ghostWorkspace],
+                snapshot: { token: "revision-1" },
+              }
+            : { cursor: null, relationships: [ghostWorkspace], snapshot: { token: "revision-1" } }
+      )
     );
 
     const result = await runAuthzedBackfill(
@@ -708,12 +818,11 @@ describe("full-scope orphan sweep", () => {
       dependencies
     );
 
-    // Two pages, each yielding one orphan. The budget of one is spent on the first; the second exceeds
-    // it and halts pruning — but both are still counted, which is the point.
-    expect(result.counters.orphaned).toBe(2);
+    expect(result.counters.orphaned).toBe(1);
+    expect(result.orphans).toEqual([{ kind: "workspace", workspaceId: "ghost-ws" }]);
+    // Deduplicated to one, so it fits the budget of one and is pruned rather than skipped.
     expect(result.counters.pruned).toBe(1);
-    // Reported once, not once per page.
-    expect(result.counters.skipped).toBe(1);
+    expect(result.counters.skipped).toBe(0);
   });
 
   test("prunes nothing when the sweep's orphan count exceeds the cap", async () => {
