@@ -19,6 +19,16 @@ import { metrics } from "@opentelemetry/api";
  * Note this covers the always-on request path only. The backfill command is a short-lived process with
  * no scrape window and no flush, so its observability is the counters in its own JSON result and its
  * exit code.
+ *
+ * **A deliberate deviation from the semantic conventions, which prescribe dots as namespace delimiters
+ * (`formbricks.authzed.projection.duration`) and say a unit need not appear in the name.** This app
+ * configures the Prometheus reader *and* an OTLP reader at once, and the two derive a series name
+ * differently: the Prometheus exporter sanitizes dots to underscores and appends no unit, while OTLP's
+ * Prometheus translation appends the unit unless the name already carries it. Under the conventional
+ * spelling the same instrument would surface as `..._duration` on a scrape and `..._duration_seconds`
+ * through a collector — so the runbook could not name one series, which is exactly the defect this
+ * naming replaced. Prometheus-style names with the unit spelled out are the only form both paths agree
+ * on. Revisit if the Prometheus reader is ever dropped.
  */
 
 const meter = metrics.getMeter("formbricks.authzed");

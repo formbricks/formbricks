@@ -129,6 +129,24 @@ Before running this, read §4.
 blast radius. It reports `orphanScope: "known_resources"` because a resource whose row is already gone
 is unreachable from its organization; only `--scope=all` can claim completeness.
 
+**One workspace.** `--workspace-id=<cuid>` is narrower still, and unlike an organization the workspace
+does not have to exist — a workspace whose row is gone is the case most worth repairing:
+
+```bash
+# Converge one workspace's team and API-key grants.
+pnpm authzed:backfill --apply --workspace-id=<cuid>
+
+# Remove the relationships of a workspace whose row is gone. This is a prune — every relationship on
+# that workspace goes, team and API-key grants included — so it takes the prune flags, not --apply
+# alone. Without them the run reports the orphans and removes nothing.
+pnpm authzed:backfill --apply --prune --confirm-prune --workspace-id=<cuid> \
+  --expected-endpoint=<host:port>
+```
+
+Narrow, but not hermetic: the API keys holding grants on that workspace are reconciled in full, which
+also converges their grants on *other* workspaces. That direction only ever writes what PostgreSQL
+says, so the effect is a wider repair than you asked for, never a deletion outside the workspace named.
+
 **Resuming.** A run reports `lastOrganizationId`. Feed it back:
 
 ```bash
