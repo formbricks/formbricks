@@ -14,13 +14,13 @@ These fields turn free text, which is normally hard to count, into structured si
 
 ## How enrichment works
 
-Enrichment is **automatic and per-record**. You do not configure or trigger it manually:
+Enrichment is **automatic and per-record**. Individual records are never triggered or configured by hand; the only setting is the translation target language, which is configured once at the service level (see [Language consolidation](#language-consolidation)):
 
 1. A Feedback Record is ingested with a text answer in `value_text`.
 2. Formbricks enriches the record **asynchronously**. The enrichment fields are absent until processing finishes, so a record may show as **Not enriched** for a short time after it arrives.
 3. Once complete, the sentiment, emotion, and translation fields appear on the record and in charts.
 
-Only records with open text are enriched. Records that only carry a rating, NPS score, or categorical choice have nothing to analyze.
+Only records with open text receive AI enrichment. Records that only carry a rating, NPS score, or categorical choice have no text to analyze. Categorical answers are still consolidated across languages through their **Value ID**, which is not AI enrichment. See [Consolidating the same option across languages](#consolidating-the-same-option-across-languages).
 
 <Note>
   Enrichment fields are read-only. Editing a record's `value_text` clears its
