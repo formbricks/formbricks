@@ -21,9 +21,15 @@ const ALLOWED_IMPORTER_PREFIXES = ["lib/authzed/", "scripts/"];
 
 const RESTRICTED_MODULES = ["backfill", "backfill-cli", "backfill-diff", "backfill-source"];
 
-const SEARCH_ROOTS = ["app", "lib", "modules", "scripts"];
+/**
+ * Every directory holding application source, plus `apps/web`'s own root modules.
+ *
+ * `instrumentation*.ts` and `proxy.ts` live at the root rather than under a directory and are as
+ * request-path as anything in `app/` — omitting them would leave the most sensitive files unchecked.
+ */
+const SEARCH_ROOTS = [".", "app", "integration", "lib", "modules", "scripts"];
 
-const collectSourceFiles = (directory: string): ReadonlyArray<string> => {
+const collectSourceFiles = (directory: string, recurse: boolean): ReadonlyArray<string> => {
   const entries: string[] = [];
 
   for (const entry of readdirSync(directory)) {
@@ -33,7 +39,9 @@ const collectSourceFiles = (directory: string): ReadonlyArray<string> => {
 
     const absolute = join(directory, entry);
     if (statSync(absolute).isDirectory()) {
-      entries.push(...collectSourceFiles(absolute));
+      if (recurse) {
+        entries.push(...collectSourceFiles(absolute, true));
+      }
       continue;
     }
     if (/\.tsx?$/.test(entry) && !/\.test\.tsx?$/.test(entry)) {
@@ -44,11 +52,33 @@ const collectSourceFiles = (directory: string): ReadonlyArray<string> => {
   return entries;
 };
 
+/**
+ * Any reference to a restricted module as a module specifier.
+ *
+ * Deliberately not anchored to `from`: a static import is only one of the ways in. `await import(…)`,
+ * `require(…)`, and a bare side-effect import all reach the same module, and a fence that only caught the
+ * tidy spelling would be trivially — and silently — stepped around.
+ */
+const restrictedSpecifierPattern = (moduleName: string): RegExp =>
+  new RegExp(String.raw`["'][^"']*(?:lib/)?authzed/${moduleName}["']`);
+
+const importsRestrictedModule = (source: string): boolean =>
+  RESTRICTED_MODULES.some((moduleName) => restrictedSpecifierPattern(moduleName).test(source));
+
 describe("backfill module boundary", () => {
-  const files = SEARCH_ROOTS.flatMap((root) => collectSourceFiles(join(WEB_ROOT, root)));
+  const files = SEARCH_ROOTS.flatMap((root) => collectSourceFiles(join(WEB_ROOT, root), root !== "."));
 
   test("finds source files to check, so a broken search cannot pass silently", () => {
     expect(files.length).toBeGreaterThan(500);
+  });
+
+  test("searches apps/web's root modules, which hold the request-path proxy and instrumentation", () => {
+    const rootModules = files
+      .map((absolute) => relative(WEB_ROOT, absolute))
+      .filter((relativePath) => !relativePath.includes("/"));
+
+    expect(rootModules).toContain("proxy.ts");
+    expect(rootModules).toContain("instrumentation.ts");
   });
 
   test("is imported only by the tooling itself and its command entry points", () => {
@@ -57,14 +87,15 @@ describe("backfill module boundary", () => {
       .filter(
         ({ relativePath }) => !ALLOWED_IMPORTER_PREFIXES.some((prefix) => relativePath.startsWith(prefix))
       )
-      .filter(({ absolute }) => {
-        const source = readFileSync(absolute, "utf8");
-        return RESTRICTED_MODULES.some((moduleName) =>
-          new RegExp(String.raw`from\s+["'][^"']*(?:lib/)?authzed/${moduleName}["']`).test(source)
-        );
-      })
+      .filter(({ absolute }) => importsRestrictedModule(readFileSync(absolute, "utf8")))
       .map(({ relativePath }) => relativePath);
 
     expect(offenders).toEqual([]);
+  });
+
+  test("is not re-exported from the barrel, which would launder it past the allowed prefix", () => {
+    // `lib/authzed/` is an allowed importer, so a re-export from inside it would make the tooling
+    // reachable as `@/lib/authzed` from anywhere — passing every check above.
+    expect(importsRestrictedModule(readFileSync(join(WEB_ROOT, "lib/authzed/index.ts"), "utf8"))).toBe(false);
   });
 });
