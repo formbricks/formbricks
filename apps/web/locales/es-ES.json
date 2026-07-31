@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Añadir método de pago",
         "trial_ending_description": "Cuando finalice, perderás el acceso a todo lo que has configurado en Pro:",
         "trial_ending_title": "{count, plural, one {Solo queda # día en tu prueba} other {Solo quedan # días en tu prueba}}",
-        "trial_payment_method_added_description": "¡Todo listo! Tu plan Pro continuará automáticamente cuando termine el periodo de prueba.",
         "trial_warning_200_description": "Has recopilado 200 respuestas. Una vez que llegues a 250, tus encuestas dejarán de aceptar nuevas respuestas hasta que finalice el período de 30 días.",
         "trial_warning_200_title": "Has recopilado el 80% de tu límite de respuestas",
         "trial_warning_250_description": "Has recopilado 250 respuestas. A partir de ahora, tus encuestas no aceptarán nuevas respuestas hasta que finalice el período de 30 días.",

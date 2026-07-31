@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "お支払い方法を追加",
         "trial_ending_description": "トライアル期間が終了すると、Proで設定したすべての機能にアクセスできなくなります:",
         "trial_ending_title": "{count, plural, other {トライアル期間終了まであと#日}}",
-        "trial_payment_method_added_description": "準備完了です！トライアル終了後、Proプランが自動的に継続されます。",
         "trial_warning_200_description": "200件の回答を収集しました。250件に達すると、30日間の期間が終了するまで、アンケートは新しい回答を受け付けなくなります。",
         "trial_warning_200_title": "回答制限の80%に達しました",
         "trial_warning_250_description": "250件の回答を収集しました。30日間の期間が終了するまで、アンケートは新しい回答を受け付けなくなります。",

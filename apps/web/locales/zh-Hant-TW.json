@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "新增付款方式",
         "trial_ending_description": "試用期結束後,您將無法使用在 Pro 方案中設定的所有功能:",
         "trial_ending_title": "{count, plural, other {試用期只剩 # 天}}",
-        "trial_payment_method_added_description": "一切就緒！試用期結束後，您的 Pro 方案將自動繼續。",
         "trial_warning_200_description": "你已經收集了 200 份回覆。一旦達到 250 份,你的問卷調查將停止接受新回覆,直到 30 天期限結束。",
         "trial_warning_200_title": "您已收集了回覆上限的 80%",
         "trial_warning_250_description": "您已收集了 250 份回覆。從現在起，在 30 天期限結束前，您的問卷將不再接受新的回覆。",

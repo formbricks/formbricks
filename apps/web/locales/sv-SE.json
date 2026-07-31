@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Lägg till betalningsmetod",
         "trial_ending_description": "När den tar slut förlorar du tillgång till allt du har satt upp i Pro:",
         "trial_ending_title": "{count, plural, one {Bara # dag kvar av din provperiod} other {Bara # dagar kvar av din provperiod}}",
-        "trial_payment_method_added_description": "Du är redo! Din Pro-plan kommer att fortsätta automatiskt efter att provperioden slutar.",
         "trial_warning_200_description": "Du har samlat in 200 svar. När du når 250 kommer dina undersökningar att sluta ta emot nya svar fram till slutet av 30-dagarsperioden.",
         "trial_warning_200_title": "Du har samlat in 80% av din svarsgräns",
         "trial_warning_250_description": "Du har samlat in 250 svar. Från och med nu kommer dina undersökningar inte att acceptera nya svar förrän 30-dagarsperioden är slut.",

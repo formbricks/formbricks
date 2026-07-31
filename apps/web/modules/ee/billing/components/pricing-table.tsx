@@ -1303,30 +1303,24 @@ export const PricingTable = ({
   return (
     <main>
       <div className="flex max-w-6xl flex-col gap-4">
-        {trialDaysRemaining !== null &&
-          (hasPaymentMethod ? (
-            <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod className="max-w-5xl">
-              <AlertDescription>
-                {t("workspace.settings.billing.trial_payment_method_added_description")}
-              </AlertDescription>
-            </TrialAlert>
-          ) : (
-            <TrialAlert trialDaysRemaining={trialDaysRemaining} className="max-w-5xl">
-              <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
-              {hasBillingRights && trialedPaidPlan && (
-                // Same flow as the plan card's "Unlock all {plan} features" CTA: the pay-now confirm
-                // modal (add-card checkout + immediate full-price conversion) — no add-card-only path.
-                <AlertButton
-                  onClick={() =>
-                    openConfirmation(trialedPaidPlan, currentBillingInterval ?? "monthly", "trial-continue")
-                  }>
-                  {t("workspace.settings.billing.unlock_all_plan_features", {
-                    plan: getCurrentCloudPlanLabel(trialedPaidPlan, t),
-                  })}
-                </AlertButton>
-              )}
-            </TrialAlert>
-          ))}
+        {trialDaysRemaining !== null && (
+          // One banner for every trial, card on file or not: features stay locked until paid, so the
+          // only action is the pay-now confirm modal (same flow as the plan card's CTA). The old
+          // card-backed "You're all set, continues automatically" variant contradicted that model.
+          <TrialAlert trialDaysRemaining={trialDaysRemaining} className="max-w-5xl">
+            <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
+            {hasBillingRights && trialedPaidPlan && (
+              <AlertButton
+                onClick={() =>
+                  openConfirmation(trialedPaidPlan, currentBillingInterval ?? "monthly", "trial-continue")
+                }>
+                {t("workspace.settings.billing.unlock_all_plan_features", {
+                  plan: getCurrentCloudPlanLabel(trialedPaidPlan, t),
+                })}
+              </AlertButton>
+            )}
+          </TrialAlert>
+        )}
 
         {pendingChange && (
           <Alert variant="info" className="max-w-5xl">

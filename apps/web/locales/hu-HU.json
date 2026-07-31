@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Fizetési mód hozzáadása",
         "trial_ending_description": "A lejárat után elveszíti a hozzáférést mindahhoz, amit a Pro verzióban beállított:",
         "trial_ending_title": "{count, plural, one {Már csak # nap van hátra a próbaidőszakból} other {Már csak # nap van hátra a próbaidőszakból}}",
-        "trial_payment_method_added_description": "Mindent beállított! A Pro csomagja a próbaidőszak vége után automatikusan folytatódik.",
         "trial_warning_200_description": "Ön 200 választ gyűjtött össze. Amint eléri a 250-et, a felmérései nem fogadnak új válaszokat a 30 napos időszak végéig.",
         "trial_warning_200_title": "Ön elérte a válaszlimit 80%-át",
         "trial_warning_250_description": "Ön 250 választ gyűjtött össze. Mostantól a felmérései nem fogadnak új válaszokat a 30 napos időszak végéig.",

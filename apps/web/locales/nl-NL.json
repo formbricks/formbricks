@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Betaalmethode toevoegen",
         "trial_ending_description": "Wanneer deze afloopt, verlies je toegang tot alles wat je hebt ingesteld op Pro:",
         "trial_ending_title": "{count, plural, one {Nog maar # dag over in je proefperiode} other {Nog maar # dagen over in je proefperiode}}",
-        "trial_payment_method_added_description": "Je bent helemaal klaar! Je Pro-abonnement wordt automatisch voortgezet na afloop van de proefperiode.",
         "trial_warning_200_description": "Je hebt 200 reacties verzameld. Zodra je 250 bereikt, accepteren je enquêtes geen nieuwe reacties meer tot het einde van de periode van 30 dagen.",
         "trial_warning_200_title": "Je hebt 80% van je reactielimiet bereikt",
         "trial_warning_250_description": "Je hebt 250 reacties verzameld. Vanaf nu accepteren je enquêtes geen nieuwe reacties meer tot het einde van de periode van 30 dagen.",

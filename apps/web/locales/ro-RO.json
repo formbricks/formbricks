@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Adaugă metodă de plată",
         "trial_ending_description": "Când se va încheia, vei pierde accesul la tot ce ai configurat în Pro:",
         "trial_ending_title": "{count, plural, one {Doar # zi rămasă în perioada ta de probă} few {Doar # zile rămase în perioada ta de probă} other {Doar # de zile rămase în perioada ta de probă}}",
-        "trial_payment_method_added_description": "Totul este pregătit! Planul tău Pro va continua automat după ce se încheie perioada de probă.",
         "trial_warning_200_description": "Ai colectat 200 de răspunsuri. Odată ce vei ajunge la 250, sondajele tale nu vor mai accepta răspunsuri noi până la sfârșitul perioadei de 30 de zile.",
         "trial_warning_200_title": "Ai colectat 80% din limita de răspunsuri",
         "trial_warning_250_description": "Ai colectat 250 de răspunsuri. De acum înainte, sondajele tale nu vor mai accepta răspunsuri noi până la finalul perioadei de 30 de zile.",
