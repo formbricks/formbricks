@@ -485,7 +485,9 @@ describe("POST /api/mcp", () => {
     expect(message.result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: expect.stringContaining("OAuth token does not include the required MCP scope:"),
+      // Names the scope this specific call needed, not just that some scope was missing — that is
+      // the only thing the client can act on.
+      detail: "OAuth token does not include the required MCP scope: surveys:write",
       requestId: "req_read_only",
     });
   });
