@@ -3277,7 +3277,6 @@
         "numbered_list": "番号付きリスト",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "一度設定すると、このフォームのデフォルト言語は、多言語オプションを無効にしてすべての翻訳を削除することによってのみ変更できます。",
         "only_display_the_survey_to_a_subset_of_the_users": "ユーザーの一部にのみフォームを表示する",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "小文字のアルファベット、数字、アンダースコアのみが許可されています。",
         "only_people_who_match_your_targeting_can_be_surveyed": "あなたのターゲティングに一致する人だけがフォームに回答できます。",
         "option_idx": "オプション {choiceIndex}",
         "option_used_in_logic_error": "このオプションは質問 {questionIndex} のロジックで使用されています。まず、ロジックから削除してください。",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "{type} IDを入力してください。",
         "validate_id_invalid_chars": "{type} IDは使用できません。英数字、ハイフン、アンダースコアのみを使用してください。",
         "validate_id_no_spaces": "{type} IDにスペースを含めることはできません。スペースを削除してください。",
+        "validate_id_not_safe_identifier": "{type} IDは小文字で始まり、小文字、数字、アンダースコアのみを含むことができます。",
         "validate_id_reserved": "{type} ID \"{field}\" は使用できません。予約されたキーワードです。",
         "validation": {
           "add_validation_rule": "検証ルールを追加",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "変数“{variableName}”は“{quotaName}”クォータで使用されています",
         "variable_name_conflicts_with_hidden_field": "変数名が既存の非表示フィールドIDと競合しています。",
         "variable_name_is_already_taken_please_choose_another": "変数名はすでに使用されています。別の名前を選択してください。",
-        "variable_name_must_start_with_a_letter": "変数名はアルファベットで始まらなければなりません。",
         "variable_used_in_recall": "変数 \"{variable}\" が 質問 {questionIndex} で 呼び出され て います 。",
         "variable_used_in_recall_ending_card": "変数 {variable} が エンディング カード で 呼び出され て います。",
         "variable_used_in_recall_welcome": "変数 \"{variable}\" が ウェルカム カード で 呼び出され て います。",

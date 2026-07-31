@@ -1,6 +1,7 @@
 import { parse } from "node-html-parser";
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
+import { isLegacyFieldIdentifier, isSafeIdentifier } from "../safe-identifier";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
   TActionJumpToQuestion,
@@ -323,11 +324,22 @@ export enum TValidateIdErrorCode {
   Reserved = "reserved",
   HasSpaces = "has_spaces",
   InvalidChars = "invalid_chars",
+  NotSafeIdentifier = "not_safe_identifier",
 }
 
 export interface TValidateIdError {
   code: TValidateIdErrorCode;
   field: string;
+}
+
+export interface TValidateIdOptions {
+  /**
+   * Applies the strict shared naming rule (`isSafeIdentifier`) on top of the lenient character
+   * check. Use it wherever a *new* declared field name is created — hidden fields, variables,
+   * Embedded Data fields — so every new name follows one rule. Element and question ids stay
+   * lenient, otherwise renaming a question to `Q1` would start failing.
+   */
+  requireSafeIdentifier?: boolean;
 }
 
 // function to validate hidden field or question id or element id
@@ -336,7 +348,8 @@ export const validateId = (
   existingElementIds: string[],
   existingEndingCardIds: string[],
   existingHiddenFieldIds: string[],
-  existingVariableNames: string[] = []
+  existingVariableNames: string[] = [],
+  { requireSafeIdentifier = false }: TValidateIdOptions = {}
 ): TValidateIdError | null => {
   if (field.trim() === "") {
     return { code: TValidateIdErrorCode.Empty, field };
@@ -361,8 +374,12 @@ export const validateId = (
     return { code: TValidateIdErrorCode.HasSpaces, field };
   }
 
-  if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
+  if (!isLegacyFieldIdentifier(field)) {
     return { code: TValidateIdErrorCode.InvalidChars, field };
+  }
+
+  if (requireSafeIdentifier && !isSafeIdentifier(field)) {
+    return { code: TValidateIdErrorCode.NotSafeIdentifier, field };
   }
 
   return null;

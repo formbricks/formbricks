@@ -3277,7 +3277,6 @@
         "numbered_list": "Нумерованный список",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "После установки язык по умолчанию для этого опроса можно изменить только, отключив опцию мультиязычности и удалив все переводы.",
         "only_display_the_survey_to_a_subset_of_the_users": "Показывать опрос только определённой группе пользователей",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Разрешены только строчные буквы, цифры и символы подчёркивания.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Опрос доступен только пользователям, соответствующим вашей целевой аудитории.",
         "option_idx": "Вариант {choiceIndex}",
         "option_used_in_logic_error": "Этот вариант используется в логике вопроса {questionIndex}. Пожалуйста, сначала удалите его из логики.",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "Пожалуйста, введите ID {type}.",
         "validate_id_invalid_chars": "ID {type} недопустим. Пожалуйста, используйте только буквенно-цифровые символы, дефисы или подчеркивания.",
         "validate_id_no_spaces": "ID {type} не может содержать пробелы. Пожалуйста, удалите пробелы.",
+        "validate_id_not_safe_identifier": "ID {type} должен начинаться с буквы в нижнем регистре и может содержать только буквы в нижнем регистре, цифры и символы подчеркивания.",
         "validate_id_reserved": "ID {type} \"{field}\" недопустим. Это зарезервированное ключевое слово.",
         "validation": {
           "add_validation_rule": "Добавить правило проверки",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Переменная «{variableName}» используется в квоте «{quotaName}». Сначала удалите её из квоты.",
         "variable_name_conflicts_with_hidden_field": "Имя переменной конфликтует с существующим ID скрытого поля.",
         "variable_name_is_already_taken_please_choose_another": "Это имя переменной уже занято, выберите другое.",
-        "variable_name_must_start_with_a_letter": "Имя переменной должно начинаться с буквы.",
         "variable_used_in_recall": "Переменная «{variable}» используется в вопросе {questionIndex}.",
         "variable_used_in_recall_ending_card": "Переменная {variable} используется в финальной карточке",
         "variable_used_in_recall_welcome": "Переменная «{variable}» используется в приветственной карточке.",

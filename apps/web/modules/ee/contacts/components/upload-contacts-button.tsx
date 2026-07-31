@@ -6,9 +6,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/helper";
-import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
 import {

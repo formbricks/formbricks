@@ -3,6 +3,7 @@ import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
+import { isLegacyFieldIdentifier, isLegacyVariableName } from "../safe-identifier";
 import { ZSegment } from "../segment";
 import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
@@ -177,7 +178,10 @@ export const ZSurveyHiddenFields = z.object({
           });
         }
 
-        if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
+        // Lenient on purpose: this schema also parses surveys loaded from the database, which
+        // still hold hidden field names created before `isSafeIdentifier`. New names are gated
+        // strictly by `validateId` in the editor.
+        if (!isLegacyFieldIdentifier(field)) {
           ctx.addIssue({
             code: "custom",
             message:
@@ -207,8 +211,10 @@ export const ZSurveyVariable = z
     }),
   ])
   .superRefine((data, ctx) => {
-    // variable name can only contain lowercase letters, numbers, and underscores
-    if (!/^[a-z0-9_]+$/.test(data.name)) {
+    // Lenient on purpose: this schema also parses surveys loaded from the database, which still
+    // hold variable names created before `isSafeIdentifier` (e.g. `_legacy`). New names are gated
+    // strictly by the variable editor.
+    if (!isLegacyVariableName(data.name)) {
       ctx.addIssue({
         code: "custom",
         message: "Variable name can only contain lowercase letters, numbers, and underscores",

@@ -3277,7 +3277,6 @@
         "numbered_list": "Numrerad lista",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "När det är satt kan standardspråket för denna enkät endast ändras genom att inaktivera flerspråksalternativet och ta bort alla översättningar.",
         "only_display_the_survey_to_a_subset_of_the_users": "Visa endast enkäten för en delmängd av användarna",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Endast små bokstäver, siffror och understreck är tillåtna.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Endast personer som matchar din målgruppsinriktning kan enkäteras.",
         "option_idx": "Alternativ {choiceIndex}",
         "option_used_in_logic_error": "Detta alternativ används i logiken för fråga {questionIndex}. Vänligen ta bort det från logiken först.",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "Vänligen ange ett {type}-ID.",
         "validate_id_invalid_chars": "{type}-ID är inte tillåtet. Använd endast alfanumeriska tecken, bindestreck eller understreck.",
         "validate_id_no_spaces": "{type}-ID kan inte innehålla mellanslag. Vänligen ta bort mellanslag.",
+        "validate_id_not_safe_identifier": "{type}-ID måste börja med en liten bokstav och får endast innehålla små bokstäver, siffror och understreck.",
         "validate_id_reserved": "{type}-ID \"{field}\" är inte tillåtet. Det är ett reserverat nyckelord.",
         "validation": {
           "add_validation_rule": "Lägg till valideringsregel",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variabeln “{variableName}” används i kvoten “{quotaName}”",
         "variable_name_conflicts_with_hidden_field": "Variabelnamnet krockar med ett befintligt dolt fält-ID.",
         "variable_name_is_already_taken_please_choose_another": "Variabelnamnet är redan taget, vänligen välj ett annat.",
-        "variable_name_must_start_with_a_letter": "Variabelnamnet måste börja med en bokstav.",
         "variable_used_in_recall": "Variabel \"{variable}\" återkallas i fråga {questionIndex}.",
         "variable_used_in_recall_ending_card": "Variabel {variable} återkallas i avslutningskortet",
         "variable_used_in_recall_welcome": "Variabel \"{variable}\" återkallas i välkomstkortet.",

@@ -3277,7 +3277,6 @@
         "numbered_list": "Számozott lista",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "A beállítás után a kérdőív alapértelmezett nyelve csak a többnyelvű beállítás letiltásával és az összes fordítás törlésével változtatható meg.",
         "only_display_the_survey_to_a_subset_of_the_users": "A kérdőív megjelenítése csak a felhasználók egy részének",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Csak kisbetűk, számok és aláhúzásjelek engedélyezettek.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Csak azok a személyek kérdezhetők meg, akik megfelelnek a célcsoportnak.",
         "option_idx": "{choiceIndex}. lehetőség",
         "option_used_in_logic_error": "Ez a lehetőség használatban van a(z) {questionIndex}. kérdés logikájában. Először távolítsa el a logikából.",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "Adja meg egy {type} azonosítóját.",
         "validate_id_invalid_chars": "A {type} azonosítója nem engedélyezett. Használjon csak alfanumerikus karaktereket, kötőjeleket vagy aláhúzásjeleket.",
         "validate_id_no_spaces": "A {type} azonosítója nem tartalmazhat szóközöket. Távolítsa el a szóközöket.",
+        "validate_id_not_safe_identifier": "A(z) {type} azonosítónak kisbetűvel kell kezdődnie, és kizárólag kisbetűket, számokat és aláhúzásjeleket tartalmazhat.",
         "validate_id_reserved": "A(z) {type} „{field}” azonosítója nem engedélyezett. Ez egy foglalt kulcsszó.",
         "validation": {
           "add_validation_rule": "Ellenőrzési szabály hozzáadása",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "A(z) „{variableName}” változó használatban van a(z) „{quotaName}” kvótában",
         "variable_name_conflicts_with_hidden_field": "A változónév ütközik egy meglévő rejtett mező azonosítójával.",
         "variable_name_is_already_taken_please_choose_another": "A változónév már használatban van. Válasszon egy másikat.",
-        "variable_name_must_start_with_a_letter": "A változónév csak ékezet nélküli betűvel kezdődhet.",
         "variable_used_in_recall": "A(z) „{variable}” változó visszahívásra kerül a(z) {questionIndex}. kérdésben.",
         "variable_used_in_recall_ending_card": "A(z) {variable} változó visszahívásra kerül a befejező kártyában",
         "variable_used_in_recall_welcome": "A(z) „{variable}” változó visszahívásra kerül az üdvözlő kártyában.",

@@ -3277,7 +3277,6 @@
         "numbered_list": "Numbered list",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Once set, the default language for this survey can only be changed by disabling the multi-language option and deleting all translations.",
         "only_display_the_survey_to_a_subset_of_the_users": "Only display the survey to a subset of the users",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Only lower case letters, numbers, and underscores are allowed.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Only people who match your targeting can be surveyed.",
         "option_idx": "Option {choiceIndex}",
         "option_used_in_logic_error": "This option is used in logic of question {questionIndex}. Please remove it from logic first.",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "Please enter a {type} ID.",
         "validate_id_invalid_chars": "{type} ID is not allowed. Please use only alphanumeric characters, hyphens, or underscores.",
         "validate_id_no_spaces": "{type} ID cannot contain spaces. Please remove spaces.",
+        "validate_id_not_safe_identifier": "{type} ID must start with a lowercase letter and can only contain lowercase letters, numbers, and underscores.",
         "validate_id_reserved": "{type} ID \"{field}\" is not allowed. It is a reserved keyword.",
         "validation": {
           "add_validation_rule": "Add validation rule",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variable “{variableName}” is being used in “{quotaName}” quota",
         "variable_name_conflicts_with_hidden_field": "Variable name conflicts with an existing hidden field ID.",
         "variable_name_is_already_taken_please_choose_another": "Variable name is already taken, please choose another.",
-        "variable_name_must_start_with_a_letter": "Variable name must start with a letter.",
         "variable_used_in_recall": "Variable “{variable}” is being recalled in question {questionIndex}.",
         "variable_used_in_recall_ending_card": "Variable {variable} is being recalled in Ending Card",
         "variable_used_in_recall_welcome": "Variable “{variable}” is being recalled in Welcome Card.",

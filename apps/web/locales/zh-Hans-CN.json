@@ -3277,7 +3277,6 @@
         "numbered_list": "编号列表",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "一旦设置，此调查的默认语言只能通过禁用多语言选项并删除所有翻译来更改。",
         "only_display_the_survey_to_a_subset_of_the_users": "仅 显示 给 部分 用户",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "仅允许小写字母、数字和下划线。",
         "only_people_who_match_your_targeting_can_be_surveyed": "只有符合 您的目标 定位 的人 可以 被调查 。",
         "option_idx": "选项 {choiceIndex}",
         "option_used_in_logic_error": "\"这个 选项 在 问题 {questionIndex} 的 逻辑 中 使用。请 先 从 逻辑 中 删除 它。\"",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "请输入 {type} ID。",
         "validate_id_invalid_chars": "{type} ID 不允许使用。请仅使用字母数字字符、连字符或下划线。",
         "validate_id_no_spaces": "{type} ID 不能包含空格。请删除空格。",
+        "validate_id_not_safe_identifier": "{type} ID 必须以小写字母开头,只能包含小写字母、数字和下划线。",
         "validate_id_reserved": "{type} ID \"{field}\" 不允许使用。它是保留关键字。",
         "validation": {
           "add_validation_rule": "添加验证规则",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "变量“{variableName}”正在被“{quotaName}”配额使用，请先将其从配额中移除",
         "variable_name_conflicts_with_hidden_field": "变量名与已有的隐藏字段 ID 冲突。",
         "variable_name_is_already_taken_please_choose_another": "变量名已被占用，请选择其他。",
-        "variable_name_must_start_with_a_letter": "变量名 必须 以字母开头。",
         "variable_used_in_recall": "变量 \"{variable}\" 正在召回于问题 {questionIndex}。",
         "variable_used_in_recall_ending_card": "变量 {variable} 正在召回于结束 卡片",
         "variable_used_in_recall_welcome": "变量 \"{variable}\" 正在召回于欢迎 卡 。",

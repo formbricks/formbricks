@@ -3277,7 +3277,6 @@
         "numbered_list": "Listă numerotată",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Odată setată, limba implicită pentru acest sondaj poate fi schimbată doar dezactivând opțiunea multi-limbă și ștergând toate traducerile.",
         "only_display_the_survey_to_a_subset_of_the_users": "Afișați sondajul doar unui subset al utilizatorilor",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Sunt permise doar litere mici, numere și caractere de subliniere.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Numai persoanele care se potrivesc cu țintirea dvs. pot fi chestionate.",
         "option_idx": "Opțiunea {choiceIndex}",
         "option_used_in_logic_error": "Această opțiune este folosită în logica întrebării {questionIndex}. Vă rugăm să-l eliminați din logică mai întâi.",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "Te rugăm să introduci un ID {type}.",
         "validate_id_invalid_chars": "ID-ul {type} nu este permis. Te rugăm să folosești doar caractere alfanumerice, cratimă sau liniuță de subliniere.",
         "validate_id_no_spaces": "ID-ul {type} nu poate conține spații. Te rugăm să elimini spațiile.",
+        "validate_id_not_safe_identifier": "ID-ul {type} trebuie să înceapă cu o literă mică și poate conține doar litere mici, numere și caractere de subliniere.",
         "validate_id_reserved": "ID-ul {type} \"{field}\" nu este permis. Este un cuvânt cheie rezervat.",
         "validation": {
           "add_validation_rule": "Adaugă regulă de validare",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variabila „{variableName}” este folosită în cota „{quotaName}”. Vă rugăm să o eliminați mai întâi din cotă",
         "variable_name_conflicts_with_hidden_field": "Numele variabilei intră în conflict cu un ID de câmp ascuns existent.",
         "variable_name_is_already_taken_please_choose_another": "Numele variabilei este deja utilizat, vă rugăm să alegeți altul.",
-        "variable_name_must_start_with_a_letter": "Numele variabilei trebuie să înceapă cu o literă.",
         "variable_used_in_recall": "Variabila \"{variable}\" este reamintită în întrebarea {questionIndex}.",
         "variable_used_in_recall_ending_card": "Variabila {variable} este reamintită în Cardul de Încheiere.",
         "variable_used_in_recall_welcome": "Variabila \"{variable}\" este reamintită în cardul de bun venit.",

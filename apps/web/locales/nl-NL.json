@@ -3277,7 +3277,6 @@
         "numbered_list": "Genummerde lijst",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Eenmaal ingesteld kan de standaardtaal voor deze enquête alleen worden gewijzigd door de meertalige optie uit te schakelen en alle vertalingen te verwijderen.",
         "only_display_the_survey_to_a_subset_of_the_users": "Geef de enquête alleen weer aan een subset van de gebruikers",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Alleen kleine letters, cijfers en onderstrepingstekens zijn toegestaan.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Alleen mensen die overeenkomen met uw targeting kunnen worden ondervraagd.",
         "option_idx": "Optie {choiceIndex}",
         "option_used_in_logic_error": "Deze optie wordt gebruikt in de logica van vraag {questionIndex}. Verwijder het eerst uit de logica.",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "Voer een {type}-ID in.",
         "validate_id_invalid_chars": "{type}-ID is niet toegestaan. Gebruik alleen alfanumerieke tekens, koppeltekens of underscores.",
         "validate_id_no_spaces": "{type}-ID mag geen spaties bevatten. Verwijder de spaties.",
+        "validate_id_not_safe_identifier": "{type}-ID moet beginnen met een kleine letter en mag alleen kleine letters, cijfers en underscores bevatten.",
         "validate_id_reserved": "{type}-ID \"{field}\" is niet toegestaan. Dit is een gereserveerd trefwoord.",
         "validation": {
           "add_validation_rule": "Validatieregel toevoegen",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Variabele “{variableName}” wordt gebruikt in het quotum “{quotaName}”",
         "variable_name_conflicts_with_hidden_field": "Variabelenaam conflicteert met een bestaande verborgen veld-ID.",
         "variable_name_is_already_taken_please_choose_another": "Variabelenaam is al in gebruik, kies een andere.",
-        "variable_name_must_start_with_a_letter": "Variabelenaam moet beginnen met een letter.",
         "variable_used_in_recall": "Variabele \"{variable}\" wordt opgeroepen in vraag {questionIndex}.",
         "variable_used_in_recall_ending_card": "Variabele {variable} wordt opgeroepen in de eindkaart",
         "variable_used_in_recall_welcome": "Variabele \"{variable}\" wordt opgeroepen in de welkomstkaart.",

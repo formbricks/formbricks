@@ -1356,6 +1356,16 @@ describe("validation.getValidateIdErrorMessage", () => {
     expect(result).toContain("validate_id_invalid_chars");
   });
 
+  test("returns a distinct message for NotSafeIdentifier error code", () => {
+    const result = validation.getValidateIdErrorMessage(
+      { code: TValidateIdErrorCode.NotSafeIdentifier, field: "Legacy-Field" },
+      "hiddenField",
+      mockT
+    );
+    expect(result).toContain("validate_id_not_safe_identifier");
+    expect(result).not.toContain("validate_id_invalid_chars");
+  });
+
   test("localizes type before passing to translation function", () => {
     const spyT = vi.fn().mockImplementation((key: string) => {
       if (key === "common.hidden_field") return "Hidden field";

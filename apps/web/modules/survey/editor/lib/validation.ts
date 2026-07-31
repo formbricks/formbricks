@@ -330,6 +330,8 @@ export const getValidateIdErrorMessage = (
       return t("workspace.surveys.edit.validate_id_no_spaces", { type: localizedType });
     case TValidateIdErrorCode.InvalidChars:
       return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+    case TValidateIdErrorCode.NotSafeIdentifier:
+      return t("workspace.surveys.edit.validate_id_not_safe_identifier", { type: localizedType });
     default:
       return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
   }

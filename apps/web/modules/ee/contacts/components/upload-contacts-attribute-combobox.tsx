@@ -3,7 +3,7 @@
 import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
   isReservedFutureDefaultAttributeKey,
@@ -151,7 +151,7 @@ export const UploadContactsAttributeCombobox = ({
                   ? "Add attribute"
                   : t("workspace.contacts.upload_contacts_modal_attributes_search_or_add")
               }
-              className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+              className="border-b border-none border-transparent shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
               onKeyDown={(e) => {

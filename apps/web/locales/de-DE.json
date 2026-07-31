@@ -3277,7 +3277,6 @@
         "numbered_list": "Nummerierte Liste",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Sobald festgelegt, kann die Standardsprache für diese Umfrage nur geändert werden, indem Du die Mehrsprachigkeitsoption deaktivierst und alle Übersetzungen löschst.",
         "only_display_the_survey_to_a_subset_of_the_users": "Zeige die Umfrage nur einer Untergruppe der Nutzer an",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Es sind nur Kleinbuchstaben, Zahlen und Unterstriche erlaubt.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Nur Personen, die deinen Targeting-Kriterien entsprechen, können befragt werden.",
         "option_idx": "Option {choiceIndex}",
         "option_used_in_logic_error": "Diese Option wird in der Logik von Frage {questionIndex} verwendet. Bitte entferne sie zuerst aus der Logik.",
@@ -3453,6 +3452,7 @@
         "validate_id_empty": "Bitte gib eine {type}-ID ein.",
         "validate_id_invalid_chars": "{type}-ID ist nicht erlaubt. Bitte verwende nur alphanumerische Zeichen, Bindestriche oder Unterstriche.",
         "validate_id_no_spaces": "{type}-ID darf keine Leerzeichen enthalten. Bitte entferne die Leerzeichen.",
+        "validate_id_not_safe_identifier": "{type}-ID muss mit einem Kleinbuchstaben beginnen und darf nur Kleinbuchstaben, Zahlen und Unterstriche enthalten.",
         "validate_id_reserved": "{type}-ID \"{field}\" ist nicht erlaubt. Es handelt sich um ein reserviertes Schlüsselwort.",
         "validation": {
           "add_validation_rule": "Validierungsregel hinzufügen",
@@ -3500,7 +3500,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "Die Variable \"{variableName}\" wird im Kontingent \"{quotaName}\" verwendet",
         "variable_name_conflicts_with_hidden_field": "Der Variablenname steht im Konflikt mit einer vorhandenen ID für versteckte Felder.",
         "variable_name_is_already_taken_please_choose_another": "Der Variablenname ist bereits vergeben, bitte wähle einen anderen.",
-        "variable_name_must_start_with_a_letter": "Der Variablenname muss mit einem Buchstaben beginnen.",
         "variable_used_in_recall": "Die Variable \"{variable}\" wird in Frage {questionIndex} abgerufen.",
         "variable_used_in_recall_ending_card": "Die Variable {variable} wird in der Abschlusskarte abgerufen",
         "variable_used_in_recall_welcome": "Die Variable \"{variable}\" wird in der Willkommenskarte abgerufen.",

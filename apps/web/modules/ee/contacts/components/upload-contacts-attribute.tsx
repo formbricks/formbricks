@@ -4,7 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/components/upload-contacts-attribute-combobox";
 import { Badge } from "@/modules/ui/components/badge";
 
@@ -132,7 +132,7 @@ export const UploadContactsAttributes = ({
 
   return (
     <>
-      <span className="overflow-hidden text-ellipsis font-medium text-slate-700">{csvColumn}</span>
+      <span className="overflow-hidden font-medium text-ellipsis text-slate-700">{csvColumn}</span>
       <div className="flex items-center gap-2">
         <UploadContactsAttributeCombobox
           open={open}
