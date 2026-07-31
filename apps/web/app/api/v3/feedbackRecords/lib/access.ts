@@ -1,8 +1,10 @@
 import "server-only";
 import type { logger } from "@formbricks/logger";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
 import { problemBadRequest, problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { retrieveFeedbackRecord } from "@/modules/hub/service";
 import type { FeedbackRecordData } from "@/modules/hub/types";
@@ -129,6 +131,65 @@ export async function resolveWorkspaceFeedbackTenant({
     datasetName: directories[0].name,
     allowedTenantIds,
   };
+}
+
+type TRequireMutationRoleParams = {
+  authentication: TV3Authentication;
+  /** The organization that owns the resolved dataset (from `resolveWorkspaceFeedbackTenant`). */
+  organizationId: string;
+  log: ReturnType<typeof logger.withContext>;
+  requestId: string;
+  instance: string;
+};
+
+/**
+ * Assert that the caller may change a record that already exists — organization owners and managers
+ * only (ENG-1770).
+ *
+ * The two guards above prove a record sits in one of the caller's datasets, which is not the same as it
+ * belonging to the caller's workspace: a dataset is shared by every workspace it is assigned to, and a
+ * record carries no workspace of its own. So a workspace `readWrite` member would otherwise edit or
+ * delete records that another workspace's surveys ingested, in exactly the datasets they legitimately
+ * read. Until Hub records carry a workspace, changing one stays with the roles that own org-level data.
+ *
+ * Only person-shaped principals are gated (sessions and OAuth/MCP tokens). An API key authorizes on its
+ * per-workspace permissions instead, and what a key should need in order to mutate a record is being
+ * settled separately in #8682 — so keys deliberately pass through here unchanged.
+ */
+export async function requireFeedbackRecordMutationRole({
+  authentication,
+  organizationId,
+  log,
+  requestId,
+  instance,
+}: TRequireMutationRoleParams): Promise<{ ok: true } | { ok: false; response: Response }> {
+  const userId = authentication && "user" in authentication ? authentication.user?.id : undefined;
+  if (!userId) {
+    return { ok: true };
+  }
+
+  try {
+    await checkAuthorizationUpdated({
+      userId,
+      organizationId,
+      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    });
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof AuthorizationError) {
+      log.warn({ statusCode: 403 }, "Feedback record mutation denied: not an organization owner or manager");
+      return {
+        ok: false,
+        response: problemForbidden(
+          requestId,
+          "Only an organization owner or manager can change or delete a feedback record. Feedback datasets are shared across workspaces, so their records are organization-level data.",
+          instance
+        ),
+      };
+    }
+
+    throw error;
+  }
 }
 
 type TRequireOwnedRecordParams = {
