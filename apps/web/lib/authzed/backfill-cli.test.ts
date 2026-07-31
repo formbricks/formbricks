@@ -14,6 +14,7 @@ vi.mock("./team-workspace", () => ({ reconcileTeamWorkspaceRelationships: vi.fn(
 
 const ORGANIZATION_ID = "clhx8n2p40000qwer1234asdf";
 const OTHER_ORGANIZATION_ID = "clhx8n2p40001qwer1234asdf";
+const WORKSPACE_ID = "clhx8n2p40002qwer1234asdf";
 const ENDPOINT = "spicedb.internal:50051";
 
 const result = (overrides: Partial<TAuthzedBackfillResult> = {}): TAuthzedBackfillResult => ({
@@ -22,6 +23,8 @@ const result = (overrides: Partial<TAuthzedBackfillResult> = {}): TAuthzedBackfi
     failed: 0,
     ignored: 0,
     invalid: 0,
+    mismatchedParents: 0,
+    missing: 0,
     orphaned: 0,
     pruned: 0,
     reconciled: 1,
@@ -30,6 +33,7 @@ const result = (overrides: Partial<TAuthzedBackfillResult> = {}): TAuthzedBackfi
   },
   failures: [],
   lastOrganizationId: ORGANIZATION_ID,
+  mismatchedParents: [],
   mode: "apply",
   orphanScope: "all",
   orphans: [],
@@ -74,6 +78,47 @@ describe("parseAuthzedBackfillCommand", () => {
 
   test("accepts an applying run without pruning", () => {
     expect(parseAuthzedBackfillCommand(["--apply"])).toMatchObject({ mode: "apply", prune: false });
+  });
+
+  test("accepts a confirmed prune scoped to one workspace", () => {
+    // The workspace scope satisfies the explicit-scope requirement, and it is the path that removes
+    // every relationship on a stale workspace ID — so it needs the same coverage as the organization.
+    expect(
+      parseAuthzedBackfillCommand([
+        "--apply",
+        "--prune",
+        "--confirm-prune",
+        `--workspace-id=${WORKSPACE_ID}`,
+        `--expected-endpoint=${ENDPOINT}`,
+      ])
+    ).toMatchObject({ mode: "apply", prune: true, workspaceId: WORKSPACE_ID });
+  });
+
+  test.each([
+    ["a workspace combined with the full sweep", [`--workspace-id=${WORKSPACE_ID}`, "--scope=all"]],
+    [
+      "a workspace combined with an organization",
+      [`--workspace-id=${WORKSPACE_ID}`, `--organization-id=${ORGANIZATION_ID}`],
+    ],
+    [
+      "a workspace combined with a resume cursor",
+      [`--workspace-id=${WORKSPACE_ID}`, `--after-organization-id=${ORGANIZATION_ID}`],
+    ],
+    ["a malformed workspace id", ["--workspace-id=not-a-cuid"]],
+    ["a repeated workspace id", [`--workspace-id=${WORKSPACE_ID}`, `--workspace-id=${WORKSPACE_ID}`]],
+  ])("refuses %s", (_label, args) => {
+    expect(parseAuthzedBackfillCommand(args)).toBeUndefined();
+  });
+
+  test("refuses a workspace prune that is missing a confirmation", () => {
+    expect(
+      parseAuthzedBackfillCommand([
+        "--apply",
+        "--prune",
+        `--workspace-id=${WORKSPACE_ID}`,
+        `--expected-endpoint=${ENDPOINT}`,
+      ])
+    ).toBeUndefined();
   });
 
   test("accepts a fully-confirmed prune", () => {

@@ -107,7 +107,14 @@ describe("readAllRelationships", () => {
     const pagesToExceed = Math.ceil(
       AUTHZED_MAX_OBSERVED_RELATIONSHIPS_PER_UNIT / AUTHZED_MAX_RELATIONSHIP_READS
     );
-    readRelationships.mockImplementation(() => Promise.resolve(fullPage("page", "cursor-next")));
+    // A distinct cursor per page, because a real server advances it — and a fixture that repeats one
+    // cursor now trips the stall guard instead, which is a different failure than this test is about.
+    let page = 0;
+    readRelationships.mockImplementation(() => {
+      page += 1;
+
+      return Promise.resolve(fullPage(`page-${page}`, `cursor-${page}`));
+    });
 
     await expect(readAllRelationships(client, filter)).rejects.toThrow(AUTHZED_ERROR_CODES.LIMIT_EXCEEDED);
     expect(readRelationships).toHaveBeenCalledTimes(pagesToExceed + 1);
@@ -177,6 +184,19 @@ describe("forEachRelationshipPage", () => {
 
     expect(pageSizes).toEqual([AUTHZED_MAX_RELATIONSHIP_READS, 1]);
     expect(snapshot).toEqual({ token: "revision-1" });
+  });
+
+  test("aborts a bounded drain on a cursor that does not advance", async () => {
+    // The accumulation cap cannot stand in for this guard: a stalled cursor returning empty pages never
+    // grows the accumulator, so the loop would spin forever instead of tripping the bound.
+    const readRelationships = vi
+      .fn()
+      .mockResolvedValue({ cursor: { token: "stuck" }, relationships: [], snapshot: null });
+
+    await expect(readAllRelationships({ readRelationships }, { resourceType: "team" })).rejects.toThrow(
+      AUTHZED_ERROR_CODES.INTERNAL
+    );
+    expect(readRelationships).toHaveBeenCalledTimes(2);
   });
 
   test("aborts on a cursor that does not advance rather than spinning forever", async () => {

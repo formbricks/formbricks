@@ -512,7 +512,9 @@ jq --exit-status '.status == "matched" and .differenceCount == 0' <<<"${persiste
 
 # Backfill and repair. Seeds more relationships than one read page holds, so the drainer has to page
 # and hold a single revision across pages — behaviour only a real engine can confirm.
-refused_backfill_driver="$(AUTHZED_SMOKE_NODE_ENV=production authzed_backfill "${AUTHZED_TOKEN}" report || true)"
+# Subshell: an assignment prefixing a *function* call persists in the calling shell under `set -o
+# posix`, which would leave every later driver invocation running as production and refusing to run.
+refused_backfill_driver="$( (AUTHZED_SMOKE_NODE_ENV=production authzed_backfill "${AUTHZED_TOKEN}" report) || true)"
 jq --exit-status '.status == "failed" and .code == "authzed_backfill_smoke_refused"' \
   <<<"${refused_backfill_driver}" >/dev/null
 

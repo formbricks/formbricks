@@ -319,7 +319,20 @@ const toFacadeRelationship = (response: v1.ReadRelationshipsResponse): TAuthzedR
   const resource = relationship?.resource;
   const subject = relationship?.subject?.object;
 
-  if (!relationship || !resource || !subject) {
+  // The message fields are optional in the generated types; the scalars inside them are plain protobuf
+  // strings that default to `""` when absent from the wire. Both have to be rejected, or a relationship
+  // with an empty relation or object ID passes here, matches no tuple Formbricks ever wrote, and gets
+  // classified as orphaned — which under `--prune` means deleted. Same fail-loud rule, same reason.
+  if (
+    !relationship ||
+    !resource ||
+    !subject ||
+    !relationship.relation ||
+    !resource.objectId ||
+    !resource.objectType ||
+    !subject.objectId ||
+    !subject.objectType
+  ) {
     throw new AuthzedError({
       attempts: 0,
       code: AUTHZED_ERROR_CODES.INTERNAL,

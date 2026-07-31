@@ -1,4 +1,5 @@
 import { configMocks, envMock, retryMocks, sdkMocks } from "./__mocks__/client-dependencies";
+import { v1 } from "@authzed/authzed-node";
 import { status } from "@grpc/grpc-js";
 import { beforeEach, describe, expect, test } from "vitest";
 import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
@@ -317,7 +318,7 @@ describe("AuthZed client facade", () => {
   test("translates a resource-scoped bulk delete through the resilience pipeline", async () => {
     sdkMocks.deleteRelationships.mockResolvedValue({
       deletedAt: { token: "private-revision" },
-      deletionProgress: 1,
+      deletionProgress: v1.DeleteRelationshipsResponse_DeletionProgress.COMPLETE,
     });
 
     await expect(
@@ -348,7 +349,7 @@ describe("AuthZed client facade", () => {
     // relationships behind — and reporting that as done would leave a half-revoked graph.
     sdkMocks.deleteRelationships.mockResolvedValue({
       deletedAt: { token: "private-revision" },
-      deletionProgress: 2,
+      deletionProgress: v1.DeleteRelationshipsResponse_DeletionProgress.PARTIAL,
     });
 
     await expect(
@@ -359,7 +360,7 @@ describe("AuthZed client facade", () => {
   test("translates a subject-scoped bulk delete without broadening the resource filter", async () => {
     sdkMocks.deleteRelationships.mockResolvedValue({
       deletedAt: { token: "private-revision" },
-      deletionProgress: 1,
+      deletionProgress: v1.DeleteRelationshipsResponse_DeletionProgress.COMPLETE,
     });
 
     await expect(

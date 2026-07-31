@@ -672,6 +672,27 @@ describe("workspace scope", () => {
     expect(result.counters.pruned).toBe(0);
   });
 
+  test("withholds the whole-workspace deletion when the orphan count exceeds the budget", async () => {
+    // Naming a workspace with no row removes every relationship on it. An over-cap unit reported
+    // `skipped: 1, pruned: 0` and still performed exactly that deletion, which inverts the cap.
+    missingWorkspace();
+    vi.mocked(source.findMissingSourceRefs).mockResolvedValue([
+      { kind: "workspaceTeamGrant", teamId: "team-1", workspaceId: "ghost-ws" },
+      { kind: "workspaceTeamGrant", teamId: "team-2", workspaceId: "ghost-ws" },
+    ]);
+
+    const result = await runAuthzedBackfill(
+      request({ maxPrune: 1, prune: true, scope: { kind: "workspace", workspaceId: "ghost-ws" } }),
+      dependencies
+    );
+
+    expect(result.counters.skipped).toBe(1);
+    expect(result.counters.pruned).toBe(0);
+    expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceIds: ["ghost-ws"] })
+    );
+  });
+
   test("removes a missing workspace's relationships when pruning is permitted", async () => {
     missingWorkspace();
 

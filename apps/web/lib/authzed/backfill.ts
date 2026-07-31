@@ -322,17 +322,6 @@ const mergeTargets = (left: TReconcileTargets, right: TReconcileTargets): TRecon
 /**
  * Run one reconciler over chunked targets, stopping at the first chunk that does not project.
  *
- * Returns `null` when there was nothing to do, so an empty list never reaches a reconciler — the write
- * facade rejects an empty batch.
- *
- * `runBestEffortProjection` never throws; a reconciler hands back `{ status: "failed" }` instead. That
- * is what gives per-unit isolation for free, since one organization's AuthZed outage cannot abort the
- * sweep. `"disabled"` counts as a failure rather than a success — otherwise a run against an instance
- * with AuthZed switched off would report every organization as reconciled.
- */
-/**
- * Run one reconciler over chunked targets, stopping at the first chunk that does not project.
- *
  * A reconciler accepts several target lists at once and reads one PostgreSQL snapshot covering all of
  * them, so every list it understands is passed in a single call. Splitting them would multiply the
  * snapshot reads and the verification passes for no benefit.
@@ -385,6 +374,11 @@ const runChunked = async <TTargets extends Readonly<Record<string, ReadonlyArray
  *
  * One call per reconciler rather than one per list: each reads a single snapshot covering everything it
  * was given, so this is three snapshot reads for an organization instead of seven.
+ *
+ * `runBestEffortProjection` never throws; a reconciler hands back `{ status: "failed" }` instead. That
+ * is what gives per-unit isolation for free, since one organization's AuthZed outage cannot abort the
+ * sweep. `"disabled"` counts as a failure rather than a success — otherwise a run against an instance
+ * with AuthZed switched off would report every organization as reconciled.
  */
 const reconcileTargets = async (
   apply: TAuthzedBackfillApply,
@@ -562,6 +556,19 @@ const recordMismatchedParents = (state: TRunState, edges: ReadonlyArray<TAuthzed
 };
 
 /**
+ * What a unit is permitted to prune.
+ *
+ * `overBudget` is carried separately rather than inferred from an empty `refs`, because "nothing to
+ * prune" and "too much to prune safely" must lead to different decisions and an empty list cannot tell
+ * them apart. The workspace scope depends on the difference: naming a workspace whose row is gone
+ * deletes *every* relationship on it, so that target has to be withheld when the budget was exceeded.
+ */
+type TPruneDecision = Readonly<{
+  overBudget: boolean;
+  refs: ReadonlyArray<TAuthzedSourceRef>;
+}>;
+
+/**
  * Record the classification tallies an observation implies, and verify the organizations its resources
  * claim to belong to.
  *
@@ -590,7 +597,7 @@ const recordObservationSummary = async (
 const recordScopedOrphans = async (
   ctx: TRunContext,
   summary: TAuthzedObservationSummary
-): Promise<ReadonlyArray<TAuthzedSourceRef>> => {
+): Promise<TPruneDecision> => {
   const missingRefs = await ctx.sourceReads.findMissingSourceRefs(summary.sourceRefs);
   ctx.state.orphaned += missingRefs.length;
   pushCapped(ctx.state.orphans, missingRefs);
@@ -598,10 +605,10 @@ const recordScopedOrphans = async (
   if (missingRefs.length > ctx.maxPrune) {
     ctx.state.skipped++;
 
-    return [];
+    return { overBudget: true, refs: [] };
   }
 
-  return ctx.isPruning ? missingRefs : [];
+  return { overBudget: false, refs: ctx.isPruning ? missingRefs : [] };
 };
 
 /**
@@ -615,7 +622,7 @@ const observeOrganization = async (
   ctx: TRunContext,
   organizationId: string,
   source: TAuthzedOrganizationSource
-): Promise<ReadonlyArray<TAuthzedSourceRef>> => {
+): Promise<TPruneDecision> => {
   const { state } = ctx;
   const observation = await observeOrganizationResources(ctx.client, organizationId, source);
   const summary = summarizeObservation(observation.relationships);
@@ -626,7 +633,7 @@ const observeOrganization = async (
   }
 
   if (!ctx.ownsOrphanAccounting) {
-    return [];
+    return { overBudget: false, refs: [] };
   }
 
   await recordObservationSummary(ctx, summary);
@@ -657,7 +664,7 @@ const processOrganization = async (ctx: TRunContext, organizationId: string): Pr
   let repairRefs: ReadonlyArray<TAuthzedSourceRef> = [];
   if (ctx.ownsOrphanAccounting || ctx.mode === "dry_run") {
     try {
-      repairRefs = await observeOrganization(ctx, organizationId, source);
+      repairRefs = (await observeOrganization(ctx, organizationId, source)).refs;
     } catch (error) {
       // An abandoned observation must never be reported as a complete one: fewer relationships seen
       // means fewer orphans found, and a caller could otherwise read that as "nothing stale here".
@@ -826,7 +833,7 @@ const observeWorkspace = async (
   ctx: TRunContext,
   workspaceId: string,
   source: TAuthzedWorkspaceSource
-): Promise<ReadonlyArray<TAuthzedSourceRef>> => {
+): Promise<TPruneDecision> => {
   const observation = await readAllRelationships(ctx.client, {
     resourceId: workspaceId,
     resourceType: "workspace",
@@ -874,9 +881,9 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
   // report it.
   const failureOrganizationId = source.organizationId ?? "";
 
-  let repairRefs: ReadonlyArray<TAuthzedSourceRef> = [];
+  let decision: TPruneDecision = { overBudget: false, refs: [] };
   try {
-    repairRefs = await observeWorkspace(ctx, workspaceId, source);
+    decision = await observeWorkspace(ctx, workspaceId, source);
   } catch (error) {
     state.truncated = true;
     recordFailure(state, failureOrganizationId, error);
@@ -900,12 +907,16 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
         // Naming the workspace projects its parent edge when the row exists, and removes *every*
         // relationship on it when the row does not — team grants and API-key grants included. That
         // second case is a prune by the definition on `TAuthzedBackfillRequest`: reconciling a record
-        // observed only in SpiceDB. So it needs the same permission, budget and accounting as any
-        // other prune, rather than happening as a side effect of naming a stale ID with `--apply`.
-        workspaceIds: source.workspaceExists || ctx.isPruning ? [workspaceId] : [],
+        // observed only in SpiceDB. So it needs the same permission, budget and accounting as any other
+        // prune, rather than happening as a side effect of naming a stale ID with `--apply`.
+        //
+        // `overBudget` is load-bearing here, not decoration: without it an over-cap unit would report
+        // `skipped: 1, pruned: 0` and still perform the widest deletion available on that workspace,
+        // which inverts what the cap is for.
+        workspaceIds: source.workspaceExists || (ctx.isPruning && !decision.overBudget) ? [workspaceId] : [],
         workspaceTeamGrants: source.workspaceTeamGrants,
       },
-      toRepairTargets(repairRefs)
+      toRepairTargets(decision.refs)
     )
   );
 
@@ -915,7 +926,7 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
     return;
   }
 
-  state.pruned += repairRefs.length;
+  state.pruned += decision.refs.length;
   state.reconciled++;
 };
 

@@ -19,6 +19,50 @@ import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
  */
 
 /**
+ * Assert the cursor advanced.
+ *
+ * Termination is not ours to guarantee — it depends on the server — so assert it rather than assume it.
+ * A command that hangs with no output and no exit code is the worst thing to hand an operator, and the
+ * accumulation bound in `readAllRelationships` cannot stand in for this: a stalled cursor returning
+ * empty pages never grows the accumulator, so that loop would spin forever rather than trip its cap.
+ */
+const assertCursorAdvanced = (
+  previous: TAuthzedReadCursor | undefined,
+  next: TAuthzedReadCursor | null,
+  operation: string
+): void => {
+  if (previous !== undefined && next?.token === previous.token) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INTERNAL,
+      operation,
+      retryable: false,
+    });
+  }
+};
+
+/**
+ * Assert every page describes the same revision.
+ *
+ * The cursor is supposed to hold the revision steady. Verifying it turns a silent torn read — the
+ * failure that would make a pruning caller delete live relationships — into a loud one.
+ */
+const assertSameRevision = (
+  snapshot: TAuthzedSnapshot | null,
+  pageSnapshot: TAuthzedSnapshot | null,
+  operation: string
+): void => {
+  if (snapshot !== null && pageSnapshot !== null && pageSnapshot.token !== snapshot.token) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.ABORTED,
+      operation,
+      retryable: true,
+    });
+  }
+};
+
+/**
  * A complete observation of every relationship matching a filter, at one revision.
  *
  * There is deliberately no "partial" or "truncated" variant. A reconciler that mistook a partial
@@ -64,26 +108,8 @@ export const forEachRelationshipPage = async (
       limit: AUTHZED_MAX_RELATIONSHIP_READS,
     });
 
-    if (snapshot !== null && page.snapshot !== null && page.snapshot.token !== snapshot.token) {
-      throw new AuthzedError({
-        attempts: 0,
-        code: AUTHZED_ERROR_CODES.ABORTED,
-        operation: "for_each_relationship_page",
-        retryable: true,
-      });
-    }
-
-    // A cursor that does not advance would spin here forever, and a command that hangs with no output
-    // and no exit code is the worst thing to hand an operator. Termination is not ours to guarantee —
-    // it depends on the server — so assert it rather than assume it.
-    if (cursor !== undefined && page.cursor?.token === cursor.token) {
-      throw new AuthzedError({
-        attempts: 0,
-        code: AUTHZED_ERROR_CODES.INTERNAL,
-        operation: "for_each_relationship_page",
-        retryable: false,
-      });
-    }
+    assertSameRevision(snapshot, page.snapshot, "for_each_relationship_page");
+    assertCursorAdvanced(cursor, page.cursor, "for_each_relationship_page");
 
     snapshot = page.snapshot ?? snapshot;
     cursor = page.cursor ?? undefined;
@@ -142,16 +168,8 @@ export const readAllRelationships = async (
       });
     }
 
-    // The cursor is supposed to hold the revision steady. Verifying it turns a silent torn read — the
-    // failure that would make a pruning caller delete live relationships — into a loud one.
-    if (snapshot !== null && page.snapshot !== null && page.snapshot.token !== snapshot.token) {
-      throw new AuthzedError({
-        attempts: 0,
-        code: AUTHZED_ERROR_CODES.ABORTED,
-        operation: "read_all_relationships",
-        retryable: true,
-      });
-    }
+    assertSameRevision(snapshot, page.snapshot, "read_all_relationships");
+    assertCursorAdvanced(cursor, page.cursor, "read_all_relationships");
 
     relationships.push(...page.relationships);
     snapshot = page.snapshot ?? snapshot;

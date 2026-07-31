@@ -219,6 +219,26 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
 };
 
 /**
+ * Run a reader over one chunk at a time, concatenating the results.
+ *
+ * Both readers below build a `where: { OR: [...] }` from their input, which is unbounded by
+ * construction — so both need the same chunking, and it lives here once rather than being re-derived
+ * per reader. Sequential rather than parallel: these run inside a sweep that already bounds its own
+ * concurrency, and a fan-out here would multiply it.
+ */
+const inChunks = async <TItem>(
+  items: ReadonlyArray<TItem>,
+  read: (chunk: ReadonlyArray<TItem>) => Promise<ReadonlyArray<TItem>>
+): Promise<ReadonlyArray<TItem>> => {
+  const collected: TItem[] = [];
+  for (let start = 0; start < items.length; start += AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
+    collected.push(...(await read(items.slice(start, start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE))));
+  }
+
+  return collected;
+};
+
+/**
  * Of the observed parent edges, report those PostgreSQL contradicts.
  *
  * An edge is only correct when the resource exists *and* belongs to the organization the edge names. An
@@ -233,13 +253,7 @@ export const findMismatchedParentEdges = async (
   edges: ReadonlyArray<TAuthzedParentEdge>
 ): Promise<ReadonlyArray<TAuthzedParentEdge>> => {
   if (edges.length > AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
-    const mismatched: TAuthzedParentEdge[] = [];
-    for (let start = 0; start < edges.length; start += AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
-      mismatched.push(
-        ...(await findMismatchedParentEdges(edges.slice(start, start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE)))
-      );
-    }
-    return mismatched;
+    return inChunks(edges, findMismatchedParentEdges);
   }
 
   const idsFor = (childType: TAuthzedParentEdge["childType"]): ReadonlyArray<string> => [
@@ -308,13 +322,7 @@ export const findMissingSourceRefs = async (
   // the planner an `OR` list it cannot use an index for. One query per kind *per chunk* still keeps the
   // cost proportional to the number of kinds rather than the number of records.
   if (refs.length > AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
-    const missing: TAuthzedSourceRef[] = [];
-    for (let start = 0; start < refs.length; start += AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
-      missing.push(
-        ...(await findMissingSourceRefs(refs.slice(start, start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE)))
-      );
-    }
-    return missing;
+    return inChunks(refs, findMissingSourceRefs);
   }
 
   const apiKeyRefs = byKind(refs, "apiKey");

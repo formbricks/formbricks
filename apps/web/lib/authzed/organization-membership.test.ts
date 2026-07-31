@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { OrganizationRole } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
@@ -42,7 +43,7 @@ vi.mock("./config", () => ({
 const ORGANIZATION_ID = "organization-private-id";
 const USER_ID = "user-private-id";
 
-const membershipRows = (role: string, userId = USER_ID, organizationId = ORGANIZATION_ID) => [
+const membershipRows = (role: OrganizationRole, userId = USER_ID, organizationId = ORGANIZATION_ID) => [
   { organizationId, role, userId },
 ];
 

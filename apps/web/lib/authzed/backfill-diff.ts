@@ -150,15 +150,28 @@ const SOURCE_REF_RESOLVERS = {
 } as const satisfies Readonly<Record<string, TSourceRefResolver>>;
 
 /**
+ * Code-unit order, deliberately not `localeCompare`.
+ *
+ * `localeCompare` resolves its collation from the host's default locale and available ICU data, so two
+ * machines can order the same keys differently — which would undercut the very guarantee this sort
+ * exists to provide.
+ */
+const byCodeUnit = (left: string, right: string): number => {
+  if (left === right) {
+    return 0;
+  }
+
+  return left < right ? -1 : 1;
+};
+
+/**
  * Resource types Formbricks projects today and may therefore reconcile.
  *
- * Sorted explicitly, with a comparator, for two reasons: the sweep's order must not depend on how the
- * resolver literal above happens to be written, and it must be identical between runs so two passes
- * over unchanged state produce identical output.
+ * Sorted explicitly for two reasons: the sweep's order must not depend on how the resolver literal above
+ * happens to be written, and it must be identical on every machine, so two passes over unchanged state
+ * produce identical output.
  */
-const MANAGED_RESOURCE_TYPES: ReadonlyArray<string> = Object.keys(SOURCE_REF_RESOLVERS).sort((left, right) =>
-  left.localeCompare(right)
-);
+const MANAGED_RESOURCE_TYPES: ReadonlyArray<string> = Object.keys(SOURCE_REF_RESOLVERS).sort(byCodeUnit);
 
 export const getManagedResourceTypes = (): ReadonlyArray<string> => MANAGED_RESOURCE_TYPES;
 
