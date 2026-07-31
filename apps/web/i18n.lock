@@ -407,6 +407,7 @@ checksums:
     common/replace: 98b2268975b1a737b2e4ad837df96703
     common/report_survey: 147dd05db52e35f5d1f837460fb720f5
     common/request_trial_license: 560df1240ef621f7c60d3f7d65422ccd
+    common/required: 04d7fb6f37ffe0a6ca97d49e2a8b6eb5
     common/reset_to_default: 68ee98b46677392f44b505b268053b26
     common/resize: 20887e5af5294f08bc72cdedeee6e7a8
     common/response: c7a9d88269d8ff117abcbc0d97f88b2c
@@ -4033,6 +4034,7 @@ checksums:
     workspace/workflows/email_attach_response_data_label: 32eff1a88e1a044fc22b0bff54f3c683
     workspace/workflows/email_body_label: e88eb1ea71f5ef886aa43ea6ba292d87
     workspace/workflows/email_body_placeholder: 5d75f0b732254eff49d0e8c5c40de7cd
+    workspace/workflows/email_body_required: ec8193d07de034ad764978b538d49d06
     workspace/workflows/email_from_label: 3d84daca8c92c8609deeab4b294b4afb
     workspace/workflows/email_include_hidden_fields_label: 8b72f10c43491126650c723819faa454
     workspace/workflows/email_include_variables_label: 9710532ac5935c4540bf98bc292c1166
@@ -4041,8 +4043,10 @@ checksums:
     workspace/workflows/email_set_up_trigger: fbfe074697929bec889438a92497c8cb
     workspace/workflows/email_subject_label: de5b885eb327b2f233f3b67aab4c4c0a
     workspace/workflows/email_subject_placeholder: 9cd2b8d4de6fb9daade571497bc39864
+    workspace/workflows/email_subject_required: e6eb6e2f6f952f58bcbc6931ca303079
     workspace/workflows/email_to_label: fc84f35b3c44796dfcdd4b096c9b8d3d
     workspace/workflows/email_to_placeholder: 1323bfdf1926a863c93bc0b37ae61218
+    workspace/workflows/email_to_required: d29dd2c5bdebdde1047f4baae12269a4
     workspace/workflows/enable_blocked_unsaved_changes: 07fc359db9158b09d612f4f0e0e2df5e
     workspace/workflows/enable_failed: 997437c65cc018c4d3cf7622e043d48d
     workspace/workflows/enable_success: 384d5e80e013c74f8e092f41ed5bae5c
@@ -4095,6 +4099,7 @@ checksums:
     workspace/workflows/upgrade_prompt_description: 526faca22b7a0b613fdce0ace49c0aa7
     workspace/workflows/upgrade_prompt_title: 5546aa81302c33f2b53857b9c62c16e2
     workspace/workflows/validation_failed: fbba0e27eca222e81a86d3036919d11a
+    workspace/workflows/validation_problem_fix_label: fe748ab52e0ad49e8a96247ec5814bb2
     workspace/workflows/validation_problem_flow_invalid: e2aaaf90f60d72553f93c3153202c542
     workspace/workflows/validation_problem_generic: a58601a8dd434a0ee3f8cdd4aca86213
     workspace/workflows/validation_problem_name_missing: b116eed6f771dff219090d142c1f6bd1

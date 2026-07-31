@@ -5,12 +5,21 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
+import { cn } from "@/lib/cn";
+import {
+  WorkflowFieldError,
+  WorkflowFieldLabel,
+} from "@/modules/ee/workflows/components/inspector/workflow-field";
+import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
 import { reconcileEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
 import {
   useWorkflowSurveyEndings,
   useWorkflowSurveyOptions,
 } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
-import { prunedTriggerEndingCardIdsAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  hasBoundTriggerSurveyAtom,
+  prunedTriggerEndingCardIdsAtom,
+} from "@/modules/ee/workflows/state/editor";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -37,6 +46,27 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   const surveyOptionsQuery = useWorkflowSurveyOptions(workspaceId);
   const triggerSurveyId = node.config.surveyId || null;
   const endingsQuery = useWorkflowSurveyEndings(triggerSurveyId);
+  const hasBoundSurvey = useAtomValue(hasBoundTriggerSurveyAtom);
+
+  // An unbound survey restated inline, so a jump from the problems dialog lands on a control that
+  // visibly says what's wrong instead of a picker that looks fine. No "touched" gating (unlike the
+  // email step's blank fields): the stored config points at a survey that cannot be resolved, which
+  // is never a normal mid-edit state.
+  //
+  // Stale ending ids deliberately get NO inline error here: they are reconciled out of the config
+  // before this form can observe them (see useReconcileTriggerEndingCards), and the widening that
+  // prune causes is already reported by the every-ending notice below.
+  const isSurveyInvalid = !hasBoundSurvey;
+
+  // Jump target for the trigger's problems, raised by the validation problems dialog: an unbound
+  // survey goes to the picker, an ending problem to the scope select it belongs to.
+  useWorkflowNodeFieldFocus({
+    nodeId: node.id,
+    resolveElement: (field) =>
+      document.getElementById(
+        field === "endingCardIds" ? "workflow-trigger-ending-scope" : "workflow-trigger-survey"
+      ),
+  });
 
   // Only an authority once the query has SETTLED for the current survey; null until then, so a
   // pending fetch never reads as "no endings" and the stored ids are taken at face value.
@@ -164,12 +194,18 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   return (
     <div className="flex flex-col gap-4 px-1">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="workflow-trigger-survey">{t("workspace.workflows.trigger_survey_label")}</Label>
+        <WorkflowFieldLabel htmlFor="workflow-trigger-survey" isRequired isInvalid={isSurveyInvalid}>
+          {t("workspace.workflows.trigger_survey_label")}
+        </WorkflowFieldLabel>
         <Select
           value={node.config.surveyId || undefined}
           onValueChange={handleSurveyChange}
           disabled={!isEditable || surveyOptionsQuery.isLoading}>
-          <SelectTrigger id="workflow-trigger-survey" className="bg-white">
+          <SelectTrigger
+            id="workflow-trigger-survey"
+            aria-invalid={isSurveyInvalid}
+            aria-describedby={isSurveyInvalid ? "workflow-trigger-survey-error" : undefined}
+            className={cn("bg-white", isSurveyInvalid && "border-red-500")}>
             <SelectValue placeholder={t("workspace.workflows.trigger_survey_placeholder")} />
           </SelectTrigger>
           <SelectContent>
@@ -188,6 +224,11 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
             )}
           </SelectContent>
         </Select>
+        {isSurveyInvalid ? (
+          <WorkflowFieldError id="workflow-trigger-survey-error">
+            {t("workspace.workflows.validation_problem_trigger_survey_unbound")}
+          </WorkflowFieldError>
+        ) : null}
         <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_survey_description")}</p>
       </div>
 

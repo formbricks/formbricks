@@ -6,6 +6,7 @@ import {
   appendSendEmailAfterNodeAtom,
   canEditWorkflowDefinitionAtom,
   canMutateCanvasAtom,
+  clearWorkflowNodeFieldFocusAtom,
   closeWorkflowNodeConfigModalAtom,
   deleteWorkflowNodeAtom,
   deriveTriggerEndingProblems,
@@ -23,6 +24,7 @@ import {
   isWorkflowTransitioningAtom,
   markWorkflowDraftSavedAtom,
   openWorkflowNodeConfigModalAtom,
+  requestWorkflowNodeFieldFocusAtom,
   selectedWorkflowNodeIdAtom,
   setSelectedWorkflowNodeIdAtom,
   setWorkflowAtom,
@@ -42,6 +44,7 @@ import {
   workflowFlowNodesAtom,
   workflowLastSavedAtAtom,
   workflowNameAtom,
+  workflowNodeFieldFocusRequestAtom,
   workflowSaveErrorAtom,
   workflowValidationProblemsAtom,
   workflowValidityAtom,
@@ -228,6 +231,56 @@ describe("openWorkflowNodeConfigModalAtom", () => {
     expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
     expect(store.get(selectedWorkflowNodeIdAtom)).toBe("node-9");
     expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(true);
+  });
+
+  test("drops a field focus request a form never consumed", () => {
+    const store = createStore();
+    store.set(requestWorkflowNodeFieldFocusAtom, { nodeId: "if-else-1", field: "condition" });
+
+    store.set(openWorkflowNodeConfigModalAtom, "node-9");
+    expect(store.get(workflowNodeFieldFocusRequestAtom)).toBeNull();
+  });
+});
+
+describe("workflow node field focus requests", () => {
+  test("opens the target node's panel alongside the request", () => {
+    const store = createStore();
+    store.set(toggleWorkflowInspectorAtom); // collapse
+
+    store.set(requestWorkflowNodeFieldFocusAtom, { nodeId: "email-1", field: "subject" });
+
+    expect(store.get(workflowNodeFieldFocusRequestAtom)).toEqual({
+      nodeId: "email-1",
+      field: "subject",
+    });
+    expect(store.get(selectedWorkflowNodeIdAtom)).toBe("email-1");
+    expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(true);
+    expect(store.get(isWorkflowInspectorCollapsedAtom)).toBe(false);
+  });
+
+  test("clearing leaves the panel open and is a no-op when nothing is pending", () => {
+    const store = createStore();
+    store.set(requestWorkflowNodeFieldFocusAtom, { nodeId: "email-1", field: "body" });
+
+    store.set(clearWorkflowNodeFieldFocusAtom);
+    expect(store.get(workflowNodeFieldFocusRequestAtom)).toBeNull();
+    expect(store.get(selectedWorkflowNodeIdAtom)).toBe("email-1");
+    expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(true);
+
+    store.set(clearWorkflowNodeFieldFocusAtom);
+    expect(store.get(workflowNodeFieldFocusRequestAtom)).toBeNull();
+  });
+
+  test("a second request to the same field re-fires (it was cleared in between)", () => {
+    const store = createStore();
+    store.set(requestWorkflowNodeFieldFocusAtom, { nodeId: "email-1", field: "subject" });
+    store.set(clearWorkflowNodeFieldFocusAtom);
+
+    store.set(requestWorkflowNodeFieldFocusAtom, { nodeId: "email-1", field: "subject" });
+    expect(store.get(workflowNodeFieldFocusRequestAtom)).toEqual({
+      nodeId: "email-1",
+      field: "subject",
+    });
   });
 });
 

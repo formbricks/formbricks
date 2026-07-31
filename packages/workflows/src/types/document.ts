@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZWorkflowActionNode } from "./actions";
 import { ZWorkflowIfElseNode } from "./conditions";
+import { getBlankSendEmailContentFields } from "./content";
 import { ZWorkflowTriggerNode } from "./triggers";
 
 export const WORKFLOW_SCHEMA_VERSION = 1;
@@ -283,15 +284,12 @@ export const ZWorkflowExecutableDefinition = ZWorkflowExecutableDefinitionBase.s
       // save work in progress), but an executable send_email must actually have something to send.
       // send_email is the only action type today, so type === "action" is the whole check.
       if (node.type === "action") {
-        const requiredContentFields = ["to", "subject", "body"] as const;
-        for (const field of requiredContentFields) {
-          if (node.config[field].trim().length === 0) {
-            ctx.addIssue({
-              code: "custom",
-              message: `send_email node ${node.id} is missing ${field}`,
-              path: ["nodes", index, "config", field],
-            });
-          }
+        for (const field of getBlankSendEmailContentFields(node.config)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `send_email node ${node.id} is missing ${field}`,
+            path: ["nodes", index, "config", field],
+          });
         }
       }
     }

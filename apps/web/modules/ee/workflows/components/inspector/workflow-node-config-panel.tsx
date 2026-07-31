@@ -66,12 +66,17 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   };
 
   return (
-    <aside className="w-[360px] shrink-0 self-start rounded-lg border border-slate-200 bg-white">
-      <div className="flex flex-col gap-3">
-        <header className="flex items-center border-b border-slate-200 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</h2>
-        </header>
-        <div className="flex flex-col gap-3 px-3 pb-4">
+    // Fills the editor row's height and scrolls its fields internally, so a config form longer than
+    // the row can't grow the page. A page-level scrollbar would be useless here anyway: the canvas
+    // beside it clips rather than scrolls, so scrolling the page only reveals blank space. `min-h-0`
+    // is what allows the shrink; without it the flex item would be floored at its content height.
+    // The header sits outside the scrolling area and stays put.
+    <aside className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <header className="flex shrink-0 items-center border-b border-slate-200 px-4 py-3">
+        <h2 className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</h2>
+      </header>
+      <div className="scroll-bar min-h-0 flex-1 overflow-y-auto">
+        <div className="flex flex-col gap-3 px-3 pt-3 pb-4">
           {!isEditable && (
             <Alert variant="info" size="small">
               <AlertDescription>{t("workspace.workflows.edit_blocked_active")}</AlertDescription>

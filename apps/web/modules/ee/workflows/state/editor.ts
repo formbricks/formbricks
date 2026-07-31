@@ -35,6 +35,17 @@ export type TWorkflowNodeData = {
 };
 
 /**
+ * A pending "take me to the field that's wrong" jump, raised by the validation problems dialog and
+ * consumed by whichever config form owns `nodeId`. The form focuses the named control and reveals
+ * that node's field-level errors, then clears the request.
+ */
+export type TWorkflowNodeFieldFocusRequest = {
+  nodeId: string;
+  /** Config key within the node's form, e.g. "to" | "subject" | "body" | "surveyId". */
+  field: string;
+};
+
+/**
  * The editable draft fields exactly as last persisted (or hydrated). Compared against the live
  * draft to derive dirtiness; kept as a client-side snapshot of what was SENT (not the server
  * response) so server-side normalization can never make the editor look permanently dirty.
@@ -74,6 +85,7 @@ type TWorkflowEditorState = {
   lastSavedAt: number | null;
   saveError: TWorkflowSaveError | null;
   selectedNodeId: string | null;
+  fieldFocusRequest: TWorkflowNodeFieldFocusRequest | null;
   isInspectorCollapsed: boolean;
   isSnapToCanvasEnabled: boolean;
   isNodeConfigModalOpen: boolean;
@@ -90,6 +102,7 @@ const initialWorkflowEditorState: TWorkflowEditorState = {
   lastSavedAt: null,
   saveError: null,
   selectedNodeId: null,
+  fieldFocusRequest: null,
   isInspectorCollapsed: false,
   isSnapToCanvasEnabled: true,
   isNodeConfigModalOpen: false,
@@ -104,6 +117,7 @@ export const workflowNameAtom = atom((get) => get(workflowEditorAtom).workflowNa
 export const workflowDescriptionAtom = atom((get) => get(workflowEditorAtom).workflowDescription);
 export const workflowDefinitionAtom = atom((get) => get(workflowEditorAtom).definition);
 export const selectedWorkflowNodeIdAtom = atom((get) => get(workflowEditorAtom).selectedNodeId);
+export const workflowNodeFieldFocusRequestAtom = atom((get) => get(workflowEditorAtom).fieldFocusRequest);
 
 // ReactFlow's nodes live OUTSIDE the immer-produced editor state on purpose: immer auto-freezes
 // everything it produces, and ReactFlow mutates node internals (measured width/height) inside
@@ -219,6 +233,27 @@ export type TWorkflowValidationProblem = {
   field: string;
 };
 
+/**
+ * The `field` paths a validation problem can carry, as builders + matchers rather than bare
+ * strings. The problems dialog resolves these back to a control to focus (see
+ * `getWorkflowValidationProblemFocusTarget`), so producer and consumer must agree — with literals
+ * on both sides, renaming one silently stops the dialog's "Fix" jump from resolving, with nothing
+ * failing to catch it. Anything that reads or writes a problem `field` goes through here.
+ */
+export const workflowProblemFields = {
+  name: "name",
+  trigger: "trigger",
+  triggerSurveyId: "trigger.config.surveyId",
+  triggerEndingCardIds: "trigger.config.endingCardIds",
+  /** The step-level path `step_incomplete` groups a send_email node's blank fields under. */
+  nodeConfig: (nodeIndex: number) => `nodes.${nodeIndex}.config`,
+  /** Index back out of a `nodeConfig` path; null for any other shape (`nodes.N.type`, `edges`, …). */
+  parseNodeConfigIndex: (field: string): number | null => {
+    const match = /^nodes\.(\d+)\.config$/.exec(field);
+    return match ? Number(match[1]) : null;
+  },
+} as const;
+
 // Buckets one ZWorkflowExecutableDefinition issue by its path. Total: every issue maps to some
 // code (worst case the generic fallback), so a failed parse always yields at least one problem
 // and the problem list can never read "valid" while workflowValidityAtom says not executable.
@@ -235,7 +270,7 @@ const categorizeDefinitionIssue = (
     // single "add a trigger" problem. With a trigger present this is an unexpected shape issue.
     return context.hasTrigger
       ? { code: "definition_invalid", field }
-      : { code: "trigger_missing", field: "trigger" };
+      : { code: "trigger_missing", field: workflowProblemFields.trigger };
   }
 
   if (root === "edges") {
@@ -264,7 +299,7 @@ const categorizeDefinitionIssue = (
     if (third === "config") {
       // Missing required content (send_email to/subject/body). Grouped per step, not per empty
       // field, so the badge count matches what the user perceives as one unfinished step.
-      return { code: "step_incomplete", field: path.slice(0, 3).join(".") };
+      return { code: "step_incomplete", field: workflowProblemFields.nodeConfig(Number(path[1])) };
     }
   }
 
@@ -295,7 +330,7 @@ export const deriveWorkflowValidation = ({
 
   const isNameValid = workflowName.trim().length > 0;
   if (!isNameValid) {
-    problems.push({ code: "name_missing", field: "name" });
+    problems.push({ code: "name_missing", field: workflowProblemFields.name });
   }
 
   // No definition means the editor isn't hydrated yet; there is nothing to validate (the status
@@ -306,7 +341,7 @@ export const deriveWorkflowValidation = ({
     // The survey binding is only meaningful once a trigger exists — for trigger-less drafts the
     // builder page reports it unbound, but `trigger_missing` already says everything.
     if (hasTrigger && !hasBoundTriggerSurvey) {
-      problems.push({ code: "trigger_survey_unbound", field: "trigger.config.surveyId" });
+      problems.push({ code: "trigger_survey_unbound", field: workflowProblemFields.triggerSurveyId });
     }
 
     const parsed = ZWorkflowExecutableDefinition.safeParse(definition);
@@ -355,7 +390,7 @@ export const deriveTriggerEndingProblems = (
   const available = new Set(availableEndingIds);
   const hasMissingEnding = endingCardIds.some((endingCardId) => !available.has(endingCardId));
   return hasMissingEnding
-    ? [{ code: "trigger_ending_not_found", field: "trigger.config.endingCardIds" }]
+    ? [{ code: "trigger_ending_not_found", field: workflowProblemFields.triggerEndingCardIds }]
     : [];
 };
 
@@ -528,6 +563,38 @@ export const openWorkflowNodeConfigModalAtom = atom(null, (get, set, nodeId: str
       // Clicking a node opens the inspector even if the user previously collapsed it —
       // otherwise the config view stays hidden and the click looks broken.
       draft.isInspectorCollapsed = false;
+      // A plain node click is not a jump: drop any request a form never got to consume (e.g. one
+      // aimed at a node whose type has no config form) so it can't fire later out of context.
+      draft.fieldFocusRequest = null;
+    })
+  );
+});
+
+// Jump to a specific field: same panel-opening effect as clicking the node, plus the pending
+// focus request its config form consumes. Raised by the validation problems dialog.
+export const requestWorkflowNodeFieldFocusAtom = atom(
+  null,
+  (get, set, request: TWorkflowNodeFieldFocusRequest) => {
+    set(
+      workflowEditorAtom,
+      produce(get(workflowEditorAtom), (draft) => {
+        draft.selectedNodeId = request.nodeId;
+        draft.isNodeConfigModalOpen = true;
+        draft.isInspectorCollapsed = false;
+        draft.fieldFocusRequest = request;
+      })
+    );
+  }
+);
+
+// Cleared by the form once it has focused the control, so remounting the panel later (e.g. after
+// switching nodes and back) doesn't re-fire a stale jump.
+export const clearWorkflowNodeFieldFocusAtom = atom(null, (get, set) => {
+  if (!get(workflowEditorAtom).fieldFocusRequest) return;
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      draft.fieldFocusRequest = null;
     })
   );
 });

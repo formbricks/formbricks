@@ -21,15 +21,25 @@ export const WorkflowInspectorPanel = ({ isEditingNode }: Readonly<WorkflowInspe
   const isVisible = isNodeConfigOpen && !isCollapsed;
 
   return (
+    // Stretches to the editor row's height (no `self-start`) so the panel inside can fill it and
+    // scroll its own content. No bottom padding either: both would make this column taller than the
+    // canvas beside it and push the page into overflow.
     <div
       aria-hidden={!isVisible}
       className={cn(
-        "shrink-0 overflow-hidden pb-8 transition-[width,opacity] duration-150 ease-in-out",
+        "min-h-0 shrink-0 overflow-hidden transition-[width,opacity] duration-150 ease-in-out",
         isVisible ? "w-[360px] opacity-100" : "w-0 opacity-0"
       )}>
-      <div className="flex w-[360px] flex-col gap-3 self-start">
-        <WorkflowNodeConfigPanel isEditable={isEditingNode} />
-      </div>
+      {/* Only mount the fixed-width content while the panel is open. Left mounted when collapsed,
+          this 360px block lays out off-screen to the right and — even inside the `w-0`
+          `overflow-hidden` column — inflates the document's scroll width, producing a phantom
+          horizontal scrollbar (most visible after collapsing the main nav). The content is already
+          hidden (opacity-0) while collapsed, so gating the mount changes nothing visible. */}
+      {isVisible && (
+        <div className="flex h-full w-[360px] flex-col gap-3">
+          <WorkflowNodeConfigPanel isEditable={isEditingNode} />
+        </div>
+      )}
     </div>
   );
 };

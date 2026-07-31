@@ -199,9 +199,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   return (
     <div
       className={cn(
-        // Fixed viewport-based height (not self-stretch): a tall inspector must not stretch the
-        // canvas with it. 220px ≈ page chrome above the canvas; kept in sync with loading.tsx.
-        "relative h-[calc(100vh-220px)] min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
+        // Height comes from the editor row (see workflow-builder-page); `min-h-0` lets this shrink
+        // to it instead of being sized by ReactFlow's content. `overflow-hidden` is the canvas's own
+        // scroll policy: it pans and zooms, so clipping is correct here.
+        "relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
       {/* The inspector only ever shows a node's config now, so the collapse toggle is only
           offered while one is open. */}
