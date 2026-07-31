@@ -45,6 +45,7 @@ vi.mock("@/lib/utils/helper", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -171,7 +172,8 @@ describe("checkSurveyValidity", () => {
     const result = await checkSurveyValidity(survey, "ws-1", responseInputWithoutToken);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
-    expect(logger.error).toHaveBeenCalledWith("Missing recaptcha token");
+    // warn, not error: a missing token on a public endpoint is caller-controlled, not a fault.
+    expect(logger.warn).toHaveBeenCalledWith("Missing recaptcha token");
     expect(responses.badRequestResponse).toHaveBeenCalledWith(
       "Missing recaptcha token",
       { code: "recaptcha_verification_failed" },
@@ -190,7 +192,8 @@ describe("checkSurveyValidity", () => {
     });
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(404);
-    expect(responses.notFoundResponse).toHaveBeenCalledWith("Organization", null);
+    // cors: true, matching every other response this path returns.
+    expect(responses.notFoundResponse).toHaveBeenCalledWith("Organization", null, true);
     expect(getOrganizationBillingByWorkspaceId).toHaveBeenCalledWith("ws-1");
   });
 
@@ -204,7 +207,7 @@ describe("checkSurveyValidity", () => {
       recaptchaToken: "test-token",
     });
     expect(result).toBeNull();
-    expect(logger.error).toHaveBeenCalledWith("Spam protection is not enabled for this organization");
+    expect(logger.warn).toHaveBeenCalledWith("Spam protection is not enabled for this organization");
   });
 
   test("should return badRequestResponse if recaptcha verification fails", async () => {

@@ -15,6 +15,7 @@ export const surveySelect = {
   },
   status: true,
   publishOn: true,
+  archivedAt: true,
   singleUse: true,
   workspaceId: true,
   _count: {

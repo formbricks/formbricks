@@ -59,7 +59,7 @@ export function FeedbackSourceTypeSelector({
                 )}`}>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium leading-5 text-slate-900">{option.name}</span>
+                    <span className="leading-5 font-medium text-slate-900">{option.name}</span>
                     {option.badge && <Badge text={option.badge.text} type={option.badge.type} size="tiny" />}
                   </div>
                   <p className="mt-0.5 text-xs text-slate-500">{option.description}</p>
@@ -81,7 +81,7 @@ export function FeedbackSourceTypeSelector({
           );
         })}
       </div>
-      <Alert variant="outbound" size="small">
+      <Alert variant="outbound" size="small" role="status">
         <AlertTitle>{t("workspace.unify.missing_feedback_source_title")}</AlertTitle>
         <AlertButton asChild>
           <Link

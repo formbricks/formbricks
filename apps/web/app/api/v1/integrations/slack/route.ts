@@ -2,7 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { SLACK_AUTH_URL, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET } from "@/lib/constants";
 import { createIntegrationOAuthState } from "@/lib/oauth/integration-state";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -19,7 +19,10 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    const canUserAccessWorkspace = await canUserWriteWorkspaceIntegrations(
+      authentication.user.id,
+      workspaceId
+    );
     if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),

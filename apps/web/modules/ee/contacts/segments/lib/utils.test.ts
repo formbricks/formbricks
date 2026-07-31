@@ -32,6 +32,7 @@ import {
   updateOperatorInFilter,
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
+  updateSurveyInteractionValueInFilter,
 } from "./utils";
 
 // Mock createId
@@ -110,6 +111,15 @@ describe("Segment Utils", () => {
     expect(convertOperatorToText("endsWith", t)).toBe("workspace.segments.operator_ends_with");
     expect(convertOperatorToText("userIsIn", t)).toBe("workspace.segments.operator_user_is_in");
     expect(convertOperatorToText("userIsNotIn", t)).toBe("workspace.segments.operator_user_is_not_in");
+    expect(convertOperatorToText("haveCompleted", t)).toBe("workspace.segments.operator_have_completed");
+    expect(convertOperatorToText("haveNotCompleted", t)).toBe(
+      "workspace.segments.operator_have_not_completed"
+    );
+    expect(convertOperatorToText("haveSeen", t)).toBe("workspace.segments.operator_have_seen");
+    expect(convertOperatorToText("haveNotSeen", t)).toBe("workspace.segments.operator_have_not_seen");
+    expect(convertOperatorToText("haveStartedRespondingTo", t)).toBe(
+      "workspace.segments.operator_have_started_responding_to"
+    );
     // @ts-expect-error - testing default case
     expect(convertOperatorToText("unknown", t)).toBe("unknown");
   });
@@ -625,6 +635,47 @@ describe("Segment Utils", () => {
     expect(((group[1].resource as TBaseFilters)[0].resource as TSegmentDeviceFilter).root.deviceType).toBe(
       "desktop"
     );
+  });
+
+  test("updateSurveyInteractionValueInFilter", () => {
+    const surveyInteractionFilter = {
+      id: "si1",
+      root: { type: "surveyInteraction" as const },
+      qualifier: { operator: "haveSeen" as const },
+      value: { surveyScope: "any" as const, surveyIds: [], within: { amount: 1, unit: "months" as const } },
+    };
+    const baseFilter = createBaseFilter(surveyInteractionFilter, null, "bf1");
+    const nested = {
+      id: "si2",
+      root: { type: "surveyInteraction" as const },
+      qualifier: { operator: "haveCompleted" as const },
+      value: { surveyScope: "any" as const, surveyIds: [], within: { amount: 1, unit: "months" as const } },
+    };
+    const nestedBaseFilter = createBaseFilter(nested, null, "nbf1");
+    const nestedGroup = createBaseFilter([nestedBaseFilter], "or", "ng1");
+    const group = [baseFilter, nestedGroup] as unknown as TBaseFilters;
+
+    updateSurveyInteractionValueInFilter(group, "si1", {
+      surveyScope: "specific",
+      surveyIds: ["survey_1"],
+      within: { amount: 3, unit: "weeks" },
+    });
+    expect((group[0].resource as TSegmentFilter).value).toEqual({
+      surveyScope: "specific",
+      surveyIds: ["survey_1"],
+      within: { amount: 3, unit: "weeks" },
+    });
+
+    updateSurveyInteractionValueInFilter(group, "si2", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 12, unit: "days" },
+    });
+    expect(((group[1].resource as TBaseFilters)[0].resource as TSegmentFilter).value).toEqual({
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 12, unit: "days" },
+    });
   });
 
   test("formatSegmentDateFields", () => {

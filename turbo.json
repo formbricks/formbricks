@@ -76,19 +76,13 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/js-core#build": {
-      "dependsOn": ["^build", "@formbricks/database#build"],
+      "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/js-core#go": {
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
-    },
-    "@formbricks/js-core#lint": {
-      "dependsOn": ["@formbricks/database#build"]
-    },
-    "@formbricks/js-core#typecheck": {
-      "dependsOn": ["@formbricks/database#build"]
     },
     "@formbricks/logger#build": {
       "dependsOn": ["^build"],
@@ -288,8 +282,9 @@
         "IMPRINT_ADDRESS",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
-        "CHATWOOT_WEBSITE_TOKEN",
-        "CHATWOOT_BASE_URL",
+        "PLAIN_APP_ID",
+        "PLAIN_CHAT_HMAC_SECRET",
+        "PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID",
         "FORMBRICKS_WORKSPACE_ID",
         "FORMBRICKS_APP_URL",
         "LOG_LEVEL",
@@ -353,6 +348,7 @@
         "TURNSTILE_SITE_KEY",
         "RECAPTCHA_SITE_KEY",
         "RECAPTCHA_SECRET_KEY",
+        "TRUSTED_PROXY_HOP_COUNT",
         "TELEMETRY_DISABLED",
         "TERMS_URL",
         "VERSION",

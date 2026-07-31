@@ -166,6 +166,16 @@ export const ENTERPRISE_LICENSE_REQUEST_FORM_URL =
 
 export const REDIS_URL = env.REDIS_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+/**
+ * Number of reverse proxies in front of the app whose `X-Forwarded-For` entries may be believed.
+ *
+ * Defaults to 1 because that matches every supported topology — the Helm chart's Traefik/Envoy ingress,
+ * docker-compose behind a proxy, and Formbricks Cloud — and because Next 16 gives route handlers no
+ * socket peer address to fall back on, so a default of 0 would leave IP-based rate limiting unable to
+ * tell clients apart until an operator set this. Deployments with a longer proxy chain must raise it;
+ * setting it higher than the real chain lets a caller spoof the address by prepending entries.
+ */
+export const TRUSTED_PROXY_HOP_COUNT = env.TRUSTED_PROXY_HOP_COUNT ?? 1;
 export const TELEMETRY_DISABLED = env.TELEMETRY_DISABLED === "1";
 
 // Opt-out for the Have-I-Been-Pwned breach check (ENG-1587). Set to "1" on air-gapped /
@@ -203,9 +213,9 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "zh-Hant-TW",
 ];
 
-export const CHATWOOT_WEBSITE_TOKEN = env.CHATWOOT_WEBSITE_TOKEN;
-export const CHATWOOT_BASE_URL = env.CHATWOOT_BASE_URL || "https://app.chatwoot.com";
-export const IS_CHATWOOT_CONFIGURED = Boolean(env.CHATWOOT_WEBSITE_TOKEN);
+export const PLAIN_APP_ID = env.PLAIN_APP_ID;
+export const PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID = env.PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID;
+export const IS_PLAIN_CHAT_CONFIGURED = Boolean(env.PLAIN_APP_ID);
 
 // Formbricks-in-Formbricks: in-app surveys served by a Formbricks instance
 // (defaults to Formbricks Cloud). The widget only mounts when a workspace id is set.

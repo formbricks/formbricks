@@ -20,6 +20,7 @@ import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/l
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
+import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
 import { sendTelemetryEvents } from "./telemetry";
 
@@ -322,47 +323,54 @@ const deliverWebhooks = async ({
   );
 };
 
-const loadResponseFinishedContext = async ({
-  data,
+const loadIntegrationsSafely = async ({
   logContext,
   workspaceId,
 }: {
-  data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   workspaceId: string;
-}): Promise<{
-  integrations: Awaited<ReturnType<typeof getIntegrations>>;
-  responseCount: number | null;
-}> => {
-  const [integrationsResult, responseCountResult] = await Promise.allSettled([
-    getIntegrations(workspaceId),
-    getResponseCountBySurveyId(data.surveyId),
-  ]);
-
-  if (integrationsResult.status === "rejected") {
+}): Promise<Awaited<ReturnType<typeof getIntegrations>>> => {
+  try {
+    return await getIntegrations(workspaceId);
+  } catch (error) {
     logger.error(
       {
         ...logContext,
-        err: integrationsResult.reason,
+        err: error,
       },
       "Response pipeline integration lookup failed"
     );
-  }
 
-  if (responseCountResult.status === "rejected") {
+    return [];
+  }
+};
+
+/**
+ * Response counts are optional side inputs: a failed lookup must never fail the job, so it
+ * resolves to `null` and the consumer skips its own work instead.
+ */
+const loadResponseCountSafely = async ({
+  count,
+  failureMessage,
+  logContext,
+}: {
+  count: () => Promise<number>;
+  failureMessage: string;
+  logContext: Record<string, unknown>;
+}): Promise<number | null> => {
+  try {
+    return await count();
+  } catch (error) {
     logger.error(
       {
         ...logContext,
-        err: responseCountResult.reason,
+        err: error,
       },
-      "Response pipeline response count lookup failed"
+      failureMessage
     );
-  }
 
-  return {
-    integrations: integrationsResult.status === "fulfilled" ? integrationsResult.value : [],
-    responseCount: responseCountResult.status === "fulfilled" ? responseCountResult.value : null,
-  };
+    return null;
+  }
 };
 
 const getUsersWithNotifications = async ({
@@ -535,32 +543,37 @@ const sendNotificationEmailsSafely = async ({
   );
 };
 
+/**
+ * The completed-response count that closes this survey, or `null` when the response limit
+ * cannot apply — no limit configured, or the survey is already closed.
+ *
+ * The limit is defined in terms of *completed* responses, so only finished responses count
+ * towards it. Counting every response would close the survey once the number of starts
+ * (partial + finished) hit the limit.
+ */
+const getAutoCompleteThreshold = (survey: TPipelineSurvey): number | null =>
+  survey.autoComplete && survey.status !== "completed" ? survey.autoComplete : null;
+
 const handleSurveyAutoCompleteSafely = async ({
+  finishedResponseCount,
   logContext,
   organizationId,
-  responseCount,
   survey,
 }: {
+  finishedResponseCount: number | null;
   logContext: ReturnType<typeof getPipelineLogContext>;
   organizationId: string;
-  responseCount: number | null;
   survey: TPipelineSurvey;
 }): Promise<void> => {
-  if (responseCount === null) {
-    if (survey.autoComplete) {
-      logger.error(
-        {
-          ...logContext,
-          autoCompleteThreshold: survey.autoComplete,
-        },
-        "Response pipeline survey auto-complete skipped because the response count could not be loaded"
-      );
-    }
+  const autoCompleteThreshold = getAutoCompleteThreshold(survey);
 
+  // `finishedResponseCount` is only looked up when a threshold applies, so a `null` here means
+  // the lookup failed — already logged by loadResponseCountSafely.
+  if (autoCompleteThreshold === null || finishedResponseCount === null) {
     return;
   }
 
-  if (!survey.autoComplete || responseCount < survey.autoComplete) {
+  if (finishedResponseCount < autoCompleteThreshold) {
     return;
   }
 
@@ -628,9 +641,8 @@ const runResponseFinishedSideEffects = async ({
   survey: TPipelineSurvey;
   workspaceId: string;
 }) => {
-  const [{ integrations, responseCount }, usersWithNotifications] = await Promise.all([
-    loadResponseFinishedContext({
-      data,
+  const [integrations, usersWithNotifications] = await Promise.all([
+    loadIntegrationsSafely({
       logContext,
       workspaceId,
     }),
@@ -640,6 +652,30 @@ const runResponseFinishedSideEffects = async ({
       workspaceId,
     }),
   ]);
+
+  // Neither count is consumed until the notification/auto-complete steps at the end, so start
+  // them here to overlap with the integration and follow-up work below. Each is skipped
+  // entirely when nothing would consume it, keeping this off the hot path for the common case.
+  const autoCompleteThreshold = getAutoCompleteThreshold(survey);
+
+  const responseCountPromise =
+    usersWithNotifications.length > 0
+      ? loadResponseCountSafely({
+          count: () => getResponseCountBySurveyId(data.surveyId),
+          failureMessage: "Response pipeline response count lookup failed",
+          logContext,
+        })
+      : Promise.resolve(null);
+
+  const finishedResponseCountPromise =
+    autoCompleteThreshold !== null
+      ? loadResponseCountSafely({
+          count: () => getFinishedResponseCountBySurveyId(survey.id),
+          failureMessage:
+            "Response pipeline survey auto-complete skipped because the finished response count could not be loaded",
+          logContext: { ...logContext, autoCompleteThreshold },
+        })
+      : Promise.resolve(null);
 
   if (integrations.length > 0) {
     try {
@@ -676,16 +712,16 @@ const runResponseFinishedSideEffects = async ({
   await sendNotificationEmailsSafely({
     data,
     logContext,
-    responseCount,
+    responseCount: await responseCountPromise,
     survey,
     usersWithNotifications,
     workspaceId,
   });
 
   await handleSurveyAutoCompleteSafely({
+    finishedResponseCount: await finishedResponseCountPromise,
     logContext,
     organizationId,
-    responseCount,
     survey,
   });
 };

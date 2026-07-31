@@ -1,11 +1,14 @@
+import * as Sentry from "@sentry/nextjs";
 import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   auditFailedAuthAfter,
   auditPasswordReset,
+  betterAuthLogger,
   getSignInAuthMethod,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
@@ -18,6 +21,23 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 
 vi.mock("@formbricks/database", () => ({
   prisma: { user: { findUnique: vi.fn() } },
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+  captureException: vi.fn(),
+}));
+
+// Stable context-logger so the betterAuthLogger tests can assert the local log level.
+const contextLoggerMock = { error: vi.fn(), warn: vi.fn(), info: vi.fn() };
+vi.mock("@formbricks/logger", () => ({
+  logger: { withContext: vi.fn(() => contextLoggerMock) },
+}));
+
+// betterAuthLogger only captures to Sentry when SENTRY_DSN && IS_PRODUCTION; force both on for the file.
+vi.mock("@/lib/constants", async (importActual) => ({
+  ...(await importActual<typeof import("@/lib/constants")>()),
+  IS_PRODUCTION: true,
+  SENTRY_DSN: "https://examplePublicKey@o0.ingest.sentry.io/0",
 }));
 
 vi.mock("./sign-in-tracking", () => ({
@@ -250,5 +270,71 @@ describe("auditPasswordReset (onPasswordReset audit)", () => {
     vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("redis down"));
 
     await expect(auditPasswordReset("user-1")).resolves.toBeUndefined();
+  });
+});
+
+describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
+  // Optional on the BetterAuthOptions["logger"] type, but always defined here.
+  const log = betterAuthLogger.log!;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // Better Auth logs handled OAuth rejections as a bare string code (redirectOnError) — the top Sentry
+  // noise source (FORMBRICKS-16Q). These must NOT be captured, only logged locally.
+  test.each(["account_not_linked", "unable_to_create_user", "unable_to_get_user_info", "email_not_found"])(
+    "does not capture the handled OAuth rejection code %s",
+    (code) => {
+      log("error", code);
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      // The rejection is still visible in the application log.
+      expect(contextLoggerMock.error).toHaveBeenCalledWith(code);
+    }
+  );
+
+  test("does not capture a client-facing APIError (handled 4xx, e.g. FAILED_TO_CREATE_USER)", () => {
+    const apiError = new APIError("UNPROCESSABLE_ENTITY", {
+      message: "Failed to create user",
+      code: "FAILED_TO_CREATE_USER",
+    });
+
+    // BA logs this as ("Failed to create user", apiError) on the credential path.
+    log("error", "Failed to create user", apiError);
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(contextLoggerMock.error).toHaveBeenCalledWith("Failed to create user");
+  });
+
+  test("captures a genuine internal fault passed as a trailing arg (DB/adapter error)", () => {
+    const dbError = new Error("Better auth was unable to query your database");
+
+    log("error", "Better auth was unable to query your database.\nError: ", dbError);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(dbError);
+  });
+
+  test("captures the deadlock DriverAdapterError so the ENG-2038 signal stays visible", () => {
+    // A non-APIError Error must still reach Sentry — this is the signal we watch post-deploy.
+    const deadlock = new Error("deadlock detected");
+
+    log("error", deadlock);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(deadlock);
+  });
+
+  test("warn-level logs are never captured", () => {
+    log("warn", "account isn't linked");
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith("account isn't linked");
+  });
+
+  test("info/debug-level logs go to info and are never captured", () => {
+    log("info", "some info");
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(contextLoggerMock.info).toHaveBeenCalledWith("some info");
   });
 });

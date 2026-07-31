@@ -5,6 +5,7 @@ export const rateLimitConfigs = {
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
+    emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
   },
 
   // API endpoints - higher limits for legitimate usage

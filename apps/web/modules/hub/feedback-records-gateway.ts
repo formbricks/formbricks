@@ -1,9 +1,7 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/api/request-body";
@@ -18,12 +16,15 @@ import {
   allowGatewayRequest,
   buildGatewayStatusResponse,
 } from "@/modules/gateway-auth/lib/request";
+import {
+  type TFeedbackRecordsGatewayPermission,
+  hasApiKeyImplicitFeedbackDirectoryAccess,
+} from "@/modules/hub/feedback-records-gateway-authz";
 import { normalizeFeedbackRecordsPath } from "@/modules/hub/feedback-records-routing";
 import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
 const ZFeedbackRecordId = z.uuid();
 
-type TFeedbackRecordsGatewayPermission = "read" | "write";
 type TFeedbackRecordsGatewayOperation =
   | "list"
   | "create"
@@ -45,27 +46,19 @@ type TParsedGatewayRoute = {
  * Operations that change or destroy records that already exist. A feedback directory is shared by
  * every workspace it is assigned to and its records carry no workspace of their own, so a workspace
  * permission cannot tell one workspace's records from another's — a `readWrite` member of workspace B
- * would otherwise edit or delete records that workspace A's surveys ingested (ENG-1770). These are
- * restricted to the organization level: owners/managers for people, org-wide write access for API
- * keys. `create` is deliberately not in this set — adding records to a shared directory is ordinary
- * workspace work, the same as a CSV import.
+ * would otherwise edit or delete records that workspace A's surveys ingested (ENG-1770). For session
+ * users these are restricted to organization owners and managers. `create` is deliberately not in
+ * this set: adding records to a shared directory is ordinary workspace work, like a CSV import.
+ *
+ * API keys are intentionally not gated on this — they authorize purely on their per-workspace
+ * permissions (`hasApiKeyImplicitFeedbackDirectoryAccess`), and what a key should need to mutate a
+ * record is being settled separately in #8682.
  */
 const RECORD_MUTATING_OPERATIONS = new Set<TFeedbackRecordsGatewayOperation>([
   "update",
   "delete",
   "bulkDelete",
 ]);
-
-const apiKeyPermissionWeight: Record<ApiKeyPermission, number> = {
-  read: 1,
-  write: 2,
-  manage: 3,
-};
-
-const gatewayPermissionToApiKeyPermissionWeight: Record<TFeedbackRecordsGatewayPermission, number> = {
-  read: apiKeyPermissionWeight.read,
-  write: apiKeyPermissionWeight.write,
-};
 
 const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TParsedGatewayRoute | null => {
   const normalizedPath = normalizeFeedbackRecordsPath(pathname);
@@ -172,38 +165,6 @@ const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | nul
   return getBearerTokenFromHeaders(headers);
 };
 
-const hasApiKeyImplicitFeedbackDirectoryAccess = (
-  authentication: TAuthenticationApiKey,
-  workspaceIds: string[],
-  requiredPermission: TFeedbackRecordsGatewayPermission,
-  isRecordMutation: boolean
-): boolean => {
-  const orgAccessControl = authentication.organizationAccess?.accessControl;
-  if (orgAccessControl?.write) {
-    return true;
-  }
-  if (orgAccessControl?.read && requiredPermission === "read") {
-    return true;
-  }
-
-  // Changing or deleting existing records needs org-wide write access; a workspace-scoped key cannot
-  // stand in for it, because the records it would reach are not workspace-scoped (ENG-1770).
-  if (isRecordMutation) {
-    return false;
-  }
-
-  const matchingWeights = authentication.workspacePermissions
-    .filter((permission) => workspaceIds.includes(permission.workspaceId))
-    .map((permission) => apiKeyPermissionWeight[permission.permission]);
-
-  if (matchingWeights.length === 0) {
-    return false;
-  }
-
-  const maxWeight = Math.max(...matchingWeights);
-  return maxWeight >= gatewayPermissionToApiKeyPermissionWeight[requiredPermission];
-};
-
 const resolveTenantId = async (
   request: NextRequest,
   route: TParsedGatewayRoute,
@@ -295,9 +256,9 @@ const authorizeFeedbackRecordsGatewayRequest = async (
   if (principal.type === "apiKey") {
     return hasApiKeyImplicitFeedbackDirectoryAccess(
       principal.authentication,
+      feedbackDirectory.organizationId,
       feedbackDirectory.workspaceIds,
-      requiredPermission,
-      isRecordMutation
+      requiredPermission
     )
       ? { allowed: true }
       : { allowed: false };

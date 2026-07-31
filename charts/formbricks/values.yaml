@@ -114,7 +114,13 @@ deployment:
   # AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
   # AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
   # Secret values can use valueFrom.secretKeyRef; omit unused provider variables.
-  env: {}
+  env:
+    # The app sits behind exactly one reverse proxy (Traefik/Envoy) in this chart, so the client address
+    # is the last X-Forwarded-For entry. Pinned here rather than relying on the code default (also 1) so
+    # the assumption is visible next to the ingress it describes. Raise it if you put further proxies —
+    # a CDN, a corporate load balancer — in front of the ingress; setting it higher than the real chain
+    # lets callers spoof their address by prepending entries.
+    TRUSTED_PROXY_HOP_COUNT: "1"
 
   # Tolerations for scheduling pods on tainted nodes
   tolerations: []
@@ -884,6 +890,9 @@ cube:
     # the Cube listener port through envFrom.
     CUBEJS_DB_TYPE: "postgres"
     CUBEJS_DEFAULT_API_SCOPES: "meta,data"
+    # The bundled schema has no external pre-aggregations, so Cube Store is not required.
+    # Override this only after configuring Cube Store for custom external pre-aggregations.
+    CUBEJS_EXTERNAL_DEFAULT: "false"
     # Keep the in-memory cache/queue driver at one Cube replica only. The chart
     # fails rendering when this remains "memory" and cube.replicas is greater than 1.
     CUBEJS_CACHE_AND_QUEUE_DRIVER: "memory"

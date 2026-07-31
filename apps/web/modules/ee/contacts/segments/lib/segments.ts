@@ -1,4 +1,5 @@
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
@@ -24,6 +25,7 @@ import {
   TSegmentFilterValue,
   TSegmentPersonFilter,
   TSegmentSegmentFilter,
+  TSegmentSurveyInteractionFilter,
   TSegmentUpdateInput,
   TSegmentWithSurveyRefs,
   ZRelativeDateValue,
@@ -35,6 +37,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
 import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
+import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
@@ -130,6 +133,70 @@ export const getSegments = reactCache(async (workspaceId: string): Promise<TSegm
     throw error;
   }
 });
+
+export interface TSurveyFilterRef {
+  id: string;
+  name: string;
+  status: string;
+}
+
+/**
+ * Upper bound on surveys returned for the picker. Keeps the query and client payload from growing
+ * unboundedly with the workspace's survey count; the picker searches client-side over this set. A
+ * workspace exceeding this many surveys would need server-side search (tracked as a follow-up), which
+ * is far beyond any realistic count today.
+ */
+export const SURVEY_FILTER_REF_LIMIT = 1000;
+
+/**
+ * Minimal survey list for the segment survey-interaction filter picker: id + name + status,
+ * scoped to the workspace. Survey has a direct workspaceId column so no environment/project join
+ * is needed. Bounded by {@link SURVEY_FILTER_REF_LIMIT}, most-recently-updated first.
+ */
+export const getSurveyRefsForWorkspace = reactCache(
+  async (workspaceId: string): Promise<TSurveyFilterRef[]> => {
+    validateInputs([workspaceId, ZId]);
+    try {
+      return await prisma.survey.findMany({
+        where: { workspaceId },
+        select: { id: true, name: true, status: true },
+        orderBy: { updatedAt: "desc" },
+        take: SURVEY_FILTER_REF_LIMIT,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
+/**
+ * Returns the subset of `surveyIds` that actually belong to `workspaceId`. Unlike
+ * {@link getSurveyRefsForWorkspace} (which caps at {@link SURVEY_FILTER_REF_LIMIT} for the picker),
+ * this queries by the exact ids being validated, so it stays correct for workspaces with more than
+ * that many surveys — a referenced-but-valid survey outside the picker's recent window is no longer
+ * wrongly rejected. Returns an empty set for an empty input without hitting the DB.
+ */
+export const getExistingWorkspaceSurveyIds = reactCache(
+  async (workspaceId: string, surveyIds: string[]): Promise<Set<string>> => {
+    validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
+    if (surveyIds.length === 0) return new Set();
+    try {
+      const surveys = await prisma.survey.findMany({
+        where: { workspaceId, id: { in: surveyIds } },
+        select: { id: true },
+      });
+      return new Set(surveys.map((survey) => survey.id));
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
 
 export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Promise<TSegment> => {
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
@@ -629,6 +696,7 @@ export const evaluateSegment = async (
   }
 
   let resultPairs: ResultConnectorPair[] = [];
+  const now = new Date();
 
   try {
     for (let filterItem of filters) {
@@ -637,82 +705,57 @@ export const evaluateSegment = async (
       let result: boolean;
 
       if (isResourceFilter(resource)) {
-        const { root } = resource;
-        const { type } = root;
+        const { type } = resource.root;
 
-        if (type === "attribute") {
-          result = evaluateAttributeFilter(userData.attributes, resource as TSegmentAttributeFilter);
-          resultPairs.push({
-            result,
-            connector: filterItem.connector,
-          });
-        }
-
-        if (type === "person") {
-          result = evaluatePersonFilter(userData.userId, resource as TSegmentPersonFilter);
-          resultPairs.push({
-            result,
-            connector: filterItem.connector,
-          });
-        }
-
-        if (type === "segment") {
-          result = await evaluateSegmentFilter(userData, resource as TSegmentSegmentFilter);
-          resultPairs.push({
-            result,
-            connector: filterItem.connector,
-          });
-        }
-
-        if (type === "device") {
-          result = evaluateDeviceFilter(userData.deviceType, resource as TSegmentDeviceFilter);
-          resultPairs.push({
-            result,
-            connector: filterItem.connector,
-          });
+        // Exhaustive switch: a new filter root type must be handled here or the `default` throws —
+        // this replaces an if-chain that silently dropped unhandled types (e.g. surveyInteraction),
+        // leaving `result` unassigned and corrupting segment membership.
+        switch (type) {
+          case "attribute":
+            result = evaluateAttributeFilter(userData.attributes, resource as TSegmentAttributeFilter);
+            break;
+          case "person":
+            result = evaluatePersonFilter(userData.userId, resource as TSegmentPersonFilter);
+            break;
+          case "segment":
+            result = await evaluateSegmentFilter(userData, resource as TSegmentSegmentFilter);
+            break;
+          case "device":
+            result = evaluateDeviceFilter(userData.deviceType, resource as TSegmentDeviceFilter);
+            break;
+          case "surveyInteraction":
+            // This in-process evaluator can only resolve interaction filters when the caller supplies
+            // the contact's interaction history. Throwing (rather than silently skipping) guarantees a
+            // surveyInteraction filter can never be dropped here; the contact-sync and Prisma paths
+            // evaluate these filters without needing this branch.
+            if (!userData.interactionData) {
+              throw new Error(
+                "Cannot evaluate a surveyInteraction filter without interactionData on userData; evaluate via the contact-sync in-memory path or the Prisma query path instead."
+              );
+            }
+            result = evaluateSurveyInteractionFilterInMemory(
+              resource as TSegmentSurveyInteractionFilter,
+              userData.interactionData,
+              now
+            );
+            break;
+          default:
+            throw new Error(`Unsupported segment filter root type: ${type as string}`);
         }
       } else {
-        result = await evaluateSegment(userData, resource);
-
         // this is a sub-group and we need to evaluate the sub-group
-        resultPairs.push({
-          result,
-          connector: filterItem.connector,
-        });
+        result = await evaluateSegment(userData, resource);
       }
+
+      resultPairs.push({
+        result,
+        connector: filterItem.connector,
+      });
     }
 
-    if (!resultPairs.length) {
-      return false;
-    }
-
-    // We first evaluate all `and` conditions consecutively
-    let intermediateResults: boolean[] = [];
-
-    // Given that the first filter in every group/sub-group always has a connector value of "null",
-    // we initialize the finalResult with the result of the first filter.
-    let currentAndGroupResult = resultPairs[0].result;
-
-    for (let i = 1; i < resultPairs.length; i++) {
-      const { result, connector } = resultPairs[i];
-
-      if (connector === "and") {
-        currentAndGroupResult = currentAndGroupResult && result;
-      } else if (connector === "or") {
-        intermediateResults.push(currentAndGroupResult);
-        currentAndGroupResult = result;
-      }
-    }
-    // Push the final `and` group result
-    intermediateResults.push(currentAndGroupResult);
-
-    // Now we can evaluate the `or` conditions
-    let finalResult = intermediateResults[0];
-    for (let i = 1; i < intermediateResults.length; i++) {
-      finalResult = finalResult || intermediateResults[i];
-    }
-
-    return finalResult;
+    // Combine the per-filter results with AND-before-OR precedence (shared with the in-memory
+    // survey-interaction evaluator so both paths agree on connector semantics).
+    return combineFilterResults(resultPairs);
   } catch (error) {
     logger.error(error instanceof Error ? error : new Error(String(error)), "Error evaluating segment");
 

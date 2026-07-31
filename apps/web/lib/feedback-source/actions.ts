@@ -7,15 +7,12 @@ import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TFeedbackSourceWithMappings,
-  THubFieldType,
   ZFeedbackSourceCreateInput,
   ZFeedbackSourceFieldMappingCreateInput,
   ZFeedbackSourceUpdateInput,
-  getHubFieldTypeFromElementType,
 } from "@formbricks/types/feedback-source";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -23,12 +20,14 @@ import {
   getOrganizationIdFromFeedbackSourceId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importHistoricalResponses } from "./import";
+import { resolveFormbricksMappingsInput } from "./mappings";
 import {
   TMappingsInput,
   createFeedbackSourceWithMappings,
@@ -77,55 +76,6 @@ export const deleteFeedbackSourceAction = authenticatedActionClient
       return deleteFeedbackSource(parsedInput.feedbackSourceId, parsedInput.workspaceId);
     }
   );
-
-const resolveSurveyMappings = async (
-  surveyId: string,
-  elementIds: string[]
-): Promise<{ surveyId: string; elementId: string; hubFieldType: THubFieldType }[]> => {
-  const survey = await getSurvey(surveyId);
-  if (!survey) {
-    throw new ResourceNotFoundError("Survey", surveyId);
-  }
-
-  const elements = getElementsFromBlocks(survey.blocks);
-  const elementMap = new Map(elements.map((el) => [el.id, el]));
-
-  return elementIds.flatMap((elementId) => {
-    const element = elementMap.get(elementId);
-    if (!element) {
-      logger.warn(
-        { surveyId, elementId },
-        "Skipping unknown elementId when building feedbackSource mappings"
-      );
-      return [];
-    }
-
-    const hubFieldType = getHubFieldTypeFromElementType(element.type);
-    if (!hubFieldType) {
-      logger.warn(
-        { surveyId, elementId, elementType: element.type },
-        "Skipping unmappable element type when building feedbackSource mappings"
-      );
-      return [];
-    }
-
-    return [{ surveyId, elementId, hubFieldType }];
-  });
-};
-
-const resolveFormbricksMappingsInput = async (
-  entries: { surveyId: string; elementIds: string[] }[]
-): Promise<TMappingsInput> => {
-  const allMappings = await Promise.all(
-    entries.map(({ surveyId, elementIds }) => resolveSurveyMappings(surveyId, elementIds))
-  );
-  const flattenedMappings = allMappings.flat();
-  if (flattenedMappings.length === 0) {
-    throw new InvalidInputError("No supported survey questions selected for feedbackSource mapping");
-  }
-
-  return { type: "formbricks_survey", mappings: flattenedMappings };
-};
 
 const ZFormbricksSurveyMapping = z.object({
   surveyId: ZId,
@@ -218,16 +168,7 @@ export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
     const { formbricksMappings, fieldMappings } = parsedInput;
 
     if (formbricksMappings?.length) {
-      await Promise.all(
-        formbricksMappings.map(async ({ surveyId }) => {
-          const orgId = await getOrganizationIdFromSurveyId(surveyId);
-          if (orgId !== organizationId) {
-            throw new AuthorizationError("You are not authorized to access this survey");
-          }
-        })
-      );
-
-      mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings);
+      mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings, parsedInput.workspaceId);
     } else if (fieldMappings?.length) {
       mappingsInput = {
         type: "field",
@@ -280,28 +221,27 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
         ],
       });
 
+      // The check above proves the caller may act in `workspaceId`; it does not prove this feedback
+      // source lives there, and the organization it was authorized against came from the source
+      // rather than the workspace. Pin the two together up front so every branch below — and the
+      // mappings resolved against the same workspace — operates on one tenant, and so a mismatch
+      // fails here rather than as a Prisma error from the update.
+      const feedbackSource = await prisma.feedbackSource.findUnique({
+        where: { id: parsedInput.feedbackSourceId, workspaceId: parsedInput.workspaceId },
+        select: { type: true },
+      });
+      if (!feedbackSource) {
+        throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
+      }
+
       let mappingsInput: TMappingsInput | undefined;
 
       if (parsedInput.formbricksMappings?.length) {
-        await Promise.all(
-          parsedInput.formbricksMappings.map(async ({ surveyId }) => {
-            const orgId = await getOrganizationIdFromSurveyId(surveyId);
-            if (orgId !== organizationId) {
-              throw new AuthorizationError("You are not authorized to access this survey");
-            }
-          })
+        mappingsInput = await resolveFormbricksMappingsInput(
+          parsedInput.formbricksMappings,
+          parsedInput.workspaceId
         );
-
-        mappingsInput = await resolveFormbricksMappingsInput(parsedInput.formbricksMappings);
       } else if (parsedInput.fieldMappings && parsedInput.fieldMappings.length > 0) {
-        const feedbackSource = await prisma.feedbackSource.findUnique({
-          where: { id: parsedInput.feedbackSourceId, workspaceId: parsedInput.workspaceId },
-          select: { type: true },
-        });
-        if (!feedbackSource) {
-          throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
-        }
-
         mappingsInput = {
           type: "field",
           mappings:
@@ -336,6 +276,12 @@ export const getResponseCountAction = authenticatedActionClient
       parsedInput: z.infer<typeof ZGetResponseCountAction>;
     }): Promise<number> => {
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+
+      // Authorize against the survey's own workspace, not the caller-supplied one: the workspaceTeam
+      // check only proves team access to whatever workspace the caller names, so passing a workspace
+      // they do have access to would otherwise return the response count for any survey in the org.
+      const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -347,7 +293,7 @@ export const getResponseCountAction = authenticatedActionClient
           {
             type: "workspaceTeam",
             minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
+            workspaceId: surveyWorkspaceId,
           },
         ],
       });
@@ -399,6 +345,16 @@ export const importHistoricalResponsesAction = authenticatedActionClient
 
       const survey = await getSurvey(parsedInput.surveyId);
       if (!survey) {
+        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+      }
+
+      // The authorization above covers the feedback source's workspace, not this survey — and the
+      // import reads every response of `surveyId` and copies them into the source's feedback
+      // directory. Without this check any caller with readWrite on one workspace could name a survey
+      // from another organization and exfiltrate its responses into their own directory. Survey ids
+      // are public (they appear in `/s/<surveyId>` links), so the id is not a secret. The picker only
+      // ever offers surveys from this workspace (`getSurveysForUnifyAction` → `getSurveys(workspaceId)`).
+      if (survey.workspaceId !== parsedInput.workspaceId) {
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
 

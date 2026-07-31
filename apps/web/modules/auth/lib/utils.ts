@@ -1,9 +1,7 @@
-import * as Sentry from "@sentry/nextjs";
 import { createHash, randomUUID } from "crypto";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
-import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -44,26 +42,10 @@ export const logAuthEvent = (
 ) => {
   const auditActorId = userId === UNKNOWN_DATA && email ? createAuditIdentifier(email, "email") : userId;
 
-  // Log failures to Sentry for monitoring and alerting
-  if (status === "failure" && SENTRY_DSN && IS_PRODUCTION) {
-    const error = new Error(`Authentication ${action} failed`);
-    Sentry.captureException(error, {
-      tags: {
-        component: "authentication",
-        action,
-        status,
-        ...(additionalData.tags ?? {}),
-      },
-      extra: {
-        userId: auditActorId,
-        provider: additionalData.provider,
-        authMethod: additionalData.authMethod,
-        failureReason: additionalData.failureReason,
-        ...additionalData,
-      },
-    });
-  }
-
+  // Auth failures are NOT sent to Sentry: they're expected (wrong password / unknown user), so
+  // capturing every attempt was noise, not signal. The security trail is the audit log below
+  // (throttled by shouldLogAuthFailure + rate-limiting); genuine *internal* auth errors are still
+  // captured via the Better Auth logger's error level (ENG-2037).
   queueAuditEventBackground({
     action,
     targetType: "user",

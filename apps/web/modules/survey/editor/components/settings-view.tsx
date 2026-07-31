@@ -23,6 +23,7 @@ interface SettingsViewProps {
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
+  finishedResponseCount: number;
   membershipRole?: OrganizationRole;
   isUserTargetingAllowed?: boolean;
   isSpamProtectionAllowed: boolean;
@@ -43,6 +44,7 @@ export const SettingsView = ({
   contactAttributeKeys,
   segments,
   responseCount,
+  finishedResponseCount,
   membershipRole,
   isUserTargetingAllowed = false,
   isSpamProtectionAllowed,
@@ -109,7 +111,7 @@ export const SettingsView = ({
       <ResponseOptionsCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        responseCount={responseCount}
+        finishedResponseCount={finishedResponseCount}
         isSpamProtectionAllowed={isSpamProtectionAllowed}
         surveySchedulingConfig={surveySchedulingConfig}
         locale={locale}

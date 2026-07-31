@@ -4,6 +4,7 @@ export {
   createFeedbackRecordsBatch,
   listFeedbackRecords,
   retrieveFeedbackRecord,
+  updateFeedbackRecord,
   type HubFeedbackRecordResult,
   type ListFeedbackRecordsResult,
 } from "./service";
@@ -12,4 +13,5 @@ export type {
   FeedbackRecordData,
   FeedbackRecordListParams,
   FeedbackRecordListResponse,
+  FeedbackRecordUpdateParams,
 } from "./types";

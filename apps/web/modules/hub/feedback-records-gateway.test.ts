@@ -15,10 +15,6 @@ vi.mock("@formbricks/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock("@formbricks/database/prisma", () => ({
-  ApiKeyPermission: { read: "read", write: "write", manage: "manage" },
-}));
-
 // Stubbed so the test does not pull prisma/session code in through the gateway-auth module; the two
 // helpers used here are trivial response builders.
 vi.mock("@/modules/gateway-auth/lib/request", () => ({
@@ -162,32 +158,27 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
     });
   });
 
+  // API keys are deliberately left out of the owners/managers rule above: they authorize on their
+  // per-workspace permissions alone (ENG-1980 / #8648), and what a key should need in order to mutate a
+  // record is being settled in #8682. These cases pin that boundary so neither side drifts by accident.
   describe("api key principal", () => {
     const workspaceWriteKey = apiKey({
       workspacePermissions: [{ workspaceId: workspaceB, workspaceName: "B", permission: "write" }],
     });
-    const orgWriteKey = apiKey({ organizationAccess: { accessControl: { read: true, write: true } } });
-
-    test("denies a delete for a workspace-scoped write key", async () => {
-      const decision = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
-
-      expect(decision.status).toBe("deny");
-      expect(decision.status === "deny" && decision.response.status).toBe(403);
+    const otherOrgWriteKey = apiKey({
+      organizationId: "clorg987654321098765432109",
+      workspacePermissions: [{ workspaceId: workspaceB, workspaceName: "B", permission: "write" }],
     });
 
-    test("denies an update for a workspace-scoped write key", async () => {
-      const decision = await authorize("PATCH", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
+    test("a workspace write key may still mutate — the session org rule does not extend to keys", async () => {
+      const deleted = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
+      const updated = await authorize("PATCH", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
 
-      expect(decision.status).toBe("deny");
+      expect(deleted.status).toBe("allow");
+      expect(updated.status).toBe("allow");
     });
 
-    test("allows a delete for an organization-wide write key", async () => {
-      const decision = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, orgWriteKey);
-
-      expect(decision.status).toBe("allow");
-    });
-
-    test("still allows a workspace-scoped write key to create and read records", async () => {
+    test("allows a workspace write key to create and read records", async () => {
       const created = await authorize("POST", "/api/v3/feedbackRecords", workspaceWriteKey, {
         tenant_id: directoryId,
       });
@@ -195,6 +186,17 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
 
       expect(created.status).toBe("allow");
       expect(read.status).toBe("allow");
+    });
+
+    // The cross-organization guard has to hold on reads as well as mutations, so it cannot be dropped
+    // on one path without a failure here.
+    test("refuses a key from another organization, on a mutation and on a read alike", async () => {
+      const deleted = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, otherOrgWriteKey);
+      const read = await authorize("GET", `/api/v3/feedbackRecords/${recordId}`, otherOrgWriteKey);
+
+      expect(deleted.status).toBe("deny");
+      expect(deleted.status === "deny" && deleted.response.status).toBe(403);
+      expect(read.status).toBe("deny");
     });
   });
 

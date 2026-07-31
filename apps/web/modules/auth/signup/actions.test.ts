@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  INVITE_TOKEN_INVALID_ERROR_CODE,
+  SIGNUP_DISABLED_ERROR_CODE,
+  SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+} from "@formbricks/types/errors";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
+import { createMembership } from "@/lib/membership/service";
 import { getUserByEmail } from "@/lib/user/service";
 import { auth } from "@/modules/auth/lib/auth";
 import { getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
@@ -12,6 +18,7 @@ import { createUserAction } from "./actions";
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -41,6 +48,7 @@ vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
   groupIdentifyPostHog: vi.fn(),
   identifyPostHogPerson: vi.fn(),
+  getEmailDomain: (email: string) => email.split("@")[1]?.toLowerCase() || undefined,
 }));
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   ensureCloudStripeSetupForOrganization: vi.fn(),
@@ -55,6 +63,7 @@ vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace:
 const constantsOverrides = vi.hoisted(() => ({
   IS_FORMBRICKS_CLOUD: false,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false,
+  SIGNUP_ENABLED: true,
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -67,7 +76,12 @@ vi.mock("@/lib/constants", () => ({
   get SIGNUP_DOMAIN_CHECK_ON_INVITES() {
     return constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES;
   },
+  get SIGNUP_ENABLED() {
+    return constantsOverrides.SIGNUP_ENABLED;
+  },
 }));
+
+vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
@@ -89,7 +103,9 @@ describe("createUserAction — signup verification email callbackURL", () => {
     notificationSettings: { alert: {} },
   };
 
-  const baseInput = { name: "Ada", email: "Ada@Example.com", password: "Password123!" };
+  // Mirrors what signup-form.tsx actually posts: it always sends the field, as `inviteToken ?? ""`,
+  // so an uninvited sign-up arrives with an empty string rather than undefined.
+  const baseInput = { name: "Ada", email: "Ada@Example.com", password: "Password123!", inviteToken: "" };
 
   const newCtx = () => ({ auditLoggingCtx: { organizationId: "", userId: "" } });
 
@@ -97,6 +113,8 @@ describe("createUserAction — signup verification email callbackURL", () => {
     vi.resetAllMocks();
     constantsOverrides.IS_FORMBRICKS_CLOUD = false;
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
+    constantsOverrides.SIGNUP_ENABLED = true;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
@@ -115,6 +133,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
   });
 
   test("does not point the verification callback at /invite for invite signups (ENG-1527)", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
     vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" } as never);
     vi.mocked(getInvite).mockResolvedValue({
       id: "invite-1",
@@ -141,6 +160,99 @@ describe("createUserAction — signup verification email callbackURL", () => {
     });
   });
 
+  // Regression: signup-form.tsx sends `inviteToken: inviteToken ?? ""`, so an uninvited sign-up arrives
+  // with an empty string. Guarding the "unusable invite" check on `!== undefined` rather than
+  // truthiness rejected every public sign-up with INVITE_TOKEN_INVALID_ERROR_CODE.
+  test.each(["", "   ", undefined])(
+    "treats %p as no invite and completes an ordinary sign-up",
+    async (inviteToken) => {
+      vi.mocked(resolveInviteMatch).mockResolvedValue("missing");
+
+      const result = await createUserAction({
+        ctx: newCtx(),
+        parsedInput: { ...baseInput, inviteToken },
+      } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(auth.api.signUpEmail).toHaveBeenCalled();
+      // No invite means no membership grant — the org-creation path handles it instead.
+      expect(createMembership).not.toHaveBeenCalled();
+    }
+  );
+
+  // Regression: an invite binds a role in an organization to one address. Accepting it only on a valid
+  // signature meant a leaked or forwarded invite link could be redeemed with any address.
+  test.each(["email_mismatch", "invalid_or_expired", "verification_error", "missing"] as const)(
+    "refuses to grant membership when the invite resolves as %s",
+    async (inviteMatch) => {
+      vi.mocked(resolveInviteMatch).mockResolvedValue(inviteMatch);
+      vi.mocked(verifyInviteToken).mockReturnValue({
+        inviteId: "invite-1",
+        email: "someone-else@example.com",
+      } as never);
+
+      await expect(
+        createUserAction({
+          ctx: newCtx(),
+          parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
+        } as never)
+        // The stable code, not just "some error": the sign-up form maps this to localized copy, so a
+        // regression to a raw message would break the UI while still passing a bare toThrow().
+      ).rejects.toThrow(INVITE_TOKEN_INVALID_ERROR_CODE);
+
+      expect(createMembership).not.toHaveBeenCalled();
+    }
+  );
+
+  // Regression: signup/page.tsx requires a valid invite once public sign-up is closed, but the action
+  // itself enforced nothing — so anyone could POST it and create an account on a closed instance.
+  describe("closed instance policy", () => {
+    beforeEach(() => {
+      constantsOverrides.SIGNUP_ENABLED = false;
+      vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    });
+
+    test("rejects an uninvited signup and creates no user", async () => {
+      await expect(createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never)).rejects.toThrow(
+        SIGNUP_DISABLED_ERROR_CODE
+      );
+      expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+    });
+
+    test("still allows the first administrator during fresh-instance setup", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+
+      const result = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(auth.api.signUpEmail).toHaveBeenCalled();
+    });
+
+    test("still allows a signup backed by a valid matching invite", async () => {
+      vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+      vi.mocked(verifyInviteToken).mockReturnValue({
+        inviteId: "invite-1",
+        email: "ada@example.com",
+      } as never);
+      vi.mocked(getInvite).mockResolvedValue({
+        id: "invite-1",
+        organizationId: "org-1",
+        role: "member",
+        teamIds: null,
+        creator: { name: "Owner", email: "owner@example.com", locale: "en-US" },
+      } as never);
+
+      const result = await createUserAction({
+        ctx: newCtx(),
+        parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
+      } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(createMembership).toHaveBeenCalled();
+    });
+  });
+
   test("treats a duplicate email as already-existed without post-creation side effects", async () => {
     vi.mocked(auth.api.signUpEmail).mockRejectedValue(new Error("user already exists"));
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
@@ -161,12 +273,19 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
     locale: "en-US",
     notificationSettings: { alert: {} },
   };
-  const blockedInput = { name: "Spammer", email: "spammer@gmail.com", password: "Password123!" };
+  const blockedInput = {
+    name: "Spammer",
+    email: "spammer@gmail.com",
+    password: "Password123!",
+    inviteToken: "",
+  };
   const newCtx = () => ({ auditLoggingCtx: { organizationId: "", userId: "" } });
 
   beforeEach(() => {
     vi.resetAllMocks();
-    constantsOverrides.IS_FORMBRICKS_CLOUD = true; // this suite runs as Formbricks Cloud
+    constantsOverrides.IS_FORMBRICKS_CLOUD = true;
+    constantsOverrides.SIGNUP_ENABLED = true;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
@@ -211,18 +330,21 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
   test("blocks when the invite email does not match the signup email", async () => {
     vi.mocked(resolveInviteMatch).mockResolvedValue("email_mismatch");
 
+    // A mismatched invite is now rejected outright rather than merely losing its domain exemption, so
+    // no user row is created for it either.
     await expect(
       createUserAction({
         ctx: newCtx(),
         parsedInput: { ...blockedInput, inviteToken: "invite-jwt-123" },
       } as never)
-    ).rejects.toThrow(SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE);
+    ).rejects.toThrow(INVITE_TOKEN_INVALID_ERROR_CODE);
     expect(auth.api.signUpEmail).not.toHaveBeenCalled();
   });
 
   test("blocks a personal-domain invite when the kill-switch is enabled", async () => {
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = true;
-    // Kill-switch on: the invite exemption isn't consulted at all, so resolveInviteMatch is irrelevant.
+    // The invite itself is usable; the kill-switch is what removes its domain exemption.
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
 
     await expect(
       createUserAction({

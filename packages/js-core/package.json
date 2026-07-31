@@ -46,6 +46,7 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
+    "@formbricks/vite-plugins": "workspace:*",
     "@types/node": "25.4.0",
     "@vitest/coverage-v8": "4.1.6",
     "typescript": "5.9.3",

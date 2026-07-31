@@ -21,6 +21,7 @@ import {
 } from "@/src/schedules";
 import {
   type TResponsePipelineJobData,
+  type TSurveyArchivePurgeJobData,
   type TSurveySchedulingJobData,
   type TTestLogJobData,
 } from "@/src/types";
@@ -366,6 +367,47 @@ export const removeRecurringSurveySchedulingJobSchedule = async (
         scope: identity.scope,
       },
       "Failed to remove BullMQ survey scheduling schedule"
+    );
+    throw error;
+  }
+};
+
+export const upsertRecurringSurveyArchivePurgeJobSchedule = async (
+  identity: TBackgroundJobScheduleIdentity,
+  schedule: TRecurringBackgroundJobSchedule,
+  data: TSurveyArchivePurgeJobData
+): Promise<Job> => {
+  try {
+    return await upsertRecurringBackgroundJobSchedule(JOB_NAMES.surveyArchivePurge, identity, schedule, data);
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        jobName: JOB_NAMES.surveyArchivePurge,
+        schedule,
+        scheduleId: identity.scheduleId,
+        scope: identity.scope,
+      },
+      "Failed to upsert BullMQ survey archive purge schedule"
+    );
+    throw error;
+  }
+};
+
+export const removeRecurringSurveyArchivePurgeJobSchedule = async (
+  identity: TBackgroundJobScheduleIdentity
+): Promise<boolean> => {
+  try {
+    return await removeRecurringBackgroundJobSchedule(JOB_NAMES.surveyArchivePurge, identity);
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        jobName: JOB_NAMES.surveyArchivePurge,
+        scheduleId: identity.scheduleId,
+        scope: identity.scope,
+      },
+      "Failed to remove BullMQ survey archive purge schedule"
     );
     throw error;
   }

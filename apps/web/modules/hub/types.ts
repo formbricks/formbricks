@@ -8,6 +8,7 @@ export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParam
   value_id?: string;
 };
 export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams;
+export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
 
 // Hub-derived, read-only translation fields (ENG-1255). The published SDK predates them, so bridge
 // them as optional reads; drop once the SDK ships them. May be null when translation is off/pending.
@@ -25,9 +26,21 @@ export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListRe
   data: FeedbackRecordData[];
 };
 
+// `GET /v1/feedback-records/count` — the Hub documents it as taking the same query parameters as the
+// list endpoint, minus pagination, and answering with a single total.
+export type FeedbackRecordCountParams = FormbricksHub.FeedbackRecordCountParams;
+export type FeedbackRecordCountResponse = FormbricksHub.FeedbackRecordCountResponse;
+
 export type SemanticSearchInput = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchParams;
 export type SemanticSearchResponse = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse;
 export type SemanticSearchResultItem = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse.Data;
+
+// Nearest-neighbour lookup for one record. The Hub returns the same row shape as semantic search (id +
+// score + field label + text), so the two are interchangeable downstream — one serializer covers both.
+export type SimilarRecordsParams = FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarParams;
+export type SimilarRecordsResponse = FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarResponse;
+export type SimilarRecordsResultItem =
+  FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarResponse.Data;
 
 export type TaxonomyScope = {
   tenant_id: string;
