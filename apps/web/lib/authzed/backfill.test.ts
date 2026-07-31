@@ -755,6 +755,31 @@ describe("full-scope orphan sweep", () => {
     expect(result.status).toBe("reconciled");
   });
 
+  test("prunes every orphan inside the budget, even past the 100-entry reporting cap", async () => {
+    // The reported lists cap at 100 so a broken instance cannot emit a huge line; the prune budget is
+    // 500. Conflating the two would silently prune only the first 100 of a run well inside its budget
+    // and report that as a success.
+    const ghosts = Array.from({ length: 150 }, (_unused, index) => ({
+      kind: "workspace" as const,
+      workspaceId: `ghost-${index}`,
+    }));
+    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) =>
+      Promise.resolve(refs.length > 0 ? ghosts : [])
+    );
+
+    const result = await runAuthzedBackfill(
+      request({ maxPrune: 500, prune: true, scope: { kind: "all" } }),
+      dependencies
+    );
+
+    expect(result.counters.orphaned).toBe(150);
+    expect(result.counters.pruned).toBe(150);
+    expect(result.counters.skipped).toBe(0);
+    // Reported lists stay capped while the counters carry the true totals.
+    expect(result.orphans).toHaveLength(100);
+    expect(result.status).toBe("reconciled");
+  });
+
   test("prunes nothing at all when a later page pushes the total past the cap", async () => {
     // The cap is an abort-before-delete guard, so it has to be decided against the *whole* sweep. Enforced
     // per page it would delete every page that fit and stop at the one that did not — so a run aimed at

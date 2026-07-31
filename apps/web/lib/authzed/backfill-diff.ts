@@ -21,9 +21,6 @@ import {
  * reconcile is written, not deleted.
  */
 
-/** Resource types Formbricks projects today and may therefore reconcile. */
-const MANAGED_RESOURCE_TYPES = ["api_key", "organization", "team", "workspace"] as const;
-
 /**
  * Resource types the schema defines but no projector writes yet.
  *
@@ -80,70 +77,97 @@ const WORKSPACE_API_KEY_GRANT_RELATIONS = new Set<string>(Object.values(WORKSPAC
 /** The relation naming a resource's owning organization, shared by `api_key`, `team`, and `workspace`. */
 const PARENT_RELATION = "organization";
 
-export const isManagedResourceType = (resourceType: string): boolean =>
-  (MANAGED_RESOURCE_TYPES as readonly string[]).includes(resourceType);
-
 export const isUnprojectedResourceType = (resourceType: string): boolean =>
   (UNPROJECTED_RESOURCE_TYPES as readonly string[]).includes(resourceType);
 
-export const getManagedResourceTypes = (): ReadonlyArray<string> => MANAGED_RESOURCE_TYPES;
+/**
+ * Resolves the source record a relationship on one resource type implies, or `null` when the
+ * vocabulary does not recognize that particular relation/subject pairing.
+ */
+type TSourceRefResolver = (relationship: TAuthzedRelationship) => TAuthzedSourceRef | null;
+
+const toOrganizationSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (subject.objectType === "user" && ORGANIZATION_ROLE_RELATIONS.has(relation)) {
+    return { kind: "membership", organizationId: resource.objectId, userId: subject.objectId };
+  }
+  if (subject.objectType === "api_key" && ORGANIZATION_API_KEY_RELATIONS.has(relation)) {
+    // Access flags live on the key's own record, so the key is the thing to look up.
+    return { apiKeyId: subject.objectId, kind: "apiKey" };
+  }
+
+  return null;
+};
+
+const toTeamSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (subject.objectType === "organization" && relation === PARENT_RELATION) {
+    return { kind: "team", teamId: resource.objectId };
+  }
+  if (subject.objectType === "user" && TEAM_ROLE_RELATIONS.has(relation)) {
+    return { kind: "teamMembership", teamId: resource.objectId, userId: subject.objectId };
+  }
+
+  return null;
+};
+
+const toWorkspaceSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (subject.objectType === "organization" && relation === PARENT_RELATION) {
+    return { kind: "workspace", workspaceId: resource.objectId };
+  }
+  if (subject.objectType === "team" && WORKSPACE_TEAM_GRANT_RELATIONS.has(relation)) {
+    return { kind: "workspaceTeamGrant", teamId: subject.objectId, workspaceId: resource.objectId };
+  }
+  if (subject.objectType === "api_key" && WORKSPACE_API_KEY_GRANT_RELATIONS.has(relation)) {
+    return {
+      apiKeyId: subject.objectId,
+      kind: "apiKeyWorkspaceGrant",
+      workspaceId: resource.objectId,
+    };
+  }
+
+  return null;
+};
+
+const toApiKeySourceRef: TSourceRefResolver = ({ relation, resource, subject }) =>
+  subject.objectType === "organization" && relation === PARENT_RELATION
+    ? { apiKeyId: resource.objectId, kind: "apiKey" }
+    : null;
 
 /**
- * Name the source record an observed relationship implies, or `null` if the vocabulary does not
- * recognize it.
+ * The vocabulary in one table: which resource types imply a source record, and how.
  *
- * Both the relation name and the subject type matter. `workspace#reader@api_key` and
- * `workspace#reader_team@team#member` are distinct grants, and the API-key relations are deliberately
- * unsuffixed while the team relations are not.
+ * `MANAGED_RESOURCE_TYPES` is derived from these keys rather than listed separately, so a resource
+ * type can never be swept without a resolver that knows how to interpret what the sweep finds.
+ *
+ * Both the relation name and the subject type matter in every resolver. `workspace#reader@api_key`
+ * and `workspace#reader_team@team#member` are distinct grants, and the API-key relations are
+ * deliberately unsuffixed while the team relations are not.
  */
+const SOURCE_REF_RESOLVERS = {
+  api_key: toApiKeySourceRef,
+  organization: toOrganizationSourceRef,
+  team: toTeamSourceRef,
+  workspace: toWorkspaceSourceRef,
+} as const satisfies Readonly<Record<string, TSourceRefResolver>>;
+
+/**
+ * Resource types Formbricks projects today and may therefore reconcile.
+ *
+ * Sorted so the sweep's order is deterministic and two runs over unchanged state produce identical
+ * output.
+ */
+const MANAGED_RESOURCE_TYPES: ReadonlyArray<string> = Object.keys(SOURCE_REF_RESOLVERS).sort();
+
+export const isManagedResourceType = (resourceType: string): boolean =>
+  MANAGED_RESOURCE_TYPES.includes(resourceType);
+
+export const getManagedResourceTypes = (): ReadonlyArray<string> => MANAGED_RESOURCE_TYPES;
+
+/** Name the source record an observed relationship implies, or `null` if it names none. */
 export const toSourceRef = (relationship: TAuthzedRelationship): TAuthzedSourceRef | null => {
-  const { relation, resource, subject } = relationship;
+  const resolve: TSourceRefResolver | undefined =
+    SOURCE_REF_RESOLVERS[relationship.resource.objectType as keyof typeof SOURCE_REF_RESOLVERS];
 
-  switch (resource.objectType) {
-    case "organization":
-      if (subject.objectType === "user" && ORGANIZATION_ROLE_RELATIONS.has(relation)) {
-        return { kind: "membership", organizationId: resource.objectId, userId: subject.objectId };
-      }
-      if (subject.objectType === "api_key" && ORGANIZATION_API_KEY_RELATIONS.has(relation)) {
-        // Access flags live on the key's own record, so the key is the thing to look up.
-        return { apiKeyId: subject.objectId, kind: "apiKey" };
-      }
-      return null;
-
-    case "team":
-      if (subject.objectType === "organization" && relation === PARENT_RELATION) {
-        return { kind: "team", teamId: resource.objectId };
-      }
-      if (subject.objectType === "user" && TEAM_ROLE_RELATIONS.has(relation)) {
-        return { kind: "teamMembership", teamId: resource.objectId, userId: subject.objectId };
-      }
-      return null;
-
-    case "workspace":
-      if (subject.objectType === "organization" && relation === PARENT_RELATION) {
-        return { kind: "workspace", workspaceId: resource.objectId };
-      }
-      if (subject.objectType === "team" && WORKSPACE_TEAM_GRANT_RELATIONS.has(relation)) {
-        return { kind: "workspaceTeamGrant", teamId: subject.objectId, workspaceId: resource.objectId };
-      }
-      if (subject.objectType === "api_key" && WORKSPACE_API_KEY_GRANT_RELATIONS.has(relation)) {
-        return {
-          apiKeyId: subject.objectId,
-          kind: "apiKeyWorkspaceGrant",
-          workspaceId: resource.objectId,
-        };
-      }
-      return null;
-
-    case "api_key":
-      if (subject.objectType === "organization" && relation === PARENT_RELATION) {
-        return { apiKeyId: resource.objectId, kind: "apiKey" };
-      }
-      return null;
-
-    default:
-      return null;
-  }
+  return resolve?.(relationship) ?? null;
 };
 
 /**
