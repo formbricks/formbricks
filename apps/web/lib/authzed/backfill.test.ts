@@ -6,10 +6,12 @@ import { AUTHZED_BACKFILL_TARGET_CHUNK_SIZE, AUTHZED_MAX_RELATIONSHIP_READS } fr
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 vi.mock("./backfill-source", () => ({
+  findMismatchedParentEdges: vi.fn(),
   findMissingSourceRefs: vi.fn(),
   organizationExists: vi.fn(),
   readOrganizationIdPage: vi.fn(),
   readOrganizationSource: vi.fn(),
+  readWorkspaceSource: vi.fn(),
 }));
 
 const apply = {
@@ -52,6 +54,12 @@ beforeEach(() => {
   vi.mocked(source.organizationExists).mockResolvedValue(true);
   vi.mocked(source.readOrganizationSource).mockResolvedValue(emptySource);
   vi.mocked(source.findMissingSourceRefs).mockResolvedValue([]);
+  vi.mocked(source.findMismatchedParentEdges).mockResolvedValue([]);
+  vi.mocked(source.readWorkspaceSource).mockResolvedValue({
+    apiKeyWorkspaceGrants: [],
+    workspaceExists: true,
+    workspaceTeamGrants: [],
+  });
   vi.mocked(source.readOrganizationIdPage).mockResolvedValue([]);
 });
 
@@ -214,7 +222,7 @@ describe("per-unit failure isolation", () => {
   test("rejects a scope naming an organization that does not exist", async () => {
     vi.mocked(source.organizationExists).mockResolvedValue(false);
 
-    await expect(runAuthzedBackfill(request(), dependencies)).rejects.toThrow("Organization not found");
+    await expect(runAuthzedBackfill(request(), dependencies)).rejects.toThrow(AUTHZED_ERROR_CODES.NOT_FOUND);
     expect(apply.reconcileMemberships).not.toHaveBeenCalled();
   });
 });
@@ -225,24 +233,116 @@ describe("idempotency", () => {
       ...emptySource,
       memberships: [{ organizationId: "org-1", userId: "user-1" }],
     });
+    // Converged state: SpiceDB holds the relationship the membership implies. Without this the run
+    // rightly reports the record as unprojected — see the dry-run detection tests.
+    const convergedPage = {
+      cursor: null,
+      relationships: [
+        {
+          relation: "owner",
+          resource: { objectId: "org-1", objectType: "organization" },
+          subject: { objectId: "user-1", objectType: "user" },
+        },
+      ],
+      snapshot: { token: "revision-1" },
+    };
+    readRelationships.mockResolvedValue(convergedPage);
 
     const first = await runAuthzedBackfill(request(), dependencies);
-    vi.clearAllMocks();
-    apply.reconcileMemberships.mockResolvedValue(PROJECTED);
-    apply.reconcileTeamWorkspace.mockResolvedValue(PROJECTED);
-    apply.reconcileApiKeys.mockResolvedValue(PROJECTED);
-    readRelationships.mockResolvedValue(emptyPage);
-    vi.mocked(source.organizationExists).mockResolvedValue(true);
-    vi.mocked(source.readOrganizationSource).mockResolvedValue({
-      ...emptySource,
-      memberships: [{ organizationId: "org-1", userId: "user-1" }],
-    });
-    vi.mocked(source.findMissingSourceRefs).mockResolvedValue([]);
     const second = await runAuthzedBackfill(request(), dependencies);
 
     expect(second).toEqual(first);
     expect(second.counters.orphaned).toBe(0);
     expect(second.status).toBe("reconciled");
+  });
+});
+
+describe("detecting records SpiceDB is missing", () => {
+  test("a dry run over an empty SpiceDB reports drift rather than a clean bill of health", async () => {
+    // The whole reason this tool exists. Reporting "reconciled" here would let an operator satisfy the
+    // documented pre-enforcement gate with a run that proved nothing.
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      apiKeyIds: ["key-1"],
+      memberships: [{ organizationId: "org-1", userId: "user-1" }],
+      teamIds: ["team-1"],
+    });
+
+    const result = await runAuthzedBackfill(request({ mode: "dry_run" }), dependencies);
+
+    expect(result.counters.missing).toBe(3);
+    expect(result.status).toBe("drifted");
+  });
+
+  test("reports nothing missing once every record is projected", async () => {
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      teamIds: ["team-1"],
+    });
+    readRelationships.mockResolvedValue({
+      cursor: null,
+      relationships: [
+        {
+          relation: "organization",
+          resource: { objectId: "team-1", objectType: "team" },
+          subject: { objectId: "org-1", objectType: "organization" },
+        },
+      ],
+      snapshot: { token: "revision-1" },
+    });
+
+    const result = await runAuthzedBackfill(request({ mode: "dry_run" }), dependencies);
+
+    expect(result.counters.missing).toBe(0);
+    expect(result.status).toBe("reconciled");
+  });
+
+  test("checks the missing direction on a full sweep only when nothing will be written", async () => {
+    vi.mocked(source.readOrganizationIdPage).mockResolvedValueOnce(["org-1"]).mockResolvedValue([]);
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({ ...emptySource, teamIds: ["team-1"] });
+
+    const dryRun = await runAuthzedBackfill(
+      request({ mode: "dry_run", scope: { kind: "all" } }),
+      dependencies
+    );
+    // An applying sweep converges this direction by writing, so it skips the per-organization read.
+    const applied = await runAuthzedBackfill(request({ scope: { kind: "all" } }), dependencies);
+
+    expect(dryRun.counters.missing).toBe(1);
+    expect(applied.counters.missing).toBe(0);
+  });
+});
+
+describe("detecting a cross-tenant parent edge", () => {
+  const foreignParent = {
+    relation: "organization",
+    resource: { objectId: "ws-1", objectType: "workspace" },
+    subject: { objectId: "other-org", objectType: "organization" },
+  };
+
+  test("reports a parent edge PostgreSQL contradicts and never prunes it", async () => {
+    // `organization` is a relation, so an extra parent edge is additive: every owner and manager of the
+    // named organization gains access through `organization->manage`. Nothing in PostgreSQL shows it, and
+    // an existence check cannot see it, because the workspace really does exist.
+    readRelationships.mockResolvedValue({
+      cursor: null,
+      relationships: [foreignParent],
+      snapshot: { token: "revision-1" },
+    });
+    vi.mocked(source.findMismatchedParentEdges).mockResolvedValue([
+      { childId: "ws-1", childType: "workspace", organizationId: "other-org" },
+    ]);
+
+    const result = await runAuthzedBackfill(request({ prune: true }), dependencies);
+
+    expect(result.counters.mismatchedParents).toBe(1);
+    expect(result.mismatchedParents).toEqual([
+      { childId: "ws-1", childType: "workspace", organizationId: "other-org" },
+    ]);
+    // Removing it would mean deleting a relation the workspace legitimately needs one of, so it is left
+    // for a human — but it must force a non-clean status.
+    expect(result.status).toBe("drifted");
+    expect(result.counters.pruned).toBe(0);
   });
 });
 
@@ -451,14 +551,18 @@ describe("full-scope orphan sweep", () => {
 
   beforeEach(() => {
     vi.mocked(source.readOrganizationIdPage).mockResolvedValueOnce([]).mockResolvedValue([]);
-    readRelationships.mockResolvedValue({
-      cursor: null,
-      relationships: [ghostWorkspace],
-      snapshot: { token: "revision-1" },
-    });
-    vi.mocked(source.findMissingSourceRefs).mockResolvedValue([
-      { kind: "workspace", workspaceId: "ghost-ws" },
-    ]);
+    // The sweep reads one resource type at a time, so the fixture has to answer per type — the ghost
+    // workspace exists on `workspace` and nowhere else.
+    readRelationships.mockImplementation(({ filter }) =>
+      Promise.resolve(
+        filter.resourceType === "workspace"
+          ? { cursor: null, relationships: [ghostWorkspace], snapshot: { token: "revision-1" } }
+          : emptyPage
+      )
+    );
+    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) =>
+      Promise.resolve(refs.length > 0 ? [{ kind: "workspace", workspaceId: "ghost-ws" }] : [])
+    );
   });
 
   test("finds a resource unreachable from any organization and reports it", async () => {

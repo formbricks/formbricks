@@ -7,7 +7,7 @@ import {
   type TAuthzedBackfillResult,
   runAuthzedBackfill,
 } from "./backfill";
-import { closeAuthzedClient, getAuthzedClient } from "./client";
+import { closeAuthzedClient, getAuthzedBulkClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError, type TAuthzedErrorCode, mapAuthzedError } from "./errors";
@@ -32,6 +32,7 @@ export type TAuthzedBackfillCliCommand = Readonly<{
   mode: "apply" | "dry_run";
   organizationId?: string;
   prune: boolean;
+  workspaceId?: string;
 }>;
 
 type TAuthzedBackfillCliFailure = Readonly<{
@@ -73,7 +74,7 @@ const defaultDependencies: TAuthzedBackfillCliDependencies = {
   closeClient: closeAuthzedClient,
   isEnabled: isAuthzedEnabled,
   resolveEndpoint: () => env.AUTHZED_ENDPOINT,
-  run: (request, apply) => runAuthzedBackfill(request, { apply, client: getAuthzedClient() }),
+  run: (request, apply) => runAuthzedBackfill(request, { apply, client: getAuthzedBulkClient() }),
   writeOutput: (output) => process.stdout.write(output),
 };
 
@@ -107,7 +108,14 @@ export const parseAuthzedBackfillCommand = (
   args: ReadonlyArray<string>
 ): TAuthzedBackfillCliCommand | undefined => {
   const known = new Set(["--apply", "--confirm-prune", "--prune"]);
-  const flagNames = ["after-organization-id", "expected-endpoint", "max-prune", "organization-id", "scope"];
+  const flagNames = [
+    "after-organization-id",
+    "expected-endpoint",
+    "max-prune",
+    "organization-id",
+    "scope",
+    "workspace-id",
+  ];
   for (const arg of args) {
     if (known.has(arg)) {
       continue;
@@ -133,12 +141,21 @@ export const parseAuthzedBackfillCommand = (
   const expectedEndpoint = readFlag(args, "expected-endpoint");
   const rawMaxPrune = readFlag(args, "max-prune");
   const scope = readFlag(args, "scope");
+  const workspaceId = readFlag(args, "workspace-id");
 
   // `all` is the only value; it exists so pruning every organization has to be spelled out.
   if (scope !== undefined && scope !== "all") {
     return undefined;
   }
-  if (scope === "all" && organizationId !== undefined) {
+  // The three scopes are mutually exclusive; naming two would leave which one applies ambiguous.
+  if ([scope === "all", organizationId !== undefined, workspaceId !== undefined].filter(Boolean).length > 1) {
+    return undefined;
+  }
+  if (workspaceId !== undefined && !CUID_PATTERN.test(workspaceId)) {
+    return undefined;
+  }
+  // Resuming is a whole-sweep concern.
+  if (workspaceId !== undefined && afterOrganizationId !== undefined) {
     return undefined;
   }
 
@@ -170,7 +187,7 @@ export const parseAuthzedBackfillCommand = (
       return undefined;
     }
     // "Prune everything" must be typed, never defaulted into.
-    if (organizationId === undefined && scope !== "all") {
+    if (organizationId === undefined && workspaceId === undefined && scope !== "all") {
       return undefined;
     }
   }
@@ -179,7 +196,7 @@ export const parseAuthzedBackfillCommand = (
     return undefined;
   }
 
-  return { afterOrganizationId, expectedEndpoint, maxPrune, mode, organizationId, prune };
+  return { afterOrganizationId, expectedEndpoint, maxPrune, mode, organizationId, prune, workspaceId };
 };
 
 const toFailureResult = (error: unknown): TAuthzedBackfillCliFailure => {
@@ -193,6 +210,17 @@ const invalidRequest = (): TAuthzedBackfillCliFailure => ({
   retryable: false,
   status: "failed",
 });
+
+/** The three scopes are mutually exclusive, enforced during parsing. */
+const resolveScope = (command: TAuthzedBackfillCliCommand): TAuthzedBackfillRequest["scope"] => {
+  if (command.workspaceId) {
+    return { kind: "workspace", workspaceId: command.workspaceId };
+  }
+  if (command.organizationId) {
+    return { kind: "organization", organizationId: command.organizationId };
+  }
+  return { afterOrganizationId: command.afterOrganizationId, kind: "all" };
+};
 
 const toExitCode = (status: TAuthzedBackfillResult["status"]): number => {
   switch (status) {
@@ -238,9 +266,7 @@ export const runAuthzedBackfillCli = async (
           maxPrune: command.maxPrune,
           mode: command.mode,
           prune: command.prune,
-          scope: command.organizationId
-            ? { kind: "organization", organizationId: command.organizationId }
-            : { afterOrganizationId: command.afterOrganizationId, kind: "all" },
+          scope: resolveScope(command),
         },
         command.mode === "apply" ? createWritableApply() : createInertApply()
       );

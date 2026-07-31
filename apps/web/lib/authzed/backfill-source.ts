@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import type { TAuthzedSourceRef } from "./backfill-diff";
-import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE } from "./constants";
+import type { TAuthzedParentEdge, TAuthzedSourceRef } from "./backfill-diff";
+import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE } from "./constants";
 
 /**
  * PostgreSQL enumeration for relationship backfill and repair.
@@ -50,6 +50,14 @@ export type TAuthzedOrganizationSource = Readonly<{
   workspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
 }>;
 
+/** The grants attached to one workspace, for the narrower workspace repair scope. */
+export type TAuthzedWorkspaceSource = Readonly<{
+  apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  /** Reported rather than enforced: a missing workspace is a valid repair target, not an error. */
+  workspaceExists: boolean;
+  workspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
+}>;
+
 /**
  * One keyset page of organization IDs.
  *
@@ -71,6 +79,38 @@ export const readOrganizationIdPage = async (
 
 export const organizationExists = async (organizationId: string): Promise<boolean> =>
   (await prisma.organization.count({ where: { id: organizationId } })) > 0;
+
+/**
+ * Enumerate the authorization-relevant records attached to one workspace.
+ *
+ * A narrower unit than the organization, for repairing a single workspace's grants without touching the
+ * rest of the tenant.
+ *
+ * Deliberately does **not** require the workspace to exist. A workspace whose row is already gone is
+ * the case most worth repairing — its relationships are exactly what should be removed — and an
+ * organization ID is not needed to reach them, because the caller supplies the workspace ID directly.
+ */
+export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzedWorkspaceSource> => {
+  const [workspaceCount, workspaceTeams, apiKeyWorkspaces] = await Promise.all([
+    prisma.workspace.count({ where: { id: workspaceId } }),
+    prisma.workspaceTeam.findMany({
+      where: { workspaceId },
+      select: { teamId: true, workspaceId: true },
+      orderBy: { teamId: "asc" },
+    }),
+    prisma.apiKeyWorkspace.findMany({
+      where: { workspaceId },
+      select: { apiKeyId: true, workspaceId: true },
+      orderBy: { apiKeyId: "asc" },
+    }),
+  ]);
+
+  return {
+    apiKeyWorkspaceGrants: apiKeyWorkspaces,
+    workspaceExists: workspaceCount > 0,
+    workspaceTeamGrants: workspaceTeams,
+  };
+};
 
 /** Enumerate every authorization-relevant record owned by one organization. */
 export const readOrganizationSource = async (organizationId: string): Promise<TAuthzedOrganizationSource> => {
@@ -138,6 +178,73 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
   };
 };
 
+/**
+ * Of the observed parent edges, report those PostgreSQL contradicts.
+ *
+ * An edge is only correct when the resource exists *and* belongs to the organization the edge names. An
+ * existence check alone cannot tell the difference, which is why this is separate — and it is the check
+ * that catches a cross-tenant parent edge, where a resource is additionally attached to an organization
+ * that does not own it and every owner and manager of that organization silently gains access.
+ *
+ * Errors propagate, for the same reason as everywhere else in this module: a failed lookup must never be
+ * read as "PostgreSQL disagrees".
+ */
+export const findMismatchedParentEdges = async (
+  edges: ReadonlyArray<TAuthzedParentEdge>
+): Promise<ReadonlyArray<TAuthzedParentEdge>> => {
+  if (edges.length > AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
+    const mismatched: TAuthzedParentEdge[] = [];
+    for (let start = 0; start < edges.length; start += AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
+      mismatched.push(
+        ...(await findMismatchedParentEdges(edges.slice(start, start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE)))
+      );
+    }
+    return mismatched;
+  }
+
+  const idsFor = (childType: TAuthzedParentEdge["childType"]): ReadonlyArray<string> => [
+    ...new Set(edges.filter((edge) => edge.childType === childType).map((edge) => edge.childId)),
+  ];
+  const teamIds = idsFor("team");
+  const workspaceIds = idsFor("workspace");
+  const apiKeyIds = idsFor("api_key");
+
+  const [teams, workspaces, apiKeys] = await Promise.all([
+    teamIds.length === 0
+      ? []
+      : prisma.team.findMany({
+          where: { id: { in: [...teamIds] } },
+          select: { id: true, organizationId: true },
+        }),
+    workspaceIds.length === 0
+      ? []
+      : prisma.workspace.findMany({
+          where: { id: { in: [...workspaceIds] } },
+          select: { id: true, organizationId: true },
+        }),
+    apiKeyIds.length === 0
+      ? []
+      : prisma.apiKey.findMany({
+          where: { id: { in: [...apiKeyIds] } },
+          select: { id: true, organizationId: true },
+        }),
+  ]);
+
+  const trueParents = new Map<string, string>([
+    ...teams.map(({ id, organizationId }): [string, string] => [`team:${id}`, organizationId]),
+    ...workspaces.map(({ id, organizationId }): [string, string] => [`workspace:${id}`, organizationId]),
+    ...apiKeys.map(({ id, organizationId }): [string, string] => [`api_key:${id}`, organizationId]),
+  ]);
+
+  // A resource with no row at all is not reported here — that is an orphan, handled by the existence
+  // check, and it has a working repair path. This is only about a resource that exists under a different
+  // organization than the edge claims.
+  return edges.filter((edge) => {
+    const trueParent = trueParents.get(`${edge.childType}:${edge.childId}`);
+    return trueParent !== undefined && trueParent !== edge.organizationId;
+  });
+};
+
 const byKind = <TKind extends TAuthzedSourceRef["kind"]>(
   refs: ReadonlyArray<TAuthzedSourceRef>,
   kind: TKind
@@ -156,6 +263,20 @@ const pairKey = (first: string, second: string): string => `${first.length}:${fi
 export const findMissingSourceRefs = async (
   refs: ReadonlyArray<TAuthzedSourceRef>
 ): Promise<ReadonlyArray<TAuthzedSourceRef>> => {
+  // Chunked for the same reason reconciler targets are: the composite-key kinds contribute two bind
+  // parameters per record, so an unchunked list would approach PostgreSQL's parameter ceiling and give
+  // the planner an `OR` list it cannot use an index for. One query per kind *per chunk* still keeps the
+  // cost proportional to the number of kinds rather than the number of records.
+  if (refs.length > AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
+    const missing: TAuthzedSourceRef[] = [];
+    for (let start = 0; start < refs.length; start += AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
+      missing.push(
+        ...(await findMissingSourceRefs(refs.slice(start, start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE)))
+      );
+    }
+    return missing;
+  }
+
   const apiKeyRefs = byKind(refs, "apiKey");
   const membershipRefs = byKind(refs, "membership");
   const teamRefs = byKind(refs, "team");

@@ -3,6 +3,7 @@ import { deadlineInterceptor, v1 } from "@authzed/authzed-node";
 import { env } from "@/lib/env";
 import { type TAuthzedConsistency, isAuthzedEnabled } from "./config";
 import {
+  AUTHZED_BULK_REQUEST_TIMEOUT_MS,
   AUTHZED_MAX_RELATIONSHIP_READS,
   AUTHZED_MAX_RELATIONSHIP_UPDATES,
   AUTHZED_REQUEST_TIMEOUT_MS,
@@ -77,11 +78,14 @@ export type TAuthzedReadCursor = Readonly<{
  * Filter for reading relationships.
  *
  * Unlike `TAuthzedRelationshipFilter` this is a plain object rather than a union, so a
- * `resourceType`-only sweep is expressible. That asymmetry is deliberate and load-bearing: **reads
- * may sweep an entire resource type, deletes may never**. Because `resourceId` here is
- * `string | undefined`, this type satisfies neither branch of the delete filter's union, so passing
- * a read filter to `deleteRelationships` is a compile error and an unbounded mass delete stays
- * inexpressible.
+ * `resourceType`-only sweep is expressible. Because `resourceId` here is `string | undefined`, this type
+ * satisfies neither branch of the delete filter's union, so passing a read filter to
+ * `deleteRelationships` is a compile error.
+ *
+ * That narrows deletes, it does not bound them: the delete filter also admits a subject-only form with
+ * no `resourceId`, which is how user-deletion cleanup removes one subject's relationships across every
+ * organization or team. Such a delete is unlimited and transactional, bounded only by how many
+ * relationships match — so a new call site has to reason about the match size itself.
  *
  * `optionalResourceIdPrefix` is deliberately not surfaced: Formbricks object IDs are unprefixed
  * cuids, so it could never narrow anything, and unused surface on a frozen facade is a liability.
@@ -98,9 +102,14 @@ export type TAuthzedRelationshipQuery = Readonly<{
    * Resume position from a previous page.
    *
    * The cursor carries the revision it was issued at, so continuing with one keeps the whole read on a
-   * single consistent view. SpiceDB enforces this by rejecting a cursor presented alongside *any* other
-   * changed argument — including a changed consistency requirement — so every page of one read must be
-   * issued with identical parameters.
+   * single consistent view, and SpiceDB rejects a cursor presented alongside *any* other changed
+   * argument — including a changed consistency requirement.
+   *
+   * Both behaviours are verified against SpiceDB v1.52 (`pkg/middleware/consistency` prefers the
+   * cursor's revision over the stated requirement; `internal/services/v1/hash.go` hashes the
+   * consistency, filter and limit into the cursor) and against a real engine in the compose smoke test.
+   * Neither is part of the published API contract, so a server upgrade should re-verify them — the
+   * revision-stability check in `readAllRelationships` is the guard if they ever change.
    */
   cursor?: TAuthzedReadCursor;
   filter: TAuthzedRelationshipReadFilter;
@@ -318,10 +327,13 @@ const toFacadeRelationship = (response: v1.ReadRelationshipsResponse): TAuthzedR
     });
   }
 
-  // Formbricks never writes caveated or expiring relationships and the facade cannot represent
-  // them, so dropping the qualifier would misreport the tuple. Their presence means something other
-  // than Formbricks is writing to this SpiceDB, which must stop reconciling tooling outright rather
-  // than let it delete relationships it does not understand.
+  // Formbricks never writes caveated or expiring relationships and the facade cannot represent them, so
+  // dropping the qualifier would misreport the tuple — and a misreported tuple is exactly what
+  // reconciling tooling would classify as stale. Refusing is therefore the safe reading today.
+  //
+  // Note this becomes a tripwire the day Formbricks adopts SpiceDB's expiration feature, which AuthZed
+  // recommends for time-limited access: the facade must learn to represent it before anything writes
+  // one, or reconciliation will start refusing to run.
   if (relationship.optionalCaveat !== undefined || relationship.optionalExpiresAt !== undefined) {
     throw new AuthzedError({
       attempts: 0,
@@ -346,7 +358,7 @@ const toFacadeRelationship = (response: v1.ReadRelationshipsResponse): TAuthzedR
   };
 };
 
-const createAuthzedClient = (): TAuthzedClientSingleton => {
+const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton => {
   const config = getAuthzedConfig();
 
   if (!config.enabled) {
@@ -361,8 +373,10 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
   const security = config.insecure
     ? v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS
     : v1.ClientSecurity.SECURE;
+  // The SDK appends its own 30s deadline interceptor last, and that interceptor only sets a deadline
+  // when none is present — so whatever is installed here wins for every call on this channel.
   const sdkClient = v1.NewClient(config.token, config.endpoint, security, undefined, {
-    interceptors: [deadlineInterceptor(AUTHZED_REQUEST_TIMEOUT_MS)],
+    interceptors: [deadlineInterceptor(requestTimeoutMs)],
   });
 
   const facade = Object.freeze<TAuthzedClient>({
@@ -425,10 +439,10 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
           // verification.
           //
           // The same requirement is sent on every page rather than pinning the first page's revision on
-          // later ones. SpiceDB rejects a cursor presented with any other changed argument, consistency
-          // included, and it does not need the help: the cursor already carries the revision it was
-          // issued at, so a cursored read stays on one revision. Substituting `atExactSnapshot` would
-          // both break the cursor and expose the read to snapshot expiry for no benefit.
+          // later ones. It has to be: SpiceDB hashes the consistency into the cursor and rejects a
+          // mismatch. It also does not need the help — the cursor's own revision takes precedence over
+          // whatever requirement is stated — so substituting `atExactSnapshot` on later pages would both
+          // invalidate the cursor and add snapshot-expiry exposure for nothing.
           consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
           optionalCursor: query.cursor ? { token: query.cursor.token } : undefined,
           optionalLimit: query.limit,
@@ -540,8 +554,23 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
   };
 };
 
+/** The shared request-path client. Deadline sized for a single cheap call. */
 export const getAuthzedClient = (): TAuthzedClient => {
-  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient();
+  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient(AUTHZED_REQUEST_TIMEOUT_MS);
+
+  return globalForAuthzed.formbricksAuthzedClient.facade;
+};
+
+/**
+ * A client for administrative work: bulk reads and wide deletes.
+ *
+ * The deadline is a property of the channel, not of a call — the SDK's promisified streaming wrappers
+ * accept no per-call options at all — so a longer deadline means a separate client. It replaces the
+ * singleton for the lifetime of the process, which is fine because nothing that needs the request-path
+ * deadline runs in a command-line process; `closeAuthzedClient` tears it down either way.
+ */
+export const getAuthzedBulkClient = (): TAuthzedClient => {
+  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient(AUTHZED_BULK_REQUEST_TIMEOUT_MS);
 
   return globalForAuthzed.formbricksAuthzedClient.facade;
 };

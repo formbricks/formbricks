@@ -338,8 +338,9 @@ authzed:backfill` closes both gaps.
 # Report drift over every organization. Writes nothing.
 pnpm authzed:backfill
 
-# Converge one organization from PostgreSQL.
+# Converge one organization from PostgreSQL, or a single workspace's grants.
 pnpm authzed:backfill --apply --organization-id=<cuid>
+pnpm authzed:backfill --apply --workspace-id=<cuid>
 
 # Converge everything, then remove relationships PostgreSQL no longer holds.
 pnpm authzed:backfill --apply --prune --confirm-prune --scope=all \
@@ -351,7 +352,29 @@ pnpm authzed:backfill --apply --after-organization-id=<cuid>
 
 Exit codes match `authzed:schema`: `0` reconciled, `2` drift remains, `1` failed
 or misused. The result is one line of JSON carrying counters, the offending
-record identifiers, the revision the run completed at, and a `truncated` flag.
+record identifiers, the revision the last observation was taken at, and a
+`truncated` flag.
+
+Drift is reported in both directions:
+
+- `missing` — records PostgreSQL holds that SpiceDB has no relationship for. This
+  is what an empty or stale SpiceDB looks like, so a report that could not see it
+  would be worthless. Note this compares *records*, not relations: a membership
+  stored as `owner` in PostgreSQL but `member` in SpiceDB counts as present.
+  Applying converges the relation regardless, by writing the current value.
+- `orphaned` — relationships whose source record is gone.
+- `mismatchedParents` — a resource attached to an organization PostgreSQL says
+  does not own it. **Reported and never touched.** `organization` is a relation,
+  so an extra parent edge is additive and hands every owner and manager of the
+  named organization access to another tenant's resource; but removing it safely
+  means deleting a relation the resource legitimately needs one of, so it is left
+  for a human. Any non-zero count here is a privilege-escalation finding, not
+  routine drift.
+
+A dry run over the whole deployment checks both directions per organization,
+which costs a read per resource. An applying run skips the `missing` check —
+its writes converge that direction anyway — and detects orphans with a single
+streamed pass per resource type.
 
 The organization is the unit of work, so a partial run leaves complete graphs for
 the organizations it finished rather than a fragment of every tenant's. Runs are
@@ -381,12 +404,14 @@ Guards on the destructive path:
 
 Two limits worth knowing before relying on a run:
 
-- `--organization-id` reports `orphanScope: "known_resources"`. SpiceDB
-  relationship filters have no notion of "belongs to organization X" and Formbricks
-  object IDs carry no organization prefix, so a resource whose row is already gone
-  is unreachable from its organization. Only `--scope=all` sweeps by resource type
-  and can claim completeness.
-- `--scope=all` assumes a SpiceDB dedicated to this deployment.
+- `--organization-id` and `--workspace-id` report
+  `orphanScope: "known_resources"`. SpiceDB relationship filters have no notion of
+  "belongs to organization X" and Formbricks object IDs carry no organization
+  prefix, so a resource whose row is already gone is unreachable from its
+  organization. Only the default whole-deployment run sweeps by resource type and
+  can claim completeness. (`--scope=all` is a confirmation token for pruning
+  everything, not what selects the sweep — the sweep is the default.)
+- The whole-deployment sweep assumes a SpiceDB dedicated to this deployment.
   `AUTHZED_SYSTEM_KEY` is not yet used to namespace object IDs, so a
   resource-type sweep cannot tell another installation's relationships from
   orphans.

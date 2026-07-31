@@ -8,19 +8,32 @@ export const AUTHZED_MAX_RELATIONSHIP_UPDATES = 1_000;
 export const AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES = 10;
 
 /**
+ * Deadline for administrative calls: bulk reads and wide deletes.
+ *
+ * The request-path deadline is sized for a single cheap call. A server-streaming read or an unbounded
+ * delete needs room, and SpiceDB's own `--streaming-api-response-delay-timeout` defaults to 30s, so
+ * matching it is the conservative choice. Applied by giving the command-line client its own channel;
+ * the request-path client keeps `AUTHZED_REQUEST_TIMEOUT_MS`.
+ */
+export const AUTHZED_BULK_REQUEST_TIMEOUT_MS = 30_000;
+
+/**
  * Relationships requested per `readRelationships` page.
  *
- * `AUTHZED_REQUEST_TIMEOUT_MS` is installed once as a channel-wide deadline interceptor and bounds
- * the *entire* server-streaming call, and the promisified SDK buffers every message before it
- * resolves — so a page must fully stream within that deadline. 250 keeps a page comfortably inside
- * it while staying well under the write batch limit. Raising the interceptor deadline instead is not
- * an option: it is global and would slow every request-path projection failure.
+ * The deadline interceptor bounds the *entire* server-streaming call — the promisified SDK buffers
+ * every message before resolving — so a page must fully stream within it. 250 leaves generous headroom
+ * even on the request-path deadline, and stays well under SpiceDB's own
+ * `--max-read-relationships-limit` (1,000 by default), which rejects a larger limit outright.
  */
 export const AUTHZED_MAX_RELATIONSHIP_READS = 250;
 
 /**
  * Observed relationships held in memory for a single backfill unit before the unit is abandoned.
- * Bounds the drainer so a pathological store cannot exhaust the process.
+ *
+ * Bounds the drainer so a pathological store cannot exhaust the process. This is a *per-unit* bound and
+ * only applies to filters narrow enough to drain — one organization's resources, say. A sweep across a
+ * whole resource type must stream instead (`forEachRelationshipPage`), because applying this bound there
+ * would make the sweep fail outright on any deployment holding more relationships than the bound.
  */
 export const AUTHZED_MAX_OBSERVED_RELATIONSHIPS_PER_UNIT = 20_000;
 

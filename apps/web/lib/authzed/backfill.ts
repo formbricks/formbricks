@@ -1,27 +1,37 @@
 import "server-only";
 import type { TApiKeyProjectionTargets } from "./api-key";
-import { type TAuthzedSourceRef, getManagedResourceTypes, summarizeObservation } from "./backfill-diff";
+import {
+  type TAuthzedParentEdge,
+  type TAuthzedSourceRef,
+  findUnprojectedSourceRefs,
+  getManagedResourceTypes,
+  summarizeObservation,
+} from "./backfill-diff";
 import {
   type TAuthzedApiKeyWorkspaceTarget,
   type TAuthzedMembershipTarget,
   type TAuthzedOrganizationSource,
   type TAuthzedTeamMembershipTarget,
+  type TAuthzedWorkspaceSource,
   type TAuthzedWorkspaceTeamTarget,
+  findMismatchedParentEdges,
   findMissingSourceRefs,
   organizationExists,
   readOrganizationIdPage,
   readOrganizationSource,
+  readWorkspaceSource,
 } from "./backfill-source";
 import type { TAuthzedClient, TAuthzedRelationship } from "./client";
 import {
   AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
   AUTHZED_BACKFILL_TARGET_CHUNK_SIZE,
   AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES,
+  AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN,
 } from "./constants";
-import { AuthzedError } from "./errors";
+import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 import type { TOrganizationMembershipProjectionTargets } from "./organization-membership";
 import type { TAuthzedProjectionResult } from "./projection";
-import { readAllRelationships } from "./relationship-reads";
+import { forEachRelationshipPage, readAllRelationships } from "./relationship-reads";
 import type { TTeamWorkspaceProjectionTargets } from "./team-workspace";
 
 /**
@@ -52,7 +62,8 @@ export type TAuthzedBackfillApply = Readonly<{
 
 export type TAuthzedBackfillScope =
   | Readonly<{ afterOrganizationId?: string; kind: "all" }>
-  | Readonly<{ kind: "organization"; organizationId: string }>;
+  | Readonly<{ kind: "organization"; organizationId: string }>
+  | Readonly<{ kind: "workspace"; workspaceId: string }>;
 
 export type TAuthzedBackfillRequest = Readonly<{
   maxPrune: number;
@@ -77,6 +88,9 @@ export type TAuthzedBackfillRequest = Readonly<{
  * them does not weaken the dry-run guarantee.
  */
 export type TAuthzedBackfillSource = Readonly<{
+  findMismatchedParentEdges: (
+    edges: ReadonlyArray<TAuthzedParentEdge>
+  ) => Promise<ReadonlyArray<TAuthzedParentEdge>>;
   findMissingSourceRefs: (
     refs: ReadonlyArray<TAuthzedSourceRef>
   ) => Promise<ReadonlyArray<TAuthzedSourceRef>>;
@@ -85,13 +99,16 @@ export type TAuthzedBackfillSource = Readonly<{
     page: Readonly<{ afterOrganizationId?: string; limit?: number }>
   ) => Promise<ReadonlyArray<string>>;
   readOrganizationSource: (organizationId: string) => Promise<TAuthzedOrganizationSource>;
+  readWorkspaceSource: (workspaceId: string) => Promise<TAuthzedWorkspaceSource>;
 }>;
 
 export const defaultBackfillSource: TAuthzedBackfillSource = {
+  findMismatchedParentEdges,
   findMissingSourceRefs,
   organizationExists,
   readOrganizationIdPage,
   readOrganizationSource,
+  readWorkspaceSource,
 };
 
 export type TAuthzedBackfillDependencies = Readonly<{
@@ -105,6 +122,10 @@ export type TAuthzedBackfillCounters = Readonly<{
   failed: number;
   ignored: number;
   invalid: number;
+  /** Resources attached to an organization PostgreSQL says does not own them. Never pruned. */
+  mismatchedParents: number;
+  /** Source records PostgreSQL holds that SpiceDB has no relationship for. */
+  missing: number;
   orphaned: number;
   pruned: number;
   reconciled: number;
@@ -123,10 +144,18 @@ export type TAuthzedBackfillResult = Readonly<{
   counters: TAuthzedBackfillCounters;
   failures: ReadonlyArray<TAuthzedBackfillFailure>;
   lastOrganizationId: string | null;
+  /**
+   * Parent edges PostgreSQL contradicts.
+   *
+   * Reported and never touched. A cross-tenant parent edge is a privilege escalation, but removing it
+   * safely means deleting a relation the resource legitimately needs one of, so it is deliberately left
+   * for a human — see the runbook.
+   */
+  mismatchedParents: ReadonlyArray<TAuthzedParentEdge>;
   mode: "apply" | "dry_run";
   orphanScope: "all" | "known_resources";
   orphans: ReadonlyArray<TAuthzedSourceRef>;
-  scope: "all" | "organization";
+  scope: "all" | "organization" | "workspace";
   status: "drifted" | "failed" | "reconciled";
   /** Set when any observation was abandoned, so the report must not be read as complete. */
   truncated: boolean;
@@ -205,6 +234,34 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
     workspaceTeamGrants,
   };
 };
+
+/**
+ * The source records an organization holds, in the same vocabulary an observation produces.
+ *
+ * Lets the two sides be compared with a set difference, which is what makes a dry run able to report the
+ * PostgreSQL-to-SpiceDB direction at all.
+ */
+const toSourceRefs = (source: TAuthzedOrganizationSource): ReadonlyArray<TAuthzedSourceRef> => [
+  ...source.memberships.map(
+    ({ organizationId, userId }): TAuthzedSourceRef => ({ kind: "membership", organizationId, userId })
+  ),
+  ...source.teamIds.map((teamId): TAuthzedSourceRef => ({ kind: "team", teamId })),
+  ...source.teamMemberships.map(
+    ({ teamId, userId }): TAuthzedSourceRef => ({ kind: "teamMembership", teamId, userId })
+  ),
+  ...source.workspaceIds.map((workspaceId): TAuthzedSourceRef => ({ kind: "workspace", workspaceId })),
+  ...source.workspaceTeamGrants.map(
+    ({ teamId, workspaceId }): TAuthzedSourceRef => ({ kind: "workspaceTeamGrant", teamId, workspaceId })
+  ),
+  ...source.apiKeyIds.map((apiKeyId): TAuthzedSourceRef => ({ apiKeyId, kind: "apiKey" })),
+  ...source.apiKeyWorkspaceGrants.map(
+    ({ apiKeyId, workspaceId }): TAuthzedSourceRef => ({
+      apiKeyId,
+      kind: "apiKeyWorkspaceGrant",
+      workspaceId,
+    })
+  ),
+];
 
 const mergeTargets = (left: TReconcileTargets, right: TReconcileTargets): TReconcileTargets => ({
   apiKeyIds: [...left.apiKeyIds, ...right.apiKeyIds],
@@ -353,10 +410,15 @@ export const runAuthzedBackfill = async (
 ): Promise<TAuthzedBackfillResult> => {
   const { apply, client, source: sourceReads = defaultBackfillSource } = dependencies;
   const isPruning = request.prune && request.mode === "apply";
+  // Defence in depth: the parser already bounds this, but `runAuthzedBackfill` is exported and a caller
+  // passing 0 would make an over-cap unit invisible in `status`.
+  const maxPrune = Math.max(1, Math.min(request.maxPrune, AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN));
 
   let failed = 0;
   let ignored = 0;
   let invalid = 0;
+  let mismatchedParentCount = 0;
+  let missingCount = 0;
   let orphaned = 0;
   let pruned = 0;
   let reconciled = 0;
@@ -367,12 +429,22 @@ export const runAuthzedBackfill = async (
   let lastOrganizationId: string | null = null;
   const failures: TAuthzedBackfillFailure[] = [];
   const orphans: TAuthzedSourceRef[] = [];
+  const mismatchedParents: TAuthzedParentEdge[] = [];
   const unmanaged: Array<Readonly<{ objectId: string; objectType: string; relation: string }>> = [];
 
   const recordFailure = (organizationId: string, error: unknown): void => {
     failed++;
     if (failures.length < MAX_REPORTED_ENTRIES) {
       failures.push({ organizationId, ...toErrorCode(error) });
+    }
+  };
+
+  const recordMismatchedParents = (edges: ReadonlyArray<TAuthzedParentEdge>): void => {
+    mismatchedParentCount += edges.length;
+    for (const edge of edges) {
+      if (mismatchedParents.length < MAX_REPORTED_ENTRIES) {
+        mismatchedParents.push(edge);
+      }
     }
   };
 
@@ -402,10 +474,13 @@ export const runAuthzedBackfill = async (
 
     invalid += source.invalidWorkspaceTeamGrants.length;
 
-    // Observation only matters for single-organization scope; a full sweep observes globally instead,
-    // which strictly covers more.
+    // Observed per organization when the scope names one, and also whenever nothing is going to be
+    // written: a dry run has to *detect* the drift an applying run would simply converge, or it would
+    // report a clean bill of health for a SpiceDB that is missing everything. An applying full sweep
+    // skips this, because its writes fix that direction and the global sweep covers the other one.
     let repairRefs: ReadonlyArray<TAuthzedSourceRef> = [];
-    if (request.scope.kind === "organization") {
+    let prunableRefs: ReadonlyArray<TAuthzedSourceRef> = [];
+    if (request.scope.kind === "organization" || request.mode === "dry_run") {
       try {
         const observation = await observeOrganizationResources(client, organizationId, source);
         const summary = summarizeObservation(observation.relationships);
@@ -417,22 +492,28 @@ export const runAuthzedBackfill = async (
         }
         completedAtSnapshot = observation.snapshot ?? completedAtSnapshot;
 
-        const missing = await sourceReads.findMissingSourceRefs(summary.sourceRefs);
-        orphaned += missing.length;
-        for (const ref of missing) {
+        // The direction an applying run converges by writing, and the only one a report can speak to.
+        const unprojected = findUnprojectedSourceRefs(toSourceRefs(source), summary.sourceRefs);
+        missingCount += unprojected.length;
+
+        recordMismatchedParents(await sourceReads.findMismatchedParentEdges(summary.parentEdges));
+
+        const missingRefs = await sourceReads.findMissingSourceRefs(summary.sourceRefs);
+        orphaned += missingRefs.length;
+        for (const ref of missingRefs) {
           if (orphans.length < MAX_REPORTED_ENTRIES) {
             orphans.push(ref);
           }
         }
 
-        if (missing.length > request.maxPrune) {
+        if (missingRefs.length > maxPrune) {
           // A large orphan count is a symptom — wrong endpoint, wrong database, a restore in progress —
           // not a big cleanup job. Prune nothing for this unit so the run degrades into a loud report
           // instead of a partly-destroyed graph.
           skipped++;
         } else if (isPruning) {
-          repairRefs = missing;
-          pruned += missing.length;
+          repairRefs = missingRefs;
+          prunableRefs = missingRefs;
         }
       } catch (error) {
         // An abandoned observation must never be reported as a complete one: fewer relationships seen
@@ -468,65 +549,219 @@ export const runAuthzedBackfill = async (
       return;
     }
 
+    // Counted here rather than at detection time so a failed reconcile cannot report relationships as
+    // pruned that are still present.
+    pruned += prunableRefs.length;
     reconciled++;
   };
 
   /** Sweep every managed resource type to find resources PostgreSQL no longer holds at all. */
   const sweepGlobalOrphans = async (): Promise<void> => {
-    const relationships: TAuthzedRelationship[] = [];
+    // Streamed page by page rather than drained. A resource type has no upper bound in a real
+    // deployment, so accumulating one would hold the whole store in memory and — worse — trip the
+    // per-unit observation bound, turning the only mode that can remove stale relationships into one
+    // that fails permanently on exactly the deployments that need it.
+    let capExceeded = false;
+
+    // Streaming means each page is classified on its own, so a record implied by relationships on two
+    // different resource types would be counted twice. Exactly one kind is ambiguous that way: an API key
+    // is named both by `api_key#organization` and by `organization#api_key_reader`. Deduplicating just
+    // that kind keeps the counts honest without holding a key for every record in the store.
+    const seenApiKeyRefs = new Set<string>();
+    const dedupe = (refs: ReadonlyArray<TAuthzedSourceRef>): ReadonlyArray<TAuthzedSourceRef> =>
+      refs.filter((ref) => {
+        if (ref.kind !== "apiKey") {
+          return true;
+        }
+        if (seenApiKeyRefs.has(ref.apiKeyId)) {
+          return false;
+        }
+        seenApiKeyRefs.add(ref.apiKeyId);
+        return true;
+      });
 
     for (const resourceType of getManagedResourceTypes()) {
-      const observation = await readAllRelationships(client, { resourceType });
-      relationships.push(...observation.relationships);
+      const snapshot = await forEachRelationshipPage(client, { resourceType }, async (relationships) => {
+        if (capExceeded) {
+          return;
+        }
+
+        const summary = summarizeObservation(relationships);
+        ignored += summary.ignored;
+        unmanaged.push(...summary.unmanaged.slice(0, Math.max(0, MAX_REPORTED_ENTRIES - unmanaged.length)));
+
+        recordMismatchedParents(await sourceReads.findMismatchedParentEdges(summary.parentEdges));
+
+        const missingRefs = await sourceReads.findMissingSourceRefs(dedupe(summary.sourceRefs));
+        orphaned += missingRefs.length;
+        orphans.push(...missingRefs.slice(0, Math.max(0, MAX_REPORTED_ENTRIES - orphans.length)));
+
+        // The cap is a run-wide budget, not a per-page one: once the total would exceed it, stop pruning
+        // for the rest of the run rather than letting a page-sized slice through each time.
+        if (pruned + missingRefs.length > maxPrune) {
+          capExceeded = true;
+          skipped++;
+          return;
+        }
+
+        if (!isPruning || missingRefs.length === 0) {
+          return;
+        }
+
+        const failure = await reconcileTargets(apply, toRepairTargets(missingRefs));
+        if (failure) {
+          // Attributed to no organization: a fully orphaned resource has none left to attribute it to.
+          recordProjectionFailure("", failure);
+          capExceeded = true;
+          return;
+        }
+
+        pruned += missingRefs.length;
+      });
+
+      completedAtSnapshot = snapshot?.token ?? completedAtSnapshot;
+    }
+  };
+
+  /**
+   * Reconcile one workspace's grants without touching the rest of the tenant.
+   *
+   * The narrowest unit available, and unlike an organization it does not have to exist: a workspace
+   * whose row is gone is the case most worth repairing, and its relationships are reachable from the ID
+   * the caller supplied.
+   */
+  const processWorkspace = async (workspaceId: string): Promise<void> => {
+    scanned++;
+
+    let source: Awaited<ReturnType<typeof sourceReads.readWorkspaceSource>>;
+    try {
+      source = await sourceReads.readWorkspaceSource(workspaceId);
+    } catch (error) {
+      recordFailure("", error);
+      return;
+    }
+
+    let repairRefs: ReadonlyArray<TAuthzedSourceRef> = [];
+    let prunableWorkspaceRefs: ReadonlyArray<TAuthzedSourceRef> = [];
+    try {
+      const observation = await readAllRelationships(client, {
+        resourceId: workspaceId,
+        resourceType: "workspace",
+      });
+      const summary = summarizeObservation(observation.relationships);
+      ignored += summary.ignored;
+      unmanaged.push(...summary.unmanaged.slice(0, Math.max(0, MAX_REPORTED_ENTRIES - unmanaged.length)));
       completedAtSnapshot = observation.snapshot?.token ?? completedAtSnapshot;
-    }
 
-    const summary = summarizeObservation(relationships);
-    ignored += summary.ignored;
-    unmanaged.push(...summary.unmanaged.slice(0, MAX_REPORTED_ENTRIES - unmanaged.length));
+      recordMismatchedParents(await sourceReads.findMismatchedParentEdges(summary.parentEdges));
 
-    const missing = await sourceReads.findMissingSourceRefs(summary.sourceRefs);
-    orphaned += missing.length;
-    orphans.push(...missing.slice(0, MAX_REPORTED_ENTRIES - orphans.length));
+      // Only the grants are compared: whether the workspace's own parent edge exists is decided by
+      // `workspaceExists` below, and a workspace with no row should have no relationships at all.
+      const expected = source.workspaceExists
+        ? [
+            ...source.workspaceTeamGrants.map(
+              ({ teamId, workspaceId: grantWorkspaceId }): TAuthzedSourceRef => ({
+                kind: "workspaceTeamGrant",
+                teamId,
+                workspaceId: grantWorkspaceId,
+              })
+            ),
+            ...source.apiKeyWorkspaceGrants.map(
+              ({ apiKeyId, workspaceId: grantWorkspaceId }): TAuthzedSourceRef => ({
+                apiKeyId,
+                kind: "apiKeyWorkspaceGrant",
+                workspaceId: grantWorkspaceId,
+              })
+            ),
+            { kind: "workspace" as const, workspaceId },
+          ]
+        : [];
+      missingCount += findUnprojectedSourceRefs(expected, summary.sourceRefs).length;
 
-    if (missing.length > request.maxPrune) {
-      skipped++;
+      const missingRefs = await sourceReads.findMissingSourceRefs(summary.sourceRefs);
+      orphaned += missingRefs.length;
+      orphans.push(...missingRefs.slice(0, Math.max(0, MAX_REPORTED_ENTRIES - orphans.length)));
+
+      if (missingRefs.length > maxPrune) {
+        skipped++;
+      } else if (isPruning) {
+        repairRefs = missingRefs;
+        prunableWorkspaceRefs = missingRefs;
+      }
+    } catch (error) {
+      truncated = true;
+      recordFailure("", error);
       return;
     }
 
-    if (!isPruning) {
+    if (request.mode === "dry_run") {
       return;
     }
 
-    const failure = await reconcileTargets(apply, toRepairTargets(missing));
+    const failure = await reconcileTargets(
+      apply,
+      mergeTargets(
+        {
+          apiKeyIds: [],
+          apiKeyWorkspaceGrants: source.apiKeyWorkspaceGrants,
+          memberships: [],
+          teamIds: [],
+          teamMemberships: [],
+          // Naming a workspace that no longer exists is what removes its relationships.
+          workspaceIds: [workspaceId],
+          workspaceTeamGrants: source.workspaceTeamGrants,
+        },
+        toRepairTargets(repairRefs)
+      )
+    );
+
     if (failure) {
-      // Attributed to no organization: a fully orphaned resource has none left to attribute it to.
       recordProjectionFailure("", failure);
       return;
     }
 
-    pruned += missing.length;
+    pruned += prunableWorkspaceRefs.length;
+    reconciled++;
   };
 
-  if (request.scope.kind === "organization") {
+  if (request.scope.kind === "workspace") {
+    await processWorkspace(request.scope.workspaceId);
+  } else if (request.scope.kind === "organization") {
     const { organizationId } = request.scope;
     if (!(await sourceReads.organizationExists(organizationId))) {
-      throw new Error("Organization not found");
+      throw new AuthzedError({
+        attempts: 0,
+        code: AUTHZED_ERROR_CODES.NOT_FOUND,
+        operation: "backfill_scope",
+        retryable: false,
+      });
     }
     await processOrganization(organizationId);
   } else {
     let afterOrganizationId = request.scope.afterOrganizationId;
     for (;;) {
-      const organizationIds = await sourceReads.readOrganizationIdPage({
-        afterOrganizationId,
-        limit: AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
-      });
+      let organizationIds: ReadonlyArray<string>;
+      try {
+        organizationIds = await sourceReads.readOrganizationIdPage({
+          afterOrganizationId,
+          limit: AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
+        });
+      } catch (error) {
+        // Caught rather than propagated so the report survives. Letting this escape would replace the
+        // whole result with a bare failure line, discarding `lastOrganizationId` — the only thing an
+        // operator can resume a long sweep from.
+        truncated = true;
+        recordFailure("", error);
+        break;
+      }
+
       if (organizationIds.length === 0) {
         break;
       }
 
-      // Strictly sequential: concurrent writes to the same organization resource produce retryable
-      // serialization conflicts against a small retry budget.
+      // Strictly sequential, and not only to avoid write contention: `lastOrganizationId` is the resume
+      // cursor, so processing out of order would let a resume skip an organization that failed while a
+      // later one succeeded.
       for (const organizationId of organizationIds) {
         await processOrganization(organizationId);
       }
@@ -541,13 +776,28 @@ export const runAuthzedBackfill = async (
     }
   }
 
-  const status = failed > 0 ? "failed" : orphaned > pruned || truncated ? "drifted" : "reconciled";
+  // `missing` and `mismatchedParents` matter as much as `orphaned` here: without them a dry run over an
+  // empty SpiceDB would report "reconciled", which is the exact state this tool exists to fix.
+  const hasDrift = orphaned > pruned || missingCount > 0 || mismatchedParentCount > 0 || truncated;
+  const status = failed > 0 ? "failed" : hasDrift ? "drifted" : "reconciled";
 
   return {
     completedAtSnapshot,
-    counters: { failed, ignored, invalid, orphaned, pruned, reconciled, scanned, skipped },
+    counters: {
+      failed,
+      ignored,
+      invalid,
+      mismatchedParents: mismatchedParentCount,
+      missing: missingCount,
+      orphaned,
+      pruned,
+      reconciled,
+      scanned,
+      skipped,
+    },
     failures,
     lastOrganizationId,
+    mismatchedParents,
     mode: request.mode,
     orphanScope: request.scope.kind === "all" ? "all" : "known_resources",
     orphans,

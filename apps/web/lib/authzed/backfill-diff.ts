@@ -57,6 +57,8 @@ export type TAuthzedSourceRef =
 export type TAuthzedObservationSummary = Readonly<{
   /** Relationships on deliberately-unprojected resource types. Counted, never acted on. */
   ignored: number;
+  /** Every parent edge observed, so the organization each resource claims can be verified. */
+  parentEdges: ReadonlyArray<TAuthzedParentEdge>;
   /** Deduplicated, deterministically ordered source records the observation implies. */
   sourceRefs: ReadonlyArray<TAuthzedSourceRef>;
   /**
@@ -144,8 +146,78 @@ export const toSourceRef = (relationship: TAuthzedRelationship): TAuthzedSourceR
   }
 };
 
+/**
+ * An observed parent edge: a resource claiming to belong to an organization.
+ *
+ * Tracked separately from the source records because the organization on the *right* of the edge is
+ * information a source-record reference throws away. `team:T#organization@organization:O` implies
+ * "Team T exists", and an existence check confirms that even when `O` is the wrong organization —
+ * so without this the edge is invisible.
+ *
+ * It matters because `organization` is a SpiceDB relation, i.e. a set, and the schema grants
+ * `workspace#manage` through `organization->manage`. A second, wrong parent edge on a workspace therefore
+ * hands every owner and manager of that organization full access to another tenant's workspace, with
+ * nothing in PostgreSQL to show for it.
+ */
+export type TAuthzedParentEdge = Readonly<{
+  childId: string;
+  childType: "api_key" | "team" | "workspace";
+  organizationId: string;
+}>;
+
 /** Stable identity for deduplication and ordering. Field order is fixed by the union's key order. */
 const sourceRefKey = (ref: TAuthzedSourceRef): string => JSON.stringify(ref);
+
+/** The parent edge an observed relationship asserts, if it asserts one. */
+const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | null => {
+  const { relation, resource, subject } = relationship;
+
+  if (relation !== PARENT_RELATION || subject.objectType !== "organization") {
+    return null;
+  }
+  if (
+    resource.objectType !== "api_key" &&
+    resource.objectType !== "team" &&
+    resource.objectType !== "workspace"
+  ) {
+    return null;
+  }
+
+  return { childId: resource.objectId, childType: resource.objectType, organizationId: subject.objectId };
+};
+
+/**
+ * Source records PostgreSQL holds that SpiceDB has no relationship for.
+ *
+ * The other half of the drift picture. Without it a report can only find *stale* relationships, so an
+ * entirely empty SpiceDB reads as clean against a fully populated PostgreSQL — which is precisely the
+ * state the backfill exists to fix.
+ *
+ * Deliberately a set difference over source *records*, not over relationships. It answers "is this
+ * record projected at all?" and **not** "is it projected with the right relation": a membership stored
+ * as `owner` in PostgreSQL but `member` in SpiceDB appears on neither side of this diff, because both
+ * map to the same record. Converging a relation is what applying does unconditionally by writing the
+ * current value; detecting a wrong one would mean rebuilding every expected relationship here, which is
+ * the projectors' job and not worth duplicating.
+ */
+export const findUnprojectedSourceRefs = (
+  expected: ReadonlyArray<TAuthzedSourceRef>,
+  observed: ReadonlyArray<TAuthzedSourceRef>
+): ReadonlyArray<TAuthzedSourceRef> => {
+  const observedKeys = new Set(observed.map(sourceRefKey));
+  const unprojected = new Map<string, TAuthzedSourceRef>();
+
+  for (const ref of expected) {
+    const key = sourceRefKey(ref);
+    if (!observedKeys.has(key)) {
+      unprojected.set(key, ref);
+    }
+  }
+
+  return [...unprojected.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([, ref]) => ref);
+};
 
 const toRelationshipRef = (relationship: TAuthzedRelationship): TAuthzedRelationshipRef => ({
   objectId: relationship.resource.objectId,
@@ -164,12 +236,18 @@ export const summarizeObservation = (
 ): TAuthzedObservationSummary => {
   const sourceRefs = new Map<string, TAuthzedSourceRef>();
   const unmanaged = new Map<string, TAuthzedRelationshipRef>();
+  const parentEdges = new Map<string, TAuthzedParentEdge>();
   let ignored = 0;
 
   for (const relationship of relationships) {
     if (isUnprojectedResourceType(relationship.resource.objectType)) {
       ignored++;
       continue;
+    }
+
+    const parentEdge = toParentEdge(relationship);
+    if (parentEdge) {
+      parentEdges.set(JSON.stringify(parentEdge), parentEdge);
     }
 
     const sourceRef = toSourceRef(relationship);
@@ -184,6 +262,9 @@ export const summarizeObservation = (
 
   return {
     ignored,
+    parentEdges: [...parentEdges.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([, edge]) => edge),
     sourceRefs: [...sourceRefs.entries()]
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([, ref]) => ref),

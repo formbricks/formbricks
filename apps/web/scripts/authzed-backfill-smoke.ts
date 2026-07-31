@@ -126,10 +126,16 @@ const run = async (): Promise<void> => {
     // Every relationship the harness seeded is absent from PostgreSQL by construction, so reporting
     // each observed record as missing is both honest and the fullest exercise of the orphan path.
     const source = {
+      findMismatchedParentEdges: async () => [],
       findMissingSourceRefs: async (refs: ReadonlyArray<unknown>) => refs,
       organizationExists: async () => true,
       readOrganizationIdPage: async () => [],
       readOrganizationSource: async () => emptySource,
+      readWorkspaceSource: async () => ({
+        apiKeyWorkspaceGrants: [],
+        workspaceExists: false,
+        workspaceTeamGrants: [],
+      }),
     } as unknown as Parameters<typeof runAuthzedBackfill>[1]["source"];
 
     const handedOver: unknown[] = [];

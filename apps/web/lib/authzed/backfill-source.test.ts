@@ -2,12 +2,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TAuthzedSourceRef } from "./backfill-diff";
 import {
+  findMismatchedParentEdges,
   findMissingSourceRefs,
   organizationExists,
   readOrganizationIdPage,
   readOrganizationSource,
 } from "./backfill-source";
-import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE } from "./constants";
+import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE } from "./constants";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -165,6 +166,57 @@ describe("readOrganizationSource", () => {
   });
 });
 
+describe("findMismatchedParentEdges", () => {
+  test("reports a resource attached to an organization that does not own it", async () => {
+    // The cross-tenant escalation an existence check cannot see: the workspace exists, so it is not an
+    // orphan, but the edge names an organization whose owners and managers thereby gain access to it.
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      { id: "ws-1", organizationId: ORGANIZATION_ID },
+    ] as never);
+
+    await expect(
+      findMismatchedParentEdges([{ childId: "ws-1", childType: "workspace", organizationId: "other-org" }])
+    ).resolves.toEqual([{ childId: "ws-1", childType: "workspace", organizationId: "other-org" }]);
+  });
+
+  test("accepts an edge naming the true owner", async () => {
+    vi.mocked(prisma.team.findMany).mockResolvedValue([
+      { id: "team-1", organizationId: ORGANIZATION_ID },
+    ] as never);
+
+    await expect(
+      findMismatchedParentEdges([{ childId: "team-1", childType: "team", organizationId: ORGANIZATION_ID }])
+    ).resolves.toEqual([]);
+  });
+
+  test("leaves an edge whose resource has no row to the orphan path", async () => {
+    // That is a different finding with a working repair, so reporting it here too would double-count it.
+    await expect(
+      findMismatchedParentEdges([{ childId: "gone", childType: "api_key", organizationId: ORGANIZATION_ID }])
+    ).resolves.toEqual([]);
+  });
+
+  test("checks all three child types in one batch per type", async () => {
+    await findMismatchedParentEdges([
+      { childId: "team-1", childType: "team", organizationId: ORGANIZATION_ID },
+      { childId: "ws-1", childType: "workspace", organizationId: ORGANIZATION_ID },
+      { childId: "key-1", childType: "api_key", organizationId: ORGANIZATION_ID },
+    ]);
+
+    expect(prisma.team.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.workspace.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.apiKey.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  test("fails closed on a lookup error rather than reporting no mismatch", async () => {
+    vi.mocked(prisma.workspace.findMany).mockRejectedValue(new Error("connection reset"));
+
+    await expect(
+      findMismatchedParentEdges([{ childId: "ws-1", childType: "workspace", organizationId: "other-org" }])
+    ).rejects.toThrow("connection reset");
+  });
+});
+
 describe("findMissingSourceRefs", () => {
   const allKinds: ReadonlyArray<TAuthzedSourceRef> = [
     { apiKeyId: "key-1", kind: "apiKey" },
@@ -228,6 +280,20 @@ describe("findMissingSourceRefs", () => {
     expect(prisma.team.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.membership.findMany).not.toHaveBeenCalled();
     expect(prisma.apiKey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("chunks a large request so the query cannot approach the bind-parameter ceiling", async () => {
+    // The composite-key kinds contribute two bind parameters per record, so an unchunked list would build
+    // exactly the unbounded OR that the chunk size exists to prevent.
+    const refs = Array.from({ length: AUTHZED_BACKFILL_TARGET_CHUNK_SIZE + 1 }, (_unused, index) => ({
+      kind: "teamMembership" as const,
+      teamId: "team-1",
+      userId: `user-${index}`,
+    }));
+
+    await findMissingSourceRefs(refs);
+
+    expect(prisma.teamUser.findMany).toHaveBeenCalledTimes(2);
   });
 
   test("issues one batched query per kind rather than one per record", async () => {

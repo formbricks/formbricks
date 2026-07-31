@@ -36,7 +36,59 @@ export type TAuthzedRelationshipObservation = Readonly<{
 }>;
 
 /**
+ * Stream every relationship matching `filter`, one page at a time.
+ *
+ * Use this rather than `readAllRelationships` whenever the match is unbounded — a whole resource type,
+ * say. Accumulating those would hold the entire store in memory and trip the per-unit bound, which for a
+ * deployment with more relationships than that bound would make the sweep fail outright rather than
+ * merely slow.
+ *
+ * Consistency behaves exactly as below: identical parameters on every page, the cursor carries the
+ * revision, and a page reporting a different revision aborts rather than silently mixing two views.
+ * `onPage` failures propagate, so a caller cannot mistake a partial stream for a complete one.
+ *
+ * Returns the revision the stream was read at, or `null` if nothing matched.
+ */
+export const forEachRelationshipPage = async (
+  client: Pick<TAuthzedClient, "readRelationships">,
+  filter: TAuthzedRelationshipReadFilter,
+  onPage: (relationships: ReadonlyArray<TAuthzedRelationship>) => Promise<void>
+): Promise<TAuthzedSnapshot | null> => {
+  let snapshot: TAuthzedSnapshot | null = null;
+  let cursor: TAuthzedReadCursor | undefined;
+
+  do {
+    const page = await client.readRelationships({
+      ...(cursor ? { cursor } : {}),
+      filter,
+      limit: AUTHZED_MAX_RELATIONSHIP_READS,
+    });
+
+    if (snapshot !== null && page.snapshot !== null && page.snapshot.token !== snapshot.token) {
+      throw new AuthzedError({
+        attempts: 0,
+        code: AUTHZED_ERROR_CODES.ABORTED,
+        operation: "for_each_relationship_page",
+        retryable: true,
+      });
+    }
+
+    snapshot = page.snapshot ?? snapshot;
+    cursor = page.cursor ?? undefined;
+
+    if (page.relationships.length > 0) {
+      await onPage(page.relationships);
+    }
+  } while (cursor);
+
+  return snapshot;
+};
+
+/**
  * Read every relationship matching `filter`, at a single consistent revision.
+ *
+ * Only for filters narrow enough to hold in memory — one resource, typically. For an unbounded filter
+ * use `forEachRelationshipPage`.
  *
  * Every page is requested with identical parameters and the cursor carries the revision it was issued
  * at, so the pages of one drain describe one view. SpiceDB enforces the identical-parameters rule by

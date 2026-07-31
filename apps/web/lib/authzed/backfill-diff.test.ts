@@ -189,7 +189,7 @@ describe("summarizeObservation", () => {
       tuple("response", "resp-1", "survey", "survey", "survey-1"),
     ]);
 
-    expect(summary).toEqual({ ignored: 3, sourceRefs: [], unmanaged: [] });
+    expect(summary).toEqual({ ignored: 3, parentEdges: [], sourceRefs: [], unmanaged: [] });
   });
 
   test("reports unrecognized relationships without naming a record for them", () => {
@@ -222,6 +222,6 @@ describe("summarizeObservation", () => {
   });
 
   test("returns an empty summary for an empty observation", () => {
-    expect(summarizeObservation([])).toEqual({ ignored: 0, sourceRefs: [], unmanaged: [] });
+    expect(summarizeObservation([])).toEqual({ ignored: 0, parentEdges: [], sourceRefs: [], unmanaged: [] });
   });
 });
