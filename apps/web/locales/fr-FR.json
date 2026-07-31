@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Ajouter un moyen de paiement",
         "trial_ending_description": "À la fin de la période d'essai, tu perdras l'accès à tout ce que tu as configuré avec Pro :",
         "trial_ending_title": "{count, plural, one {Plus qu'# jour d'essai restant} other {Plus que # jours d'essai restants}}",
-        "trial_payment_method_added_description": "Tout est prêt ! Votre abonnement Pro se poursuivra automatiquement après la fin de la période d'essai.",
         "trial_warning_200_description": "Tu as collecté 200 réponses. Une fois que tu atteindras 250, tes sondages ne pourront plus accepter de nouvelles réponses jusqu'à la fin de la période de 30 jours.",
         "trial_warning_200_title": "Tu as collecté 80 % de ta limite de réponses",
         "trial_warning_250_description": "Tu as collecté 250 réponses. À partir de maintenant, tes sondages n'accepteront plus de nouvelles réponses jusqu'à la fin de la période de 30 jours.",

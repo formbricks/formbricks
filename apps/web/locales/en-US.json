@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Add payment method",
         "trial_ending_description": "When it ends, you'll lose access to everything you've set up on Pro:",
         "trial_ending_title": "{count, plural, one {Only # day left in your trial} other {Only # days left in your trial}}",
-        "trial_payment_method_added_description": "You're all set! Your plan will continue automatically after the trial ends.",
         "trial_warning_200_description": "You've collected 200 responses. Once you reach 250, your surveys will stop accepting new responses until the end of the 30-day period.",
         "trial_warning_200_title": "You've collected 80% of your response limit",
         "trial_warning_250_description": "You've collected 250 responses. From now on, your surveys will not accept new responses until the end of the 30-day period.",

@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Ödeme yöntemi ekle",
         "trial_ending_description": "Deneme süresi sona erdiğinde, Pro ile kurduğunuz her şeye erişiminizi kaybedeceksiniz:",
         "trial_ending_title": "{count, plural, one {Deneme sürenizde sadece # gün kaldı} other {Deneme sürenizde sadece # gün kaldı}}",
-        "trial_payment_method_added_description": "Her şey tamam! Pro planın deneme süresi sona erdikten sonra otomatik olarak devam edecek.",
         "trial_warning_200_description": "200 yanıt topladınız. 250'ye ulaştığınızda, anketleriniz 30 günlük süre sonuna kadar yeni yanıt kabul etmeyi durduracak.",
         "trial_warning_200_title": "Yanıt limitinin %80'ine ulaştın",
         "trial_warning_250_description": "250 yanıt topladın. Bundan sonra anketlerin, 30 günlük süre sonuna kadar yeni yanıt kabul etmeyecek.",

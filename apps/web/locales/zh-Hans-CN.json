@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "添加付款方式",
         "trial_ending_description": "试用结束后，你将失去在专业版中设置的所有功能：",
         "trial_ending_title": "{count, plural, other {试用期仅剩 # 天}}",
-        "trial_payment_method_added_description": "一切就绪！试用期结束后，您的专业版计划将自动继续。",
         "trial_warning_200_description": "你已收集了 200 份回复。一旦达到 250 份,你的调查将停止接受新回复,直到 30 天试用期结束。",
         "trial_warning_200_title": "你已收集了回复限额的 80%",
         "trial_warning_250_description": "你已收集了 250 条回复。从现在起，你的调查问卷将不再接受新的回复,直到 30 天试用期结束。",

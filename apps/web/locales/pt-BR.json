@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Adicionar forma de pagamento",
         "trial_ending_description": "Quando terminar, você perderá acesso a tudo que configurou no Pro:",
         "trial_ending_title": "{count, plural, one {Resta apenas # dia no seu período de testes} other {Restam apenas # dias no seu período de testes}}",
-        "trial_payment_method_added_description": "Tudo pronto! Seu plano Pro continuará automaticamente após o término do período de teste.",
         "trial_warning_200_description": "Você coletou 200 respostas. Assim que atingir 250, suas pesquisas vão parar de aceitar novas respostas até o fim do período de 30 dias.",
         "trial_warning_200_title": "Você coletou 80% do seu limite de respostas",
         "trial_warning_250_description": "Você coletou 250 respostas. A partir de agora, suas pesquisas não aceitarão novas respostas até o final do período de 30 dias.",

@@ -2459,7 +2459,6 @@ checksums:
     workspace/settings/billing/trial_ending_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
     workspace/settings/billing/trial_ending_description: 8be0ee811be739704ce92391593ca544
     workspace/settings/billing/trial_ending_title: 3c2b88e6693450a7f38255076414eed5
-    workspace/settings/billing/trial_payment_method_added_description: 917727553a379d52b8a9c8ebce370061
     workspace/settings/billing/trial_warning_200_description: b62a8996f7002340e1ed89e37ca713d2
     workspace/settings/billing/trial_warning_200_title: 804fae1197fba14b15e2d697e62f34cd
     workspace/settings/billing/trial_warning_250_description: 8142e4b105b47443895a315e4b4a156e

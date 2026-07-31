@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Adicionar método de pagamento",
         "trial_ending_description": "Quando terminar, vais perder acesso a tudo o que configuraste no Pro:",
         "trial_ending_title": "{count, plural, one {Resta apenas # dia do teu período experimental} other {Restam apenas # dias do teu período experimental}}",
-        "trial_payment_method_added_description": "Está tudo pronto! O teu plano Pro continuará automaticamente após o fim do período experimental.",
         "trial_warning_200_description": "Recolheste 200 respostas. Quando chegares a 250, os teus inquéritos deixarão de aceitar novas respostas até ao fim do período de 30 dias.",
         "trial_warning_200_title": "Recolheste 80% do teu limite de respostas",
         "trial_warning_250_description": "Recolheste 250 respostas. A partir de agora, os teus inquéritos não aceitarão novas respostas até ao final do período de 30 dias.",

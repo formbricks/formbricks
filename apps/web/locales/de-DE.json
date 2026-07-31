@@ -2556,7 +2556,6 @@
         "trial_ending_add_payment_method": "Zahlungsmethode hinzufügen",
         "trial_ending_description": "Wenn die Testphase endet, verlierst du den Zugriff auf alles, was du mit Pro eingerichtet hast:",
         "trial_ending_title": "{count, plural, one {Nur noch # Tag in deiner Testphase} other {Nur noch # Tage in deiner Testphase}}",
-        "trial_payment_method_added_description": "Alles bereit! Dein Pro-Plan läuft nach Ende der Testphase automatisch weiter.",
         "trial_warning_200_description": "Du hast 200 Antworten gesammelt. Sobald du 250 erreichst, akzeptieren deine Umfragen keine neuen Antworten mehr bis zum Ende der 30-Tage-Periode.",
         "trial_warning_200_title": "Du hast 80 % deines Antwortlimits erreicht",
         "trial_warning_250_description": "Du hast 250 Antworten gesammelt. Ab jetzt akzeptieren deine Umfragen keine neuen Antworten mehr, bis die 30-Tage-Periode endet.",
