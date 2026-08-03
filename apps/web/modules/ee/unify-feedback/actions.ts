@@ -1,14 +1,13 @@
 "use server";
 
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   assertRecordBelongsToWorkspace,
+  ensureDeleteAccess,
+  ensureReadAccess,
   getWorkspaceDirectoryIds,
 } from "@/modules/ee/unify-feedback/lib/access";
 import { deleteFeedbackRecord, retrieveFeedbackRecord } from "@/modules/hub/service";
@@ -17,64 +16,6 @@ import {
   ZDeleteFeedbackRecordAction,
   ZRetrieveFeedbackRecordAction,
 } from "./types";
-
-const ensureUnifyEnabled = async (workspaceId: string): Promise<string> => {
-  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-  const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
-  if (!isFeedbackDirectoriesAllowed) {
-    throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
-  }
-  return organizationId;
-};
-
-/**
- * Reads are open to the whole workspace: seeing every record in a shared feedback directory is the
- * point of sharing it.
- */
-const ensureReadAccess = async (userId: string, workspaceId: string): Promise<void> => {
-  const organizationId = await ensureUnifyEnabled(workspaceId);
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-      {
-        type: "workspaceTeam",
-        minPermission: "read",
-        workspaceId,
-      },
-    ],
-  });
-};
-
-/**
- * Deleting a record is restricted to organization owners and managers (ENG-1770).
- *
- * A record's only tenancy is its feedback directory (the Hub tenant), and a directory is shared by
- * every workspace it is assigned to — the record itself carries no workspace. A workspace
- * `readWrite` check therefore cannot tell this workspace's records from another workspace's, so a
- * member of workspace B could delete records that workspace A's surveys ingested. Until Hub records
- * carry a workspace, deleting stays with the roles that own org-level data.
- *
- * Returns the organization id so callers can attribute the audit event without resolving it again.
- */
-const ensureDeleteAccess = async (userId: string, workspaceId: string): Promise<string> => {
-  const organizationId = await ensureUnifyEnabled(workspaceId);
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-    ],
-  });
-  return organizationId;
-};
 
 export const retrieveFeedbackRecordAction = authenticatedActionClient
   .inputSchema(ZRetrieveFeedbackRecordAction)
