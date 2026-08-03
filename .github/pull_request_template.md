@@ -9,27 +9,11 @@ keep it short enough to grasp without opening files. -->
 
 ## Linear ticket
 
-<!-- A bare ticket URL does NOT link the PR. Linear only links when a magic word comes BEFORE the
-issue ID or URL, so replace the line below with one of:
-
-    Fixes ENG-1234
-    Fixes https://linear.app/formbricks/issue/ENG-1234/some-slug
-
-Closing magic words move the ticket to its on-merge status when this PR merges — use one of these for
-the normal case: `close`, `fix`, `resolve`, `complete`, `implement`, in any tense (`fixes`, `fixed`,
-`fixing`, …).
-
-Non-closing magic words still link the PR and still let your team's other automations run (e.g.
-moving the ticket to In Progress when the PR opens); they only skip the on-merge transition. Use one
-when this PR is a partial step: `ref`, `refs`, `references`, `part of`, `related to`, `relates to`,
-`contributes to`, `toward`, `towards`. Several tickets: `Fixes ENG-1234, ENG-5678`.
-
-Putting the issue ID in the branch name or the PR title links the PR too (copy the branch name from
-Linear with Cmd/Ctrl+Shift+.), so magic words here are what to rely on when the branch name has no ID.
-
-Full keyword list and linking rules: https://linear.app/docs/github
-
-No ticket? Delete the line and say why. Closing a GitHub issue as well? Add "Fixes #123". -->
+<!-- Complete the line below: `Fixes ENG-1234`. A bare URL does NOT link the PR — the magic word has
+to come first. Use `Ref ENG-1234` instead if this PR only partly addresses the ticket, so merging
+doesn't close it. A full ticket URL works in place of the ID.
+No ticket? Delete the line and say why. Closing a GitHub issue? Add "Fixes #123".
+More: https://linear.app/docs/github -->
 
 Fixes ENG-
 
