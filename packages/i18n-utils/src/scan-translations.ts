@@ -709,5 +709,17 @@ async function main(): Promise<void> {
   }
 }
 
-// Run the script
-void main();
+// Run the script only when this file IS the process entrypoint (`tsx src/scan-translations.ts`, i.e.
+// `pnpm scan-translations` / `pnpm i18n` / the translation-check workflow).
+//
+// This module doubles as a library: scan-translations.test.ts imports the pure helpers above. Calling
+// main() unconditionally meant that importing it started a full repo-wide scan (~1900 files under
+// apps/web) in the background, which then raced the importing test suite for the event loop and ended
+// in a process.exit() that could tear the vitest worker down mid-run. Locally the tests finish before
+// the scan gets far, so it looked fine; under CI load it surfaced as an unrelated-looking 5s test
+// timeout in the SonarQube job.
+const isProcessEntrypoint = process.argv[1] !== undefined && path.resolve(process.argv[1]) === __filename;
+
+if (isProcessEntrypoint) {
+  void main();
+}
