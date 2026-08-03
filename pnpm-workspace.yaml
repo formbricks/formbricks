@@ -117,11 +117,15 @@ overrides:
   # linkify-it, protobufjs@7, undici@7 and uuid@11 all resolve to the patched version on their own now.
   # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
   # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
-  # GHSA-mh99-v99m-4gvg (brace-expansion <=5.0.7) is still reported by `pnpm audit` as high: the range
-  # also matches 1.1.16 / 2.1.2, each the latest release in its line with no patch coming. Those paths
-  # are devDependency-only (eslint, prettier plugins and @redocly/cli, all via minimatch) and never run
-  # against untrusted input, so the residual risk is accepted until their consumers move to
-  # brace-expansion@5 — a pin cannot close it.
+  # GHSA-mh99-v99m-4gvg is still reported by `pnpm audit` as high, but it is now FIXABLE — re-verified
+  # 2026-08-03. The advisory was re-split upstream into per-major ranges, and both lines we resolve have
+  # since shipped a patch: `<1.1.17` (we resolve 1.1.16; 1.1.17 published 2026-07-29) and
+  # `>=2.0.0 <2.1.3` (we resolve 2.1.2; 2.1.3 published 2026-07-28). The earlier note here — "no patch
+  # coming", "a pin cannot close it" — stopped being true on those dates: re-pinning brace-expansion@1
+  # and @2 closes both. That is a dependency change needing its own lockfile and test run, so it is
+  # deferred to a follow-up PR rather than folded into an audit-comment sweep. Until then the residual
+  # risk stays acceptable for the same reason as before: these paths are devDependency-only (eslint,
+  # prettier plugins and @redocly/cli, all via minimatch) and never run against untrusted input.
   # === Accepted risk, no override possible yet (pnpm audit will keep flagging this) ===
   # ENG-1703 / GHSA-p2fr-6hmx-4528 (Dependabot alerts #612 and #613, both dismissed as tolerable risk;
   # the ticket is closed Done with the same conclusion as here). Re-verified 2026-08-03.
