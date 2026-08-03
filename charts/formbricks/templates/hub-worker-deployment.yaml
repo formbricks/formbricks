@@ -61,13 +61,13 @@ spec:
             - |
               attempts=0
               max_attempts={{ .Values.hub.worker.waitForApi.maxAttempts | default 120 }}
-              until wget --no-verbose --tries=1 --spider http://{{ include "formbricks.hubname" . }}:8080/health; do
+              until wget --no-verbose --tries=1 --timeout=5 --spider http://{{ include "formbricks.hubname" . }}:8080/health; do
                 attempts=$((attempts+1))
                 if [ "$attempts" -ge "$max_attempts" ]; then
-                  echo "Hub API health check timed out after $((max_attempts * 5)) seconds"
+                  echo "Hub API did not become healthy after $max_attempts attempt(s)"
                   exit 1
                 fi
-                echo "Waiting for Hub API migrations and health check..."
+                echo "Waiting for Hub API migrations and health check (attempt $attempts/$max_attempts)..."
                 sleep 5
               done
       {{- end }}
