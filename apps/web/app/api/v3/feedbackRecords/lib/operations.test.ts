@@ -639,7 +639,9 @@ describe("createV3FeedbackRecord", () => {
 });
 
 describe("deleteV3FeedbackRecord", () => {
-  const deleteBase = { ...base, feedbackRecordId: record.id };
+  // A session principal, not `base`'s null: these operations now require an identifiable caller, and
+  // a null principal is refused upstream in production anyway.
+  const deleteBase = { ...base, authentication: sessionAuth, feedbackRecordId: record.id };
 
   beforeEach(() => {
     vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
@@ -650,7 +652,7 @@ describe("deleteV3FeedbackRecord", () => {
     await deleteV3FeedbackRecord(deleteBase);
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
-      null,
+      sessionAuth,
       workspaceId,
       "readWrite",
       requestId,
@@ -1348,7 +1350,7 @@ describe("createV3FeedbackRecords", () => {
 });
 
 describe("updateV3FeedbackRecord", () => {
-  const updateBase = { ...base, feedbackRecordId: record.id };
+  const updateBase = { ...base, authentication: sessionAuth, feedbackRecordId: record.id };
   const updated = { ...record, value_text: "Actually, love it a lot" } as FeedbackRecordData;
 
   beforeEach(() => {
@@ -1360,7 +1362,7 @@ describe("updateV3FeedbackRecord", () => {
     await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
-      null,
+      sessionAuth,
       workspaceId,
       "readWrite",
       requestId,
@@ -1669,5 +1671,18 @@ describe("feedback record mutation role (ENG-1770)", () => {
 
     expect(deleted.status).toBe(204);
     expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+  });
+
+  // The API key above is the only shape that skips the role check. Anything that resolves to no user is
+  // refused rather than admitted by the absence of a field — the pass-through has to stay an allowlist.
+  test.each([
+    ["no principal", null],
+    ["a session with no user id", { user: {} } as TV3Authentication],
+    ["an unknown principal shape", { serviceId: "svc_1" } as unknown as TV3Authentication],
+  ])("refuses %s", async (_name, authentication) => {
+    const response = await deleteV3FeedbackRecord({ ...deleteArgs, authentication });
+
+    expect(response.status).toBe(403);
+    expect(deleteFeedbackRecord).not.toHaveBeenCalled();
   });
 });

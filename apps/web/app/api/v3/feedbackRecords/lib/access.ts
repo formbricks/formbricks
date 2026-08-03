@@ -155,6 +155,12 @@ type TRequireMutationRoleParams = {
  * Only person-shaped principals are gated (sessions and OAuth/MCP tokens). An API key authorizes on its
  * per-workspace permissions instead, and what a key should need in order to mutate a record is being
  * settled separately in #8682 — so keys deliberately pass through here unchanged.
+ *
+ * Written as an allowlist rather than "no user id ⇒ allowed": an API key is the one shape that skips the
+ * role check, and anything else that cannot be resolved to a user — a principal type added later, or a
+ * session whose user never materialized — is refused. Not reachable today (the resolver above already
+ * rejects an absent principal), but it means the pass-through stays deliberate instead of being implied
+ * by a missing field.
  */
 export async function requireFeedbackRecordMutationRole({
   authentication,
@@ -163,9 +169,14 @@ export async function requireFeedbackRecordMutationRole({
   requestId,
   instance,
 }: TRequireMutationRoleParams): Promise<{ ok: true } | { ok: false; response: Response }> {
+  if (authentication && "apiKeyId" in authentication) {
+    return { ok: true };
+  }
+
   const userId = authentication && "user" in authentication ? authentication.user?.id : undefined;
   if (!userId) {
-    return { ok: true };
+    log.warn({ statusCode: 403 }, "Feedback record mutation denied: principal resolved to no user");
+    return { ok: false, response: forbidFeedbackRecordMutation(requestId, instance) };
   }
 
   try {
@@ -178,19 +189,20 @@ export async function requireFeedbackRecordMutationRole({
   } catch (error) {
     if (error instanceof AuthorizationError) {
       log.warn({ statusCode: 403 }, "Feedback record mutation denied: not an organization owner or manager");
-      return {
-        ok: false,
-        response: problemForbidden(
-          requestId,
-          "Only an organization owner or manager can change or delete a feedback record. Feedback datasets are shared across workspaces, so their records are organization-level data.",
-          instance
-        ),
-      };
+      return { ok: false, response: forbidFeedbackRecordMutation(requestId, instance) };
     }
 
     throw error;
   }
 }
+
+/** The single 403 for "you may not change records here", so every refusal reads identically. */
+const forbidFeedbackRecordMutation = (requestId: string, instance: string): Response =>
+  problemForbidden(
+    requestId,
+    "Only an organization owner or manager can change or delete a feedback record. Feedback datasets are shared across workspaces, so their records are organization-level data.",
+    instance
+  );
 
 type TRequireOwnedRecordParams = {
   feedbackRecordId: string;
