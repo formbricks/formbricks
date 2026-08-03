@@ -423,7 +423,14 @@ export const getTaxonomyRun = async (runId: string, tenantId: string): Promise<H
     const data = await client.taxonomy.runs.retrieve(runId, { tenant_id: tenantId });
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyRun failed");
+    // A run is polled every few seconds while it generates, so a 404 (the run was deleted, or the id is
+    // stale) would otherwise write a warning with a stack trace on every tick. It is a benign outcome —
+    // the v3 route returns a 404 of its own — so log it at debug, same as the missing tree below.
+    if (getErrorStatus(err) === 404) {
+      logger.debug({ runId, tenantId }, "Hub: taxonomy run not found");
+    } else {
+      logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyRun failed");
+    }
     return createHubResultFromError(err);
   }
 };

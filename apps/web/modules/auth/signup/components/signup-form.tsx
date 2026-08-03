@@ -17,7 +17,10 @@ import {
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
-import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
+import {
+  buildSignupWithoutVerificationSuccessPath,
+  buildVerificationRequestedPath,
+} from "@/modules/auth/lib/verification-links";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
@@ -75,7 +78,7 @@ export const SignupForm = ({
   isTurnstileConfigured,
   turnstileSiteKey,
   isFormbricksCloud,
-}: SignupFormProps) => {
+}: Readonly<SignupFormProps>) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
   const { t } = useTranslation();
@@ -124,6 +127,38 @@ export const SignupForm = ({
     resolver: zodResolver(ZSignupInput),
   });
 
+  /**
+   * Map a failed `createUserAction` to where the user should see it: the two field-level rejections go
+   * under the input that caused them, everything else is a toast. Each stable error code exists so the
+   * server can be specific without the message itself being an enumeration signal.
+   */
+  const surfaceSignupError = (errorMessage: string) => {
+    switch (errorMessage) {
+      case SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE:
+        form.setError("email", { type: "manual", message: t("auth.signup.company_email_required") });
+        return;
+      case PASSWORD_COMPROMISED_ERROR_CODE:
+        form.setError("password", { type: "manual", message: t("auth.password_compromised") });
+        return;
+      case INVITE_TOKEN_INVALID_ERROR_CODE:
+        // Reachable when the invite expires or is revoked between this page rendering and the form being
+        // submitted. Reuses the existing invite copy rather than naming the specific reason, matching the
+        // server, which returns one code for expired / revoked / wrong-address so it cannot be used to
+        // probe which invites exist.
+        toast.error(t("auth.invite.invite_not_found_description"));
+        return;
+      default:
+        // SIGNUP_DISABLED_ERROR_CODE lands here (#8681). CodeRabbit is right that a real user can see
+        // it — sign-up can be open when this page renders and closed before submit, the same
+        // render-then-revoke race that makes the invite branch above user-facing — so it should be
+        // translated rather than shown as a raw code. Deferred there because adding an en-US string
+        // needs the 14 target locales populated too, and doing it without that reddens
+        // `scan-translations`; tracked as a follow-up. (This PR hand-writes such strings with their
+        // i18n.lock checksums, so that route is open to whoever picks the follow-up up.)
+        toast.error(errorMessage);
+    }
+  };
+
   const handleSubmit = async (data: TSignupInput) => {
     try {
       if (isTurnstileConfigured && !turnstileToken) {
@@ -151,30 +186,7 @@ export const SignupForm = ({
 
       if (!createUserResponse?.data) {
         resetTurnstileIfConfigured();
-
-        const errorMessage = getFormattedErrorMessage(createUserResponse);
-        // Personal-email block: surface under the email field rather than as a toast.
-        if (errorMessage === SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE) {
-          form.setError("email", { type: "manual", message: t("auth.signup.company_email_required") });
-        } else if (errorMessage === PASSWORD_COMPROMISED_ERROR_CODE) {
-          // Breached password: surface under the password field with a clear, actionable message.
-          form.setError("password", { type: "manual", message: t("auth.password_compromised") });
-        } else if (errorMessage === INVITE_TOKEN_INVALID_ERROR_CODE) {
-          // Reachable when the invite expires or is revoked between this page rendering and the form
-          // being submitted. Reuses the existing invite copy rather than naming the specific reason,
-          // matching the server, which returns one code for expired / revoked / wrong-address so it
-          // cannot be used to probe which invites exist.
-          toast.error(t("auth.invite.invite_not_found_description"));
-        } else {
-          // SIGNUP_DISABLED_ERROR_CODE lands here. CodeRabbit is right that a real user can see it —
-          // sign-up can be open when this page renders and closed before submit, the same
-          // render-then-revoke race that makes the invite branch above user-facing — so it should be
-          // translated rather than shown as a raw code. Deferred, not declined: the fix needs a new
-          // en-US string plus a Lingo run to populate the 14 target locales, and adding the key without
-          // that run fails `scan-translations` (incomplete translations + lockfile out of sync). Doing
-          // it here would redden the translation gate on a release-critical PR; tracked for follow-up.
-          toast.error(errorMessage);
-        }
+        surfaceSignupError(getFormattedErrorMessage(createUserResponse));
         return;
       }
 
@@ -189,12 +201,13 @@ export const SignupForm = ({
         return;
       }
 
+      // Both branches carry the invite callback. The verification-disabled branch is the default for
+      // self-hosted, so omitting it there left invited users with an existing account unable to reach
+      // the invite from the screen they land on (ENG-2091, raised in review).
+      const callbackUrl = inviteToken ? returnToUrl : undefined;
       const url = emailVerificationDisabled
-        ? `/auth/signup-without-verification-success?token=${token}`
-        : buildVerificationRequestedPath({
-            token,
-            callbackUrl: inviteToken ? returnToUrl : undefined,
-          });
+        ? buildSignupWithoutVerificationSuccessPath({ token, callbackUrl })
+        : buildVerificationRequestedPath({ token, callbackUrl });
 
       router.push(url);
     } catch (e: any) {

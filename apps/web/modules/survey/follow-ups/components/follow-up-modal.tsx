@@ -16,7 +16,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -29,7 +28,10 @@ import {
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
-import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import {
+  type EmailSendToOption,
+  buildEmailSendToOptions,
+} from "@/modules/survey/follow-ups/lib/email-send-to-options";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
@@ -78,12 +80,6 @@ interface AddFollowUpModalProps {
   locale: TUserLocale;
 }
 
-type EmailSendToOption = {
-  type: "openTextElement" | "contactInfoElement" | "hiddenField" | "user" | "verifiedEmail";
-  label: string;
-  id: string;
-};
-
 export const FollowUpModal = ({
   localSurvey,
   open,
@@ -102,81 +98,17 @@ export const FollowUpModal = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
 
-  const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
-    const elements = getElementsFromBlocks(localSurvey.blocks);
-
-    const openTextAndContactElements = elements.filter((element) => {
-      if (element.type === TSurveyElementTypeEnum.ContactInfo) {
-        return element.email.show;
-      }
-
-      if (element.type === TSurveyElementTypeEnum.OpenText) {
-        if (element.inputType === "email") {
-          return true;
-        }
-
-        return false;
-      }
-
-      return false;
-    });
-
-    const hiddenFields = localSurvey.hiddenFields.fieldIds
-      ? { fieldIds: localSurvey.hiddenFields.fieldIds }
-      : { fieldIds: [] };
-
-    const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
-      if (teamMemberDetail.email === userEmail) {
-        return { name: "Yourself", email: userEmail };
-      }
-
-      return teamMemberDetail;
-    });
-
-    const isUserEmailInTeamMemberDetails = updatedTeamMemberDetails.some(
-      (teamMemberDetail) => teamMemberDetail.email === userEmail
-    );
-
-    const updatedTeamMembers = isUserEmailInTeamMemberDetails
-      ? updatedTeamMemberDetails
-      : [...updatedTeamMemberDetails, { email: userEmail, name: "Yourself" }];
-
-    const verifiedEmailOption = localSurvey.isVerifyEmailEnabled
-      ? [
-          {
-            label: t("common.verified_email"),
-            id: "verifiedEmail",
-            type: "verifiedEmail" as EmailSendToOption["type"],
-          },
-        ]
-      : [];
-
-    return [
-      ...verifiedEmailOption,
-      ...openTextAndContactElements.map((element) => ({
-        label: getTextContent(
-          recallToHeadline(element.headline, localSurvey, false, selectedLanguageCode)[selectedLanguageCode]
-        ),
-        id: element.id,
-        type:
-          element.type === TSurveyElementTypeEnum.OpenText
-            ? "openTextElement"
-            : ("contactInfoElement" as EmailSendToOption["type"]),
-      })),
-
-      ...hiddenFields.fieldIds.map((fieldId: string) => ({
-        label: fieldId,
-        id: fieldId,
-        type: "hiddenField" as EmailSendToOption["type"],
-      })),
-
-      ...updatedTeamMembers.map((member) => ({
-        label: `${member.name} (${member.email})`,
-        id: member.email,
-        type: "user" as EmailSendToOption["type"],
-      })),
-    ] satisfies EmailSendToOption[];
-  }, [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail, t]);
+  const emailSendToOptions: EmailSendToOption[] = useMemo(
+    () =>
+      buildEmailSendToOptions({
+        survey: localSurvey,
+        teamMemberDetails,
+        userEmail,
+        selectedLanguageCode,
+        t,
+      }),
+    [localSurvey, selectedLanguageCode, teamMemberDetails, userEmail, t]
+  );
 
   const form = useForm<TCreateSurveyFollowUpForm>({
     defaultValues: {

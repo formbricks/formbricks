@@ -21,6 +21,7 @@ import {
   getIsSpamProtectionEnabled,
   getIsSsoEnabled,
   getIsTwoFactorAuthEnabled,
+  getIsWorkflowsEnabled,
   getOrganizationWorkspacesLimit,
   getRemoveBrandingPermission,
   getWhiteLabelPermission,
@@ -84,6 +85,7 @@ const defaultEntitlementsContext: TOrganizationEntitlementsContext = {
   limits: {
     workspaces: 3,
     monthlyResponses: null,
+    monthlyWorkflowRuns: null,
   },
   licenseStatus: "active",
   licenseFeatures: defaultFeatures,
@@ -299,7 +301,21 @@ describe("License Utils", () => {
       expect(getEnterpriseLicense).not.toHaveBeenCalled();
     });
 
-    test("returns self-hosted FRD / dashboards from license", async () => {
+    test("uses cloud workflows entitlement", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
+
+      const result = await getIsWorkflowsEnabled("org_1");
+
+      expect(result).toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
+        "org_1",
+        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.WORKFLOWS
+      );
+      expect(getEnterpriseLicense).not.toHaveBeenCalled();
+    });
+
+    test("returns self-hosted FRD / dashboards / workflows from license", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
       vi.mocked(getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,
@@ -307,33 +323,38 @@ describe("License Utils", () => {
           ...defaultFeatures,
           feedbackDirectories: true,
           dashboards: true,
+          workflows: true,
         },
       });
 
-      const [frd, dashboards] = await Promise.all([
+      const [frd, dashboards, workflows] = await Promise.all([
         getIsFeedbackDirectoriesEnabled("org_1"),
         getIsDashboardsEnabled("org_1"),
+        getIsWorkflowsEnabled("org_1"),
       ]);
 
       expect(frd).toBe(true);
       expect(dashboards).toBe(true);
+      expect(workflows).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
     });
 
-    test("returns false for self-hosted FRD / dashboards when not enabled", async () => {
+    test("returns false for self-hosted FRD / dashboards / workflows when not enabled", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
       vi.mocked(getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,
         features: defaultFeatures,
       });
 
-      const [frd, dashboards] = await Promise.all([
+      const [frd, dashboards, workflows] = await Promise.all([
         getIsFeedbackDirectoriesEnabled("org_1"),
         getIsDashboardsEnabled("org_1"),
+        getIsWorkflowsEnabled("org_1"),
       ]);
 
       expect(frd).toBe(false);
       expect(dashboards).toBe(false);
+      expect(workflows).toBe(false);
       expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
     });
   });

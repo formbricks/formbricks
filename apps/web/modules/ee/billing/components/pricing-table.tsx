@@ -31,6 +31,7 @@ import {
   reportUpgradePaymentIssueAction,
   retryStripeSetupAction,
   undoPendingPlanChangeAction,
+  waitForBillingPaymentMethodAction,
   waitForBillingPlanAction,
 } from "../actions";
 import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
@@ -46,9 +47,8 @@ const BILLING_PENDING_UPGRADE_INTERVAL_KEY = "billingPendingUpgradeInterval";
 // synced plan.
 const BILLING_UPGRADE_RESULT_KEY = "billingUpgradeResult";
 
-// After checkout the plan lands in our DB via an async Stripe webhook (not instant). Poll a Stripe
-// force-sync until the plan reflects, so we can render the new plan without a manual refresh. Bounded
-// so a genuinely stuck upgrade doesn't spin forever.
+// The plan lands in our DB via an async Stripe webhook, not instantly. Poll a force-sync until it
+// reflects so we can render without a manual refresh; bounded so a stuck upgrade doesn't spin forever.
 const UPGRADE_SYNC_POLL_INTERVAL_MS = 1500;
 const UPGRADE_SYNC_POLL_TIMEOUT_MS = 45000;
 
@@ -165,6 +165,12 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
     return t("workspace.settings.billing.payment_method_required");
   }
 
+  // Trial conversion charges synchronously (payment_behavior: "error_if_incomplete"), so a card
+  // needing 3DS errors out with nothing left to confirm. Say so instead of a generic failure.
+  if (serverError === "card_authentication_required") {
+    return t("workspace.settings.billing.payment_authentication_failed");
+  }
+
   return t("common.something_went_wrong_please_try_again");
 };
 
@@ -180,11 +186,15 @@ const canCancelCurrentPaidPlanAtPeriodEnd = (
   interval: TCloudBillingInterval,
   currentCloudPlan: TDisplayPlan,
   currentBillingInterval: TCloudBillingInterval | null,
-  isTrialingWithoutPayment: boolean,
+  isTrialing: boolean,
   pendingChange: TOrganizationStripePendingChange | null
 ) =>
   plan !== "hobby" &&
-  !isTrialingWithoutPayment &&
+  // Any trial (with or without a card) selecting its current paid plan is CONVERTING to paid
+  // ("Upgrade now"), never cancelling at period end — excluding only no-card trials here let a
+  // card-backed "Upgrade now" click fall into cancel-at-period-end, scheduling a Hobby downgrade
+  // instead of converting.
+  !isTrialing &&
   pendingChange?.targetPlan !== "hobby" &&
   isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
 
@@ -245,16 +255,29 @@ export const PricingTable = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const upgradeDriveRef = useRef(false);
+  const trialCardDriveRef = useRef(false);
+  // Monotonic token guarding the lazy upgrade-charge preview: openConfirmation bumps it so a stale
+  // preview can never leak into the modal (mislabeling the "Pay $X now" amount);
+  // closeUpgradeConfirmation bumps it too, discarding a dismissed modal's in-flight preview.
+  const previewRequestRef = useRef(0);
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
   const [isPlanActionPending, setIsPlanActionPending] = useState<string | null>(null);
-  // Set when an immediate, in-place upgrade charge needs explicit confirmation before it runs.
+  // Set when an immediate upgrade charge needs confirmation. mode "upgrade" = single confirm (tier
+  // upgrade / card-backed convert); "trial-continue" = the pay-prorated-now-or-keep-trial choice modal.
   const [upgradeConfirmation, setUpgradeConfirmation] = useState<{
     plan: Exclude<TStandardPlan, "hobby">;
     interval: TCloudBillingInterval;
+    mode: "upgrade" | "trial-continue";
   } | null>(null);
-  // Prorated amount Stripe would charge now for the pending upgrade confirmation, fetched lazily.
-  const [upgradePreview, setUpgradePreview] = useState<{ amountDue: number; currency: string } | null>(null);
+  // Amount Stripe would charge now (full price incl. tax), fetched lazily for the confirm modal.
+  const [upgradePreview, setUpgradePreview] = useState<{
+    amountDue: number;
+    currency: string;
+  } | null>(null);
   const [isLoadingUpgradePreview, setIsLoadingUpgradePreview] = useState(false);
+  // A Pro trial returning to Hobby switches immediately (server ends the trial now), so it's gated
+  // behind a confirmation dialog. Paid plans still schedule the downgrade for period end (no dialog).
+  const [isHobbyDowngradeConfirmOpen, setIsHobbyDowngradeConfirmOpen] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<TCloudBillingInterval>(
     currentBillingInterval ?? "monthly"
   );
@@ -265,6 +288,12 @@ export const PricingTable = ({
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
   const canShowSubscriptionButton = hasBillingRights && !!organization.billing.stripeCustomerId;
   const isTrialingWithoutPayment = isTrialing && !hasPaymentMethod;
+  // Trialing with a card on file: selecting a paid plan converts the trial and charges now (so the
+  // user unlocks links/follow-ups immediately), behind the confirm modal so they know they're billed.
+  const isTrialingWithPayment = isTrialing && hasPaymentMethod;
+  // The paid plan being trialed (Pro today) — the trial banner's pay-now CTA targets it.
+  const trialedPaidPlan =
+    isTrialing && (currentCloudPlan === "pro" || currentCloudPlan === "scale") ? currentCloudPlan : null;
   const showPlanSelector = !isStripeSetupIncomplete;
   const usageCycleLabel = `${formatDateForDisplay(usageCycleStart, locale, {
     year: "numeric",
@@ -393,8 +422,29 @@ export const PricingTable = ({
     }
 
     if (searchParams.get("upgrade_pending") !== "1") {
-      const timer = setTimeout(() => router.refresh(), 2500);
-      return () => clearTimeout(timer);
+      // Card-only setup checkout (e.g. "Continue with Pro after trial"): the webhook attaches the
+      // card asynchronously, so a single router.refresh() can race it and leave the stale "add a
+      // payment method" CTA showing. Force a bounded resync until the card reflects, then hard-reload
+      // (router.refresh() doesn't reliably refetch the billing snapshot) to deterministically drop the CTA.
+      if (globalThis.window === undefined || trialCardDriveRef.current) {
+        return;
+      }
+      trialCardDriveRef.current = true;
+      const billingUrl = `/organizations/${organizationId}/settings/billing`;
+      // Resync can take a few seconds; show a loading state so it doesn't read as a broken save.
+      // Generic "Saving" (not the plan-change toast): only the card changes here, not the plan/trial.
+      const cardSyncToastId = toast.loading(t("common.saving"));
+      void (async () => {
+        try {
+          await waitForBillingPaymentMethodAction({ organizationId });
+        } finally {
+          toast.dismiss(cardSyncToastId);
+          // Full reload strips checkout_success (blocks re-run on back-nav/refresh) and
+          // deterministically re-renders against the now-synced snapshot.
+          globalThis.window.location.replace(billingUrl);
+        }
+      })();
+      return;
     }
 
     // Setup checkout saved the card; finalize the (SCA-capable, on-session) upgrade here.
@@ -413,16 +463,15 @@ export const PricingTable = ({
       "hobby"
     > | null;
 
-    // upgradeDriveRef guarantees this runs once; deliberately no `cancelled` cleanup flag — React
-    // StrictMode's mount→unmount→mount in dev would otherwise cancel the real run before it reaches
-    // the reload, leaving the page stale (the bug looks identical to no fix at all).
+    // upgradeDriveRef guarantees a single run; deliberately no `cancelled` cleanup flag — StrictMode's
+    // dev mount→unmount→mount would otherwise cancel the real run before the reload, leaving it stale.
     upgradeDriveRef.current = true;
     // Loading toast at the top of this first post-checkout page, shown while we poll for the plan.
     const toastId = toast.loading(t("workspace.settings.billing.upgrade_checkout_pending"));
     const billingUrl = `/organizations/${organizationId}/settings/billing`;
 
-    // Once the plan is confirmed in our DB, a full reload is the only reliable way to render it
-    // (router.refresh() did not consistently refetch the billing snapshot). Hand the toast across it.
+    // A full reload is the only reliable way to render the confirmed plan (router.refresh() doesn't
+    // consistently refetch the billing snapshot); hand the toast across it.
     const reloadWithToast = (plan: Exclude<TStandardPlan, "hobby"> | null) => {
       if (globalThis.window === undefined) return;
       globalThis.window.sessionStorage.setItem(
@@ -592,6 +641,7 @@ export const PricingTable = ({
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_workspaces") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_rbac") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_quota") },
+          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_workflows") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_feedback") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_semantic_analysis") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_security") },
@@ -624,25 +674,6 @@ export const PricingTable = ({
     }
 
     toast.error(t("common.something_went_wrong_please_try_again"));
-  };
-
-  const openTrialPaymentCheckout = async () => {
-    try {
-      persistOrganizationId();
-      const response = await createTrialPaymentCheckoutAction({ organizationId });
-      if (response?.serverError) {
-        toast.error(getActionErrorMessage(response.serverError, t));
-        return;
-      }
-      if (response?.data && typeof response.data === "string") {
-        navigateToExternalUrl(response.data);
-        return;
-      }
-      toast.error(t("common.something_went_wrong_please_try_again"));
-    } catch (error) {
-      console.error("Failed to create setup checkout session:", error);
-      toast.error(t("common.something_went_wrong_please_try_again"));
-    }
   };
 
   const openUpgradeCheckout = async (
@@ -740,14 +771,6 @@ export const PricingTable = ({
 
     try {
       if (!hasPaymentMethod && plan !== "hobby") {
-        if (
-          isTrialingWithoutPayment &&
-          isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval)
-        ) {
-          await openTrialPaymentCheckout();
-          return;
-        }
-
         await redirectToPlanCheckout(plan, interval);
         return;
       }
@@ -758,7 +781,7 @@ export const PricingTable = ({
           interval,
           currentCloudPlan,
           currentBillingInterval,
-          isTrialingWithoutPayment,
+          isTrialing,
           pendingChange
         )
       ) {
@@ -790,7 +813,15 @@ export const PricingTable = ({
           return;
         }
         if (response.data.mode === "immediate") {
+          // Force-sync until the converted plan lands, then hand the success toast across a full
+          // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
+          // plan" would keep showing the trial until a manual refresh.
           await waitForBillingPlanAction({ organizationId, targetPlan: plan });
+          if (globalThis.window !== undefined) {
+            globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
+            globalThis.window.location.reload();
+            return;
+          }
         }
       }
 
@@ -804,39 +835,113 @@ export const PricingTable = ({
     }
   };
 
-  // True only for the in-place upgrade that charges the card immediately (the path with no prior confirmation).
-  const willChargeImmediately = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
-    hasPaymentMethod &&
-    plan !== "hobby" &&
-    currentPlanLevel !== null &&
-    STANDARD_PLAN_LEVEL[plan] > currentPlanLevel &&
-    !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval) &&
-    !canCancelCurrentPaidPlanAtPeriodEnd(
-      plan,
-      interval,
-      currentCloudPlan,
-      currentBillingInterval,
-      isTrialingWithoutPayment,
-      pendingChange
+  // True for any card-on-file path that bills immediately (goes behind the confirm modal): a tier
+  // upgrade, or a trial conversion to any paid plan (ends the trial and charges now).
+  const willChargeImmediately = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean => {
+    if (plan === "hobby" || !hasPaymentMethod) return false;
+    if (isTrialingWithPayment) return true;
+    return (
+      currentPlanLevel !== null &&
+      STANDARD_PLAN_LEVEL[plan] > currentPlanLevel &&
+      !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval) &&
+      !canCancelCurrentPaidPlanAtPeriodEnd(
+        plan,
+        interval,
+        currentCloudPlan,
+        currentBillingInterval,
+        isTrialing,
+        pendingChange
+      )
     );
+  };
 
-  // Gate the immediate-charge upgrade behind a confirmation modal; everything else runs as before.
+  // A no-card trial upgrading to a different paid plan adds a card and is charged immediately, so it
+  // must go behind the same confirm modal. Continuing the same trial plan only saves a card (billed
+  // at trial_end, not now), so it's intentionally excluded.
+  const willChargeAfterAddingCard = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
+    isTrialingWithoutPayment &&
+    plan !== "hobby" &&
+    !isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
+
+  // The Pro-trial "continue" choice: on the plan currently trialed, pick between paying the full
+  // price now (unlock immediately) or keeping the free trial.
+  const isProTrialContinue = (plan: TStandardPlan, interval: TCloudBillingInterval): boolean =>
+    isTrialing &&
+    plan !== "hobby" &&
+    isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
+
+  const openConfirmation = (
+    plan: Exclude<TStandardPlan, "hobby">,
+    interval: TCloudBillingInterval,
+    mode: "upgrade" | "trial-continue"
+  ) => {
+    setUpgradeConfirmation({ plan, interval, mode });
+    // Fetch the full charge to show — every conversion and upgrade is billed at full price.
+    setUpgradePreview(null);
+    setIsLoadingUpgradePreview(true);
+    const requestId = ++previewRequestRef.current;
+    getUpgradeChargePreviewAction({
+      organizationId,
+      targetPlan: plan,
+      targetInterval: interval,
+    })
+      .then((response) => {
+        if (previewRequestRef.current !== requestId) return;
+        setUpgradePreview(response?.data ?? null);
+      })
+      .catch(() => {
+        if (previewRequestRef.current !== requestId) return;
+        setUpgradePreview(null);
+      })
+      .finally(() => {
+        if (previewRequestRef.current !== requestId) return;
+        setIsLoadingUpgradePreview(false);
+      });
+  };
+
+  // Gate any charge-now action behind a confirmation modal; everything else runs as before.
   const requestPlanAction = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
-    if (plan !== "hobby" && willChargeImmediately(plan, interval)) {
-      setUpgradeConfirmation({ plan, interval });
-      // Fetch the prorated charge to show in the modal. On failure we fall back to the generic copy.
-      setUpgradePreview(null);
-      setIsLoadingUpgradePreview(true);
-      getUpgradeChargePreviewAction({ organizationId, targetPlan: plan, targetInterval: interval })
-        .then((response) => setUpgradePreview(response?.data ?? null))
-        .catch(() => setUpgradePreview(null))
-        .finally(() => setIsLoadingUpgradePreview(false));
+    if (plan === "hobby") {
+      // Returning to Hobby from a Pro trial switches immediately — confirm before ending the trial.
+      // A paid plan just schedules the downgrade for period end, so it needs no dialog.
+      if (isTrialing) {
+        setIsHobbyDowngradeConfirmOpen(true);
+        return;
+      }
+      void handlePlanAction(plan, interval);
+      return;
+    }
+    // The two-option "pay now or keep the trial" modal is only for a trial WITHOUT a card yet. Once
+    // a card is on file, "Upgrade now" is a normal full-price confirm (below).
+    if (isProTrialContinue(plan, interval) && !hasPaymentMethod) {
+      openConfirmation(plan, interval, "trial-continue");
+      return;
+    }
+    if (willChargeImmediately(plan, interval) || willChargeAfterAddingCard(plan, interval)) {
+      openConfirmation(plan, interval, "upgrade");
       return;
     }
     void handlePlanAction(plan, interval);
   };
 
+  // Primary action of the trial-continue modal: pay the full price now and convert to paid. Both
+  // branches mark the CTA pending before dispatching — the no-card branch skips handlePlanAction
+  // (which owns that state) and would otherwise look idle during the Checkout round-trip, inviting a
+  // double-click.
+  const handleTrialPayNow = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) => {
+    if (hasPaymentMethod) {
+      void handlePlanAction(plan, interval); // card on file -> convert immediately
+      return;
+    }
+    setIsPlanActionPending(`${plan}-${interval}`);
+    // add card -> applySetupCheckoutUpgrade converts. On success the tab is already navigating to
+    // Stripe, so what matters is that the error path re-enables the CTA.
+    void redirectToPlanCheckout(plan, interval).finally(() => setIsPlanActionPending(null));
+  };
+
   const closeUpgradeConfirmation = () => {
+    // Invalidate any in-flight preview so its resolution can't repopulate a just-closed modal.
+    previewRequestRef.current += 1;
     setUpgradeConfirmation(null);
     setUpgradePreview(null);
     setIsLoadingUpgradePreview(false);
@@ -873,20 +978,24 @@ export const PricingTable = ({
       currentBillingInterval
     );
 
-    if (isCurrentSelection && isTrialingWithoutPayment) return "continue_with_plan_after_trial";
+    if (isCurrentSelection && isTrialingWithoutPayment) return "unlock_all_plan_features";
     if (isTrialingWithoutPayment && plan === "hobby") return "downgrade_to_hobby";
+    // Trial + card: any paid plan converts the trial and charges now (even the trialed plan itself),
+    // so it reads as an upgrade rather than "current plan".
+    if (isTrialingWithPayment && plan !== "hobby") return "upgrade_now";
     if (
       canCancelCurrentPaidPlanAtPeriodEnd(
         plan,
         interval,
         currentCloudPlan,
         currentBillingInterval,
-        isTrialingWithoutPayment,
+        isTrialing,
         pendingChange
       )
     )
       return "cancel_at_period_end";
-    if (isCurrentSelection && pendingChange?.targetPlan === "hobby") return "pending_plan_cta";
+    // The current plan stays "Current plan" even while a downgrade is scheduled — only the pending
+    // TARGET card (matched by isPendingSelection below) shows "Scheduled". The banner handles undo.
     if (isCurrentSelection) return "current_plan_cta";
     const isPendingSelection =
       pendingChange?.targetPlan === plan && (plan === "hobby" || pendingChange.targetInterval === interval);
@@ -905,11 +1014,19 @@ export const PricingTable = ({
     );
 
     if (isCurrentSelection && isTrialingWithoutPayment) {
-      return t("workspace.settings.billing.continue_with_plan_after_trial");
+      // Clicking this pays the full plan price now and unlocks the features excluded from the trial
+      // (follow-ups, custom links) — so it's "unlock all Pro features", not "continue after trial".
+      return t("workspace.settings.billing.unlock_all_plan_features", {
+        plan: getCurrentCloudPlanLabel(plan, t),
+      });
     }
 
     if (isTrialingWithoutPayment && plan === "hobby") {
       return t("workspace.settings.billing.downgrade_to_hobby");
+    }
+
+    if (isTrialingWithPayment && plan !== "hobby") {
+      return t("workspace.settings.billing.upgrade_now");
     }
 
     if (
@@ -918,15 +1035,11 @@ export const PricingTable = ({
         interval,
         currentCloudPlan,
         currentBillingInterval,
-        isTrialingWithoutPayment,
+        isTrialing,
         pendingChange
       )
     ) {
       return t("workspace.settings.billing.cancel_at_period_end");
-    }
-
-    if (isCurrentSelection && pendingChange?.targetPlan === "hobby") {
-      return t("workspace.settings.billing.pending_plan_cta");
     }
 
     if (isCurrentSelection) {
@@ -952,9 +1065,15 @@ export const PricingTable = ({
       : t("workspace.settings.billing.switch_at_period_end");
   };
 
+  // List price for the plan/interval being confirmed, straight from the catalog — NOT from the
+  // rendered planCards, which are built from the interval TOGGLE (selectedInterval) and miss
+  // (interpolating "") when the modal's interval differs from the toggle.
+  const getCatalogPlanAmount = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) =>
+    formatMoney(billingCatalog[plan][interval].currency, billingCatalog[plan][interval].unitAmount, locale);
+
   // Upgrade modal body: calculating placeholder, real prorated charge once previewed, or generic fallback.
   const getUpgradeConfirmationBody = () => {
-    if (!upgradeConfirmation) return "";
+    if (!upgradeConfirmation) return null;
     const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
     const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
 
@@ -962,6 +1081,11 @@ export const PricingTable = ({
       return t("workspace.settings.billing.confirm_upgrade_calculating");
     }
 
+    const planCardAmount = getCatalogPlanAmount(upgradeConfirmation.plan, upgradeConfirmation.interval);
+
+    // Deliberately period-neutral ("charged {chargeNow} now"): the same modal covers a mid-cycle
+    // proration (ordinary upgrade) and a full fresh period (trial conversion). The old "rest of your
+    // billing period" wording was false for trial conversions on a payment-consent screen.
     if (upgradePreview) {
       return t("workspace.settings.billing.confirm_upgrade_body_with_charge", {
         plan,
@@ -970,15 +1094,53 @@ export const PricingTable = ({
       });
     }
 
-    const amount =
-      planCards.find(
-        (card) => card.plan === upgradeConfirmation.plan && card.interval === upgradeConfirmation.interval
-      )?.amount ?? "";
-    return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount, period });
+    return t("workspace.settings.billing.confirm_upgrade_body", { plan, amount: planCardAmount, period });
   };
 
-  // Plan columns for the comparison table (test variant), reusing the same CTA state as the cards.
-  // Shared CTA/plan-state derivation used by both the comparison table and the card grid.
+  // Primary button label for the trial-continue modal ("Pay $X now"); falls back while previewing.
+  const getTrialContinuePayNowLabel = () => {
+    if (upgradePreview && !isLoadingUpgradePreview) {
+      return t("workspace.settings.billing.confirm_trial_continue_pay_now", {
+        chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+      });
+    }
+    return t("workspace.settings.billing.confirm_trial_continue_pay_now_generic");
+  };
+
+  // Trial-continue modal body, rendered via <Trans> so key words can be bold. Whitespace-pre-line on
+  // the modal's <div> turns the \n\n into paragraph breaks between the two bullet options.
+  const renderTrialContinueBody = () => {
+    if (!upgradeConfirmation) return null;
+    if (isLoadingUpgradePreview) return t("workspace.settings.billing.confirm_upgrade_calculating");
+
+    const plan = getCurrentCloudPlanLabel(upgradeConfirmation.plan, t);
+    const period = getPlanPeriodLabel(upgradeConfirmation.plan, upgradeConfirmation.interval, t);
+    const fullPrice = getCatalogPlanAmount(upgradeConfirmation.plan, upgradeConfirmation.interval);
+
+    if (upgradePreview) {
+      return (
+        <Trans
+          i18nKey="workspace.settings.billing.confirm_trial_continue_body"
+          values={{
+            plan,
+            period,
+            fullPrice,
+            chargeNow: formatMoney(upgradePreview.currency, upgradePreview.amountDue, locale),
+          }}
+          components={{ b: <b /> }}
+        />
+      );
+    }
+    return (
+      <Trans
+        i18nKey="workspace.settings.billing.confirm_trial_continue_body_fallback"
+        values={{ plan, period, fullPrice }}
+        components={{ b: <b /> }}
+      />
+    );
+  };
+
+  // Shared CTA/plan-state derivation, reused by both the comparison table and the card grid.
   const getPlanCtaState = (planCard: TPlanCardData) => {
     const isCurrentSelection = isCurrentPlanSelection(
       planCard.plan,
@@ -994,7 +1156,7 @@ export const PricingTable = ({
       planCard.interval,
       currentCloudPlan,
       currentBillingInterval,
-      isTrialingWithoutPayment,
+      isTrialing,
       pendingChange
     );
     const isSwitchAtPeriodEndCtaForCard = isSwitchAtPeriodEndCta(
@@ -1010,7 +1172,9 @@ export const PricingTable = ({
     const isSecondaryPlanCta = isCancelAtPeriodEndCta || isSwitchAtPeriodEndCtaForCard;
     const isDisabled =
       !hasBillingRights ||
-      (isCurrentSelection && !isTrialingWithoutPayment && !isCancelAtPeriodEndCta) ||
+      // A current-selection button is inert only when genuinely the active plan — during a trial
+      // (with or without a card) the trialed plan stays actionable, opening the pay-now-or-keep-trial choice.
+      (isCurrentSelection && !isTrialing && !isCancelAtPeriodEndCta) ||
       isPendingSelection ||
       isStripeSetupIncomplete;
 
@@ -1138,23 +1302,24 @@ export const PricingTable = ({
   return (
     <main>
       <div className="flex max-w-6xl flex-col gap-4">
-        {trialDaysRemaining !== null &&
-          (hasPaymentMethod ? (
-            <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod className="max-w-5xl">
-              <AlertDescription>
-                {t("workspace.settings.billing.trial_payment_method_added_description")}
-              </AlertDescription>
-            </TrialAlert>
-          ) : (
-            <TrialAlert trialDaysRemaining={trialDaysRemaining} className="max-w-5xl">
-              <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
-              {hasBillingRights && (
-                <AlertButton onClick={() => void openTrialPaymentCheckout()}>
-                  {t("workspace.settings.billing.continue_with_plan_after_trial")}
-                </AlertButton>
-              )}
-            </TrialAlert>
-          ))}
+        {trialDaysRemaining !== null && (
+          // One banner for every trial, card on file or not: features stay locked until paid, so the
+          // only action is the pay-now confirm modal. Routed through requestPlanAction so the banner
+          // picks the SAME modal mode as the plan card CTA (trial-continue without a card, upgrade
+          // confirm with one) — identical payment-consent copy for the same conversion. The old
+          // card-backed "You're all set, continues automatically" variant contradicted that model.
+          <TrialAlert trialDaysRemaining={trialDaysRemaining} className="max-w-5xl">
+            <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
+            {hasBillingRights && trialedPaidPlan && (
+              <AlertButton
+                onClick={() => requestPlanAction(trialedPaidPlan, currentBillingInterval ?? "monthly")}>
+                {t("workspace.settings.billing.unlock_all_plan_features", {
+                  plan: getCurrentCloudPlanLabel(trialedPaidPlan, t),
+                })}
+              </AlertButton>
+            )}
+          </TrialAlert>
+        )}
 
         {pendingChange && (
           <Alert variant="info" className="max-w-5xl" role="status">
@@ -1334,7 +1499,31 @@ export const PricingTable = ({
         )}
       </div>
 
-      {upgradeConfirmation && (
+      {upgradeConfirmation?.mode === "trial-continue" && (
+        <ConfirmationModal
+          open
+          setOpen={(value) => {
+            if (!value) closeUpgradeConfirmation();
+          }}
+          title={t("workspace.settings.billing.confirm_trial_continue_title", {
+            plan: getCurrentCloudPlanLabel(upgradeConfirmation.plan, t),
+          })}
+          description={t("workspace.settings.billing.confirm_trial_continue_description")}
+          body={renderTrialContinueBody()}
+          buttonText={getTrialContinuePayNowLabel()}
+          buttonVariant="default"
+          buttonLoading={isLoadingUpgradePreview}
+          isButtonDisabled={isLoadingUpgradePreview}
+          cancelButtonText={t("common.cancel")}
+          onConfirm={() => {
+            const { plan, interval } = upgradeConfirmation;
+            closeUpgradeConfirmation();
+            handleTrialPayNow(plan, interval);
+          }}
+        />
+      )}
+
+      {upgradeConfirmation?.mode === "upgrade" && (
         <ConfirmationModal
           open
           setOpen={(value) => {
@@ -1352,6 +1541,27 @@ export const PricingTable = ({
             const { plan, interval } = upgradeConfirmation;
             closeUpgradeConfirmation();
             void handlePlanAction(plan, interval);
+          }}
+        />
+      )}
+
+      {isHobbyDowngradeConfirmOpen && (
+        <ConfirmationModal
+          open
+          setOpen={(value) => {
+            if (!value) setIsHobbyDowngradeConfirmOpen(false);
+          }}
+          title={t("workspace.settings.billing.confirm_hobby_downgrade_title")}
+          description={t("workspace.settings.billing.confirm_hobby_downgrade_description")}
+          body={t("workspace.settings.billing.confirm_hobby_downgrade_body", {
+            plan: getCurrentCloudPlanLabel(currentCloudPlan, t),
+          })}
+          buttonText={t("workspace.settings.billing.downgrade_to_hobby")}
+          buttonVariant="destructive"
+          cancelButtonText={t("common.cancel")}
+          onConfirm={() => {
+            setIsHobbyDowngradeConfirmOpen(false);
+            void handlePlanAction("hobby", "monthly");
           }}
         />
       )}

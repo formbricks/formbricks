@@ -1,0 +1,23 @@
+type: object
+description: >
+  Partial workflow update. `name` and `description` are accepted in any state
+  except
+
+  `archived`; `definition` is only accepted while the workflow is `draft` or
+  `disabled`.
+
+  `status` is intentionally not patchable — use the lifecycle endpoints.
+minProperties: 1
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+  description:
+    type:
+      - string
+      - 'null'
+    maxLength: 500
+  definition:
+    $ref: ./WorkflowDefinition.yml
+additionalProperties: false

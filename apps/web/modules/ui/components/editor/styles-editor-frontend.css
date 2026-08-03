@@ -39,20 +39,45 @@
   margin-bottom: 20px !important;
 }
 
+/*
+ * One list model for every surface: the survey runtime injects this stylesheet as well
+ * (packages/surveys/src/lib/styles.ts), so a list looks the same in the editor, in the preview and
+ * for the respondent. Every level — the first one included — advances by exactly the list's own
+ * 1.5em padding; the items themselves add no horizontal offset.
+ */
+.fb-editor-list-ul,
+.fb-editor-list-ol {
+  list-style-position: outside !important;
+  margin-block: 0 12px !important;
+  padding-inline-start: 1.5em !important;
+}
+
 .fb-editor-list-ul {
-  margin-bottom: 12px !important;
+  list-style-type: disc !important;
 }
 
 .fb-editor-list-ol {
-  margin-bottom: 12px !important;
+  list-style-type: decimal !important;
 }
 
 .fb-editor-listitem {
-  margin: 0px 32px !important;
+  margin: 0 !important;
 }
 
+/*
+ * Lexical wraps a nested list in a structural <li> that carries no text of its own, so it must not
+ * show a marker. Source of truth for the class: lib/example-theme.ts -> list.nested.listitem.
+ */
 .fb-editor-nested-listitem {
   list-style-type: none !important;
+}
+
+/* Only the outermost list keeps the trailing gap; nesting adds no vertical space. */
+.fb-editor-list-ul .fb-editor-list-ul,
+.fb-editor-list-ul .fb-editor-list-ol,
+.fb-editor-list-ol .fb-editor-list-ul,
+.fb-editor-list-ol .fb-editor-list-ol {
+  margin-block: 0 !important;
 }
 
 .fb-editor-rtl {

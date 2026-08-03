@@ -27,10 +27,36 @@ process.env.PASSWORD_HIBP_CHECK_DISABLED ??= "1";
 // server-only is a Next.js build guard; no-op it under vitest.
 vi.mock("server-only", () => ({}));
 
-// Capture transactional emails instead of sending via SMTP.
+// Capture transactional emails instead of sending via SMTP. These resolve `true` because the real
+// senders return Promise<boolean> and a FALSY result means "not sent" — auth.ts treats that as a send
+// failure (ENG-2091), so a mock resolving undefined would fake an outage.
+//
+// Keep this the ONE place the module is mocked for integration tests. A per-file `vi.mock` of the same
+// module replaces this wholesale, so an incomplete copy silently drops senders or gets their return
+// type wrong — which is exactly how the undefined-vs-boolean bug above got in. Add senders here.
 vi.mock("@/modules/email", () => ({
-  sendVerificationLinkEmail: vi.fn(async () => undefined),
-  sendPasswordResetLinkEmail: vi.fn(async () => undefined),
-  sendPasswordResetNotifyEmail: vi.fn(async () => undefined),
-  sendDeleteAccountConfirmationEmail: vi.fn(async () => undefined),
+  sendVerificationLinkEmail: vi.fn(async () => true),
+  sendPasswordResetLinkEmail: vi.fn(async () => true),
+  sendPasswordResetNotifyEmail: vi.fn(async () => true),
+  sendDeleteAccountConfirmationEmail: vi.fn(async () => true),
+  sendInviteAcceptedEmail: vi.fn(async () => undefined), // returns void, not boolean
+}));
+
+/**
+ * Analytics: stub only the exports that would do network I/O, and spread the rest so PURE helpers keep
+ * their real behaviour — `getEmailDomain` computes a property value, and stubbing it to `undefined`
+ * would quietly change what the code under test captures rather than just silencing a send.
+ *
+ * Spreading the real module is safe here: `posthogServerClient` is `null` without POSTHOG_KEY, and
+ * `server-only` is no-op'd above.
+ *
+ * Same rule as the mailer above — keep this the ONE place the module is mocked. Five integration files
+ * each had their own partial factory listing exports by hand, so when #8605 added `getEmailDomain` they
+ * all failed with "No export is defined on the mock". A spread cannot drift that way.
+ */
+vi.mock("@/lib/posthog", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/posthog")>()),
+  capturePostHogEvent: vi.fn(),
+  identifyPostHogPerson: vi.fn(),
+  groupIdentifyPostHog: vi.fn(),
 }));

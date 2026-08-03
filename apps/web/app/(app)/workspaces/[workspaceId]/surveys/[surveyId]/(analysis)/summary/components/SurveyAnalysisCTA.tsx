@@ -305,10 +305,13 @@ export const SurveyAnalysisCTA = ({
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
           isLoading={loading}
-          primaryButtonAction={() => duplicateSurveyAndRoute(survey.id)}
-          primaryButtonText={t("workspace.surveys.edit.caution_edit_duplicate")}
-          secondaryButtonAction={() => router.push(`/workspaces/${workspace?.id}/surveys/${survey.id}/edit`)}
-          secondaryButtonText={t("common.edit")}
+          primaryButtonAction={async () => {
+            setIsCautionDialogOpen(false);
+            router.push(`/workspaces/${workspace?.id}/surveys/${survey.id}/edit`);
+          }}
+          primaryButtonText={t("common.edit")}
+          secondaryButtonAction={() => duplicateSurveyAndRoute(survey.id)}
+          secondaryButtonText={t("workspace.surveys.edit.caution_edit_duplicate")}
         />
       )}
 

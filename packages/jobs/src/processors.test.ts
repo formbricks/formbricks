@@ -27,6 +27,7 @@ describe("@formbricks/jobs processor registry", () => {
     expect(getJobProcessor(JOB_NAMES.testLog)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.responsePipeline)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.surveyScheduling)).toBeDefined();
+    expect(getJobProcessor(JOB_NAMES.workflowRun)).toBeDefined();
     expect(getBackgroundJobDefinition(JOB_NAMES.testLog)).toBeDefined();
   });
 
@@ -91,6 +92,34 @@ describe("@formbricks/jobs processor registry", () => {
         surveyId: "cm8cmpnjj000108jfdr9dfqe7",
       }),
       "BullMQ response pipeline processor override is not registered"
+    );
+  });
+
+  test("fails fast for the unimplemented workflow run processor", async () => {
+    await expect(
+      processJob({
+        attemptsMade: 0,
+        data: {
+          workflowRunId: "cm8cmpnjj000108jfdr9wrun1",
+          workflowId: "cm8cmpnjj000108jfdr9wflo1",
+          workspaceId: "cm8cmpnjj000108jfdr9wksp1",
+        },
+        id: "job-wf",
+        name: JOB_NAMES.workflowRun,
+        opts: { attempts: 1 },
+        queueName: "background-jobs",
+      } as never)
+    ).rejects.toThrow("BullMQ workflow run processor override missing");
+
+    expect(mockError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workflowRunId: "cm8cmpnjj000108jfdr9wrun1",
+        workflowId: "cm8cmpnjj000108jfdr9wflo1",
+        workspaceId: "cm8cmpnjj000108jfdr9wksp1",
+        jobId: "job-wf",
+        jobName: JOB_NAMES.workflowRun,
+      }),
+      "BullMQ workflow run processor override is not registered"
     );
   });
 

@@ -72,7 +72,7 @@ export const LoginForm = ({
   inviteToken,
   resolvedCallbackPath,
   resolvedCallbackUrl,
-}: LoginFormProps) => {
+}: Readonly<LoginFormProps>) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);

@@ -1,0 +1,28 @@
+type: object
+required:
+  - id
+  - source
+  - target
+properties:
+  id:
+    type: string
+    minLength: 1
+  source:
+    type: string
+    minLength: 1
+    description: Node id the edge starts from.
+  target:
+    type: string
+    minLength: 1
+    description: Node id the edge points to.
+  sourceHandle:
+    type: string
+    minLength: 1
+    description: >-
+      Builder handle identifier on the source node. Reserved for branch nodes
+      (`then`/`else`) in future scopes.
+  targetHandle:
+    type: string
+    minLength: 1
+    description: Builder handle identifier on the target node.
+additionalProperties: false
