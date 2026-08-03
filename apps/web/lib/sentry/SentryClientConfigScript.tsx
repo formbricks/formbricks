@@ -1,8 +1,8 @@
+import { IS_PRODUCTION, SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE } from "@/lib/constants";
 import {
   SENTRY_CLIENT_RUNTIME_CONFIG_KEY,
   type TSentryClientRuntimeConfig,
-} from "@/app/sentry/client-runtime-config";
-import { IS_PRODUCTION, SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE } from "@/lib/constants";
+} from "@/lib/sentry/client-runtime-config";
 
 /**
  * Serialises the server-only Sentry env vars into the document so `instrumentation-client.ts` can

@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import React from "react";
 import { NoScriptWarning } from "@/app/components/NoScriptWarning";
-import { SentryClientConfigScript } from "@/app/sentry/SentryClientConfigScript";
 import { DEFAULT_LOCALE } from "@/lib/constants";
+import { SentryClientConfigScript } from "@/lib/sentry/SentryClientConfigScript";
 import { I18nProvider } from "@/lingodotdev/client";
 import { getLocale } from "@/lingodotdev/language";
 import "../modules/ui/globals.css";

@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import {
   SENTRY_CLIENT_RUNTIME_CONFIG_KEY,
   type TSentryClientRuntimeConfig,
-} from "@/app/sentry/client-runtime-config";
+} from "@/lib/sentry/client-runtime-config";
 
 let hasInitialized = false;
 

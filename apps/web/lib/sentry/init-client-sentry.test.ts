@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { SENTRY_CLIENT_RUNTIME_CONFIG_KEY } from "@/app/sentry/client-runtime-config";
+import { SENTRY_CLIENT_RUNTIME_CONFIG_KEY } from "@/lib/sentry/client-runtime-config";
 
 const mockInit = vi.hoisted(() => vi.fn());
 const mockReplayIntegration = vi.hoisted(() => vi.fn(() => ({ name: "Replay" })));
@@ -12,7 +12,7 @@ vi.mock("@sentry/nextjs", () => ({
 const CONFIG = { dsn: "https://key@sentry.example.com/1", release: "1.2.3", environment: "production" };
 
 const importInit = async () => {
-  const { initClientSentryFromRuntimeConfig } = await import("@/app/sentry/init-client-sentry");
+  const { initClientSentryFromRuntimeConfig } = await import("@/lib/sentry/init-client-sentry");
   return initClientSentryFromRuntimeConfig;
 };
 

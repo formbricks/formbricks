@@ -2,7 +2,7 @@
 // hydration, so module-evaluation, hydration and early-navigation errors are captured. Replaces the
 // former `SentryProvider` `useEffect`, which only started Sentry after hydration (ENG-1686).
 import * as Sentry from "@sentry/nextjs";
-import { initClientSentryFromRuntimeConfig } from "@/app/sentry/init-client-sentry";
+import { initClientSentryFromRuntimeConfig } from "@/lib/sentry/init-client-sentry";
 
 initClientSentryFromRuntimeConfig();
 
