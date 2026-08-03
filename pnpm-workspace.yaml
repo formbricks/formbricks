@@ -125,14 +125,17 @@ overrides:
   # and @2 closes both. That is a dependency change needing its own lockfile and test run, so it is
   # deferred to a follow-up PR rather than folded into an audit-comment sweep. Until then the residual
   # risk stays acceptable — but NOT for the "devDependency-only" reason this note used to give, which was
-  # wrong. Both lines reach brace-expansion via minimatch, and the 2.x line does so through production
-  # chains as well: `googleapis` and `@boxyhq/saml-jackson` (both apps/web `dependencies`, via
-  # gaxios>rimraf>glob and typeorm>glob) and `@ai-sdk/google-vertex` (a packages/ai `dependency`). Only
-  # the 1.x line is dev-tooling-only (eslint, prettier plugins, @redocly/cli, and node-gyp under
-  # typeorm's sqlite3); the bulk of the 2.x line is vite-plugin-dts>@vue/language-core across several
-  # workspace packages. What makes it tolerable is the input, not the dependency type: every one of these
-  # call sites expands glob patterns supplied by library code or developer config (gaxios' cache cleanup,
-  # typeorm's entity discovery, build and lint globs), never by request data.
+  # wrong. Both lines reach brace-expansion via minimatch, and both are rooted in production chains, not
+  # only dev ones: the 2.x line through `googleapis` and `@boxyhq/saml-jackson` (both apps/web
+  # `dependencies`, via gaxios>rimraf>glob and typeorm>glob) and `@ai-sdk/google-vertex` (a packages/ai
+  # `dependency`); the 1.x line through node-gyp under that same saml-jackson's typeorm>sqlite3.
+  # `pnpm audit` marks both findings `dev: false`. By contributor, the 1.x line is dominated by the
+  # eslint plugin graph (typescript-eslint, @vitest/eslint-plugin, eslint-config-next, the storybook
+  # eslint plugins) and the 2.x line by vite-plugin-dts>@vue/language-core across several workspace
+  # packages, with @redocly/cli and the prettier plugins mostly on the 2.x side.
+  # What makes it tolerable is the input, not the dependency type: every one of these call sites expands
+  # glob patterns supplied by library code or developer config (gaxios' cache cleanup, typeorm's entity
+  # discovery, build and lint globs), never by request data.
   # === Accepted risk, no override possible yet (pnpm audit will keep flagging this) ===
   # ENG-1703 / GHSA-p2fr-6hmx-4528 (Dependabot alerts #612 and #613, both dismissed as tolerable risk;
   # the ticket is closed Done with the same conclusion as here). Re-verified 2026-08-03.
