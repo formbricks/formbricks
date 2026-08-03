@@ -9,8 +9,23 @@ keep it short enough to grasp without opening files. -->
 
 ## Linear ticket
 
-<!-- Paste the full Linear ticket URL (e.g. https://linear.app/formbricks/issue/ENG-1234/…) so it
-auto-links. No ticket? Say why. Closing a GitHub issue? Add "Fixes #123". -->
+<!-- A bare ticket URL does NOT link the PR. Linear only links when a magic word comes BEFORE the
+issue ID or URL, so replace the line below with one of:
+
+    Fixes ENG-1234
+    Fixes https://linear.app/formbricks/issue/ENG-1234/some-slug
+
+Closing magic words (`fix`/`fixes`/`closes`/`resolves`/`completes`/`implements`) move the ticket to
+its merge status when this PR merges — use these for the normal case. Use a non-closing word
+(`ref`/`refs`/`part of`/`related to`) when the PR only partially addresses the ticket and it should
+stay open. Several tickets: `Fixes ENG-1234, ENG-5678`.
+
+Putting the issue ID in the branch name or the PR title links the PR too (copy the branch name from
+Linear with Cmd/Ctrl+Shift+.), so magic words here are what to rely on when the branch name has no ID.
+
+No ticket? Delete the line and say why. Closing a GitHub issue as well? Add "Fixes #123". -->
+
+Fixes ENG-
 
 ## How this was tested
 
