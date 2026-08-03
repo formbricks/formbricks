@@ -15,13 +15,19 @@ issue ID or URL, so replace the line below with one of:
     Fixes ENG-1234
     Fixes https://linear.app/formbricks/issue/ENG-1234/some-slug
 
-Closing magic words (`fix`/`fixes`/`closes`/`resolves`/`completes`/`implements`) move the ticket to
-its merge status when this PR merges — use these for the normal case. Use a non-closing word
-(`ref`/`refs`/`part of`/`related to`) when the PR only partially addresses the ticket and it should
-stay open. Several tickets: `Fixes ENG-1234, ENG-5678`.
+Closing magic words move the ticket to its on-merge status when this PR merges — use one of these for
+the normal case: `close`, `fix`, `resolve`, `complete`, `implement`, in any tense (`fixes`, `fixed`,
+`fixing`, …).
+
+Non-closing magic words still link the PR and still let your team's other automations run (e.g.
+moving the ticket to In Progress when the PR opens); they only skip the on-merge transition. Use one
+when this PR is a partial step: `ref`, `refs`, `references`, `part of`, `related to`, `relates to`,
+`contributes to`, `toward`, `towards`. Several tickets: `Fixes ENG-1234, ENG-5678`.
 
 Putting the issue ID in the branch name or the PR title links the PR too (copy the branch name from
 Linear with Cmd/Ctrl+Shift+.), so magic words here are what to rely on when the branch name has no ID.
+
+Full keyword list and linking rules: https://linear.app/docs/github
 
 No ticket? Delete the line and say why. Closing a GitHub issue as well? Add "Fixes #123". -->
 
