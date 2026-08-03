@@ -122,6 +122,40 @@ overrides:
   # are devDependency-only (eslint, prettier plugins and @redocly/cli, all via minimatch) and never run
   # against untrusted input, so the residual risk is accepted until their consumers move to
   # brace-expansion@5 — a pin cannot close it.
+  # === Accepted risk, no override possible yet (pnpm audit will keep flagging this) ===
+  # ENG-1703 / GHSA-p2fr-6hmx-4528 (Dependabot alerts #612 and #613, both dismissed as tolerable risk;
+  # the ticket is closed Done with the same conclusion as here). Re-verified 2026-08-03.
+  # @better-auth/oauth-provider 1.6.23 (used for the MCP OAuth flow, ENG-1055) fails to bind
+  # access-token audiences to their authorization grant (RFC 8707 resource-indicator confusion) — a
+  # client can complete a normal authorization flow and then request a JWT scoped to a resource server
+  # the authorization never covered. No pin can close it: the whole 1.6.x line is in range (latest is
+  # 1.6.25) and the patch ships only from 1.7.0-beta.4, a line that is still unreleased (currently at
+  # 1.7.0-rc.2).
+  # Why this deployment isn't exposed today — and what that rests on:
+  # - apps/web/modules/auth/lib/mcp-oauth-provider-options.ts sets a single-entry validAudiences (the
+  #   MCP resource URL), so there is no second audience for a client to escalate into. This is the
+  #   load-bearing mitigation, and it holds only while that array stays single-entry.
+  # - apps/web/modules/mcp/auth.ts additionally pins `audience: getMcpResourceUrl()` on the resource
+  #   server's own verifyAccessToken call. That hardens the MCP endpoint but is NOT a substitute for the
+  #   above: the option flows straight into jose's jwtVerify, whose `aud` check is a membership test, so
+  #   a token whose `aud` array also lists other audiences still passes. The advisory's workaround also
+  #   requires rejecting multi-audience tokens, which verifyOptions.audience cannot express — that would
+  #   need an explicit assert on the returned payload. And if a second audience were ever added, the
+  #   party at risk is that other resource server, which our own pin does nothing for.
+  # - Test coverage is uneven: apps/web/modules/mcp/auth.test.ts asserts the audience/issuer pin, so
+  #   that leg is guarded. Single-entry validAudiences is asserted nowhere — that is the assert worth
+  #   adding before anyone touches this config.
+  # Upgrade cost, for whoever picks up 1.7.0: the renames the 1.7 upgrade guide warns about do not apply
+  # to us (migration 20260702093000_add_better_auth_oauth_provider already created `oauthClient`, not
+  # `oauthApplication`, with an `oauthAccessToken.token` column, not `.accessToken`, plus the `sessionId`
+  # that session-bound token validity needs — and we have no SCIM), and customAccessTokenClaims.resource
+  # does not apply either (ours only returns email/name). But there is still real DDL to write:
+  # 1.7.0-rc.2 replaces `validAudiences` with a resources model and declares three tables we do not have
+  # — `oauthResource`, `oauthClientResource` and `oauthClientAssertion`. The bigger blocker is that
+  # @better-auth/oauth-provider@1.7.0-rc.2 declares `better-auth` and `@better-auth/core` as
+  # `^1.7.0-rc.2` peers, making this a coupled auth-core upgrade touching login/2FA/SSO/sessions rather
+  # than a plugin-only bump. That needs its own reviewed PR once Better Auth ships 1.7.0 stable, not an
+  # audit sweep or an unattended dependency-only bump.
 
 autoInstallPeers: true
 linkWorkspacePackages: true
