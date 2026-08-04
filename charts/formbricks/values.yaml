@@ -1030,7 +1030,8 @@ hub:
     waitForApi:
       # Avoid starting workers before the API service is healthy during installs/upgrades.
       enabled: true
-      # 120 attempts * 5 seconds = 10 minutes.
+      # Maximum failed checks before the init container exits. Each health request and the delay
+      # between failed checks are bounded to 5 seconds.
       maxAttempts: 120
 
     resources:
