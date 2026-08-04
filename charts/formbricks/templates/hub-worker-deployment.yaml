@@ -61,7 +61,7 @@ spec:
             - |
               attempts=0
               max_attempts={{ .Values.hub.worker.waitForApi.maxAttempts | default 120 }}
-              until wget --no-verbose --tries=1 --timeout=5 --spider http://{{ include "formbricks.hubname" . }}:8080/health; do
+              until timeout 5 wget --no-verbose --tries=1 --timeout=5 --spider http://{{ include "formbricks.hubname" . }}:8080/health; do
                 attempts=$((attempts+1))
                 if [ "$attempts" -ge "$max_attempts" ]; then
                   echo "Hub API did not become healthy after $max_attempts attempt(s)"
