@@ -2622,6 +2622,7 @@
         "trial_warning_add_payment_method": "Alle Funktionen freischalten",
         "trial_warning_remind_me_later": "Später erinnern",
         "unlimited_responses": "Unbegrenzte Antworten",
+        "unlimited_workflow_runs": "Unbegrenzte Workflow-Ausführungen",
         "unlimited_workspaces": "Unbegrenzte Workspaces",
         "unlock_all_plan_features": "Alle {plan}-Features freischalten",
         "upgrade": "Upgrade",

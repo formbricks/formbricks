@@ -2622,6 +2622,7 @@
         "trial_warning_add_payment_method": "すべての機能をアンロック",
         "trial_warning_remind_me_later": "後で通知",
         "unlimited_responses": "無制限の回答",
+        "unlimited_workflow_runs": "無制限のワークフロー実行",
         "unlimited_workspaces": "無制限ワークスペース",
         "unlock_all_plan_features": "すべての{plan}機能をアンロック",
         "upgrade": "アップグレード",

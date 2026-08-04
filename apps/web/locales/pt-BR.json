@@ -2622,6 +2622,7 @@
         "trial_warning_add_payment_method": "Desbloquear todos os recursos",
         "trial_warning_remind_me_later": "Lembrar mais tarde",
         "unlimited_responses": "Respostas Ilimitadas",
+        "unlimited_workflow_runs": "Execuções de Fluxo de Trabalho Ilimitadas",
         "unlimited_workspaces": "Workspaces Ilimitados",
         "unlock_all_plan_features": "Desbloquear todos os recursos do {plan}",
         "upgrade": "Atualizar",

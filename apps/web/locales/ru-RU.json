@@ -2622,6 +2622,7 @@
         "trial_warning_add_payment_method": "Разблокировать все функции",
         "trial_warning_remind_me_later": "Напомнить позже",
         "unlimited_responses": "Неограниченное количество ответов",
+        "unlimited_workflow_runs": "Неограниченное количество запусков рабочих процессов",
         "unlimited_workspaces": "Неограниченное количество рабочих пространств",
         "unlock_all_plan_features": "Разблокировать все функции тарифа {plan}",
         "upgrade": "Обновить",

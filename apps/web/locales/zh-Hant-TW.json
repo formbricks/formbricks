@@ -2622,6 +2622,7 @@
         "trial_warning_add_payment_method": "解鎖所有功能",
         "trial_warning_remind_me_later": "稍後提醒我",
         "unlimited_responses": "無限回應",
+        "unlimited_workflow_runs": "無限制工作流程執行次數",
         "unlimited_workspaces": "無限工作區",
         "unlock_all_plan_features": "解鎖所有 {plan} 功能",
         "upgrade": "升級",

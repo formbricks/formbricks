@@ -2622,6 +2622,7 @@
         "trial_warning_add_payment_method": "Lås upp alla funktioner",
         "trial_warning_remind_me_later": "Påminn mig senare",
         "unlimited_responses": "Obegränsade svar",
+        "unlimited_workflow_runs": "Obegränsade arbetsflödeskörningar",
         "unlimited_workspaces": "Obegränsat antal arbetsytor",
         "unlock_all_plan_features": "Lås upp alla {plan}-funktioner",
         "upgrade": "Uppgradera",

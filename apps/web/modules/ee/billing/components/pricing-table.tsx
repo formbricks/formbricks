@@ -66,6 +66,7 @@ interface PricingTableProps {
   organization: TOrganization;
   responseCount: number;
   workspaceCount: number;
+  workflowRunCount: number;
   isPlanComparison: boolean;
   usageCycleStart: Date;
   usageCycleEnd: Date;
@@ -237,6 +238,7 @@ export const PricingTable = ({
   organization,
   responseCount,
   workspaceCount,
+  workflowRunCount,
   isPlanComparison,
   usageCycleStart,
   usageCycleEnd,
@@ -308,6 +310,10 @@ export const PricingTable = ({
   })}`;
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
   const workspacesUnlimitedCheck = organization.billing.limits.workspaces === null;
+  // workflowRuns is null on plans that do not include workflows (unlike responses/workspaces, which
+  // exist on every plan). Only surface the usage card when a concrete included volume is set, so we
+  // never render a misleading "unlimited" badge for a plan that has no workflows at all.
+  const workflowRunsLimit = organization.billing.limits.monthly.workflowRuns;
   const trialEndDate = organization.billing.stripe?.trialEnd
     ? new Date(organization.billing.stripe.trialEnd)
     : null;
@@ -1420,6 +1426,16 @@ export const PricingTable = ({
                 {t("workspace.settings.billing.usage_cycle")}: {usageCycleLabel}
               </p>
             </div>
+
+            {workflowRunsLimit !== null && (
+              <UsageCard
+                metric={t("common.workflow_runs")}
+                currentCount={workflowRunCount}
+                limit={workflowRunsLimit}
+                isUnlimited={false}
+                unlimitedLabel={t("workspace.settings.billing.unlimited_workflow_runs")}
+              />
+            )}
 
             <UsageCard
               metric={t("common.workspaces")}
