@@ -1,0 +1,54 @@
+{
+  "edges": [
+    {
+      "id": "trigger-send-email",
+      "source": "trigger",
+      "target": "send-email",
+      "targetHandle": "input"
+    }
+  ],
+  "entryNodeId": "trigger",
+  "nodes": [
+    {
+      "actionType": "send_email",
+      "config": {
+        "attachResponseData": true,
+        "body": "<p>Hi #recall:cm9zr4mps000008l8name/fallback:there#, we received your response.</p>",
+        "from": "noreply@example.com",
+        "includeHiddenFields": true,
+        "includeVariables": true,
+        "replyTo": ["support@example.com"],
+        "subject": "Thanks for your response",
+        "to": "cm9zr4mps000008l8email"
+      },
+      "id": "send-email",
+      "label": "Send thank you email",
+      "type": "action",
+      "ui": {
+        "collapsed": false,
+        "position": {
+          "x": 320,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "schemaVersion": 1,
+  "trigger": {
+    "config": {
+      "endingCardIds": ["cm9zr4q7i000108l84gozfggr"],
+      "surveyId": "cm9zr4mps000008l8btfy1vtz"
+    },
+    "id": "trigger",
+    "label": "Survey response completed",
+    "triggerType": "response.completed",
+    "type": "trigger",
+    "ui": {
+      "collapsed": false,
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  }
+}

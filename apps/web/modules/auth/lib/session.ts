@@ -1,6 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 import { cache } from "react";
+import { prisma } from "@formbricks/database";
 import type { Session } from "@formbricks/types/auth";
 import { auth } from "@/modules/auth/lib/auth";
 
@@ -19,9 +20,32 @@ import { auth } from "@/modules/auth/lib/auth";
  * resolves to `null`: Better Auth deletes the credential session and issues a short-lived
  * two-factor cookie until the code is verified, so no authenticated session exists yet.
  */
+/**
+ * Deactivation must take effect on the *existing* session, not just the next sign-in.
+ *
+ * `rejectInactiveUserOnSessionCreate` only gates session *creation*, and Better Auth serves this
+ * session from Redis secondary storage and a 5-minute signed cookie cache, so neither the session
+ * record nor `result.user` reflects a user who was deactivated after signing in. Without this read a
+ * deactivated user keeps full access — server actions, v3 session routes, storage — for the life of a
+ * rolling 1-day session. `getProxySession` already performs the equivalent check for the middleware.
+ */
+const isUserActive = async (userId: string): Promise<boolean> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true },
+  });
+
+  // A session whose user row is gone is not a session either.
+  return user?.isActive === true;
+};
+
 export const getSession = cache(async (): Promise<Session | null> => {
   const result = await auth.api.getSession({ headers: await headers() });
   if (!result?.user) {
+    return null;
+  }
+
+  if (!(await isUserActive(result.user.id))) {
     return null;
   }
 

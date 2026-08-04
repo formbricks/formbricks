@@ -62,6 +62,7 @@ export const PinScreen = (props: PinScreenProps) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
+  const [pinAuthToken, setPinAuthToken] = useState<string | undefined>();
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
 
@@ -91,6 +92,7 @@ export const PinScreen = (props: PinScreenProps) => {
         const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
         if (response?.data?.survey) {
           setSurvey(response.data.survey);
+          setPinAuthToken(response.data.pinAuthToken ?? undefined);
         } else {
           const errorMessage = getFormattedErrorMessage(response);
           setError(errorMessage);
@@ -149,6 +151,7 @@ export const PinScreen = (props: PinScreenProps) => {
       PRIVACY_URL={PRIVACY_URL}
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      pinAuthToken={pinAuthToken}
     />
   );
 };

@@ -3,6 +3,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
 import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
   ArrowRightLeftIcon,
   CopyIcon,
   EyeIcon,
@@ -28,6 +30,7 @@ import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions"
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
 import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -51,6 +54,8 @@ interface SurveyDropDownMenuProps {
   isReadOnly: boolean;
   deleteSurvey: (surveyId: string) => Promise<void>;
   updateSurveyStatus: (surveyId: string, status: TSurveyStatus) => Promise<void>;
+  archiveSurvey: (surveyId: string) => Promise<void>;
+  restoreSurvey: (surveyId: string) => Promise<void>;
 }
 
 // Non-draft statuses that can be targeted by a status change from the list.
@@ -64,12 +69,16 @@ export const SurveyDropDownMenu = ({
   isReadOnly,
   deleteSurvey,
   updateSurveyStatus,
+  archiveSurvey,
+  restoreSurvey,
 }: Readonly<SurveyDropDownMenuProps>) => {
   const { workspace } = useWorkspace();
 
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isArchiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
@@ -81,11 +90,15 @@ export const SurveyDropDownMenu = ({
 
   const surveyLink = useMemo(() => `${publicDomain}/s/${survey.id}`, [publicDomain, survey.id]);
   const isSingleUseEnabled = survey.singleUse?.enabled ?? false;
+  const isArchived = survey.archivedAt !== null;
   const canManageSurvey = !isSurveyCreationDeletionDisabled;
-  const canPreviewOrCopyLink = survey.type === "link" && survey.status !== "draft";
+  const canPreviewOrCopyLink = !isArchived && survey.type === "link" && survey.status !== "draft";
   // Show the status submenu for non-draft surveys when the user has write access.
-  const canChangeStatus = !isReadOnly && survey.status !== "draft";
-  const hasVisibleActions = canManageSurvey || canPreviewOrCopyLink || canChangeStatus;
+  const canChangeStatus = !isArchived && !isReadOnly && survey.status !== "draft";
+  const isInProgress = survey.status === "inProgress";
+  const hasVisibleActions = isArchived
+    ? canManageSurvey
+    : canManageSurvey || canPreviewOrCopyLink || canChangeStatus;
 
   const getStatusLabel = (t: TFunction, status: TSurveyStatus): string => {
     switch (status) {
@@ -125,6 +138,35 @@ export const SurveyDropDownMenu = ({
       toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.error_deleting_survey")));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleArchiveSurvey = async () => {
+    setIsArchiving(true);
+    const toastId = toast.loading(t("workspace.surveys.archiving_survey"));
+    try {
+      await archiveSurvey(survey.id);
+      toast.success(t("workspace.surveys.survey_archived_successfully"), { id: toastId });
+      setArchiveDialogOpen(false);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.error_archiving_survey")), {
+        id: toastId,
+      });
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleRestoreSurvey = async () => {
+    setIsDropDownOpen(false);
+    const toastId = toast.loading(t("workspace.surveys.restoring_survey"));
+    try {
+      await restoreSurvey(survey.id);
+      toast.success(t("workspace.surveys.survey_restored_successfully"), { id: toastId });
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.error_restoring_survey")), {
+        id: toastId,
+      });
     }
   };
 
@@ -193,7 +235,31 @@ export const SurveyDropDownMenu = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
-            {canManageSurvey && (
+            {isArchived && canManageSurvey && (
+              <DropdownMenuItem
+                data-testid="restore-survey"
+                icon={<ArchiveRestoreIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  void handleRestoreSurvey();
+                }}>
+                {t("workspace.surveys.restore")}
+              </DropdownMenuItem>
+            )}
+            {isArchived && canManageSurvey && (
+              <DropdownMenuItem
+                data-testid="delete-survey-forever"
+                className="text-red-600 focus:text-red-600"
+                icon={<TrashIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setDeleteDialogOpen(true);
+                }}>
+                {t("common.delete")}
+              </DropdownMenuItem>
+            )}
+            {!isArchived && canManageSurvey && (
               <DropdownMenuItem>
                 <Link
                   className="flex w-full items-center"
@@ -204,7 +270,7 @@ export const SurveyDropDownMenu = ({
                 </Link>
               </DropdownMenuItem>
             )}
-            {canManageSurvey && (
+            {!isArchived && canManageSurvey && (
               <DropdownMenuItem>
                 <button
                   type="button"
@@ -251,7 +317,7 @@ export const SurveyDropDownMenu = ({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
-            {canManageSurvey && workspace?.organizationId && (
+            {!isArchived && canManageSurvey && workspace?.organizationId && (
               <DropdownMenuItem
                 data-testid="copy-to-workspace"
                 onSelect={(e) => {
@@ -300,7 +366,7 @@ export const SurveyDropDownMenu = ({
                 </button>
               </DropdownMenuItem>
             )}
-            {canManageSurvey && (
+            {!isArchived && canManageSurvey && (
               <DropdownMenuItem>
                 <button
                   type="button"
@@ -315,6 +381,19 @@ export const SurveyDropDownMenu = ({
                 </button>
               </DropdownMenuItem>
             )}
+            {!isArchived && canManageSurvey && (
+              <DropdownMenuItem
+                data-testid="archive-survey"
+                className="text-red-600 focus:text-red-600"
+                icon={<ArchiveIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setArchiveDialogOpen(true);
+                }}>
+                {t("workspace.surveys.archive")}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -327,6 +406,26 @@ export const SurveyDropDownMenu = ({
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("workspace.surveys.delete_survey_and_responses_warning")}
           isDeleting={loading}
+        />
+      )}
+
+      {!isArchived && canManageSurvey && (
+        <ConfirmationModal
+          open={isArchiveDialogOpen}
+          setOpen={setArchiveDialogOpen}
+          title={t("workspace.surveys.archive_survey")}
+          description={
+            isInProgress
+              ? t("workspace.surveys.archive_survey_description_in_progress")
+              : t("workspace.surveys.archive_survey_description")
+          }
+          body={t("workspace.surveys.archive_survey_warning")}
+          buttonText={isInProgress ? t("workspace.surveys.stop_and_archive") : t("common.archive")}
+          buttonVariant={isInProgress ? "destructive" : "default"}
+          buttonLoading={isArchiving}
+          onConfirm={handleArchiveSurvey}
+          hideCloseButton={isInProgress}
+          closeOnOutsideClick={!isInProgress}
         />
       )}
 

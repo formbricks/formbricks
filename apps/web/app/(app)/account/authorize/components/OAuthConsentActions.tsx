@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { Button } from "@/modules/ui/components/button";
+import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
 
 export const OAuthConsentActions = () => {
   const { t } = useTranslation();
@@ -21,21 +22,14 @@ export const OAuthConsentActions = () => {
         return;
       }
 
-      const redirectUri =
-        response.data &&
-        typeof response.data === "object" &&
-        "redirect_uri" in response.data &&
-        typeof response.data.redirect_uri === "string" &&
-        response.data.redirect_uri.length > 0
-          ? response.data.redirect_uri
-          : null;
-
-      if (!redirectUri) {
+      // Better Auth returns { redirect: true, url } (both accept and deny) — not { redirect_uri }.
+      const redirectUrl = resolveConsentRedirectUrl(response.data);
+      if (!redirectUrl) {
         toast.error(t("auth.oauth.consent_failed"));
         return;
       }
 
-      window.location.href = redirectUri;
+      window.location.href = redirectUrl;
     } catch {
       toast.error(t("auth.oauth.consent_failed"));
     } finally {

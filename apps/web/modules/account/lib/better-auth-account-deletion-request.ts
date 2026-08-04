@@ -3,7 +3,8 @@ import crypto from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import type { TUserLocale } from "@formbricks/types/user";
-import { WEBAPP_URL } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
+import { FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL } from "@/modules/account/constants";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
 import { auth } from "@/modules/auth/lib/auth";
 import { getSession } from "@/modules/auth/lib/session";
@@ -66,7 +67,13 @@ export const requestSsoAccountDeletionEmail = async (): Promise<void> => {
     expiresAt: new Date(Date.now() + DELETE_ACCOUNT_LINK_VALIDITY_MS),
   });
 
-  const deleteLink = `${WEBAPP_URL}/api/auth/delete-user/callback?token=${token}&callbackURL=/`;
+  // Match the credential delete path's post-deletion redirect (DeleteAccountModal): survey on
+  // Formbricks Cloud, /auth/login otherwise. Better Auth's delete-user/callback only accepts
+  // same-origin callbackURLs (trustedOrigins); the survey is served from the Cloud app's own origin,
+  // so it passes there. (It is rejected when WEBAPP_URL differs from the survey origin — e.g. a local
+  // build with the Cloud flag forced on.)
+  const callbackURL = IS_FORMBRICKS_CLOUD ? FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL : "/auth/login";
+  const deleteLink = `${WEBAPP_URL}/api/auth/delete-user/callback?token=${token}&callbackURL=${encodeURIComponent(callbackURL)}`;
 
   await sendDeleteAccountConfirmationEmail({
     email,

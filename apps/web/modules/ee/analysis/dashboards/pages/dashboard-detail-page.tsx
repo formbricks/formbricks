@@ -6,6 +6,7 @@ import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -24,6 +25,7 @@ type TDashboardWidgetWithChart = TDashboardWidget & { chart: NonNullable<TDashbo
 interface WidgetQueryResult {
   data: TChartDataRow[];
   query: TChartQuery;
+  optionLabels?: Record<string, string>;
 }
 
 async function executeWidgetQuery(
@@ -41,15 +43,25 @@ async function executeWidgetQuery(
       userId,
       source: "dashboards.widget",
     });
+
+    // Mirror the chart builder (executeQueryAction): resolve option labels so value_id slices
+    // display human-readable option names. Without this the dashboard renders raw value_ids.
+    const { rewrittenQuery, optionLabels } = await resolveOptionGrouping(query, workspaceId);
+
     const data = await executeTenantScopedQuery({
-      query,
+      query: rewrittenQuery,
       feedbackDirectoryId: tenant.feedbackDirectoryId,
       workspaceId,
       organizationId,
       userId,
       source: "dashboards.widget",
     });
-    return { data: Array.isArray(data) ? data : [], query };
+
+    return {
+      data: Array.isArray(data) ? data : [],
+      query: rewrittenQuery,
+      ...(optionLabels ? { optionLabels } : {}),
+    };
   } catch (error) {
     logger.error(error, "Failed to load dashboard widget data");
     return { error: DASHBOARD_WIDGET_LOAD_ERROR };

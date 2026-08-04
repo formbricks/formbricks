@@ -109,7 +109,6 @@ export const ManageTranslationsModal = ({
       if (!aEmpty && bEmpty) return 1;
       return 0;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [strings, missingFirst]);
 
   // Merge draft translations into localSurvey so that the recall dropdown

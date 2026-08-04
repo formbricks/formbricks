@@ -24,8 +24,14 @@ export const getLocalizedValue = (
   let result = "";
 
   if (isI18nObject(value)) {
-    if (typeof value[languageId] === "string") {
-      result = value[languageId];
+    // An empty (or whitespace-only) localized value means the string was never translated for this
+    // language, so fall back to `default`. This is standard i18n behavior and, critically, keeps
+    // choice-membership validation correct: a survey whose default language is keyed by its real
+    // code (e.g. "en-GB": "") with content still under `default` must resolve to the default label
+    // rather than an empty string, otherwise valid responses are rejected (see ENG-2001).
+    const localized = value[languageId];
+    if (typeof localized === "string" && localized.trim() !== "") {
+      result = localized;
     } else {
       result = value.default;
     }

@@ -85,7 +85,7 @@
 #fbjs [data-variant="description"] ol {
   list-style-position: outside;
   margin: 0.5em 0;
-  padding-left: 1.5em;
+  padding-inline-start: 1.5em;
 }
 #fbjs .htmlbody ul,
 #fbjs [data-variant="headline"] ul,
@@ -102,6 +102,14 @@
 #fbjs [data-variant="description"] li {
   margin: 0.25em 0;
 }
+/*
+ * The rules above are the fallback for list markup without the editor's theme classes. Rich text
+ * authored in the app carries them, and its geometry (1.5em per level, no item margins, no marker
+ * on the .fb-editor-nested-listitem wrapper Lexical puts around a nested list) comes from the
+ * editor stylesheet that lib/styles.ts injects right after this file — one definition shared with
+ * the editor itself. Source of truth for those class names:
+ * apps/web/modules/ui/components/editor/lib/example-theme.ts
+ */
 
 /* without this, it wont override the color */
 #fbjs p.editor-paragraph {

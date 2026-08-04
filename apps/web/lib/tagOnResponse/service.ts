@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
+import { getUniqueConstraintFields, isUniqueConstraintError } from "../utils/prisma-constraint";
 import { validateInputs } from "../utils/validate";
 
 const selectTagsOnResponse = {
@@ -30,17 +31,17 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
       tagId,
     };
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      const target = error.meta?.target;
-      const isTagsOnResponsesUniqueViolation =
-        Array.isArray(target) && target.includes("responseId") && target.includes("tagId");
-
-      if (error.code === "P2002" && isTagsOnResponsesUniqueViolation) {
+    if (isUniqueConstraintError(error)) {
+      const fields = getUniqueConstraintFields(error);
+      if (fields.includes("responseId") && fields.includes("tagId")) {
+        // Idempotent: the tag is already on the response.
         return {
           responseId,
           tagId,
         };
       }
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
 

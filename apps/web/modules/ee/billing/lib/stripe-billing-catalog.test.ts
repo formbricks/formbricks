@@ -198,6 +198,53 @@ describe("stripe-billing-catalog", () => {
   );
 
   test(
+    "excludes a metered price tagged with a non-responses kind (e.g. workflow_runs) so it does not collide with responses",
+    async () => {
+      // A second metered price on Scale, tagged workflow_runs (ENG-1936). Without the getPriceKind
+      // guard it would fall through usage_type=metered -> "responses" and produce two matches for
+      // scale/responses/monthly, breaking the billing page.
+      const workflowRunsPrice = {
+        id: "price_scale_workflow_runs",
+        active: true,
+        currency: "usd",
+        unit_amount: 0,
+        tiers: RESPONSE_PRICE_TIERS,
+        tiers_mode: "graduated",
+        metadata: {
+          formbricks_plan: "scale",
+          formbricks_price_kind: "workflow_runs",
+          formbricks_interval: "monthly",
+        },
+        recurring: { usage_type: "metered", interval: "month" },
+        product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
+      };
+
+      mocks.pricesList.mockResolvedValue({
+        data: [
+          createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
+          createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+          workflowRunsPrice,
+        ],
+        has_more: false,
+      });
+
+      const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
+
+      // Resolves without throwing "found 2", and the workflow_runs price is not part of the catalog.
+      await expect(getCatalogItemsForPlan("scale", "monthly")).resolves.toEqual([
+        { price: "price_scale_monthly", quantity: 1 },
+        { price: "price_scale_responses" },
+      ]);
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
     "fails fast when the catalog is incomplete",
     async () => {
       mocks.pricesList.mockResolvedValue({

@@ -88,6 +88,20 @@ describe("organization", () => {
       });
       expect(prisma.organization.update).not.toHaveBeenCalled();
     });
+
+    test("should throw ResourceNotFoundError when the update targets a missing organization (P2025)", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "5.0.0",
+      });
+
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue({ whitelabel: {} } as any);
+      vi.mocked(prisma.organization.update).mockRejectedValue(prismaError);
+
+      await expect(
+        updateOrganizationEmailLogoUrl("clg123456789012345678901234", "new-logo.png")
+      ).rejects.toThrow(ResourceNotFoundError);
+    });
   });
 
   describe("removeOrganizationEmailLogoUrl", () => {
@@ -151,6 +165,23 @@ describe("organization", () => {
         },
       });
       expect(prisma.organization.update).not.toHaveBeenCalled();
+    });
+
+    test("should throw ResourceNotFoundError when the update targets a missing organization (P2025)", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "5.0.0",
+      });
+
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+        whitelabel: {},
+        workspaces: [],
+      } as any);
+      vi.mocked(prisma.organization.update).mockRejectedValue(prismaError);
+
+      await expect(removeOrganizationEmailLogoUrl("clg123456789012345678901234")).rejects.toThrow(
+        ResourceNotFoundError
+      );
     });
   });
 

@@ -63,7 +63,7 @@ describe("useChartQuery", () => {
   });
 
   test("returns query result and updates state on success", async () => {
-    mockExecuteQueryAction.mockResolvedValue({ data: sampleData });
+    mockExecuteQueryAction.mockResolvedValue({ data: { rows: sampleData } });
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
@@ -100,7 +100,7 @@ describe("useChartQuery", () => {
   });
 
   test("treats empty data as success so chart can still be saved", async () => {
-    mockExecuteQueryAction.mockResolvedValue({ data: [] });
+    mockExecuteQueryAction.mockResolvedValue({ data: { rows: [] } });
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
@@ -144,14 +144,74 @@ describe("useChartQuery", () => {
     expect(result.current.error).toBe("workspace.analysis.charts.failed_to_execute_query");
   });
 
+  test("threads optionLabels through QueryResult when the server returns them", async () => {
+    const optionLabels = { "c-male": "Male", "c-female": "Female" };
+    mockExecuteQueryAction.mockResolvedValue({ data: { rows: sampleData, optionLabels } });
+
+    const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
+
+    let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
+    await act(async () => {
+      response = await result.current.runQuery(sampleQuery);
+    });
+
+    expect(response).toEqual({ query: sampleQuery, data: sampleData, optionLabels });
+  });
+
+  test("uses effectiveQuery from server response as the QueryResult query when present", async () => {
+    // Server rewrites valueText → valueId for a single-select question.
+    const effectiveQuery: TChartQuery = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.valueId"],
+    };
+    const optionLabels = { opt1: "Option A", opt2: "Option B" };
+    mockExecuteQueryAction.mockResolvedValue({
+      data: { rows: sampleData, optionLabels, effectiveQuery },
+    });
+
+    const clientQuery: TChartQuery = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.valueText"],
+    };
+
+    const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
+
+    let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
+    await act(async () => {
+      response = await result.current.runQuery(clientQuery);
+    });
+
+    // The returned QueryResult.query must be the server-rewritten effectiveQuery, not the
+    // client-side query. This ensures the renderer's xAxisKey matches the data columns.
+    expect(response).toEqual({ query: effectiveQuery, data: sampleData, optionLabels });
+    expect(result.current.query).toEqual(effectiveQuery);
+  });
+
+  test("falls back to client query when server does not return effectiveQuery", async () => {
+    // Server returns no effectiveQuery (e.g. no value dimension rewrite needed).
+    mockExecuteQueryAction.mockResolvedValue({ data: { rows: sampleData } });
+
+    const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
+
+    let response: Awaited<ReturnType<typeof result.current.runQuery>> = null;
+    await act(async () => {
+      response = await result.current.runQuery(sampleQuery);
+    });
+
+    expect(response).toEqual({ query: sampleQuery, data: sampleData });
+    expect(result.current.query).toEqual(sampleQuery);
+  });
+
   test("ignores stale responses when a newer query supersedes an older one", async () => {
-    let resolveFirst: ((value: { data: typeof sampleData }) => void) | undefined;
-    const firstPromise = new Promise<{ data: typeof sampleData }>((resolve) => {
+    let resolveFirst: ((value: { data: { rows: typeof sampleData } }) => void) | undefined;
+    const firstPromise = new Promise<{ data: { rows: typeof sampleData } }>((resolve) => {
       resolveFirst = resolve;
     });
     const secondData = [{ "FeedbackRecords.count": 9, "FeedbackRecords.sourceType": "link" }];
 
-    mockExecuteQueryAction.mockReturnValueOnce(firstPromise).mockResolvedValueOnce({ data: secondData });
+    mockExecuteQueryAction
+      .mockReturnValueOnce(firstPromise)
+      .mockResolvedValueOnce({ data: { rows: secondData } });
 
     const { result } = renderHook(() => useChartQuery(WORKSPACE_ID, DIRECTORY_ID));
 
@@ -165,7 +225,7 @@ describe("useChartQuery", () => {
         dimensions: ["FeedbackRecords.status"],
       });
       secondResponse = await secondRun;
-      resolveFirst?.({ data: sampleData });
+      resolveFirst?.({ data: { rows: sampleData } });
       firstResponse = await firstRun;
     });
 
@@ -179,14 +239,16 @@ describe("useChartQuery", () => {
   });
 
   test("ignores stale responses when scope changes during an in-flight request", async () => {
-    let resolveFirst: ((value: { data: typeof sampleData }) => void) | undefined;
-    const firstPromise = new Promise<{ data: typeof sampleData }>((resolve) => {
+    let resolveFirst: ((value: { data: { rows: typeof sampleData } }) => void) | undefined;
+    const firstPromise = new Promise<{ data: { rows: typeof sampleData } }>((resolve) => {
       resolveFirst = resolve;
     });
     const NEW_DIRECTORY_ID = "frd-2";
     const secondData = [{ "FeedbackRecords.count": 9, "FeedbackRecords.sourceType": "link" }];
 
-    mockExecuteQueryAction.mockReturnValueOnce(firstPromise).mockResolvedValueOnce({ data: secondData });
+    mockExecuteQueryAction
+      .mockReturnValueOnce(firstPromise)
+      .mockResolvedValueOnce({ data: { rows: secondData } });
 
     const { result, rerender } = renderHook(
       ({ feedbackDirectoryId }: { feedbackDirectoryId: string | null }) =>
@@ -201,7 +263,7 @@ describe("useChartQuery", () => {
     rerender({ feedbackDirectoryId: NEW_DIRECTORY_ID });
 
     await act(async () => {
-      resolveFirst?.({ data: sampleData });
+      resolveFirst?.({ data: { rows: sampleData } });
       await Promise.resolve();
     });
 

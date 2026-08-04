@@ -29,7 +29,8 @@ export const PendingDowngradeBanner = ({
   const threeDaysInMillis = 3 * 24 * 60 * 60 * 1000;
   const { t } = useTranslation();
   const isLastCheckedWithin72Hours = lastChecked
-    ? Date.now() - lastChecked.getTime() < threeDaysInMillis
+    ? // eslint-disable-next-line react-hooks/purity -- migration ENG-1677
+      Date.now() - lastChecked.getTime() < threeDaysInMillis
     : false;
 
   const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);

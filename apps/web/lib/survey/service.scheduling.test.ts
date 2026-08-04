@@ -120,7 +120,7 @@ describe("survey service scheduling", () => {
         closeOn: scheduledCloseSelection,
         status: "paused",
       },
-      true
+      false
     );
 
     expect(prisma.survey.update).toHaveBeenCalledWith(
@@ -196,7 +196,7 @@ describe("survey service scheduling", () => {
         publishOn: scheduledSelection,
         status: "completed",
       },
-      true
+      false
     );
 
     expect(prisma.survey.update).toHaveBeenCalledWith(
@@ -247,7 +247,7 @@ describe("survey service scheduling", () => {
         publishOn: dueSelection,
         status: "paused",
       },
-      true
+      false
     );
 
     expect(updatedSurvey.status).toBe("inProgress");
@@ -355,7 +355,7 @@ describe("survey service scheduling", () => {
           publishOn: sameDaySelection,
           status: "paused",
         },
-        true
+        false
       )
     ).rejects.toThrow(ValidationError);
 

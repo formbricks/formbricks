@@ -105,7 +105,7 @@ describe("createActionClass", () => {
         code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "test",
       }),
-      { meta: { target: ["name"] } }
+      { meta: { driverAdapterError: { cause: { constraint: { fields: ["name"] } } } } }
     );
     vi.mocked(prisma.actionClass.create).mockRejectedValue(prismaError);
 

@@ -37,7 +37,10 @@ interface DashboardDetailClientProps {
   dashboard: TDashboardDetail;
   widgetDataPromises: Map<
     string,
-    Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>
+    Promise<
+      | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
+      | { error: TDashboardWidgetError }
+    >
   >;
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
@@ -109,16 +112,15 @@ const MemoizedWidgetContent = memo(function WidgetContent({
   dataPromise,
 }: Readonly<{
   widget: TDashboardWidget;
-  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>;
+  dataPromise?: Promise<
+    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
+    | { error: TDashboardWidgetError }
+  >;
 }>) {
   if (widget.chart && dataPromise) {
     return (
       <Suspense fallback={<DashboardWidgetSkeleton />}>
-        <DashboardWidgetData
-          dataPromise={dataPromise}
-          chartType={widget.chart.type}
-          query={widget.chart.query}
-        />
+        <DashboardWidgetData dataPromise={dataPromise} chartType={widget.chart.type} />
       </Suspense>
     );
   }
@@ -136,7 +138,10 @@ const MemoizedWidgetItem = memo(function WidgetItem({
 }: Readonly<{
   widget: TDashboardWidget;
   isEditing: boolean;
-  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>;
+  dataPromise?: Promise<
+    | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
+    | { error: TDashboardWidgetError }
+  >;
   onEdit?: () => void;
   onDuplicate?: () => void;
   onResize?: () => void;

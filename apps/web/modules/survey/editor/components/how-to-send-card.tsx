@@ -115,7 +115,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
         <hr className="py-1 text-slate-600" />
         <div className="space-y-3 p-3">
           {localSurvey.status === "inProgress" && (
-            <Alert variant="warning" className="mb-3">
+            <Alert variant="warning" className="mb-3" role="status">
               <AlertTitle>{t("workspace.surveys.edit.change_survey_type")}</AlertTitle>
               <AlertDescription>
                 {t("workspace.surveys.edit.changing_survey_type_will_remove_existing_distribution_channels")}

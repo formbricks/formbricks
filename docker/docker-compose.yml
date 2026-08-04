@@ -320,10 +320,13 @@ services:
   formbricks-migrate:
     image: ghcr.io/formbricks/formbricks:latest
     restart: "no"
+    env_file:
+      - path: .env
+        required: false
     entrypoint: ["sh", "-c"]
     command:
       [
-        "if command -v timeout >/dev/null 2>&1; then timeout 300 node packages/database/dist/scripts/apply-migrations.js; else node packages/database/dist/scripts/apply-migrations.js; fi",
+        "node /home/nextjs/validate-env.mjs && if command -v timeout >/dev/null 2>&1; then timeout 300 node packages/database/dist/scripts/apply-migrations.js; else node packages/database/dist/scripts/apply-migrations.js; fi",
       ]
     depends_on:
       postgres:
@@ -509,6 +512,7 @@ services:
       CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}
       CUBEJS_JWT_AUDIENCE: ${CUBEJS_JWT_AUDIENCE:-formbricks-cube}
       CUBEJS_DEFAULT_API_SCOPES: meta,data
+      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
     volumes:
       - ./cube/cube.js:/cube/conf/cube.js:ro

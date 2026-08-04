@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { isValidEmail } from "@/lib/utils/email";
 import { cn } from "@/modules/ui/lib/utils";
 
@@ -6,13 +7,16 @@ interface FollowUpActionMultiEmailInputProps {
   emails: string[];
   setEmails: React.Dispatch<React.SetStateAction<string[]>>;
   isInvalid?: boolean;
+  disabled?: boolean;
 }
 
 const FollowUpActionMultiEmailInput = ({
   emails,
   setEmails,
   isInvalid,
+  disabled,
 }: FollowUpActionMultiEmailInputProps) => {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
 
@@ -22,12 +26,12 @@ const FollowUpActionMultiEmailInput = ({
     if (!email) return;
 
     if (!isValidEmail(email)) {
-      setError("Please enter a valid email address");
+      setError(t("workspace.surveys.edit.follow_ups_modal_action_email_invalid"));
       return;
     }
 
     if (emails.includes(email)) {
-      setError("This email has already been added");
+      setError(t("workspace.surveys.edit.follow_ups_modal_action_email_already_added"));
       return;
     }
 
@@ -66,7 +70,8 @@ const FollowUpActionMultiEmailInput = ({
       <div
         className={cn(
           "flex flex-wrap items-center gap-2 rounded-md border px-2 py-1",
-          isInvalid ? "border-red-500" : "border-slate-300"
+          isInvalid ? "border-red-500" : "border-slate-300",
+          disabled && "bg-slate-50"
         )}>
         {emails.map((email, index) => (
           <div
@@ -75,19 +80,25 @@ const FollowUpActionMultiEmailInput = ({
             <span className="text-slate-900">{email}</span>
             <button
               type="button"
+              disabled={disabled}
               onClick={() => removeEmail(index)}
-              className="px-1 text-lg leading-none font-medium text-slate-500">
+              className="px-1 text-lg leading-none font-medium text-slate-500 disabled:opacity-50">
               ×
             </button>
           </div>
         ))}
         <input
           type="text"
+          disabled={disabled}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleInputBlur}
-          placeholder={emails.length === 0 ? "Write an email & press space bar" : ""}
+          placeholder={
+            emails.length === 0
+              ? t("workspace.surveys.edit.follow_ups_modal_action_email_input_placeholder")
+              : ""
+          }
           className="min-w-[180px] flex-1 border-none p-0 py-1 text-sm placeholder:text-slate-400 focus:ring-0"
         />
       </div>

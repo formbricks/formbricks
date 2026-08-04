@@ -7,6 +7,16 @@ type UseFocusTrapOptions = {
   onEscapeKeyDown?: () => void;
 };
 
+// A host page can run its own focus manager (another focus trap, a modal from the embedding app, a
+// second embedded survey bundle). When it pulls focus out every time this trap pulls it back in, the
+// two ping-pong focus synchronously and blow the call stack. Two guards stop that: the trap ignores
+// focus events caused by its own redirects, and it gives up after a few redirects the page undoes.
+const REDIRECT_WINDOW_MS = 250;
+const MAX_REDIRECTS_PER_WINDOW = 10;
+const MAX_FAILED_REDIRECTS = 3;
+
+const getTimestamp = () => (typeof performance === "undefined" ? Date.now() : performance.now());
+
 // focus trap behavior adapted from Radix UI FocusScope (MIT) for this Preact runtime.
 const focusScopesStack = (() => {
   let stack: FocusScope[] = [];
@@ -170,6 +180,57 @@ export const useFocusTrap = <TElement extends HTMLElement>({
       focus(lastFocusedElement ?? firstFocusableElement ?? container, { select: true });
     };
 
+    let isRedirectingFocus = false;
+    let hasYieldedToPage = false;
+    let redirectWindowStart = getTimestamp();
+    let redirectsInWindow = 0;
+    let failedRedirects = 0;
+
+    const yieldToPage = () => {
+      hasYieldedToPage = true;
+      console.warn("Formbricks: focus trap turned off, another focus handler on the page keeps taking focus");
+    };
+
+    const hasRedirectBudget = () => {
+      const timestamp = getTimestamp();
+      if (timestamp - redirectWindowStart > REDIRECT_WINDOW_MS) {
+        redirectWindowStart = timestamp;
+        redirectsInWindow = 0;
+      }
+
+      redirectsInWindow += 1;
+      return redirectsInWindow <= MAX_REDIRECTS_PER_WINDOW;
+    };
+
+    // Pull focus back into the survey. Never re-entrant, so a competing focus manager that reacts to
+    // our own focus move cannot recurse through the handlers below.
+    const redirectFocusIntoContainer = () => {
+      if (isRedirectingFocus || hasYieldedToPage) return;
+
+      if (!hasRedirectBudget()) {
+        yieldToPage();
+        return;
+      }
+
+      isRedirectingFocus = true;
+      try {
+        focusLastElementInsideContainer();
+      } finally {
+        isRedirectingFocus = false;
+      }
+
+      if (container.contains(document.activeElement)) {
+        failedRedirects = 0;
+        return;
+      }
+
+      // Something moved focus straight back out. Stop fighting for it after a few tries.
+      failedRedirects += 1;
+      if (failedRedirects >= MAX_FAILED_REDIRECTS) {
+        yieldToPage();
+      }
+    };
+
     const handleFocusIn = (event: FocusEvent) => {
       if (focusScope.paused) return;
 
@@ -179,7 +240,7 @@ export const useFocusTrap = <TElement extends HTMLElement>({
         return;
       }
 
-      focusLastElementInsideContainer();
+      redirectFocusIntoContainer();
     };
 
     const handleFocusOut = (event: FocusEvent) => {
@@ -187,14 +248,14 @@ export const useFocusTrap = <TElement extends HTMLElement>({
 
       const relatedTarget = event.relatedTarget as HTMLElement | null;
       if (relatedTarget && !container.contains(relatedTarget)) {
-        focusLastElementInsideContainer();
+        redirectFocusIntoContainer();
         return;
       }
 
       if (relatedTarget === null) {
         setTimeout(() => {
           if (!isUnmounting && !container.contains(document.activeElement)) {
-            focusLastElementInsideContainer();
+            redirectFocusIntoContainer();
           }
         }, 0);
       }
@@ -202,7 +263,7 @@ export const useFocusTrap = <TElement extends HTMLElement>({
 
     const handleMutations = () => {
       if (!container.contains(document.activeElement)) {
-        focusLastElementInsideContainer();
+        redirectFocusIntoContainer();
       }
     };
 

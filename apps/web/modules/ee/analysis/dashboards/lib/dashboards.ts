@@ -1,10 +1,9 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {
@@ -45,10 +44,10 @@ export const createDashboard = async (data: TDashboardCreateInput): Promise<TDas
       select: selectDashboard,
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A dashboard with this name already exists");
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("A dashboard with this name already exists");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -87,10 +86,10 @@ export const updateDashboard = async (
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A dashboard with this name already exists");
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("A dashboard with this name already exists");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -121,7 +120,7 @@ export const deleteDashboard = async (dashboardId: string, workspaceId: string):
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -155,7 +154,7 @@ export const getDashboard = async (dashboardId: string, workspaceId: string) => 
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -191,7 +190,7 @@ export const getDashboards = async (
       containsChart: (widgets?.length ?? 0) > 0,
     }));
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -253,7 +252,7 @@ export const duplicateDashboard = async (
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -313,7 +312,7 @@ export const updateWidgetLayouts = async (
     if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -338,7 +337,7 @@ export const removeWidgetFromDashboard = async (
 
     return await prisma.dashboardWidget.delete({ where: { id: widgetId } });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -417,10 +416,10 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
     if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("This chart is already on the dashboard");
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("This chart is already on the dashboard");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;

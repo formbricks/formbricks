@@ -10,6 +10,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { getSurveyWithMetadata, isSurveyResponsePresent } from "@/modules/survey/link/lib/data";
+import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 
 export const sendLinkSurveyEmailAction = actionClient
   .inputSchema(ZLinkSurveyEmailData)
@@ -53,7 +54,7 @@ export const validateSurveyPinAction = actionClient
       throw new InvalidInputError("INVALID_PIN");
     }
 
-    return { survey };
+    return { survey, pinAuthToken: createLinkSurveyPinToken(survey.id) };
   });
 
 const ZIsSurveyResponsePresentAction = z.object({

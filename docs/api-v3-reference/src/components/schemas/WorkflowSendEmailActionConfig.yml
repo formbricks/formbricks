@@ -1,0 +1,80 @@
+type: object
+description: >-
+  Send-email action with 1:1 field parity to survey Follow-ups
+  (`ZSurveyFollowUpAction`).
+
+
+  `to`, `subject` and `body` accept an empty string on create and update, so an
+  author can save an unfinished draft. Completeness is enforced when the workflow
+  has to run: enabling it returns **422** `workflow_not_executable` naming each
+  blank field, and the dry run reports them as problems.
+required:
+  - to
+  - from
+  - replyTo
+  - subject
+  - body
+  - attachResponseData
+properties:
+  to:
+    type: string
+    description: >
+      Recipient: either a literal email address (e.g. a teammate) or the element
+      id of a
+
+      survey question / hidden field whose answer contains the respondent's email
+      address
+
+      (contact-info elements resolve index [2]) — the same semantics as the
+      Follow-ups `to` field.
+
+
+      A **literal** address must belong to a member of this organization.
+      Enabling a workflow whose
+
+      literal recipient is not an organization member returns **422**
+      `workflow_not_executable`, the
+
+      dry run reports a `recipient_not_allowed` problem, and the runner refuses
+      to send to it — so a
+
+      workflow cannot forward response data to an arbitrary external inbox. An
+      element-id `to`
+
+      resolves to the respondent's own address and is never allowlist-checked.
+  from:
+    type: string
+    format: email
+  replyTo:
+    type: array
+    items:
+      type: string
+      format: email
+  subject:
+    type: string
+    maxLength: 998
+    description: >
+      Email subject. Used verbatim (recall tokens are not expanded in the
+      subject), the same as Follow-ups. Capped at RFC 5322's maximum line
+      length.
+  body:
+    type: string
+    maxLength: 100000
+    description: >
+      Email body as HTML with recall tokens (`#recall:[elementId]/fallback:x#`).
+      Recall tokens
+
+      are expanded against the response, the result is sanitized to a narrow HTML
+      allowlist,
+
+      and it is wrapped in the branded Follow-ups email template — identical
+      rendering to survey Follow-ups.
+  attachResponseData:
+    type: boolean
+  includeVariables:
+    type: boolean
+    default: false
+  includeHiddenFields:
+    type: boolean
+    default: false
+additionalProperties: false

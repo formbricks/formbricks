@@ -121,4 +121,10 @@ export interface AnalyticsResponse {
   data?: TChartDataRow[];
   error?: string;
   suggestedName?: string;
+  /**
+   * Mapping from value_id (choice UUID) to the choice's default-language label. Present when the
+   * query groups by `FeedbackRecords.valueId` (i.e., the server rewrote a valueText grouping for a
+   * single-select question). Renderers use this to display human-readable labels instead of raw ids.
+   */
+  optionLabels?: Record<string, string>;
 }

@@ -6,6 +6,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const getQuota = reactCache(async (quotaId: string): Promise<TSurveyQuota> => {
@@ -23,7 +24,7 @@ export const getQuota = reactCache(async (quotaId: string): Promise<TSurveyQuota
     }
     return quota;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -45,7 +46,7 @@ export const getQuotas = reactCache(async (surveyId: string): Promise<TSurveyQuo
 
     return quotas;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
 
@@ -61,10 +62,8 @@ export const createQuota = async (quota: TSurveyQuotaInput): Promise<TSurveyQuot
 
     return newQuota;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("Quota with this name already exists");
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("Quota with this name already exists");
     }
     throw error;
   }
@@ -72,20 +71,22 @@ export const createQuota = async (quota: TSurveyQuotaInput): Promise<TSurveyQuot
 
 export const updateQuota = async (quota: TSurveyQuotaInput, id: string): Promise<TSurveyQuota> => {
   try {
+    // ENG-1749: surveyId is the quota's tenant anchor, set at creation and immutable thereafter.
+    // Persisting a caller-supplied surveyId here would let an authorized quota owner re-point their
+    // quota onto another tenant's survey, so it is stripped from the update payload.
+    const { surveyId: _surveyId, ...quotaData } = quota;
     const updatedQuota = await prisma.surveyQuota.update({
       where: { id },
-      data: quota,
+      data: quotaData,
     });
 
     return updatedQuota;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("Quota with this name already exists");
-      }
-      if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        throw new ResourceNotFoundError("Quota not found", error.message);
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("Quota with this name already exists");
+    }
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
+      throw new ResourceNotFoundError("Quota", id);
     }
     throw error;
   }
@@ -99,11 +100,10 @@ export const deleteQuota = async (quotaId: string): Promise<TSurveyQuota> => {
 
     return deletedQuota;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        throw new ResourceNotFoundError("Quota not found", error.message);
-      }
-
+    if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
+      throw new ResourceNotFoundError("Quota", quotaId);
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -129,7 +129,7 @@ export const reduceQuotaLimits = async (quotaIds: string[], tx?: Prisma.Transact
       },
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;

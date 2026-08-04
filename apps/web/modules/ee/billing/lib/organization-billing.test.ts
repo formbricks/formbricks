@@ -7,6 +7,7 @@ import {
   ensureStripeCustomerForOrganization,
   findOrganizationIdByStripeCustomerId,
   getOrganizationBillingWithReadThroughSync,
+  previewImmediateUpgradeCharge,
   reconcileCloudStripeSubscriptionsForOrganization,
   setOrganizationPaymentAttemptError,
   switchOrganizationToCloudPlan,
@@ -19,6 +20,7 @@ vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
   isCloud: true,
   getBillingCacheKey: vi.fn(),
+  getBillingSyncLockKey: vi.fn(),
   getCustomCacheKey: vi.fn(),
   prismaOrganizationFindUnique: vi.fn(),
   prismaOrganizationBillingFindUnique: vi.fn(),
@@ -28,12 +30,14 @@ const mocks = vi.hoisted(() => ({
   cacheWithCache: vi.fn(),
   cacheWithCacheNullable: vi.fn(),
   cacheDel: vi.fn(),
+  cacheTryLock: vi.fn(),
   loggerWarn: vi.fn(),
   getCloudPlanFromProduct: vi.fn(),
   customersCreate: vi.fn(),
   checkoutSessionsCreate: vi.fn(),
   checkoutSessionsRetrieve: vi.fn(),
   invoicesRetrieve: vi.fn(),
+  invoicesCreatePreview: vi.fn(),
   productsList: vi.fn(),
   productsRetrieve: vi.fn(),
   subscriptionsList: vi.fn(),
@@ -70,6 +74,7 @@ vi.mock("@formbricks/cache", () => ({
   createCacheKey: {
     organization: {
       billing: mocks.getBillingCacheKey,
+      billingSyncLock: mocks.getBillingSyncLockKey,
     },
     custom: mocks.getCustomCacheKey,
   },
@@ -97,6 +102,7 @@ vi.mock("@/lib/cache", () => ({
     withCache: mocks.cacheWithCache,
     withCacheNullable: mocks.cacheWithCacheNullable,
     del: mocks.cacheDel,
+    tryLock: mocks.cacheTryLock,
   },
 }));
 
@@ -140,6 +146,7 @@ vi.mock("./stripe-client", () => ({
     },
     invoices: {
       retrieve: mocks.invoicesRetrieve,
+      createPreview: mocks.invoicesCreatePreview,
     },
     subscriptions: {
       list: mocks.subscriptionsList,
@@ -167,15 +174,22 @@ describe("organization-billing", () => {
     vi.clearAllMocks();
     mocks.isCloud = true;
     mocks.getBillingCacheKey.mockReturnValue("billing-cache-key");
+    mocks.getBillingSyncLockKey.mockImplementation(
+      (organizationId: string) => `org:${organizationId}:billing-sync-lock`
+    );
     mocks.getCustomCacheKey.mockImplementation(
       (namespace: string, identifier: string, subresource?: string) =>
         [namespace, identifier, subresource].filter(Boolean).join(":")
     );
     mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
     mocks.cacheWithCacheNullable.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
+    // Default: the read-through single-flight lock is acquired, so stale-sync tests exercise the sync.
+    mocks.cacheTryLock.mockResolvedValue({ ok: true, data: true });
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
+    // Default upgrade-preview invoice total (overridden per-test where relevant).
+    mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 8900, currency: "usd" });
     mocks.prismaMembershipFindFirst.mockResolvedValue(null);
     mocks.productsList.mockResolvedValue({
       data: [
@@ -372,6 +386,14 @@ describe("organization-billing", () => {
     }));
     mocks.subscriptionSchedulesRelease.mockResolvedValue({});
     mocks.subscriptionsUpdate.mockResolvedValue({});
+    // Default: no card at the customer level either. The payment-method check falls back to the
+    // customer default when the subscription has none, so it must always resolve to a customer.
+    mocks.customersRetrieve.mockResolvedValue({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: null },
+      currency: "usd",
+    });
   });
 
   test("ensureStripeCustomerForOrganization returns null when org does not exist", async () => {
@@ -742,6 +764,7 @@ describe("organization-billing", () => {
       data: [
         { id: "ent_0", lookup_key: "workspace-limit-5" },
         { id: "ent_00", lookup_key: "responses-included-2000" },
+        { id: "ent_000", lookup_key: "workflow-runs-included-1000" },
         { id: "ent_1", lookup_key: "custom-links-in-surveys" },
         { id: "ent_2", lookup_key: "custom-links-in-surveys" },
         { id: "ent_3", lookup_key: null },
@@ -759,12 +782,18 @@ describe("organization-billing", () => {
           workspaces: 5,
           monthly: {
             responses: 2000,
+            workflowRuns: 1000,
           },
         },
         stripe: expect.objectContaining({
           plan: "pro",
           subscriptionId: "sub_1",
-          features: ["workspace-limit-5", "responses-included-2000", "custom-links-in-surveys"],
+          features: [
+            "workspace-limit-5",
+            "responses-included-2000",
+            "workflow-runs-included-1000",
+            "custom-links-in-surveys",
+          ],
           lastSyncedEventId: "evt_new",
           lastStripeEventCreatedAt: expect.any(String),
           lastSyncedAt: expect.any(String),
@@ -776,9 +805,72 @@ describe("organization-billing", () => {
     expect(result?.stripe?.features).toEqual([
       "workspace-limit-5",
       "responses-included-2000",
+      "workflow-runs-included-1000",
       "custom-links-in-surveys",
     ]);
+    expect(result?.limits?.monthly?.workflowRuns).toBe(1000);
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
+  });
+
+  test("syncOrganizationBillingFromStripe clears a stale workflowRuns limit when the entitlement is absent (downgrade is not sticky)", async () => {
+    // Previous limits carry the Scale-era included volume; the new subscription has no
+    // workflow-runs entitlement (absence is the normal state on plans without workflows).
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        workspaces: 3,
+        monthly: {
+          responses: 1500,
+          workflowRuns: 1000,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          items: {
+            data: [
+              {
+                price: {
+                  metadata: {},
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" } },
+                  recurring: { usage_type: "licensed", interval: "year" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.entitlementsList.mockResolvedValue({
+      data: [
+        { id: "ent_0", lookup_key: "workspace-limit-5" },
+        { id: "ent_00", lookup_key: "responses-included-2000" },
+      ],
+      has_more: false,
+    });
+
+    const result = await syncOrganizationBillingFromStripe("org_1", { id: "evt_new", created: 1739923300 });
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          limits: {
+            workspaces: 5,
+            monthly: {
+              responses: 2000,
+              workflowRuns: null,
+            },
+          },
+        }),
+      })
+    );
+    expect(result?.limits?.monthly?.workflowRuns).toBeNull();
   });
 
   test("createPaidPlanCheckoutSession rejects mixed-interval yearly checkout", async () => {
@@ -919,6 +1011,741 @@ describe("organization-billing", () => {
       },
     });
     expect(mocks.cacheDel).toHaveBeenCalledWith(["billing-cache-key"]);
+  });
+
+  test("switchOrganizationToCloudPlan switches a no-card trial to Hobby immediately on downgrade instead of scheduling", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          default_payment_method: null,
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    // No card on the subscription and none on the customer either.
+    mocks.customersRetrieve.mockResolvedValue({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: null },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: false,
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "hobby",
+      targetInterval: "monthly",
+    });
+
+    expect(result).toEqual({
+      mode: "immediate",
+      pendingChange: null,
+      clientSecret: null,
+      requiresAction: false,
+    });
+    // The trial ends now and the subscription moves straight to the free Hobby items — no schedule,
+    // no cancel_at_period_end, no charge.
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", {
+      items: [
+        { id: "si_pro_base", deleted: true },
+        { price: "price_hobby_monthly", quantity: 1 },
+      ],
+      trial_end: "now",
+      proration_behavior: "none",
+      trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
+    });
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
+      cancel_at_period_end: true,
+    });
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
+    // Any prior pending downgrade snapshot is nulled — the switch is applied immediately.
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+      where: { organizationId: "org_1" },
+      data: {
+        stripe: expect.objectContaining({
+          pendingChange: null,
+        }),
+      },
+    });
+  });
+
+  test("switchOrganizationToCloudPlan switches a CARD-BACKED trial to Hobby immediately on downgrade instead of scheduling", async () => {
+    // A card-backed trial opting back to Hobby also switches immediately to the free Hobby plan —
+    // never build a schedule whose phase 1 is a billable Pro phase (charging the trial early), and
+    // never leave the user on the paid trial they explicitly left.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          // Card IS on the subscription — previously this fell through to the scheduled path.
+          default_payment_method: "pm_sub",
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "hobby",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("immediate");
+    expect(result.pendingChange).toBeNull();
+    // Switched to the free Hobby items now, NOT scheduled or cancelled at period end.
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", {
+      items: [
+        { id: "si_pro_base", deleted: true },
+        { price: "price_hobby_monthly", quantity: 1 },
+      ],
+      trial_end: "now",
+      proration_behavior: "none",
+      trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
+    });
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
+      cancel_at_period_end: true,
+    });
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
+  });
+
+  test("switchOrganizationToCloudPlan rejects a paid switch from a no-card trial", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          default_payment_method: null,
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.customersRetrieve.mockResolvedValue({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: null },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: false,
+      },
+    });
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("payment_method_required");
+
+    // No billable conversion is attempted.
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
+  });
+
+  test("switchOrganizationToCloudPlan releases a stray schedule before switching a no-card trial to Hobby on downgrade", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          default_payment_method: null,
+          trial_end: 1742515200,
+          schedule: "sched_trial",
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.customersRetrieve.mockResolvedValue({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: null },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: false,
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "hobby",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("immediate");
+    // The stray schedule (which would otherwise rebuild the trial into a billable Pro phase) is
+    // released first, then the trial ends and moves straight to the free Hobby items.
+    expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_trial", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", {
+      items: [
+        { id: "si_pro_base", deleted: true },
+        { price: "price_hobby_monthly", quantity: 1 },
+      ],
+      trial_end: "now",
+      proration_behavior: "none",
+      trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
+    });
+    expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
+  });
+
+  test("switchOrganizationToCloudPlan allows a paid switch from a trial when the card is only on the customer", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          // No card on the subscription itself...
+          default_payment_method: null,
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    // ...but a card is saved at the customer level, so the paid switch must be allowed through.
+    mocks.customersRetrieve.mockResolvedValue({
+      id: "cus_1",
+      deleted: false,
+      invoice_settings: { default_payment_method: "pm_customer" },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: false,
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "scale",
+      targetInterval: "monthly",
+    });
+
+    // Proceeds through the normal paid path instead of being rejected or cancelled.
+    expect(result.mode).toBe("immediate");
+    // Single update: ends the trial AND switches items at once, so the card is invoiced exactly once
+    // for the target plan (a split update would double-invoice — old plan then new plan).
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({
+        trial_end: "now",
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      })
+    );
+    // Exactly one items/trial update on the subscription (no separate trial_end-only update).
+    const trialEndUpdateCalls = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([id]: [string]) => id === "sub_trial"
+    );
+    expect(trialEndUpdateCalls).toHaveLength(1);
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
+      cancel_at_period_end: true,
+    });
+  });
+
+  test("switchOrganizationToCloudPlan converts a card-backed trial to the same paid plan instead of treating it as a no-op", async () => {
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          // Card is on the subscription itself, so the paid conversion is allowed immediately.
+          default_payment_method: "pm_sub",
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+      },
+    });
+
+    // Same plan + interval as the one being trialed: pre-change this returned a no-op; a card-backed
+    // trial must instead convert to paid and charge now.
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("immediate");
+    // Single update ends the trial and applies the target plan in one invoice.
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({
+        trial_end: "now",
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      })
+    );
+    const trialUpdateCalls = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([id]: [string]) => id === "sub_trial"
+    );
+    expect(trialUpdateCalls).toHaveLength(1);
+  });
+
+  test("switchOrganizationToCloudPlan clears a pending hobby downgrade when converting a card-backed trial to paid", async () => {
+    // A trial carrying a pending downgrade tracked via cancel_at_period_end (no schedule). Adding a
+    // card and upgrading to paid Pro must supersede that pending downgrade, otherwise the Hobby card
+    // keeps showing a stale "Scheduled" badge after the upgrade.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          // The pending hobby downgrade is tracked here, not via a schedule.
+          cancel_at_period_end: true,
+          default_payment_method: "pm_sub",
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+        pendingChange: {
+          type: "plan_change",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+          effectiveAt: "2026-08-11T00:00:00.000Z",
+        },
+      },
+    });
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("immediate");
+    expect(result.pendingChange).toBeNull();
+    // Ends the trial and switches items in one update...
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({ trial_end: "now", payment_behavior: "error_if_incomplete" })
+    );
+    // ...clears the cancel_at_period_end that backed the pending hobby downgrade...
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", { cancel_at_period_end: false });
+    // ...and nulls the persisted pending-change snapshot so no stale "Scheduled" badge lingers.
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          stripe: expect.objectContaining({ pendingChange: null }),
+        }),
+      })
+    );
+  });
+
+  // Shared fixture: a card-backed Pro trial with `remaining` days left on the trial.
+  const setupCardBackedProTrial = (remainingDays: number) => {
+    const trialEnd = Math.floor(Date.now() / 1000) + remainingDays * 86_400;
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          currency: "usd",
+          billing_cycle_anchor: trialEnd,
+          cancel_at_period_end: false,
+          default_payment_method: "pm_sub",
+          trial_end: trialEnd,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: trialEnd,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+      },
+    });
+    mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 8900, currency: "usd" });
+  };
+
+  test("switchOrganizationToCloudPlan bills the FULL price when a card-backed Pro trial converts to Pro", async () => {
+    setupCardBackedProTrial(14);
+
+    const result = await switchOrganizationToCloudPlan({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(result.mode).toBe("immediate");
+    // Single update: ends the trial and charges the full plan price synchronously; no credits,
+    // coupons, or balance mutations ride along.
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({
+        trial_end: "now",
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      })
+    );
+    const [, updateArgs] = mocks.subscriptionsUpdate.mock.calls.find(
+      ([id, args]: [string, { trial_end?: string }]) => id === "sub_trial" && args.trial_end === "now"
+    );
+    expect(updateArgs.discounts).toBeUndefined();
+  });
+
+  test("a declined conversion charge propagates and leaves the trial intact", async () => {
+    setupCardBackedProTrial(14);
+    mocks.subscriptionsUpdate.mockRejectedValueOnce(new Error("card_declined"));
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("card_declined");
+
+    // error_if_incomplete rolls the whole update back server-side; exactly one conversion attempt,
+    // no follow-up mutations to clean anything up.
+    const conversionUpdates = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([id, args]: [string, { trial_end?: string }]) => id === "sub_trial" && args.trial_end === "now"
+    );
+    expect(conversionUpdates).toHaveLength(1);
+  });
+
+  test("previewImmediateUpgradeCharge quotes Stripe's full invoice total for a trial conversion", async () => {
+    setupCardBackedProTrial(14);
+    // Stripe's preview is authoritative: full plan price + tax ($89 + $16.91 VAT), exactly what the
+    // card is charged at conversion.
+    mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 10_591, currency: "usd" });
+
+    const preview = await previewImmediateUpgradeCharge({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(preview).toEqual({ amountDue: 10_591, currency: "usd" });
+  });
+
+  test("previewImmediateUpgradeCharge returns null when Stripe cannot preview the invoice", async () => {
+    setupCardBackedProTrial(14);
+    // A preview can fail on usage-based line items; the modal falls back to amount-less copy rather
+    // than showing a fabricated number.
+    mocks.invoicesCreatePreview.mockRejectedValue(new Error("cannot preview metered price"));
+
+    const preview = await previewImmediateUpgradeCharge({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(preview).toBeNull();
+  });
+
+  test("previewImmediateUpgradeCharge does NOT send trial_end for a non-trialing upgrade", async () => {
+    // trial_end re-anchors the billing cycle, so sending it here would preview a full fresh period
+    // while the real update (which sends no trial_end) charges a mid-cycle proration — over-stating
+    // the amount on every ordinary paid upgrade.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_active",
+          status: "active",
+          currency: "usd",
+          billing_cycle_anchor: 1_739_923_200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1_742_515_200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.invoicesCreatePreview.mockResolvedValue({ amount_due: 4500, currency: "usd" });
+
+    const preview = await previewImmediateUpgradeCharge({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "scale",
+      targetInterval: "monthly",
+    });
+
+    expect(preview).toEqual({
+      amountDue: 4500,
+      currency: "usd",
+    });
+    const [previewArgs] = mocks.invoicesCreatePreview.mock.calls[0];
+    expect(previewArgs.subscription_details).not.toHaveProperty("trial_end");
+  });
+
+  test("previewImmediateUpgradeCharge sends trial_end for a trialing subscription (the cycle really does reset)", async () => {
+    setupCardBackedProTrial(14);
+
+    await previewImmediateUpgradeCharge({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "scale",
+      targetInterval: "monthly",
+    });
+
+    const [previewArgs] = mocks.invoicesCreatePreview.mock.calls[0];
+    expect(previewArgs.subscription_details).toMatchObject({ trial_end: "now" });
   });
 
   test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {
@@ -1634,6 +2461,7 @@ describe("organization-billing", () => {
           workspaces: 5,
           monthly: {
             responses: null,
+            workflowRuns: null,
           },
         },
         stripe: expect.objectContaining({
@@ -1722,6 +2550,7 @@ describe("organization-billing", () => {
           workspaces: 3,
           monthly: {
             responses: 1500,
+            workflowRuns: null,
           },
         },
         stripe: expect.objectContaining({
@@ -2102,6 +2931,69 @@ describe("organization-billing", () => {
       { error: expect.any(Error), organizationId: "org_1" },
       "Failed to refresh billing snapshot from Stripe"
     );
+  });
+
+  test("getOrganizationBillingWithReadThroughSync serves cached and skips sync when another process holds the lock", async () => {
+    const cachedBilling = {
+      stripeCustomerId: "cus_1",
+      stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+    };
+    mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
+    // Lock NOT acquired (another request/process is already syncing this org).
+    mocks.cacheTryLock.mockResolvedValue({ ok: true, data: false });
+
+    const result = await getOrganizationBillingWithReadThroughSync("org_1");
+
+    expect(result).toEqual(cachedBilling);
+    // Single-flight: no Stripe sync + no OrganizationBilling write happen in the loser.
+    expect(mocks.subscriptionsList).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+    // Lock is scoped to this org so it can't gate a different tenant's sync.
+    expect(mocks.cacheTryLock).toHaveBeenCalledWith("org:org_1:billing-sync-lock", "1", 30_000);
+  });
+
+  test("getOrganizationBillingWithReadThroughSync serves cached and skips sync when the lock backend is unavailable", async () => {
+    const cachedBilling = {
+      stripeCustomerId: "cus_1",
+      stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+    };
+    mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
+    // Redis unavailable → tryLock returns an error Result; treat as "not acquired", serve cached.
+    mocks.cacheTryLock.mockResolvedValue({ ok: false, error: { code: "RedisConnectionError" } });
+
+    const result = await getOrganizationBillingWithReadThroughSync("org_1");
+
+    expect(result).toEqual(cachedBilling);
+    expect(mocks.subscriptionsList).not.toHaveBeenCalled();
+    expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+  });
+
+  test("getOrganizationBillingWithReadThroughSync stops waiting at the deadline and serves cached (never overruns the lease)", async () => {
+    vi.useFakeTimers();
+    try {
+      const cachedBilling = {
+        stripeCustomerId: "cus_1",
+        // Fixed old timestamp so staleness doesn't depend on the fake clock.
+        stripe: { lastSyncedAt: new Date("2020-01-01T00:00:00.000Z").toISOString() },
+      };
+      mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
+      // Sync hangs on its first DB read → it would run past the 20s deadline (which is < the 30s lease).
+      mocks.prismaOrganizationBillingFindUnique.mockReturnValue(new Promise(() => {}));
+
+      const resultPromise = getOrganizationBillingWithReadThroughSync("org_1");
+      await vi.advanceTimersByTimeAsync(20_000 + 1);
+      const result = await resultPromise;
+
+      expect(result).toEqual(cachedBilling);
+      // Deadline fired before any write, so the request returns without blocking or writing.
+      expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+      expect(mocks.loggerWarn).toHaveBeenCalledWith(
+        { error: expect.any(Error), organizationId: "org_1" },
+        "Failed to refresh billing snapshot from Stripe"
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("getOrganizationBillingWithReadThroughSync bypasses Redis cache in self-hosted mode", async () => {

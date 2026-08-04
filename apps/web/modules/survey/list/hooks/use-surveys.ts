@@ -41,11 +41,13 @@ export const useSurveys = ({
 
   const surveys = flattenSurveyPages(query.data);
   const totalCount = query.data?.pages[0]?.meta.totalCount ?? 0;
+  const hasArchived = query.data?.pages[0]?.meta.hasArchived ?? false;
 
   return {
     ...query,
     queryKey,
     surveys,
     totalCount,
+    hasArchived,
   };
 };

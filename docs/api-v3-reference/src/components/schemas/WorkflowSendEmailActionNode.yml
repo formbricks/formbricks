@@ -1,0 +1,31 @@
+type: object
+description: >-
+  Send-email action node. Renders 1:1 with survey Follow-ups: recall-token body,
+  question/hidden-field `to` resolution, and the branded Follow-ups email template.
+required:
+  - id
+  - type
+  - actionType
+  - config
+properties:
+  id:
+    type: string
+    minLength: 1
+  type:
+    type: string
+    enum:
+      - action
+  actionType:
+    type: string
+    enum:
+      - send_email
+  label:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Optional display label shown in the builder.
+  config:
+    $ref: ./WorkflowSendEmailActionConfig.yml
+  ui:
+    $ref: ./WorkflowNodeUi.yml
+additionalProperties: false

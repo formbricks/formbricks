@@ -5,6 +5,7 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import {
   createFeedbackSourceWithMappings,
   deleteFeedbackSource,
+  getFeedbackSourceWithMappingsById,
   getFeedbackSourcesBySurveyId,
   getFeedbackSourcesWithMappings,
   updateFeedbackSource,
@@ -15,6 +16,7 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     feedbackSource: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -156,6 +158,59 @@ describe("getFeedbackSourcesWithMappings", () => {
 
     await expect(getFeedbackSourcesWithMappings(ENV_ID)).rejects.toThrow(DatabaseError);
   });
+
+  test("rethrows non-Prisma errors", async () => {
+    vi.mocked(prisma.feedbackSource.findMany).mockRejectedValue(new Error("boom"));
+
+    await expect(getFeedbackSourcesWithMappings(ENV_ID)).rejects.toThrow("boom");
+  });
+});
+
+describe("getFeedbackSourceWithMappingsById", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("returns the feedbackSource when found", async () => {
+    vi.mocked(prisma.feedbackSource.findUnique).mockResolvedValue(
+      mockFeedbackSourceWithMappingsFromDb as never
+    );
+
+    const result = await getFeedbackSourceWithMappingsById(FEEDBACK_SOURCE_ID, ENV_ID);
+
+    expect(prisma.feedbackSource.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
+      })
+    );
+    expect(result).toEqual(mockFeedbackSourceWithMappings);
+  });
+
+  test("returns null when not found", async () => {
+    vi.mocked(prisma.feedbackSource.findUnique).mockResolvedValue(null as never);
+
+    const result = await getFeedbackSourceWithMappingsById(FEEDBACK_SOURCE_ID, ENV_ID);
+    expect(result).toBeNull();
+  });
+
+  test("throws DatabaseError on Prisma error", async () => {
+    vi.mocked(prisma.feedbackSource.findUnique).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("DB error", {
+        code: "P1001",
+        clientVersion: "5.0.0",
+      })
+    );
+
+    await expect(getFeedbackSourceWithMappingsById(FEEDBACK_SOURCE_ID, ENV_ID)).rejects.toThrow(
+      DatabaseError
+    );
+  });
+
+  test("rethrows non-Prisma errors", async () => {
+    vi.mocked(prisma.feedbackSource.findUnique).mockRejectedValue(new Error("boom"));
+
+    await expect(getFeedbackSourceWithMappingsById(FEEDBACK_SOURCE_ID, ENV_ID)).rejects.toThrow("boom");
+  });
 });
 
 describe("getFeedbackSourcesBySurveyId", () => {
@@ -199,6 +254,12 @@ describe("getFeedbackSourcesBySurveyId", () => {
 
     await expect(getFeedbackSourcesBySurveyId(SURVEY_ID)).rejects.toThrow(DatabaseError);
   });
+
+  test("rethrows non-Prisma errors", async () => {
+    vi.mocked(prisma.feedbackSource.findMany).mockRejectedValue(new Error("boom"));
+
+    await expect(getFeedbackSourcesBySurveyId(SURVEY_ID)).rejects.toThrow("boom");
+  });
 });
 
 describe("updateFeedbackSource", () => {
@@ -232,7 +293,7 @@ describe("updateFeedbackSource", () => {
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
     vi.mocked(prisma.feedbackSource.update).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
-        code: "P2015",
+        code: "P2025",
         clientVersion: "5.0.0",
       })
     );
@@ -285,7 +346,7 @@ describe("deleteFeedbackSource", () => {
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
     vi.mocked(prisma.feedbackSource.delete).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
-        code: "P2015",
+        code: "P2025",
         clientVersion: "5.0.0",
       })
     );
@@ -302,6 +363,12 @@ describe("deleteFeedbackSource", () => {
     );
 
     await expect(deleteFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID)).rejects.toThrow(DatabaseError);
+  });
+
+  test("rethrows non-Prisma errors", async () => {
+    vi.mocked(prisma.feedbackSource.delete).mockRejectedValue(new Error("boom"));
+
+    await expect(deleteFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID)).rejects.toThrow("boom");
   });
 });
 
@@ -426,7 +493,9 @@ describe("createFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "name"] },
+        meta: {
+          driverAdapterError: { cause: { constraint: { fields: ["workspaceId", "name"] } } },
+        },
       })
     );
 
@@ -444,7 +513,11 @@ describe("createFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] },
+        meta: {
+          driverAdapterError: {
+            cause: { constraint: { fields: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] } },
+          },
+        },
       })
     );
 
@@ -462,7 +535,17 @@ describe("createFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "feedbackSourceId", "sourceFieldId", "targetFieldId"] },
+        // Real Prisma 7 + adapter-pg shape: no meta.target, and columns are the @map()-ed DB names
+        // (source_field_id / target_field_id) — verifies the helper's mapped-column handling.
+        meta: {
+          driverAdapterError: {
+            cause: {
+              constraint: {
+                fields: ["workspaceId", "feedbackSourceId", "source_field_id", "target_field_id"],
+              },
+            },
+          },
+        },
       })
     );
 
@@ -473,6 +556,23 @@ describe("createFeedbackSourceWithMappings", () => {
         feedbackDirectoryId: FRD_ID,
       })
     ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE"));
+  });
+
+  test("throws FEEDBACK_SOURCE_NAME_DUPLICATE on a unique violation without target meta", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      })
+    );
+
+    await expect(
+      createFeedbackSourceWithMappings(ENV_ID, {
+        name: "Dup",
+        type: "formbricks_survey",
+        feedbackDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE"));
   });
 
   test("throws FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE on composite FK violation", async () => {
@@ -534,6 +634,14 @@ describe("createFeedbackSourceWithMappings", () => {
     await expect(
       createFeedbackSourceWithMappings(ENV_ID, { name: "Fail", type: "csv", feedbackDirectoryId: FRD_ID })
     ).rejects.toThrow(DatabaseError);
+  });
+
+  test("rethrows non-Prisma errors", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(new Error("boom"));
+
+    await expect(
+      createFeedbackSourceWithMappings(ENV_ID, { name: "Fail", type: "csv", feedbackDirectoryId: FRD_ID })
+    ).rejects.toThrow("boom");
   });
 });
 
@@ -636,7 +744,7 @@ describe("updateFeedbackSourceWithMappings", () => {
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
-        code: "P2015",
+        code: "P2025",
         clientVersion: "5.0.0",
       })
     );
@@ -651,7 +759,9 @@ describe("updateFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "name"] },
+        meta: {
+          driverAdapterError: { cause: { constraint: { fields: ["workspaceId", "name"] } } },
+        },
       })
     );
 
@@ -665,7 +775,11 @@ describe("updateFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] },
+        meta: {
+          driverAdapterError: {
+            cause: { constraint: { fields: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] } },
+          },
+        },
       })
     );
 
@@ -679,7 +793,17 @@ describe("updateFeedbackSourceWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "feedbackSourceId", "sourceFieldId", "targetFieldId"] },
+        // Real Prisma 7 + adapter-pg shape: no meta.target, and columns are the @map()-ed DB names
+        // (source_field_id / target_field_id) — verifies the helper's mapped-column handling.
+        meta: {
+          driverAdapterError: {
+            cause: {
+              constraint: {
+                fields: ["workspaceId", "feedbackSourceId", "source_field_id", "target_field_id"],
+              },
+            },
+          },
+        },
       })
     );
 
@@ -698,6 +822,14 @@ describe("updateFeedbackSourceWithMappings", () => {
 
     await expect(updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       DatabaseError
+    );
+  });
+
+  test("rethrows non-Prisma errors", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(new Error("boom"));
+
+    await expect(updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+      "boom"
     );
   });
 });

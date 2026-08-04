@@ -98,18 +98,15 @@ const SENTIMENT_COUNT_MEASURES: MeasureDefinition[] = SENTIMENT_MEASURE_ORDER.ma
 }));
 
 export const FEEDBACK_FIELDS = {
+  // Ordered by filter/group-by relevance (ENG-1673 follow-up): the fields people reach for most
+  // lead the list, so the first entry doubles as the default filter field. Tiers: question →
+  // answer values → AI enrichment → source → time/language → identifiers & Hub meta.
   dimensions: [
     {
-      id: "FeedbackRecords.sourceType",
-      label: "Source Type",
+      id: "FeedbackRecords.fieldLabel",
+      label: "Question",
       type: "string",
-      description: "Source type of the feedback (e.g., nps_campaign, survey)",
-    },
-    {
-      id: "FeedbackRecords.sourceName",
-      label: "Source Name",
-      type: "string",
-      description: "Human-readable name of the source",
+      description: "Human-readable label of the question/field",
     },
     {
       id: "FeedbackRecords.fieldType",
@@ -118,29 +115,37 @@ export const FEEDBACK_FIELDS = {
       description: "Type of feedback field (e.g., nps, text, rating)",
     },
     {
-      id: "FeedbackRecords.fieldLabel",
-      label: "Question",
-      type: "string",
-      description: "Human-readable label of the question/field",
-    },
-    {
-      id: "FeedbackRecords.fieldId",
-      label: "Field ID/Question ID",
+      id: "FeedbackRecords.valueText",
+      label: "Value (Text)",
       type: "string",
       description:
-        "Stable question/field identifier (the survey element id). Unlike the label it is consistent across languages and duplicate labels, so group or filter by this to treat them as one question.",
+        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
     },
     {
-      id: "FeedbackRecords.fieldGroupLabel",
-      label: "Question Group",
+      id: "FeedbackRecords.valueId",
+      label: "Value (Option)",
       type: "string",
-      description: "Label of the parent composite question for matrix/ranking rows",
+      description:
+        "Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.",
     },
     {
-      id: "FeedbackRecords.language",
-      label: "Language",
-      type: "string",
-      description: 'Response language code (e.g., "en", "de")',
+      id: "FeedbackRecords.valueNumber",
+      label: "Value (Number)",
+      type: "number",
+      description:
+        "Numeric answer value (NPS 0-10, CSAT 1-5, CES 1-5 or 1-7, rating, number). Pair with a fieldType filter to keep scales consistent.",
+    },
+    {
+      id: "FeedbackRecords.valueBoolean",
+      label: "Value (Boolean)",
+      type: "boolean",
+      description: "Boolean answer value (yes/no). Pair with a fieldType filter.",
+    },
+    {
+      id: "FeedbackRecords.valueDate",
+      label: "Value (Date)",
+      type: "time",
+      description: "Date answer value. Pair with a fieldType filter.",
     },
     {
       id: "FeedbackRecords.sentiment",
@@ -164,6 +169,49 @@ export const FEEDBACK_FIELDS = {
         'AI-detected emotions as a comma-separated multi-label set from: joy, anger, sadness, fear, surprise, disgust. Filter a single emotion with "contains". Empty until a record is enriched.',
     },
     {
+      id: "FeedbackRecords.sourceName",
+      label: "Source Name",
+      type: "string",
+      description: "Human-readable name of the source",
+    },
+    {
+      id: "FeedbackRecords.sourceType",
+      label: "Source Type",
+      type: "string",
+      description: "Source type of the feedback (e.g., nps_campaign, survey)",
+    },
+    {
+      id: "FeedbackRecords.sourceId",
+      label: "Source ID",
+      type: "string",
+      description: "Stable id of the source (e.g. the survey id).",
+    },
+    {
+      id: "FeedbackRecords.collectedAt",
+      label: "Collected At",
+      type: "time",
+      description: "Timestamp when the feedback was collected",
+    },
+    {
+      id: "FeedbackRecords.language",
+      label: "Language",
+      type: "string",
+      description: 'Response language code (e.g., "en", "de")',
+    },
+    {
+      id: "FeedbackRecords.fieldId",
+      label: "Field ID/Question ID",
+      type: "string",
+      description:
+        "Stable question/field identifier (the survey element id). Unlike the label it is consistent across languages and duplicate labels, so group or filter by this to treat them as one question.",
+    },
+    {
+      id: "FeedbackRecords.fieldGroupLabel",
+      label: "Question Group",
+      type: "string",
+      description: "Label of the parent composite question for matrix/ranking rows",
+    },
+    {
       id: "FeedbackRecords.userId",
       label: "User ID",
       type: "string",
@@ -174,38 +222,6 @@ export const FEEDBACK_FIELDS = {
       label: "Response ID",
       type: "string",
       description: "Unique identifier linking related feedback records",
-    },
-    {
-      id: "FeedbackRecords.valueNumber",
-      label: "Value (Number)",
-      type: "number",
-      description:
-        "Numeric answer value (NPS 0-10, CSAT 1-5, CES 1-5 or 1-7, rating, number). Pair with a fieldType filter to keep scales consistent.",
-    },
-    {
-      id: "FeedbackRecords.valueText",
-      label: "Value (Text)",
-      type: "string",
-      description:
-        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
-    },
-    {
-      id: "FeedbackRecords.valueBoolean",
-      label: "Value (Boolean)",
-      type: "boolean",
-      description: "Boolean answer value (yes/no). Pair with a fieldType filter.",
-    },
-    {
-      id: "FeedbackRecords.valueDate",
-      label: "Value (Date)",
-      type: "time",
-      description: "Date answer value. Pair with a fieldType filter.",
-    },
-    {
-      id: "FeedbackRecords.collectedAt",
-      label: "Collected At",
-      type: "time",
-      description: "Timestamp when the feedback was collected",
     },
     {
       id: "FeedbackRecords.createdAt",
@@ -384,8 +400,14 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
 
-const isSentimentValue = (value: string): value is TSentimentValue =>
+export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
+
+/** Map a sentiment count measure id (e.g. "FeedbackRecords.veryPositiveCount") back to its enum
+ * value. Charts use this to give the sentiment count series the same semantic colors as the
+ * sentiment dimension buckets. Returns undefined for every other measure. */
+export const getSentimentValueForMeasureId = (measureId: string): TSentimentValue | undefined =>
+  SENTIMENT_VALUE_ORDER.find((value) => measureId === `FeedbackRecords.${toCountMeasureId(value)}Count`);
 
 const isEmotionValue = (value: string): value is TEmotionValue =>
   (EMOTION_VALUES as readonly string[]).includes(value);
@@ -524,6 +546,7 @@ export function sortRowsByEnumDimension<T extends Record<string, unknown>>(
  * free-text dimensions (e.g. valueText) are intentionally excluded.
  */
 export const SELECTABLE_VALUE_DIMENSION_IDS = [
+  "FeedbackRecords.sourceId",
   "FeedbackRecords.sourceName",
   "FeedbackRecords.sourceType",
   "FeedbackRecords.language",
@@ -608,6 +631,7 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
     "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
     "FeedbackRecords.sourceName": t("workspace.analysis.charts.field_label_source_name"),
+    "FeedbackRecords.sourceId": t("workspace.analysis.charts.field_label_source_id"),
     "FeedbackRecords.fieldType": t("workspace.analysis.charts.field_label_field_type"),
     "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_question"),
     "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_question_group"),

@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import {
   TIntegrationGoogleSheets,
   ZIntegrationGoogleSheets,
@@ -68,6 +69,14 @@ export const getSpreadsheetNameByIdAction = authenticatedActionClient
         },
       ],
     });
+
+    // ENG-1921: googleSheetIntegration is fully client-supplied and carries its own workspaceId,
+    // which is used downstream to upsert the integration (incl. OAuth tokens) on the token-refresh
+    // path. Reject it unless it targets the authorized workspace, otherwise a caller could
+    // create/overwrite another tenant's integration.
+    if (parsedInput.googleSheetIntegration.workspaceId !== parsedInput.workspaceId) {
+      throw new OperationNotAllowedError("Integration does not belong to the specified workspace");
+    }
 
     const integrationData = structuredClone(parsedInput.googleSheetIntegration);
     integrationData.config.data.forEach((data) => {

@@ -177,6 +177,17 @@ describe("ActionClass Service", () => {
       await expect(deleteActionClass("id4")).rejects.toThrow(ResourceNotFoundError);
     });
 
+    test("should throw DatabaseError for PrismaClientKnownRequestError", async () => {
+      if (!prisma.actionClass.delete) prisma.actionClass.delete = vi.fn();
+      vi.mocked(prisma.actionClass.delete).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Record not found", {
+          code: "P2025",
+          clientVersion: "test",
+        })
+      );
+      await expect(deleteActionClass("id4")).rejects.toThrow(DatabaseError);
+    });
+
     test("should rethrow unknown errors", async () => {
       if (!prisma.actionClass.delete) prisma.actionClass.delete = vi.fn();
       const error = new Error("unknown");

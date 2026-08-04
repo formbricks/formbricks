@@ -1,4 +1,3 @@
-// @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TJsWorkspaceStateSurvey } from "@formbricks/types/js";

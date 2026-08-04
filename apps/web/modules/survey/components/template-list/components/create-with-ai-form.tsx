@@ -95,7 +95,7 @@ export const CreateWithAIForm = ({
   return (
     <form className="flex w-full flex-col space-y-4" onSubmit={handleGenerate}>
       {!isAIAvailable && (
-        <Alert variant="info">
+        <Alert variant="info" role="status">
           <AlertTitle>{t("workspace.surveys.ai_create.ai_not_available")}</AlertTitle>
           <AlertDescription>{t(getUnavailableMessageKey(aiUnavailableReason))}</AlertDescription>
           {unavailableAction && unavailableActionLabel && (

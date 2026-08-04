@@ -10,7 +10,6 @@ let isRedisAvailable = false;
 // Test Redis availability
 async function checkRedisAvailability() {
   try {
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     const redis = await cache.getRedisClient();
     if (redis === null) {
       console.log("Redis client is null - Redis not available");
@@ -147,7 +146,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     console.log("🟢 Rate Limiter Load Tests: Redis available - tests will run");
 
     // Clear any existing test keys
-    // eslint-disable-next-line @typescript-eslint/await-thenable
+
     const redis = await cache.getRedisClient();
     if (redis) {
       const testKeys = await redis.keys("fb:rate_limit:test:*");
@@ -166,7 +165,6 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     const redis = await cache.getRedisClient();
     if (redis) {
       const testKeys = await redis.keys("fb:rate_limit:test:*");
@@ -329,7 +327,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     const identifier = "stress-test";
 
     // Clear any existing keys first to ensure clean state
-    // eslint-disable-next-line @typescript-eslint/await-thenable
+
     const redis = await cache.getRedisClient();
     if (redis) {
       const existingKeys = await redis.keys(`fb:rate_limit:${config.namespace}:*`);
@@ -458,7 +456,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     const identifier = "ttl-test-user";
 
     // Clear any existing keys first
-    // eslint-disable-next-line @typescript-eslint/await-thenable
+
     const redis = await cache.getRedisClient();
     if (redis) {
       const existingKeys = await redis.keys(`fb:rate_limit:${config.namespace}:*`);

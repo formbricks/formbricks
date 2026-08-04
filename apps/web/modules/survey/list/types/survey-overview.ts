@@ -3,9 +3,12 @@ import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
 export const ZSurveyOverviewType = z.enum(["link", "app"]);
 export const ZSurveyOverviewSort = z.enum(["createdAt", "updatedAt", "name", "relevance"]);
+// "archived" is a pseudo-status used only by the list filter UI. It is not a real
+// SurveyStatus; the server translates it into an archivedAt filter.
+export const ZSurveyOverviewStatus = z.union([ZSurveyStatus, z.literal("archived")]);
 export const ZSurveyOverviewFilters = z.object({
   name: z.string(),
-  status: z.array(ZSurveyStatus),
+  status: z.array(ZSurveyOverviewStatus),
   type: z.array(ZSurveyOverviewType),
   sortBy: ZSurveyOverviewSort,
 });
@@ -17,6 +20,7 @@ export const ZSurveyListItem = z.object({
   type: z.enum(["link", "app", "website", "web"]),
   status: ZSurveyStatus,
   publishOn: z.date().nullable(),
+  archivedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   responseCount: z.number(),
@@ -34,7 +38,7 @@ export const ZSurveyListItem = z.object({
 });
 
 export type TSurveyOverviewType = z.infer<typeof ZSurveyOverviewType>;
-export type TSurveyOverviewStatus = z.infer<typeof ZSurveyStatus>;
+export type TSurveyOverviewStatus = z.infer<typeof ZSurveyOverviewStatus>;
 export type TSurveyOverviewSort = z.infer<typeof ZSurveyOverviewSort>;
 export type TSurveyOverviewFilters = z.infer<typeof ZSurveyOverviewFilters>;
 export type TSurveyListItem = z.infer<typeof ZSurveyListItem>;

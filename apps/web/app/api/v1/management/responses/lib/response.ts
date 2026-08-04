@@ -134,7 +134,7 @@ export const createResponse = async (
     return response;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RelatedRecordDoesNotExist) {
+      if (error.code === PrismaErrorType.RecordNotFound) {
         throw new DatabaseError("Display ID does not exist");
       }
       throw new DatabaseError(error.message);

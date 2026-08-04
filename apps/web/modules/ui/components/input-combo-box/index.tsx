@@ -13,6 +13,7 @@ import React, {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import {
   Command,
   CommandEmpty,
@@ -66,6 +67,7 @@ export interface InputComboboxProps {
   comboboxClasses?: string;
   emptyDropdownText?: string;
   iconClassName?: string;
+  disabled?: boolean;
 }
 
 // Helper to flatten all options and their children
@@ -106,7 +108,14 @@ function ComboboxOptionLabel({
       )}
       {option.icon && <option.icon className={iconClassName} />}
       {option.imgSrc && (
-        <Image src={option.imgSrc} alt={option.label} width={24} height={24} className="shrink-0" />
+        <Image
+          src={option.imgSrc}
+          alt={option.label}
+          width={24}
+          height={24}
+          className="shrink-0"
+          unoptimized={isExternalImageSrc(option.imgSrc)}
+        />
       )}
       {hasOptionDetails(option) ? (
         <span className="flex min-w-0 flex-col">
@@ -146,6 +155,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   comboboxClasses,
   emptyDropdownText,
   iconClassName = "h-5 w-5 text-slate-400",
+  disabled = false,
 }) => {
   const { t } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
@@ -237,7 +247,15 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             {i > 0 && <span>, </span>}
             <div className="flex min-w-0 items-center gap-2 overflow-hidden">
               {opt.icon && <opt.icon className={cn("shrink-0", iconClassName)} />}
-              {opt.imgSrc && <Image src={opt.imgSrc} alt={opt.label} width={24} height={24} />}
+              {opt.imgSrc && (
+                <Image
+                  src={opt.imgSrc}
+                  alt={opt.label}
+                  width={24}
+                  height={24}
+                  unoptimized={isExternalImageSrc(opt.imgSrc)}
+                />
+              )}
               <span className="truncate" title={opt.label}>
                 {opt.label}
               </span>
@@ -252,7 +270,15 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     return (
       <div className="flex min-w-0 items-center gap-2 overflow-hidden">
         {opt.icon && <opt.icon className={cn("shrink-0", iconClassName)} />}
-        {opt.imgSrc && <Image src={opt.imgSrc} alt={opt.label} width={24} height={24} />}
+        {opt.imgSrc && (
+          <Image
+            src={opt.imgSrc}
+            alt={opt.label}
+            width={24}
+            height={24}
+            unoptimized={isExternalImageSrc(opt.imgSrc)}
+          />
+        )}
         <span className="truncate" title={opt.label}>
           {opt.label}
         </span>
@@ -274,12 +300,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     <div
       className={cn(
         "group/icon flex max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
+        disabled && "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60 hover:border-slate-200",
         comboboxClasses
       )}>
       {withInput && inputType !== "dropdown" && (
         <Input
           id={`${id}-input`}
           {...inputProps}
+          disabled={disabled || inputProps?.disabled}
           className={cn(
             "min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0",
             inputProps?.className
@@ -289,19 +317,21 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         />
       )}
 
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenu open={disabled ? false : open} onOpenChange={disabled ? undefined : setOpen}>
         <DropdownMenuTrigger asChild className="z-10 min-w-0 flex-1">
           <div
             id={id}
             role="combobox"
-            tabIndex={0}
+            tabIndex={disabled ? -1 : 0}
             aria-controls="options"
             aria-expanded={open}
+            aria-disabled={disabled || undefined}
             className={cn(
               "flex h-10 w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
               {
                 "w-10 shrink-0 justify-center pr-0": withInput && inputType !== "dropdown",
-                "pointer-events-none": isClearing,
+                "pointer-events-none": isClearing || disabled,
+                "cursor-not-allowed bg-transparent": disabled,
               }
             )}>
             {inputType === "dropdown" ? (
@@ -414,6 +444,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                                     width={24}
                                     height={24}
                                     className="shrink-0"
+                                    unoptimized={isExternalImageSrc(opt.imgSrc)}
                                   />
                                 )}
                                 <span className="flex-1 truncate text-slate-900">{opt.label}</span>

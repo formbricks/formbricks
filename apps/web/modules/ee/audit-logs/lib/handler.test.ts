@@ -247,6 +247,43 @@ describe("withAuditLogging", () => {
     expect(callArgs.target.id).toBe("t1");
   });
 
+  // ENG-2091: `action` is fixed when the wrapper is applied, so a handler whose success does NOT mean
+  // the audited thing happened (a duplicate sign-up answering identically to a real one) would otherwise
+  // record a false `created`.
+  test("skips the event when a successful handler sets suppressEvent", async () => {
+    const suppressedCtx = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, suppressEvent: true },
+    };
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("created", "user", handlerImpl);
+
+    const result = await wrapped({ ctx: suppressedCtx as any, parsedInput: mockParsedInput });
+    await new Promise(setImmediate);
+
+    expect(result).toBe("ok"); // the response is unchanged — only the record is
+    expect(handlerImpl).toHaveBeenCalled();
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
+  });
+
+  // The flag must never be usable to hide a failure, so it is honoured only on the success path.
+  test("still logs a FAILED handler even when suppressEvent is set", async () => {
+    const suppressedCtx = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, suppressEvent: true },
+    };
+    const handlerImpl = vi.fn().mockRejectedValue(new Error("fail"));
+    const wrapped = OriginalHandler.withAuditLogging("created", "user", handlerImpl);
+
+    await expect(wrapped({ ctx: suppressedCtx as any, parsedInput: mockParsedInput })).rejects.toThrow(
+      "fail"
+    );
+    await new Promise(setImmediate);
+
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+    expect(serviceLogAuditEventMockHandle.mock.calls[0][0].status).toBe("failure");
+  });
+
   test("does not log if AUDIT_LOG_ENABLED is false", async () => {
     if (mutableConstants) mutableConstants.AUDIT_LOG_ENABLED = false;
     const handlerImpl = vi.fn().mockResolvedValue("ok");

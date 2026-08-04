@@ -6,7 +6,6 @@ import { type ApiErrorResponse, type Result, okVoid } from "@/types/error";
 
 const MAX_USER_ID_LENGTH = 255;
 
-// eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
 export const setUserId = async (userId: string): Promise<Result<void, ApiErrorResponse>> => {
   const appConfig = Config.getInstance();
   const logger = Logger.getInstance();

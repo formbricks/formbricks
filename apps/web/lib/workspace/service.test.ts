@@ -4,7 +4,13 @@ import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma, WidgetPlacement, Workspace } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
-import { getUserWorkspaces, getWorkspace, getWorkspaces } from "./service";
+import {
+  getUserWorkspaces,
+  getUserWorkspacesByOrganizationIds,
+  getWorkspace,
+  getWorkspaceLegacyStoragePrefixes,
+  getWorkspaces,
+} from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -221,6 +227,62 @@ describe("Workspace Service", () => {
     });
   });
 
+  test("getUserWorkspacesByOrganizationIds team-scopes non-owner/manager roles (owner/manager get all)", async () => {
+    const userId = createId();
+    const orgManager = createId();
+    const orgBilling = createId();
+
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      { userId, organizationId: orgManager, role: OrganizationRole.manager, accepted: true },
+      { userId, organizationId: orgBilling, role: OrganizationRole.billing, accepted: true },
+    ]);
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+    await getUserWorkspacesByOrganizationIds([orgManager, orgBilling], userId);
+
+    const teamScope = { some: { team: { teamUsers: { some: { userId } } } } };
+    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          // manager: all of the org's workspaces (no team filter)
+          { organizationId: orgManager },
+          // billing: team-scoped only (regression: previously unscoped → every workspace)
+          { organizationId: orgBilling, workspaceTeams: teamScope },
+        ],
+      },
+      select: { id: true },
+    });
+  });
+
+  test("getUserWorkspaces should team-scope a billing user (not return every workspace)", async () => {
+    const userId = createId();
+    const organizationId = createId();
+
+    vi.mocked(prisma.membership.findFirst).mockResolvedValue({
+      userId,
+      organizationId,
+      role: OrganizationRole.billing,
+      accepted: true,
+    });
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+    await getUserWorkspaces(userId, organizationId);
+
+    // Billing is not owner/manager, so it must be scoped to team-accessible workspaces — never the
+    // whole org (regression: `role === "member"` previously leaked all workspaces to billing users).
+    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId,
+        workspaceTeams: {
+          some: { team: { teamUsers: { some: { userId } } } },
+        },
+      },
+      select: expect.any(Object),
+      take: undefined,
+      skip: undefined,
+    });
+  });
+
   test("getUserWorkspaces should throw ValidationError when user is not a member of organization", async () => {
     const userId = createId();
     const organizationId = createId();
@@ -405,5 +467,51 @@ describe("Workspace Service", () => {
     vi.mocked(prisma.workspace.findMany).mockRejectedValue(prismaError);
 
     await expect(getWorkspaces(organizationId)).rejects.toThrow(DatabaseError);
+  });
+
+  describe("getWorkspaceLegacyStoragePrefixes", () => {
+    test("returns both the workspace id and its legacyEnvironmentId when set", async () => {
+      const workspaceId = createId();
+      const legacyEnvironmentId = createId();
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        id: workspaceId,
+        legacyEnvironmentId,
+      } as unknown as Workspace);
+
+      await expect(getWorkspaceLegacyStoragePrefixes(workspaceId)).resolves.toEqual([
+        workspaceId,
+        legacyEnvironmentId,
+      ]);
+    });
+
+    test("returns only the workspace id when legacyEnvironmentId is null", async () => {
+      const workspaceId = createId();
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        id: workspaceId,
+        legacyEnvironmentId: null,
+      } as unknown as Workspace);
+
+      await expect(getWorkspaceLegacyStoragePrefixes(workspaceId)).resolves.toEqual([workspaceId]);
+    });
+
+    test("returns an empty array when the workspace does not exist", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
+
+      await expect(getWorkspaceLegacyStoragePrefixes(createId())).resolves.toEqual([]);
+    });
+
+    test("throws ValidationError for an invalid workspace id", async () => {
+      await expect(getWorkspaceLegacyStoragePrefixes("not-a-cuid")).rejects.toThrow(ValidationError);
+    });
+
+    test("throws DatabaseError when prisma throws", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.workspace.findUnique).mockRejectedValue(prismaError);
+
+      await expect(getWorkspaceLegacyStoragePrefixes(createId())).rejects.toThrow(DatabaseError);
+    });
   });
 });

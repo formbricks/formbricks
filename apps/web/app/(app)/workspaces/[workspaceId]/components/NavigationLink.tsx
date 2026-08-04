@@ -57,11 +57,13 @@ export const NavigationLink = ({
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <li className={cn("mb-1 ml-2 rounded-l-md py-2 pl-2 text-sm", collapsedColorClass)}>
+              <li className={cn("mb-1 ml-1 rounded-l-md py-2 text-sm", collapsedColorClass)}>
                 {disabled ? (
-                  <div className="flex items-center">{children}</div>
+                  <div className="flex items-center justify-center">{children}</div>
                 ) : (
-                  <Link href={href}>{children}</Link>
+                  <Link href={href} className="flex items-center justify-center">
+                    {children}
+                  </Link>
                 )}
               </li>
             </TooltipTrigger>
