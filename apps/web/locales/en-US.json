@@ -4223,6 +4223,8 @@
       "email_to_label": "Send to",
       "email_to_placeholder": "team@example.com",
       "email_to_required": "Pick who should receive this email.",
+      "email_to_unavailable_group_label": "Not available",
+      "email_to_unavailable_warning": "This recipient is no longer available — they may have lost access to this workspace, or the survey field they came from was removed. Pick a new one; this email can't be sent until you do.",
       "enable_blocked_unsaved_changes": "Your latest changes couldn't be saved, so the workflow wasn't enabled.",
       "enable_failed": "Could not enable the workflow.",
       "enable_success": "Workflow enabled.",

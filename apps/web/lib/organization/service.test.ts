@@ -12,7 +12,6 @@ import {
   createOrganization,
   deleteOrganization,
   getOrganization,
-  getOrganizationMemberEmails,
   getOrganizationsByUserId,
   select as organizationSelect,
   subscribeOrganizationMembersToSurveyResponses,
@@ -34,9 +33,6 @@ vi.mock("@formbricks/database", () => ({
     },
     user: {
       findUnique: vi.fn(),
-    },
-    membership: {
-      findMany: vi.fn(),
     },
   },
 }));
@@ -412,53 +408,6 @@ describe("Organization Service", () => {
       expect(deleteHubTenantData).toHaveBeenCalledTimes(2);
       expect(deleteHubTenantData).toHaveBeenCalledWith("frd_1");
       expect(deleteHubTenantData).toHaveBeenCalledWith("frd_2");
-    });
-  });
-
-  describe("getOrganizationMemberEmails (send_email recipient allowlist, ENG-2029)", () => {
-    test("queries only active members of the organization", async () => {
-      vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
-
-      await getOrganizationMemberEmails("org_1");
-
-      expect(prisma.membership.findMany).toHaveBeenCalledWith({
-        where: { organizationId: "org_1", user: { isActive: true } },
-        select: { user: { select: { email: true } } },
-      });
-    });
-
-    test("returns a lowercased, whitespace-trimmed set for case-insensitive matching", async () => {
-      vi.mocked(prisma.membership.findMany).mockResolvedValue([
-        { user: { email: "  Member@Corp.Example " } },
-        { user: { email: "second@corp.example" } },
-      ] as never);
-
-      const result = await getOrganizationMemberEmails("org_1");
-
-      expect(result).toEqual(new Set(["member@corp.example", "second@corp.example"]));
-    });
-
-    test("drops memberships with a missing user or empty email", async () => {
-      vi.mocked(prisma.membership.findMany).mockResolvedValue([
-        { user: { email: "kept@corp.example" } },
-        { user: null },
-        { user: { email: null } },
-        { user: { email: "" } },
-      ] as never);
-
-      const result = await getOrganizationMemberEmails("org_1");
-
-      expect(result).toEqual(new Set(["kept@corp.example"]));
-    });
-
-    test("wraps a known Prisma error in DatabaseError", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("db down", {
-        code: "P2002",
-        clientVersion: "1.0.0",
-      });
-      vi.mocked(prisma.membership.findMany).mockRejectedValue(prismaError);
-
-      await expect(getOrganizationMemberEmails("org_1")).rejects.toThrow(DatabaseError);
     });
   });
 });

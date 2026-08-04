@@ -4223,6 +4223,8 @@
       "email_to_label": "发送至",
       "email_to_placeholder": "team@example.com",
       "email_to_required": "选择应接收此邮件的收件人。",
+      "email_to_unavailable_group_label": "不可用",
+      "email_to_unavailable_warning": "此收件人不再可用——他们可能已失去对此工作区的访问权限,或者他们所属的调查字段已被删除。请选择新的收件人;在此之前无法发送此邮件。",
       "enable_blocked_unsaved_changes": "无法保存你的最新更改，因此工作流未启用。",
       "enable_failed": "无法启用工作流。",
       "enable_success": "工作流已启用。",

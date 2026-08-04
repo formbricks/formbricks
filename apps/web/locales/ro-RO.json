@@ -4223,6 +4223,8 @@
       "email_to_label": "Trimite către",
       "email_to_placeholder": "echipa@exemplu.com",
       "email_to_required": "Alege cine ar trebui să primească acest email.",
+      "email_to_unavailable_group_label": "Indisponibil",
+      "email_to_unavailable_warning": "Acest destinatar nu mai este disponibil — este posibil să fi pierdut accesul la acest spațiu de lucru sau câmpul sondajului din care provenea a fost eliminat. Alege unul nou; acest email nu poate fi trimis până nu faci asta.",
       "enable_blocked_unsaved_changes": "Ultimele tale modificări nu au putut fi salvate, așa că fluxul de lucru nu a fost activat.",
       "enable_failed": "Nu am putut activa workflow-ul.",
       "enable_success": "Workflow activat.",

@@ -4223,6 +4223,8 @@
       "email_to_label": "Gönder",
       "email_to_placeholder": "ekip@ornek.com",
       "email_to_required": "Bu e-postayı kimin alacağını seçin.",
+      "email_to_unavailable_group_label": "Kullanılamıyor",
+      "email_to_unavailable_warning": "Bu alıcı artık kullanılamıyor — bu çalışma alanına erişimini kaybetmiş olabilir veya geldiği anket alanı kaldırılmış olabilir. Yeni bir tane seç; bunu yapana kadar bu e-posta gönderilemez.",
       "enable_blocked_unsaved_changes": "Son değişiklikleriniz kaydedilemediği için iş akışı etkinleştirilemedi.",
       "enable_failed": "İş akışı etkinleştirilemedi.",
       "enable_success": "İş akışı etkinleştirildi.",

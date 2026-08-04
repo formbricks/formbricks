@@ -4223,6 +4223,8 @@
       "email_to_label": "送信先",
       "email_to_placeholder": "team@example.com",
       "email_to_required": "このメールを受信する宛先を選択してください。",
+      "email_to_unavailable_group_label": "利用不可",
+      "email_to_unavailable_warning": "この宛先は利用できなくなりました。ワークスペースへのアクセス権を失ったか、元となるアンケートフィールドが削除された可能性があります。新しい宛先を選択してください。選択するまでこのメールは送信できません。",
       "enable_blocked_unsaved_changes": "最新の変更を保存できなかったため、ワークフローは有効化されませんでした。",
       "enable_failed": "ワークフローを有効化できませんでした。",
       "enable_success": "ワークフローを有効化しました。",

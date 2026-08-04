@@ -49,7 +49,7 @@ const {
   mockGetResponse,
   mockGetSurvey,
   mockGetOrganizationByWorkspaceId,
-  mockGetOrganizationMemberEmails,
+  mockGetWorkspaceMemberEmails,
 } = vi.hoisted(() => {
   const sendMail = vi.fn();
   return {
@@ -67,7 +67,7 @@ const {
     mockGetResponse: vi.fn(),
     mockGetSurvey: vi.fn(),
     mockGetOrganizationByWorkspaceId: vi.fn(),
-    mockGetOrganizationMemberEmails: vi.fn(),
+    mockGetWorkspaceMemberEmails: vi.fn(),
   };
 });
 
@@ -109,8 +109,8 @@ vi.mock("@/lib/response/service", () => ({ getResponse: mockGetResponse }));
 vi.mock("@/lib/survey/service", () => ({ getSurvey: mockGetSurvey }));
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByWorkspaceId: mockGetOrganizationByWorkspaceId,
-  getOrganizationMemberEmails: mockGetOrganizationMemberEmails,
 }));
+vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMemberEmails: mockGetWorkspaceMemberEmails }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -284,7 +284,7 @@ describe("processWorkflowRunJob — send_email Follow-Ups render parity (integra
     mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: { logoUrl: "" } });
     // Recipient is a respondent field (not a literal address), so the allowlist is not consulted;
     // an empty set is enough to satisfy loadRunEmailContext's lookup.
-    mockGetOrganizationMemberEmails.mockResolvedValue(new Set());
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set());
     // The real sendEmail awaits sendMail; a resolved value means "sent".
     mockSendMail.mockResolvedValue({ messageId: "smtp-accepted" });
   });
