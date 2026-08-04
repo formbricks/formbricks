@@ -165,22 +165,25 @@ describe("Logger", () => {
     expect(logger).toBeDefined();
   });
 
-  test("production OTEL logs use the absolute pino-opentelemetry transport target when enabled", async () => {
+  test("production OTEL logs use the runtime-root pino-opentelemetry transport target when enabled", async () => {
     process.env.NODE_ENV = "production";
     process.env.NEXT_RUNTIME = "nodejs";
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://signoz-otel-collector.signoz:4318";
     process.env.OTEL_LOGS_ENABLED = "1";
     process.env.OTEL_SERVICE_NAME = "formbricks-web";
     process.env.npm_package_version = "5.1.2";
+    const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue("/home/nextjs/apps/web");
 
     const { logger } = await import("./logger");
     const loggerConfig = vi.mocked(Pino).mock.calls.at(-1)?.[0] as Pino.LoggerOptions;
+    cwdSpy.mockRestore();
 
     expect(loggerConfig.transport).toEqual(
       expect.objectContaining({
         targets: expect.arrayContaining([
           expect.objectContaining({
-            target: `${process.cwd()}/node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js`,
+            target:
+              "/home/nextjs/node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js",
             options: expect.objectContaining({
               loggerName: "formbricks-web",
               serviceVersion: "5.1.2",
