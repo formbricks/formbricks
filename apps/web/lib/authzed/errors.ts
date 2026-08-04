@@ -9,6 +9,7 @@ export const AUTHZED_ERROR_CODES = {
   FAILED_PRECONDITION: "authzed_failed_precondition",
   INTERNAL: "authzed_internal",
   INVALID_REQUEST: "authzed_invalid_request",
+  LIMIT_EXCEEDED: "authzed_limit_exceeded",
   NOT_FOUND: "authzed_not_found",
   OVERLOADED: "authzed_overloaded",
   PERMISSION_DENIED: "authzed_permission_denied",

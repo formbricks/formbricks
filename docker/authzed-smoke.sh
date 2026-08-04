@@ -55,6 +55,13 @@ authzed_relationships() {
   authzed_cli "${token}" ./scripts/authzed-relationships-smoke.ts "$@"
 }
 
+authzed_backfill() {
+  local token="$1"
+  shift
+
+  authzed_cli "${token}" ./scripts/authzed-backfill-smoke.ts "$@"
+}
+
 authzed_cli() {
   local token="$1"
   local script="$2"
@@ -503,8 +510,64 @@ jq --exit-status '.status == "projected"' <<<"${restored_projection}" >/dev/null
 persisted_schema_check="$(authzed_schema "${AUTHZED_TOKEN}" check)"
 jq --exit-status '.status == "matched" and .differenceCount == 0' <<<"${persisted_schema_check}" >/dev/null
 
+# Backfill and repair. Seeds more relationships than one read page holds, so the drainer has to page
+# and hold a single revision across pages — behaviour only a real engine can confirm.
+# Subshell: an assignment prefixing a *function* call persists in the calling shell under `set -o
+# posix`, which would leave every later driver invocation running as production and refusing to run.
+refused_backfill_driver="$( (AUTHZED_SMOKE_NODE_ENV=production authzed_backfill "${AUTHZED_TOKEN}" report) || true)"
+jq --exit-status '.status == "failed" and .code == "authzed_backfill_smoke_refused"' \
+  <<<"${refused_backfill_driver}" >/dev/null
+
+backfill_seed="$(authzed_backfill "${AUTHZED_TOKEN}" seed 300)"
+jq --exit-status '.status == "seeded" and .seeded == 300' <<<"${backfill_seed}" >/dev/null
+
+backfill_observation="$(authzed_backfill "${AUTHZED_TOKEN}" observe)"
+# The non-zero count matters as much as the paging: an accidentally empty observation would let every
+# assertion below pass while proving nothing.
+jq --exit-status '.status == "observed" and .relationshipCount >= 300 and .snapshotPinned == true' \
+  <<<"${backfill_observation}" >/dev/null
+
+backfill_report="$(authzed_backfill "${AUTHZED_TOKEN}" report)"
+jq --exit-status '.status == "drifted" and .orphaned >= 300 and .pruned == 0 and .handedOverCount == 0' \
+  <<<"${backfill_report}" >/dev/null
+
+# The cap exists because a large orphan count is a symptom rather than a big cleanup job. Exceeding it
+# must hand over nothing at all, not prune an arbitrary prefix.
+backfill_capped="$(authzed_backfill "${AUTHZED_TOKEN}" prune-capped)"
+jq --exit-status '.pruned == 0 and .skipped == 1 and .handedOverCount == 0' <<<"${backfill_capped}" >/dev/null
+
+# The cap has to be decided against the whole sweep, not per page. 280 is above one 250-relationship
+# page and below the seeded total, so a per-page check would delete the first page and halt on the
+# second — revoking a cap's worth of live access on a run aimed at the wrong database, where the guard
+# exists to revoke none. This is the multi-page case; the assertion above only exceeds the cap on page
+# one, so it cannot distinguish the two.
+backfill_page_capped="$(authzed_backfill "${AUTHZED_TOKEN}" prune-page-capped)"
+jq --exit-status '.pruned == 0 and .skipped == 1 and .handedOverCount == 0 and .orphaned >= 300' \
+  <<<"${backfill_page_capped}" >/dev/null
+
+backfill_prune="$(authzed_backfill "${AUTHZED_TOKEN}" prune)"
+jq --exit-status \
+  '.status == "reconciled" and .pruned >= 300 and .handedOverCount > 0 and .truncated == false' \
+  <<<"${backfill_prune}" >/dev/null
+
+backfill_cleanup="$(authzed_backfill "${AUTHZED_TOKEN}" cleanup)"
+jq --exit-status '.status == "cleaned"' <<<"${backfill_cleanup}" >/dev/null
+
+# The store also holds the fixtures the projection assertions above created, so the absolute orphan
+# count is not zero here. Asserting the delta is the stronger claim anyway: exactly the 300 seeded
+# relationships disappeared and nothing else was touched.
+backfill_orphans_before_cleanup="$(jq -r '.orphaned' <<<"${backfill_prune}")"
+backfill_after_cleanup="$(authzed_backfill "${AUTHZED_TOKEN}" report)"
+jq --exit-status --argjson before "${backfill_orphans_before_cleanup}" \
+  '.status == "drifted" and .orphaned == ($before - 300)' <<<"${backfill_after_cleanup}" >/dev/null
+
+# Idempotency, byte for byte: a second pass over unchanged state reports exactly the same thing rather
+# than doing a fresh round of work.
+backfill_repeated="$(authzed_backfill "${AUTHZED_TOKEN}" report)"
+[[ "${backfill_repeated}" == "${backfill_after_cleanup}" ]]
+
 service_logs="$(compose logs --no-color postgres authzed-db-bootstrap spicedb-migrate spicedb)"
-application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${api_key_seed}${downgraded_api_key}${removed_api_key_scope}${deleted_api_key}${idempotent_deleted_api_key}${team_workspace_seed}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${persisted_team_workspace_seed}${persisted_api_key_seed}${unavailable_health}${unavailable_projection}${restored_health}${restored_projection}${persisted_schema_check}"
+application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${api_key_seed}${downgraded_api_key}${removed_api_key_scope}${deleted_api_key}${idempotent_deleted_api_key}${team_workspace_seed}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${persisted_team_workspace_seed}${persisted_api_key_seed}${unavailable_health}${unavailable_projection}${restored_health}${restored_projection}${persisted_schema_check}${refused_backfill_driver}${backfill_seed}${backfill_observation}${backfill_report}${backfill_capped}${backfill_page_capped}${backfill_prune}${backfill_cleanup}${backfill_after_cleanup}${backfill_repeated}"
 if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${WRONG_AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* || \
@@ -513,4 +576,4 @@ if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   exit 1
 fi
 
-printf '%s\n' "AuthZed smoke test passed: schema lifecycle, organization/team/workspace/API-key projection, permission ladders, grant and membership revocation, idempotent cascade cleanup, health, authentication failure, bounded outage handling, migrations, and persistence were verified."
+printf '%s\n' "AuthZed smoke test passed: schema lifecycle, organization/team/workspace/API-key projection, permission ladders, grant and membership revocation, idempotent cascade cleanup, paginated relationship reads, backfill orphan detection and prune guards, health, authentication failure, bounded outage handling, migrations, and persistence were verified."
