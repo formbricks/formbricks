@@ -104,7 +104,7 @@ handlers is still gated, but the guarantee is by convention there rather than by
 converging them onto `registerScopedTool` is a known follow-up.
 
 **There is no single mandatory baseline scope.** Authentication requires *at least one* resource scope
-(`MCP_MINIMUM_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
+(`MCP_RESOURCE_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
 client. `list_workspaces` — the workspaceId-discovery prerequisite for every resource tool — therefore
 gates on any resource read scope rather than one specific one; its result is derived from the caller's
 own memberships and key grants, so admitting any read scope exposes nothing extra.
