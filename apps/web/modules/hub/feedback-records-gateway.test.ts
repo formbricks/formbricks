@@ -158,26 +158,77 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
     });
   });
 
-  // API keys are deliberately left out of the owners/managers rule above: they authorize on their
-  // per-workspace permissions alone (ENG-1980 / #8648), and what a key should need in order to mutate a
-  // record is being settled in #8682. These cases pin that boundary so neither side drifts by accident.
+  // An API key has no organization role, so the owners/managers rule above cannot apply to it. It gets
+  // the equivalent instead: it may mutate only a directory that is not shared, where its workspace
+  // permission unambiguously covers every record present (ENG-2189). Deletes additionally require
+  // `manage`, matching DELETE everywhere else in the API (ENG-2083).
   describe("api key principal", () => {
     const workspaceWriteKey = apiKey({
       workspacePermissions: [{ workspaceId: workspaceB, workspaceName: "B", permission: "write" }],
+    });
+    const workspaceManageKey = apiKey({
+      workspacePermissions: [{ workspaceId: workspaceB, workspaceName: "B", permission: "manage" }],
     });
     const otherOrgWriteKey = apiKey({
       organizationId: "clorg987654321098765432109",
       workspacePermissions: [{ workspaceId: workspaceB, workspaceName: "B", permission: "write" }],
     });
 
-    test("a workspace write key may still mutate — the session org rule does not extend to keys", async () => {
-      const deleted = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
-      const updated = await authorize("PATCH", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
+    // The directory from `beforeEach` is shared between workspace A and workspace B, so a key scoped to
+    // B cannot be shown to own the records A's surveys ingested.
+    test.each([
+      ["delete", "DELETE", `/api/v3/feedbackRecords/${recordId}`],
+      ["update", "PATCH", `/api/v3/feedbackRecords/${recordId}`],
+      ["bulkDelete", "DELETE", `/api/v3/feedbackRecords?tenant_id=${directoryId}`],
+    ])(
+      "refuses %s for a workspace-scoped key in a shared directory (ENG-2189)",
+      async (_op, method, path) => {
+        const decision = await authorize(method, path, workspaceManageKey);
+
+        expect(decision.status).toBe("deny");
+        expect(decision.status === "deny" && decision.response.status).toBe(403);
+      }
+    );
+
+    test("allows the same key to mutate once the directory belongs to one workspace only", async () => {
+      vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue({
+        organizationId,
+        workspaceIds: [workspaceB],
+        isArchived: false,
+      });
+
+      const deleted = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, workspaceManageKey);
+      const updated = await authorize("PATCH", `/api/v3/feedbackRecords/${recordId}`, workspaceManageKey);
 
       expect(deleted.status).toBe("allow");
       expect(updated.status).toBe("allow");
     });
 
+    // ENG-2083: DELETE is reserved for `manage` everywhere else in the API, and record deletion is
+    // unrecoverable. `write` is enough to update, but not to delete.
+    test("refuses a delete at write even in a sole-workspace directory (ENG-2083)", async () => {
+      vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue({
+        organizationId,
+        workspaceIds: [workspaceB],
+        isArchived: false,
+      });
+
+      const deleted = await authorize("DELETE", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
+      const bulkDeleted = await authorize(
+        "DELETE",
+        `/api/v3/feedbackRecords?tenant_id=${directoryId}`,
+        workspaceWriteKey
+      );
+      const updated = await authorize("PATCH", `/api/v3/feedbackRecords/${recordId}`, workspaceWriteKey);
+
+      expect(deleted.status).toBe("deny");
+      // bulkDelete moved write -> manage alongside the single delete, so it must move with it.
+      expect(bulkDeleted.status).toBe("deny");
+      expect(updated.status).toBe("allow");
+    });
+
+    // Runs against the shared directory from `beforeEach`, so it also pins that ENG-2189 did not
+    // over-reach into reads and creates.
     test("allows a workspace write key to create and read records", async () => {
       const created = await authorize("POST", "/api/v3/feedbackRecords", workspaceWriteKey, {
         tenant_id: directoryId,
