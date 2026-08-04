@@ -155,6 +155,7 @@ describe("stripe-billing-catalog", () => {
             currency: "usd",
             unitAmount: 1000,
             responseOverage: null,
+            workflowRunsIncluded: null,
           },
         },
         pro: {
@@ -164,6 +165,7 @@ describe("stripe-billing-catalog", () => {
             currency: "usd",
             unitAmount: 1000,
             responseOverage: EXPECTED_RESPONSE_OVERAGE,
+            workflowRunsIncluded: null,
           },
           yearly: {
             plan: "pro",
@@ -171,6 +173,7 @@ describe("stripe-billing-catalog", () => {
             currency: "usd",
             unitAmount: 10000,
             responseOverage: EXPECTED_RESPONSE_OVERAGE,
+            workflowRunsIncluded: null,
           },
         },
         scale: {
@@ -180,6 +183,7 @@ describe("stripe-billing-catalog", () => {
             currency: "usd",
             unitAmount: 1000,
             responseOverage: EXPECTED_RESPONSE_OVERAGE,
+            workflowRunsIncluded: null,
           },
           yearly: {
             plan: "scale",
@@ -187,6 +191,7 @@ describe("stripe-billing-catalog", () => {
             currency: "usd",
             unitAmount: 10000,
             responseOverage: EXPECTED_RESPONSE_OVERAGE,
+            workflowRunsIncluded: null,
           },
         },
       });
@@ -288,6 +293,68 @@ describe("stripe-billing-catalog", () => {
 
       await expect(getCatalogItemsForPlan("scale", "monthly")).rejects.toThrow(
         "Expected at most one Stripe price for scale/workflow_runs/monthly, but found 2"
+      );
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "exposes the included workflow-run volume from the price's free first tier (single source of truth)",
+    async () => {
+      // createWorkflowRunsPrice uses RESPONSE_PRICE_TIERS whose first tier is free (unit_amount 0) up
+      // to 2000, so the displayed included volume must be 2000 — derived from the price, not an
+      // entitlement — and null on plans with no workflow price.
+      mocks.pricesList.mockResolvedValue({
+        data: [...STANDARD_CATALOG_PRICES, createWorkflowRunsPrice("price_scale_workflow_runs")],
+        has_more: false,
+      });
+
+      const { getStripeBillingCatalogDisplay } = await import("./stripe-billing-catalog");
+      const display = await getStripeBillingCatalogDisplay();
+
+      expect(display.scale.monthly.workflowRunsIncluded).toBe(2000);
+      expect(display.scale.yearly.workflowRunsIncluded).toBe(2000);
+      expect(display.pro.monthly.workflowRunsIncluded).toBeNull();
+      expect(display.hobby.monthly.workflowRunsIncluded).toBeNull();
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "fails closed when the workflow price cannot honor its included volume (no free first tier)",
+    async () => {
+      // The footgun: a metered workflow price that charges from run #1 (first tier is NOT free). The
+      // usage card would claim "X of N included" while Stripe invoices every run. Rather than render a
+      // reassuring-but-false allowance, catalog construction must throw (ENG-2193/2194).
+      const paidFromFirstUnit = {
+        ...createWorkflowRunsPrice("price_scale_workflow_runs"),
+        tiers: [
+          {
+            flat_amount: null,
+            flat_amount_decimal: null,
+            unit_amount: 8,
+            unit_amount_decimal: "8",
+            up_to: 2000,
+          },
+          {
+            flat_amount: null,
+            flat_amount_decimal: null,
+            unit_amount: 2,
+            unit_amount_decimal: "2",
+            up_to: null,
+          },
+        ],
+      };
+
+      mocks.pricesList.mockResolvedValue({
+        data: [...STANDARD_CATALOG_PRICES, paidFromFirstUnit],
+        has_more: false,
+      });
+
+      const { getStripeBillingCatalogDisplay } = await import("./stripe-billing-catalog");
+
+      await expect(getStripeBillingCatalogDisplay()).rejects.toThrow(
+        "must be graduated with a free first tier"
       );
     },
     TEST_TIMEOUT_MS

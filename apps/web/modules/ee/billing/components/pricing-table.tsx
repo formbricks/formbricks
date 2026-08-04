@@ -310,10 +310,19 @@ export const PricingTable = ({
   })}`;
   const responsesUnlimitedCheck = organization.billing.limits.monthly.responses === null;
   const workspacesUnlimitedCheck = organization.billing.limits.workspaces === null;
-  // workflowRuns is null on plans that do not include workflows (unlike responses/workspaces, which
-  // exist on every plan). Only surface the usage card when a concrete included volume is set, so we
-  // never render a misleading "unlimited" badge for a plan that has no workflows at all.
-  const workflowRunsLimit = organization.billing.limits.monthly.workflowRuns;
+  // The workflow-runs card's included volume comes from the billing catalog (derived from the price's
+  // own free tier), NOT the entitlement limit, so the number shown is exactly what Stripe leaves
+  // uncharged — the two can't drift and reassure a customer they're inside an allowance while being
+  // billed (ENG-2193/2194). Null when the current plan has no workflow price, so the card hides.
+  const currentPlanCatalogItem =
+    currentCloudPlan === "hobby"
+      ? billingCatalog.hobby.monthly
+      : currentCloudPlan === "pro"
+        ? billingCatalog.pro[currentBillingInterval ?? "monthly"]
+        : currentCloudPlan === "scale"
+          ? billingCatalog.scale[currentBillingInterval ?? "monthly"]
+          : null;
+  const workflowRunsLimit = currentPlanCatalogItem?.workflowRunsIncluded ?? null;
   const trialEndDate = organization.billing.stripe?.trialEnd
     ? new Date(organization.billing.stripe.trialEnd)
     : null;

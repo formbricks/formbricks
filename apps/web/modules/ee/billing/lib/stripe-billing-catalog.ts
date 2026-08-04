@@ -25,6 +25,12 @@ export type TStripeBillingCatalogItem = {
   // elsewhere. Like responsePrice it is always the monthly-billed metered variant, even for a yearly
   // base, because usage is aggregated and billed monthly (ENG-1936).
   workflowRunsPrice: TStripeCatalogPrice | null;
+  // The included (free) workflow-run allowance DERIVED FROM the price's own free first tier — the
+  // single source of truth the usage card renders. Null when there is no workflow price. This is
+  // deliberately NOT the entitlement's included-<n> value: the number the UI shows and the number
+  // Stripe leaves uncharged must be the same object, or the card can reassure a customer they are
+  // inside an allowance while Stripe invoices them (ENG-2193/2194).
+  workflowRunsIncluded: number | null;
 };
 
 export type TStripeBillingCatalog = {
@@ -52,6 +58,8 @@ export type TStripeBillingCatalogDisplayItem = {
   currency: string;
   unitAmount: number | null;
   responseOverage: TResponseOverageDisplay | null;
+  // Free workflow-run allowance derived from the price's free first tier (see TStripeBillingCatalogItem).
+  workflowRunsIncluded: number | null;
 };
 
 export type TStripeBillingCatalogDisplay = {
@@ -225,6 +233,34 @@ const getOptionalSinglePrice = (
   return matches[0] ?? null;
 };
 
+// Resolve the included (free) workflow-run allowance from the price's OWN tier structure, and fail
+// closed if the price can't honor an "included volume" claim. A graduated price whose first tier is
+// free (unit_amount 0, flat_amount 0) up to a finite boundary grants exactly that many free runs —
+// the number the usage card shows. Any other shape (flat per-unit, a paid first tier, or an
+// unbounded free tier) means the card's "X of N included" would not match what Stripe charges, so we
+// throw rather than render a reassuring-but-false allowance (ENG-2193/2194). Returns null when the
+// plan has no workflow price at all.
+const resolveWorkflowIncludedVolume = (price: TStripeCatalogPrice | null, label: string): number | null => {
+  if (!price) {
+    return null;
+  }
+
+  const firstTier = price.tiers?.[0];
+  const firstTierIsFree =
+    firstTier != null && (firstTier.unit_amount ?? 0) === 0 && (firstTier.flat_amount ?? 0) === 0;
+
+  if (price.tiers_mode !== "graduated" || !firstTierIsFree || typeof firstTier?.up_to !== "number") {
+    throw new Error(
+      `Metered workflow price ${label} (${price.id}) must be graduated with a free first tier ` +
+        `(unit_amount 0, finite up_to) so the included volume shown to customers matches what Stripe ` +
+        `leaves uncharged; got tiers_mode=${price.tiers_mode ?? "null"}, ` +
+        `firstTier=${JSON.stringify(firstTier ?? null)}`
+    );
+  }
+
+  return firstTier.up_to;
+};
+
 const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
@@ -236,6 +272,18 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
     throw new Error("No active Stripe billing catalog prices found");
   }
 
+  // Resolve the workflow price AND its validated included volume together, so both the price object
+  // and the number the UI trusts come from the same source and can't drift.
+  const workflowRuns = (
+    plan: TStandardCloudPlan
+  ): Pick<TStripeBillingCatalogItem, "workflowRunsPrice" | "workflowRunsIncluded"> => {
+    const workflowRunsPrice = getOptionalSinglePrice(prices, plan, "workflow_runs", "monthly");
+    return {
+      workflowRunsPrice,
+      workflowRunsIncluded: resolveWorkflowIncludedVolume(workflowRunsPrice, `${plan}/workflow_runs/monthly`),
+    };
+  };
+
   return {
     hobby: {
       monthly: {
@@ -243,7 +291,7 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "hobby", "base", "monthly"),
         responsePrice: null,
-        workflowRunsPrice: getOptionalSinglePrice(prices, "hobby", "workflow_runs", "monthly"),
+        ...workflowRuns("hobby"),
       },
     },
     pro: {
@@ -252,14 +300,14 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "pro", "base", "monthly"),
         responsePrice: getSinglePrice(prices, "pro", "responses", "monthly"),
-        workflowRunsPrice: getOptionalSinglePrice(prices, "pro", "workflow_runs", "monthly"),
+        ...workflowRuns("pro"),
       },
       yearly: {
         plan: "pro",
         interval: "yearly",
         basePrice: getSinglePrice(prices, "pro", "base", "yearly"),
         responsePrice: getSinglePrice(prices, "pro", "responses", "monthly"),
-        workflowRunsPrice: getOptionalSinglePrice(prices, "pro", "workflow_runs", "monthly"),
+        ...workflowRuns("pro"),
       },
     },
     scale: {
@@ -268,14 +316,14 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "scale", "base", "monthly"),
         responsePrice: getSinglePrice(prices, "scale", "responses", "monthly"),
-        workflowRunsPrice: getOptionalSinglePrice(prices, "scale", "workflow_runs", "monthly"),
+        ...workflowRuns("scale"),
       },
       yearly: {
         plan: "scale",
         interval: "yearly",
         basePrice: getSinglePrice(prices, "scale", "base", "yearly"),
         responsePrice: getSinglePrice(prices, "scale", "responses", "monthly"),
-        workflowRunsPrice: getOptionalSinglePrice(prices, "scale", "workflow_runs", "monthly"),
+        ...workflowRuns("scale"),
       },
     },
   };
@@ -310,6 +358,7 @@ const toDisplayItem = (item: TStripeBillingCatalogItem): TStripeBillingCatalogDi
   currency: item.basePrice.currency,
   unitAmount: item.basePrice.unit_amount,
   responseOverage: toResponseOverageDisplay(item),
+  workflowRunsIncluded: item.workflowRunsIncluded,
 });
 
 export const getStripeBillingCatalogDisplay = reactCache(async (): Promise<TStripeBillingCatalogDisplay> => {
