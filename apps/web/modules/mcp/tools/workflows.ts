@@ -243,6 +243,7 @@ export function registerWorkflowTools(server: McpServer): void {
       ].join(" "),
       annotations: {
         // Dry-run: validates + mock-executes with all side effects suppressed, so no world mutation.
+        // The handler gates at "read" to match the workflows:read scope declared below.
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
