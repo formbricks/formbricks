@@ -15,6 +15,23 @@ export const isUniqueConstraintError = (error: unknown): error is PrismaClientKn
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === UNIQUE_CONSTRAINT_VIOLATION;
 
 /**
+ * Strips one symmetric pair of double quotes from a column name.
+ *
+ * `@prisma/adapter-pg` derives the column list by regex-scraping the Postgres error DETAIL
+ * (`Key ("surveyId", "singleUseId")=(…)`) and never unquotes it. Postgres quotes any identifier
+ * that `quote_identifier()` considers non-trivial — anything not all-lowercase, plus reserved
+ * keywords — so `singleUseId` arrives as `"singleUseId"` while `token_hash` arrives bare.
+ *
+ * Only a matched outer pair is removed, so already-bare names (and the legacy `meta.target` shape,
+ * which is never quoted) pass through byte-identical.
+ */
+const unquoteIdentifier = (field: string): string =>
+  field.length >= 2 && field.startsWith('"') && field.endsWith('"') ? field.slice(1, -1) : field;
+
+const toColumnNames = (fields: unknown[]): string[] =>
+  fields.filter((field): field is string => typeof field === "string").map(unquoteIdentifier);
+
+/**
  * Returns the column names involved in a P2002 unique-constraint violation.
  *
  * Prisma's `error.meta` shape is explicitly NOT public API (prisma#28953) and differs by engine:
@@ -28,7 +45,8 @@ export const isUniqueConstraintError = (error: unknown): error is PrismaClientKn
  *
  * Security: only the structured column names are returned. Never surface `originalMessage`, the
  * constraint name, or any other raw `driverAdapterError.cause` string to a response or log — the
- * underlying Postgres unique-violation detail can contain the offending value (PII).
+ * underlying Postgres unique-violation detail can contain the offending value (PII). Stripping the
+ * quotes below is deliberately the *only* string processing done here, for the same reason.
  */
 export const getUniqueConstraintFields = (error: PrismaClientKnownRequestError): string[] => {
   const meta = error.meta as
@@ -41,13 +59,13 @@ export const getUniqueConstraintFields = (error: PrismaClientKnownRequestError):
   // Legacy / library-engine shape.
   const legacyTarget = meta?.target;
   if (Array.isArray(legacyTarget)) {
-    return legacyTarget.filter((field): field is string => typeof field === "string");
+    return toColumnNames(legacyTarget);
   }
 
   // Prisma 7 driver-adapter shape.
   const adapterFields = meta?.driverAdapterError?.cause?.constraint?.fields;
   if (Array.isArray(adapterFields)) {
-    return adapterFields.filter((field): field is string => typeof field === "string");
+    return toColumnNames(adapterFields);
   }
 
   return [];
