@@ -740,7 +740,7 @@ export async function updateV3FeedbackRecord({
     // which record ids exist.
     const role = await requireFeedbackRecordMutationRole({
       authentication,
-      organizationId: resolution.organizationId,
+      resolution,
       log,
       requestId,
       instance,
@@ -853,7 +853,9 @@ export async function deleteV3FeedbackRecord({
       authentication,
       workspaceId,
       datasetId,
-      minPermission: "readWrite",
+      // `manage`, matching the gateway's DELETE route and `methodPermissionMap` everywhere else in the
+      // API. Both delete paths had to move or the bar would only apply to one of them (ENG-2083).
+      minPermission: "manage",
       requestId,
       instance,
     });
@@ -865,7 +867,7 @@ export async function deleteV3FeedbackRecord({
     // which record ids exist.
     const role = await requireFeedbackRecordMutationRole({
       authentication,
-      organizationId: resolution.organizationId,
+      resolution,
       log,
       requestId,
       instance,

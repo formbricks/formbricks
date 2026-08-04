@@ -5,7 +5,12 @@ import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-a
 import { problemBadRequest, problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import {
+  getFeedbackDirectoriesByWorkspaceId,
+  getFeedbackDirectoryAuthContext,
+} from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
+import { canApiKeyMutateFeedbackDirectoryRecords } from "@/modules/hub/feedback-records-gateway-authz";
 import { retrieveFeedbackRecord } from "@/modules/hub/service";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { hubErrorToProblemResponse } from "./errors";
@@ -25,7 +30,8 @@ import { hubErrorToProblemResponse } from "./errors";
 type TResolveParams = {
   authentication: TV3Authentication;
   workspaceId: string;
-  minPermission: "read" | "readWrite";
+  /** `TTeamPermission` rather than a local union so it cannot drift from what the check downstream accepts. */
+  minPermission: TTeamPermission;
   requestId: string;
   instance: string;
   datasetId?: string;
@@ -135,8 +141,8 @@ export async function resolveWorkspaceFeedbackTenant({
 
 type TRequireMutationRoleParams = {
   authentication: TV3Authentication;
-  /** The organization that owns the resolved dataset (from `resolveWorkspaceFeedbackTenant`). */
-  organizationId: string;
+  /** The dataset the mutation targets, from `resolveWorkspaceFeedbackTenant`. */
+  resolution: TResolvedFeedbackTenant;
   log: ReturnType<typeof logger.withContext>;
   requestId: string;
   instance: string;
@@ -152,24 +158,71 @@ type TRequireMutationRoleParams = {
  * delete records that another workspace's surveys ingested, in exactly the datasets they legitimately
  * read. Until Hub records carry a workspace, changing one stays with the roles that own org-level data.
  *
- * Only person-shaped principals are gated (sessions and OAuth/MCP tokens). An API key authorizes on its
- * per-workspace permissions instead, and what a key should need in order to mutate a record is being
- * settled separately in #8682 — so keys deliberately pass through here unchanged.
+ * An API key has no organization role to check, so it is held to the equivalent rule instead: it may
+ * mutate a record only in a dataset assigned to exactly one workspace, where its workspace permission
+ * unambiguously covers every record present (ENG-2189). The permission level itself was already
+ * established by `resolveWorkspaceFeedbackTenant`; what is left is whether that permission can identify
+ * whose records these are, which it can only do when the dataset is not shared.
  *
- * Written as an allowlist rather than "no user id ⇒ allowed": an API key is the one shape that skips the
- * role check, and anything else that cannot be resolved to a user — a principal type added later, or a
- * session whose user never materialized — is refused. Not reachable today (the resolver above already
- * rejects an absent principal), but it means the pass-through stays deliberate instead of being implied
- * by a missing field.
+ * Written as an allowlist rather than "no user id ⇒ allowed": an API key is the one shape that takes the
+ * sharing rule instead of the role check, and anything else that cannot be resolved to a user — a
+ * principal type added later, or a session whose user never materialized — is refused. Not reachable
+ * today (the resolver above already rejects an absent principal), but it means the branch stays
+ * deliberate instead of being implied by a missing field.
  */
 export async function requireFeedbackRecordMutationRole({
   authentication,
-  organizationId,
+  resolution,
   log,
   requestId,
   instance,
 }: TRequireMutationRoleParams): Promise<{ ok: true } | { ok: false; response: Response }> {
   if (authentication && "apiKeyId" in authentication) {
+    // Read the dataset's workspaces from the directory, not from the resolution: `allowedTenantIds` is
+    // the workspace's datasets, which is the opposite direction of the same relation.
+    const directory = await getFeedbackDirectoryAuthContext(resolution.tenantId);
+
+    // These two refuse with the generic record-level 403, not the shared-dataset one below: the dataset
+    // being unresolvable, foreign, or archived has nothing to do with sharing, and telling an integrator
+    // to "assign this dataset to a single workspace" would send them after a problem they do not have.
+    // Sharing its response with `requireOwnedFeedbackRecord` also keeps the two indistinguishable, so
+    // neither confirms that a dataset exists or whose it is.
+    //
+    // The three checks below re-assert what `resolveWorkspaceFeedbackTenant` already implies, so each is
+    // unreachable while its invariant holds. That is the point: they are compared against the *key* and
+    // the *dataset* directly, so this decision stays correct read on its own rather than inheriting the
+    // resolver's word for it — which is the bug class that let ENG-1980 exist.
+    if (!directory) {
+      log.warn({ statusCode: 403 }, "Feedback record mutation denied: dataset could not be resolved");
+      return { ok: false, response: forbidFeedbackRecord(requestId, instance) };
+    }
+    // The key's own organization, not `resolution.organizationId`. The resolution's org came from the
+    // workspace, and the workspace is only known to be the key's via `workspacePermissions` — the very
+    // invariant this check exists to distrust. Comparing the two derived values would assert nothing.
+    if (authentication.organizationId !== directory.organizationId) {
+      log.warn({ statusCode: 403 }, "Feedback record mutation denied: dataset organization mismatch");
+      return { ok: false, response: forbidFeedbackRecord(requestId, instance) };
+    }
+    if (directory.isArchived) {
+      log.warn({ statusCode: 403 }, "Feedback record mutation denied: dataset is archived");
+      return { ok: false, response: forbidFeedbackRecord(requestId, instance) };
+    }
+
+    if (!canApiKeyMutateFeedbackDirectoryRecords(directory.workspaceIds)) {
+      log.warn(
+        { statusCode: 403, workspaceCount: directory.workspaceIds.length },
+        "Feedback record mutation denied: API key in a shared feedback dataset"
+      );
+      return { ok: false, response: forbidSharedDatasetRecordMutation(requestId, instance) };
+    }
+
+    // Counting to one says the dataset is unshared; it does not say the one workspace is the caller's.
+    // That is the assertion the rule actually rests on, so it is made rather than assumed.
+    if (directory.workspaceIds[0] !== resolution.workspaceId) {
+      log.warn({ statusCode: 403 }, "Feedback record mutation denied: dataset belongs to another workspace");
+      return { ok: false, response: forbidFeedbackRecord(requestId, instance) };
+    }
+
     return { ok: true };
   }
 
@@ -182,7 +235,7 @@ export async function requireFeedbackRecordMutationRole({
   try {
     await checkAuthorizationUpdated({
       userId,
-      organizationId,
+      organizationId: resolution.organizationId,
       access: [{ type: "organization", roles: ["owner", "manager"] }],
     });
     return { ok: true };
@@ -201,6 +254,21 @@ const forbidFeedbackRecordMutation = (requestId: string, instance: string): Resp
   problemForbidden(
     requestId,
     "Only an organization owner or manager can change or delete a feedback record. Feedback datasets are shared across workspaces, so their records are organization-level data.",
+    instance
+  );
+
+/**
+ * The 403 for an API key in a shared dataset. Separate from the owner/manager refusal above because the
+ * cause and the remedy are different, and an integrator handed a generic "ask an owner" cannot act on it.
+ * For an MCP agent this body is the entire user interface, so it names the cause, what still works, and
+ * both ways out. It does disclose that the dataset is shared with another workspace — accepted
+ * deliberately: the key already belongs to that organization, sharing is its own configuration, and the
+ * alternative is an unactionable refusal against a caller with no UI to fall back on.
+ */
+const forbidSharedDatasetRecordMutation = (requestId: string, instance: string): Response =>
+  problemForbidden(
+    requestId,
+    "An API key cannot change or delete records in a feedback dataset that is shared by more than one workspace. Records carry no workspace of their own, so a workspace-scoped key cannot be shown to own the record it is changing. Reading and creating records are unaffected. To change one, authenticate as an organization owner or manager, or assign this dataset to a single workspace under Settings → Organization → Feedback Datasets.",
     instance
   );
 
