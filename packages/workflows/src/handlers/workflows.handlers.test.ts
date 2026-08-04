@@ -668,6 +668,16 @@ describe("testWorkflow", () => {
     expect(body.data).toEqual({ workflowId, ok: true, problems: [] });
   });
 
+  test("authorizes at read — it is a dry run and the MCP tool is workflows:read scoped", async () => {
+    // ENG-2223: this authorized at "readWrite", so a read-scoped caller got a 403 from a tool that
+    // persists nothing. Raising it back means moving test_workflow's declared MCP scope with it.
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(authorizeAllow).toHaveBeenCalledWith(workspaceId, "read");
+  });
+
   test("tests a disabled workflow", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "disabled" }));
 
