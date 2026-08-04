@@ -199,11 +199,22 @@ Either way, re-run before concluding anything.
   every owner and manager of the named organization has access to that resource through
   `organization->manage`, and no PostgreSQL row explains it. The backfill reports these and deliberately
   never removes them, because deleting a parent edge means deleting a relation the resource legitimately
-  needs one of. Confirm the true owner in PostgreSQL, then remove the wrong edge by hand:
+  needs one of. Confirm the true owner in PostgreSQL, then remove the wrong edge by hand.
+
+  **Read the reported `relation` first — it decides which command applies**, because two relationship
+  shapes state ownership and the organization sits on opposite sides of them:
 
   ```bash
+  # relation == "organization": the child's own parent edge.
   zed relationship delete <childType>:<childId> organization organization:<wrongOrganizationId>
+
+  # any other relation (an organization-level API-key access grant, e.g. api_key_reader/api_key_writer):
+  # resource and subject are reversed.
+  zed relationship delete organization:<wrongOrganizationId> <relation> <childType>:<childId>
   ```
+
+  Running the first command against the second case deletes nothing and leaves the grant — still handing
+  `manage_access` over another tenant's organization — so check the field rather than assuming.
 
   Then re-run step 2 to confirm the correct edge is present, and work out how it was written — nothing in
   Formbricks creates one.
