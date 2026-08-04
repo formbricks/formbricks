@@ -13,7 +13,7 @@ import {
 } from "@/modules/hub/service";
 import type { FeedbackRecordData, TaxonomyNode, TaxonomyRun } from "@/modules/hub/types";
 import { NO_CONFIG_ERROR } from "@/modules/hub/utils";
-import { getSessionUserId, requireUnifyDirectoryAccess } from "./access";
+import { getSessionUserId, requireUnifyDirectoryAccess, requireUnifyDirectoryMutationAccess } from "./access";
 import {
   getV3TaxonomyNodeRecordCounts,
   getV3TaxonomyNodeRecords,
@@ -29,6 +29,7 @@ vi.mock("server-only", () => ({}));
 
 vi.mock("./access", () => ({
   requireUnifyDirectoryAccess: vi.fn(),
+  requireUnifyDirectoryMutationAccess: vi.fn(),
   getSessionUserId: vi.fn(),
 }));
 
@@ -117,6 +118,7 @@ const record: FeedbackRecordData = {
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(requireUnifyDirectoryAccess).mockResolvedValue(context);
+  vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(context);
   vi.mocked(getSessionUserId).mockReturnValue("user_1");
 });
 
@@ -404,6 +406,17 @@ describe("triggerV3TaxonomyRun", () => {
     expect(createTaxonomyRun).not.toHaveBeenCalled();
   });
 
+  test("gates on the owners/managers check and skips the Hub call when denied (ENG-1770)", async () => {
+    const denied = new Response("forbidden", { status: 403 });
+    vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(denied);
+
+    const response = await triggerV3TaxonomyRun(runParams);
+
+    expect(response).toBe(denied);
+    expect(requireUnifyDirectoryAccess).not.toHaveBeenCalled();
+    expect(createTaxonomyRun).not.toHaveBeenCalled();
+  });
+
   test("keeps a Hub 404 as a 502 — there is no resource to report missing on a create", async () => {
     vi.mocked(createTaxonomyRun).mockResolvedValue({ data: null, error: hubNotFound });
 
@@ -459,6 +472,17 @@ describe("renameV3TaxonomyNode", () => {
     expect(body.detail).toBe("Failed to rename taxonomy node");
     expect(JSON.stringify(body)).not.toContain(HUB_INTERNAL_MARKER);
   });
+
+  test("gates on the owners/managers check and skips the Hub call when denied (ENG-1770)", async () => {
+    const denied = new Response("forbidden", { status: 403 });
+    vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(denied);
+
+    const response = await renameV3TaxonomyNode({ ...base, nodeId: node.id, label: "Copilot" });
+
+    expect(response).toBe(denied);
+    expect(requireUnifyDirectoryAccess).not.toHaveBeenCalled();
+    expect(renameTaxonomyNode).not.toHaveBeenCalled();
+  });
 });
 
 describe("removeV3TaxonomyNode", () => {
@@ -490,5 +514,16 @@ describe("removeV3TaxonomyNode", () => {
     expect(response.status).toBe(502);
     expect(body.detail).toBe("Failed to remove taxonomy node");
     expect(JSON.stringify(body)).not.toContain(HUB_INTERNAL_MARKER);
+  });
+
+  test("gates on the owners/managers check and skips the Hub call when denied (ENG-1770)", async () => {
+    const denied = new Response("forbidden", { status: 403 });
+    vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(denied);
+
+    const response = await removeV3TaxonomyNode({ ...base, nodeId: node.id });
+
+    expect(response).toBe(denied);
+    expect(requireUnifyDirectoryAccess).not.toHaveBeenCalled();
+    expect(removeTaxonomyNode).not.toHaveBeenCalled();
   });
 });

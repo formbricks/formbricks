@@ -187,6 +187,7 @@ describe("authorizeTraefikRequest", () => {
     expect(response.status).toBe(400);
   });
 
+  // ENG-1770: changing an existing record is organization-level, so there is no workspace-team fallback.
   test("authorizes record lookups through the shared FeedbackRecords authorizer", async () => {
     mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
@@ -210,11 +211,6 @@ describe("authorizeTraefikRequest", () => {
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: "workspace_1",
-          minPermission: "readWrite",
         },
       ],
     });

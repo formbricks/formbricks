@@ -22,7 +22,7 @@ import {
 } from "@/modules/hub/service";
 import type { TaxonomyScopeInput, TaxonomyScopeType } from "@/modules/hub/types";
 import { type HubError, isHubNotConfigured } from "@/modules/hub/utils";
-import { getSessionUserId, requireUnifyDirectoryAccess } from "./access";
+import { getSessionUserId, requireUnifyDirectoryAccess, requireUnifyDirectoryMutationAccess } from "./access";
 
 type TBaseParams = {
   authentication: TV3Authentication;
@@ -263,11 +263,10 @@ export async function triggerV3TaxonomyRun(
     instance,
   } = params;
 
-  const access = await requireUnifyDirectoryAccess(
+  const access = await requireUnifyDirectoryMutationAccess(
     authentication,
     workspaceId,
     directoryId,
-    "readWrite",
     requestId,
     instance
   );
@@ -327,11 +326,10 @@ export async function renameV3TaxonomyNode(
 ): Promise<Response> {
   const { authentication, workspaceId, directoryId, nodeId, label, requestId, instance } = params;
 
-  const access = await requireUnifyDirectoryAccess(
+  const access = await requireUnifyDirectoryMutationAccess(
     authentication,
     workspaceId,
     directoryId,
-    "readWrite",
     requestId,
     instance
   );
@@ -360,11 +358,10 @@ export async function renameV3TaxonomyNode(
 export async function removeV3TaxonomyNode(params: TBaseParams & { nodeId: string }): Promise<Response> {
   const { authentication, workspaceId, directoryId, nodeId, requestId, instance } = params;
 
-  const access = await requireUnifyDirectoryAccess(
+  const access = await requireUnifyDirectoryMutationAccess(
     authentication,
     workspaceId,
     directoryId,
-    "readWrite",
     requestId,
     instance
   );

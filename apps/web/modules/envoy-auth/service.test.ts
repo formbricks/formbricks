@@ -277,7 +277,8 @@ describe("authorizeEnvoyRequest", () => {
     expect(mockGetProxySession).not.toHaveBeenCalled();
   });
 
-  test("allows PATCH requests with a valid gateway JWT", async () => {
+  // ENG-1770: changing an existing record is organization-level, so there is no workspace-team fallback.
+  test("allows PATCH requests with a valid gateway JWT, gated on the organization role", async () => {
     mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
 
@@ -298,11 +299,6 @@ describe("authorizeEnvoyRequest", () => {
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: "workspace_1",
-          minPermission: "readWrite",
         },
       ],
     });

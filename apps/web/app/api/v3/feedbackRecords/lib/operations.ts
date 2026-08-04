@@ -34,6 +34,7 @@ import type {
 import {
   type TResolvedFeedbackTenant,
   forbidFeedbackRecord,
+  requireFeedbackRecordMutationRole,
   requireOwnedFeedbackRecord,
   resolveWorkspaceFeedbackTenant,
 } from "./access";
@@ -735,6 +736,19 @@ export async function updateV3FeedbackRecord({
       return resolution.response;
     }
 
+    // Before the record is looked up: a caller who may not mutate anything here learns nothing about
+    // which record ids exist.
+    const role = await requireFeedbackRecordMutationRole({
+      authentication,
+      organizationId: resolution.organizationId,
+      log,
+      requestId,
+      instance,
+    });
+    if (!role.ok) {
+      return role.response;
+    }
+
     const parsed = ZV3FeedbackRecordUpdateBody.safeParse(body);
     if (!parsed.success) {
       log.warn({ statusCode: 422 }, "Invalid feedback record update");
@@ -845,6 +859,19 @@ export async function deleteV3FeedbackRecord({
     });
     if (!resolution.ok) {
       return resolution.response;
+    }
+
+    // Before the record is looked up: a caller who may not delete anything here learns nothing about
+    // which record ids exist.
+    const role = await requireFeedbackRecordMutationRole({
+      authentication,
+      organizationId: resolution.organizationId,
+      log,
+      requestId,
+      instance,
+    });
+    if (!role.ok) {
+      return role.response;
     }
 
     const owned = await requireOwnedFeedbackRecord({
