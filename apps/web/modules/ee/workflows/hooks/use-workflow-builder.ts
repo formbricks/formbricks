@@ -101,6 +101,21 @@ const describeInvalidDraft = (invalid: TInvalidWorkflowDraft, t: (key: string) =
   return invalid.detail ?? t("workspace.workflows.validation_failed");
 };
 
+/**
+ * The user-facing reason a save was refused, for the header pill's tooltip. The API answers a bad
+ * payload with field-level `invalid_params` (RFC 9457) but keeps its top-level `detail` generic
+ * ("The request payload is invalid."). Prefer the field-level reason so the pill can name the field
+ * and its limit; fall back to the generic detail. Only a deliberate refusal (4xx) has a reason worth
+ * quoting — a 5xx / no-response is "unreachable" and gets the generic tooltip, so return null there.
+ */
+const describeSaveErrorDetail = (error: unknown, t: (key: string) => string): string | null => {
+  if (!(error instanceof V3ApiError) || error.status >= 500) return null;
+  const param = error.invalid_params?.[0];
+  if (param?.name === "name") return t("workspace.workflows.name_invalid");
+  if (param) return param.reason;
+  return error.detail.trim() ? error.detail : null;
+};
+
 export const useWorkflowBuilder = ({
   workspaceId,
   workflowId,
@@ -267,7 +282,7 @@ export const useWorkflowBuilder = ({
         setSaveError({
           draftSignature: attemptedSignature,
           kind: classifyWorkflowSaveError(error),
-          detail: error instanceof V3ApiError ? error.detail : null,
+          detail: describeSaveErrorDetail(error, t),
         });
         if (!silent) toast.error(getWorkflowApiErrorMessage(error, t("workspace.workflows.save_failed")));
         return false;
