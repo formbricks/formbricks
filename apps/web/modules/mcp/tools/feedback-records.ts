@@ -16,7 +16,7 @@ import {
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { MCP_API_ROUTE } from "@/modules/mcp/constants";
+import { MCP_API_ROUTE, MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { guardMcpScopes } from "./guard-scopes";
@@ -245,7 +245,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       // attribute a creation to the wrong record. `buildV3AuditLog` returns undefined for every record or
       // none (it only depends on whether auditing is enabled), so the holes are all-or-nothing.
       const auditLogs = input.records.map(() =>
-        buildV3AuditLog(authentication, "created", "feedbackRecord", MCP_API_ROUTE)
+        buildV3AuditLog(authentication, "created", "feedbackRecord", MCP_AUDIT_API_URL)
       );
 
       const queueOutcome = async () => {
