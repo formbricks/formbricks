@@ -76,6 +76,34 @@ const createPrice = ({
   },
 });
 
+// A Scale metered workflow-run price (ENG-1936). Its metadata kind is what keeps it from being
+// misread as "responses" by the usage_type fallback.
+const createWorkflowRunsPrice = (id: string) => ({
+  id,
+  active: true,
+  currency: "usd",
+  unit_amount: 0,
+  tiers: RESPONSE_PRICE_TIERS,
+  tiers_mode: "graduated",
+  metadata: {
+    formbricks_plan: "scale",
+    formbricks_price_kind: "workflow_runs",
+    formbricks_interval: "monthly",
+  },
+  recurring: { usage_type: "metered", interval: "month" },
+  product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
+});
+
+const STANDARD_CATALOG_PRICES = [
+  createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+  createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+  createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+  createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
+  createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+  createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+  createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+];
+
 describe("stripe-billing-catalog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -204,33 +232,8 @@ describe("stripe-billing-catalog", () => {
       // by its metadata kind rather than the usage_type=metered fallback, so it does NOT produce a
       // second match for scale/responses/monthly (which would throw "found 2"), and it is added to the
       // subscription as its own metered line item.
-      const workflowRunsPrice = {
-        id: "price_scale_workflow_runs",
-        active: true,
-        currency: "usd",
-        unit_amount: 0,
-        tiers: RESPONSE_PRICE_TIERS,
-        tiers_mode: "graduated",
-        metadata: {
-          formbricks_plan: "scale",
-          formbricks_price_kind: "workflow_runs",
-          formbricks_interval: "monthly",
-        },
-        recurring: { usage_type: "metered", interval: "month" },
-        product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
-      };
-
       mocks.pricesList.mockResolvedValue({
-        data: [
-          createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
-          createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
-          createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
-          createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
-          createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
-          createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
-          createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
-          workflowRunsPrice,
-        ],
+        data: [...STANDARD_CATALOG_PRICES, createWorkflowRunsPrice("price_scale_workflow_runs")],
         has_more: false,
       });
 
@@ -243,6 +246,49 @@ describe("stripe-billing-catalog", () => {
         { price: "price_scale_responses" },
         { price: "price_scale_workflow_runs" },
       ]);
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "omits the workflow_runs line item when no such price exists on the plan (getOptionalSinglePrice -> null)",
+    async () => {
+      // No workflow_runs price anywhere in the catalog: the optional lookup resolves to null and the
+      // Scale subscription is provisioned with base + responses only.
+      mocks.pricesList.mockResolvedValue({
+        data: STANDARD_CATALOG_PRICES,
+        has_more: false,
+      });
+
+      const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
+
+      await expect(getCatalogItemsForPlan("scale", "monthly")).resolves.toEqual([
+        { price: "price_scale_monthly", quantity: 1 },
+        { price: "price_scale_responses" },
+      ]);
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "rejects catalog construction when a plan has ambiguous (duplicate) workflow_runs prices",
+    async () => {
+      // Two active workflow_runs prices for scale/monthly: getOptionalSinglePrice must surface the
+      // ambiguity rather than silently pick one, so the whole catalog build fails fast.
+      mocks.pricesList.mockResolvedValue({
+        data: [
+          ...STANDARD_CATALOG_PRICES,
+          createWorkflowRunsPrice("price_scale_workflow_runs_a"),
+          createWorkflowRunsPrice("price_scale_workflow_runs_b"),
+        ],
+        has_more: false,
+      });
+
+      const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
+
+      await expect(getCatalogItemsForPlan("scale", "monthly")).rejects.toThrow(
+        "Expected at most one Stripe price for scale/workflow_runs/monthly, but found 2"
+      );
     },
     TEST_TIMEOUT_MS
   );
