@@ -27,8 +27,10 @@ async function main(): Promise<void> {
     await import("../lib/env");
   } catch {
     // `throwEnvValidationError` already printed the formatted list of invalid
-    // variables; just propagate the failure as a non-zero exit code.
-    process.exit(1);
+    // variables. Set the exit code and return rather than calling `process.exit`
+    // so that buffered diagnostics are flushed before the process terminates.
+    process.exitCode = 1;
+    return;
   }
 
   const nextBin = require.resolve("next/dist/bin/next");

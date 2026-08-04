@@ -31,6 +31,10 @@ describe("typegen wrapper", () => {
     expect(result.status).not.toBe(0);
     const output = `${result.stdout}${result.stderr}`;
     expect(output).toContain("Invalid environment variables");
+    // Assert the specific overridden variable is reported, not just that *some*
+    // validation failed — otherwise an unrelated missing var could mask a
+    // DATABASE_URL validation/reporting regression.
+    expect(output).toContain("DATABASE_URL");
     expect(output).not.toContain("Types generated successfully");
   });
 });
