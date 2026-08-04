@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
 import {
   createdResponse,
   noContentResponse,
@@ -294,7 +295,7 @@ describe("registerWorkflowTools", () => {
 
     const result = await tools.get("create_workflow")!.handler(body, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "workflow", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "workflow", MCP_AUDIT_API_URL);
     expect(buildWorkflowApiContext).toHaveBeenCalledWith(apiKeyAuth, "req_tool", "/api/mcp", auditLog);
     const callArg = vi.mocked(workflowsHandlers.create).mock.calls[0][0];
     expect(callArg.ctx).toEqual({ __ctx: true });
@@ -314,7 +315,7 @@ describe("registerWorkflowTools", () => {
 
     await tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", MCP_AUDIT_API_URL);
     expect(workflowsHandlers.enable).toHaveBeenCalledWith({
       ctx: { __ctx: true },
       params: { workflowId: WORKFLOW_ID },
@@ -331,7 +332,7 @@ describe("registerWorkflowTools", () => {
 
     const result = await tools.get("delete_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "workflow", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "workflow", MCP_AUDIT_API_URL);
     expect(auditLog.status).toBe("success");
     expect(result.structuredContent).toEqual({ requestId: "req_tool" });
   });
@@ -396,7 +397,7 @@ describe("registerWorkflowTools", () => {
       .get("patch_workflow")!
       .handler({ workflowId: WORKFLOW_ID, data: { name: "Renamed" } }, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", MCP_AUDIT_API_URL);
     const callArg = vi.mocked(workflowsHandlers.patch).mock.calls[0][0];
     expect(callArg.params).toEqual({ workflowId: WORKFLOW_ID });
     expect(JSON.parse(await callArg.req.text())).toEqual({ name: "Renamed" });
@@ -414,7 +415,7 @@ describe("registerWorkflowTools", () => {
 
     await tools.get("duplicate_workflow")!.handler({ workflowId: WORKFLOW_ID, name: "Copy" }, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "workflow", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "workflow", MCP_AUDIT_API_URL);
     const callArg = vi.mocked(workflowsHandlers.duplicate).mock.calls[0][0];
     expect(callArg.params).toEqual({ workflowId: WORKFLOW_ID });
     expect(JSON.parse(await callArg.req.text())).toEqual({ name: "Copy" });
@@ -431,7 +432,7 @@ describe("registerWorkflowTools", () => {
 
     await tools.get("archive_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", MCP_AUDIT_API_URL);
     expect(workflowsHandlers.archive).toHaveBeenCalledWith({
       ctx: { __ctx: true },
       params: { workflowId: WORKFLOW_ID },
@@ -449,7 +450,7 @@ describe("registerWorkflowTools", () => {
 
     await tools.get("unarchive_workflow")!.handler({ workflowId: WORKFLOW_ID }, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "workflow", MCP_AUDIT_API_URL);
     expect(workflowsHandlers.unarchive).toHaveBeenCalledWith({
       ctx: { __ctx: true },
       params: { workflowId: WORKFLOW_ID },

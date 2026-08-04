@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
 import {
   createdResponse,
   noContentResponse,
@@ -347,7 +348,7 @@ describe("registerSurveyTools", () => {
 
     const result = await tools.get("create_survey")!.handler(createBody, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", MCP_AUDIT_API_URL);
     expect(createV3SurveyResponseFromRawInput).toHaveBeenCalledWith({
       body: createBody,
       authentication: apiKeyAuth,
@@ -408,7 +409,7 @@ describe("registerSurveyTools", () => {
 
     const result = await tools.get("patch_survey")!.handler(patchInput, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", MCP_AUDIT_API_URL);
     expect(patchV3SurveyResponse).toHaveBeenCalledWith({
       surveyId: "clxx1234567890123456789012",
       body: {

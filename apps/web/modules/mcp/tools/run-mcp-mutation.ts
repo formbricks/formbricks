@@ -2,7 +2,7 @@ import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
-import { MCP_API_ROUTE } from "@/modules/mcp/constants";
+import { MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 
@@ -37,7 +37,7 @@ export async function runMcpMutation(
   const requestId = getMcpRequestId(extra.authInfo);
   const authentication = getMcpAuthentication(extra.authInfo);
   const log = logger.withContext({ requestId, ...logContext });
-  const auditLog = buildV3AuditLog(authentication, action, resource, MCP_API_ROUTE);
+  const auditLog = buildV3AuditLog(authentication, action, resource, MCP_AUDIT_API_URL);
 
   try {
     const response = await run({ authentication, requestId, auditLog });

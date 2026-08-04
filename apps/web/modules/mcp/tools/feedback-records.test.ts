@@ -13,6 +13,7 @@ import {
   updateV3FeedbackRecord,
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
 import {
   noContentResponse,
   problemBadRequest,
@@ -237,7 +238,7 @@ describe("create_feedback_record", () => {
 
     await tools.get("create_feedback_record")!.handler(body, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "feedbackRecord", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "feedbackRecord", MCP_AUDIT_API_URL);
     expect(createV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, body, authentication: apiKeyAuth })
     );
@@ -299,7 +300,7 @@ describe("delete_feedback_record", () => {
 
     const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "feedbackRecord", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "feedbackRecord", MCP_AUDIT_API_URL);
     expect(deleteV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId,
@@ -533,7 +534,7 @@ describe("update_feedback_record", () => {
 
     await tools.get("update_feedback_record")!.handler(input, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "feedbackRecord", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "feedbackRecord", MCP_AUDIT_API_URL);
     expect(updateV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, feedbackRecordId: recordId, body: input, auditLog })
     );
