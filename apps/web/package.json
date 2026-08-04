@@ -12,7 +12,7 @@
     "build:dev": "pnpm run build",
     "start": "next start",
     "typecheck": "pnpm typegen && tsc --noEmit --project tsconfig.typecheck.json",
-    "typegen": "dotenv -e ../../.env -- next typegen",
+    "typegen": "dotenv -e ../../.env -- tsx scripts/typegen.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "dotenv -e ../../.env -- vitest run",
