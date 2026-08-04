@@ -76,6 +76,25 @@ const isAllowlisted = (ruleId: string, target: string): boolean =>
       entry.targets.some((needle) => target.toLowerCase().includes(needle.toLowerCase()))
   );
 
+// Freezes CSS transitions/animations so axe never measures a mid-animation frame.
+// Elements such as the date-picker day cells use `transition-all`, animating their
+// text color and background independently on entrance/interaction. The settled
+// state is compliant (e.g. black text on the light card, or white text on the solid
+// brand fill), but for a few frames the two cross a low-contrast blend that axe
+// flags as a spurious `color-contrast` violation — the flake this spec's comments
+// already note. `waitForSettled` only tracks a container's opacity, not these
+// property-level transitions, so we disable animation globally right after every
+// navigation, before any entrance animation can start.
+const FREEZE_ANIMATIONS_CSS = `*, *::before, *::after {
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}`;
+
+const freezeAnimations = (page: Page): Promise<unknown> =>
+  page.addStyleTag({ content: FREEZE_ANIMATIONS_CSS });
+
 /**
  * Runs axe ONCE against the current page state over the union of fail + warn tags,
  * then partitions each violation by whether it carries a WCAG AA (FAIL_TAGS) tag.
@@ -339,6 +358,7 @@ const walkAndScan = async (
   failSink: ViolationRow[]
 ): Promise<void> => {
   await page.goto(surveyUrl, { waitUntil: "domcontentloaded" });
+  await freezeAnimations(page);
 
   // The welcome card is itself the active card "questionCard--1" (welcome maps to
   // block index -1 in the renderer) with a focusable nav button, so the single walk
@@ -437,6 +457,7 @@ const walkAndScan = async (
  */
 const openFirstQuestionCard = async (page: Page, surveyUrl: string): Promise<string> => {
   await page.goto(surveyUrl, { waitUntil: "domcontentloaded" });
+  await freezeAnimations(page);
   const welcomeCard = activeCard(page).first();
   await expect(welcomeCard, "welcome card should render").toBeVisible({ timeout: CARD_TIMEOUT });
   const welcomeCardId = await welcomeCard.getAttribute("id");
