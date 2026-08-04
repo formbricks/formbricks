@@ -8,9 +8,9 @@ icon: "arrow-right"
 
 Formbricks v5.3 is a **drop-in upgrade for most self-hosted instances**. There are no breaking API,
 webhook, or authentication changes, and every database migration is additive and runs automatically on
-startup. The only externally visible changes are configuration cleanup (the in-product support chat moved
-from Chatwoot to Plain) and a few new optional variables. The two things worth doing before you deploy are
-setting `TRUSTED_PROXY_HOP_COUNT` for your proxy setup and refreshing the Cube analytics schema.
+startup. The only self-hosting-relevant changes are a few new optional variables. The two things worth
+doing before you deploy are setting `TRUSTED_PROXY_HOP_COUNT` for your proxy setup and refreshing the Cube
+analytics schema.
 
 <Info>
   All new environment variables are optional and defaulted — none of them block startup. You can upgrade
@@ -40,11 +40,8 @@ hops:
   no higher. The default of `1` is correct for a single reverse proxy / ingress.
 </Warning>
 
-### Removed and Renamed Configuration
+### Renamed Configuration
 
-- **Chatwoot removed.** The in-product support chat moved from Chatwoot to Plain (see below). All
-  `CHATWOOT_*` variables (`CHATWOOT_BASE_URL`, `CHATWOOT_WEBSITE_TOKEN`, `CHATWOOT_CONFIGURED`,
-  `CHATWOOT_SCRIPT_ID`, …) are now no-ops. Remove them from your environment.
 - **Scheduling variables renamed.** `NEXT_PUBLIC_SURVEY_SCHEDULING_*` → `SURVEY_SCHEDULING_*` (the
   `NEXT_PUBLIC_` prefix was dropped). This only affects you if you ran a v5.3 release candidate that used
   the old names; a clean v5.2 → v5.3 upgrade never set them.
@@ -52,15 +49,6 @@ hops:
 ### Optional New Configuration
 
 None of the following is required to run v5.3. Add them only if you want the associated feature.
-
-#### In-Product Support Chat (Plain)
-
-Formbricks now uses [Plain](https://plain.com) for the in-app support chat (replacing Chatwoot). Leave
-these unset to disable the support chat entirely.
-
-- `PLAIN_APP_ID` — the Plain application id that enables the chat widget.
-- `PLAIN_CHAT_HMAC_SECRET` — secret used to sign the customer identity (identity verification).
-- `PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID` — optional label applied to active customers.
 
 #### Survey Scheduling
 
@@ -93,21 +81,18 @@ moves to `0.8.1` — pull the new image.
 ### Upgrade Steps
 
 1. Back up your database.
-2. Remove any `CHATWOOT_*` variables from your environment; optionally add the `PLAIN_*` variables if you
-   want the support chat.
-3. Set `TRUSTED_PROXY_HOP_COUNT` to the number of proxies in front of your instance (default `1`).
-4. Pull the v5.3 images and restart (`docker compose pull && docker compose down && docker compose up -d`,
+2. Set `TRUSTED_PROXY_HOP_COUNT` to the number of proxies in front of your instance (default `1`).
+3. Pull the v5.3 images and restart (`docker compose pull && docker compose down && docker compose up -d`,
    or `helm upgrade` with the new chart / tag). Migrations apply automatically on startup.
-5. Redeploy / refresh **Cube** so it picks up the updated `FeedbackRecords.js` schema.
-6. Smoke test: sign in (including 2FA), create and schedule a survey, and open the Feedback Records
+4. Redeploy / refresh **Cube** so it picks up the updated `FeedbackRecords.js` schema.
+5. Smoke test: sign in (including 2FA), create and schedule a survey, and open the Feedback Records
    dashboards / charts to confirm analytics render correctly.
 
 ### Rollback
 
 The v5.3 migrations are additive and are not read by v5.2, so rolling back the application images / Helm
-values to v5.2 is safe without touching the database. Re-add any `CHATWOOT_*` variables you removed if you
-want the old support chat back, and restore a database backup only if you specifically need to undo the
-schema additions.
+values to v5.2 is safe without touching the database. Restore a database backup only if you specifically
+need to undo the schema additions.
 
 ## v5.2
 
