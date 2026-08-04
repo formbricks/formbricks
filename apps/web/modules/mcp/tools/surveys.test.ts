@@ -504,6 +504,9 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  // Covers the MCP scope gate only — validateV3SurveyFromRawInput is mocked here, so this passed
+  // even while the real v3 operation demanded readWrite and 403'd every read-scoped caller
+  // (ENG-2179). The v3 gate itself is asserted in app/api/v3/surveys/lib/operations.test.ts.
   test("validate_survey allows patch validations for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
     vi.mocked(validateV3SurveyFromRawInput).mockResolvedValue(
