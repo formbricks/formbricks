@@ -198,11 +198,12 @@ describe("stripe-billing-catalog", () => {
   );
 
   test(
-    "excludes a metered price tagged with a non-responses kind (e.g. workflow_runs) so it does not collide with responses",
+    "provisions a workflow_runs metered price as its own line item without colliding with responses",
     async () => {
-      // A second metered price on Scale, tagged workflow_runs (ENG-1936). Without the getPriceKind
-      // guard it would fall through usage_type=metered -> "responses" and produce two matches for
-      // scale/responses/monthly, breaking the billing page.
+      // A second metered price on Scale, tagged workflow_runs (ENG-1936). getPriceKind classifies it
+      // by its metadata kind rather than the usage_type=metered fallback, so it does NOT produce a
+      // second match for scale/responses/monthly (which would throw "found 2"), and it is added to the
+      // subscription as its own metered line item.
       const workflowRunsPrice = {
         id: "price_scale_workflow_runs",
         active: true,
@@ -235,10 +236,12 @@ describe("stripe-billing-catalog", () => {
 
       const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
 
-      // Resolves without throwing "found 2", and the workflow_runs price is not part of the catalog.
+      // Resolves without throwing "found 2"; the workflow_runs price is added as its own metered
+      // line item (no quantity), alongside base and responses.
       await expect(getCatalogItemsForPlan("scale", "monthly")).resolves.toEqual([
         { price: "price_scale_monthly", quantity: 1 },
         { price: "price_scale_responses" },
+        { price: "price_scale_workflow_runs" },
       ]);
     },
     TEST_TIMEOUT_MS

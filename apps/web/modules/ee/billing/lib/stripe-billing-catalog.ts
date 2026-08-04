@@ -10,7 +10,7 @@ import { type TResponsePricingTier, mapStripeTiersToResponsePricingTiers } from 
 import { stripeClient } from "./stripe-client";
 
 export type TStandardCloudPlan = "hobby" | "pro" | "scale";
-type TStripePriceKind = "base" | "responses";
+type TStripePriceKind = "base" | "responses" | "workflow_runs";
 
 type TStripeCatalogPrice = Stripe.Price & {
   product: Stripe.Product | Stripe.DeletedProduct;
@@ -21,6 +21,10 @@ export type TStripeBillingCatalogItem = {
   interval: TCloudBillingInterval;
   basePrice: TStripeCatalogPrice;
   responsePrice: TStripeCatalogPrice | null;
+  // Metered workflow-run overage. Only present on plans that include workflows (Scale today); null
+  // elsewhere. Like responsePrice it is always the monthly-billed metered variant, even for a yearly
+  // base, because usage is aggregated and billed monthly (ENG-1936).
+  workflowRunsPrice: TStripeCatalogPrice | null;
 };
 
 export type TStripeBillingCatalog = {
@@ -66,8 +70,8 @@ export type TStripeBillingCatalogDisplay = {
 
 const STANDARD_CLOUD_PLANS = new Set<TStandardCloudPlan>(["hobby", "pro", "scale"]);
 const STRIPE_BILLING_CATALOG_CACHE_TTL_MS = 10 * 60 * 1000;
-// v2: response prices include expanded tiers
-const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v2";
+// v3: catalog item carries workflowRunsPrice (metered workflow overage)
+const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v3";
 
 const getStripeBillingCatalogCacheKey = () =>
   createCacheKey.custom(
@@ -114,14 +118,13 @@ const getPriceInterval = (price: Stripe.Price): TCloudBillingInterval | null => 
 
 const getPriceKind = (price: Stripe.Price): TStripePriceKind | null => {
   const metadataKind = price.metadata?.formbricks_price_kind;
-  if (metadataKind === "base" || metadataKind === "responses") {
+  if (metadataKind === "base" || metadataKind === "responses" || metadataKind === "workflow_runs") {
     return metadataKind;
   }
 
-  // A metered price explicitly tagged with a different kind (e.g. "workflow_runs") is a separate
-  // metered product, not part of the base/responses plan catalog. Exclude it here so the usage_type
-  // fallback below can't misclassify it as "responses" and collide with the real responses price on
-  // the same plan/interval (ENG-1936). Full catalog wiring for such kinds is added separately.
+  // A metered price tagged with an unrecognized kind is a separate metered product, not part of the
+  // plan catalog. Exclude it here so the usage_type fallback below can't misclassify it as
+  // "responses" and collide with the real responses price on the same plan/interval (ENG-1936).
   if (metadataKind) {
     return null;
   }
@@ -199,6 +202,29 @@ const getSinglePrice = (
   return matches[0];
 };
 
+// Like getSinglePrice, but tolerates absence: returns null when no price matches (the kind is not
+// offered on this plan), still throwing on ambiguity (>1) so a duplicate can never be silently
+// ignored. Used for optional kinds like workflow_runs that exist only on some plans.
+const getOptionalSinglePrice = (
+  prices: TStripeCatalogPrice[],
+  plan: TStandardCloudPlan,
+  kind: TStripePriceKind,
+  interval: TCloudBillingInterval
+): TStripeCatalogPrice | null => {
+  const matches = prices.filter(
+    (price) =>
+      getPricePlan(price) === plan && getPriceKind(price) === kind && getPriceInterval(price) === interval
+  );
+
+  if (matches.length > 1) {
+    throw new Error(
+      `Expected at most one Stripe price for ${plan}/${kind}/${interval}, but found ${matches.length}`
+    );
+  }
+
+  return matches[0] ?? null;
+};
+
 const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
@@ -217,6 +243,7 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "hobby", "base", "monthly"),
         responsePrice: null,
+        workflowRunsPrice: getOptionalSinglePrice(prices, "hobby", "workflow_runs", "monthly"),
       },
     },
     pro: {
@@ -225,12 +252,14 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "pro", "base", "monthly"),
         responsePrice: getSinglePrice(prices, "pro", "responses", "monthly"),
+        workflowRunsPrice: getOptionalSinglePrice(prices, "pro", "workflow_runs", "monthly"),
       },
       yearly: {
         plan: "pro",
         interval: "yearly",
         basePrice: getSinglePrice(prices, "pro", "base", "yearly"),
         responsePrice: getSinglePrice(prices, "pro", "responses", "monthly"),
+        workflowRunsPrice: getOptionalSinglePrice(prices, "pro", "workflow_runs", "monthly"),
       },
     },
     scale: {
@@ -239,12 +268,14 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "scale", "base", "monthly"),
         responsePrice: getSinglePrice(prices, "scale", "responses", "monthly"),
+        workflowRunsPrice: getOptionalSinglePrice(prices, "scale", "workflow_runs", "monthly"),
       },
       yearly: {
         plan: "scale",
         interval: "yearly",
         basePrice: getSinglePrice(prices, "scale", "base", "yearly"),
         responsePrice: getSinglePrice(prices, "scale", "responses", "monthly"),
+        workflowRunsPrice: getOptionalSinglePrice(prices, "scale", "workflow_runs", "monthly"),
       },
     },
   };
@@ -321,6 +352,8 @@ export const getCatalogItemsForPlan = async (
   return [
     { price: item.basePrice.id, quantity: 1 },
     ...(item.responsePrice ? [{ price: item.responsePrice.id }] : []),
+    // Metered items carry no quantity (usage is reported via meter events).
+    ...(item.workflowRunsPrice ? [{ price: item.workflowRunsPrice.id }] : []),
   ];
 };
 
