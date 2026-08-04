@@ -36,6 +36,14 @@ import {
 } from "@formbricks/types/surveys/types";
 import type { TUserLocale, TUserNotificationSettings } from "@formbricks/types/user";
 import { type TLogo, type TWorkspaceConfig, type TWorkspaceStyling } from "@formbricks/types/workspace";
+import type {
+  TWorkflowDefinition,
+  TWorkflowExecutableDefinition,
+  TWorkflowRunData,
+  TWorkflowRunLogInput,
+  TWorkflowRunLogOutput,
+  TWorkflowTriggerRunPayload,
+} from "@formbricks/workflows";
 
 declare global {
   namespace PrismaJson {
@@ -78,5 +86,11 @@ declare global {
     export type ChartQuery = TChartQuery;
     export type ChartConfig = TChartConfig;
     export type WidgetLayout = TWidgetLayout;
+    export type WorkflowDefinition = TWorkflowDefinition;
+    export type WorkflowExecutableDefinition = TWorkflowExecutableDefinition;
+    export type WorkflowTriggerRunPayload = TWorkflowTriggerRunPayload;
+    export type WorkflowRunData = TWorkflowRunData;
+    export type WorkflowRunLogInput = TWorkflowRunLogInput;
+    export type WorkflowRunLogOutput = TWorkflowRunLogOutput;
   }
 }

@@ -19,16 +19,32 @@ allowBuilds:
 
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
+#
+# Every entry below was re-verified on 2026-07-28 by resolving the workspace with the
+# override dropped (`pnpm install --lockfile-only`) and re-running `pnpm audit`: each one
+# is still load-bearing, i.e. the natural resolution is a version the advisory covers.
+# The `load-bearing:` notes record the consumer that keeps the vulnerable version in the
+# tree, so the next cleanup can check that single upstream instead of re-deriving it.
 overrides:
   # ENG-1324 / GHSA-5375-pq7m-f5r2, ENG-1325 / GHSA-99f4-grh7-6pcq:
   # @grpc/grpc-js is patched in 1.14.4 against malformed-request and malformed-compressed-message crashes.
+  # load-bearing: @boxyhq/metrics resolves 1.14.3.
   "@grpc/grpc-js": 1.14.4
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
-  "@hono/node-server": 1.19.13
-  hono: 4.12.25
+  # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
+  # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).
+  # GHSA-9mqv-5hh9-4cgg: 2.0.0–2.0.9 unauthenticated memory-leak DoS via aborted WebSocket handshake;
+  # patched in 2.0.10. Pinned to 2.0.10 to close both.
+  # load-bearing: @prisma/dev pins 1.19.11 and @modelcontextprotocol/sdk resolves 1.19.15.
+  "@hono/node-server": 2.0.10
   # OpenTelemetry / protobuf chains.
-  protobufjs@7: 7.6.3
-  protobufjs@8: 8.6.3
+  # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
+  # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
+  # mutation, patched in 8.6.5. The 8.x line is pinned to the lowest release covering both advisories.
+  # The 7.x line no longer needs a pin: @grpc/proto-loader and the older otlp-transformer lines resolve
+  # 7.6.5 on their own.
+  # load-bearing: @opentelemetry/otlp-transformer pins 8.0.0 / 8.0.1.
+  protobufjs@8: 8.6.6
   # sqlite3 / node-gyp chain: tar advisory pins are safe here because sqlite3 is pulled in
   # transitively by typeorm but the project uses postgres; sqlite3 is never built at runtime.
   # Therefore node-gyp@8 / http-proxy-agent@4 compatibility is not a concern.
@@ -37,45 +53,75 @@ overrides:
   # required. Pinned to the minimal patched version (2.0.1) to stay CJS-compatible with http-proxy-agent@4.
   "@tootallnate/once": 2.0.1
   # SAML and XML processing chains.
-  "@xmldom/xmldom": 0.9.10 # load-bearing: 0.8.x/0.9.8 vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
-  axios: 1.16.0
-  lodash: 4.18.1
-  node-forge: 1.4.0 # load-bearing: 1.3.3 still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
+  "@xmldom/xmldom": 0.9.10 # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
+  axios: 1.18.0 # ENG-1958 / GHSA-gcfj-64vw-6mp9: <1.18.0 Node HTTP adapter can use an inherited proxy after interceptor config cloning; patched in 1.18.0. load-bearing: @boxyhq/saml-jackson pins 1.13.5.
+  lodash: 4.18.1 # GHSA-r5fr-rjxr-66jc + GHSA-f23m-r3pf-42rh: <=4.17.23 vulnerable, patched in 4.17.24. load-bearing: @boxyhq/saml-jackson and @microsoft/api-extractor resolve 4.17.23.
+  node-forge: 1.4.0 # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
   # Webpack / linting / schema validation chains.
-  ajv@6: 6.14.0
-  minimatch@10: 10.2.5
-  postcss: 8.5.14
+  minimatch@10: 10.2.5 # GHSA-7r86-cg39-jmmj + GHSA-23c5-xmqv-rm74: 10.0.0–10.2.2 vulnerable, patched in 10.2.3. load-bearing: @microsoft/api-extractor pins 10.2.1.
+  # GHSA-r28c-9q8g-f849: postcss <=8.5.17 auto-loads a previous sourceMappingURL
+  # without validating it stays within the project root, allowing arbitrary .map file
+  # disclosure via path traversal; patched in 8.5.18.
+  # load-bearing: next pins 8.4.31 and @tailwindcss/postcss pins 8.5.15.
+  postcss: 8.5.18
   # SDK and runtime transitive security pins.
-  fast-xml-parser: 5.7.0 # load-bearing: <5.7.0 vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  fast-xml-parser: 5.7.0 # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
   # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
-  typeorm: 0.3.29
-  # js-cookie / uuid: load-bearing security pins that are also MAJOR coercions on transitive consumers
-  # (react-use@17 js-cookie v2->v3; @azure/msal-node + next-auth uuid v8/9->v11). Natural versions are
-  # vulnerable (GHSA-qjx8-664m-686j / GHSA-w5hq-g745-h8pq), so the pins stay; runtime verified in build+tests.
-  js-cookie: 3.0.7
+  # ENG-1990 / GHSA-2rp8-mm9q-fp49: typeorm <0.3.31 migration:generate template-literal code injection;
+  # patched in 0.3.31.
+  typeorm: 0.3.31
+  # uuid: load-bearing security pins that are also MAJOR coercions on transitive consumers
+  # (@azure/msal-node uuid v8 and @sentry/webpack-plugin uuid v9 -> v11). Natural versions are
+  # vulnerable (GHSA-w5hq-g745-h8pq), so the pins stay; runtime verified in build+tests.
+  # The 11.x line no longer needs a pin — it resolves to the patched 11.1.1 on its own.
   uuid@8: 11.1.1
   uuid@9: 11.1.1
-  uuid@11: 11.1.1
-  # ENG-1302 / GHSA-w7jw-789q-3m8p: shell-quote quote() does not escape newlines, patched in 1.8.4.
-  shell-quote: 1.8.4
-  # ENG-1111 / GHSA-58qx-3vcg-4xpx: ws is patched in 8.20.1+.
+  # ENG-1111 / GHSA-58qx-3vcg-4xpx: ws is patched in 8.20.1+. GHSA-96hv-2xvq-fx4p raises that to 8.21.0.
+  # load-bearing: socket.io-adapter resolves 8.17.1 and engine.io resolves 8.18.3.
   ws@8: 8.21.0
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
-  "@babel/core": 7.29.6 # ENG-1376 / GHSA-4x5r-pxfx-6jf8
-  "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf
-  dompurify: 3.4.11 # ENG-1359 + GHSA-vxr8-fq34-vvx9 / GHSA-gvmj-g25r-r7wr (audit: <3.4.9); ENG-1527-batch / GHSA-cmwh-pvxp-8882 raises the pin to >=3.4.11 (3.4.9/3.4.10 vulnerable to clobbered-root / cross-realm / hook-pollution XSS)
-  esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr
-  # ENG-1509 / ENG-1505 / GHSA-vmh5-mc38-953g: undici 7.x TLS certificate
-  # validation bypass, patched in 7.28.0 (covers the jsdom transitive 7.25.0).
-  undici@7: 7.28.0
-  # ENG-1513 / GHSA-fjxv-7rqg-78g4: form-data <4.0.4 uses an unsafe random function for the
-  # multipart boundary. @redocly/respect-core pins 4.0.0; patched in 4.0.4+.
-  form-data@4: 4.0.6
-  tar: 7.5.16
+  "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf (<2.8.0). load-bearing: the 0.208.0/0.211.0/0.212.0/0.217.0 exporter lines resolve 2.2.0–2.7.1.
+  esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr (>=0.27.3 <0.28.1). load-bearing: vite@7/tsx/storybook resolve 0.27.7 and react-email pins 0.27.4.
+  # ENG-1947 / GHSA-23hp-3jrh-7fpw (CVE-2026-59873): node-tar <=7.5.18 has no hard
+  # upper bound on total decompressed bytes / entry count, so a small gzip bomb can
+  # exhaust disk and CPU (DoS). Patched in 7.5.19.
+  # GHSA-r292-9mhp-454m: node-tar <=7.5.20 has uncontrolled recursion in
+  # mapHas/filesFilter, allowing an uncatchable stack-overflow DoS via a crafted
+  # long-path tar entry during member selection; patched in 7.5.21.
+  # load-bearing: the sqlite3 / node-gyp@8 chain resolves the tar 6.x line (6.2.1).
+  tar: 7.5.21
   # ENG-1527-batch / GHSA-mh29-5h37-fv8m + GHSA-h67p-54hq-rp68: js-yaml <4.1.2 quadratic-complexity
   # DoS via merge keys / repeated aliases (dev-only, via @redocly/cli). No 4.1.2 published; 4.2.0 is the
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
-  js-yaml@4: 4.2.0
+  # ENG-1952 / GHSA-52cp-r559-cp3m (CVE-2026-59869): js-yaml 4.0.0–4.2.x can spend quadratic CPU on a
+  # merge-key mapping chain; patched in 4.3.0. Raises the 4.x pin from 4.2.0 to 4.3.0 (still <5).
+  # load-bearing: @redocly/openapi-core and @redocly/respect-core pin 4.2.0.
+  js-yaml@4: 4.3.0
+  # === Dependabot security batch (ENG-1988..ENG-1999) ===
+  # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
+  # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
+  # sharp 0.34.5 that next@16 declares as an optional peer, which otherwise keeps the alert open.
+  sharp: 0.35.0
+  # ENG-1992 / GHSA-45rx-2jwx-cxfr (CVE-2026-59892): @opentelemetry/propagator-jaeger <2.9.0 DoS via an
+  # unhandled decodeURIComponent() error on a malformed header; patched in 2.9.0. Coerces the transitive
+  # 1.26.0 line up to 2.9.0 (core is already pinned to 2.x above).
+  # load-bearing: @opentelemetry/sdk-node resolves 2.7.1 and @redocly/cli's sdk-trace-node pins 1.26.0.
+  "@opentelemetry/propagator-jaeger": 2.9.0
+  # GHSA-5qjj-4xww-7phc: valibot <=1.4.1 record() issue paths can make flatten() throw for
+  # inherited Object property names (e.g. "constructor"). Pulled in transitively via prisma's dev-only
+  # tooling (@prisma/dev); patched in 1.4.2.
+  # load-bearing: @prisma/dev pins 1.2.0.
+  valibot: 1.4.2
+  # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
+  # ajv@6, @babel/core, body-parser, brace-expansion@1/@2/@5, dompurify, engine.io@6, fast-uri@3, hono,
+  # linkify-it, protobufjs@7, undici@7 and uuid@11 all resolve to the patched version on their own now.
+  # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
+  # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
+  # GHSA-mh99-v99m-4gvg (brace-expansion <=5.0.7) is still reported by `pnpm audit` as high: the range
+  # also matches 1.1.16 / 2.1.2, each the latest release in its line with no patch coming. Those paths
+  # are devDependency-only (eslint, prettier plugins and @redocly/cli, all via minimatch) and never run
+  # against untrusted input, so the residual risk is accepted until their consumers move to
+  # brace-expansion@5 — a pin cannot close it.
 
 autoInstallPeers: true
 linkWorkspacePackages: true
@@ -83,9 +129,24 @@ shamefullyHoist: true
 sharedWorkspaceLockfile: true
 access: public
 enablePrePostScripts: true
-legacyPeerDeps: true
+# Flat, npm-style node_modules. Deliberate for now: several packages still rely on hoisted
+# (undeclared) dependencies — e.g. @formbricks/js-core reaches into sibling packages (ENG-1681)
+# and react/react-dom are hoisted from the workspace root (ENG-1693). Moving to the strict
+# `isolated` linker is the long-term goal (ENG-1674); fix the undeclared deps first.
+# `shamefullyHoist` above is left untouched here — it becomes meaningful only under the isolated
+# linker, so it is handled together with that migration rather than in this cleanup.
 nodeLinker: hoisted
 saveExact: true
+# Supply-chain release cooldown: refuse to install package versions published less than
+# 3 days (4320 minutes) ago, so compromised releases are usually detected/yanked before we
+# can pull them. pnpm 11 already defaults to 1 day; we raise it to 3 days and pin it
+# explicitly. Note: with trustLockfile disabled (below), `pnpm install` re-verifies entries
+# already in the lockfile against this policy too — a lockfile bump younger than 3 days
+# (e.g. written by a bot) fails install until it ages or is excluded below. Intended.
+minimumReleaseAge: 4320
+# Keep the install-time re-verification of lockfile entries active (this is pnpm's default;
+# pinned explicitly so a future default flip can't silently weaken the cooldown).
+trustLockfile: false
 minimumReleaseAgeExclude:
   # First-party SDK (published by Formbricks' own CI) — exempt all versions from the release-age gate so
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not

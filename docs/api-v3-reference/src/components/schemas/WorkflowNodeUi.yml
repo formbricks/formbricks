@@ -1,0 +1,19 @@
+type: object
+description: >-
+  Builder-only UI metadata that does not affect workflow execution. Additional
+  keys are preserved.
+properties:
+  position:
+    type: object
+    required:
+      - x
+      - 'y'
+    properties:
+      x:
+        type: number
+      'y':
+        type: number
+    additionalProperties: false
+  collapsed:
+    type: boolean
+additionalProperties: true

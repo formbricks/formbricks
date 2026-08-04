@@ -1,5 +1,6 @@
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils";
 import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
@@ -7,6 +8,34 @@ import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
+
+/** Message codes whose presence alone reveals whether an identifier is already a contact here. */
+const EXISTENCE_REVEALING_MESSAGE_CODES = new Set(["email_already_exists", "userid_already_exists"]);
+
+/**
+ * Shared select for the two contact-state branches (existing contact vs newly created). Kept in one
+ * place so both produce the identical shape that feeds buildUserStateFromContact and the in-memory
+ * survey-interaction evaluator. `createdAt`/`finished` on responses (and `createdAt` on displays) are
+ * consumed by that evaluator (see getPersonSegmentIds), which relies on the load being complete — do
+ * NOT add a `take` limit without also bounding it by the widest interaction window, or the in-memory
+ * and Prisma evaluators would diverge.
+ */
+const contactStateSelect = {
+  id: true,
+  attributes: {
+    select: {
+      attributeKey: { select: { key: true } },
+      value: true,
+    },
+  },
+  responses: {
+    select: { surveyId: true, createdAt: true, finished: true },
+  },
+  displays: {
+    select: { surveyId: true, createdAt: true },
+    orderBy: { createdAt: "desc" as const },
+  },
+} satisfies Prisma.ContactSelect;
 
 /**
  * Comprehensive contact data fetcher - gets everything needed in one query
@@ -23,26 +52,7 @@ const getContactWithFullData = async (workspaceId: string, userId: string) => {
         },
       },
     },
-    select: {
-      id: true,
-      attributes: {
-        select: {
-          attributeKey: { select: { key: true } },
-          value: true,
-        },
-      },
-      // Include user state data in the same query
-      responses: {
-        select: { surveyId: true },
-      },
-      displays: {
-        select: {
-          surveyId: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-      },
-    },
+    select: contactStateSelect,
   });
 };
 
@@ -66,26 +76,7 @@ const createContact = async (workspaceId: string, userId: string) => {
         ],
       },
     },
-    select: {
-      id: true,
-      attributes: {
-        select: {
-          attributeKey: { select: { key: true } },
-          value: true,
-        },
-      },
-      // Include empty arrays for new contacts
-      responses: {
-        select: { surveyId: true },
-      },
-      displays: {
-        select: {
-          surveyId: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-      },
-    },
+    select: contactStateSelect,
   });
 };
 
@@ -103,7 +94,12 @@ const buildUserStateFromContact = async (
   // Ensure segments is always an array to prevent "segments is not iterable" error
   let segments: string[] = [];
   try {
-    segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device);
+    // The contact's displays/responses are already loaded here, so interaction-only segments can be
+    // evaluated in memory without any additional query (see getPersonSegmentIds).
+    segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device, {
+      displays: contactData.displays,
+      responses: contactData.responses,
+    });
     // Double-check that segments is actually an array
     if (!Array.isArray(segments)) {
       segments = [];
@@ -239,7 +235,15 @@ export const updateUser = async (
         errors: updateAttrErrors,
       } = await updateAttributes(contactData.id, userId, workspaceId, normalizedAttributes);
 
-      messages = updateAttrMessages?.map(formatAttributeMessage) ?? [];
+      // This runs on the *unauthenticated* public client endpoint, and workspaceId is public — it ships
+      // in the widget snippet on the customer's own site. Echoing "the email/userId already exists"
+      // turns the endpoint into an oracle for "is this address a contact of this organization?",
+      // answerable for any address an attacker cares to try. The SDK only debug-logs these two, so
+      // withholding them costs nothing; genuine `errors` are still returned in full.
+      messages =
+        updateAttrMessages
+          ?.filter((message) => !EXISTENCE_REVEALING_MESSAGE_CODES.has(message.code))
+          .map(formatAttributeMessage) ?? [];
       errors = updateAttrErrors?.map(formatAttributeMessage) ?? [];
 
       // Update language if provided (used in response state)

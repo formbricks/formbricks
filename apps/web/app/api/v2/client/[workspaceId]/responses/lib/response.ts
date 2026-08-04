@@ -2,22 +2,14 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import {
-  DatabaseError,
-  InvalidInputError,
-  ResourceNotFoundError,
-  UniqueConstraintError,
-} from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import {
   buildClientResponse,
   createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
 } from "@/app/api/client/[workspaceId]/responses/lib/response";
-import {
-  isPrismaKnownRequestError,
-  isSingleUseIdUniqueConstraintError,
-} from "@/app/api/client/[workspaceId]/responses/lib/response-error";
+import { handleClientResponseCreateError } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { responseSelection } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
 import { buildPrismaResponseData as buildV1PrismaResponseData } from "@/app/api/v1/lib/utils";
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
@@ -92,21 +84,6 @@ export const createResponse = async (
 
     return buildClientResponse(responsePrisma, contact);
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
-      if (
-        error.code === "P2002" &&
-        Array.isArray(error.meta?.target) &&
-        error.meta.target.includes("displayId")
-      ) {
-        throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
-      }
-      if (isSingleUseIdUniqueConstraintError(error)) {
-        throw new UniqueConstraintError("Response already submitted for this single-use link");
-      }
-
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
+    return handleClientResponseCreateError(error, responseInput.displayId);
   }
 };

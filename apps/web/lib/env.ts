@@ -194,7 +194,7 @@ const isValidIanaTimeZone = (value: string): boolean => {
 };
 
 const ZSurveySchedulingTimeZone = z.string().trim().min(1).refine(isValidIanaTimeZone, {
-  message: "NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE must be a valid IANA time zone",
+  message: "SURVEY_SCHEDULING_TIME_ZONE must be a valid IANA time zone",
 });
 
 const ZSurveySchedulingLocalHour = z.coerce.number().int().min(0).max(23);
@@ -370,8 +370,9 @@ const parsedEnv = createEnv({
       .or(z.string().refine((str) => str === "")),
     IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
-    CHATWOOT_WEBSITE_TOKEN: z.string().optional(),
-    CHATWOOT_BASE_URL: z.url().optional(),
+    PLAIN_APP_ID: z.string().optional(),
+    PLAIN_CHAT_HMAC_SECRET: z.string().optional(),
+    PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID: z.string().optional(),
     // Formbricks-in-Formbricks: dogfood in-app surveys. Points at the Formbricks
     // instance that hosts the surveys (defaults to Formbricks Cloud). When
     // FORMBRICKS_WORKSPACE_ID is set, the survey widget is mounted in the app.
@@ -408,6 +409,18 @@ const parsedEnv = createEnv({
       .optional()
       .or(z.string().refine((str) => str === "")),
     RATE_LIMITING_DISABLED: z.enum(["1", "0"]).optional(),
+    // Number of reverse proxies in front of the app whose X-Forwarded-For entries can be believed.
+    // Unset falls back to 1 (see TRUSTED_PROXY_HOP_COUNT in lib/constants.ts); an explicit 0 trusts no
+    // forwarding header at all. See resolveClientIp in lib/utils/client-ip.ts.
+    // Preprocessed because `z.coerce.number()` turns "" into 0, and 0 is a *valid* value here (the
+    // explicit "trust nothing" opt-out) rather than something `.min()` would reject. A deployment that
+    // renders the variable empty when unset — the common docker-compose / Helm shape — would otherwise
+    // silently opt out of trusting any forwarding header, collapsing every request into one rate-limit
+    // bucket. The neighbouring numeric vars only fail loudly on "" because their minimums exceed 0.
+    TRUSTED_PROXY_HOP_COUNT: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().int().min(0).max(10).optional()
+    ),
     TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
     S3_ACCESS_KEY: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
@@ -467,12 +480,11 @@ const parsedEnv = createEnv({
       .transform((val) => Number.parseInt(val, 10))
       .optional(),
     SENTRY_ENVIRONMENT: z.string().optional(),
+    SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
+    SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
+    SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
   },
-  client: {
-    NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
-    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
-    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
-  },
+  client: {},
 
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -552,8 +564,9 @@ const parsedEnv = createEnv({
     IMPRINT_URL: process.env.IMPRINT_URL,
     IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
-    CHATWOOT_WEBSITE_TOKEN: process.env.CHATWOOT_WEBSITE_TOKEN,
-    CHATWOOT_BASE_URL: process.env.CHATWOOT_BASE_URL,
+    PLAIN_APP_ID: process.env.PLAIN_APP_ID,
+    PLAIN_CHAT_HMAC_SECRET: process.env.PLAIN_CHAT_HMAC_SECRET,
+    PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID: process.env.PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID,
     FORMBRICKS_WORKSPACE_ID: process.env.FORMBRICKS_WORKSPACE_ID,
     FORMBRICKS_APP_URL: process.env.FORMBRICKS_APP_URL,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
@@ -563,9 +576,9 @@ const parsedEnv = createEnv({
     MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR,
-    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE,
-    NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE,
+    SURVEY_SCHEDULING_LOCAL_HOUR: process.env.SURVEY_SCHEDULING_LOCAL_HOUR,
+    SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.SURVEY_SCHEDULING_LOCAL_MINUTE,
+    SURVEY_SCHEDULING_TIME_ZONE: process.env.SURVEY_SCHEDULING_TIME_ZONE,
     SENTRY_DSN: process.env.SENTRY_DSN,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
@@ -580,6 +593,7 @@ const parsedEnv = createEnv({
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: process.env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
+    TRUSTED_PROXY_HOP_COUNT: process.env.TRUSTED_PROXY_HOP_COUNT,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
     S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,

@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
+import { isExternalImageSrc } from "@/lib/image-hosts";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -189,6 +190,7 @@ export const LogoSettingsCard = ({
                       height={56}
                       style={{ backgroundColor: logoBgColor || undefined }}
                       className="h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
+                      unoptimized={isExternalImageSrc(logoUrl)}
                     />
                   </div>
 

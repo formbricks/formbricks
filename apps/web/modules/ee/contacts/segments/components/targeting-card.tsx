@@ -177,7 +177,7 @@ export function TargetingCard({
         asChild
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               strokeWidth={3}
@@ -431,7 +431,7 @@ export function TargetingCard({
         </div>
 
         <div>
-          <Alert className="flex items-center rounded-none bg-slate-50">
+          <Alert className="flex items-center rounded-none bg-slate-50" role="status">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
                 <Trans

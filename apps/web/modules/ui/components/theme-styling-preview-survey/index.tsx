@@ -108,6 +108,7 @@ export const ThemeStylingPreviewSurvey = ({
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
 
   const highlightBorderColor = workspace.styling.highlightBorderColor?.light;
+  // eslint-disable-next-line react-hooks/purity -- migration ENG-1677
   const [surveyFormKey, setSurveyFormKey] = useState<number>(Date.now());
 
   const resetQuestionProgress = () => {

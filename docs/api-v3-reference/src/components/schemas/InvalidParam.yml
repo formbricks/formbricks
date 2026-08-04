@@ -26,13 +26,21 @@ properties:
       - duplicate_locale
       - forbidden_identifier
       - immutable_identifier
+      - invalid_graph
       - invalid_locale
       - invalid_reference
       - missing_required_field
       - missing_translation
       - unsupported_field
       - unsupported_locale
-    description: Machine-readable validation category, when available.
+    description: >
+      Machine-readable validation category, when available. `invalid_graph`
+      covers workflow
+
+      graph-structure violations such as a duplicated trigger edge, an
+      unreachable node, or a
+
+      cycle.
   identifier:
     type: string
     description: >-
@@ -49,8 +57,13 @@ properties:
       - variable
       - variableName
       - recall
+      - node
+      - edge
+      - survey
+      - endingCard
     description: >-
-      Identifier namespace involved in the validation failure.
+      Identifier namespace involved in the validation failure. `node`, `edge`,
+      `survey`, and `endingCard` are used by workflow validation.
   missingId:
     type: string
     description: Referenced id that does not exist in the submitted survey document.

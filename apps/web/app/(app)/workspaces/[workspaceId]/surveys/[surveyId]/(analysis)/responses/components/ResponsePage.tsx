@@ -51,7 +51,6 @@ export const ResponsePage = ({
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedFilter, dateRange]
   );
 
@@ -163,7 +162,6 @@ export const ResponsePage = ({
     };
     fetchFilteredResponses();
     // page is intentionally omitted to avoid refetching after the initial page setup.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (

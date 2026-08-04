@@ -18,7 +18,7 @@ export const DocumentationLinks = ({ links }: DocumentationLinksProps) => {
     <div className="flex w-full flex-col gap-y-2">
       {links.map((link) => (
         <div key={link.title} className="flex w-full flex-col gap-3">
-          <Alert variant="outbound" size="small">
+          <Alert variant="outbound" size="small" role="status">
             <AlertTitle>{link.title}</AlertTitle>
             <AlertButton asChild>
               <Link

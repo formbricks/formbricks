@@ -1,11 +1,10 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { logger } from "@formbricks/logger";
-import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -16,9 +15,12 @@ import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
+import { verifyResponseRecaptcha } from "@/modules/api/lib/verify-response-recaptcha";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
+import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
+import { enforceVerifiedEmailGate } from "@/modules/survey/link/lib/verify-email-gate";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -146,6 +148,35 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    if (survey.pin && !verifyLinkSurveyPinToken(responseInputData.pinAuthToken, survey.id)) {
+      return {
+        response: responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id }),
+      };
+    }
+
+    // Email verification, like the PIN above, has to be enforced here and not only in the renderer:
+    // this endpoint is public, so a caller could otherwise submit with any `verifiedEmail` they like.
+    // Shared with the v2 endpoint so the two versions cannot drift apart.
+    const verifiedEmailErrorResponse = enforceVerifiedEmailGate({
+      survey,
+      responseData: responseInputData.data,
+      metaUrl: responseInputData.meta?.url,
+    });
+    if (verifiedEmailErrorResponse) {
+      return { response: verifiedEmailErrorResponse };
+    }
+
+    // Same gate the v2 endpoint applies — without it, posting to the v1 URL opts the caller out of the
+    // survey's spam protection entirely.
+    const recaptchaErrorResponse = await verifyResponseRecaptcha({
+      survey,
+      workspaceId,
+      recaptchaToken: responseInputData.recaptchaToken,
+    });
+    if (recaptchaErrorResponse) {
+      return { response: recaptchaErrorResponse };
+    }
+
     const singleUseValidationResult = validateSingleUseResponseInput(survey, workspaceId, responseInputData);
     if (singleUseValidationResult) {
       if ("response" in singleUseValidationResult) {
@@ -199,22 +230,7 @@ export const POST = withV1ApiWrapper({
         meta,
       });
     } catch (error) {
-      if (error instanceof InvalidInputError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      } else if (error instanceof UniqueConstraintError) {
-        return {
-          response: responses.conflictResponse(error.message, undefined, true),
-        };
-      } else {
-        logger.error({ error, url: req.url }, "Error creating response");
-        return {
-          response: responses.internalServerErrorResponse(
-            error instanceof Error ? error.message : "Unknown error occurred"
-          ),
-        };
-      }
+      return handleApiError(error, { cors: true });
     }
 
     const { quotaFull, ...responseData } = response;

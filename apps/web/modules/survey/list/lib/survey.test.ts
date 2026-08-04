@@ -21,6 +21,7 @@ import {
   getSurveyCount,
   getSurveys,
   getSurveysSortedByRelevance,
+  hasArchivedSurveys,
 } from "./survey";
 import { surveySelect } from "./survey-record";
 
@@ -81,6 +82,7 @@ vi.mock("@formbricks/database", () => ({
     survey: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       count: vi.fn(),
       delete: vi.fn(),
       create: vi.fn(),
@@ -128,6 +130,7 @@ const resetMocks = () => {
   vi.mocked(createId).mockClear();
   vi.mocked(prisma.survey.findMany).mockReset();
   vi.mocked(prisma.survey.findUnique).mockReset();
+  vi.mocked(prisma.survey.findFirst).mockReset();
   vi.mocked(prisma.survey.count).mockReset();
   vi.mocked(prisma.survey.delete).mockReset();
   vi.mocked(prisma.survey.create).mockReset();
@@ -859,5 +862,40 @@ describe("copySurveyToOtherWorkspace", () => {
         }),
       })
     );
+  });
+});
+
+describe("hasArchivedSurveys", () => {
+  const workspaceId = "clq5n7p1q0000m7z0h5p6g3r3";
+
+  beforeEach(() => {
+    resetMocks();
+    vi.mocked(validateInputs).mockReturnValue([] as never);
+  });
+
+  test("returns true when the workspace has at least one archived survey", async () => {
+    vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: "survey_1" } as never);
+
+    await expect(hasArchivedSurveys(workspaceId)).resolves.toBe(true);
+    expect(prisma.survey.findFirst).toHaveBeenCalledWith({
+      where: { workspaceId, archivedAt: { not: null } },
+      select: { id: true },
+    });
+  });
+
+  test("returns false when the workspace has no archived surveys", async () => {
+    vi.mocked(prisma.survey.findFirst).mockResolvedValue(null as never);
+
+    await expect(hasArchivedSurveys(workspaceId)).resolves.toBe(false);
+  });
+
+  test("throws DatabaseError on a Prisma known request error", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("db down", {
+      code: "P2010",
+      clientVersion: "4.0.0",
+    });
+    vi.mocked(prisma.survey.findFirst).mockRejectedValue(prismaError);
+
+    await expect(hasArchivedSurveys(workspaceId)).rejects.toThrow(DatabaseError);
   });
 });

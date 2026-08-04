@@ -10,6 +10,11 @@ import {
   uploadImageChoicesForPictureSelection,
 } from "./utils/helper";
 
+// NOTE: slowMo paces every action in this spec's heavy survey-editor flows.
+// It is load-bearing: without it, the question-builder interactions (matrix
+// columns, ranking options) hit "element detached from the DOM" races and the
+// tests fail. Removing it requires first hardening those waits in
+// createSurvey/createSurveyWithLogic (utils/helper.ts). Tracked as a follow-up.
 test.use({
   launchOptions: {
     slowMo: 150,
@@ -20,8 +25,10 @@ test.beforeEach(async ({ page }) => {
   await helper.mockStorageUploads(page);
 });
 
-const firstPictureChoiceAlt = "logo-transparent.png";
-const secondPictureChoiceAlt = "android-chrome-192x192.png";
+// The rendered alt is the human-readable form of the file name (decoded, no
+// extension or separator noise) — see getImageAltFromUrl in @formbricks/surveys.
+const firstPictureChoiceAlt = "logo transparent";
+const secondPictureChoiceAlt = "android chrome 192x192";
 
 const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
   const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });

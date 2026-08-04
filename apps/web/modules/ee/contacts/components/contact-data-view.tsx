@@ -105,7 +105,6 @@ export const ContactDataView = ({
     if (isResettingSearch.current) {
       isResettingSearch.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchValue]);
 
   useEffect(() => {

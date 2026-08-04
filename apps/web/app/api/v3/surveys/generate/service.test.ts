@@ -157,6 +157,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
         schema: ZGeneratedSurveyDraftForAI,
         schemaName: "FormbricksSurveyDraft",
         temperature: 0.2,
+        maxOutputTokens: 8192,
         timeout: 45_000,
       })
     );

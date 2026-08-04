@@ -2,19 +2,18 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
-import { KeyboardEventHandler, useEffect, useState } from "react";
+import { KeyboardEventHandler, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import {
-  SURVEY_SCHEDULING_TIME_LABEL,
-  SURVEY_SCHEDULING_TIME_ZONE_LABEL,
-} from "@/modules/survey/scheduling/lib/constants";
+  type TSurveySchedulingConfig,
+  getSurveySchedulingTimeLabel,
+} from "@/modules/survey/scheduling/lib/config";
 import {
-  getMinimumSurveySchedulingCalendarDate,
-  toCalendarDate,
+  createSurveySchedulingDateUtils,
   toDateOnlySelection,
 } from "@/modules/survey/scheduling/lib/date-utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -27,19 +26,27 @@ import { Slider } from "@/modules/ui/components/slider";
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((prev: TSurvey) => TSurvey)) => void;
-  responseCount: number;
+  finishedResponseCount: number;
   isSpamProtectionAllowed: boolean;
+  surveySchedulingConfig: TSurveySchedulingConfig;
   locale: TUserLocale;
 }
 
 export const ResponseOptionsCard = ({
   localSurvey,
   setLocalSurvey,
-  responseCount,
+  finishedResponseCount,
   isSpamProtectionAllowed,
+  surveySchedulingConfig,
   locale,
-}: ResponseOptionsCardProps) => {
+}: Readonly<ResponseOptionsCardProps>) => {
   const { t } = useTranslation();
+  const { toCalendarDate, getMinimumSurveySchedulingCalendarDate } = useMemo(
+    () => createSurveySchedulingDateUtils(surveySchedulingConfig),
+    [surveySchedulingConfig]
+  );
+  const surveySchedulingTimeLabel = getSurveySchedulingTimeLabel(surveySchedulingConfig);
+  const surveySchedulingTimeZoneLabel = surveySchedulingConfig.timeZone;
   const [open, setOpen] = useState(localSurvey.type === "link");
   const autoComplete = localSurvey.autoComplete !== null;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
@@ -193,7 +200,7 @@ export const ResponseOptionsCard = ({
         closeOn: null,
       };
     });
-  }, [closeOn, publishOn, setLocalSurvey]);
+  }, [closeOn, publishOn, setLocalSurvey, toCalendarDate]);
 
   const togglePublishOnDate = () => {
     if (isPublishOnDateEnabled) {
@@ -238,7 +245,7 @@ export const ResponseOptionsCard = ({
       const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey = { ...localSurvey, autoComplete: Math.max(25, responseCount + 5) };
+      const updatedSurvey = { ...localSurvey, autoComplete: Math.max(25, finishedResponseCount + 5) };
       setLocalSurvey(updatedSurvey);
     }
   };
@@ -259,10 +266,10 @@ export const ResponseOptionsCard = ({
       return;
     }
 
-    if (Number.parseInt(e.target.value) <= responseCount) {
+    if (Number.parseInt(e.target.value) <= finishedResponseCount) {
       toast.error(
         t("workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
-          responseCount,
+          responseCount: finishedResponseCount,
         }),
         {
           id: "response-limit-error",
@@ -331,8 +338,8 @@ export const ResponseOptionsCard = ({
             onToggle={togglePublishOnDate}
             title={t("workspace.surveys.edit.publish_survey_on_date")}
             description={t("workspace.surveys.edit.survey_will_be_published_at_midnight_cet", {
-              time: SURVEY_SCHEDULING_TIME_LABEL,
-              timeZone: SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+              time: surveySchedulingTimeLabel,
+              timeZone: surveySchedulingTimeZoneLabel,
             })}
             childBorder={true}>
             <div className="p-4">
@@ -371,8 +378,8 @@ export const ResponseOptionsCard = ({
             onToggle={toggleCloseOnDate}
             title={t("workspace.surveys.edit.close_survey_on_date")}
             description={t("workspace.surveys.edit.survey_will_be_closed_at_midnight_cet", {
-              time: SURVEY_SCHEDULING_TIME_LABEL,
-              timeZone: SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+              time: surveySchedulingTimeLabel,
+              timeZone: surveySchedulingTimeZoneLabel,
             })}
             childBorder={true}>
             <div className="p-4">
@@ -416,7 +423,7 @@ export const ResponseOptionsCard = ({
                       <Input
                         autoFocus
                         type="number"
-                        min={responseCount ? (responseCount + 1).toString() : "1"}
+                        min={finishedResponseCount ? (finishedResponseCount + 1).toString() : "1"}
                         id="autoCompleteResponses"
                         value={localSurvey.autoComplete?.toString()}
                         onChange={handleInputResponse}
@@ -467,7 +474,7 @@ export const ResponseOptionsCard = ({
                     <p className="mx-2 text-xs text-slate-500">Strict</p>
                   </div>
                 </div>
-                <Alert variant="warning" size="default" className="w-fill mt-2 text-sm">
+                <Alert variant="warning" size="default" className="w-fill mt-2 text-sm" role="status">
                   <AlertTitle>{t("workspace.surveys.edit.spam_protection_note")}</AlertTitle>
                 </Alert>
               </div>

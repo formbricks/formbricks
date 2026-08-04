@@ -156,6 +156,13 @@
   --fb-option-font-family: inherit;
   --fb-option-font-size: 14px;
   --fb-option-font-weight: 400;
+
+  /* ── Page backdrop ─────────────────────────────────────────────────── */
+  /* The gray the link-survey shell paints behind the widget when no survey
+     background is configured (MediaBackground's default, slate-200). The
+     cardless layout blends its scroll fades and scroll-to-bottom button into
+     it; the shell can override this token if its default ever changes. */
+  --fb-page-bg-color: #e2e8f0;
 }
 
 #fbjs .button-custom {
@@ -266,13 +273,38 @@
     --fb-focus-ring-outer-width: 2px;
   }
 
+  /* Tailwind v4's transition-colors includes outline-color, and the focus rule
+     below sets a transparent outline (upgraded under forced-colors). Without a
+     transparent resting value, every focus would animate the outline from its
+     default (black) to transparent — a dark ring flashing outside the control.
+     Keep the resting outline-color transparent so that transition is a no-op. */
+  #fbjs a,
+  #fbjs button,
+  #fbjs input,
+  #fbjs select,
+  #fbjs textarea,
+  #fbjs summary,
+  #fbjs [tabindex],
+  #fbjs label:has(input[type="radio"]),
+  #fbjs label:has(input[type="checkbox"]),
+  #fbjs [data-fb-focus-ring],
+  #fbjs [role="menuitem"],
+  #fbjs [role="menuitemradio"],
+  #fbjs [role="menuitemcheckbox"] {
+    outline-color: transparent;
+  }
+
   #fbjs a:focus-visible,
   #fbjs button:focus-visible,
   #fbjs input:focus-visible,
   #fbjs select:focus-visible,
   #fbjs textarea:focus-visible,
   #fbjs summary:focus-visible,
-  #fbjs [tabindex]:focus-visible,
+  /* tabindex="-1" targets are script-focus-only (e.g. the ending card container focused
+     for screen-reader announcement) — not operable controls, so no indicator. :where()
+     keeps the exclusion at zero specificity so later same-specificity overrides (the
+     inset menu-item ring below) still win the cascade. */
+  #fbjs [tabindex]:where(:not([tabindex="-1"])):focus-visible,
   /* A visually-hidden radio/checkbox drives a visible label: paint the ring on the label. */
   #fbjs label:has(input[type="radio"]:focus-visible),
   #fbjs label:has(input[type="checkbox"]:focus-visible),
@@ -305,6 +337,27 @@
     outline: none !important;
   }
 
+  /* Scale cells (NPS / rating numbers) sit flush together and against the card's
+     scroll edge, so the default outer ring is clipped (WCAG 2.4.11). Paint a single
+     brand ring inset instead and raise the focused cell. The negative outline-offset
+     keeps it inset under forced-colors too, where box-shadows drop and the base
+     rule's positive-offset outline would otherwise reintroduce the clipping. */
+  #fbjs label[data-fb-scale-cell]:has(input[type="radio"]:focus-visible) {
+    z-index: 20;
+    outline-offset: calc(-1 * var(--fb-focus-ring-outer-width)) !important;
+    box-shadow: inset 0 0 0 var(--fb-focus-ring-outer-width) var(--fb-focus-ring-outer-color) !important;
+  }
+
+  /* Dropdown menu options: the menu content clips overflowing shadows (overflow-hidden
+     for its rounded corners), which cut the sides off the default outer ring. Paint the
+     ring inset for menu items as well (same forced-colors offset rationale as above). */
+  #fbjs [role="menuitem"]:focus-visible,
+  #fbjs [role="menuitemradio"]:focus-visible,
+  #fbjs [role="menuitemcheckbox"]:focus-visible {
+    outline-offset: calc(-1 * var(--fb-focus-ring-outer-width)) !important;
+    box-shadow: inset 0 0 0 var(--fb-focus-ring-outer-width) var(--fb-focus-ring-outer-color) !important;
+  }
+
   @media (forced-colors: active) {
     #fbjs a:focus-visible,
     #fbjs button:focus-visible,
@@ -312,7 +365,7 @@
     #fbjs select:focus-visible,
     #fbjs textarea:focus-visible,
     #fbjs summary:focus-visible,
-    #fbjs [tabindex]:focus-visible,
+    #fbjs [tabindex]:where(:not([tabindex="-1"])):focus-visible,
     #fbjs label:has(input[type="radio"]:focus-visible),
     #fbjs label:has(input[type="checkbox"]:focus-visible),
     #fbjs [data-fb-focus-ring]:has(:focus-visible),

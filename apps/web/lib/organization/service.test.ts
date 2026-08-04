@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -15,6 +15,7 @@ import {
   createOrganization,
   deleteOrganization,
   getOrganization,
+  getOrganizationMemberEmails,
   getOrganizationsByUserId,
   select as organizationSelect,
   subscribeOrganizationMembersToSurveyResponses,
@@ -36,6 +37,9 @@ vi.mock("@formbricks/database", () => ({
     },
     user: {
       findUnique: vi.fn(),
+    },
+    membership: {
+      findMany: vi.fn(),
     },
   },
 }));
@@ -214,6 +218,7 @@ describe("Organization Service", () => {
                 workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
                 monthly: {
                   responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+                  workflowRuns: null,
                 },
               },
               stripeCustomerId: null,
@@ -303,6 +308,30 @@ describe("Organization Service", () => {
         where: { id: "org1" },
         data: { name: "Updated Org" },
       });
+    });
+
+    test("should throw ResourceNotFoundError when the update targets a missing organization (P2025)", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Record to update not found", {
+        code: "P2025",
+        clientVersion: "5.0.0",
+      });
+
+      vi.mocked(prisma.$transaction).mockImplementation(
+        async (fn: any) =>
+          await fn({
+            organization: {
+              update: vi.fn().mockRejectedValue(prismaError),
+              findUnique: vi.fn().mockResolvedValue({ id: "org1" }),
+            },
+            organizationBilling: {
+              upsert: prisma.organizationBilling.upsert,
+            },
+          })
+      );
+
+      await expect(updateOrganization("org1", { name: "Updated Org" })).rejects.toThrow(
+        ResourceNotFoundError
+      );
     });
   });
 
@@ -415,6 +444,53 @@ describe("Organization Service", () => {
       expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({
         apiKeyIds: ["api-key-1", "api-key-2"],
       });
+    });
+  });
+
+  describe("getOrganizationMemberEmails (send_email recipient allowlist, ENG-2029)", () => {
+    test("queries only active members of the organization", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
+
+      await getOrganizationMemberEmails("org_1");
+
+      expect(prisma.membership.findMany).toHaveBeenCalledWith({
+        where: { organizationId: "org_1", user: { isActive: true } },
+        select: { user: { select: { email: true } } },
+      });
+    });
+
+    test("returns a lowercased, whitespace-trimmed set for case-insensitive matching", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([
+        { user: { email: "  Member@Corp.Example " } },
+        { user: { email: "second@corp.example" } },
+      ] as never);
+
+      const result = await getOrganizationMemberEmails("org_1");
+
+      expect(result).toEqual(new Set(["member@corp.example", "second@corp.example"]));
+    });
+
+    test("drops memberships with a missing user or empty email", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([
+        { user: { email: "kept@corp.example" } },
+        { user: null },
+        { user: { email: null } },
+        { user: { email: "" } },
+      ] as never);
+
+      const result = await getOrganizationMemberEmails("org_1");
+
+      expect(result).toEqual(new Set(["kept@corp.example"]));
+    });
+
+    test("wraps a known Prisma error in DatabaseError", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("db down", {
+        code: "P2002",
+        clientVersion: "1.0.0",
+      });
+      vi.mocked(prisma.membership.findMany).mockRejectedValue(prismaError);
+
+      await expect(getOrganizationMemberEmails("org_1")).rejects.toThrow(DatabaseError);
     });
   });
 });

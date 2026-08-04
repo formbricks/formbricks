@@ -40,6 +40,7 @@
     },
     "@formbricks/database#build": {
       "dependsOn": ["^build"],
+      "env": ["DATABASE_URL"],
       "outputs": ["dist/**", "generated/prisma/**"]
     },
     "@formbricks/database#lint": {
@@ -76,19 +77,13 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/js-core#build": {
-      "dependsOn": ["^build", "@formbricks/database#build"],
+      "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/js-core#go": {
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
-    },
-    "@formbricks/js-core#lint": {
-      "dependsOn": ["@formbricks/database#build"]
-    },
-    "@formbricks/js-core#typecheck": {
-      "dependsOn": ["@formbricks/database#build"]
     },
     "@formbricks/logger#build": {
       "dependsOn": ["^build"],
@@ -207,6 +202,21 @@
         "@formbricks/surveys#build"
       ]
     },
+    "@formbricks/workflows#build": {
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/workflows#lint": {
+      "dependsOn": []
+    },
+    "@formbricks/workflows#test": {
+      "dependsOn": []
+    },
+    "@formbricks/workflows#test:coverage": {
+      "dependsOn": []
+    },
+    "@formbricks/workflows#typecheck": {
+      "dependsOn": []
+    },
     "build": {
       "dependsOn": ["^build"],
       "env": [
@@ -218,12 +228,9 @@
         "WEBAPP_URL",
         "NEXTAUTH_URL",
         "S3_ENDPOINT_URL",
-        "POSTHOG_KEY",
-        "NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE",
-        "NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR",
-        "NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE"
+        "POSTHOG_KEY"
       ],
-      "outputs": ["dist/**", ".next/**"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"],
       "passThroughEnv": [
         "AUDIT_LOG_ENABLED",
         "AUDIT_LOG_GET_USER_IP",
@@ -297,8 +304,9 @@
         "IMPRINT_ADDRESS",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
-        "CHATWOOT_WEBSITE_TOKEN",
-        "CHATWOOT_BASE_URL",
+        "PLAIN_APP_ID",
+        "PLAIN_CHAT_HMAC_SECRET",
+        "PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID",
         "FORMBRICKS_WORKSPACE_ID",
         "FORMBRICKS_APP_URL",
         "LOG_LEVEL",
@@ -354,11 +362,15 @@
         "STRIPE_PUBLISHABLE_KEY",
         "SURVEYS_PACKAGE_MODE",
         "SURVEYS_PACKAGE_BUILD",
+        "SURVEY_SCHEDULING_TIME_ZONE",
+        "SURVEY_SCHEDULING_LOCAL_HOUR",
+        "SURVEY_SCHEDULING_LOCAL_MINUTE",
         "PUBLIC_URL",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
         "RECAPTCHA_SITE_KEY",
         "RECAPTCHA_SECRET_KEY",
+        "TRUSTED_PROXY_HOP_COUNT",
         "TELEMETRY_DISABLED",
         "TERMS_URL",
         "VERSION",

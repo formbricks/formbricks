@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 const execFileAsync = promisify(execFile);
 const DATABASE_PACKAGE_DIR = path.resolve(__dirname, "../..");
 const REPO_ROOT_DIR = path.resolve(DATABASE_PACKAGE_DIR, "../..");
-const PRISMA_CONFIG_PATH = path.join(REPO_ROOT_DIR, "prisma.config.mjs");
+const PRISMA_CONFIG_PATH = path.join(DATABASE_PACKAGE_DIR, "prisma.config.ts");
 const LOCAL_PRISMA_BIN = path.join(REPO_ROOT_DIR, "node_modules", ".bin", "prisma");
 
 const resolvePrismaBin = async (): Promise<string> => {

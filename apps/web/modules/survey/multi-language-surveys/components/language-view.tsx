@@ -88,6 +88,18 @@ export const LanguageView = ({
 
   const enabledLanguages = getEnabledLanguages(localSurvey.languages);
 
+  // Every non-default language to show in the table: the union of workspace languages and languages
+  // already stored on the survey. Including survey-only languages (e.g. one later removed from the
+  // workspace) guarantees a language present in the survey object always stays visible here, so it
+  // can be managed or removed instead of silently lingering in the data (ENG-2001).
+  const nonDefaultLanguageCodes = useMemo(() => {
+    const codes = new Set<string>();
+    workspaceLanguages.forEach((l) => codes.add(l.code));
+    localSurvey.languages.forEach((sl) => codes.add(sl.language.code));
+    if (defaultLanguage) codes.delete(defaultLanguage.code);
+    return [...codes];
+  }, [workspaceLanguages, localSurvey.languages, defaultLanguage]);
+
   // Check AI availability once on mount
   useEffect(() => {
     let isCurrent = true;
@@ -186,8 +198,14 @@ export const LanguageView = ({
       newLanguages.push({ enabled: true, default: true, language });
     }
 
+    // The default language is always keyed as "default" throughout the survey object. Strip any
+    // stale/empty code key for the promoted language so it can never end up as the default while
+    // its own code key sits empty next to a populated "default" — the state that makes the response
+    // API reject valid choice answers (ENG-2001).
+    const cleanedSurvey = removeLanguageKeysFromSurvey(localSurvey, language.code);
+
     setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
-    setLocalSurvey({ ...localSurvey, languages: newLanguages });
+    setLocalSurvey({ ...cleanedSurvey, languages: newLanguages });
   };
 
   const handleToggleLanguage = (code: string) => {
@@ -231,13 +249,19 @@ export const LanguageView = ({
 
   const handleRemoveTranslations = (code: string) => {
     const label = getLanguageLabel(code, locale) ?? code;
+    const progress = computeTranslationProgress(translatableStrings, code);
+    const hasTranslations = progress.translated > 0;
     setConfirmationModalInfo({
       open: true,
       title: `${t("workspace.surveys.edit.remove_translations")}: ${label}`,
-      body: t("workspace.surveys.edit.this_will_remove_the_language_and_all_its_translations"),
+      body: hasTranslations
+        ? t("workspace.surveys.edit.this_will_remove_the_language_and_all_its_translations")
+        : t("workspace.surveys.edit.this_will_remove_the_language_from_this_survey"),
       buttonText: t("workspace.surveys.edit.remove_translations"),
       buttonVariant: "destructive",
       onConfirm: () => {
+        // Fully strip the language's keys from the survey object (not just blank the strings) so a
+        // removed language can never linger and later corrupt the default (ENG-2001).
         const cleanedSurvey = removeLanguageKeysFromSurvey(localSurvey, code);
         const updatedLanguages = localSurvey.languages.filter((l) => l.language.code !== code);
         setLocalSurvey({ ...cleanedSurvey, languages: updatedLanguages });
@@ -254,7 +278,16 @@ export const LanguageView = ({
       buttonText: t("workspace.surveys.edit.remove_translations"),
       buttonVariant: "destructive",
       onConfirm: () => {
-        updateSurveyTranslations(localSurvey, []);
+        // Actually strip every non-default language's keys from the survey object. Using
+        // updateSurveyTranslations([]) here only re-seeds keys and leaves stale empty code keys
+        // behind, which can later be promoted into a broken default (ENG-2001).
+        let cleanedSurvey = localSurvey;
+        for (const lang of localSurvey.languages) {
+          if (!lang.default) {
+            cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
+          }
+        }
+        setLocalSurvey({ ...cleanedSurvey, languages: [] });
         setIsMultiLanguageActivated(false);
         setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
       },
@@ -385,84 +418,79 @@ export const LanguageView = ({
                     </td>
                   </tr>
 
-                  {/* Non-default language rows — all workspace languages except default */}
-                  {workspaceLanguages
-                    .filter((pl) => pl.code !== defaultLanguage.code)
-                    .map((pl) => {
-                      const surveyLang = localSurvey.languages.find((sl) => sl.language.code === pl.code);
-                      const inSurvey = !!surveyLang;
-                      const enabled = surveyLang?.enabled ?? false;
-                      const progress = inSurvey
-                        ? computeTranslationProgress(translatableStrings, pl.code)
-                        : null;
+                  {/* Non-default rows — every workspace language plus any language already stored on
+                      the survey (union), so a survey language is always visible and removable. */}
+                  {nonDefaultLanguageCodes.map((code) => {
+                    const surveyLang = localSurvey.languages.find((sl) => sl.language.code === code);
+                    const inSurvey = !!surveyLang;
+                    const enabled = surveyLang?.enabled ?? false;
+                    const progress = inSurvey ? computeTranslationProgress(translatableStrings, code) : null;
 
-                      return (
-                        <tr
-                          key={pl.code}
-                          className={cn(
-                            "border-t border-slate-200",
-                            inSurvey && "cursor-pointer hover:bg-slate-50"
-                          )}
-                          onClick={() => {
-                            if (inSurvey) {
-                              openTranslationModal(pl.code);
-                            }
-                          }}>
-                          <td className="px-4 py-3 font-medium text-slate-800">
-                            {getLanguageLabel(pl.code, locale)}
-                          </td>
-                          <td className="px-4 py-3 text-slate-600">{pl.code}</td>
-                          <td className="px-4 py-3">
-                            {inSurvey && progress && (
-                              <div className="flex items-center gap-2">
-                                <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
-                                  <div
-                                    className={cn(
-                                      "h-full rounded-full transition-all",
-                                      getProgressColor(progress.percentage)
-                                    )}
-                                    style={{ width: `${progress.percentage}%` }}
-                                  />
-                                </div>
-                                <span
+                    return (
+                      <tr
+                        key={code}
+                        className={cn(
+                          "border-t border-slate-200",
+                          inSurvey && "cursor-pointer hover:bg-slate-50"
+                        )}
+                        onClick={() => {
+                          if (inSurvey) {
+                            openTranslationModal(code);
+                          }
+                        }}>
+                        <td className="px-4 py-3 font-medium text-slate-800">
+                          {getLanguageLabel(code, locale)}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">{code}</td>
+                        <td className="px-4 py-3">
+                          {inSurvey && progress && (
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
+                                <div
                                   className={cn(
-                                    "text-xs font-medium",
-                                    getProgressTextColor(progress.percentage)
-                                  )}>
-                                  {progress.translated}/{progress.total}
-                                </span>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                            <Switch checked={enabled} onCheckedChange={() => handleToggleLanguage(pl.code)} />
-                          </td>
-                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                            {inSurvey && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button type="button" className="rounded-sm p-1 hover:bg-slate-100">
-                                    <EllipsisVerticalIcon className="size-4 text-slate-500" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => openTranslationModal(pl.code)}>
-                                    {t("workspace.surveys.edit.manage_translations")}
-                                  </DropdownMenuItem>
-                                  {progress && progress.translated > 0 && (
-                                    <DropdownMenuItem
-                                      className="text-red-600 focus:text-red-600"
-                                      onClick={() => handleRemoveTranslations(pl.code)}>
-                                      {t("workspace.surveys.edit.remove_translations")}
-                                    </DropdownMenuItem>
+                                    "h-full rounded-full transition-all",
+                                    getProgressColor(progress.percentage)
                                   )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                                  style={{ width: `${progress.percentage}%` }}
+                                />
+                              </div>
+                              <span
+                                className={cn(
+                                  "text-xs font-medium",
+                                  getProgressTextColor(progress.percentage)
+                                )}>
+                                {progress.translated}/{progress.total}
+                              </span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <Switch checked={enabled} onCheckedChange={() => handleToggleLanguage(code)} />
+                        </td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          {inSurvey && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button type="button" className="rounded-sm p-1 hover:bg-slate-100">
+                                  <EllipsisVerticalIcon className="size-4 text-slate-500" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openTranslationModal(code)}>
+                                  {t("workspace.surveys.edit.manage_translations")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-red-600 focus:text-red-600"
+                                  onClick={() => handleRemoveTranslations(code)}>
+                                  {t("workspace.surveys.edit.remove_translations")}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

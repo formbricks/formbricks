@@ -3,6 +3,9 @@
 set -eu
 export NODE_ENV=production
 
+echo "Validating environment variables..."
+node /home/nextjs/validate-env.mjs
+
 # Function to run command with timeout if available, or without timeout as fallback
 run_with_timeout() {
   _timeout_duration="$1"

@@ -35,6 +35,7 @@ export {
 export { Matrix, type MatrixProps, type MatrixOption } from "@/components/elements/matrix";
 export { DateElement, type DateElementProps } from "@/components/elements/date";
 export { getDateFnsLocale } from "@/lib/locale";
+export { isSafeMediaUrl } from "@/lib/video";
 export {
   PictureSelect,
   type PictureSelectProps,

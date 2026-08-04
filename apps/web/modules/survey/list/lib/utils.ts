@@ -6,7 +6,7 @@ import {
   TSurveyOverviewType,
 } from "@/modules/survey/list/types/survey-overview";
 
-const allowedStatus = new Set(["draft", "inProgress", "paused", "completed"] as const);
+const allowedStatus = new Set(["draft", "inProgress", "paused", "completed", "archived"] as const);
 const allowedType = new Set(["app", "link"] as const);
 const allowedSort = new Set(["createdAt", "updatedAt", "name", "relevance"] as const);
 const compareNormalizedFilterValues = (left: string, right: string) => left.localeCompare(right);

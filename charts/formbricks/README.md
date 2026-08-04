@@ -185,17 +185,28 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
 - The generated app secret supplies `CUBEJS_API_SECRET` by default. If you disable generated secrets,
   provide it through your existing secret management flow.
 - Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.
-- Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store before running multiple Cube replicas.
+- The bundled single-replica Cube has no external pre-aggregations and defaults
+  `cube.env.CUBEJS_EXTERNAL_DEFAULT` to `false`, so it does not require Cube Store. If you add external
+  pre-aggregations, configure Cube Store before overriding this value to `true`.
+- Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store
+  and switch cache and queue storage away from memory before running multiple Cube replicas.
 - Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
 
 ## Hub worker and self-hosted embeddings
 
 The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is insert-only for River jobs; webhook dispatch and embedding jobs are processed by `hub-worker`.
+When `hub.worker.waitForApi.enabled` is enabled (the default), the worker waits for Hub API health
+before it starts. Each health request and the delay between failed checks are bounded to five
+seconds; `hub.worker.waitForApi.maxAttempts` limits the failed checks before the init container
+exits. Setting `hub.worker.waitForApi.enabled=false` omits the health gate, so the worker starts
+without waiting for Hub API health.
 
 When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
 If the Job has already been cleaned up, Hub only continues after all expected Prisma and data migration success markers are present in the database.
 
-When deployed with Argo CD, chart-managed Secrets and ExternalSecrets render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist before migration jobs start.
+Before migrations start, the migration Job waits for the effective PostgreSQL endpoint to accept TCP connections. `MIGRATE_DATABASE_URL` takes precedence over `DATABASE_URL`, matching the migration runner. Configure the timeout and retry interval under `migration.waitForDatabase`, or disable the readiness check for deployments that provide their own gate.
+
+When deployed with Argo CD, chart-managed Secrets, ExternalSecrets, and bundled PostgreSQL render in sync wave `-2`, and the Formbricks and Hub migration hooks run in sync wave `-1`. This lets app and Hub secrets exist and PostgreSQL become healthy before migration jobs start.
 
 Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
 
@@ -374,6 +385,38 @@ taxonomy:
 The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
 
+### Hub and Taxonomy metrics and structured logs
+
+Hub and the taxonomy service can export OpenTelemetry metrics over OTLP/HTTP. Configure the standard `OTEL_*`
+environment variables through the existing `hub.env` and `taxonomy.env` maps; no chart-specific collector values
+are required. The example below uses a SigNoz collector in the `signoz` namespace and labels both services as
+`production`. Replace the collector DNS name and `deployment.environment` with values matching each cluster and
+environment:
+
+```yaml
+hub:
+  env:
+    LOG_FORMAT: json
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+    OTEL_SERVICE_NAME: formbricks-hub
+    OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
+
+taxonomy:
+  env:
+    LOG_FORMAT: json
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+    OTEL_SERVICE_NAME: formbricks-taxonomy
+    OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
+```
+
+Metrics use only bounded lifecycle, phase, provider, outcome, and reason attributes. Run, request, tenant, source,
+and field identifiers are emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings,
+credentials, authorization tokens, provider response bodies, and collector URLs are never telemetry fields.
+
 ## Values
 
 | Key                                                                | Type   | Default                                                                     | Description                                               |
@@ -525,7 +568,7 @@ JSON that can call Vertex AI.
 | hub.worker.resources.requests.cpu                                  | string | `"100m"`                                                                    |                                                           |
 | hub.worker.resources.requests.memory                               | string | `"256Mi"`                                                                   |                                                           |
 | hub.worker.waitForApi.enabled                                      | bool   | `true`                                                                      |                                                           |
-| hub.worker.waitForApi.maxAttempts                                  | int    | `120`                                                                       | 120 attempts at 5s intervals = 10 minutes.                |
+| hub.worker.waitForApi.maxAttempts                                  | int    | `120`                                                                       | Health requests and retry delays are bounded to 5s each.  |
 | ingress.annotations                                                | object | `{}`                                                                        |                                                           |
 | ingress.enabled                                                    | bool   | `false`                                                                     |                                                           |
 | ingress.hosts[0].host                                              | string | `"k8s.formbricks.com"`                                                      |                                                           |
@@ -559,6 +602,10 @@ JSON that can call Vertex AI.
 | migration.resources.requests.cpu                                   | string | `"100m"`                                                                    |                                                           |
 | migration.resources.requests.memory                                | string | `"256Mi"`                                                                   |                                                           |
 | migration.ttlSecondsAfterFinished                                  | int    | `300`                                                                       |                                                           |
+| migration.waitForDatabase.connectionTimeoutSeconds                 | int    | `5`                                                                         | Per-attempt TCP connection timeout.                       |
+| migration.waitForDatabase.enabled                                  | bool   | `true`                                                                      | Wait for PostgreSQL before starting migrations.           |
+| migration.waitForDatabase.intervalSeconds                          | int    | `5`                                                                         | Delay between readiness attempts.                         |
+| migration.waitForDatabase.timeoutSeconds                           | int    | `900`                                                                       | Overall readiness timeout for each Job attempt.           |
 | nameOverride                                                       | string | `""`                                                                        |                                                           |
 | partOfOverride                                                     | string | `""`                                                                        |                                                           |
 | pdb.additionalLabels                                               | object | `{}`                                                                        |                                                           |
@@ -571,6 +618,7 @@ JSON that can call Vertex AI.
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`                                                 |                                                           |
 | postgresql.auth.secretKeys.userPasswordKey                         | string | `"POSTGRES_USER_PASSWORD"`                                                  |                                                           |
 | postgresql.auth.username                                           | string | `"formbricks"`                                                              |                                                           |
+| postgresql.commonAnnotations                                       | object | `{"argocd.argoproj.io/sync-wave":"-2"}`                                   | Order bundled PostgreSQL before migration hooks in Argo.  |
 | postgresql.enabled                                                 | bool   | `true`                                                                      |                                                           |
 | postgresql.externalDatabaseUrl                                     | string | `""`                                                                        |                                                           |
 | postgresql.fullnameOverride                                        | string | `"formbricks-postgresql"`                                                   |                                                           |

@@ -26,10 +26,6 @@ on:
   merge_group:
   workflow_dispatch:
 
-env:
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
 # Cancel superseded runs on the same PR/ref (matches pr.yml).
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -88,28 +84,25 @@ jobs:
           fi
         shell: bash
 
-      - name: Setup Node.js 22.x
-        if: steps.harness.outputs.present == 'true'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 22.x
-
       - name: Install pnpm
         if: steps.harness.outputs.present == 'true'
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      - name: Setup Node.js (version from .nvmrc)
+        if: steps.harness.outputs.present == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
 
       - name: Install dependencies
         if: steps.harness.outputs.present == 'true'
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
         shell: bash
 
-      # Build the workspace packages the tests import (@formbricks/logger, cache, types, email, …) so
-      # vite can resolve their package.json `exports` → dist. Deps only (`^...`), not the Next app.
-      - name: Build workspace package dependencies
-        if: steps.harness.outputs.present == 'true'
-        run: pnpm build --filter=@formbricks/web^...
-        shell: bash
-
+      # The .env must exist before the package build: @formbricks/database's prisma.config.ts
+      # resolves DATABASE_URL at config load (dotenv from the repo root), so `prisma generate`
+      # fails without it. Same order as e2e.yml.
       - name: Create .env
         if: steps.harness.outputs.present == 'true'
         run: pnpm dev:setup
@@ -125,6 +118,13 @@ jobs:
           sed -i "s|DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5432/formbricks_ba_test?schema=public|" .env
         shell: bash
 
+      # Build the workspace packages the tests import (@formbricks/logger, cache, types, email, …) so
+      # vite can resolve their package.json `exports` → dist. Deps only (`^...`), not the Next app.
+      - name: Build workspace package dependencies
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm build --filter=@formbricks/web^...
+        shell: bash
+
       - name: Create the test database
         if: steps.harness.outputs.present == 'true'
         run: psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c 'CREATE DATABASE formbricks_ba_test;'
@@ -132,7 +132,19 @@ jobs:
 
       - name: Apply schema + data migrations to the test database
         if: steps.harness.outputs.present == 'true'
-        run: pnpm db:migrate:dev
+        # @formbricks/database is already built by the "Build workspace package
+        # dependencies" step above, so run the migration runner directly instead
+        # of db:migrate:dev (which would rebuild + re-generate the package).
+        # db:migrate:ci was added in #8627; PR branches cut before it lack the
+        # script (this workflow runs from the base ref against the PR-head code),
+        # so fall back to db:migrate:dev, which every older branch already has.
+        run: |
+          if node -e "process.exit(require('./packages/database/package.json').scripts['db:migrate:ci'] ? 0 : 1)"; then
+            pnpm --filter=@formbricks/database db:migrate:ci
+          else
+            echo "::warning::db:migrate:ci absent on this ref (predates #8627); falling back to db:migrate:dev"
+            pnpm --filter=@formbricks/database db:migrate:dev
+          fi
         shell: bash
 
       # Shared with apps/web/integration/global-setup.ts (the local harness applies the same file) so

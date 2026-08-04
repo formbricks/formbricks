@@ -1,16 +1,15 @@
 import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getOrganizationBillingByWorkspaceId } from "@/app/api/v2/client/[workspaceId]/responses/lib/organization";
-import { verifyRecaptchaToken } from "@/app/api/v2/client/[workspaceId]/responses/lib/recaptcha";
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
-import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
+import { verifyResponseRecaptcha } from "@/modules/api/lib/verify-response-recaptcha";
+import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
+import { enforceVerifiedEmailGate } from "@/modules/survey/link/lib/verify-email-gate";
 
-export const RECAPTCHA_VERIFICATION_ERROR_CODE = "recaptcha_verification_failed";
+export { RECAPTCHA_VERIFICATION_ERROR_CODE } from "@/modules/api/lib/verify-response-recaptcha";
 
 export const checkSurveyValidity = async (
   survey: TSurvey,
@@ -31,6 +30,10 @@ export const checkSurveyValidity = async (
     return responses.forbiddenResponse("Survey is not accepting submissions", true, {
       surveyId: survey.id,
     });
+  }
+
+  if (survey.pin && !verifyLinkSurveyPinToken(responseInput.pinAuthToken, survey.id)) {
+    return responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id });
   }
 
   if (survey.type === "link" && survey.singleUse?.enabled) {
@@ -90,41 +93,22 @@ export const checkSurveyValidity = async (
     responseInput.singleUseId = canonicalSingleUseId;
   }
 
-  if (survey.recaptcha?.enabled) {
-    if (!responseInput.recaptchaToken) {
-      logger.error("Missing recaptcha token");
-      return responses.badRequestResponse(
-        "Missing recaptcha token",
-        {
-          code: RECAPTCHA_VERIFICATION_ERROR_CODE,
-        },
-        true
-      );
-    }
-    const billing = await getOrganizationBillingByWorkspaceId(workspaceId);
-
-    if (!billing) {
-      return responses.notFoundResponse("Organization", null);
-    }
-
-    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-    const isSpamProtectionEnabled = await getIsSpamProtectionEnabled(organizationId);
-
-    if (!isSpamProtectionEnabled) {
-      logger.error("Spam protection is not enabled for this organization");
-    }
-
-    const isPassed = await verifyRecaptchaToken(responseInput.recaptchaToken, survey.recaptcha.threshold);
-    if (!isPassed) {
-      return responses.badRequestResponse(
-        "reCAPTCHA verification failed",
-        {
-          code: RECAPTCHA_VERIFICATION_ERROR_CODE,
-        },
-        true
-      );
-    }
+  // Email verification, like the PIN above, must be enforced here and not only in the page renderer:
+  // this endpoint is public, so a caller could otherwise submit any `verifiedEmail` they like.
+  // Shared with the v1 endpoint so the two versions cannot drift apart.
+  const verifiedEmailErrorResponse = enforceVerifiedEmailGate({
+    survey,
+    responseData: responseInput.data,
+    metaUrl: responseInput.meta?.url,
+  });
+  if (verifiedEmailErrorResponse) {
+    return verifiedEmailErrorResponse;
   }
 
-  return null;
+  // Shared with the v1 endpoint so the two versions cannot drift apart again.
+  return await verifyResponseRecaptcha({
+    survey,
+    workspaceId,
+    recaptchaToken: responseInput.recaptchaToken,
+  });
 };

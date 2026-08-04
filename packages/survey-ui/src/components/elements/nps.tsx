@@ -2,6 +2,7 @@ import * as React from "react";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
+import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn, getRTLScaleOptionClasses } from "@/lib/utils";
 
 interface NPSProps {
@@ -69,19 +70,17 @@ function NPS({
     }
   };
 
-  // Handle keyboard navigation
-  const handleKeyDown = (npsValue: number) => (e: React.KeyboardEvent) => {
-    if (disabled) return;
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleSelect(npsValue);
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-      e.preventDefault();
-      const direction = e.key === "ArrowLeft" ? -1 : 1;
-      const newValue = Math.max(0, Math.min(10, (currentValue ?? 0) + direction));
-      handleSelect(newValue);
-    }
-  };
+  // Keyboard interaction lives on the native radio inputs; selection is
+  // decoupled from arrow-key focus moves because selecting can trigger
+  // auto-progress (see useRovingRadioGroup).
+  const npsValues = Array.from({ length: 11 }, (_, i) => String(i));
+  const { getRadioProps } = useRovingRadioGroup({
+    values: npsValues,
+    selectedValue: currentValue === undefined ? undefined : String(currentValue),
+    onSelect: (v) => {
+      handleSelect(Number(v));
+    },
+  });
 
   // Get NPS option color for color coding
   const getNPSOptionColor = (idx: number): string => {
@@ -102,13 +101,11 @@ function NPS({
     const { borderRadiusClasses, borderClasses } = getRTLScaleOptionClasses(isFirst, isLast);
 
     return (
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- label is interactive
       <label
         key={number}
-        tabIndex={disabled ? -1 : 0}
-        onKeyDown={handleKeyDown(number)}
+        data-fb-scale-cell
         className={cn(
-          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors focus:outline-none",
+          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors",
           borderClasses,
           isSelected
             ? "bg-brand-20 border-brand z-10 -ml-[1px] border-2 first:ml-0"
@@ -116,8 +113,7 @@ function NPS({
           borderRadiusClasses,
           isHovered && !isSelected && "bg-input-selected-bg",
           colorCoding ? "min-h-[47px]" : "min-h-[41px]",
-          disabled && "cursor-not-allowed opacity-50",
-          "focus:border-brand focus:border-2"
+          disabled && "cursor-not-allowed opacity-50"
         )}
         onMouseEnter={() => {
           if (!disabled) {
@@ -149,6 +145,7 @@ function NPS({
           disabled={disabled}
           className="sr-only"
           aria-label={`Rate ${String(number)} out of 10`}
+          {...getRadioProps(String(number))}
         />
         <span className="text-sm">{number}</span>
       </label>

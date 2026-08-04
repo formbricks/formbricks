@@ -1,0 +1,95 @@
+type: object
+description: >
+  Slim run shape embedded as `lastRun` in workflow resources. The runs list
+  (`GET /api/v3/workflows/runs`)
+
+  returns `WorkflowRunListItem`, which extends this with `workflowName`. Excludes
+  `triggerPayload`, `data`, and `logs`.
+required:
+  - id
+  - workflowId
+  - workspaceId
+  - workflowVersionId
+  - status
+  - isDryRun
+  - triggerType
+  - surveyId
+  - responseId
+  - error
+  - attempt
+  - createdAt
+  - updatedAt
+  - startedAt
+  - finishedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  workflowId:
+    type: string
+    format: cuid2
+  workspaceId:
+    type: string
+    format: cuid2
+  workflowVersionId:
+    type:
+      - string
+      - 'null'
+    format: cuid2
+    description: >
+      Immutable workflow version snapshot the run executes against. `null` for
+      dry runs of
+
+      workflows that have never been enabled. Version contents are not readable
+      through the
+
+      v3 API in Scope 1.
+  status:
+    $ref: ./WorkflowRunStatus.yml
+  isDryRun:
+    type: boolean
+    description: '`true` for runs created by `POST /api/v3/workflows/{workflowId}/test`.'
+  triggerType:
+    type: string
+    enum:
+      - response.completed
+  surveyId:
+    type:
+      - string
+      - 'null'
+    format: cuid2
+  responseId:
+    type:
+      - string
+      - 'null'
+    format: cuid2
+    description: >-
+      Survey response that triggered the run. `null` for synthesized dry-run
+      data or when the response was deleted.
+  error:
+    type:
+      - string
+      - 'null'
+    description: Terminal or most recent failure reason. `null` while the run is healthy.
+  attempt:
+    type: integer
+    minimum: 0
+    description: >-
+      Retry attempt counter. `0` on the first execution; retries increment it
+      without changing `status`.
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  startedAt:
+    type:
+      - string
+      - 'null'
+    format: date-time
+  finishedAt:
+    type:
+      - string
+      - 'null'
+    format: date-time

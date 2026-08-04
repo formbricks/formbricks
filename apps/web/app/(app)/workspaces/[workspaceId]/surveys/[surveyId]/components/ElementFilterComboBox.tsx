@@ -252,7 +252,6 @@ export const ElementFilterComboBox = ({
         />
       ) : (
         <Command ref={commandRef} className="relative h-fit w-full min-w-0 overflow-visible bg-transparent">
-          {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role */}
           <div
             role="button"
             tabIndex={isComboBoxDisabled ? -1 : 0}
