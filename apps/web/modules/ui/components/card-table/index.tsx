@@ -42,6 +42,6 @@ export const CardTableRow = ({ href, className, actions, children }: Readonly<Ca
       )}>
       {children}
     </Link>
-    {actions ? <div className="absolute right-3 top-3.5">{actions}</div> : null}
+    {actions ? <div className="absolute top-3.5 right-3">{actions}</div> : null}
   </div>
 );

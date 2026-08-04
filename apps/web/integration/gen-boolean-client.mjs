@@ -5,7 +5,7 @@
 // packages/database/schema/ so it never drifts. Output (generated/prisma-test) is gitignored. Run via
 // `pnpm test:integration`.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { delimiter, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,7 +49,9 @@ for (const file of readdirSync(srcSchemaDir)) {
     }
     schema =
       schema.slice(0, accountStart) +
-      schema.slice(accountStart, accountEnd).replace(/\n([ \t]*)type([ \t]+)String(\s)/, "\n$1type$2String?$3") +
+      schema
+        .slice(accountStart, accountEnd)
+        .replace(/\n([ \t]*)type([ \t]+)String(\s)/, "\n$1type$2String?$3") +
       schema.slice(accountEnd);
   }
 
@@ -58,7 +60,9 @@ for (const file of readdirSync(srcSchemaDir)) {
 }
 
 if (!accountFound) {
-  throw new Error("gen-boolean-client: Account model block not found — schema shape changed; update this script.");
+  throw new Error(
+    "gen-boolean-client: Account model block not found — schema shape changed; update this script."
+  );
 }
 if (!patchedAny) {
   throw new Error("gen-boolean-client: no replacements applied — schema shape changed; update this script.");

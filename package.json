@@ -61,17 +61,6 @@
     "tsx": "4.21.0",
     "turbo": "2.9.14"
   },
-  "lint-staged": {
-    "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
-      "prettier --write"
-    ],
-    "*.json": [
-      "prettier --write"
-    ],
-    "packages/database/schema/**/*.prisma": [
-      "prisma format --schema packages/database/schema"
-    ]
-  },
   "engines": {
     "node": ">=20.19.0 <21 || >=22.12.0 <23 || >=24.0.0 <25"
   },
