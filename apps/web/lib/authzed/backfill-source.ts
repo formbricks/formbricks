@@ -60,6 +60,16 @@ export type TAuthzedOrganizationSource = Readonly<{
 export type TAuthzedWorkspaceSource = Readonly<{
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
   /**
+   * Grants whose principal belongs to a different organization than the workspace.
+   *
+   * The join tables carry independent foreign keys and no same-organization constraint, so a
+   * cross-tenant row is representable. The organization scope already partitions these out; this scope
+   * has to as well, or `--workspace-id` would *write* a cross-tenant grant that `--organization-id`
+   * refuses to write. Reported, never projected, never pruned.
+   */
+  invalidApiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  invalidWorkspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
+  /**
    * The owning organization, or `null` when the workspace has no row.
    *
    * Read so a failure in this scope can be attributed to a tenant. Without it every workspace-scoped
@@ -109,23 +119,59 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
     prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
     prisma.workspaceTeam.findMany({
       where: { workspaceId },
-      select: { teamId: true, workspaceId: true },
+      // The principal's organization is read so a cross-organization grant can be partitioned out
+      // rather than projected, matching what the organization scope already does.
+      select: { team: { select: { organizationId: true } }, teamId: true, workspaceId: true },
       orderBy: { teamId: "asc" },
     }),
     prisma.apiKeyWorkspace.findMany({
       where: { workspaceId },
-      select: { apiKeyId: true, workspaceId: true },
+      select: { apiKey: { select: { organizationId: true } }, apiKeyId: true, workspaceId: true },
       orderBy: { apiKeyId: "asc" },
     }),
   ]);
 
+  const organizationId = workspace?.organizationId ?? null;
+
+  // Only decidable when the workspace still has a row. With no row there is no organization to compare
+  // against, and its grants are stale by construction — the prune path is what deals with them.
+  const partition = <TGrant>(
+    grants: ReadonlyArray<TGrant>,
+    principalOrganizationId: (grant: TGrant) => string
+  ): Readonly<{ invalid: TGrant[]; valid: TGrant[] }> => {
+    if (organizationId === null) {
+      return { invalid: [], valid: [...grants] };
+    }
+
+    const valid: TGrant[] = [];
+    const invalid: TGrant[] = [];
+    for (const grant of grants) {
+      (principalOrganizationId(grant) === organizationId ? valid : invalid).push(grant);
+    }
+
+    return { invalid, valid };
+  };
+
+  const teamGrants = partition(workspaceTeams, (grant) => grant.team.organizationId);
+  const keyGrants = partition(apiKeyWorkspaces, (grant) => grant.apiKey.organizationId);
+  const toTeamTarget = ({ teamId }: (typeof workspaceTeams)[number]): TAuthzedWorkspaceTeamTarget => ({
+    teamId,
+    workspaceId,
+  });
+  const toKeyTarget = ({ apiKeyId }: (typeof apiKeyWorkspaces)[number]): TAuthzedApiKeyWorkspaceTarget => ({
+    apiKeyId,
+    workspaceId,
+  });
+
   return {
-    apiKeyWorkspaceGrants: apiKeyWorkspaces,
-    organizationId: workspace?.organizationId ?? null,
+    apiKeyWorkspaceGrants: keyGrants.valid.map(toKeyTarget),
+    invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toKeyTarget),
+    invalidWorkspaceTeamGrants: teamGrants.invalid.map(toTeamTarget),
+    organizationId,
     // Truthiness rather than `!== null`, so a row is required to claim existence rather than merely the
     // absence of one particular falsy value.
     workspaceExists: Boolean(workspace),
-    workspaceTeamGrants: workspaceTeams,
+    workspaceTeamGrants: teamGrants.valid.map(toTeamTarget),
   };
 };
 

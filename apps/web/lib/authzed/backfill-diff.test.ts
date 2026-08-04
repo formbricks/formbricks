@@ -151,6 +151,36 @@ describe("resource type classification", () => {
   });
 });
 
+describe("cross-tenant organization access", () => {
+  test("reports an organization access grant naming a key from another organization", () => {
+    // `organization:A#api_key_writer@api_key:K` implies "K belongs to A". Reduced to "does K exist?" it
+    // read as sourced whenever K existed anywhere, so a cross-tenant grant survived apply and prune.
+    const summary = summarizeObservation([
+      {
+        relation: "api_key_writer",
+        resource: { objectId: "org-a", objectType: "organization" },
+        subject: { objectId: "key-1", objectType: "api_key" },
+      },
+    ]);
+
+    expect(summary.parentEdges).toEqual([
+      { childId: "key-1", childType: "api_key", organizationId: "org-a" },
+    ]);
+  });
+
+  test("still names the key as a source record, so a deleted key is found too", () => {
+    const summary = summarizeObservation([
+      {
+        relation: "api_key_reader",
+        resource: { objectId: "org-a", objectType: "organization" },
+        subject: { objectId: "key-1", objectType: "api_key" },
+      },
+    ]);
+
+    expect(summary.sourceRefs).toEqual([{ apiKeyId: "key-1", kind: "apiKey" }]);
+  });
+});
+
 describe("summarizeObservation", () => {
   test("collects the source records an observation implies", () => {
     const summary = summarizeObservation([

@@ -348,6 +348,10 @@ pnpm authzed:backfill --apply --workspace-id=<cuid>
 pnpm authzed:backfill --apply --prune --confirm-prune --workspace-id=<cuid> \
   --expected-endpoint=<host:port>
 
+# A stale grant whose *team or API key* is also gone is reported but not removed by
+# this scope: deleting it would delete that principal's relationships everywhere,
+# which is the organization or full sweep's unit of work, not one workspace's.
+
 # Converge everything, then remove relationships PostgreSQL no longer holds.
 pnpm authzed:backfill --apply --prune --confirm-prune --scope=all \
   --expected-endpoint=<host:port>
@@ -357,7 +361,11 @@ pnpm authzed:backfill --apply --after-organization-id=<cuid>
 ```
 
 Exit codes match `authzed:schema`: `0` reconciled, `2` drift remains, `1` failed
-or misused. The result is one line of JSON carrying counters, the offending
+or misused. **`0` means every category is clear, including the ones this tool
+deliberately will not repair** — `invalid` and `unmanaged` count toward drift
+exactly like `orphaned` and `missing`, because unrepaired authorization state is
+still authorization state and this exit code is what gates shadow evaluation and
+enforcement. The result is one line of JSON carrying counters, the offending
 record identifiers, a revision captured *after* the run's own writes (so shadow
 evaluation can use it as an `at_least_as_fresh` floor — `null` for a dry run,
 which wrote nothing to be fresh relative to), and a `truncated` flag.
@@ -376,6 +384,9 @@ Drift is reported in both directions:
   stored as `owner` in PostgreSQL but `member` in SpiceDB counts as present.
   Applying converges the relation regardless, by writing the current value.
 - `orphaned` — relationships whose source record is gone.
+- `invalid` — source rows whose principal and resource belong to different
+  organizations. Never projected and never pruned, in either scope.
+- `unmanaged` — relationships outside the vocabulary. Reported, never touched.
 - `mismatchedParents` — a resource attached to an organization PostgreSQL says
   does not own it. **Reported and never touched.** `organization` is a relation,
   so an extra parent edge is additive and hands every owner and manager of the

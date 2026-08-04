@@ -60,7 +60,11 @@ const collectSourceFiles = (directory: string, recurse: boolean): ReadonlyArray<
  * tidy spelling would be trivially — and silently — stepped around.
  */
 const restrictedSpecifierPattern = (moduleName: string): RegExp =>
-  new RegExp(String.raw`["'][^"']*(?:lib/)?authzed/${moduleName}["']`);
+  // Both spellings: an aliased path (`@/lib/authzed/backfill`) and a relative one (`./backfill`). The
+  // relative form is what a re-export inside `lib/authzed/` would actually use, and it is the form that
+  // matters most — the offender scan below skips that directory, so the barrel check is the only thing
+  // standing between a one-line `export * from "./backfill"` and a request-path import.
+  new RegExp(String.raw`["'](?:[^"']*(?:lib/)?authzed/|\./)${moduleName}["']`);
 
 const importsRestrictedModule = (source: string): boolean =>
   RESTRICTED_MODULES.some((moduleName) => restrictedSpecifierPattern(moduleName).test(source));
@@ -97,5 +101,20 @@ describe("backfill module boundary", () => {
     // `lib/authzed/` is an allowed importer, so a re-export from inside it would make the tooling
     // reachable as `@/lib/authzed` from anywhere — passing every check above.
     expect(importsRestrictedModule(readFileSync(join(WEB_ROOT, "lib/authzed/index.ts"), "utf8"))).toBe(false);
+  });
+
+  test.each([
+    ['export * from "./backfill";', "a star re-export"],
+    ['export { runAuthzedBackfill } from "./backfill";', "a named re-export"],
+    ['const m = await import("./backfill-cli");', "a dynamic import"],
+    ['import "./backfill-source";', "a bare side-effect import"],
+    ['import { runAuthzedBackfill } from "@/lib/authzed/backfill";', "an aliased import"],
+  ])("detects %s as reaching a restricted module", (source) => {
+    // Sentinels: the fence is only worth having if it recognizes the forms someone would actually write.
+    expect(importsRestrictedModule(source)).toBe(true);
+  });
+
+  test("does not flag an unrelated relative import", () => {
+    expect(importsRestrictedModule('import { getAuthzedClient } from "./client";')).toBe(false);
   });
 });

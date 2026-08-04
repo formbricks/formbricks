@@ -143,6 +143,12 @@ export type TAuthzedBackfillCounters = Readonly<{
   reconciled: number;
   scanned: number;
   skipped: number;
+  /**
+   * Relationships outside the vocabulary, counted rather than merely listed.
+   *
+   * The `unmanaged` list is capped for output size, so the count is what the status can be computed from.
+   */
+  unmanaged: number;
 }>;
 
 export type TAuthzedBackfillFailure = Readonly<{
@@ -485,6 +491,7 @@ type TRunState = {
   skipped: number;
   truncated: boolean;
   readonly unmanaged: Array<Readonly<{ objectId: string; objectType: string; relation: string }>>;
+  unmanagedCount: number;
 };
 
 const createRunState = (): TRunState => ({
@@ -505,6 +512,7 @@ const createRunState = (): TRunState => ({
   skipped: 0,
   truncated: false,
   unmanaged: [],
+  unmanagedCount: 0,
 });
 
 /** A unit of work's whole world: the run's tallies plus the configuration every unit shares. */
@@ -580,6 +588,7 @@ const recordObservationSummary = async (
   summary: TAuthzedObservationSummary
 ): Promise<void> => {
   ctx.state.ignored += summary.ignored;
+  ctx.state.unmanagedCount += summary.unmanaged.length;
   pushCapped(ctx.state.unmanaged, summary.unmanaged);
   recordMismatchedParents(ctx.state, await ctx.sourceReads.findMismatchedParentEdges(summary.parentEdges));
 };
@@ -841,12 +850,60 @@ const observeWorkspace = async (
   const summary = summarizeObservation(observation.relationships);
   await recordObservationSummary(ctx, summary);
 
-  ctx.state.missingCount += findUnprojectedSourceRefs(
-    toWorkspaceSourceRefs(source, workspaceId),
-    summary.sourceRefs
-  ).length;
+  if (ctx.mode === "dry_run") {
+    // Dry run only. An applying run converges this direction by writing, so counting it beforehand would
+    // leave a successful repair reporting `drifted` and exiting 2 on the strength of a pre-write reading.
+    ctx.state.missingCount += findUnprojectedSourceRefs(
+      toWorkspaceSourceRefs(source, workspaceId),
+      summary.sourceRefs
+    ).length;
+  }
 
   return recordScopedOrphans(ctx, summary);
+};
+
+/**
+ * Drop prune targets whose deletion would reach outside the named workspace.
+ *
+ * A grant ref implies its principal — `normalizeTargets` in both reconcilers adds the team or API key a
+ * grant names — and when that principal has no PostgreSQL row the reconciler deletes subject-wide: every
+ * workspace relationship for that team, or every organization *and* workspace relationship for that key.
+ * One in-budget orphan on this workspace would therefore delete relationships in other tenants, none of
+ * them counted against `pruned` or weighed against the cap.
+ *
+ * That fan-out is correct convergence — those relationships genuinely should go — but it is the
+ * organization or full sweep's unit of work, not this one's. Here the ref stays counted in `orphaned` and
+ * is withheld, so the run finishes `drifted` and tells the operator a wider scope is needed.
+ */
+const withinWorkspaceScope = async (
+  ctx: TRunContext,
+  refs: ReadonlyArray<TAuthzedSourceRef>
+): Promise<ReadonlyArray<TAuthzedSourceRef>> => {
+  const principalFor = (ref: TAuthzedSourceRef): TAuthzedSourceRef | null => {
+    if (ref.kind === "workspaceTeamGrant") {
+      return { kind: "team", teamId: ref.teamId };
+    }
+    if (ref.kind === "apiKeyWorkspaceGrant") {
+      return { apiKeyId: ref.apiKeyId, kind: "apiKey" };
+    }
+
+    return null;
+  };
+
+  const principals = refs.map(principalFor).filter((ref): ref is TAuthzedSourceRef => ref !== null);
+  if (principals.length === 0) {
+    return refs;
+  }
+
+  const missing = new Set(
+    (await ctx.sourceReads.findMissingSourceRefs(principals)).map((ref) => sourceRefKey(ref))
+  );
+
+  return refs.filter((ref) => {
+    const principal = principalFor(ref);
+
+    return principal === null || !missing.has(sourceRefKey(principal));
+  });
 };
 
 /**
@@ -859,8 +916,11 @@ const observeWorkspace = async (
  * Narrow, but not hermetic. The API keys holding grants on this workspace are reconciled in full, which
  * covers every *other* workspace those keys hold too — a key is reconciled as a unit, and splitting it
  * would mean writing a second, narrower implementation of the same convergence. Everything that reaches
- * is convergent (it writes what PostgreSQL says), so the effect is a wider repair than asked for, never
- * a deletion outside the named workspace.
+ * that way is convergent: it writes what PostgreSQL says.
+ *
+ * Deletion is held to the stated scope separately, by `withinWorkspaceScope`. Without it a grant whose
+ * principal had been deleted would make the reconciler delete subject-wide, reaching other tenants on the
+ * strength of one orphan here — see that function for why those cases are deferred instead.
  */
 const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<void> => {
   const { state } = ctx;
@@ -881,9 +941,12 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
   // report it.
   const failureOrganizationId = source.organizationId ?? "";
 
+  state.invalid += source.invalidWorkspaceTeamGrants.length + source.invalidApiKeyWorkspaceGrants.length;
+
   let decision: TPruneDecision = { overBudget: false, refs: [] };
   try {
-    decision = await observeWorkspace(ctx, workspaceId, source);
+    const observed = await observeWorkspace(ctx, workspaceId, source);
+    decision = { ...observed, refs: await withinWorkspaceScope(ctx, observed.refs) };
   } catch (error) {
     state.truncated = true;
     recordFailure(state, failureOrganizationId, error);
@@ -1016,18 +1079,27 @@ const captureClosingSnapshot = async (ctx: TRunContext): Promise<string | null> 
   }
 };
 
-/** A failure outranks drift, and only a run that found nothing outstanding is `reconciled`. */
+/**
+ * A failure outranks drift, and only a run that found nothing outstanding is `reconciled`.
+ *
+ * Every category of *unrepaired* state counts, not just the ones this tool can fix. `missing` and
+ * `mismatchedParents` matter as much as `orphaned` — without them a dry run over an empty SpiceDB would
+ * report "reconciled", the exact state this tool exists to fix — and so do `invalid` and `unmanaged`,
+ * which are deliberately left alone. A cross-organization source row or an unrecognized relationship is
+ * still authorization state nothing accounts for, and a clean exit here is what gates shadow evaluation
+ * and enforcement, so it must not be reachable while any of them remain.
+ */
 const toRunStatus = (state: TRunState): TAuthzedBackfillResult["status"] => {
   if (state.failed > 0) {
     return "failed";
   }
 
-  // `missing` and `mismatchedParents` matter as much as `orphaned`: without them a dry run over an
-  // empty SpiceDB would report "reconciled", which is the exact state this tool exists to fix.
   const hasDrift =
     state.orphaned > state.pruned ||
     state.missingCount > 0 ||
     state.mismatchedParentCount > 0 ||
+    state.invalid > 0 ||
+    state.unmanagedCount > 0 ||
     state.truncated;
 
   return hasDrift ? "drifted" : "reconciled";
@@ -1071,6 +1143,7 @@ export const runAuthzedBackfill = async (
       reconciled: state.reconciled,
       scanned: state.scanned,
       skipped: state.skipped,
+      unmanaged: state.unmanagedCount,
     },
     failures: state.failures,
     lastOrganizationId: state.lastOrganizationId,

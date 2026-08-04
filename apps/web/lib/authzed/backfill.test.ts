@@ -65,6 +65,8 @@ beforeEach(() => {
   vi.mocked(source.findMismatchedParentEdges).mockResolvedValue([]);
   vi.mocked(source.readWorkspaceSource).mockResolvedValue({
     apiKeyWorkspaceGrants: [],
+    invalidApiKeyWorkspaceGrants: [],
+    invalidWorkspaceTeamGrants: [],
     organizationId: "org-1",
     workspaceExists: true,
     workspaceTeamGrants: [],
@@ -373,6 +375,42 @@ describe("counting each finding once", () => {
   });
 });
 
+describe("drift status covers unrepaired state", () => {
+  test.each([
+    [
+      "a cross-organization source grant",
+      () =>
+        vi.mocked(source.readOrganizationSource).mockResolvedValue({
+          ...emptySource,
+          invalidWorkspaceTeamGrants: [{ teamId: "foreign-team", workspaceId: "ws-1" }],
+        }),
+    ],
+    [
+      "an unrecognized relationship",
+      () =>
+        readRelationships.mockResolvedValue({
+          cursor: null,
+          relationships: [
+            {
+              relation: "not_a_formbricks_relation",
+              resource: { objectId: "org-1", objectType: "organization" },
+              subject: { objectId: "someone", objectType: "user" },
+            },
+          ],
+          snapshot: { token: "revision-1" },
+        }),
+    ],
+  ])("does not report reconciled while %s remains", async (_label, arrange) => {
+    // Both are deliberately left unrepaired — which is exactly why a clean exit must not be reachable
+    // while they exist. This result is the gate for shadow evaluation and enforcement.
+    arrange();
+
+    const result = await runAuthzedBackfill(request(), dependencies);
+
+    expect(result.status).toBe("drifted");
+  });
+});
+
 describe("detecting a cross-tenant parent edge", () => {
   const foreignParent = {
     relation: "organization",
@@ -649,6 +687,8 @@ describe("workspace scope", () => {
   const missingWorkspace = (): void => {
     vi.mocked(source.readWorkspaceSource).mockResolvedValue({
       apiKeyWorkspaceGrants: [],
+      invalidApiKeyWorkspaceGrants: [],
+      invalidWorkspaceTeamGrants: [],
       organizationId: null,
       workspaceExists: false,
       workspaceTeamGrants: [],
@@ -704,6 +744,41 @@ describe("workspace scope", () => {
     expect(apply.reconcileTeamWorkspace).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceIds: ["ghost-ws"] })
     );
+  });
+
+  test("withholds a grant whose principal is gone, since deleting it would reach other tenants", async () => {
+    // A grant ref implies its team, and a team with no PostgreSQL row makes the reconciler delete that
+    // team's grants on *every* workspace — outside this scope and outside its budget.
+    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) =>
+      Promise.resolve(refs.filter((ref) => ref.kind === "workspaceTeamGrant" || ref.kind === "team"))
+    );
+    readRelationships.mockResolvedValue({
+      cursor: null,
+      relationships: [
+        {
+          relation: "reader_team",
+          resource: { objectId: "ws-1", objectType: "workspace" },
+          subject: { objectId: "ghost-team", objectType: "team", relation: "member" },
+        },
+      ],
+      snapshot: { token: "revision-1" },
+    });
+
+    const result = await runAuthzedBackfill(
+      request({ prune: true, scope: { kind: "workspace", workspaceId: "ws-1" } }),
+      dependencies
+    );
+
+    // Counted, so the run stays drifted and tells the operator a wider scope is needed…
+    expect(result.counters.orphaned).toBe(1);
+    // …but never handed over, because the delete would not stay inside this workspace.
+    expect(result.counters.pruned).toBe(0);
+    expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceTeamGrants: [{ teamId: "ghost-team", workspaceId: "ws-1" }],
+      })
+    );
+    expect(result.status).toBe("drifted");
   });
 
   test("still projects the parent edge of a workspace that exists", async () => {

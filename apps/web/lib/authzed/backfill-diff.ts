@@ -216,6 +216,24 @@ export const sourceRefKey = (ref: TAuthzedSourceRef): string => JSON.stringify(r
 const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | null => {
   const { relation, resource, subject } = relationship;
 
+  // Two relationship shapes state the same fact — "this API key belongs to that organization" — and both
+  // have to be verified against PostgreSQL:
+  //
+  //   api_key:K      # organization    @ organization:A    the key's own parent edge
+  //   organization:A # api_key_writer  @ api_key:K         an organization-level access grant
+  //
+  // The second reduces to `{kind: "apiKey"}` as a source ref, which only asks "does K exist?" — true
+  // whenever K exists under *any* organization. So a grant naming a foreign key read as sourced, survived
+  // apply and prune, and went on granting `manage_access` over another tenant's organization. Emitting it
+  // as the same edge shape routes it through the check that already validates `api_key` parents.
+  if (
+    resource.objectType === "organization" &&
+    subject.objectType === "api_key" &&
+    ORGANIZATION_API_KEY_RELATIONS.has(relation)
+  ) {
+    return { childId: subject.objectId, childType: "api_key", organizationId: resource.objectId };
+  }
+
   if (relation !== PARENT_RELATION || subject.objectType !== "organization") {
     return null;
   }

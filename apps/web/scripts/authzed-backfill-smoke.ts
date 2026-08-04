@@ -152,6 +152,8 @@ const run = async (): Promise<void> => {
       readOrganizationSource: async () => emptySource,
       readWorkspaceSource: async () => ({
         apiKeyWorkspaceGrants: [],
+        invalidApiKeyWorkspaceGrants: [],
+        invalidWorkspaceTeamGrants: [],
         organizationId: null,
         workspaceExists: false,
         workspaceTeamGrants: [],

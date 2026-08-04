@@ -167,15 +167,40 @@ describe("readOrganizationSource", () => {
       organizationId: ORGANIZATION_ID,
     } as never);
     vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([
-      { teamId: "team-1", workspaceId: "ws-1" },
+      { team: { organizationId: ORGANIZATION_ID }, teamId: "team-1", workspaceId: "ws-1" },
     ] as never);
 
     await expect(readWorkspaceSource("ws-1")).resolves.toEqual({
       apiKeyWorkspaceGrants: [],
+      invalidApiKeyWorkspaceGrants: [],
+      invalidWorkspaceTeamGrants: [],
       organizationId: ORGANIZATION_ID,
       workspaceExists: true,
       workspaceTeamGrants: [{ teamId: "team-1", workspaceId: "ws-1" }],
     });
+  });
+
+  test("partitions a workspace grant whose principal belongs to another organization", async () => {
+    // The join tables have independent foreign keys and no same-organization constraint, so a
+    // cross-tenant row is representable — and `--workspace-id` must refuse to project it, exactly as
+    // `--organization-id` does.
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      organizationId: ORGANIZATION_ID,
+    } as never);
+    vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([
+      { team: { organizationId: ORGANIZATION_ID }, teamId: "own-team", workspaceId: "ws-1" },
+      { team: { organizationId: "other-org" }, teamId: "foreign-team", workspaceId: "ws-1" },
+    ] as never);
+    vi.mocked(prisma.apiKeyWorkspace.findMany).mockResolvedValue([
+      { apiKey: { organizationId: "other-org" }, apiKeyId: "foreign-key", workspaceId: "ws-1" },
+    ] as never);
+
+    const source = await readWorkspaceSource("ws-1");
+
+    expect(source.workspaceTeamGrants).toEqual([{ teamId: "own-team", workspaceId: "ws-1" }]);
+    expect(source.invalidWorkspaceTeamGrants).toEqual([{ teamId: "foreign-team", workspaceId: "ws-1" }]);
+    expect(source.apiKeyWorkspaceGrants).toEqual([]);
+    expect(source.invalidApiKeyWorkspaceGrants).toEqual([{ apiKeyId: "foreign-key", workspaceId: "ws-1" }]);
   });
 
   test("reports a workspace with no row as absent rather than failing", async () => {
