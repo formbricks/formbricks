@@ -210,6 +210,19 @@ export const SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE = "email_domain_not_allowed"
  */
 export const PASSWORD_COMPROMISED_ERROR_CODE = "password_compromised";
 
+/**
+ * Stable, locale-independent marker used when a sign-up presents an invite token that is malformed,
+ * expired, or issued to a different email address than the account being created.
+ */
+export const INVITE_TOKEN_INVALID_ERROR_CODE = "invite_token_invalid";
+
+/**
+ * Stable, locale-independent marker used when a sign-up is rejected because the instance has public
+ * sign-up closed (`SIGNUP_DISABLED`, or multi-org disabled) and the caller presented neither a valid
+ * invite nor a fresh instance to bootstrap.
+ */
+export const SIGNUP_DISABLED_ERROR_CODE = "signup_disabled";
+
 export interface ApiErrorResponse {
   code:
     | "not_found"

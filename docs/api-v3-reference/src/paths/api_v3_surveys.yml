@@ -57,6 +57,7 @@ get:
             - inProgress
             - paused
             - completed
+            - archived
       style: form
       explode: true
       description: >
@@ -64,6 +65,10 @@ get:
         (`filter[status][in]=draft&filter[status][in]=inProgress`) or use
         comma-separated values (`filter[status][in]=draft,inProgress`). Invalid
         values → **400**.
+
+        `archived` is a pseudo-status: it does not match a real survey status but
+        includes archived (soft-deleted) surveys in the result set. Archived
+        surveys are otherwise excluded from the default list.
     - in: query
       name: filter[type][in]
       schema:
@@ -120,6 +125,7 @@ get:
                   - limit
                   - nextCursor
                   - totalCount
+                  - hasArchived
                 properties:
                   limit:
                     type: integer
@@ -138,6 +144,15 @@ get:
                     description: >-
                       Total number of surveys matching the current filters
                       across all pages. `null` when `includeTotalCount=false`.
+                  hasArchived:
+                    type:
+                      - boolean
+                      - 'null'
+                    description: >-
+                      `true` when the workspace has at least one archived
+                      (soft-deleted) survey. Computed only on the first page
+                      (same gate as `totalCount`); `null` when
+                      `includeTotalCount=false`.
     '400':
       $ref: ../components/responses/V3BadRequest.yml
     '401':

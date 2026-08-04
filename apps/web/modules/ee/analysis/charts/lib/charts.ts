@@ -1,10 +1,9 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZChartConfig, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateCubeQueryMembers } from "@/modules/ee/analysis/api/lib/cube-query";
 import {
@@ -46,10 +45,10 @@ export const createChart = async (data: TChartCreateInput): Promise<TChart> => {
       select: selectChart,
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A chart with this name already exists");
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("A chart with this name already exists");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -94,10 +93,10 @@ export const updateChart = async (
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A chart with this name already exists");
-      }
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("A chart with this name already exists");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -129,7 +128,7 @@ const getUniqueCopyName = async (baseName: string, workspaceId: string): Promise
     }
     return `${stripped} (copy ${n})`;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -168,7 +167,7 @@ export const duplicateChart = async (
     if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -199,7 +198,7 @@ export const deleteChart = async (chartId: string, workspaceId: string): Promise
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -224,7 +223,7 @@ export const getChart = async (chartId: string, workspaceId: string): Promise<TC
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -248,7 +247,7 @@ export const getCharts = async (workspaceId: string): Promise<TChartWithCreator[
     if (error instanceof ResourceNotFoundError) {
       throw error;
     }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -270,7 +269,7 @@ export const getChartsWithCreator = async (workspaceId: string): Promise<TChartW
       },
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;

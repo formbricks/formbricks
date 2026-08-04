@@ -59,8 +59,12 @@ RUN touch apps/web/.env
 # Install the dependencies
 RUN pnpm install --ignore-scripts --frozen-lockfile
 
-# Build the database package first
-RUN pnpm build --filter=@formbricks/database
+# Build the database package first. `pnpm generate` loads prisma.config.ts, which
+# resolves DATABASE_URL via Prisma's env() helper and throws when it is unset. Mount
+# the secret and run through the secret reader so a build-time fallback is supplied
+# (mirrors the web build below); prisma generate never connects to the database.
+RUN --mount=type=secret,id=database_url \
+    /tmp/read-secrets.sh pnpm build --filter=@formbricks/database
 
 # Build the project using our secret reader script
 # This mounts the secrets only during this build step without storing them in layers
@@ -80,10 +84,11 @@ RUN --mount=type=secret,id=database_url \
 #
 FROM base AS runner
 
-# Upgrade Alpine system packages to pick up security patches, update npm to the patched 11.x line, then create user
-# Note: npm is updated in the runtime image so any bundled transitive packages scanned from the base image are patched
+# Upgrade Alpine system packages, remove build-only npm tooling from the runtime image, then create user.
+# The application and startup migrations run directly with Node.js; npm and npx are only needed in the installer.
 RUN apk update && apk upgrade --no-cache \
-    && npm install --ignore-scripts -g npm@11.17.0 \
+    && rm -rf /usr/local/lib/node_modules/npm \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
@@ -117,8 +122,12 @@ RUN mkdir -p ./packages/database/migrations && chown -R nextjs:nextjs ./packages
 COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
 RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
 
-COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
-RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
+COPY --from=installer /app/packages/database/schema ./packages/database/schema
+RUN chown -R nextjs:nextjs ./packages/database/schema && chmod -R 755 ./packages/database/schema
+
+# The migration runner invokes `prisma migrate deploy --config packages/database/prisma.config.ts`
+COPY --from=installer /app/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
+RUN chown nextjs:nextjs ./packages/database/prisma.config.ts && chmod 644 ./packages/database/prisma.config.ts
 
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist

@@ -108,7 +108,8 @@ export const STYLE_DEFAULTS: TWorkspaceStyling = {
   highlightBorderColor: { light: _colors["highlightBorderColor.light"] },
   isDarkModeEnabled: false,
   roundness: 8,
-  cardArrangement: { linkSurveys: "simple", appSurveys: "simple" },
+  // Link surveys default to the cardless layout; "cardless" is link-only, so app surveys keep "simple".
+  cardArrangement: { linkSurveys: "cardless", appSurveys: "simple" },
   linkSurveyCardWidth: "default",
 
   // Headlines & Descriptions

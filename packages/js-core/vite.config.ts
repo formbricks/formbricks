@@ -3,7 +3,6 @@ import { resolve } from "path";
 import dts from "vite-plugin-dts";
 import { defineConfig } from "vitest/config";
 import type { ViteUserConfig } from "vitest/config";
-import webPackageJson from "../../apps/web/package.json";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
 
@@ -14,9 +13,6 @@ export default defineConfig({
     alias: {
       "@": resolve(__dirname, "src"),
     },
-  },
-  define: {
-    "import.meta.env.VERSION": JSON.stringify(webPackageJson.version),
   },
   build: {
     rollupOptions: {

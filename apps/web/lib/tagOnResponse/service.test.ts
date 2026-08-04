@@ -212,4 +212,42 @@ describe("TagOnResponse Service", () => {
 
     await expect(addTagToRespone("response1", "tag1")).rejects.toThrow(DatabaseError);
   });
+
+  test("addTagToRespone should rethrow non-prisma errors", async () => {
+    vi.mocked(prisma.tagsOnResponses.create).mockRejectedValue(new Error("boom"));
+
+    await expect(addTagToRespone("response1", "tag1")).rejects.toThrow("boom");
+  });
+
+  test("deleteTagOnResponse should throw DatabaseError for prisma errors", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+      code: "P2010",
+      clientVersion: "5.0.0",
+    });
+    vi.mocked(prisma.tagsOnResponses.delete).mockRejectedValue(prismaError);
+
+    await expect(deleteTagOnResponse("response1", "tag1")).rejects.toThrow(DatabaseError);
+  });
+
+  test("deleteTagOnResponse should rethrow non-prisma errors", async () => {
+    vi.mocked(prisma.tagsOnResponses.delete).mockRejectedValue(new Error("boom"));
+
+    await expect(deleteTagOnResponse("response1", "tag1")).rejects.toThrow("boom");
+  });
+
+  test("getTagsOnResponsesCount should throw DatabaseError for prisma errors", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+      code: "P2010",
+      clientVersion: "5.0.0",
+    });
+    vi.mocked(prisma.tagsOnResponses.groupBy).mockRejectedValue(prismaError);
+
+    await expect(getTagsOnResponsesCount("env1")).rejects.toThrow(DatabaseError);
+  });
+
+  test("getTagsOnResponsesCount should rethrow non-prisma errors", async () => {
+    vi.mocked(prisma.tagsOnResponses.groupBy).mockRejectedValue(new Error("boom"));
+
+    await expect(getTagsOnResponsesCount("env1")).rejects.toThrow("boom");
+  });
 });

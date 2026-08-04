@@ -105,7 +105,13 @@ export const ${migrationName}: MigrationScript = {
   id: "${migrationId}",
   name: "${fullMigrationName}",
   run: async ({ tx }) => {
-    // Your migration script goes here
+    // Your migration script goes here.
+    //
+    // IMPORTANT: this must be a no-op on an empty database. Data migrations only
+    // transform pre-existing rows; on a fresh DB they are baselined (marked
+    // applied) WITHOUT running. Guard any write behind a SELECT of existing rows
+    // and never seed essential/default data here — seed via the seed script
+    // (packages/database/src/seed.ts) instead. See the database package README.
   }
 };
 `;

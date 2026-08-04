@@ -124,7 +124,7 @@ export const EnterpriseLicenseStatus = ({
           </Button>
         </div>
         {status === "unreachable" && gracePeriodEnd && (
-          <Alert variant="warning" size="small">
+          <Alert variant="warning" size="small" role="status">
             <AlertDescription className="overflow-visible whitespace-normal">
               {t("workspace.settings.enterprise.license_unreachable_grace_period", {
                 gracePeriodEnd: formatDateForDisplay(new Date(gracePeriodEnd), locale, {
@@ -137,14 +137,14 @@ export const EnterpriseLicenseStatus = ({
           </Alert>
         )}
         {status === "invalid_license" && (
-          <Alert variant="error" size="small">
+          <Alert variant="error" size="small" role="status">
             <AlertDescription className="overflow-visible whitespace-normal">
               {t("workspace.settings.enterprise.license_invalid_description")}
             </AlertDescription>
           </Alert>
         )}
         {status === "instance_mismatch" && (
-          <Alert variant="error" size="small">
+          <Alert variant="error" size="small" role="status">
             <AlertDescription className="overflow-visible whitespace-normal">
               {t("workspace.settings.enterprise.license_instance_mismatch_description")}
             </AlertDescription>

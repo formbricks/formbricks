@@ -1,0 +1,68 @@
+type: object
+description: >
+  Scope 1 workflow JSON document, mirroring `ZWorkflowDefinition` in
+  `packages/workflows`. The
+
+  definition is the public source of truth for the builder and API clients.
+  Scope 1
+
+  intentionally excludes user-authored if/else branches, webhook actions,
+  schedules, delays,
+
+  loops, and AI/MCP-assisted creation; future node types extend `nodes`
+  additively.
+
+
+  Graph rules enforced on every write (**400** with `invalid_params` on
+  violation):
+
+  node ids are unique across `trigger` and `nodes`; every edge references
+  existing node ids;
+
+  the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`.
+  Trigger-only
+
+  drafts (no `nodes`, no `edges`) are valid persisted documents. Executability
+  rules (exactly
+
+  one outgoing trigger edge, acyclic graph, every node reachable from the
+  trigger) are
+
+  additionally enforced by `enable` and `test` with **422**
+  `workflow_not_executable`.
+required:
+  - trigger
+  - entryNodeId
+properties:
+  schemaVersion:
+    type: integer
+    enum:
+      - 1
+    default: 1
+    description: >-
+      Definition schema version. Optional on writes (defaults to the current
+      version); always present in responses.
+  trigger:
+    $ref: ./WorkflowResponseCompletedTriggerNode.yml
+  nodes:
+    type: array
+    default: []
+    items:
+      $ref: ./WorkflowSendEmailActionNode.yml
+    description: >-
+      Child nodes of the graph. The trigger lives in `trigger`, not in this
+      array. Scope 1 accepts `send_email` action nodes only. Optional on writes
+      (defaults to empty for trigger-only drafts); always present in responses.
+  edges:
+    type: array
+    default: []
+    items:
+      $ref: ./WorkflowEdge.yml
+    description: >-
+      Optional on writes (defaults to empty for trigger-only drafts); always
+      present in responses.
+  entryNodeId:
+    type: string
+    minLength: 1
+    description: Workflow entry point. Must equal `trigger.id`.
+additionalProperties: false

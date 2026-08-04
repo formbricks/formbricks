@@ -35,20 +35,20 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
       {
         id: "respect",
         value: null,
-        name: t("workspace.surveys.edit.respect_global_waiting_time"),
-        description: t("workspace.surveys.edit.respect_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.respect_global_cooldown_period"),
+        description: t("workspace.surveys.edit.respect_global_cooldown_period_description"),
       },
       {
         id: "ignore",
         value: 0,
-        name: t("workspace.surveys.edit.ignore_global_waiting_time"),
-        description: t("workspace.surveys.edit.ignore_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.ignore_global_cooldown_period"),
+        description: t("workspace.surveys.edit.ignore_global_cooldown_period_description"),
       },
       {
         id: "overwrite",
         value: 1,
-        name: t("workspace.surveys.edit.overwrite_global_waiting_time"),
-        description: t("workspace.surveys.edit.overwrite_global_waiting_time_description"),
+        name: t("workspace.surveys.edit.overwrite_global_cooldown_period"),
+        description: t("workspace.surveys.edit.overwrite_global_cooldown_period_description"),
       },
     ],
     [t]
@@ -178,10 +178,10 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
           {/* Waiting Time Section */}
           <div className="mb-4 space-y-1 px-1">
             <h3 className="font-semibold text-slate-800">
-              {t("workspace.surveys.edit.waiting_time_across_surveys")}
+              {t("workspace.surveys.edit.cooldown_period_across_surveys")}
             </h3>
             <p className="text-sm text-slate-500">
-              {t("workspace.surveys.edit.waiting_time_across_surveys_description")}
+              {t("workspace.surveys.edit.cooldown_period_across_surveys_description")}
             </p>
           </div>
 
@@ -192,12 +192,12 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
             {waitingTimeOptions.map((option) => (
               <div key={option.id}>
                 <Label
-                  htmlFor={`waiting-time-${option.id}`}
+                  htmlFor={`cooldown-period-${option.id}`}
                   className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4"
-                  data-testid={`waiting-time-option-${option.id}`}>
+                  data-testid={`cooldown-period-option-${option.id}`}>
                   <RadioGroupItem
                     value={option.id}
-                    id={`waiting-time-${option.id}`}
+                    id={`cooldown-period-${option.id}`}
                     className="mx-5 disabled:border-slate-400 aria-checked:border-2 aria-checked:border-brand-dark"
                   />
                   <div>

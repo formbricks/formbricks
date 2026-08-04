@@ -31,6 +31,7 @@ const baseWorkspace: TWorkspace = {
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     workspace: {
       update: vi.fn(),
       create: vi.fn(),
@@ -38,6 +39,9 @@ vi.mock("@formbricks/database", () => ({
     },
     workspaceTeam: {
       createMany: vi.fn(),
+    },
+    team: {
+      findMany: vi.fn(),
     },
     feedbackDirectory: {
       upsert: vi.fn(),
@@ -50,6 +54,12 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+// ENG-1922: createWorkspace's org-scope guard queries team.findMany({ select: { id: true } }).
+// Model exactly that projection for the mock — a single localized assertion instead of scattered
+// `any` casts, so the fixture can't silently drift from the query's shape.
+const mockOrgTeams = (...ids: string[]) =>
+  ids.map((id) => ({ id })) as unknown as Awaited<ReturnType<typeof prisma.team.findMany>>;
+
 const expectNoFrdSideEffects = () => {
   expect(prisma.feedbackDirectory.upsert).not.toHaveBeenCalled();
   expect(prisma.feedbackDirectory.findFirst).not.toHaveBeenCalled();
@@ -60,6 +70,7 @@ const expectNoFrdSideEffects = () => {
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -74,6 +85,9 @@ vi.mock("@/modules/storage/service", () => ({
 describe("workspace lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // createWorkspace runs its ownership check and both writes in one transaction. Hand the callback
+    // the same prisma mock so assertions stay on `prisma.*` and a rollback surfaces as a throw.
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
   });
 
   describe("updateWorkspace", () => {
@@ -98,6 +112,20 @@ describe("workspace lib", () => {
       await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow();
     });
 
+    test("throws DatabaseError on PrismaClientKnownRequestError", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
+        code: "P2010",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.workspace.update).mockRejectedValueOnce(prismaError);
+      await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow(DatabaseError);
+    });
+
+    test("rethrows non-Prisma errors", async () => {
+      vi.mocked(prisma.workspace.update).mockRejectedValueOnce(new Error("boom"));
+      await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow("boom");
+    });
+
     test("returns workspace data without Zod validation", async () => {
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce({ ...baseWorkspace, id: 123 } as any);
       const result = await updateWorkspace("p1", { name: "Workspace 1" });
@@ -116,15 +144,82 @@ describe("workspace lib", () => {
   describe("createWorkspace", () => {
     test("creates workspace with team links and no FRD side-effects", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p2" };
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
 
       const result = await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
 
       expect(result).toEqual(createdWorkspace);
+      // ENG-1922: teamIds must be validated against the target org before linking.
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ["t1"] }, organizationId: "org1" } })
+      );
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).toHaveBeenCalled();
       expectNoFrdSideEffects();
+    });
+
+    // ENG-1922: a caller must not link a team from another organization to their workspace.
+    test("rejects teamIds that belong to another organization", async () => {
+      // Foreign team: the org-scoped lookup returns nothing.
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams());
+
+      await expect(
+        createWorkspace("org1", { name: "Workspace 1", teamIds: ["foreign-team"] })
+      ).rejects.toThrow(ValidationError);
+
+      // The membership check must run org-scoped...
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ["foreign-team"] }, organizationId: "org1" } })
+      );
+      // ...and the workspace and the join rows must never be written.
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
+      expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
+      // The rejection is logged for security observability, naming only tenant ids (no PII).
+      expect(logger.warn).toHaveBeenCalledWith(
+        { organizationId: "org1", foreignTeamIds: ["foreign-team"] },
+        expect.stringContaining("Rejected cross-organization team assignment")
+      );
+    });
+
+    // ENG-1922: the rejection log must not fire when every team is in the caller's organization.
+    test("does not log a cross-organization warning on the happy path", async () => {
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p3" } as any);
+      vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
+
+      await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
+
+      expect(logger.warn).not.toHaveBeenCalled();
+    });
+
+    // ENG-1922: a mix of own-org and foreign teamIds must be rejected wholesale (count mismatch),
+    // not partially linked.
+    test("rejects when only some teamIds belong to the organization", async () => {
+      // Only t1 is in the org; the org-scoped lookup omits the foreign id.
+      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
+
+      await expect(
+        createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "foreign-team"] })
+      ).rejects.toThrow(ValidationError);
+
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: { in: ["t1", "foreign-team"] }, organizationId: "org1" } })
+      );
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
+      expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
+    });
+
+    test("rejects duplicate teamIds", async () => {
+      await expect(createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "t1"] })).rejects.toThrow(
+        ValidationError
+      );
+
+      // Rejected before any lookup or write.
+      expect(prisma.team.findMany).not.toHaveBeenCalled();
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
+      expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
     });
 
     test("seeds English as the default survey language when creating a workspace", async () => {

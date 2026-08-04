@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method -- mock functions are unbound */
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { checkSetup } from "@/lib/common/status";
@@ -51,7 +50,6 @@ vi.mock("@/lib/common/timeout-stack", () => ({
 }));
 
 vi.mock("@/lib/common/utils", async (importOriginal) => {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- We need this only for type inference
   const actual = await importOriginal<typeof import("@/lib/common/utils")>();
   return {
     ...actual,

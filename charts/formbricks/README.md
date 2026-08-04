@@ -59,12 +59,21 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
 - The generated app secret supplies `CUBEJS_API_SECRET` by default. If you disable generated secrets,
   provide it through your existing secret management flow.
 - Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.
-- Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store before running multiple Cube replicas.
+- The bundled single-replica Cube has no external pre-aggregations and defaults
+  `cube.env.CUBEJS_EXTERNAL_DEFAULT` to `false`, so it does not require Cube Store. If you add external
+  pre-aggregations, configure Cube Store before overriding this value to `true`.
+- Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store
+  and switch cache and queue storage away from memory before running multiple Cube replicas.
 - Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
 
 ## Hub worker and self-hosted embeddings
 
 The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is insert-only for River jobs; webhook dispatch and embedding jobs are processed by `hub-worker`.
+When `hub.worker.waitForApi.enabled` is enabled (the default), the worker waits for Hub API health
+before it starts. Each health request and the delay between failed checks are bounded to five
+seconds; `hub.worker.waitForApi.maxAttempts` limits the failed checks before the init container
+exits. Setting `hub.worker.waitForApi.enabled=false` omits the health gate, so the worker starts
+without waiting for Hub API health.
 
 When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
 If the Job has already been cleaned up, Hub only continues after all expected Prisma and data migration success markers are present in the database.
@@ -401,7 +410,7 @@ JSON that can call Vertex AI.
 | hub.worker.resources.requests.cpu                                  | string | `"100m"`                                                                    |                                                           |
 | hub.worker.resources.requests.memory                               | string | `"256Mi"`                                                                   |                                                           |
 | hub.worker.waitForApi.enabled                                      | bool   | `true`                                                                      |                                                           |
-| hub.worker.waitForApi.maxAttempts                                  | int    | `120`                                                                       | 120 attempts at 5s intervals = 10 minutes.                |
+| hub.worker.waitForApi.maxAttempts                                  | int    | `120`                                                                       | Health requests and retry delays are bounded to 5s each.  |
 | ingress.annotations                                                | object | `{}`                                                                        |                                                           |
 | ingress.enabled                                                    | bool   | `false`                                                                     |                                                           |
 | ingress.hosts[0].host                                              | string | `"k8s.formbricks.com"`                                                      |                                                           |

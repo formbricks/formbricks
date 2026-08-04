@@ -64,7 +64,9 @@ const ZV3SurveysListQuery = z.object({
     .max(512)
     .optional()
     .transform((s) => (s === undefined || s.trim() === "" ? undefined : s.trim())),
-  [FILTER_STATUS_IN_QUERY_PARAM]: z.array(ZSurveyStatus).optional(),
+  // "archived" is a pseudo-status accepted only by the list filter; it is translated
+  // into an archivedAt filter (see buildFilterCriteria) rather than a real status match.
+  [FILTER_STATUS_IN_QUERY_PARAM]: z.array(z.union([ZSurveyStatus, z.literal("archived")])).optional(),
   [FILTER_TYPE_IN_QUERY_PARAM]: z.array(ZSurveyType).optional(),
   sortBy: ZSurveyFilters.shape.sortBy.optional(),
 });
@@ -97,7 +99,13 @@ function getUnsupportedQueryParams(searchParams: URLSearchParams): InvalidParam[
 function buildFilterCriteria(q: TV3SurveysListQuery): TSurveyFilterCriteria | undefined {
   const f: TSurveyFilterCriteria = {};
   if (q[FILTER_NAME_CONTAINS_QUERY_PARAM]) f.name = q[FILTER_NAME_CONTAINS_QUERY_PARAM];
-  if (q[FILTER_STATUS_IN_QUERY_PARAM]?.length) f.status = q[FILTER_STATUS_IN_QUERY_PARAM];
+  const statusValues = q[FILTER_STATUS_IN_QUERY_PARAM] ?? [];
+  // Split the "archived" pseudo-status out from real statuses.
+  const realStatuses = statusValues.filter(
+    (status): status is z.infer<typeof ZSurveyStatus> => status !== "archived"
+  );
+  if (realStatuses.length) f.status = realStatuses;
+  if (statusValues.includes("archived")) f.includeArchived = true;
   if (q[FILTER_TYPE_IN_QUERY_PARAM]?.length) f.type = q[FILTER_TYPE_IN_QUERY_PARAM];
   return Object.keys(f).length > 0 ? f : undefined;
 }

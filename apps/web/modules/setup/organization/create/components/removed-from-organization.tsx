@@ -22,7 +22,7 @@ export const RemovedFromOrganization = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="space-y-4">
-      <Alert variant="warning">
+      <Alert variant="warning" role="status">
         <AlertTitle>{t("setup.organization.create.no_membership_found")}</AlertTitle>
         <AlertDescription>{t("setup.organization.create.no_membership_found_description")}</AlertDescription>
       </Alert>

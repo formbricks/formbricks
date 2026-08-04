@@ -137,7 +137,6 @@ export const AttributesTable = ({
         console.error(err);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
   // Hide select column when all attributes are system attributes

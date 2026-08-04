@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function -- required for singleton pattern */
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { sendUpdates } from "@/lib/user/update";

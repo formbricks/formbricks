@@ -75,7 +75,7 @@ describe("Teams Lib", () => {
     test("returns not_found error on known prisma error", async () => {
       (prisma.team.delete as any).mockRejectedValueOnce(
         new Prisma.PrismaClientKnownRequestError("Not found", {
-          code: PrismaErrorType.RecordDoesNotExist,
+          code: PrismaErrorType.RecordNotFound,
           clientVersion: "1.0.0",
           meta: {},
         })
@@ -121,7 +121,7 @@ describe("Teams Lib", () => {
     test("returns not_found error when update fails due to missing team", async () => {
       (prisma.team.update as any).mockRejectedValueOnce(
         new Prisma.PrismaClientKnownRequestError("Not found", {
-          code: PrismaErrorType.RecordDoesNotExist,
+          code: PrismaErrorType.RecordNotFound,
           clientVersion: "1.0.0",
           meta: {},
         })

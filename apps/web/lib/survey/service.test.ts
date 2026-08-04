@@ -7,6 +7,7 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import {
   DatabaseError,
   InvalidInputError,
+  OperationNotAllowedError,
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
@@ -481,7 +482,9 @@ describe("Tests for updateSurvey", () => {
     // ENG-1749/ENG-1920: the app-survey segment block connects segment.surveys by id; a survey from
     // another workspace must not be connectable (would re-point that survey's targeting).
     test("rejects connecting a survey from another workspace to the segment (app survey update)", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput); // getSurvey → current survey (own workspace)
+      // Draft row: this exercises the skip-validation path, which the ENG-1939 guard restricts to
+      // drafts. The cross-workspace segment check under test is unaffected by the status.
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" }); // getSurvey → current survey (own workspace)
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
       } as any); // segment.id belongs to the survey's workspace (passes the segment guard)
@@ -512,6 +515,16 @@ describe("Tests for updateSurvey", () => {
 
       expect(prisma.segment.update).not.toHaveBeenCalled();
     });
+
+    // Archived surveys are read-only on every write path that flows through updateSurveyInternal
+    // (editor save, summary status dropdown, v1/v3 update) — not just the v3 API layer.
+    test("rejects updating an archived survey and does not write", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, archivedAt: new Date() } as any);
+
+      await expect(updateSurveyInternal({ ...updateSurveyInput }, true)).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
   });
 });
 
@@ -526,6 +539,14 @@ describe("Tests for getSurveyCount service", () => {
       prisma.survey.count.mockResolvedValue(0);
       const count = await getSurveyCount(mockId);
       expect(count).toEqual(0);
+    });
+
+    test("Counts archived surveys too so the onboarding gate stays satisfied", async () => {
+      await getSurveyCount(mockId);
+      // The onboarding count must be archive-inclusive: no archivedAt filter in the where clause.
+      expect(prisma.survey.count).toHaveBeenCalledWith({
+        where: { workspaceId: mockId },
+      });
     });
   });
 
@@ -815,6 +836,24 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("strips archivedAt from a create payload so a caller can't create a pre-archived survey", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        // archivedAt is not part of the create schema; a supplied value must never reach the DB,
+        // otherwise the purge cron would hard-delete the survey with no archive audit or retention window.
+        archivedAt: new Date("2020-01-01T00:00:00Z"),
+      } as typeof mockCreateSurveyInput);
+
+      expect(prisma.survey.create).toHaveBeenCalledTimes(1);
+      const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      expect(createArg.data).not.toHaveProperty("archivedAt");
     });
 
     test("throws InvalidInputError when creating a non-draft app survey with no triggers", async () => {
@@ -1351,10 +1390,15 @@ describe("updateSurveyDraftAction", () => {
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue(mockOrganizationOutput);
   });
 
+  // The persisted survey must be a draft for the skip-validation path (ENG-1939 guard); these
+  // cases are about the skipValidation flag, so the stored row is a draft rather than the
+  // inProgress default of mockSurveyOutput.
+  const mockDraftSurveyOutput = { ...mockSurveyOutput, status: "draft" as const };
+
   describe("Happy Path", () => {
     test("should save draft with missing translations", async () => {
-      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
 
       // Create a survey with incomplete i18n/fields
       const incompleteSurvey = {
@@ -1375,8 +1419,8 @@ describe("updateSurveyDraftAction", () => {
     });
 
     test("should allow draft with invalid images if gating is applied", async () => {
-      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
 
       const surveyWithInvalidImage = {
         ...updateSurveyInput,
@@ -1416,6 +1460,21 @@ describe("updateSurveyDraftAction", () => {
         await expect(updateSurveyInternal(incompleteSurvey, false)).rejects.toThrow();
       },
       SURVEY_SERVICE_TEST_TIMEOUT_MS
+    );
+
+    // ENG-1939: the lenient draft schema does not validate elements, so skipping validation on an
+    // already-published survey would let structurally invalid blocks reach the DB and silently
+    // revert the survey to draft. Gate on the PERSISTED status, not the payload's.
+    test.each(["inProgress", "paused", "completed"] as const)(
+      "rejects a skip-validation update when the stored survey is %s",
+      async (status) => {
+        prisma.survey.findUnique.mockResolvedValue({ ...mockSurveyOutput, status });
+
+        await expect(updateSurveyInternal(updateSurveyInput as TSurvey, true)).rejects.toThrow(
+          OperationNotAllowedError
+        );
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      }
     );
   });
 });

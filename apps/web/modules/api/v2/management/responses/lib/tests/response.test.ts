@@ -32,6 +32,10 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
     },
+    // createResponse checks that a caller-supplied displayId belongs to the survey before connecting it.
+    display: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
@@ -48,9 +52,58 @@ vi.mock("@/lib/constants", async () => {
 describe("Response Lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: the display named by the fixtures belongs to the survey under test.
+    vi.mocked(prisma.display.findUnique).mockResolvedValue({
+      surveyId: responseInput.surveyId,
+    } as never);
   });
 
   describe("createResponse", () => {
+    // Regression: displayId was connected with no ownership check, and Display<->Response is 1:1, so
+    // naming another workspace's display moved it onto this response and corrupted that tenant's counts.
+    test("reject a displayId that belongs to a different survey", async () => {
+      vi.mocked(prisma.display.findUnique).mockResolvedValue({
+        surveyId: "someothersurveyid00000000",
+      } as never);
+
+      const result = await createResponse(workspaceId, responseInput);
+
+      expect(result.ok).toBe(false);
+      expect(prisma.response.create).not.toHaveBeenCalled();
+    });
+
+    test("reject a displayId that does not exist", async () => {
+      vi.mocked(prisma.display.findUnique).mockResolvedValue(null as never);
+
+      const result = await createResponse(workspaceId, responseInput);
+
+      expect(result.ok).toBe(false);
+      expect(prisma.response.create).not.toHaveBeenCalled();
+    });
+
+    // The anti-enumeration property, not just the rejection: a foreign display and a nonexistent one
+    // must be indistinguishable, or the endpoint confirms which display ids are real. Asserted as one
+    // test comparing the two errors so a future edit cannot make only one of them more specific.
+    test("report a foreign and a nonexistent displayId identically", async () => {
+      vi.mocked(prisma.display.findUnique).mockResolvedValue({
+        surveyId: "someothersurveyid00000000",
+      } as never);
+      const foreign = await createResponse(workspaceId, responseInput);
+
+      vi.mocked(prisma.display.findUnique).mockResolvedValue(null as never);
+      const missing = await createResponse(workspaceId, responseInput);
+
+      expect(foreign.ok).toBe(false);
+      expect(missing.ok).toBe(false);
+      if (!foreign.ok && !missing.ok) {
+        expect(foreign.error).toEqual({
+          type: "not_found",
+          details: [{ field: "display", issue: "not found" }],
+        });
+        expect(missing.error).toEqual(foreign.error);
+      }
+    });
+
     test("create a response successfully", async () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 

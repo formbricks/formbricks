@@ -26,9 +26,9 @@
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint . --ext .ts,.js",
-    "lint:fix": "eslint . --ext .ts,.js --fix",
-    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:report": "eslint . --format json --output-file ../../lint-results/storage.json",
     "typecheck": "tsc --noEmit",
     "build": "vite build && tsc --project tsconfig.build.json",
     "test": "vitest run",
@@ -46,6 +46,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.6",
+    "typescript": "5.9.3",
     "vite": "7.3.5",
     "vitest": "4.1.6"
   }

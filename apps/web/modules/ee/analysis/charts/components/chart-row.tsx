@@ -37,7 +37,6 @@ export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readon
   return (
     <>
       {/* Cannot use native <button>; row contains dropdown trigger (nested interactive invalid) */}
-      {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role, jsx-a11y/no-static-element-interactions */}
       <div
         role={isReadOnly ? undefined : "button"}
         tabIndex={isReadOnly ? undefined : 0}

@@ -99,6 +99,7 @@ const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText, disabled }: T
           variant="ghost"
           size="icon"
           type="button"
+          aria-label={tooltipText}
           tabIndex={-1}
           onClick={onClick}
           disabled={disabled}
@@ -259,7 +260,6 @@ export const ToolbarPlugin = (
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.updateTemplate, props.firstRender]);
 
   useEffect(() => {
@@ -275,8 +275,6 @@ export const ToolbarPlugin = (
         root.append(...nodes);
       });
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Register text-saving update listener - always active for each editor instance

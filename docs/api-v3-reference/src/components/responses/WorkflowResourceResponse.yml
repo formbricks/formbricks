@@ -1,0 +1,19 @@
+description: Workflow returned successfully
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: ../schemas/WorkflowResource.yml

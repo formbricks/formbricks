@@ -105,6 +105,16 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
     ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
     ctx.auditLoggingCtx.oldObject = null;
 
+    // Reset is hidden client-side while archived, but re-check server-side so a stale tab or a direct
+    // action call can't wipe the responses/displays the 30-day archive window exists to preserve.
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+    if (survey.archivedAt) {
+      throw new OperationNotAllowedError("Cannot reset an archived survey.");
+    }
+
     const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
       parsedInput.surveyId
     );
@@ -167,6 +177,12 @@ export const generateExampleResponsesAction = authenticatedActionClient
     const survey = await getSurvey(parsedInput.surveyId);
     if (!survey) {
       throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
+    // Same stale-tab defense as the responseCount check below: generating examples is hidden while
+    // archived, but a direct call would still write responses/displays/a tag into an archived survey.
+    if (survey.archivedAt) {
+      throw new OperationNotAllowedError("Cannot generate example responses for an archived survey.");
     }
 
     const existingCount = await getResponseCountBySurveyId(parsedInput.surveyId);

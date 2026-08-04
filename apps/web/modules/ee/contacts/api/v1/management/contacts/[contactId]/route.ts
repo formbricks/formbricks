@@ -58,9 +58,7 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(result.contact),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
 });
@@ -109,9 +107,7 @@ export const DELETE = withV1ApiWrapper({
         response: responses.successResponse({ success: "Contact deleted successfully" }),
       };
     } catch (error) {
-      return {
-        response: handleErrorResponse(error),
-      };
+      return handleErrorResponse(error);
     }
   },
   action: "deleted",

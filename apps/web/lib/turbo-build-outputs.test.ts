@@ -21,7 +21,8 @@ describe("turbo.json web build excludes transient Next.js dirs", () => {
   };
 
   // Turbo uses the package-specific task when defined, otherwise the generic one.
-  const resolvedOutputs = turboJson.tasks["@formbricks/web#build"]?.outputs ?? turboJson.tasks.build.outputs ?? [];
+  const resolvedOutputs =
+    turboJson.tasks["@formbricks/web#build"]?.outputs ?? turboJson.tasks.build.outputs ?? [];
 
   test("resolved @formbricks/web#build outputs exclude .next/cache and .next/dev", () => {
     const missing = REQUIRED_EXCLUSIONS.filter((exclusion) => !resolvedOutputs.includes(exclusion));

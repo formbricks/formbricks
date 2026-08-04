@@ -39,6 +39,82 @@ jobs:
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/cube-deployment.yaml > "$render_dir/cube-default.yaml"
+          grep -A1 'name: CUBEJS_EXTERNAL_DEFAULT' "$render_dir/cube-default.yaml" \
+            | grep -q 'value: "false"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set-string cube.env.CUBEJS_EXTERNAL_DEFAULT=true \
+            --show-only templates/cube-deployment.yaml > "$render_dir/cube-external.yaml"
+          grep -A1 'name: CUBEJS_EXTERNAL_DEFAULT' "$render_dir/cube-external.yaml" \
+            | grep -q 'value: "true"'
+
+          if helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set cube.replicas=2 \
+            --show-only templates/cube-deployment.yaml > "$render_dir/cube-invalid.yaml" 2>&1; then
+            echo "Expected the in-memory Cube configuration with multiple replicas to fail" >&2
+            exit 1
+          fi
+          grep -q 'CUBEJS_CACHE_AND_QUEUE_DRIVER=memory is only supported when cube.replicas=1' \
+            "$render_dir/cube-invalid.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-worker-default.yaml"
+          grep -q 'max_attempts=120' "$render_dir/hub-worker-default.yaml"
+          grep -q 'timeout 5 wget --no-verbose --tries=1 --timeout=5 --spider' \
+            "$render_dir/hub-worker-default.yaml"
+          grep -q 'Waiting for Hub API migrations and health check (attempt \$attempts/\$max_attempts)' \
+            "$render_dir/hub-worker-default.yaml"
+          grep -q 'Hub API did not become healthy after \$max_attempts attempt(s)' \
+            "$render_dir/hub-worker-default.yaml"
+          grep -q 'sleep 5' "$render_dir/hub-worker-default.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.worker.waitForApi.maxAttempts=3 \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-worker-override.yaml"
+          grep -q 'max_attempts=3' "$render_dir/hub-worker-override.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.worker.waitForApi.enabled=false \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-worker-disabled.yaml"
+          ! grep -q 'wait-for-hub-api' "$render_dir/hub-worker-disabled.yaml"
+          grep -q '/app/hub-worker' "$render_dir/hub-worker-disabled.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/hub-deployment.yaml \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-default.yaml"
+          ! grep -q 'qa-hub-credentials' "$render_dir/hub-default.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set 'hub.extraVolumes[0].name=qa-hub-credentials' \
+            --set 'hub.extraVolumes[0].secret.secretName=qa-hub-credentials' \
+            --set 'hub.extraVolumeMounts[0].name=qa-hub-credentials' \
+            --set 'hub.extraVolumeMounts[0].mountPath=/var/run/qa-credentials' \
+            --set 'hub.extraVolumeMounts[0].readOnly=true' \
+            --show-only templates/hub-deployment.yaml > "$render_dir/hub-api-volumes.yaml"
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set 'hub.extraVolumes[0].name=qa-hub-credentials' \
+            --set 'hub.extraVolumes[0].secret.secretName=qa-hub-credentials' \
+            --set 'hub.extraVolumeMounts[0].name=qa-hub-credentials' \
+            --set 'hub.extraVolumeMounts[0].mountPath=/var/run/qa-credentials' \
+            --set 'hub.extraVolumeMounts[0].readOnly=true' \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-worker-volumes.yaml"
+          for manifest in "$render_dir/hub-api-volumes.yaml" "$render_dir/hub-worker-volumes.yaml"; do
+            test "$(grep -c 'secretName: qa-hub-credentials' "$manifest")" -eq 1
+            test "$(grep -c 'mountPath: /var/run/qa-credentials' "$manifest")" -eq 1
+            test "$(grep -c 'readOnly: true' "$manifest")" -eq 1
+          done
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
             --show-only templates/migration-job.yaml > "$render_dir/default.yaml"
 
           grep -q 'packages/database/dist/scripts/wait-for-database.js' "$render_dir/default.yaml"

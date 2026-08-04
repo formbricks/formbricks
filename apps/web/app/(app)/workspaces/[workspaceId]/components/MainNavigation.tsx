@@ -14,6 +14,7 @@ import {
   RocketIcon,
   SettingsIcon,
   UserIcon,
+  WorkflowIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -181,6 +182,20 @@ export const MainNavigation = ({
           },
         ],
       },
+      {
+        id: "act",
+        name: t("common.act"),
+        items: [
+          {
+            name: t("common.workflows"),
+            href: `/workspaces/${workspace.id}/workflows`,
+            icon: WorkflowIcon,
+            isActive: pathname?.startsWith(`/workspaces/${workspace.id}/workflows`),
+            isHidden: false,
+            disabled: isMembershipPending || isBilling,
+          },
+        ],
+      },
     ],
     [t, workspace.id, pathname, isMembershipPending, isBilling]
   );
@@ -246,6 +261,7 @@ export const MainNavigation = ({
     const ts = new Date(trialEnd).getTime();
     if (!Number.isFinite(ts)) return null;
     const msPerDay = 86_400_000;
+    // eslint-disable-next-line react-hooks/purity -- migration ENG-1677
     return Math.ceil((ts - Date.now()) / msPerDay);
   }, [
     isFormbricksCloud,
