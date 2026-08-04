@@ -259,6 +259,38 @@ taxonomy:
 The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
 
+### Hub and Taxonomy metrics and structured logs
+
+Hub and the taxonomy service can export OpenTelemetry metrics over OTLP/HTTP. Configure the standard `OTEL_*`
+environment variables through the existing `hub.env` and `taxonomy.env` maps; no chart-specific collector values
+are required. The example below uses a SigNoz collector in the `signoz` namespace and labels both services as
+`production`. Replace the collector DNS name and `deployment.environment` with values matching each cluster and
+environment:
+
+```yaml
+hub:
+  env:
+    LOG_FORMAT: json
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+    OTEL_SERVICE_NAME: formbricks-hub
+    OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
+
+taxonomy:
+  env:
+    LOG_FORMAT: json
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+    OTEL_SERVICE_NAME: formbricks-taxonomy
+    OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
+```
+
+Metrics use only bounded lifecycle, phase, provider, outcome, and reason attributes. Run, request, tenant, source,
+and field identifiers are emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings,
+credentials, authorization tokens, provider response bodies, and collector URLs are never telemetry fields.
+
 ## Values
 
 | Key                                                                | Type   | Default                                                                     | Description                                               |
