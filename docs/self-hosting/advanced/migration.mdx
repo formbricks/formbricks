@@ -24,7 +24,9 @@ hops:
 
 - `TRUSTED_PROXY_HOP_COUNT` — optional, **defaults to `1`**. Set it to the number of trusted proxies /
   load balancers in front of Formbricks (e.g. an ingress plus a CDN = `2`). An explicit `0` trusts no
-  proxy and uses the socket peer address.
+  proxy at all: the runtime exposes no socket peer address, so the client IP then resolves to a fixed
+  "untrusted" placeholder that rate limiting and response audit logging record in place of a real address.
+  Leave it at `1` (or your real hop count) unless you deliberately want to stop capturing client IPs.
 
 <Warning>
   Setting `TRUSTED_PROXY_HOP_COUNT` **higher** than your real hop count lets a client spoof its IP by
@@ -74,17 +76,22 @@ moves to `0.8.1` — pull the new image.
 
 1. Back up your database.
 2. Set `TRUSTED_PROXY_HOP_COUNT` to the number of proxies in front of your instance (default `1`).
-3. Pull the v5.3 images and restart (`docker compose pull && docker compose down && docker compose up -d`,
-   or `helm upgrade` with the new chart / tag). Migrations apply automatically on startup.
-4. Redeploy / refresh **Cube** so it picks up the updated `FeedbackRecords.js` schema.
-5. Smoke test: sign in (including 2FA), create and schedule a survey, and open the Feedback Records
+3. Update your deployment assets to v5.3 **before** pulling images. `docker compose pull` reads your local
+   Compose file, so fetch the v5.3 `docker-compose.yml` first (it pins the new Hub image and ships the
+   updated `FeedbackRecords.js` Cube schema) — otherwise you re-pull the old images. Helm users use the
+   v5.3 chart.
+4. Pull and restart (`docker compose pull && docker compose down && docker compose up -d`, or
+   `helm upgrade` with the new chart / tag). Migrations apply automatically on startup.
+5. Redeploy / refresh **Cube** so it picks up the updated `FeedbackRecords.js` schema.
+6. Smoke test: sign in (including 2FA), create and schedule a survey, and open the Feedback Records
    dashboards / charts to confirm analytics render correctly.
 
 ### Rollback
 
 The v5.3 migrations are additive and are not read by v5.2, so rolling back the application images / Helm
 values to v5.2 is safe without touching the database. Restore a database backup only if you specifically
-need to undo the schema additions.
+need to undo the schema additions — and note that doing so discards any data written after the backup was
+taken, so perform it within a maintenance window.
 
 ## v5.2
 
