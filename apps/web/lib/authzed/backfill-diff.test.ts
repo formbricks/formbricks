@@ -152,6 +152,30 @@ describe("resource type classification", () => {
 });
 
 describe("cross-tenant organization access", () => {
+  test("distinguishes the two ownership shapes, which need different remediation", () => {
+    // Both say "this key belongs to that organization", but the organization sits on opposite sides, so
+    // `zed relationship delete` takes different arguments. Reporting them identically would send an
+    // operator to delete a relationship that does not exist while the escalation survives.
+    const summary = summarizeObservation([
+      {
+        relation: "organization",
+        resource: { objectId: "key-1", objectType: "api_key" },
+        subject: { objectId: "org-a", objectType: "organization" },
+      },
+      {
+        relation: "api_key_writer",
+        resource: { objectId: "org-a", objectType: "organization" },
+        subject: { objectId: "key-1", objectType: "api_key" },
+      },
+    ]);
+
+    // Deterministically ordered, so `api_key_writer` precedes `organization`.
+    expect(summary.parentEdges).toEqual([
+      { childId: "key-1", childType: "api_key", organizationId: "org-a", relation: "api_key_writer" },
+      { childId: "key-1", childType: "api_key", organizationId: "org-a", relation: "organization" },
+    ]);
+  });
+
   test("reports an organization access grant naming a key from another organization", () => {
     // `organization:A#api_key_writer@api_key:K` implies "K belongs to A". Reduced to "does K exist?" it
     // read as sourced whenever K existed anywhere, so a cross-tenant grant survived apply and prune.
@@ -164,7 +188,7 @@ describe("cross-tenant organization access", () => {
     ]);
 
     expect(summary.parentEdges).toEqual([
-      { childId: "key-1", childType: "api_key", organizationId: "org-a" },
+      { childId: "key-1", childType: "api_key", organizationId: "org-a", relation: "api_key_writer" },
     ]);
   });
 

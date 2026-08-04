@@ -244,8 +244,12 @@ describe("findMismatchedParentEdges", () => {
     ] as never);
 
     await expect(
-      findMismatchedParentEdges([{ childId: "ws-1", childType: "workspace", organizationId: "other-org" }])
-    ).resolves.toEqual([{ childId: "ws-1", childType: "workspace", organizationId: "other-org" }]);
+      findMismatchedParentEdges([
+        { childId: "ws-1", childType: "workspace", organizationId: "other-org", relation: "organization" },
+      ])
+    ).resolves.toEqual([
+      { childId: "ws-1", childType: "workspace", organizationId: "other-org", relation: "organization" },
+    ]);
   });
 
   test("accepts an edge naming the true owner", async () => {
@@ -254,22 +258,26 @@ describe("findMismatchedParentEdges", () => {
     ] as never);
 
     await expect(
-      findMismatchedParentEdges([{ childId: "team-1", childType: "team", organizationId: ORGANIZATION_ID }])
+      findMismatchedParentEdges([
+        { childId: "team-1", childType: "team", organizationId: ORGANIZATION_ID, relation: "organization" },
+      ])
     ).resolves.toEqual([]);
   });
 
   test("leaves an edge whose resource has no row to the orphan path", async () => {
     // That is a different finding with a working repair, so reporting it here too would double-count it.
     await expect(
-      findMismatchedParentEdges([{ childId: "gone", childType: "api_key", organizationId: ORGANIZATION_ID }])
+      findMismatchedParentEdges([
+        { childId: "gone", childType: "api_key", organizationId: ORGANIZATION_ID, relation: "organization" },
+      ])
     ).resolves.toEqual([]);
   });
 
   test("checks all three child types in one batch per type", async () => {
     await findMismatchedParentEdges([
-      { childId: "team-1", childType: "team", organizationId: ORGANIZATION_ID },
-      { childId: "ws-1", childType: "workspace", organizationId: ORGANIZATION_ID },
-      { childId: "key-1", childType: "api_key", organizationId: ORGANIZATION_ID },
+      { childId: "team-1", childType: "team", organizationId: ORGANIZATION_ID, relation: "organization" },
+      { childId: "ws-1", childType: "workspace", organizationId: ORGANIZATION_ID, relation: "organization" },
+      { childId: "key-1", childType: "api_key", organizationId: ORGANIZATION_ID, relation: "organization" },
     ]);
 
     expect(prisma.team.findMany).toHaveBeenCalledTimes(1);
@@ -281,7 +289,9 @@ describe("findMismatchedParentEdges", () => {
     vi.mocked(prisma.workspace.findMany).mockRejectedValue(new Error("connection reset"));
 
     await expect(
-      findMismatchedParentEdges([{ childId: "ws-1", childType: "workspace", organizationId: "other-org" }])
+      findMismatchedParentEdges([
+        { childId: "ws-1", childType: "workspace", organizationId: "other-org", relation: "organization" },
+      ])
     ).rejects.toThrow("connection reset");
   });
 });

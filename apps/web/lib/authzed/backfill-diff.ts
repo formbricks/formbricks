@@ -200,6 +200,19 @@ export type TAuthzedParentEdge = Readonly<{
   childId: string;
   childType: "api_key" | "team" | "workspace";
   organizationId: string;
+  /**
+   * The relation that asserted the ownership.
+   *
+   * Two relationship shapes can state it, and they are removed by *different* `zed` commands because the
+   * organization sits on opposite sides:
+   *
+   * - `organization` — the child's own parent edge, `<childType>:<childId> # organization @ organization:O`
+   * - anything else — an organization-level access grant, `organization:O # <relation> @ <childType>:<childId>`
+   *
+   * Reported so an operator acting on a finding deletes the relationship that actually exists. Without it
+   * both cases render identically and only one of them matches the documented remediation.
+   */
+  relation: string;
 }>;
 
 /** Stable identity for deduplication and ordering. Field order is fixed by the union's key order. */
@@ -231,7 +244,12 @@ const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | 
     subject.objectType === "api_key" &&
     ORGANIZATION_API_KEY_RELATIONS.has(relation)
   ) {
-    return { childId: subject.objectId, childType: "api_key", organizationId: resource.objectId };
+    return {
+      childId: subject.objectId,
+      childType: "api_key",
+      organizationId: resource.objectId,
+      relation,
+    };
   }
 
   if (relation !== PARENT_RELATION || subject.objectType !== "organization") {
@@ -245,7 +263,12 @@ const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | 
     return null;
   }
 
-  return { childId: resource.objectId, childType: resource.objectType, organizationId: subject.objectId };
+  return {
+    childId: resource.objectId,
+    childType: resource.objectType,
+    organizationId: subject.objectId,
+    relation,
+  };
 };
 
 /**

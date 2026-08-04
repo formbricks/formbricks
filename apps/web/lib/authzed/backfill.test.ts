@@ -428,14 +428,14 @@ describe("detecting a cross-tenant parent edge", () => {
       snapshot: { token: "revision-1" },
     });
     vi.mocked(source.findMismatchedParentEdges).mockResolvedValue([
-      { childId: "ws-1", childType: "workspace", organizationId: "other-org" },
+      { childId: "ws-1", childType: "workspace", organizationId: "other-org", relation: "organization" },
     ]);
 
     const result = await runAuthzedBackfill(request({ prune: true }), dependencies);
 
     expect(result.counters.mismatchedParents).toBe(1);
     expect(result.mismatchedParents).toEqual([
-      { childId: "ws-1", childType: "workspace", organizationId: "other-org" },
+      { childId: "ws-1", childType: "workspace", organizationId: "other-org", relation: "organization" },
     ]);
     // Removing it would mean deleting a relation the workspace legitimately needs one of, so it is left
     // for a human — but it must force a non-clean status.
