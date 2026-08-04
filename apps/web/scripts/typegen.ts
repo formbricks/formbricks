@@ -19,8 +19,9 @@ const require = createRequire(import.meta.url);
 async function main(): Promise<void> {
   // Load `.env` files exactly as `next typegen` does before it evaluates
   // `next.config.mjs`, so the preflight validation below sees the same
-  // environment Next would. Existing `process.env` values (e.g. the ones the
-  // package script injects via cross-env) take precedence over `.env`.
+  // environment Next would. Existing `process.env` values (e.g. a caller-supplied
+  // or dotenv-loaded variable) take precedence over `.env`, so an invalid value
+  // passed on the command line is not masked here.
   loadEnvConfig(process.cwd());
 
   try {
