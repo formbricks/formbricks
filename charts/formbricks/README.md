@@ -259,11 +259,13 @@ taxonomy:
 The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
 
-### Taxonomy metrics and structured logs
+### Hub and Taxonomy metrics and structured logs
 
 Hub and the taxonomy service can export OpenTelemetry metrics over OTLP/HTTP. Configure the standard `OTEL_*`
 environment variables through the existing `hub.env` and `taxonomy.env` maps; no chart-specific collector values
-are required. For an in-cluster collector listening on port 4318:
+are required. The example below uses a SigNoz collector in the `signoz` namespace and labels both services as
+`production`. Replace the collector DNS name and `deployment.environment` with values matching each cluster and
+environment:
 
 ```yaml
 hub:
