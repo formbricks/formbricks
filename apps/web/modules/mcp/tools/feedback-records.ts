@@ -20,6 +20,7 @@ import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { guardMcpScopes } from "./guard-scopes";
+import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCountFeedbackRecordsInput,
   type TMcpCreateFeedbackRecordInput,
@@ -86,31 +87,14 @@ function writeHandler<TInput extends { workspaceId: string }>(
       return scopeError;
     }
 
-    const authentication = getMcpAuthentication(extra.authInfo);
-    const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
-    const auditLog = buildV3AuditLog(authentication, action, "feedbackRecord", MCP_API_ROUTE);
-
-    try {
-      const response = await run(input, authentication, requestId, auditLog);
-
-      if (auditLog) {
-        if (response.ok) {
-          auditLog.status = "success";
-        } else {
-          auditLog.eventId = requestId;
-        }
-      }
-
-      await queueV3AuditLog(auditLog, requestId, log);
-      return await responseToMcpToolResult(response, requestId);
-    } catch (error) {
-      if (auditLog) {
-        auditLog.eventId = requestId;
-        await queueV3AuditLog(auditLog, requestId, log);
-      }
-
-      throw error;
-    }
+    // The scope gate above is the only part that differs from the survey/workflow tools, which get
+    // theirs from registerScopedTool; the audit lifecycle itself is shared.
+    return await runMcpMutation(
+      extra,
+      { action, resource: "feedbackRecord", logContext: { workspaceId: input.workspaceId } },
+      ({ authentication, requestId: mutationRequestId, auditLog }) =>
+        run(input, authentication, mutationRequestId, auditLog ?? undefined)
+    );
   };
 }
 
