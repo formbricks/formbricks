@@ -9,6 +9,9 @@ assertion-based validation suite.
   blocks that pin down the schema's semantics.
 - `validate.sh` — offline validation runner (local `zed` binary or the pinned
   `authzed/zed` container image; no SpiceDB server needed).
+- [`RUNBOOK.md`](./RUNBOOK.md) — diagnosing and recovering from relationship-sync
+  failures: the metrics, the log field contract, suggested alert rules, and the
+  recovery path through `pnpm authzed:backfill`.
 
 ## Running the validation
 
