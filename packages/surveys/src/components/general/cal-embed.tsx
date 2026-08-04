@@ -9,6 +9,21 @@ interface CalEmbedProps {
   onSuccessfulBooking: () => void;
 }
 
+// Resolve a survey CSS custom property (e.g. `--fb-heading-color`) to a concrete
+// color string. The survey style vars can hold `var(--slate-900)`-style tokens,
+// so we let the browser compute the final value via a throwaway probe element.
+// Cal.com's embed lives in an iframe and can't read the parent's vars, so we
+// forward the resolved colors into its own `cal-text-*` vars below.
+function resolveSurveyColor(scope: HTMLElement, varName: string): string | undefined {
+  const probe = document.createElement("span");
+  probe.style.color = `var(${varName})`;
+  probe.style.display = "none";
+  scope.appendChild(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color || undefined;
+}
+
 export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
   const { t } = useTranslation();
   const iframeTitle = t("common.scheduling_calendar");
@@ -18,25 +33,6 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
 
   const cal = useMemo(() => {
     const calInline = snippet("https://cal.com/embed.js");
-
-    const calCssVars = {
-      "cal-border-subtle": "transparent",
-      "cal-border-booker": "transparent",
-    };
-
-    calInline("ui", {
-      theme: "light",
-      cssVarsPerTheme: {
-        light: {
-          ...calCssVars,
-        },
-        dark: {
-          "cal-bg-muted": "transparent",
-          "cal-bg": "transparent",
-          ...calCssVars,
-        },
-      },
-    });
 
     calInline("on", {
       action: "bookingSuccessful",
@@ -53,6 +49,47 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
     document.querySelectorAll("cal-inline").forEach((el) => {
       el.remove();
     });
+
+    const embedContainer = document.getElementById(containerId);
+
+    // Forward the survey's resolved text colors into Cal's own text vars so the
+    // scheduler header (host, title, description, duration/link/timezone) stays
+    // legible and honors the survey style override instead of Cal's washed-out
+    // grey defaults. Fall back to Cal's theme when a var can't be resolved.
+    const headingColor = embedContainer
+      ? resolveSurveyColor(embedContainer, "--fb-heading-color")
+      : undefined;
+    const subheadingColor = embedContainer
+      ? resolveSurveyColor(embedContainer, "--fb-subheading-color")
+      : undefined;
+    const infoColor = embedContainer ? resolveSurveyColor(embedContainer, "--fb-info-text-color") : undefined;
+
+    const calTextVars = {
+      ...(headingColor ? { "cal-text-emphasis": headingColor } : {}),
+      ...(subheadingColor ? { "cal-text": subheadingColor, "cal-text-subtle": subheadingColor } : {}),
+      ...(infoColor ? { "cal-text-muted": infoColor } : {}),
+    };
+
+    const calCssVars = {
+      "cal-border-subtle": "transparent",
+      "cal-border-booker": "transparent",
+      ...calTextVars,
+    };
+
+    cal("ui", {
+      theme: "light",
+      cssVarsPerTheme: {
+        light: {
+          ...calCssVars,
+        },
+        dark: {
+          "cal-bg-muted": "transparent",
+          "cal-bg": "transparent",
+          ...calCssVars,
+        },
+      },
+    });
+
     cal("init", { calOrigin: element.calHost ? `https://${element.calHost}` : "https://cal.com" });
     cal("inline", {
       elementOrSelector: `#${containerId}`,
@@ -61,7 +98,6 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
 
     // The snippet injects the iframe asynchronously without a title, so screen
     // readers announce it as just "iframe". Title it as soon as it appears.
-    const embedContainer = document.getElementById(containerId);
     if (!embedContainer) return;
     const titleIframe = (): boolean => {
       const iframe = embedContainer.querySelector("iframe");
