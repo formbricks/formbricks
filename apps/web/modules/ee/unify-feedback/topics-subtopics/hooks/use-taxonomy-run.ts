@@ -8,6 +8,17 @@ import { taxonomyKeys } from "../lib/query";
 
 const RUN_POLL_INTERVAL_MS = 5000;
 
+/**
+ * The run no longer exists — reaped by the orphan cleaner, or a stale id after a regenerate. The endpoint
+ * answers 404 for both "no such run" and "not this directory's run", so the status alone decides.
+ *
+ * Shared rather than inlined because two things have to agree about it: this hook stops polling, and the
+ * container stops treating the run as in-flight. If they disagreed, the UI would sit on "generating…" with
+ * the Generate button disabled and nothing left to poll — stuck until a page reload.
+ */
+export const isTaxonomyRunGone = (error: unknown): boolean =>
+  error instanceof V3ApiError && error.status === 404;
+
 /** Poll a taxonomy run until it reaches a terminal state (succeeded/failed/canceled). Keeps polling while
  * the status is unknown too — e.g. a poll that errored before any success — so a transient Hub blip
  * self-recovers instead of leaving the caller stuck showing "generating" forever.
@@ -32,10 +43,8 @@ export const useTaxonomyRun = ({
     },
     staleTime: 0,
     refetchInterval: (query) => {
-      // A run that no longer exists is terminal however many times we ask. The endpoint returns 404 for
-      // both "no such run" and "not this directory's run", so the status alone is enough to decide.
-      const { error } = query.state;
-      if (error instanceof V3ApiError && error.status === 404) {
+      // A run that no longer exists is terminal however many times we ask.
+      if (isTaxonomyRunGone(query.state.error)) {
         return false;
       }
 
