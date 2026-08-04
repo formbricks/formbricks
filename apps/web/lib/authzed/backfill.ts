@@ -943,7 +943,10 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
 
   state.invalid += source.invalidWorkspaceTeamGrants.length + source.invalidApiKeyWorkspaceGrants.length;
 
-  let decision: TPruneDecision = { overBudget: false, refs: [] };
+  // Declared without a value, like `source` above: the `catch` returns, so an initializer here would be
+  // dead — and a dead initializer on a prune decision is worse than noise, since it reads as a safe
+  // default that nothing actually falls back to.
+  let decision: TPruneDecision;
   try {
     const observed = await observeWorkspace(ctx, workspaceId, source);
     decision = { ...observed, refs: await withinWorkspaceScope(ctx, observed.refs) };
