@@ -52,6 +52,15 @@ const projectionTotal = meter.createCounter("formbricks_authzed_projection_total
  * nothing on the scrape path.
  */
 const projectionDuration = meter.createHistogram("formbricks_authzed_projection_duration_seconds", {
+  // The SDK's default boundaries are `[0, 5, 10, 25, … 10000]` — a millisecond scale. Recording seconds
+  // against them puts every healthy projection in the single `(0, 5]` bucket, and `histogram_quantile`
+  // interpolates within a bucket: a p95 over observations that are all ~100ms reports something close to
+  // 4.75s, so the runbook's `> 0.5` alert would fire continuously on healthy traffic. These are the
+  // semantic conventions' second-scale boundaries, which include 0.5 exactly so the alert threshold
+  // falls on a boundary rather than inside a bucket.
+  advice: {
+    explicitBucketBoundaries: [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10],
+  },
   description: "Duration of AuthZed relationship projections",
   unit: "s",
 });

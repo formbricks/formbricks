@@ -46,7 +46,7 @@ All four carry only bounded attributes — never an organization, user, or relat
 | --- | --- | --- |
 | `formbricks_authzed_projection_total` | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`. |
 | `formbricks_authzed_projection_duration_seconds` | same | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement. |
-| `formbricks_authzed_request_failures_total` | `operation`, `code`, `retryable` | Requests that exhausted their retry budget. **Each one is a dropped relationship.** |
+| `formbricks_authzed_request_failures_total` | `operation`, `code`, `retryable` | Requests that exhausted their retry budget — *any* facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`. |
 | `formbricks_authzed_request_retries_total` | `operation`, `code` | Retries scheduled. Elevated but not failing = degraded, not down. |
 
 Exported through the readers already configured in `instrumentation-node.ts`: Prometheus when
@@ -111,6 +111,17 @@ pnpm authzed:backfill
 
 Exit `0` clean, `2` drift remains, `1` failed. Read `counters`, `orphans`, and `failures` from the JSON.
 
+`0` covers **every** unrepaired category, not only the ones the tool fixes: `invalid` (source rows whose
+principal and resource sit in different organizations) and `unmanaged` (relationships outside the
+vocabulary) count toward drift alongside `orphaned`, `missing` and `mismatchedParents`. That matters
+because this exit code is the gate for shadow evaluation and enforcement below — a run cannot report
+clean while authorization state nothing accounts for is still present.
+
+**A non-zero `invalid` needs a human.** These are cross-organization source rows in PostgreSQL: the join
+tables carry independent foreign keys and no same-organization constraint, so the row is representable
+even though nothing in Formbricks creates one. The backfill will never project or prune them. Establish
+how the row was written, then correct or delete it in PostgreSQL — after which a re-run reports clean.
+
 **2. Converge what PostgreSQL says should exist.**
 
 ```bash
@@ -148,8 +159,17 @@ pnpm authzed:backfill --apply --prune --confirm-prune --workspace-id=<cuid> \
 ```
 
 Narrow, but not hermetic: the API keys holding grants on that workspace are reconciled in full, which
-also converges their grants on *other* workspaces. That direction only ever writes what PostgreSQL
-says, so the effect is a wider repair than you asked for, never a deletion outside the workspace named.
+also converges their grants on *other* workspaces. That direction only ever writes what PostgreSQL says,
+so it is a wider repair than you asked for.
+
+**Deletion is held to the workspace, but at a cost worth knowing.** A grant ref implies its principal, and
+a principal with no PostgreSQL row makes the reconciler delete subject-wide — every workspace
+relationship for that team, or every organization *and* workspace relationship for that key. One orphan
+here would then delete relationships in other tenants, none of it weighed against this run's cap. So this
+scope **withholds** any grant whose team or API key is also gone: it stays counted in `orphaned`, nothing
+is deleted for it, and the run finishes `drifted`. That cleanup belongs to `--organization-id` or
+`--scope=all`, where the wider deletion is the intended unit of work. If a workspace run keeps reporting
+orphans it will not prune, this is why — widen the scope.
 
 **Resuming.** A run reports `lastOrganizationId`. Feed it back:
 
