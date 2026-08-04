@@ -1427,7 +1427,7 @@ export const PricingTable = ({
               </p>
             </div>
 
-            {workflowRunsLimit !== null && (
+            {workflowRunsLimit != null && (
               <UsageCard
                 metric={t("common.workflow_runs")}
                 currentCount={workflowRunCount}
