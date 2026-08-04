@@ -17,14 +17,6 @@ analytics schema.
   to v5.3 without changing any environment variables and everything will run.
 </Info>
 
-### Database Migrations
-
-v5.3 adds several migrations (new `Workflow` tables and enum, a nullable `Survey.archivedAt`, and
-two-factor lockout fields). They are all additive — no `NOT NULL` columns without defaults, no dropped
-columns, no `DELETE`/`TRUNCATE` — so there is **no manual migration step and no risk of data loss**. They
-apply with the standard automatic Prisma migrations on startup (or your migration job). Just back up your
-database first, as always.
-
 ### Client IP Resolution Behind a Proxy (recommended)
 
 v5.3 resolves the client IP from the `X-Forwarded-For` chain using a configurable number of trusted proxy
