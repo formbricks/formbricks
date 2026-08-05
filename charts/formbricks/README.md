@@ -259,22 +259,22 @@ taxonomy:
 The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
 
-### Hub and Taxonomy metrics and structured logs
+## Hub and Taxonomy metrics and structured logs
 
-Hub and the taxonomy service can export OpenTelemetry metrics over OTLP/HTTP. Configure the standard `OTEL_*`
-environment variables through the existing `hub.env` and `taxonomy.env` maps; no chart-specific collector values
-are required. The example below uses a SigNoz collector in the `signoz` namespace and labels both services as
-`production`. Replace the collector DNS name and `deployment.environment` with values matching each cluster and
-environment:
+Hub and the taxonomy service can export OpenTelemetry metrics over OTLP/HTTP, and Hub can additionally export
+traces. Configure the standard `OTEL_*` environment variables through the existing `hub.env` and `taxonomy.env`
+maps; no chart-specific collector values are required. The example below uses a SigNoz collector in the `signoz`
+namespace and labels both services as `production`. Replace the collector DNS name and `deployment.environment`
+with values matching each cluster and environment:
 
 ```yaml
 hub:
   env:
     LOG_FORMAT: json
     OTEL_METRICS_EXPORTER: otlp
+    OTEL_TRACES_EXPORTER: otlp
     OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
-    OTEL_SERVICE_NAME: formbricks-hub
     OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
 
 taxonomy:
@@ -287,9 +287,29 @@ taxonomy:
     OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
 ```
 
-Metrics use only bounded lifecycle, phase, provider, outcome, and reason attributes. Run, request, tenant, source,
-and field identifiers are emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings,
-credentials, authorization tokens, provider response bodies, and collector URLs are never telemetry fields.
+`OTEL_TRACES_EXPORTER` is set for Hub only, and it is what puts `trace_id` and `span_id` in Hub's logs — Hub
+stamps them onto a log record only when tracing is enabled. Without it, Hub's JSON logs carry `request_id` alone
+and Hub warns `tracing not enabled (OTEL_TRACES_EXPORTER empty or unset)` at startup. The taxonomy service exports
+metrics but does not emit traces, so the variable is deliberately absent from `taxonomy.env`; it correlates its
+logs through `request_id` and `run_id`, both of which Hub also logs, so a run can still be followed across the two
+services.
+
+`OTEL_SERVICE_NAME` is set for the taxonomy service but deliberately not for Hub. `hub.env` is applied to both
+the Hub API and the Hub worker Deployments, so setting it there would report two different processes under one
+`service.name` and make them indistinguishable at the collector. Hub already names each binary itself —
+`hub-api` and `hub-worker` — and only falls back to that when the variable is unset, so leaving it out is what
+keeps them apart. If you do want custom names, override per component in `hub.worker.env` rather than widening
+`hub.env`. The taxonomy service has no such built-in default and would report `unknown_service` without it.
+
+Both blocks need recent images. Hub reads `LOG_FORMAT` from 0.8.3 onward, and the taxonomy service's
+OpenTelemetry and JSON-logging support is newer than `v0.1.0`. Older images ignore these variables entirely
+rather than failing, so applying them ahead of the image bump is silent — expect text logs and no taxonomy
+metrics until each image is new enough.
+
+Hub's metric attributes are restricted to a fixed, low-cardinality set — for its taxonomy metrics that is
+`scope_type`, `status`, `failure_code`, and `reason`. Run, request, tenant, source, and field identifiers are
+emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings, credentials, authorization
+tokens, provider response bodies, and collector URLs are never telemetry fields.
 
 ## Values
 
