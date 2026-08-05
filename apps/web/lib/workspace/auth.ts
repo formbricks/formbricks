@@ -1,8 +1,5 @@
 import "server-only";
-import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
 import type { LegacyWorkspaceAction } from "@/lib/authorization/legacy-workspace-access";
 import { validateInputs } from "../utils/validate";
@@ -39,10 +36,10 @@ export const hasUserWorkspaceAccessForAction = async (
  * These are credential *mutations* delivered over GET: completing the flow writes the workspace's
  * third-party credentials, after which survey responses are forwarded to whichever account was
  * connected. They must therefore be gated on readWrite, not on mere workspace access —
- * {@link hasUserWorkspaceAccess} returns true for the `billing` role (which is otherwise excluded from
- * all product data) and for a `read`-only team member, either of whom could otherwise bind their own
- * account as the workspace integration and start receiving another team's responses, or overwrite the
- * credentials an admin configured.
+ * {@link canUserNavigateWorkspace} admits the `billing` role (which is otherwise excluded from all
+ * product data) and `workspace.read` admits a `read`-only team member, either of whom could otherwise
+ * bind their own account as the workspace integration and start receiving another team's responses, or
+ * overwrite the credentials an admin configured.
  */
 export const canUserWriteWorkspaceIntegrations = async (
   userId: string,
@@ -51,7 +48,7 @@ export const canUserWriteWorkspaceIntegrations = async (
 
 /**
  * Read-only counterpart for routes that only surface a connected integration's data. Unlike
- * {@link hasUserWorkspaceAccess} this still excludes the `billing` role.
+ * {@link canUserNavigateWorkspace} this still excludes the `billing` role.
  */
 export const canUserReadWorkspaceIntegrations = async (
   userId: string,
@@ -59,58 +56,35 @@ export const canUserReadWorkspaceIntegrations = async (
 ): Promise<boolean> => hasUserWorkspaceAccessForAction(userId, workspaceId, "GET");
 
 /**
- * Navigation/layout compatibility check.
+ * Whether a user may land on a workspace URL at all — the navigation/layout gate,
+ * as opposed to a gate on any of the workspace's data.
  *
- * @deprecated This helper is not action-aware and intentionally includes the
- * billing role. Do not use it for new data-access or mutation authorization;
- * migrate remaining callers under ENG-1737.
+ * Reaching a workspace is deliberately broader than reading it: the `billing` role
+ * is excluded from all product data but must still be able to follow a workspace
+ * link, because that is how it arrives at the billing screens the layout redirects
+ * it to. Expressed in the central vocabulary that is exactly:
+ *
+ *     workspace.read  OR  organization.manage_billing
+ *
+ * `workspace.read` covers owners and managers (through `organization#manage`) and
+ * any team member holding a `WorkspaceTeam` grant. `organization.manage_billing`
+ * is `owner + manager + billing`, so the second check only ever adds the billing
+ * role — an organization `member` with no grant for this workspace is in neither,
+ * and is still refused. It is ordered second so the common case costs one check.
+ *
+ * Callers pass the resolved workspace rather than an id: every one of them has
+ * already loaded it, and requiring the owning organization here keeps this helper
+ * from hiding a lookup behind an authorization decision.
  */
-export const hasUserWorkspaceAccess = async (userId: string, workspaceId: string) => {
-  validateInputs([userId, ZId], [workspaceId, ZId]);
+export const canUserNavigateWorkspace = async (
+  userId: string,
+  workspace: Readonly<{ id: string; organizationId: string }>
+): Promise<boolean> => {
+  validateInputs([userId, ZId], [workspace.id, ZId], [workspace.organizationId, ZId]);
 
-  try {
-    const orgMembership = await prisma.membership.findFirst({
-      where: {
-        userId,
-        organization: {
-          workspaces: {
-            some: {
-              id: workspaceId,
-            },
-          },
-        },
-      },
-    });
+  const actor = { type: "user", id: userId } as const;
 
-    if (!orgMembership) return false;
+  if (await can(actor, "workspace.read", { type: "workspace", id: workspace.id })) return true;
 
-    if (
-      orgMembership.role === "owner" ||
-      orgMembership.role === "manager" ||
-      orgMembership.role === "billing"
-    )
-      return true;
-
-    const teamMembership = await prisma.teamUser.findFirst({
-      where: {
-        userId,
-        team: {
-          workspaceTeams: {
-            some: {
-              workspaceId,
-            },
-          },
-        },
-      },
-    });
-
-    if (teamMembership) return true;
-
-    return false;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
+  return can(actor, "organization.manage_billing", { type: "organization", id: workspace.organizationId });
 };

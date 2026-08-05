@@ -2,10 +2,10 @@ import { redirect } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TMembership, TOrganizationRole } from "@formbricks/types/memberships";
+import { can } from "@/lib/authorization";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
@@ -23,7 +23,8 @@ vi.mock("@/lib/constants", async (importOriginal) => ({
   IS_FORMBRICKS_CLOUD: mocks.isFormbricksCloud,
 }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspace: vi.fn() }));
-vi.mock("@/lib/workspace/auth", () => ({ hasUserWorkspaceAccess: vi.fn() }));
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
+vi.mock("@/lib/workspace/auth", () => ({ canUserNavigateWorkspace: vi.fn() }));
 vi.mock("@/lib/organization/service", () => ({
   getOrganization: vi.fn(),
   getMonthlyOrganizationResponseCount: vi.fn(),
@@ -56,7 +57,7 @@ const primeAuth = (role: TOrganizationRole) => {
     userId,
     accepted: true,
   } as TMembership);
-  vi.mocked(hasUserWorkspaceAccess).mockResolvedValue(true);
+  vi.mocked(can).mockResolvedValue(true);
   vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue(null);
   vi.mocked(getBillingFallbackPath).mockReturnValue(billingFallbackPath);
 };
@@ -120,10 +121,15 @@ describe("getWorkspaceAuth workspace-access gate + isReadOnly (ENG-1769)", () =>
   // The core fix: an org member with no WorkspaceTeam grant for this workspace
   // must be rejected instead of being admitted (and mislabeled as a writer).
   test("throws AuthorizationError when the user has no workspace access", async () => {
-    vi.mocked(hasUserWorkspaceAccess).mockResolvedValue(false);
+    vi.mocked(can).mockResolvedValue(false);
     vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue(null);
     await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow(AuthorizationError);
-    expect(hasUserWorkspaceAccess).toHaveBeenCalledWith(userId, workspaceId);
+    // The narrow read permission, not the navigation check: billing has already been
+    // redirected above, so this choke point must not re-admit it.
+    expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.read", {
+      type: "workspace",
+      id: workspaceId,
+    });
   });
 
   test("marks a member with a read grant as read-only", async () => {
