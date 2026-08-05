@@ -2,7 +2,7 @@ import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
-import { MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
+import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 
@@ -37,7 +37,12 @@ export async function runMcpMutation(
   const requestId = getMcpRequestId(extra.authInfo);
   const authentication = getMcpAuthentication(extra.authInfo);
   const log = logger.withContext({ requestId, ...logContext });
-  const auditLog = buildV3AuditLog(authentication, action, resource, MCP_AUDIT_API_URL);
+  // getMcpResourceUrl(), NOT MCP_API_ROUTE: the audit schema validates apiUrl with z.url(), and
+  // logAuditEvent catches the failure and downgrades it to a logger.error — so a bare path silently
+  // drops the whole event, which is why no MCP mutation was ever audited (ENG-2173). This is the same
+  // absolute URL the OAuth protected-resource metadata advertises, so the two agree by construction
+  // and it stays correct on a sub-path deployment (WEBAPP_URL=https://host/formbricks).
+  const auditLog = buildV3AuditLog(authentication, action, resource, getMcpResourceUrl());
 
   try {
     const response = await run({ authentication, requestId, auditLog });
