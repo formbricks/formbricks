@@ -20,8 +20,10 @@ Key facts:
 - **`reconcileCloudStripeSubscriptionsForOrganization` does NOT backfill line items** — existing Scale subs
   must be backfilled manually.
 - The usage card's "included" number is the **price's free-tier boundary** (global catalog), not the
-  entitlement. **Fail-closed:** if the workflow price is not graduated with a free first tier (finite
-  `up_to`), catalog construction throws and the billing page 500s — loud, pre-invoice, by design.
+  entitlement. **Fail-closed (workflow item only):** if the workflow price is not graduated with a free
+  first tier (finite `up_to`), the workflow item is dropped from the catalog (card hides, new subs skip
+  it — workflows just don't bill) and a loud `logger.error` fires. The rest of billing (base/responses
+  checkout, billing page) stays up. Watch logs for `Invalid workflow_runs price`.
 
 ## Rollout — do in order (order matters, fail-closed)
 
@@ -72,6 +74,8 @@ That gap is exactly what the backfill closes.
 
 ## Guardrails
 
-- Price MUST be graduated with a free first tier, else billing page 500s (loud, pre-invoice — intended).
-- Never two active workflow prices per plan/interval.
+- Price MUST be graduated with a free first tier. If not, the workflow item is silently dropped (card
+  hidden, not billed on new subs) and a `logger.error` ("Invalid workflow_runs price") fires — the rest
+  of billing stays up. Monitor logs; a bad price means workflows stop billing, not an outage.
+- Never two active workflow prices per plan/interval (that DOES break the catalog — `found 2`).
 - Deploy code before creating the price.
