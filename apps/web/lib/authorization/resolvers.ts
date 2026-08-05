@@ -25,6 +25,11 @@ const rethrowAsDatabaseError = (error: unknown): never => {
   throw error;
 };
 
+export type TAuthorizationWorkspaceScope = Readonly<{
+  organizationId: string;
+  workspaceId: string;
+}>;
+
 /** Whether a user principal still exists and is active. */
 export const isAuthorizationUserActive = reactCache(async (userId: string): Promise<boolean> => {
   try {
@@ -65,6 +70,73 @@ export const getWorkspaceOrganizationId = reactCache(async (workspaceId: string)
     return rethrowAsDatabaseError(error);
   }
 });
+
+/** The workspace and organization a survey belongs to. */
+export const getSurveyAuthorizationWorkspaceScope = reactCache(
+  async (surveyId: string): Promise<TAuthorizationWorkspaceScope | null> => {
+    try {
+      const survey = await prisma.survey.findUnique({
+        where: { id: surveyId },
+        select: {
+          workspaceId: true,
+          workspace: { select: { organizationId: true } },
+        },
+      });
+      return survey
+        ? { organizationId: survey.workspace.organizationId, workspaceId: survey.workspaceId }
+        : null;
+    } catch (error) {
+      return rethrowAsDatabaseError(error);
+    }
+  }
+);
+
+/** The workspace and organization a dashboard belongs to. */
+export const getDashboardAuthorizationWorkspaceScope = reactCache(
+  async (dashboardId: string): Promise<TAuthorizationWorkspaceScope | null> => {
+    try {
+      const dashboard = await prisma.dashboard.findUnique({
+        where: { id: dashboardId },
+        select: {
+          workspaceId: true,
+          workspace: { select: { organizationId: true } },
+        },
+      });
+      return dashboard
+        ? { organizationId: dashboard.workspace.organizationId, workspaceId: dashboard.workspaceId }
+        : null;
+    } catch (error) {
+      return rethrowAsDatabaseError(error);
+    }
+  }
+);
+
+/** The workspace and organization a response's survey belongs to. */
+export const getResponseAuthorizationWorkspaceScope = reactCache(
+  async (responseId: string): Promise<TAuthorizationWorkspaceScope | null> => {
+    try {
+      const response = await prisma.response.findUnique({
+        where: { id: responseId },
+        select: {
+          survey: {
+            select: {
+              workspaceId: true,
+              workspace: { select: { organizationId: true } },
+            },
+          },
+        },
+      });
+      return response
+        ? {
+            organizationId: response.survey.workspace.organizationId,
+            workspaceId: response.survey.workspaceId,
+          }
+        : null;
+    } catch (error) {
+      return rethrowAsDatabaseError(error);
+    }
+  }
+);
 
 /** The workspace a survey belongs to (`Survey.workspaceId`). */
 export const getSurveyWorkspaceId = reactCache(async (surveyId: string): Promise<string | null> => {

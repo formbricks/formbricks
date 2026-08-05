@@ -24,9 +24,7 @@ const globalForAuthorization = globalThis as unknown as {
 const authorizationContext =
   globalForAuthorization.formbricksAuthorizationContext ?? new AsyncLocalStorage<TAuthorizationContext>();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForAuthorization.formbricksAuthorizationContext = authorizationContext;
-}
+globalForAuthorization.formbricksAuthorizationContext = authorizationContext;
 
 const COMPARISON_CONCURRENCY = 4;
 const MAX_COMPARISON_JOBS = 100;

@@ -79,4 +79,4 @@ export const matchesRolloutRule = (
 export const targetsRolloutSurface = (
   rule: TRolloutRule,
   target: TAuthzedAuthorizationRolloutTarget
-): boolean => rule.targets.includes(target);
+): boolean => rule.targets.includes(target) && (rule.organizations.all || rule.organizations.ids.length > 0);

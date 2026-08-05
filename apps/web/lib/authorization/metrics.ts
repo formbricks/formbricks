@@ -58,5 +58,9 @@ export const recordAuthorizationComparison = (metric: TAuthorizationComparisonMe
   };
 
   comparisonsTotal.add(1, attributes);
-  comparisonDuration.record(metric.durationMs / 1_000, attributes);
+  comparisonDuration.record(metric.durationMs / 1_000, {
+    mode: metric.mode,
+    outcome: metric.outcome,
+    surface: metric.surface,
+  });
 };

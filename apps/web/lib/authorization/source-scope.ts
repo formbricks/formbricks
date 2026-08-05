@@ -3,9 +3,9 @@ import type { TAuthorizationActor, TAuthorizationResource } from "./contract";
 import {
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
-  getDashboardWorkspaceId,
-  getResponseSurveyId,
-  getSurveyWorkspaceId,
+  getDashboardAuthorizationWorkspaceScope,
+  getResponseAuthorizationWorkspaceScope,
+  getSurveyAuthorizationWorkspaceScope,
   getTeamOrganizationId,
   getWorkspaceOrganizationId,
   isAuthorizationUserActive,
@@ -29,6 +29,16 @@ const resolveWorkspaceScope = async (workspaceId: string): Promise<TResourceScop
     : null;
 };
 
+const toWorkspaceResourceScope = (
+  scope: Readonly<{ organizationId: string; workspaceId: string }> | null
+): TResourceScope | null =>
+  scope
+    ? {
+        organizationId: scope.organizationId,
+        permissionResource: { type: "workspace", id: scope.workspaceId },
+      }
+    : null;
+
 const resolveResourceScope = async (resource: TAuthorizationResource): Promise<TResourceScope | null> => {
   switch (resource.type) {
     case "organization": {
@@ -46,18 +56,13 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
       return organizationId ? { organizationId, permissionResource: resource } : null;
     }
     case "survey": {
-      const workspaceId = await getSurveyWorkspaceId(resource.id);
-      return workspaceId ? resolveWorkspaceScope(workspaceId) : null;
+      return toWorkspaceResourceScope(await getSurveyAuthorizationWorkspaceScope(resource.id));
     }
     case "dashboard": {
-      const workspaceId = await getDashboardWorkspaceId(resource.id);
-      return workspaceId ? resolveWorkspaceScope(workspaceId) : null;
+      return toWorkspaceResourceScope(await getDashboardAuthorizationWorkspaceScope(resource.id));
     }
     case "response": {
-      const surveyId = await getResponseSurveyId(resource.id);
-      if (!surveyId) return null;
-      const workspaceId = await getSurveyWorkspaceId(surveyId);
-      return workspaceId ? resolveWorkspaceScope(workspaceId) : null;
+      return toWorkspaceResourceScope(await getResponseAuthorizationWorkspaceScope(resource.id));
     }
   }
 };
@@ -71,17 +76,25 @@ export const resolveAuthorizationScope = async (
   actor: TAuthorizationActor,
   resource: TAuthorizationResource
 ): Promise<TResolvedAuthorizationScope | null> => {
-  const resourceScope = await resolveResourceScope(resource);
-  if (!resourceScope) return null;
-
   if (actor.type === "user") {
+    const [resourceScope, actorValid] = await Promise.all([
+      resolveResourceScope(resource),
+      isAuthorizationUserActive(actor.id),
+    ]);
+    if (!resourceScope) return null;
+
     return {
-      actorValid: await isAuthorizationUserActive(actor.id),
+      actorValid,
       ...resourceScope,
     };
   }
 
-  const actorOrganizationId = await getApiKeyOrganizationId(actor.id);
+  const [resourceScope, actorOrganizationId] = await Promise.all([
+    resolveResourceScope(resource),
+    getApiKeyOrganizationId(actor.id),
+  ]);
+  if (!resourceScope) return null;
+
   return {
     actorValid: actorOrganizationId !== null && actorOrganizationId === resourceScope.organizationId,
     ...resourceScope,

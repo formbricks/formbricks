@@ -47,7 +47,11 @@ describe("authorization comparison metrics", () => {
       surface: "server_action",
     };
     expect(telemetry.add).toHaveBeenCalledWith(1, expectedAttributes);
-    expect(telemetry.record).toHaveBeenCalledWith(0.125, expectedAttributes);
+    expect(telemetry.record).toHaveBeenCalledWith(0.125, {
+      mode: "shadow",
+      outcome: "legacy_allow_authzed_deny",
+      surface: "server_action",
+    });
   });
 
   test("uses stable none labels when no operational error is present", () => {
@@ -78,6 +82,10 @@ describe("authorization comparison metrics", () => {
       surface: "api_v2",
     };
     expect(telemetry.add).toHaveBeenCalledWith(1, expectedAttributes);
-    expect(telemetry.record).toHaveBeenCalledWith(0.01, expectedAttributes);
+    expect(telemetry.record).toHaveBeenCalledWith(0.01, {
+      mode: "shadow",
+      outcome: "match",
+      surface: "api_v2",
+    });
   });
 });

@@ -74,4 +74,10 @@ describe("authorization rollout configuration", () => {
     expect(matchesRolloutRule(shadow, "server_action:user", "org-2")).toBe(false);
     expect(matchesRolloutRule(shadow, "api_v3:user", "org-1")).toBe(false);
   });
+
+  test("does not target a rollout surface without an organization cohort", () => {
+    rolloutEnv.AUTHZED_SHADOW_TARGETS = "server_action:user";
+
+    expect(targetsRolloutSurface(getAuthorizationRolloutConfig().shadow, "server_action:user")).toBe(false);
+  });
 });

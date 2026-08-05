@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
-  getDashboardWorkspaceId,
-  getResponseSurveyId,
-  getSurveyWorkspaceId,
+  getDashboardAuthorizationWorkspaceScope,
+  getResponseAuthorizationWorkspaceScope,
+  getSurveyAuthorizationWorkspaceScope,
   getTeamOrganizationId,
   getWorkspaceOrganizationId,
   isAuthorizationUserActive,
@@ -14,9 +14,9 @@ import { resolveAuthorizationScope } from "./source-scope";
 vi.mock("./resolvers", () => ({
   getApiKeyOrganizationId: vi.fn(),
   getAuthorizationOrganizationId: vi.fn(),
-  getDashboardWorkspaceId: vi.fn(),
-  getResponseSurveyId: vi.fn(),
-  getSurveyWorkspaceId: vi.fn(),
+  getDashboardAuthorizationWorkspaceScope: vi.fn(),
+  getResponseAuthorizationWorkspaceScope: vi.fn(),
+  getSurveyAuthorizationWorkspaceScope: vi.fn(),
   getTeamOrganizationId: vi.fn(),
   getWorkspaceOrganizationId: vi.fn(),
   isAuthorizationUserActive: vi.fn(),
@@ -46,12 +46,18 @@ describe("resolveAuthorizationScope", () => {
   });
 
   test("resolves survey, dashboard, and response parent chains", async () => {
-    vi.mocked(getSurveyWorkspaceId).mockImplementation(async (id) =>
-      id === "survey-from-response" ? "workspace-response" : "workspace-survey"
-    );
-    vi.mocked(getDashboardWorkspaceId).mockResolvedValue("workspace-dashboard");
-    vi.mocked(getResponseSurveyId).mockResolvedValue("survey-from-response");
-    vi.mocked(getWorkspaceOrganizationId).mockImplementation(async (id) => `org-${id}`);
+    vi.mocked(getSurveyAuthorizationWorkspaceScope).mockResolvedValue({
+      organizationId: "org-workspace-survey",
+      workspaceId: "workspace-survey",
+    });
+    vi.mocked(getDashboardAuthorizationWorkspaceScope).mockResolvedValue({
+      organizationId: "org-workspace-dashboard",
+      workspaceId: "workspace-dashboard",
+    });
+    vi.mocked(getResponseAuthorizationWorkspaceScope).mockResolvedValue({
+      organizationId: "org-workspace-response",
+      workspaceId: "workspace-response",
+    });
 
     await expect(
       resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "survey", id: "survey-1" })
@@ -76,13 +82,31 @@ describe("resolveAuthorizationScope", () => {
     });
   });
 
-  test("denies missing resources before validating the actor", async () => {
+  test("denies missing resources after resolving actor and resource in parallel", async () => {
     vi.mocked(getWorkspaceOrganizationId).mockResolvedValue(null);
 
     await expect(
       resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "workspace", id: "missing" })
     ).resolves.toBeNull();
-    expect(isAuthorizationUserActive).not.toHaveBeenCalled();
+    expect(isAuthorizationUserActive).toHaveBeenCalledWith("user-1");
+  });
+
+  test("starts actor validation without waiting for resource scope resolution", async () => {
+    let resolveResource: ((organizationId: string) => void) | undefined;
+    vi.mocked(getWorkspaceOrganizationId).mockReturnValue(
+      new Promise((resolve) => {
+        resolveResource = resolve;
+      })
+    );
+
+    const result = resolveAuthorizationScope(
+      { type: "user", id: "user-1" },
+      { type: "workspace", id: "workspace-1" }
+    );
+
+    expect(isAuthorizationUserActive).toHaveBeenCalledWith("user-1");
+    resolveResource?.("org-1");
+    await expect(result).resolves.toMatchObject({ actorValid: true, organizationId: "org-1" });
   });
 
   test("marks a missing user as invalid", async () => {

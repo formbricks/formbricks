@@ -6,8 +6,11 @@ import {
   getApiKeyAuthById,
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
+  getDashboardAuthorizationWorkspaceScope,
   getDashboardWorkspaceId,
+  getResponseAuthorizationWorkspaceScope,
   getResponseSurveyId,
+  getSurveyAuthorizationWorkspaceScope,
   getSurveyWorkspaceId,
   getTeamOrganizationId,
   getWorkspaceOrganizationId,
@@ -81,6 +84,76 @@ describe("parent-id resolvers", () => {
       await expect(fn("error-id")).rejects.toBeInstanceOf(DatabaseError);
     }
   );
+});
+
+describe("authorization workspace scope resolvers", () => {
+  test("resolves survey scope in one query", async () => {
+    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce({
+      workspaceId: "ws-survey",
+      workspace: { organizationId: "org-1" },
+    } as never);
+
+    await expect(getSurveyAuthorizationWorkspaceScope("survey-scope")).resolves.toEqual({
+      organizationId: "org-1",
+      workspaceId: "ws-survey",
+    });
+    expect(prisma.survey.findUnique).toHaveBeenCalledWith({
+      where: { id: "survey-scope" },
+      select: {
+        workspaceId: true,
+        workspace: { select: { organizationId: true } },
+      },
+    });
+  });
+
+  test("resolves dashboard scope in one query", async () => {
+    vi.mocked(prisma.dashboard.findUnique).mockResolvedValueOnce({
+      workspaceId: "ws-dashboard",
+      workspace: { organizationId: "org-2" },
+    } as never);
+
+    await expect(getDashboardAuthorizationWorkspaceScope("dashboard-scope")).resolves.toEqual({
+      organizationId: "org-2",
+      workspaceId: "ws-dashboard",
+    });
+  });
+
+  test("resolves response scope in one query", async () => {
+    vi.mocked(prisma.response.findUnique).mockResolvedValueOnce({
+      survey: {
+        workspaceId: "ws-response",
+        workspace: { organizationId: "org-3" },
+      },
+    } as never);
+
+    await expect(getResponseAuthorizationWorkspaceScope("response-scope")).resolves.toEqual({
+      organizationId: "org-3",
+      workspaceId: "ws-response",
+    });
+    expect(prisma.response.findUnique).toHaveBeenCalledWith({
+      where: { id: "response-scope" },
+      select: {
+        survey: {
+          select: {
+            workspaceId: true,
+            workspace: { select: { organizationId: true } },
+          },
+        },
+      },
+    });
+  });
+
+  test.each([
+    [getSurveyAuthorizationWorkspaceScope, prisma.survey.findUnique],
+    [getDashboardAuthorizationWorkspaceScope, prisma.dashboard.findUnique],
+    [getResponseAuthorizationWorkspaceScope, prisma.response.findUnique],
+  ] as const)("returns null when missing and maps Prisma errors", async (resolver, model) => {
+    vi.mocked(model).mockResolvedValueOnce(null);
+    await expect(resolver(`missing-${model.name}`)).resolves.toBeNull();
+
+    vi.mocked(model).mockRejectedValueOnce(prismaKnownError);
+    await expect(resolver(`error-${model.name}`)).rejects.toBeInstanceOf(DatabaseError);
+  });
 });
 
 describe("isAuthorizationUserActive", () => {

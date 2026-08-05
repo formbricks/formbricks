@@ -354,10 +354,10 @@ sum(rate(formbricks_authzed_authorization_comparisons_total{outcome="operational
 /
 sum(rate(formbricks_authzed_authorization_comparisons_total[5m]))
 
-# Comparison latency p95 by mode, surface, and actor type.
+# Comparison latency p95 by mode, surface, and outcome.
 histogram_quantile(
   0.95,
-  sum by (le, mode, surface, actor_type) (
+  sum by (le, mode, surface, outcome) (
     rate(formbricks_authzed_authorization_duration_seconds_bucket[5m])
   )
 )
