@@ -7,9 +7,9 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -57,13 +57,21 @@ export const recheckLicenseAction = authenticatedActionClient
         throw new ResourceNotFoundError("Organization", null);
       }
 
-      // Check user is owner or manager (not member)
-      const currentUserMembership = await getMembershipByUserIdOrganizationId(ctx.user.id, organization.id);
-      if (!currentUserMembership) {
+      // Check user is owner or manager.
+      //
+      // ENG-1737: this used to deny the `member` role by name, which let the `billing` role
+      // through — it is neither an owner nor a manager, but it is also not a member, so the
+      // negative test missed it. Asking for `organization.manage` (defined as exactly owner +
+      // manager) is what the comment and the error message always claimed. Membership is still
+      // established separately so a non-member keeps reporting as a non-member.
+      const actor = { type: "user", id: ctx.user.id } as const;
+      const organizationResource = { type: "organization", id: organization.id } as const;
+
+      if (!(await can(actor, "organization.read", organizationResource))) {
         throw new AuthenticationError("User not a member of this organization");
       }
 
-      if (currentUserMembership.role === "member") {
+      if (!(await can(actor, "organization.manage", organizationResource))) {
         throw new OperationNotAllowedError("Only owners and managers can recheck license");
       }
 
