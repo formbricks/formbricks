@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -168,6 +169,35 @@ describe("handleFeedbackSourcePipeline", () => {
     await handleFeedbackSourcePipeline(mockResponse, mockSurvey, "env-1");
 
     expect(updateFeedbackSource).not.toHaveBeenCalled();
+  });
+
+  // A Hub outage is reported once per pipeline run at warn, and the per-record detail sits at debug.
+  // Pinned because the levels are an operator-visible contract, not an implementation detail: the
+  // per-record line used to be error, which made a handled failure look like an unhandled fault and
+  // reported one outage 2N+1 times. Anyone alerting on this path reads the warn.
+  test("reports a Hub outage once at warn, with per-record detail at debug", async () => {
+    vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
+    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        { data: null, error: { status: 500, message: "Hub unavailable", detail: "Hub unavailable" } },
+      ],
+    });
+
+    await handleFeedbackSourcePipeline(mockResponse, mockSurvey, "env-1");
+
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ feedbackSourceId: "conn-1", successes: 0, failures: 1 }),
+      expect.stringContaining("1/1 FeedbackRecords failed to send")
+    );
+
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({ feedbackSourceId: "conn-1", feedbackRecordIndex: 0 }),
+      expect.any(String)
+    );
+
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   test("updates lastSyncAt on partial failure when some creates succeed", async () => {
