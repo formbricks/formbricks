@@ -59,6 +59,12 @@ export const canApiKeyMutateFeedbackDirectoryRecords = (workspaceIds: string[]):
  * `isRecordMutation` additionally applies the shared-directory rule (ENG-2189). It is required rather
  * than defaulted so a call site added later has to state which side it is on instead of silently
  * getting the permissive branch.
+ *
+ * Counting the directory down to one workspace says it is unshared, not that the one workspace is the
+ * caller's. The `access.ts` twin (`requireApiKeyExclusiveDataset`) asserts that explicitly against its
+ * resolved workspace; here it falls out of the permission match below, where a single `workspaceIds`
+ * entry makes an empty `matchingWeights` mean precisely "the key holds nothing on that workspace".
+ * There is no resolved workspace to compare against — the permission match *is* the authorization.
  */
 export const hasApiKeyImplicitFeedbackDirectoryAccess = (
   authentication: TAuthenticationApiKey,
