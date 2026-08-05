@@ -1,6 +1,7 @@
 "use client";
 
 import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
+import type { TFunction } from "i18next";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,7 +35,10 @@ import {
   waitForBillingPaymentMethodAction,
   waitForBillingPlanAction,
 } from "../actions";
-import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
+import type {
+  TStripeBillingCatalogDisplay,
+  TStripeBillingCatalogDisplayItem,
+} from "../lib/stripe-billing-catalog";
 import { PlanComparisonTable, type TPlanColumn } from "./plan-comparison";
 import { PlanResponseFeature, PlanWorkflowRunsFeature } from "./response-pricing-tooltip";
 import { TrialAlert } from "./trial-alert";
@@ -85,6 +89,21 @@ const STANDARD_PLAN_LEVEL: Record<TStandardPlan, number> = {
   hobby: 0,
   pro: 1,
   scale: 2,
+};
+
+// Billing-catalog display item for the org's current plan/interval, or null for plans not in the
+// standard catalog (custom/unknown). Kept out of the component to avoid a nested ternary and hold the
+// component's cognitive complexity down.
+const getCurrentPlanCatalogItem = (
+  billingCatalog: TStripeBillingCatalogDisplay,
+  currentCloudPlan: TDisplayPlan,
+  currentBillingInterval: TCloudBillingInterval | null
+): TStripeBillingCatalogDisplayItem | null => {
+  const interval = currentBillingInterval ?? "monthly";
+  if (currentCloudPlan === "hobby") return billingCatalog.hobby.monthly;
+  if (currentCloudPlan === "pro") return billingCatalog.pro[interval];
+  if (currentCloudPlan === "scale") return billingCatalog.scale[interval];
+  return null;
 };
 
 const getCurrentCloudPlanLabel = (plan: TDisplayPlan, t: (key: string) => string) => {
@@ -237,6 +256,46 @@ const isSwitchAtPeriodEndCta = (
   return STANDARD_PLAN_LEVEL[plan] <= currentPlanLevel;
 };
 
+// Renders one plan-card feature row. Metered features (responses, workflow runs) show a tier tooltip
+// sourced from the catalog; plain text features just render their label. Extracted from PricingTable
+// to keep that component's cognitive complexity within bounds.
+const PlanFeatureContent = ({
+  feature,
+  billingCatalog,
+  selectedInterval,
+  locale,
+  t,
+}: Readonly<{
+  feature: TPlanFeature;
+  billingCatalog: TStripeBillingCatalogDisplay;
+  selectedInterval: TCloudBillingInterval;
+  locale: string;
+  t: TFunction;
+}>) => {
+  if (feature.type === "text") {
+    return <>{feature.label}</>;
+  }
+
+  if (feature.type === "responses") {
+    return (
+      <PlanResponseFeature
+        plan={feature.plan}
+        locale={locale}
+        overage={billingCatalog[feature.plan][selectedInterval].responseOverage}
+        t={t}
+      />
+    );
+  }
+
+  return (
+    <PlanWorkflowRunsFeature
+      locale={locale}
+      overage={billingCatalog[feature.plan][selectedInterval].workflowRunsOverage}
+      t={t}
+    />
+  );
+};
+
 export const PricingTable = ({
   organization,
   responseCount,
@@ -317,14 +376,11 @@ export const PricingTable = ({
   // own free tier), NOT the entitlement limit, so the number shown is exactly what Stripe leaves
   // uncharged — the two can't drift and reassure a customer they're inside an allowance while being
   // billed (ENG-2193/2194). Null when the current plan has no workflow price, so the card hides.
-  const currentPlanCatalogItem =
-    currentCloudPlan === "hobby"
-      ? billingCatalog.hobby.monthly
-      : currentCloudPlan === "pro"
-        ? billingCatalog.pro[currentBillingInterval ?? "monthly"]
-        : currentCloudPlan === "scale"
-          ? billingCatalog.scale[currentBillingInterval ?? "monthly"]
-          : null;
+  const currentPlanCatalogItem = getCurrentPlanCatalogItem(
+    billingCatalog,
+    currentCloudPlan,
+    currentBillingInterval
+  );
   const workflowRunsLimit = currentPlanCatalogItem?.workflowRunsIncluded ?? null;
   const trialEndDate = organization.billing.stripe?.trialEnd
     ? new Date(organization.billing.stripe.trialEnd)
@@ -1296,22 +1352,13 @@ export const PricingTable = ({
                     className="flex items-start gap-3 text-sm text-slate-700">
                     <CheckIcon className="mt-0.5 size-4 shrink-0 text-slate-500" />
                     <span>
-                      {feature.type === "text" && feature.label}
-                      {feature.type === "responses" && (
-                        <PlanResponseFeature
-                          plan={feature.plan}
-                          locale={locale}
-                          overage={billingCatalog[feature.plan][selectedInterval].responseOverage}
-                          t={t}
-                        />
-                      )}
-                      {feature.type === "workflow_runs" && (
-                        <PlanWorkflowRunsFeature
-                          locale={locale}
-                          overage={billingCatalog[feature.plan][selectedInterval].workflowRunsOverage}
-                          t={t}
-                        />
-                      )}
+                      <PlanFeatureContent
+                        feature={feature}
+                        billingCatalog={billingCatalog}
+                        selectedInterval={selectedInterval}
+                        locale={locale}
+                        t={t}
+                      />
                     </span>
                   </li>
                 ))}
