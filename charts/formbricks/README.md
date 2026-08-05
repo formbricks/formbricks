@@ -275,7 +275,6 @@ hub:
     OTEL_TRACES_EXPORTER: otlp
     OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
-    OTEL_SERVICE_NAME: formbricks-hub
     OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
 
 taxonomy:
@@ -294,6 +293,13 @@ and Hub warns `tracing not enabled (OTEL_TRACES_EXPORTER empty or unset)` at sta
 metrics but does not emit traces, so the variable is deliberately absent from `taxonomy.env`; it correlates its
 logs through `request_id` and `run_id`, both of which Hub also logs, so a run can still be followed across the two
 services.
+
+`OTEL_SERVICE_NAME` is set for the taxonomy service but deliberately not for Hub. `hub.env` is applied to both
+the Hub API and the Hub worker Deployments, so setting it there would report two different processes under one
+`service.name` and make them indistinguishable at the collector. Hub already names each binary itself —
+`hub-api` and `hub-worker` — and only falls back to that when the variable is unset, so leaving it out is what
+keeps them apart. If you do want custom names, override per component in `hub.worker.env` rather than widening
+`hub.env`. The taxonomy service has no such built-in default and would report `unknown_service` without it.
 
 Both blocks need images newer than the ones this chart currently pins. Hub reads `LOG_FORMAT` only in builds after
 0.8.2, and the taxonomy service gained its OpenTelemetry and JSON-logging support after `v0.1.0`. Older images
