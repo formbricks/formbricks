@@ -32,11 +32,11 @@
     "@formbricks/eslint-config": "workspace:*",
     "@types/js-yaml": "4.0.9",
     "@vitest/coverage-v8": "4.1.6",
-    "js-yaml": "4.1.0",
+    "js-yaml": "4.3.0",
     "publint": "0.3.21",
     "rimraf": "^6.1.2",
     "typescript": "^5.9.3",
-    "vite": "7.3.3",
+    "vite": "7.3.5",
     "vite-plugin-dts": "^4.5.4",
     "vitest": "4.1.6"
   }
