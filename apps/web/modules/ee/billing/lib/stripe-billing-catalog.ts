@@ -2,6 +2,7 @@ import "server-only";
 import { cache as reactCache } from "react";
 import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
+import { logger } from "@formbricks/logger";
 import type { TCloudBillingInterval } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { env } from "@/lib/env";
@@ -241,7 +242,8 @@ const getOptionalSinglePrice = (
 // free (unit_amount 0, flat_amount 0) up to a finite boundary grants exactly that many free runs —
 // the number the usage card shows. Any other shape (flat per-unit, a paid first tier, or an
 // unbounded free tier) means the card's "X of N included" would not match what Stripe charges, so we
-// throw rather than render a reassuring-but-false allowance (ENG-2193/2194). Returns null when the
+// throw rather than let a reassuring-but-false allowance render (ENG-2193/2194). The caller catches
+// this and degrades the workflow item only, keeping the rest of the catalog up. Returns null when the
 // plan has no workflow price at all.
 const resolveWorkflowIncludedVolume = (price: TStripeCatalogPrice | null, label: string): number | null => {
   if (!price) {
@@ -277,14 +279,32 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
 
   // Resolve the workflow price AND its validated included volume together, so both the price object
   // and the number the UI trusts come from the same source and can't drift.
+  //
+  // Fail closed on the WORKFLOW ITEM ONLY, not the whole catalog: a misconfigured workflow price
+  // (see resolveWorkflowIncludedVolume) drops the workflow price + included volume to null and logs
+  // loudly, instead of throwing. The card then hides and new checkouts skip the workflow line item —
+  // i.e. workflows simply don't bill, today's harmless state — while base/responses checkout and the
+  // billing page for every plan/org stay up. Base/responses themselves stay fail-loud (getSinglePrice
+  // throws): they are load-bearing on every plan, so a missing one is a real catalog outage.
   const workflowRuns = (
     plan: TStandardCloudPlan
   ): Pick<TStripeBillingCatalogItem, "workflowRunsPrice" | "workflowRunsIncluded"> => {
     const workflowRunsPrice = getOptionalSinglePrice(prices, plan, "workflow_runs", "monthly");
-    return {
-      workflowRunsPrice,
-      workflowRunsIncluded: resolveWorkflowIncludedVolume(workflowRunsPrice, `${plan}/workflow_runs/monthly`),
-    };
+    try {
+      return {
+        workflowRunsPrice,
+        workflowRunsIncluded: resolveWorkflowIncludedVolume(
+          workflowRunsPrice,
+          `${plan}/workflow_runs/monthly`
+        ),
+      };
+    } catch (error) {
+      logger.error(
+        { error, plan, priceId: workflowRunsPrice?.id },
+        "Invalid workflow_runs price; excluding it from the catalog so the rest of billing stays up"
+      );
+      return { workflowRunsPrice: null, workflowRunsIncluded: null };
+    }
   };
 
   return {

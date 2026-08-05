@@ -7,6 +7,11 @@ const TEST_TIMEOUT_MS = 15_000;
 const mocks = vi.hoisted(() => ({
   pricesList: vi.fn(),
   cacheWithCache: vi.fn(),
+  loggerError: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: { error: mocks.loggerError },
 }));
 
 vi.mock("./stripe-client", () => ({
@@ -329,11 +334,13 @@ describe("stripe-billing-catalog", () => {
   );
 
   test(
-    "fails closed when the workflow price cannot honor its included volume (no free first tier)",
+    "degrades the workflow item only (keeps the catalog up) when the workflow price has no free first tier",
     async () => {
       // The footgun: a metered workflow price that charges from run #1 (first tier is NOT free). The
-      // usage card would claim "X of N included" while Stripe invoices every run. Rather than render a
-      // reassuring-but-false allowance, catalog construction must throw (ENG-2193/2194).
+      // usage card must not claim "X of N included" while Stripe invoices every run. Rather than take
+      // down the whole catalog (checkout + billing for every plan), the workflow item is dropped
+      // (price + included → null, card hides, new subs skip it) and the failure is logged loudly; the
+      // rest of the catalog resolves normally (ENG-2193/2194).
       const paidFromFirstUnit = {
         ...createWorkflowRunsPrice("price_scale_workflow_runs"),
         tiers: [
@@ -359,11 +366,21 @@ describe("stripe-billing-catalog", () => {
         has_more: false,
       });
 
-      const { getStripeBillingCatalogDisplay } = await import("./stripe-billing-catalog");
+      const { getStripeBillingCatalogDisplay, getCatalogItemsForPlan } =
+        await import("./stripe-billing-catalog");
 
-      await expect(getStripeBillingCatalogDisplay()).rejects.toThrow(
-        "must be graduated with a free first tier"
-      );
+      // Catalog resolves — no throw — and the workflow item is degraded to null (no false allowance).
+      const display = await getStripeBillingCatalogDisplay();
+      expect(display.scale.monthly.workflowRunsIncluded).toBeNull();
+      expect(display.scale.monthly.workflowRunsOverage).toBeNull();
+
+      // New Scale checkout skips the misconfigured workflow price (base + responses only).
+      await expect(getCatalogItemsForPlan("scale", "monthly")).resolves.toEqual([
+        { price: "price_scale_monthly", quantity: 1 },
+        { price: "price_scale_responses" },
+      ]);
+
+      expect(mocks.loggerError).toHaveBeenCalled();
     },
     TEST_TIMEOUT_MS
   );
