@@ -1,8 +1,8 @@
 import "server-only";
 import { AuthorizationError } from "@formbricks/types/errors";
 import type { TAuthorizationAction, TAuthorizationActor, TAuthorizationResourceForAction } from "./contract";
+import { authorizationCoordinator } from "./coordinator";
 import type { AuthorizationEvaluator } from "./evaluator";
-import { legacyEvaluator } from "./legacy-evaluator";
 
 /**
  * The single, engine-independent authorization interface for Formbricks (Phase 0
@@ -15,8 +15,7 @@ import { legacyEvaluator } from "./legacy-evaluator";
  * later without touching any caller.
  */
 
-// Selection point. Phase 0 is legacy-only; the SpiceDB evaluator slots in here.
-const evaluator: AuthorizationEvaluator = legacyEvaluator;
+const evaluator: AuthorizationEvaluator = authorizationCoordinator;
 
 /** Whether `actor` may perform `action` on `resource`. */
 export const can = <TAction extends TAuthorizationAction>(

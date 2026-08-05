@@ -189,6 +189,7 @@ const run = async (): Promise<void> => {
     );
 
     writeResult({
+      completedAtSnapshot: result.completedAtSnapshot,
       handedOverCount: handedOver.length,
       orphaned: result.counters.orphaned,
       pruned: result.counters.pruned,

@@ -23,6 +23,10 @@ const API_KEY_ORGANIZATION_RELATIONS = ["api_key_reader", "api_key_writer"] as c
 const API_KEY_WORKSPACE_RELATIONS = ["manager", "reader", "writer"] as const;
 
 type TSmokeCommand =
+  | "check-api-key-allow"
+  | "check-api-key-deny"
+  | "check-user-allow"
+  | "check-user-deny"
   | "delete"
   | "delete-api-key"
   | "delete-manager-team"
@@ -42,6 +46,10 @@ const writeResult = (result: object): void => {
 };
 
 const isSmokeCommand = (value: string | undefined): value is TSmokeCommand =>
+  value === "check-api-key-allow" ||
+  value === "check-api-key-deny" ||
+  value === "check-user-allow" ||
+  value === "check-user-deny" ||
   value === "delete" ||
   value === "delete-api-key" ||
   value === "delete-manager-team" ||
@@ -234,52 +242,81 @@ const deleteWriterApiKeyProjection = async (client: TAuthzedClient): Promise<voi
   });
 };
 
-const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeCommand): Promise<void> => {
+type TSmokeResult = Readonly<{ status: "projected" }> | Readonly<{ allowed: boolean; status: "checked" }>;
+
+const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeCommand): Promise<TSmokeResult> => {
   switch (command) {
+    case "check-user-allow":
+    case "check-user-deny":
+      return {
+        ...(await client.checkPermission({
+          permission: "manage",
+          resource: { objectId: GRAPH_WORKSPACE_ID, objectType: "workspace" },
+          subject: {
+            objectId: command === "check-user-allow" ? ALICE_ID : BOB_ID,
+            objectType: "user",
+          },
+        })),
+        status: "checked",
+      };
+    case "check-api-key-allow":
+    case "check-api-key-deny":
+      return {
+        ...(await client.checkPermission({
+          permission: "manage_access",
+          resource: { objectId: API_KEY_ORGANIZATION_ID, objectType: "organization" },
+          subject: {
+            objectId: command === "check-api-key-allow" ? WRITER_API_KEY_ID : READER_API_KEY_ID,
+            objectType: "api_key",
+          },
+        })),
+        status: "checked",
+      };
     case "delete":
     case "set-billing":
     case "set-owner":
       await writeOrganizationProjection(client, command);
-      return;
+      return { status: "projected" };
     case "seed-team-workspace":
       await seedTeamWorkspaceProjection(client);
-      return;
+      return { status: "projected" };
     case "seed-api-key":
       await seedApiKeyProjection(client);
-      return;
+      return { status: "projected" };
     case "downgrade-api-key-manager":
       await client.writeRelationships(
         createApiKeyWorkspaceUpdates(MANAGER_API_KEY_ID, PRIMARY_API_KEY_WORKSPACE_ID, "writer")
       );
-      return;
+      return { status: "projected" };
     case "remove-api-key-scope":
       await client.writeRelationships(
         createApiKeyWorkspaceUpdates(MANAGER_API_KEY_ID, SECONDARY_API_KEY_WORKSPACE_ID)
       );
-      return;
+      return { status: "projected" };
     case "delete-api-key":
       await deleteWriterApiKeyProjection(client);
-      return;
+      return { status: "projected" };
     case "downgrade-manager-grant":
       await client.writeRelationships(createWorkspaceGrantUpdates(MANAGER_TEAM_ID, "reader_team"));
-      return;
+      return { status: "projected" };
     case "remove-reader-grant":
       await client.writeRelationships(createWorkspaceGrantUpdates(READER_TEAM_ID));
-      return;
+      return { status: "projected" };
     case "remove-alice-memberships":
       await client.writeRelationships([
         ...createTeamRoleUpdates(READER_TEAM_ID, ALICE_ID),
         ...createTeamRoleUpdates(MANAGER_TEAM_ID, ALICE_ID),
       ]);
-      return;
+      return { status: "projected" };
     case "delete-manager-team":
       await deleteManagerTeamProjection(client);
-      return;
+      return { status: "projected" };
     case "delete-workspace":
       await client.deleteRelationships({
         resourceId: GRAPH_WORKSPACE_ID,
         resourceType: "workspace",
       });
+      return { status: "projected" };
   }
 };
 
@@ -315,9 +352,9 @@ const run = async (): Promise<void> => {
   try {
     const { closeAuthzedClient, getAuthzedClient } = await import("../lib/authzed/client");
     closeClient = closeAuthzedClient;
-    await executeSmokeCommand(getAuthzedClient(), command);
+    const result = await executeSmokeCommand(getAuthzedClient(), command);
 
-    writeResult({ latencyMs: latencyMs(), status: "projected" });
+    writeResult({ ...result, latencyMs: latencyMs() });
     process.exitCode = 0;
   } catch (error) {
     const { AuthzedError } = await import("../lib/authzed/errors");

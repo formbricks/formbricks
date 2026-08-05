@@ -5,10 +5,13 @@ import { DatabaseError } from "@formbricks/types/errors";
 import {
   getApiKeyAuthById,
   getApiKeyOrganizationId,
+  getAuthorizationOrganizationId,
   getDashboardWorkspaceId,
   getResponseSurveyId,
   getSurveyWorkspaceId,
   getTeamOrganizationId,
+  getWorkspaceOrganizationId,
+  isAuthorizationUserActive,
 } from "./resolvers";
 
 vi.mock("@formbricks/database", () => ({
@@ -18,6 +21,9 @@ vi.mock("@formbricks/database", () => ({
     response: { findUnique: vi.fn() },
     team: { findUnique: vi.fn() },
     apiKey: { findUnique: vi.fn() },
+    organization: { findUnique: vi.fn() },
+    user: { findUnique: vi.fn() },
+    workspace: { findUnique: vi.fn() },
   },
 }));
 
@@ -48,6 +54,18 @@ describe("parent-id resolvers", () => {
       row: { organizationId: "o2" },
       value: "o2",
     },
+    {
+      fn: getAuthorizationOrganizationId,
+      model: prisma.organization.findUnique,
+      row: { id: "o3" },
+      value: "o3",
+    },
+    {
+      fn: getWorkspaceOrganizationId,
+      model: prisma.workspace.findUnique,
+      row: { organizationId: "o4" },
+      value: "o4",
+    },
   ];
 
   test.each(cases)(
@@ -63,6 +81,22 @@ describe("parent-id resolvers", () => {
       await expect(fn("error-id")).rejects.toBeInstanceOf(DatabaseError);
     }
   );
+});
+
+describe("isAuthorizationUserActive", () => {
+  test("requires an existing active user and preserves operational failures", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({ isActive: true } as never);
+    await expect(isAuthorizationUserActive("active-user")).resolves.toBe(true);
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({ isActive: false } as never);
+    await expect(isAuthorizationUserActive("inactive-user")).resolves.toBe(false);
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
+    await expect(isAuthorizationUserActive("missing-user")).resolves.toBe(false);
+
+    vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(prismaKnownError);
+    await expect(isAuthorizationUserActive("error-user")).rejects.toBeInstanceOf(DatabaseError);
+  });
 });
 
 describe("getApiKeyAuthById", () => {

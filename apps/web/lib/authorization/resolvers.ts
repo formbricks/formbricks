@@ -25,6 +25,47 @@ const rethrowAsDatabaseError = (error: unknown): never => {
   throw error;
 };
 
+/** Whether a user principal still exists and is active. */
+export const isAuthorizationUserActive = reactCache(async (userId: string): Promise<boolean> => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isActive: true },
+    });
+    return user?.isActive === true;
+  } catch (error) {
+    return rethrowAsDatabaseError(error);
+  }
+});
+
+/** Whether an organization resource still exists. */
+export const getAuthorizationOrganizationId = reactCache(
+  async (organizationId: string): Promise<string | null> => {
+    try {
+      const organization = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { id: true },
+      });
+      return organization?.id ?? null;
+    } catch (error) {
+      return rethrowAsDatabaseError(error);
+    }
+  }
+);
+
+/** The organization a workspace belongs to (`Workspace.organizationId`). */
+export const getWorkspaceOrganizationId = reactCache(async (workspaceId: string): Promise<string | null> => {
+  try {
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { organizationId: true },
+    });
+    return workspace?.organizationId ?? null;
+  } catch (error) {
+    return rethrowAsDatabaseError(error);
+  }
+});
+
 /** The workspace a survey belongs to (`Survey.workspaceId`). */
 export const getSurveyWorkspaceId = reactCache(async (surveyId: string): Promise<string | null> => {
   try {

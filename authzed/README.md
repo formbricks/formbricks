@@ -245,7 +245,7 @@ ENG-1731, and SpiceDB comparison/cutover remains ENG-1738.
 ## Resource parent resolution during the current-model migration
 
 The initial migration deliberately does not project one relationship for every
-survey, dashboard, and response. ENG-1738's private shadow evaluator must use
+survey, dashboard, and response. ENG-1738's private evaluator uses
 the existing server-only PostgreSQL resolvers to map:
 
 - a survey or dashboard to its workspace;
@@ -263,6 +263,20 @@ directly until a future projector and matching backfill scope cover those edges;
 the backfill classifies them as ignored today and never prunes them.
 Phase 2 direct resource grants must add that projection and repair scope before
 enforcement.
+
+## Authorization evaluation and shadow rollout
+
+The private SpiceDB evaluator sits behind the existing server-only `can()` and
+`assertCan()` contract. Legacy authorization remains authoritative unless an
+internal rollout cohort explicitly selects SpiceDB enforcement. Shadow checks
+run after the response and cannot change the legacy result; enforcement checks
+run inline and fail closed on operational errors.
+
+Rollout configuration, supported request surfaces, comparison metrics, parity
+gates, and rollback steps are documented in the [relationship sync
+runbook](./RUNBOOK.md#6-shadow-and-enforcement-rollout). A clean applying
+backfill must provide the `completedAtSnapshot` used as the shadow freshness
+floor before any cohort is enabled.
 
 ## Mapping from the current system
 

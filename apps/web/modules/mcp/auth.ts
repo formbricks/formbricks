@@ -15,6 +15,7 @@ import {
   problemUnauthorized,
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
@@ -504,6 +505,6 @@ export async function handleAuthenticatedMcpRequest(
   }
 
   (request as Request & { auth?: AuthInfo }).auth = authResult.authInfo;
-  const response = await handler(request);
+  const response = await withAuthorizationSurface("mcp", () => handler(request));
   return withMcpResponseHeaders(response, authResult.requestId);
 }
