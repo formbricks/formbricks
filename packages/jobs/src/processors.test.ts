@@ -251,27 +251,31 @@ describe("@formbricks/jobs processor registry", () => {
     );
   });
 
-  test("fails fast for the unimplemented survey scheduling processor", async () => {
+  // One factory backs all three recurring fallbacks, so they are covered together — survey-archive-purge
+  // and workflow-run.reconcile previously had no test at all.
+  test.each([
+    [JOB_NAMES.surveyArchivePurge, "survey archive purge"],
+    [JOB_NAMES.surveyScheduling, "survey scheduling"],
+    [JOB_NAMES.workflowRunReconcile, "workflow run reconcile"],
+  ])("fails fast for the unimplemented %s processor", async (jobName, label) => {
     await expect(
       processJob({
         attemptsMade: 0,
-        data: {
-          scope: "global",
-        },
-        id: "job-survey-scheduling",
-        name: JOB_NAMES.surveyScheduling,
+        data: { scope: "global" },
+        id: `job-${jobName}`,
+        name: jobName,
         opts: { attempts: 3 },
         queueName: "background-jobs",
       } as never)
-    ).rejects.toThrow("BullMQ survey scheduling processor override missing");
+    ).rejects.toThrow(`BullMQ ${label} processor override missing`);
 
     expect(mockError).toHaveBeenCalledWith(
       expect.objectContaining({
-        jobId: "job-survey-scheduling",
-        jobName: JOB_NAMES.surveyScheduling,
+        jobId: `job-${jobName}`,
+        jobName,
         scope: "global",
       }),
-      "BullMQ survey scheduling processor override is not registered"
+      `BullMQ ${label} processor override is not registered`
     );
   });
 

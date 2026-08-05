@@ -12,6 +12,11 @@ import {
 import type { BackgroundJobProducer, EnqueuedJob } from "@/src/contracts";
 import { getBackgroundJobDefinition } from "@/src/definitions";
 import {
+  type RecurringJobDescriptor,
+  type TRecurringJobKey,
+  recurringJobDescriptors,
+} from "@/src/recurring";
+import {
   type TBackgroundJobScheduleIdentity,
   type TRecurringBackgroundJobSchedule,
   type TRunAtBackgroundJobSchedule,
@@ -21,11 +26,8 @@ import {
 } from "@/src/schedules";
 import {
   type TResponsePipelineJobData,
-  type TSurveyArchivePurgeJobData,
-  type TSurveySchedulingJobData,
   type TTestLogJobData,
   type TWorkflowRunJobData,
-  type TWorkflowRunReconcileJobData,
 } from "@/src/types";
 
 export interface JobsQueueHandle {
@@ -286,133 +288,76 @@ export const upsertRecurringTestLogJobSchedule = async (
   }
 };
 
-export const upsertRecurringSurveySchedulingJobSchedule = async (
-  identity: TBackgroundJobScheduleIdentity,
-  schedule: TRecurringBackgroundJobSchedule,
-  data: TSurveySchedulingJobData
-): Promise<Job> => {
-  try {
-    return await upsertRecurringBackgroundJobSchedule(JOB_NAMES.surveyScheduling, identity, schedule, data);
-  } catch (error) {
-    logger.error(
-      {
-        err: error,
-        jobName: JOB_NAMES.surveyScheduling,
-        schedule,
-        scheduleId: identity.scheduleId,
-        scope: identity.scope,
-      },
-      "Failed to upsert BullMQ survey scheduling schedule"
-    );
-    throw error;
-  }
+export interface RecurringJobHandle {
+  readonly name: string;
+  readonly scheduleId: string;
+  readonly scope: string;
+  remove: () => Promise<boolean>;
+  upsert: (schedule: TRecurringBackgroundJobSchedule) => Promise<Job>;
+}
+
+const toRecurringJobHandle = (descriptor: RecurringJobDescriptor): RecurringJobHandle => {
+  const identity = { scheduleId: descriptor.scheduleId, scope: descriptor.scope };
+  // Built once from the descriptor so log field names cannot drift between recurring jobs.
+  const logContext = {
+    jobName: descriptor.name,
+    scheduleId: descriptor.scheduleId,
+    scope: descriptor.scope,
+  };
+
+  return {
+    name: descriptor.name,
+    scheduleId: descriptor.scheduleId,
+    scope: descriptor.scope,
+    remove: async () => {
+      try {
+        return await removeRecurringBackgroundJobSchedule(descriptor.name, identity);
+      } catch (error) {
+        logger.error({ ...logContext, err: error }, `Failed to remove BullMQ ${descriptor.label} schedule`);
+        throw error;
+      }
+    },
+    upsert: async (schedule) => {
+      try {
+        return await upsertRecurringBackgroundJobSchedule(
+          descriptor.name,
+          identity,
+          schedule,
+          descriptor.data
+        );
+      } catch (error) {
+        logger.error(
+          { ...logContext, err: error, schedule },
+          `Failed to upsert BullMQ ${descriptor.label} schedule`
+        );
+        throw error;
+      }
+    },
+  };
 };
 
-export const removeRecurringSurveySchedulingJobSchedule = async (
-  identity: TBackgroundJobScheduleIdentity
-): Promise<boolean> => {
-  try {
-    return await removeRecurringBackgroundJobSchedule(JOB_NAMES.surveyScheduling, identity);
-  } catch (error) {
-    logger.error(
-      {
-        err: error,
-        jobName: JOB_NAMES.surveyScheduling,
-        scheduleId: identity.scheduleId,
-        scope: identity.scope,
-      },
-      "Failed to remove BullMQ survey scheduling schedule"
-    );
-    throw error;
-  }
-};
+/**
+ * Queue-bound handle per recurring job. The app registers a schedule through `upsert` and never spells
+ * the job name itself: `name` also keys the worker's handler-override map, so a typo can no longer
+ * leave a schedule firing against an unregistered override.
+ */
+export const recurringJobs = Object.freeze(
+  Object.fromEntries(
+    Object.entries(recurringJobDescriptors).map(([key, descriptor]) => [
+      key,
+      toRecurringJobHandle(descriptor),
+    ])
+  ) as Record<TRecurringJobKey, RecurringJobHandle>
+);
 
-export const upsertRecurringSurveyArchivePurgeJobSchedule = async (
-  identity: TBackgroundJobScheduleIdentity,
-  schedule: TRecurringBackgroundJobSchedule,
-  data: TSurveyArchivePurgeJobData
-): Promise<Job> => {
-  try {
-    return await upsertRecurringBackgroundJobSchedule(JOB_NAMES.surveyArchivePurge, identity, schedule, data);
-  } catch (error) {
-    logger.error(
-      {
-        err: error,
-        jobName: JOB_NAMES.surveyArchivePurge,
-        schedule,
-        scheduleId: identity.scheduleId,
-        scope: identity.scope,
-      },
-      "Failed to upsert BullMQ survey archive purge schedule"
-    );
-    throw error;
-  }
-};
-
-export const removeRecurringSurveyArchivePurgeJobSchedule = async (
-  identity: TBackgroundJobScheduleIdentity
-): Promise<boolean> => {
-  try {
-    return await removeRecurringBackgroundJobSchedule(JOB_NAMES.surveyArchivePurge, identity);
-  } catch (error) {
-    logger.error(
-      {
-        err: error,
-        jobName: JOB_NAMES.surveyArchivePurge,
-        scheduleId: identity.scheduleId,
-        scope: identity.scope,
-      },
-      "Failed to remove BullMQ survey archive purge schedule"
-    );
-    throw error;
-  }
-};
-
-export const upsertRecurringWorkflowRunReconcileJobSchedule = async (
-  identity: TBackgroundJobScheduleIdentity,
-  schedule: TRecurringBackgroundJobSchedule,
-  data: TWorkflowRunReconcileJobData
-): Promise<Job> => {
-  try {
-    return await upsertRecurringBackgroundJobSchedule(
-      JOB_NAMES.workflowRunReconcile,
-      identity,
-      schedule,
-      data
-    );
-  } catch (error) {
-    logger.error(
-      {
-        err: error,
-        jobName: JOB_NAMES.workflowRunReconcile,
-        schedule,
-        scheduleId: identity.scheduleId,
-        scope: identity.scope,
-      },
-      "Failed to upsert BullMQ workflow run reconcile schedule"
-    );
-    throw error;
-  }
-};
-
-export const removeRecurringWorkflowRunReconcileJobSchedule = async (
-  identity: TBackgroundJobScheduleIdentity
-): Promise<boolean> => {
-  try {
-    return await removeRecurringBackgroundJobSchedule(JOB_NAMES.workflowRunReconcile, identity);
-  } catch (error) {
-    logger.error(
-      {
-        err: error,
-        jobName: JOB_NAMES.workflowRunReconcile,
-        scheduleId: identity.scheduleId,
-        scope: identity.scope,
-      },
-      "Failed to remove BullMQ workflow run reconcile schedule"
-    );
-    throw error;
-  }
-};
+/**
+ * Names of the one-shot jobs whose real handler lives in `apps/web`. Exported so the app keys its
+ * override map off this module instead of re-typing the strings; the JOB_NAMES registry stays internal.
+ */
+export const ONE_SHOT_JOB_NAMES = Object.freeze({
+  responsePipeline: JOB_NAMES.responsePipeline,
+  workflowRun: JOB_NAMES.workflowRun,
+});
 
 export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
   enqueueResponsePipeline: async (data) => toEnqueuedJob(await enqueueResponsePipelineJob(data)),

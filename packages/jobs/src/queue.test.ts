@@ -15,13 +15,10 @@ import {
   enqueueWorkflowRunJob,
   getBackgroundJobProducer,
   getJobsQueue,
-  removeRecurringSurveySchedulingJobSchedule,
-  removeRecurringWorkflowRunReconcileJobSchedule,
+  recurringJobs,
   resetJobsQueueFactory,
   scheduleTestLogJobAt,
-  upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
-  upsertRecurringWorkflowRunReconcileJobSchedule,
 } from "./queue";
 import { getRecurringJobSchedulerId } from "./schedules";
 
@@ -256,24 +253,17 @@ describe("@formbricks/jobs queue helpers", () => {
     );
   });
 
-  test("upserts a recurring workflow run reconcile scheduler using an every schedule", async () => {
+  test("upserts a recurring schedule through its handle using an every schedule", async () => {
     mockQueueUpsertJobScheduler.mockResolvedValue({
       id: "job-reconcile-1",
       name: JOB_NAMES.workflowRunReconcile,
       queueName: JOBS_QUEUE_NAME,
     });
 
-    await upsertRecurringWorkflowRunReconcileJobSchedule(
-      { scheduleId: "workflow-run-reconcile", scope: "global" },
-      { everyMs: 180_000, kind: "every" },
-      { scope: "global" }
-    );
+    await recurringJobs.workflowRunReconcile.upsert({ everyMs: 180_000, kind: "every" });
 
     expect(mockQueueUpsertJobScheduler).toHaveBeenCalledWith(
-      getRecurringJobSchedulerId(JOB_NAMES.workflowRunReconcile, {
-        scheduleId: "workflow-run-reconcile",
-        scope: "global",
-      }),
+      "workflow-run.reconcile:global:workflow-run-reconcile",
       { endDate: undefined, every: 180_000, limit: undefined, startDate: undefined },
       {
         data: { scope: "global" },
@@ -283,48 +273,21 @@ describe("@formbricks/jobs queue helpers", () => {
     );
   });
 
-  test("removes the recurring workflow run reconcile scheduler", async () => {
-    mockQueueRemoveJobScheduler.mockResolvedValue(true);
-
-    const removed = await removeRecurringWorkflowRunReconcileJobSchedule({
-      scheduleId: "workflow-run-reconcile",
-      scope: "global",
-    });
-
-    expect(removed).toBe(true);
-    expect(mockQueueRemoveJobScheduler).toHaveBeenCalledWith(
-      getRecurringJobSchedulerId(JOB_NAMES.workflowRunReconcile, {
-        scheduleId: "workflow-run-reconcile",
-        scope: "global",
-      })
-    );
-  });
-
-  test("upserts recurring survey scheduling schedules", async () => {
+  test("upserts a recurring schedule through its handle using a cron schedule", async () => {
     mockQueueUpsertJobScheduler.mockResolvedValue({
-      id: "job-7c",
+      id: "job-scheduling-1",
       name: JOB_NAMES.surveyScheduling,
       queueName: JOBS_QUEUE_NAME,
     });
 
-    const scheduledJob = await upsertRecurringSurveySchedulingJobSchedule(
-      {
-        scheduleId: "daily-survey-scheduling",
-        scope: "global",
-      },
-      {
-        cronPattern: "0 0 * * *",
-        kind: "cron",
-        timeZone: "Etc/GMT-1",
-      },
-      surveySchedulingJobData
-    );
+    const scheduledJob = await recurringJobs.surveyScheduling.upsert({
+      cronPattern: "0 0 * * *",
+      kind: "cron",
+      timeZone: "Etc/GMT-1",
+    });
 
     expect(mockQueueUpsertJobScheduler).toHaveBeenCalledWith(
-      getRecurringJobSchedulerId(JOB_NAMES.surveyScheduling, {
-        scheduleId: "daily-survey-scheduling",
-        scope: "global",
-      }),
+      "survey-scheduling.reconcile:global:daily-survey-scheduling",
       {
         endDate: undefined,
         immediately: undefined,
@@ -339,24 +302,43 @@ describe("@formbricks/jobs queue helpers", () => {
         opts: JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
       }
     );
-    expect(scheduledJob.id).toBe("job-7c");
+    expect(scheduledJob.id).toBe("job-scheduling-1");
   });
 
-  test("removes recurring survey scheduling schedules", async () => {
+  test("removes a recurring schedule using the identity it owns", async () => {
     mockQueueRemoveJobScheduler.mockResolvedValue(true);
 
-    const removed = await removeRecurringSurveySchedulingJobSchedule({
-      scheduleId: "daily-survey-scheduling",
-      scope: "global",
+    const removed = await recurringJobs.surveyScheduling.remove();
+
+    expect(removed).toBe(true);
+    expect(mockQueueRemoveJobScheduler).toHaveBeenCalledWith(
+      "survey-scheduling.reconcile:global:daily-survey-scheduling"
+    );
+  });
+
+  // These ids address schedules that already exist in production Redis. Changing one orphans the live
+  // schedule instead of updating it, so they are pinned as literals here rather than derived.
+  test.each([
+    ["surveyArchivePurge", "survey-archive-purge.process:global:daily-survey-archive-purge"],
+    ["surveyScheduling", "survey-scheduling.reconcile:global:daily-survey-scheduling"],
+    ["workflowRunReconcile", "workflow-run.reconcile:global:workflow-run-reconcile"],
+  ] as const)("keeps the %s scheduler id stable", async (key, expectedSchedulerId) => {
+    mockQueueUpsertJobScheduler.mockResolvedValue({
+      id: "job-id-parity",
+      name: recurringJobs[key].name,
+      queueName: JOBS_QUEUE_NAME,
     });
 
-    expect(mockQueueRemoveJobScheduler).toHaveBeenCalledWith(
-      getRecurringJobSchedulerId(JOB_NAMES.surveyScheduling, {
-        scheduleId: "daily-survey-scheduling",
-        scope: "global",
-      })
+    await recurringJobs[key].upsert({ everyMs: 60_000, kind: "every" });
+
+    expect(mockQueueUpsertJobScheduler).toHaveBeenCalledWith(
+      expectedSchedulerId,
+      expect.anything(),
+      expect.objectContaining({ name: recurringJobs[key].name })
     );
-    expect(removed).toBe(true);
+    expect(getRecurringJobSchedulerId(recurringJobs[key].name, recurringJobs[key])).toBe(
+      expectedSchedulerId
+    );
   });
 
   test("rejects engine-neutral enqueues when BullMQ returns a job without an id", async () => {

@@ -8,30 +8,24 @@ export type {
   JobHandler,
 } from "./contracts";
 export {
+  ONE_SHOT_JOB_NAMES,
   enqueueResponsePipelineJob,
   enqueueTestLogJob,
   enqueueWorkflowRunJob,
   getBackgroundJobProducer,
-  removeRecurringSurveyArchivePurgeJobSchedule,
-  removeRecurringSurveySchedulingJobSchedule,
-  removeRecurringWorkflowRunReconcileJobSchedule,
+  recurringJobs,
   scheduleTestLogJobAt,
-  upsertRecurringSurveyArchivePurgeJobSchedule,
-  upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
-  upsertRecurringWorkflowRunReconcileJobSchedule,
 } from "./queue";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
-export { processSurveyArchivePurgeJob } from "./processors/survey-archive-purge";
-export { processSurveySchedulingJob } from "./processors/survey-scheduling";
 export { processTestLogJob } from "./processors/test-log";
 export { processWorkflowRunJob } from "./processors/workflow-run";
-export { processWorkflowRunReconcileJob } from "./processors/workflow-run-reconcile";
 export { startJobsRuntime } from "./runtime";
-export type { JobsQueueHandle } from "./queue";
+export type { JobsQueueHandle, RecurringJobHandle } from "./queue";
 export type { JobsRuntimeHandle, JobsRuntimeOptions } from "./runtime";
 export type { TRecurringBackgroundJobSchedule } from "./schedules";
 export {
+  ZGlobalScopeJobData,
   ZResponsePipelineEvent,
   ZResponsePipelineJobData,
   ZSurveyArchivePurgeJobData,
@@ -41,6 +35,7 @@ export {
   ZWorkflowRunReconcileJobData,
 } from "./types";
 export type {
+  TGlobalScopeJobData,
   TResponsePipelineEvent,
   TResponsePipelineJobData,
   TSurveyArchivePurgeJobData,
