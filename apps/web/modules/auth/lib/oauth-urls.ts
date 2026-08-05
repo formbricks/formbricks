@@ -71,3 +71,15 @@ export const MCP_PROTECTED_RESOURCE_SCOPES = [
   ...MCP_RESOURCE_SCOPES,
   "offline_access",
 ] as const satisfies readonly (typeof MCP_OAUTH_SCOPES)[number][];
+
+/**
+ * The `scope` advertised in the 401 `WWW-Authenticate` challenge from the MCP endpoint.
+ *
+ * Must stay byte-identical to the protected-resource metadata above, hence deriving both from one
+ * array: a client that hits the 401 *before* fetching the metadata uses this string as its Dynamic
+ * Client Registration `scope`. If it registers from a narrower list and then authorizes with the
+ * wider metadata list, the oauth-provider rejects the authorize request with `invalid_scope` — the
+ * client fails its first connect and only succeeds on retry, once it has the metadata cached
+ * (ENG-2175). A superset is not enough; the two lists must match exactly.
+ */
+export const MCP_CHALLENGE_SCOPE = MCP_PROTECTED_RESOURCE_SCOPES.join(" ");
