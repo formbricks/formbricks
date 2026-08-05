@@ -47,6 +47,8 @@ const parseOrganizations = (value: string | undefined): TOrganizationAllowlist =
     ),
   ];
   return Object.freeze({
+    // env.ts rejects mixing `*` with explicit IDs. Keep invalid bypassed input
+    // narrowed rather than silently widening it to every organization.
     all: ids.length === 1 && ids[0] === "*",
     ids: Object.freeze(ids.filter((organizationId) => organizationId !== "*")),
   });

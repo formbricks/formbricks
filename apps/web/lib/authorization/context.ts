@@ -29,6 +29,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 const COMPARISON_CONCURRENCY = 4;
+const MAX_COMPARISON_JOBS = 100;
 
 const drainComparisons = async (jobs: ReadonlyArray<TComparisonJob>): Promise<void> => {
   for (let index = 0; index < jobs.length; index += COMPARISON_CONCURRENCY) {
@@ -63,7 +64,7 @@ export const withAuthorizationSurface = async <T>(
 
 export const enqueueAuthorizationComparison = (job: TComparisonJob): boolean => {
   const context = authorizationContext.getStore();
-  if (!context?.scheduled) return false;
+  if (!context?.scheduled || context.jobs.length >= MAX_COMPARISON_JOBS) return false;
   context.jobs.push(job);
   return true;
 };

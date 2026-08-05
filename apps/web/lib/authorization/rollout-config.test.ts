@@ -42,7 +42,7 @@ describe("authorization rollout configuration", () => {
   test("trims and deduplicates targets and organization IDs", () => {
     rolloutEnv.AUTHZED_AUTHORIZATION_COHORT = "sandbox";
     rolloutEnv.AUTHZED_AUTHORIZATION_ENABLED = "true";
-    rolloutEnv.AUTHZED_SHADOW_TARGETS = " server_action:user,api_v3:user,server_action:user ";
+    rolloutEnv.AUTHZED_SHADOW_TARGETS = " server_action:user,api_v3:user,api_v9:user,server_action:user ";
     rolloutEnv.AUTHZED_SHADOW_ORGANIZATION_IDS = " org-1,org-2,org-1 ";
 
     expect(getAuthorizationRolloutConfig()).toMatchObject({

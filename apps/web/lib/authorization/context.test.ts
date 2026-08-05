@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   enqueueAuthorizationComparison,
@@ -13,6 +14,9 @@ vi.mock("next/server", () => ({
 
 beforeEach(() => {
   afterCallbacks.length = 0;
+  vi.mocked(after)
+    .mockReset()
+    .mockImplementation((callback) => afterCallbacks.push(callback));
 });
 
 describe("authorization request context", () => {
@@ -66,6 +70,29 @@ describe("authorization request context", () => {
   test("does not accept comparison work outside a request context", () => {
     expect(getAuthorizationRolloutTarget("user")).toBeNull();
     expect(enqueueAuthorizationComparison(vi.fn())).toBe(false);
+  });
+
+  test("returns the callback result but rejects comparison work when after is unavailable", async () => {
+    vi.mocked(after).mockImplementationOnce(() => {
+      throw new Error("after is unavailable");
+    });
+
+    const result = await withAuthorizationSurface("server_action", async () => {
+      expect(enqueueAuthorizationComparison(vi.fn())).toBe(false);
+      return "completed";
+    });
+
+    expect(result).toBe("completed");
+    expect(afterCallbacks).toHaveLength(0);
+  });
+
+  test("caps deferred comparison work per request", async () => {
+    await withAuthorizationSurface("server_action", async () => {
+      for (let index = 0; index < 100; index += 1) {
+        expect(enqueueAuthorizationComparison(vi.fn())).toBe(true);
+      }
+      expect(enqueueAuthorizationComparison(vi.fn())).toBe(false);
+    });
   });
 
   test("drains comparisons with at most four concurrent jobs", async () => {

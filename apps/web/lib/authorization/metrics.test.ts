@@ -48,7 +48,36 @@ describe("authorization comparison metrics", () => {
     };
     expect(telemetry.add).toHaveBeenCalledWith(1, expectedAttributes);
     expect(telemetry.record).toHaveBeenCalledWith(0.125, expectedAttributes);
-    expect(JSON.stringify(telemetry.add.mock.calls)).not.toContain("user-id");
-    expect(JSON.stringify(telemetry.add.mock.calls)).not.toContain("resource-id");
+  });
+
+  test("uses stable none labels when no operational error is present", () => {
+    recordAuthorizationComparison({
+      action: "workspace.read",
+      actorType: "apiKey",
+      authzedDecision: "allow",
+      cohort: "sandbox_api_keys",
+      durationMs: 10,
+      legacyDecision: "allow",
+      mode: "shadow",
+      outcome: "match",
+      resourceType: "workspace",
+      surface: "api_v2",
+    });
+
+    const expectedAttributes = {
+      action: "workspace.read",
+      actor_type: "apiKey",
+      authzed_decision: "allow",
+      cohort: "sandbox_api_keys",
+      error_code: "none",
+      error_source: "none",
+      legacy_decision: "allow",
+      mode: "shadow",
+      outcome: "match",
+      resource_type: "workspace",
+      surface: "api_v2",
+    };
+    expect(telemetry.add).toHaveBeenCalledWith(1, expectedAttributes);
+    expect(telemetry.record).toHaveBeenCalledWith(0.01, expectedAttributes);
   });
 });

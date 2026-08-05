@@ -4,7 +4,7 @@ import { enqueueAuthorizationComparison, getAuthorizationRolloutTarget } from ".
 import { authorizationCoordinator } from "./coordinator";
 import { legacyEvaluator } from "./legacy-evaluator";
 import { recordAuthorizationComparison } from "./metrics";
-import { getAuthorizationRolloutConfig } from "./rollout-config";
+import { type TAuthorizationRolloutConfig, getAuthorizationRolloutConfig } from "./rollout-config";
 import { resolveAuthorizationScope } from "./source-scope";
 import { checkSpicedbPermissionAtScope } from "./spicedb-evaluator";
 
@@ -27,8 +27,11 @@ vi.mock("./rollout-config", () => ({
 vi.mock("./source-scope", () => ({ resolveAuthorizationScope: vi.fn() }));
 vi.mock("./spicedb-evaluator", () => ({ checkSpicedbPermissionAtScope: vi.fn() }));
 
-const emptyRule = () => ({ organizations: { all: false, ids: [] }, targets: [] });
-const config = (overrides: Record<string, unknown> = {}) => ({
+const emptyRule = (): TAuthorizationRolloutConfig["shadow"] => ({
+  organizations: { all: false, ids: [] },
+  targets: [],
+});
+const config = (overrides: Partial<TAuthorizationRolloutConfig> = {}): TAuthorizationRolloutConfig => ({
   cohort: "sandbox",
   enabled: true,
   enforcement: emptyRule(),
@@ -43,7 +46,7 @@ const queuedJobs: Array<() => Promise<void>> = [];
 beforeEach(() => {
   vi.clearAllMocks();
   queuedJobs.length = 0;
-  vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config() as never);
+  vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config());
   vi.mocked(getAuthorizationRolloutTarget).mockReturnValue("server_action:user");
   vi.mocked(enqueueAuthorizationComparison).mockImplementation((job) => {
     queuedJobs.push(job);
@@ -63,7 +66,7 @@ describe("authorizationCoordinator", () => {
     [false, "server_action:user"],
     [true, null],
   ] as const)("uses only legacy when enabled=%s and target=%s", async (enabled, target) => {
-    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config({ enabled }) as never);
+    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config({ enabled }));
     vi.mocked(getAuthorizationRolloutTarget).mockReturnValue(target);
 
     await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(true);
@@ -80,7 +83,7 @@ describe("authorizationCoordinator", () => {
           organizations: { all: false, ids: ["org-1"] },
           targets: ["server_action:user"],
         },
-      }) as never
+      })
     );
     vi.mocked(checkSpicedbPermissionAtScope).mockResolvedValue(false);
 
@@ -109,7 +112,7 @@ describe("authorizationCoordinator", () => {
           organizations: { all: true, ids: [] },
           targets: ["server_action:user"],
         },
-      }) as never
+      })
     );
     vi.mocked(checkSpicedbPermissionAtScope).mockRejectedValue(
       new AuthzedError({
@@ -134,7 +137,7 @@ describe("authorizationCoordinator", () => {
           organizations: { all: false, ids: ["org-1"] },
           targets: ["server_action:user"],
         },
-      }) as never
+      })
     );
     vi.mocked(checkSpicedbPermissionAtScope).mockResolvedValue(false);
 
@@ -159,10 +162,8 @@ describe("authorizationCoordinator", () => {
     const rule = {
       organizations: { all: true, ids: [] },
       targets: ["server_action:user"],
-    };
-    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(
-      config({ enforcement: rule, shadow: rule }) as never
-    );
+    } satisfies TAuthorizationRolloutConfig["shadow"];
+    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config({ enforcement: rule, shadow: rule }));
 
     await authorizationCoordinator.can(actor, "survey.read", resource);
 
@@ -178,13 +179,71 @@ describe("authorizationCoordinator", () => {
           organizations: { all: false, ids: ["org-2"] },
           targets: ["server_action:user"],
         },
-      }) as never
+      })
     );
 
     await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(true);
     expect(resolveAuthorizationScope).toHaveBeenCalledOnce();
     expect(checkSpicedbPermissionAtScope).not.toHaveBeenCalled();
     expect(legacyEvaluator.can).toHaveBeenCalledOnce();
+  });
+
+  test("denies a missing resource selected by wildcard enforcement without calling SpiceDB", async () => {
+    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(
+      config({
+        enforcement: {
+          organizations: { all: true, ids: [] },
+          targets: ["server_action:user"],
+        },
+      })
+    );
+    vi.mocked(resolveAuthorizationScope).mockResolvedValue(null);
+
+    await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(false);
+    expect(checkSpicedbPermissionAtScope).not.toHaveBeenCalled();
+    expect(legacyEvaluator.can).not.toHaveBeenCalled();
+  });
+
+  test("selects a missing organization resource by its configured ID", async () => {
+    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(
+      config({
+        enforcement: {
+          organizations: { all: false, ids: ["org-1"] },
+          targets: ["server_action:user"],
+        },
+      })
+    );
+    vi.mocked(resolveAuthorizationScope).mockResolvedValue(null);
+
+    await expect(
+      authorizationCoordinator.can(actor, "organization.read", { type: "organization", id: "org-1" })
+    ).resolves.toBe(false);
+    expect(checkSpicedbPermissionAtScope).not.toHaveBeenCalled();
+    expect(legacyEvaluator.can).not.toHaveBeenCalled();
+  });
+
+  test("records a missing resource as a genuine shadow denial without calling SpiceDB", async () => {
+    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(
+      config({
+        shadow: {
+          organizations: { all: true, ids: [] },
+          targets: ["server_action:user"],
+        },
+      })
+    );
+    vi.mocked(resolveAuthorizationScope).mockResolvedValue(null);
+
+    await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(true);
+    await queuedJobs[0]();
+
+    expect(checkSpicedbPermissionAtScope).not.toHaveBeenCalled();
+    expect(recordAuthorizationComparison).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authzedDecision: "deny",
+        legacyDecision: "allow",
+        outcome: "legacy_allow_authzed_deny",
+      })
+    );
   });
 
   test("fails closed with a stable AuthZed error when enforcement resolution fails", async () => {
@@ -194,7 +253,7 @@ describe("authorizationCoordinator", () => {
           organizations: { all: true, ids: [] },
           targets: ["server_action:user"],
         },
-      }) as never
+      })
     );
     vi.mocked(resolveAuthorizationScope).mockRejectedValue(new Error("database unavailable"));
 
@@ -214,7 +273,7 @@ describe("authorizationCoordinator", () => {
           organizations: { all: true, ids: [] },
           targets: ["server_action:user"],
         },
-      }) as never
+      })
     );
     const outage = new AuthzedError({
       attempts: 3,
@@ -244,7 +303,7 @@ describe("authorizationCoordinator", () => {
           organizations: { all: true, ids: [] },
           targets: ["server_action:user"],
         },
-      }) as never
+      })
     );
     vi.mocked(enqueueAuthorizationComparison).mockReturnValue(false);
 

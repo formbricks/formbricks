@@ -7,7 +7,12 @@ import {
   getAuthzedAuthorizationRolloutSurface,
 } from "@/lib/authzed/rollout-contract";
 import { enqueueAuthorizationComparison, getAuthorizationRolloutTarget } from "./context";
-import type { TAuthorizationAction, TAuthorizationActor, TAuthorizationResourceForAction } from "./contract";
+import type {
+  TAuthorizationAction,
+  TAuthorizationActor,
+  TAuthorizationResourceForAction,
+  TAuthorizationResourceType,
+} from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
 import { legacyEvaluator } from "./legacy-evaluator";
 import {
@@ -119,7 +124,7 @@ const matchesRuleWithoutResolvedResource = (
   config: TAuthorizationRolloutConfig,
   mode: "enforcement" | "shadow",
   target: TAuthzedAuthorizationRolloutTarget,
-  resource: { id: string; type: string }
+  resource: Readonly<{ id: string; type: TAuthorizationResourceType }>
 ): boolean => {
   const rule = config[mode];
   if (!targetsRolloutSurface(rule, target)) return false;
@@ -146,6 +151,8 @@ const runShadowComparison = async <TAction extends TAuthorizationAction>(
 
     if (!selected) return;
 
+    // The source-scope contract treats a missing resource as a genuine denial,
+    // not an operational failure. No SpiceDB RPC is required for that result.
     const authzedDecision = scope
       ? await checkSpicedbPermissionAtScope(context.actor, context.action, context.resource, scope)
       : false;
