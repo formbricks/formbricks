@@ -1,0 +1,39 @@
+post:
+  operationId: unarchiveWorkflowV3
+  summary: Unarchive a workflow
+  description: >
+    Restores an `archived` workflow to `draft`. Unarchiving never re-enables a
+    workflow
+
+    automatically: re-enable explicitly with `POST
+    /api/v3/workflows/{workflowId}/enable`, which
+
+    re-validates the definition (the referenced survey or ending cards may have
+    changed while
+
+    the workflow was archived). Calling unarchive on a non-archived workflow
+    returns **422**
+
+    with code `invalid_workflow_state`.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  responses:
+    '200':
+      $ref: ../components/responses/WorkflowResourceResponse.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '422':
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

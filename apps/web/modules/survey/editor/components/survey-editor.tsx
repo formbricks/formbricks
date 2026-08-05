@@ -32,6 +32,7 @@ interface SurveyEditorProps {
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
+  finishedResponseCount: number;
   membershipRole?: OrganizationRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
@@ -63,6 +64,7 @@ export const SurveyEditor = ({
   contactAttributeKeys,
   segments,
   responseCount,
+  finishedResponseCount,
   membershipRole,
   colors,
   isUserTargetingAllowed = false,
@@ -184,6 +186,7 @@ export const SurveyEditor = ({
         setInvalidElements={setInvalidElements}
         workspace={localWorkspace}
         responseCount={responseCount}
+        finishedResponseCount={finishedResponseCount}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
@@ -259,6 +262,7 @@ export const SurveyEditor = ({
               contactAttributeKeys={contactAttributeKeys}
               segments={segments}
               responseCount={responseCount}
+              finishedResponseCount={finishedResponseCount}
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
               isSpamProtectionAllowed={isSpamProtectionAllowed}

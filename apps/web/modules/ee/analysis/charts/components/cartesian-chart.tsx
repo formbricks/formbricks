@@ -3,7 +3,7 @@
 import { type ElementType, type ReactNode } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import { formatXAxisTick } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
+import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip } from "@/modules/ui/components/chart";
@@ -31,6 +31,10 @@ export interface CartesianChartProps {
    * measure charts keep their category axis but hide the header, since each tooltip row already
    * carries the measure label and a header would just repeat it. */
   tooltipHideLabel?: boolean;
+  /** Precomputed Y-axis scale, used in place of deriving one from `data`/`dataKeys`. Measure-pivot
+   * charts render values under a synthetic key (PIVOTED_VALUE_KEY) that carries no measure id, so
+   * they resolve the fixed-scale axis from the original measure columns and pass it here (ENG-2226). */
+  yAxisScale?: YAxisScale;
 }
 
 export function CartesianChart({
@@ -47,8 +51,9 @@ export function CartesianChart({
   xAxisTickFormatter,
   hasCategoryAxis = true,
   tooltipHideLabel,
+  yAxisScale,
 }: Readonly<CartesianChartProps>) {
-  const yScale = computeYAxis(data, dataKeys, zeroBaseline);
+  const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
 
   return (
     <div className="h-full min-h-64 w-full">

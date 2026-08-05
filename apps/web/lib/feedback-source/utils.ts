@@ -107,6 +107,9 @@ export const getMissingRequiredCsvFieldMappings = (
   return missing;
 };
 
+export const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : "Unknown error";
+
 export const routeResponseValueTarget = (
   fieldType: THubFieldType
 ): "value_text" | "value_number" | "value_boolean" | "value_date" => {

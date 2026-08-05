@@ -14,6 +14,7 @@ import {
   RocketIcon,
   SettingsIcon,
   UserIcon,
+  WorkflowIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -176,6 +177,20 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/dashboards`,
             icon: BarChart3Icon,
             isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
+            isHidden: false,
+            disabled: isMembershipPending || isBilling,
+          },
+        ],
+      },
+      {
+        id: "act",
+        name: t("common.act"),
+        items: [
+          {
+            name: t("common.workflows"),
+            href: `/workspaces/${workspace.id}/workflows`,
+            icon: WorkflowIcon,
+            isActive: pathname?.startsWith(`/workspaces/${workspace.id}/workflows`),
             isHidden: false,
             disabled: isMembershipPending || isBilling,
           },

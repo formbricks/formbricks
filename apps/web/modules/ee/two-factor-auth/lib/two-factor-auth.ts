@@ -40,6 +40,17 @@ export const setupTwoFactorAuth = async (
     throw new InvalidInputError("Third party login is already enabled");
   }
 
+  // Re-enrolling while a factor is active must not be possible on a password alone. The update below
+  // sets `twoFactorEnabled: false` and replaces both the secret and the backup codes, so reaching it
+  // with an already-enabled factor turned 2FA off — the same end state `disableTwoFactorAuth` reaches,
+  // but that one demands the password *and* a current code or backup code. It would also strand a
+  // legitimate user who abandoned the flow half-way, with their authenticator and backup codes both
+  // replaced. Disabling first is the supported path, and the settings UI only offers setup when the
+  // factor is off.
+  if (user.twoFactorEnabled) {
+    throw new InvalidInputError("Two factor authentication is already enabled");
+  }
+
   // Password verification — the credential-account lookup and fail-closed "no password" handling —
   // is owned by verifyUserPassword; 2FA setup just needs the yes/no answer.
   const isCorrectPassword = await verifyUserPassword(userId, password);

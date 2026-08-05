@@ -1,0 +1,10 @@
+type: object
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: >-
+      Optional name for the duplicate. If omitted, the server chooses a
+      non-conflicting copy name.
+additionalProperties: false

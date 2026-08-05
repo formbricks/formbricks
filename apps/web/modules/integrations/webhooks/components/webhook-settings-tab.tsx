@@ -76,6 +76,7 @@ export const WebhookSettingsTab = ({
       const testEndpointActionResult = await testEndpointAction({
         url: testEndpointInput,
         webhookId: webhook.id,
+        workspaceId: webhook.workspaceId,
       });
       if (!testEndpointActionResult?.data?.success) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);

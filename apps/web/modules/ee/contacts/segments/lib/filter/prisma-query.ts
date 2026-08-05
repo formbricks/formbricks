@@ -410,6 +410,18 @@ const buildSegmentFilterWhereClause = async (
     return {};
   }
 
+  // `getSegment` looks up by id alone, and `segmentId` comes from a caller-authored filter tree. Without
+  // this check a user could nest another workspace's segment inside their own and have its filters
+  // evaluated against contacts they control — probing seeded attribute values against the resulting
+  // membership reveals the other team's targeting rules.
+  if (segment.workspaceId !== workspaceId) {
+    logger.error(
+      { segmentId, segmentWorkspaceId: segment.workspaceId, workspaceId },
+      "Refusing to resolve a segment filter referencing another workspace's segment"
+    );
+    return {};
+  }
+
   const newPath = new Set(segmentPath);
   newPath.add(segmentId);
 

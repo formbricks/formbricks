@@ -178,6 +178,26 @@ describe("User Management", () => {
       expect(result).toEqual(previousLastLoginAt);
     });
 
+    test("locks with FOR NO KEY UPDATE, not FOR UPDATE (sign-in FK deadlock, ENG-2038)", async () => {
+      const queryRaw = vi.fn().mockResolvedValue([{ id: mockUser.id, lastLoginAt: null }]);
+      vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+        callback({
+          $queryRaw: queryRaw,
+          user: {
+            update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }),
+          },
+        } as any)
+      );
+
+      await updateUserLastLoginAt(mockUser.email);
+
+      // $queryRaw is a tagged template: the first call arg is the array of string literals.
+      const sql = (queryRaw.mock.calls[0][0] as string[]).join(" ").replace(/\s+/g, " ");
+      expect(sql).toContain("FOR NO KEY UPDATE");
+      // FOR UPDATE conflicts with the FK FOR KEY SHARE lock — a revert must fail this test.
+      expect(sql).not.toContain("FOR UPDATE");
+    });
+
     test("throws ResourceNotFoundError when user doesn't exist", async () => {
       vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
         callback({
@@ -205,6 +225,43 @@ describe("User Management", () => {
       vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("boom"));
 
       await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow("boom");
+    });
+
+    test("retries on a deadlock (P2034) and succeeds on the next attempt (ENG-2038)", async () => {
+      const previousLastLoginAt = new Date("2025-04-16T10:00:00.000Z");
+      const deadlock = new Prisma.PrismaClientKnownRequestError("deadlock", {
+        code: "P2034",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.$transaction)
+        .mockRejectedValueOnce(deadlock)
+        .mockImplementationOnce(async (callback) =>
+          callback({
+            $queryRaw: vi.fn().mockResolvedValue([{ id: mockUser.id, lastLoginAt: previousLastLoginAt }]),
+            user: { update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }) },
+          } as any)
+        );
+
+      const result = await updateUserLastLoginAt(mockUser.email);
+
+      expect(result).toEqual(previousLastLoginAt);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    });
+
+    test("gives up after the max attempts when a deadlock persists", async () => {
+      // A driver-adapter deadlock surfaces as a plain Error with this message (the ENG-2038 shape).
+      vi.mocked(prisma.$transaction).mockRejectedValue(new Error("deadlock detected"));
+
+      await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow("deadlock detected");
+      expect(prisma.$transaction).toHaveBeenCalledTimes(3);
+    });
+
+    test("does not retry a non-deadlock error", async () => {
+      vi.mocked(prisma.$transaction).mockRejectedValue(new Error("boom"));
+
+      await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow("boom");
+      // Non-deadlock errors propagate on the first attempt — no retry.
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
 

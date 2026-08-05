@@ -4,11 +4,15 @@ import { processResponsePipelineJob } from "@/src/processors/response-pipeline";
 import { processSurveyArchivePurgeJob } from "@/src/processors/survey-archive-purge";
 import { processSurveySchedulingJob } from "@/src/processors/survey-scheduling";
 import { processTestLogJob } from "@/src/processors/test-log";
+import { processWorkflowRunJob } from "@/src/processors/workflow-run";
+import { processWorkflowRunReconcileJob } from "@/src/processors/workflow-run-reconcile";
 import {
   ZResponsePipelineJobData,
   ZSurveyArchivePurgeJobData,
   ZSurveySchedulingJobData,
   ZTestLogJobData,
+  ZWorkflowRunJobData,
+  ZWorkflowRunReconcileJobData,
 } from "@/src/types";
 
 export const backgroundJobDefinitions = {
@@ -31,6 +35,16 @@ export const backgroundJobDefinitions = {
     handle: processTestLogJob,
     name: JOB_NAMES.testLog,
     schema: ZTestLogJobData,
+  }),
+  [JOB_NAMES.workflowRun]: toAnyBackgroundJobDefinition({
+    handle: processWorkflowRunJob,
+    name: JOB_NAMES.workflowRun,
+    schema: ZWorkflowRunJobData,
+  }),
+  [JOB_NAMES.workflowRunReconcile]: toAnyBackgroundJobDefinition({
+    handle: processWorkflowRunReconcileJob,
+    name: JOB_NAMES.workflowRunReconcile,
+    schema: ZWorkflowRunReconcileJobData,
   }),
 } as const satisfies Record<string, AnyBackgroundJobDefinition>;
 

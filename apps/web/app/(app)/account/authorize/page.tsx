@@ -136,7 +136,7 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
         </dl>
 
         {isLocalhostHost(redirectHost) && (
-          <Alert variant="warning" size="small" className="mt-6" role="status">
+          <Alert variant="warning" className="mt-6" role="status">
             <AlertTitle>{t("auth.oauth.localhost_redirect_warning")}</AlertTitle>
             <AlertDescription>{t("auth.oauth.localhost_redirect_warning_description")}</AlertDescription>
           </Alert>

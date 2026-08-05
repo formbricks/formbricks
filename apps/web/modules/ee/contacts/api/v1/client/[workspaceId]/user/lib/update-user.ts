@@ -9,6 +9,9 @@ import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 
+/** Message codes whose presence alone reveals whether an identifier is already a contact here. */
+const EXISTENCE_REVEALING_MESSAGE_CODES = new Set(["email_already_exists", "userid_already_exists"]);
+
 /**
  * Shared select for the two contact-state branches (existing contact vs newly created). Kept in one
  * place so both produce the identical shape that feeds buildUserStateFromContact and the in-memory
@@ -232,7 +235,15 @@ export const updateUser = async (
         errors: updateAttrErrors,
       } = await updateAttributes(contactData.id, userId, workspaceId, normalizedAttributes);
 
-      messages = updateAttrMessages?.map(formatAttributeMessage) ?? [];
+      // This runs on the *unauthenticated* public client endpoint, and workspaceId is public — it ships
+      // in the widget snippet on the customer's own site. Echoing "the email/userId already exists"
+      // turns the endpoint into an oracle for "is this address a contact of this organization?",
+      // answerable for any address an attacker cares to try. The SDK only debug-logs these two, so
+      // withholding them costs nothing; genuine `errors` are still returned in full.
+      messages =
+        updateAttrMessages
+          ?.filter((message) => !EXISTENCE_REVEALING_MESSAGE_CODES.has(message.code))
+          .map(formatAttributeMessage) ?? [];
       errors = updateAttrErrors?.map(formatAttributeMessage) ?? [];
 
       // Update language if provided (used in response state)

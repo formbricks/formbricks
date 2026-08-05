@@ -1,0 +1,26 @@
+type: object
+required:
+  - workspaceId
+  - name
+  - definition
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+  description:
+    type:
+      - string
+      - 'null'
+    maxLength: 500
+  status:
+    type: string
+    enum:
+      - draft
+    description: New workflows are created as drafts in Scope 1.
+  definition:
+    $ref: ./WorkflowDefinition.yml
+additionalProperties: false

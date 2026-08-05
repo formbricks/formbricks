@@ -1,4 +1,5 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import {
   TFeedbackSourceFormbricksMapping,
@@ -8,6 +9,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { getResponses } from "../response/service";
 import { transformResponseToFeedbackRecords } from "./transform";
+import { getErrorMessage } from "./utils";
 
 const IMPORT_BATCH_SIZE = 50;
 
@@ -24,9 +26,20 @@ const processBatch = async (
   let duplicates = 0;
   const expectedRecords = responses.length * mappings.length;
 
-  const allRecords = responses.flatMap((response) =>
-    transformResponseToFeedbackRecords(response, survey, mappings, tenantId)
-  );
+  const allRecords = responses.flatMap((response) => {
+    try {
+      return transformResponseToFeedbackRecords(response, survey, mappings, tenantId);
+    } catch (error) {
+      // Contain a per-response transform failure so one malformed response can't abort the
+      // entire historical import (the live pipeline path already isolates per response). The
+      // response yields no records and is counted under `skipped`; the cause is logged.
+      logger.error(
+        { surveyId: survey.id, responseId: response.id, error: getErrorMessage(error) },
+        "Historical import: failed to transform response, skipping"
+      );
+      return [];
+    }
+  });
 
   if (allRecords.length > 0) {
     const { results } = await createFeedbackRecordsBatch(allRecords);

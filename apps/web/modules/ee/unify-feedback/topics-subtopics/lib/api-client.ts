@@ -20,14 +20,12 @@ const MUTATION_TIMEOUT_MS = 15_000;
 export type TTaxonomyFieldsResponse = {
   fields: TaxonomyFieldOption[];
   unavailable: boolean;
-  unavailableMessage?: string;
 };
 
 export type TTaxonomyStateResponse = {
   activeTree: TaxonomyTreeResponse | null;
   runs: TaxonomyRun[];
   unavailable: boolean;
-  unavailableMessage?: string;
 };
 
 export type TTriggerRunResponse = {
