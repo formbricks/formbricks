@@ -350,6 +350,10 @@ function DropdownVariant({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
+      {/* The dropdown branch renders no fieldset/group, and this free text is a SIBLING of the
+          trigger rather than a descendant, so nothing above it would supply a description. It also
+          needs one most: validateMultiSelectOtherValue errors precisely when this box is empty, and
+          it is the only native input[aria-invalid] here, so focusFirstControl lands right on it. */}
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
@@ -360,6 +364,7 @@ function DropdownVariant({
           disabled={disabled}
           aria-required
           aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? `${inputId}-error` : undefined}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -462,6 +467,9 @@ function ListVariant({
               <CheckboxIndicator />
               <span className={cn("mx-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
             </label>
+            {/* No aria-describedby here, unlike the dropdown branch: the list variant's enclosing
+                <fieldset> already carries it, and repeating the same message on one option would
+                announce it twice for this row and once for every sibling. */}
             {isOtherSelected ? (
               <Input
                 type="text"
@@ -571,8 +579,10 @@ function MultiSelect({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {isListVariant ? (
-        // A checkbox group is role="group", which doesn't support aria-required (only the
-        // visible "Required" badge conveys it). aria-invalid is a global attribute, so it stays.
+        // A checkbox group is role="group", which ARIA 1.2 gives neither aria-required nor
+        // aria-invalid (aria-invalid was global in ARIA 1.1 but is not in 1.2), and checkboxes have
+        // no radiogroup-equivalent role. Only the visible "Required" badge conveys requiredness;
+        // aria-invalid stays as a best-effort hook while the live region carries the announcement.
         // The group is named by its headline via aria-labelledby instead of a <legend>, so the
         // headline's media/required badge are not nested in invalid block content.
         <fieldset

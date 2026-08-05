@@ -225,8 +225,12 @@ function Ranking({
       {/* Ranking Options */}
       <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
-        {/* The <fieldset> is role="group", which doesn't support aria-required (the visible
-            "Required" badge conveys it); aria-invalid is a global attribute, so it is valid here. */}
+        {/* The <fieldset> is role="group", which ARIA 1.2 gives neither aria-required nor
+            aria-invalid (aria-invalid was global in ARIA 1.1 but is not in 1.2). The items are
+            reorder buttons in an <ol>, not radios, so there is no accurate role that does support
+            them. The visible "Required" badge conveys requiredness; the invalid state is announced
+            by the live region above plus the focus move, and aria-invalid stays only as a
+            best-effort machine-readable hook. */}
         <fieldset
           className="w-full"
           dir={dir}

@@ -82,8 +82,11 @@ function CTA({
         videoUrl={videoUrl}
       />
 
-      {/* CTA Button */}
-      <div className="relative space-y-2" data-element-input>
+      {/* CTA Button. No `space-y-*` here: ElementError's live region is always mounted, so a
+          child-spacing utility would reserve a gap under the (empty) region in the default state
+          and shift the button down. Spacing under a *visible* error comes from the region's own
+          error-gated `mb-2`, matching every other ElementError call site. */}
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
 
         {buttonExternal ? (

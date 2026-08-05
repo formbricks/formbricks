@@ -100,6 +100,14 @@ function FormField({
 
   // This element has no single `inputId` — its inputs are keyed off `elementId` — so the error
   // region id follows the same `${elementId}-...` scheme the field ids already use.
+  //
+  // The region is deliberately NOT referenced by the individual inputs via aria-describedby. This
+  // element receives one already-flattened message for the whole element, and for contact-info and
+  // address that message is field-scoped ("Email: ..." — the evaluator prefixes the field
+  // placeholder for rules that carry a `field`). Pointing every visible input at that single node
+  // would make a screen reader read "Email: ..." as the description of "First name" or "Company" —
+  // a confidently wrong description, which is worse than none. The inputs still expose
+  // aria-invalid, so the state is conveyed, and the live region announces the message itself.
   const errorId = `${elementId}-error`;
 
   return (
@@ -147,7 +155,6 @@ function FormField({
                   disabled={disabled}
                   dir={dir}
                   aria-invalid={Boolean(errorMessage) || undefined}
-                  aria-describedby={errorMessage ? errorId : undefined}
                 />
               </div>
             );

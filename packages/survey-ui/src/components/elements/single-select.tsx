@@ -304,6 +304,10 @@ function SingleSelectDropdownVariant({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
+      {/* The dropdown branch renders no fieldset/radiogroup, and this free text is a SIBLING of the
+          trigger rather than a descendant, so nothing above it would supply a description. It also
+          needs one most: validateSingleSelectOtherValue errors precisely when this box is empty, and
+          it is the only native input[aria-invalid] here, so focusFirstControl lands right on it. */}
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
@@ -314,6 +318,7 @@ function SingleSelectDropdownVariant({
           disabled={disabled}
           aria-required
           aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? `${inputId}-error` : undefined}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -607,6 +612,9 @@ function OtherOptionLabel({
         <RadioIndicator />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
       </label>
+      {/* No aria-describedby here, unlike the dropdown branch: the list variant's enclosing
+          <fieldset role="radiogroup"> already carries it, and repeating the same message on one
+          option would announce it twice for this row and once for every sibling. */}
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
