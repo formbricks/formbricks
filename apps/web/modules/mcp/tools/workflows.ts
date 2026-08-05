@@ -242,8 +242,9 @@ export function registerWorkflowTools(server: McpServer): void {
         "No run is persisted and no side effects occur; the response reports { ok, problems }.",
       ].join(" "),
       annotations: {
-        // Dry-run: validates + mock-executes with all side effects suppressed, so no world mutation.
-        // The handler gates at "read" to match the workflows:read scope declared below.
+        // Dry-run: validates the definition and resolves its trigger references. Nothing is
+        // executed and no run is created, so the handler gates at "read" to match the
+        // workflows:read scope declared below.
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,

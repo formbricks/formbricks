@@ -129,9 +129,10 @@ info:
     endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable
     via `POST` or `PATCH`. Enabling validates that the definition is executable
     and snapshots an immutable workflow version; runs reference that snapshot
-    via `workflowVersionId`. Dry-run tests create real run records with
-    `isDryRun: true` that mock action execution and never send email. Runs
-    execute asynchronously: `POST .../test` returns a `queued` run to poll via
+    via `workflowVersionId`. `POST .../test` is a dry run: it validates the
+    definition and resolves the trigger's references synchronously, creating no
+    run and sending no email, and returns `{ workflowId, ok, problems }`
+    directly. Real runs execute asynchronously and are polled via
     `GET /api/v3/workflows/runs/{runId}`.
 
 
