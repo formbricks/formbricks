@@ -4226,6 +4226,8 @@
       "email_to_label": "Enviar para",
       "email_to_placeholder": "equipa@exemplo.com",
       "email_to_required": "Escolhe quem deve receber este email.",
+      "email_to_unavailable_group_label": "Não disponível",
+      "email_to_unavailable_warning": "Este destinatário já não está disponível — pode ter perdido o acesso a esta área de trabalho ou o campo de inquérito de onde provinha foi removido. Escolhe um novo; este email não pode ser enviado enquanto não o fizeres.",
       "enable_blocked_unsaved_changes": "Não foi possível guardar as tuas últimas alterações, por isso o workflow não foi ativado.",
       "enable_failed": "Não foi possível ativar o fluxo de trabalho.",
       "enable_success": "Fluxo de trabalho ativado.",

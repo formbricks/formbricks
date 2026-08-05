@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { buildEmailSendToOptions } from "./email-send-to-options";
+import {
+  type EmailSendToOption,
+  buildEmailSendToOptions,
+  findEmailSendToOption,
+} from "./email-send-to-options";
 
 const { mockGetElementsFromBlocks, mockRecallToHeadline, mockGetTextContent } = vi.hoisted(() => ({
   mockGetElementsFromBlocks: vi.fn(),
@@ -143,5 +147,53 @@ describe("buildEmailSendToOptions", () => {
       { id: "alice@example.com", type: "user", label: "Alice (alice@example.com)" },
       { id: "me@example.com", type: "user", label: "Yourself (me@example.com)" },
     ]);
+  });
+});
+
+describe("findEmailSendToOption", () => {
+  const options: EmailSendToOption[] = [
+    { id: "verifiedEmail", type: "verifiedEmail", label: "Verified email" },
+    { id: "aBc123", type: "openTextElement", label: "Your email" },
+    { id: "userEmail", type: "hiddenField", label: "userEmail" },
+    { id: "alice@example.com", type: "user", label: "Alice (alice@example.com)" },
+  ];
+
+  test("matches a member option regardless of case", () => {
+    // The v3 API and MCP tools accept `to` verbatim, so a stored recipient can differ in case from
+    // the member's address while the runtime allowlist (which normalizes both sides) still sends it.
+    expect(findEmailSendToOption(options, "Alice@Example.com")?.id).toBe("alice@example.com");
+  });
+
+  test("leaves a padded address unmatched, matching how the runtime classifies it", () => {
+    // `isLiteralEmailRecipient` (z.email()) rejects surrounding whitespace, so a padded `to` is never
+    // a literal recipient: enable/test skip it entirely and every run then fails resolving it as an
+    // element id. Trimming it into a member match here would hide a warning that is correct.
+    expect(findEmailSendToOption(options, " alice@example.com")).toBeUndefined();
+    expect(findEmailSendToOption(options, "alice@example.com ")).toBeUndefined();
+  });
+
+  test("prefers an exact non-user match over a case-insensitive member match", () => {
+    // A hidden field can be named after a member's address. Options are built elements-then-members,
+    // so the exact id wins and the response's own value keeps resolving.
+    const collidingOptions: EmailSendToOption[] = [
+      { id: "Alice@Example.com", type: "hiddenField", label: "Alice@Example.com" },
+      { id: "alice@example.com", type: "user", label: "Alice (alice@example.com)" },
+    ];
+
+    expect(findEmailSendToOption(collidingOptions, "Alice@Example.com")?.type).toBe("hiddenField");
+    expect(findEmailSendToOption(collidingOptions, "ALICE@EXAMPLE.COM")?.type).toBe("user");
+  });
+
+  test("matches element and hidden-field ids case-sensitively", () => {
+    expect(findEmailSendToOption(options, "aBc123")?.type).toBe("openTextElement");
+    expect(findEmailSendToOption(options, "abc123")).toBeUndefined();
+    expect(findEmailSendToOption(options, "userEmail")?.type).toBe("hiddenField");
+    expect(findEmailSendToOption(options, "useremail")).toBeUndefined();
+    expect(findEmailSendToOption(options, "verifiedEmail")?.type).toBe("verifiedEmail");
+  });
+
+  test("returns undefined for an empty value or a recipient no option covers", () => {
+    expect(findEmailSendToOption(options, "")).toBeUndefined();
+    expect(findEmailSendToOption(options, "outsider@external.example")).toBeUndefined();
   });
 });

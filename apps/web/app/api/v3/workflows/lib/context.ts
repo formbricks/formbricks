@@ -11,9 +11,9 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
-import { getOrganizationMemberEmails } from "@/lib/organization/service";
 import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 /**
@@ -94,16 +94,18 @@ const buildRecordAudit =
 
 /**
  * Recipient allowlist for `send_email` actions. Injected so `@formbricks/workflows` stays
- * organization-agnostic: given literal recipient emails, returns the subset that does NOT belong to
- * the workspace's organization. Enable/test use it to block a workflow from silently forwarding
- * response data to an arbitrary external inbox (ENG-2029). Emails are compared case-insensitively.
+ * tenancy-agnostic: given literal recipient emails, returns the subset whose owners cannot access
+ * this workspace. Enable/test use it to block a workflow from silently forwarding response data to
+ * an arbitrary external inbox (ENG-2029) or to someone whose access to this workspace was revoked
+ * (ENG-2186). Scoped to the workspace — not merely to its organization — so it matches both the
+ * authoring picker's options and the runner's send-time backstop. Emails are compared
+ * case-insensitively.
  */
 const verifyRecipientsAllowed: WorkflowApiContext["verifyRecipientsAllowed"] = async ({
   workspaceId,
   emails,
 }) => {
-  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-  const memberEmails = await getOrganizationMemberEmails(organizationId);
+  const memberEmails = await getWorkspaceMemberEmails(workspaceId);
   const disallowedEmails = emails.filter((email) => !memberEmails.has(normalizeEmailForComparison(email)));
   return { disallowedEmails };
 };

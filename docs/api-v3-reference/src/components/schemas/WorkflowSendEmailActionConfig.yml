@@ -29,10 +29,11 @@ properties:
       Follow-ups `to` field.
 
 
-      A **literal** address must belong to a member of this organization.
-      Enabling a workflow whose
+      A **literal** address must belong to someone who can access this
+      workspace — an organization owner or manager, or a member of a team the
 
-      literal recipient is not an organization member returns **422**
+      workspace is shared with. Enabling a workflow whose literal recipient
+      cannot access the workspace returns **422**
       `workflow_not_executable`, the
 
       dry run reports a `recipient_not_allowed` problem, and the runner refuses

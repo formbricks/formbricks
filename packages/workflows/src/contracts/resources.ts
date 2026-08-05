@@ -103,7 +103,7 @@ export const ZWorkflowTestResult = z
     ok: z
       .boolean()
       .describe(
-        "True when the definition is executable, every trigger reference resolves, and every literal send_email recipient is an organization member."
+        "True when the definition is executable, every trigger reference resolves, and every literal send_email recipient can access this workspace."
       ),
     problems: z
       .array(ZWorkflowTestProblem)

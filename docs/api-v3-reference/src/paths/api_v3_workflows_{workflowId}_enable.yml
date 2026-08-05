@@ -20,8 +20,8 @@ post:
     and ending cards still exist, and every `send_email` action addressing a
     *literal* email address
 
-    targets a member of this organization (an element-id `to` resolves to the
-    respondent's own
+    targets someone who can access this workspace (an element-id `to` resolves
+    to the respondent's own
 
     address and is exempt) — and then snapshots an immutable workflow
     version. Runs

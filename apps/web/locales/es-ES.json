@@ -4226,6 +4226,8 @@
       "email_to_label": "Enviar a",
       "email_to_placeholder": "equipo@ejemplo.com",
       "email_to_required": "Elige quién debe recibir este correo.",
+      "email_to_unavailable_group_label": "No disponible",
+      "email_to_unavailable_warning": "Este destinatario ya no está disponible: es posible que haya perdido el acceso a este espacio de trabajo o que se haya eliminado el campo de encuesta del que procedía. Elige uno nuevo; este correo no se puede enviar hasta que lo hagas.",
       "enable_blocked_unsaved_changes": "No se pudieron guardar tus últimos cambios, así que el flujo de trabajo no se habilitó.",
       "enable_failed": "No se pudo activar el flujo de trabajo.",
       "enable_success": "Flujo de trabajo activado.",
