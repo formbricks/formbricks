@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
-import { MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
 import {
   createdResponse,
   noContentResponse,
@@ -19,6 +18,12 @@ import {
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
+
+// Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
+// itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
+// invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
+// with z.url() and drops the whole event otherwise.
+const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
 
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   createV3SurveyResponseFromRawInput: vi.fn(),
@@ -348,7 +353,7 @@ describe("registerSurveyTools", () => {
 
     const result = await tools.get("create_survey")!.handler(createBody, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", MCP_AUDIT_API_URL);
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", ABSOLUTE_MCP_AUDIT_URL);
     expect(createV3SurveyResponseFromRawInput).toHaveBeenCalledWith({
       body: createBody,
       authentication: apiKeyAuth,
@@ -409,7 +414,7 @@ describe("registerSurveyTools", () => {
 
     const result = await tools.get("patch_survey")!.handler(patchInput, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", MCP_AUDIT_API_URL);
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", ABSOLUTE_MCP_AUDIT_URL);
     expect(patchV3SurveyResponse).toHaveBeenCalledWith({
       surveyId: "clxx1234567890123456789012",
       body: {

@@ -320,6 +320,16 @@ describe("createV3SurveyResponse", () => {
 
     expect(response.status).toBe(201);
     expect(response.headers.get("Location")).toBe("/api/v3/surveys/survey_1");
+    // Negative control for the level, not just the check: validateV3Survey was moved across this
+    // same seam from "readWrite" to "read" because it writes nothing. Create does write, so it must
+    // stay at "readWrite" — without this, the same move here would pass the suite.
+    expect(vi.mocked(requireV3WorkspaceAccess)).toHaveBeenCalledWith(
+      authentication,
+      workspaceId,
+      "readWrite",
+      requestId,
+      instance
+    );
     expect(vi.mocked(createV3Survey)).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId,

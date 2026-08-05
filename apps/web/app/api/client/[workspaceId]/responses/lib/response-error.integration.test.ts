@@ -63,6 +63,11 @@ describe("handleClientResponseCreateError vs real Prisma 7 + adapter-pg (ENG-217
       .catch((e) => e);
 
     expect(error?.code).toBe("P2002");
+    const rawFields = (
+      error?.meta as { driverAdapterError?: { cause?: { constraint?: { fields?: string[] } } } }
+    )?.driverAdapterError?.cause?.constraint?.fields;
+    expect(rawFields).toContain('"displayId"');
+
     expect(() => handleClientResponseCreateError(error, display.id)).toThrow(InvalidInputError);
     expect(() => handleClientResponseCreateError(error, display.id)).not.toThrow(DatabaseError);
   });
