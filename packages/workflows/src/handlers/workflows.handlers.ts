@@ -505,11 +505,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
    */
   async testWorkflow({ ctx, params }) {
     try {
-      // "read", not "readWrite": this is a dry run — it validates and mock-executes with side
-      // effects suppressed, persisting nothing. The MCP test_workflow tool is registered
-      // workflows:read and annotated readOnlyHint, so requiring write here 403'd every read-scoped
-      // caller on a tool that mutates nothing (ENG-2223). Raising this back means moving that
-      // tool's declared scope with it.
+      // "read", not "readWrite": as the doc comment above says, this validates the definition and
+      // resolves its trigger references — nothing is executed and no run is created, so there is no
+      // side effect to gate on. The MCP test_workflow tool is registered workflows:read and
+      // annotated readOnlyHint, so requiring write here 403'd every read-scoped caller on a tool
+      // that writes nothing (ENG-2223). Raising this back means moving that tool's scope with it.
       const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "read");
       if (loaded instanceof Response) return loaded;
       // Drafts are testable too — the whole point of a dry run is checking the setup BEFORE going

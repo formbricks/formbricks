@@ -19,11 +19,14 @@ export const isUniqueConstraintError = (error: unknown): error is PrismaClientKn
  *
  * `@prisma/adapter-pg` derives the column list by regex-scraping the Postgres error DETAIL
  * (`Key ("surveyId", "singleUseId")=(…)`) and never unquotes it. Postgres quotes any identifier
- * that `quote_identifier()` considers non-trivial — anything not all-lowercase, plus reserved
- * keywords — so `singleUseId` arrives as `"singleUseId"` while `token_hash` arrives bare.
+ * `quote_identifier()` does not consider safe to leave bare — not all-lowercase, starting with a
+ * digit, containing anything outside `[a-z0-9_]`, or colliding with a keyword — so `singleUseId`
+ * arrives as `"singleUseId"` while `token_hash` arrives bare. (`quote_all_identifiers = on` quotes
+ * everything, which this also handles.)
  *
- * Only a matched outer pair is removed, so already-bare names (and the legacy `meta.target` shape,
- * which is never quoted) pass through byte-identical.
+ * Only a matched outer pair is removed, so already-bare names pass through byte-identical. Applied
+ * to the legacy `meta.target` shape too: that engine does not quote, but running both branches
+ * through the same normaliser keeps the two interchangeable for callers and tests.
  */
 const unquoteIdentifier = (field: string): string =>
   field.length >= 2 && field.startsWith('"') && field.endsWith('"') ? field.slice(1, -1) : field;

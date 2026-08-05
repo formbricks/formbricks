@@ -14,8 +14,8 @@ post:
     machine-readable `code` and the offending `field` — so they can be fixed in a single pass.
 
 
-    Only `enabled` and `disabled` workflows can be tested. Testing a `draft` or `archived` workflow
-    returns **422** with code `invalid_workflow_state`.
+    Drafts are testable — validating the setup before going live is the point of a dry run. Only an
+    `archived` workflow is rejected, with **422** and code `invalid_workflow_state`.
   tags:
     - V3 Workflows
   parameters:
