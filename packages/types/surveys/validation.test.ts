@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { TValidateIdErrorCode, validateId } from "./validation";
+import {
+  LINK_SURVEY_SYSTEM_PARAMS,
+  RESERVED_DECLARED_FIELD_NAMES,
+  TValidateIdErrorCode,
+  validateId,
+} from "./validation";
 
 describe("validateId", () => {
   const noExistingIds: [string[], string[], string[], string[]] = [[], [], [], []];
@@ -27,7 +32,9 @@ describe("validateId", () => {
         field: "Legacy-Field",
       });
       expect(validateId("Q1", ...noExistingIds, strict)?.code).toBe(TValidateIdErrorCode.NotSafeIdentifier);
-      expect(validateId("UserID", ...noExistingIds, strict)?.code).toBe(
+      // Deliberately not `UserID`: that lowercases onto a reserved name, so it is reported as
+      // Reserved instead. See the reserved-name block below.
+      expect(validateId("CustomerRef", ...noExistingIds, strict)?.code).toBe(
         TValidateIdErrorCode.NotSafeIdentifier
       );
     });
@@ -46,6 +53,57 @@ describe("validateId", () => {
 
     test("reports the more specific error first for characters the lenient rule also rejects", () => {
       expect(validateId("user:name", ...noExistingIds, strict)?.code).toBe(TValidateIdErrorCode.InvalidChars);
+    });
+  });
+
+  /**
+   * A new declared field name must be refused whenever `getHiddenFieldsFromSearchParams` would refuse
+   * to capture it, otherwise the editor accepts a field that can never receive a value. Both ends read
+   * `RESERVED_DECLARED_FIELD_NAMES`, so these cases pin the two together.
+   */
+  describe("reserved names in strict mode", () => {
+    const strict = { requireSafeIdentifier: true };
+
+    test("rejects every reserved name in any casing", () => {
+      for (const reserved of RESERVED_DECLARED_FIELD_NAMES) {
+        for (const candidate of [reserved, reserved.toUpperCase()]) {
+          expect(validateId(candidate, ...noExistingIds, strict)).toEqual({
+            code: TValidateIdErrorCode.Reserved,
+            field: candidate,
+          });
+        }
+      }
+    });
+
+    test("rejects the link-survey system params the old rule let through", () => {
+      for (const systemParam of LINK_SURVEY_SYSTEM_PARAMS) {
+        expect(validateId(systemParam, ...noExistingIds, strict)?.code).toBe(TValidateIdErrorCode.Reserved);
+      }
+    });
+
+    test("rejects the FORBIDDEN_IDS casings the old rule let through", () => {
+      // Each of these passed `isSafeIdentifier` and missed the case-sensitive `FORBIDDEN_IDS` check,
+      // so the editor used to accept them.
+      for (const name of ["userid", "verifiedemail", "multilanguage", "welcomecard"]) {
+        expect(validateId(name, ...noExistingIds, strict)?.code).toBe(TValidateIdErrorCode.Reserved);
+      }
+    });
+
+    test("still accepts names that merely contain a reserved word", () => {
+      expect(validateId("user_id_ref", ...noExistingIds, strict)).toBeNull();
+      expect(validateId("language", ...noExistingIds, strict)).toBeNull();
+      expect(validateId("verified", ...noExistingIds, strict)).toBeNull();
+      expect(validateId("started_at", ...noExistingIds, strict)).toBeNull();
+    });
+
+    test("leaves the lenient path alone so element and question ids keep parsing", () => {
+      // Element/question id renames must not start failing: only the exact-case FORBIDDEN_IDS entry
+      // is reserved there, exactly as before this change.
+      expect(validateId("userid", ...noExistingIds)).toBeNull();
+      expect(validateId("lang", ...noExistingIds)).toBeNull();
+      expect(validateId("startat", ...noExistingIds)).toBeNull();
+      expect(validateId("WelcomeCard", ...noExistingIds)).toBeNull();
+      expect(validateId("userId", ...noExistingIds)?.code).toBe(TValidateIdErrorCode.Reserved);
     });
   });
 

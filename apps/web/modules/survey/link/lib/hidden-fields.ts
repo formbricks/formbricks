@@ -1,28 +1,5 @@
 import { matchDeclaredFieldName } from "@formbricks/types/safe-identifier";
-import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
-
-/**
- * Link-survey params that drive the runtime rather than carrying response data, and which
- * `FORBIDDEN_IDS` does not already cover. Lowercase because they are compared against a lowercased
- * param key. `suToken` in particular is a credential, and the rest would silently capture UI state.
- */
-const LINK_SURVEY_SYSTEM_PARAMS = [
-  "sutoken",
-  "lang",
-  "preview",
-  "startat",
-  "skipprefilled",
-  "offlinesupport",
-];
-
-/**
- * Param keys that must never be captured as a hidden field answer, in any casing. Derived from
- * `FORBIDDEN_IDS` so the reserved list cannot drift away from the survey schema's own.
- */
-const RESERVED_PARAM_KEYS = new Set([
-  ...FORBIDDEN_IDS.map((forbiddenId) => forbiddenId.toLowerCase()),
-  ...LINK_SURVEY_SYSTEM_PARAMS,
-]);
+import { RESERVED_DECLARED_FIELD_NAMES } from "@formbricks/types/surveys/validation";
 
 type TSearchParamsWithKeys = Pick<URLSearchParams, "keys" | "get">;
 
@@ -46,12 +23,13 @@ export const getHiddenFieldsFromSearchParams = (
     const matchedParamKey = matchDeclaredFieldName(incomingParamKeys, declaredFieldId);
     if (matchedParamKey === undefined) continue;
 
-    // `ZSurveyHiddenFields` rejects reserved names case-sensitively, so a survey can legally declare
-    // `Verify` or `UserId`. Matching case-insensitively here would turn that into a way to capture
-    // reserved params - most seriously `?verify=<jwt>`, the email-verification credential read by
-    // `verify-email-gate.ts`, which would then be written to the response and every export.
+    // `ZSurveyHiddenFields` rejects reserved names case-sensitively, so an already-stored survey can
+    // hold a field named `Verify` or `UserId` (the editor now refuses to create one). Matching
+    // case-insensitively here would turn that into a way to capture reserved params - most seriously
+    // `?verify=<jwt>`, the email-verification credential read by `verify-email-gate.ts`, which would
+    // then be written to the response and every export.
     // Checked on the resolved param key so no casing on either side gets through.
-    if (RESERVED_PARAM_KEYS.has(matchedParamKey.toLowerCase())) continue;
+    if (RESERVED_DECLARED_FIELD_NAMES.has(matchedParamKey.toLowerCase())) continue;
 
     const answer = searchParams.get(matchedParamKey);
     if (answer) fieldsRecord[declaredFieldId] = answer;

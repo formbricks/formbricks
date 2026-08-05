@@ -66,6 +66,31 @@ export const FORBIDDEN_IDS = [
   "verify",
 ];
 
+/**
+ * Link-survey params that drive the runtime rather than carrying response data, and which
+ * `FORBIDDEN_IDS` does not already cover. Lowercase because they are only ever compared against a
+ * lowercased key. `suToken` in particular is a credential, and the rest would silently capture UI state.
+ */
+export const LINK_SURVEY_SYSTEM_PARAMS = [
+  "sutoken",
+  "lang",
+  "preview",
+  "startat",
+  "skipprefilled",
+  "offlinesupport",
+];
+
+/**
+ * Every name a declared field must never take, lowercased. The single source of truth shared by the
+ * two ends that have to agree: `validateId` refuses to create such a name, and
+ * `getHiddenFieldsFromSearchParams` refuses to capture a param with such a key. When the two lists
+ * disagree the editor happily accepts a field that can never receive a value.
+ */
+export const RESERVED_DECLARED_FIELD_NAMES = new Set([
+  ...FORBIDDEN_IDS.map((forbiddenId) => forbiddenId.toLowerCase()),
+  ...LINK_SURVEY_SYSTEM_PARAMS,
+]);
+
 const FIELD_TO_LABEL_MAP: Record<string, string> = {
   headline: "question",
   subheader: "description",
@@ -366,7 +391,15 @@ export const validateId = (
     return { code: TValidateIdErrorCode.Duplicate, field };
   }
 
-  if (FORBIDDEN_IDS.includes(field)) {
+  // Reserved names stay case-sensitive on the lenient path so element and question id renames keep
+  // behaving exactly as before. New declared field names are matched case-insensitively and against
+  // the link-survey system params too, because `getHiddenFieldsFromSearchParams` refuses to capture
+  // any of those under any casing - a name that could never receive a value must not be creatable.
+  const isReserved = requireSafeIdentifier
+    ? RESERVED_DECLARED_FIELD_NAMES.has(field.toLowerCase())
+    : FORBIDDEN_IDS.includes(field);
+
+  if (isReserved) {
     return { code: TValidateIdErrorCode.Reserved, field };
   }
 
