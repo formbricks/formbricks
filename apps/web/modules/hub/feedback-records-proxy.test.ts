@@ -39,11 +39,32 @@ vi.mock("@/modules/hub/feedback-records-gateway", () => ({
  * Like JSON.stringify, but renders Error values including the members that matter for a leak check.
  * `message`, `name` and `cause` are non-enumerable or exotic, so plain stringify drops them and any
  * "does not contain the URL" assertion built on it can never fail.
+ *
+ * Projects the same two links getHubErrorHint walks — `cause` and `AggregateError.errors` — because
+ * Node buries the errno (and the URL alongside it) down either one. Omitting `errors` would leave the
+ * multi-address case silently unchecked, which is the failure this assertion exists to avoid.
+ *
+ * Tracks visited errors because the replacer hands back a fresh object each time, which defeats
+ * stringify's own cycle detection — a self-referencing `cause` (another shape getHubErrorHint
+ * explicitly handles) would otherwise recurse until the stack blows instead of failing the assertion.
  */
-const serializeIncludingErrors = (value: unknown): string =>
-  JSON.stringify(value, (_key, val) =>
-    val instanceof Error ? { name: val.name, message: val.message, stack: val.stack, cause: val.cause } : val
-  );
+const serializeIncludingErrors = (value: unknown): string => {
+  const seen = new WeakSet<Error>();
+
+  return JSON.stringify(value, (_key, val) => {
+    if (!(val instanceof Error)) return val;
+    if (seen.has(val)) return "[circular]";
+    seen.add(val);
+
+    return {
+      name: val.name,
+      message: val.message,
+      stack: val.stack,
+      cause: val.cause,
+      errors: (val as { errors?: unknown }).errors,
+    };
+  });
+};
 
 describe("proxyFeedbackRecordsRequest", () => {
   beforeEach(() => {
