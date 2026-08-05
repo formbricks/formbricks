@@ -25,6 +25,16 @@ export type TAuthzedObjectReference = Readonly<{
   objectType: string;
 }>;
 
+export type TAuthzedPermissionCheck = Readonly<{
+  permission: string;
+  resource: TAuthzedObjectReference;
+  subject: TAuthzedObjectReference;
+}>;
+
+export type TAuthzedPermissionDecision = Readonly<{
+  allowed: boolean;
+}>;
+
 export type TAuthzedSubjectReference = TAuthzedObjectReference &
   Readonly<{
     relation?: string;
@@ -125,6 +135,7 @@ export type TAuthzedRelationshipPage = Readonly<{
 }>;
 
 export type TAuthzedClient = Readonly<{
+  checkPermission: (check: TAuthzedPermissionCheck) => Promise<TAuthzedPermissionDecision>;
   consistency: TAuthzedConsistency;
   deleteRelationships: (filter: TAuthzedRelationshipFilter) => Promise<void>;
   diffSchema: (schemaText: string) => Promise<TAuthzedSchemaDiff>;
@@ -161,6 +172,7 @@ type TAuthzedConfig =
       enabled: true;
       endpoint: string;
       insecure: boolean;
+      minimumSnapshot?: string;
       systemKey: string;
       token: string;
     }>;
@@ -208,7 +220,12 @@ const getAuthzedConfig = (): TAuthzedConfig => {
     return { consistency, enabled: false, insecure };
   }
 
-  const { AUTHZED_ENDPOINT: endpoint, AUTHZED_SYSTEM_KEY: systemKey, AUTHZED_TOKEN: token } = env;
+  const {
+    AUTHZED_ENDPOINT: endpoint,
+    AUTHZED_MINIMUM_SNAPSHOT: minimumSnapshot,
+    AUTHZED_SYSTEM_KEY: systemKey,
+    AUTHZED_TOKEN: token,
+  } = env;
 
   if (!endpoint || !systemKey || !token) {
     throw new Error("Enabled AuthZed configuration was not validated");
@@ -219,12 +236,47 @@ const getAuthzedConfig = (): TAuthzedConfig => {
     enabled: true,
     endpoint,
     insecure,
+    minimumSnapshot,
     systemKey,
     token,
   };
 };
 
 const isNonEmpty = (value: string): boolean => value.length > 0;
+
+const validatePermissionCheck = (check: TAuthzedPermissionCheck): void => {
+  if (
+    !isNonEmpty(check.permission) ||
+    !isNonEmpty(check.resource.objectId) ||
+    !isNonEmpty(check.resource.objectType) ||
+    !isNonEmpty(check.subject.objectId) ||
+    !isNonEmpty(check.subject.objectType)
+  ) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+      operation: "check_permission",
+      retryable: false,
+    });
+  }
+};
+
+const getPermissionCheckConsistency = (config: Extract<TAuthzedConfig, { enabled: true }>) => {
+  if (config.consistency === "fully_consistent") {
+    return { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" as const } };
+  }
+
+  if (config.minimumSnapshot) {
+    return {
+      requirement: {
+        atLeastAsFresh: { token: config.minimumSnapshot },
+        oneofKind: "atLeastAsFresh" as const,
+      },
+    };
+  }
+
+  return { requirement: { minimizeLatency: true, oneofKind: "minimizeLatency" as const } };
+};
 
 const validateRelationshipUpdates = (updates: ReadonlyArray<TAuthzedRelationshipUpdate>): void => {
   if (updates.length === 0 || updates.length > AUTHZED_MAX_RELATIONSHIP_UPDATES) {
@@ -394,6 +446,44 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
   });
 
   const facade = Object.freeze<TAuthzedClient>({
+    checkPermission: async (check) => {
+      validatePermissionCheck(check);
+
+      return executeAuthzedOperation("check_permission", async () => {
+        const response = await sdkClient.promises.checkPermission({
+          consistency: getPermissionCheckConsistency(config),
+          context: undefined,
+          permission: check.permission,
+          resource: {
+            objectId: check.resource.objectId,
+            objectType: check.resource.objectType,
+          },
+          subject: {
+            object: {
+              objectId: check.subject.objectId,
+              objectType: check.subject.objectType,
+            },
+            optionalRelation: "",
+          },
+          withTracing: false,
+        });
+
+        if (response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION) {
+          return { allowed: true };
+        }
+
+        if (response.permissionship === v1.CheckPermissionResponse_Permissionship.NO_PERMISSION) {
+          return { allowed: false };
+        }
+
+        throw new AuthzedError({
+          attempts: 1,
+          code: AUTHZED_ERROR_CODES.UNSUPPORTED,
+          operation: "check_permission",
+          retryable: false,
+        });
+      });
+    },
     consistency: config.consistency,
     deleteRelationships: async (filter) => {
       validateRelationshipFilter(filter);

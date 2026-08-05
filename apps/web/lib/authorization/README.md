@@ -87,9 +87,27 @@ actor/action/resource types.
 
 ## Migration inventory
 
-The central interface still selects the legacy evaluator. Migration means
-callers use semantic actor/action/resource decisions; it does not enable an
-AuthZed network dependency.
+The central interface uses the legacy evaluator unless an internal ENG-1738
+rollout rule selects the current request surface and organization. Migration
+means callers use semantic actor/action/resource decisions; deployments with
+authorization rollout disabled have no AuthZed read dependency.
+
+### Added by ENG-1738
+
+- A private SpiceDB evaluator behind the unchanged `can()` and `assertCan()`
+  interface.
+- PostgreSQL actor/resource existence and tenant-boundary resolution before a
+  SpiceDB check.
+- Post-response shadow comparison for selected authenticated request surfaces.
+- Per-surface and per-organization enforcement cohorts with fail-closed
+  operational behavior.
+- Bounded, identifier-free comparison metrics and mismatch/error logs.
+
+Surveys, dashboards, and responses are intentionally resolved to their owning
+workspace before the SpiceDB check. Their parent relationships are not yet
+projected, so checking those resource definitions directly would turn every
+valid legacy decision into a false denial. This remains a current-model
+migration; resource-level relationships belong to the later sharing phase.
 
 ### Migrated by ENG-1714
 

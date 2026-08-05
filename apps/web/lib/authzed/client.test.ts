@@ -9,6 +9,7 @@ describe("AuthZed client facade", () => {
   beforeEach(() => {
     closeAuthzedClient();
     sdkMocks.close.mockReset();
+    sdkMocks.checkPermission.mockReset();
     sdkMocks.deadlineInterceptor.mockClear();
     sdkMocks.deleteRelationships.mockReset();
     sdkMocks.diffSchema.mockReset();
@@ -22,11 +23,13 @@ describe("AuthZed client facade", () => {
     envMock.AUTHZED_CONSISTENCY = undefined;
     envMock.AUTHZED_ENDPOINT = "spicedb:50051";
     envMock.AUTHZED_INSECURE = "true";
+    envMock.AUTHZED_MINIMUM_SNAPSHOT = undefined;
     envMock.AUTHZED_SYSTEM_KEY = "formbricks";
     envMock.AUTHZED_TOKEN = "private-token";
     sdkMocks.newClient.mockReturnValue({
       close: sdkMocks.close,
       promises: {
+        checkPermission: sdkMocks.checkPermission,
         deleteRelationships: sdkMocks.deleteRelationships,
         diffSchema: sdkMocks.diffSchema,
         readRelationships: sdkMocks.readRelationships,
@@ -101,6 +104,7 @@ describe("AuthZed client facade", () => {
     expect(first).toBe(second);
     expect(sdkMocks.newClient).toHaveBeenCalledTimes(1);
     expect(Object.keys(first).sort()).toEqual([
+      "checkPermission",
       "consistency",
       "deleteRelationships",
       "diffSchema",
@@ -173,6 +177,94 @@ describe("AuthZed client facade", () => {
     });
     expect(sdkMocks.readSchema).toHaveBeenCalledWith({});
     expect(retryMocks.execute).toHaveBeenCalledWith("read_schema", expect.any(Function));
+  });
+
+  test("checks permission with minimize-latency consistency and returns only the decision", async () => {
+    sdkMocks.checkPermission.mockResolvedValue({
+      checkedAt: { token: "private-revision" },
+      permissionship: v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION,
+    });
+
+    await expect(
+      getAuthzedClient().checkPermission({
+        permission: "read",
+        resource: { objectId: "workspace-1", objectType: "workspace" },
+        subject: { objectId: "user-1", objectType: "user" },
+      })
+    ).resolves.toEqual({ allowed: true });
+
+    expect(sdkMocks.checkPermission).toHaveBeenCalledWith({
+      consistency: { requirement: { minimizeLatency: true, oneofKind: "minimizeLatency" } },
+      context: undefined,
+      permission: "read",
+      resource: { objectId: "workspace-1", objectType: "workspace" },
+      subject: {
+        object: { objectId: "user-1", objectType: "user" },
+        optionalRelation: "",
+      },
+      withTracing: false,
+    });
+    expect(retryMocks.execute).toHaveBeenCalledWith("check_permission", expect.any(Function));
+  });
+
+  test("uses the configured minimum snapshot as an at-least-as-fresh floor", async () => {
+    envMock.AUTHZED_MINIMUM_SNAPSHOT = "backfill-snapshot";
+    sdkMocks.checkPermission.mockResolvedValue({
+      permissionship: v1.CheckPermissionResponse_Permissionship.NO_PERMISSION,
+    });
+
+    await expect(
+      getAuthzedClient().checkPermission({
+        permission: "write",
+        resource: { objectId: "workspace-1", objectType: "workspace" },
+        subject: { objectId: "key-1", objectType: "api_key" },
+      })
+    ).resolves.toEqual({ allowed: false });
+
+    expect(sdkMocks.checkPermission).toHaveBeenCalledWith(
+      expect.objectContaining({
+        consistency: {
+          requirement: {
+            atLeastAsFresh: { token: "backfill-snapshot" },
+            oneofKind: "atLeastAsFresh",
+          },
+        },
+      })
+    );
+  });
+
+  test("uses fully-consistent permission checks when configured for enforcement", async () => {
+    envMock.AUTHZED_CONSISTENCY = "fully_consistent";
+    sdkMocks.checkPermission.mockResolvedValue({
+      permissionship: v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION,
+    });
+
+    await getAuthzedClient().checkPermission({
+      permission: "read",
+      resource: { objectId: "organization-1", objectType: "organization" },
+      subject: { objectId: "user-1", objectType: "user" },
+    });
+
+    expect(sdkMocks.checkPermission).toHaveBeenCalledWith(
+      expect.objectContaining({
+        consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+      })
+    );
+  });
+
+  test.each([
+    v1.CheckPermissionResponse_Permissionship.CONDITIONAL_PERMISSION,
+    v1.CheckPermissionResponse_Permissionship.UNSPECIFIED,
+  ])("rejects unsupported permission result %s", async (permissionship) => {
+    sdkMocks.checkPermission.mockResolvedValue({ permissionship });
+
+    await expect(
+      getAuthzedClient().checkPermission({
+        permission: "read",
+        resource: { objectId: "workspace-1", objectType: "workspace" },
+        subject: { objectId: "user-1", objectType: "user" },
+      })
+    ).rejects.toMatchObject({ code: AUTHZED_ERROR_CODES.UNSUPPORTED, retryable: false });
   });
 
   test("normalizes SpiceDB's uninitialized-schema response to an empty successful schema", async () => {

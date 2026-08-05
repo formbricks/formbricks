@@ -10,6 +10,9 @@ readonly AUTHZED_TOKEN="00000000000000000000000000000000000000000000000000000000
 readonly AUTHZED_DATABASE_PASSWORD="0000000000000000000000000000000000000000000000000000000000000002"
 readonly WRONG_AUTHZED_TOKEN="0000000000000000000000000000000000000000000000000000000000000003"
 readonly SCHEMA_LOG_SENTINEL="Canonical Formbricks authorization schema."
+readonly RELATIONSHIP_USER_SENTINEL="application-graph-alice"
+readonly RELATIONSHIP_API_KEY_SENTINEL="application-api-key-writer"
+readonly RELATIONSHIP_RESOURCE_SENTINEL="application-graph-smoke"
 SMOKE_TEMP_DIR="$(mktemp -d)" || exit 1
 readonly SMOKE_TEMP_DIR
 readonly DRIFT_SCHEMA_FILE="${SMOKE_TEMP_DIR}/schema-with-drift.zed"
@@ -68,10 +71,11 @@ authzed_cli() {
   shift 2
 
   env \
-    AUTHZED_CONSISTENCY=minimize_latency \
+    AUTHZED_CONSISTENCY="${AUTHZED_SMOKE_CONSISTENCY:-minimize_latency}" \
     AUTHZED_ENABLED=true \
     AUTHZED_ENDPOINT="localhost:${spicedb_port}" \
     AUTHZED_INSECURE=true \
+    AUTHZED_MINIMUM_SNAPSHOT="${AUTHZED_SMOKE_MINIMUM_SNAPSHOT:-}" \
     AUTHZED_SYSTEM_KEY=formbricks \
     AUTHZED_TOKEN="${token}" \
     CUBEJS_API_SECRET=authzed-smoke-cube-secret \
@@ -153,6 +157,7 @@ refresh_spicedb_port
 
 if ! empty_schema_health="$(authzed_health "${AUTHZED_TOKEN}" 2>&1)"; then
   printf '%s\n' "Application health CLI failed before schema installation." >&2
+  printf '%s\n' "${empty_schema_health}" | sanitize_logs >&2
   exit 1
 fi
 assert_health_result "${empty_schema_health}" "healthy"
@@ -266,6 +271,17 @@ jq --exit-status '.status == "projected"' <<<"${idempotent_deleted_projection}" 
 
 api_key_seed="$(authzed_relationships "${AUTHZED_TOKEN}" seed-api-key)"
 jq --exit-status '.status == "projected"' <<<"${api_key_seed}" >/dev/null
+api_key_allow_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-api-key-allow) )"
+api_key_deny_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-api-key-deny) )"
+jq --exit-status '.status == "checked" and .allowed == true' <<<"${api_key_allow_check}" >/dev/null
+jq --exit-status '.status == "checked" and .allowed == false' <<<"${api_key_deny_check}" >/dev/null
+if wrong_token_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${WRONG_AUTHZED_TOKEN}" check-api-key-allow) 2>&1)"; then
+  printf '%s\n' "Application permission check unexpectedly accepted an incorrect token." >&2
+  exit 1
+fi
+jq --exit-status \
+  '.status == "failed" and .code == "authzed_permission_denied" and .retryable == false' \
+  <<<"${wrong_token_check}" >/dev/null
 [[ "$(
   zed permission check organization:application-api-key-organization read_access \
     api_key:application-api-key-reader --consistency-full
@@ -350,6 +366,10 @@ jq --exit-status '.status == "projected"' <<<"${idempotent_deleted_api_key}" >/d
 
 team_workspace_seed="$(authzed_relationships "${AUTHZED_TOKEN}" seed-team-workspace)"
 jq --exit-status '.status == "projected"' <<<"${team_workspace_seed}" >/dev/null
+user_allow_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-user-allow) )"
+user_deny_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-user-deny) )"
+jq --exit-status '.status == "checked" and .allowed == true' <<<"${user_allow_check}" >/dev/null
+jq --exit-status '.status == "checked" and .allowed == false' <<<"${user_deny_check}" >/dev/null
 [[ "$(
   zed permission check workspace:application-graph-smoke manage \
     user:application-graph-alice --consistency-full
@@ -463,6 +483,14 @@ jq --exit-status \
   '.status == "failed" and .code == "authzed_unavailable" and .attempts == 3 and .retryable == true and .latencyMs <= 4000' \
   <<<"${unavailable_projection}" >/dev/null
 
+if unavailable_permission_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-user-allow) 2>&1)"; then
+  printf '%s\n' "Application permission check unexpectedly succeeded while SpiceDB was stopped." >&2
+  exit 1
+fi
+jq --exit-status \
+  '.status == "failed" and .code == "authzed_unavailable" and .attempts == 3 and .retryable == true and .latencyMs <= 4000' \
+  <<<"${unavailable_permission_check}" >/dev/null
+
 compose up --detach --force-recreate spicedb
 wait_for_spicedb
 refresh_spicedb_port
@@ -547,8 +575,11 @@ jq --exit-status '.pruned == 0 and .skipped == 1 and .handedOverCount == 0 and .
 
 backfill_prune="$(authzed_backfill "${AUTHZED_TOKEN}" prune)"
 jq --exit-status \
-  '.status == "reconciled" and .pruned >= 300 and .handedOverCount > 0 and .truncated == false' \
+  '.status == "reconciled" and .pruned >= 300 and .handedOverCount > 0 and .truncated == false and (.completedAtSnapshot | type == "string")' \
   <<<"${backfill_prune}" >/dev/null
+completed_at_snapshot="$(jq --raw-output '.completedAtSnapshot' <<<"${backfill_prune}")"
+snapshot_floor_check="$( (AUTHZED_SMOKE_CONSISTENCY=minimize_latency AUTHZED_SMOKE_MINIMUM_SNAPSHOT="${completed_at_snapshot}" authzed_relationships "${AUTHZED_TOKEN}" check-user-allow) )"
+jq --exit-status '.status == "checked" and .allowed == true' <<<"${snapshot_floor_check}" >/dev/null
 
 backfill_cleanup="$(authzed_backfill "${AUTHZED_TOKEN}" cleanup)"
 jq --exit-status '.status == "cleaned"' <<<"${backfill_cleanup}" >/dev/null
@@ -567,13 +598,16 @@ backfill_repeated="$(authzed_backfill "${AUTHZED_TOKEN}" report)"
 [[ "${backfill_repeated}" == "${backfill_after_cleanup}" ]]
 
 service_logs="$(compose logs --no-color postgres authzed-db-bootstrap spicedb-migrate spicedb)"
-application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${api_key_seed}${downgraded_api_key}${removed_api_key_scope}${deleted_api_key}${idempotent_deleted_api_key}${team_workspace_seed}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${persisted_team_workspace_seed}${persisted_api_key_seed}${unavailable_health}${unavailable_projection}${restored_health}${restored_projection}${persisted_schema_check}${refused_backfill_driver}${backfill_seed}${backfill_observation}${backfill_report}${backfill_capped}${backfill_page_capped}${backfill_prune}${backfill_cleanup}${backfill_after_cleanup}${backfill_repeated}"
+application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${api_key_seed}${api_key_allow_check}${api_key_deny_check}${wrong_token_check}${downgraded_api_key}${removed_api_key_scope}${deleted_api_key}${idempotent_deleted_api_key}${team_workspace_seed}${user_allow_check}${user_deny_check}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${persisted_team_workspace_seed}${persisted_api_key_seed}${unavailable_health}${unavailable_projection}${unavailable_permission_check}${restored_health}${restored_projection}${persisted_schema_check}${refused_backfill_driver}${backfill_seed}${backfill_observation}${backfill_report}${backfill_capped}${backfill_page_capped}${backfill_prune}${snapshot_floor_check}${backfill_cleanup}${backfill_after_cleanup}${backfill_repeated}"
 if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${WRONG_AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* || \
-  "${service_logs}${application_outputs}" == *"${SCHEMA_LOG_SENTINEL}"* ]]; then
-  printf '%s\n' "AuthZed logs exposed a configured secret or schema content." >&2
+  "${service_logs}${application_outputs}" == *"${SCHEMA_LOG_SENTINEL}"* || \
+  "${service_logs}${application_outputs}" == *"${RELATIONSHIP_USER_SENTINEL}"* || \
+  "${service_logs}${application_outputs}" == *"${RELATIONSHIP_API_KEY_SENTINEL}"* || \
+  "${service_logs}${application_outputs}" == *"${RELATIONSHIP_RESOURCE_SENTINEL}"* ]]; then
+  printf '%s\n' "AuthZed logs exposed a configured secret, schema, or relationship identifier." >&2
   exit 1
 fi
 
-printf '%s\n' "AuthZed smoke test passed: schema lifecycle, organization/team/workspace/API-key projection, permission ladders, grant and membership revocation, idempotent cascade cleanup, paginated relationship reads, backfill orphan detection and prune guards, health, authentication failure, bounded outage handling, migrations, and persistence were verified."
+printf '%s\n' "AuthZed smoke test passed: schema lifecycle, organization/team/workspace/API-key projection, application user/API-key permission checks, fully-consistent and snapshot-floor reads, permission ladders, grant and membership revocation, idempotent cascade cleanup, paginated relationship reads, backfill orphan detection and prune guards, health, authentication failure, bounded outage handling, migrations, and persistence were verified."

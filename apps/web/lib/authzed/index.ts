@@ -4,6 +4,8 @@ export {
   getAuthzedClient,
   type TAuthzedClient,
   type TAuthzedObjectReference,
+  type TAuthzedPermissionCheck,
+  type TAuthzedPermissionDecision,
   type TAuthzedRelationship,
   type TAuthzedRelationshipFilter,
   type TAuthzedRelationshipUpdate,

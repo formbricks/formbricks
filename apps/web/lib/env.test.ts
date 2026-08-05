@@ -13,9 +13,16 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     CUBEJS_API_URL: "https://cube.formbricks.local",
     CUBEJS_API_SECRET: "cube-secret",
     AUTHZED_CONSISTENCY: undefined,
+    AUTHZED_AUTHORIZATION_COHORT: undefined,
+    AUTHZED_AUTHORIZATION_ENABLED: undefined,
     AUTHZED_ENABLED: undefined,
     AUTHZED_ENDPOINT: undefined,
+    AUTHZED_ENFORCEMENT_ORGANIZATION_IDS: undefined,
+    AUTHZED_ENFORCEMENT_TARGETS: undefined,
     AUTHZED_INSECURE: undefined,
+    AUTHZED_MINIMUM_SNAPSHOT: undefined,
+    AUTHZED_SHADOW_ORGANIZATION_IDS: undefined,
+    AUTHZED_SHADOW_TARGETS: undefined,
     AUTHZED_SYSTEM_KEY: undefined,
     AUTHZED_TOKEN: undefined,
     ...overrides,
@@ -280,6 +287,170 @@ describe("env", () => {
     });
 
     await expect(import("./env")).rejects.toThrow("AUTHZED_ENABLED");
+  });
+
+  test.each(["true", "false", "1", "0"])(
+    "accepts AuthZed authorization boolean value %s",
+    async (enabled) => {
+      setTestEnv({ AUTHZED_AUTHORIZATION_ENABLED: enabled });
+
+      const { env } = await import("./env");
+
+      expect(env.AUTHZED_AUTHORIZATION_ENABLED).toBe(enabled);
+    }
+  );
+
+  test("accepts a complete AuthZed shadow rollout configuration", async () => {
+    setTestEnv({
+      AUTHZED_AUTHORIZATION_COHORT: "sandbox_users",
+      AUTHZED_AUTHORIZATION_ENABLED: "true",
+      AUTHZED_ENABLED: "true",
+      AUTHZED_ENDPOINT: "spicedb:50051",
+      AUTHZED_MINIMUM_SNAPSHOT: "opaque-snapshot-token",
+      AUTHZED_SHADOW_ORGANIZATION_IDS: "org_a, org_b",
+      AUTHZED_SHADOW_TARGETS: "server_action:user,api_v3:user",
+      AUTHZED_SYSTEM_KEY: "formbricks",
+      AUTHZED_TOKEN: "test-authzed-token",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.AUTHZED_AUTHORIZATION_COHORT).toBe("sandbox_users");
+    expect(env.AUTHZED_SHADOW_TARGETS).toBe("server_action:user,api_v3:user");
+  });
+
+  test("treats an empty optional AuthZed snapshot as unset", async () => {
+    setTestEnv({ AUTHZED_MINIMUM_SNAPSHOT: "" });
+
+    const { env } = await import("./env");
+
+    expect(env.AUTHZED_MINIMUM_SNAPSHOT).toBeUndefined();
+  });
+
+  test("accepts a complete AuthZed enforcement rollout configuration", async () => {
+    setTestEnv({
+      AUTHZED_AUTHORIZATION_COHORT: "sandbox_api_keys",
+      AUTHZED_AUTHORIZATION_ENABLED: "1",
+      AUTHZED_CONSISTENCY: "fully_consistent",
+      AUTHZED_ENABLED: "1",
+      AUTHZED_ENDPOINT: "spicedb:50051",
+      AUTHZED_ENFORCEMENT_ORGANIZATION_IDS: "*",
+      AUTHZED_ENFORCEMENT_TARGETS: "api_v2:apiKey,mcp:apiKey",
+      AUTHZED_SYSTEM_KEY: "formbricks",
+      AUTHZED_TOKEN: "test-authzed-token",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.AUTHZED_ENFORCEMENT_ORGANIZATION_IDS).toBe("*");
+    expect(env.AUTHZED_ENFORCEMENT_TARGETS).toBe("api_v2:apiKey,mcp:apiKey");
+  });
+
+  test.each([
+    ["AUTHZED_SHADOW_TARGETS", "server_action:apiKey"],
+    ["AUTHZED_SHADOW_TARGETS", "unknown:user"],
+    ["AUTHZED_ENFORCEMENT_TARGETS", "api_v2:user"],
+  ])("rejects invalid rollout target in %s", async (variable, value) => {
+    setTestEnv({
+      [variable]: value,
+      [variable.replace("TARGETS", "ORGANIZATION_IDS")]: "org_a",
+      AUTHZED_AUTHORIZATION_COHORT: "test_cohort",
+    });
+
+    await expect(import("./env")).rejects.toThrow(variable);
+  });
+
+  test.each([
+    ["AUTHZED_SHADOW_TARGETS", "AUTHZED_SHADOW_ORGANIZATION_IDS"],
+    ["AUTHZED_ENFORCEMENT_TARGETS", "AUTHZED_ENFORCEMENT_ORGANIZATION_IDS"],
+  ])("requires paired rollout values for %s", async (targetVariable, organizationVariable) => {
+    setTestEnv({
+      [targetVariable]: "server_action:user",
+      AUTHZED_AUTHORIZATION_COHORT: "test_cohort",
+    });
+
+    await expect(import("./env")).rejects.toThrow(organizationVariable);
+  });
+
+  test("rejects an organization wildcard mixed with explicit IDs", async () => {
+    setTestEnv({
+      AUTHZED_AUTHORIZATION_COHORT: "test_cohort",
+      AUTHZED_SHADOW_ORGANIZATION_IDS: "*,org_a",
+      AUTHZED_SHADOW_TARGETS: "server_action:user",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AUTHZED_SHADOW_ORGANIZATION_IDS");
+  });
+
+  test("requires a cohort label when rollout rules are configured", async () => {
+    setTestEnv({
+      AUTHZED_SHADOW_ORGANIZATION_IDS: "org_a",
+      AUTHZED_SHADOW_TARGETS: "server_action:user",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AUTHZED_AUTHORIZATION_COHORT");
+  });
+
+  test("requires the base AuthZed client whenever authorization rollout rules are configured", async () => {
+    setTestEnv({
+      AUTHZED_AUTHORIZATION_COHORT: "test_cohort",
+      AUTHZED_SHADOW_ORGANIZATION_IDS: "org_a",
+      AUTHZED_SHADOW_TARGETS: "server_action:user",
+      AUTHZED_MINIMUM_SNAPSHOT: "snapshot-token",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AUTHZED_ENABLED");
+  });
+
+  test("requires a snapshot floor for minimize-latency shadow evaluation", async () => {
+    setTestEnv({
+      AUTHZED_AUTHORIZATION_COHORT: "test_cohort",
+      AUTHZED_AUTHORIZATION_ENABLED: "true",
+      AUTHZED_ENABLED: "true",
+      AUTHZED_ENDPOINT: "spicedb:50051",
+      AUTHZED_SHADOW_ORGANIZATION_IDS: "org_a",
+      AUTHZED_SHADOW_TARGETS: "server_action:user",
+      AUTHZED_SYSTEM_KEY: "formbricks",
+      AUTHZED_TOKEN: "test-authzed-token",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AUTHZED_MINIMUM_SNAPSHOT");
+  });
+
+  test("requires fully-consistent authorization enforcement", async () => {
+    setTestEnv({
+      AUTHZED_AUTHORIZATION_COHORT: "test_cohort",
+      AUTHZED_AUTHORIZATION_ENABLED: "true",
+      AUTHZED_ENABLED: "true",
+      AUTHZED_ENDPOINT: "spicedb:50051",
+      AUTHZED_ENFORCEMENT_ORGANIZATION_IDS: "org_a",
+      AUTHZED_ENFORCEMENT_TARGETS: "server_action:user",
+      AUTHZED_SYSTEM_KEY: "formbricks",
+      AUTHZED_TOKEN: "test-authzed-token",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AUTHZED_CONSISTENCY");
+  });
+
+  test("rejects invalid authorization cohort labels", async () => {
+    setTestEnv({ AUTHZED_AUTHORIZATION_COHORT: "Sandbox-Users" });
+
+    await expect(import("./env")).rejects.toThrow("AUTHZED_AUTHORIZATION_COHORT");
+  });
+
+  test("does not expose the AuthZed snapshot in validation errors", async () => {
+    const snapshot = "never-log-this-snapshot-token";
+    setTestEnv({
+      AUTHZED_AUTHORIZATION_COHORT: "test_cohort",
+      AUTHZED_MINIMUM_SNAPSHOT: snapshot,
+      AUTHZED_SHADOW_ORGANIZATION_IDS: "*,org_a",
+      AUTHZED_SHADOW_TARGETS: "server_action:user",
+    });
+
+    const error = await import("./env").catch((caughtError: unknown) => caughtError);
+
+    expect(String(error)).toContain("AUTHZED_SHADOW_ORGANIZATION_IDS");
+    expect(String(error)).not.toContain(snapshot);
   });
 
   test("allows Google Cloud AI configuration to rely on ADC credentials", async () => {

@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 
 export const sdkMocks = {
+  checkPermission: vi.fn(),
   close: vi.fn(),
   deadlineInterceptor: vi.fn((timeoutMs: number) => ({ timeoutMs })),
   deleteRelationships: vi.fn(),
@@ -20,6 +21,7 @@ export const envMock = {
   AUTHZED_CONSISTENCY: undefined as "minimize_latency" | "fully_consistent" | undefined,
   AUTHZED_ENDPOINT: "spicedb:50051" as string | undefined,
   AUTHZED_INSECURE: "true" as "true" | "false" | "1" | "0" | undefined,
+  AUTHZED_MINIMUM_SNAPSHOT: undefined as string | undefined,
   AUTHZED_SYSTEM_KEY: "formbricks" as string | undefined,
   AUTHZED_TOKEN: "private-token" as string | undefined,
 };
@@ -34,6 +36,12 @@ vi.mock("@authzed/authzed-node", () => ({
     ClientSecurity: {
       INSECURE_PLAINTEXT_CREDENTIALS: 2,
       SECURE: 0,
+    },
+    CheckPermissionResponse_Permissionship: {
+      CONDITIONAL_PERMISSION: 3,
+      HAS_PERMISSION: 2,
+      NO_PERMISSION: 1,
+      UNSPECIFIED: 0,
     },
     // Mirrors the real enum. A mock that omitted it would make the facade's completeness assertion
     // throw a TypeError instead of exercising it.
