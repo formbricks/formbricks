@@ -301,10 +301,10 @@ the Hub API and the Hub worker Deployments, so setting it there would report two
 keeps them apart. If you do want custom names, override per component in `hub.worker.env` rather than widening
 `hub.env`. The taxonomy service has no such built-in default and would report `unknown_service` without it.
 
-Both blocks need images newer than the ones this chart currently pins. Hub reads `LOG_FORMAT` only in builds after
-0.8.2, and the taxonomy service gained its OpenTelemetry and JSON-logging support after `v0.1.0`. Older images
-ignore these variables entirely rather than failing, so a rollout ahead of the image bump is silent — expect text
-logs and no taxonomy metrics until both images are updated.
+Both blocks need recent images. Hub reads `LOG_FORMAT` from 0.8.3 onward, and the taxonomy service's
+OpenTelemetry and JSON-logging support is newer than `v0.1.0`. Older images ignore these variables entirely
+rather than failing, so applying them ahead of the image bump is silent — expect text logs and no taxonomy
+metrics until each image is new enough.
 
 Hub's metric attributes are restricted to a fixed, low-cardinality set — for its taxonomy metrics that is
 `scope_type`, `status`, `failure_code`, and `reason`. Run, request, tenant, source, and field identifiers are
