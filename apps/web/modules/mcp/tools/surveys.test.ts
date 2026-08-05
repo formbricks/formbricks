@@ -19,6 +19,12 @@ import {
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
 
+// Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
+// itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
+// invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
+// with z.url() and drops the whole event otherwise.
+const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
+
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   createV3SurveyResponseFromRawInput: vi.fn(),
   deleteV3Survey: vi.fn(),
@@ -347,7 +353,7 @@ describe("registerSurveyTools", () => {
 
     const result = await tools.get("create_survey")!.handler(createBody, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", ABSOLUTE_MCP_AUDIT_URL);
     expect(createV3SurveyResponseFromRawInput).toHaveBeenCalledWith({
       body: createBody,
       authentication: apiKeyAuth,
@@ -408,7 +414,7 @@ describe("registerSurveyTools", () => {
 
     const result = await tools.get("patch_survey")!.handler(patchInput, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", ABSOLUTE_MCP_AUDIT_URL);
     expect(patchV3SurveyResponse).toHaveBeenCalledWith({
       surveyId: "clxx1234567890123456789012",
       body: {
@@ -498,11 +504,14 @@ describe("registerSurveyTools", () => {
     expect(result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      detail: "OAuth token does not include the required MCP scope: surveys:write",
       requestId: "req_tool",
     });
   });
 
+  // Covers the MCP scope gate only — validateV3SurveyFromRawInput is mocked here, so this passed
+  // even while the real v3 operation demanded readWrite and 403'd every read-scoped caller
+  // (ENG-2179). The v3 gate itself is asserted in app/api/v3/surveys/lib/operations.test.ts.
   test("validate_survey allows patch validations for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
     vi.mocked(validateV3SurveyFromRawInput).mockResolvedValue(
@@ -543,7 +552,7 @@ describe("registerSurveyTools", () => {
     expect(result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      detail: "OAuth token does not include the required MCP scope: surveys:read",
       requestId: "req_tool",
     });
   });

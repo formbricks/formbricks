@@ -19,6 +19,7 @@ import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
 import {
+  MCP_CHALLENGE_SCOPE,
   MCP_RESOURCE_SCOPES,
   getAuthIssuerUrl,
   getMcpOrigin,
@@ -37,16 +38,6 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "authorization",
 ]);
 
-// Minimum grant required to authenticate against the MCP server at all: at least ONE resource scope.
-// Any single one is enough — a token granted only `feedbackRecords:read` is a legitimate MCP client and
-// must not be rejected here for lacking `surveys:read`. Which tools it can actually call is enforced
-// per-tool by guardMcpScopes at call time.
-const MCP_MINIMUM_SCOPES = MCP_RESOURCE_SCOPES;
-// Scopes advertised in the 401 WWW-Authenticate challenge. Clients build their DCR + authorize
-// requests from this, so it must list every resource scope (read + write) or clients only ever
-// request read and can never reach the write tools. Actual write access is still gated downstream
-// by the user's workspace permissions in the v3 layer.
-const MCP_CHALLENGE_SCOPE = MCP_RESOURCE_SCOPES.join(" ");
 const oauthResourceClient = oauthProviderResourceClient(auth);
 
 export type TMcpAuthInfo = AuthInfo & {
@@ -212,9 +203,12 @@ export function withMcpResponseHeaders(response: Response, requestId: string): R
 
 function withOAuthChallenge(response: Response, scope = MCP_CHALLENGE_SCOPE): Response {
   const headers = new Headers(response.headers);
+  // Comma-separated auth-params, per the `#auth-param` list grammar in RFC 9110 §11.6.1 (as used by
+  // RFC 6750 and RFC 9728). Space-separated, a strict parser reads the whole tail as one malformed
+  // param and misses `resource_metadata` — the pointer MCP clients follow to discover this server.
   headers.set(
     "WWW-Authenticate",
-    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}" scope="${scope}"`
+    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}", scope="${scope}"`
   );
 
   return new Response(response.body, {
@@ -370,14 +364,24 @@ async function authenticateMcpOAuthBearer(
     };
   }
 
-  if (!hasAnyMcpScope(authInfo, MCP_MINIMUM_SCOPES)) {
+  // Minimum grant required to authenticate against the MCP server at all: at least ONE *resource*
+  // scope. Any single one is enough — a token granted only `feedbackRecords:read` is a legitimate
+  // MCP client and must not be rejected here for lacking `surveys:read`. Which tools it can actually
+  // call is enforced per-tool by guardMcpScopes at call time.
+  //
+  // Deliberately NOT MCP_CHALLENGE_SCOPE / MCP_PROTECTED_RESOURCE_SCOPES: those include
+  // `offline_access`, and an any-of gate over that list would let a token holding *only*
+  // `offline_access` — which grants no resource access at all — authenticate to the MCP server.
+  // Same reason the insufficient_scope challenge below advertises only the resource scopes: RFC 6750
+  // `scope` names the scopes *required* for the resource, and `offline_access` is not one of them.
+  if (!hasAnyMcpScope(authInfo, MCP_RESOURCE_SCOPES)) {
     log.warn({ statusCode: 403, clientId: authInfo.clientId }, "MCP OAuth token missing every MCP scope");
     return {
       ok: false,
       requestId,
       response: withInsufficientScopeChallenge(
         problemForbidden(requestId, "OAuth token does not include the required MCP scope", instance),
-        [...MCP_MINIMUM_SCOPES]
+        [...MCP_RESOURCE_SCOPES]
       ),
     };
   }
@@ -418,9 +422,20 @@ export function hasAnyMcpScope(authInfo: AuthInfo | undefined, allowedScopes: re
   return allowedScopes.some((scope) => scopes.includes(scope));
 }
 
+/**
+ * The scopes are named in `detail`, not only in the `WWW-Authenticate` challenge, because the tool path
+ * cannot carry a header: `guardMcpScopes` hands this Response to `responseToMcpToolResult`, which
+ * serializes the JSON body into a JSON-RPC result and drops every header. Without them in the body a
+ * client that is refused a tool call learns only "some scope is missing" and cannot re-authorize for the
+ * right one. The challenge is still set for the transport-level 403, where the header does reach clients.
+ */
 export function createMcpInsufficientScopeResponse(requestId: string, scopes: string[]): Response {
   return withInsufficientScopeChallenge(
-    problemForbidden(requestId, "OAuth token does not include the required MCP scope", "/api/mcp"),
+    problemForbidden(
+      requestId,
+      `OAuth token does not include the required MCP scope: ${scopes.join(" ")}`,
+      "/api/mcp"
+    ),
     scopes
   );
 }

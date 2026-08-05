@@ -320,6 +320,16 @@ describe("createV3SurveyResponse", () => {
 
     expect(response.status).toBe(201);
     expect(response.headers.get("Location")).toBe("/api/v3/surveys/survey_1");
+    // Negative control for the level, not just the check: validateV3Survey was moved across this
+    // same seam from "readWrite" to "read" because it writes nothing. Create does write, so it must
+    // stay at "readWrite" — without this, the same move here would pass the suite.
+    expect(vi.mocked(requireV3WorkspaceAccess)).toHaveBeenCalledWith(
+      authentication,
+      workspaceId,
+      "readWrite",
+      requestId,
+      instance
+    );
     expect(vi.mocked(createV3Survey)).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId,
@@ -913,10 +923,12 @@ describe("validateV3Survey", () => {
     } as any);
 
     expect(response.status).toBe(200);
+    // "read", not "readWrite": validation writes nothing, and the MCP validate_survey tool is
+    // registered surveys:read. Raising this back to readWrite re-breaks that tool (ENG-2179).
     expect(vi.mocked(requireV3WorkspaceAccess)).toHaveBeenCalledWith(
       authentication,
       workspaceId,
-      "readWrite",
+      "read",
       requestId,
       instance
     );
@@ -953,10 +965,11 @@ describe("validateV3Survey", () => {
     } as any);
 
     expect(response.status).toBe(200);
+    // See the create-branch note above: the patch dry run is gated at "read" too.
     expect(vi.mocked(getAuthorizedV3Survey)).toHaveBeenCalledWith({
       surveyId: validSurveyId,
       authentication,
-      access: "readWrite",
+      access: "read",
       requestId,
       instance,
     });
