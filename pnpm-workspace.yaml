@@ -138,7 +138,8 @@ overrides:
   # typeorm>sqlite3. `pnpm audit` marks these findings `dev: false`. By contributor, the 1.x line is
   # dominated by the eslint plugin graph (typescript-eslint, @vitest/eslint-plugin, eslint-config-next,
   # eslint-plugin-storybook) and the 2.x line by vite-plugin-dts>@vue/language-core across six workspace
-  # packages, plus both prettier plugins. @redocly/cli is the only root on both lines, mostly on 2.x.
+  # packages, plus both prettier plugins. Two roots sit on both lines: @redocly/cli (mostly 2.x) and
+  # @boxyhq/saml-jackson (mostly 1.x, via the node-gyp chain above).
   # What makes it tolerable is the input, not the dependency type: every one of these call sites expands
   # glob patterns supplied by library code or developer config (gaxios' cache cleanup, typeorm's entity
   # discovery, build and lint globs), never by request data.
