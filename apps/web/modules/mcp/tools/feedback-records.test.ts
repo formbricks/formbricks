@@ -13,7 +13,6 @@ import {
   updateV3FeedbackRecord,
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
-import { MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
 import {
   noContentResponse,
   problemBadRequest,
@@ -21,7 +20,14 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { registerFeedbackRecordTools } from "./feedback-records";
+
+// Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
+// itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
+// invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
+// with z.url() and drops the whole event otherwise.
+const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
 
 vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
   countV3FeedbackRecords: vi.fn(),
@@ -238,7 +244,12 @@ describe("create_feedback_record", () => {
 
     await tools.get("create_feedback_record")!.handler(body, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "feedbackRecord", MCP_AUDIT_API_URL);
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      apiKeyAuth,
+      "created",
+      "feedbackRecord",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
     expect(createV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, body, authentication: apiKeyAuth })
     );
@@ -300,7 +311,12 @@ describe("delete_feedback_record", () => {
 
     const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "feedbackRecord", MCP_AUDIT_API_URL);
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      apiKeyAuth,
+      "deleted",
+      "feedbackRecord",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
     expect(deleteV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId,
@@ -446,6 +462,11 @@ describe("count_feedback_records", () => {
 });
 
 describe("create_feedback_records", () => {
+  // buildAuditLogBaseObject seeds `targetId` with the UNKNOWN_DATA placeholder and the batch path
+  // branches on it, so the mock has to carry it. Omitting it (as these tests used to) makes a plain
+  // truthiness check pass here while matching every entry in production — which is how the batch path
+  // came to emit success events for records the Hub had rejected.
+  const makeAuditLog = () => ({ status: "failure", targetId: UNKNOWN_DATA }) as any;
   const records = [
     { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "one" },
     { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "two" },
@@ -466,7 +487,7 @@ describe("create_feedback_records", () => {
   test("queues one success audit event per created record", async () => {
     const built: any[] = [];
     vi.mocked(buildV3AuditLog).mockImplementation(() => {
-      const auditLog = { status: "failure" } as any;
+      const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
     });
@@ -483,12 +504,16 @@ describe("create_feedback_records", () => {
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
     expect(built[0].status).toBe("success");
     expect(built[1].status).toBe("failure");
+    // The rejected record keeps the placeholder, so it must never be reported as a creation: an
+    // audit trail that invents records is worse than one with gaps.
+    expect(built[1].targetId).toBe(UNKNOWN_DATA);
+    expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toBe(built[0]);
   });
 
   test("still queues a failure event when the batch operation throws, and rethrows", async () => {
     const built: any[] = [];
     vi.mocked(buildV3AuditLog).mockImplementation(() => {
-      const auditLog = { status: "failure" } as any;
+      const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
     });
@@ -504,7 +529,7 @@ describe("create_feedback_records", () => {
   test("queues a single failure event when nothing was created", async () => {
     const built: any[] = [];
     vi.mocked(buildV3AuditLog).mockImplementation(() => {
-      const auditLog = { status: "failure" } as any;
+      const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
     });
@@ -534,7 +559,12 @@ describe("update_feedback_record", () => {
 
     await tools.get("update_feedback_record")!.handler(input, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "feedbackRecord", MCP_AUDIT_API_URL);
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      apiKeyAuth,
+      "updated",
+      "feedbackRecord",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
     expect(updateV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, feedbackRecordId: recordId, body: input, auditLog })
     );
