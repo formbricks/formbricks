@@ -401,6 +401,47 @@ export const getMonthlyOrganizationResponseCount = reactCache(
   }
 );
 
+export const getMonthlyOrganizationWorkflowRunCount = reactCache(
+  async (organizationId: string): Promise<number> => {
+    validateInputs([organizationId, ZId]);
+
+    try {
+      const organization = await getOrganization(organizationId);
+      if (!organization) {
+        throw new ResourceNotFoundError("Organization", organizationId);
+      }
+
+      const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
+
+      const workspaces = await getWorkspaces(organizationId);
+      const workspaceIds = workspaces.map((workspace) => workspace.id);
+
+      // Mirror the metered usage: count only non-dry runs in the current billing cycle, scoped to the
+      // organization's workspaces. Dry runs are excluded from billing, so they must not show as usage.
+      const workflowRunAggregations = await prisma.workflowRun.aggregate({
+        _count: {
+          id: true,
+        },
+        where: {
+          AND: [
+            { workspaceId: { in: workspaceIds } },
+            { isDryRun: false },
+            { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
+          ],
+        },
+      });
+
+      return workflowRunAggregations._count.id;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
 export const subscribeOrganizationMembersToSurveyResponses = async (
   surveyId: string,
   createdBy: string,

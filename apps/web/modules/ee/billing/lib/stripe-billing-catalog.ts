@@ -2,6 +2,7 @@ import "server-only";
 import { cache as reactCache } from "react";
 import Stripe from "stripe";
 import { createCacheKey } from "@formbricks/cache";
+import { logger } from "@formbricks/logger";
 import type { TCloudBillingInterval } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { env } from "@/lib/env";
@@ -10,7 +11,7 @@ import { type TResponsePricingTier, mapStripeTiersToResponsePricingTiers } from 
 import { stripeClient } from "./stripe-client";
 
 export type TStandardCloudPlan = "hobby" | "pro" | "scale";
-type TStripePriceKind = "base" | "responses";
+type TStripePriceKind = "base" | "responses" | "workflow_runs";
 
 type TStripeCatalogPrice = Stripe.Price & {
   product: Stripe.Product | Stripe.DeletedProduct;
@@ -21,6 +22,16 @@ export type TStripeBillingCatalogItem = {
   interval: TCloudBillingInterval;
   basePrice: TStripeCatalogPrice;
   responsePrice: TStripeCatalogPrice | null;
+  // Metered workflow-run overage. Only present on plans that include workflows (Scale today); null
+  // elsewhere. Like responsePrice it is always the monthly-billed metered variant, even for a yearly
+  // base, because usage is aggregated and billed monthly (ENG-1936).
+  workflowRunsPrice: TStripeCatalogPrice | null;
+  // The included (free) workflow-run allowance DERIVED FROM the price's own free first tier — the
+  // single source of truth the usage card renders. Null when there is no workflow price. This is
+  // deliberately NOT the entitlement's included-<n> value: the number the UI shows and the number
+  // Stripe leaves uncharged must be the same object, or the card can reassure a customer they are
+  // inside an allowance while Stripe invoices them (ENG-2193/2194).
+  workflowRunsIncluded: number | null;
 };
 
 export type TStripeBillingCatalog = {
@@ -48,6 +59,11 @@ export type TStripeBillingCatalogDisplayItem = {
   currency: string;
   unitAmount: number | null;
   responseOverage: TResponseOverageDisplay | null;
+  // Free workflow-run allowance derived from the price's free first tier (see TStripeBillingCatalogItem).
+  workflowRunsIncluded: number | null;
+  // Graduated overage tiers for workflow runs, derived from the price (same shape/source as
+  // responseOverage) so the plan card can show the per-unit tier table straight from Stripe.
+  workflowRunsOverage: TResponseOverageDisplay | null;
 };
 
 export type TStripeBillingCatalogDisplay = {
@@ -66,8 +82,8 @@ export type TStripeBillingCatalogDisplay = {
 
 const STANDARD_CLOUD_PLANS = new Set<TStandardCloudPlan>(["hobby", "pro", "scale"]);
 const STRIPE_BILLING_CATALOG_CACHE_TTL_MS = 10 * 60 * 1000;
-// v2: response prices include expanded tiers
-const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v2";
+// v3: catalog item carries workflowRunsPrice (metered workflow overage)
+const STRIPE_BILLING_CATALOG_CACHE_VERSION = "v3";
 
 const getStripeBillingCatalogCacheKey = () =>
   createCacheKey.custom(
@@ -114,14 +130,13 @@ const getPriceInterval = (price: Stripe.Price): TCloudBillingInterval | null => 
 
 const getPriceKind = (price: Stripe.Price): TStripePriceKind | null => {
   const metadataKind = price.metadata?.formbricks_price_kind;
-  if (metadataKind === "base" || metadataKind === "responses") {
+  if (metadataKind === "base" || metadataKind === "responses" || metadataKind === "workflow_runs") {
     return metadataKind;
   }
 
-  // A metered price explicitly tagged with a different kind (e.g. "workflow_runs") is a separate
-  // metered product, not part of the base/responses plan catalog. Exclude it here so the usage_type
-  // fallback below can't misclassify it as "responses" and collide with the real responses price on
-  // the same plan/interval (ENG-1936). Full catalog wiring for such kinds is added separately.
+  // A metered price tagged with an unrecognized kind is a separate metered product, not part of the
+  // plan catalog. Exclude it here so the usage_type fallback below can't misclassify it as
+  // "responses" and collide with the real responses price on the same plan/interval (ENG-1936).
   if (metadataKind) {
     return null;
   }
@@ -199,6 +214,58 @@ const getSinglePrice = (
   return matches[0];
 };
 
+// Like getSinglePrice, but tolerates absence: returns null when no price matches (the kind is not
+// offered on this plan), still throwing on ambiguity (>1) so a duplicate can never be silently
+// ignored. Used for optional kinds like workflow_runs that exist only on some plans.
+const getOptionalSinglePrice = (
+  prices: TStripeCatalogPrice[],
+  plan: TStandardCloudPlan,
+  kind: TStripePriceKind,
+  interval: TCloudBillingInterval
+): TStripeCatalogPrice | null => {
+  const matches = prices.filter(
+    (price) =>
+      getPricePlan(price) === plan && getPriceKind(price) === kind && getPriceInterval(price) === interval
+  );
+
+  if (matches.length > 1) {
+    throw new Error(
+      `Expected at most one Stripe price for ${plan}/${kind}/${interval}, but found ${matches.length}`
+    );
+  }
+
+  return matches[0] ?? null;
+};
+
+// Resolve the included (free) workflow-run allowance from the price's OWN tier structure, and fail
+// closed if the price can't honor an "included volume" claim. A graduated price whose first tier is
+// free (unit_amount 0, flat_amount 0) up to a finite boundary grants exactly that many free runs —
+// the number the usage card shows. Any other shape (flat per-unit, a paid first tier, or an
+// unbounded free tier) means the card's "X of N included" would not match what Stripe charges, so we
+// throw rather than let a reassuring-but-false allowance render (ENG-2193/2194). The caller catches
+// this and degrades the workflow item only, keeping the rest of the catalog up. Returns null when the
+// plan has no workflow price at all.
+const resolveWorkflowIncludedVolume = (price: TStripeCatalogPrice | null, label: string): number | null => {
+  if (!price) {
+    return null;
+  }
+
+  const firstTier = price.tiers?.[0];
+  const firstTierIsFree =
+    firstTier != null && (firstTier.unit_amount ?? 0) === 0 && (firstTier.flat_amount ?? 0) === 0;
+
+  if (price.tiers_mode !== "graduated" || !firstTierIsFree || typeof firstTier?.up_to !== "number") {
+    throw new Error(
+      `Metered workflow price ${label} (${price.id}) must be graduated with a free first tier ` +
+        `(unit_amount 0, finite up_to) so the included volume shown to customers matches what Stripe ` +
+        `leaves uncharged; got tiers_mode=${price.tiers_mode ?? "null"}, ` +
+        `firstTier=${JSON.stringify(firstTier ?? null)}`
+    );
+  }
+
+  return firstTier.up_to;
+};
+
 const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
@@ -210,6 +277,36 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
     throw new Error("No active Stripe billing catalog prices found");
   }
 
+  // Resolve the workflow price AND its validated included volume together, so both the price object
+  // and the number the UI trusts come from the same source and can't drift.
+  //
+  // Fail closed on the WORKFLOW ITEM ONLY, not the whole catalog: a misconfigured workflow price
+  // (see resolveWorkflowIncludedVolume) drops the workflow price + included volume to null and logs
+  // loudly, instead of throwing. The card then hides and new checkouts skip the workflow line item —
+  // i.e. workflows simply don't bill, today's harmless state — while base/responses checkout and the
+  // billing page for every plan/org stay up. Base/responses themselves stay fail-loud (getSinglePrice
+  // throws): they are load-bearing on every plan, so a missing one is a real catalog outage.
+  const workflowRuns = (
+    plan: TStandardCloudPlan
+  ): Pick<TStripeBillingCatalogItem, "workflowRunsPrice" | "workflowRunsIncluded"> => {
+    const workflowRunsPrice = getOptionalSinglePrice(prices, plan, "workflow_runs", "monthly");
+    try {
+      return {
+        workflowRunsPrice,
+        workflowRunsIncluded: resolveWorkflowIncludedVolume(
+          workflowRunsPrice,
+          `${plan}/workflow_runs/monthly`
+        ),
+      };
+    } catch (error) {
+      logger.error(
+        { error, plan, priceId: workflowRunsPrice?.id },
+        "Invalid workflow_runs price; excluding it from the catalog so the rest of billing stays up"
+      );
+      return { workflowRunsPrice: null, workflowRunsIncluded: null };
+    }
+  };
+
   return {
     hobby: {
       monthly: {
@@ -217,6 +314,7 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "hobby", "base", "monthly"),
         responsePrice: null,
+        ...workflowRuns("hobby"),
       },
     },
     pro: {
@@ -225,12 +323,14 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "pro", "base", "monthly"),
         responsePrice: getSinglePrice(prices, "pro", "responses", "monthly"),
+        ...workflowRuns("pro"),
       },
       yearly: {
         plan: "pro",
         interval: "yearly",
         basePrice: getSinglePrice(prices, "pro", "base", "yearly"),
         responsePrice: getSinglePrice(prices, "pro", "responses", "monthly"),
+        ...workflowRuns("pro"),
       },
     },
     scale: {
@@ -239,12 +339,14 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
         interval: "monthly",
         basePrice: getSinglePrice(prices, "scale", "base", "monthly"),
         responsePrice: getSinglePrice(prices, "scale", "responses", "monthly"),
+        ...workflowRuns("scale"),
       },
       yearly: {
         plan: "scale",
         interval: "yearly",
         basePrice: getSinglePrice(prices, "scale", "base", "yearly"),
         responsePrice: getSinglePrice(prices, "scale", "responses", "monthly"),
+        ...workflowRuns("scale"),
       },
     },
   };
@@ -258,19 +360,21 @@ export const getStripeBillingCatalog = reactCache(async (): Promise<TStripeBilli
   );
 });
 
-const toResponseOverageDisplay = (item: TStripeBillingCatalogItem): TResponseOverageDisplay | null => {
-  // The tier table renders graduated semantics (each band priced separately),
-  // so volume-mode prices must not be displayed with it.
-  if (item.responsePrice?.tiers_mode !== "graduated") {
+// Derive the per-unit overage tier table shown in the plan card straight from a graduated Stripe
+// price, so the displayed pricing can never drift from what Stripe charges. Used for both responses
+// and workflow-run metered prices. The tier table renders graduated semantics (each band priced
+// separately), so volume-mode prices must not be displayed with it.
+const toOverageDisplay = (price: TStripeCatalogPrice | null): TResponseOverageDisplay | null => {
+  if (price?.tiers_mode !== "graduated") {
     return null;
   }
 
-  const tiers = mapStripeTiersToResponsePricingTiers(item.responsePrice.tiers);
+  const tiers = mapStripeTiersToResponsePricingTiers(price.tiers);
   if (!tiers) {
     return null;
   }
 
-  return { currency: item.responsePrice.currency, tiers };
+  return { currency: price.currency, tiers };
 };
 
 const toDisplayItem = (item: TStripeBillingCatalogItem): TStripeBillingCatalogDisplayItem => ({
@@ -278,7 +382,9 @@ const toDisplayItem = (item: TStripeBillingCatalogItem): TStripeBillingCatalogDi
   interval: item.interval,
   currency: item.basePrice.currency,
   unitAmount: item.basePrice.unit_amount,
-  responseOverage: toResponseOverageDisplay(item),
+  responseOverage: toOverageDisplay(item.responsePrice),
+  workflowRunsIncluded: item.workflowRunsIncluded,
+  workflowRunsOverage: toOverageDisplay(item.workflowRunsPrice),
 });
 
 export const getStripeBillingCatalogDisplay = reactCache(async (): Promise<TStripeBillingCatalogDisplay> => {
@@ -321,6 +427,8 @@ export const getCatalogItemsForPlan = async (
   return [
     { price: item.basePrice.id, quantity: 1 },
     ...(item.responsePrice ? [{ price: item.responsePrice.id }] : []),
+    // Metered items carry no quantity (usage is reported via meter events).
+    ...(item.workflowRunsPrice ? [{ price: item.workflowRunsPrice.id }] : []),
   ];
 };
 
