@@ -2,23 +2,20 @@ import { cleanup } from "@testing-library/react";
 import { returnValidationErrors } from "next-safe-action";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ZodIssue, z } from "zod";
+import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
-import { getMembershipRole } from "@/lib/membership/hooks/actions";
-import { getTeamRoleByTeamIdUserId, getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { checkAuthorizationUpdated, formatErrors } from "./action-client-middleware";
 
 vi.mock("@/lib/authorization", () => ({
   can: vi.fn(),
 }));
 
-vi.mock("@/lib/membership/hooks/actions", () => ({
-  getMembershipRole: vi.fn(),
-}));
-
-vi.mock("@/modules/ee/teams/lib/roles", () => ({
-  getWorkspacePermissionByUserId: vi.fn(),
-  getTeamRoleByTeamIdUserId: vi.fn(),
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+  },
 }));
 
 vi.mock("next-safe-action", () => ({
@@ -29,7 +26,6 @@ describe("action-client-middleware", () => {
   const userId = "user-1";
   const organizationId = "org-1";
   const workspaceId = "workspace-1";
-  const teamId = "team-1";
 
   beforeEach(() => {
     vi.mocked(can).mockResolvedValue(false);
@@ -111,7 +107,6 @@ describe("action-client-middleware", () => {
         id: organizationId,
       });
       expect(can).toHaveBeenCalledTimes(expectedAction === "organization.read" ? 1 : 2);
-      expect(getMembershipRole).not.toHaveBeenCalled();
     });
 
     test.each([
@@ -139,30 +134,6 @@ describe("action-client-middleware", () => {
         type: "workspace",
         id: workspaceId,
       });
-      expect(getWorkspacePermissionByUserId).not.toHaveBeenCalled();
-    });
-
-    test("maps an admin team alternative to team.manage", async () => {
-      vi.mocked(can).mockImplementation(async (_actor, action) =>
-        ["organization.read", "team.manage"].includes(action)
-      );
-
-      await expect(
-        checkAuthorizationUpdated({
-          userId,
-          organizationId,
-          access: [
-            { type: "organization", roles: ["owner", "manager"] },
-            { type: "team", teamId, minPermission: "admin" },
-          ],
-        })
-      ).resolves.toBe(true);
-
-      expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "team.manage", {
-        type: "team",
-        id: teamId,
-      });
-      expect(getTeamRoleByTeamIdUserId).not.toHaveBeenCalled();
     });
 
     test("preserves ordered OR evaluation across multiple workspace alternatives", async () => {
@@ -243,34 +214,17 @@ describe("action-client-middleware", () => {
           access: [
             { type: "organization", roles: ["owner", "manager"] },
             { type: "workspaceTeam", workspaceId, minPermission: "manage" },
-            { type: "team", teamId, minPermission: "admin" },
           ],
         })
       ).rejects.toThrow(new AuthorizationError("Not authorized"));
     });
 
-    test("preserves legacy WorkspaceTeam access when the central workspace decision denies", async () => {
-      vi.mocked(can).mockImplementation(async (_actor, action) => action === "organization.read");
-      vi.mocked(getMembershipRole).mockResolvedValue("billing");
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("manage");
+    test("denies an empty requirement list instead of treating it as no requirement", async () => {
+      vi.mocked(can).mockResolvedValue(true);
 
-      await expect(
-        checkAuthorizationUpdated({
-          userId,
-          organizationId,
-          access: [
-            { type: "organization", roles: ["owner", "manager"] },
-            { type: "workspaceTeam", workspaceId, minPermission: "manage" },
-          ],
-        })
-      ).resolves.toBe(true);
-
-      expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.manage", {
-        type: "workspace",
-        id: workspaceId,
-      });
-      expect(getMembershipRole).toHaveBeenCalledWith(userId, organizationId);
-      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
+      await expect(checkAuthorizationUpdated({ userId, organizationId, access: [] })).rejects.toThrow(
+        new AuthorizationError("Not authorized")
+      );
     });
 
     test("propagates central evaluator failures", async () => {
@@ -287,9 +241,11 @@ describe("action-client-middleware", () => {
     });
   });
 
-  describe("legacy fallback", () => {
-    test("preserves arbitrary organization role sets", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
+  // ENG-1737 removed the parallel legacy evaluator these shapes used to reach. What replaces
+  // it is a refusal, so the cases below pin the failure mode rather than the old behavior.
+  describe("shapes with no central meaning", () => {
+    test("refuses an unmapped organization role set, and says so", async () => {
+      vi.mocked(can).mockResolvedValue(true);
 
       await expect(
         checkAuthorizationUpdated({
@@ -297,14 +253,20 @@ describe("action-client-middleware", () => {
           organizationId,
           access: [{ type: "organization", roles: ["member"] }],
         })
-      ).resolves.toBe(true);
+      ).rejects.toThrow(new AuthorizationError("Not authorized"));
 
-      expect(can).not.toHaveBeenCalled();
+      // The membership gate is the only decision that ran; the role set itself never mapped.
+      expect(can).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith(
+        { roleSet: "member" },
+        "Unmapped organization role set in action-client authorization"
+      );
     });
 
-    test("preserves standalone workspace access", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("readWrite");
+    test("evaluates a workspace-only requirement centrally, with no organization item", async () => {
+      vi.mocked(can).mockImplementation(async (_actor, action) =>
+        ["organization.read", "workspace.read"].includes(action)
+      );
 
       await expect(
         checkAuthorizationUpdated({
@@ -314,32 +276,16 @@ describe("action-client-middleware", () => {
         })
       ).resolves.toBe(true);
 
-      expect(getWorkspacePermissionByUserId).toHaveBeenCalledWith(userId, workspaceId);
-      expect(can).not.toHaveBeenCalled();
+      expect(can).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.read", {
+        type: "workspace",
+        id: workspaceId,
+      });
+      expect(logger.error).not.toHaveBeenCalled();
     });
 
-    test("preserves contributor team checks", async () => {
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
-      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("admin");
-
-      await expect(
-        checkAuthorizationUpdated({
-          userId,
-          organizationId,
-          access: [
-            { type: "organization", roles: ["owner", "manager"] },
-            { type: "team", teamId, minPermission: "contributor" },
-          ],
-        })
-      ).resolves.toBe(true);
-
-      expect(getTeamRoleByTeamIdUserId).toHaveBeenCalledWith(teamId, userId);
-      expect(can).not.toHaveBeenCalled();
-    });
-
-    test("preserves fallback schema validation", async () => {
+    test("still returns schema validation errors ahead of the role mapping", async () => {
       const schema = z.object({ name: z.string() });
-      vi.mocked(getMembershipRole).mockResolvedValue("member");
+      vi.mocked(can).mockResolvedValue(true);
       vi.mocked(returnValidationErrors).mockReturnValue("validation-error" as unknown as never);
 
       await expect(
@@ -357,7 +303,7 @@ describe("action-client-middleware", () => {
         })
       ).resolves.toBe("validation-error");
 
-      expect(can).not.toHaveBeenCalled();
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 });

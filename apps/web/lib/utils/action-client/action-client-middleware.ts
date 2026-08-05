@@ -1,6 +1,7 @@
 import "server-only";
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
+import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { type TOrganizationRole } from "@formbricks/types/memberships";
 import {
@@ -10,9 +11,6 @@ import {
   can,
 } from "@/lib/authorization";
 import { getWorkspaceActionForPermission } from "@/lib/authorization/compatibility";
-import { getMembershipRole } from "@/lib/membership/hooks/actions";
-import { getTeamRoleByTeamIdUserId, getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { type TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { type TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
@@ -26,6 +24,15 @@ export const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: stri
   };
 };
 
+/**
+ * The legacy action-client access shapes, each of which maps onto exactly one action in
+ * the central vocabulary.
+ *
+ * The `team` shape was removed under ENG-1737: no call site used it, and the only role it
+ * could express beyond `team.manage` was bare team membership, which is not an action the
+ * current contract exposes. Leaving it in the union would have meant a shape that type-checks
+ * and then quietly denies.
+ */
 export type TAccess<T extends z.ZodRawShape> =
   | {
       type: "organization";
@@ -37,29 +44,20 @@ export type TAccess<T extends z.ZodRawShape> =
       type: "workspaceTeam";
       minPermission?: TTeamPermission;
       workspaceId: string;
-    }
-  | {
-      type: "team";
-      minPermission?: TTeamRole;
-      teamId: string;
     };
 
-const teamPermissionWeight = {
-  read: 1,
-  readWrite: 2,
-  manage: 3,
-};
-
-const teamRoleWeight = {
-  contributor: 1,
-  admin: 2,
-};
-
 type TOrganizationAction = Extract<TAuthorizationAction, `organization.${string}`>;
-type TTeamAction = Extract<TAuthorizationAction, `team.${string}`>;
 type TUserActor = Extract<TAuthorizationActor, { type: "user" }>;
 type TOrganizationResource = Extract<TAuthorizationResource, { type: "organization" }>;
 
+/**
+ * Every organization role set the action clients express, keyed by its sorted members.
+ *
+ * These five sets are exhaustive over the repository: each one is the membership of exactly
+ * one organization permission in the schema, which is why the translation is lossless.
+ * A set outside this table has no defined meaning, so it is refused rather than guessed at
+ * (see {@link getOrganizationAction}).
+ */
 const ORGANIZATION_ACTION_BY_ROLE_SET: Readonly<Record<string, TOrganizationAction>> = {
   "billing,manager,member,owner": "organization.read",
   "manager,member,owner": "organization.read_access",
@@ -68,13 +66,26 @@ const ORGANIZATION_ACTION_BY_ROLE_SET: Readonly<Record<string, TOrganizationActi
   owner: "organization.write",
 };
 
-const getOrganizationAction = (roles: TOrganizationRole[]): TOrganizationAction | null => {
-  const roleSet = [...new Set(roles)].sort((roleA, roleB) => roleA.localeCompare(roleB)).join(",");
-  return ORGANIZATION_ACTION_BY_ROLE_SET[roleSet] ?? null;
+const byCodeUnit = (roleA: string, roleB: string): number => {
+  if (roleA < roleB) return -1;
+  return roleA > roleB ? 1 : 0;
 };
 
-const getTeamAction = (minPermission?: TTeamRole): TTeamAction | null =>
-  minPermission === "admin" ? "team.manage" : null;
+const getOrganizationAction = (roles: TOrganizationRole[]): TOrganizationAction | null => {
+  const roleSet = [...new Set(roles)].sort(byCodeUnit).join(",");
+  const action = ORGANIZATION_ACTION_BY_ROLE_SET[roleSet];
+
+  if (!action) {
+    // Fail closed, and say so. An unmapped set means an action client asked for a rule the
+    // central vocabulary cannot express, which is a bug in the caller rather than a decision
+    // about this request — the caller is refused, but silence would let it look like an
+    // ordinary denial. The role set is a fixed enum combination, never an identifier.
+    logger.error({ roleSet }, "Unmapped organization role set in action-client authorization");
+    return null;
+  }
+
+  return action;
+};
 
 const getOrganizationValidationError = <T extends z.ZodRawShape>(accessItem: TAccess<T>) => {
   if (accessItem.type !== "organization" || !accessItem.schema) return null;
@@ -87,116 +98,38 @@ const getOrganizationValidationError = <T extends z.ZodRawShape>(accessItem: TAc
   return returnValidationErrors(resultSchema, formatErrors(parsedResult.error.issues));
 };
 
-const checkOrganizationAccess = <T extends z.ZodRawShape>(
-  accessItem: TAccess<T>,
-  role: TOrganizationRole
-) => {
-  if (accessItem.type !== "organization") return false;
-
-  const validationError = getOrganizationValidationError(accessItem);
-  if (validationError) return validationError;
-
-  return accessItem.roles.includes(role);
-};
-
-const checkWorkspaceTeamAccess = async <T extends z.ZodRawShape>(accessItem: TAccess<T>, userId: string) => {
-  if (accessItem.type !== "workspaceTeam") return false;
-  const workspacePermission = await getWorkspacePermissionByUserId(userId, accessItem.workspaceId);
-  if (!workspacePermission) return false;
-  if (
-    accessItem.minPermission !== undefined &&
-    teamPermissionWeight[workspacePermission as keyof typeof teamPermissionWeight] <
-      teamPermissionWeight[accessItem.minPermission as keyof typeof teamPermissionWeight]
-  ) {
-    return false;
-  }
-  return true;
-};
-
-const checkTeamAccess = async <T extends z.ZodRawShape>(accessItem: TAccess<T>, userId: string) => {
-  if (accessItem.type !== "team") return false;
-  const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
-  if (!teamRole) return false;
-  if (
-    accessItem.minPermission !== undefined &&
-    teamRoleWeight[teamRole as keyof typeof teamRoleWeight] <
-      teamRoleWeight[accessItem.minPermission as keyof typeof teamRoleWeight]
-  ) {
-    return false;
-  }
-  return true;
-};
-
-const isCentralCompatibilityShape = <T extends z.ZodRawShape>(access: TAccess<T>[]): boolean => {
-  const includesOrganizationAccess = access.some((accessItem) => accessItem.type === "organization");
-  if (!includesOrganizationAccess) return false;
-
-  return access.every((accessItem) => {
-    if (accessItem.type === "organization") return getOrganizationAction(accessItem.roles) !== null;
-    if (accessItem.type === "workspaceTeam") return true;
-    return getTeamAction(accessItem.minPermission) !== null;
-  });
-};
-
-const checkLegacyAuthorization = async <T extends z.ZodRawShape>({
-  userId,
-  organizationId,
-  access,
-}: {
-  userId: string;
-  organizationId: string;
-  access: TAccess<T>[];
-}) => {
-  const role = await getMembershipRole(userId, organizationId);
-
-  for (const accessItem of access) {
-    if (accessItem.type === "organization") {
-      const orgResult = checkOrganizationAccess(accessItem, role);
-      if (orgResult === true) return true;
-      if (orgResult) return orgResult;
-    }
-
-    if (accessItem.type === "workspaceTeam" && (await checkWorkspaceTeamAccess(accessItem, userId))) {
-      return true;
-    }
-
-    if (accessItem.type === "team" && (await checkTeamAccess(accessItem, userId))) {
-      return true;
-    }
-  }
-
-  throw new AuthorizationError("Not authorized");
-};
-
-const checkCentralAccessItem = async <T extends z.ZodRawShape>(
+const checkAccessItem = async <T extends z.ZodRawShape>(
   accessItem: TAccess<T>,
   actor: TUserActor,
-  organization: TOrganizationResource,
-  isOrganizationMember: boolean
+  organization: TOrganizationResource
 ) => {
   if (accessItem.type === "organization") {
     const validationError = getOrganizationValidationError(accessItem);
     if (validationError) return validationError;
 
     const action = getOrganizationAction(accessItem.roles);
-    if (action === "organization.read") return isOrganizationMember;
+    // `organization.read` is "holds any membership role", which the caller has already
+    // established for this request; re-asking would be a second identical check.
+    if (action === "organization.read") return true;
     return action ? can(actor, action, organization) : false;
   }
 
-  if (accessItem.type === "workspaceTeam") {
-    const action = getWorkspaceActionForPermission(accessItem.minPermission);
-    return can(actor, action, { type: "workspace", id: accessItem.workspaceId });
-  }
-
-  const action = getTeamAction(accessItem.minPermission);
-  return action ? can(actor, action, { type: "team", id: accessItem.teamId }) : false;
+  const action = getWorkspaceActionForPermission(accessItem.minPermission);
+  return can(actor, action, { type: "workspace", id: accessItem.workspaceId });
 };
 
 /**
  * Compatibility adapter for the pre-ENG-1712 action-client authorization signature.
  *
- * @deprecated New code must call `can` or `assertCan` with a semantic action and
- * resource. Unrecognized legacy shapes remain supported only until ENG-1737.
+ * Every decision now goes through `can`. ENG-1737 removed the parallel legacy evaluator
+ * this used to fall back to: it was reachable only for shapes no call site produced, and
+ * for the live shapes the central path is a superset of it (organization role sets map onto
+ * the identically-defined schema permission, and the workspace ladder additionally admits
+ * owners and managers through `organization#manage`, which the organization item in those
+ * same shapes already admitted). Keeping both meant two implementations of one rule.
+ *
+ * @deprecated New code must call `can` or `assertCan` with a semantic action and resource
+ * rather than adding a caller here.
  */
 export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
   userId,
@@ -207,25 +140,19 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
   organizationId: string;
   access: TAccess<T>[];
 }) => {
-  if (!isCentralCompatibilityShape(access)) {
-    return checkLegacyAuthorization({ userId, organizationId, access });
-  }
-
   const actor = { type: "user", id: userId } as const;
   const organization = { type: "organization", id: organizationId } as const;
-  const isOrganizationMember = await can(actor, "organization.read", organization);
 
-  if (!isOrganizationMember) {
+  if (!(await can(actor, "organization.read", organization))) {
     throw new AuthorizationError("Not authorized");
   }
 
   for (const accessItem of access) {
-    const accessResult = await checkCentralAccessItem(accessItem, actor, organization, isOrganizationMember);
+    const accessResult = await checkAccessItem(accessItem, actor, organization);
     if (accessResult) return accessResult;
   }
 
-  // Some legacy OR signatures grant a WorkspaceTeam permission independently
-  // of the organization role. Keep that edge-case behavior until the
-  // compatibility adapter is removed under ENG-1737.
-  return checkLegacyAuthorization({ userId, organizationId, access });
+  // Reached when no item matched, and also when `access` is empty — an empty requirement
+  // list must not read as "no requirements".
+  throw new AuthorizationError("Not authorized");
 };
