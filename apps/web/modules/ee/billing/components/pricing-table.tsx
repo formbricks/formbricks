@@ -97,9 +97,8 @@ const STANDARD_PLAN_LEVEL: Record<TStandardPlan, number> = {
 const getCurrentPlanCatalogItem = (
   billingCatalog: TStripeBillingCatalogDisplay,
   currentCloudPlan: TDisplayPlan,
-  currentBillingInterval: TCloudBillingInterval | null
+  interval: TCloudBillingInterval
 ): TStripeBillingCatalogDisplayItem | null => {
-  const interval = currentBillingInterval ?? "monthly";
   if (currentCloudPlan === "hobby") return billingCatalog.hobby.monthly;
   if (currentCloudPlan === "pro") return billingCatalog.pro[interval];
   if (currentCloudPlan === "scale") return billingCatalog.scale[interval];
@@ -379,7 +378,7 @@ export const PricingTable = ({
   const currentPlanCatalogItem = getCurrentPlanCatalogItem(
     billingCatalog,
     currentCloudPlan,
-    currentBillingInterval
+    currentBillingInterval ?? "monthly"
   );
   const workflowRunsLimit = currentPlanCatalogItem?.workflowRunsIncluded ?? null;
   const trialEndDate = organization.billing.stripe?.trialEnd
