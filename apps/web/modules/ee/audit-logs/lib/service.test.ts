@@ -89,11 +89,11 @@ describe("logAuditEvent", () => {
       expect(logger.error).not.toHaveBeenCalled();
     });
 
-    // Ties the MCP producer to this schema: the constant the MCP tools pass must be a value this
+    // Ties the MCP producer to this schema: the exact value the MCP tools pass must be one this
     // validator accepts, which is the invariant that broke.
     test("accepts the apiUrl the MCP tools actually pass", async () => {
-      const { MCP_AUDIT_API_URL } = await import("@/modules/mcp/constants");
-      await logAuditEvent({ ...validEvent, apiUrl: MCP_AUDIT_API_URL });
+      const { getMcpResourceUrl } = await import("@/modules/auth/lib/oauth-urls");
+      await logAuditEvent({ ...validEvent, apiUrl: getMcpResourceUrl() });
       expect(logger.audit).toHaveBeenCalled();
       expect(logger.error).not.toHaveBeenCalled();
     });
