@@ -16,7 +16,9 @@ import {
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { MCP_API_ROUTE, MCP_AUDIT_API_URL } from "@/modules/mcp/constants";
+import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { guardMcpScopes } from "./guard-scopes";
@@ -93,7 +95,7 @@ function writeHandler<TInput extends { workspaceId: string }>(
       extra,
       { action, resource: "feedbackRecord", logContext: { workspaceId: input.workspaceId } },
       ({ authentication, requestId: mutationRequestId, auditLog }) =>
-        run(input, authentication, mutationRequestId, auditLog ?? undefined)
+        run(input, authentication, mutationRequestId, auditLog)
     );
   };
 }
@@ -245,13 +247,19 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       // attribute a creation to the wrong record. `buildV3AuditLog` returns undefined for every record or
       // none (it only depends on whether auditing is enabled), so the holes are all-or-nothing.
       const auditLogs = input.records.map(() =>
-        buildV3AuditLog(authentication, "created", "feedbackRecord", MCP_AUDIT_API_URL)
+        buildV3AuditLog(authentication, "created", "feedbackRecord", getMcpResourceUrl())
       );
 
       const queueOutcome = async () => {
-        const stamped = auditLogs.filter((auditLog) => auditLog?.targetId);
+        // `targetId` must be compared against the placeholder, not just tested for truthiness:
+        // buildAuditLogBaseObject seeds it with UNKNOWN_DATA ("unknown"), so a truthy check matches
+        // every entry — including records the Hub rejected — and would emit a success event
+        // asserting a creation that never happened, with targetId "unknown" and no newObject.
+        // Only createV3FeedbackRecords overwrites it, and only for records it actually created.
+        const stamped = auditLogs.filter(
+          (auditLog): auditLog is TV3AuditLog => !!auditLog && auditLog.targetId !== UNKNOWN_DATA
+        );
         for (const auditLog of stamped) {
-          if (!auditLog) continue;
           auditLog.status = "success";
           await queueV3AuditLog(auditLog, requestId, log);
         }
