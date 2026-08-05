@@ -4,16 +4,17 @@ import { getBackgroundJobDefinition } from "./definitions";
 import type { JobExecutionContext, TResponsePipelineJobData } from "./index";
 import { getJobProcessor, processJob } from "./processors/registry";
 
-const { mockDebug, mockError } = vi.hoisted(() => ({
+const { mockDebug, mockError, mockWarn } = vi.hoisted(() => ({
   mockDebug: vi.fn(),
   mockError: vi.fn(),
+  mockWarn: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: mockError,
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: mockWarn,
     debug: mockDebug,
   },
 }));
@@ -279,18 +280,41 @@ describe("@formbricks/jobs processor registry", () => {
     );
   });
 
-  test("throws for unknown jobs", async () => {
+  // ENG-2235: a schedule outliving its code is an operational fact, not a retriable error. Throwing here
+  // meant a rollback produced a failure every tick, forever.
+  test("logs and drops unknown jobs instead of throwing", async () => {
     await expect(
       processJob({
         attemptsMade: 0,
-        data: {},
+        data: { some: "payload" },
         id: "job-2",
         name: "unknown.job",
         opts: { attempts: 3 },
         queueName: "background-jobs",
       } as never)
-    ).rejects.toThrow("No BullMQ processor registered for job: unknown.job");
+    ).resolves.toBeUndefined();
 
-    expect(mockError).toHaveBeenCalled();
+    expect(mockWarn).toHaveBeenCalledWith(
+      { jobId: "job-2", jobName: "unknown.job", queueName: "background-jobs" },
+      "Dropping BullMQ job with no registered processor: its schedule outlived the code that handled it"
+    );
+    // The payload of an unknown job is unvalidated and may hold real data, so it must never be logged.
+    expect(mockWarn.mock.calls[0]?.[0]).not.toHaveProperty("some");
+    expect(mockError).not.toHaveBeenCalled();
+  });
+
+  test("still throws when a known job's payload fails validation", async () => {
+    await expect(
+      processJob({
+        attemptsMade: 0,
+        data: { scope: "not-a-valid-scope" },
+        id: "job-invalid",
+        name: JOB_NAMES.surveyScheduling,
+        opts: { attempts: 3 },
+        queueName: "background-jobs",
+      } as never)
+    ).rejects.toThrow();
+
+    expect(mockWarn).not.toHaveBeenCalled();
   });
 });
