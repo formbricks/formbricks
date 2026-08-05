@@ -69,10 +69,14 @@ export const toSafeIdentifier = (value: string): string => {
  * Example: "job_description" -> "Job Description"
  *          "api_key" -> "Api Key"
  *          "signup_date" -> "Signup Date"
+ *
+ * Empty segments are dropped, because `isSafeIdentifier` allows leading, trailing and repeated
+ * underscores: without the filter a key like `a__b` would render with a double space.
  */
 export const formatSnakeCaseToTitleCase = (key: string): string => {
   return key
     .split("_")
+    .filter((word) => word.length > 0)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 };

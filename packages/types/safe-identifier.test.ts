@@ -74,6 +74,17 @@ describe("safe-identifier", () => {
     test("returns an empty string for empty input", () => {
       expect(formatSnakeCaseToTitleCase("")).toBe("");
     });
+
+    // `isSafeIdentifier` accepts repeated and trailing underscores, so `a__b` is a contact attribute
+    // key the create-attribute modal will happily accept. Leading underscores only arrive from the
+    // unvalidated upsert paths. Either way the derived label must not carry the gaps.
+    test("does not render stray spaces for repeated, leading or trailing underscores", () => {
+      expect(formatSnakeCaseToTitleCase("a__b")).toBe("A B");
+      expect(formatSnakeCaseToTitleCase("job___description")).toBe("Job Description");
+      expect(formatSnakeCaseToTitleCase("api_key_")).toBe("Api Key");
+      expect(formatSnakeCaseToTitleCase("_legacy")).toBe("Legacy");
+      expect(formatSnakeCaseToTitleCase("_")).toBe("");
+    });
   });
 
   describe("isLegacyFieldIdentifier", () => {
