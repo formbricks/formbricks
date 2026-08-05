@@ -27,6 +27,7 @@ const {
   mockLoggerError,
   mockQueueAdd,
   mockQueueClose,
+  mockQueueOn,
   mockQueueRemoveJobScheduler,
   mockQueueUpsertJobScheduler,
   mockQueueWaitUntilReady,
@@ -35,6 +36,7 @@ const {
   mockLoggerError: vi.fn(),
   mockQueueAdd: vi.fn(),
   mockQueueClose: vi.fn(),
+  mockQueueOn: vi.fn(),
   mockQueueRemoveJobScheduler: vi.fn(),
   mockQueueUpsertJobScheduler: vi.fn(),
   mockQueueWaitUntilReady: vi.fn(),
@@ -102,6 +104,7 @@ vi.mock("bullmq", () => ({
     return {
       add: mockQueueAdd,
       close: mockQueueClose,
+      on: mockQueueOn,
       removeJobScheduler: mockQueueRemoveJobScheduler,
       upsertJobScheduler: mockQueueUpsertJobScheduler,
       waitUntilReady: mockQueueWaitUntilReady,
@@ -136,6 +139,24 @@ describe("@formbricks/jobs queue helpers", () => {
 
   test("uses a Redis Cluster hash-tagged prefix for BullMQ keys", () => {
     expect(JOBS_PREFIX).toBe("{formbricks:jobs}");
+  });
+
+  // An unhandled 'error' event on the queue would otherwise take the process down.
+  test("logs queue errors instead of leaving the event unhandled", () => {
+    createJobsQueue({ connection: mockConnection });
+
+    expect(mockQueueOn).toHaveBeenCalledWith("error", expect.any(Function));
+
+    const errorListener = mockQueueOn.mock.calls.find((call) => call[0] === "error")?.[1] as (
+      error: Error
+    ) => void;
+    const queueError = new Error("queue exploded");
+    errorListener(queueError);
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: queueError, queueName: JOBS_QUEUE_NAME }),
+      "BullMQ queue error"
+    );
   });
 
   test("memoizes the producer queue", async () => {

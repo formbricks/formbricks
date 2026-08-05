@@ -55,12 +55,22 @@ export const createJobsQueue = ({
 }: {
   connection: IORedis;
   prefix?: string;
-}): Queue =>
-  new Queue(JOBS_QUEUE_NAME, {
+}): Queue => {
+  const queue = new Queue(JOBS_QUEUE_NAME, {
     connection,
     defaultJobOptions: JOBS_DEFAULT_JOB_OPTIONS,
     prefix,
   });
+
+  // BullMQ's guide asks for an error handler on both the Worker and the Queue (the worker's lives in
+  // runtime.ts). Without one, an emitted 'error' is an unhandled EventEmitter error and takes the
+  // process down.
+  queue.on("error", (error) => {
+    logger.error({ err: error, queueName: JOBS_QUEUE_NAME, prefix }, "BullMQ queue error");
+  });
+
+  return queue;
+};
 
 export const getJobsQueue = async (): Promise<JobsQueueHandle> => {
   if (queueSingleton && hasActiveConnection(connectionSingleton)) {
