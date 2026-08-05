@@ -399,26 +399,28 @@ describe("instrumentation-jobs", () => {
       // The schedule identity and payload now belong to the job declaration in @formbricks/jobs (and are
       // asserted there); what this app owns, and what is asserted here, is the timing per job.
       expect(mockStartJobsRuntime).not.toHaveBeenCalled();
-      expect(mockRemoveSurveyScheduling).toHaveBeenCalledTimes(1);
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledTimes(1);
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledWith({
         cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
         kind: "cron",
         timeZone: SURVEY_SCHEDULING_TIME_ZONE,
       });
-      expect(mockRemoveSurveyArchivePurge).toHaveBeenCalledTimes(1);
       expect(mockUpsertSurveyArchivePurge).toHaveBeenCalledTimes(1);
       expect(mockUpsertSurveyArchivePurge).toHaveBeenCalledWith({
         cronPattern: SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
         kind: "cron",
         timeZone: SURVEY_ARCHIVE_PURGE_TIME_ZONE,
       });
-      expect(mockRemoveWorkflowRunReconcile).toHaveBeenCalledTimes(1);
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledTimes(1);
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledWith({
         everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
         kind: "every",
       });
+      // Upsert is idempotent and updates repeat options in place; removing first risks leaving the
+      // scheduler with no delayed job (bullmq#3063).
+      expect(mockRemoveSurveyScheduling).not.toHaveBeenCalled();
+      expect(mockRemoveSurveyArchivePurge).not.toHaveBeenCalled();
+      expect(mockRemoveWorkflowRunReconcile).not.toHaveBeenCalled();
     }
   );
 

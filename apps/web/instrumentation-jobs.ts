@@ -16,9 +16,19 @@ type TJobsRuntimeGlobal = typeof globalThis & {
 
 const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 
+/**
+ * Upsert only — never remove first. `upsertJobScheduler` updates an existing scheduler's repeat options
+ * in place (including switching between cron and every), so a remove is unnecessary; it is also harmful.
+ * Removing and re-upserting in close succession can leave the scheduler with **no** delayed job at all
+ * (bullmq#3063: the upsert finds a job already holding the expected id, but that job is already
+ * completed), so the schedule reports a correct next run and never fires again. It also opens a window
+ * with no schedule, which a crash between the two calls makes permanent until the next boot.
+ *
+ * The remove-first this replaces was a reasonable workaround for bullmq#3378 — upsert not updating an
+ * existing scheduler — which affected v5.56.9 and earlier. We are on 5.61.0, past that fix.
+ */
 const registerRecurringJobSchedules = async (): Promise<void> => {
   for (const registration of RECURRING_JOB_REGISTRATIONS) {
-    await registration.job.remove();
     await registration.job.upsert(registration.schedule);
   }
 };
