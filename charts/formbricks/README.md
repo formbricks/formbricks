@@ -300,7 +300,7 @@ Both blocks need images newer than the ones this chart currently pins. Hub reads
 ignore these variables entirely rather than failing, so a rollout ahead of the image bump is silent — expect text
 logs and no taxonomy metrics until both images are updated.
 
-Metric attributes are restricted to a fixed, low-cardinality set — for Hub's taxonomy metrics that is
+Hub's metric attributes are restricted to a fixed, low-cardinality set — for its taxonomy metrics that is
 `scope_type`, `status`, `failure_code`, and `reason`. Run, request, tenant, source, and field identifiers are
 emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings, credentials, authorization
 tokens, provider response bodies, and collector URLs are never telemetry fields.
