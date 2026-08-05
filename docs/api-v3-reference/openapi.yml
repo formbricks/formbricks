@@ -38,7 +38,7 @@ info:
     **Workflows Scope 1**
     Workflows are a follow-up extension of the existing v3 Survey API work. The Survey API establishes API-first survey authoring; Workflows build on that same v3 style to automate actions around survey responses through workspace-scoped JSON definitions. Scope 1 models the existing Follow-ups capability as workflows: one `response.completed` trigger with an optional `endingCardIds` filter, and `send_email` actions with Follow-up email field parity. The definition and run shapes mirror the shared Zod schemas in `packages/workflows` (ENG-1100), which are the implementation source of truth for this contract.
 
-    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. Dry-run tests create real run records with `isDryRun: true` that mock action execution and never send email. Runs execute asynchronously: `POST .../test` returns a `queued` run to poll via `GET /api/v3/workflows/runs/{runId}`.
+    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. `POST .../test` is a dry run: it validates the definition and resolves the trigger's references synchronously, creating no run and sending no email, and returns `{ workflowId, ok, problems }` directly. Real runs execute asynchronously and are polled via `GET /api/v3/workflows/runs/{runId}`.
 
     **Overview migration note**
     The v3-backed survey overview page intentionally removes actions that are not yet exposed by this contract: `Created by` filtering, `Duplicate`, `Copy...`, `Preview`, and `Copy link`.
@@ -1973,7 +1973,7 @@ paths:
 
         The response is always `200` with `{ data: { workflowId, ok, problems } }`. `data.ok` is `true` when the workflow would execute; otherwise `data.problems` lists every issue found — each with a machine-readable `code` and the offending `field` — so they can be fixed in a single pass.
 
-        Only `enabled` and `disabled` workflows can be tested. Testing a `draft` or `archived` workflow returns **422** with code `invalid_workflow_state`.
+        Drafts are testable — validating the setup before going live is the point of a dry run. Only an `archived` workflow is rejected, with **422** and code `invalid_workflow_state`.
       tags:
         - V3 Workflows
       parameters:
