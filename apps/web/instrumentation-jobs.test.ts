@@ -411,6 +411,10 @@ describe("instrumentation-jobs", () => {
         kind: "cron",
         timeZone: SURVEY_ARCHIVE_PURGE_TIME_ZONE,
       });
+      // The purge is offset from scheduling but must run in the same zone. It used to read a
+      // NEXT_PUBLIC_ var that ENG-1665 renamed away, pinning it to the Europe/Berlin fallback
+      // regardless of configuration (ENG-2244).
+      expect(SURVEY_ARCHIVE_PURGE_TIME_ZONE).toBe(SURVEY_SCHEDULING_TIME_ZONE);
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledTimes(1);
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledWith({
         everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
