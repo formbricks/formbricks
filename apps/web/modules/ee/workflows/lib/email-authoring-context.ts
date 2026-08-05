@@ -3,13 +3,11 @@ import { prisma } from "@formbricks/database";
 import { ZWorkflowDefinition } from "@formbricks/workflows";
 import { createWorkflowsService } from "@formbricks/workflows/server";
 import { DEFAULT_LOCALE, MAIL_FROM } from "@/lib/constants";
+import { getWorkspaceMembers } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
 import type { TWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/types/email-authoring-context";
-import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail, getUserLocale } from "@/modules/survey/editor/lib/user";
-import type { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 
 const workflowsService = createWorkflowsService({ prisma });
 
@@ -23,8 +21,9 @@ const readTriggerSurveyId = (definition: unknown): string | null => {
 /**
  * Server-side loader for the data the workflow `send_email` inspector needs to author an email with
  * Follow-Ups parity: the bound survey (full internal `TSurvey` for recall + recipient options), the
- * team roster, the current user's email/locale, and the configured sender. Resolved entirely in the
- * route so the client form receives fully-formed objects (no client re-lookup by id).
+ * members who can access the workspace, the current user's email/locale, and the configured sender.
+ * Resolved entirely in the route so the client form receives fully-formed objects (no client
+ * re-lookup by id).
  *
  * The bound survey is looked up from the workflow's persisted trigger `surveyId`; it may be `null`
  * when the workflow has no survey bound yet or the survey was deleted — the form degrades gracefully.
@@ -53,9 +52,13 @@ export const getWorkflowEmailAuthoringContext = async ({
     return emptyContext;
   }
 
-  const [workflow, workspaceWithTeamIds, userEmail, locale] = await Promise.all([
+  // The offered recipients come from the same "who can access this workspace" source the enable-time
+  // gate and the runner's send-time backstop check against (`getWorkspaceMemberEmails`), so the
+  // picker can never offer an address the runtime would refuse to send to — and stops offering one
+  // as soon as that access is revoked (ENG-2186).
+  const [workflow, workspaceMembers, userEmail, locale] = await Promise.all([
     workflowsService.getWorkflowById(workflowId),
-    getWorkspaceWithTeamIds(workspaceId),
+    getWorkspaceMembers(workspaceId),
     getUserEmail(session.user.id),
     getUserLocale(session.user.id),
   ]);
@@ -66,10 +69,6 @@ export const getWorkflowEmailAuthoringContext = async ({
     return { ...emptyContext, userEmail: userEmail ?? "", locale: locale ?? DEFAULT_LOCALE };
   }
 
-  const teamMemberDetails: TFollowUpEmailToUser[] = workspaceWithTeamIds
-    ? await getTeamMemberDetails(workspaceWithTeamIds.teamIds)
-    : [];
-
   // The trigger `surveyId` is author-set but NOT workspace-validated by the workflow patch handler, so a
   // member could point it at another workspace's survey. Scope by `workspaceId` here (IDOR guard); a
   // non-matching or missing survey resolves to null and the form degrades to plain inputs.
@@ -79,7 +78,7 @@ export const getWorkflowEmailAuthoringContext = async ({
 
   return {
     survey,
-    teamMemberDetails,
+    teamMemberDetails: workspaceMembers,
     userEmail: userEmail ?? "",
     mailFrom,
     locale: locale ?? DEFAULT_LOCALE,

@@ -538,7 +538,7 @@ describe("enable", () => {
     expect(service.enableWorkflow).not.toHaveBeenCalled();
   });
 
-  test("checks literal send_email recipients against the org allowlist and rejects an external one (ENG-2029)", async () => {
+  test("checks literal send_email recipients against the workspace allowlist and rejects an external one (ENG-2029)", async () => {
     // Default definition's send_email targets a literal address (support@example.com).
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: ["support@example.com"] });
@@ -558,11 +558,11 @@ describe("enable", () => {
     expect(body.code).toBe("workflow_not_executable");
     expect(body.invalid_params.map((p) => p.name)).toContain("definition.nodes.config.to");
     // `detail` must name the cause on its own: the editor's error mapper surfaces only `detail`.
-    expect(body.detail).toBe("A send_email recipient is not a member of this organization.");
+    expect(body.detail).toBe("A send_email recipient cannot access this workspace.");
     expect(service.enableWorkflow).not.toHaveBeenCalled();
   });
 
-  test("allows enabling when the literal recipient is an org member", async () => {
+  test("allows enabling when the literal recipient can access the workspace", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
     verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: [] });

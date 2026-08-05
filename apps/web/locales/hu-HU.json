@@ -4226,6 +4226,8 @@
       "email_to_label": "Címzett",
       "email_to_placeholder": "csapat@pelda.hu",
       "email_to_required": "Válassza ki, hogy ki kapja meg ezt az e-mailt.",
+      "email_to_unavailable_group_label": "Nem elérhető",
+      "email_to_unavailable_warning": "Ez a címzett már nem elérhető — lehet, hogy elvesztette a hozzáférést ehhez a munkaterülethez, vagy a felmérési mező, amelyből származott, eltávolításra került. Kérjük, válasszon egy újat; ez az e-mail nem küldhető el, amíg ezt meg nem teszi.",
       "enable_blocked_unsaved_changes": "A legutóbbi módosításokat nem sikerült menteni, ezért a munkafolyamat nem lett engedélyezve.",
       "enable_failed": "A munkafolyamat nem engedélyezhető.",
       "enable_success": "Munkafolyamat engedélyezve.",

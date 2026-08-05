@@ -9,6 +9,8 @@ import {
   getUserWorkspacesByOrganizationIds,
   getWorkspace,
   getWorkspaceLegacyStoragePrefixes,
+  getWorkspaceMemberEmails,
+  getWorkspaceMembers,
   getWorkspaces,
 } from "./service";
 
@@ -512,6 +514,92 @@ describe("Workspace Service", () => {
       vi.mocked(prisma.workspace.findUnique).mockRejectedValue(prismaError);
 
       await expect(getWorkspaceLegacyStoragePrefixes(createId())).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  // Fresh cuid per test: both functions are `reactCache`d, so reusing a workspace id would replay a
+  // previous test's result instead of the mock set up here.
+  describe("getWorkspaceMembers / getWorkspaceMemberEmails (send_email recipient allowlist)", () => {
+    const member = (name: string, email: string) => ({ user: { name, email } });
+
+    test("selects the members who can access the workspace: org owner/manager, or a team linked to it", async () => {
+      // The filter is the behavior here — it decides who may receive a workspace's response data, so
+      // it is asserted directly. It mirrors `checkAuthorizationUpdated`'s workspace access: an
+      // owner/manager reaches every workspace in the org, everyone else only through a linked team
+      // (any `WorkspaceTeam` permission, since `read` already grants access). The organization comes
+      // from the workspace itself, never from a caller-supplied id.
+      const workspaceId = createId();
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
+
+      await getWorkspaceMembers(workspaceId);
+
+      expect(prisma.membership.findMany).toHaveBeenCalledWith({
+        where: {
+          organization: { workspaces: { some: { id: workspaceId } } },
+          user: { isActive: true },
+          OR: [
+            { role: { in: ["owner", "manager"] } },
+            { user: { teamUsers: { some: { team: { workspaceTeams: { some: { workspaceId } } } } } } },
+          ],
+        },
+        select: { user: { select: { name: true, email: true } } },
+      });
+    });
+
+    test("returns the name and email of each member with workspace access", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([
+        member("Owner", "owner@corp.example"),
+        member("Team Member", "member@corp.example"),
+      ] as never);
+
+      await expect(getWorkspaceMembers(createId())).resolves.toEqual([
+        { name: "Owner", email: "owner@corp.example" },
+        { name: "Team Member", email: "member@corp.example" },
+      ]);
+    });
+
+    test("drops a member with an empty email so a blank recipient can never match", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([
+        member("Kept", "kept@corp.example"),
+        member("No Email", ""),
+      ] as never);
+
+      await expect(getWorkspaceMembers(createId())).resolves.toEqual([
+        { name: "Kept", email: "kept@corp.example" },
+      ]);
+    });
+
+    test("normalizes the allowlist emails so recipient matching stays case-insensitive", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([
+        member("Mixed Case", "  Member@Corp.Example "),
+        member("Second", "second@corp.example"),
+      ] as never);
+
+      await expect(getWorkspaceMemberEmails(createId())).resolves.toEqual(
+        new Set(["member@corp.example", "second@corp.example"])
+      );
+    });
+
+    test("returns an empty allowlist when nobody can access the workspace (fails closed)", async () => {
+      // A revoked team, a deleted workspace or a foreign id all land here; the callers treat an empty
+      // set as "reject every literal recipient" rather than "skip the check".
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
+
+      await expect(getWorkspaceMemberEmails(createId())).resolves.toEqual(new Set());
+    });
+
+    test("throws ValidationError for an invalid workspace id", async () => {
+      await expect(getWorkspaceMemberEmails("not-a-cuid")).rejects.toThrow(ValidationError);
+    });
+
+    test("throws DatabaseError when prisma throws", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.membership.findMany).mockRejectedValue(prismaError);
+
+      await expect(getWorkspaceMemberEmails(createId())).rejects.toThrow(DatabaseError);
     });
   });
 });

@@ -4226,6 +4226,8 @@
       "email_to_label": "Skicka till",
       "email_to_placeholder": "team@example.com",
       "email_to_required": "Välj vem som ska ta emot det här mejlet.",
+      "email_to_unavailable_group_label": "Inte tillgänglig",
+      "email_to_unavailable_warning": "Den här mottagaren är inte längre tillgänglig — de kan ha förlorat åtkomst till den här arbetsytan, eller så har enkätfältet de kom från tagits bort. Välj en ny mottagare; det här e-postmeddelandet kan inte skickas förrän du gör det.",
       "enable_blocked_unsaved_changes": "Dina senaste ändringar kunde inte sparas, så arbetsflödet aktiverades inte.",
       "enable_failed": "Kunde inte aktivera arbetsflödet.",
       "enable_success": "Arbetsflöde aktiverat.",

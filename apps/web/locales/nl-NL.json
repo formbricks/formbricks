@@ -4226,6 +4226,8 @@
       "email_to_label": "Verzenden naar",
       "email_to_placeholder": "team@voorbeeld.nl",
       "email_to_required": "Kies wie deze e-mail moet ontvangen.",
+      "email_to_unavailable_group_label": "Niet beschikbaar",
+      "email_to_unavailable_warning": "Deze ontvanger is niet meer beschikbaar — ze hebben mogelijk geen toegang meer tot deze workspace, of het enquêteveld waaruit ze kwamen is verwijderd. Kies een nieuwe ontvanger; deze e-mail kan niet worden verzonden totdat je dat doet.",
       "enable_blocked_unsaved_changes": "Je laatste wijzigingen konden niet worden opgeslagen, dus de workflow is niet ingeschakeld.",
       "enable_failed": "Workflow kon niet worden ingeschakeld.",
       "enable_success": "Workflow ingeschakeld.",
