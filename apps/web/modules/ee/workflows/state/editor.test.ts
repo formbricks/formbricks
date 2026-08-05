@@ -557,13 +557,16 @@ describe("isWorkflowDirtyAtom + markWorkflowDraftSavedAtom", () => {
 });
 
 describe("workflow save error", () => {
-  const saveError = { draftSignature: "sig", kind: "unreachable", detail: null } as const;
-
   test("a successful save clears the failed state in the same write as lastSavedAt", () => {
     const store = createStore();
     store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
     store.set(setWorkflowNameAtom, "Renamed");
-    store.set(setWorkflowSaveErrorAtom, saveError);
+    // save() records the failure against the signature of the draft it actually sent.
+    store.set(setWorkflowSaveErrorAtom, {
+      draftSignature: store.get(workflowDraftSignatureAtom),
+      kind: "unreachable",
+      detail: null,
+    });
 
     expect(store.get(hasWorkflowSaveFailedAtom)).toBe(true);
 
@@ -582,14 +585,19 @@ describe("workflow save error", () => {
     const store = createStore();
     store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
     store.set(setWorkflowNameAtom, "Renamed");
-    store.set(setWorkflowSaveErrorAtom, saveError);
+    const failedError = {
+      draftSignature: store.get(workflowDraftSignatureAtom),
+      kind: "unreachable",
+      detail: null,
+    } as const;
+    store.set(setWorkflowSaveErrorAtom, failedError);
 
     expect(store.get(hasWorkflowSaveFailedAtom)).toBe(true);
 
     // Nothing is unsaved any more, so nothing should still read "Save failed".
     store.set(setWorkflowNameAtom, workflow.name);
     expect(store.get(hasWorkflowSaveFailedAtom)).toBe(false);
-    expect(store.get(workflowSaveErrorAtom)).toEqual(saveError);
+    expect(store.get(workflowSaveErrorAtom)).toEqual(failedError);
   });
 
   test("a redundant clear does not churn editor state", () => {

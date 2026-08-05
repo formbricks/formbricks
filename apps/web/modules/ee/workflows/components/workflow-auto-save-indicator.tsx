@@ -10,15 +10,18 @@ import {
   isWorkflowSavingAtom,
   workflowLastSavedAtAtom,
   workflowSaveErrorAtom,
+  workflowValidityAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 const SAVED_FLASH_MS = 3000;
 
 // Same palette as Badge's "success" / "error" / "gray" types, which is what the survey editor's
-// equivalent pill matches.
+// equivalent pill matches. "blocked" borrows the "warning" amber: not an error the app hit, but a
+// draft the user has to fix (a missing name) before anything can be saved.
 const PILL_CLASSES = {
   failed: "border-red-200 bg-red-100 text-red-800",
+  blocked: "border-amber-200 bg-amber-100 text-amber-800",
   saved: "border-green-600 bg-green-50 text-green-800",
   idle: "border-slate-200 bg-slate-100 text-slate-600",
 } as const;
@@ -38,7 +41,13 @@ export const WorkflowAutoSaveIndicator = () => {
   const saveError = useAtomValue(workflowSaveErrorAtom);
   const isDirty = useAtomValue(isWorkflowDirtyAtom);
   const isSaving = useAtomValue(isWorkflowSavingAtom);
+  const { isNameValid } = useAtomValue(workflowValidityAtom);
   const [showSaved, setShowSaved] = useState(false);
+
+  // A dirty draft the autosave can't send at all — the name is empty, so buildWorkflowPatch bails
+  // before any request and no save is ever attempted. Without this the pill fell through to the
+  // "Saving…" branch and claimed a save was in flight that never was.
+  const isBlocked = isDirty && !isNameValid;
 
   useEffect(() => {
     if (!lastSavedAt) return;
@@ -56,6 +65,11 @@ export const WorkflowAutoSaveIndicator = () => {
   if (hasFailed) {
     state = "failed";
     label = t("workspace.workflows.autosave_failed");
+  } else if (isBlocked) {
+    // Above "Saving…": a draft that can never be sent is not on its way. The inline error on the
+    // title field says which field and why; the pill just reports the unsaved state honestly.
+    state = "blocked";
+    label = t("workspace.workflows.autosave_blocked");
   } else if (isDirty || isSaving) {
     label = t("workspace.workflows.saving_changes");
   } else if (showSaved) {
@@ -68,13 +82,17 @@ export const WorkflowAutoSaveIndicator = () => {
   // timeout, where no `online` event is ever coming and the promise would sit there unfulfilled
   // (raised in review of ENG-1970).
 
-  const tooltipContent = saveError?.detail
-    ? t("workspace.workflows.autosave_failed_tooltip_rejected", { detail: saveError.detail })
-    : t("workspace.workflows.autosave_failed_tooltip");
+  let tooltipContent = t("workspace.workflows.autosave_failed_tooltip");
+  if (isBlocked) {
+    tooltipContent = t("workspace.workflows.autosave_blocked_tooltip");
+  } else if (saveError?.detail) {
+    tooltipContent = t("workspace.workflows.autosave_failed_tooltip_rejected", { detail: saveError.detail });
+  }
+  const hasTooltip = hasFailed || isBlocked;
 
   return (
     <TooltipRenderer
-      shouldRender={hasFailed}
+      shouldRender={hasTooltip}
       tooltipContent={tooltipContent}
       className="max-w-64 text-center">
       {/* A live region because this pill is the whole report: autosave never toasts, so a failure
@@ -90,7 +108,7 @@ export const WorkflowAutoSaveIndicator = () => {
           PILL_CLASSES[state]
         )}>
         {label}
-        {hasFailed ? <span className="sr-only">. {tooltipContent}</span> : null}
+        {hasTooltip ? <span className="sr-only">. {tooltipContent}</span> : null}
       </span>
     </TooltipRenderer>
   );
