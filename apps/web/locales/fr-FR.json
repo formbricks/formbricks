@@ -2581,7 +2581,7 @@
         "plan_scale_feature_responses": "5 000 réponses / mois avec <dynamicPricing>tarification dynamique</dynamicPricing>",
         "plan_scale_feature_security": "2FA et protection anti-spam",
         "plan_scale_feature_semantic_analysis": "Analyse sémantique (IA)",
-        "plan_scale_feature_workflows": "Workflows",
+        "plan_scale_feature_workflow_runs": "1 000 exécutions de workflow / mois avec <dynamicPricing>tarification dynamique</dynamicPricing>",
         "plan_scale_feature_workspaces": "5 espaces de travail",
         "plan_selection_description": "Compare les formules Hobby, Pro et Scale, puis change de formule directement depuis Formbricks.",
         "plan_selection_title": "Choisis ta formule",

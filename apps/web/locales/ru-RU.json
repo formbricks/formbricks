@@ -2581,7 +2581,7 @@
         "plan_scale_feature_responses": "5 000 ответов в месяц с <dynamicPricing>динамическим ценообразованием</dynamicPricing>",
         "plan_scale_feature_security": "Двухфакторная аутентификация и защита от спама",
         "plan_scale_feature_semantic_analysis": "Семантический анализ (AI)",
-        "plan_scale_feature_workflows": "Рабочие процессы",
+        "plan_scale_feature_workflow_runs": "1 000 запусков процессов в месяц с <dynamicPricing>динамическим ценообразованием</dynamicPricing>",
         "plan_scale_feature_workspaces": "5 рабочих пространств",
         "plan_selection_description": "Сравни планы Hobby, Pro и Scale, а затем переключайся между ними прямо в Formbricks.",
         "plan_selection_title": "Выбери свой план",

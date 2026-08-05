@@ -2581,7 +2581,7 @@
         "plan_scale_feature_responses": "5.000 respostas / mês com <dynamicPricing>preços dinâmicos</dynamicPricing>",
         "plan_scale_feature_security": "2FA e proteção contra spam",
         "plan_scale_feature_semantic_analysis": "Análise Semântica (IA)",
-        "plan_scale_feature_workflows": "Fluxos de Trabalho",
+        "plan_scale_feature_workflow_runs": "1000 execuções de fluxo de trabalho / mês com <dynamicPricing>preços dinâmicos</dynamicPricing>",
         "plan_scale_feature_workspaces": "5 áreas de trabalho",
         "plan_selection_description": "Compara Hobby, Pro e Scale, e depois muda de plano diretamente no Formbricks.",
         "plan_selection_title": "Escolhe o teu plano",

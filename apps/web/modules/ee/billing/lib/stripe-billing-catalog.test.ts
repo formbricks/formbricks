@@ -156,6 +156,7 @@ describe("stripe-billing-catalog", () => {
             unitAmount: 1000,
             responseOverage: null,
             workflowRunsIncluded: null,
+            workflowRunsOverage: null,
           },
         },
         pro: {
@@ -166,6 +167,7 @@ describe("stripe-billing-catalog", () => {
             unitAmount: 1000,
             responseOverage: EXPECTED_RESPONSE_OVERAGE,
             workflowRunsIncluded: null,
+            workflowRunsOverage: null,
           },
           yearly: {
             plan: "pro",
@@ -174,6 +176,7 @@ describe("stripe-billing-catalog", () => {
             unitAmount: 10000,
             responseOverage: EXPECTED_RESPONSE_OVERAGE,
             workflowRunsIncluded: null,
+            workflowRunsOverage: null,
           },
         },
         scale: {
@@ -184,6 +187,7 @@ describe("stripe-billing-catalog", () => {
             unitAmount: 1000,
             responseOverage: EXPECTED_RESPONSE_OVERAGE,
             workflowRunsIncluded: null,
+            workflowRunsOverage: null,
           },
           yearly: {
             plan: "scale",
@@ -192,6 +196,7 @@ describe("stripe-billing-catalog", () => {
             unitAmount: 10000,
             responseOverage: EXPECTED_RESPONSE_OVERAGE,
             workflowRunsIncluded: null,
+            workflowRunsOverage: null,
           },
         },
       });
@@ -316,6 +321,9 @@ describe("stripe-billing-catalog", () => {
       expect(display.scale.yearly.workflowRunsIncluded).toBe(2000);
       expect(display.pro.monthly.workflowRunsIncluded).toBeNull();
       expect(display.hobby.monthly.workflowRunsIncluded).toBeNull();
+      // The graduated tiers are exposed for the plan-card tooltip, straight from the price.
+      expect(display.scale.monthly.workflowRunsOverage).toEqual(EXPECTED_RESPONSE_OVERAGE);
+      expect(display.pro.monthly.workflowRunsOverage).toBeNull();
     },
     TEST_TIMEOUT_MS
   );

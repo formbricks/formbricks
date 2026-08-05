@@ -36,7 +36,7 @@ import {
 } from "../actions";
 import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog";
 import { PlanComparisonTable, type TPlanColumn } from "./plan-comparison";
-import { PlanResponseFeature } from "./response-pricing-tooltip";
+import { PlanResponseFeature, PlanWorkflowRunsFeature } from "./response-pricing-tooltip";
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
@@ -107,7 +107,10 @@ const formatMoney = (currency: string, unitAmount: number | null, locale: string
   }).format(unitAmount / 100);
 };
 
-type TPlanFeature = { type: "text"; label: string } | { type: "responses"; plan: "pro" | "scale" };
+type TPlanFeature =
+  | { type: "text"; label: string }
+  | { type: "responses"; plan: "pro" | "scale" }
+  | { type: "workflow_runs"; plan: "scale" };
 
 type TPlanCardData = {
   plan: TStandardPlan;
@@ -656,7 +659,7 @@ export const PricingTable = ({
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_workspaces") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_rbac") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_quota") },
-          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_workflows") },
+          { type: "workflow_runs", plan: "scale" },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_feedback") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_semantic_analysis") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_security") },
@@ -1289,17 +1292,23 @@ export const PricingTable = ({
               <ul className="space-y-3">
                 {planCard.features.map((feature) => (
                   <li
-                    key={feature.type === "text" ? feature.label : `${feature.plan}-responses`}
+                    key={feature.type === "text" ? feature.label : `${feature.plan}-${feature.type}`}
                     className="flex items-start gap-3 text-sm text-slate-700">
                     <CheckIcon className="mt-0.5 size-4 shrink-0 text-slate-500" />
                     <span>
-                      {feature.type === "text" ? (
-                        feature.label
-                      ) : (
+                      {feature.type === "text" && feature.label}
+                      {feature.type === "responses" && (
                         <PlanResponseFeature
                           plan={feature.plan}
                           locale={locale}
                           overage={billingCatalog[feature.plan][selectedInterval].responseOverage}
+                          t={t}
+                        />
+                      )}
+                      {feature.type === "workflow_runs" && (
+                        <PlanWorkflowRunsFeature
+                          locale={locale}
+                          overage={billingCatalog[feature.plan][selectedInterval].workflowRunsOverage}
                           t={t}
                         />
                       )}

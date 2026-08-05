@@ -2581,7 +2581,7 @@
         "plan_scale_feature_responses": "5.000 reacties / maand met <dynamicPricing>dynamische prijzen</dynamicPricing>",
         "plan_scale_feature_security": "2FA & spambescherming",
         "plan_scale_feature_semantic_analysis": "Semantische analyse (AI)",
-        "plan_scale_feature_workflows": "Workflows",
+        "plan_scale_feature_workflow_runs": "1.000 workflowuitvoeringen / maand met <dynamicPricing>dynamische prijzen</dynamicPricing>",
         "plan_scale_feature_workspaces": "5 werkruimtes",
         "plan_selection_description": "Vergelijk Hobby, Pro en Scale, en schakel direct vanuit Formbricks tussen abonnementen.",
         "plan_selection_title": "Kies je abonnement",

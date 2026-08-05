@@ -2581,7 +2581,7 @@
         "plan_scale_feature_responses": "Ayda 5.000 yanıt, <dynamicPricing>dinamik fiyatlandırma</dynamicPricing> ile",
         "plan_scale_feature_security": "2FA ve spam koruması",
         "plan_scale_feature_semantic_analysis": "Anlamsal Analiz (Yapay Zeka)",
-        "plan_scale_feature_workflows": "İş Akışları",
+        "plan_scale_feature_workflow_runs": "Ayda 1.000 iş akışı çalıştırması ile <dynamicPricing>dinamik fiyatlandırma</dynamicPricing>",
         "plan_scale_feature_workspaces": "5 çalışma alanı",
         "plan_selection_description": "Hobby, Pro ve Scale planlarını karşılaştır, ardından doğrudan Formbricks'ten plan değiştir.",
         "plan_selection_title": "Planını seç",

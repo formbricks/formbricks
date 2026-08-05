@@ -2484,7 +2484,7 @@ checksums:
     workspace/settings/billing/plan_scale_feature_responses: f2be033ebf6c86a664b812b4a918647f
     workspace/settings/billing/plan_scale_feature_security: 6671961cf8d8413d1740b13901bcc033
     workspace/settings/billing/plan_scale_feature_semantic_analysis: 1441e34cacd26f0aa27af4ebad6e5c54
-    workspace/settings/billing/plan_scale_feature_workflows: b0c9c8615a9ba7d9cb73e767290a7f72
+    workspace/settings/billing/plan_scale_feature_workflow_runs: 22007bc0ad530bfd56b8a3788bdef02f
     workspace/settings/billing/plan_scale_feature_workspaces: 6bd1b676b9470ca8cc4e73be3ffd4bef
     workspace/settings/billing/plan_selection_description: 8367b137b31234cafe0e297a35b0b599
     workspace/settings/billing/plan_selection_title: 8b814effdaee1787281b740f67482d7d

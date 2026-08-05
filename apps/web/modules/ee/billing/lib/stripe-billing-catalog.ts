@@ -60,6 +60,9 @@ export type TStripeBillingCatalogDisplayItem = {
   responseOverage: TResponseOverageDisplay | null;
   // Free workflow-run allowance derived from the price's free first tier (see TStripeBillingCatalogItem).
   workflowRunsIncluded: number | null;
+  // Graduated overage tiers for workflow runs, derived from the price (same shape/source as
+  // responseOverage) so the plan card can show the per-unit tier table straight from Stripe.
+  workflowRunsOverage: TResponseOverageDisplay | null;
 };
 
 export type TStripeBillingCatalogDisplay = {
@@ -337,19 +340,21 @@ export const getStripeBillingCatalog = reactCache(async (): Promise<TStripeBilli
   );
 });
 
-const toResponseOverageDisplay = (item: TStripeBillingCatalogItem): TResponseOverageDisplay | null => {
-  // The tier table renders graduated semantics (each band priced separately),
-  // so volume-mode prices must not be displayed with it.
-  if (item.responsePrice?.tiers_mode !== "graduated") {
+// Derive the per-unit overage tier table shown in the plan card straight from a graduated Stripe
+// price, so the displayed pricing can never drift from what Stripe charges. Used for both responses
+// and workflow-run metered prices. The tier table renders graduated semantics (each band priced
+// separately), so volume-mode prices must not be displayed with it.
+const toOverageDisplay = (price: TStripeCatalogPrice | null): TResponseOverageDisplay | null => {
+  if (price?.tiers_mode !== "graduated") {
     return null;
   }
 
-  const tiers = mapStripeTiersToResponsePricingTiers(item.responsePrice.tiers);
+  const tiers = mapStripeTiersToResponsePricingTiers(price.tiers);
   if (!tiers) {
     return null;
   }
 
-  return { currency: item.responsePrice.currency, tiers };
+  return { currency: price.currency, tiers };
 };
 
 const toDisplayItem = (item: TStripeBillingCatalogItem): TStripeBillingCatalogDisplayItem => ({
@@ -357,8 +362,9 @@ const toDisplayItem = (item: TStripeBillingCatalogItem): TStripeBillingCatalogDi
   interval: item.interval,
   currency: item.basePrice.currency,
   unitAmount: item.basePrice.unit_amount,
-  responseOverage: toResponseOverageDisplay(item),
+  responseOverage: toOverageDisplay(item.responsePrice),
   workflowRunsIncluded: item.workflowRunsIncluded,
+  workflowRunsOverage: toOverageDisplay(item.workflowRunsPrice),
 });
 
 export const getStripeBillingCatalogDisplay = reactCache(async (): Promise<TStripeBillingCatalogDisplay> => {

@@ -2581,7 +2581,7 @@
         "plan_scale_feature_responses": "每月 5,000 次响应，采用<dynamicPricing>动态定价</dynamicPricing>",
         "plan_scale_feature_security": "双因素认证和垃圾邮件防护",
         "plan_scale_feature_semantic_analysis": "语义分析（AI）",
-        "plan_scale_feature_workflows": "工作流",
+        "plan_scale_feature_workflow_runs": "每月 1,000 次工作流运行，采用<dynamicPricing>动态定价</dynamicPricing>",
         "plan_scale_feature_workspaces": "5 个工作区",
         "plan_selection_description": "比较 Hobby、Pro 和 Scale 套餐，然后直接从 Formbricks 切换套餐。",
         "plan_selection_title": "选择您的套餐",

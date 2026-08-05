@@ -2581,7 +2581,7 @@
         "plan_scale_feature_responses": "5 000 svar / månad med <dynamicPricing>dynamisk prissättning</dynamicPricing>",
         "plan_scale_feature_security": "2FA och skräppostskydd",
         "plan_scale_feature_semantic_analysis": "Semantisk analys (AI)",
-        "plan_scale_feature_workflows": "Arbetsflöden",
+        "plan_scale_feature_workflow_runs": "1 000 arbetsflödeskörningar/månad med <dynamicPricing>dynamisk prissättning</dynamicPricing>",
         "plan_scale_feature_workspaces": "5 arbetsytor",
         "plan_selection_description": "Jämför Hobby, Pro och Scale och byt sedan plan direkt från Formbricks.",
         "plan_selection_title": "Välj din plan",
