@@ -109,7 +109,7 @@ export const getApiKeyAuthById = reactCache(
             select: {
               permission: true,
               workspaceId: true,
-              workspace: { select: { name: true } },
+              workspace: { select: { name: true, organizationId: true } },
             },
           },
         },
@@ -122,11 +122,15 @@ export const getApiKeyAuthById = reactCache(
         apiKeyId: apiKey.id,
         organizationId: apiKey.organizationId,
         organizationAccess: apiKey.organizationAccess as TAuthenticationApiKey["organizationAccess"],
-        workspacePermissions: apiKey.apiKeyWorkspaces.map((workspacePermission) => ({
-          permission: workspacePermission.permission,
-          workspaceId: workspacePermission.workspaceId,
-          workspaceName: workspacePermission.workspace.name,
-        })),
+        workspacePermissions: apiKey.apiKeyWorkspaces
+          .filter(
+            (workspacePermission) => workspacePermission.workspace.organizationId === apiKey.organizationId
+          )
+          .map((workspacePermission) => ({
+            permission: workspacePermission.permission,
+            workspaceId: workspacePermission.workspaceId,
+            workspaceName: workspacePermission.workspace.name,
+          })),
       };
     } catch (error) {
       return rethrowAsDatabaseError(error);
