@@ -171,7 +171,7 @@ describe("POST /api/mcp", () => {
     expect(response.status).toBe(401);
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
     expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp", scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
     );
     expect(applyIPRateLimit).toHaveBeenCalled();
   });
@@ -445,7 +445,7 @@ describe("POST /api/mcp", () => {
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
     expect(applyIPRateLimit).toHaveBeenCalled();
     expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
+      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp", scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
     );
   });
 
@@ -485,7 +485,9 @@ describe("POST /api/mcp", () => {
     expect(message.result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      // Names the scope this specific call needed, not just that some scope was missing — that is
+      // the only thing the client can act on.
+      detail: "OAuth token does not include the required MCP scope: surveys:write",
       requestId: "req_read_only",
     });
   });
@@ -528,7 +530,9 @@ describe("POST /api/mcp", () => {
     expect(message.result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      // The refusal names the scope the client must obtain, since a JSON-RPC tool result carries no
+      // WWW-Authenticate header for it to read.
+      detail: "OAuth token does not include the required MCP scope: workflows:write",
       requestId: "req_wf_read_only",
     });
     // The scope gate must fire BEFORE any mutation side effect: no audit log is built or queued for a
