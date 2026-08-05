@@ -1,7 +1,7 @@
-import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
+import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { responses } from "@/app/lib/api/response";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -14,7 +14,7 @@ type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
  */
 export const resolveBodyIds = async <T extends Record<string, unknown>>(
   body: T,
-  permissions: TAPIKeyWorkspacePermission[],
+  authentication: TAuthenticationApiKey,
   method: HttpMethod
 ): Promise<
   | { ok: true; body: T & { workspaceId: string }; alreadyAuthorized: boolean }
@@ -42,7 +42,7 @@ export const resolveBodyIds = async <T extends Record<string, unknown>>(
 
   const workspaceId = workspace.id;
 
-  if (!hasPermission(permissions, workspaceId, method)) {
+  if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceId, method))) {
     return { ok: false, response: responses.unauthorizedResponse() };
   }
 

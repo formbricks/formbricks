@@ -1,31 +1,16 @@
 /**
  * V3 API auth — session (browser) or API key with workspace-scoped access.
  */
-import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
+import { getWorkspaceActionForPermission } from "@/lib/authorization/compatibility";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { problemForbidden, problemUnauthorized } from "./response";
 import type { TV3Authentication } from "./types";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
-
-function apiKeyPermissionAllows(permission: ApiKeyPermission, minPermission: TTeamPermission): boolean {
-  const grantedRank = {
-    [ApiKeyPermission.read]: 1,
-    [ApiKeyPermission.write]: 2,
-    [ApiKeyPermission.manage]: 3,
-  }[permission];
-
-  const requiredRank = {
-    read: 1,
-    readWrite: 2,
-    manage: 3,
-  }[minPermission];
-
-  return grantedRank >= requiredRank;
-}
 
 /**
  * Require session and workspace access. workspaceId is resolved via the V3 workspace-context layer.
@@ -97,11 +82,13 @@ export async function requireV3WorkspaceAccess(
 
     try {
       const context = await resolveV3WorkspaceContext(workspaceId);
-      const permission = keyAuth.workspacePermissions.find(
-        (workspacePermission) => workspacePermission.workspaceId === context.workspaceId
+      const allowed = await can(
+        { type: "apiKey", id: keyAuth.apiKeyId },
+        getWorkspaceActionForPermission(minPermission),
+        { type: "workspace", id: context.workspaceId }
       );
 
-      if (!permission || !apiKeyPermissionAllows(permission.permission, minPermission)) {
+      if (!allowed) {
         log.warn({ statusCode: 403 }, "API key not allowed for workspace");
         return problemForbidden(requestId, "You are not authorized to access this resource", instance);
       }

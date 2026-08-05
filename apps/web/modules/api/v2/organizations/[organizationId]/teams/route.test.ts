@@ -6,6 +6,7 @@ const {
   mockCanManageOrganizationUsers,
   mockCreateTeam,
   mockGetApiKeyCreatorRole,
+  mockHasOrganizationIdAndAccess,
   mockHandleApiError,
   mockSuccessResponse,
 } = vi.hoisted(() => ({
@@ -13,6 +14,7 @@ const {
   mockCanManageOrganizationUsers: vi.fn(),
   mockCreateTeam: vi.fn(),
   mockGetApiKeyCreatorRole: vi.fn(),
+  mockHasOrganizationIdAndAccess: vi.fn(),
   mockHandleApiError: vi.fn(),
   mockSuccessResponse: vi.fn(),
 }));
@@ -30,6 +32,10 @@ vi.mock("@/modules/api/v2/lib/response", () => ({
 
 vi.mock("@/modules/api/v2/lib/utils", () => ({
   handleApiError: mockHandleApiError,
+}));
+
+vi.mock("@/modules/api/v2/organizations/[organizationId]/lib/utils", () => ({
+  hasOrganizationIdAndAccess: mockHasOrganizationIdAndAccess,
 }));
 
 vi.mock("@/modules/api/v2/organizations/[organizationId]/teams/lib/teams", () => ({
@@ -52,6 +58,7 @@ const buildRequest = () =>
 describe("POST /organizations/[organizationId]/teams", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHasOrganizationIdAndAccess.mockResolvedValue(true);
 
     mockAuthenticatedApiClient.mockImplementation(
       async ({ handler }: Parameters<typeof authenticatedApiClient>[0]) =>

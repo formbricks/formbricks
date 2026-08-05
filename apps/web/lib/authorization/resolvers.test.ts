@@ -71,7 +71,13 @@ describe("getApiKeyAuthById", () => {
       id: "key1",
       organizationId: "org1",
       organizationAccess: { accessControl: { read: true, write: false } },
-      apiKeyWorkspaces: [{ permission: "read", workspaceId: "ws1", workspace: { name: "Growth" } }],
+      apiKeyWorkspaces: [
+        {
+          permission: "read",
+          workspaceId: "ws1",
+          workspace: { name: "Growth", organizationId: "org1" },
+        },
+      ],
     } as never);
 
     await expect(getApiKeyAuthById("key1")).resolves.toEqual({
@@ -80,6 +86,36 @@ describe("getApiKeyAuthById", () => {
       organizationId: "org1",
       organizationAccess: { accessControl: { read: true, write: false } },
       workspacePermissions: [{ permission: "read", workspaceId: "ws1", workspaceName: "Growth" }],
+    });
+  });
+
+  test("drops workspace grants outside the API key's organization", async () => {
+    vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
+      id: "key-with-foreign-grant",
+      organizationId: "org1",
+      organizationAccess: {},
+      apiKeyWorkspaces: [
+        {
+          permission: "manage",
+          workspaceId: "ws-legitimate",
+          workspace: { name: "Legitimate", organizationId: "org1" },
+        },
+        {
+          permission: "manage",
+          workspaceId: "ws-foreign",
+          workspace: { name: "Foreign", organizationId: "org2" },
+        },
+      ],
+    } as never);
+
+    await expect(getApiKeyAuthById("key-with-foreign-grant")).resolves.toEqual({
+      type: "apiKey",
+      apiKeyId: "key-with-foreign-grant",
+      organizationId: "org1",
+      organizationAccess: {},
+      workspacePermissions: [
+        { permission: "manage", workspaceId: "ws-legitimate", workspaceName: "Legitimate" },
+      ],
     });
   });
 

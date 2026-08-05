@@ -49,29 +49,65 @@ describe("api-key-auth helpers", () => {
   });
 });
 
-describe("authenticateApiKeyFromHeaders — ENG-1749 cross-org permission filter", () => {
+describe("authenticateApiKeyFromHeaders", () => {
   const headers = new Headers({ "x-api-key": "fbk_secret" });
 
   const apiKeyData = (workspaces: unknown[]) => ({
-    id: "key1",
-    organizationId: "org-self",
-    organizationAccess: { accessControl: { read: false, write: false } },
+    id: "key-1",
+    organizationId: "org-1",
+    organizationAccess: { accessControl: { read: true, write: false } },
     apiKeyWorkspaces: workspaces,
   });
 
-  const ws = (id: string, organizationId: string) => ({
-    permission: "manage",
+  const workspaceGrant = (
+    id: string,
+    organizationId = "org-1",
+    permission: "read" | "write" | "manage" = "manage",
+    name = id
+  ) => ({
+    permission,
     workspaceId: id,
-    workspace: { id, name: id, organizationId },
+    workspace: { id, name, organizationId },
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  test("rejects a revoked or deleted key", async () => {
+    mocks.getApiKeyWithPermissions.mockResolvedValue(null);
+    await expect(authenticateApiKeyFromHeaders(headers)).resolves.toBeNull();
+  });
+
+  test("rejects an organization-only key on routes that did not opt in", async () => {
+    mocks.getApiKeyWithPermissions.mockResolvedValue(apiKeyData([]));
+    await expect(authenticateApiKeyFromHeaders(headers)).resolves.toBeNull();
+  });
+
+  test("accepts an organization-only key when the route opts in", async () => {
+    mocks.getApiKeyWithPermissions.mockResolvedValue(apiKeyData([]));
+
+    const auth = await authenticateApiKeyFromHeaders(headers, { allowOrganizationOnlyApiKey: true });
+
+    expect(auth?.apiKeyId).toBe("key-1");
+    expect(auth?.workspacePermissions).toEqual([]);
+  });
+
+  test("accepts a workspace-scoped key and maps its grants", async () => {
+    mocks.getApiKeyWithPermissions.mockResolvedValue(
+      apiKeyData([workspaceGrant("ws-1", "org-1", "read", "Growth")])
+    );
+
+    const auth = await authenticateApiKeyFromHeaders(headers);
+
+    expect(auth?.workspacePermissions).toEqual([
+      { permission: "read", workspaceId: "ws-1", workspaceName: "Growth" },
+    ]);
+  });
+
   test("drops workspace permissions whose workspace is in another organization", async () => {
     mocks.getApiKeyWithPermissions.mockResolvedValue(
-      apiKeyData([ws("ws-own", "org-self"), ws("ws-victim", "org-other")])
+      apiKeyData([workspaceGrant("ws-own"), workspaceGrant("ws-victim", "org-other")])
     );
 
     const auth = await authenticateApiKeyFromHeaders(headers);
@@ -82,13 +118,13 @@ describe("authenticateApiKeyFromHeaders — ENG-1749 cross-org permission filter
   });
 
   test("returns null when only cross-org permissions remain", async () => {
-    mocks.getApiKeyWithPermissions.mockResolvedValue(apiKeyData([ws("ws-victim", "org-other")]));
+    mocks.getApiKeyWithPermissions.mockResolvedValue(apiKeyData([workspaceGrant("ws-victim", "org-other")]));
 
     expect(await authenticateApiKeyFromHeaders(headers)).toBeNull();
   });
 
   test("keeps a cross-org-only key for org-scoped routes but with no workspace permissions", async () => {
-    mocks.getApiKeyWithPermissions.mockResolvedValue(apiKeyData([ws("ws-victim", "org-other")]));
+    mocks.getApiKeyWithPermissions.mockResolvedValue(apiKeyData([workspaceGrant("ws-victim", "org-other")]));
 
     const auth = await authenticateApiKeyFromHeaders(headers, { allowOrganizationOnlyApiKey: true });
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspace } from "@/lib/workspace/service";
@@ -26,6 +27,10 @@ vi.mock("@/lib/workspace/service", () => ({
 vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
   checkAuthorizationUpdated: vi.fn(),
 }));
+
+// The API-key ladder itself is covered by lib/authorization/legacy-api-key-access.test.ts;
+// here we assert the v3 layer asks the central interface and maps a denial to 403.
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 
 const requestId = "req-123";
 
@@ -144,6 +149,7 @@ function wsPerm(workspaceId: string, permission: ApiKeyPermission = ApiKeyPermis
 
 describe("requireV3WorkspaceAccess", () => {
   beforeEach(() => {
+    vi.mocked(can).mockResolvedValue(true);
     vi.mocked(getWorkspace).mockResolvedValue({ id: "proj_k" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_k");
   });
@@ -195,6 +201,7 @@ describe("requireV3WorkspaceAccess", () => {
   });
 
   test("returns 403 when API key permission is lower than the required permission", async () => {
+    vi.mocked(can).mockResolvedValue(false);
     const auth = {
       ...keyBase,
       workspacePermissions: [wsPerm("proj_k", ApiKeyPermission.read)],
@@ -204,6 +211,7 @@ describe("requireV3WorkspaceAccess", () => {
   });
 
   test("403 when API key has no matching workspace", async () => {
+    vi.mocked(can).mockResolvedValue(false);
     const auth = {
       ...keyBase,
       workspacePermissions: [wsPerm("other_workspace")],
@@ -213,6 +221,7 @@ describe("requireV3WorkspaceAccess", () => {
   });
 
   test("403 when API key permission is not list-eligible (runtime value)", async () => {
+    vi.mocked(can).mockResolvedValue(false);
     const auth = {
       ...keyBase,
       workspacePermissions: [

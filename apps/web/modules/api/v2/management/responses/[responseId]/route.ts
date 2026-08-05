@@ -15,7 +15,7 @@ import {
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
@@ -41,7 +41,7 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         return handleApiError(request, workspaceIdResult.error);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "GET")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceIdResult.data.workspaceId, "GET"))) {
         return handleApiError(request, {
           type: "unauthorized",
         });
@@ -89,7 +89,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
         return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "DELETE")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceIdResult.data.workspaceId, "DELETE"))) {
         return handleApiError(
           request,
           {
@@ -142,7 +142,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
-      if (!hasPermission(authentication.workspacePermissions, workspaceIdResult.data.workspaceId, "PUT")) {
+      if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceIdResult.data.workspaceId, "PUT"))) {
         return handleApiError(
           request,
           {
