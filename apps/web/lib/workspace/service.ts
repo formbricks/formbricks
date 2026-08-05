@@ -6,6 +6,7 @@ import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TWorkspace } from "@formbricks/types/workspace";
 import { ITEMS_PER_PAGE } from "../constants";
+import { normalizeEmailForComparison } from "../utils/email";
 import { validateInputs } from "../utils/validate";
 
 const selectWorkspace = {
@@ -157,6 +158,65 @@ export const getWorkspaceLegacyStoragePrefixes = reactCache(
     }
   }
 );
+
+/** A member who can access a workspace, as the `send_email` recipient picker needs them. */
+export interface TWorkspaceMember {
+  name: string;
+  email: string;
+}
+
+/**
+ * Everyone who can access a workspace, name included. The single source of truth the `send_email`
+ * recipient picker offers options from, so the authoring UI cannot offer an address that the
+ * enable-time gate and the runner backstop would then reject (ENG-2186).
+ *
+ * "Can access" mirrors the authorization the real request path enforces (`checkAuthorizationUpdated`
+ * via `requireSessionWorkspaceAccess`): an organization owner/manager reaches every workspace in the
+ * organization, and every other role reaches a workspace only through a team linked to it — at any
+ * `WorkspaceTeam` permission, since `read` already grants access.
+ *
+ * The organization is resolved from the workspace itself rather than taken from the caller, so the
+ * tenant boundary cannot be widened by passing a foreign organization id. Deactivated (soft-deleted)
+ * users are excluded: their access has been revoked.
+ */
+export const getWorkspaceMembers = reactCache(async (workspaceId: string): Promise<TWorkspaceMember[]> => {
+  validateInputs([workspaceId, ZId]);
+
+  try {
+    const memberships = await prisma.membership.findMany({
+      where: {
+        organization: { workspaces: { some: { id: workspaceId } } },
+        user: { isActive: true },
+        OR: [
+          { role: { in: ["owner", "manager"] } },
+          { user: { teamUsers: { some: { team: { workspaceTeams: { some: { workspaceId } } } } } } },
+        ],
+      },
+      select: { user: { select: { name: true, email: true } } },
+    });
+
+    return memberships.map((membership) => membership.user).filter((user) => user.email.length > 0);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+});
+
+/**
+ * Lowercased set of the email addresses of everyone who can access a workspace. Used as the
+ * recipient allowlist for workflow `send_email` actions: a literal recipient address is only
+ * permitted when its owner can access the workspace whose response data the email carries, so a
+ * workflow can neither forward that data to an arbitrary external inbox (ENG-2029) nor keep
+ * emailing a member whose access to this workspace was revoked (ENG-2186). Emails are normalized
+ * for case-insensitive matching.
+ */
+export const getWorkspaceMemberEmails = reactCache(async (workspaceId: string): Promise<Set<string>> => {
+  const members = await getWorkspaceMembers(workspaceId);
+  return new Set(members.map((member) => normalizeEmailForComparison(member.email)));
+});
 
 export const getOrganizationWorkspacesCount = reactCache(async (organizationId: string): Promise<number> => {
   validateInputs([organizationId, ZId]);

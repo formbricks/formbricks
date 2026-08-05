@@ -1,6 +1,7 @@
 "use client";
 
 import { MailIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
@@ -10,6 +11,7 @@ import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/works
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
@@ -102,23 +104,37 @@ export const FollowUpsView = ({
         )}
       </div>
 
-      <div className="flex flex-col gap-y-2">
-        {surveyFollowUps.map((followUp) => {
-          return (
-            <FollowUpItem
-              key={followUp.id}
-              followUp={followUp}
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
-              selectedLanguageCode={selectedLanguageCode}
-              mailFrom={mailFrom}
-              userEmail={userEmail}
-              teamMemberDetails={teamMemberDetails}
-              locale={locale}
-            />
-          );
-        })}
-      </div>
+      {surveyFollowUps.length > 0 && (
+        <div className="flex flex-col gap-y-2">
+          {surveyFollowUps.map((followUp) => {
+            return (
+              <FollowUpItem
+                key={followUp.id}
+                followUp={followUp}
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                selectedLanguageCode={selectedLanguageCode}
+                mailFrom={mailFrom}
+                userEmail={userEmail}
+                teamMemberDetails={teamMemberDetails}
+                locale={locale}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      <Alert variant="info" size="small">
+        <AlertTitle>{t("workspace.surveys.edit.follow_ups_workflows_alert_title")}</AlertTitle>
+        <AlertButton asChild>
+          <Link
+            href="https://formbricks.com/docs/workflows/overview"
+            target="_blank"
+            rel="noopener noreferrer">
+            {t("common.learn_more")}
+          </Link>
+        </AlertButton>
+      </Alert>
 
       <FollowUpModal
         localSurvey={localSurvey}

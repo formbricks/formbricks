@@ -690,6 +690,16 @@ export async function patchV3SurveyResponse({
   }
 }
 
+/**
+ * Dry-run validation of a create or patch payload. Neither branch writes: the create branch is a
+ * pure function of the input, and the patch branch merges the payload into the loaded survey in
+ * memory. Both are therefore gated at `read`, not `readWrite`.
+ *
+ * That level is load-bearing for the MCP `validate_survey` tool, which is registered `surveys:read`
+ * (and annotated `readOnlyHint`). Requiring write here made a read-scoped agent 403 on a tool that
+ * mutates nothing (ENG-2179). If this is ever raised back to `readWrite`, that tool's declared scope
+ * has to move with it.
+ */
 export async function validateV3Survey({
   body,
   authentication,
@@ -710,7 +720,7 @@ export async function validateV3Survey({
         const authResult = await requireV3WorkspaceAccess(
           authentication,
           workspaceResult.data.workspaceId,
-          "readWrite",
+          "read",
           requestId,
           instance
         );
@@ -732,7 +742,7 @@ export async function validateV3Survey({
     const { survey, response } = await getAuthorizedV3Survey({
       surveyId: validationBody.surveyId,
       authentication,
-      access: "readWrite",
+      access: "read",
       requestId,
       instance,
     });

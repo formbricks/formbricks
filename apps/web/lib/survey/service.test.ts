@@ -7,6 +7,7 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import {
   DatabaseError,
   InvalidInputError,
+  OperationNotAllowedError,
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
@@ -481,7 +482,9 @@ describe("Tests for updateSurvey", () => {
     // ENG-1749/ENG-1920: the app-survey segment block connects segment.surveys by id; a survey from
     // another workspace must not be connectable (would re-point that survey's targeting).
     test("rejects connecting a survey from another workspace to the segment (app survey update)", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput); // getSurvey → current survey (own workspace)
+      // Draft row: this exercises the skip-validation path, which the ENG-1939 guard restricts to
+      // drafts. The cross-workspace segment check under test is unaffected by the status.
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" }); // getSurvey → current survey (own workspace)
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
       } as any); // segment.id belongs to the survey's workspace (passes the segment guard)
@@ -1387,10 +1390,15 @@ describe("updateSurveyDraftAction", () => {
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue(mockOrganizationOutput);
   });
 
+  // The persisted survey must be a draft for the skip-validation path (ENG-1939 guard); these
+  // cases are about the skipValidation flag, so the stored row is a draft rather than the
+  // inProgress default of mockSurveyOutput.
+  const mockDraftSurveyOutput = { ...mockSurveyOutput, status: "draft" as const };
+
   describe("Happy Path", () => {
     test("should save draft with missing translations", async () => {
-      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
 
       // Create a survey with incomplete i18n/fields
       const incompleteSurvey = {
@@ -1411,8 +1419,8 @@ describe("updateSurveyDraftAction", () => {
     });
 
     test("should allow draft with invalid images if gating is applied", async () => {
-      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
 
       const surveyWithInvalidImage = {
         ...updateSurveyInput,
@@ -1452,6 +1460,21 @@ describe("updateSurveyDraftAction", () => {
         await expect(updateSurveyInternal(incompleteSurvey, false)).rejects.toThrow();
       },
       SURVEY_SERVICE_TEST_TIMEOUT_MS
+    );
+
+    // ENG-1939: the lenient draft schema does not validate elements, so skipping validation on an
+    // already-published survey would let structurally invalid blocks reach the DB and silently
+    // revert the survey to draft. Gate on the PERSISTED status, not the payload's.
+    test.each(["inProgress", "paused", "completed"] as const)(
+      "rejects a skip-validation update when the stored survey is %s",
+      async (status) => {
+        prisma.survey.findUnique.mockResolvedValue({ ...mockSurveyOutput, status });
+
+        await expect(updateSurveyInternal(updateSurveyInput as TSurvey, true)).rejects.toThrow(
+          OperationNotAllowedError
+        );
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      }
     );
   });
 });

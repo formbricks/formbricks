@@ -28,7 +28,7 @@ interface ConfirmationModalProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onConfirm: () => void;
   description?: string;
-  body: string;
+  body: React.ReactNode;
   buttonText: string;
   isButtonDisabled?: boolean;
   buttonVariant?: "destructive" | "default";
@@ -127,7 +127,8 @@ export const ConfirmationModal = ({
         </DialogHeader>
 
         <DialogBody>
-          <p>{body}</p>
+          {/* div (not p) so a ReactNode body with block-level children is valid markup */}
+          <div className="whitespace-pre-line">{body}</div>
         </DialogBody>
 
         <DialogFooter>

@@ -1,0 +1,285 @@
+"use client";
+
+import {
+  Background,
+  BackgroundVariant,
+  type EdgeTypes,
+  type Node,
+  type NodeTypes,
+  type OnNodesChange,
+  ReactFlow,
+  ReactFlowProvider,
+  applyNodeChanges,
+  useReactFlow,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { useAtomValue, useSetAtom } from "jotai";
+import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
+import {
+  WORKFLOW_CANVAS_NODE_TYPE,
+  WORKFLOW_CANVAS_SNAP_GRID,
+  reorganizeWorkflowDefinition,
+  snapWorkflowNodePosition,
+  updateNodePosition,
+  workflowDefinitionToFlowEdges,
+  workflowDefinitionToFlowNodes,
+} from "@/modules/ee/workflows/lib/definition-to-flow";
+import {
+  type TWorkflowNodeData,
+  addWorkflowTriggerAtom,
+  closeWorkflowNodeConfigModalAtom,
+  hasBoundTriggerSurveyAtom,
+  isCanvasLockedAtom,
+  isWorkflowInspectorCollapsedAtom,
+  isWorkflowNodeConfigModalOpenAtom,
+  isWorkflowSnapToCanvasEnabledAtom,
+  openWorkflowNodeConfigModalAtom,
+  setWorkflowDefinitionAtom,
+  toggleWorkflowInspectorAtom,
+  workflowAtom,
+  workflowDefinitionAtom,
+  workflowFlowNodesAtom,
+} from "@/modules/ee/workflows/state/editor";
+import { Button } from "@/modules/ui/components/button";
+import { AddButtonEdge } from "./add-button-edge";
+import { CanvasControls } from "./canvas-controls";
+import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
+import { WorkflowCanvasNode } from "./workflow-canvas-node";
+import "./workflow-canvas.css";
+import { WorkflowValidationStatus } from "./workflow-validation-status";
+
+const NODE_TYPES: NodeTypes = {
+  [WORKFLOW_CANVAS_NODE_TYPE]: WorkflowCanvasNode,
+};
+
+const EDGE_TYPES: EdgeTypes = {
+  addButton: AddButtonEdge,
+};
+
+// The canvas is the page's main action — let fitView scale small flows past the former 0.85 cap,
+// which rendered a fresh two-node workflow noticeably small. 2x proved too big; 1.15 is three
+// zoom-out steps down from it (RF's zoomIn/zoomOut step is 1.2x, and 2 / 1.2^3 ≈ 1.157).
+const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
+
+// The inspector column animates its width over 150ms (see workflow-inspector-panel.tsx); refit
+// only after the canvas has its final size, with a small buffer.
+const INSPECTOR_RESIZE_SETTLE_MS = 170;
+// Near-instant pan: the refit should feel like part of the sidebar toggle, not a second animation.
+const INSPECTOR_REFIT_PAN_MS = INSPECTOR_RESIZE_SETTLE_MS / 4;
+
+interface WorkflowCanvasProps {
+  isEditable: boolean;
+}
+
+const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) => {
+  const { t } = useTranslation();
+  const workflow = useAtomValue(workflowAtom);
+  const definition = useAtomValue(workflowDefinitionAtom);
+  const flowNodes = useAtomValue(workflowFlowNodesAtom);
+  const isSnapToCanvasEnabled = useAtomValue(isWorkflowSnapToCanvasEnabledAtom);
+  const isLocked = useAtomValue(isCanvasLockedAtom);
+  const setLocked = useSetAtom(isCanvasLockedAtom);
+  const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
+  const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
+  const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
+  const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
+  const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
+  const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
+  const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
+  const addTrigger = useSetAtom(addWorkflowTriggerAtom);
+  const { fitView } = useReactFlow();
+  // `isEditable` (canEditDefinition) is the API-side gate. The drag/pointer mode toggle is the
+  // user-driven gate layered on top: even when permissions allow editing, the canvas stays
+  // non-mutable until the user switches to pointer mode.
+  const canMutate = isEditable && !isLocked;
+  // Shared by the picker overlay and the validation chip: while the centered add-trigger picker
+  // is the canvas's main event, the chip would only restate it ("1 problem: no trigger"), so the
+  // two are mutually exclusive by construction.
+  const isTriggerPickerVisible = Boolean(definition && !definition.trigger && isEditable);
+
+  // Shared flag owned by the builder page (server context OR workspace survey-list membership),
+  // so a just-picked survey clears the node's setup flag immediately.
+  const hasBoundSurvey = useAtomValue(hasBoundTriggerSurveyAtom);
+  // Unloaded state defaults to draft so a fresh page never flashes red before the workflow lands.
+  const isDraft = workflow ? workflow.status === "draft" : true;
+
+  const derivedFlowNodes = useMemo(
+    () => (definition ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey, isDraft }) : []),
+    [definition, t, hasBoundSurvey, isDraft]
+  );
+  const flowEdges = useMemo(
+    () => (definition ? workflowDefinitionToFlowEdges(definition) : []),
+    [definition]
+  );
+
+  // Keep ReactFlow's nodes in sync with the projected definition while preserving the user's
+  // current selection — recomputing from scratch would lose it on every definition edit.
+  useEffect(() => {
+    setFlowNodes((currentNodes) => {
+      const currentNodesById = new Map(currentNodes.map((node) => [node.id, node]));
+
+      return derivedFlowNodes.map((node) => ({
+        ...node,
+        selected: currentNodesById.get(node.id)?.selected ?? node.selected,
+      }));
+    });
+  }, [derivedFlowNodes, setFlowNodes]);
+
+  const handleNodesChange: OnNodesChange<Node<TWorkflowNodeData>> = useCallback(
+    (changes) => setFlowNodes((currentNodes) => applyNodeChanges(changes, currentNodes)),
+    [setFlowNodes]
+  );
+
+  const handleNodeDragStop = useCallback(
+    (node: Node<TWorkflowNodeData>) => {
+      if (!canMutate) return;
+
+      const position = isSnapToCanvasEnabled ? snapWorkflowNodePosition(node.position) : node.position;
+      setDefinition((currentDefinition) =>
+        currentDefinition ? updateNodePosition(currentDefinition, node.id, position) : currentDefinition
+      );
+    },
+    [canMutate, isSnapToCanvasEnabled, setDefinition]
+  );
+
+  // Opening/closing the inspector resizes the canvas by 360px, which can push nodes behind the
+  // panel edge. Refit the VIEWPORT once the width transition settles — fitView only pans/zooms;
+  // node coordinates are untouched.
+  const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
+  const previousInspectorVisibleRef = useRef(isInspectorVisible);
+  useEffect(() => {
+    if (previousInspectorVisibleRef.current === isInspectorVisible) return;
+    previousInspectorVisibleRef.current = isInspectorVisible;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timeoutHandle = setTimeout(() => {
+      void fitView({
+        padding: 0.25,
+        maxZoom: WORKFLOW_CANVAS_MAX_ZOOM,
+        minZoom: 0.4,
+        duration: prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS,
+      });
+    }, INSPECTOR_RESIZE_SETTLE_MS / 2);
+    return () => clearTimeout(timeoutHandle);
+  }, [isInspectorVisible, fitView]);
+
+  const handleAutoLayout = useCallback(() => {
+    if (!canMutate) return;
+    setDefinition((currentDefinition) =>
+      currentDefinition ? reorganizeWorkflowDefinition(currentDefinition) : currentDefinition
+    );
+    // Skip the animated recenter for users who ask for reduced motion (read at call time —
+    // no reactivity needed for a click handler).
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Defer one frame so the new node positions render before RF recenters the viewport.
+    requestAnimationFrame(() =>
+      fitView({
+        padding: 0.25,
+        maxZoom: WORKFLOW_CANVAS_MAX_ZOOM,
+        minZoom: 0.4,
+        duration: prefersReducedMotion ? 0 : 300,
+      })
+    );
+  }, [canMutate, setDefinition, fitView]);
+
+  // Pan mode is the pan/browse tool: nodes are fully inert (no click, selection, or drag), so
+  // switching into it also clears any leftover selection. Pointer mode is the select/inspect
+  // tool and is available to everyone — mutations stay gated by status/permissions (canMutate).
+  const handlePanMode = () => {
+    setLocked(true);
+    setFlowNodes((currentNodes) =>
+      currentNodes.map((node) => (node.selected ? { ...node, selected: false } : node))
+    );
+  };
+
+  const handlePointerMode = () => setLocked(false);
+
+  return (
+    <div
+      className={cn(
+        // Height comes from the editor row (see workflow-builder-page); `min-h-0` lets this shrink
+        // to it instead of being sized by ReactFlow's content. `overflow-hidden` is the canvas's own
+        // scroll policy: it pans and zooms, so clipping is correct here.
+        "relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
+      )}>
+      {/* The inspector only ever shows a node's config now, so the collapse toggle is only
+          offered while one is open. */}
+      {isNodeConfigOpen ? (
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-white"
+            aria-label={
+              isInspectorCollapsed
+                ? t("workspace.workflows.expand_inspector")
+                : t("workspace.workflows.collapse_inspector")
+            }
+            aria-pressed={!isInspectorCollapsed}
+            onClick={toggleInspector}>
+            {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
+          </Button>
+        </div>
+      ) : null}
+      <ReactFlow
+        nodes={flowNodes}
+        edges={flowEdges}
+        nodeTypes={NODE_TYPES}
+        edgeTypes={EDGE_TYPES}
+        onNodesChange={handleNodesChange}
+        onNodeDragStop={(_event, node) => handleNodeDragStop(node)}
+        onNodeClick={(_event, node) => {
+          if (!isLocked) openNodeConfigModal(node.id);
+        }}
+        // Clicking empty canvas deselects (ReactFlow) and dismisses the node inspector — with
+        // Settings gone this is the natural way out of a node's config view.
+        onPaneClick={() => closeNodeConfig()}
+        // Mode-dependent cursor + hit-testing rules live in workflow-canvas.css, keyed off
+        // these classes (Tailwind can't express `.react-flow__node` — underscores in arbitrary
+        // selectors turn into spaces).
+        className={cn("workflow-canvas bg-slate-50", isLocked && "pan-mode")}
+        fitView
+        fitViewOptions={{ padding: 0.25, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4 }}
+        defaultViewport={{ x: 0, y: 0, zoom: WORKFLOW_CANVAS_MAX_ZOOM }}
+        nodesDraggable={canMutate}
+        nodesConnectable={false}
+        snapGrid={WORKFLOW_CANVAS_SNAP_GRID}
+        snapToGrid={isSnapToCanvasEnabled}
+        proOptions={{ hideAttribution: true }}
+        elementsSelectable={!isLocked}
+        nodesFocusable={!isLocked}>
+        {/* Same dot grid the pre-ReactFlow mockup used: radial-gradient(#cbd5e1 1px) on an 18px grid. */}
+        <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} color="#cbd5e1" />
+      </ReactFlow>
+      {/* Empty drafts start with no nodes: the centered picker is how the trigger gets added.
+          Gated on status-based editability (not the layout lock) — adding nodes is a content
+          edit, same as the node config forms. */}
+      {isTriggerPickerVisible && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <div className="pointer-events-auto">
+            <WorkflowAddTriggerPicker onSelect={addTrigger} />
+          </div>
+        </div>
+      )}
+      <CanvasControls
+        canMutate={canMutate}
+        isPanMode={isLocked}
+        onAutoLayout={handleAutoLayout}
+        onPanMode={handlePanMode}
+        onPointerMode={handlePointerMode}
+      />
+      {/* Always-on live validation state (replaces the former manual "Validate" dry-run button):
+          a passive badge while valid, a button listing the problems while not. Suppressed while
+          the add-trigger picker is up so a fresh draft isn't greeted with a problem count. */}
+      {!isTriggerPickerVisible && <WorkflowValidationStatus />}
+    </div>
+  );
+};
+
+export const WorkflowCanvas = (props: Readonly<WorkflowCanvasProps>) => (
+  <ReactFlowProvider>
+    <WorkflowCanvasContent {...props} />
+  </ReactFlowProvider>
+);

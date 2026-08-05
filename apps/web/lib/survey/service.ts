@@ -4,7 +4,12 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
@@ -334,6 +339,16 @@ export const updateSurveyInternal = async (
     // referenced language belongs to this survey's workspace so a caller cannot attach another
     // tenant's language. Mirrors the create path guard (covers drafts too — runs before validation).
     await assertSurveyLanguagesBelongToWorkspace(currentSurvey.workspaceId, languages);
+
+    // ENG-1939: validation may only be skipped while the survey is still a draft. Gate on the
+    // PERSISTED status, not the payload's — the lenient draft schema (ZSurveyDraft) does not validate
+    // elements at all, so without this a caller could push structurally invalid blocks onto a live
+    // survey (crashing downstream consumers that trust the schema) and silently revert it to draft,
+    // stopping it from collecting responses. Deliberately placed after the ENG-1749 tenant guards so
+    // a cross-workspace attempt still reports the authorization failure first.
+    if (skipValidation && currentSurvey.status !== "draft") {
+      throw new OperationNotAllowedError("Only draft surveys can be updated without validation");
+    }
 
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);

@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
+import { getWorkspaces } from "@/lib/workspace/service";
 import {
   cleanupStripeCustomer,
   ensureCloudStripeSetupForOrganization,
@@ -11,6 +12,7 @@ import {
 import {
   createOrganization,
   deleteOrganization,
+  getMonthlyOrganizationWorkflowRunCount,
   getOrganization,
   getOrganizationsByUserId,
   select as organizationSelect,
@@ -34,11 +36,18 @@ vi.mock("@formbricks/database", () => ({
     user: {
       findUnique: vi.fn(),
     },
+    workflowRun: {
+      aggregate: vi.fn(),
+    },
   },
 }));
 
 vi.mock("@/lib/user/service", () => ({
   updateUser: vi.fn(),
+}));
+
+vi.mock("@/lib/workspace/service", () => ({
+  getWorkspaces: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
@@ -201,6 +210,7 @@ describe("Organization Service", () => {
                 workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
                 monthly: {
                   responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+                  workflowRuns: null,
                 },
               },
               stripeCustomerId: null,
@@ -407,6 +417,61 @@ describe("Organization Service", () => {
       expect(deleteHubTenantData).toHaveBeenCalledTimes(2);
       expect(deleteHubTenantData).toHaveBeenCalledWith("frd_1");
       expect(deleteHubTenantData).toHaveBeenCalledWith("frd_2");
+    });
+  });
+
+  describe("getMonthlyOrganizationWorkflowRunCount", () => {
+    const mockOrganization = {
+      id: "org_1",
+      name: "Test Org",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      billing: {
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 5, monthly: { responses: 5000, workflowRuns: 1000 } },
+        usageCycleAnchor: null,
+        stripe: null,
+      },
+      isAISmartToolsEnabled: false,
+      whitelabel: null,
+    };
+
+    test("counts non-dry workflow runs across the organization's workspaces in the billing cycle", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
+      vi.mocked(getWorkspaces).mockResolvedValue([{ id: "ws_1" }, { id: "ws_2" }] as never);
+      vi.mocked(prisma.workflowRun.aggregate).mockResolvedValue({ _count: { id: 42 } } as never);
+
+      const result = await getMonthlyOrganizationWorkflowRunCount("cms634kob000001uzrelh0qeb");
+
+      expect(result).toBe(42);
+      const aggregateArgs = vi.mocked(prisma.workflowRun.aggregate).mock.calls[0][0];
+      expect(aggregateArgs.where?.AND).toEqual(
+        expect.arrayContaining([
+          { workspaceId: { in: ["ws_1", "ws_2"] } },
+          { isDryRun: false },
+          expect.objectContaining({ createdAt: expect.any(Object) }),
+        ])
+      );
+    });
+
+    test("throws ResourceNotFoundError when the organization does not exist", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
+
+      await expect(getMonthlyOrganizationWorkflowRunCount("cmmissingorg00000000000a")).rejects.toThrow(
+        ResourceNotFoundError
+      );
+    });
+
+    test("wraps a known Prisma error in DatabaseError", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
+      vi.mocked(getWorkspaces).mockResolvedValue([{ id: "ws_1" }] as never);
+      vi.mocked(prisma.workflowRun.aggregate).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("db down", { code: "P2002", clientVersion: "1.0.0" })
+      );
+
+      await expect(getMonthlyOrganizationWorkflowRunCount("cms634kob000001uzrelh0qeb")).rejects.toThrow(
+        DatabaseError
+      );
     });
   });
 });

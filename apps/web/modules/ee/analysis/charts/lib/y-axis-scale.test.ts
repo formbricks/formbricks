@@ -58,6 +58,17 @@ describe("computeYAxis", () => {
       const data = [{ [RATING_AVG]: 3.2, [CSAT_AVG]: null }];
       expect(computeYAxis(data, [RATING_AVG, CSAT_AVG], true)?.domain).toEqual([0, 5]);
     });
+
+    // Regression for ENG-2226: ungrouped measure charts pivot every measure onto a synthetic
+    // "value" key that resolves no candidates, so pinning must key off the real measure id. The
+    // renderer therefore derives the axis from the original measure columns, not the pivoted key.
+    test("pinning keys off the real measure id, not a synthetic pivot key", () => {
+      const PIVOTED_VALUE_KEY = "value";
+      // Same 1-5 rating average of 3.3: keyed by the measure id it pins to 5; keyed by the
+      // synthetic pivot key it can't look up candidates and falls back to a data-driven 4.
+      expect(computeYAxis([{ [RATING_AVG]: 3.3 }], [RATING_AVG], true)?.domain).toEqual([0, 5]);
+      expect(computeYAxis([{ [PIVOTED_VALUE_KEY]: 3.3 }], [PIVOTED_VALUE_KEY], true)?.domain).toEqual([0, 4]);
+    });
   });
 
   describe("falls back to data-driven nice scaling", () => {

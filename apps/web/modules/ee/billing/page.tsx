@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { env } from "@/lib/env";
-import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
+import {
+  getMonthlyOrganizationResponseCount,
+  getMonthlyOrganizationWorkflowRunCount,
+} from "@/lib/organization/service";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -32,9 +35,10 @@ export const PricingPage = async (props: { params: Promise<{ organizationId: str
     billing: cloudBillingDisplayContext.billing,
   };
 
-  const [responseCount, workspaceCount, planComparisonFlag] = await Promise.all([
+  const [responseCount, workspaceCount, workflowRunCount, planComparisonFlag] = await Promise.all([
     getMonthlyOrganizationResponseCount(organization.id),
     getOrganizationWorkspacesCount(organization.id),
+    getMonthlyOrganizationWorkflowRunCount(organization.id),
     getPostHogFeatureFlag(session.user.id, "a-b_billing_plan-comparison-table"),
   ]);
 
@@ -48,6 +52,7 @@ export const PricingPage = async (props: { params: Promise<{ organizationId: str
         organization={organizationWithSyncedBilling}
         responseCount={responseCount}
         workspaceCount={workspaceCount}
+        workflowRunCount={workflowRunCount}
         isPlanComparison={planComparisonFlag === "test"}
         hasBillingRights={hasBillingRights}
         currentCloudPlan={cloudBillingDisplayContext.currentCloudPlan}

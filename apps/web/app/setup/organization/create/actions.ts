@@ -7,7 +7,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -56,7 +56,10 @@ export const createOrganizationAction = authenticatedActionClient
       ctx.auditLoggingCtx.organizationId = newOrganization.id;
       ctx.auditLoggingCtx.newObject = newOrganization;
 
-      groupIdentifyPostHog("organization", newOrganization.id, { name: newOrganization.name });
+      groupIdentifyPostHog("organization", newOrganization.id, {
+        name: newOrganization.name,
+        email_domain: getEmailDomain(ctx.user.email),
+      });
       groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
 
       capturePostHogEvent(

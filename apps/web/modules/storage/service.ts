@@ -15,6 +15,21 @@ import { sanitizeFileName } from "./utils";
 
 const SAFE_FILE_PATH_SEGMENT = /^[A-Za-z0-9_-]+$/;
 
+/**
+ * Rejects relative path segments in a caller-supplied storage file name.
+ *
+ * Download/delete keys are built as `${id}/${accessType}/${fileName}`, and `fileName` arrives from the
+ * `[...filePath]` route param, so `..` segments let a caller step out of their own
+ * `workspaceId/accessType/` prefix and name another tenant's object — including a `private/` one via
+ * the unauthenticated `public/` route. Object stores treat keys opaquely and SigV4 signs the
+ * unnormalized path, so this does not resolve on a stock S3/MinIO backend; but whether one tenant can
+ * name another's file must not depend on how the storage backend or any proxy in front of it happens
+ * to treat dot segments. `fileName` legitimately contains `/` (upload nests it under
+ * `filePathSegments`), so only the segments themselves are constrained.
+ */
+const hasTraversalSegment = (fileName: string): boolean =>
+  fileName.split("/").some((segment) => segment === "." || segment === "..");
+
 export const getSignedUrlForUpload = async (
   fileName: string,
   workspaceId: string,
@@ -89,6 +104,13 @@ export const getFileStreamForDownload = async (
 ): Promise<Result<FileStreamResult, StorageError>> => {
   try {
     const fileNameDecoded = decodeURIComponent(fileName);
+
+    // Checked after the decode: the route param is already URL-decoded once, so a `%252e%252e`
+    // traversal only becomes `..` here.
+    if (hasTraversalSegment(fileName) || hasTraversalSegment(fileNameDecoded)) {
+      return err({ code: StorageErrorCode.InvalidInput });
+    }
+
     const primaryKey = `${primaryId}/${accessType}/${fileNameDecoded}`;
 
     const streamResult = await getFileStream(primaryKey);
@@ -116,6 +138,12 @@ export const deleteFile = async (
   fileName: string,
   fallbackId?: string
 ) => {
+  // Same reasoning as the download path: a `..` segment would let an authorized caller delete objects
+  // outside the workspace prefix they were authorized against.
+  if (hasTraversalSegment(fileName)) {
+    return err({ code: StorageErrorCode.InvalidInput });
+  }
+
   const result = await deleteFileFromS3(`${primaryId}/${accessType}/${fileName}`);
 
   if (!result.ok && result.error.code === StorageErrorCode.FileNotFoundError && fallbackId) {

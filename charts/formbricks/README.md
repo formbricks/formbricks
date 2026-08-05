@@ -69,6 +69,11 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
 ## Hub worker and self-hosted embeddings
 
 The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is insert-only for River jobs; webhook dispatch and embedding jobs are processed by `hub-worker`.
+When `hub.worker.waitForApi.enabled` is enabled (the default), the worker waits for Hub API health
+before it starts. Each health request and the delay between failed checks are bounded to five
+seconds; `hub.worker.waitForApi.maxAttempts` limits the failed checks before the init container
+exits. Setting `hub.worker.waitForApi.enabled=false` omits the health gate, so the worker starts
+without waiting for Hub API health.
 
 When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
 If the Job has already been cleaned up, Hub only continues after all expected Prisma and data migration success markers are present in the database.
@@ -254,6 +259,38 @@ taxonomy:
 The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
 
+### Hub and Taxonomy metrics and structured logs
+
+Hub and the taxonomy service can export OpenTelemetry metrics over OTLP/HTTP. Configure the standard `OTEL_*`
+environment variables through the existing `hub.env` and `taxonomy.env` maps; no chart-specific collector values
+are required. The example below uses a SigNoz collector in the `signoz` namespace and labels both services as
+`production`. Replace the collector DNS name and `deployment.environment` with values matching each cluster and
+environment:
+
+```yaml
+hub:
+  env:
+    LOG_FORMAT: json
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+    OTEL_SERVICE_NAME: formbricks-hub
+    OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
+
+taxonomy:
+  env:
+    LOG_FORMAT: json
+    OTEL_METRICS_EXPORTER: otlp
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+    OTEL_SERVICE_NAME: formbricks-taxonomy
+    OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
+```
+
+Metrics use only bounded lifecycle, phase, provider, outcome, and reason attributes. Run, request, tenant, source,
+and field identifiers are emitted only in correlated JSON logs. Prompt text, feedback, model output, embeddings,
+credentials, authorization tokens, provider response bodies, and collector URLs are never telemetry fields.
+
 ## Values
 
 | Key                                                                | Type   | Default                                                                     | Description                                               |
@@ -405,7 +442,7 @@ JSON that can call Vertex AI.
 | hub.worker.resources.requests.cpu                                  | string | `"100m"`                                                                    |                                                           |
 | hub.worker.resources.requests.memory                               | string | `"256Mi"`                                                                   |                                                           |
 | hub.worker.waitForApi.enabled                                      | bool   | `true`                                                                      |                                                           |
-| hub.worker.waitForApi.maxAttempts                                  | int    | `120`                                                                       | 120 attempts at 5s intervals = 10 minutes.                |
+| hub.worker.waitForApi.maxAttempts                                  | int    | `120`                                                                       | Health requests and retry delays are bounded to 5s each.  |
 | ingress.annotations                                                | object | `{}`                                                                        |                                                           |
 | ingress.enabled                                                    | bool   | `false`                                                                     |                                                           |
 | ingress.hosts[0].host                                              | string | `"k8s.formbricks.com"`                                                      |                                                           |

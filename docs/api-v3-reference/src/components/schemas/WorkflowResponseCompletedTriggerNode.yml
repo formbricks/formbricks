@@ -1,0 +1,47 @@
+type: object
+required:
+  - id
+  - type
+  - triggerType
+  - config
+properties:
+  id:
+    type: string
+    minLength: 1
+  type:
+    type: string
+    enum:
+      - trigger
+  triggerType:
+    type: string
+    enum:
+      - response.completed
+  label:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Optional display label shown in the builder.
+  config:
+    type: object
+    required:
+      - surveyId
+    properties:
+      surveyId:
+        type: string
+        format: cuid2
+        description: >-
+          Survey whose completed responses trigger the workflow. Must exist in
+          the workspace.
+      endingCardIds:
+        type: array
+        items:
+          type: string
+          format: cuid2
+        default: []
+        description: >-
+          Ending card ids that should trigger the workflow. Empty or omitted
+          means every ending matches.
+    additionalProperties: false
+  ui:
+    $ref: ./WorkflowNodeUi.yml
+additionalProperties: false

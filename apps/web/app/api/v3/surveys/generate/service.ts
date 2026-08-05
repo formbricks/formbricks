@@ -33,6 +33,11 @@ export type TV3SurveyGenerateResult = {
 
 const V3_SURVEY_GENERATION_TIMEOUT_MS = 45_000;
 
+// Gemini 2.5 Flash spends a large share of the output budget on reasoning tokens before emitting
+// the survey JSON; 8192 leaves headroom for both so long prompts don't stop with finishReason
+// "length" (the previous 3000 budget did).
+const V3_SURVEY_GENERATION_MAX_OUTPUT_TOKENS = 8192;
+
 export class V3SurveyGeneratePromptError extends Error {
   invalidParams: InvalidParam[];
 
@@ -393,7 +398,7 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
       V3_SURVEY_GENERATE_ALLOWED_LOCALES
     ),
     temperature: 0.2,
-    maxOutputTokens: 3000,
+    maxOutputTokens: V3_SURVEY_GENERATION_MAX_OUTPUT_TOKENS,
     timeout: V3_SURVEY_GENERATION_TIMEOUT_MS,
   });
 

@@ -54,4 +54,48 @@ describe("getUniqueConstraintFields", () => {
   test("filters out non-string entries defensively", () => {
     expect(getUniqueConstraintFields(legacyP2002(["email", null as unknown as string]))).toEqual(["email"]);
   });
+
+  // The adapter regex-scrapes the Postgres DETAIL, which quotes every identifier that isn't
+  // all-lowercase. Before this was handled, `includes("singleUseId")` never matched `'"singleUseId"'`
+  // and duplicate single-use responses fell through to a 500 instead of a 409 (ENG-2174).
+  describe("quoted identifiers (Postgres quote_identifier)", () => {
+    test("unquotes a fully quoted composite key", () => {
+      expect(getUniqueConstraintFields(adapterP2002(['"surveyId"', '"singleUseId"']))).toEqual([
+        "surveyId",
+        "singleUseId",
+      ]);
+    });
+
+    test("unquotes a single quoted column", () => {
+      expect(getUniqueConstraintFields(adapterP2002(['"displayId"']))).toEqual(["displayId"]);
+    });
+
+    test("handles a mixed list, leaving the bare lowercase column untouched", () => {
+      // ActionClass_name_workspaceId_key — callers that read fields[0] must be unaffected.
+      const fields = getUniqueConstraintFields(adapterP2002(["name", '"workspaceId"']));
+      expect(fields).toEqual(["name", "workspaceId"]);
+      expect(fields[0]).toBe("name");
+    });
+
+    test("leaves @map()ed snake_case columns unchanged (Postgres never quotes them)", () => {
+      expect(getUniqueConstraintFields(adapterP2002(["token_hash"]))).toEqual(["token_hash"]);
+    });
+
+    test("normalises the legacy shape too, so both shapes stay interchangeable", () => {
+      expect(getUniqueConstraintFields(legacyP2002(['"email"']))).toEqual(["email"]);
+      expect(getUniqueConstraintFields(legacyP2002(["email"]))).toEqual(["email"]);
+    });
+
+    test("only strips a matched outer pair", () => {
+      // A lone quote is not a pair; an inner quote is part of the identifier.
+      expect(getUniqueConstraintFields(adapterP2002(['"']))).toEqual(['"']);
+      expect(getUniqueConstraintFields(adapterP2002(['""']))).toEqual([""]);
+      expect(getUniqueConstraintFields(adapterP2002(['"a"b"']))).toEqual(['a"b']);
+    });
+
+    test("is idempotent — an already-bare name survives a second pass", () => {
+      const once = getUniqueConstraintFields(adapterP2002(['"surveyId"']));
+      expect(getUniqueConstraintFields(adapterP2002(once))).toEqual(once);
+    });
+  });
 });
