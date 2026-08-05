@@ -2,6 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { isAuthzedEnabled } from "./config";
 import { AuthzedError, type TAuthzedErrorCode, mapAuthzedError } from "./errors";
+import { recordAuthzedProjection } from "./metrics";
 
 export const AUTHZED_MAX_RECONCILIATION_PASSES = 3;
 
@@ -45,6 +46,9 @@ export const runBestEffortProjection = async (
   projection: () => Promise<number>
 ): Promise<TAuthzedProjectionResult> => {
   if (!isAuthzedEnabled()) {
+    // Recorded rather than skipped: a deployment that believes AuthZed is on while it is off looks
+    // identical to a healthy one from every other signal.
+    recordAuthzedProjection({ durationMs: 0, operation, projection: projectionName, status: "disabled" });
     return { status: "disabled" };
   }
 
@@ -65,6 +69,7 @@ export const runBestEffortProjection = async (
       },
       "AuthZed relationship projection completed"
     );
+    recordAuthzedProjection({ durationMs, operation, projection: projectionName, status: "projected" });
 
     return { passes, status: "projected" };
   } catch (error) {
@@ -86,9 +91,11 @@ export const runBestEffortProjection = async (
         operation,
         projection: projectionName,
         retryable: result.retryable,
+        status: result.status,
       },
       "AuthZed relationship projection failed"
     );
+    recordAuthzedProjection({ durationMs, operation, projection: projectionName, status: "failed" });
 
     return result;
   }

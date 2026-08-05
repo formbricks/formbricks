@@ -14,6 +14,7 @@ import {
   getTeamDetails,
   updateTeamDetails,
 } from "@/modules/ee/teams/team-list/lib/team";
+import { hasWorkspaceAccessChanges } from "@/modules/ee/teams/team-list/lib/workspace-access";
 import { ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 
 const ZCreateTeamAction = z.object({
@@ -98,6 +99,20 @@ export const updateTeamDetailsAction = authenticatedActionClient.inputSchema(ZUp
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.teamId = parsedInput.teamId;
     const oldObject = await getTeamDetails(parsedInput.teamId);
+
+    // A team admin may be a plain org `member`, and this input carries the team's full workspace grant
+    // list — so without this gate they could grant their own team `manage` on every workspace in the
+    // organization. Changing workspace access stays owner/manager-only, matching what the UI offers.
+    if (hasWorkspaceAccessChanges(oldObject?.workspaces ?? [], parsedInput.data.workspaces)) {
+      // `roles: ["owner", "manager"]` in the original gate is exactly `organization#manage` in the
+      // schema, which is how this file expresses the same requirement elsewhere. Translated rather
+      // than left calling the helper this module no longer imports.
+      await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+        type: "organization",
+        id: organizationId,
+      });
+    }
+
     const result = await updateTeamDetails(parsedInput.teamId, parsedInput.data);
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = await getTeamDetails(parsedInput.teamId);

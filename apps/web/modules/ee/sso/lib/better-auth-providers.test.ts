@@ -168,6 +168,9 @@ describe("better-auth SSO providers", () => {
         "https://login.microsoftonline.com/tenant-123/v2.0/.well-known/openid-configuration"
       );
       expect(azure.scopes).toEqual(["openid", "email", "profile"]);
+      // ENG-1800: Entra never returns the RFC 9207 response `iss`, so validation must stay off even
+      // with a fixed tenant — turning it on here is exactly what caused `error=issuer_missing`.
+      expect(azure.requireIssuerValidation).toBe(false);
     });
 
     test("Azure discovery URL falls back to the 'common' tenant when none is configured", async () => {
@@ -176,6 +179,7 @@ describe("better-auth SSO providers", () => {
       expect(azure?.discoveryUrl).toBe(
         "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration"
       );
+      expect(azure?.requireIssuerValidation).toBe(false);
     });
 
     test("Azure mapProfileToUser resolves the display name through its fallback chain", async () => {

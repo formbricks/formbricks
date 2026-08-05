@@ -260,7 +260,6 @@ const InlineRename = ({
 
   return (
     <div className="flex flex-1 items-center gap-1 py-1">
-      {/* eslint-disable-next-line jsx-a11y/no-autofocus -- focus the field the user just opened */}
       <Input
         autoFocus
         value={value}

@@ -269,7 +269,7 @@ export function FeedbackSourcesSection({
         isReadOnly={isReadOnly}
       />
       {directories.length > 0 && (
-        <Alert size="small" className="mt-4">
+        <Alert size="small" className="mt-4" role="status">
           <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
           {!isReadOnly && workspace?.organizationId && (
             <AlertButton asChild>

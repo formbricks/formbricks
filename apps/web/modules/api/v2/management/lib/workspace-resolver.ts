@@ -31,6 +31,13 @@ export const resolveBodyIdsV2 = async (
       });
     }
 
+    // ENG-1749 defense-in-depth: even if the API key somehow carries a permission row for this
+    // workspace, refuse it unless the workspace belongs to the key's own organization. This is a
+    // second, independent tenant boundary behind the create-time check in createApiKey.
+    if (workspace.organizationId !== authentication.organizationId) {
+      return err({ type: "forbidden" });
+    }
+
     if (!(await hasApiKeyWorkspaceAccess(authentication, workspace.id, method))) {
       return err({ type: "forbidden" });
     }

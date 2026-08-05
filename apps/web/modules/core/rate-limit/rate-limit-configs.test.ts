@@ -64,7 +64,14 @@ describe("rateLimitConfigs", () => {
 
     test("should have all auth configurations", () => {
       const authConfigs = Object.keys(rateLimitConfigs.auth);
-      expect(authConfigs).toEqual(["login", "signup", "forgotPassword", "verifyEmail"]);
+      expect(authConfigs).toEqual(["login", "signup", "forgotPassword", "verifyEmail", "emailToken"]);
+      // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
+      // reveals whether an address is registered, so a loosened quota is a security regression.
+      expect(rateLimitConfigs.auth.emailToken).toEqual({
+        interval: 3600,
+        allowedPerInterval: 10,
+        namespace: "auth:email-token",
+      });
     });
 
     test("should have all API configurations", () => {
@@ -90,10 +97,20 @@ describe("rateLimitConfigs", () => {
         "isSurveyResponsePresent",
         "validateSurveyPin",
         "licenseRecheck",
+        "unsplash",
         "inviteMember",
         "bulkInviteMembers",
         "generateExampleResponses",
       ]);
+
+      // Exact values, not just presence: this quota is the only thing bounding one account from
+      // exhausting the instance-wide UNSPLASH_ACCESS_KEY, so a loosened interval, allowance or
+      // namespace is a security regression and should fail here rather than in production.
+      expect(rateLimitConfigs.actions.unsplash).toEqual({
+        interval: 60,
+        allowedPerInterval: 30,
+        namespace: "action:unsplash",
+      });
     });
 
     test("should have all storage configurations", () => {
@@ -164,6 +181,7 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.clientEnvironment, identifier: "environment-id" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
         { config: rateLimitConfigs.actions.accountDeletion, identifier: "user-account-delete" },
+        { config: rateLimitConfigs.actions.unsplash, identifier: "user-unsplash" },
         { config: rateLimitConfigs.storage.upload, identifier: "storage-upload" },
         { config: rateLimitConfigs.storage.uploadPerWorkspace, identifier: "storage-upload-workspace" },
         { config: rateLimitConfigs.storage.delete, identifier: "storage-delete" },

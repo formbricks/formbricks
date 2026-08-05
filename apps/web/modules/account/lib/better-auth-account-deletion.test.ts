@@ -125,10 +125,12 @@ describe("accountDeletionAfterDelete", () => {
 
     expect(logger.error).toHaveBeenCalledWith(
       {
-        code: "authzed_internal",
         component: "authzed",
+        errorCode: "authzed_internal",
         errorName: "Error",
         operation: "account_delete_organization_cleanup",
+        retryable: false,
+        status: "failed",
       },
       "Unexpected AuthZed projection failure after source commit"
     );

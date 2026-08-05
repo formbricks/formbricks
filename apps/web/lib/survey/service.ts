@@ -4,7 +4,12 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
@@ -12,6 +17,7 @@ import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -55,6 +61,7 @@ export const selectSurvey = {
   autoComplete: true,
   publishOn: true,
   closeOn: true,
+  archivedAt: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
@@ -232,6 +239,8 @@ export const getSurveys = reactCache(
       const surveysPrisma = await prisma.survey.findMany({
         where: {
           workspaceId,
+          // Archived surveys are hidden by default across the app.
+          archivedAt: null,
         },
         select: selectSurvey,
         orderBy: {
@@ -255,6 +264,11 @@ export const getSurveys = reactCache(
 export const getSurveyCount = reactCache(async (workspaceId: string): Promise<number> => {
   validateInputs([workspaceId, ZId]);
   try {
+    // Deliberately archive-inclusive. The sole consumer is the onboarding gate
+    // (redirect-if-onboarding-complete.ts): a workspace whose only survey is archived has already
+    // finished onboarding, so it must count > 0. Excluding archived here bounces such a user back
+    // into the "create your first survey" flow on every login — a full-screen page with no route to
+    // the Archived filter — while their archived survey counts down to permanent deletion.
     const surveyCount = await prisma.survey.count({
       where: {
         workspaceId,
@@ -284,14 +298,57 @@ export const updateSurveyInternal = async (
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    const actionClasses = await getActionClasses(updatedSurvey.workspaceId);
     const currentSurvey = await getSurvey(surveyId);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
+    // Archived surveys are read-only. This covers every write path that flows through here
+    // (editor save, the summary status dropdown's server action, etc.) — not just the v3 API.
+    // Archive/restore themselves bypass this guard: they write archivedAt directly, not via update.
+    if (currentSurvey.archivedAt) {
+      throw new InvalidInputError("This survey is archived. Restore it before editing.");
+    }
+
+    // ENG-1749: workspaceId and id are the survey's tenant anchors. Always resolve the workspace from
+    // the existing survey (never the client payload), and strip workspaceId/id from the update below,
+    // so an authorized editor cannot re-point their own survey into another workspace/organization.
+    const actionClasses = await getActionClasses(currentSurvey.workspaceId);
+
+    const {
+      triggers,
+      segment,
+      questions,
+      languages,
+      type,
+      followUps,
+      workspaceId: _workspaceId,
+      id: _id,
+      // archivedAt is owned exclusively by the archive/restore flows; never let a survey update touch it.
+      archivedAt: _archivedAt,
+      ...surveyData
+    } = updatedSurvey;
+
+    // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
+    // segment belongs to this survey's workspace so a caller cannot mutate or delete another
+    // tenant's segment by supplying its id. Mirrors the create path guard.
+    await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
+
+    // ENG-1749 sibling: the languages block below links languages by language.id. Ensure every
+    // referenced language belongs to this survey's workspace so a caller cannot attach another
+    // tenant's language. Mirrors the create path guard (covers drafts too — runs before validation).
+    await assertSurveyLanguagesBelongToWorkspace(currentSurvey.workspaceId, languages);
+
+    // ENG-1939: validation may only be skipped while the survey is still a draft. Gate on the
+    // PERSISTED status, not the payload's — the lenient draft schema (ZSurveyDraft) does not validate
+    // elements at all, so without this a caller could push structurally invalid blocks onto a live
+    // survey (crashing downstream consumers that trust the schema) and silently revert it to draft,
+    // stopping it from collecting responses. Deliberately placed after the ENG-1749 tenant guards so
+    // a cross-workspace attempt still reports the authorization failure first.
+    if (skipValidation && currentSurvey.status !== "draft") {
+      throw new OperationNotAllowedError("Only draft surveys can be updated without validation");
+    }
 
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
@@ -373,21 +430,33 @@ export const updateSurveyInternal = async (
           throw new InvalidInputError("Invalid user segment filters");
         }
 
-        try {
-          // update the segment:
-          let updatedInput: Prisma.SegmentUpdateInput = {
-            ...segment,
-            surveys: undefined,
-          };
-
-          if (segment.surveys) {
-            updatedInput = {
-              ...segment,
-              surveys: {
-                connect: segment.surveys.map((surveyId) => ({ id: surveyId })),
-              },
-            };
+        // ENG-1749/ENG-1920: the connected survey ids are client-supplied; ensure each belongs to
+        // this survey's workspace before re-pointing it to the segment (a foreign id would hijack
+        // another tenant's survey targeting). Done outside the try below, which masks errors as a
+        // generic Error and would otherwise hide this rejection.
+        if (segment.surveys && segment.surveys.length > 0) {
+          const workspaceBySurveyId = await getSurveyWorkspaceIdMap(segment.surveys);
+          if (
+            !segment.surveys.every(
+              (surveyId) => workspaceBySurveyId.get(surveyId) === currentSurvey.workspaceId
+            )
+          ) {
+            throw new InvalidInputError("Survey and segment are not in the same workspace");
           }
+        }
+
+        try {
+          // Update only the segment's own mutable fields — never mass-assign workspaceId/id/
+          // timestamps from the client-supplied segment object (ENG-1749).
+          const updatedInput: Prisma.SegmentUpdateInput = {
+            title: segment.title,
+            description: segment.description,
+            isPrivate: segment.isPrivate,
+            filters: segment.filters,
+            ...(segment.surveys
+              ? { surveys: { connect: segment.surveys.map((surveyId) => ({ id: surveyId })) } }
+              : {}),
+          };
 
           await prisma.segment.update({
             where: { id: segment.id },
@@ -436,7 +505,7 @@ export const updateSurveyInternal = async (
       }
     } else if (type === "app") {
       if (!currentSurvey.segment) {
-        const workspaceId = updatedSurvey.workspaceId;
+        const workspaceId = currentSurvey.workspaceId;
         await prisma.survey.update({
           where: {
             id: surveyId,
@@ -630,20 +699,35 @@ const validateSurveyCreateDataMedia = (
   return data;
 };
 
-const assertSurveyLanguagesBelongToWorkspace = (
+const assertSurveyLanguagesBelongToWorkspace = async (
   workspaceId: string,
-  languages: TSurveyCreateInput["languages"]
-): void => {
-  for (const surveyLanguage of languages ?? []) {
-    if (surveyLanguage.language.workspaceId !== workspaceId) {
-      throw new ResourceNotFoundError("Language", surveyLanguage.language.id);
+  languages: Array<{ language: { id: string } }> | null | undefined
+): Promise<void> => {
+  const languageIds = [...new Set((languages ?? []).map((surveyLanguage) => surveyLanguage.language.id))];
+  if (languageIds.length === 0) {
+    return;
+  }
+
+  // ENG-1749: resolve each language's real owning workspace from the DB rather than trusting the
+  // caller-supplied language.workspaceId — the survey payload is client-controlled, so an attacker
+  // could otherwise claim a foreign language belongs to this workspace. A single batched query
+  // avoids a per-language fan-out; an unknown id is absent from the map and thus rejected.
+  const dbLanguages = await prisma.language.findMany({
+    where: { id: { in: languageIds } },
+    select: { id: true, workspaceId: true },
+  });
+  const workspaceByLanguageId = new Map(dbLanguages.map((language) => [language.id, language.workspaceId]));
+
+  for (const languageId of languageIds) {
+    if (workspaceByLanguageId.get(languageId) !== workspaceId) {
+      throw new ResourceNotFoundError("Language", languageId);
     }
   }
 };
 
 const assertSurveySegmentBelongsToWorkspace = async (
   workspaceId: string,
-  segment: TSurveyCreateInput["segment"]
+  segment: { id?: string | null } | null | undefined
 ): Promise<void> => {
   if (!segment?.id) {
     return;
@@ -671,7 +755,7 @@ export const createSurvey = async (
 
   try {
     const { createdBy, languages, segment, followUps, styling, ...restSurveyBody } = parsedSurveyBody;
-    assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
+    await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment);
 
     // An app survey can never be shown without a trigger, so block creating one directly in a

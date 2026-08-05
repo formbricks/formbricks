@@ -377,6 +377,7 @@ export const EditFeedbackSourceModal = ({
                   mappings={mappings}
                   onMappingsChange={setMappings}
                   feedbackSourceType={feedbackSource.type}
+                  disabled={isReadOnly}
                 />
               </fieldset>
             </>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "preact/hooks";
+import { useCallback, useEffect, useRef } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
@@ -46,6 +46,17 @@ export function EndingCard({
   isOfflineWithPending = false,
 }: Readonly<EndingCardProps>) {
   const { t } = useTranslation();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // When the ending card has no button, nothing receives focus on arrival and
+  // screen readers are left announcing the surrounding dialog. Focus the card
+  // container instead so the thank-you message is read in place.
+  const hasButton = endingCard.type === "endScreen" && Boolean(endingCard.buttonLabel);
+  useEffect(() => {
+    if (isCurrent && autoFocusEnabled && isResponseSendingFinished && !hasButton) {
+      containerRef.current?.focus();
+    }
+  }, [isCurrent, autoFocusEnabled, isResponseSendingFinished, hasButton]);
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
       <ElementMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
@@ -134,7 +145,7 @@ export function EndingCard({
 
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
-      <div className="text-center">
+      <div ref={containerRef} tabIndex={-1} className="text-center outline-none">
         {isResponseSendingFinished ? (
           <>
             {endingCard.type === "endScreen" && (

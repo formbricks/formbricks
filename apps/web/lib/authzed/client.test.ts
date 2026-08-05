@@ -1,7 +1,8 @@
 import { configMocks, envMock, retryMocks, sdkMocks } from "./__mocks__/client-dependencies";
+import { v1 } from "@authzed/authzed-node";
 import { status } from "@grpc/grpc-js";
 import { beforeEach, describe, expect, test } from "vitest";
-import { closeAuthzedClient, getAuthzedClient } from "./client";
+import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 describe("AuthZed client facade", () => {
@@ -12,6 +13,7 @@ describe("AuthZed client facade", () => {
     sdkMocks.deleteRelationships.mockReset();
     sdkMocks.diffSchema.mockReset();
     sdkMocks.newClient.mockReset();
+    sdkMocks.readRelationships.mockReset();
     sdkMocks.readSchema.mockReset();
     sdkMocks.writeRelationships.mockReset();
     sdkMocks.writeSchema.mockReset();
@@ -27,6 +29,7 @@ describe("AuthZed client facade", () => {
       promises: {
         deleteRelationships: sdkMocks.deleteRelationships,
         diffSchema: sdkMocks.diffSchema,
+        readRelationships: sdkMocks.readRelationships,
         readSchema: sdkMocks.readSchema,
         writeRelationships: sdkMocks.writeRelationships,
         writeSchema: sdkMocks.writeSchema,
@@ -101,6 +104,7 @@ describe("AuthZed client facade", () => {
       "consistency",
       "deleteRelationships",
       "diffSchema",
+      "readRelationships",
       "readSchema",
       "systemKey",
       "writeRelationships",
@@ -109,6 +113,42 @@ describe("AuthZed client facade", () => {
     expect(first).not.toHaveProperty("token");
     expect(first).not.toHaveProperty("promises");
     expect(first).not.toHaveProperty("close");
+  });
+
+  test("gives a bulk-configured process the long deadline on every call it makes", () => {
+    // The deadline belongs to the channel, and every projector reaches the channel through
+    // `getAuthzedClient()` rather than being handed one — so a command that both sweeps and writes gets
+    // the bulk deadline on its writes too. That is the intent: the alternative is a sweep that dies on
+    // its first slow page.
+    configureAuthzedClientForBulkWork();
+
+    getAuthzedClient();
+
+    expect(sdkMocks.deadlineInterceptor).toHaveBeenCalledWith(30_000);
+    expect(sdkMocks.newClient).toHaveBeenCalledWith(
+      envMock.AUTHZED_TOKEN,
+      envMock.AUTHZED_ENDPOINT,
+      2,
+      undefined,
+      { interceptors: [{ timeoutMs: 30_000 }] }
+    );
+  });
+
+  test("refuses to widen the deadline once a client exists, rather than silently leaving it short", () => {
+    getAuthzedClient();
+
+    expect(() => configureAuthzedClientForBulkWork()).toThrow(AuthzedError);
+    expect(() => configureAuthzedClientForBulkWork()).toThrow(AUTHZED_ERROR_CODES.FAILED_PRECONDITION);
+  });
+
+  test("forgets the bulk deadline on close, so it cannot leak into a later client", () => {
+    configureAuthzedClientForBulkWork();
+    getAuthzedClient();
+
+    closeAuthzedClient();
+    getAuthzedClient();
+
+    expect(sdkMocks.deadlineInterceptor).toHaveBeenLastCalledWith(1_000);
   });
 
   test("closes, resets, and reconstructs the internal client", () => {
@@ -276,7 +316,10 @@ describe("AuthZed client facade", () => {
   });
 
   test("translates a resource-scoped bulk delete through the resilience pipeline", async () => {
-    sdkMocks.deleteRelationships.mockResolvedValue({ deletedAt: { token: "private-revision" } });
+    sdkMocks.deleteRelationships.mockResolvedValue({
+      deletedAt: { token: "private-revision" },
+      deletionProgress: v1.DeleteRelationshipsResponse_DeletionProgress.COMPLETE,
+    });
 
     await expect(
       getAuthzedClient().deleteRelationships({
@@ -300,8 +343,25 @@ describe("AuthZed client facade", () => {
     expect(retryMocks.execute).toHaveBeenCalledWith("delete_relationships", expect.any(Function));
   });
 
+  test("refuses to report a partial deletion as a success", async () => {
+    // The one facade call that destroys access. An unlimited, non-partial delete should always come
+    // back COMPLETE, so PARTIAL means a server-side cap or a changed default is quietly leaving
+    // relationships behind — and reporting that as done would leave a half-revoked graph.
+    sdkMocks.deleteRelationships.mockResolvedValue({
+      deletedAt: { token: "private-revision" },
+      deletionProgress: v1.DeleteRelationshipsResponse_DeletionProgress.PARTIAL,
+    });
+
+    await expect(
+      getAuthzedClient().deleteRelationships({ resourceId: "org-1", resourceType: "organization" })
+    ).rejects.toMatchObject({ code: AUTHZED_ERROR_CODES.INTERNAL, retryable: true });
+  });
+
   test("translates a subject-scoped bulk delete without broadening the resource filter", async () => {
-    sdkMocks.deleteRelationships.mockResolvedValue({ deletedAt: { token: "private-revision" } });
+    sdkMocks.deleteRelationships.mockResolvedValue({
+      deletedAt: { token: "private-revision" },
+      deletionProgress: v1.DeleteRelationshipsResponse_DeletionProgress.COMPLETE,
+    });
 
     await expect(
       getAuthzedClient().deleteRelationships({
@@ -325,6 +385,246 @@ describe("AuthZed client facade", () => {
         },
         resourceType: "organization",
       },
+    });
+  });
+
+  describe("readRelationships", () => {
+    const readResponse = (
+      relationship: Record<string, unknown>,
+      overrides: Record<string, unknown> = {}
+    ) => ({
+      afterResultCursor: { token: "private-cursor" },
+      readAt: { token: "private-revision" },
+      relationship,
+      ...overrides,
+    });
+
+    const membershipRelationship = {
+      relation: "owner",
+      resource: { objectId: "org-1", objectType: "organization" },
+      subject: { object: { objectId: "user-1", objectType: "user" }, optionalRelation: "" },
+    };
+
+    test("resolves the first page fully consistently and returns a pinnable revision", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([readResponse(membershipRelationship)]);
+
+      await expect(
+        getAuthzedClient().readRelationships({
+          filter: { resourceType: "organization" },
+          limit: 250,
+        })
+      ).resolves.toEqual({
+        // A short page exhausts the filter, so no cursor is offered even though SpiceDB sent one.
+        cursor: null,
+        relationships: [
+          {
+            relation: "owner",
+            resource: { objectId: "org-1", objectType: "organization" },
+            subject: { objectId: "user-1", objectType: "user" },
+          },
+        ],
+        snapshot: { token: "private-revision" },
+      });
+
+      expect(sdkMocks.readRelationships).toHaveBeenCalledWith({
+        consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+        optionalCursor: undefined,
+        optionalLimit: 250,
+        relationshipFilter: {
+          optionalRelation: "",
+          optionalResourceId: "",
+          optionalResourceIdPrefix: "",
+          optionalSubjectFilter: undefined,
+          resourceType: "organization",
+        },
+      });
+      expect(retryMocks.execute).toHaveBeenCalledWith("read_relationships", expect.any(Function));
+    });
+
+    test("continues a cursored read without altering any other argument", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([
+        readResponse(membershipRelationship, { readAt: { token: "revision-1" } }),
+      ]);
+
+      const page = await getAuthzedClient().readRelationships({
+        cursor: { token: "resume-here" },
+        filter: { resourceType: "organization" },
+        limit: 250,
+      });
+
+      // SpiceDB rejects a cursor presented with any other changed argument, and the cursor already
+      // carries the revision it was issued at — so the consistency requirement must stay put rather
+      // than being swapped for an explicit snapshot on later pages.
+      expect(page.snapshot).toEqual({ token: "revision-1" });
+      expect(sdkMocks.readRelationships).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+          optionalCursor: { token: "resume-here" },
+        })
+      );
+    });
+
+    test("offers a resume cursor only when the page is full", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([
+        readResponse(membershipRelationship),
+        readResponse(membershipRelationship),
+      ]);
+
+      await expect(
+        getAuthzedClient().readRelationships({
+          filter: { resourceType: "organization" },
+          limit: 2,
+        })
+      ).resolves.toMatchObject({ cursor: { token: "private-cursor" } });
+    });
+
+    test("returns an exhausted empty page without a revision", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([]);
+
+      await expect(
+        getAuthzedClient().readRelationships({
+          filter: { resourceType: "organization" },
+          limit: 250,
+        })
+      ).resolves.toEqual({ cursor: null, relationships: [], snapshot: null });
+    });
+
+    test("preserves a subject relation so team-member grants round-trip", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([
+        readResponse({
+          relation: "reader_team",
+          resource: { objectId: "ws-1", objectType: "workspace" },
+          subject: { object: { objectId: "team-1", objectType: "team" }, optionalRelation: "member" },
+        }),
+      ]);
+
+      const page = await getAuthzedClient().readRelationships({
+        filter: { resourceType: "workspace", subject: { objectId: "team-1", objectType: "team" } },
+        limit: 250,
+      });
+
+      expect(page.relationships[0].subject).toEqual({
+        objectId: "team-1",
+        objectType: "team",
+        relation: "member",
+      });
+    });
+
+    test("narrows the SDK filter for every supported field", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([]);
+
+      await getAuthzedClient().readRelationships({
+        filter: {
+          relation: "reader_team",
+          resourceId: "ws-1",
+          resourceType: "workspace",
+          subject: { objectId: "team-1", objectType: "team", relation: "member" },
+        },
+        limit: 10,
+      });
+
+      expect(sdkMocks.readRelationships).toHaveBeenCalledWith(
+        expect.objectContaining({
+          relationshipFilter: {
+            optionalRelation: "reader_team",
+            optionalResourceId: "ws-1",
+            optionalResourceIdPrefix: "",
+            optionalSubjectFilter: {
+              optionalRelation: { relation: "member" },
+              optionalSubjectId: "team-1",
+              subjectType: "team",
+            },
+            resourceType: "workspace",
+          },
+        })
+      );
+    });
+
+    test.each([
+      ["a missing resource type", { filter: { resourceType: "" }, limit: 10 }],
+      // SpiceDB reads `optionalLimit: 0` as unlimited, which would breach the channel deadline and
+      // buffer without bound, so an unset or non-positive limit must never reach the wire.
+      ["an unlimited read", { filter: { resourceType: "organization" }, limit: 0 }],
+      ["a negative limit", { filter: { resourceType: "organization" }, limit: -1 }],
+      ["a fractional limit", { filter: { resourceType: "organization" }, limit: 1.5 }],
+      ["a limit above the page bound", { filter: { resourceType: "organization" }, limit: 251 }],
+      ["a blank relation", { filter: { relation: "", resourceType: "organization" }, limit: 10 }],
+      ["a blank resource id", { filter: { resourceId: "", resourceType: "organization" }, limit: 10 }],
+      [
+        "an incomplete subject filter",
+        {
+          filter: { resourceType: "workspace", subject: { objectId: "", objectType: "team" } },
+          limit: 10,
+        },
+      ],
+      ["a blank cursor", { cursor: { token: "" }, filter: { resourceType: "organization" }, limit: 10 }],
+    ])("rejects %s before reaching the SDK", async (_label, query) => {
+      await expect(getAuthzedClient().readRelationships(query)).rejects.toThrow(
+        AUTHZED_ERROR_CODES.INVALID_REQUEST
+      );
+      expect(sdkMocks.readRelationships).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["relationship", {}],
+      ["resource", { relation: "owner", subject: membershipRelationship.subject }],
+      ["subject object", { relation: "owner", resource: membershipRelationship.resource, subject: {} }],
+    ])(
+      "refuses a response missing its %s rather than reporting a malformed relationship",
+      async (_label, relationship) => {
+        sdkMocks.readRelationships.mockResolvedValue([readResponse(relationship)]);
+
+        await expect(
+          getAuthzedClient().readRelationships({
+            filter: { resourceType: "organization" },
+            limit: 250,
+          })
+        ).rejects.toThrow(AUTHZED_ERROR_CODES.INTERNAL);
+      }
+    );
+
+    test("refuses a non-empty page that carries no revision to pin", async () => {
+      sdkMocks.readRelationships.mockResolvedValue([
+        readResponse(membershipRelationship, { readAt: undefined }),
+      ]);
+
+      await expect(
+        getAuthzedClient().readRelationships({
+          filter: { resourceType: "organization" },
+          limit: 250,
+        })
+      ).rejects.toThrow(AUTHZED_ERROR_CODES.INTERNAL);
+    });
+
+    test.each(["optionalCaveat", "optionalExpiresAt"])(
+      "refuses a relationship qualified by %s that the facade cannot represent",
+      async (qualifier) => {
+        sdkMocks.readRelationships.mockResolvedValue([
+          readResponse({ ...membershipRelationship, [qualifier]: { anything: true } }),
+        ]);
+
+        await expect(
+          getAuthzedClient().readRelationships({
+            filter: { resourceType: "organization" },
+            limit: 250,
+          })
+        ).rejects.toThrow(AUTHZED_ERROR_CODES.UNSUPPORTED);
+      }
+    );
+
+    test("routes reads through the resilience pipeline so transient failures are mapped there", async () => {
+      // Error sanitization belongs to `executeAuthzedOperation` (covered in retry.test.ts); the
+      // facade's own contract is that it opts this operation into that pipeline rather than calling
+      // the SDK bare.
+      sdkMocks.readRelationships.mockRejectedValue(
+        Object.assign(new Error("private-endpoint-detail"), { code: status.UNAVAILABLE })
+      );
+
+      await expect(
+        getAuthzedClient().readRelationships({ filter: { resourceType: "organization" }, limit: 250 })
+      ).rejects.toThrow();
+
+      expect(retryMocks.execute).toHaveBeenCalledWith("read_relationships", expect.any(Function));
     });
   });
 });

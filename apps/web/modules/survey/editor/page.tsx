@@ -24,9 +24,13 @@ import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
+import {
+  getFinishedResponseCountBySurveyId,
+  getResponseCountBySurveyId,
+} from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
+import { SURVEY_SCHEDULING_CONFIG } from "@/modules/survey/scheduling/lib/constants";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { SurveyEditor } from "./components/survey-editor";
@@ -52,15 +56,23 @@ export const SurveyEditorPage = async (props: {
 
   const t = await getTranslate();
 
-  const [survey, workspaceWithTeamIds, actionClasses, contactAttributeKeys, responseCount, segments] =
-    await Promise.all([
-      getSurvey(params.surveyId),
-      getWorkspaceWithTeamIds(params.workspaceId),
-      getActionClasses(workspace.id),
-      getContactAttributeKeys(workspace.id),
-      getResponseCountBySurveyId(params.surveyId),
-      getSegments(workspace.id),
-    ]);
+  const [
+    survey,
+    workspaceWithTeamIds,
+    actionClasses,
+    contactAttributeKeys,
+    responseCount,
+    finishedResponseCount,
+    segments,
+  ] = await Promise.all([
+    getSurvey(params.surveyId),
+    getWorkspaceWithTeamIds(params.workspaceId),
+    getActionClasses(workspace.id),
+    getContactAttributeKeys(workspace.id),
+    getResponseCountBySurveyId(params.surveyId),
+    getFinishedResponseCountBySurveyId(params.surveyId),
+    getSegments(workspace.id),
+  ]);
 
   if (!workspaceWithTeamIds) {
     throw new ResourceNotFoundError(t("common.workspace"), null);
@@ -118,6 +130,7 @@ export const SurveyEditorPage = async (props: {
       actionClasses={actionClasses}
       contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}
+      finishedResponseCount={finishedResponseCount}
       membershipRole={currentUserMembership.role}
       workspacePermission={workspacePermission}
       colors={SURVEY_BG_COLORS}
@@ -128,6 +141,7 @@ export const SurveyEditorPage = async (props: {
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
       isCxMode={isCxMode}
+      surveySchedulingConfig={SURVEY_SCHEDULING_CONFIG}
       locale={locale ?? DEFAULT_LOCALE}
       mailFrom={MAIL_FROM ?? "hola@formbricks.com"}
       isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}

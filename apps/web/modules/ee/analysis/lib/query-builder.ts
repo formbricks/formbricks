@@ -26,6 +26,16 @@ export interface ChartBuilderState {
   timeDimension: TimeDimensionConfig | null;
   limit?: number;
   orderBy?: { field: string; direction: "asc" | "desc" };
+  /**
+   * When true and `FeedbackRecords.valueText` is in `selectedDimensions`, the emitted Cube
+   * query swaps that dimension to `FeedbackRecords.valueId` so Cube groups by the stable
+   * choice id instead of the submitted label. Set this when the chart is scoped to a
+   * single-select question (the caller that knows the question type must set it; the chart
+   * builder itself has no access to survey metadata). The server action also performs this
+   * rewrite automatically when it can detect the field type, so this flag is primarily
+   * useful for callers that want explicit control (e.g. tests, programmatic chart creation).
+   */
+  groupByOptionId?: boolean;
 }
 
 function buildMemberFilter(f: FilterRow): TMemberFilter {
@@ -41,6 +51,10 @@ function buildMemberFilter(f: FilterRow): TMemberFilter {
 
 /**
  * Build a Cube.js query from chart builder state.
+ *
+ * When `config.groupByOptionId` is true and `FeedbackRecords.valueText` is among the selected
+ * dimensions, it is replaced with `FeedbackRecords.valueId` in the emitted query so Cube groups
+ * by the stable choice id rather than the submitted label.
  */
 export function buildCubeQuery(config: ChartBuilderState): TChartQuery {
   const query: TChartQuery = {
@@ -48,7 +62,12 @@ export function buildCubeQuery(config: ChartBuilderState): TChartQuery {
   };
 
   if (config.selectedDimensions.length > 0) {
-    query.dimensions = config.selectedDimensions;
+    const dimensions = config.groupByOptionId
+      ? config.selectedDimensions.map((d) =>
+          d === "FeedbackRecords.valueText" ? "FeedbackRecords.valueId" : d
+        )
+      : config.selectedDimensions;
+    query.dimensions = dimensions;
   }
 
   if (config.timeDimension) {

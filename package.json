@@ -17,6 +17,7 @@
     "db:seed:clear": "turbo run db:seed -- -- --clear",
     "db:up": "pnpm dev:setup && docker compose -f docker-compose.dev.yml up -d",
     "db:down": "docker compose -f docker-compose.dev.yml down",
+    "authzed:backfill": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-backfill.ts",
     "authzed:health": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-health.ts",
     "authzed:schema": "dotenv -e .env -v NODE_OPTIONS=--conditions=react-server -v LOG_LEVEL=fatal -- tsx --tsconfig apps/web/tsconfig.json ./apps/web/scripts/authzed-schema.ts",
     "authzed:smoke": "bash docker/authzed-smoke.sh",
@@ -28,9 +29,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint && pnpm api:v3:lint",
-    "api:v3:bundle": "node docs/api-v3-reference/scripts/bundle.mjs",
-    "api:v3:lint": "node docs/api-v3-reference/scripts/bundle.mjs --lint",
-    "api:v3:check": "node docs/api-v3-reference/scripts/bundle.mjs --check",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --no-cache",
     "test:coverage": "turbo run test:coverage --no-cache",
@@ -45,45 +43,31 @@
     "scan-translations": "pnpm --filter @formbricks/i18n-utils scan-translations",
     "i18n": "pnpm generate-translations && pnpm scan-translations",
     "i18n:validate": "pnpm scan-translations",
+    "api:v3:bundle": "node docs/api-v3-reference/scripts/bundle.mjs",
+    "api:v3:lint": "node docs/api-v3-reference/scripts/bundle.mjs --lint",
+    "api:v3:check": "node docs/api-v3-reference/scripts/bundle.mjs --check",
     "dev:setup": "bash scripts/setup-dev-env.sh"
-  },
-  "dependencies": {
-    "react": "19.2.6",
-    "react-dom": "19.2.6"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.3",
     "@azure/playwright": "1.1.5",
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.58.2",
-    "@redocly/cli": "1.34.3",
+    "@redocly/cli": "1.34.17",
+    "@trivago/prettier-plugin-sort-imports": "6.0.2",
     "dotenv": "17.3.1",
-    "eslint": "8.57.1",
+    "eslint": "9.39.5",
     "husky": "9.1.7",
     "lint-staged": "16.4.0",
+    "prettier": "3.8.3",
+    "prettier-plugin-sort-json": "4.2.0",
+    "prettier-plugin-tailwindcss": "0.7.4",
     "rimraf": "6.1.3",
     "tsx": "4.21.0",
     "turbo": "2.9.14"
   },
-  "lint-staged": {
-    "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
-      "prettier --write"
-    ],
-    "*.json": [
-      "prettier --write"
-    ],
-    "packages/database/schema.prisma": [
-      "prisma format"
-    ]
-  },
   "engines": {
     "node": ">=20.19.0 <21 || >=22.12.0 <23 || >=24.0.0 <25"
   },
-  "packageManager": "pnpm@11.7.0",
-  "nextBundleAnalysis": {
-    "budget": 358400,
-    "budgetPercentIncreaseRed": 20,
-    "minimumChangeThreshold": 0,
-    "showDetails": true
-  }
+  "packageManager": "pnpm@11.7.0"
 }

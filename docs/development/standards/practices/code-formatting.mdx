@@ -26,6 +26,7 @@ module.exports = {
     "<THIRD_PARTY_MODULES>",
     "^@formbricks/(.*)$",
     "^~/(.*)$",
+    "^@/(.*)$",
     "^[./]",
   ],
   importOrderSeparation: false,
@@ -116,8 +117,7 @@ Using Husky and lint-staged for automated checks:
 {
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
-      "prettier --write",
-      "eslint --fix"
+      "prettier --write"
     ],
     "*.json": [
       "prettier --write"
@@ -129,11 +129,41 @@ Using Husky and lint-staged for automated checks:
 }
 ```
 
+The hook formats staged files only — ESLint is not part of it. Lint violations are caught by `pnpm lint` and the "Run Linters" CI job.
+
 ### ESLint Configuration
-Each package extends from `@formbricks/eslint-config` with specific presets:
-- `library.js` for packages
-- `next.js` for Next.js applications
-- `react.js` for React applications
+ESLint runs on the flat config format. Every package and app has its own `eslint.config.mjs` that imports one of the composable tiers exported by `@formbricks/eslint-config`:
+
+| Import | Use for |
+| --- | --- |
+| `@formbricks/eslint-config/library` | Node/TypeScript packages |
+| `@formbricks/eslint-config/react` | React packages (react, react-hooks, jsx-a11y) |
+| `@formbricks/eslint-config/react-hooks` | React packages that only need the hooks rules |
+| `@formbricks/eslint-config/next` | Next.js applications |
+
+Every tier builds on `@formbricks/eslint-config/base`, which holds the shared turbo, prettier, vitest and unused-vars conventions. It exports named building blocks rather than a ready-made config, so packages import one of the tiers above instead of `base` directly.
+
+Each tier is an array of flat config objects, so a package either re-exports it directly or spreads it and appends its own overrides:
+
+```javascript
+// packages/<pkg>/eslint.config.mjs
+import library from "@formbricks/eslint-config/library";
+
+export default library;
+```
+
+```javascript
+// apps/web/eslint.config.mjs
+import next from "@formbricks/eslint-config/next";
+
+export default [
+  { ignores: [".next/**", "public/**"] },
+  ...next,
+  { rules: { "react-hooks/exhaustive-deps": "warn" } },
+];
+```
+
+Use the extensionless subpaths above — they are the only ones the package exports.
 
 ### Continuous Integration
 - Automated formatting checks in CI/CD pipeline

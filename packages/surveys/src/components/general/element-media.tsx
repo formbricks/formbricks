@@ -1,23 +1,33 @@
 import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { isSafeMediaUrl } from "@formbricks/survey-ui";
 import { ExpandIcon } from "@/components/icons/expand-icon";
 import { ImageDownIcon } from "@/components/icons/image-down-icon";
 import { cn } from "@/lib/utils";
 import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
 
 //Function to add extra params to videoUrls in order to reduce video controls
-const getVideoUrlWithParams = (videoUrl: string): string => {
-  const isYoutubeVideo = checkForYoutubeUrl(videoUrl);
-  const isVimeoUrl = checkForVimeoUrl(videoUrl);
-  const isLoomUrl = checkForLoomUrl(videoUrl);
-  if (isYoutubeVideo) return videoUrl.concat("?controls=0");
-  else if (isVimeoUrl)
-    return videoUrl.concat(
+const getVideoUrlWithParams = (videoUrl: string): string | undefined => {
+  // Only the three supported platforms may reach the iframe, and only as the normalized embed URL that
+  // convertToEmbedUrl builds from a hardcoded origin plus an extracted id. Returning `videoUrl`
+  // unchanged for anything else put an arbitrary attacker-chosen URL into `<iframe src>` — a
+  // `javascript:`/`data:` payload, or a phishing page framed inside a survey on the customer's site.
+  const embedUrl = convertToEmbedUrl(videoUrl);
+  if (!embedUrl) return undefined;
+
+  if (checkForYoutubeUrl(videoUrl)) return embedUrl.concat("?controls=0");
+  if (checkForVimeoUrl(videoUrl))
+    return embedUrl.concat(
       "?title=false&transcript=false&speed=false&quality_selector=false&progress_bar=false&pip=false&fullscreen=false&cc=false&chromecast=false"
     );
-  else if (isLoomUrl) return videoUrl.concat("?hide_share=true&hideEmbedTopBar=true&hide_title=true");
-  return videoUrl;
+  if (checkForLoomUrl(videoUrl))
+    return embedUrl.concat("?hide_share=true&hideEmbedTopBar=true&hide_title=true");
+  return undefined;
 };
+
+/** Validated media URL, or `undefined` when it must not reach a `src`/`href`. */
+const asSafeMediaUrl = (url: string | undefined): string | undefined =>
+  url && isSafeMediaUrl(url) ? url : undefined;
 
 interface ElementMediaProps {
   imgUrl?: string;
@@ -28,7 +38,13 @@ interface ElementMediaProps {
 
 export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }: ElementMediaProps) {
   const { t } = useTranslation();
-  const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
+  // Every sink is validated, not just the href. `ZStorageUrl` now rejects unsafe schemes on write, but
+  // this component renders survey JSON straight from the API, and rows written before that validation
+  // can still carry a `javascript:`/`data:` URL. An unsafe value in `<iframe src>` executes; in
+  // `<img src>` it does not, but neither should reach the DOM from stored data.
+  const safeVideoUrl = asSafeMediaUrl(videoUrl ? getVideoUrlWithParams(videoUrl) : undefined);
+  const safeImgUrl = asSafeMediaUrl(imgUrl);
+  const safeHref = asSafeMediaUrl(imgUrl ?? convertToEmbedUrl(videoUrl ?? ""));
   const [isLoading, setIsLoading] = useState(true);
 
   return (
@@ -36,10 +52,10 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }:
       {isLoading ? (
         <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
       ) : null}
-      {imgUrl ? (
+      {safeImgUrl ? (
         <img
-          key={imgUrl}
-          src={imgUrl}
+          key={safeImgUrl}
+          src={safeImgUrl}
           alt={altText}
           className={cn("rounded-custom mx-auto max-h-[40dvh] object-contain", isLoading ? "opacity-0" : "")}
           onLoad={() => {
@@ -50,11 +66,11 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }:
           }}
         />
       ) : null}
-      {videoUrlWithParams ? (
+      {safeVideoUrl ? (
         <div className="relative">
           <div className="rounded-custom bg-black">
             <iframe
-              src={videoUrlWithParams}
+              src={safeVideoUrl}
               title={t("common.question_video")}
               frameBorder="0"
               className={cn("rounded-custom aspect-video w-full", isLoading ? "opacity-0" : "")}
@@ -71,7 +87,7 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }:
         </div>
       ) : null}
       <a
-        href={imgUrl ? imgUrl : convertToEmbedUrl(videoUrl ?? "")}
+        href={safeHref}
         target="_blank"
         rel="noreferrer"
         aria-label={t("common.open_in_new_tab")}

@@ -63,7 +63,6 @@ export const SentryProvider = ({
       });
     }
     // We only want to run this once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;

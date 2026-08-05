@@ -46,7 +46,11 @@ export const getUserWorkspaces = reactCache(
 
     let workspaceWhereClause: Prisma.WorkspaceWhereInput = {};
 
-    if (orgMembership.role === "member") {
+    // Only org owners/managers get every workspace. Every other role (member, billing, …) is scoped to
+    // the workspaces whose teams they belong to — mirroring the per-workspace v3 authorization
+    // (`requireV3WorkspaceAccess`: org owner/manager OR workspace-team membership). Special-casing only
+    // `member` here previously leaked all workspaces to `billing` members, who cannot access them.
+    if (orgMembership.role !== "owner" && orgMembership.role !== "manager") {
       workspaceWhereClause = {
         workspaceTeams: {
           some: {
@@ -126,6 +130,34 @@ export const getWorkspace = reactCache(async (workspaceId: string): Promise<TWor
   }
 });
 
+// Storage prefixes a workspace owns for pre-#8044 file URLs: its own id and, when present, the
+// environment id it was migrated from (old storage was keyed by environment id, mirrored by
+// `legacyEnvironmentId ?? workspaceId`). The management routes pass these to validateClientFileUploads
+// so a replayed legacy response validates without reopening cross-tenant deletion. See ENG-1981.
+export const getWorkspaceLegacyStoragePrefixes = reactCache(
+  async (workspaceId: string): Promise<string[]> => {
+    validateInputs([workspaceId, ZId]);
+
+    try {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { id: true, legacyEnvironmentId: true },
+      });
+
+      if (!workspace) return [];
+
+      return [workspace.id, workspace.legacyEnvironmentId].filter((prefix): prefix is string =>
+        Boolean(prefix)
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 export const getOrganizationWorkspacesCount = reactCache(async (organizationId: string): Promise<number> => {
   validateInputs([organizationId, ZId]);
 
@@ -171,7 +203,9 @@ export const getUserWorkspacesByOrganizationIds = reactCache(
           organizationId: membership.organizationId,
         };
 
-        if (membership.role === "member") {
+        // Same scoping as getUserWorkspaces: only owner/manager see all of an org's workspaces; every
+        // other role (member, billing, …) is limited to their team-scoped workspaces.
+        if (membership.role !== "owner" && membership.role !== "manager") {
           workspaceWhereClause = {
             ...workspaceWhereClause,
             workspaceTeams: {

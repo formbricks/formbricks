@@ -174,7 +174,7 @@ describe("createResponse", () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
       code: "P2002",
       clientVersion: "test",
-      meta: { target: ["surveyId", "singleUseId"] },
+      meta: { driverAdapterError: { cause: { constraint: { fields: ["surveyId", "singleUseId"] } } } },
     });
     vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
     await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(UniqueConstraintError);
@@ -184,7 +184,7 @@ describe("createResponse", () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
       code: "P2002",
       clientVersion: "test",
-      meta: { target: ["displayId"] },
+      meta: { driverAdapterError: { cause: { constraint: { fields: ["displayId"] } } } },
     });
     vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
     await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(InvalidInputError);

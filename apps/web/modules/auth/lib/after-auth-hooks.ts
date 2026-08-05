@@ -5,6 +5,7 @@ import {
   ssoRecoveryAfterHandler,
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { auditFailedAuthAfter } from "./better-auth-observability";
+import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
 
 /**
  * Composed Better Auth `hooks.after` chain. Ordering rationale: `auditFailedAuthAfter` runs before
@@ -19,5 +20,8 @@ import { auditFailedAuthAfter } from "./better-auth-observability";
 export const runAfterAuthHooks = async (ctx: AuthHookContext): Promise<void> => {
   await ssoRecoveryAfterHandler(ctx);
   await auditFailedAuthAfter(ctx);
+  // ENG-1824: heal legacy 2FA enrollments (no `TwoFactor` row) on successful password sign-in, before
+  // the 2FA challenge. Only touches `/sign-in/email`, so it's unaffected by the SSO-only redirect below.
+  await twoFactorBackfillAfterHandler(ctx);
   await blockedSignupDomainRedirectAfterHandler(ctx);
 };

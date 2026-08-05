@@ -73,12 +73,12 @@ export function CsvImportModal({
 
       const missingMappedColumns = getMissingCsvMappedSourceColumns(
         fieldMappings,
-        Object.keys(result.data[0] ?? {})
+        Object.keys(result.data[0])
       );
       if (missingMappedColumns.length > 0) {
         const missingRequiredSourceColumns = getMissingRequiredCsvSourceColumns(
           fieldMappings,
-          Object.keys(result.data[0] ?? {})
+          Object.keys(result.data[0])
         );
         const missingSourceColumns =
           missingRequiredSourceColumns.length > 0

@@ -78,7 +78,56 @@ export function useDropdownSearch<T extends { id: string; label: string }>({
     setLockedSide(undefined);
   };
 
+  const getMenuItems = (): HTMLElement[] => {
+    // Resolve the menu from the search input itself: contentRef is not reliably
+    // attached under preact/compat (ref-as-prop forwarding), but the input always
+    // lives inside the open menu content.
+    const menu = searchInputRef.current?.closest("[role='menu']") ?? contentRef.current;
+    return menu
+      ? [
+          ...menu.querySelectorAll<HTMLElement>(
+            "[role='menuitemradio']:not([data-disabled]),[role='menuitemcheckbox']:not([data-disabled]),[role='menuitem']:not([data-disabled])"
+          ),
+        ]
+      : [];
+  };
+
+  // Radix's menu keyboard handling ignores keydowns that originate from the
+  // search input, so arrow keys must move focus into the option list manually.
+  const focusMenuItem = (which: "first" | "last"): void => {
+    const items = getMenuItems();
+    if (items.length === 0) return;
+    const target = which === "first" ? items[0] : items[items.length - 1];
+    target.focus();
+  };
+
+  // While focus is on the options, typing edits the search query instead of
+  // triggering the Radix menu typeahead; ArrowUp on the first option returns
+  // to the search input. Space/Enter keep their native select behavior.
+  const handleContentKeyDown = (e: React.KeyboardEvent): void => {
+    if (!isSearchEnabled) return;
+    const target = e.target as HTMLElement;
+    if (target === searchInputRef.current) return;
+
+    const isPrintable = e.key.length === 1 && e.key !== " " && !e.ctrlKey && !e.metaKey && !e.altKey;
+    if (isPrintable || e.key === "Backspace") {
+      e.preventDefault();
+      e.stopPropagation();
+      setSearchQuery(isPrintable ? searchQuery + e.key : searchQuery.slice(0, -1));
+      searchInputRef.current?.focus();
+      return;
+    }
+
+    if (e.key === "ArrowUp" && target === getMenuItems()[0]) {
+      e.preventDefault();
+      e.stopPropagation();
+      searchInputRef.current?.focus();
+    }
+  };
+
   return {
+    focusMenuItem,
+    handleContentKeyDown,
     searchQuery,
     setSearchQuery,
     searchInputRef,
@@ -100,6 +149,8 @@ interface DropdownSearchInputProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   placeholder: string;
   dir?: string;
+  /** Moves focus into the option list (ArrowDown → first, ArrowUp → last) */
+  onNavigateToOptions: (which: "first" | "last") => void;
 }
 
 /**
@@ -111,6 +162,7 @@ export function DropdownSearchInput({
   searchInputRef,
   placeholder,
   dir,
+  onNavigateToOptions,
 }: Readonly<DropdownSearchInputProps>): React.JSX.Element {
   return (
     <div className="border-option-border border-b pb-0.5" role="search">
@@ -131,7 +183,11 @@ export function DropdownSearchInput({
                 e.stopPropagation();
                 setSearchQuery("");
               }
-            } else if (e.key !== "ArrowDown" && e.key !== "ArrowUp") {
+            } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault();
+              e.stopPropagation();
+              onNavigateToOptions(e.key === "ArrowDown" ? "first" : "last");
+            } else {
               e.stopPropagation();
             }
           }}

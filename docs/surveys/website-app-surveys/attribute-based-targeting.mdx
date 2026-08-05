@@ -1,0 +1,69 @@
+---
+title: "Attribute-based Targeting"
+description: "Attribute-based Targeting allows you to show surveys to a specific segment of your users. You can target surveys based on user attributes, device type, and more. This helps you get more relevant insights while keeping survey fatigue at a minimum. After the initial setup, you can target any segment without touching code."
+icon: "bullseye"
+---
+
+<Note>
+  Attribute-based Targeting is part of the [Enterprise Edition](/self-hosting/advanced/license). 
+</Note>
+
+### When to use Attribute-based Targeting?
+
+Attribute-based Targeting helps you achieve a number of goals:
+
+1. **Relevance**: Keep survey content relevant to respondents.
+
+2. **Cohort-analysis**: Survey specific user cohorts only.
+
+3. **Statistical Relevance:** When surveying a smaller subset of users, statistical relevance is reached with a lot less responses.
+
+## How does Attribute-based Targeting work?
+
+<Steps>
+  <Step title="Create Segment">
+    To get started, go to the Contacts tab and create a new Segment:
+
+    ![Create a new segment](/images/surveys/website-app-surveys/targeting/contacts.webp "Create a new segment")
+
+  </Step>
+
+  <Step title="Configure Segment based on attributes">
+    In the Segment editor, you can configure your Segment with a combination of Attributes, Segments, Devices, and Survey Interactions. If a user matches either or all of the criteria, they become part of the Segment. See [Segment Configuration](/surveys/website-app-surveys/attribute-based-targeting#segment-configuration) below.
+  </Step>
+
+  <Step title="Create a survey of type Website & App">
+    Create a new survey and go to Settings to change it to Website & App survey:
+
+    ![Create a new segment of type in-app](/images/surveys/website-app-surveys/targeting/survey-type.webp "Create a new segment")
+  </Step>
+
+  <Step title="Choose Segment in Targeting options">
+    ![Choose Segment in Targeting options](/images/surveys/website-app-surveys/targeting/target-audience.webp "Choose Segment in Targeting options")
+
+  </Step>
+
+  <Step title="Publish your survey" icon="party-horn" iconType="solid" />
+</Steps>
+
+### Segment Configuration
+
+There are four means to move Contacts in or out of Segments: **Attributes**, other **Segments**, **Devices**, and [**Survey Interactions**](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments):
+
+1. **Attributes**: If the value of a specific attribute matches, the user becomes part of the Segment.
+
+  ![Attribute filter](/images/surveys/website-app-surveys/targeting/attribute-filter.webp "Attribute filter")
+
+
+2. **Segments**: You can nest Segments meaning that if a user is or is not part of another Segment, they can be included or excluded
+
+   ![Segments filter](/images/surveys/website-app-surveys/targeting/segments-filter.webp "Segments filter")
+
+
+3. **Devices**: If a user uses a Phone or Desktop, you can include or exclude them
+
+   ![Devices filter](/images/surveys/website-app-surveys/targeting/device-filter.webp "Devices filter")
+
+4. **Survey Interactions**: Include or exclude Contacts based on whether they have seen, started, or completed a survey within a recent time window. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments) for details and use cases like per-survey cooldowns and follow-up funnels.
+
+5. **Filter Groups:** You can group any of the above conditions in group and connect them logically with `AND` or `OR`. This allows for maximum granularity.

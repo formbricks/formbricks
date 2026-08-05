@@ -1,5 +1,6 @@
 // mock these globally used functions
 import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
 import ResizeObserver from "resize-observer-polyfill";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ValidationError } from "@formbricks/types/errors";
@@ -161,6 +162,14 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // React Testing Library normally registers this itself, but it looks for a *global* `afterEach`
+  // (`typeof afterEach === 'function'`) and this project runs with vitest `globals: false` — so its
+  // auto-cleanup never installs. Without it, every render()/renderHook() stays mounted for the rest
+  // of the file: components from earlier tests keep firing timers, keep responding to window events,
+  // and keep calling shared module mocks, so a later test's assertions can count work it never did.
+  // Called here rather than as its own afterEach so the order against clearAllMocks is explicit:
+  // unmount first, while mock implementations are still in place for any cleanup effects.
+  cleanup();
   vi.clearAllMocks();
 });
 

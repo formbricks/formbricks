@@ -1,0 +1,100 @@
+get:
+  operationId: listWorkflowRunsV3
+  summary: List workflow runs
+  description: >
+    Returns workflow run summaries for a workspace, newest first (`createdAt`
+    descending). Use
+
+    `workflowId` to narrow the list to one workflow, or `responseId` to find the
+    runs a specific
+
+    survey response produced.
+
+
+    List items are summaries without `triggerPayload`, `data`, or `logs`; fetch
+
+    `GET /api/v3/workflows/runs/{runId}` for the full debug-oriented payload.
+    This keeps
+
+    response-level data out of list reads by default.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/LimitQuery.yml
+    - $ref: ../components/parameters/CursorQuery.yml
+    - in: query
+      name: workflowId
+      schema:
+        type: string
+        format: cuid2
+      description: Optional workflow scoping. Returns only runs of this workflow.
+    - in: query
+      name: responseId
+      schema:
+        type: string
+        format: cuid2
+      description: >-
+        Optional response scoping. Returns only runs triggered by this survey
+        response.
+    - in: query
+      name: filter[status][in]
+      schema:
+        type: array
+        items:
+          $ref: ../components/schemas/WorkflowRunStatus.yml
+      style: form
+      explode: true
+      description: >
+        Run lifecycle-state filter. Repeat the parameter or use comma-separated
+        values
+
+        (`filter[status][in]=failed,canceled`). Invalid values → **400**.
+    - in: query
+      name: filter[isDryRun][eq]
+      schema:
+        type: boolean
+      description: >
+        Filter for dry runs created by `POST
+        /api/v3/workflows/{workflowId}/test` (`true`) or
+
+        for real trigger-initiated runs only (`false`). Omit to return both.
+  responses:
+    '200':
+      description: Workflow runs retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/WorkflowRunListItem.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

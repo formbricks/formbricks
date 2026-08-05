@@ -25,13 +25,35 @@ export const ZUserNotificationSettings = z.object({
   unsubscribedOrganizationIds: z.array(z.string()).optional(),
 });
 
+// Characters allowed in a user's display name: letters, combining marks, space, and common name
+// punctuation — apostrophe, comma, period, ampersand, parentheses, digits, hyphen. `.` and `&` were
+// added for ENG-1743 so ordinary names ("J. Smith", "Smith & Co") validate instead of being rejected.
+// Declared once so the validator (ZUserName) and the normalizer (normalizeUserName) can never diverge:
+// every string normalizeUserName produces is guaranteed to satisfy ZUserName. `-` stays last so it is
+// a literal, not a range.
+const USER_NAME_ALLOWED_CHARS = "\\p{L}\\p{M} ',.&()\\d-";
+
 export const ZUserName = z
   .string()
   .trim()
   .min(1, {
     error: "Name should be at least 1 character long",
   })
-  .regex(/^[\p{L}\p{M} ',()\d-]+$/u, "Invalid name format");
+  .regex(new RegExp(`^[${USER_NAME_ALLOWED_CHARS}]+$`, "u"), "Invalid name format");
+
+/**
+ * Normalize an untrusted display name (e.g. an SSO identity-provider name) into a value that always
+ * satisfies {@link ZUserName}: characters outside the allowlist collapse to a single space, internal
+ * whitespace is collapsed, and the result is trimmed. External IdP names are untrusted input, so we
+ * sanitize them to fit the model rather than rejecting the sign-in (ENG-1743). Returns "" when nothing
+ * survives (e.g. a name of only emoji); callers should fall back to another source such as the email
+ * local-part.
+ */
+export const normalizeUserName = (name: string): string =>
+  name
+    .replace(new RegExp(`[^${USER_NAME_ALLOWED_CHARS}]+`, "gu"), " ")
+    .replace(/\s+/gu, " ")
+    .trim();
 
 export const ZUserEmail = z
   .email({

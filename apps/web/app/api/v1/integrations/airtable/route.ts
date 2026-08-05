@@ -2,7 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { createIntegrationOAuthState, generatePkcePair } from "@/lib/oauth/integration-state";
-import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
+import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
 
 const scope = `data.records:read data.records:write schema.bases:read schema.bases:write user.email:read`;
 
@@ -20,7 +20,10 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    const canUserAccessWorkspace = await canUserWriteWorkspaceIntegrations(
+      authentication.user.id,
+      workspaceId
+    );
     if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),

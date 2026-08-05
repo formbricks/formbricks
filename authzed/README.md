@@ -9,6 +9,9 @@ assertion-based validation suite.
   blocks that pin down the schema's semantics.
 - `validate.sh` — offline validation runner (local `zed` binary or the pinned
   `authzed/zed` container image; no SpiceDB server needed).
+- [`RUNBOOK.md`](./RUNBOOK.md) — diagnosing and recovering from relationship-sync
+  failures: the metrics, the log field contract, suggested alert rules, and the
+  recovery path through `pnpm authzed:backfill`.
 
 ## Running the validation
 
@@ -124,9 +127,10 @@ behavior: accepted and pending membership rows project identically. An
 Projection runs after the source transaction commits and is best-effort.
 AuthZed being disabled performs no projection work. An AuthZed outage never
 changes a successful PostgreSQL mutation into an application error; it produces
-only a sanitized operational result and warning. ENG-1718 must backfill and
-repair all source relationships before AuthZed shadow evaluation or enforcement
-can be enabled.
+only a sanitized operational result and warning. Existing records and any drift
+an outage leaves behind are reconciled by `pnpm authzed:backfill` (see
+[Backfill and repair](#backfill-and-repair)), which must report a clean run
+before AuthZed shadow evaluation or enforcement is enabled.
 
 The organization-membership projection boundary covers:
 
@@ -138,8 +142,8 @@ The organization-membership projection boundary covers:
   cascades.
 
 User deletion removes both organization-role and team-role relationships for
-the deleted user. API-key relationship projection remains owned by a later
-ticket.
+the deleted user. API-key projection is described separately below because API
+keys are independent authorization subjects rather than user-owned role edges.
 
 The application facade accepts only Formbricks-owned relationship types. It
 supports idempotent `touch`/`delete` batches of at most 1,000 updates and safely
@@ -192,9 +196,51 @@ Deletion cleanup is deliberately two-sided and idempotent:
 Projection covers UI and API team creation/update/deletion, workspace
 creation/deletion, API v2 workspace-team CRUD, invite/signup/SSO team
 assignment, organization-role promotions, membership removal, API v2 nested
-organization-user team changes, and user/organization cascades. Existing
-records are not backfilled here: ENG-1718 remains mandatory before AuthZed
-shadow evaluation or enforcement.
+organization-user team changes, and user/organization cascades. Existing records
+are not backfilled by these hooks; `pnpm authzed:backfill` covers them.
+
+## API-key scope projection
+
+PostgreSQL remains authoritative for API-key ownership and access. After API
+key creation commits, Formbricks reconciles:
+
+- `ApiKey.organizationId` to `api_key#organization@organization`;
+- `organizationAccess.accessControl.read` to
+  `organization#api_key_reader@api_key`;
+- `organizationAccess.accessControl.write` to
+  `organization#api_key_writer@api_key`;
+- `ApiKeyWorkspace.permission` (`read`, `write`, or `manage`) to exactly one
+  `workspace#reader`, `workspace#writer`, or `workspace#manager` relationship
+  whose subject is the API key.
+
+The organization-access flags are independent. Missing, malformed, or
+non-boolean JSON values are treated as `false`, matching the current evaluator.
+Each workspace scope touches its selected relation and deletes the other two,
+so repeating a write is idempotent and a lower permission removes any stale
+higher grant.
+
+API-key scopes are selected during creation and are not editable today. Label
+and `lastUsedAt` updates do not affect authorization and therefore do not
+project. There is no separate revoked state in the current data model: deleting
+an API key is revocation.
+
+Deletion cleanup removes every relationship on the API-key resource and every
+organization or workspace relationship where the API key is the subject.
+Organization deletion captures API-key IDs before PostgreSQL cascades and then
+performs the same idempotent cleanup. Workspace deletion is already covered by
+the workspace projector, which deletes every relationship on the missing
+workspace resource.
+
+The projector reads only IDs, organization access, and workspace permissions;
+it never reads or logs plaintext keys, hashes, lookup hashes, creator metadata,
+or usage timestamps. Reconciliation uses the same post-commit, best-effort,
+three-pass convergence and bounded batching contract as organization, team,
+and workspace projection.
+
+Existing API keys are not backfilled by mutation hooks; `pnpm authzed:backfill`
+covers them, including a scope revoked outside a hook, which the projector alone
+cannot see. Routing API-key principals through the central interface remains
+ENG-1731, and SpiceDB comparison/cutover remains ENG-1738.
 
 ## Resource parent resolution during the current-model migration
 
@@ -213,7 +259,8 @@ remain denials, matching the legacy evaluator.
 
 The `survey#workspace`, `dashboard#workspace`, and `response#survey` relations
 remain in the schema for later resource-level sharing. They must not be queried
-directly until a future projector and ENG-1718 backfill cover those edges.
+directly until a future projector and matching backfill scope cover those edges;
+the backfill classifies them as ignored today and never prunes them.
 Phase 2 direct resource grants must add that projection and repair scope before
 enforcement.
 
@@ -281,6 +328,138 @@ doc comments):
    their granted workspace at their granted level; organization-level
    `accessControl` rights grant access to organization access-control resources
    but no product data.
+
+## Backfill and repair
+
+Mutation hooks only project records that change while they are running. They do
+not cover records that predate them, and they cannot see a row deleted outside a
+hook — a projector derives its targets from PostgreSQL, so a relationship whose
+source row is already gone is never named and never removed. `pnpm
+authzed:backfill` closes both gaps.
+
+```bash
+# Report drift over every organization. Writes nothing.
+pnpm authzed:backfill
+
+# Converge one organization from PostgreSQL, or a single workspace's grants.
+pnpm authzed:backfill --apply --organization-id=<cuid>
+pnpm authzed:backfill --apply --workspace-id=<cuid>
+
+# Remove the relationships of a workspace whose row is gone. This is a prune —
+# every relationship on that workspace goes, team and API-key grants included —
+# so it takes the prune flags rather than --apply alone.
+pnpm authzed:backfill --apply --prune --confirm-prune --workspace-id=<cuid> \
+  --expected-endpoint=<host:port>
+
+# A stale grant whose *team or API key* is also gone is reported but not removed by
+# this scope: deleting it would delete that principal's relationships everywhere,
+# which is the organization or full sweep's unit of work, not one workspace's.
+
+# Converge everything, then remove relationships PostgreSQL no longer holds.
+pnpm authzed:backfill --apply --prune --confirm-prune --scope=all \
+  --expected-endpoint=<host:port>
+
+# Resume an interrupted run from the lastOrganizationId it reported.
+pnpm authzed:backfill --apply --after-organization-id=<cuid>
+```
+
+Exit codes match `authzed:schema`: `0` reconciled, `2` drift remains, `1` failed
+or misused. **`0` means every category is clear, including the ones this tool
+deliberately will not repair** — `invalid` and `unmanaged` count toward drift
+exactly like `orphaned` and `missing`, because unrepaired authorization state is
+still authorization state and this exit code is what gates shadow evaluation and
+enforcement. The result is one line of JSON carrying counters, the offending
+record identifiers, a revision captured *after* the run's own writes (so shadow
+evaluation can use it as an `at_least_as_fresh` floor — `null` for a dry run,
+which wrote nothing to be fresh relative to), and a `truncated` flag.
+
+That JSON is the whole diagnostic: like the other AuthZed commands, this one runs
+at `LOG_LEVEL=fatal` so stdout stays a single parseable line. Each entry in
+`failures` therefore carries `attempts` alongside the sanitized code, because
+"failed once" and "exhausted the retry budget" call for different reactions and
+the logs that would otherwise distinguish them are suppressed.
+
+Drift is reported in both directions:
+
+- `missing` — records PostgreSQL holds that SpiceDB has no relationship for. This
+  is what an empty or stale SpiceDB looks like, so a report that could not see it
+  would be worthless. Note this compares *records*, not relations: a membership
+  stored as `owner` in PostgreSQL but `member` in SpiceDB counts as present.
+  Applying converges the relation regardless, by writing the current value.
+- `orphaned` — relationships whose source record is gone.
+- `invalid` — source rows whose principal and resource belong to different
+  organizations. Never projected and never pruned, in either scope.
+- `unmanaged` — relationships outside the vocabulary. Reported, never touched.
+- `mismatchedParents` — a resource attached to an organization PostgreSQL says
+  does not own it. **Reported and never touched.** `organization` is a relation,
+  so an extra parent edge is additive and hands every owner and manager of the
+  named organization access to another tenant's resource; but removing it safely
+  means deleting a relation the resource legitimately needs one of, so it is left
+  for a human. Any non-zero count here is a privilege-escalation finding, not
+  routine drift.
+
+  **Only `--scope=all` can find one.** The escalation is an edge on *another*
+  tenant's resource that names the organization under investigation, and a
+  single-organization run reads only the resources PostgreSQL says that
+  organization owns — so the offending resource is never read. A
+  `--organization-id` run reporting `mismatchedParents: 0` therefore means "none
+  among this tenant's own resources", not "this tenant is not being targeted".
+
+A dry run over the whole deployment checks both directions per organization,
+which costs a read per resource. An applying run skips the `missing` check —
+its writes converge that direction anyway — and detects orphans with a single
+streamed pass per resource type.
+
+The organization is the unit of work, so a partial run leaves complete graphs for
+the organizations it finished rather than a fragment of every tenant's. Runs are
+idempotent — relationships are written with `TOUCH` — so re-running is always safe
+and is the intended response to a failed unit.
+
+**"No prune" does not mean "no deletes."** Converging a membership inherently
+deletes the roles it does not hold. What `--prune` adds is permission to reconcile
+records observed *only* in SpiceDB. Even then no delete is precomputed: an
+unsourced record becomes a reconciler *target*, and the reconciler re-reads
+PostgreSQL before deciding, so a row recreated in the meantime is written rather
+than deleted.
+
+Guards on the destructive path:
+
+- a dry run is the default, so a mistyped invocation is inert;
+- `--prune` additionally requires `--apply`, `--confirm-prune`, an explicit scope,
+  and `--expected-endpoint`;
+- `--expected-endpoint` must match `AUTHZED_ENDPOINT`. **`AUTHZED_SYSTEM_KEY` is
+  not usable for this** — it is a stable namespace and defaults to the same value
+  everywhere, so it cannot tell staging from production;
+- exceeding the per-run prune cap (default 500, lowerable via `--max-prune`, never
+  raisable) prunes *nothing* — not a capped subset. Every unit, the streamed sweep
+  included, counts its orphans to completion before deleting any of them, so the
+  cap aborts before the first delete rather than part-way through. A large orphan
+  count is a symptom — wrong endpoint, wrong database, a restore in progress — not
+  a big cleanup job;
+- `survey`, `dashboard`, and `response` relationships are classified ignored, and
+  anything outside the vocabulary is reported but never touched.
+
+Two limits worth knowing before relying on a run:
+
+- `--organization-id` and `--workspace-id` report
+  `orphanScope: "known_resources"`. SpiceDB relationship filters have no notion of
+  "belongs to organization X" and Formbricks object IDs carry no organization
+  prefix, so a resource whose row is already gone is unreachable from its
+  organization. Only the default whole-deployment run sweeps by resource type and
+  can claim completeness. (`--scope=all` is a confirmation token for pruning
+  everything, not what selects the sweep — the sweep is the default.)
+- The whole-deployment sweep assumes a SpiceDB dedicated to this deployment.
+  `AUTHZED_SYSTEM_KEY` is not yet used to namespace object IDs, so a
+  resource-type sweep cannot tell another installation's relationships from
+  orphans.
+
+Note also that the command reads `.env` and ignores `.env.local`, so the instance
+it rewrites is not necessarily the one a local dev server talks to. Always pass
+`--expected-endpoint` when pruning.
+
+The command is not present in the released container image, matching
+`authzed:health` and `authzed:schema`; running it requires a checkout. Packaging it
+for self-hosted operators is ENG-1740.
 
 ## Deliberately not modeled (stays in application code)
 

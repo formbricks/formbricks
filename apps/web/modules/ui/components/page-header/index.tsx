@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 
 export interface PageHeaderProps {
-  pageTitle: string;
+  pageTitle: React.ReactNode;
   cta?: React.ReactNode;
   children?: React.ReactNode;
 }

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { OrganizationRole } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
@@ -8,6 +9,7 @@ import {
   deleteOrganizationRelationships,
   deleteUserOrganizationRelationships,
   reconcileOrganizationMembership,
+  reconcileOrganizationMemberships,
 } from "./organization-membership";
 
 const clientMocks = {
@@ -18,7 +20,7 @@ const clientMocks = {
 vi.mock("@formbricks/database", () => ({
   prisma: {
     membership: {
-      findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -41,6 +43,10 @@ vi.mock("./config", () => ({
 const ORGANIZATION_ID = "organization-private-id";
 const USER_ID = "user-private-id";
 
+const membershipRows = (role: OrganizationRole, userId = USER_ID, organizationId = ORGANIZATION_ID) => [
+  { organizationId, role, userId },
+];
+
 describe("organization membership projection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -55,7 +61,7 @@ describe("organization membership projection", () => {
   test.each(["owner", "manager", "member", "billing"] as const)(
     "atomically touches the %s relationship and deletes the other organization roles",
     async (role) => {
-      vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role } as never);
+      vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows(role) as never);
 
       await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toEqual({
         passes: 1,
@@ -77,33 +83,32 @@ describe("organization membership projection", () => {
         true
       );
       expect(updates.every(({ relationship }) => relationship.subject.objectId === USER_ID)).toBe(true);
-      expect(prisma.membership.findUnique).toHaveBeenCalledWith({
-        select: { role: true },
+      expect(prisma.membership.findMany).toHaveBeenCalledWith({
+        orderBy: [{ organizationId: "asc" }, { userId: "asc" }],
+        select: { organizationId: true, role: true, userId: true },
         where: {
-          userId_organizationId: {
-            organizationId: ORGANIZATION_ID,
-            userId: USER_ID,
-          },
+          OR: [{ organizationId: ORGANIZATION_ID, userId: USER_ID }],
         },
       });
     }
   );
 
   test("projects accepted and pending Membership rows identically by reading only their role", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: "member" } as never);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows("member") as never);
 
     await reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID);
 
-    expect(prisma.membership.findUnique).toHaveBeenCalledWith(
+    // Reading only the role is what makes accepted and pending rows project identically.
+    expect(prisma.membership.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        select: { role: true },
+        select: { organizationId: true, role: true, userId: true },
       })
     );
     expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(1);
   });
 
   test("deletes every organization role when the source membership no longer exists", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
 
     await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toEqual({
       passes: 1,
@@ -123,11 +128,11 @@ describe("organization membership projection", () => {
   });
 
   test("reconciles again when the source role changes during projection", async () => {
-    vi.mocked(prisma.membership.findUnique)
-      .mockResolvedValueOnce({ role: "owner" } as never)
-      .mockResolvedValueOnce({ role: "manager" } as never)
-      .mockResolvedValueOnce({ role: "manager" } as never)
-      .mockResolvedValueOnce({ role: "manager" } as never);
+    vi.mocked(prisma.membership.findMany)
+      .mockResolvedValueOnce(membershipRows("owner") as never)
+      .mockResolvedValueOnce(membershipRows("manager") as never)
+      .mockResolvedValueOnce(membershipRows("manager") as never)
+      .mockResolvedValueOnce(membershipRows("manager") as never);
 
     await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toEqual({
       passes: 2,
@@ -146,13 +151,13 @@ describe("organization membership projection", () => {
   });
 
   test("returns a stable internal failure after three concurrently changing passes", async () => {
-    vi.mocked(prisma.membership.findUnique)
-      .mockResolvedValueOnce({ role: "owner" } as never)
-      .mockResolvedValueOnce({ role: "manager" } as never)
-      .mockResolvedValueOnce({ role: "owner" } as never)
-      .mockResolvedValueOnce({ role: "manager" } as never)
-      .mockResolvedValueOnce({ role: "owner" } as never)
-      .mockResolvedValueOnce({ role: "manager" } as never);
+    vi.mocked(prisma.membership.findMany)
+      .mockResolvedValueOnce(membershipRows("owner") as never)
+      .mockResolvedValueOnce(membershipRows("manager") as never)
+      .mockResolvedValueOnce(membershipRows("owner") as never)
+      .mockResolvedValueOnce(membershipRows("manager") as never)
+      .mockResolvedValueOnce(membershipRows("owner") as never)
+      .mockResolvedValueOnce(membershipRows("manager") as never);
 
     await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toEqual({
       attempts: 3,
@@ -170,13 +175,13 @@ describe("organization membership projection", () => {
       status: "disabled",
     });
 
-    expect(prisma.membership.findUnique).not.toHaveBeenCalled();
+    expect(prisma.membership.findMany).not.toHaveBeenCalled();
     expect(getAuthzedClient).not.toHaveBeenCalled();
   });
 
   test("contains operational failures at the projection boundary with sanitized logs", async () => {
     const privateCause = new Error("raw-sdk-message-with-private-token");
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: "owner" } as never);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows("owner") as never);
     clientMocks.writeRelationships.mockRejectedValue(
       new AuthzedError({
         attempts: 3,
@@ -201,6 +206,101 @@ describe("organization membership projection", () => {
     expect(serializedLog).not.toContain("private-token");
     expect(serializedLog).not.toContain("raw-sdk-message");
     expect(serializedLog).toContain(AUTHZED_ERROR_CODES.UNAVAILABLE);
+  });
+
+  describe("batched reconciliation", () => {
+    test("reads every named membership in one query and writes one group per target", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([
+        { organizationId: "org-1", role: "owner", userId: "user-1" },
+        { organizationId: "org-2", role: "billing", userId: "user-2" },
+      ] as never);
+
+      await expect(
+        reconcileOrganizationMemberships({
+          memberships: [
+            { organizationId: "org-1", userId: "user-1" },
+            { organizationId: "org-2", userId: "user-2" },
+          ],
+        })
+      ).resolves.toEqual({ passes: 1, status: "projected" });
+
+      // One read and one write for two memberships, rather than two of each.
+      expect(prisma.membership.findMany).toHaveBeenCalledTimes(2); // source + verify
+      expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(1);
+      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(8);
+    });
+
+    test("deletes every role for a target with no source row while preserving other targets", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([
+        { organizationId: "org-1", role: "manager", userId: "user-1" },
+      ] as never);
+
+      await reconcileOrganizationMemberships({
+        memberships: [
+          { organizationId: "org-1", userId: "user-1" },
+          // Observed in SpiceDB but absent from PostgreSQL — the repair path.
+          { organizationId: "org-1", userId: "ghost-user" },
+        ],
+      });
+
+      const updates = clientMocks.writeRelationships.mock.calls[0][0];
+      const ghostUpdates = updates.filter(
+        ({ relationship }) => relationship.subject.objectId === "ghost-user"
+      );
+      expect(ghostUpdates).toHaveLength(4);
+      expect(ghostUpdates.every(({ operation }) => operation === "delete")).toBe(true);
+      expect(
+        updates.filter(
+          ({ operation, relationship }) => operation === "touch" && relationship.subject.objectId === "user-1"
+        )
+      ).toHaveLength(1);
+    });
+
+    test("deduplicates repeated targets so a membership is written once", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows("owner") as never);
+
+      await reconcileOrganizationMemberships({
+        memberships: [
+          { organizationId: ORGANIZATION_ID, userId: USER_ID },
+          { organizationId: ORGANIZATION_ID, userId: USER_ID },
+        ],
+      });
+
+      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(4);
+    });
+
+    test.each([[undefined], [[]]])(
+      "short-circuits an empty target set without constructing a client (%s)",
+      async (memberships) => {
+        await expect(reconcileOrganizationMemberships({ memberships })).resolves.toEqual({
+          passes: 0,
+          status: "projected",
+        });
+
+        // `writeRelationships` rejects an empty batch, so reaching the client at all would fail.
+        expect(getAuthzedClient).not.toHaveBeenCalled();
+        expect(prisma.membership.findMany).not.toHaveBeenCalled();
+      }
+    );
+
+    test("splits a target set that exceeds the write batch limit without splitting a role group", async () => {
+      const memberships = Array.from({ length: 251 }, (_unused, index) => ({
+        organizationId: ORGANIZATION_ID,
+        userId: `user-${index}`,
+      }));
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
+
+      await expect(reconcileOrganizationMemberships({ memberships })).resolves.toEqual({
+        passes: 1,
+        status: "projected",
+      });
+
+      // 251 targets * 4 relations = 1004 updates, so it must split, and the four updates for a single
+      // membership must stay in one request or the role would not change atomically.
+      expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
+      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(1_000);
+      expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(4);
+    });
   });
 
   test("deletes all organization-resource relationships after an organization cascade", async () => {

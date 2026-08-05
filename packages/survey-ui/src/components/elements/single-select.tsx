@@ -16,6 +16,7 @@ import {
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn } from "@/lib/utils";
 
 type Direction = "ltr" | "rtl" | "auto";
@@ -138,7 +139,6 @@ const useDropdownCommitState = ({
 
 interface DropdownVariantProps {
   inputId: string;
-  headline: string;
   dir: Direction;
   disabled: boolean;
   errorMessage?: string;
@@ -156,6 +156,8 @@ interface DropdownVariantProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   searchPlaceholder: string;
   searchNoResultsText: string;
+  focusMenuItem: (which: "first" | "last") => void;
+  handleContentKeyDown: (e: React.KeyboardEvent) => void;
   filteredRegularOptions: SingleSelectOption[];
   otherMatchesSearch: boolean;
   otherOptionId?: string;
@@ -173,7 +175,6 @@ interface DropdownVariantProps {
 
 function SingleSelectDropdownVariant({
   inputId,
-  headline,
   dir,
   disabled,
   errorMessage,
@@ -191,6 +192,8 @@ function SingleSelectDropdownVariant({
   searchInputRef,
   searchPlaceholder,
   searchNoResultsText,
+  focusMenuItem,
+  handleContentKeyDown,
   filteredRegularOptions,
   otherMatchesSearch,
   otherOptionId,
@@ -219,13 +222,20 @@ function SingleSelectDropdownVariant({
       <ElementError errorMessage={errorMessage} dir={dir} />
       <DropdownMenu onOpenChange={handleDropdownOpenChange}>
         <DropdownMenuTrigger asChild>
+          {/* Named via aria-labelledby (headline + visible value) instead of aria-label:
+              a rich-text headline would leak raw HTML into the accessible name, and the
+              name must contain the visible text (WCAG 2.5.3 Label in Name). */}
           <Button
             variant="outline"
             disabled={disabled}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
             aria-invalid={Boolean(errorMessage)}
-            aria-label={headline}>
-            <span className="font-input font-input-weight text-input-text truncate">{displayText}</span>
+            aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
+            <span
+              id={`${inputId}-trigger-value`}
+              className="font-input font-input-weight text-input-text truncate">
+              {displayText}
+            </span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
@@ -234,7 +244,8 @@ function SingleSelectDropdownVariant({
           side={lockedSide}
           avoidCollisions={lockedSide === undefined}
           className="bg-option-bg border-input-border w-(--radix-dropdown-menu-trigger-width) overflow-hidden"
-          align="start">
+          align="start"
+          onKeyDown={handleContentKeyDown}>
           {showSearch ? (
             <DropdownSearchInput
               searchQuery={searchQuery}
@@ -242,6 +253,7 @@ function SingleSelectDropdownVariant({
               searchInputRef={searchInputRef}
               placeholder={searchPlaceholder}
               dir={dir}
+              onNavigateToOptions={focusMenuItem}
             />
           ) : null}
           <div className="max-h-[260px] overflow-y-auto">
@@ -379,6 +391,8 @@ function RadioIndicator(): React.JSX.Element {
   );
 }
 
+type GetRadioProps = ReturnType<typeof useRovingRadioGroup>["getRadioProps"];
+
 interface SingleSelectOptionItemProps {
   inputId: string;
   option: SingleSelectOption;
@@ -388,6 +402,7 @@ interface SingleSelectOptionItemProps {
   dir: Direction;
   onSelect: (optionId: string) => void;
   onDeselect: (optionId: string) => void;
+  getRadioProps: GetRadioProps;
 }
 
 function SingleSelectOptionItem({
@@ -399,6 +414,7 @@ function SingleSelectOptionItem({
   dir,
   onSelect,
   onDeselect,
+  getRadioProps,
 }: Readonly<SingleSelectOptionItemProps>): React.JSX.Element {
   const optionId = `${inputId}-${option.id}`;
 
@@ -426,6 +442,7 @@ function SingleSelectOptionItem({
               onDeselect(option.id);
             }
           }}
+          {...getRadioProps(option.id)}
         />
         <RadioIndicator />
         <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
@@ -465,6 +482,18 @@ function SingleSelectListVariant({
     }
   };
 
+  // All radios of the group in DOM order: regular options, then "other", then "none".
+  const orderedValues = [
+    ...regularOptions.map((option) => option.id),
+    ...(hasOtherOption && otherOptionId ? [otherOptionId] : []),
+    ...noneOptions.map((option) => option.id),
+  ];
+  const { getRadioProps } = useRovingRadioGroup({
+    values: orderedValues,
+    selectedValue,
+    onSelect: handleSelect,
+  });
+
   const renderOption = (option: SingleSelectOption): React.JSX.Element => (
     <SingleSelectOptionItem
       key={option.id}
@@ -476,6 +505,7 @@ function SingleSelectListVariant({
       dir={dir}
       onSelect={handleSelect}
       onDeselect={handleDeselect}
+      getRadioProps={getRadioProps}
     />
   );
 
@@ -500,6 +530,7 @@ function SingleSelectListVariant({
             disabled={disabled}
             required={required}
             errorMessage={errorMessage}
+            getRadioProps={getRadioProps}
           />
         ) : null}
         {noneOptions.map(renderOption)}
@@ -523,6 +554,7 @@ interface OtherOptionLabelProps {
   disabled: boolean;
   required: boolean;
   errorMessage?: string;
+  getRadioProps: GetRadioProps;
 }
 
 function OtherOptionLabel({
@@ -540,6 +572,7 @@ function OtherOptionLabel({
   disabled,
   required,
   errorMessage,
+  getRadioProps,
 }: Readonly<OtherOptionLabelProps>): React.JSX.Element {
   const optionId = `${inputId}-${otherOptionId}`;
   const otherTextId = `${optionId}-input`;
@@ -568,6 +601,7 @@ function OtherOptionLabel({
               onDeselect(otherOptionId);
             }
           }}
+          {...getRadioProps(otherOptionId)}
         />
         <RadioIndicator />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
@@ -638,6 +672,8 @@ function SingleSelect({
     hasNoResults,
     handleDropdownOpen,
     handleDropdownClose,
+    focusMenuItem,
+    handleContentKeyDown,
   } = useDropdownSearch({ options, hasOtherOption, otherOptionLabel, isSearchEnabled: showSearch });
 
   const {
@@ -719,9 +755,11 @@ function SingleSelect({
         </fieldset>
       ) : (
         <>
-          {/* Dropdown trigger is a Radix menu button that names itself via aria-label={headline};
-              the headline is a plain label here (no htmlFor) to avoid pointing at a non-input. */}
+          {/* Dropdown trigger is a Radix menu button named via aria-labelledby (headline id +
+              visible value id); the headline is a plain label here (no htmlFor) to avoid
+              pointing at a non-input. */}
           <ElementHeader
+            headlineId={`${inputId}-headline`}
             headline={headline}
             description={description}
             required={required}
@@ -732,7 +770,6 @@ function SingleSelect({
           <div data-element-input>
             <SingleSelectDropdownVariant
               inputId={inputId}
-              headline={headline}
               dir={dir}
               disabled={disabled}
               errorMessage={errorMessage}
@@ -750,6 +787,8 @@ function SingleSelect({
               searchInputRef={searchInputRef}
               searchPlaceholder={searchPlaceholder}
               searchNoResultsText={searchNoResultsText}
+              focusMenuItem={focusMenuItem}
+              handleContentKeyDown={handleContentKeyDown}
               filteredRegularOptions={filteredRegularOptions}
               otherMatchesSearch={otherMatchesSearch}
               otherOptionId={otherOptionId}

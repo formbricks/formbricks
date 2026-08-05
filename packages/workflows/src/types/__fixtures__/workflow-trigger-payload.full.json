@@ -1,0 +1,13 @@
+{
+  "data": {
+    "response": {
+      "email": "jane@example.com",
+      "score": 9
+    }
+  },
+  "endingCardId": "cm9zr4q7i000108l84gozfggr",
+  "responseId": "cm9zr4rsp000708l8bqccpfrx",
+  "surveyId": "cm9zr4mps000008l8btfy1vtz",
+  "type": "response.completed",
+  "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
+}

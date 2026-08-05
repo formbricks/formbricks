@@ -1,0 +1,366 @@
+import "server-only";
+import { env } from "@/lib/env";
+import { reconcileApiKeyRelationships } from "./api-key";
+import {
+  type TAuthzedBackfillApply,
+  type TAuthzedBackfillRequest,
+  type TAuthzedBackfillResult,
+  runAuthzedBackfill,
+} from "./backfill";
+import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
+import { isAuthzedEnabled } from "./config";
+import { AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN } from "./constants";
+import { AUTHZED_ERROR_CODES, AuthzedError, type TAuthzedErrorCode, mapAuthzedError } from "./errors";
+import { reconcileOrganizationMemberships } from "./organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "./team-workspace";
+
+/**
+ * Command layer for relationship backfill and repair.
+ *
+ * Argument parsing lives here rather than in the script entry point, unlike the health and schema
+ * commands: `apps/web/scripts/**` is excluded from coverage, and the flag matrix below — three
+ * independent confirmations before anything destructive happens — is exactly the logic that must not
+ * go untested.
+ *
+ * The exit-code contract matches `authzed:schema`: 0 clean, 2 drift remains, 1 failed or misused.
+ */
+
+export type TAuthzedBackfillCliCommand = Readonly<{
+  afterOrganizationId?: string;
+  expectedEndpoint?: string;
+  maxPrune: number;
+  mode: "apply" | "dry_run";
+  organizationId?: string;
+  prune: boolean;
+  workspaceId?: string;
+}>;
+
+type TAuthzedBackfillCliFailure = Readonly<{
+  code: TAuthzedErrorCode;
+  retryable: boolean;
+  status: "failed";
+}>;
+
+type TAuthzedBackfillCliDependencies = Readonly<{
+  closeClient: () => void;
+  isEnabled: () => boolean;
+  resolveEndpoint: () => string | undefined;
+  run: (request: TAuthzedBackfillRequest, apply: TAuthzedBackfillApply) => Promise<TAuthzedBackfillResult>;
+  writeOutput: (output: string) => void;
+}>;
+
+/**
+ * Real reconcilers. Selected once, in `runAuthzedBackfillCli`, and only for an applying run.
+ *
+ * The orchestrator can reach a mutation only through this object, so a dry run supplying
+ * `createInertApply()` cannot write regardless of any flag it is passed.
+ */
+const createWritableApply = (): TAuthzedBackfillApply => ({
+  reconcileApiKeys: reconcileApiKeyRelationships,
+  reconcileMemberships: reconcileOrganizationMemberships,
+  reconcileTeamWorkspace: reconcileTeamWorkspaceRelationships,
+});
+
+const INERT_RESULT = { passes: 0, status: "projected" } as const;
+
+/** No-op reconcilers for a dry run. */
+const createInertApply = (): TAuthzedBackfillApply => ({
+  reconcileApiKeys: async () => INERT_RESULT,
+  reconcileMemberships: async () => INERT_RESULT,
+  reconcileTeamWorkspace: async () => INERT_RESULT,
+});
+
+const defaultDependencies: TAuthzedBackfillCliDependencies = {
+  closeClient: closeAuthzedClient,
+  isEnabled: isAuthzedEnabled,
+  resolveEndpoint: () => env.AUTHZED_ENDPOINT,
+  // Widened before the first client is built, so the reconcilers this hands to the orchestrator — which
+  // reach the channel through `getAuthzedClient()` themselves — write under the same bulk deadline the
+  // sweep reads under.
+  run: (request, apply) => {
+    configureAuthzedClientForBulkWork();
+
+    return runAuthzedBackfill(request, { apply, client: getAuthzedClient() });
+  },
+  writeOutput: (output) => process.stdout.write(output),
+};
+
+const CUID_PATTERN = /^[a-z0-9]{20,40}$/;
+const POSITIVE_INTEGER_PATTERN = /^[1-9]\d{0,6}$/;
+
+const countFlag = (args: ReadonlyArray<string>, name: string): number =>
+  args.filter((arg) => arg.startsWith(`--${name}=`)).length;
+
+const readFlag = (args: ReadonlyArray<string>, name: string): string | undefined => {
+  const prefix = `--${name}=`;
+  return args.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
+};
+
+const KNOWN_BOOLEAN_FLAGS = new Set(["--apply", "--confirm-prune", "--prune"]);
+
+const VALUE_FLAG_NAMES = [
+  "after-organization-id",
+  "expected-endpoint",
+  "max-prune",
+  "organization-id",
+  "scope",
+  "workspace-id",
+] as const;
+
+/** The values a scope can be named by, before any of them are validated against each other. */
+type TFlagSelection = Readonly<{
+  afterOrganizationId?: string;
+  expectedEndpoint?: string;
+  organizationId?: string;
+  scope?: string;
+  workspaceId?: string;
+}>;
+
+/** Every argument is either a known boolean flag or a known `--name=value` flag. */
+const hasOnlyKnownArguments = (args: ReadonlyArray<string>): boolean =>
+  args.every(
+    (arg) => KNOWN_BOOLEAN_FLAGS.has(arg) || VALUE_FLAG_NAMES.some((name) => arg.startsWith(`--${name}=`))
+  );
+
+/**
+ * A repeated flag is an error rather than a silent first-wins: on a command that removes
+ * relationships, an operator who typed a value twice deserves to be told which one would have applied
+ * instead of finding out afterwards.
+ */
+const hasRepeatedFlag = (args: ReadonlyArray<string>): boolean =>
+  VALUE_FLAG_NAMES.some((name) => countFlag(args, name) > 1);
+
+/**
+ * Exactly one scope, named exactly once.
+ *
+ * `all` is the only accepted `--scope` value; it exists so that pruning every organization has to be
+ * spelled out rather than defaulted into. Naming two scopes would leave which one applies ambiguous.
+ */
+const isScopeNamedUnambiguously = ({ organizationId, scope, workspaceId }: TFlagSelection): boolean => {
+  if (scope !== undefined && scope !== "all") {
+    return false;
+  }
+
+  const named = [scope === "all", organizationId !== undefined, workspaceId !== undefined];
+
+  return named.filter(Boolean).length <= 1;
+};
+
+/**
+ * Every supplied identifier is a cuid, and resuming is combined only with a scope it means something
+ * for — a whole sweep. Resuming from an organization is meaningless when one organization or one
+ * workspace is named outright.
+ */
+const areIdentifiersValid = ({
+  afterOrganizationId,
+  organizationId,
+  workspaceId,
+}: TFlagSelection): boolean => {
+  const ids = [organizationId, afterOrganizationId, workspaceId].filter(
+    (id): id is string => id !== undefined
+  );
+  if (!ids.every((id) => CUID_PATTERN.test(id))) {
+    return false;
+  }
+
+  return afterOrganizationId === undefined || (organizationId === undefined && workspaceId === undefined);
+};
+
+/**
+ * The per-run prune cap, or `undefined` when the operator supplied one this tool will not honour.
+ *
+ * Absent means the default. Present means it may only ever *lower* the cap.
+ */
+const resolveMaxPrune = (raw: string | undefined): number | undefined => {
+  if (raw === undefined) {
+    return AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN;
+  }
+  if (!POSITIVE_INTEGER_PATTERN.test(raw)) {
+    return undefined;
+  }
+
+  const requested = Number(raw);
+
+  return requested > AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN ? undefined : requested;
+};
+
+/**
+ * Whether a destructive run carries every confirmation it needs.
+ *
+ * `--prune` requires `--apply`, `--confirm-prune`, `--expected-endpoint`, and an explicit scope, so
+ * removing relationships cannot happen as a side effect of any shorter command. `--confirm-prune`
+ * without `--prune` is rejected too: it means the operator believes they are pruning and are not.
+ */
+const isPruneRequestPermitted = ({
+  confirmed,
+  mode,
+  prune,
+  selection,
+}: Readonly<{
+  confirmed: boolean;
+  mode: "apply" | "dry_run";
+  prune: boolean;
+  selection: TFlagSelection;
+}>): boolean => {
+  if (!prune) {
+    return !confirmed;
+  }
+  if (mode !== "apply" || !confirmed || !selection.expectedEndpoint) {
+    return false;
+  }
+
+  // "Prune everything" must be typed, never defaulted into.
+  return (
+    selection.organizationId !== undefined || selection.workspaceId !== undefined || selection.scope === "all"
+  );
+};
+
+/**
+ * Parse argv into a command, or `undefined` if the invocation is not one this tool will perform.
+ *
+ * Deliberately strict and deliberately inconvenient where it matters. A dry run is the default, so a
+ * mistyped invocation is inert; every rule that guards the destructive path is a named predicate
+ * below, so each can be read — and tested — on its own.
+ *
+ * On `--expected-endpoint`: the endpoint differs per environment by construction, which the AuthZed
+ * system key does not — it is documented as a stable namespace and defaults to the same value
+ * everywhere, so it could not tell staging from production. This is the guard against a stale `.env`
+ * aiming the destructive path at the wrong instance, which matters because these commands read `.env`
+ * only and ignore `.env.local`.
+ */
+export const parseAuthzedBackfillCommand = (
+  args: ReadonlyArray<string>
+): TAuthzedBackfillCliCommand | undefined => {
+  if (!hasOnlyKnownArguments(args) || hasRepeatedFlag(args)) {
+    return undefined;
+  }
+
+  const mode = args.includes("--apply") ? "apply" : "dry_run";
+  const prune = args.includes("--prune");
+  const confirmed = args.includes("--confirm-prune");
+
+  const selection: TFlagSelection = {
+    afterOrganizationId: readFlag(args, "after-organization-id"),
+    expectedEndpoint: readFlag(args, "expected-endpoint"),
+    organizationId: readFlag(args, "organization-id"),
+    scope: readFlag(args, "scope"),
+    workspaceId: readFlag(args, "workspace-id"),
+  };
+
+  if (!isScopeNamedUnambiguously(selection) || !areIdentifiersValid(selection)) {
+    return undefined;
+  }
+
+  const maxPrune = resolveMaxPrune(readFlag(args, "max-prune"));
+  if (maxPrune === undefined) {
+    return undefined;
+  }
+
+  if (!isPruneRequestPermitted({ confirmed, mode, prune, selection })) {
+    return undefined;
+  }
+
+  return {
+    afterOrganizationId: selection.afterOrganizationId,
+    expectedEndpoint: selection.expectedEndpoint,
+    maxPrune,
+    mode,
+    organizationId: selection.organizationId,
+    prune,
+    workspaceId: selection.workspaceId,
+  };
+};
+
+const toFailureResult = (error: unknown): TAuthzedBackfillCliFailure => {
+  const authzedError = error instanceof AuthzedError ? error : mapAuthzedError(error, "backfill_cli", 1);
+
+  return { code: authzedError.code, retryable: authzedError.retryable, status: "failed" };
+};
+
+const invalidRequest = (): TAuthzedBackfillCliFailure => ({
+  code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+  retryable: false,
+  status: "failed",
+});
+
+/** The three scopes are mutually exclusive, enforced during parsing. */
+const resolveScope = (command: TAuthzedBackfillCliCommand): TAuthzedBackfillRequest["scope"] => {
+  if (command.workspaceId) {
+    return { kind: "workspace", workspaceId: command.workspaceId };
+  }
+  if (command.organizationId) {
+    return { kind: "organization", organizationId: command.organizationId };
+  }
+  return { afterOrganizationId: command.afterOrganizationId, kind: "all" };
+};
+
+const toExitCode = (status: TAuthzedBackfillResult["status"]): number => {
+  switch (status) {
+    case "reconciled":
+      return 0;
+    case "drifted":
+      return 2;
+    case "failed":
+      return 1;
+  }
+};
+
+export const runAuthzedBackfillCli = async (
+  command: TAuthzedBackfillCliCommand,
+  dependencyOverrides: Partial<TAuthzedBackfillCliDependencies> = {}
+): Promise<number> => {
+  const dependencies = { ...defaultDependencies, ...dependencyOverrides };
+  let result: TAuthzedBackfillResult | TAuthzedBackfillCliFailure = invalidRequest();
+  let exitCode = 1;
+
+  try {
+    // Checked up front. Left to the per-unit result, a disabled instance would report every
+    // organization as reconciled, because that is what "not failed" looks like from the outside.
+    if (!dependencies.isEnabled()) {
+      throw new AuthzedError({
+        attempts: 0,
+        code: AUTHZED_ERROR_CODES.DISABLED,
+        operation: "backfill_cli",
+        retryable: false,
+      });
+    }
+
+    if (
+      command.expectedEndpoint !== undefined &&
+      command.expectedEndpoint !== dependencies.resolveEndpoint()
+    ) {
+      // The operator named an instance other than the configured one. Refuse rather than guess — and
+      // report a distinct code, because "you aimed this at the wrong SpiceDB" and "you mistyped a flag"
+      // want very different reactions.
+      // `exitCode` is already 1 from its initializer, which is what this branch wants.
+      result = {
+        code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+        retryable: false,
+        status: "failed",
+      };
+    } else {
+      result = await dependencies.run(
+        {
+          maxPrune: command.maxPrune,
+          mode: command.mode,
+          prune: command.prune,
+          scope: resolveScope(command),
+        },
+        command.mode === "apply" ? createWritableApply() : createInertApply()
+      );
+      exitCode = toExitCode(result.status);
+    }
+  } catch (error) {
+    result = toFailureResult(error);
+    exitCode = 1;
+  } finally {
+    try {
+      dependencies.closeClient();
+    } catch {
+      // Cleanup failures must not replace the backfill's result or exit code.
+    }
+  }
+
+  dependencies.writeOutput(`${JSON.stringify(result)}\n`);
+  return exitCode;
+};

@@ -145,7 +145,7 @@ export const ThemeStyling = ({
 
   if (isReadOnly) {
     return (
-      <Alert variant="warning">
+      <Alert variant="warning" role="status">
         <AlertDescription>
           {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
         </AlertDescription>

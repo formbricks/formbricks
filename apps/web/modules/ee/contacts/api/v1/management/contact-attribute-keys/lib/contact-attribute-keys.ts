@@ -1,10 +1,9 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import {
@@ -21,7 +20,7 @@ export const getContactAttributeKeys = reactCache(
 
       return contactAttributeKeys;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
       }
       throw error;
@@ -62,11 +61,10 @@ export const createContactAttributeKey = async (
 
     return contactAttributeKey;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new DatabaseError("Attribute key already exists");
-      }
-
+    if (isUniqueConstraintError(error)) {
+      throw new DatabaseError("Attribute key already exists");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;

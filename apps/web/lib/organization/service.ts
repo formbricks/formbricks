@@ -14,12 +14,14 @@ import {
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
+import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
 import { deleteHubTenantData } from "@/modules/hub/service";
@@ -49,6 +51,8 @@ const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+      // No included workflow runs by default (ENG-1936); the Scale entitlement grants the volume.
+      workflowRuns: null,
     },
   },
   stripeCustomerId: null,
@@ -134,6 +138,42 @@ export const getOrganizationByWorkspaceId = reactCache(
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         logger.error(error, "Error getting organization by workspace id");
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
+/**
+ * Lowercased set of the email addresses of every active member of an organization. Used as the
+ * recipient allowlist for workflow `send_email` actions (ENG-2029): a literal recipient address is
+ * only permitted when it belongs to an active organization member, so a workflow cannot silently
+ * forward response data to an arbitrary external inbox. Emails are lowercased for case-insensitive
+ * matching.
+ */
+export const getOrganizationMemberEmails = reactCache(
+  async (organizationId: string): Promise<Set<string>> => {
+    validateInputs([organizationId, ZString]);
+
+    try {
+      // Only active users: a deactivated (soft-deleted) member has had access revoked and must not
+      // remain on the send_email recipient allowlist (ENG-2029).
+      const memberships = await prisma.membership.findMany({
+        where: { organizationId, user: { isActive: true } },
+        select: { user: { select: { email: true } } },
+      });
+
+      return new Set(
+        memberships
+          .map((membership) =>
+            membership.user?.email ? normalizeEmailForComparison(membership.user.email) : undefined
+          )
+          .filter((email): email is string => Boolean(email))
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
       }
 
@@ -263,7 +303,7 @@ export const updateOrganization = async (
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === PrismaErrorType.RecordDoesNotExist
+      error.code === PrismaErrorType.RecordNotFound
     ) {
       throw new ResourceNotFoundError("Organization", organizationId);
     }
@@ -301,6 +341,11 @@ export const deleteOrganization = async (organizationId: string) => {
             id: true,
           },
         },
+        apiKeys: {
+          select: {
+            id: true,
+          },
+        },
         feedbackDirectories: {
           select: {
             id: true,
@@ -316,6 +361,11 @@ export const deleteOrganization = async (organizationId: string) => {
       reconcileTeamWorkspaceRelationships({
         teamIds: deletedOrganization.teams.map(({ id }) => id),
         workspaceIds: deletedOrganization.workspaces.map(({ id }) => id),
+      })
+    );
+    await runPostCommitProjection("organization_delete_api_key_cleanup", () =>
+      reconcileApiKeyRelationships({
+        apiKeyIds: deletedOrganization.apiKeys.map(({ id }) => id),
       })
     );
 

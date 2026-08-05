@@ -6,6 +6,8 @@ import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/erro
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getCredentialPasswordHash, verifyUserPassword } from "@/lib/user/password";
+import { auth } from "@/modules/auth/lib/auth";
+import { buildReencodedTwoFactorData } from "@/modules/auth/lib/cutover/reencode-two-factor";
 import { totpAuthenticatorCheck } from "@/modules/auth/lib/totp";
 
 export const setupTwoFactorAuth = async (
@@ -36,6 +38,17 @@ export const setupTwoFactorAuth = async (
 
   if (user.identityProvider !== "email") {
     throw new InvalidInputError("Third party login is already enabled");
+  }
+
+  // Re-enrolling while a factor is active must not be possible on a password alone. The update below
+  // sets `twoFactorEnabled: false` and replaces both the secret and the backup codes, so reaching it
+  // with an already-enabled factor turned 2FA off — the same end state `disableTwoFactorAuth` reaches,
+  // but that one demands the password *and* a current code or backup code. It would also strand a
+  // legitimate user who abandoned the flow half-way, with their authenticator and backup codes both
+  // replaced. Disabling first is the supported path, and the settings UI only offers setup when the
+  // factor is off.
+  if (user.twoFactorEnabled) {
+    throw new InvalidInputError("Two factor authentication is already enabled");
   }
 
   // Password verification — the credential-account lookup and fail-closed "no password" handling —
@@ -110,14 +123,25 @@ export const enableTwoFactorAuth = async (id: string, code: string) => {
     throw new InvalidInputError("Invalid code");
   }
 
-  await prisma.user.update({
-    where: {
-      id,
-    },
-    data: {
-      twoFactorEnabled: true,
-    },
-  });
+  // Better Auth's login-time TOTP/backup verification reads the `TwoFactor` table, not the legacy
+  // `User.twoFactorSecret` column this flow writes — so we re-encode the same (already TOTP-verified)
+  // secret + backup codes into that table, or login fails with "TOTP not enabled" (ENG-1824). `verified`
+  // defaults to true, which is correct: we only reach here after checking a live TOTP code. Both writes
+  // run in one transaction so the enabled flag and the BA row can't diverge.
+  const { secretConfig } = await auth.$context;
+  const twoFactorRow = await buildReencodedTwoFactorData(
+    user.twoFactorSecret,
+    user.backupCodes,
+    secretConfig
+  );
+  await prisma.$transaction([
+    prisma.user.update({ where: { id }, data: { twoFactorEnabled: true } }),
+    prisma.twoFactor.upsert({
+      where: { userId: id },
+      update: { ...twoFactorRow, verified: true },
+      create: { userId: id, ...twoFactorRow, verified: true },
+    }),
+  ]);
 
   return {
     message: "Two factor authentication enabled",
@@ -201,16 +225,15 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
     }
   }
 
-  await prisma.user.update({
-    where: {
-      id,
-    },
-    data: {
-      backupCodes: null,
-      twoFactorEnabled: false,
-      twoFactorSecret: null,
-    },
-  });
+  // Clear both stores together: the legacy User columns and Better Auth's `TwoFactor` row (which login
+  // reads). Leaving the BA row behind would keep 2FA effectively on at login (ENG-1824).
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id },
+      data: { backupCodes: null, twoFactorEnabled: false, twoFactorSecret: null },
+    }),
+    prisma.twoFactor.deleteMany({ where: { userId: id } }),
+  ]);
 
   return {
     message: "Two factor authentication disabled",

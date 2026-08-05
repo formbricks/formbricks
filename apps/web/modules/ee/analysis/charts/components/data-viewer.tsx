@@ -12,9 +12,11 @@ import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 const MAX_DISPLAY_ROWS = 50;
 interface DataViewerProps {
   data: TChartDataRow[];
+  /** value_id → default-language label map, present when the query groups by valueId. */
+  optionLabels?: Record<string, string>;
 }
 
-export function DataViewer({ data }: Readonly<DataViewerProps>) {
+export function DataViewer({ data, optionLabels }: Readonly<DataViewerProps>) {
   const { t } = useTranslation();
   if (!data || data.length === 0 || Object.keys(data[0]).length === 0) {
     return (
@@ -26,6 +28,13 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
 
   const columns = Object.keys(data[0]);
   const displayData = data.slice(0, MAX_DISPLAY_ROWS);
+
+  const renderCellValue = (key: string, value: unknown): string => {
+    if (key === "FeedbackRecords.valueId" && optionLabels && typeof value === "string") {
+      return optionLabels[value] ?? value;
+    }
+    return (getTranslatedDimensionValueLabel(key, value, t) ?? formatCellValue(value)) as string;
+  };
 
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -55,7 +64,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
                 <tr key={`data-row-${rowKey}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
                   {Object.entries(row).map(([key, value]) => (
                     <td key={`cell-${key}-${rowKey}`} className="px-3 py-2">
-                      {getTranslatedDimensionValueLabel(key, value, t) ?? formatCellValue(value)}
+                      {renderCellValue(key, value)}
                     </td>
                   ))}
                 </tr>

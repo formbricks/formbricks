@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- logging required for error logging */
 import { ApiClient } from "@/lib/common/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
@@ -44,7 +43,6 @@ export const fetchWorkspaceState = async ({
       data: { workspace?: TWorkspaceState["data"]["settings"] };
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- server sends `workspace` but SDK type defines `settings`
     if (rawData.data.workspace && !rawData.data.settings) {
       rawData.data.settings = rawData.data.workspace;
       delete rawData.data.workspace;
@@ -78,7 +76,7 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
 
       try {
         // check if the environmentState has not expired yet
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- expiresAt is checked for null
+
         if (expiresAt && new Date(expiresAt) >= new Date()) {
           return;
         }
@@ -101,7 +99,6 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
             filteredSurveys,
           });
         } else {
-          // eslint-disable-next-line @typescript-eslint/only-throw-error -- error is an ApiErrorResponse
           throw workspace.error;
         }
       } catch (e) {

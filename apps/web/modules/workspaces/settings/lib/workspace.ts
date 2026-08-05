@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
@@ -9,6 +8,7 @@ import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formb
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_LOCALE } from "@/lib/constants";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 
@@ -79,7 +79,10 @@ export const updateWorkspace = async (
   inputWorkspace: TWorkspaceUpdateInput
 ): Promise<TWorkspace> => {
   validateInputs([workspaceId, ZId], [inputWorkspace, ZWorkspaceUpdateInput]);
-  const { ...data } = inputWorkspace;
+  // ENG-1919: organizationId is the workspace's tenant anchor, set at creation and immutable on
+  // update. Persisting a caller-supplied organizationId here would let an authorized workspace
+  // owner move their workspace (and all its data) into another organization, so it is stripped.
+  const { organizationId: _organizationId, ...data } = inputWorkspace;
   let updatedWorkspace;
   try {
     updatedWorkspace = await prisma.workspace.update({
@@ -90,7 +93,7 @@ export const updateWorkspace = async (
       select: selectWorkspace,
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -114,50 +117,94 @@ export const createWorkspace = async (
   }
 
   const { teamIds, ...data } = workspaceInput;
+  // Captured out here so the guard above still narrows it: inside the transaction callback below,
+  // TypeScript widens workspaceInput.name back to `string | undefined`.
+  const name = workspaceInput.name;
+
+  // Assigned only once the transaction has resolved, so a rolled-back create cannot project a
+  // workspace that does not exist. The projection then runs in `finally`, i.e. strictly post-commit.
   let committedWorkspaceId: string | undefined;
 
   try {
-    const workspace = await prisma.workspace.create({
-      data: {
-        config: {
-          channel: null,
-          industry: null,
-        },
-        ...data,
-        name: workspaceInput.name,
-        organizationId,
-        contactAttributeKeys: {
-          create: DEFAULT_CONTACT_ATTRIBUTE_KEYS,
-        },
-        languages: {
-          create: [DEFAULT_WORKSPACE_LANGUAGE],
-        },
-      },
-      select: selectWorkspace,
-    });
-    committedWorkspaceId = workspace.id;
-
-    if (teamIds) {
-      await prisma.workspaceTeam.createMany({
-        data: teamIds.map((teamId) => ({
-          workspaceId: workspace.id,
-          teamId,
-        })),
-      });
-    }
-
-    return workspace;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError("A workspace with this name already exists in your organization");
+    // The ownership check and both writes share one transaction: it keeps the check and the link
+    // atomic (a team cannot leave the organization in between), and stops a failed createMany from
+    // leaving an orphan workspace with no team links.
+    const created = await prisma.$transaction(async (tx) => {
+      // ENG-1922: teamIds are caller-supplied. Validate that every team belongs to this
+      // organization before linking it — otherwise a caller could attach another org's team
+      // to their workspace (a cross-tenant WorkspaceTeam write). The FK only enforces that the
+      // team exists, not that it belongs here, so this must be checked at the app layer. A
+      // foreign-but-real id and a nonexistent id fail identically, so this is not an
+      // existence oracle for other orgs' teams.
+      if (teamIds && teamIds.length > 0) {
+        const uniqueTeamIds = new Set(teamIds);
+        if (uniqueTeamIds.size !== teamIds.length) {
+          throw new ValidationError("teamIds must be unique");
+        }
+        const teams = await tx.team.findMany({
+          where: { id: { in: teamIds }, organizationId },
+          select: { id: true },
+        });
+        if (teams.length !== uniqueTeamIds.size) {
+          const foundTeamIds = new Set(teams.map((team) => team.id));
+          const foreignTeamIds = [...uniqueTeamIds].filter((teamId) => !foundTeamIds.has(teamId));
+          // ENG-1922: log the rejected cross-organization attempt for security observability.
+          // Only tenant identifiers (org id + the caller-supplied team ids) are logged — no PII.
+          logger.warn(
+            { organizationId, foreignTeamIds },
+            "Rejected cross-organization team assignment on workspace creation (ENG-1922)"
+          );
+          throw new ValidationError("teamIds must belong to the organization");
+        }
       }
+
+      const workspace = await tx.workspace.create({
+        data: {
+          config: {
+            channel: null,
+            industry: null,
+          },
+          ...data,
+          name,
+          organizationId,
+          contactAttributeKeys: {
+            create: DEFAULT_CONTACT_ATTRIBUTE_KEYS,
+          },
+          languages: {
+            create: [DEFAULT_WORKSPACE_LANGUAGE],
+          },
+        },
+        select: selectWorkspace,
+      });
+
+      if (teamIds) {
+        await tx.workspaceTeam.createMany({
+          data: teamIds.map((teamId) => ({
+            workspaceId: workspace.id,
+            teamId,
+          })),
+        });
+      }
+
+      return workspace;
+    });
+
+    committedWorkspaceId = created.id;
+
+    return created;
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("A workspace with this name already exists in your organization");
+    }
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
     throw error;
   } finally {
     if (committedWorkspaceId) {
       const workspaceId = committedWorkspaceId;
+      // Projecting the caller's team list is safe here: a list containing a foreign team threw
+      // inside the transaction above, so nothing committed and nothing is projected.
       await runPostCommitProjection("workspace_create", () =>
         reconcileTeamWorkspaceRelationships({
           workspaceIds: [workspaceId],
@@ -195,7 +242,7 @@ export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> 
 
     return workspace;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
 

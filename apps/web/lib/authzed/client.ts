@@ -2,7 +2,12 @@ import "server-only";
 import { deadlineInterceptor, v1 } from "@authzed/authzed-node";
 import { env } from "@/lib/env";
 import { type TAuthzedConsistency, isAuthzedEnabled } from "./config";
-import { AUTHZED_MAX_RELATIONSHIP_UPDATES, AUTHZED_REQUEST_TIMEOUT_MS } from "./constants";
+import {
+  AUTHZED_BULK_REQUEST_TIMEOUT_MS,
+  AUTHZED_MAX_RELATIONSHIP_READS,
+  AUTHZED_MAX_RELATIONSHIP_UPDATES,
+  AUTHZED_REQUEST_TIMEOUT_MS,
+} from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError, mapAuthzedError } from "./errors";
 import { executeAuthzedOperation } from "./retry";
 
@@ -59,10 +64,81 @@ export type TAuthzedRelationshipFilter =
         subject: TAuthzedSubjectFilter;
       }>);
 
+/** An opaque SpiceDB revision. Formbricks-owned wrapper: the SDK's ZedToken never crosses the facade. */
+export type TAuthzedSnapshot = Readonly<{
+  token: string;
+}>;
+
+/** An opaque resume position within a relationship read. */
+export type TAuthzedReadCursor = Readonly<{
+  token: string;
+}>;
+
+/**
+ * Filter for reading relationships.
+ *
+ * Unlike `TAuthzedRelationshipFilter` this is a plain object rather than a union, so a
+ * `resourceType`-only sweep is expressible. Because `resourceId` here is `string | undefined`, this type
+ * satisfies neither branch of the delete filter's union, so passing a read filter to
+ * `deleteRelationships` is a compile error.
+ *
+ * That narrows deletes, it does not bound them: the delete filter also admits a subject-only form with
+ * no `resourceId`, which is how user-deletion cleanup removes one subject's relationships across every
+ * organization or team. Such a delete is unlimited and transactional, bounded only by how many
+ * relationships match — so a new call site has to reason about the match size itself.
+ *
+ * `optionalResourceIdPrefix` is deliberately not surfaced: Formbricks object IDs are unprefixed
+ * cuids, so it could never narrow anything, and unused surface on a frozen facade is a liability.
+ */
+export type TAuthzedRelationshipReadFilter = Readonly<{
+  relation?: string;
+  resourceId?: string;
+  resourceType: string;
+  subject?: TAuthzedSubjectFilter;
+}>;
+
+export type TAuthzedRelationshipQuery = Readonly<{
+  /**
+   * Resume position from a previous page.
+   *
+   * The cursor carries the revision it was issued at, so continuing with one keeps the whole read on a
+   * single consistent view, and SpiceDB rejects a cursor presented alongside *any* other changed
+   * argument — including a changed consistency requirement.
+   *
+   * Both behaviours are verified against SpiceDB v1.52 (`pkg/middleware/consistency` prefers the
+   * cursor's revision over the stated requirement; `internal/services/v1/hash.go` hashes the
+   * consistency, filter and limit into the cursor) and against a real engine in the compose smoke test.
+   * Neither is part of the published API contract, so a server upgrade should re-verify them — the
+   * revision-stability check in `readAllRelationships` is the guard if they ever change.
+   */
+  cursor?: TAuthzedReadCursor;
+  filter: TAuthzedRelationshipReadFilter;
+  limit: number;
+}>;
+
+export type TAuthzedRelationshipPage = Readonly<{
+  /** Resume position, or `null` when the page was short and the read is exhausted. */
+  cursor: TAuthzedReadCursor | null;
+  relationships: ReadonlyArray<TAuthzedRelationship>;
+  /** Revision this page was read at. Constant across the pages of one cursored read. */
+  snapshot: TAuthzedSnapshot | null;
+}>;
+
 export type TAuthzedClient = Readonly<{
   consistency: TAuthzedConsistency;
   deleteRelationships: (filter: TAuthzedRelationshipFilter) => Promise<void>;
   diffSchema: (schemaText: string) => Promise<TAuthzedSchemaDiff>;
+  /**
+   * Read one page of raw relationships.
+   *
+   * **Operational use only — never for permission logic.** AuthZed's guidance is explicit that
+   * checks and ID listing must go through `Check`, `CheckBulk`, `LookupResources`, and
+   * `LookupSubjects`; reading raw relationships to decide access reimplements the permission graph
+   * in application code and silently diverges from the schema. This exists so operational tooling
+   * can observe what SpiceDB actually holds and reconcile it against PostgreSQL. It is deliberately
+   * not re-exported from `./index`.
+   */
+  readRelationships: (query: TAuthzedRelationshipQuery) => Promise<TAuthzedRelationshipPage>;
   readSchema: () => Promise<TAuthzedSchema>;
   systemKey: string;
   writeRelationships: (updates: ReadonlyArray<TAuthzedRelationshipUpdate>) => Promise<void>;
@@ -91,6 +167,7 @@ type TAuthzedConfig =
 
 const globalForAuthzed = globalThis as unknown as {
   formbricksAuthzedClient: TAuthzedClientSingleton | undefined;
+  formbricksAuthzedRequestTimeoutMs: number | undefined;
 };
 
 const STABLE_SCHEMA_DIFF_KINDS = {
@@ -199,7 +276,103 @@ const validateRelationshipFilter = (filter: TAuthzedRelationshipFilter): void =>
   }
 };
 
-const createAuthzedClient = (): TAuthzedClientSingleton => {
+const invalidReadRequest = (): AuthzedError =>
+  new AuthzedError({
+    attempts: 0,
+    code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+    operation: "read_relationships",
+    retryable: false,
+  });
+
+const validateRelationshipQuery = (query: TAuthzedRelationshipQuery): void => {
+  const { filter } = query;
+  const optionalFieldsValid =
+    (filter.relation === undefined || isNonEmpty(filter.relation)) &&
+    (filter.resourceId === undefined || isNonEmpty(filter.resourceId)) &&
+    (filter.subject === undefined ||
+      (isNonEmpty(filter.subject.objectType) &&
+        isNonEmpty(filter.subject.objectId) &&
+        (filter.subject.relation === undefined || isNonEmpty(filter.subject.relation))));
+
+  // A limit is mandatory and must be positive: SpiceDB treats `optionalLimit: 0` as *unlimited*,
+  // which under the channel-wide deadline is a guaranteed timeout and an unbounded allocation,
+  // because the promisified streaming call buffers every message before it resolves.
+  const limitValid =
+    Number.isSafeInteger(query.limit) && query.limit >= 1 && query.limit <= AUTHZED_MAX_RELATIONSHIP_READS;
+
+  const tokensValid = query.cursor === undefined || isNonEmpty(query.cursor.token);
+
+  if (!isNonEmpty(filter.resourceType) || !optionalFieldsValid || !limitValid || !tokensValid) {
+    throw invalidReadRequest();
+  }
+};
+
+/**
+ * Convert one streamed response into a facade relationship.
+ *
+ * Strict by design. Every field below is optional in the generated SDK types, and a missing one
+ * would yield a relationship that compares unequal to the tuple Formbricks wrote — which reconciling
+ * tooling would classify as orphaned and delete. Failing loudly is the only safe reading.
+ */
+const toFacadeRelationship = (response: v1.ReadRelationshipsResponse): TAuthzedRelationship => {
+  const relationship = response.relationship;
+  const resource = relationship?.resource;
+  const subject = relationship?.subject?.object;
+
+  // The message fields are optional in the generated types; the scalars inside them are plain protobuf
+  // strings that default to `""` when absent from the wire. Both have to be rejected, or a relationship
+  // with an empty relation or object ID passes here, matches no tuple Formbricks ever wrote, and gets
+  // classified as orphaned — which under `--prune` means deleted. Same fail-loud rule, same reason.
+  if (
+    !relationship ||
+    !resource ||
+    !subject ||
+    !relationship.relation ||
+    !resource.objectId ||
+    !resource.objectType ||
+    !subject.objectId ||
+    !subject.objectType
+  ) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INTERNAL,
+      operation: "read_relationships",
+      retryable: false,
+    });
+  }
+
+  // Formbricks never writes caveated or expiring relationships and the facade cannot represent them, so
+  // dropping the qualifier would misreport the tuple — and a misreported tuple is exactly what
+  // reconciling tooling would classify as stale. Refusing is therefore the safe reading today.
+  //
+  // Note this becomes a tripwire the day Formbricks adopts SpiceDB's expiration feature, which AuthZed
+  // recommends for time-limited access: the facade must learn to represent it before anything writes
+  // one, or reconciliation will start refusing to run.
+  if (relationship.optionalCaveat !== undefined || relationship.optionalExpiresAt !== undefined) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.UNSUPPORTED,
+      operation: "read_relationships",
+      retryable: false,
+    });
+  }
+
+  const subjectRelation = relationship.subject?.optionalRelation;
+
+  return {
+    relation: relationship.relation,
+    resource: { objectId: resource.objectId, objectType: resource.objectType },
+    subject: {
+      objectId: subject.objectId,
+      objectType: subject.objectType,
+      // Normalize the wire's empty string back to `undefined` so a subject-relation tuple such as
+      // `workspace:x#reader_team@team:y#member` round-trips equal to the update that wrote it.
+      ...(subjectRelation ? { relation: subjectRelation } : {}),
+    },
+  };
+};
+
+const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton => {
   const config = getAuthzedConfig();
 
   if (!config.enabled) {
@@ -214,8 +387,10 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
   const security = config.insecure
     ? v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS
     : v1.ClientSecurity.SECURE;
+  // The SDK appends its own 30s deadline interceptor last, and that interceptor only sets a deadline
+  // when none is present — so whatever is installed here wins for every call on this channel.
   const sdkClient = v1.NewClient(config.token, config.endpoint, security, undefined, {
-    interceptors: [deadlineInterceptor(AUTHZED_REQUEST_TIMEOUT_MS)],
+    interceptors: [deadlineInterceptor(requestTimeoutMs)],
   });
 
   const facade = Object.freeze<TAuthzedClient>({
@@ -224,7 +399,7 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
       validateRelationshipFilter(filter);
 
       await executeAuthzedOperation("delete_relationships", async () => {
-        await sdkClient.promises.deleteRelationships({
+        const response = await sdkClient.promises.deleteRelationships({
           optionalAllowPartialDeletions: false,
           optionalLimit: 0,
           optionalPreconditions: [],
@@ -244,6 +419,20 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
             resourceType: filter.resourceType,
           },
         });
+
+        // Asserted rather than assumed. An unlimited, non-partial delete should always report
+        // `COMPLETE`, but this is the one call in the facade that destroys access, and "SpiceDB said it
+        // only got part way and we carried on believing it finished" is the failure that leaves a
+        // half-revoked graph while the caller reports success. A server-side cap or a change in SDK
+        // defaults would surface here instead of silently.
+        if (response.deletionProgress !== v1.DeleteRelationshipsResponse_DeletionProgress.COMPLETE) {
+          throw new AuthzedError({
+            attempts: 1,
+            code: AUTHZED_ERROR_CODES.INTERNAL,
+            operation: "delete_relationships",
+            retryable: true,
+          });
+        }
       });
     },
     diffSchema: async (schemaText) =>
@@ -267,6 +456,66 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
           differenceKinds: Object.freeze(differenceKinds),
         };
       }),
+    readRelationships: async (query) => {
+      validateRelationshipQuery(query);
+
+      return executeAuthzedOperation("read_relationships", async () => {
+        const { filter } = query;
+        const responses = await sdkClient.promises.readRelationships({
+          // Fully consistent so reconciliation observes the latest write, matching `diffSchema`: the
+          // application's configurable permission-check consistency is never used for operational
+          // verification.
+          //
+          // The same requirement is sent on every page rather than pinning the first page's revision on
+          // later ones. It has to be: SpiceDB hashes the consistency into the cursor and rejects a
+          // mismatch. It also does not need the help — the cursor's own revision takes precedence over
+          // whatever requirement is stated — so substituting `atExactSnapshot` on later pages would both
+          // invalidate the cursor and add snapshot-expiry exposure for nothing.
+          consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+          optionalCursor: query.cursor ? { token: query.cursor.token } : undefined,
+          optionalLimit: query.limit,
+          relationshipFilter: {
+            optionalRelation: filter.relation ?? "",
+            optionalResourceId: filter.resourceId ?? "",
+            optionalResourceIdPrefix: "",
+            optionalSubjectFilter: filter.subject
+              ? {
+                  optionalRelation: filter.subject.relation
+                    ? { relation: filter.subject.relation }
+                    : undefined,
+                  optionalSubjectId: filter.subject.objectId,
+                  subjectType: filter.subject.objectType,
+                }
+              : undefined,
+            resourceType: filter.resourceType,
+          },
+        });
+
+        const lastResponse = responses.at(-1);
+        const readAt = lastResponse?.readAt?.token;
+
+        // A non-empty page always carries the revision it was read at. Without it a caller cannot tell
+        // whether successive pages describe the same view, so refuse rather than silently degrade.
+        if (lastResponse && !readAt) {
+          throw new AuthzedError({
+            attempts: 0,
+            code: AUTHZED_ERROR_CODES.INTERNAL,
+            operation: "read_relationships",
+            retryable: false,
+          });
+        }
+
+        const afterResultCursor = lastResponse?.afterResultCursor?.token;
+
+        return {
+          // A short page means the filter is exhausted. Only a full page can have more behind it, and
+          // only then is a cursor meaningful.
+          cursor: responses.length === query.limit && afterResultCursor ? { token: afterResultCursor } : null,
+          relationships: responses.map(toFacadeRelationship),
+          snapshot: readAt ? { token: readAt } : null,
+        };
+      });
+    },
     readSchema: async () => {
       const schemaText = await executeAuthzedOperation("read_schema", async () => {
         try {
@@ -333,8 +582,39 @@ const createAuthzedClient = (): TAuthzedClientSingleton => {
   };
 };
 
+/**
+ * Widen this process's channel deadline to the bulk one, before any client exists.
+ *
+ * The deadline belongs to the channel, not to a call — the SDK's promisified streaming wrappers accept
+ * no per-call options at all — and every projector reaches the channel through `getAuthzedClient()`
+ * rather than being handed one. So "a separate client for bulk work" is not expressible: a command that
+ * both sweeps and writes would need one channel at two deadlines.
+ *
+ * It is a property of the *process* instead. A request-serving process wants the short deadline on
+ * everything, because a projection that hangs holds a user's request open; a command-line process wants
+ * the long one on everything, because a page of relationships legitimately takes longer than a single
+ * `Check`. Command entry points call this first, and it refuses to run once a client exists — silently
+ * leaving the short deadline in place would strand the sweep on its first slow page, which is precisely
+ * the failure this replaced.
+ */
+export const configureAuthzedClientForBulkWork = (): void => {
+  if (globalForAuthzed.formbricksAuthzedClient) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+      operation: "configure_authzed_client_for_bulk_work",
+      retryable: false,
+    });
+  }
+
+  globalForAuthzed.formbricksAuthzedRequestTimeoutMs = AUTHZED_BULK_REQUEST_TIMEOUT_MS;
+};
+
+/** The shared client. Deadline sized for a single cheap call unless the process asked for bulk work. */
 export const getAuthzedClient = (): TAuthzedClient => {
-  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient();
+  globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient(
+    globalForAuthzed.formbricksAuthzedRequestTimeoutMs ?? AUTHZED_REQUEST_TIMEOUT_MS
+  );
 
   return globalForAuthzed.formbricksAuthzedClient.facade;
 };
@@ -342,4 +622,5 @@ export const getAuthzedClient = (): TAuthzedClient => {
 export const closeAuthzedClient = (): void => {
   globalForAuthzed.formbricksAuthzedClient?.close();
   globalForAuthzed.formbricksAuthzedClient = undefined;
+  globalForAuthzed.formbricksAuthzedRequestTimeoutMs = undefined;
 };
