@@ -4,6 +4,88 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v5.3
+
+Formbricks v5.3 is a **drop-in upgrade for most self-hosted instances**. There are no breaking API,
+webhook, or authentication changes, and every database migration is additive and runs automatically on
+startup. The only self-hosting-relevant changes are a few new optional variables. The main thing worth
+setting before you deploy is `TRUSTED_PROXY_HOP_COUNT` for your proxy setup; everything else is optional.
+
+<Info>
+  All new environment variables are optional and defaulted — none of them block startup. You can upgrade
+  to v5.3 without changing any environment variables and everything will run.
+</Info>
+
+### Client IP Resolution Behind a Proxy (recommended)
+
+v5.3 resolves the client IP from the `X-Forwarded-For` chain using a configurable number of trusted proxy
+hops:
+
+- `TRUSTED_PROXY_HOP_COUNT` — optional, **defaults to `1`**. Set it to the number of trusted proxies /
+  load balancers in front of Formbricks (e.g. an ingress plus a CDN = `2`). An explicit `0` trusts no
+  proxy at all: the runtime exposes no socket peer address, so the client IP then resolves to a fixed
+  "untrusted" placeholder that rate limiting and response audit logging record in place of a real address.
+  Leave it at `1` (or your real hop count) unless you deliberately want to stop capturing client IPs.
+
+<Warning>
+  Setting `TRUSTED_PROXY_HOP_COUNT` **higher** than your real hop count lets a client spoof its IP by
+  sending a forged `X-Forwarded-For` header. Set it to the exact number of proxies in front of the app —
+  no higher. The default of `1` is correct for a single reverse proxy / ingress.
+</Warning>
+
+### Renamed Configuration
+
+- **Scheduling variables renamed.** `NEXT_PUBLIC_SURVEY_SCHEDULING_*` → `SURVEY_SCHEDULING_*` (the
+  `NEXT_PUBLIC_` prefix was dropped). This only affects you if you ran a v5.3 release candidate that used
+  the old names; a clean v5.2 → v5.3 upgrade never set them.
+
+### Optional New Configuration
+
+None of the following is required to run v5.3. Add them only if you want the associated feature.
+
+#### Survey Scheduling
+
+The new survey-scheduling feature runs on a fixed daily local time. All three are optional and defaulted:
+
+- `SURVEY_SCHEDULING_TIME_ZONE` — a valid IANA time zone. Default `Europe/Berlin`.
+- `SURVEY_SCHEDULING_LOCAL_HOUR` — default `0`.
+- `SURVEY_SCHEDULING_LOCAL_MINUTE` — default `0`.
+
+#### Password Breach Check
+
+- `PASSWORD_HIBP_CHECK_DISABLED` — set to `"1"` to disable the "Have I Been Pwned" breached-password
+  check on sign-up and password reset (`"0"` or unset keeps it on).
+
+### Analytics (Cube)
+
+Two Cube-related deltas in v5.3. Neither changes the Cube schema, so there is **no schema refresh to run**:
+
+- **`CUBEJS_EXTERNAL_DEFAULT` now defaults to `false`** (in both `docker/docker-compose.yml` and the Helm
+  chart). Cube Store is used only when you explicitly opt into external pre-aggregations — a safe default
+  for most self-hosters. Set it back to `true` only if you run external pre-aggregations.
+- **The Hub image moves to `0.8.1`.** The Helm chart pins `0.8.1`. Docker Compose instead resolves the Hub
+  image through `${HUB_IMAGE_REF:-:latest}`, so a plain `docker compose pull` fetches whatever `:latest`
+  currently is — set `HUB_IMAGE_REF=:0.8.1` in `docker/.env` before pulling for a deterministic upgrade.
+
+### Upgrade Steps
+
+1. Back up your database.
+2. Set `TRUSTED_PROXY_HOP_COUNT` to the number of proxies in front of your instance (default `1`).
+3. Update your deployment assets to v5.3 **before** pulling images — `docker compose pull` reads your local
+   Compose file, so fetch the v5.3 `docker-compose.yml` first (Helm users use the v5.3 chart). For a
+   deterministic Hub image on Compose, set `HUB_IMAGE_REF=:0.8.1` in `docker/.env`.
+4. Pull and restart (`docker compose pull && docker compose down && docker compose up -d`, or
+   `helm upgrade` with the new chart / tag). Migrations apply automatically on startup.
+5. Smoke test: sign in (including 2FA), create and schedule a survey, and open the Feedback Records
+   dashboards / charts to confirm analytics render correctly.
+
+### Rollback
+
+The v5.3 migrations are additive and are not read by v5.2, so rolling back the application images / Helm
+values to v5.2 is safe without touching the database. Restore a database backup only if you specifically
+need to undo the schema additions — and note that doing so discards any data written after the backup was
+taken, so perform it within a maintenance window.
+
 ## v5.2
 
 Formbricks v5.2 migrates authentication from NextAuth to **Better Auth**. For most self-hosted

@@ -42,6 +42,24 @@ type TParsedGatewayRoute = {
   tenantSource: "query" | "body" | "recordLookup";
 };
 
+/**
+ * Operations that change or destroy records that already exist. A feedback directory is shared by
+ * every workspace it is assigned to and its records carry no workspace of their own, so a workspace
+ * permission cannot tell one workspace's records from another's — a `readWrite` member of workspace B
+ * would otherwise edit or delete records that workspace A's surveys ingested (ENG-1770). For session
+ * users these are restricted to organization owners and managers. `create` is deliberately not in
+ * this set: adding records to a shared directory is ordinary workspace work, like a CSV import.
+ *
+ * API keys are intentionally not gated on this — they authorize purely on their per-workspace
+ * permissions (`hasApiKeyImplicitFeedbackDirectoryAccess`), and what a key should need to mutate a
+ * record is being settled separately in #8682.
+ */
+const RECORD_MUTATING_OPERATIONS = new Set<TFeedbackRecordsGatewayOperation>([
+  "update",
+  "delete",
+  "bulkDelete",
+]);
+
 const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TParsedGatewayRoute | null => {
   const normalizedPath = normalizeFeedbackRecordsPath(pathname);
   if (!normalizedPath) {
@@ -219,8 +237,10 @@ const resolveTenantId = async (
 const authorizeFeedbackRecordsGatewayRequest = async (
   principal: TAuthenticatedGatewayPrincipal,
   feedbackDirectoryId: string,
-  requiredPermission: TFeedbackRecordsGatewayPermission
+  requiredPermission: TFeedbackRecordsGatewayPermission,
+  operation: TFeedbackRecordsGatewayOperation
 ): Promise<{ allowed: true } | { allowed: false }> => {
+  const isRecordMutation = RECORD_MUTATING_OPERATIONS.has(operation);
   const feedbackDirectory = await getFeedbackDirectoryAuthContext(feedbackDirectoryId);
   if (!feedbackDirectory || feedbackDirectory.isArchived) {
     return { allowed: false };
@@ -255,11 +275,14 @@ const authorizeFeedbackRecordsGatewayRequest = async (
           type: "organization",
           roles: ["owner", "manager"],
         },
-        ...feedbackDirectory.workspaceIds.map((workspaceId) => ({
-          type: "workspaceTeam" as const,
-          workspaceId,
-          minPermission,
-        })),
+        // Mutating an existing record is owners/managers only, so no workspace-team fallback.
+        ...(isRecordMutation
+          ? []
+          : feedbackDirectory.workspaceIds.map((workspaceId) => ({
+              type: "workspaceTeam" as const,
+              workspaceId,
+              minPermission,
+            }))),
       ],
     });
 
@@ -299,7 +322,8 @@ export const feedbackRecordsGatewayAuthorizer: TGatewayRequestAuthorizer = {
     const authorizationResult = await authorizeFeedbackRecordsGatewayRequest(
       principal,
       tenantResolution.tenantId,
-      route.requiredPermission
+      route.requiredPermission,
+      route.operation
     );
     if (!authorizationResult.allowed) {
       logger.info(

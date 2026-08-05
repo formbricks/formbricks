@@ -12,7 +12,7 @@ export const Textarea = ({ className, isInvalid, ref, ...props }: TextareaProps)
     <textarea
       ref={ref}
       className={cn(
-        "flex min-h-20 w-full resize-none rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-dark focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300",
+        "flex min-h-20 w-full resize-none rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-dark focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300",
         className,
         isInvalid && "border border-red-500 focus:border-red-500"
       )}

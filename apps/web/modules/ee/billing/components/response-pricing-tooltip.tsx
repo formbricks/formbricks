@@ -92,3 +92,20 @@ export const PlanResponseFeature = ({ plan, locale, overage, t }: Readonly<PlanR
     <Trans i18nKey={i18nKey} components={{ dynamicPricing: dynamicPricingComponent(overage, locale) }} />
   );
 };
+
+interface PlanWorkflowRunsFeatureProps {
+  locale: string;
+  overage: TResponseOverageDisplay | null;
+  t: TFunction;
+}
+
+// Workflow runs are metered graduated like responses (Scale only). Same tier tooltip, sourced from
+// the workflow price's tiers so the shown pricing matches what Stripe charges (ENG-2194).
+export const PlanWorkflowRunsFeature = ({ locale, overage, t }: Readonly<PlanWorkflowRunsFeatureProps>) => {
+  return (
+    <Trans
+      i18nKey={t("workspace.settings.billing.plan_scale_feature_workflow_runs")}
+      components={{ dynamicPricing: dynamicPricingComponent(overage, locale) }}
+    />
+  );
+};
