@@ -68,6 +68,8 @@ function OpenText({
   };
 
   const descriptionId = description ? `${inputId}-description` : undefined;
+  const errorId = `${inputId}-error`;
+  const describedBy = [descriptionId, errorMessage ? errorId : undefined].filter(Boolean).join(" ");
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
@@ -83,7 +85,7 @@ function OpenText({
         videoUrl={videoUrl}
       />
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} />
+        <ElementError errorMessage={errorMessage} id={errorId} />
         {/* Input or Textarea */}
         <div className="space-y-1">
           {longAnswer ? (
@@ -93,7 +95,8 @@ function OpenText({
               value={value}
               onChange={handleChange}
               aria-required={required}
-              aria-describedby={descriptionId}
+              aria-invalid={Boolean(errorMessage)}
+              aria-describedby={describedBy || undefined}
               dir={dir}
               rows={rows}
               disabled={disabled}
@@ -109,7 +112,8 @@ function OpenText({
               value={value}
               onChange={handleChange}
               aria-required={required}
-              aria-describedby={descriptionId}
+              aria-invalid={Boolean(errorMessage)}
+              aria-describedby={describedBy || undefined}
               dir={dir}
               disabled={disabled}
               errorMessage={errorMessage}

@@ -82,8 +82,10 @@ export function SurveyContainer({
 
   return (
     <div id="fbjs" className="formbricks-form" dir={dir}>
+      {/* No aria-live here: this wrapper spans the whole modal, so every DOM mutation inside the
+          survey was announced assertively. Announcements are owned by the regions that need them
+          (inline validation errors, response errors). */}
       <div
-        aria-live="assertive"
         className={cn(
           hasOverlay ? "pointer-events-auto" : "pointer-events-none",
           isModal && "fixed inset-0 z-999999 flex items-end"

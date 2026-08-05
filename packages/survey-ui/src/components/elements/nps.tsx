@@ -170,8 +170,14 @@ function NPS({
 
       {/* NPS Options */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
-        <fieldset className="w-full px-[2px]" dir={dir}>
+        <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+        {/* The <fieldset> is role="group", which doesn't support aria-required (the visible
+            "Required" badge conveys it); aria-invalid is a global attribute, so it is valid here. */}
+        <fieldset
+          className="w-full px-[2px]"
+          dir={dir}
+          aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
           <legend className="sr-only">NPS rating options</legend>
           <div className="flex w-full">{npsOptions.map((number) => renderNPSOption(number))}</div>
 

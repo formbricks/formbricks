@@ -84,7 +84,7 @@ function CTA({
 
       {/* CTA Button */}
       <div className="relative space-y-2" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
 
         {buttonExternal ? (
           <div className="flex w-full justify-start">
@@ -93,6 +93,8 @@ function CTA({
               type="button"
               onClick={handleButtonClick}
               disabled={disabled}
+              aria-invalid={Boolean(errorMessage)}
+              aria-describedby={errorMessage ? `${inputId}-error` : undefined}
               className="text-button font-button-weight flex items-center gap-2"
               variant={buttonVariant}
               size="custom">

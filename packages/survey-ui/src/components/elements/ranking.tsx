@@ -224,8 +224,14 @@ function Ranking({
 
       {/* Ranking Options */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
-        <fieldset className="w-full" dir={dir}>
+        <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+        {/* The <fieldset> is role="group", which doesn't support aria-required (the visible
+            "Required" badge conveys it); aria-invalid is a global attribute, so it is valid here. */}
+        <fieldset
+          className="w-full"
+          dir={dir}
+          aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
           <legend className="sr-only">Ranking options</legend>
           {/* Semantic ordered list so screen readers announce rank position and count;
               role="list" is kept explicitly because list-style removal (Tailwind preflight)

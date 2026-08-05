@@ -219,7 +219,7 @@ function SingleSelectDropdownVariant({
 
   return (
     <>
-      <ElementError errorMessage={errorMessage} dir={dir} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
       <DropdownMenu onOpenChange={handleDropdownOpenChange}>
         <DropdownMenuTrigger asChild>
           {/* Named via aria-labelledby (headline + visible value) instead of aria-label:
@@ -230,6 +230,7 @@ function SingleSelectDropdownVariant({
             disabled={disabled}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
             aria-invalid={Boolean(errorMessage)}
+            aria-describedby={errorMessage ? `${inputId}-error` : undefined}
             aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
             <span
               id={`${inputId}-trigger-value`}
@@ -511,7 +512,7 @@ function SingleSelectListVariant({
 
   return (
     <div className="relative" data-element-input>
-      <ElementError errorMessage={errorMessage} dir={dir} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
       <div className="w-full space-y-2">
         {regularOptions.map(renderOption)}
         {hasOtherOption && otherOptionId ? (
@@ -724,7 +725,8 @@ function SingleSelect({
           role="radiogroup"
           aria-labelledby={`${inputId}-headline`}
           aria-required={required}
-          aria-invalid={Boolean(errorMessage)}>
+          aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
           <ElementHeader
             headlineId={`${inputId}-headline`}
             headline={headline}

@@ -243,7 +243,7 @@ function DropdownVariant({
 
   return (
     <div>
-      <ElementError errorMessage={errorMessage} dir={dir} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
       <DropdownMenu
         onOpenChange={(open) => {
           if (open) handleDropdownOpen();
@@ -258,6 +258,7 @@ function DropdownVariant({
             disabled={disabled}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
             aria-invalid={Boolean(errorMessage)}
+            aria-describedby={errorMessage ? `${inputId}-error` : undefined}
             aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
             <span
               id={`${inputId}-trigger-value`}
@@ -428,7 +429,7 @@ function ListVariant({
 
   return (
     <>
-      <ElementError errorMessage={errorMessage} dir={dir} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
       <div className="space-y-2">
         {options.filter((option) => option.id !== "none").map(renderOption)}
         {hasOtherOption && otherOptionId ? (
@@ -577,7 +578,8 @@ function MultiSelect({
         <fieldset
           className="w-full space-y-4"
           aria-labelledby={`${inputId}-headline`}
-          aria-invalid={Boolean(errorMessage)}>
+          aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
           <ElementHeader
             headlineId={`${inputId}-headline`}
             headline={headline}

@@ -59,6 +59,8 @@ function Consent({
     onChange(checked);
   };
 
+  const errorId = `${inputId}-error`;
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
@@ -74,7 +76,7 @@ function Consent({
 
       {/* Consent Checkbox */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorId} />
 
         <label
           htmlFor={`${inputId}-checkbox`}
@@ -91,6 +93,7 @@ function Consent({
             onCheckedChange={handleCheckboxChange}
             disabled={disabled}
             aria-invalid={Boolean(errorMessage)}
+            aria-describedby={errorMessage ? errorId : undefined}
           />
           <span
             className="font-input-weight text-input-text flex-1 [font-size:var(--fb-input-font-size)]"

@@ -115,12 +115,14 @@ function PictureSelect({
 
       {/* Picture Grid - 2 columns */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
         {allowMulti ? (
           // Native fieldset (group role) named by the headline; m-0/p-0/border-0/w-full
           // reset the fieldset UA defaults so it lays out like a plain div.
           <fieldset
             aria-labelledby={`${inputId}-headline`}
+            aria-invalid={Boolean(errorMessage)}
+            aria-describedby={errorMessage ? `${inputId}-error` : undefined}
             className="m-0 grid w-full min-w-0 grid-cols-2 gap-2 border-0 p-0">
             {options.map((option) => {
               const isSelected = (selectedValues as string[]).includes(option.id);
@@ -177,6 +179,7 @@ function PictureSelect({
             aria-labelledby={`${inputId}-headline`}
             aria-required={required}
             aria-invalid={Boolean(errorMessage)}
+            aria-describedby={errorMessage ? `${inputId}-error` : undefined}
             className="grid grid-cols-2 gap-2">
             {options.map((option) => {
               const optionId = `${inputId}-${option.id}`;

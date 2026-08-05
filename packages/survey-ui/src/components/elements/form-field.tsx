@@ -98,6 +98,10 @@ function FormField({
   // Get visible fields
   const visibleFields = fields.filter((field) => field.show !== false);
 
+  // This element has no single `inputId` — its inputs are keyed off `elementId` — so the error
+  // region id follows the same `${elementId}-...` scheme the field ids already use.
+  const errorId = `${elementId}-error`;
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
@@ -112,7 +116,7 @@ function FormField({
 
       {/* Form Fields */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorId} />
         <div className="space-y-3">
           {visibleFields.map((field) => {
             const fieldRequired = isFieldRequired(field);
@@ -143,6 +147,7 @@ function FormField({
                   disabled={disabled}
                   dir={dir}
                   aria-invalid={Boolean(errorMessage) || undefined}
+                  aria-describedby={errorMessage ? errorId : undefined}
                 />
               </div>
             );
