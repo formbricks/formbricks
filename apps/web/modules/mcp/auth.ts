@@ -19,6 +19,7 @@ import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
 import {
+  MCP_CHALLENGE_SCOPE,
   MCP_RESOURCE_SCOPES,
   getAuthIssuerUrl,
   getMcpOrigin,
@@ -37,16 +38,6 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "authorization",
 ]);
 
-// Minimum grant required to authenticate against the MCP server at all: at least ONE resource scope.
-// Any single one is enough — a token granted only `feedbackRecords:read` is a legitimate MCP client and
-// must not be rejected here for lacking `surveys:read`. Which tools it can actually call is enforced
-// per-tool by guardMcpScopes at call time.
-const MCP_MINIMUM_SCOPES = MCP_RESOURCE_SCOPES;
-// Scopes advertised in the 401 WWW-Authenticate challenge. Clients build their DCR + authorize
-// requests from this, so it must list every resource scope (read + write) or clients only ever
-// request read and can never reach the write tools. Actual write access is still gated downstream
-// by the user's workspace permissions in the v3 layer.
-const MCP_CHALLENGE_SCOPE = MCP_RESOURCE_SCOPES.join(" ");
 const oauthResourceClient = oauthProviderResourceClient(auth);
 
 export type TMcpAuthInfo = AuthInfo & {
@@ -373,14 +364,24 @@ async function authenticateMcpOAuthBearer(
     };
   }
 
-  if (!hasAnyMcpScope(authInfo, MCP_MINIMUM_SCOPES)) {
+  // Minimum grant required to authenticate against the MCP server at all: at least ONE *resource*
+  // scope. Any single one is enough — a token granted only `feedbackRecords:read` is a legitimate
+  // MCP client and must not be rejected here for lacking `surveys:read`. Which tools it can actually
+  // call is enforced per-tool by guardMcpScopes at call time.
+  //
+  // Deliberately NOT MCP_CHALLENGE_SCOPE / MCP_PROTECTED_RESOURCE_SCOPES: those include
+  // `offline_access`, and an any-of gate over that list would let a token holding *only*
+  // `offline_access` — which grants no resource access at all — authenticate to the MCP server.
+  // Same reason the insufficient_scope challenge below advertises only the resource scopes: RFC 6750
+  // `scope` names the scopes *required* for the resource, and `offline_access` is not one of them.
+  if (!hasAnyMcpScope(authInfo, MCP_RESOURCE_SCOPES)) {
     log.warn({ statusCode: 403, clientId: authInfo.clientId }, "MCP OAuth token missing every MCP scope");
     return {
       ok: false,
       requestId,
       response: withInsufficientScopeChallenge(
         problemForbidden(requestId, "OAuth token does not include the required MCP scope", instance),
-        [...MCP_MINIMUM_SCOPES]
+        [...MCP_RESOURCE_SCOPES]
       ),
     };
   }
