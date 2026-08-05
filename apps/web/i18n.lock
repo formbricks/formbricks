@@ -2484,7 +2484,7 @@ checksums:
     workspace/settings/billing/plan_scale_feature_responses: f2be033ebf6c86a664b812b4a918647f
     workspace/settings/billing/plan_scale_feature_security: 6671961cf8d8413d1740b13901bcc033
     workspace/settings/billing/plan_scale_feature_semantic_analysis: 1441e34cacd26f0aa27af4ebad6e5c54
-    workspace/settings/billing/plan_scale_feature_workflows: b0c9c8615a9ba7d9cb73e767290a7f72
+    workspace/settings/billing/plan_scale_feature_workflow_runs: 22007bc0ad530bfd56b8a3788bdef02f
     workspace/settings/billing/plan_scale_feature_workspaces: 6bd1b676b9470ca8cc4e73be3ffd4bef
     workspace/settings/billing/plan_selection_description: 8367b137b31234cafe0e297a35b0b599
     workspace/settings/billing/plan_selection_title: 8b814effdaee1787281b740f67482d7d
@@ -2525,6 +2525,7 @@ checksums:
     workspace/settings/billing/trial_warning_add_payment_method: 5e6879babc7acb05a258de64fef57262
     workspace/settings/billing/trial_warning_remind_me_later: a12f38fb4352c31ca0d43c05303b7257
     workspace/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
+    workspace/settings/billing/unlimited_workflow_runs: 61221f0506d1bf247f732a31959dc146
     workspace/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     workspace/settings/billing/unlock_all_plan_features: f494466ed4d974763434fb15c0d63750
     workspace/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
