@@ -35,6 +35,16 @@ vi.mock("@/modules/hub/feedback-records-gateway", () => ({
   },
 }));
 
+/**
+ * Like JSON.stringify, but renders Error values including the members that matter for a leak check.
+ * `message`, `name` and `cause` are non-enumerable or exotic, so plain stringify drops them and any
+ * "does not contain the URL" assertion built on it can never fail.
+ */
+const serializeIncludingErrors = (value: unknown): string =>
+  JSON.stringify(value, (_key, val) =>
+    val instanceof Error ? { name: val.name, message: val.message, stack: val.stack, cause: val.cause } : val
+  );
+
 describe("proxyFeedbackRecordsRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -232,7 +242,12 @@ describe("proxyFeedbackRecordsRequest", () => {
 
     // The whole point of building this payload by hand: a fetch failure carries the target URL in
     // its message, so neither the log nor the response body may echo the error itself.
-    expect(JSON.stringify(mockLoggerError.mock.calls)).not.toContain("secret-url");
+    //
+    // Serialized with an Error-aware replacer, not plain JSON.stringify. `Error.prototype.message`
+    // is non-enumerable, so stringify renders a logged error as `{"code":"ECONNREFUSED"}` and the
+    // URL never appears — the assertion would pass even with `err` back in the payload, which is
+    // the regression it exists to catch.
+    expect(serializeIncludingErrors(mockLoggerError.mock.calls)).not.toContain("secret-url");
   });
 
   test("is unavailable in production", async () => {
