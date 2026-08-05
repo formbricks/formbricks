@@ -40,9 +40,29 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // A section is "declared" when it holds real content — a filled table or prose —
-            // i.e. it is neither empty nor a bare "None". Reusable default rule predicate.
-            const isDeclared = (content) => !(content === "" || /^none\.?$/i.test(content));
+            // A section is "declared" when it holds real content — a filled table or prose.
+            //
+            // The template asks for a bare "None" when there is nothing to declare, but authors
+            // routinely add a clause: "None — docs only", "N/A", "No breaking changes". Accepting only
+            // the exact word labelled those PRs as breaking, and this label feeds the GitHub release
+            // notes and the self-hoster migration guide, so a false positive is expensive.
+            //
+            // Anything after a negative opener is ignored only when it reads as an aside — introduced
+            // by a dash, colon, comma, period or bracket. Prose that merely *starts* with a negative
+            // word stays declared, so "No breaking changes to the API, but the `--legacy` flag is
+            // removed" and "None of the endpoints are removed, but the response shape changed" are
+            // still labelled. Being wrong in that direction is the safe one: the label is also set by
+            // hand per the template, and this job removes a label it considers inactive.
+            const NOTHING_DECLARED =
+              /^(?:none|n\/?a|not applicable|no breaking changes?)(?:\s*[—–:,.(\[-][\s\S]*)?$/i;
+
+            const isDeclared = (content) => {
+              const normalized = content
+                .replace(/^\s*[-*+]\s+/, "") // a leading list marker ("- none")
+                .replace(/[*_`]/g, "") // markdown emphasis / code ticks ("**None**")
+                .trim();
+              return normalized !== "" && !NOTHING_DECLARED.test(normalized);
+            };
 
             // Label rules. Add an entry to sync a new label from a new "## <heading>" PR-body section.
             // `isActive(content)` decides whether the label should be present for the given section text.
