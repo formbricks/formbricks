@@ -4226,6 +4226,8 @@
       "email_to_label": "傳送至",
       "email_to_placeholder": "team@example.com",
       "email_to_required": "選擇誰應該收到這封電子郵件。",
+      "email_to_unavailable_group_label": "無法使用",
+      "email_to_unavailable_warning": "此收件者已無法使用——他們可能已失去此工作區的存取權限,或他們來自的調查問卷欄位已被移除。請選擇新的收件者;在您更換之前,這封電子郵件無法寄送。",
       "enable_blocked_unsaved_changes": "無法儲存你的最新變更，因此工作流程未啟用。",
       "enable_failed": "無法啟用工作流程。",
       "enable_success": "工作流程已啟用。",

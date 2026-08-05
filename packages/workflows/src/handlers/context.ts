@@ -75,11 +75,17 @@ export interface WorkflowApiContext {
     endingCardIds: string[];
   }) => Promise<TriggerSurveyCheck>;
   /**
-   * Injected recipient allowlist check (the adapter queries the organization's members) so the
-   * package stays user/organization-agnostic. `send_email` actions may address a literal email; to
+   * Injected recipient allowlist check (the adapter resolves who can access the workspace) so the
+   * package stays user/tenancy-agnostic. `send_email` actions may address a literal email; to
    * prevent a workflow from silently forwarding response data to an arbitrary external inbox
-   * (ENG-2029), enable/test confirm every literal recipient belongs to the workspace's organization.
-   * Given the literal recipient emails on a definition, it returns the subset that is NOT allowed.
+   * (ENG-2029), or to someone whose access to the workspace was revoked (ENG-2186), enable/test
+   * confirm every literal recipient can still access the workspace. Given the literal recipient
+   * emails on a definition, it returns the subset that is NOT allowed.
+   *
+   * An adapter must scope this to the workspace, not merely to its organization: an organization
+   * member with no access to *this* workspace has to come back disallowed, otherwise enable accepts
+   * recipients the authoring picker never offers and the runner's send-time backstop then refuses.
+   * Compare emails case-insensitively.
    */
   verifyRecipientsAllowed: (input: {
     workspaceId: string;
