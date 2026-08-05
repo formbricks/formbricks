@@ -21,9 +21,10 @@ export const SentryClientConfigScript = () => {
     environment: SENTRY_ENVIRONMENT,
   };
 
-  // `</script>` and friends cannot appear in a DSN, but escaping `<` keeps the inline script safe
-  // regardless of what the env vars hold.
-  const serializedConfig = JSON.stringify(config).replace(/</g, "\\u003c");
+  // `</script>` cannot appear in a DSN, but escaping `<` to its unicode form keeps the
+  // inline script safe regardless of what the env vars hold. String.raw avoids
+  // double-escaping the backslash, so the replacement reads as it lands.
+  const serializedConfig = JSON.stringify(config).replaceAll("<", String.raw`\u003c`);
 
   return (
     <script
