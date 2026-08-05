@@ -89,7 +89,9 @@ const baseEventParams = {
   status: "success" as TAuditStatus,
   oldObject: { foo: "bar" },
   newObject: { foo: "baz" },
-  apiUrl: "/api/test",
+  // Absolute: the schema validates apiUrl with z.url(). This file mocks the service out, so a bare
+  // path would pass here while being dropped in production (see service.test.ts).
+  apiUrl: "http://localhost:3000/api/test",
 };
 
 const fullUser = {
