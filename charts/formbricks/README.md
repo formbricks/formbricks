@@ -261,11 +261,11 @@ JSON that can call Vertex AI.
 
 ## Hub and Taxonomy metrics and structured logs
 
-Hub and the taxonomy service can export OpenTelemetry metrics and traces over OTLP/HTTP. Configure the standard
-`OTEL_*` environment variables through the existing `hub.env` and `taxonomy.env` maps; no chart-specific collector
-values are required. The example below uses a SigNoz collector in the `signoz` namespace and labels both services
-as `production`. Replace the collector DNS name and `deployment.environment` with values matching each cluster and
-environment:
+Hub and the taxonomy service can export OpenTelemetry metrics over OTLP/HTTP, and Hub can additionally export
+traces. Configure the standard `OTEL_*` environment variables through the existing `hub.env` and `taxonomy.env`
+maps; no chart-specific collector values are required. The example below uses a SigNoz collector in the `signoz`
+namespace and labels both services as `production`. Replace the collector DNS name and `deployment.environment`
+with values matching each cluster and environment:
 
 ```yaml
 hub:
@@ -282,17 +282,23 @@ taxonomy:
   env:
     LOG_FORMAT: json
     OTEL_METRICS_EXPORTER: otlp
-    OTEL_TRACES_EXPORTER: otlp
     OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
     OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz-otel-collector.signoz.svc.cluster.local:4318
     OTEL_SERVICE_NAME: formbricks-taxonomy
     OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production,service.namespace=formbricks
 ```
 
-`OTEL_TRACES_EXPORTER` is what makes the logs *correlated*: Hub only stamps `trace_id` and `span_id` onto log
-records when tracing is enabled. With metrics alone, JSON logs carry `request_id` and nothing else, and Hub logs
-`tracing not enabled (OTEL_TRACES_EXPORTER empty or unset)` at startup. `LOG_FORMAT: json` needs a Hub image built
-after 0.8.2; earlier images ignore it and keep the text format.
+`OTEL_TRACES_EXPORTER` is set for Hub only, and it is what puts `trace_id` and `span_id` in Hub's logs — Hub
+stamps them onto a log record only when tracing is enabled. Without it, Hub's JSON logs carry `request_id` alone
+and Hub warns `tracing not enabled (OTEL_TRACES_EXPORTER empty or unset)` at startup. The taxonomy service exports
+metrics but does not emit traces, so the variable is deliberately absent from `taxonomy.env`; it correlates its
+logs through `request_id` and `run_id`, both of which Hub also logs, so a run can still be followed across the two
+services.
+
+Both blocks need images newer than the ones this chart currently pins. Hub reads `LOG_FORMAT` only in builds after
+0.8.2, and the taxonomy service gained its OpenTelemetry and JSON-logging support after `v0.1.0`. Older images
+ignore these variables entirely rather than failing, so a rollout ahead of the image bump is silent — expect text
+logs and no taxonomy metrics until both images are updated.
 
 Metric attributes are restricted to a fixed, low-cardinality set — for Hub's taxonomy metrics that is
 `scope_type`, `status`, `failure_code`, and `reason`. Run, request, tenant, source, and field identifiers are
