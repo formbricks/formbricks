@@ -7,9 +7,9 @@ import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation"
 import { test } from "./lib/fixtures";
 
 /**
- * Keyboard interaction gate for the rendered link survey (ENG-1779).
+ * Keyboard / assistive-technology gate for the rendered link survey.
  *
- * Covers the APG-aligned keyboard model of the survey player:
+ * Covers the APG-aligned keyboard model of the survey player (ENG-1779):
  * - radio-scale elements (single-select / NPS): one Tab stop, arrow keys move
  *   focus WITHOUT selecting, Space/Enter select — so auto-progress can never
  *   fire while a keyboard user is still browsing the options;
@@ -17,6 +17,11 @@ import { test } from "./lib/fixtures";
  *   options in both variants (previously a focus trap);
  * - focus management: the new card's first control is focused after navigation,
  *   and the first invalid control is focused after a failed submit.
+ *
+ * …and the announcement half of that same failed submit (ENG-1292): the error a
+ * sighted user sees must reach a screen-reader user too. axe cannot catch this —
+ * a static scan has no way to know that a message which appears after an event
+ * was never announced — so these assertions ARE the regression guard.
  */
 
 type I18n = { default: string };
@@ -336,5 +341,329 @@ test.describe("Survey keyboard interaction @slow", () => {
     // Space selects the focused picture and auto-progress completes the survey.
     await page.keyboard.press("Space");
     await expect(page.getByText(ENDING_HEADLINE)).toBeVisible();
+  });
+});
+
+/* -------------------------------------------------------------------------- *
+ * ENG-1292 — validation errors must be announced, not just painted.
+ * -------------------------------------------------------------------------- */
+
+/** The required-field message every element type renders (surveys locale `errors.please_fill_out_this_field`). */
+const REQUIRED_ERROR = "Please fill out this field";
+const OPEN_TEXT_HEADLINE = "What went wrong?";
+const GROUPED_HEADLINE = "How likely are you to recommend us?";
+
+interface SeededValidationSurvey {
+  url: string;
+  /** Element ids, so the spec can address each element's `${inputId}-error` region exactly. */
+  ids: {
+    openText: string;
+    nps: string;
+    ranking: string;
+    date: string;
+    pictureMulti: string;
+  };
+}
+
+/**
+ * Survey for the error-announcement contract.
+ *
+ * Auto-progress is OFF: a required auto-progress element (single-select, NPS,
+ * rating, single picture-select) hides the submit button entirely, and without a
+ * submit button there is no way to trigger an empty required submit at all.
+ *
+ * The four element types that newly carry `aria-invalid` on a GROUP node rather
+ * than on a native control (NPS + ranking fieldsets, the date fieldset that
+ * replaced `div role="group"`, and the picture-select multi fieldset) share one
+ * card: a block holds many elements and validation runs over all of them, so a
+ * single empty submit surfaces all four errors at once instead of needing a
+ * four-card walk.
+ */
+const seedValidationSurvey = async (
+  workspaceId: string,
+  createdBy: string,
+  baseURL: string
+): Promise<SeededValidationSurvey> => {
+  const ids = {
+    openText: createId(),
+    nps: createId(),
+    ranking: createId(),
+    date: createId(),
+    pictureMulti: createId(),
+  };
+
+  const endings = [
+    {
+      id: createId(),
+      type: "endScreen" as const,
+      headline: i18nValue(ENDING_HEADLINE),
+      subheader: i18nValue("We appreciate your feedback."),
+    },
+  ] as unknown as TSurveyEnding[];
+
+  const questions = [
+    {
+      id: ids.openText,
+      type: "openText",
+      headline: i18nValue(OPEN_TEXT_HEADLINE),
+      // A subheader gives the input a second aria-describedby token, so the spec
+      // proves the error id is APPENDED to an existing description rather than
+      // replacing it.
+      subheader: i18nValue("Tell us as much as you like."),
+      required: true,
+      inputType: "text",
+      charLimit: { enabled: false },
+    },
+    {
+      id: ids.nps,
+      type: "nps",
+      headline: i18nValue(GROUPED_HEADLINE),
+      required: true,
+      lowerLabel: i18nValue("Not likely"),
+      upperLabel: i18nValue("Very likely"),
+    },
+    {
+      id: ids.ranking,
+      type: "ranking",
+      headline: i18nValue("Rank these in order of importance"),
+      required: true,
+      choices: ["Speed", "Reliability", "Support"].map((label) => ({
+        id: createId(),
+        label: i18nValue(label),
+      })),
+    },
+    {
+      id: ids.date,
+      type: "date",
+      headline: i18nValue("When did it happen?"),
+      required: true,
+      format: "M-d-y",
+    },
+    {
+      id: ids.pictureMulti,
+      type: "pictureSelection",
+      headline: i18nValue("Pick the screenshots that match"),
+      required: true,
+      // allowMulti renders the <fieldset> branch; the single branch is a role="radiogroup".
+      allowMulti: true,
+      choices: [
+        { id: createId(), imageUrl: new URL("/logo-transparent.png", baseURL).toString() },
+        { id: createId(), imageUrl: new URL("/favicon/android-chrome-192x192.png", baseURL).toString() },
+      ],
+    },
+  ];
+
+  // transformQuestionsToBlocks emits one block per question; merge the grouped
+  // types into a single second block so they render on one card.
+  const perQuestionBlocks = transformQuestionsToBlocks(questions as unknown as TLegacyQuestions, endings);
+  const [openTextBlock, ...groupedBlocks] = perQuestionBlocks;
+  const blocks = [
+    openTextBlock,
+    { ...groupedBlocks[0], elements: groupedBlocks.flatMap((block) => block.elements) },
+  ];
+
+  const survey = await prisma.survey.create({
+    data: {
+      workspaceId,
+      createdBy,
+      name: "Validation announcement survey",
+      type: "link",
+      status: "inProgress",
+      // See the docblock: auto-progress would hide the submit button on the
+      // required NPS element and make an empty submit unreachable.
+      isAutoProgressingEnabled: false,
+      welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
+      blocks: blocks as unknown as Prisma.InputJsonValue[],
+      endings: endings as unknown as Prisma.InputJsonValue[],
+    },
+    select: { id: true },
+  });
+
+  return { url: `/s/${survey.id}`, ids };
+};
+
+/**
+ * Resolves the focused control's aria-describedby IDREF list inside the page.
+ *
+ * Asserting the attribute alone would pass against a dangling reference — an id
+ * that points at nothing announces nothing, and that is precisely the state this
+ * change could regress into. So every referenced id is looked up and reported
+ * with the text a screen reader would actually read from it.
+ */
+const focusedControlDescription = (page: Page) =>
+  page.evaluate(() => {
+    const active = document.activeElement as HTMLElement | null;
+    if (!active) return null;
+    const ids = (active.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean);
+    return {
+      tagName: active.tagName,
+      ariaInvalid: active.getAttribute("aria-invalid"),
+      ids,
+      resolved: ids.map((id) => {
+        const target = document.getElementById(id);
+        return {
+          id,
+          exists: target !== null,
+          text: target?.textContent?.trim() ?? null,
+          ariaLive: target?.getAttribute("aria-live") ?? null,
+          role: target?.getAttribute("role") ?? null,
+        };
+      }),
+    };
+  });
+
+/** The live region for an element, addressed by the `${inputId}-error` call-site convention. */
+const errorRegion = (page: Page, errorId: string) => page.locator(`[id="${errorId}"]`);
+
+/** Whatever node currently declares itself described by that region (CSS `~=` matches one IDREF token). */
+const controlDescribedBy = (page: Page, errorId: string) => page.locator(`[aria-describedby~="${errorId}"]`);
+
+/** A region that exists, is polite, and is silent: the state a live region must be in BEFORE the error. */
+const expectSilentLiveRegion = async (page: Page, errorId: string): Promise<void> => {
+  const region = errorRegion(page, errorId);
+  await expect(region, `${errorId} should already be in the DOM before any submit`).toHaveCount(1);
+  await expect(region, `${errorId} should render nothing while there is no error`).toBeEmpty();
+  await expect(region).toHaveAttribute("aria-live", "polite");
+  await expect(region).toHaveAttribute("aria-atomic", "true");
+  await expect(controlDescribedBy(page, errorId), `nothing should point at ${errorId} yet`).toHaveCount(0);
+};
+
+/** The announced state: the region carries the message and exactly one invalid control resolves to it. */
+const expectAnnouncedError = async (page: Page, errorId: string): Promise<void> => {
+  const region = errorRegion(page, errorId);
+  await expect(region, `${errorId} should announce the required error`).toHaveText(REQUIRED_ERROR);
+  // Polite on purpose: focus moves to the invalid control at the same instant, and
+  // an assertive region (or role="alert") would interrupt that announcement.
+  await expect(region).toHaveAttribute("aria-live", "polite");
+  await expect(region, `${errorId} must not be an alert`).not.toHaveAttribute("role");
+
+  const control = controlDescribedBy(page, errorId);
+  await expect(control, `exactly one control should be described by ${errorId}`).toHaveCount(1);
+  await expect(control).toHaveAttribute("aria-invalid", "true");
+};
+
+test.describe("Survey validation error announcement @slow", () => {
+  // Seeded once per worker process and reused: the tests only read the published
+  // survey (responses never mutate it), same rationale as the suites above.
+  let seeded: SeededValidationSurvey | undefined;
+
+  const requireSeeded = (): SeededValidationSurvey => {
+    if (!seeded) throw new Error("validation survey was not seeded");
+    return seeded;
+  };
+
+  test.beforeEach(async ({ users, baseURL }) => {
+    if (seeded) return;
+    const user = await users.create({ skipSurveySeed: true });
+    if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
+    seeded = await seedValidationSurvey(user.workspaceId, user.id, baseURL ?? "http://localhost:3000");
+  });
+
+  test("empty required submit announces the error through a live region that already existed", async ({
+    page,
+  }) => {
+    const { url, ids } = requireSeeded();
+    const errorId = `${ids.openText}-input-error`;
+    const input = page.locator(`[id="${ids.openText}-input"]`);
+
+    await page.goto(url);
+    await expect(page.getByText(OPEN_TEXT_HEADLINE)).toBeVisible();
+    await expect(input).toBeVisible();
+
+    // AC2 — the region must pre-exist. A live region inserted together with its
+    // message is not reliably announced, so mounting it only on error would look
+    // correct on screen and stay silent in a screen reader.
+    await expectSilentLiveRegion(page, errorId);
+
+    await navButton(page, "Next").click();
+
+    // Still on the card, and the SAME node now carries the message: updated, not remounted.
+    await expect(page.getByText(OPEN_TEXT_HEADLINE)).toBeVisible();
+    await expectAnnouncedError(page, errorId);
+    await expect(errorRegion(page, errorId)).toBeVisible();
+
+    // The failed control is flagged invalid and keeps its pre-existing description
+    // token (the subheader) alongside the error one.
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    await expect(input).toHaveAttribute("aria-describedby", new RegExp(`(^|\\s)${errorId}(\\s|$)`));
+    await expect(input).toHaveAttribute(
+      "aria-describedby",
+      new RegExp(`(^|\\s)${ids.openText}-input-description(\\s|$)`)
+    );
+
+    // The core proof: focus is on the invalid control and its aria-describedby
+    // RESOLVES to a node whose text is the visible error message.
+    await expect
+      .poll(async () => (await focusedControlDescription(page))?.ariaInvalid, { timeout: 5000 })
+      .toBe("true");
+    const described = await focusedControlDescription(page);
+    expect(described?.ids, "the focused control should point at its error region").toContain(errorId);
+    expect(
+      described?.resolved.every((target) => target.exists),
+      `aria-describedby contains a dangling IDREF: ${JSON.stringify(described?.resolved)}`
+    ).toBe(true);
+    expect(
+      described?.resolved.map((target) => target.text),
+      "the described node must read out the visible error message"
+    ).toContain(REQUIRED_ERROR);
+    expect(described?.resolved.find((target) => target.id === errorId)?.ariaLive).toBe("polite");
+    await expect(page.getByText(REQUIRED_ERROR)).toBeVisible();
+
+    // Answering clears the announcement and the association, but keeps the region
+    // mounted and ready for the next failure.
+    await input.fill("The Next button did nothing at all");
+    await expect(errorRegion(page, errorId)).toBeEmpty();
+    await expect(errorRegion(page, errorId)).toHaveCount(1);
+    await expect(input).not.toHaveAttribute("aria-invalid", "true");
+    await expect(controlDescribedBy(page, errorId)).toHaveCount(0);
+  });
+
+  test("group-level element types announce through a resolvable region too", async ({ page }) => {
+    const { url, ids } = requireSeeded();
+    const groupedIds = [ids.nps, ids.ranking, ids.date, ids.pictureMulti];
+
+    await page.goto(url);
+    await expect(page.getByText(OPEN_TEXT_HEADLINE)).toBeVisible();
+    await page.locator(`[id="${ids.openText}-input"]`).fill("Something broke on submit");
+    await navButton(page, "Next").click();
+    await expect(page.getByText(GROUPED_HEADLINE)).toBeVisible();
+
+    for (const id of groupedIds) {
+      await expectSilentLiveRegion(page, `${id}-error`);
+    }
+
+    await navButton(page, "Finish").click();
+
+    for (const id of groupedIds) {
+      await expectAnnouncedError(page, `${id}-error`);
+    }
+
+    // These four flag the invalid state on a grouping element rather than a native
+    // control; date specifically moved from `div role="group"` to a real fieldset.
+    for (const id of groupedIds) {
+      await expect(
+        page.locator(`fieldset[aria-describedby="${id}-error"]`),
+        `${id} should expose its invalid state on a native fieldset`
+      ).toHaveCount(1);
+    }
+  });
+
+  test("no assertive live region spans the whole survey", async ({ page }) => {
+    const { url, ids } = requireSeeded();
+
+    await page.goto(url);
+    await expect(page.locator("#fbjs")).toBeVisible();
+    // Proves the scoped selector below can actually match live regions inside the
+    // survey, so its zero-count assertion cannot pass vacuously.
+    await expect(page.locator('#fbjs [aria-live="polite"]').first()).toBeAttached();
+
+    // The wrapper used to be aria-live="assertive", so every DOM mutation anywhere
+    // in the survey was announced assertively — which would talk over the polite
+    // error region asserted above.
+    await expect(page.locator('#fbjs [aria-live="assertive"]')).toHaveCount(0);
+
+    await navButton(page, "Next").click();
+    await expect(errorRegion(page, `${ids.openText}-input-error`)).toHaveText(REQUIRED_ERROR);
+    await expect(page.locator('#fbjs [aria-live="assertive"]')).toHaveCount(0);
   });
 });
