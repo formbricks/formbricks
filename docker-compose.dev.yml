@@ -18,11 +18,20 @@
 # volume" — taking postgres and everything else down with it, for an error that never mentions
 # credentials. With an explicit type: bind, a relative value is resolved against the project
 # directory instead.
+#
+# create_host_path: false because Docker's default is to CREATE a missing bind source, as a
+# directory. A typo'd or since-moved path would therefore leave a stray "creds.json/" directory on
+# the host and mount it as a directory here, so the read fails with "is a directory" and hub-worker
+# crash-loops on a path that looks correct. Refusing to start is the better failure: the daemon
+# names the exact path it could not find, and only the hub containers fail rather than the whole
+# project (unlike the undefined-volume case above, which fails at config parse).
 x-hub-volumes: &hub-volumes
   - type: bind
     source: ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}
     target: /secrets/gcp.json
     read_only: true
+    bind:
+      create_host_path: false
 
 services:
   # PostgreSQL must load the vector library so Hub (and Formbricks) can use the pgvector extension.
