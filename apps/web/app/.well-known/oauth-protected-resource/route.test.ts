@@ -79,7 +79,10 @@ describe("OAuth protected resource metadata", () => {
     // /authorize against the client's REGISTERED scopes. If the challenge is narrower than what
     // this document advertises, the client registers narrow, authorizes wide, and its first
     // connect fails with `invalid_scope` — succeeding only on retry, once the metadata is cached.
-    // A superset is not enough: these two must be exactly equal.
+    // The provider validates authorize as a subset of the registered scopes, so the challenge must
+    // COVER this list; a wider challenge would also pass. Asserting equality is the stricter check,
+    // and it holds because both derive from MCP_PROTECTED_RESOURCE_SCOPES — so a drift in either
+    // direction is a deliberate change, not an accident.
     const response = await GET(createRequest(), {
       params: Promise.resolve({ resource: ["api", "mcp"] }),
     });

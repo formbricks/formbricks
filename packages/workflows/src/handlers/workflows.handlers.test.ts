@@ -1284,3 +1284,44 @@ describe("getRun", () => {
     expect(body.code).toBe("forbidden");
   });
 });
+
+// Negative controls for the authorization level itself. This PR lowered two handlers from
+// "readWrite" to "read" after verifying they write nothing; without these, making the same move on a
+// handler that DOES write would pass the whole suite — the level was previously asserted in only
+// three places, all of them expecting "read".
+describe("write handlers authorize at readWrite", () => {
+  const jsonRequest = (method: string, body: unknown): Request =>
+    new Request("http://localhost/api/v3/workflows/x", {
+      method,
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    });
+
+  const params = { workflowId };
+
+  const writeHandlers: [string, () => Promise<Response>][] = [
+    [
+      "create",
+      () =>
+        handlers.create({ req: jsonRequest("POST", { workspaceId, name: "n", definition }), ctx: makeCtx() }),
+    ],
+    ["patch", () => handlers.patch({ req: jsonRequest("PATCH", { name: "n" }), ctx: makeCtx(), params })],
+    ["duplicate", () => handlers.duplicate({ req: jsonRequest("POST", {}), ctx: makeCtx(), params })],
+    ["delete", () => handlers.delete({ ctx: makeCtx(), params })],
+    ["archive", () => handlers.archive({ ctx: makeCtx(), params })],
+    ["unarchive", () => handlers.unarchive({ ctx: makeCtx(), params })],
+    ["enable", () => handlers.enable({ ctx: makeCtx(), params })],
+    ["disable", () => handlers.disable({ ctx: makeCtx(), params })],
+  ];
+
+  test.each(writeHandlers)("%s authorizes at readWrite", async (_name, invoke) => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled" }));
+    service.createWorkflow.mockResolvedValue(makeRow());
+    service.updateWorkflow.mockResolvedValue(makeRow());
+    service.duplicateWorkflow.mockResolvedValue(makeRow());
+
+    await invoke();
+
+    expect(authorizeAllow).toHaveBeenCalledWith(workspaceId, "readWrite");
+  });
+});
