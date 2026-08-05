@@ -465,11 +465,13 @@ describe("MCP scope enforcement (ENG-1967)", () => {
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
-  const INSUFFICIENT_SCOPE = {
+  // The detail names the scope the denied call needed, so each case asserts its own — a regression that
+  // dropped or mislabelled the scope would slip past a generic prefix match.
+  const insufficientScope = (scope: string) => ({
     status: 403,
     code: "forbidden",
-    detail: "OAuth token does not include the required MCP scope",
-  };
+    detail: `OAuth token does not include the required MCP scope: ${scope}`,
+  });
 
   // Every mutating tool + a representative valid input for it.
   const writeTools: { name: string; handlerKey: keyof typeof workflowsHandlers; input: unknown }[] = [
@@ -498,7 +500,10 @@ describe("MCP scope enforcement (ENG-1967)", () => {
       expect(workflowsHandlers[handlerKey]).not.toHaveBeenCalled();
       expect(queueV3AuditLog).not.toHaveBeenCalled();
       expect(result.isError).toBe(true);
-      expect(result.structuredContent.error).toMatchObject({ ...INSUFFICIENT_SCOPE, requestId: "req_tool" });
+      expect(result.structuredContent.error).toMatchObject({
+        ...insufficientScope("workflows:write"),
+        requestId: "req_tool",
+      });
     }
   );
 
@@ -523,7 +528,10 @@ describe("MCP scope enforcement (ENG-1967)", () => {
 
     expect(workflowsHandlers.list).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
-    expect(result.structuredContent.error).toMatchObject({ ...INSUFFICIENT_SCOPE, requestId: "req_tool" });
+    expect(result.structuredContent.error).toMatchObject({
+      ...insufficientScope("workflows:read"),
+      requestId: "req_tool",
+    });
   });
 
   test("read tools succeed for a read-only token", async () => {

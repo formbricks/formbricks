@@ -212,9 +212,12 @@ export function withMcpResponseHeaders(response: Response, requestId: string): R
 
 function withOAuthChallenge(response: Response, scope = MCP_CHALLENGE_SCOPE): Response {
   const headers = new Headers(response.headers);
+  // Comma-separated auth-params, per the `#auth-param` list grammar in RFC 9110 §11.6.1 (as used by
+  // RFC 6750 and RFC 9728). Space-separated, a strict parser reads the whole tail as one malformed
+  // param and misses `resource_metadata` — the pointer MCP clients follow to discover this server.
   headers.set(
     "WWW-Authenticate",
-    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}" scope="${scope}"`
+    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}", scope="${scope}"`
   );
 
   return new Response(response.body, {
@@ -418,9 +421,20 @@ export function hasAnyMcpScope(authInfo: AuthInfo | undefined, allowedScopes: re
   return allowedScopes.some((scope) => scopes.includes(scope));
 }
 
+/**
+ * The scopes are named in `detail`, not only in the `WWW-Authenticate` challenge, because the tool path
+ * cannot carry a header: `guardMcpScopes` hands this Response to `responseToMcpToolResult`, which
+ * serializes the JSON body into a JSON-RPC result and drops every header. Without them in the body a
+ * client that is refused a tool call learns only "some scope is missing" and cannot re-authorize for the
+ * right one. The challenge is still set for the transport-level 403, where the header does reach clients.
+ */
 export function createMcpInsufficientScopeResponse(requestId: string, scopes: string[]): Response {
   return withInsufficientScopeChallenge(
-    problemForbidden(requestId, "OAuth token does not include the required MCP scope", "/api/mcp"),
+    problemForbidden(
+      requestId,
+      `OAuth token does not include the required MCP scope: ${scopes.join(" ")}`,
+      "/api/mcp"
+    ),
     scopes
   );
 }

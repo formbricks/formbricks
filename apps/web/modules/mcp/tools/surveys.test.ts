@@ -498,7 +498,7 @@ describe("registerSurveyTools", () => {
     expect(result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      detail: "OAuth token does not include the required MCP scope: surveys:write",
       requestId: "req_tool",
     });
   });
@@ -543,7 +543,7 @@ describe("registerSurveyTools", () => {
     expect(result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      detail: "OAuth token does not include the required MCP scope: surveys:read",
       requestId: "req_tool",
     });
   });
