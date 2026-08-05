@@ -5,9 +5,9 @@ import { logger } from "@formbricks/logger";
 import { JOBS_DEFAULT_JOB_OPTIONS, JOBS_PREFIX, JOBS_QUEUE_NAME, JOB_NAMES } from "./constants";
 import {
   enqueueTestLogJob,
-  getBackgroundJobProducer,
   resetJobsQueueFactory,
   scheduleTestLogJobAt,
+  upsertRecurringTestLogJobSchedule,
 } from "./queue";
 import { startJobsRuntime } from "./runtime";
 
@@ -131,18 +131,17 @@ describe("BullMQ integration tests", () => {
     expect(Date.now()).toBeGreaterThanOrEqual(scheduledFor);
   }, 15000);
 
-  test("upserts recurring schedules using the engine-neutral producer interface", async () => {
+  test("upserts a recurring schedule that actually produces jobs", async () => {
     if (!isRedisAvailable) {
       logger.info("Skipping BullMQ integration test: Redis not available");
       return;
     }
 
-    const producer = getBackgroundJobProducer();
     const debugSpy = vi.spyOn(logger, "debug");
     const message = `integration recurring ${Date.now().toString()}`;
     const scheduleId = `integration-recurring-${Date.now().toString()}`;
 
-    const scheduledJob = await producer.upsertRecurringTestLogSchedule(
+    const scheduledJob = await upsertRecurringTestLogJobSchedule(
       {
         scheduleId,
         scope: "integration-tests",
@@ -163,12 +162,8 @@ describe("BullMQ integration tests", () => {
       { interval: 100, timeout: 10_000 }
     );
 
-    expect(scheduledJob).toMatchObject({
-      jobName: JOB_NAMES.testLog,
-      queueName: JOBS_QUEUE_NAME,
-      scheduleId,
-      scope: "integration-tests",
-    });
-    expect(scheduledJob.jobId).toEqual(expect.any(String));
+    expect(scheduledJob.name).toBe(JOB_NAMES.testLog);
+    expect(scheduledJob.queueName).toBe(JOBS_QUEUE_NAME);
+    expect(scheduledJob.id).toEqual(expect.any(String));
   }, 15000);
 });

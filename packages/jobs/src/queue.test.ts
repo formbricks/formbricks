@@ -11,7 +11,6 @@ import {
 import {
   createJobsQueue,
   enqueueResponsePipelineJob,
-  enqueueSurveySchedulingJob,
   enqueueTestLogJob,
   enqueueWorkflowRunJob,
   getBackgroundJobProducer,
@@ -19,10 +18,7 @@ import {
   removeRecurringSurveySchedulingJobSchedule,
   removeRecurringWorkflowRunReconcileJobSchedule,
   resetJobsQueueFactory,
-  scheduleResponsePipelineJobAt,
-  scheduleSurveySchedulingJobAt,
   scheduleTestLogJobAt,
-  upsertRecurringResponsePipelineJobSchedule,
   upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
   upsertRecurringWorkflowRunReconcileJobSchedule,
@@ -173,16 +169,6 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.responsePipeline, responsePipelineJobData, undefined);
   });
 
-  test("enqueues the survey scheduling job with the shared queue", async () => {
-    const mockJob = { id: "job-scheduling-1" };
-    mockQueueAdd.mockResolvedValue(mockJob);
-
-    const job = await enqueueSurveySchedulingJob(surveySchedulingJobData);
-
-    expect(job).toBe(mockJob);
-    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.surveyScheduling, surveySchedulingJobData, undefined);
-  });
-
   test("enqueues the workflow run job with a deterministic jobId and the shared retry policy", async () => {
     const mockJob = { id: "job-workflow-run-1" };
     mockQueueAdd.mockResolvedValue(mockJob);
@@ -194,23 +180,6 @@ describe("@formbricks/jobs queue helpers", () => {
     // defaultJobOptions (retries are safe now that execution is idempotent per step — ENG-1228).
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, {
       jobId: workflowRunJobData.workflowRunId,
-    });
-  });
-
-  test("exposes an engine-neutral producer interface", async () => {
-    const producer = getBackgroundJobProducer();
-    mockQueueAdd.mockResolvedValue({
-      id: "job-2",
-      name: JOB_NAMES.testLog,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const job = await producer.enqueueTestLog({ message: "hello interface" });
-
-    expect(job).toEqual({
-      jobId: "job-2",
-      jobName: JOB_NAMES.testLog,
-      queueName: JOBS_QUEUE_NAME,
     });
   });
 
@@ -244,32 +213,6 @@ describe("@formbricks/jobs queue helpers", () => {
       { message: "hello delayed world" },
       { delay: 5000 }
     );
-  });
-
-  test("schedules a delayed response pipeline job", async () => {
-    mockQueueAdd.mockResolvedValue({ id: "job-response-2" });
-
-    await scheduleResponsePipelineJobAt(
-      { runAt: new Date("2026-04-07T10:00:05.000Z") },
-      responsePipelineJobData
-    );
-
-    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.responsePipeline, responsePipelineJobData, {
-      delay: 5000,
-    });
-  });
-
-  test("schedules a delayed survey scheduling job", async () => {
-    mockQueueAdd.mockResolvedValue({ id: "job-scheduling-2" });
-
-    await scheduleSurveySchedulingJobAt(
-      { runAt: new Date("2026-04-07T10:00:05.000Z") },
-      surveySchedulingJobData
-    );
-
-    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.surveyScheduling, surveySchedulingJobData, {
-      delay: 5000,
-    });
   });
 
   test("upserts a recurring scheduler using engine-neutral schedule types", async () => {
@@ -357,186 +300,6 @@ describe("@formbricks/jobs queue helpers", () => {
     );
   });
 
-  test("exposes workflow run reconcile scheduling through the engine-neutral producer interface", async () => {
-    const producer = getBackgroundJobProducer();
-    mockQueueUpsertJobScheduler.mockResolvedValue({
-      id: "job-reconcile-2",
-      name: JOB_NAMES.workflowRunReconcile,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const schedule = await producer.upsertRecurringWorkflowRunReconcileSchedule(
-      { scheduleId: "workflow-run-reconcile", scope: "global" },
-      { everyMs: 180_000, kind: "every" },
-      { scope: "global" }
-    );
-
-    expect(schedule).toEqual({
-      jobId: "job-reconcile-2",
-      jobName: JOB_NAMES.workflowRunReconcile,
-      queueName: JOBS_QUEUE_NAME,
-      scheduleId: "workflow-run-reconcile",
-      scope: "global",
-    });
-  });
-
-  test("exposes scheduling through the engine-neutral producer interface", async () => {
-    const producer = getBackgroundJobProducer();
-    mockQueueUpsertJobScheduler.mockResolvedValue({
-      id: "job-5",
-      name: JOB_NAMES.testLog,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const job = await producer.upsertRecurringTestLogSchedule(
-      {
-        scheduleId: "interface-recurring",
-        scope: "organization_123",
-      },
-      {
-        everyMs: 60_000,
-        kind: "every",
-      },
-      { message: "hello scheduled interface" }
-    );
-
-    expect(job).toEqual({
-      jobId: "job-5",
-      jobName: JOB_NAMES.testLog,
-      queueName: JOBS_QUEUE_NAME,
-      scheduleId: "interface-recurring",
-      scope: "organization_123",
-    });
-  });
-
-  test("exposes response pipeline scheduling through the engine-neutral producer interface", async () => {
-    const producer = getBackgroundJobProducer();
-    mockQueueAdd.mockResolvedValue({
-      id: "job-6",
-      name: JOB_NAMES.responsePipeline,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const scheduledJob = await producer.scheduleResponsePipelineAt(
-      { runAt: new Date("2026-04-07T10:00:05.000Z") },
-      responsePipelineJobData
-    );
-
-    expect(scheduledJob).toEqual({
-      jobId: "job-6",
-      jobName: JOB_NAMES.responsePipeline,
-      queueName: JOBS_QUEUE_NAME,
-    });
-  });
-
-  test("exposes survey scheduling through the engine-neutral producer interface", async () => {
-    const producer = getBackgroundJobProducer();
-    mockQueueAdd.mockResolvedValue({
-      id: "job-6c",
-      name: JOB_NAMES.surveyScheduling,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const scheduledJob = await producer.scheduleSurveySchedulingAt(
-      { runAt: new Date("2026-04-07T10:00:05.000Z") },
-      surveySchedulingJobData
-    );
-
-    expect(scheduledJob).toEqual({
-      jobId: "job-6c",
-      jobName: JOB_NAMES.surveyScheduling,
-      queueName: JOBS_QUEUE_NAME,
-    });
-  });
-
-  test("exposes test log scheduling through the engine-neutral producer interface", async () => {
-    const producer = getBackgroundJobProducer();
-    mockQueueAdd.mockResolvedValue({
-      id: "job-6b",
-      name: JOB_NAMES.testLog,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const scheduledJob = await producer.scheduleTestLogAt(
-      { runAt: new Date("2026-04-07T10:00:05.000Z") },
-      { message: "scheduled through producer" }
-    );
-
-    expect(scheduledJob).toEqual({
-      jobId: "job-6b",
-      jobName: JOB_NAMES.testLog,
-      queueName: JOBS_QUEUE_NAME,
-    });
-  });
-
-  test("upserts recurring response pipeline schedules", async () => {
-    mockQueueUpsertJobScheduler.mockResolvedValue({
-      id: "job-7",
-      name: JOB_NAMES.responsePipeline,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const scheduledJob = await upsertRecurringResponsePipelineJobSchedule(
-      {
-        scheduleId: "response-pipeline-recurring",
-        scope: "environment_123",
-      },
-      {
-        everyMs: 60_000,
-        kind: "every",
-      },
-      responsePipelineJobData
-    );
-
-    expect(mockQueueUpsertJobScheduler).toHaveBeenCalledWith(
-      getRecurringJobSchedulerId(JOB_NAMES.responsePipeline, {
-        scheduleId: "response-pipeline-recurring",
-        scope: "environment_123",
-      }),
-      {
-        endDate: undefined,
-        every: 60_000,
-        limit: undefined,
-        startDate: undefined,
-      },
-      {
-        data: responsePipelineJobData,
-        name: JOB_NAMES.responsePipeline,
-        opts: JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
-      }
-    );
-    expect(scheduledJob.id).toBe("job-7");
-  });
-
-  test("exposes recurring response pipeline scheduling through the engine-neutral producer interface", async () => {
-    const producer = getBackgroundJobProducer();
-    mockQueueUpsertJobScheduler.mockResolvedValue({
-      id: "job-7b",
-      name: JOB_NAMES.responsePipeline,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const scheduledJob = await producer.upsertRecurringResponsePipelineSchedule(
-      {
-        scheduleId: "response-pipeline-recurring-producer",
-        scope: "environment_123",
-      },
-      {
-        everyMs: 60_000,
-        kind: "every",
-      },
-      responsePipelineJobData
-    );
-
-    expect(scheduledJob).toEqual({
-      jobId: "job-7b",
-      jobName: JOB_NAMES.responsePipeline,
-      queueName: JOBS_QUEUE_NAME,
-      scheduleId: "response-pipeline-recurring-producer",
-      scope: "environment_123",
-    });
-  });
-
   test("upserts recurring survey scheduling schedules", async () => {
     mockQueueUpsertJobScheduler.mockResolvedValue({
       id: "job-7c",
@@ -596,46 +359,16 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(removed).toBe(true);
   });
 
-  test("exposes recurring survey scheduling through the engine-neutral producer interface", async () => {
-    const producer = getBackgroundJobProducer();
-    mockQueueUpsertJobScheduler.mockResolvedValue({
-      id: "job-7d",
-      name: JOB_NAMES.surveyScheduling,
-      queueName: JOBS_QUEUE_NAME,
-    });
-
-    const scheduledJob = await producer.upsertRecurringSurveySchedulingSchedule(
-      {
-        scheduleId: "daily-survey-scheduling",
-        scope: "global",
-      },
-      {
-        cronPattern: "0 0 * * *",
-        kind: "cron",
-        timeZone: "Etc/GMT-1",
-      },
-      surveySchedulingJobData
-    );
-
-    expect(scheduledJob).toEqual({
-      jobId: "job-7d",
-      jobName: JOB_NAMES.surveyScheduling,
-      queueName: JOBS_QUEUE_NAME,
-      scheduleId: "daily-survey-scheduling",
-      scope: "global",
-    });
-  });
-
   test("rejects engine-neutral enqueues when BullMQ returns a job without an id", async () => {
     const producer = getBackgroundJobProducer();
     mockQueueAdd.mockResolvedValue({
       id: undefined,
-      name: JOB_NAMES.testLog,
+      name: JOB_NAMES.responsePipeline,
       queueName: JOBS_QUEUE_NAME,
     });
 
-    await expect(producer.enqueueTestLog({ message: "missing id" })).rejects.toThrow(
-      "Missing BullMQ job.id in toEnqueuedJob for jobName=system.test-log"
+    await expect(producer.enqueueResponsePipeline(responsePipelineJobData)).rejects.toThrow(
+      "Missing BullMQ job.id in toEnqueuedJob for jobName=response-pipeline.process"
     );
   });
 
