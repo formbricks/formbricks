@@ -3,6 +3,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { AI_TRACING_FEATURE } from "@/lib/posthog";
 import { type TV3SurveyPrepareResult, prepareV3SurveyCreateInput } from "../prepare";
 import { DEFAULT_V3_SURVEY_LANGUAGE, type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "../schemas";
 import {
@@ -377,6 +378,8 @@ function serializeValidation(
 
 export async function generateV3SurveyCreatePayloadFromPrompt(params: {
   organizationId: string;
+  workspaceId: string;
+  userId?: string | null;
   input: TV3SurveyGenerateBody;
 }): Promise<TV3SurveyGenerateResult> {
   const invalidParams = getPromptInvalidParams(params.input.prompt);
@@ -387,6 +390,13 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
 
   const generation = await generateOrganizationAIObject({
     organizationId: params.organizationId,
+    aiTracing: params.userId
+      ? {
+          distinctId: params.userId,
+          feature: AI_TRACING_FEATURE.SurveyGeneration,
+          workspaceId: params.workspaceId,
+        }
+      : undefined,
     schema: ZGeneratedSurveyDraftForAI,
     schemaName: "FormbricksSurveyDraft",
     schemaDescription: "A concise Formbricks survey draft that can be converted to a v3 create payload.",

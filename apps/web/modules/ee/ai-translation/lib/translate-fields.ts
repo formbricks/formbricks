@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { AI_TRACING_FEATURE } from "@/lib/posthog";
 
 export const ZAITranslationField = z.object({
   path: z.string(),
@@ -18,6 +19,8 @@ const AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD = 160;
 
 interface TranslateFieldsInput {
   organizationId: string;
+  workspaceId: string;
+  userId: string;
   fields: TAITranslationField[];
   sourceLanguage: string;
   targetLanguage: string;
@@ -25,6 +28,8 @@ interface TranslateFieldsInput {
 
 export const translateFields = async ({
   organizationId,
+  workspaceId,
+  userId,
   fields,
   sourceLanguage,
   targetLanguage,
@@ -74,6 +79,7 @@ Rules:
 
   const result = await generateOrganizationAIObject({
     organizationId,
+    aiTracing: { distinctId: userId, feature: AI_TRACING_FEATURE.Translation, workspaceId },
     schema,
     system: systemPrompt,
     prompt: userPayload,

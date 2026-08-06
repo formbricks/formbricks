@@ -192,7 +192,12 @@ export const generateExampleResponsesAction = authenticatedActionClient
       );
     }
 
-    const generatedDataset = await generateExampleResponseDataset({ survey, organizationId });
+    const generatedDataset = await generateExampleResponseDataset({
+      survey,
+      organizationId,
+      workspaceId,
+      userId: ctx.user.id,
+    });
     if (generatedDataset.responses.length === 0) {
       throw new InvalidInputError(
         "This survey doesn't contain any question types we can synthesize answers for yet."

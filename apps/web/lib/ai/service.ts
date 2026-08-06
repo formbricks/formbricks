@@ -1,6 +1,7 @@
 import "server-only";
 import {
   AIConfigurationError,
+  type AIResolvedLanguageModel,
   type TGenerateObjectOptions,
   type TGenerateObjectResult,
   classifyAIProviderError,
@@ -16,6 +17,7 @@ import {
 } from "@formbricks/types/errors";
 import { env } from "@/lib/env";
 import { getOrganization } from "@/lib/organization/service";
+import { type AITracingContext, wrapAiModelWithTracing } from "@/lib/posthog";
 import { getIsAISmartToolsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const AI_ERROR_CODES = {
@@ -86,16 +88,22 @@ export const assertOrganizationAIConfigured = async (
 
 type TGenerateOrganizationAITextInput = {
   organizationId: string;
+  aiTracing?: Omit<AITracingContext, "organizationId">;
 } & Parameters<typeof generateText>[0];
 
 export const generateOrganizationAIText = async ({
   organizationId,
+  aiTracing,
   ...options
 }: TGenerateOrganizationAITextInput): Promise<Awaited<ReturnType<typeof generateText>>> => {
   const aiConfig = await assertOrganizationAIConfigured(organizationId);
 
+  const wrapModel = aiTracing
+    ? (model: AIResolvedLanguageModel) => wrapAiModelWithTracing(model, { organizationId, ...aiTracing })
+    : undefined;
+
   try {
-    return await generateText(options, env);
+    return await generateText(options, env, wrapModel);
   } catch (error) {
     const providerError = classifyAIProviderError(error);
     logger.error(
@@ -119,16 +127,22 @@ export const generateOrganizationAIText = async ({
 
 type TGenerateOrganizationAIObjectInput<T = unknown> = {
   organizationId: string;
+  aiTracing?: Omit<AITracingContext, "organizationId">;
 } & TGenerateObjectOptions<T>;
 
 export const generateOrganizationAIObject = async <T = unknown>({
   organizationId,
+  aiTracing,
   ...options
 }: TGenerateOrganizationAIObjectInput<T>): Promise<TGenerateObjectResult<T>> => {
   const aiConfig = await assertOrganizationAIConfigured(organizationId);
 
+  const wrapModel = aiTracing
+    ? (model: AIResolvedLanguageModel) => wrapAiModelWithTracing(model, { organizationId, ...aiTracing })
+    : undefined;
+
   try {
-    return await generateObject<T>(options, env);
+    return await generateObject<T>(options, env, wrapModel);
   } catch (error) {
     const providerError = classifyAIProviderError(error);
     logger.error(

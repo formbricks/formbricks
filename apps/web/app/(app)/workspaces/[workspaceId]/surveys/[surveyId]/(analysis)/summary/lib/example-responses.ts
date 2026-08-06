@@ -1,5 +1,5 @@
 import "server-only";
-import { randomInt } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { type TResponseData, type TResponseInput, type TResponseTtc } from "@formbricks/types/responses";
@@ -7,6 +7,7 @@ import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/s
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { AI_TRACING_FEATURE } from "@/lib/posthog";
 
 export const EXAMPLE_RESPONSE_COUNT = 20;
 // Impression-only displays simulate respondents who saw the survey but didn't
@@ -503,6 +504,8 @@ Example output shape:
 export type TGenerateExampleResponsesArgs = {
   survey: TSurvey;
   organizationId: string;
+  workspaceId: string;
+  userId: string;
 };
 
 export type TGeneratedExampleResponse = {
@@ -928,6 +931,9 @@ const buildFallbackOpenTextAnswer = (
 const fillOpenTextAnswers = async (
   survey: TSurvey,
   organizationId: string,
+  workspaceId: string,
+  userId: string,
+  traceId: string,
   planRows: TExampleResponsePlanRow[]
 ): Promise<TExampleResponsePlanRow[]> => {
   const rowsNeedingText = planRows.filter((row) => row.openTextElementIds.length > 0);
@@ -940,6 +946,7 @@ const fillOpenTextAnswers = async (
     try {
       const result = await generateOrganizationAIObject<TOpenTextAIResult>({
         organizationId,
+        aiTracing: { distinctId: userId, feature: AI_TRACING_FEATURE.ExampleResponses, workspaceId, traceId },
         schema: buildOpenTextResponsesSchema() as z.ZodType<TOpenTextAIResult>,
         system: SYSTEM_PROMPT,
         prompt: `Write one short answer for each requestedOpenTextAnswers entry in every row below. Every requested elementId must map to a non-empty string in your output. Stay grounded in the actual question headline for each elementId.
@@ -1010,13 +1017,25 @@ const toGeneratedResponse = (row: TExampleResponsePlanRow): TGeneratedExampleRes
 export const generateExampleResponseDataset = async ({
   survey,
   organizationId,
+  workspaceId,
+  userId,
 }: TGenerateExampleResponsesArgs): Promise<TGeneratedExampleDataset> => {
   const planRows = buildExampleResponsePlan(survey);
   if (planRows.length === 0) {
     return { responses: [], displays: [], tagName: EXAMPLE_AI_GENERATED_TAG_NAME };
   }
 
-  const rowsWithText = await fillOpenTextAnswers(survey, organizationId, planRows);
+  // Shared across every chunked AI call below so PostHog groups them under one
+  // $ai_trace per "Generate examples" click instead of N disconnected traces.
+  const traceId = randomUUID();
+  const rowsWithText = await fillOpenTextAnswers(
+    survey,
+    organizationId,
+    workspaceId,
+    userId,
+    traceId,
+    planRows
+  );
 
   return {
     responses: rowsWithText.map(toGeneratedResponse),
