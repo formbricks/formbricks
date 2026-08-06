@@ -177,7 +177,7 @@ Formbricks writes structured logs to stdout and stderr. Search the `msg` field f
 | `BullMQ recurring job registration failed`          | Recurring schedules could not be registered. Check Redis connectivity.                                      |
 | `BullMQ recurring job registration retry scheduled` | A recurring-schedule registration retry is pending for 30 seconds.                                          |
 | `BullMQ job failed`                                 | Inspect `jobName`, `jobId`, `attemptsMade`, and `err`. The job may retry until all three attempts are used. |
-| `Dropping BullMQ job with no registered processor`  | A schedule in Redis outlived the build that handles it — typically after a rollback to a version without that feature. The job is completed rather than retried, so it does not accumulate in the failed set. Redeploy the build that owns `jobName`, or remove the stale schedule from Redis. |
+| `Dropping BullMQ job with no registered processor: its schedule outlived the code that handled it` | A schedule in Redis outlived the build that handles it — typically after a rollback to a version without that feature. The job is completed rather than retried, so it does not accumulate in the failed set. Redeploy the build that owns `jobName`, or remove the stale schedule from Redis. |
 
 If background jobs stay queued:
 

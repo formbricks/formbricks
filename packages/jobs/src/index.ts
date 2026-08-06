@@ -22,6 +22,7 @@ export { processTestLogJob } from "./processors/test-log";
 export { processWorkflowRunJob } from "./processors/workflow-run";
 export { startJobsRuntime } from "./runtime";
 export type { JobsQueueHandle, RecurringJobHandle } from "./queue";
+export type { TRecurringJobKey } from "./recurring";
 export type { JobsRuntimeHandle, JobsRuntimeOptions } from "./runtime";
 export type { TRecurringBackgroundJobSchedule } from "./schedules";
 export {

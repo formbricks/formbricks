@@ -156,39 +156,40 @@ describe("BullMQ integration tests", () => {
   }, 15000);
 
   test("upserts a recurring schedule that actually produces jobs", async () => {
-    if (!isRedisAvailable) {
+    if (!isRedisAvailable || !runtime) {
       logger.info("Skipping BullMQ integration test: Redis not available");
       return;
     }
 
+    const { queue } = runtime;
     const debugSpy = vi.spyOn(logger, "debug");
+    const scope = "integration-tests";
     const message = `integration recurring ${Date.now().toString()}`;
     const scheduleId = `integration-recurring-${Date.now().toString()}`;
+    const schedulerId = getRecurringJobSchedulerId(JOB_NAMES.testLog, { scheduleId, scope });
 
-    const scheduledJob = await upsertRecurringTestLogJobSchedule(
-      {
-        scheduleId,
-        scope: "integration-tests",
-      },
-      {
-        everyMs: 200,
-        kind: "every",
-        limit: 2,
-      },
-      { message }
-    );
+    try {
+      const scheduledJob = await upsertRecurringTestLogJobSchedule(
+        { scheduleId, scope },
+        { everyMs: 200, kind: "every", limit: 2 },
+        { message }
+      );
 
-    await vi.waitFor(
-      () => {
-        const processorLogs = debugSpy.mock.calls.filter((call) => call[1] === message);
-        expect(processorLogs).toHaveLength(2);
-      },
-      { interval: 100, timeout: 10_000 }
-    );
+      await vi.waitFor(
+        () => {
+          const processorLogs = debugSpy.mock.calls.filter((call) => call[1] === message);
+          expect(processorLogs).toHaveLength(2);
+        },
+        { interval: 100, timeout: 10_000 }
+      );
 
-    expect(scheduledJob.name).toBe(JOB_NAMES.testLog);
-    expect(scheduledJob.queueName).toBe(JOBS_QUEUE_NAME);
-    expect(scheduledJob.id).toEqual(expect.any(String));
+      expect(scheduledJob.name).toBe(JOB_NAMES.testLog);
+      expect(scheduledJob.queueName).toBe(JOBS_QUEUE_NAME);
+      expect(scheduledJob.id).toEqual(expect.any(String));
+    } finally {
+      // Otherwise every run leaves a scheduler behind in the shared integration Redis.
+      await queue.removeJobScheduler(schedulerId);
+    }
   }, 15000);
 
   test("keeps producing work when a scheduler's repeat options change", async () => {
@@ -197,6 +198,7 @@ describe("BullMQ integration tests", () => {
       return;
     }
 
+    const { queue } = runtime;
     const scope = "integration-tests";
     const scheduleId = `integration-reupsert-${Date.now().toString()}`;
     const schedulerId = getRecurringJobSchedulerId(JOB_NAMES.testLog, { scheduleId, scope });
@@ -212,7 +214,7 @@ describe("BullMQ integration tests", () => {
     const expectExactlyOnePendingJob = async (): Promise<void> => {
       await vi.waitFor(
         async () => {
-          const pendingJobIds = await getPendingJobIdsForScheduler(runtime?.queue as Queue, schedulerId);
+          const pendingJobIds = await getPendingJobIdsForScheduler(queue, schedulerId);
           expect(pendingJobIds).toHaveLength(1);
         },
         { interval: 100, timeout: 5_000 }
@@ -231,10 +233,10 @@ describe("BullMQ integration tests", () => {
 
       await expectExactlyOnePendingJob();
 
-      const schedulers = await runtime.queue.getJobSchedulers();
+      const schedulers = await queue.getJobSchedulers();
       expect(schedulers.map((scheduler) => scheduler.key)).toContain(schedulerId);
     } finally {
-      await runtime.queue.removeJobScheduler(schedulerId);
+      await queue.removeJobScheduler(schedulerId);
     }
   }, 15000);
 });

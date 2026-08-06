@@ -5,6 +5,7 @@ import {
   type RecurringJobHandle,
   type TGlobalScopeJobData,
   type TRecurringBackgroundJobSchedule,
+  type TRecurringJobKey,
   type TResponsePipelineJobData,
   type TWorkflowRunJobData,
   recurringJobs,
@@ -45,18 +46,13 @@ interface RecurringJobRegistration {
  * The app's half of each recurring job: when it runs (env-derived timing) and what runs. The job name,
  * schedule identity and payload live with the declaration in `@formbricks/jobs`, so neither the name nor
  * the identity is ever spelled out here — which is what keeps the schedule and its handler in step.
+ *
+ * Keyed by `TRecurringJobKey` deliberately: declaring a new job in `recurringJobDescriptors` without
+ * adding it here is then a build error rather than a job that quietly never runs — its schedule would
+ * never be upserted and its handler never registered.
  */
-export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = [
-  {
-    handler: processSurveySchedulingJob,
-    job: recurringJobs.surveyScheduling,
-    schedule: {
-      cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
-      kind: "cron",
-      timeZone: SURVEY_SCHEDULING_TIME_ZONE,
-    },
-  },
-  {
+const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, RecurringJobRegistration> = {
+  surveyArchivePurge: {
     handler: processSurveyArchivePurgeJob,
     job: recurringJobs.surveyArchivePurge,
     schedule: {
@@ -65,7 +61,16 @@ export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = 
       timeZone: SURVEY_ARCHIVE_PURGE_TIME_ZONE,
     },
   },
-  {
+  surveyScheduling: {
+    handler: processSurveySchedulingJob,
+    job: recurringJobs.surveyScheduling,
+    schedule: {
+      cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
+      kind: "cron",
+      timeZone: SURVEY_SCHEDULING_TIME_ZONE,
+    },
+  },
+  workflowRunReconcile: {
     handler: processWorkflowRunReconcileJob,
     job: recurringJobs.workflowRunReconcile,
     schedule: {
@@ -73,7 +78,11 @@ export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = 
       kind: "every",
     },
   },
-];
+};
+
+export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = Object.values(
+  RECURRING_JOB_REGISTRATIONS_BY_KEY
+);
 
 /** Handler overrides for every job whose real implementation lives in this app. */
 export const getJobHandlerOverrides = (): JobHandlerOverrides => ({
