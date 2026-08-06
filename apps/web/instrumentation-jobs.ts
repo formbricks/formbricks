@@ -26,6 +26,13 @@ const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
  *
  * The remove-first this replaces was a reasonable workaround for bullmq#3378 — upsert not updating an
  * existing scheduler — which affected v5.56.9 and earlier. We are on 5.61.0, past that fix.
+ *
+ * Known trade-off, verified against a real Redis: upsert updates the scheduler's repeat options but
+ * leaves the run it has already queued alone, so a changed cron pattern or time zone takes effect from
+ * the *next* iteration — up to 24h later for the daily sweeps, 3 minutes for the reconciler. The
+ * remove-first moved that pending run immediately. That is the price of never leaving the schedule
+ * without a queued run, and it is the right way round: a config change landing one cycle late is
+ * recoverable, a schedule that silently stops firing is not.
  */
 const registerRecurringJobSchedules = async (): Promise<void> => {
   for (const registration of RECURRING_JOB_REGISTRATIONS) {
