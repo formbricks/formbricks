@@ -7,6 +7,7 @@ import {
   DATE_FILTER_PARAM,
   DATE_FILTER_TO_PARAM,
   applyDashboardDateFilter,
+  deserializeStoredDateFilter,
   parseDashboardDateFilter,
 } from "./dashboard-date-filter";
 
@@ -147,5 +148,85 @@ describe("parseDashboardDateFilter", () => {
       type: "preset",
       value: "last 7 days",
     });
+  });
+
+  test("rejects a custom range with an impossible calendar date", () => {
+    expect(
+      parseDashboardDateFilter({
+        [DATE_FILTER_PARAM]: CUSTOM_VALUE,
+        [DATE_FILTER_FROM_PARAM]: "2026-02-30",
+        [DATE_FILTER_TO_PARAM]: "2026-03-01",
+      })
+    ).toBeNull();
+  });
+
+  test("rejects a custom range where from is after to", () => {
+    expect(
+      parseDashboardDateFilter({
+        [DATE_FILTER_PARAM]: CUSTOM_VALUE,
+        [DATE_FILTER_FROM_PARAM]: "2026-01-31",
+        [DATE_FILTER_TO_PARAM]: "2026-01-01",
+      })
+    ).toBeNull();
+  });
+
+  test("accepts a custom range with equal from and to", () => {
+    expect(
+      parseDashboardDateFilter({
+        [DATE_FILTER_PARAM]: CUSTOM_VALUE,
+        [DATE_FILTER_FROM_PARAM]: "2026-01-15",
+        [DATE_FILTER_TO_PARAM]: "2026-01-15",
+      })
+    ).toEqual({ type: "custom", range: ["2026-01-15", "2026-01-15"] });
+  });
+});
+
+describe("deserializeStoredDateFilter", () => {
+  test("returns null for null, empty, or malformed JSON", () => {
+    expect(deserializeStoredDateFilter(null)).toBeNull();
+    expect(deserializeStoredDateFilter("")).toBeNull();
+    expect(deserializeStoredDateFilter("{not json")).toBeNull();
+    expect(deserializeStoredDateFilter('"a string"')).toBeNull();
+    expect(deserializeStoredDateFilter("42")).toBeNull();
+  });
+
+  test("parses an all-time filter", () => {
+    expect(deserializeStoredDateFilter(JSON.stringify({ type: "all-time" }))).toEqual({
+      type: "all-time",
+    });
+  });
+
+  test("parses a valid preset and rejects an unknown one", () => {
+    expect(deserializeStoredDateFilter(JSON.stringify({ type: "preset", value: "last 7 days" }))).toEqual({
+      type: "preset",
+      value: "last 7 days",
+    });
+    expect(deserializeStoredDateFilter(JSON.stringify({ type: "preset", value: "last 3 eons" }))).toBeNull();
+  });
+
+  test("parses a valid custom range and rejects malformed dates", () => {
+    expect(
+      deserializeStoredDateFilter(JSON.stringify({ type: "custom", range: ["2026-01-01", "2026-01-31"] }))
+    ).toEqual({ type: "custom", range: ["2026-01-01", "2026-01-31"] });
+    expect(
+      deserializeStoredDateFilter(JSON.stringify({ type: "custom", range: ["2026/01/01", "2026-01-31"] }))
+    ).toBeNull();
+    expect(deserializeStoredDateFilter(JSON.stringify({ type: "custom", range: ["2026-01-01"] }))).toBeNull();
+  });
+
+  test("rejects an unknown filter type", () => {
+    expect(deserializeStoredDateFilter(JSON.stringify({ type: "rolling", value: "x" }))).toBeNull();
+  });
+
+  test("rejects an impossible calendar date", () => {
+    expect(
+      deserializeStoredDateFilter(JSON.stringify({ type: "custom", range: ["2026-02-30", "2026-03-01"] }))
+    ).toBeNull();
+  });
+
+  test("rejects an inverted range", () => {
+    expect(
+      deserializeStoredDateFilter(JSON.stringify({ type: "custom", range: ["2026-01-31", "2026-01-01"] }))
+    ).toBeNull();
   });
 });

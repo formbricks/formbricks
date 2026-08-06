@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, memo, useCallback, useMemo, useState, useTransition } from "react";
+import { Suspense, memo, useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { ResponsiveGridLayout, useContainerWidth, verticalCompactor } from "react-grid-layout";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -25,6 +25,8 @@ import {
   DATE_FILTER_PARAM,
   DATE_FILTER_TO_PARAM,
   type TDashboardDateFilter,
+  readStoredDateFilter,
+  writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
@@ -400,8 +402,8 @@ export function DashboardDetailClient({
     }
   }, [name, widgets, dashboard, workspaceId, router, t, startTransition]);
 
-  const handleDateFilterChange = useCallback(
-    (filter: TDashboardDateFilter | null) => {
+  const applyDateFilterToUrl = useCallback(
+    (filter: TDashboardDateFilter | null, options?: { replace?: boolean }) => {
       const params = new URLSearchParams(searchParams.toString());
       params.delete(DATE_FILTER_PARAM);
       params.delete(DATE_FILTER_FROM_PARAM);
@@ -418,12 +420,45 @@ export function DashboardDetailClient({
       }
 
       const queryString = params.toString();
-      router.push(queryString ? `${pathname}?${queryString}` : pathname);
+      const url = queryString ? `${pathname}?${queryString}` : pathname;
+      if (options?.replace) {
+        router.replace(url);
+      } else {
+        router.push(url);
+      }
     },
     [pathname, router, searchParams]
   );
 
+  const handleDateFilterChange = useCallback(
+    (filter: TDashboardDateFilter | null) => {
+      // Persist the choice so it survives across sessions, then reflect it in the URL (the
+      // server reads the URL params to fetch each chart's data).
+      writeStoredDateFilter(dashboard.id, filter);
+      applyDateFilterToUrl(filter);
+    },
+    [applyDateFilterToUrl, dashboard.id]
+  );
+
   const isEmpty = widgets.length === 0;
+
+  // Restore the persisted date filter on load when the URL doesn't already pin one, so the last
+  // chosen range carries across sessions. When the URL does pin a filter (shared link, in-app
+  // navigation) that wins and we keep storage in sync with it. Skipped on empty dashboards, which
+  // hide the filter and have nothing to apply it to.
+  useEffect(() => {
+    if (isEmpty) return;
+
+    if (searchParams.get(DATE_FILTER_PARAM) !== null) {
+      writeStoredDateFilter(dashboard.id, dateFilter);
+      return;
+    }
+
+    const stored = readStoredDateFilter(dashboard.id);
+    if (stored) {
+      applyDateFilterToUrl(stored, { replace: true });
+    }
+  }, [isEmpty, searchParams, dashboard.id, dateFilter, applyDateFilterToUrl]);
 
   return (
     <PageContentWrapper>
@@ -452,7 +487,9 @@ export function DashboardDetailClient({
         }
       />
 
-      {!isEditing && (
+      {/* The date range only filters existing charts, so hide it on an empty dashboard where it
+          would have nothing to act on. */}
+      {!isEditing && !isEmpty && (
         <div className="flex flex-wrap items-center gap-2">
           <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />
         </div>
@@ -471,6 +508,10 @@ export function DashboardDetailClient({
                 cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
                 rowHeight={ROW_HEIGHT}
                 margin={[16, 16]}
+                // Keep 16px only between items; drop the default container padding (which mirrors
+                // margin) so the grid sits flush with the container's left/top edge, aligned with
+                // the date filter above instead of inset from it.
+                containerPadding={[0, 0]}
                 dragConfig={{
                   enabled: isEditing,
                   handle: ".rgl-drag-handle",

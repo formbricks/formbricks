@@ -5,14 +5,29 @@ import { DASHBOARD_DATE_PRESETS } from "@/modules/ee/analysis/lib/date-presets";
 // specified by ENG-1553. Other time dimensions (e.g. createdAt) are left untouched.
 export const COLLECTED_AT_DIMENSION = "FeedbackRecords.collectedAt";
 
-// URL search-param keys + reserved values for the dashboard date filter.
+// URL search-param keys + reserved values for the dashboard date filter. The custom-range keys are
+// namespaced so toggling the filter never clears unrelated `from`/`to` params owned by other UI.
 export const DATE_FILTER_PARAM = "dateRange";
-export const DATE_FILTER_FROM_PARAM = "from";
-export const DATE_FILTER_TO_PARAM = "to";
+export const DATE_FILTER_FROM_PARAM = "dateRangeFrom";
+export const DATE_FILTER_TO_PARAM = "dateRangeTo";
 export const ALL_TIME_VALUE = "all time";
 export const CUSTOM_VALUE = "custom";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+// ISO_DATE only checks the shape, so "2026-02-30" slips through. Reconstruct the date in UTC and
+// confirm every component round-trips to reject impossible calendar dates.
+const isRealIsoDate = (value: string): boolean => {
+  if (!ISO_DATE.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+};
+
+// A valid custom range needs two real dates in chronological order. ISO date strings compare
+// lexicographically the same as chronologically, so a plain string comparison is enough.
+const isValidCustomRange = (from: string, to: string): boolean =>
+  isRealIsoDate(from) && isRealIsoDate(to) && from <= to;
 
 export type TDashboardDateFilter =
   | { type: "preset"; value: string }
@@ -78,7 +93,7 @@ export const parseDashboardDateFilter = (
     const toRaw = searchParams[DATE_FILTER_TO_PARAM];
     const from = Array.isArray(fromRaw) ? fromRaw[0] : fromRaw;
     const to = Array.isArray(toRaw) ? toRaw[0] : toRaw;
-    if (from && to && ISO_DATE.test(from) && ISO_DATE.test(to)) {
+    if (from && to && isValidCustomRange(from, to)) {
       return { type: "custom", range: [from, to] };
     }
     return null;
@@ -89,4 +104,78 @@ export const parseDashboardDateFilter = (
   }
 
   return null;
+};
+
+// localStorage key for the persisted dashboard date filter. Scoped per dashboard so a custom range
+// on one dashboard does not leak into another.
+export const getDateFilterStorageKey = (dashboardId: string): string =>
+  `formbricks:dashboard-date-filter:${dashboardId}`;
+
+/**
+ * Validate a JSON string read from localStorage back into a TDashboardDateFilter. Returns null for
+ * missing, malformed, or stale values (e.g. a preset that no longer exists), so a bad stored value
+ * simply falls back to the default instead of throwing.
+ */
+export const deserializeStoredDateFilter = (raw: string | null): TDashboardDateFilter | null => {
+  if (!raw) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+
+  const filter = parsed as Record<string, unknown>;
+
+  if (filter.type === "all-time") return { type: "all-time" };
+
+  if (
+    filter.type === "preset" &&
+    typeof filter.value === "string" &&
+    (DASHBOARD_DATE_PRESETS as readonly string[]).includes(filter.value)
+  ) {
+    return { type: "preset", value: filter.value };
+  }
+
+  if (filter.type === "custom" && Array.isArray(filter.range) && filter.range.length === 2) {
+    const [from, to] = filter.range;
+    if (typeof from === "string" && typeof to === "string" && isValidCustomRange(from, to)) {
+      return { type: "custom", range: [from, to] };
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Read the persisted dashboard date filter from localStorage. Client-only and defensive: returns
+ * null during SSR or when storage is unavailable/blocked.
+ */
+export const readStoredDateFilter = (dashboardId: string): TDashboardDateFilter | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    return deserializeStoredDateFilter(window.localStorage.getItem(getDateFilterStorageKey(dashboardId)));
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Persist (or clear, when null) the dashboard date filter in localStorage. Client-only and
+ * defensive: no-ops during SSR or when storage is unavailable (private mode, quota, disabled).
+ */
+export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDateFilter | null): void => {
+  if (typeof window === "undefined") return;
+  try {
+    const key = getDateFilterStorageKey(dashboardId);
+    if (filter) {
+      window.localStorage.setItem(key, JSON.stringify(filter));
+    } else {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // Ignore storage failures (private mode, quota exceeded); persistence is best-effort.
+  }
 };

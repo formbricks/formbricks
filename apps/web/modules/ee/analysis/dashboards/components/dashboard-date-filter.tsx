@@ -2,9 +2,10 @@
 
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import { useTranslation } from "react-i18next";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { DASHBOARD_DATE_PRESETS } from "@/modules/ee/analysis/lib/date-presets";
 import { getTranslatedDatePresetLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import { Button } from "@/modules/ui/components/button";
@@ -25,7 +26,8 @@ interface DashboardDateFilterProps {
 }
 
 export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateFilterProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? "en-US";
 
   const [isCustomMode, setIsCustomMode] = useState(value?.type === "custom");
   const [customStart, setCustomStart] = useState<Date | null>(
@@ -34,6 +36,19 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
   const [customEnd, setCustomEnd] = useState<Date | null>(
     value?.type === "custom" ? new Date(value.range[1]) : null
   );
+
+  // Query-only navigation (back/forward, or restoring a persisted filter) keeps this component
+  // mounted, so re-sync the local custom-range state whenever the incoming value changes to keep
+  // the UI aligned with the URL rather than showing stale bounds.
+  useEffect(() => {
+    if (value?.type === "custom") {
+      setIsCustomMode(true);
+      setCustomStart(new Date(value.range[0]));
+      setCustomEnd(new Date(value.range[1]));
+    } else {
+      setIsCustomMode(false);
+    }
+  }, [value]);
 
   const selectValue = (() => {
     if (isCustomMode || value?.type === "custom") return CUSTOM_VALUE;
@@ -90,7 +105,7 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
               <Button variant="outline" className="justify-start bg-white text-left font-normal">
                 <CalendarIcon className="mr-2 size-4" />
                 {customStart
-                  ? format(customStart, "MMM dd, yyyy")
+                  ? formatDateForDisplay(customStart, locale)
                   : t("workspace.analysis.charts.start_date")}
               </Button>
             </PopoverTrigger>
@@ -110,7 +125,9 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
             <PopoverTrigger asChild>
               <Button variant="outline" className="justify-start bg-white text-left font-normal">
                 <CalendarIcon className="mr-2 size-4" />
-                {customEnd ? format(customEnd, "MMM dd, yyyy") : t("workspace.analysis.charts.end_date")}
+                {customEnd
+                  ? formatDateForDisplay(customEnd, locale)
+                  : t("workspace.analysis.charts.end_date")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
