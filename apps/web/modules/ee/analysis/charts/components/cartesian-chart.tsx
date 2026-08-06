@@ -33,32 +33,47 @@ export interface CartesianChartProps {
   tooltipHideLabel?: boolean;
 }
 
-/** Max width (px) a single x-axis label may occupy before wrapping. Keeps long question labels
- * from bleeding into neighbouring data points. */
-const X_AXIS_TICK_WIDTH = 140;
-/** Vertical space reserved for the (wrapped, up to 3-line) x-axis labels. */
-const X_AXIS_HEIGHT = 56;
+/** Upper bound (px) on a single x-axis label before wrapping. Keeps long question labels from
+ * bleeding into neighbouring data points on charts with few categories. */
+const X_AXIS_TICK_MAX_WIDTH = 140;
+/** Lower bound (px) so a label keeps a little room to wrap even on very dense axes. Below the band
+ * width the label narrows to fit rather than overlapping its neighbours. */
+const X_AXIS_TICK_MIN_WIDTH = 32;
+/** Horizontal gap (px) reserved between adjacent labels so wrapped text never touches. */
+const X_AXIS_TICK_GAP = 8;
+/** Vertical space reserved for the x-axis labels: enough for 3 wrapped lines of `text-xs`
+ * (~15px each) plus the tick margin and top offset below the axis, so the third line is not
+ * clipped by the plot's bottom edge. */
+const X_AXIS_HEIGHT = 72;
 
 /** Recharts renders default ticks as SVG `<text>`, which cannot wrap. This custom tick uses a
- * `foreignObject` so long labels (e.g. full survey questions) wrap within a fixed max-width,
- * stay centred under their data point, and clamp to 3 lines with the full text on hover. */
+ * `foreignObject` so long labels (e.g. full survey questions) wrap within a max-width, stay centred
+ * under their data point, and clamp to 3 lines with the full text on hover. The width is derived
+ * from the per-category band (`width / visibleTicksCount`, both injected by Recharts' CartesianAxis)
+ * so labels shrink to fit as categories are added instead of overlapping each other. */
 function WrappingXAxisTick({
   x,
   y,
   payload,
   formatter,
+  width,
+  visibleTicksCount,
 }: Readonly<{
   x?: number;
   y?: number;
   payload?: { value?: unknown };
   formatter: (value: unknown) => string;
+  width?: number;
+  visibleTicksCount?: number;
 }>) {
   const label = formatter(payload?.value);
+  const band = width && visibleTicksCount ? width / visibleTicksCount : X_AXIS_TICK_MAX_WIDTH;
+  const tickWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, Math.max(X_AXIS_TICK_MIN_WIDTH, band - X_AXIS_TICK_GAP));
   return (
     <foreignObject
-      x={(x ?? 0) - X_AXIS_TICK_WIDTH / 2}
+      x={(x ?? 0) - tickWidth / 2}
       y={(y ?? 0) + 4}
-      width={X_AXIS_TICK_WIDTH}
+      width={tickWidth}
       height={X_AXIS_HEIGHT}
       // Let the tooltip cursor win the pointer; the label is decorative.
       style={{ overflow: "visible", pointerEvents: "none" }}>
