@@ -3,7 +3,7 @@
 import { type ElementType, type ReactNode } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import { formatXAxisTick } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
+import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip } from "@/modules/ui/components/chart";
@@ -31,6 +31,10 @@ export interface CartesianChartProps {
    * measure charts keep their category axis but hide the header, since each tooltip row already
    * carries the measure label and a header would just repeat it. */
   tooltipHideLabel?: boolean;
+  /** Precomputed Y-axis scale, used in place of deriving one from `data`/`dataKeys`. Measure-pivot
+   * charts render values under a synthetic key (PIVOTED_VALUE_KEY) that carries no measure id, so
+   * they resolve the fixed-scale axis from the original measure columns and pass it here (ENG-2226). */
+  yAxisScale?: YAxisScale;
 }
 
 /** Upper bound (px) on a single x-axis label before wrapping. Keeps long question labels from
@@ -75,8 +79,9 @@ function WrappingXAxisTick({
       y={(y ?? 0) + 4}
       width={tickWidth}
       height={X_AXIS_HEIGHT}
-      // Let the tooltip cursor win the pointer; the label is decorative.
-      style={{ overflow: "visible", pointerEvents: "none" }}>
+      // Keep the label hit-testable so the `title` full-text tooltip works on hover. The tick sits
+      // in the axis band below the plot, so this doesn't intercept hover over the bars/points.
+      style={{ overflow: "visible" }}>
       <div
         title={label}
         className="text-muted-foreground line-clamp-3 text-center text-xs leading-tight"
@@ -101,8 +106,9 @@ export function CartesianChart({
   xAxisTickFormatter,
   hasCategoryAxis = true,
   tooltipHideLabel,
+  yAxisScale,
 }: Readonly<CartesianChartProps>) {
-  const yScale = computeYAxis(data, dataKeys, zeroBaseline);
+  const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
   const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
 
   return (

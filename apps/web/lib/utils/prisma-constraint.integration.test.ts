@@ -48,4 +48,25 @@ describe("getUniqueConstraintFields vs real Prisma 7 + adapter-pg (ENG-1801)", (
     // The adapter reports the DB column name (`token_hash`), not the Prisma field name (`tokenHash`).
     expect(getUniqueConstraintFields(error)).toEqual(["token_hash"]);
   });
+
+  test("unquotes camelCase columns, which Postgres quotes in the error DETAIL (ENG-2174)", async () => {
+    const organization = await prisma.organization.create({ data: { name: "ENG-2174 quoting" } });
+    await prisma.workspace.create({ data: { name: "Duplicate", organizationId: organization.id } });
+
+    const error = await prisma.workspace
+      .create({ data: { name: "Duplicate", organizationId: organization.id } })
+      .catch((e) => e);
+
+    expect(error?.code).toBe("P2002");
+    // The premise: Postgres quotes any identifier that is not all-lowercase, and the adapter
+    // regex-scrapes the DETAIL without unquoting — so the raw meta carries the quotes.
+    const rawFields = (
+      error?.meta as { driverAdapterError?: { cause?: { constraint?: { fields?: string[] } } } }
+    )?.driverAdapterError?.cause?.constraint?.fields;
+    expect(rawFields).toContain('"organizationId"');
+
+    // ...and the helper hands back usable Prisma field names. Note `name` is lowercase and therefore
+    // never quoted, which is why callers that only read fields[0] kept working by luck.
+    expect(getUniqueConstraintFields(error)).toEqual(["organizationId", "name"]);
+  });
 });

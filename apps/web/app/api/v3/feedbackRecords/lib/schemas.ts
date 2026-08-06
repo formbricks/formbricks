@@ -32,44 +32,48 @@ import { ZHubFieldType } from "@formbricks/types/feedback-source";
  */
 const ZFeedbackRecordFilterId = z.string().trim().min(1).max(255);
 
-export const ZV3FeedbackRecordFilters = z.object({
-  source_type: ZFeedbackRecordFilterId.optional().describe(
-    "Filter by feedback source type, e.g. survey, review, call_notes."
-  ),
-  source_id: ZFeedbackRecordFilterId.optional().describe(
-    "Filter by source id — the survey/form/ticket the feedback came from."
-  ),
-  field_type: ZHubFieldType.optional().describe("Filter by field type."),
-  field_id: ZFeedbackRecordFilterId.optional().describe("Filter by field id — all answers to one question."),
-  field_group_id: ZFeedbackRecordFilterId.optional().describe(
-    "Filter by field group id, which groups related fields of one question (ranking, matrix, grid)."
-  ),
-  submission_id: ZFeedbackRecordFilterId.optional().describe(
-    "Filter by submission id — the sibling records of one logical submission, i.e. the rest of the answers given at the same time."
-  ),
-  user_id: ZFeedbackRecordFilterId.optional().describe(
-    "Filter by end-user identifier — everything one person submitted."
-  ),
-  value_id: ZFeedbackRecordFilterId.optional().describe(
-    "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice."
-  ),
-  since: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .describe(
-      "Only records collected at or after this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+export const ZV3FeedbackRecordFilters = z
+  .object({
+    source_type: ZFeedbackRecordFilterId.optional().describe(
+      "Filter by feedback source type, e.g. survey, review, call_notes."
     ),
-  until: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .describe(
-      "Only records collected at or before this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+    source_id: ZFeedbackRecordFilterId.optional().describe(
+      "Filter by source id — the survey/form/ticket the feedback came from."
     ),
-}).strict();
+    field_type: ZHubFieldType.optional().describe("Filter by field type."),
+    field_id: ZFeedbackRecordFilterId.optional().describe(
+      "Filter by field id — all answers to one question."
+    ),
+    field_group_id: ZFeedbackRecordFilterId.optional().describe(
+      "Filter by field group id, which groups related fields of one question (ranking, matrix, grid)."
+    ),
+    submission_id: ZFeedbackRecordFilterId.optional().describe(
+      "Filter by submission id — the sibling records of one logical submission, i.e. the rest of the answers given at the same time."
+    ),
+    user_id: ZFeedbackRecordFilterId.optional().describe(
+      "Filter by end-user identifier — everything one person submitted."
+    ),
+    value_id: ZFeedbackRecordFilterId.optional().describe(
+      "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice."
+    ),
+    since: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe(
+        "Only records collected at or after this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+      ),
+    until: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe(
+        "Only records collected at or before this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+      ),
+  })
+  .strict();
 export type TV3FeedbackRecordFilters = z.infer<typeof ZV3FeedbackRecordFilters>;
 
 // Listing adds keyset pagination on top of the shared filters (the Hub's cursor/keyset contract).
@@ -296,9 +300,7 @@ export function conflictingUpdateValueFields(
   data: TV3FeedbackRecordUpdateBody,
   fieldType: string | undefined
 ): { name: string; accepted: string[] }[] {
-  const accepted = VALUE_FIELD_BY_TYPE[fieldType as keyof typeof VALUE_FIELD_BY_TYPE] as
-    | string[]
-    | undefined;
+  const accepted = VALUE_FIELD_BY_TYPE[fieldType as keyof typeof VALUE_FIELD_BY_TYPE] as string[] | undefined;
 
   // Typed loosely and guarded on purpose: `field_type` arrives from a remote service, and this codebase
   // already treats it as possibly absent (`TV3FeedbackRecord.field_type` is optional, and the serializer
@@ -309,9 +311,9 @@ export function conflictingUpdateValueFields(
     return [];
   }
 
-  return UPDATABLE_VALUE_FIELDS.filter(
-    (field) => data[field] !== undefined && !accepted.includes(field)
-  ).map((name) => ({ name, accepted }));
+  return UPDATABLE_VALUE_FIELDS.filter((field) => data[field] !== undefined && !accepted.includes(field)).map(
+    (name) => ({ name, accepted })
+  );
 }
 
 /**

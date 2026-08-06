@@ -1,13 +1,13 @@
 ---
 title: "MCP Server"
-description: "Configure and use the Formbricks v3 Surveys MCP server"
+description: "Configure and use the Formbricks v3 Surveys and Workflows MCP server"
 icon: "robot"
 ---
 
 ## Overview
 
-The Formbricks MCP server exposes a small v3 Surveys tool surface for AI agents. It runs inside the
-Formbricks web app at `/api/mcp` and reuses the same v3 Surveys API authentication, authorization,
+The Formbricks MCP server exposes v3 Surveys and Workflows tool surfaces for AI agents. It runs inside
+the Formbricks web app at `/api/mcp` and reuses the same v3 API authentication, authorization,
 rate limiting, response handling, and audit logging paths as the REST routes.
 
 <Note>
@@ -77,23 +77,44 @@ Discovery endpoints:
 
 Supported scopes:
 
-| Scope                   | Use                                                                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                                                                                                   |
-| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations                                                                                        |
-| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
-| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record`                                                        |
-| `openid`                | OpenID Connect subject interoperability                                                                                                                        |
-| `profile`               | User profile claims                                                                                                                                            |
-| `email`                 | User email claim                                                                                                                                               |
-| `offline_access`        | Refresh tokens for MCP clients                                                                                                                                 |
+| Scope | Use |
+| --- | --- |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey` |
+| `surveys:write` | `create_survey`, `patch_survey`, `delete_survey` |
+| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
+| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
+| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
+| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
+| `openid` | OpenID Connect subject interoperability |
+| `profile` | User profile claims |
+| `email` | User email claim |
+| `offline_access` | Refresh tokens for MCP clients |
+
+**The rule:** every MCP tool is registered through `registerScopedTool`, which takes the required
+scope(s) as a mandatory argument and runs the gate before the handler. Read tools declare
+`<resource>:read`; every mutating tool declares `<resource>:write`. A tool cannot be registered
+without declaring a scope, so a new tool inherits enforcement by construction — the gate returns a
+`403 insufficient_scope` before the handler touches a v3 operation. Tools that more than one scope
+group legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, which keeps them on the
+same registration path rather than a hand-rolled gate.
+
+The one current exception is the feedback-record tools, which centralise the gate in their own shared
+read/write handler factories and register through `server.registerTool` directly. Every one of their
+handlers is still gated, but the guarantee is by convention there rather than by construction —
+converging them onto `registerScopedTool` is a known follow-up.
+
+**There is no single mandatory baseline scope.** Authentication requires *at least one* resource scope
+(`MCP_RESOURCE_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
+client. `list_workspaces` — the workspaceId-discovery prerequisite for every resource tool — therefore
+gates on any resource read scope rather than one specific one; its result is derived from the caller's
+own memberships and key grants, so admitting any read scope exposes nothing extra.
 
 The authorization server supports all of the above, but the MCP protected-resource metadata
-(`/.well-known/oauth-protected-resource/api/mcp`) advertises only `surveys:read`, `surveys:write`,
-`feedbackRecords:read`, `feedbackRecords:write`, and `offline_access` — the scopes an MCP client
-needs. Clients derive their Dynamic Client
-Registration scopes from that list, so `offline_access` must be advertised there for clients to be
-issued refresh tokens (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
+(`/.well-known/oauth-protected-resource/api/mcp`) advertises only the resource scopes an MCP client
+needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, `feedbackRecords:read`,
+`feedbackRecords:write`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
+from that list, so `offline_access` must be advertised there for clients to be issued refresh tokens
+(`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
 <Warning>
   Adding a resource scope breaks already-connected OAuth clients until they re-register. The
@@ -106,8 +127,9 @@ issued refresh tokens (`openid`/`profile`/`email` are OIDC scopes the MCP resour
   changes.
 </Warning>
 
-OAuth scopes only gate MCP tool categories. Actual workspace access is still evaluated at tool
-execution through the existing v3 authorization checks for the signed-in Formbricks user.
+OAuth scopes gate MCP tool categories at the token layer. Actual workspace access is still evaluated
+at tool execution through the existing v3 authorization checks for the signed-in Formbricks user, so
+a token scope and a workspace role are independent gates — a call must satisfy both.
 
 Scope groups are **independent**: a token authenticates as long as it holds at least one resource
 scope, so a `feedbackRecords:read`-only grant is valid and simply can't reach the survey tools.
@@ -132,24 +154,42 @@ Do not pass credentials in the query string. The MCP route rejects query credent
 
 API key permissions are enforced through the same workspace access checks as the v3 REST API:
 
-| Tool                            | Minimum Workspace Permission                                        |
-| ------------------------------- | ------------------------------------------------------------------- |
-| `list_surveys`                  | `read`                                                              |
-| `get_survey`                    | `read`                                                              |
-| `create_survey`                 | `write` or `manage`                                                 |
-| `validate_survey`               | `write` or `manage` when the validation request checks write access |
-| `patch_survey`                  | `write` or `manage`                                                 |
-| `delete_survey`                 | `write` or `manage`                                                 |
-| `list_feedback_datasets`        | `read`                                                              |
-| `list_feedback_records`         | `read`                                                              |
-| `count_feedback_records`        | `read`                                                              |
-| `get_feedback_record`           | `read`                                                              |
-| `search_feedback_records`       | `read`                                                              |
-| `find_similar_feedback_records` | `read`                                                              |
-| `create_feedback_record`        | `write` or `manage`                                                 |
-| `create_feedback_records`       | `write` or `manage`                                                 |
-| `update_feedback_record`        | `write` or `manage`                                                 |
-| `delete_feedback_record`        | `write` or `manage`                                                 |
+| Tool | Minimum Workspace Permission |
+| --- | --- |
+| `list_surveys` | `read` |
+| `get_survey` | `read` |
+| `create_survey` | `write` or `manage` |
+| `validate_survey` | `read` — a dry run; it validates a create or patch payload without writing |
+| `patch_survey` | `write` or `manage` |
+| `delete_survey` | `write` or `manage` |
+| `list_workflows` | `read` |
+| `get_workflow` | `read` |
+| `list_workflow_runs` | `read` |
+| `get_workflow_run` | `read` |
+| `test_workflow` | `read` — a dry run; it validates the definition and resolves its trigger references, creating no run |
+| `create_workflow` | `write` or `manage` |
+| `patch_workflow` | `write` or `manage` |
+| `duplicate_workflow` | `write` or `manage` |
+| `delete_workflow` | `write` or `manage` |
+| `enable_workflow` | `write` or `manage` |
+| `disable_workflow` | `write` or `manage` |
+| `archive_workflow` | `write` or `manage` |
+| `unarchive_workflow` | `write` or `manage` |
+| `list_feedback_datasets` | `read` |
+| `list_feedback_records` | `read` |
+| `count_feedback_records` | `read` |
+| `get_feedback_record` | `read` |
+| `search_feedback_records` | `read` |
+| `find_similar_feedback_records` | `read` |
+| `create_feedback_record` | `write` or `manage` |
+| `create_feedback_records` | `write` or `manage` |
+| `update_feedback_record` | `write` or `manage` |
+| `delete_feedback_record` | `write` or `manage` |
+
+Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` + `feedbackRecords:read`
+always; the matching `:write` scopes when the key has `write` or `manage` on any workspace. The scope
+gate and the per-workspace access check above are independent — a `:write` tool requires **both** the
+`:write` scope on the token and write/manage on the target workspace.
 
 <Warning>
   Store fallback MCP API keys as environment variables or client secrets. Do not commit API keys into MCP
@@ -197,18 +237,27 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
     "token_endpoint_auth_method": "none",
     "grant_types": ["authorization_code", "refresh_token"],
     "response_types": ["code"],
-    "scope": "openid profile email offline_access surveys:read surveys:write feedbackRecords:read feedbackRecords:write"
+    "scope": "openid profile email offline_access surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"
   }'
 ```
 
 <Note>
-  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP clients
-  register with the scopes from the protected-resource metadata's `scopes_supported` (`surveys:read
-  surveys:write feedbackRecords:read feedbackRecords:write offline_access`). Because the authorization server
-  validates the `/authorize` request against the client's **registered** scopes, a client that registers with
-  a narrower set than it later requests (e.g. it registers surveys-only but requests `offline_access`) is
-  rejected with `invalid_scope`. To smoke-test the real path, omit `scope` and let the client adopt the
-  advertised set, or pass exactly what the metadata advertises.
+  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
+  clients register with the scopes from the protected-resource metadata's `scopes_supported`
+  (`surveys:read surveys:write workflows:read workflows:write feedbackRecords:read
+  feedbackRecords:write offline_access`). Because the authorization server validates the `/authorize`
+  request against the client's **registered** scopes, a client that registers with a narrower set than
+  it later requests (e.g. it registers surveys-only but requests `offline_access`) is rejected with
+  `invalid_scope`. To smoke-test the real path, omit `scope` and let the client adopt the advertised
+  set, or pass exactly what the metadata advertises.
+</Note>
+
+<Note>
+  For the same reason, the `scope` in the MCP endpoint's 401 `WWW-Authenticate` challenge is exactly
+  the metadata's `scopes_supported`, not a subset — a client that hits the 401 before fetching the
+  metadata uses the challenge string as its registration scope. The two are derived from one constant
+  (`MCP_CHALLENGE_SCOPE`) and a test asserts they stay equal; when they diverged, every new client
+  failed its first connect with `invalid_scope` and only succeeded on retry.
 </Note>
 
 The consent screen is served at `/account/authorize`. Users can revoke approved MCP clients from
@@ -246,14 +295,14 @@ Authenticate and request the scopes the agent needs:
 
 ```bash
 codex mcp login formbricks-local \
-  --scopes openid,profile,email,offline_access,surveys:read,surveys:write,feedbackRecords:read,feedbackRecords:write
+  --scopes openid,profile,email,offline_access,surveys:read,surveys:write,workflows:read,workflows:write,feedbackRecords:read,feedbackRecords:write
 ```
 
-For read-only usage, omit the write scopes:
+For read-only usage, omit the `:write` scopes:
 
 ```bash
 codex mcp login formbricks-local \
-  --scopes openid,profile,email,offline_access,surveys:read,feedbackRecords:read
+  --scopes openid,profile,email,offline_access,surveys:read,workflows:read,feedbackRecords:read
 ```
 
 Scope groups are independent — a token needs at least one resource scope, but not all of them. To use
@@ -321,10 +370,11 @@ claude mcp add --transport http formbricks-local http://localhost:3000/api/mcp
 
 Run `/mcp` and authenticate `formbricks-local`. Claude Code discovers the MCP protected-resource
 metadata, registers a public client whose scopes are taken from that metadata's `scopes_supported`
-(`surveys:read surveys:write feedbackRecords:read feedbackRecords:write offline_access`), and launches
-the browser-based OAuth flow — there is no scope-entry step. You approve the requested scopes on the
-Formbricks consent screen. Workspace role determines whether write tools actually succeed at execution time (see
-[Authentication](#authentication)), regardless of the granted scope.
+(`surveys:read surveys:write workflows:read workflows:write feedbackRecords:read
+feedbackRecords:write offline_access`), and launches the browser-based OAuth flow — there is no
+scope-entry step. You approve the requested scopes on the Formbricks consent screen. A `:write` tool
+requires both the matching `:write` scope on the token and write/manage permission on the target
+workspace at execution time (see [Authentication](#authentication)).
 
 Verify it:
 
@@ -594,7 +644,8 @@ Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` a
 ### validate_survey
 
 Validates a create or patch payload without writing survey changes. The tool is read-only and
-idempotent, but create validation still checks workspace write access when `workspaceId` is present.
+idempotent; workspace access is still checked when `workspaceId` is present, at `read` level —
+matching the `surveys:read` scope the tool declares.
 
 Create validation input:
 
@@ -691,6 +742,143 @@ so callers can correlate the audit trail:
   "requestId": "req_..."
 }
 ```
+
+### Workflow tools
+
+Workflow tools operate on the v3 Workflows API (trigger → condition → action automations). They reuse
+the same authentication, authorization, audit logging, and error mapping as the survey tools.
+
+#### list_workflows
+
+Lists workflows in one workspace. Read-only and idempotent.
+
+Input:
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "limit": 20,
+  "cursor": "opaque-cursor-from-previous-response",
+  "sortBy": "updatedAt",
+  "filter": {
+    "name": { "contains": "welcome" },
+    "status": { "in": ["draft", "enabled"] }
+  }
+}
+```
+
+Output mirrors the v3 list envelope: `{ "data": [...], "meta": { "limit", "nextCursor" }, "requestId" }`.
+Omitting `filter.status.in` returns every status except archived.
+
+#### get_workflow
+
+Gets one workflow by ID. Read-only and idempotent. Unknown or cross-workspace ids return `403`
+(never `404`) so existence is not leaked.
+
+```json
+{ "workflowId": "clwf1234567890123456789012" }
+```
+
+#### list_workflow_runs
+
+Lists workflow runs for a workspace, newest first. Read-only and idempotent.
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "limit": 20,
+  "workflowId": "clwf1234567890123456789012",
+  "responseId": "clrs1234567890123456789012",
+  "filter": { "status": { "in": ["completed"] }, "isDryRun": false }
+}
+```
+
+Only `workspaceId` is required. Omit `filter.isDryRun` to return both real and dry runs.
+
+#### get_workflow_run
+
+Gets one workflow run with its ordered step logs. Read-only and idempotent.
+
+```json
+{ "runId": "clrn1234567890123456789012" }
+```
+
+#### test_workflow
+
+Dry-runs a workflow: validates its live definition would execute and resolves the trigger's survey +
+ending cards. No run is persisted and no side effects occur; the result reports `{ ok, problems }`.
+Annotated read-only (no world mutation). **Drafts are testable** — checking the setup before going
+live is the point of a dry run — so a workflow can be tested straight after `create_workflow`. Only
+**archived** workflows are rejected, with `422 invalid_workflow_state`, since they are soft-deleted.
+
+```json
+{ "workflowId": "clwf1234567890123456789012" }
+```
+
+#### create_workflow
+
+Creates a workflow, always as a draft (only `enable_workflow` makes it live). Writes data; not
+idempotent. Takes the full v3 create payload:
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "name": "Notify on churn survey completion",
+  "definition": {
+    "schemaVersion": 1,
+    "entryNodeId": "trigger",
+    "trigger": {
+      "id": "trigger",
+      "type": "trigger",
+      "triggerType": "response.completed",
+      "config": { "surveyId": "clsv1234567890123456789012", "endingCardIds": ["ending-1"] }
+    },
+    "nodes": [],
+    "edges": []
+  }
+}
+```
+
+#### patch_workflow
+
+Updates a workflow (v3 PATCH contract: top-level partial merge, no deep merge). Destructive; not
+idempotent. `definition` edits are only accepted while the workflow is draft or disabled.
+
+```json
+{
+  "workflowId": "clwf1234567890123456789012",
+  "data": { "name": "Renamed workflow" }
+}
+```
+
+#### duplicate_workflow
+
+Duplicates a workflow as a new draft with empty run and version history. Writes data; not idempotent.
+
+```json
+{ "workflowId": "clwf1234567890123456789012", "name": "Copy of workflow" }
+```
+
+`name` is optional; if omitted the server picks a non-conflicting copy name.
+
+#### Lifecycle tools
+
+`delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, and `unarchive_workflow`
+each take only a workflow id:
+
+```json
+{ "workflowId": "clwf1234567890123456789012" }
+```
+
+- `enable_workflow` — validates executability, snapshots an immutable version, and makes the workflow
+  live. A non-executable definition is refused with `422 workflow_not_executable`.
+
+  <Warning>
+    Once live, the workflow runs on matching survey responses and can send emails.
+  </Warning>
+- `disable_workflow` — stops future runs.
+- `archive_workflow` / `unarchive_workflow` — soft archive and restore (to draft).
+- `delete_workflow` — the v3 delete returns `204 No Content`; the MCP result contains the `requestId`.
 
 ### list_feedback_datasets
 
@@ -1079,7 +1267,28 @@ passed straight through: the Hub silently coerces out-of-range values to its own
 return something other than what was asked for. The default `minScore` of 0.5 is Formbricks' own — the Hub
 defaults to 0.7, which is strict enough that a fair paraphrase often falls just below it.
 
-## Relationship To V3 Surveys API
+## Relationship to V3 Workflows API
+
+Like the survey tools, workflow tools run no custom database queries — each calls the shared,
+framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
+
+| MCP Tool             | REST Contract                                    |
+| -------------------- | ------------------------------------------------ |
+| `list_workflows`     | `GET /api/v3/workflows`                          |
+| `get_workflow`       | `GET /api/v3/workflows/{workflowId}`             |
+| `list_workflow_runs` | `GET /api/v3/workflows/runs`                     |
+| `get_workflow_run`   | `GET /api/v3/workflows/runs/{runId}`             |
+| `test_workflow`      | `POST /api/v3/workflows/{workflowId}/test`       |
+| `create_workflow`    | `POST /api/v3/workflows`                         |
+| `patch_workflow`     | `PATCH /api/v3/workflows/{workflowId}`           |
+| `duplicate_workflow` | `POST /api/v3/workflows/{workflowId}/duplicate`  |
+| `delete_workflow`    | `DELETE /api/v3/workflows/{workflowId}`          |
+| `enable_workflow`    | `POST /api/v3/workflows/{workflowId}/enable`     |
+| `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`    |
+| `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`    |
+| `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive`  |
+
+## Relationship to V3 Surveys API
 
 The MCP server does not run custom survey database queries. Each tool calls the shared server-only v3
 survey operations used by the REST routes:
@@ -1126,9 +1335,13 @@ query, like `create_feedback_record`.
 - OAuth access tokens must be JWTs audience-bound to `/api/mcp`; opaque MCP access token introspection is not
   accepted by the MCP route.
 - API-key authentication remains supported for compatibility and fallback use.
-- The MCP server exposes the survey and feedback-record operations listed on this page.
-- Survey tool coverage depends on the current v3 Surveys REST endpoint coverage; feedback-record tool
-  coverage depends on the Hub feedback-records API.
+- The MCP server exposes only the survey, workflow and feedback-record operations listed on this page.
+- Survey and workflow tool coverage depends on the current v3 Surveys and Workflows REST endpoint
+  coverage; feedback-record tool coverage depends on the Hub feedback-records API.
+- `enable_workflow` makes a workflow live and can trigger email sending; treat it as a high-impact
+  mutation when granting agents write access.
+- `create_workflow` requires a complete workflow `definition` (schema version, trigger, entry node);
+  it is created as a draft and only `enable_workflow` can make it live.
 - Feedback-record tools require the `feedbackDirectories` Enterprise entitlement and a feedback
   directory assigned to the workspace; without either they return 403 / 422.
 - A feedback record's **provenance** is immutable: `update_feedback_record` changes values, users, language
@@ -1161,7 +1374,10 @@ query, like `create_feedback_record`.
 - `apps/web/modules/mcp/tools/workspaces.ts`
 - `apps/web/modules/mcp/tools/feedback-records.ts`
 - `apps/web/modules/mcp/tools/schemas.ts`
+- `apps/web/modules/mcp/tools/workflows.ts`
+- `apps/web/modules/mcp/tools/workflow-schemas.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`
+- `apps/web/app/api/v3/workflows/lib/context.ts` (adapter to the `@formbricks/workflows` handlers)
 - `apps/web/app/api/v3/feedbackRecords/lib/operations.ts`
 - `apps/web/app/api/v3/feedbackRecords/lib/access.ts` (tenant resolution + per-record ownership guard)
 - `apps/web/app/api/v3/feedbackRecords/lib/errors.ts` (Hub error → v3 problem mapping)

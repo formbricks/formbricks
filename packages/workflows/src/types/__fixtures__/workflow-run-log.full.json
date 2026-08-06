@@ -1,0 +1,19 @@
+{
+  "error": "SMTP provider rejected the message",
+  "finishedAt": "2026-06-09T12:01:03.000Z",
+  "id": "cm9zr4log000808l8f36vw9sz",
+  "input": {
+    "subject": "Thanks for your response",
+    "to": "jane@example.com"
+  },
+  "output": {
+    "messageId": "message-1",
+    "provider": "smtp"
+  },
+  "runId": "cm9zr4run000908l8q9b9d3pm",
+  "sequence": 1,
+  "startedAt": "2026-06-09T12:01:01.000Z",
+  "status": "failed",
+  "stepId": "send-email",
+  "stepType": "send_email"
+}

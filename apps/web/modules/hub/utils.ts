@@ -28,6 +28,16 @@ export const NO_CONFIG_ERROR = {
   detail: "HUB_API_KEY is not set; Hub integration is disabled.",
 } as const;
 
+/**
+ * "Hub is switched off on this deployment" — as opposed to a Hub that is configured but unreachable.
+ *
+ * `status: 0` alone cannot tell them apart: the SDK reports a connection failure or timeout without a
+ * status too, so `getErrorStatus` returns 0 for both. Match on the sentinel's message so a dead socket
+ * still reads as an upstream fault (502) while a missing config reads as "not enabled here" (503).
+ */
+export const isHubNotConfigured = (error: HubError): boolean =>
+  error.status === NO_CONFIG_ERROR.status && error.message === NO_CONFIG_ERROR.message;
+
 export const getErrorMessage = (err: unknown): string => {
   if (err instanceof Error) return err.message;
   if (typeof err === "string") return err;

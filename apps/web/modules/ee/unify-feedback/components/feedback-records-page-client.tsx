@@ -16,6 +16,7 @@ interface FeedbackRecordsPageClientProps {
   frdMap: Record<string, string>;
   csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
   canWrite: boolean;
+  canDeleteRecords: boolean;
 }
 
 export function FeedbackRecordsPageClient({
@@ -26,6 +27,7 @@ export function FeedbackRecordsPageClient({
   frdMap,
   csvSources,
   canWrite,
+  canDeleteRecords,
 }: Readonly<FeedbackRecordsPageClientProps>) {
   const { t } = useTranslation();
 
@@ -43,6 +45,7 @@ export function FeedbackRecordsPageClient({
         frdMap={frdMap}
         csvSources={csvSources}
         canWrite={canWrite}
+        canDeleteRecords={canDeleteRecords}
       />
     </PageContentWrapper>
   );

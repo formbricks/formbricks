@@ -1,0 +1,32 @@
+type: object
+description: In-document result for one workflow step, mirroring `ZWorkflowStepResult`.
+required:
+  - stepId
+  - stepType
+  - status
+properties:
+  stepId:
+    type: string
+    minLength: 1
+    description: Node id of the executed step.
+  stepType:
+    type: string
+    minLength: 1
+    description: Node/step type, e.g. `response.completed` or `send_email`.
+  status:
+    $ref: ./WorkflowRunLogStatus.yml
+  input:
+    type: object
+    description: Step input snapshot.
+  output:
+    type: object
+    description: Step output snapshot, or the mocked output for dry runs.
+  error:
+    type: string
+  startedAt:
+    type: string
+    format: date-time
+  finishedAt:
+    type: string
+    format: date-time
+additionalProperties: false

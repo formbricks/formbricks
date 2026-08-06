@@ -61,6 +61,43 @@ describe("logAuditEvent", () => {
     await logAuditEvent(validEvent);
     expect(logger.error).toHaveBeenCalled();
   });
+
+  // `apiUrl` is validated with z.url(), and a validation failure is swallowed into a logger.error
+  // rather than surfaced — so a producer passing a malformed value silently drops the whole audit
+  // event. That is exactly how every MCP mutation went unaudited (ENG-2173).
+  describe("apiUrl", () => {
+    beforeEach(() => {
+      getIsAuditLogsEnabled.mockResolvedValue(true);
+    });
+
+    test("drops the event when apiUrl is a bare path", async () => {
+      await logAuditEvent({ ...validEvent, apiUrl: "/api/mcp" } as any);
+      expect(logger.audit).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    test("logs the event when apiUrl is absolute", async () => {
+      const event = { ...validEvent, apiUrl: "http://localhost:3000/api/mcp" };
+      await logAuditEvent(event);
+      expect(logger.audit).toHaveBeenCalledWith(event);
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    test("logs the event when apiUrl is omitted (optional, unlike a malformed one)", async () => {
+      await logAuditEvent(validEvent);
+      expect(logger.audit).toHaveBeenCalledWith(validEvent);
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    // Ties the MCP producer to this schema: the exact value the MCP tools pass must be one this
+    // validator accepts, which is the invariant that broke.
+    test("accepts the apiUrl the MCP tools actually pass", async () => {
+      const { getMcpResourceUrl } = await import("@/modules/auth/lib/oauth-urls");
+      await logAuditEvent({ ...validEvent, apiUrl: getMcpResourceUrl() });
+      expect(logger.audit).toHaveBeenCalled();
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe("logAuditEvent export", () => {

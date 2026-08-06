@@ -46,6 +46,8 @@ const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
     workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
+      // No included workflow runs by default (ENG-1936); the Scale entitlement grants the volume.
+      workflowRuns: null,
     },
   },
   stripeCustomerId: null,
@@ -352,6 +354,47 @@ export const getMonthlyOrganizationResponseCount = reactCache(
 
       // The result is an aggregation of the total count
       return responseAggregations._count.id;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
+export const getMonthlyOrganizationWorkflowRunCount = reactCache(
+  async (organizationId: string): Promise<number> => {
+    validateInputs([organizationId, ZId]);
+
+    try {
+      const organization = await getOrganization(organizationId);
+      if (!organization) {
+        throw new ResourceNotFoundError("Organization", organizationId);
+      }
+
+      const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
+
+      const workspaces = await getWorkspaces(organizationId);
+      const workspaceIds = workspaces.map((workspace) => workspace.id);
+
+      // Mirror the metered usage: count only non-dry runs in the current billing cycle, scoped to the
+      // organization's workspaces. Dry runs are excluded from billing, so they must not show as usage.
+      const workflowRunAggregations = await prisma.workflowRun.aggregate({
+        _count: {
+          id: true,
+        },
+        where: {
+          AND: [
+            { workspaceId: { in: workspaceIds } },
+            { isDryRun: false },
+            { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
+          ],
+        },
+      });
+
+      return workflowRunAggregations._count.id;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

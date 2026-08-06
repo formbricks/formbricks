@@ -79,7 +79,10 @@ export const UnifyTopicsSubtopicsPage = async (
   }
 
   const directoryMap = Object.fromEntries(directories.map((directory) => [directory.id, directory.name]));
-  const canWrite = isOwner || isManager || hasReadWriteAccess || hasManageAccess;
+  // A directory's taxonomy is one tree shared by every workspace the directory is assigned to, and it
+  // carries no workspace of its own — so changing it (generate, rename, remove) is an org-level act
+  // and stays with owners and managers (ENG-1770). Everyone else gets the read-only view.
+  const canWrite = isOwner || isManager;
 
   return (
     <TopicsSubtopicsPage workspaceId={params.workspaceId} directoryMap={directoryMap} canWrite={canWrite} />

@@ -120,12 +120,20 @@ export const auth = betterAuth({
     // app-wide static import chain (only loaded when a reset is actually sent).
     sendResetPassword: async ({ user, url }) => {
       const { sendPasswordResetLinkEmail } = await import("@/modules/email");
-      await sendPasswordResetLinkEmail({
+      // Same falsy-return trap as sendVerificationEmail below (ENG-2091): `sendEmail` returns false
+      // without throwing when SMTP isn't configured, and Better Auth ignores the return value — so a
+      // reset that never went out would leave no trace at all. Throwing makes it attributable; the
+      // caller (forgot-password/actions.ts) already catches and still answers generically, so the
+      // enumeration-safe response is unchanged.
+      const sent = await sendPasswordResetLinkEmail({
         email: user.email,
         locale: await getUserLocale(user.id),
         verifyLink: url,
         linkValidityInMinutes: PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
       });
+      if (!sent) {
+        throw new Error("Password reset email was not sent (mailer reported no delivery)");
+      }
     },
     // After a successful reset, send the security notification (parity with the retired
     // completePasswordReset) and audit it. Better Auth already revoked sessions
@@ -157,13 +165,37 @@ export const auth = betterAuth({
     // before ownership is proven; also enumeration-safe).
     autoSignInAfterVerification: true,
     expiresIn: 60 * 60, // 1 hour
+    // ENG-2091: a failed send must never present as a successful one. Two ways it can hide:
+    //  1. a THROW — on the sign-up path Better Auth calls this through `runInBackgroundOrAwait`, whose
+    //     catch only logs, so sign-up still resolves 200. (The resend endpoint awaits it directly and
+    //     does propagate, which is why rethrowing below is what makes THAT path truthful.)
+    //  2. a FALSY RETURN — `sendEmail` returns false without throwing when SMTP isn't configured, and
+    //     Better Auth ignores the return value entirely. Silent on every path.
+    // So: treat both as failures and make them attributable — log with the user id, and rethrow so the
+    // paths that DO propagate (resend, sign-in resend) fail loudly instead of claiming success.
+    // Deliberately NOT surfaced in the sign-up response: that response must not vary by what happened to
+    // one address, or it becomes an account-existence oracle (ENG-2099). The verification-requested
+    // screen derives its "nothing was sent" state from IS_SMTP_CONFIGURED instead.
     sendVerificationEmail: async ({ user, url }) => {
       const { sendVerificationLinkEmail } = await import("@/modules/email");
-      await sendVerificationLinkEmail({
-        email: user.email,
-        locale: await getUserLocale(user.id),
-        verifyLink: url,
-      });
+      try {
+        const sent = await sendVerificationLinkEmail({
+          email: user.email,
+          locale: await getUserLocale(user.id),
+          verifyLink: url,
+        });
+        if (!sent) {
+          throw new Error("Verification email was not sent (mailer reported no delivery)");
+        }
+      } catch (error) {
+        // Domain only — never the address, the token, or the verify URL (all three are sensitive and
+        // the URL grants account access).
+        logger.error(
+          { error, userId: user.id, emailDomain: user.email.split("@")[1] },
+          "Failed to send verification email"
+        );
+        throw error;
+      }
     },
     // Re-home the "token" provider's Brevo-on-first-verification side effect (better-auth-email-verification.ts).
     afterEmailVerification: createBrevoCustomerAfterEmailVerification,

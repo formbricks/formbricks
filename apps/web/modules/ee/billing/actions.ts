@@ -388,9 +388,8 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       throw new ResourceNotFoundError("OrganizationBilling", organizationId);
     }
 
-    // Mirror the client rule server-side: a paid plan change requires a collected payment method.
-    // The client routes no-card paid changes through the add-card checkout; this rejects any direct
-    // call that bypasses it (e.g. a trialing no-card org trying to launder into active paid Pro).
+    // Mirror the client rule server-side: paid plan changes require a payment method, rejecting
+    // direct calls that bypass the add-card checkout (e.g. laundering a no-card trial into paid Pro).
     if (parsedInput.targetPlan !== "hobby" && organization.billing.stripe?.hasPaymentMethod !== true) {
       throw new OperationNotAllowedError("payment_method_required");
     }
@@ -502,6 +501,25 @@ const ZWaitForBillingPlanAction = z.object({
 const BILLING_PLAN_SYNC_ATTEMPTS = 5;
 const BILLING_PLAN_SYNC_DELAY_MS = 1200;
 
+// Bounded resync poll shared by the wait actions: re-read a value off the freshly synced billing
+// record until the predicate holds or the attempts run out (webhook-written fields race a single
+// refresh). Keeps both actions on the same attempt count and delay.
+const pollBillingSync = async <T>(
+  organizationId: string,
+  read: (billing: Awaited<ReturnType<typeof syncOrganizationBillingFromStripe>>) => T,
+  isDone: (value: T) => boolean
+): Promise<T> => {
+  let value = read(null);
+  for (let attempt = 0; attempt < BILLING_PLAN_SYNC_ATTEMPTS; attempt++) {
+    value = read(await syncOrganizationBillingFromStripe(organizationId));
+    if (isDone(value)) break;
+    if (attempt < BILLING_PLAN_SYNC_ATTEMPTS - 1) {
+      await new Promise((resolve) => setTimeout(resolve, BILLING_PLAN_SYNC_DELAY_MS));
+    }
+  }
+  return value;
+};
+
 export const waitForBillingPlanAction = authenticatedActionClient
   .inputSchema(ZWaitForBillingPlanAction)
   .action(
@@ -518,18 +536,48 @@ export const waitForBillingPlanAction = authenticatedActionClient
         ],
       });
 
-      let plan: string | null = null;
-      for (let attempt = 0; attempt < BILLING_PLAN_SYNC_ATTEMPTS; attempt++) {
-        const billing = await syncOrganizationBillingFromStripe(organizationId);
-        plan = billing?.stripe?.plan ?? null;
-        if (plan === targetPlan) break;
-        if (attempt < BILLING_PLAN_SYNC_ATTEMPTS - 1) {
-          await new Promise((resolve) => setTimeout(resolve, BILLING_PLAN_SYNC_DELAY_MS));
-        }
-      }
+      const plan = await pollBillingSync(
+        organizationId,
+        (billing) => billing?.stripe?.plan ?? null,
+        (value) => value === targetPlan
+      );
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       return { plan };
+    })
+  );
+
+const ZWaitForBillingPaymentMethodAction = z.object({
+  organizationId: ZId,
+});
+
+// A card saved via setup-checkout is attached to the subscription by an async webhook, and a single
+// refresh can race it, leaving a stale "add payment method" CTA. Resync (bounded) until it reflects.
+// Reuses the plan-sync cadence above.
+export const waitForBillingPaymentMethodAction = authenticatedActionClient
+  .inputSchema(ZWaitForBillingPaymentMethodAction)
+  .action(
+    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+      const { organizationId } = parsedInput;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager", "billing"],
+          },
+        ],
+      });
+
+      const hasPaymentMethod = await pollBillingSync(
+        organizationId,
+        (billing) => billing?.stripe?.hasPaymentMethod === true,
+        (value) => value
+      );
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      return { hasPaymentMethod };
     })
   );
 

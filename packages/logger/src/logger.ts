@@ -4,6 +4,10 @@ import { type TLogLevel, ZLogLevel } from "../types/logger";
 const IS_PRODUCTION = !process.env.NODE_ENV || process.env.NODE_ENV === "production";
 const IS_BUILD = process.env.NEXT_PHASE === "phase-production-build";
 const PROCESS_GLOBAL_KEY = "process";
+const PROCESS_HANDLERS_ATTACHED_KEY = Symbol.for("@formbricks/logger/process-handlers-attached");
+const NEXT_STANDALONE_APP_DIR_PATTERN = /[/\\]apps[/\\]web$/;
+const OTEL_TRANSPORT_PACKAGE_PATH =
+  "node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js";
 
 interface TransportStream {
   on?: (event: "error", listener: (error: unknown) => void) => void;
@@ -11,8 +15,10 @@ interface TransportStream {
 
 const getNodeProcess = (): typeof process => globalThis[PROCESS_GLOBAL_KEY];
 
-const getOtelTransportTarget = (): string =>
-  `${getNodeProcess().cwd()}/node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js`;
+const getOtelTransportTarget = (): string => {
+  const runtimeRoot = getNodeProcess().cwd().replace(NEXT_STANDALONE_APP_DIR_PATTERN, "");
+  return `${runtimeRoot}/${OTEL_TRANSPORT_PACKAGE_PATH}`;
+};
 
 const getLogLevel = (): TLogLevel => {
   let logLevel: TLogLevel = "info";
@@ -185,20 +191,32 @@ const handleShutdown = (event: string, err?: Error): void => {
 
 // Create a separate function for attaching Node.js process handlers
 const attachNodeProcessHandlers = (): void => {
-  // Only attach handlers if we're in a Node.js environment with full process support
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    process.on("uncaughtException", (err) => {
-      handleShutdown("uncaughtException", err);
-    });
-    process.on("unhandledRejection", (err) => {
-      handleShutdown("unhandledRejection", err as Error);
-    });
-    process.on("SIGTERM", () => {
-      handleShutdown("SIGTERM");
-    });
-    process.on("SIGINT", () => {
-      handleShutdown("SIGINT");
-    });
+  if (process.env.NEXT_RUNTIME !== "nodejs") return;
+
+  // Next.js can evaluate bundled copies of this module in one process.
+  const nodeProcess = process as typeof process & { [key: symbol]: boolean | undefined };
+  if (nodeProcess[PROCESS_HANDLERS_ATTACHED_KEY]) return;
+
+  nodeProcess[PROCESS_HANDLERS_ATTACHED_KEY] = true;
+  const removeAttachedHandlers: Array<() => void> = [];
+  const handleUncaughtException = (err: Error): void => handleShutdown("uncaughtException", err);
+  const handleUnhandledRejection = (err: unknown): void => handleShutdown("unhandledRejection", err as Error);
+  const handleSigterm = (): void => handleShutdown("SIGTERM");
+  const handleSigint = (): void => handleShutdown("SIGINT");
+
+  try {
+    process.on("uncaughtException", handleUncaughtException);
+    removeAttachedHandlers.push(() => process.off("uncaughtException", handleUncaughtException));
+    process.on("unhandledRejection", handleUnhandledRejection);
+    removeAttachedHandlers.push(() => process.off("unhandledRejection", handleUnhandledRejection));
+    process.on("SIGTERM", handleSigterm);
+    removeAttachedHandlers.push(() => process.off("SIGTERM", handleSigterm));
+    process.on("SIGINT", handleSigint);
+    removeAttachedHandlers.push(() => process.off("SIGINT", handleSigint));
+  } catch (error) {
+    removeAttachedHandlers.reverse().forEach((removeHandler) => removeHandler());
+    Reflect.deleteProperty(nodeProcess, PROCESS_HANDLERS_ATTACHED_KEY);
+    throw error;
   }
 };
 

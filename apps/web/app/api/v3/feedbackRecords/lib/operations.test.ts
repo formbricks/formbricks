@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { AuthorizationError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import type { TV3AuditLog } from "@/app/api/v3/lib/types";
+import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
@@ -36,6 +38,9 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
+vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
+  checkAuthorizationUpdated: vi.fn(),
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsFeedbackDirectoriesEnabled: vi.fn() }));
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: vi.fn(),
@@ -73,11 +78,17 @@ const record: FeedbackRecordData = {
   value_text: "Love it",
 };
 
+// A person-shaped principal, as an OAuth/MCP token produces. The shared `base` passes `authentication:
+// null`, which the mutation-role gate skips, so these are used where the caller's role is the subject.
+const sessionAuth = { user: { id: "user_1" } } as TV3Authentication;
+const apiKeyAuth = { apiKeyId: "key_1" } as unknown as TV3Authentication;
+
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
   vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
   vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([{ id: directoryId, name: "Support" }]);
+  vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 });
 
 describe("shared authorization + tenant resolution", () => {
@@ -628,7 +639,9 @@ describe("createV3FeedbackRecord", () => {
 });
 
 describe("deleteV3FeedbackRecord", () => {
-  const deleteBase = { ...base, feedbackRecordId: record.id };
+  // A session principal, not `base`'s null: these operations now require an identifiable caller, and
+  // a null principal is refused upstream in production anyway.
+  const deleteBase = { ...base, authentication: sessionAuth, feedbackRecordId: record.id };
 
   beforeEach(() => {
     vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
@@ -639,7 +652,7 @@ describe("deleteV3FeedbackRecord", () => {
     await deleteV3FeedbackRecord(deleteBase);
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
-      null,
+      sessionAuth,
       workspaceId,
       "readWrite",
       requestId,
@@ -1337,7 +1350,7 @@ describe("createV3FeedbackRecords", () => {
 });
 
 describe("updateV3FeedbackRecord", () => {
-  const updateBase = { ...base, feedbackRecordId: record.id };
+  const updateBase = { ...base, authentication: sessionAuth, feedbackRecordId: record.id };
   const updated = { ...record, value_text: "Actually, love it a lot" } as FeedbackRecordData;
 
   beforeEach(() => {
@@ -1349,7 +1362,7 @@ describe("updateV3FeedbackRecord", () => {
     await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
-      null,
+      sessionAuth,
       workspaceId,
       "readWrite",
       requestId,
@@ -1591,5 +1604,85 @@ describe("updateV3FeedbackRecord", () => {
 
     expect(response.status).toBe(400);
     expect(body.invalid_params).toEqual([{ name: "value_text", reason: "must not contain NULL bytes" }]);
+  });
+});
+
+// ENG-1770: a dataset is shared by every workspace it is assigned to, and its records carry no workspace
+// of their own. Resolving the tenant and asserting ownership prove a record sits in one of the caller's
+// datasets — not that it is their workspace's record — so changing one is organization-level.
+describe("feedback record mutation role (ENG-1770)", () => {
+  const updateArgs = {
+    ...base,
+    authentication: sessionAuth,
+    feedbackRecordId: record.id,
+    body: { value_text: "x" },
+  };
+  const deleteArgs = { ...base, authentication: sessionAuth, feedbackRecordId: record.id };
+
+  beforeEach(() => {
+    vi.mocked(retrieveFeedbackRecord).mockResolvedValue({ data: record, error: null });
+    vi.mocked(updateFeedbackRecord).mockResolvedValue({ data: record, error: null });
+    vi.mocked(deleteFeedbackRecord).mockResolvedValue({ data: { deleted: true }, error: null });
+  });
+
+  test("asks for an organization owner or manager, with no workspace-team fallback", async () => {
+    await updateV3FeedbackRecord(updateArgs);
+
+    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
+      userId: "user_1",
+      organizationId: context.organizationId,
+      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    });
+  });
+
+  test("refuses an update from a workspace member who is not an owner or manager", async () => {
+    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+
+    const response = await updateV3FeedbackRecord(updateArgs);
+
+    expect(response.status).toBe(403);
+    // Runs before the record is fetched, so a refusal cannot double as an existence oracle.
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+    expect(updateFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test("refuses a delete from a workspace member who is not an owner or manager", async () => {
+    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+
+    const response = await deleteV3FeedbackRecord(deleteArgs);
+
+    expect(response.status).toBe(403);
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+    expect(deleteFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test("lets an organization owner or manager update and delete", async () => {
+    const updated = await updateV3FeedbackRecord(updateArgs);
+    const deleted = await deleteV3FeedbackRecord(deleteArgs);
+
+    expect(updated.status).toBe(200);
+    expect(deleted.status).toBe(204);
+  });
+
+  // Deliberate carve-out: an API key authorizes on its per-workspace permissions, and what a key should
+  // need in order to mutate a record is being settled in #8682.
+  test("leaves API-key callers to their workspace permissions", async () => {
+    const deleted = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: apiKeyAuth });
+
+    expect(deleted.status).toBe(204);
+    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+  });
+
+  // The API key above is the only shape that skips the role check. Anything that resolves to no user is
+  // refused rather than admitted by the absence of a field — the pass-through has to stay an allowlist.
+  test.each([
+    ["no principal", null],
+    ["a session with no user id", { user: {} } as TV3Authentication],
+    ["an unknown principal shape", { serviceId: "svc_1" } as unknown as TV3Authentication],
+  ])("refuses %s", async (_name, authentication) => {
+    const response = await deleteV3FeedbackRecord({ ...deleteArgs, authentication });
+
+    expect(response.status).toBe(403);
+    expect(deleteFeedbackRecord).not.toHaveBeenCalled();
   });
 });
