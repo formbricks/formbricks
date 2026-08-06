@@ -73,6 +73,12 @@ deployment:
     #   maxSurge: 25%
     #   maxUnavailable: 25%
 
+  # Time Kubernetes allows the app container to stop gracefully
+  terminationGracePeriodSeconds: 30
+
+  # Optional app container lifecycle hooks
+  lifecycle: {}
+
   # Automatically reload deployment when ConfigMaps or Secrets change
   reloadOnChange: false
 
