@@ -3,6 +3,7 @@ import { JOB_NAMES } from "./constants";
 import { getBackgroundJobDefinition } from "./definitions";
 import type { JobExecutionContext, TResponsePipelineJobData } from "./index";
 import { getJobProcessor, processJob } from "./processors/registry";
+import { ONE_SHOT_JOB_NAMES, recurringJobs } from "./queue";
 
 const { mockDebug, mockError, mockWarn } = vi.hoisted(() => ({
   mockDebug: vi.fn(),
@@ -30,6 +31,29 @@ describe("@formbricks/jobs processor registry", () => {
     expect(getJobProcessor(JOB_NAMES.surveyScheduling)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.workflowRun)).toBeDefined();
     expect(getBackgroundJobDefinition(JOB_NAMES.testLog)).toBeDefined();
+  });
+
+  /**
+   * Guards the copy-paste slip the declaration table invites: duplicating a descriptor and forgetting to
+   * change its name. `recurringJobDefinitions` is keyed by name, so the duplicate would silently collapse
+   * the two entries and one job would run the other's handler. Since ENG-2235 an unknown name is dropped
+   * with a warning rather than failing loudly, that would be quiet.
+   *
+   * A *mistyped* name is a different failure and is not caught here — it propagates consistently to both
+   * the schedule and the registry, so the job still works while orphaning the old schedule in Redis. The
+   * pinned scheduler ids in `queue.test.ts` are what catch that.
+   */
+  test("every declared job name resolves to a registered processor", () => {
+    const declaredNames = [
+      ...Object.values(recurringJobs).map((handle) => handle.name),
+      ...Object.values(ONE_SHOT_JOB_NAMES),
+    ];
+
+    expect(new Set(declaredNames).size).toBe(declaredNames.length);
+
+    for (const jobName of declaredNames) {
+      expect(getJobProcessor(jobName), `no processor registered for ${jobName}`).toBeDefined();
+    }
   });
 
   test("dispatches test log jobs", async () => {
