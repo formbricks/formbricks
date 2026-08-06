@@ -47,21 +47,35 @@ jobs:
             // the exact word labelled those PRs as breaking, and this label feeds the GitHub release
             // notes and the self-hoster migration guide, so a false positive is expensive.
             //
-            // Anything after a negative opener is ignored only when it reads as an aside — introduced
-            // by a dash, colon, comma, period or bracket. Prose that merely *starts* with a negative
-            // word stays declared, so "No breaking changes to the API, but the `--legacy` flag is
-            // removed" and "None of the endpoints are removed, but the response shape changed" are
-            // still labelled. Being wrong in that direction is the safe one: the label is also set by
-            // hand per the template, and this job removes a label it considers inactive.
-            const NOTHING_DECLARED =
-              /^(?:none|n\/?a|not applicable|no breaking changes?)(?:\s*[—–:,.(\[-][\s\S]*)?$/i;
+            // A negative opener alone is not enough to clear the section, because "No breaking changes,
+            // but the response shape changed" declares a real one. So an aside after the opener counts
+            // as "nothing here" only when *every* word in it is a scope word — docs, tests, internal,
+            // only… One unrecognised word (endpoint, renamed, shape) makes the section declared.
+            //
+            // That asymmetry is deliberate. A missed breaking change silently omits a migration-guide
+            // entry that self-hosters need; a spurious label is caught by whoever reads the release
+            // notes. So anything the vocabulary does not recognise errs towards labelling, and an
+            // unusual way of writing "nothing here" costs one label removal by hand.
+            const NEGATIVE_OPENER = /^(?:none|n\/?a|not applicable|no breaking changes?)\b/i;
+            const SCOPE_WORD =
+              /^(?:a|and|is|the|this|pr|no|not|nothing|none|n\/?a|applicable|only|just|pure|purely|docs?|documentation|readme|comments?|tests?|ci|chore|refactor(?:ing)?|typos?|styling?|formatting|internal|product|code|changes?)$/i;
 
             const isDeclared = (content) => {
               const normalized = content
                 .replace(/^\s*[-*+]\s+/, "") // a leading list marker ("- none")
                 .replace(/[*_`]/g, "") // markdown emphasis / code ticks ("**None**")
                 .trim();
-              return normalized !== "" && !NOTHING_DECLARED.test(normalized);
+              if (normalized === "") return false;
+              const opener = NEGATIVE_OPENER.exec(normalized);
+              if (!opener) return true;
+              // Split on whitespace and the punctuation that introduces an aside, but not on "/", so
+              // an "N/A" inside the aside survives as one token.
+              const aside = normalized
+                .slice(opener[0].length)
+                .split(/[\s—–:,.;()\[\]-]+/)
+                .filter(Boolean);
+              if (aside.length === 0) return false; // "None", "None.", "N/A"
+              return !(aside.length <= 6 && aside.every((word) => SCOPE_WORD.test(word)));
             };
 
             // Label rules. Add an entry to sync a new label from a new "## <heading>" PR-body section.
