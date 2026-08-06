@@ -50,8 +50,12 @@ interface RecurringJobRegistration {
  * Keyed by `TRecurringJobKey` deliberately: declaring a new job in `recurringJobDescriptors` without
  * adding it here is then a build error rather than a job that quietly never runs — its schedule would
  * never be upserted and its handler never registered.
+ *
+ * The key only forces an entry to *exist*; pairing a key with another job's handle still type-checks,
+ * and would be worse than a swap (both entries upsert the same scheduler, so one job's schedule is never
+ * registered at all). A test pins the pairing instead.
  */
-const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, RecurringJobRegistration> = {
+export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, RecurringJobRegistration> = {
   surveyArchivePurge: {
     handler: processSurveyArchivePurgeJob,
     job: recurringJobs.surveyArchivePurge,
