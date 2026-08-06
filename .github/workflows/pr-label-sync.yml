@@ -103,13 +103,22 @@ jobs:
                 });
                 core.info(`[${rule.label}] added.`);
               } else if (!active && has) {
-                await github.rest.issues.removeLabel({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: pr.number,
-                  name: rule.label,
-                });
-                core.info(`[${rule.label}] removed.`);
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: pr.number,
+                    name: rule.label,
+                  });
+                  core.info(`[${rule.label}] removed.`);
+                } catch (error) {
+                  // A 404 means the label is already gone. `pr.labels` is a snapshot taken when the event
+                  // fired, so a label removed by hand races with the `edited` event that still observes it
+                  // — #8762 went red exactly that way, the two events two seconds apart. The desired end
+                  // state is already in place, so treat it as success; anything else is a real failure.
+                  if (error.status !== 404) throw error;
+                  core.info(`[${rule.label}] already removed by hand; nothing to do.`);
+                }
               } else {
                 core.info(`[${rule.label}] already in the correct state.`);
               }
