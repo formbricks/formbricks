@@ -1,6 +1,15 @@
+import { existsSync } from "node:fs";
 import path from "node:path";
 
 const ESLINT_BIN = "node_modules/.bin/eslint";
+
+// The `config-*` packages ship the shared presets themselves and have no
+// eslint.config.* of their own, so `turbo run lint` skips them. Running ESLint
+// there anyway aborts with "couldn't find an eslint.config file" and fails the
+// whole commit, so skip any package without a flat config.
+function hasEslintConfig(pkgDir) {
+  return ["mjs", "js", "cjs", "ts"].some((ext) => existsSync(path.join(pkgDir, `eslint.config.${ext}`)));
+}
 
 // Groups staged files by their owning app/package directory (e.g. "apps/web",
 // "packages/database"), each exactly one level under apps/ or packages/.
@@ -23,11 +32,13 @@ function groupByPackage(files) {
 // elsewhere in the package can't block it.
 function lintStagedFiles(files) {
   const groups = groupByPackage(files);
-  return [...groups.entries()].map(([pkgDir, relFiles]) => {
-    const eslintBin = path.relative(pkgDir, ESLINT_BIN);
-    const quotedFiles = relFiles.map((f) => `"${f}"`).join(" ");
-    return `sh -c 'cd "${pkgDir}" && "${eslintBin}" ${quotedFiles}'`;
-  });
+  return [...groups.entries()]
+    .filter(([pkgDir]) => hasEslintConfig(pkgDir))
+    .map(([pkgDir, relFiles]) => {
+      const eslintBin = path.relative(pkgDir, ESLINT_BIN);
+      const quotedFiles = relFiles.map((f) => `"${f}"`).join(" ");
+      return `sh -c 'cd "${pkgDir}" && "${eslintBin}" ${quotedFiles}'`;
+    });
 }
 
 export default {
