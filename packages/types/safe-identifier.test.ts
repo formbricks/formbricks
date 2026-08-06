@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   formatSnakeCaseToTitleCase,
-  isLegacyFieldIdentifier,
+  isLegacyIdCharset,
   isLegacyVariableName,
   isSafeIdentifier,
   matchDeclaredFieldName,
@@ -87,19 +87,19 @@ describe("safe-identifier", () => {
     });
   });
 
-  describe("isLegacyFieldIdentifier", () => {
+  describe("isLegacyIdCharset", () => {
     test("accepts the legacy caps and hyphen names already stored on surveys", () => {
-      expect(isLegacyFieldIdentifier("Legacy-Field_1")).toBe(true);
-      expect(isLegacyFieldIdentifier("UserID")).toBe(true);
-      expect(isLegacyFieldIdentifier("email")).toBe(true);
-      expect(isLegacyFieldIdentifier("123")).toBe(true);
+      expect(isLegacyIdCharset("Legacy-Field_1")).toBe(true);
+      expect(isLegacyIdCharset("UserID")).toBe(true);
+      expect(isLegacyIdCharset("email")).toBe(true);
+      expect(isLegacyIdCharset("123")).toBe(true);
     });
 
     test("rejects spaces, empty strings and other punctuation", () => {
-      expect(isLegacyFieldIdentifier("user name")).toBe(false);
-      expect(isLegacyFieldIdentifier("")).toBe(false);
-      expect(isLegacyFieldIdentifier("user:name")).toBe(false);
-      expect(isLegacyFieldIdentifier("email@domain")).toBe(false);
+      expect(isLegacyIdCharset("user name")).toBe(false);
+      expect(isLegacyIdCharset("")).toBe(false);
+      expect(isLegacyIdCharset("user:name")).toBe(false);
+      expect(isLegacyIdCharset("email@domain")).toBe(false);
     });
   });
 

@@ -1,7 +1,7 @@
 import { parse } from "node-html-parser";
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
-import { isLegacyFieldIdentifier, isSafeIdentifier } from "../safe-identifier";
+import { isLegacyIdCharset, isSafeIdentifier } from "../safe-identifier";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
   TActionJumpToQuestion,
@@ -407,7 +407,7 @@ export const validateId = (
     return { code: TValidateIdErrorCode.HasSpaces, field };
   }
 
-  if (!isLegacyFieldIdentifier(field)) {
+  if (!isLegacyIdCharset(field)) {
     return { code: TValidateIdErrorCode.InvalidChars, field };
   }
 

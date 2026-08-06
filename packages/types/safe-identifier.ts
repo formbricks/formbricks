@@ -1,9 +1,9 @@
 /**
- * The pre-existing hidden-field / element id character rule: alphanumeric, underscores and
- * hyphens, with no leading-letter requirement. Kept only so already-stored surveys keep
- * loading; new names must satisfy `isSafeIdentifier` instead.
+ * The pre-existing declared-id character rule: alphanumeric, underscores and hyphens, with no
+ * leading-letter requirement. Kept only so already-stored surveys keep loading; new names must
+ * satisfy `isSafeIdentifier` instead.
  */
-const LEGACY_FIELD_IDENTIFIER_REGEX = /^[a-zA-Z0-9_-]+$/;
+const LEGACY_ID_CHARSET_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 /**
  * The pre-existing variable name rule. Note it lacks the leading-letter requirement, so it
@@ -82,12 +82,14 @@ export const formatSnakeCaseToTitleCase = (key: string): string => {
 };
 
 /**
- * Legacy shim for the load path: the character rule hidden field ids and element ids were
- * stored under before `isSafeIdentifier` existed. Survey schemas validate already-persisted
- * names with this, so tightening it would stop existing surveys from loading. Editors gate new
- * names with `isSafeIdentifier`.
+ * Legacy shim for the load path: the character rule every declared id was stored under before
+ * `isSafeIdentifier` existed. Via `validateId` this governs element and question ids as well as
+ * hidden field ids, hence the charset-level name. Survey schemas validate already-persisted names
+ * with this, so tightening it would stop existing surveys from loading — and element/question ids
+ * never graduate to the strict rule, because `Q1` has to stay a legal question id. Editors gate
+ * new *declared field* names with `isSafeIdentifier` on top of this.
  */
-export const isLegacyFieldIdentifier = (value: string): boolean => LEGACY_FIELD_IDENTIFIER_REGEX.test(value);
+export const isLegacyIdCharset = (value: string): boolean => LEGACY_ID_CHARSET_REGEX.test(value);
 
 /**
  * Legacy shim for the load path: the character rule survey variables were stored under before

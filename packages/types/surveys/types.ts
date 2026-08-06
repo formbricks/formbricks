@@ -3,7 +3,7 @@ import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
-import { isLegacyFieldIdentifier, isLegacyVariableName } from "../safe-identifier";
+import { isLegacyIdCharset, isLegacyVariableName } from "../safe-identifier";
 import { ZSegment } from "../segment";
 import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
@@ -181,7 +181,7 @@ export const ZSurveyHiddenFields = z.object({
         // Lenient on purpose: this schema also parses surveys loaded from the database, which
         // still hold hidden field names created before `isSafeIdentifier`. New names are gated
         // strictly by `validateId` in the editor.
-        if (!isLegacyFieldIdentifier(field)) {
+        if (!isLegacyIdCharset(field)) {
           ctx.addIssue({
             code: "custom",
             message:
