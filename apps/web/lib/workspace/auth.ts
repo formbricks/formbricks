@@ -72,6 +72,15 @@ export const canUserReadWorkspaceIntegrations = async (
  * role — an organization `member` with no grant for this workspace is in neither,
  * and is still refused. It is ordered second so the common case costs one check.
  *
+ * Membership in the owning organization is checked first, because it is a
+ * precondition the helper this replaced enforced with its own query and neither
+ * disjunct re-derives. `TeamUser` has no foreign key to `Membership` — it cascades
+ * from `Team` and `User` only — so "removed from the organization" and "still has a
+ * team row" are separable states in the schema. `deleteMembership` deletes both in
+ * one serializable transaction, so that state should not occur; this check is what
+ * makes it not matter if it ever does, and keeps the migration from quietly
+ * widening what the old query allowed.
+ *
  * Callers pass the resolved workspace rather than an id: every one of them has
  * already loaded it, and requiring the owning organization here keeps this helper
  * from hiding a lookup behind an authorization decision.
@@ -83,8 +92,11 @@ export const canUserNavigateWorkspace = async (
   validateInputs([userId, ZId], [workspace.id, ZId], [workspace.organizationId, ZId]);
 
   const actor = { type: "user", id: userId } as const;
+  const organization = { type: "organization", id: workspace.organizationId } as const;
+
+  if (!(await can(actor, "organization.read", organization))) return false;
 
   if (await can(actor, "workspace.read", { type: "workspace", id: workspace.id })) return true;
 
-  return can(actor, "organization.manage_billing", { type: "organization", id: workspace.organizationId });
+  return can(actor, "organization.manage_billing", organization);
 };

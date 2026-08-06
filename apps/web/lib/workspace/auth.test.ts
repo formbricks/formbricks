@@ -71,15 +71,17 @@ describe("canUserNavigateWorkspace", () => {
 
     await expect(canUserNavigateWorkspace(userId, workspace)).resolves.toBe(true);
 
-    expect(can).toHaveBeenCalledTimes(1);
-    expect(can).toHaveBeenCalledWith(actor, "workspace.read", {
+    expect(can).toHaveBeenCalledTimes(2);
+    expect(can).toHaveBeenLastCalledWith(actor, "workspace.read", {
       type: "workspace",
       id: workspace.id,
     });
   });
 
   test("admits the billing role, which cannot read the workspace", async () => {
-    vi.mocked(can).mockImplementation(async (_actor, action) => action === "organization.manage_billing");
+    vi.mocked(can).mockImplementation(
+      async (_actor, action) => action === "organization.read" || action === "organization.manage_billing"
+    );
 
     await expect(canUserNavigateWorkspace(userId, workspace)).resolves.toBe(true);
 
@@ -90,11 +92,26 @@ describe("canUserNavigateWorkspace", () => {
   });
 
   test("refuses an organization member with no grant for this workspace", async () => {
-    vi.mocked(can).mockResolvedValue(false);
+    vi.mocked(can).mockImplementation(async (_actor, action) => action === "organization.read");
 
     await expect(canUserNavigateWorkspace(userId, workspace)).resolves.toBe(false);
 
-    expect(can).toHaveBeenCalledTimes(2);
+    expect(can).toHaveBeenCalledTimes(3);
+  });
+
+  // `TeamUser` has no foreign key to `Membership`, so a stale team row could otherwise satisfy
+  // `workspace.read` for someone no longer in the organization. The helper this replaced established
+  // membership with its own query first; this keeps that precondition.
+  test("refuses a non-member even when a team grant would satisfy workspace.read", async () => {
+    vi.mocked(can).mockImplementation(async (_actor, action) => action === "workspace.read");
+
+    await expect(canUserNavigateWorkspace(userId, workspace)).resolves.toBe(false);
+
+    expect(can).toHaveBeenCalledTimes(1);
+    expect(can).toHaveBeenCalledWith(actor, "organization.read", {
+      type: "organization",
+      id: workspace.organizationId,
+    });
   });
 
   test("propagates central evaluator failures instead of denying", async () => {
