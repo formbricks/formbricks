@@ -196,23 +196,27 @@ async function requireApiKeyExclusiveDataset(
   // From the directory, not the resolution: `allowedTenantIds` is the workspace's datasets, the opposite
   // direction of the same relation.
   const directory = await getFeedbackDirectoryAuthContext(resolution.tenantId);
-  const deny = (reason: string, response: Response): { ok: false; response: Response } => {
+  // The generic record 403 is the default because it is what all but one refusal returns. Built by the
+  // default parameter rather than up front so the success path — the common one — allocates no Response.
+  const deny = (
+    reason: string,
+    response: Response = forbidFeedbackRecord(requestId, instance)
+  ): { ok: false; response: Response } => {
     log.warn({ statusCode: 403 }, `Feedback record mutation denied: ${reason}`);
     return { ok: false, response };
   };
-  const generic = forbidFeedbackRecord(requestId, instance);
 
   if (!directory) {
-    return deny("dataset could not be resolved", generic);
+    return deny("dataset could not be resolved");
   }
   // The key's own organization, not `resolution.organizationId`. The resolution's org came from the
   // workspace, and the workspace is only known to be the key's via `workspacePermissions` — the very
   // invariant this check exists to distrust. Comparing the two derived values would assert nothing.
   if (authentication.organizationId !== directory.organizationId) {
-    return deny("dataset organization mismatch", generic);
+    return deny("dataset organization mismatch");
   }
   if (directory.isArchived) {
-    return deny("dataset is archived", generic);
+    return deny("dataset is archived");
   }
   if (!canApiKeyMutateFeedbackDirectoryRecords(directory.workspaceIds)) {
     return deny(
@@ -223,7 +227,7 @@ async function requireApiKeyExclusiveDataset(
   // Counting to one says the dataset is unshared; it does not say the one workspace is the caller's.
   // That is the assertion the rule actually rests on, so it is made rather than assumed.
   if (directory.workspaceIds[0] !== resolution.workspaceId) {
-    return deny("dataset belongs to another workspace", generic);
+    return deny("dataset belongs to another workspace");
   }
 
   return { ok: true };
