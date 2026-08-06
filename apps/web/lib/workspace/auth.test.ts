@@ -99,9 +99,11 @@ describe("canUserNavigateWorkspace", () => {
     expect(can).toHaveBeenCalledTimes(3);
   });
 
-  // `TeamUser` has no foreign key to `Membership`, so a stale team row could otherwise satisfy
-  // `workspace.read` for someone no longer in the organization. The helper this replaced established
-  // membership with its own query first; this keeps that precondition.
+  // Pins the composition, not a live gap: today's legacy evaluator already refuses a non-member
+  // inside `workspace.read`, so this case is unreachable through it. It matters for the SpiceDB
+  // definition, where `reader_team` is a projected edge carrying no membership requirement — see
+  // the note on canUserNavigateWorkspace. The real-database matrix in
+  // navigation-access.integration.test.ts is what proves the legacy behaviour is unchanged.
   test("refuses a non-member even when a team grant would satisfy workspace.read", async () => {
     vi.mocked(can).mockImplementation(async (_actor, action) => action === "workspace.read");
 

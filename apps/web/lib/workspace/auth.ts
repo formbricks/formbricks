@@ -72,14 +72,17 @@ export const canUserReadWorkspaceIntegrations = async (
  * role — an organization `member` with no grant for this workspace is in neither,
  * and is still refused. It is ordered second so the common case costs one check.
  *
- * Membership in the owning organization is checked first, because it is a
- * precondition the helper this replaced enforced with its own query and neither
- * disjunct re-derives. `TeamUser` has no foreign key to `Membership` — it cascades
- * from `Team` and `User` only — so "removed from the organization" and "still has a
- * team row" are separable states in the schema. `deleteMembership` deletes both in
- * one serializable transaction, so that state should not occur; this check is what
- * makes it not matter if it ever does, and keeps the migration from quietly
- * widening what the old query allowed.
+ * Membership in the owning organization is asked for first so that this
+ * composition does not depend on which evaluator backs `workspace.read`. Today the
+ * legacy evaluator opens with the same membership query the deleted helper used, so
+ * the check is redundant — but the SpiceDB definition is `reader + reader_team +
+ * write`, where `reader_team` is a projected `team#member` edge that carries no
+ * membership requirement of its own. `TeamUser` has no foreign key to `Membership`
+ * (it cascades from `Team` and `User` only), so "removed from the organization" and
+ * "still has a team row" are separable states in the schema; `deleteMembership`
+ * closes both in one serializable transaction and reconciles the projection, so a
+ * stale edge should not exist. This states the precondition rather than inheriting
+ * it, which is what keeps the two evaluators answering alike here.
  *
  * Callers pass the resolved workspace rather than an id: every one of them has
  * already loaded it, and requiring the owning organization here keeps this helper
