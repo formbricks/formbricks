@@ -57,6 +57,26 @@ describe("expandPresetDateRanges", () => {
     expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-01-01", "2026-05-21"]);
   });
 
+  test("'last 24 hours' uses timestamp precision ending now", () => {
+    const result = expandPresetDateRanges(queryWithDateRange("last 24 hours"), NOW);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-05-20T14:30:00", "2026-05-21T14:30:00"]);
+  });
+
+  test("'last quarter' is the full previous calendar quarter", () => {
+    const result = expandPresetDateRanges(queryWithDateRange("last quarter"), NOW);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-01-01", "2026-03-31"]);
+  });
+
+  test("'last 6 months' runs from 6 months back through today", () => {
+    const result = expandPresetDateRanges(queryWithDateRange("last 6 months"), NOW);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2025-11-21", "2026-05-21"]);
+  });
+
+  test("'last year' is the full previous calendar year", () => {
+    const result = expandPresetDateRanges(queryWithDateRange("last year"), NOW);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2025-01-01", "2025-12-31"]);
+  });
+
   test("leaves explicit [start, end] tuple unchanged", () => {
     const result = expandPresetDateRanges(queryWithDateRange(["2026-01-01", "2026-01-15"]), NOW);
     expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-01-01", "2026-01-15"]);

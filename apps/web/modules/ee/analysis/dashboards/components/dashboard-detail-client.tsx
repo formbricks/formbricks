@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, memo, useCallback, useMemo, useState, useTransition } from "react";
 import { ResponsiveGridLayout, useContainerWidth, verticalCompactor } from "react-grid-layout";
 import type { Layout, LayoutItem } from "react-grid-layout";
@@ -13,10 +13,19 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
+import { DashboardDateFilter } from "@/modules/ee/analysis/dashboards/components/dashboard-date-filter";
 import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components/dashboard-page-header";
 import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/dashboard-widget";
 import { DashboardWidgetData } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-skeleton";
+import {
+  ALL_TIME_VALUE,
+  CUSTOM_VALUE,
+  DATE_FILTER_FROM_PARAM,
+  DATE_FILTER_PARAM,
+  DATE_FILTER_TO_PARAM,
+  type TDashboardDateFilter,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -42,6 +51,7 @@ interface DashboardDetailClientProps {
       | { error: TDashboardWidgetError }
     >
   >;
+  dateFilter: TDashboardDateFilter | null;
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
   isAIAvailable: boolean;
@@ -166,12 +176,15 @@ export function DashboardDetailClient({
   workspaceId,
   dashboard,
   widgetDataPromises,
+  dateFilter,
   directories,
   isReadOnly,
   isAIAvailable,
   aiUnavailableReason,
 }: Readonly<DashboardDetailClientProps>) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
   const { width, containerRef, mounted } = useContainerWidth();
 
@@ -387,6 +400,29 @@ export function DashboardDetailClient({
     }
   }, [name, widgets, dashboard, workspaceId, router, t, startTransition]);
 
+  const handleDateFilterChange = useCallback(
+    (filter: TDashboardDateFilter | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete(DATE_FILTER_PARAM);
+      params.delete(DATE_FILTER_FROM_PARAM);
+      params.delete(DATE_FILTER_TO_PARAM);
+
+      if (filter?.type === "all-time") {
+        params.set(DATE_FILTER_PARAM, ALL_TIME_VALUE);
+      } else if (filter?.type === "preset") {
+        params.set(DATE_FILTER_PARAM, filter.value);
+      } else if (filter?.type === "custom") {
+        params.set(DATE_FILTER_PARAM, CUSTOM_VALUE);
+        params.set(DATE_FILTER_FROM_PARAM, filter.range[0]);
+        params.set(DATE_FILTER_TO_PARAM, filter.range[1]);
+      }
+
+      const queryString = params.toString();
+      router.push(queryString ? `${pathname}?${queryString}` : pathname);
+    },
+    [pathname, router, searchParams]
+  );
+
   const isEmpty = widgets.length === 0;
 
   return (
@@ -415,6 +451,12 @@ export function DashboardDetailClient({
           />
         }
       />
+
+      {!isEditing && (
+        <div className="flex flex-wrap items-center gap-2">
+          <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />
+        </div>
+      )}
 
       <section>
         <div ref={containerRef} className="w-full">
