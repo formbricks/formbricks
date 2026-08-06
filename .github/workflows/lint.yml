@@ -37,3 +37,8 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+      # Formatting is otherwise only applied by the lint-staged pre-commit hook,
+      # which `git commit --no-verify` skips. Run `pnpm format` to fix failures.
+      - name: Check formatting
+        run: pnpm format:check
