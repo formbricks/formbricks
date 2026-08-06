@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import { AuthorizationError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { resetDb } from "@/integration/reset-db";
 import { type TAccess, checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -59,6 +60,12 @@ const replayDeletedLegacyPath = async (
   return false;
 };
 
+/**
+ * Only an `AuthorizationError` is a decision. Anything else — a Prisma failure, a bug in the central
+ * path — must reach the runner: a bare `catch` would turn it into `false`, which agrees with the
+ * legacy replay in most cells and would let this matrix pass green while measuring nothing. The
+ * cell-count assertion below does not catch that, because the cells would all still be evaluated.
+ */
 const decidesAllow = async (
   userId: string,
   organizationId: string,
@@ -66,8 +73,9 @@ const decidesAllow = async (
 ): Promise<boolean> => {
   try {
     return (await checkAuthorizationUpdated({ userId, organizationId, access })) === true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (error instanceof AuthorizationError) return false;
+    throw error;
   }
 };
 
