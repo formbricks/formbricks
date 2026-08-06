@@ -371,6 +371,41 @@ describe("Logger", () => {
     processSpy.mockRestore();
   });
 
+  test("removes partially attached process handlers before retrying registration", async () => {
+    const registrationError = new Error("registration failed");
+    let registrationCount = 0;
+    const processOnSpy = vi.spyOn(process, "on");
+    const processOffSpy = vi.spyOn(process, "off");
+    processOnSpy.mockImplementation(() => {
+      registrationCount += 1;
+      if (registrationCount === 3) throw registrationError;
+      return process;
+    });
+    processOffSpy.mockImplementation(() => process);
+    process.env.NEXT_RUNTIME = "nodejs";
+
+    await import("./logger");
+    expect(processOffSpy).toHaveBeenCalledTimes(2);
+    expect(processOffSpy).toHaveBeenCalledWith("unhandledRejection", expect.any(Function));
+    expect(processOffSpy).toHaveBeenCalledWith("uncaughtException", expect.any(Function));
+    expect(
+      (process as typeof process & { [key: symbol]: boolean | undefined })[processHandlersAttachedKey]
+    ).toBe(undefined);
+
+    processOnSpy.mockClear();
+    processOnSpy.mockImplementation(() => process);
+    processOffSpy.mockClear();
+    vi.resetModules();
+
+    await import("./logger");
+
+    expect(processOnSpy).toHaveBeenCalledTimes(4);
+    expect(processOffSpy).not.toHaveBeenCalled();
+
+    processOnSpy.mockRestore();
+    processOffSpy.mockRestore();
+  });
+
   test("process handlers are not attached outside Node.js environment", async () => {
     const processSpy = vi.spyOn(process, "on");
     processSpy.mockImplementation(() => process); // Return process for chaining

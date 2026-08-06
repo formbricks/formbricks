@@ -198,20 +198,23 @@ const attachNodeProcessHandlers = (): void => {
   if (nodeProcess[PROCESS_HANDLERS_ATTACHED_KEY]) return;
 
   nodeProcess[PROCESS_HANDLERS_ATTACHED_KEY] = true;
+  const removeAttachedHandlers: Array<() => void> = [];
+  const handleUncaughtException = (err: Error): void => handleShutdown("uncaughtException", err);
+  const handleUnhandledRejection = (err: unknown): void => handleShutdown("unhandledRejection", err as Error);
+  const handleSigterm = (): void => handleShutdown("SIGTERM");
+  const handleSigint = (): void => handleShutdown("SIGINT");
+
   try {
-    process.on("uncaughtException", (err) => {
-      handleShutdown("uncaughtException", err);
-    });
-    process.on("unhandledRejection", (err) => {
-      handleShutdown("unhandledRejection", err as Error);
-    });
-    process.on("SIGTERM", () => {
-      handleShutdown("SIGTERM");
-    });
-    process.on("SIGINT", () => {
-      handleShutdown("SIGINT");
-    });
+    process.on("uncaughtException", handleUncaughtException);
+    removeAttachedHandlers.push(() => process.off("uncaughtException", handleUncaughtException));
+    process.on("unhandledRejection", handleUnhandledRejection);
+    removeAttachedHandlers.push(() => process.off("unhandledRejection", handleUnhandledRejection));
+    process.on("SIGTERM", handleSigterm);
+    removeAttachedHandlers.push(() => process.off("SIGTERM", handleSigterm));
+    process.on("SIGINT", handleSigint);
+    removeAttachedHandlers.push(() => process.off("SIGINT", handleSigint));
   } catch (error) {
+    removeAttachedHandlers.reverse().forEach((removeHandler) => removeHandler());
     Reflect.deleteProperty(nodeProcess, PROCESS_HANDLERS_ATTACHED_KEY);
     throw error;
   }
