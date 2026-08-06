@@ -73,11 +73,16 @@ deployment:
     #   maxSurge: 25%
     #   maxUnavailable: 25%
 
-  # Time Kubernetes allows the app container to stop gracefully
+  # Time Kubernetes allows the Pod to stop gracefully
+  # Must exceed any preStop drain below because lifecycle hooks run inside this budget
   terminationGracePeriodSeconds: 30
 
   # Optional app container lifecycle hooks
   lifecycle: {}
+  # Native sleep requires Kubernetes >= 1.29; use an exec handler on older clusters
+  #   preStop:
+  #     sleep:
+  #       seconds: 20
 
   # Automatically reload deployment when ConfigMaps or Secrets change
   reloadOnChange: false

@@ -41,7 +41,10 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --show-only templates/deployment.yaml > "$render_dir/deployment-default.yaml"
           grep -q 'terminationGracePeriodSeconds: 30' "$render_dir/deployment-default.yaml"
-          ! grep -q '^          lifecycle:$' "$render_dir/deployment-default.yaml"
+          if grep -q '^          lifecycle:$' "$render_dir/deployment-default.yaml"; then
+            echo "Expected no lifecycle block in the default render" >&2
+            exit 1
+          fi
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
