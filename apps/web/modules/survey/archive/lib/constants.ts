@@ -1,3 +1,5 @@
+import { env } from "@/lib/env";
+
 // Archived surveys are permanently deleted after this many days (see ENG-1042).
 export const SURVEY_ARCHIVE_RETENTION_DAYS = 30;
 
@@ -5,8 +7,9 @@ export const SURVEY_ARCHIVE_RETENTION_DAYS = 30;
 export const SURVEY_ARCHIVE_PURGE_BATCH_SIZE = 100;
 
 // Daily at 01:30 in the same time zone as survey scheduling, offset from the scheduling job.
-export const SURVEY_ARCHIVE_PURGE_TIME_ZONE =
-  process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE ?? "Europe/Berlin";
+// Reuses the validated, server-only SURVEY_SCHEDULING_TIME_ZONE (single source of truth in
+// apps/web/lib/env.ts), which already defaults to "Europe/Berlin".
+export const SURVEY_ARCHIVE_PURGE_TIME_ZONE = env.SURVEY_SCHEDULING_TIME_ZONE;
 export const SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN = "30 1 * * *";
 export const SURVEY_ARCHIVE_PURGE_GLOBAL_SCOPE = "global";
 export const SURVEY_ARCHIVE_PURGE_DAILY_SCHEDULE_ID = "daily-survey-archive-purge";
