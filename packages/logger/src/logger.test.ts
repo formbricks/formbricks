@@ -13,6 +13,7 @@ const originalOtelLogsEnabled = process.env.OTEL_LOGS_ENABLED;
 const originalOtelServiceName = process.env.OTEL_SERVICE_NAME;
 const originalNpmPackageVersion = process.env.npm_package_version;
 const originalEnvironment = process.env.ENVIRONMENT;
+const processHandlersAttachedKey = Symbol.for("@formbricks/logger/process-handlers-attached");
 
 const restoreEnv = (key: string, value: string | undefined): void => {
   if (value === undefined) {
@@ -109,6 +110,7 @@ describe("Logger", () => {
     delete process.env.OTEL_SERVICE_NAME;
     delete process.env.npm_package_version;
     delete process.env.ENVIRONMENT;
+    Reflect.deleteProperty(process, processHandlersAttachedKey);
   });
 
   afterEach(() => {
@@ -120,6 +122,7 @@ describe("Logger", () => {
     restoreEnv("OTEL_SERVICE_NAME", originalOtelServiceName);
     restoreEnv("npm_package_version", originalNpmPackageVersion);
     restoreEnv("ENVIRONMENT", originalEnvironment);
+    Reflect.deleteProperty(process, processHandlersAttachedKey);
   });
 
   test("logger is created with development config when NODE_ENV is not production", async () => {
@@ -350,6 +353,20 @@ describe("Logger", () => {
     expect(processSpy).toHaveBeenCalledWith("unhandledRejection", expect.any(Function));
     expect(processSpy).toHaveBeenCalledWith("SIGTERM", expect.any(Function));
     expect(processSpy).toHaveBeenCalledWith("SIGINT", expect.any(Function));
+
+    processSpy.mockRestore();
+  });
+
+  test("process handlers are attached only once across bundled logger instances", async () => {
+    const processSpy = vi.spyOn(process, "on");
+    processSpy.mockImplementation(() => process);
+    process.env.NEXT_RUNTIME = "nodejs";
+
+    await import("./logger");
+    vi.resetModules();
+    await import("./logger");
+
+    expect(processSpy).toHaveBeenCalledTimes(4);
 
     processSpy.mockRestore();
   });
