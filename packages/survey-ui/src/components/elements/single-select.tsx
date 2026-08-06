@@ -612,9 +612,10 @@ function OtherOptionLabel({
         <RadioIndicator />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
       </label>
-      {/* No aria-describedby here, unlike the dropdown branch: the list variant's enclosing
-          <fieldset role="radiogroup"> already carries it, and repeating the same message on one
-          option would announce it twice for this row and once for every sibling. */}
+      {/* The enclosing <fieldset role="radiogroup"> carries aria-describedby, but an ancestor's
+          description is not part of a descendant's accessible description (accname): focusing this
+          input announces its own name/state/description only. Without this it would read as invalid
+          with no reason. It describes one text input, not each option, so nothing repeats per row. */}
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
@@ -627,6 +628,7 @@ function OtherOptionLabel({
           aria-required
           aria-label={otherOptionLabel}
           aria-invalid={Boolean(errorMessage)}
+          aria-describedby={errorMessage ? `${inputId}-error` : undefined}
           dir={dir}
           className="mt-2 w-full"
         />
