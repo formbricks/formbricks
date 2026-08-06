@@ -4,6 +4,7 @@ import { type TLogLevel, ZLogLevel } from "../types/logger";
 const IS_PRODUCTION = !process.env.NODE_ENV || process.env.NODE_ENV === "production";
 const IS_BUILD = process.env.NEXT_PHASE === "phase-production-build";
 const PROCESS_GLOBAL_KEY = "process";
+const PROCESS_HANDLERS_ATTACHED_KEY = Symbol.for("@formbricks/logger/process-handlers-attached");
 const NEXT_STANDALONE_APP_DIR_PATTERN = /[/\\]apps[/\\]web$/;
 const OTEL_TRANSPORT_PACKAGE_PATH =
   "node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js";
@@ -190,8 +191,14 @@ const handleShutdown = (event: string, err?: Error): void => {
 
 // Create a separate function for attaching Node.js process handlers
 const attachNodeProcessHandlers = (): void => {
-  // Only attach handlers if we're in a Node.js environment with full process support
-  if (process.env.NEXT_RUNTIME === "nodejs") {
+  if (process.env.NEXT_RUNTIME !== "nodejs") return;
+
+  // Next.js can evaluate bundled copies of this module in one process.
+  const nodeProcess = process as typeof process & { [key: symbol]: boolean | undefined };
+  if (nodeProcess[PROCESS_HANDLERS_ATTACHED_KEY]) return;
+
+  nodeProcess[PROCESS_HANDLERS_ATTACHED_KEY] = true;
+  try {
     process.on("uncaughtException", (err) => {
       handleShutdown("uncaughtException", err);
     });
@@ -204,6 +211,9 @@ const attachNodeProcessHandlers = (): void => {
     process.on("SIGINT", () => {
       handleShutdown("SIGINT");
     });
+  } catch (error) {
+    Reflect.deleteProperty(nodeProcess, PROCESS_HANDLERS_ATTACHED_KEY);
+    throw error;
   }
 };
 
