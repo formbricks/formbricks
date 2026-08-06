@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { type Page, expect } from "@playwright/test";
+import { type Locator, type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
@@ -483,34 +483,47 @@ const seedValidationSurvey = async (
 };
 
 /**
- * Resolves the focused control's aria-describedby IDREF list inside the page.
+ * Resolves a control's aria-describedby IDREF list against the document.
  *
  * Asserting the attribute alone would pass against a dangling reference — an id
  * that points at nothing announces nothing, and that is precisely the state this
  * change could regress into. So every referenced id is looked up and reported
  * with the text a screen reader would actually read from it.
+ *
+ * Runs INSIDE the page (Playwright serializes it), so it must stay closure-free.
  */
-const focusedControlDescription = (page: Page) =>
-  page.evaluate(() => {
-    const active = document.activeElement as HTMLElement | null;
-    if (!active) return null;
-    const ids = (active.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean);
-    return {
-      tagName: active.tagName,
-      ariaInvalid: active.getAttribute("aria-invalid"),
-      ids,
-      resolved: ids.map((id) => {
-        const target = document.getElementById(id);
-        return {
-          id,
-          exists: target !== null,
-          text: target?.textContent?.trim() ?? null,
-          ariaLive: target?.getAttribute("aria-live") ?? null,
-          role: target?.getAttribute("role") ?? null,
-        };
-      }),
-    };
-  });
+const readDescription = (control: Element | null) => {
+  if (!control) return null;
+  const ids = (control.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean);
+  return {
+    tagName: control.tagName,
+    ariaInvalid: control.getAttribute("aria-invalid"),
+    ids,
+    resolved: ids.map((id) => {
+      const target = document.getElementById(id);
+      return {
+        id,
+        exists: target !== null,
+        text: target?.textContent?.trim() ?? null,
+        ariaLive: target?.getAttribute("aria-live") ?? null,
+        role: target?.getAttribute("role") ?? null,
+      };
+    }),
+  };
+};
+
+/** …for whatever currently holds focus. */
+const focusedControlDescription = async (page: Page) => {
+  const active = await page.evaluateHandle(() => document.activeElement);
+  try {
+    return await page.evaluate(readDescription, active);
+  } finally {
+    await active.dispose();
+  }
+};
+
+/** …for one named control, so an assertion can target a box that is not focused. */
+const describedControl = (control: Locator) => control.evaluate(readDescription);
 
 /** The live region for an element, addressed by the `${inputId}-error` call-site convention. */
 const errorRegion = (page: Page, errorId: string) => page.locator(`[id="${errorId}"]`);
@@ -528,8 +541,17 @@ const expectSilentLiveRegion = async (page: Page, errorId: string): Promise<void
   await expect(controlDescribedBy(page, errorId), `nothing should point at ${errorId} yet`).toHaveCount(0);
 };
 
-/** The announced state: the region carries the message and exactly one invalid control resolves to it. */
-const expectAnnouncedError = async (page: Page, errorId: string): Promise<void> => {
+/**
+ * The announced state: the region carries the message and every control that
+ * resolves to it is flagged invalid.
+ *
+ * `describedControls` is the exact number of nodes allowed to point at the region.
+ * It is 1 for element types with a single invalid node, and 2 for the select types,
+ * where the group (or dropdown trigger) AND the "Other" free-text box each need
+ * their own description — see the "Other" suite below for why the ancestor's is not
+ * enough.
+ */
+const expectAnnouncedError = async (page: Page, errorId: string, describedControls = 1): Promise<void> => {
   const region = errorRegion(page, errorId);
   await expect(region, `${errorId} should announce the required error`).toHaveText(REQUIRED_ERROR);
   // Polite on purpose: focus moves to the invalid control at the same instant, and
@@ -538,8 +560,13 @@ const expectAnnouncedError = async (page: Page, errorId: string): Promise<void> 
   await expect(region, `${errorId} must not be an alert`).not.toHaveAttribute("role");
 
   const control = controlDescribedBy(page, errorId);
-  await expect(control, `exactly one control should be described by ${errorId}`).toHaveCount(1);
-  await expect(control).toHaveAttribute("aria-invalid", "true");
+  await expect(
+    control,
+    `exactly ${String(describedControls)} control(s) should be described by ${errorId}`
+  ).toHaveCount(describedControls);
+  for (let index = 0; index < describedControls; index++) {
+    await expect(control.nth(index)).toHaveAttribute("aria-invalid", "true");
+  }
 };
 
 test.describe("Survey validation error announcement @slow", () => {
@@ -665,5 +692,262 @@ test.describe("Survey validation error announcement @slow", () => {
     await navButton(page, "Next").click();
     await expect(errorRegion(page, `${ids.openText}-input-error`)).toHaveText(REQUIRED_ERROR);
     await expect(page.locator('#fbjs [aria-live="assertive"]')).toHaveCount(0);
+  });
+});
+
+/* -------------------------------------------------------------------------- *
+ * ENG-1292 — the "Other" free-text box must describe its OWN error.
+ * -------------------------------------------------------------------------- */
+
+/**
+ * The "Other" box is the one control whose invalid state has no other route to a
+ * screen reader. Its enclosing fieldset (list variant) or its dropdown trigger
+ * does carry aria-describedby, but per accname an ancestor's description is NOT
+ * part of a descendant's accessible description — so focusing the box announced
+ * "invalid" with no reason at all, while a sighted user saw the message right
+ * above it.
+ *
+ * Both select types ship their own copy of that input in both display variants,
+ * so all four are seeded onto ONE card: block validation runs over every element,
+ * and a single empty submit surfaces all four errors instead of a four-card walk.
+ */
+interface OtherVariant {
+  /** Also the suffix that makes every accessible name in the fixture unique. */
+  key: string;
+  type: "multipleChoiceSingle" | "multipleChoiceMulti";
+  displayType: "list" | "dropdown";
+  headline: string;
+  choices: [string, string];
+}
+
+/** Two regular choices + "Other" stays at the dropdown search threshold, so no search box renders. */
+const OTHER_VARIANTS: OtherVariant[] = [
+  // First on purpose: a failed submit focuses the first invalid control inside the
+  // FIRST erroring element's form, and here that control is the "Other" box itself
+  // — focusFirstControl matches `:is(input, textarea, select)[aria-invalid="true"]`,
+  // which skips the dropdown trigger because the trigger is a <button>.
+  {
+    key: "single-dropdown",
+    type: "multipleChoiceSingle",
+    displayType: "dropdown",
+    headline: "Which plan are you on",
+    choices: ["Free", "Pro"],
+  },
+  {
+    key: "single-list",
+    type: "multipleChoiceSingle",
+    displayType: "list",
+    headline: "Which city do you work from",
+    choices: ["Berlin", "Paris"],
+  },
+  {
+    key: "multi-dropdown",
+    type: "multipleChoiceMulti",
+    displayType: "dropdown",
+    headline: "Which features do you use",
+    choices: ["Surveys", "Contacts"],
+  },
+  {
+    key: "multi-list",
+    type: "multipleChoiceMulti",
+    displayType: "list",
+    headline: "Which channels do you send from",
+    choices: ["Email", "Link"],
+  },
+];
+
+const otherLabel = (variant: OtherVariant): string => `Other ${variant.key}`;
+const otherPlaceholder = (variant: OtherVariant): string => `Specify ${variant.key}`;
+const isMultiSelect = (variant: OtherVariant): boolean => variant.type === "multipleChoiceMulti";
+
+interface SeededOtherSurvey {
+  url: string;
+  /** Element id per variant key, so the spec can address each `${elementId}-error` region. */
+  elementIds: Record<string, string>;
+}
+
+const seedOtherSurvey = async (workspaceId: string, createdBy: string): Promise<SeededOtherSurvey> => {
+  const elementIds: Record<string, string> = {};
+
+  const endings = [
+    {
+      id: createId(),
+      type: "endScreen" as const,
+      headline: i18nValue(ENDING_HEADLINE),
+      subheader: i18nValue("We appreciate your feedback."),
+    },
+  ] as unknown as TSurveyEnding[];
+
+  const questions = OTHER_VARIANTS.map((variant) => {
+    const id = createId();
+    elementIds[variant.key] = id;
+    return {
+      id,
+      type: variant.type,
+      displayType: variant.displayType,
+      headline: i18nValue(variant.headline),
+      required: true,
+      choices: [
+        ...variant.choices.map((label) => ({ id: createId(), label: i18nValue(label) })),
+        // The renderer keys the free-text option off the literal choice id "other".
+        { id: "other", label: i18nValue(otherLabel(variant)) },
+      ],
+      otherOptionPlaceholder: i18nValue(otherPlaceholder(variant)),
+    };
+  });
+
+  // transformQuestionsToBlocks emits one block per question; merge them into a
+  // single card so one empty submit exercises all four "Other" boxes at once.
+  const perQuestionBlocks = transformQuestionsToBlocks(questions as unknown as TLegacyQuestions, endings);
+  const blocks = [
+    { ...perQuestionBlocks[0], elements: perQuestionBlocks.flatMap((block) => block.elements) },
+  ];
+
+  const survey = await prisma.survey.create({
+    data: {
+      workspaceId,
+      createdBy,
+      name: "Other option announcement survey",
+      type: "link",
+      status: "inProgress",
+      // Off for the same reason as the validation fixture: a required auto-progress
+      // element hides the submit button, and without one there is no empty submit to
+      // make. A multi-element block already disables auto-progress; the flag keeps
+      // the fixture honest if it is ever split into one card per variant.
+      isAutoProgressingEnabled: false,
+      welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
+      blocks: blocks as unknown as Prisma.InputJsonValue[],
+      endings: endings as unknown as Prisma.InputJsonValue[],
+    },
+    select: { id: true },
+  });
+
+  return { url: `/s/${survey.id}`, elementIds };
+};
+
+/**
+ * The "Other" free-text box. The list variant names it with aria-label (the option
+ * label); the dropdown variant carries no label at all, so its accessible name
+ * falls back to the placeholder.
+ */
+const otherBox = (page: Page, variant: OtherVariant): Locator =>
+  page.getByRole("textbox", {
+    name: variant.displayType === "list" ? otherLabel(variant) : otherPlaceholder(variant),
+    exact: true,
+  });
+
+/** Selects "Other" for one variant and resolves once its free-text box is on screen. */
+const selectOther = async (page: Page, variant: OtherVariant): Promise<Locator> => {
+  const name = otherLabel(variant);
+
+  if (variant.displayType === "dropdown") {
+    await page.getByRole("button", { name: variant.headline }).click();
+    await page.getByRole(isMultiSelect(variant) ? "menuitemcheckbox" : "menuitemradio", { name }).click();
+    // A checkbox item keeps the menu open by design; a radio item closes it, and the
+    // single-select dropdown only commits its value on close.
+    if (isMultiSelect(variant)) await page.keyboard.press("Escape");
+  } else {
+    // The native control is sr-only; click the visible row that labels it.
+    await page
+      .locator("label")
+      .filter({ has: page.getByRole(isMultiSelect(variant) ? "checkbox" : "radio", { name, exact: true }) })
+      .click();
+  }
+
+  const box = otherBox(page, variant);
+  await expect(box, `${variant.key}: selecting "Other" should reveal its free-text box`).toBeVisible();
+  return box;
+};
+
+/** The regression guard: this box, on its own, announces why it is invalid. */
+const expectOtherBoxDescribesError = async (box: Locator, errorId: string, key: string): Promise<void> => {
+  await expect(box, `${key}: the "Other" box should be flagged invalid`).toHaveAttribute(
+    "aria-invalid",
+    "true"
+  );
+
+  // Resolving the IDREF list is the whole point: a dangling id, or one pointing at
+  // an empty node, renders exactly like a correct one but announces nothing.
+  const described = await describedControl(box);
+  expect(described?.ids, `${key}: the box should point at ${errorId}`).toContain(errorId);
+  expect(
+    described?.resolved.every((target) => target.exists),
+    `${key}: aria-describedby contains a dangling IDREF: ${JSON.stringify(described?.resolved)}`
+  ).toBe(true);
+  expect(
+    described?.resolved.map((target) => target.text),
+    `${key}: the described node must read out the visible error message`
+  ).toContain(REQUIRED_ERROR);
+  expect(described?.resolved.find((target) => target.id === errorId)?.ariaLive).toBe("polite");
+};
+
+test.describe('Survey "Other" option error announcement @slow', () => {
+  // Seeded once per worker process and reused: the test only reads the published
+  // survey, same rationale as the suites above.
+  let seeded: SeededOtherSurvey | undefined;
+
+  const requireSeeded = (): SeededOtherSurvey => {
+    if (!seeded) throw new Error("other-option survey was not seeded");
+    return seeded;
+  };
+
+  test.beforeEach(async ({ users }) => {
+    if (seeded) return;
+    const user = await users.create({ skipSurveySeed: true });
+    if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
+    seeded = await seedOtherSurvey(user.workspaceId, user.id);
+  });
+
+  test('an empty "Other" box announces its own error in both select types and variants', async ({ page }) => {
+    const { url, elementIds } = requireSeeded();
+    const errorIdFor = (variant: OtherVariant): string => `${elementIds[variant.key]}-error`;
+
+    await page.goto(url);
+    await expect(page.getByText(OTHER_VARIANTS[0].headline)).toBeVisible();
+
+    // Every region is mounted and silent before anything is submitted.
+    for (const variant of OTHER_VARIANTS) {
+      await expectSilentLiveRegion(page, errorIdFor(variant));
+    }
+
+    // Select "Other" everywhere and leave every box empty — the exact state that
+    // used to render aria-invalid with no aria-describedby at all.
+    const boxes: Record<string, Locator> = {};
+    for (const variant of OTHER_VARIANTS) {
+      boxes[variant.key] = await selectOther(page, variant);
+    }
+
+    await navButton(page, "Finish").click();
+    await expect(page.getByText(OTHER_VARIANTS[0].headline)).toBeVisible();
+
+    for (const variant of OTHER_VARIANTS) {
+      const errorId = errorIdFor(variant);
+      // Two nodes describe the region: the group (list) or the trigger (dropdown),
+      // AND the "Other" box itself — the second one is the fix.
+      await expectAnnouncedError(page, errorId, 2);
+      await expectOtherBoxDescribesError(boxes[variant.key], errorId, variant.key);
+      await expect(errorRegion(page, errorId)).toBeVisible();
+    }
+
+    // focusFirstControl prefers an invalid native control inside the first erroring
+    // element's form, so the box that has to be fixed is the one that gets focus —
+    // and what it announces on arrival is the assertion above.
+    await expect(boxes[OTHER_VARIANTS[0].key]).toBeFocused();
+    expect((await focusedControlDescription(page))?.ids).toContain(errorIdFor(OTHER_VARIANTS[0]));
+
+    // Typing clears the announcement and the association on the SAME node, so
+    // nothing is left pointing at an empty region, and the answers are accepted.
+    for (const variant of OTHER_VARIANTS) {
+      await boxes[variant.key].fill(`Something else for ${variant.key}`);
+    }
+    for (const variant of OTHER_VARIANTS) {
+      const errorId = errorIdFor(variant);
+      await expect(errorRegion(page, errorId)).toBeEmpty();
+      await expect(errorRegion(page, errorId)).toHaveCount(1);
+      await expect(controlDescribedBy(page, errorId)).toHaveCount(0);
+    }
+
+    await navButton(page, "Finish").click();
+    await expect(page.getByText(ENDING_HEADLINE)).toBeVisible();
   });
 });
