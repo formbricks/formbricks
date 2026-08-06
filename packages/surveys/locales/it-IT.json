@@ -29,7 +29,7 @@
     "select_option": "Seleziona un'opzione",
     "select_options": "Seleziona opzioni",
     "sending_responses": "Invio risposte in corso...",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Questo sondaggio si chiude automaticamente tra 1 secondo se non rispondi} other {Questo sondaggio si chiude automaticamente tra {count} secondi se non rispondi}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Questo sondaggio si chiude automaticamente tra {count} secondo se non rispondi} other {Questo sondaggio si chiude automaticamente tra {count} secondi se non rispondi}}",
     "survey_dialog": "Finestra di dialogo del sondaggio",
     "survey_progress": "Avanzamento del sondaggio",
     "takes_less_than_x_minutes": "{count, plural, one {Richiede meno di 1 minuto} other {Richiede meno di {count} minuti}}",

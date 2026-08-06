@@ -4,7 +4,7 @@ interface AutoCloseProgressBarProps {
   autoCloseTimeout: number;
 }
 
-export function AutoCloseProgressBar({ autoCloseTimeout }: AutoCloseProgressBarProps) {
+export function AutoCloseProgressBar({ autoCloseTimeout }: Readonly<AutoCloseProgressBarProps>) {
   const { t } = useTranslation();
 
   return (

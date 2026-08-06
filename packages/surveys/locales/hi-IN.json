@@ -29,7 +29,7 @@
     "select_option": "एक विकल्प चुनें",
     "select_options": "विकल्प चुनें",
     "sending_responses": "प्रतिक्रियाएँ भेज रहे हैं...",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {यह सर्वेक्षण 1 सेकंड में स्वचालित रूप से बंद हो जाएगा जब तक आप जवाब नहीं देते} other {यह सर्वेक्षण {count} सेकंड में स्वचालित रूप से बंद हो जाएगा जब तक आप जवाब नहीं देते}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {यह सर्वे {count} सेकंड में अपने आप बंद हो जाएगा जब तक आप जवाब नहीं देते} other {यह सर्वे {count} सेकंड में अपने आप बंद हो जाएगा जब तक आप जवाब नहीं देते}}",
     "survey_dialog": "सर्वेक्षण संवाद",
     "survey_progress": "सर्वेक्षण प्रगति",
     "takes_less_than_x_minutes": "{count, plural, one {1 मिनट से कम लगता है} other {{count} मिनट से कम लगता है}}",

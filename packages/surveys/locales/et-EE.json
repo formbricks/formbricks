@@ -29,7 +29,7 @@
     "select_option": "Vali variant",
     "select_options": "Vali variandid",
     "sending_responses": "Vastuste saatmine…",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {See küsitlus sulgub automaatselt 1 sekundi pärast, kui sa ei vasta} other {See küsitlus sulgub automaatselt {count} sekundi pärast, kui sa ei vasta}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {See küsitlus sulgub automaatselt {count} sekundi pärast, kui sa ei vasta} other {See küsitlus sulgub automaatselt {count} sekundi pärast, kui sa ei vasta}}",
     "survey_dialog": "Küsitluse dialoog",
     "survey_progress": "Küsitluse edenemine",
     "takes_less_than_x_minutes": "{count, plural, one {Võtab vähem kui 1 minuti} other {Võtab vähem kui {count} minutit}}",

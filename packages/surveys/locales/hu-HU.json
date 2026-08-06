@@ -29,7 +29,7 @@
     "select_option": "Lehetőség kiválasztása",
     "select_options": "Lehetőségek kiválasztása",
     "sending_responses": "Válaszok küldése…",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Ez a felmérés 1 másodperc múlva automatikusan bezáródik, hacsak nem válaszol} other {Ez a felmérés {count} másodperc múlva automatikusan bezáródik, hacsak nem válaszol}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Ez a felmérés automatikusan bezáródik {count} másodperc múlva, hacsak nem válaszol} other {Ez a felmérés automatikusan bezáródik {count} másodperc múlva, hacsak nem válaszol}}",
     "survey_dialog": "Kérdőív párbeszédablak",
     "survey_progress": "Felmérés előrehaladása",
     "takes_less_than_x_minutes": "{count, plural, one {Kevesebb mint 1 percet vesz igénybe} other {Kevesebb mint {count} percet vesz igénybe}}",

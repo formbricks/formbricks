@@ -29,7 +29,7 @@
     "select_option": "Selecteer een optie",
     "select_options": "Selecteer opties",
     "sending_responses": "Reacties verzenden...",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Deze enquête sluit automatisch over 1 seconde, tenzij je reageert} other {Deze enquête sluit automatisch over {count} seconden, tenzij je reageert}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Deze enquête sluit automatisch over {count} seconde tenzij je reageert} other {Deze enquête sluit automatisch over {count} seconden tenzij je reageert}}",
     "survey_dialog": "Enquête-dialoogvenster",
     "survey_progress": "Voortgang van de enquête",
     "takes_less_than_x_minutes": "{count, plural, one {Duurt minder dan 1 minuut} other {Duurt minder dan {count} minuten}}",

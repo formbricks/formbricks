@@ -29,7 +29,7 @@
     "select_option": "オプションを選択",
     "select_options": "オプションを選択",
     "sending_responses": "回答を送信中...",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, other {このアンケートは応答しない場合、{count}秒後に自動的に閉じます}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, other {このアンケートは、回答しない場合、{count}秒後に自動的に閉じます}}",
     "survey_dialog": "アンケートダイアログ",
     "survey_progress": "アンケートの進行状況",
     "takes_less_than_x_minutes": "{count, plural, one {1分未満} other {{count}分未満}}",

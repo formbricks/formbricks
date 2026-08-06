@@ -29,7 +29,7 @@
     "select_option": "Selecione uma opção",
     "select_options": "Selecione opções",
     "sending_responses": "Enviando respostas...",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Esta pesquisa fecha automaticamente em 1 segundo, a menos que você responda} other {Esta pesquisa fecha automaticamente em {count} segundos, a menos que você responda}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Esta pesquisa fecha automaticamente em {count} segundo, a menos que você responda} other {Esta pesquisa fecha automaticamente em {count} segundos, a menos que você responda}}",
     "survey_dialog": "Caixa de diálogo da pesquisa",
     "survey_progress": "Progresso da pesquisa",
     "takes_less_than_x_minutes": "{count, plural, one {Leva menos de 1 minuto} other {Leva menos de {count} minutos}}",

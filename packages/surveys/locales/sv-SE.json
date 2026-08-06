@@ -29,7 +29,7 @@
     "select_option": "Välj ett alternativ",
     "select_options": "Välj alternativ",
     "sending_responses": "Skickar svar...",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Denna enkät stängs automatiskt om 1 sekund om du inte svarar} other {Denna enkät stängs automatiskt om {count} sekunder om du inte svarar}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Den här enkäten stängs automatiskt om {count} sekund om du inte svarar} other {Den här enkäten stängs automatiskt om {count} sekunder om du inte svarar}}",
     "survey_dialog": "Enkätdialog",
     "survey_progress": "Enkätens framsteg",
     "takes_less_than_x_minutes": "{count, plural, one {Tar mindre än 1 minut} other {Tar mindre än {count} minuter}}",

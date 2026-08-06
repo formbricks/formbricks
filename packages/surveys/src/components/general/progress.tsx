@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-export function Progress({ progress }: { progress: number }) {
+export function Progress({ progress }: Readonly<{ progress: number }>) {
   const { t } = useTranslation();
   // One value drives both the painted width and aria-valuenow, so what a screen reader
   // reports can never drift from what is on screen. Clamped because callers derive

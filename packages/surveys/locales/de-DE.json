@@ -29,7 +29,7 @@
     "select_option": "Wähle eine Option",
     "select_options": "Wähle Optionen",
     "sending_responses": "Antworten werden gesendet...",
-    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Diese Umfrage schließt sich automatisch in 1 Sekunde, wenn du nicht antwortest} other {Diese Umfrage schließt sich automatisch in {count} Sekunden, wenn du nicht antwortest}}",
+    "survey_closes_automatically_in_x_seconds": "{count, plural, one {Diese Umfrage schließt sich automatisch in {count} Sekunde, wenn du nicht antwortest} other {Diese Umfrage schließt sich automatisch in {count} Sekunden, wenn du nicht antwortest}}",
     "survey_dialog": "Umfragedialog",
     "survey_progress": "Umfragefortschritt",
     "takes_less_than_x_minutes": "{count, plural, one {Dauert weniger als 1 Minute} other {Dauert weniger als {count} Minuten}}",
