@@ -16,8 +16,13 @@ export const nodeAutoInstrumentationConfig: InstrumentationConfigMap = {
   },
   "@opentelemetry/instrumentation-http": {
     ignoreIncomingRequestHook: (req) => {
-      const url = req.url || "";
-      return url === "/health" || url.startsWith("/metrics") || url === "/api/v2/health";
+      const pathname = new URL(req.url || "/", "http://localhost").pathname;
+      return (
+        pathname === "/health" ||
+        pathname === "/api/v2/health" ||
+        pathname === "/metrics" ||
+        pathname.startsWith("/metrics/")
+      );
     },
   },
   "@opentelemetry/instrumentation-pino": {

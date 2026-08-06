@@ -8,16 +8,21 @@ describe("nodeAutoInstrumentationConfig", () => {
     });
   });
 
-  test.each(["/health", "/metrics", "/metrics/runtime", "/api/v2/health"])(
-    "ignores the %s endpoint",
-    (url) => {
-      const config = nodeAutoInstrumentationConfig["@opentelemetry/instrumentation-http"];
-      expect(config?.ignoreIncomingRequestHook?.({ url } as never)).toBe(true);
-    }
-  );
-
-  test("instruments application routes", () => {
+  test.each([
+    "/health",
+    "/health?probe=1",
+    "/metrics",
+    "/metrics?format=prometheus",
+    "/metrics/runtime",
+    "/api/v2/health",
+    "/api/v2/health?probe=1",
+  ])("ignores the %s endpoint", (url) => {
     const config = nodeAutoInstrumentationConfig["@opentelemetry/instrumentation-http"];
-    expect(config?.ignoreIncomingRequestHook?.({ url: "/auth/login" } as never)).toBe(false);
+    expect(config?.ignoreIncomingRequestHook?.({ url } as never)).toBe(true);
+  });
+
+  test.each(["/auth/login", "/metrics-dashboard"])("instruments the %s route", (url) => {
+    const config = nodeAutoInstrumentationConfig["@opentelemetry/instrumentation-http"];
+    expect(config?.ignoreIncomingRequestHook?.({ url } as never)).toBe(false);
   });
 });
