@@ -257,7 +257,59 @@ reviews:
       mode: warning
     issue_assessment:
       mode: warning
-    custom_checks: []
+    # `pr-label-sync.yml` reads what the Breaking changes section says; these check whether
+    # what it says is true of the diff, and whether the QA plan a release tester will be
+    # handed is actually executable. Both are advisory — nothing here blocks a merge.
+    custom_checks:
+      - name: Breaking changes match the diff
+        mode: warning
+        instructions: |
+          Compare the PR description's "## Breaking changes" section against the actual diff.
+
+          Treat a change as breaking if the diff does any of the following:
+          - Renames, removes, or retypes a field in an API request or response shape, or changes
+            an emitted value (for example `EN` becoming `en-US`).
+          - Removes or renames an endpoint or route, or changes a webhook payload.
+          - Changes a default value, or adds, removes, or renames an environment variable or
+            config key — including keys in `charts/formbricks/values.yaml` and `.env.example`.
+          - Adds a database migration that needs manual action, drops or renames a column or
+            table, or adds a NOT NULL column with no default and no backfill.
+          - Changes an exported signature of the public SDK surface in `packages/js-core` or
+            `packages/surveys`.
+
+          FAIL if the diff contains at least one of the above and the "Breaking changes" section
+          says "None", is empty, or still holds the unedited template comment. Name the specific
+          file and line that is breaking.
+
+          FAIL if the section claims a breaking change that has no corresponding change in the diff.
+
+          PASS if the section holds a table whose rows correspond to the breaking changes in the
+          diff, or if the diff contains none of the above and the section says "None".
+
+          Return inconclusive rather than failing when the diff alone does not let you determine
+          an API response shape — for example when the shape comes from a serializer or type that
+          this PR does not touch.
+
+      - name: QA plan is executable by a tester
+        mode: warning
+        instructions: |
+          Check the PR description's "## QA / Test Plan" section. Its audience is a manual tester
+          with no repository or CLI access, working only from the running app or the live API.
+
+          FAIL if any of the following is true:
+          - The "How to test" subsection has no steps, or holds only the unedited template
+            placeholder text.
+          - A step cannot be performed through the app UI or an HTTP request — for example it
+            references `pnpm test`, `pnpm build`, `grep`, a file path, a function name, or reading
+            code. Those belong in "How this was tested" instead.
+          - A step states an action with no expected result, or an expected result with no action.
+
+          PASS if every step in "How to test" pairs an action such a tester can perform with an
+          observable expected result.
+
+          PASS also when the PR changes no user-facing or API behaviour — for example it only
+          touches CI configuration, repository tooling, tests, or documentation — and the section
+          says so explicitly rather than being left empty.
 
   post_merge_actions: []
 
