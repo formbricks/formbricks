@@ -51,7 +51,7 @@ export const ResponsePage = ({
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
-    [selectedFilter, dateRange]
+    [survey, selectedFilter, dateRange]
   );
 
   const searchParams = useSearchParams();
@@ -107,7 +107,7 @@ export const ResponsePage = ({
     } finally {
       setIsFetchingFirstPage(false);
     }
-  }, [filters, responsesPerPage, surveyId]);
+  }, [filters, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);
@@ -162,6 +162,8 @@ export const ResponsePage = ({
     };
     fetchFilteredResponses();
     // page is intentionally omitted to avoid refetching after the initial page setup.
+    // hasFilters is derived from selectedFilter/dateRange which are already deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- effect must run only on filter changes, not on page updates it sets internally
   }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (

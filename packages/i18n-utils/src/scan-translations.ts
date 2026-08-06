@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- CLI script needs synchronous console output */
 /**
  * Translation Key Scanner
  *

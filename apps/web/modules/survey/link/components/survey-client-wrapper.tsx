@@ -124,14 +124,14 @@ export const SurveyClientWrapper = ({
 
   // Extract hidden fields from URL parameters
   const hiddenFieldsRecord = useMemo(() => {
+    const hiddenFieldIds = survey.hiddenFields.fieldIds || [];
     const fieldsRecord: Record<string, string> = {};
-    for (const field of survey.hiddenFields.fieldIds || []) {
+    for (const field of hiddenFieldIds) {
       const answer = searchParams.get(field);
       if (answer) fieldsRecord[field] = answer;
     }
     return fieldsRecord;
-    // eslint-disable-next-line react-hooks/use-memo -- migration ENG-1677
-  }, [searchParams, JSON.stringify(survey.hiddenFields.fieldIds || [])]);
+  }, [searchParams, survey.hiddenFields.fieldIds]);
 
   // Include verified email in hidden fields if available
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {

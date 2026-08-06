@@ -353,7 +353,7 @@ export const MainNavigation = ({
         }
       });
     },
-    [router, organization.id, workspace.id]
+    [router, organization.id]
   );
 
   const switcherTriggerClasses = cn(

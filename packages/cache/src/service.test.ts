@@ -125,7 +125,7 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.RedisOperationError);
       }
       expect(logger.error).toHaveBeenCalledWith(
-        { error: expect.any(Error), key }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        { error: expect.any(Error), key },
         "Cache get operation failed"
       );
     });
@@ -231,7 +231,7 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.RedisOperationError);
       }
       expect(logger.error).toHaveBeenCalledWith(
-        { error: expect.any(Error), key }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        { error: expect.any(Error), key },
         "Cache exists operation failed"
       );
     });
@@ -339,7 +339,7 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.RedisOperationError);
       }
       expect(logger.error).toHaveBeenCalledWith(
-        { error: expect.any(Error), key, ttlMs }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        { error: expect.any(Error), key, ttlMs },
         "Cache set operation failed"
       );
     });
@@ -433,7 +433,7 @@ describe("CacheService", () => {
         expect(result.error.code).toBe(ErrorCode.RedisOperationError);
       }
       expect(logger.error).toHaveBeenCalledWith(
-        { error: expect.any(Error), keys }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        { error: expect.any(Error), keys },
         "Cache delete operation failed"
       );
     });
@@ -513,7 +513,7 @@ describe("CacheService", () => {
       expect(result).toBe(false);
       expect(mockRedis.ping).toHaveBeenCalledOnce();
       expect(logger.debug).toHaveBeenCalledWith(
-        { error: expect.any(Error) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment -- Testing error handling with any Error type
+        { error: expect.any(Error) },
         "Redis ping failed during availability check"
       );
     });

@@ -63,6 +63,7 @@ export const SentryProvider = ({
       });
     }
     // We only want to run this once
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initialize Sentry once on mount; re-running would re-init the client
   }, []);
 
   return <>{children}</>;
