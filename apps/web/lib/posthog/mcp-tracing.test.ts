@@ -96,6 +96,7 @@ describe("instrumentMcpServerWithTracing", () => {
 
 describe("instrumentMcpServerWithTracing with null client", () => {
   test("no-ops and returns undefined", async () => {
+    vi.clearAllMocks();
     vi.resetModules();
     vi.doMock("server-only", () => ({}));
     vi.doMock("@posthog/mcp", () => ({

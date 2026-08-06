@@ -103,6 +103,7 @@ describe("wrapAiModelWithTracing", () => {
 
 describe("wrapAiModelWithTracing with null client", () => {
   test("no-ops and returns the model unchanged", async () => {
+    vi.clearAllMocks();
     vi.resetModules();
     vi.doMock("server-only", () => ({}));
     vi.doMock("@posthog/ai/vercel", () => ({ withTracing: mocks.withTracing }));

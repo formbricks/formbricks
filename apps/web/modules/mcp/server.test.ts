@@ -57,7 +57,7 @@ describe("identifyMcpUser", () => {
     });
   });
 
-  test("derives distinctId from the session user for OAuth auth with no group (avoids a DB lookup on the tool-call critical path)", async () => {
+  test("derives distinctId from the session user for OAuth auth with no group (avoids a DB lookup)", async () => {
     mocks.getMcpAuthentication.mockReturnValue({
       user: { id: "user_1" },
       expires: "2099-01-01",
