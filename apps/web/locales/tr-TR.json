@@ -3327,7 +3327,6 @@
         "numbered_list": "Numaralı liste",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Bir kez ayarlandıktan sonra, bu anketin varsayılan dili yalnızca çoklu dil seçeneği devre dışı bırakılıp tüm çeviriler silindikten sonra değiştirilebilir.",
         "only_display_the_survey_to_a_subset_of_the_users": "Anketi yalnızca kullanıcıların bir alt kümesine göster",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Yalnızca küçük harfler, sayılar ve alt çizgiler kullanılabilir.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Yalnızca hedefleme kriterlerinize uyan kişiler anket alabilir.",
         "option_idx": "Seçenek {choiceIndex}",
         "option_used_in_logic_error": "Bu seçenek {questionIndex} numaralı sorunun mantığında kullanılıyor. Lütfen önce mantıktan kaldır.",
@@ -3503,6 +3502,7 @@
         "validate_id_empty": "Lütfen bir {type} ID'si girin.",
         "validate_id_invalid_chars": "{type} ID'sine izin verilmiyor. Lütfen yalnızca alfanümerik karakterler, tireler veya alt çizgiler kullanın.",
         "validate_id_no_spaces": "{type} ID'si boşluk içeremez. Lütfen boşlukları kaldırın.",
+        "validate_id_not_safe_identifier": "{type} ID'si küçük harfle başlamalı ve yalnızca küçük harfler, rakamlar ve alt çizgi içerebilir.",
         "validate_id_reserved": "{type} ID'si \"{field}\" kullanılamaz. Bu ayrılmış bir anahtar kelimedir.",
         "validation": {
           "add_validation_rule": "Doğrulama kuralı ekle",
@@ -3550,7 +3550,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "\"{variableName}\" değişkeni \"{quotaName}\" kotasında kullanılıyor",
         "variable_name_conflicts_with_hidden_field": "Değişken adı mevcut bir gizli alan kimliğiyle çakışıyor.",
         "variable_name_is_already_taken_please_choose_another": "Değişken adı zaten kullanılıyor, lütfen başka bir ad seç.",
-        "variable_name_must_start_with_a_letter": "Değişken adı bir harfle başlamalı.",
         "variable_used_in_recall": "“{variable}” değişkeni, {questionIndex}. soruda geri çağrılıyor.",
         "variable_used_in_recall_ending_card": "{variable} değişkeni Bitiş Kartı'nda geri çağrılıyor.",
         "variable_used_in_recall_welcome": "“{variable}” değişkeni Hoş Geldin Kartı'nda geri çağrılıyor.",

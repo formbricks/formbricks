@@ -12,6 +12,7 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
+import { getHiddenFieldsFromSearchParams } from "@/modules/survey/link/lib/hidden-fields";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
 import { getSurveyLanguageTag, getWebAppLocale, isRTLLanguage } from "@/modules/survey/link/lib/utils";
@@ -124,12 +125,7 @@ export const SurveyClientWrapper = ({
 
   // Extract hidden fields from URL parameters
   const hiddenFieldsRecord = useMemo(() => {
-    const fieldsRecord: Record<string, string> = {};
-    for (const field of survey.hiddenFields.fieldIds || []) {
-      const answer = searchParams.get(field);
-      if (answer) fieldsRecord[field] = answer;
-    }
-    return fieldsRecord;
+    return getHiddenFieldsFromSearchParams(survey.hiddenFields.fieldIds || [], searchParams);
     // eslint-disable-next-line react-hooks/use-memo -- migration ENG-1677
   }, [searchParams, JSON.stringify(survey.hiddenFields.fieldIds || [])]);
 

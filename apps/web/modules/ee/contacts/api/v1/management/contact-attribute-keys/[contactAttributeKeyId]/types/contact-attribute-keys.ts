@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
-import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
   isReservedFutureDefaultAttributeKey,

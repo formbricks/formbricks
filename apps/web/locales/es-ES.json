@@ -3327,7 +3327,6 @@
         "numbered_list": "Lista numerada",
         "once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations": "Una vez establecido, el idioma predeterminado para esta encuesta solo se puede cambiar desactivando la opción multilingüe y eliminando todas las traducciones.",
         "only_display_the_survey_to_a_subset_of_the_users": "Mostrar la encuesta solo a un subconjunto de los usuarios",
-        "only_lower_case_letters_numbers_and_underscores_are_allowed": "Solo se permiten letras minúsculas, números y guiones bajos.",
         "only_people_who_match_your_targeting_can_be_surveyed": "Solo se puede encuestar a las personas que coincidan con tu segmentación.",
         "option_idx": "Opción {choiceIndex}",
         "option_used_in_logic_error": "Esta opción se utiliza en la lógica de la pregunta {questionIndex}. Por favor, elimínala de la lógica primero.",
@@ -3503,6 +3502,7 @@
         "validate_id_empty": "Por favor, introduce un ID de {type}.",
         "validate_id_invalid_chars": "El ID de {type} no está permitido. Por favor, utiliza solo caracteres alfanuméricos, guiones o guiones bajos.",
         "validate_id_no_spaces": "El ID de {type} no puede contener espacios. Por favor, elimina los espacios.",
+        "validate_id_not_safe_identifier": "El ID de {type} debe comenzar con una letra minúscula y solo puede contener letras minúsculas, números y guiones bajos.",
         "validate_id_reserved": "El ID de {type} \"{field}\" no está permitido. Es una palabra reservada.",
         "validation": {
           "add_validation_rule": "Añadir regla de validación",
@@ -3550,7 +3550,6 @@
         "variable_is_used_in_quota_please_remove_it_from_quota_first": "La variable “{variableName}” se está utilizando en la cuota “{quotaName}”",
         "variable_name_conflicts_with_hidden_field": "El nombre de la variable entra en conflicto con un ID de campo oculto existente.",
         "variable_name_is_already_taken_please_choose_another": "El nombre de la variable ya está en uso, por favor elige otro.",
-        "variable_name_must_start_with_a_letter": "El nombre de la variable debe comenzar con una letra.",
         "variable_used_in_recall": "La variable \"{variable}\" se está recuperando en la pregunta {questionIndex}.",
         "variable_used_in_recall_ending_card": "La variable {variable} se está recuperando en la tarjeta final",
         "variable_used_in_recall_welcome": "La variable \"{variable}\" se está recuperando en la tarjeta de bienvenida.",

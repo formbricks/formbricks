@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -159,13 +160,16 @@ export const SurveyVariablesCardItem = ({
               control={form.control}
               name="name"
               rules={{
-                pattern: {
-                  value: /^[a-z0-9_]+$/,
-                  message: t(
-                    "workspace.surveys.edit.only_lower_case_letters_numbers_and_underscores_are_allowed"
-                  ),
-                },
                 validate: (value) => {
+                  // Single shared naming rule for new variable names: the charset check and the
+                  // leading-letter check together are exactly `isSafeIdentifier`. Kept first so the
+                  // name-rule message still wins over the duplicate messages, as `pattern` did.
+                  // Shares the strict gate's message because it states both halves of the rule.
+                  if (!isSafeIdentifier(value)) {
+                    return t("workspace.surveys.edit.validate_id_not_safe_identifier", {
+                      type: t("common.variable"),
+                    });
+                  }
                   if (mode === "create" && localSurvey.variables.find((v) => v.name === value)) {
                     return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
                   }
@@ -173,9 +177,6 @@ export const SurveyVariablesCardItem = ({
                     if (localSurvey.variables.find((v) => v.name === value)) {
                       return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
                     }
-                  }
-                  if (!/^[a-z]/.test(value)) {
-                    return t("workspace.surveys.edit.variable_name_must_start_with_a_letter");
                   }
                   const hiddenFieldIds = localSurvey.hiddenFields?.fieldIds ?? [];
                   if (hiddenFieldIds.some((id) => id.toLowerCase() === value.toLowerCase())) {
