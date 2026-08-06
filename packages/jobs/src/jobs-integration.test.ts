@@ -102,7 +102,9 @@ describe("BullMQ integration tests", () => {
 
     const job = await enqueueTestLogJob({ message: "integration success" });
 
-    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeUndefined();
+    // `null`, not `undefined`: BullMQ round-trips the processor's return value through JSON, so a
+    // handler returning nothing reads back as null.
+    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeNull();
     expect(job.name).toBe(JOB_NAMES.testLog);
     expect(job.opts.attempts).toBe(JOBS_DEFAULT_JOB_OPTIONS.attempts);
     expect(job.opts.backoff).toEqual(JOBS_DEFAULT_JOB_OPTIONS.backoff);
@@ -119,13 +121,20 @@ describe("BullMQ integration tests", () => {
 
     await expect(job.waitUntilFinished(queueEvents)).rejects.toThrow();
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        attemptsMade: JOBS_DEFAULT_JOB_OPTIONS.attempts,
-        jobId: job.id,
-        jobName: JOB_NAMES.testLog,
-      }),
-      "BullMQ job failed"
+    // `waitUntilFinished` resolves off the QueueEvents stream, which can beat the worker's own `failed`
+    // listener to logging, so poll rather than assert the final attempt has already been recorded.
+    await vi.waitFor(
+      () => {
+        expect(errorSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            attemptsMade: JOBS_DEFAULT_JOB_OPTIONS.attempts,
+            jobId: job.id,
+            jobName: JOB_NAMES.testLog,
+          }),
+          "BullMQ job failed"
+        );
+      },
+      { interval: 100, timeout: 10_000 }
     );
   }, 35000);
 
@@ -142,7 +151,7 @@ describe("BullMQ integration tests", () => {
       { message: "integration delayed success" }
     );
 
-    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeUndefined();
+    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeNull();
     expect(Date.now()).toBeGreaterThanOrEqual(scheduledFor);
   }, 15000);
 
