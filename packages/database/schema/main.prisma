@@ -1167,18 +1167,20 @@ enum EmbeddedDataType {
 /// Defines one Embedded Data field: the extra context stored on a response that isn't an
 /// answer to a question (brand, plan, page type, a computed score, ...).
 ///
-/// A field is either **local** — bespoke to a single survey, which is how existing variables
-/// and hidden fields are migrated — or **shared**, meaning it is part of the workspace library
-/// and can be linked by many surveys. Those states move together:
-/// `isLocal = true` <=> `surveyId` is set <=> `key` is null.
+/// A field is either **local** — used by a single survey, which is how existing variables and
+/// hidden fields are migrated — or **shared**, meaning it is part of the workspace library and can
+/// be linked by many surveys. There is no stored flag for that: `surveyId` is the owner and `key`
+/// is the library name, so a local field has `surveyId` set and `key` null, and a shared field the
+/// other way round. Deriving it rather than storing a boolean removes a column that could drift
+/// out of step with the two fields it stands for.
 ///
 /// @property key - Library name, unique per workspace and immutable. Null for local fields
 /// @property name - Human-readable display label
-/// @property source - Where the value comes from (computed | ingested)
+/// @property source - Where the value comes from (computed | ingested). `reserved` is part of the
+/// shared enum but never stored as a row: those fields are a static catalog in code
 /// @property dataType - Declared value type, used for coercion at ingest
 /// @property defaultValue - Initial value (computed) or fallback when nothing arrives (ingested)
 /// @property locked - Ingested only: ignore external writes and use the default instead
-/// @property isLocal - True when the field belongs to one survey rather than the shared library
 /// @property survey - The owning survey for a local field; cascades so nothing is orphaned
 model EmbeddedData {
   id          String   @id @default(cuid())
@@ -1193,9 +1195,12 @@ model EmbeddedData {
   /// [EmbeddedDataDefaultValue]
   defaultValue Json?
   locked       Boolean            @default(false)
-  isLocal      Boolean            @default(true)
 
-  survey      Survey?              @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  // Composite for the same reason SurveyEmbeddedData's are: on its own, `surveyId` would let a
+  // local field name a survey from a different workspace. `surveyId` is nullable and Postgres
+  // skips a multi-column foreign key when any of its columns is NULL, so shared fields (no owning
+  // survey) are unaffected.
+  survey      Survey?              @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
   surveyId    String?
   workspace   Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId String
@@ -1204,27 +1209,35 @@ model EmbeddedData {
   // Only shared fields carry a key, and Postgres treats NULLs as distinct, so any number of
   // local fields can coexist in a workspace while the library itself stays de-duplicated.
   @@unique([workspaceId, key])
-  @@index([workspaceId])
+  // Target for SurveyEmbeddedData's composite foreign key, which is what stops a survey linking
+  // a field definition from another workspace.
+  @@unique([id, workspaceId])
   @@index([surveyId])
 }
 
 /// Links a survey to an Embedded Data field and records the key that field's value is stored
 /// under inside that survey.
 ///
+/// `workspaceId` is part of both foreign keys on purpose: `surveyId` and `embeddedDataId` alone are
+/// independent, so nothing would stop a survey in one workspace linking a field defined in another.
+/// Referencing `(id, workspaceId)` on both sides makes a cross-workspace pair unrepresentable, and
+/// puts the workspace scope every query needs on the row instead of behind a join through Survey.
+///
 /// @property storageKey - The key the value lives under: a cuid for computed fields, the field
 /// name for ingested ones. Migrated fields keep their original key, which is what lets existing
 /// recall tokens, logic conditions and stored responses keep resolving untouched.
 model SurveyEmbeddedData {
-  id             String       @id @default(cuid())
-  survey         Survey       @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  id             String @id @default(cuid())
+  workspaceId    String
   surveyId       String
-  embeddedData   EmbeddedData @relation(fields: [embeddedDataId], references: [id], onDelete: Cascade)
   embeddedDataId String
   storageKey     String
 
+  survey       Survey       @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  embeddedData EmbeddedData @relation(fields: [embeddedDataId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+
   @@unique([surveyId, embeddedDataId])
   @@unique([surveyId, storageKey])
-  @@index([surveyId])
   @@index([embeddedDataId])
 }
 
