@@ -84,7 +84,7 @@ export const TagsCombobox = ({
               placeholder={
                 tagsToSearch?.length === 0 ? t("workspace.tags.add_tag") : t("workspace.tags.search_tags")
               }
-              className="h-8 border-b border-none border-transparent py-1 shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+              className="h-8 border-b border-none border-transparent py-1 shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
               onKeyDown={(e) => {

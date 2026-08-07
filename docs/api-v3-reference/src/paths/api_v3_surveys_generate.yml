@@ -51,7 +51,7 @@ post:
                 Understand why new users stop during onboarding and what would
                 help them finish setup.
   responses:
-    '200':
+    "200":
       description: >-
         Survey create payload generated successfully. The survey has not been
         created yet.
@@ -123,7 +123,7 @@ post:
                       - code: en-US
                         default: true
                         enabled: true
-    '400':
+    "400":
       description: Malformed body or a prompt that is too short or underspecified
       content:
         application/problem+json:
@@ -143,9 +143,9 @@ post:
                     reason: >-
                       Describe the survey goal, audience, or topic in a sentence
                       so the AI can create a useful draft.
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       description: >-
         Forbidden — no write access, workspace does not exist, AI is not in
         plan, or AI smart tools are disabled
@@ -178,7 +178,7 @@ post:
                 detail: AI features are not enabled for this organization's plan.
                 code: ai_features_not_enabled
                 requestId: req_123
-    '422':
+    "422":
       description: >-
         AI generated an invalid payload after schema and v3 create validation,
         or the generation stopped because the output token limit was reached
@@ -210,11 +210,11 @@ post:
                   Simplify the prompt or split it into smaller surveys.
                 code: ai_output_too_long
                 requestId: req_123
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
-    '502':
+    "502":
       description: The configured AI provider failed or could not produce a valid draft
       content:
         application/problem+json:
@@ -231,7 +231,7 @@ post:
                   again or add more detail.
                 code: bad_gateway
                 requestId: req_123
-    '503':
+    "503":
       description: AI is not configured on this Formbricks instance
       content:
         application/problem+json:

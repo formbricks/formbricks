@@ -64,7 +64,7 @@ get:
         Sort order. Defaults to `updatedAt` (newest first). The `cursor` token
         is bound to the selected sort order.
   responses:
-    '200':
+    "200":
       description: Workflows retrieved successfully
       headers:
         X-Request-Id:
@@ -89,15 +89,15 @@ get:
                   $ref: ../components/schemas/WorkflowListItem.yml
               meta:
                 $ref: ../components/schemas/CursorPaginationMeta.yml
-    '400':
+    "400":
       $ref: ../components/responses/V3BadRequest.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []
@@ -176,14 +176,14 @@ post:
                     ui:
                       position:
                         x: 260
-                        'y': 120
+                        "y": 120
                 edges:
                   - id: edge-trigger-email
                     source: trigger
                     target: send-email
                 entryNodeId: trigger
   responses:
-    '201':
+    "201":
       description: Workflow created successfully
       headers:
         X-Request-Id:
@@ -207,17 +207,17 @@ post:
             properties:
               data:
                 $ref: ../components/schemas/WorkflowResource.yml
-    '400':
+    "400":
       $ref: ../components/responses/V3BadRequest.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '422':
+    "422":
       $ref: ../components/responses/V3UnprocessableContent.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []

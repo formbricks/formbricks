@@ -10,6 +10,6 @@ properties:
   nextCursor:
     type:
       - string
-      - 'null'
+      - "null"
     description: Opaque cursor for the next page. `null` when there are no more results.
 additionalProperties: false
