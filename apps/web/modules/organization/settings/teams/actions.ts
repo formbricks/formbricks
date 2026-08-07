@@ -7,6 +7,7 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
+import { can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -294,6 +295,31 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
           },
         ],
       });
+    } else {
+      // Team admins reach this action too, and until ENG-1737 their capability was established only
+      // by `getTeamsWhereUserIsAdmin`, so a successful team-admin invite produced no central decision
+      // — no shadow comparison, and legacy-authoritative under enforcement. `team.manage` is that
+      // capability (legacy answers it as `teamRole === "admin" || org owner/manager`), asked once per
+      // requested team so the answer covers exactly the teams this invite would write to.
+      //
+      // The narrower rules below stay in application logic, as they should: which invitation role a
+      // team admin may grant, and that they must name at least one team, are policy about the
+      // request's content rather than a capability the vocabulary expresses.
+      const actor = { type: "user", id: ctx.user.id } as const;
+      const refusedTeamIds = (
+        await Promise.all(
+          parsedInput.teamIds.map(async (teamId) => ({
+            teamId,
+            allowed: await can(actor, "team.manage", { type: "team", id: teamId }),
+          }))
+        )
+      )
+        .filter((decision) => !decision.allowed)
+        .map((decision) => decision.teamId);
+
+      if (refusedTeamIds.length > 0) {
+        throw new OperationNotAllowedError("Team admins can only add users to teams where they are admin");
+      }
     }
 
     // Validate team admin restrictions
