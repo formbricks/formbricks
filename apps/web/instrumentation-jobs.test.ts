@@ -91,23 +91,6 @@ vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job", 
 }));
 
 describe("instrumentation-jobs", () => {
-  /**
-   * Keying the registrations by `TRecurringJobKey` forces an entry to exist for every declared job, but
-   * not that the entry holds *that* job's handle — a mispairing type-checks. It would be worse than a
-   * swap: both entries would upsert the same scheduler, so one job's schedule is never registered and
-   * its handler binds to the wrong name.
-   */
-  test("each recurring registration is paired with its own job handle", async () => {
-    const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
-    const { recurringJobs } = await import("@formbricks/jobs");
-
-    for (const [key, registration] of Object.entries(RECURRING_JOB_REGISTRATIONS_BY_KEY)) {
-      expect(registration.job, `registration "${key}" holds another job's handle`).toBe(
-        recurringJobs[key as keyof typeof recurringJobs]
-      );
-    }
-  });
-
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -130,6 +113,23 @@ describe("instrumentation-jobs", () => {
     const { resetJobsWorkerRegistrationForTests } = await import("./instrumentation-jobs");
     await resetJobsWorkerRegistrationForTests();
     vi.useRealTimers();
+  });
+
+  /**
+   * Keying the registrations by `TRecurringJobKey` forces an entry to exist for every declared job, but
+   * not that the entry holds *that* job's handle — a mispairing type-checks. It would be worse than a
+   * swap: both entries would upsert the same scheduler, so one job's schedule is never registered and
+   * its handler binds to the wrong name.
+   */
+  test("each recurring registration is paired with its own job handle", async () => {
+    const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
+    const { recurringJobs } = await import("@formbricks/jobs");
+
+    for (const [key, registration] of Object.entries(RECURRING_JOB_REGISTRATIONS_BY_KEY)) {
+      expect(registration.job, `registration "${key}" holds another job's handle`).toBe(
+        recurringJobs[key as keyof typeof recurringJobs]
+      );
+    }
   });
 
   slowTest("skips worker startup when disabled", async () => {
