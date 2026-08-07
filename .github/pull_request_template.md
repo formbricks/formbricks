@@ -9,8 +9,13 @@ keep it short enough to grasp without opening files. -->
 
 ## Linear ticket
 
-<!-- Paste the full Linear ticket URL (e.g. https://linear.app/formbricks/issue/ENG-1234/…) so it
-auto-links. No ticket? Say why. Closing a GitHub issue? Add "Fixes #123". -->
+<!-- Complete the line below: `Fixes ENG-1234`. A bare URL does NOT link the PR — the magic word has
+to come first. Use `Ref ENG-1234` instead if this PR only partly addresses the ticket, so merging
+doesn't close it. A full ticket URL works in place of the ID.
+No ticket? Delete the line and say why. Closing a GitHub issue? Add "Fixes #123".
+More: https://linear.app/docs/github -->
+
+Fixes ENG-
 
 ## How this was tested
 
