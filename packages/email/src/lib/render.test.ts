@@ -35,21 +35,41 @@ const responseFinishedElements = [
   },
 ];
 
+// Render every email with the legal props supplied. The imprint/privacy footer is a
+// conditional branch of the shared chrome, so leaving them out would hide anything that
+// only goes wrong once that branch renders.
+const legal = exampleData.legalProps;
+
 const renderers: [string, () => Promise<string>][] = [
-  ["renderVerificationEmail", () => renderVerificationEmail({ ...exampleData.verificationEmail, t })],
-  ["renderForgotPasswordEmail", () => renderForgotPasswordEmail({ ...exampleData.forgotPasswordEmail, t })],
-  ["renderAccountDeletionEmail", () => renderAccountDeletionEmail({ ...exampleData.deleteAccountEmail, t })],
+  [
+    "renderVerificationEmail",
+    () => renderVerificationEmail({ ...exampleData.verificationEmail, ...legal, t }),
+  ],
+  [
+    "renderForgotPasswordEmail",
+    () => renderForgotPasswordEmail({ ...exampleData.forgotPasswordEmail, ...legal, t }),
+  ],
+  [
+    "renderAccountDeletionEmail",
+    () => renderAccountDeletionEmail({ ...exampleData.deleteAccountEmail, ...legal, t }),
+  ],
   [
     "renderNewEmailVerification",
-    () => renderNewEmailVerification({ ...exampleData.newEmailVerification, t }),
+    () => renderNewEmailVerification({ ...exampleData.newEmailVerification, ...legal, t }),
   ],
-  ["renderPasswordResetNotifyEmail", () => renderPasswordResetNotifyEmail({ t })],
-  ["renderInviteEmail", () => renderInviteEmail({ ...exampleData.inviteEmail, t })],
-  ["renderInviteAcceptedEmail", () => renderInviteAcceptedEmail({ ...exampleData.inviteAcceptedEmail, t })],
-  ["renderLinkSurveyEmail", () => renderLinkSurveyEmail({ ...exampleData.linkSurveyEmail, logoUrl: "", t })],
+  ["renderPasswordResetNotifyEmail", () => renderPasswordResetNotifyEmail({ ...legal, t })],
+  ["renderInviteEmail", () => renderInviteEmail({ ...exampleData.inviteEmail, ...legal, t })],
+  [
+    "renderInviteAcceptedEmail",
+    () => renderInviteAcceptedEmail({ ...exampleData.inviteAcceptedEmail, ...legal, t }),
+  ],
+  [
+    "renderLinkSurveyEmail",
+    () => renderLinkSurveyEmail({ ...exampleData.linkSurveyEmail, logoUrl: "", ...legal, t }),
+  ],
   [
     "renderEmbedSurveyPreviewEmail",
-    () => renderEmbedSurveyPreviewEmail({ ...exampleData.embedSurveyPreviewEmail, t }),
+    () => renderEmbedSurveyPreviewEmail({ ...exampleData.embedSurveyPreviewEmail, ...legal, t }),
   ],
   [
     "renderResponseFinishedEmail",
@@ -57,14 +77,16 @@ const renderers: [string, () => Promise<string>][] = [
       renderResponseFinishedEmail({
         ...exampleData.responseFinishedEmail,
         elements: responseFinishedElements,
+        ...legal,
         t,
       }),
   ],
   [
     "renderEmailCustomizationPreviewEmail",
-    () => renderEmailCustomizationPreviewEmail({ ...exampleData.emailCustomizationPreviewEmail, t }),
+    () =>
+      renderEmailCustomizationPreviewEmail({ ...exampleData.emailCustomizationPreviewEmail, ...legal, t }),
   ],
-  ["renderFollowUpEmail", () => renderFollowUpEmail({ ...exampleData.followUpEmail, t })],
+  ["renderFollowUpEmail", () => renderFollowUpEmail({ ...exampleData.followUpEmail, ...legal, t })],
 ];
 
 describe.each(renderers)("%s", (_name, renderEmail) => {
@@ -84,12 +106,12 @@ describe.each(renderers)("%s", (_name, renderEmail) => {
   test("inlines Tailwind utilities as styles rather than shipping class names", async () => {
     const html = await renderEmail();
 
-    // The shared chrome sets `p-6` on the body and `max-w-xl rounded-md` on the card.
-    // Mail clients ignore stylesheets, so those must arrive as inline declarations.
-    expect(html).toContain("padding:1.5rem");
-    expect(html).toContain("max-width:36rem");
-    expect(html).toContain("border-radius:0.375rem");
-    expect(html).not.toMatch(/class="[^"]*\bmax-w-xl\b/);
+    // Mail clients ignore stylesheets, so `<Tailwind>` has to inline the utilities.
+    // Assert the shape, not the design tokens: `justify-center` on the shared body has
+    // no react-email default equivalent, so seeing it inline proves the Tailwind pass
+    // ran, and re-tuning the chrome's spacing or sizing cannot churn this test.
+    expect(html).toContain("justify-content:center");
+    expect(html).not.toMatch(/class="[^"]*\bmax-w-[a-z0-9]/);
   });
 });
 
@@ -134,17 +156,20 @@ describe("legal footer", () => {
   test("renders imprint and privacy links only when the legal props are supplied", async () => {
     const withLegal = await renderVerificationEmail({
       ...exampleData.verificationEmail,
-      ...exampleData.legalProps,
+      ...legal,
       t,
     });
     const withoutLegal = await renderVerificationEmail({ ...exampleData.verificationEmail, t });
 
-    expect(withLegal).toContain(exampleData.legalProps.imprintUrl);
-    expect(withLegal).toContain(exampleData.legalProps.privacyUrl);
-    expect(withLegal).toContain(exampleData.legalProps.imprintAddress);
-    expect(withoutLegal).not.toContain(exampleData.legalProps.imprintUrl);
-    expect(withoutLegal).not.toContain(exampleData.legalProps.privacyUrl);
-    expect(withoutLegal).not.toContain(exampleData.legalProps.imprintAddress);
+    expect(withLegal).toContain(legal.imprintUrl);
+    expect(withLegal).toContain(legal.privacyUrl);
+    expect(withLegal).toContain(legal.imprintAddress);
+    // The links need readable labels, not the translation keys behind them.
+    expect(withLegal).toContain(">Imprint<");
+    expect(withLegal).toContain(">Privacy Policy<");
+    expect(withoutLegal).not.toContain(legal.imprintUrl);
+    expect(withoutLegal).not.toContain(legal.privacyUrl);
+    expect(withoutLegal).not.toContain(legal.imprintAddress);
   });
 });
 
