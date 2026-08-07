@@ -28,22 +28,22 @@ after 30 seconds if startup fails.
 
 <Note>
   Changing a recurring job's cron pattern, interval or time zone — for example by setting
-  `SURVEY_SCHEDULING_TIME_ZONE` — updates the schedule as soon as the process restarts, but takes effect
-  from the **following** run: the run already queued keeps its previous timing. For the daily sweeps that
-  can be up to 24 hours. Inspecting the schedule in Redis shows the new value immediately, so a job firing
-  once more at the old hour after a restart is expected rather than a sign the setting was ignored.
+  `SURVEY_SCHEDULING_TIME_ZONE` — updates the schedule as soon as the process restarts, but takes effect from
+  the **following** run: the run already queued keeps its previous timing. For the daily sweeps that can be up
+  to 24 hours. Inspecting the schedule in Redis shows the new value immediately, so a job firing once more at
+  the old hour after a restart is expected rather than a sign the setting was ignored.
 </Note>
 
 ## Current background jobs
 
 Current workloads on the shared queue include:
 
-| Workload          | Job names                                        | Purpose                                           |
-| ----------------- | ------------------------------------------------ | ------------------------------------------------- |
-| Response pipeline | `response-pipeline.process`                      | Processes asynchronous response pipeline events.  |
-| Survey scheduling | `survey-scheduling.reconcile`                    | Reconciles scheduled survey state.                |
+| Workload          | Job names                                        | Purpose                                                        |
+| ----------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| Response pipeline | `response-pipeline.process`                      | Processes asynchronous response pipeline events.               |
+| Survey scheduling | `survey-scheduling.reconcile`                    | Reconciles scheduled survey state.                             |
 | Survey archive    | `survey-archive-purge.process`                   | Permanently deletes surveys past the archive retention window. |
-| Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs. |
+| Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.              |
 
 These are current examples rather than a fixed list. Future Formbricks features can use the same Job Runner for
 additional background work.
@@ -174,17 +174,17 @@ REDIS_URL=redis://redis:6379
 
 Formbricks writes structured logs to stdout and stderr. Search the `msg` field for these exact messages:
 
-| Log message                                         | What to check                                                                                               |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `BullMQ runtime started`                            | The worker is connected. Verify its `workerCount`, `workerConcurrency`, `queueName`, and `prefix` fields.   |
-| `BullMQ Redis connection error`                     | Verify `REDIS_URL`, DNS, network access, Redis credentials, and TLS settings.                               |
-| `BullMQ queue error`                                | The producer queue emitted an error. Review the attached `err` field; usually the same causes as above.     |
-| `Failed to start BullMQ runtime`                    | Review the attached `err` field, then confirm Redis is reachable from the web process.                      |
-| `BullMQ worker registration failed`                 | Worker startup failed. Formbricks schedules another attempt after 30 seconds.                               |
-| `BullMQ worker registration retry scheduled`        | A startup retry is pending. Fix the underlying Redis or configuration error before it runs.                 |
-| `BullMQ recurring job registration failed`          | Recurring schedules could not be registered. Check Redis connectivity.                                      |
-| `BullMQ recurring job registration retry scheduled` | A recurring-schedule registration retry is pending for 30 seconds.                                          |
-| `BullMQ job failed`                                 | Inspect `jobName`, `jobId`, `attemptsMade`, and `err`. The job may retry until all three attempts are used. |
+| Log message                                                                                        | What to check                                                                                                                                                                                                                                                                                  |
+| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BullMQ runtime started`                                                                           | The worker is connected. Verify its `workerCount`, `workerConcurrency`, `queueName`, and `prefix` fields.                                                                                                                                                                                      |
+| `BullMQ Redis connection error`                                                                    | Verify `REDIS_URL`, DNS, network access, Redis credentials, and TLS settings.                                                                                                                                                                                                                  |
+| `BullMQ queue error`                                                                               | The producer queue emitted an error. Review the attached `err` field; usually the same causes as above.                                                                                                                                                                                        |
+| `Failed to start BullMQ runtime`                                                                   | Review the attached `err` field, then confirm Redis is reachable from the web process.                                                                                                                                                                                                         |
+| `BullMQ worker registration failed`                                                                | Worker startup failed. Formbricks schedules another attempt after 30 seconds.                                                                                                                                                                                                                  |
+| `BullMQ worker registration retry scheduled`                                                       | A startup retry is pending. Fix the underlying Redis or configuration error before it runs.                                                                                                                                                                                                    |
+| `BullMQ recurring job registration failed`                                                         | Recurring schedules could not be registered. Check Redis connectivity.                                                                                                                                                                                                                         |
+| `BullMQ recurring job registration retry scheduled`                                                | A recurring-schedule registration retry is pending for 30 seconds.                                                                                                                                                                                                                             |
+| `BullMQ job failed`                                                                                | Inspect `jobName`, `jobId`, `attemptsMade`, and `err`. The job may retry until all three attempts are used.                                                                                                                                                                                    |
 | `Dropping BullMQ job with no registered processor: its schedule outlived the code that handled it` | A schedule in Redis outlived the build that handles it — typically after a rollback to a version without that feature. The job is completed rather than retried, so it does not accumulate in the failed set. Redeploy the build that owns `jobName`, or remove the stale schedule from Redis. |
 
 If background jobs stay queued:

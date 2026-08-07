@@ -11,11 +11,7 @@ import {
 } from "@/src/constants";
 import type { BackgroundJobProducer, EnqueuedJob } from "@/src/contracts";
 import { getBackgroundJobDefinition } from "@/src/definitions";
-import {
-  type RecurringJobDescriptor,
-  type TRecurringJobKey,
-  recurringJobDescriptors,
-} from "@/src/recurring";
+import { type RecurringJobDescriptor, type TRecurringJobKey, recurringJobDescriptors } from "@/src/recurring";
 import {
   type TBackgroundJobScheduleIdentity,
   type TRecurringBackgroundJobSchedule,
@@ -24,11 +20,7 @@ import {
   getRecurringJobSchedulerId,
   toBullMQRepeatOptions,
 } from "@/src/schedules";
-import {
-  type TResponsePipelineJobData,
-  type TTestLogJobData,
-  type TWorkflowRunJobData,
-} from "@/src/types";
+import { type TResponsePipelineJobData, type TTestLogJobData, type TWorkflowRunJobData } from "@/src/types";
 
 export interface JobsQueueHandle {
   connection: IORedis;

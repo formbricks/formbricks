@@ -1,7 +1,7 @@
 import { JOB_NAMES } from "@/src/constants";
 import { type AnyBackgroundJobDefinition, toAnyBackgroundJobDefinition } from "@/src/contracts";
 import { createMissingOverrideHandler } from "@/src/processors/missing-override";
-import { ZGlobalScopeJobData, type TGlobalScopeJobData } from "@/src/types";
+import { type TGlobalScopeJobData, ZGlobalScopeJobData } from "@/src/types";
 
 /**
  * The scope every recurring job runs under. It is both the scheduler-identity segment and the job
@@ -39,7 +39,11 @@ export interface RecurringJobDescriptor {
  * of the same job can run at once. They must also stay I/O-bound — BullMQ renews the job lock on a
  * timer, so CPU-bound work that blocks the event loop is what makes a job stall, not a long runtime.
  */
-export const defineRecurringJob = ({ label, name, scheduleId }: RecurringJobInput): RecurringJobDescriptor => ({
+export const defineRecurringJob = ({
+  label,
+  name,
+  scheduleId,
+}: RecurringJobInput): RecurringJobDescriptor => ({
   data: { scope: GLOBAL_SCOPE },
   definition: toAnyBackgroundJobDefinition({
     handle: createMissingOverrideHandler<TGlobalScopeJobData>(label, (data) => ({ scope: data.scope })),

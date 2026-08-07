@@ -357,9 +357,7 @@ describe("@formbricks/jobs queue helpers", () => {
       expect.anything(),
       expect.objectContaining({ name: recurringJobs[key].name })
     );
-    expect(getRecurringJobSchedulerId(recurringJobs[key].name, recurringJobs[key])).toBe(
-      expectedSchedulerId
-    );
+    expect(getRecurringJobSchedulerId(recurringJobs[key].name, recurringJobs[key])).toBe(expectedSchedulerId);
   });
 
   test("rejects engine-neutral enqueues when BullMQ returns a job without an id", async () => {
