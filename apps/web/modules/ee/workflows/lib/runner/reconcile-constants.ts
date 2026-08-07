@@ -1,8 +1,5 @@
-// Tuning for the workflow-run orphan reconciler (workflow-run.reconcile recurring job).
-
-/** Recurring-schedule identity (a single global sweep, mirroring survey-scheduling). */
-export const WORKFLOW_RUN_RECONCILE_GLOBAL_SCOPE = "global";
-export const WORKFLOW_RUN_RECONCILE_SCHEDULE_ID = "workflow-run-reconcile";
+// Tuning for the workflow-run orphan reconciler (workflow-run.reconcile recurring job). The schedule's
+// identity (name, scheduleId, scope) belongs to its declaration in @formbricks/jobs.
 
 /** How often the sweep runs. Orphans are rare, so a few minutes balances recovery latency vs. churn. */
 export const WORKFLOW_RUN_RECONCILE_INTERVAL_MS = 3 * 60 * 1000;

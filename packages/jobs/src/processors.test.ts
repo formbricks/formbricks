@@ -3,17 +3,19 @@ import { JOB_NAMES } from "./constants";
 import { getBackgroundJobDefinition } from "./definitions";
 import type { JobExecutionContext, TResponsePipelineJobData } from "./index";
 import { getJobProcessor, processJob } from "./processors/registry";
+import { ONE_SHOT_JOB_NAMES, recurringJobs } from "./queue";
 
-const { mockDebug, mockError } = vi.hoisted(() => ({
+const { mockDebug, mockError, mockWarn } = vi.hoisted(() => ({
   mockDebug: vi.fn(),
   mockError: vi.fn(),
+  mockWarn: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: mockError,
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: mockWarn,
     debug: mockDebug,
   },
 }));
@@ -29,6 +31,29 @@ describe("@formbricks/jobs processor registry", () => {
     expect(getJobProcessor(JOB_NAMES.surveyScheduling)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.workflowRun)).toBeDefined();
     expect(getBackgroundJobDefinition(JOB_NAMES.testLog)).toBeDefined();
+  });
+
+  /**
+   * Guards the copy-paste slip the declaration table invites: duplicating a descriptor and forgetting to
+   * change its name. `recurringJobDefinitions` is keyed by name, so the duplicate would silently collapse
+   * the two entries and one job would run the other's handler. Since ENG-2235 an unknown name is dropped
+   * with a warning rather than failing loudly, that would be quiet.
+   *
+   * A *mistyped* name is a different failure and is not caught here — it propagates consistently to both
+   * the schedule and the registry, so the job still works while orphaning the old schedule in Redis. The
+   * pinned scheduler ids in `queue.test.ts` are what catch that.
+   */
+  test("every declared job name resolves to a registered processor", () => {
+    const declaredNames = [
+      ...Object.values(recurringJobs).map((handle) => handle.name),
+      ...Object.values(ONE_SHOT_JOB_NAMES),
+    ];
+
+    expect(new Set(declaredNames).size).toBe(declaredNames.length);
+
+    for (const jobName of declaredNames) {
+      expect(getJobProcessor(jobName), `no processor registered for ${jobName}`).toBeDefined();
+    }
   });
 
   test("dispatches test log jobs", async () => {
@@ -251,42 +276,69 @@ describe("@formbricks/jobs processor registry", () => {
     );
   });
 
-  test("fails fast for the unimplemented survey scheduling processor", async () => {
+  // One factory backs all three recurring fallbacks, so they are covered together — survey-archive-purge
+  // and workflow-run.reconcile previously had no test at all.
+  test.each([
+    [JOB_NAMES.surveyArchivePurge, "survey archive purge"],
+    [JOB_NAMES.surveyScheduling, "survey scheduling"],
+    [JOB_NAMES.workflowRunReconcile, "workflow run reconcile"],
+  ])("fails fast for the unimplemented %s processor", async (jobName, label) => {
     await expect(
       processJob({
         attemptsMade: 0,
-        data: {
-          scope: "global",
-        },
-        id: "job-survey-scheduling",
-        name: JOB_NAMES.surveyScheduling,
+        data: { scope: "global" },
+        id: `job-${jobName}`,
+        name: jobName,
         opts: { attempts: 3 },
         queueName: "background-jobs",
       } as never)
-    ).rejects.toThrow("BullMQ survey scheduling processor override missing");
+    ).rejects.toThrow(`BullMQ ${label} processor override missing`);
 
     expect(mockError).toHaveBeenCalledWith(
       expect.objectContaining({
-        jobId: "job-survey-scheduling",
-        jobName: JOB_NAMES.surveyScheduling,
+        jobId: `job-${jobName}`,
+        jobName,
         scope: "global",
       }),
-      "BullMQ survey scheduling processor override is not registered"
+      `BullMQ ${label} processor override is not registered`
     );
   });
 
-  test("throws for unknown jobs", async () => {
+  // ENG-2235: a schedule outliving its code is an operational fact, not a retriable error. Throwing here
+  // meant a rollback produced a failure every tick, forever.
+  test("logs and drops unknown jobs instead of throwing", async () => {
     await expect(
       processJob({
         attemptsMade: 0,
-        data: {},
+        data: { some: "payload" },
         id: "job-2",
         name: "unknown.job",
         opts: { attempts: 3 },
         queueName: "background-jobs",
       } as never)
-    ).rejects.toThrow("No BullMQ processor registered for job: unknown.job");
+    ).resolves.toBeUndefined();
 
-    expect(mockError).toHaveBeenCalled();
+    expect(mockWarn).toHaveBeenCalledWith(
+      { jobId: "job-2", jobName: "unknown.job", queueName: "background-jobs" },
+      "Dropping BullMQ job with no registered processor: its schedule outlived the code that handled it"
+    );
+    // The payload of an unknown job is unvalidated and may hold real data, so it must never be logged.
+    expect(mockWarn.mock.calls[0]?.[0]).not.toHaveProperty("some");
+    expect(mockError).not.toHaveBeenCalled();
+  });
+
+  test("still throws when a known job's payload fails validation", async () => {
+    await expect(
+      processJob({
+        attemptsMade: 0,
+        data: { scope: "not-a-valid-scope" },
+        id: "job-invalid",
+        name: JOB_NAMES.surveyScheduling,
+        opts: { attempts: 3 },
+        queueName: "background-jobs",
+      } as never)
+    ).rejects.toThrow();
+
+    expect(mockWarn).not.toHaveBeenCalled();
   });
 });
