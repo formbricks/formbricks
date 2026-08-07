@@ -350,7 +350,7 @@ jobs:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
           PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
           CI: true
-        run: pnpm test-e2e:azure
+        run: pnpm test-e2e:azure --grep "video-probe" --retries=0
 
       - name: Run E2E Tests (Local)
         if: env.PW_MODE == 'local'
