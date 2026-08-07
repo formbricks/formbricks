@@ -210,6 +210,29 @@ jobs:
           set -euo pipefail
 
           PW_INSTALL_PID=""
+
+          emit_install_log() {
+            echo "--- playwright install output ---"
+            cat /tmp/playwright-install.log 2>/dev/null || echo "(no output captured)"
+            echo "--- end playwright install output ---"
+          }
+
+          # If `pnpm build` fails, `set -e` leaves the step before the reaping block at the
+          # bottom — stranding the installer and discarding its log, which is exactly the
+          # diagnostic this step exists to preserve. The trap reaps the child and emits the
+          # log on every exit path; the happy path clears PW_INSTALL_PID once it has done
+          # both itself, so this never runs twice.
+          on_exit() {
+            local status=$?
+            if [[ -n "${PW_INSTALL_PID}" ]]; then
+              kill "${PW_INSTALL_PID}" 2>/dev/null || true
+              wait "${PW_INSTALL_PID}" 2>/dev/null || true
+              emit_install_log
+            fi
+            return "${status}"
+          }
+          trap on_exit EXIT
+
           if [[ "${PW_MODE:-}" == "local" ]]; then
             # Install Playwright browsers + OS deps concurrently with the Next.js build.
             # Both are largely I/O-bound, so overlapping them shaves the browser-install
@@ -238,10 +261,9 @@ jobs:
             # install fails, so anything appended after the install inside it never runs.
             pw_rc=0
             wait "${PW_INSTALL_PID}" || pw_rc=$?
+            PW_INSTALL_PID=""  # reaped — keep the EXIT trap from re-reporting it
 
-            echo "--- playwright install output ---"
-            cat /tmp/playwright-install.log 2>/dev/null || echo "(no output captured)"
-            echo "--- end playwright install output ---"
+            emit_install_log
 
             if [[ "${pw_rc}" == "124" ]]; then
               echo "::error::playwright install exceeded its 600s budget (apt mirror stall?). See the install output above."

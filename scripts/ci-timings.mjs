@@ -139,7 +139,10 @@ const reportAggregate = async (last, event, jobFilter) => {
 
   for (const row of measured) {
     const flag = row.duration >= 20 * 60 ? "  <-- OVER 20min" : "";
-    console.log(`  ${fmt(row.duration).padStart(8)}  ${row.conclusion.padEnd(9)}  ${row.id}${flag}`);
+    // A cancelled or still-reporting job has `conclusion: null` even when the parent run
+    // says "completed" — don't let that abort a report the loop above already paid for.
+    const conclusion = row.conclusion ?? "unknown";
+    console.log(`  ${fmt(row.duration).padStart(8)}  ${conclusion.padEnd(9)}  ${row.id}${flag}`);
   }
 
   const sorted = measured.map((r) => r.duration).sort((a, b) => a - b);
@@ -168,7 +171,14 @@ const main = async () => {
   }
 
   if (last) {
-    await reportAggregate(Number(last), event, jobFilter);
+    // `per_page` silently falls back to the API default for NaN/0 and is silently capped
+    // at 100. Either would make the report claim a sample size it didn't actually use, and
+    // the whole point of this tool is trustworthy numbers.
+    const count = Number(last);
+    if (!Number.isInteger(count) || count < 1 || count > 100) {
+      throw new Error(`--last must be an integer between 1 and 100, got ${JSON.stringify(last)}.`);
+    }
+    await reportAggregate(count, event, jobFilter);
     return;
   }
 
