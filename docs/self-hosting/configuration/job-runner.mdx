@@ -26,6 +26,14 @@ The web application creates jobs and consumes them from a shared Redis-backed qu
 Redis is also used to coordinate recurring jobs. The web process retries worker and recurring-job registration
 after 30 seconds if startup fails.
 
+<Note>
+  Changing a recurring job's cron pattern, interval or time zone — for example by setting
+  `SURVEY_SCHEDULING_TIME_ZONE` — updates the schedule as soon as the process restarts, but takes effect
+  from the **following** run: the run already queued keeps its previous timing. For the daily sweeps that
+  can be up to 24 hours. Inspecting the schedule in Redis shows the new value immediately, so a job firing
+  once more at the old hour after a restart is expected rather than a sign the setting was ignored.
+</Note>
+
 ## Current background jobs
 
 Current workloads on the shared queue include:
