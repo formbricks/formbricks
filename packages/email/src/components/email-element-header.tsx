@@ -20,13 +20,13 @@ export function ElementHeader({
   return (
     <>
       <Container
-        className={cn("text-question-color m-0 block text-base font-semibold leading-6", className)}
+        className={cn("text-question-color m-0 block text-base leading-6 font-semibold", className)}
         style={style}>
         <div dangerouslySetInnerHTML={{ __html: headline }} />
       </Container>
       {subheader && (
         <Container
-          className="text-question-color m-0 mt-2 block p-0 text-sm font-normal leading-6"
+          className="text-question-color m-0 mt-2 block p-0 text-sm leading-6 font-normal"
           style={{ ...style, ...subheaderStyle }}>
           <div dangerouslySetInnerHTML={{ __html: subheader }} />
         </Container>
