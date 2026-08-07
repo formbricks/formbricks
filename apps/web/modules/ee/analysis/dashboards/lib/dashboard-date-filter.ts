@@ -106,10 +106,16 @@ export const parseDashboardDateFilter = (
   return null;
 };
 
-// localStorage key for the persisted dashboard date filter. Scoped per dashboard so a custom range
-// on one dashboard does not leak into another.
-export const getDateFilterStorageKey = (dashboardId: string): string =>
-  `formbricks:dashboard-date-filter:${dashboardId}`;
+// Cookie name for the persisted dashboard date filter. A cookie (rather than localStorage) lets the
+// server read the stored filter on the first render pass, so a revisit with no URL param renders the
+// filtered widgets directly instead of running every widget query unfiltered and then again after a
+// client round trip. Scoped per dashboard so a custom range on one dashboard does not leak into
+// another; underscores because cookie-name tokens cannot contain colons.
+export const getDateFilterCookieName = (dashboardId: string): string =>
+  `fb_dashboard_date_filter_${dashboardId}`;
+
+// Persisted filters live for 30 days, refreshed on every change.
+const DATE_FILTER_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 /**
  * Validate a JSON string read from localStorage back into a TDashboardDateFilter. Returns null for
@@ -150,32 +156,32 @@ export const deserializeStoredDateFilter = (raw: string | null): TDashboardDateF
 };
 
 /**
- * Read the persisted dashboard date filter from localStorage. Client-only and defensive: returns
- * null during SSR or when storage is unavailable/blocked.
+ * Deserialize a persisted date filter read from the request cookie (server-side). The cookie value
+ * is URL-encoded JSON; decode then validate. Returns null for a missing, malformed, or stale value.
  */
-export const readStoredDateFilter = (dashboardId: string): TDashboardDateFilter | null => {
-  if (typeof window === "undefined") return null;
+export const readStoredDateFilterFromCookie = (
+  rawCookieValue: string | undefined
+): TDashboardDateFilter | null => {
+  if (!rawCookieValue) return null;
   try {
-    return deserializeStoredDateFilter(window.localStorage.getItem(getDateFilterStorageKey(dashboardId)));
+    return deserializeStoredDateFilter(decodeURIComponent(rawCookieValue));
   } catch {
     return null;
   }
 };
 
 /**
- * Persist (or clear, when null) the dashboard date filter in localStorage. Client-only and
- * defensive: no-ops during SSR or when storage is unavailable (private mode, quota, disabled).
+ * Persist (or clear, when null) the dashboard date filter in a cookie. Client-only and defensive:
+ * no-ops during SSR. `SameSite=Lax` keeps the cookie on top-level navigations (shared links) without
+ * exposing it cross-site.
  */
 export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDateFilter | null): void => {
-  if (typeof window === "undefined") return;
-  try {
-    const key = getDateFilterStorageKey(dashboardId);
-    if (filter) {
-      window.localStorage.setItem(key, JSON.stringify(filter));
-    } else {
-      window.localStorage.removeItem(key);
-    }
-  } catch {
-    // Ignore storage failures (private mode, quota exceeded); persistence is best-effort.
+  if (typeof document === "undefined") return;
+  const name = getDateFilterCookieName(dashboardId);
+  if (filter) {
+    const value = encodeURIComponent(JSON.stringify(filter));
+    document.cookie = `${name}=${value}; path=/; max-age=${DATE_FILTER_COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
+  } else {
+    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
   }
 };

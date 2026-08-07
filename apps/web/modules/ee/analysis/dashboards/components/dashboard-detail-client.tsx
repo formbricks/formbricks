@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, memo, useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { Suspense, memo, useCallback, useMemo, useState, useTransition } from "react";
 import { ResponsiveGridLayout, useContainerWidth, verticalCompactor } from "react-grid-layout";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -25,7 +25,6 @@ import {
   DATE_FILTER_PARAM,
   DATE_FILTER_TO_PARAM,
   type TDashboardDateFilter,
-  readStoredDateFilter,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
@@ -403,7 +402,7 @@ export function DashboardDetailClient({
   }, [name, widgets, dashboard, workspaceId, router, t, startTransition]);
 
   const applyDateFilterToUrl = useCallback(
-    (filter: TDashboardDateFilter | null, options?: { replace?: boolean }) => {
+    (filter: TDashboardDateFilter | null) => {
       const params = new URLSearchParams(searchParams.toString());
       params.delete(DATE_FILTER_PARAM);
       params.delete(DATE_FILTER_FROM_PARAM);
@@ -420,20 +419,16 @@ export function DashboardDetailClient({
       }
 
       const queryString = params.toString();
-      const url = queryString ? `${pathname}?${queryString}` : pathname;
-      if (options?.replace) {
-        router.replace(url);
-      } else {
-        router.push(url);
-      }
+      router.push(queryString ? `${pathname}?${queryString}` : pathname);
     },
     [pathname, router, searchParams]
   );
 
   const handleDateFilterChange = useCallback(
     (filter: TDashboardDateFilter | null) => {
-      // Persist the choice so it survives across sessions, then reflect it in the URL (the
-      // server reads the URL params to fetch each chart's data).
+      // Persist the choice (cookie) so it survives across sessions and the server can apply it on the
+      // next visit, then reflect it in the URL (the server reads the URL params to fetch each chart's
+      // data for this navigation).
       writeStoredDateFilter(dashboard.id, filter);
       applyDateFilterToUrl(filter);
     },
@@ -442,23 +437,11 @@ export function DashboardDetailClient({
 
   const isEmpty = widgets.length === 0;
 
-  // Restore the persisted date filter on load when the URL doesn't already pin one, so the last
-  // chosen range carries across sessions. When the URL does pin a filter (shared link, in-app
-  // navigation) that wins and we keep storage in sync with it. Skipped on empty dashboards, which
-  // hide the filter and have nothing to apply it to.
-  useEffect(() => {
-    if (isEmpty) return;
-
-    if (searchParams.get(DATE_FILTER_PARAM) !== null) {
-      writeStoredDateFilter(dashboard.id, dateFilter);
-      return;
-    }
-
-    const stored = readStoredDateFilter(dashboard.id);
-    if (stored) {
-      applyDateFilterToUrl(stored, { replace: true });
-    }
-  }, [isEmpty, searchParams, dashboard.id, dateFilter, applyDateFilterToUrl]);
+  // Persistence is now cookie-based and read by the server on the first render pass (see
+  // dashboard-detail-page), so there is no client-side restore effect: a revisit renders filtered
+  // directly instead of re-running every widget query after a `router.replace` round trip. A pinned
+  // URL param still wins and is intentionally NOT written back to the cookie, so opening a shared
+  // link never overwrites the viewer's own saved preference.
 
   return (
     <PageContentWrapper>
