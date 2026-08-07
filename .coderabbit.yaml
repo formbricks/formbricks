@@ -30,7 +30,10 @@ reviews:
   high_level_summary_in_walkthrough: false
   auto_title_placeholder: "@coderabbitai"
   auto_title_instructions: ""
-  review_status: false
+  # On: this is the "review skipped" notice. With incremental review enabled,
+  # `auto_pause_after_reviewed_commits` actually fires, and with this off a paused
+  # review looks exactly like a clean one — silence must never stand in for a pass.
+  review_status: true
   review_details: false
   review_progress: true
   commit_status: true
@@ -83,6 +86,12 @@ reviews:
         - Dates and times must use the shared formatting helpers, never ad-hoc `date-fns`, `Intl`,
           or `toLocale*` calls, and never an implicit/`undefined` locale.
         - Don't ask for `useMemo`/`useCallback` unless there is a measured re-render problem.
+        - Do scrutinise effects and closures. `apps/web/eslint.config.mjs` turns
+          `react-hooks/set-state-in-effect`, `incompatible-library`, `error-boundaries`,
+          `immutability` and `preserve-manual-memoization` off, and leaves `exhaustive-deps` at
+          `warn` with no `--max-warnings 0`, so none of them can fail CI. Flag state set from an
+          effect without a guard, missing or lying dependency arrays, stale closures over props
+          or state, and effects that need cleanup and don't have it.
 
     - path: "**/*.test.ts"
       instructions: |
@@ -163,9 +172,26 @@ reviews:
 
     - path: "apps/web/app/api/v3/**"
       instructions: |
-        Public API v3. Any change to a request or response shape must be mirrored in the
-        hand-authored spec under `docs/api-v3-reference/src/**/*.yml`, which CI bundles. A handler
-        change with no spec change is a bug unless the shape is genuinely unchanged.
+        Public API v3 — the surface new backend work targets, so hold it to the strictest bar.
+        - Handlers go through `withV3ApiWrapper` (`app/api/v3/lib/api-wrapper.ts`), which owns
+          auth, input parsing, rate limiting and audit logging. A hand-rolled handler that skips
+          it is a finding, not a style preference.
+        - Authorization is `requireV3WorkspaceAccess` (`app/api/v3/lib/auth.ts`). Every query is
+          scoped by the resolved workspace, never fetched by id alone.
+        - Return **403, not 404**, for a resource the caller may not see — a 404 leaks existence.
+        - Responses come from the RFC 9457 problem builders in `app/api/v3/lib/response.ts`. No
+          invented error envelopes, and no internal or database types leaking into a public shape.
+        - Any change to a request or response shape must be mirrored in the hand-authored spec
+          under `docs/api-v3-reference/src/**/*.yml`, which CI bundles. A handler change with no
+          spec change is a bug unless the shape is genuinely unchanged.
+        - A `/v3` route with no public OpenAPI entry is internal by definition and belongs under
+          `apps/web/app/api/(internal)/`. Shipping an internal route as public v3 is a finding.
+
+    - path: "apps/web/app/api/(internal)/**"
+      instructions: |
+        Internal routes, not a public contract — they carry no OpenAPI entry and no compatibility
+        promise. Check that they are unreachable without the expected internal authentication, and
+        flag anything here that looks like it should have been a public `/api/v3` route instead.
 
     - path: "apps/web/modules/ee/**"
       instructions: |
@@ -476,7 +502,11 @@ knowledge_base:
     filePatterns: []
   learnings:
     scope: auto
-    approval_delay: 0
+    # Not 0. A learning is a durable review rule, and at 0 it applies immediately —
+    # unversioned, unreviewed, and settable by anyone who replies to the bot. That is
+    # the same failure this file exists to end. Seven days give an admin time to reject
+    # one. `scope: auto` resolves to local on a public repo, so it stays in this repo.
+    approval_delay: 7
   issues:
     scope: auto
   jira:
