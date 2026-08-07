@@ -119,21 +119,50 @@ migration; resource-level relationships belong to the later sharing phase.
 - Organization settings, workspace settings, team operations, and
   user-managed API-key settings migrated to explicit actions.
 
-### Assigned to ENG-1731
+### Migrated by ENG-1731
 
 - API-key principals in V1, V2, V3, MCP, and storage authorization paths.
 - `ApiKeyWorkspace` permissions and organization access-control flags.
 - Organization-only API-key opt-in and API-key revocation behavior.
 
-### Assigned to ENG-1737
+### Migrated by ENG-1737
 
-- The broad, non-action-aware `hasUserWorkspaceAccess` navigation helper.
-- Layout and UI-derived access flags.
-- Unrecognized action-client compatibility shapes and remaining
-  feature-specific role checks.
+- The broad, non-action-aware `hasUserWorkspaceAccess` helper is gone.
+  `getWorkspaceAuth` asks for `workspace.read`; the four navigation callers ask
+  `canUserNavigateWorkspace`, which is `workspace.read` or
+  `organization.manage_billing` — the second disjunct exists only because
+  reaching a workspace URL is how the `billing` role gets to billing.
+- The action-client adapter's parallel legacy evaluator is gone. Every access
+  shape the repository produces maps onto exactly one central action, so the
+  fallback could only repeat a decision already made. Its `team` shape was
+  removed with it, an unmapped organization role set is now refused and logged
+  as a caller bug, and an empty requirement list is refused rather than passing.
+- The two remaining role-name gates outside the module: workspace creation
+  during onboarding, and the self-hosted license recheck. The latter denied the
+  `member` role by name, which admitted `billing`; `organization.manage` is what
+  its own message always claimed.
+
+#### Retained by design
+
+These read a role but do not decide access, so they stay as they are:
+
+- **Rendering.** Navigation, sidebars, settings forms, and role pickers take
+  `getAccessFlags` output as props. Hiding a control is not a gate; the gate is
+  on the action or page behind it.
+- **Context output.** `getWorkspaceAuth` and `getOrganizationAuth` _return_ the
+  flags for those consumers. Their own gates are `can` calls.
+- **Invariants and finer rules.** An owner may not leave their organization; a
+  manager may only assign the `member` role; `billing` is Cloud-only. The
+  schema comments already name these as application rules — they constrain a
+  request's _content_, not the principal's capability.
+- **Invite fan-out.** The signup and invite paths derive from the _invited_
+  role whether to create `TeamUser` rows, since owners and managers get
+  workspace access from the role itself. That is a statement about the invite.
+- **List scoping.** Workspace list queries narrow by role instead of asking a
+  question per row. Replacing those with a permission-aware lookup is ENG-1713.
 
 New authorization-sensitive code must use `can` or `assertCan`; it must not add
-callers to the compatibility fallback or broad workspace helper.
+callers to the deprecated action-client adapter or reintroduce a role-name gate.
 
 ## Explicit exclusions
 
