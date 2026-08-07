@@ -55,10 +55,16 @@ export const expandPresetDateRanges = (query: TChartQuery, now: Date = new Date(
     const resolver = PRESET_RESOLVERS[key];
     if (!resolver) return td;
     const [start, end] = resolver(now);
-    const pattern = TIME_PRECISION_PRESETS.has(key) ? "yyyy-MM-dd'T'HH:mm:ss" : "yyyy-MM-dd";
+    // Sub-day presets serialize as UTC ISO 8601 (with the `Z` offset, milliseconds truncated) so the
+    // same instant produces the same string regardless of the server's timezone — Cube reads these
+    // bare timestamps as UTC. Day-granular presets stay date-only, keeping their calendar-day meaning.
+    const serialize = (date: Date): string =>
+      TIME_PRECISION_PRESETS.has(key)
+        ? `${date.toISOString().slice(0, 19)}Z`
+        : formatDate(date, "yyyy-MM-dd");
     return {
       ...td,
-      dateRange: [formatDate(start, pattern), formatDate(end, pattern)] as [string, string],
+      dateRange: [serialize(start), serialize(end)] as [string, string],
     };
   });
 

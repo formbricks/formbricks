@@ -57,9 +57,12 @@ describe("expandPresetDateRanges", () => {
     expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-01-01", "2026-05-21"]);
   });
 
-  test("'last 24 hours' uses timestamp precision ending now", () => {
-    const result = expandPresetDateRanges(queryWithDateRange("last 24 hours"), NOW);
-    expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-05-20T14:30:00", "2026-05-21T14:30:00"]);
+  test("'last 24 hours' serializes as UTC timestamps ending now", () => {
+    // Constructed as a UTC instant so the assertion pins the UTC serialization and stays invariant
+    // across the test runner's timezone (a local-time NOW would make this assertion TZ-dependent).
+    const nowUtc = new Date(Date.UTC(2026, 4, 21, 14, 30, 0));
+    const result = expandPresetDateRanges(queryWithDateRange("last 24 hours"), nowUtc);
+    expect(result.timeDimensions?.[0].dateRange).toEqual(["2026-05-20T14:30:00Z", "2026-05-21T14:30:00Z"]);
   });
 
   test("'last quarter' is the full previous calendar quarter", () => {

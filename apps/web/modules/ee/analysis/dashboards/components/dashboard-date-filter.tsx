@@ -25,16 +25,25 @@ interface DashboardDateFilterProps {
   onChange: (filter: TDashboardDateFilter | null) => void;
 }
 
+// Custom-range bounds serialize with the local `format(date, "yyyy-MM-dd")` below, so they must be
+// parsed back as local calendar days too. `new Date("YYYY-MM-DD")` parses as UTC midnight, which
+// shows (and re-emits) a day earlier for anyone west of UTC — parse the parts as local instead to
+// keep the round trip symmetric.
+const parseLocalDate = (iso: string): Date => {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateFilterProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? "en-US";
 
   const [isCustomMode, setIsCustomMode] = useState(value?.type === "custom");
   const [customStart, setCustomStart] = useState<Date | null>(
-    value?.type === "custom" ? new Date(value.range[0]) : null
+    value?.type === "custom" ? parseLocalDate(value.range[0]) : null
   );
   const [customEnd, setCustomEnd] = useState<Date | null>(
-    value?.type === "custom" ? new Date(value.range[1]) : null
+    value?.type === "custom" ? parseLocalDate(value.range[1]) : null
   );
 
   // Query-only navigation (back/forward, or restoring a persisted filter) keeps this component
@@ -43,8 +52,8 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
   useEffect(() => {
     if (value?.type === "custom") {
       setIsCustomMode(true);
-      setCustomStart(new Date(value.range[0]));
-      setCustomEnd(new Date(value.range[1]));
+      setCustomStart(parseLocalDate(value.range[0]));
+      setCustomEnd(parseLocalDate(value.range[1]));
     } else {
       setIsCustomMode(false);
     }
