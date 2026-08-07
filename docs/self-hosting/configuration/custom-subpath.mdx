@@ -19,9 +19,24 @@ assets, and sign-in redirects honor the prefix.
 ### Requirements and limitations
 
 - `BASE_PATH` must be present during `pnpm build`; changing it afterward requires a rebuild.
-- Official Formbricks Docker images do **not** accept this flag for technical reasons, so you must build your own image.
+- Next.js inlines the base path into the client bundles, so setting `BASE_PATH` on an already-built official Formbricks
+  image has no effect. You must build your own Formbricks web image with the required value.
 - All Formbricks URLs (`WEBAPP_URL`, `NEXTAUTH_URL`, webhook targets, OAuth callbacks, MCP clients, etc.) need the same prefix.
 - Your proxy must rewrite `/custom-path/*` to the Formbricks container while keeping the prefix visible to clients.
+
+### Configure object storage separately
+
+`BASE_PATH` applies only to the Formbricks web application. It does not add the same prefix to RustFS, MinIO, or
+another S3-compatible storage service, and the custom image described below is a Formbricks image—not a custom
+storage image.
+
+Keep the S3 API at the root of a dedicated endpoint such as `https://files.example.com` and set `S3_ENDPOINT_URL`
+to that endpoint. Do not route it through an arbitrary prefix such as `https://example.com/custom-path/storage`:
+the request path is part of the AWS Signature Version 4 signature, so proxy path rewriting can invalidate signed and
+presigned requests. Provider settings that expose a management console under a subpath do not change the S3 API
+base path.
+
+For the complete storage and CORS setup, see [File Uploads Configuration](/self-hosting/configuration/file-uploads).
 
 ### Configure environment variables
 
