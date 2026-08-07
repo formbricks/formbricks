@@ -38,7 +38,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --project tsconfig.build.json && vite build",
+    "build": "rimraf dist && tsc --project tsconfig.build.json && vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
