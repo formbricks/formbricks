@@ -80,6 +80,9 @@ reviews:
       instructions: |
         - Never suggest adding unit tests for `.tsx` files. AGENTS.md forbids them; UI behaviour is
           covered by Playwright specs in `apps/web/playwright/`. Suggesting an E2E spec is fine.
+        - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
+          Action. Server data lives in the query cache only — flag it being mirrored into
+          `useState` or Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
         - Component props must be `Readonly<>` (e.g. `({ children }: Readonly<Props>)`).
         - All user-facing strings must go through `t()` from `react-i18next` with lowercase
           dot-nested keys, never hardcoded text.
@@ -110,7 +113,12 @@ reviews:
 
     - path: "**/actions.ts"
       instructions: |
-        Server actions are the repo's authorization boundary. For every exported action, check that:
+        A **newly added** exported action is itself the finding: Server Actions are legacy here and
+        no new ones should be added. New backend work belongs in an `/api/v3` route consumed from
+        the client with TanStack Query. Raise that first, then apply the checks below.
+
+        Server actions are the repo's authorization boundary. For every existing exported action
+        that this PR touches, check that:
         - It goes through the shared action client (`authenticatedActionClient` /
           `checkAuthorizationUpdated`), and never trusts an id from the client as proof of access.
         - Input is validated with a zod schema before use.
@@ -264,10 +272,16 @@ reviews:
       enabled: false
     simplify:
       enabled: false
+    # Off: both let the reviewer author commits on the branch — autofix through the
+    # one-click checkboxes under each review comment, not just the chat command. With
+    # incremental review on it would then review its own work, so that commit gets no
+    # independent reviewer. Reviewers here are read-only on the code; the human who
+    # merges owns the diff. Same reasoning as `chat.allow_non_org_members: false`.
     autofix:
-      enabled: true
+      enabled: false
     fix_ci:
-      enabled: true
+      enabled: false
+    # Kept: mechanical, and the resolution is visible in the diff like any other change.
     resolve_merge_conflict:
       enabled: true
     custom: []
