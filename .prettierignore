@@ -22,3 +22,10 @@ charts/**/templates/
 # Intentional empty list items are the fill-in placeholders of this form;
 # Prettier folds them into the label above and changes the template.
 .github/pull_request_template.md
+
+# Partly owned by a generator: .agents/install.sh rewrites the `robots:start`
+# block, and Prettier wants a blank line after that marker where the installer
+# emits none. Ignoring is per-file, not per-region, so the whole file is out —
+# otherwise every regeneration of the block turns format:check red on whichever
+# unrelated PR happens to carry it.
+AGENTS.md

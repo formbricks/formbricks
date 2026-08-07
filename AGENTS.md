@@ -142,7 +142,6 @@ Every PR must use `.github/pull_request_template.md` and follow its inline guida
 Do not rely on training data for Next.js behavior in this repo. For any Next.js-related work (routing, layouts, server/client components, caching, next.config, etc.), use the `nextjs-docs` skill, which indexes the version-pinned local docs in `.next-docs/`.
 
 <!-- robots:start (managed by .agents/install.sh - do not edit inside this block) -->
-
 ## Agent setup (robots)
 
 Shared agent skills and subagents are installed under `.claude/`, and design context under `.agents/` (symlinked from the robots clone; `git -C <clone> pull` refreshes every install). This complements the conventions above; it does not replace them.

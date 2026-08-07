@@ -35,10 +35,12 @@ jobs:
       - name: Create .env
         run: pnpm dev:setup
 
-      - name: Lint
-        run: pnpm lint
-
-      # Formatting is otherwise only applied by the lint-staged pre-commit hook,
-      # which `git commit --no-verify` skips. Run `pnpm format` to fix failures.
+      # Runs before the linters: formatting takes seconds where linting takes
+      # minutes, so a formatting slip fails fast instead of after a full lint.
+      # Otherwise only applied by the lint-staged pre-commit hook, which
+      # `git commit --no-verify` skips. Run `pnpm format` to fix failures.
       - name: Check formatting
         run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
