@@ -894,6 +894,9 @@ importers:
 
   packages/email:
     dependencies:
+      '@formbricks/types':
+        specifier: workspace:*
+        version: link:../types
       '@react-email/components':
         specifier: 1.0.12
         version: 1.0.12(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -922,9 +925,6 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
-      '@formbricks/types':
-        specifier: workspace:*
-        version: link:../types
       '@types/react':
         specifier: 19.2.14
         version: 19.2.14

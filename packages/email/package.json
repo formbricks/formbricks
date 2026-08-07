@@ -15,6 +15,7 @@
     "clean": "rimraf .turbo node_modules dist"
   },
   "dependencies": {
+    "@formbricks/types": "workspace:*",
     "@react-email/components": "1.0.12",
     "@react-email/render": "2.0.6",
     "clsx": "2.1.1",
@@ -26,7 +27,6 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@formbricks/types": "workspace:*",
     "@types/react": "19.2.14",
     "typescript": "5.9.3",
     "vitest": "4.1.6"
