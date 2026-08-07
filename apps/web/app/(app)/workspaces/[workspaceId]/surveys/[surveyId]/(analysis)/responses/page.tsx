@@ -19,15 +19,18 @@ import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
+import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 const Page = async (props: { params: Promise<{ workspaceId: string; surveyId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, organization, isReadOnly, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { session, organization, isReadOnly, workspace } = await getSurveyAuth(
+    params.workspaceId,
+    params.surveyId
+  );
 
   const [survey, user, tags, isContactsEnabled, responseCount] = await Promise.all([
     getSurvey(params.surveyId),
