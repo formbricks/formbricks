@@ -36,7 +36,7 @@ export function OfflineAlert({ isOnline, isSyncing, pendingSyncCount }: OfflineA
     return (
       <div className="fixed inset-x-0 top-4 z-50 flex justify-center px-4">
         <Alert variant="warning" size="small" className="w-fit max-w-[calc(100vw-2rem)]">
-          <AlertDescription className="flex items-center gap-2 whitespace-normal text-xs sm:text-sm">
+          <AlertDescription className="flex items-center gap-2 text-xs whitespace-normal sm:text-sm">
             <svg
               className="size-4 shrink-0 animate-spin"
               xmlns="http://www.w3.org/2000/svg"
@@ -60,7 +60,7 @@ export function OfflineAlert({ isOnline, isSyncing, pendingSyncCount }: OfflineA
     return (
       <div className="fixed inset-x-0 top-4 z-50 flex justify-center px-4">
         <Alert variant="info" size="small" className="w-fit max-w-[calc(100vw-2rem)]">
-          <AlertDescription className="whitespace-normal text-xs sm:text-sm">
+          <AlertDescription className="text-xs whitespace-normal sm:text-sm">
             {t("common.offline_syncing_responses")}
           </AlertDescription>
         </Alert>
@@ -71,7 +71,7 @@ export function OfflineAlert({ isOnline, isSyncing, pendingSyncCount }: OfflineA
   return (
     <div className="fixed inset-x-0 top-4 z-50 flex justify-center px-4">
       <Alert variant="success" size="small" className="w-fit max-w-[calc(100vw-2rem)]">
-        <AlertDescription className="whitespace-normal text-xs sm:text-sm">
+        <AlertDescription className="text-xs whitespace-normal sm:text-sm">
           {t("common.offline_all_responses_synced")}
         </AlertDescription>
       </Alert>

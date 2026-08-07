@@ -61,7 +61,7 @@ export const SingleContactPage = async (props: {
     <PageContentWrapper>
       <GoBackButton url={`/workspaces/${workspace.id}/contacts`} />
       <PageHeader pageTitle={contactIdentifier} cta={getContactControlBar()} />
-      <section className="pb-24 pt-6">
+      <section className="pt-6 pb-24">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />
           <ActivitySection
