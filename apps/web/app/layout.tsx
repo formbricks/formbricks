@@ -1,14 +1,8 @@
 import { Metadata } from "next";
 import React from "react";
 import { NoScriptWarning } from "@/app/components/NoScriptWarning";
-import { SentryProvider } from "@/app/sentry/SentryProvider";
-import {
-  DEFAULT_LOCALE,
-  IS_PRODUCTION,
-  SENTRY_DSN,
-  SENTRY_ENVIRONMENT,
-  SENTRY_RELEASE,
-} from "@/lib/constants";
+import { DEFAULT_LOCALE } from "@/lib/constants";
+import { SentryClientConfigScript } from "@/lib/sentry/SentryClientConfigScript";
 import { I18nProvider } from "@/lingodotdev/client";
 import { getLocale } from "@/lingodotdev/language";
 import "../modules/ui/globals.css";
@@ -27,16 +21,12 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang={locale} translate="no">
       <body className="flex h-dvh flex-col transition-all ease-in-out">
+        {/* First in the document so instrumentation-client.ts can start Sentry as early as possible. */}
+        <SentryClientConfigScript />
         <NoScriptWarning locale={locale} />
-        <SentryProvider
-          sentryDsn={SENTRY_DSN}
-          sentryRelease={SENTRY_RELEASE}
-          sentryEnvironment={SENTRY_ENVIRONMENT}
-          isEnabled={IS_PRODUCTION}>
-          <I18nProvider language={locale} defaultLanguage={DEFAULT_LOCALE}>
-            {children}
-          </I18nProvider>
-        </SentryProvider>
+        <I18nProvider language={locale} defaultLanguage={DEFAULT_LOCALE}>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );
