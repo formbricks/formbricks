@@ -35,6 +35,98 @@ export interface CartesianChartProps {
    * charts render values under a synthetic key (PIVOTED_VALUE_KEY) that carries no measure id, so
    * they resolve the fixed-scale axis from the original measure columns and pass it here (ENG-2226). */
   yAxisScale?: YAxisScale;
+  /** True for point-scale charts (line/area) where the first/last categories sit on the plot
+   * boundary. Anchors the edge x-axis labels inward so they aren't clipped by the plot edge.
+   * Leave false for band-scale charts (bars), whose edge categories are already inset. */
+  pointScale?: boolean;
+}
+
+/** Upper bound (px) on a single x-axis label before wrapping. The per-category band clamp below
+ * already stops neighbours colliding, so this is only a ceiling for charts with lots of room (few
+ * categories) — kept generous so long question labels show as much as possible before truncating. */
+const X_AXIS_TICK_MAX_WIDTH = 220;
+/** Lower bound (px) so a label keeps a little room to wrap even on very dense axes. Below the band
+ * width the label narrows to fit rather than overlapping its neighbours. */
+const X_AXIS_TICK_MIN_WIDTH = 32;
+/** Horizontal gap (px) reserved between adjacent labels so wrapped text never touches. */
+const X_AXIS_TICK_GAP = 8;
+/** Number of lines a wrapped label clamps to, and the `text-xs`/`leading-tight` line height (px,
+ * ~15px for 12px text with a hair of headroom for descenders on the last line). */
+const X_AXIS_LABEL_MAX_LINES = 3;
+const X_AXIS_LABEL_LINE_HEIGHT = 16;
+/** Height (px) of the label box itself: just the clamped text, so on legend-less charts (bars) the
+ * box does not overhang the plot below the labels. */
+const X_AXIS_LABEL_BOX_HEIGHT = X_AXIS_LABEL_MAX_LINES * X_AXIS_LABEL_LINE_HEIGHT;
+/** Vertical space reserved on the axis for the labels: the label box plus the tick margin and the
+ * box's top offset below the axis line, so the last line is not clipped by the plot's bottom edge. */
+const X_AXIS_RESERVED_HEIGHT = X_AXIS_LABEL_BOX_HEIGHT + 24;
+/** Vertical offset (px) of the label box below the axis line. */
+const X_AXIS_LABEL_TOP_OFFSET = 4;
+
+/** Recharts renders default ticks as SVG `<text>`, which cannot wrap. This custom tick uses a
+ * `foreignObject` so long labels (e.g. full survey questions) wrap within a max-width, stay under
+ * their data point, and clamp to 3 lines with the full text on hover. The width is derived from the
+ * per-category band (`width / visibleTicksCount`, both injected by Recharts' CartesianAxis) so
+ * labels shrink to fit as categories are added instead of overlapping each other.
+ *
+ * `pointScale` charts (line/area) place the first and last categories *on* the plot boundary, so a
+ * centred label there would spill half its width past the SVG edge and get clipped. For those edge
+ * ticks we anchor the box inward (left-align the first, right-align the last) instead of centring,
+ * which keeps the full label inside the plot. Band-scale charts (bars) inset their edge categories
+ * by half a band, so their centred labels always fit and are left centred. */
+function WrappingXAxisTick({
+  x,
+  y,
+  payload,
+  formatter,
+  width,
+  visibleTicksCount,
+  index,
+  pointScale = false,
+}: Readonly<{
+  x?: number;
+  y?: number;
+  payload?: { value?: unknown };
+  formatter: (value: unknown) => string;
+  width?: number;
+  visibleTicksCount?: number;
+  index?: number;
+  pointScale?: boolean;
+}>) {
+  const label = formatter(payload?.value);
+  const band = width && visibleTicksCount ? width / visibleTicksCount : X_AXIS_TICK_MAX_WIDTH;
+  const tickWidth = Math.min(X_AXIS_TICK_MAX_WIDTH, Math.max(X_AXIS_TICK_MIN_WIDTH, band - X_AXIS_TICK_GAP));
+  const tickX = x ?? 0;
+
+  const isFirst = pointScale && index === 0;
+  const isLast = pointScale && index === (visibleTicksCount ?? 0) - 1;
+  let boxX = tickX - tickWidth / 2;
+  let textAlign = "text-center";
+  if (isFirst) {
+    boxX = tickX; // left edge at the point; label extends inward (right)
+    textAlign = "text-left";
+  } else if (isLast) {
+    boxX = tickX - tickWidth; // right edge at the point; label extends inward (left)
+    textAlign = "text-right";
+  }
+
+  return (
+    <foreignObject
+      x={boxX}
+      y={(y ?? 0) + X_AXIS_LABEL_TOP_OFFSET}
+      width={tickWidth}
+      height={X_AXIS_LABEL_BOX_HEIGHT}
+      // Keep the label hit-testable so the `title` full-text tooltip works on hover. The tick sits
+      // in the axis band below the plot, so this doesn't intercept hover over the bars/points.
+      style={{ overflow: "visible" }}>
+      <div
+        title={label}
+        className={`text-muted-foreground line-clamp-3 ${textAlign} text-xs leading-tight`}
+        style={{ textWrap: "pretty" }}>
+        {label}
+      </div>
+    </foreignObject>
+  );
 }
 
 export function CartesianChart({
@@ -52,8 +144,10 @@ export function CartesianChart({
   hasCategoryAxis = true,
   tooltipHideLabel,
   yAxisScale,
+  pointScale = false,
 }: Readonly<CartesianChartProps>) {
   const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
+  const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
 
   return (
     <div className="h-full min-h-64 w-full">
@@ -68,8 +162,17 @@ export function CartesianChart({
             tickLine={false}
             tickMargin={10}
             axisLine={false}
-            tick={hasCategoryAxis}
-            tickFormatter={xAxisTickFormatter ?? formatXAxisTick}
+            // Label every data point (default recharts hides overlapping ticks, which dropped
+            // long question labels on area/line charts) and wrap each label within a max-width.
+            interval={hasCategoryAxis ? 0 : undefined}
+            height={hasCategoryAxis ? X_AXIS_RESERVED_HEIGHT : undefined}
+            tick={
+              hasCategoryAxis ? (
+                <WrappingXAxisTick formatter={tickFormatter} pointScale={pointScale} />
+              ) : (
+                false
+              )
+            }
           />
           <YAxis
             tickLine={false}

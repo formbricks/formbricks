@@ -422,7 +422,8 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           chartConfig={chartConfig}
           showLegend
           hasCategoryAxis={hasCategoryAxis}
-          xAxisTickFormatter={formatDimensionValue}>
+          xAxisTickFormatter={formatDimensionValue}
+          pointScale>
           <defs>
             {dataKeys.map((key) => {
               const color = chartConfig[key]?.color;
@@ -463,7 +464,8 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           chartConfig={chartConfig}
           showLegend
           hasCategoryAxis={hasCategoryAxis}
-          xAxisTickFormatter={formatDimensionValue}>
+          xAxisTickFormatter={formatDimensionValue}
+          pointScale>
           {dataKeys.map((key) => (
             <Area
               key={key}
