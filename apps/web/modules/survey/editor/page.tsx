@@ -29,15 +29,25 @@ import {
   getResponseCountBySurveyId,
 } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
+import { canReadSurveyInWorkspace, getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SURVEY_SCHEDULING_CONFIG } from "@/modules/survey/scheduling/lib/constants";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
 
-export const generateMetadata = async (props: { params: Promise<{ surveyId: string }> }) => {
+export const generateMetadata = async (props: {
+  params: Promise<{ workspaceId: string; surveyId: string }>;
+}) => {
   const params = await props.params;
+
+  // The survey name belongs to whoever owns the survey, so it may only be used as the title
+  // when the caller may actually read this survey through this workspace. The page 404s
+  // otherwise, but metadata resolves independently of it.
+  if (!(await canReadSurveyInWorkspace(params.surveyId, params.workspaceId))) {
+    return { title: "Editor" };
+  }
+
   const survey = await getSurvey(params.surveyId);
   return {
     title: survey?.name ? `${survey?.name} | Editor` : "Editor",
@@ -52,7 +62,7 @@ export const SurveyEditorPage = async (props: {
   const params = await props.params;
 
   const { session, isMember, hasReadAccess, currentUserMembership, workspacePermission, workspace } =
-    await getWorkspaceAuth(params.workspaceId);
+    await getSurveyAuth(params.workspaceId, params.surveyId);
 
   const t = await getTranslate();
 
