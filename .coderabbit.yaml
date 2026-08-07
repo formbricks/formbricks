@@ -214,7 +214,11 @@ reviews:
   auto_review:
     enabled: true
     description_keyword: ""
-    auto_incremental_review: false
+    # On, so the commits that fix a review round get reviewed too — with it off,
+    # `auto_pause_after_reviewed_commits` below was dead config and someone had to
+    # remember to type `@coderabbitai review`. The pause caps the volume at five
+    # reviewed commits since the last pause.
+    auto_incremental_review: true
     auto_pause_after_reviewed_commits: 5
     ignore_title_keywords: []
     labels: []
@@ -452,7 +456,10 @@ reviews:
 
 chat:
   art: true
-  allow_non_org_members: true
+  # Public repo: only org members may drive the bot with commands. Outside PRs
+  # are still reviewed automatically — this only stops non-members invoking
+  # `@coderabbitai`, including the autofix and fix_ci recipes enabled above.
+  allow_non_org_members: false
   auto_reply: true
   integrations:
     jira:
