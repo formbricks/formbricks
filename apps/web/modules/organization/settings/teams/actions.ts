@@ -35,6 +35,9 @@ import { type TBulkInviteResult, getInviteFailureReason } from "./lib/invite-fai
 // Hard cap on a single bulk import to bound payload size and email fan-out.
 const BULK_INVITE_MAX_INVITEES = 500;
 
+// Cap on the teams one invite may name. See ZInviteUserAction.
+const INVITE_MAX_TEAMS = 100;
+
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
 });
@@ -248,7 +251,10 @@ const ZInviteUserAction = z.object({
   email: z.string(),
   name: z.string().trim().min(1, "Name is required"),
   role: ZOrganizationRole,
-  teamIds: z.array(ZId),
+  // Bounded because a team admin's authorization is now decided per named team: without a cap the
+  // number of authorization decisions would follow the request body. The UI offers the teams the
+  // inviter can see, so this is far above any real selection.
+  teamIds: z.array(ZId).max(INVITE_MAX_TEAMS, `An invite is limited to ${INVITE_MAX_TEAMS} teams`),
 });
 
 export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUserAction).action(
@@ -305,20 +311,18 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       // The narrower rules below stay in application logic, as they should: which invitation role a
       // team admin may grant, and that they must name at least one team, are policy about the
       // request's content rather than a capability the vocabulary expresses.
+      //
+      // Distinct ids, checked one at a time and stopping at the first refusal. Asking per team means
+      // the number of authorization decisions follows the request body, so it is deduplicated first
+      // (repeating a team is meaningless) and bounded by the schema above. Sequential rather than
+      // Promise.all for the same reason: a request naming many teams should not fan out that many
+      // concurrent checks, and the honest answer is available as soon as one is refused.
       const actor = { type: "user", id: ctx.user.id } as const;
-      const refusedTeamIds = (
-        await Promise.all(
-          parsedInput.teamIds.map(async (teamId) => ({
-            teamId,
-            allowed: await can(actor, "team.manage", { type: "team", id: teamId }),
-          }))
-        )
-      )
-        .filter((decision) => !decision.allowed)
-        .map((decision) => decision.teamId);
 
-      if (refusedTeamIds.length > 0) {
-        throw new OperationNotAllowedError("Team admins can only add users to teams where they are admin");
+      for (const teamId of new Set(parsedInput.teamIds)) {
+        if (!(await can(actor, "team.manage", { type: "team", id: teamId }))) {
+          throw new OperationNotAllowedError("Team admins can only add users to teams where they are admin");
+        }
       }
     }
 
