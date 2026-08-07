@@ -59,7 +59,7 @@ const InteractiveTag = (args: any) => {
   };
 
   if (isDeleted) {
-    return <div className="text-sm italic text-slate-500">Tag deleted (will reappear in 2s)</div>;
+    return <div className="text-sm text-slate-500 italic">Tag deleted (will reappear in 2s)</div>;
   }
 
   return <Tag {...args} onDelete={handleDelete} />;

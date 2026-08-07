@@ -45,9 +45,11 @@ Key facts:
    - `workflow-runs-included-1000` (included volume; boundary must match the price's free tier = 1000).
 
 5. **Backfill existing Scale subs** — one metered line item each (no quantity):
+
    ```
    stripe subscription_items create --subscription <sub_id> --price <workflow_price_id>
    ```
+
    Script over every active Scale sub. Idempotent: skip subs that already have the workflow price.
 
 6. **Refresh DB limits** for existing orgs: step 5 fires `customer.subscription.updated` → sync runs
@@ -55,12 +57,12 @@ Key facts:
 
 ## How it starts working for existing Scale customers
 
-| Concern | Auto / manual | Reflects when |
-| --- | --- | --- |
-| Availability (`workflows`) | Auto — feature grants entitlement to all active subscribers | Next billing sync |
-| Included-volume limit | Auto — same | Next billing sync |
-| Usage card shows | Auto — reads global catalog price free-tier | Price active + code deployed |
-| Billing (runs → invoice) | **Manual** — line item not auto-added (reconcile doesn't backfill) | After step 5 |
+| Concern                    | Auto / manual                                                      | Reflects when                |
+| -------------------------- | ------------------------------------------------------------------ | ---------------------------- |
+| Availability (`workflows`) | Auto — feature grants entitlement to all active subscribers        | Next billing sync            |
+| Included-volume limit      | Auto — same                                                        | Next billing sync            |
+| Usage card shows           | Auto — reads global catalog price free-tier                        | Price active + code deployed |
+| Billing (runs → invoice)   | **Manual** — line item not auto-added (reconcile doesn't backfill) | After step 5                 |
 
 Until step 5, an existing customer's runs are metered but have no subscription item → **not invoiced**.
 That gap is exactly what the backfill closes.
