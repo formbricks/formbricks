@@ -29,11 +29,17 @@ jobs:
   build:
     name: Run E2E Tests
     runs-on: ubuntu-latest
-    # Healthy runs are ~13min (p50 12m56s, slowest healthy run in 30 was 15m41s). 25 leaves
-    # ~1.6x headroom while capping how long a wedged job can block the merge queue — the
-    # previous 60 let a stalled `playwright install` sit on the queue for the better part
-    # of an hour. The step-level timeouts below fail faster and name the culprit.
-    timeout-minutes: 25
+    # Chosen so the step timeouts below always fire FIRST, because a step timeout names
+    # the culprit while a job timeout just says "exceeded the maximum execution time" —
+    # the opaque symptom this workflow is being changed to eliminate.
+    #
+    # Measured fixed overhead outside the two capped steps is 122s (from the local-mode
+    # run 31169882088: 1009s total - 247s build - 640s tests), so the worst case where
+    # both step caps are hit is 122 + 720 + 900 = 1742s ~= 29m. 30 clears that; 25 did
+    # not, and on the fork path would have killed the job before either step timeout.
+    # Still half the previous 60, which let a stalled `playwright install` sit on the
+    # merge queue for the better part of an hour.
+    timeout-minutes: 30
     services:
       postgres:
         image: pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a
@@ -246,7 +252,9 @@ jobs:
             # Bounded with `timeout` and logged to a file that is always echoed below:
             # the `--with-deps` apt step has hung for 40+ minutes on the Ubuntu mirror,
             # and because it is backgrounded that looked like a hung build with no output.
-            (timeout 600 pnpm exec playwright install chromium ffmpeg --with-deps \
+            # 420s is ~5x the observed healthy install; it runs concurrently with the
+            # ~247s build, so it only becomes this step's critical path when it misbehaves.
+            (timeout 420 pnpm exec playwright install chromium ffmpeg --with-deps \
               > /tmp/playwright-install.log 2>&1) &
             PW_INSTALL_PID=$!
           else
@@ -266,7 +274,7 @@ jobs:
             emit_install_log
 
             if [[ "${pw_rc}" == "124" ]]; then
-              echo "::error::playwright install exceeded its 600s budget (apt mirror stall?). See the install output above."
+              echo "::error::playwright install exceeded its 420s budget (apt mirror stall?). See the install output above."
               exit 1
             fi
             if [[ "${pw_rc}" != "0" ]]; then

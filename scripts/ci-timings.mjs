@@ -91,11 +91,14 @@ const reportRun = async (runId, jobFilter) => {
 
     for (const step of job.steps ?? []) {
       const dur = seconds(step.started_at, step.completed_at);
-      // Skip the long tail of sub-second setup/teardown steps; they're pure noise here.
-      if (dur !== null && dur < 2 && step.conclusion !== "failure") continue;
+      const skipped = step.conclusion === "skipped";
+      // Drop the long tail of sub-second setup/teardown noise — but never drop a skipped
+      // step. GitHub gives those equal start/complete timestamps, so a plain duration
+      // filter would silently eat them, and "Cache Playwright browsers (skipped)" is
+      // exactly the line that tells you service mode is doing the right thing.
+      if (!skipped && dur !== null && dur < 2 && step.conclusion !== "failure") continue;
       const flag = dur !== null && dur >= SLOW_STEP_SECONDS ? "  <-- slow" : "";
-      const skipped = step.conclusion === "skipped" ? " (skipped)" : "";
-      console.log(`  ${fmt(dur).padStart(7)}  ${step.name}${skipped}${flag}`);
+      console.log(`  ${fmt(dur).padStart(7)}  ${step.name}${skipped ? " (skipped)" : ""}${flag}`);
     }
   }
 };
@@ -145,17 +148,33 @@ const reportAggregate = async (last, event, jobFilter) => {
     console.log(`  ${fmt(row.duration).padStart(8)}  ${conclusion.padEnd(9)}  ${row.id}${flag}`);
   }
 
-  const sorted = measured.map((r) => r.duration).sort((a, b) => a - b);
-  console.log(`\n  n=${sorted.length}`);
-  console.log(`  min  ${fmt(sorted[0])}`);
-  console.log(`  p50  ${fmt(percentile(sorted, 50))}`);
-  console.log(`  p95  ${fmt(percentile(sorted, 95))}`);
-  console.log(`  max  ${fmt(sorted[sorted.length - 1])}`);
+  // Stats over successful runs only. `pr.yml` sets `cancel-in-progress: true`, so
+  // cancelled runs are common and their durations measure when someone pushed again,
+  // not how long the job takes — folding them in drags `min` down and can make `p95`
+  // entirely an artefact of one cancellation. Non-success runs are still listed above
+  // and still counted as outliers below, which is how a genuine stall shows up.
+  const succeeded = measured.filter((r) => r.conclusion === "success");
+  const excluded = measured.length - succeeded.length;
 
+  if (succeeded.length === 0) {
+    console.log(`\n  No successful runs in the sample — no timing stats. (${measured.length} listed above.)`);
+  } else {
+    const sorted = succeeded.map((r) => r.duration).sort((a, b) => a - b);
+    console.log(
+      `\n  n=${sorted.length} successful${excluded > 0 ? ` (${excluded} non-success excluded)` : ""}`
+    );
+    console.log(`  min  ${fmt(sorted[0])}`);
+    console.log(`  p50  ${fmt(percentile(sorted, 50))}`);
+    console.log(`  p95  ${fmt(percentile(sorted, 95))}`);
+    console.log(`  max  ${fmt(sorted[sorted.length - 1])}`);
+  }
+
+  // Outliers span every conclusion on purpose: the 49m45s stall that motivated this
+  // tool would be invisible if a cancellation hid it.
   const over = measured.filter((r) => r.duration >= 20 * 60);
-  console.log(`  runs over 20min: ${over.length}/${measured.length}`);
+  console.log(`  runs over 20min: ${over.length}/${measured.length} (all conclusions)`);
   for (const row of over) {
-    console.log(`    ${row.url}`);
+    console.log(`    ${row.conclusion ?? "unknown"}  ${row.url}`);
   }
 };
 
