@@ -3,14 +3,7 @@ import next from "@formbricks/eslint-config/next";
 const config = [
   // carried over from the legacy .eslintignore / ignorePatterns
   {
-    ignores: [
-      ".next/**",
-      "public/**",
-      "playwright/**",
-      "vendor/**",
-      "**/package.json",
-      "**/tsconfig.json",
-    ],
+    ignores: [".next/**", "public/**", "playwright/**", "vendor/**", "**/package.json", "**/tsconfig.json"],
   },
   ...next,
   {

@@ -34,7 +34,7 @@ properties:
   description:
     type:
       - string
-      - 'null'
+      - "null"
   status:
     $ref: ./WorkflowStatus.yml
   triggerType:
@@ -49,7 +49,7 @@ properties:
   createdBy:
     type:
       - string
-      - 'null'
+      - "null"
     format: cuid2
     description: >-
       User id that created the workflow. `null` when the creating user was
@@ -57,7 +57,7 @@ properties:
   creator:
     type:
       - object
-      - 'null'
+      - "null"
     required:
       - name
     properties:
@@ -74,7 +74,7 @@ properties:
   lastRun:
     anyOf:
       - $ref: ./WorkflowRunSummary.yml
-      - type: 'null'
+      - type: "null"
     description: >-
       Most recent run summary (dry runs included). `null` when the workflow has
       never run.
