@@ -4,7 +4,6 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-
 import { base, commonIgnores, unusedVarsConvention } from "./base.mjs";
 
 /*
