@@ -1,6 +1,5 @@
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
-
 import { base, commonIgnores, typescriptParsing } from "./base.mjs";
 
 /*
