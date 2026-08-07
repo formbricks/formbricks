@@ -1,11 +1,3 @@
-/* Tailwind v4 automatic source detection is rooted at this app (apps/web) and never
-   descends into node_modules — where every @formbricks/* workspace package is linked.
-   A utility used only inside a workspace package will therefore NOT exist in this
-   stylesheet. Consumed workspace packages ship their own CSS instead:
-   @formbricks/surveys as a prebuilt bundle under public/js/, @formbricks/survey-ui via
-   its ./styles export, @formbricks/email inlined at render time by @react-email/tailwind.
-   Consume one as raw source for its styling and you must add an explicit @source below.
-   See "Tailwind & Workspace Package CSS" in the root AGENTS.md. */
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
