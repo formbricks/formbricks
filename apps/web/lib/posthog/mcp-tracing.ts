@@ -46,11 +46,11 @@ const ALLOWED_PROPERTIES = new Set<string>([
  * only - never survey/feedback content).
  */
 const beforeSend: NonNullable<MCPAnalyticsOptions["beforeSend"]> = (event) => {
-  if (!event.properties) return event;
-
-  for (const key of Object.keys(event.properties)) {
-    if (!ALLOWED_PROPERTIES.has(key)) {
-      delete event.properties[key];
+  if (event.properties) {
+    for (const key of Object.keys(event.properties)) {
+      if (!ALLOWED_PROPERTIES.has(key)) {
+        delete event.properties[key];
+      }
     }
   }
   return event;
