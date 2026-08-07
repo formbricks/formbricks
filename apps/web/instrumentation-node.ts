@@ -18,6 +18,7 @@ import {
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { logger } from "@formbricks/logger";
+import { nodeAutoInstrumentationConfig } from "./instrumentation-node-config";
 
 // --- Configuration from environment ---
 const serviceName = process.env.OTEL_SERVICE_NAME || "formbricks";
@@ -140,33 +141,7 @@ const sdk = new NodeSDK({
     : [],
   metricReaders: metricReaders.length > 0 ? metricReaders : undefined,
   instrumentations: [
-    getNodeAutoInstrumentations({
-      // Disable noisy/unnecessary instrumentations
-      "@opentelemetry/instrumentation-fs": {
-        enabled: false,
-      },
-      "@opentelemetry/instrumentation-dns": {
-        enabled: false,
-      },
-      "@opentelemetry/instrumentation-net": {
-        enabled: false,
-      },
-      // Disable pg instrumentation - PrismaInstrumentation handles DB tracing
-      "@opentelemetry/instrumentation-pg": {
-        enabled: false,
-      },
-      "@opentelemetry/instrumentation-http": {
-        // Ignore health/metrics endpoints to reduce noise
-        ignoreIncomingRequestHook: (req) => {
-          const url = req.url || "";
-          return url === "/health" || url.startsWith("/metrics") || url === "/api/v2/health";
-        },
-      },
-      // Enable runtime metrics for Node.js process monitoring
-      "@opentelemetry/instrumentation-runtime-node": {
-        enabled: true,
-      },
-    }),
+    getNodeAutoInstrumentations(nodeAutoInstrumentationConfig),
     // Prisma instrumentation for database query tracing
     new PrismaInstrumentation(),
   ],
