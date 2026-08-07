@@ -12,11 +12,11 @@
 # `inheritance: false` means every value is defined here; nothing is inherited from
 # organisation-level settings. Keep it that way so the repo stays the source of truth.
 language: en-US
+# Max 250 characters — the schema enforces it.
 tone_instructions: |
-  Prettier and ESLint own formatting, import ordering, and quote style in this repo — never
-  comment on them. Do not ask for docstrings or JSDoc; this codebase does not require them.
-  Prefer one well-evidenced comment over three speculative ones: if you cannot point at the
-  specific line that breaks, say so or stay quiet.
+  Prettier and ESLint own formatting, import order and quote style; never comment on them.
+  Do not ask for docstrings or JSDoc. Prefer one well-evidenced comment over three
+  speculative ones: if you cannot point at the line that breaks, stay quiet.
 early_access: true
 enable_free_tier: true
 inheritance: false
