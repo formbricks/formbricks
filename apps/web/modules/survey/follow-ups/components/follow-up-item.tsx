@@ -156,7 +156,7 @@ export const FollowUpItem = ({
           </div>
         </button>
 
-        <div className="absolute right-4 top-4 flex items-center">
+        <div className="absolute top-4 right-4 flex items-center">
           <TooltipRenderer tooltipContent={t("common.delete")}>
             <Button
               variant="ghost"

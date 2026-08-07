@@ -20,7 +20,7 @@ properties:
   alias:
     type:
       - string
-      - 'null'
+      - "null"
     description: >-
       Optional configured alias accepted by `?lang` for compatibility and agent
       discovery.

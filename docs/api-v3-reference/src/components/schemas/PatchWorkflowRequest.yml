@@ -16,7 +16,7 @@ properties:
   description:
     type:
       - string
-      - 'null'
+      - "null"
     maxLength: 500
   definition:
     $ref: ./WorkflowDefinition.yml

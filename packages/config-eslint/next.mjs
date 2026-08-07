@@ -1,5 +1,4 @@
 import nextConfig from "eslint-config-next";
-
 import { base, commonIgnores, typescriptParsing } from "./base.mjs";
 
 /*
