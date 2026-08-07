@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
-import DOMpurify from "isomorphic-dompurify";
 import {
   ArrowDownIcon,
   EyeOffIcon,
@@ -32,6 +31,7 @@ import {
   type EmailSendToOption,
   buildEmailSendToOptions,
 } from "@/modules/survey/follow-ups/lib/email-send-to-options";
+import { sanitizeFollowUpBody } from "@/modules/survey/follow-ups/lib/sanitize-follow-up-body";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
@@ -179,12 +179,7 @@ export const FollowUpModal = ({
         (followUp) => followUp.id === defaultValues.surveyFollowUpId
       );
 
-      const sanitizedBody = DOMpurify.sanitize(data.body, {
-        ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
-        ALLOWED_ATTR: ["href", "rel", "dir", "class"],
-        ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https
-        ADD_ATTR: ["target"], // Optional: Allow 'target' attribute for links (e.g., _blank)
-      });
+      const sanitizedBody = sanitizeFollowUpBody(data.body);
 
       const updatedFollowUp = {
         id: defaultValues.surveyFollowUpId,
@@ -228,12 +223,7 @@ export const FollowUpModal = ({
       return;
     }
 
-    const sanitizedBody = DOMpurify.sanitize(data.body, {
-      ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br"],
-      ALLOWED_ATTR: ["href", "rel", "dir", "class"],
-      ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https
-      ADD_ATTR: ["target"], // Optional: Allow 'target' attribute for links (e.g., _blank)
-    });
+    const sanitizedBody = sanitizeFollowUpBody(data.body);
 
     const newFollowUp = {
       id: createId(),
