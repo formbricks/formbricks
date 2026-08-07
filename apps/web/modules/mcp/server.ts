@@ -3,7 +3,7 @@ import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { MCPAnalyticsOptions } from "@posthog/mcp";
 import { createMcpHandler } from "mcp-handler";
 import { logger } from "@formbricks/logger";
-import { instrumentMcpServerWithTracing } from "@/lib/posthog";
+import { instrumentMcpServerWithTracing } from "@/lib/posthog/mcp-tracing";
 import { getMcpAuthentication } from "./auth";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";

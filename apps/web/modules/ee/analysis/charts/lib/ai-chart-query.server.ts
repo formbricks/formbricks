@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { type TChartQuery } from "@formbricks/types/analysis";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
-import { AI_TRACING_FEATURE } from "@/lib/posthog";
+import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import {
   FEEDBACK_DIMENSION_IDS,

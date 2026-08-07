@@ -7,7 +7,7 @@ vi.mock("mcp-handler", () => ({
   createMcpHandler: vi.fn(() => vi.fn()),
 }));
 
-vi.mock("@/lib/posthog", () => ({
+vi.mock("@/lib/posthog/mcp-tracing", () => ({
   instrumentMcpServerWithTracing: vi.fn(),
 }));
 

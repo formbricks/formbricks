@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AI_TRACING_FEATURE, wrapAiModelWithTracing } from "./ai-tracing";
+import { wrapAiModelWithTracing } from "./ai-tracing";
+import { AI_TRACING_FEATURE } from "./ai-tracing-feature";
 
 const mocks = vi.hoisted(() => ({
   withTracing: vi.fn(),
@@ -110,13 +111,12 @@ describe("wrapAiModelWithTracing with null client", () => {
     vi.doMock("@formbricks/logger", () => ({ logger: { warn: mocks.loggerWarn } }));
     vi.doMock("./server", () => ({ posthogTracingClient: null }));
 
-    const { wrapAiModelWithTracing: wrapWithNullClient, AI_TRACING_FEATURE: FEATURE } =
-      await import("./ai-tracing");
+    const { wrapAiModelWithTracing: wrapWithNullClient } = await import("./ai-tracing");
     const model = { providerName: "google", modelId: "gemini-2.5-flash" };
 
     const result = wrapWithNullClient(model as never, {
       distinctId: "user_1",
-      feature: FEATURE.ChartQuery,
+      feature: AI_TRACING_FEATURE.ChartQuery,
     });
 
     expect(result).toBe(model);

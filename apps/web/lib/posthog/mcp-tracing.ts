@@ -80,6 +80,13 @@ export function instrumentMcpServerWithTracing(
       beforeSend,
       context: false,
       reportMissing: false,
+      // Defaults to true. The sibling `$exception` event it emits on every
+      // failed tool call carries its payload via `event.error` properties
+      // ($exception_list, etc.) that live outside our allowlist entirely -
+      // not stripped by beforeSend, just not covered by it. MCP errors
+      // already go to Sentry; $mcp_is_error/$mcp_error_type (allowlisted)
+      // keep the failure-rate/reason breakdown on the PostHog side.
+      enableExceptionAutocapture: false,
     });
   } catch (error) {
     logger.warn({ error }, "Failed to instrument MCP server with PostHog tracing");

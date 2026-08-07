@@ -7,7 +7,7 @@ import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/s
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { AI_TRACING_FEATURE } from "@/lib/posthog";
+import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 
 export const EXAMPLE_RESPONSE_COUNT = 20;
 // Impression-only displays simulate respondents who saw the survey but didn't

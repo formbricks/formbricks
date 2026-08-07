@@ -47,6 +47,7 @@ describe("instrumentMcpServerWithTracing", () => {
         beforeSend: expect.any(Function),
         context: false,
         reportMissing: false,
+        enableExceptionAutocapture: false,
       })
     );
     expect(result).toBe(handle);

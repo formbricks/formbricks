@@ -74,7 +74,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsAISmartToolsEnabled: mocks.getIsAISmartToolsEnabled,
 }));
 
-vi.mock("@/lib/posthog", () => ({
+vi.mock("@/lib/posthog/ai-tracing", () => ({
   wrapAiModelWithTracing: mocks.wrapAiModelWithTracing,
 }));
 

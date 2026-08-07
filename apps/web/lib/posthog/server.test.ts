@@ -53,7 +53,7 @@ describe("server - posthog clients", () => {
     });
   });
 
-  test("creates the tracing client with batched flush", async () => {
+  test("creates the tracing client with batched flush and a before_send hook", async () => {
     setupMocks({ posthogKey: "phc_test_key" });
 
     const { posthogTracingClient } = await import("./server");
@@ -64,6 +64,44 @@ describe("server - posthog clients", () => {
       host: "https://eu.i.posthog.com",
       flushAt: 20,
       flushInterval: 10_000,
+      before_send: expect.any(Function),
+    });
+  });
+
+  describe("tracing client before_send", () => {
+    const getBeforeSend = async () => {
+      const { PostHog } = await import("posthog-node");
+      const call = vi.mocked(PostHog).mock.calls.find((args) => "before_send" in args[1]);
+      return call![1].before_send as (event: unknown) => unknown;
+    };
+
+    test("strips $ai_error but keeps $ai_is_error and other properties", async () => {
+      setupMocks({ posthogKey: "phc_test_key" });
+      await import("./server");
+      const beforeSend = await getBeforeSend();
+
+      const result = beforeSend({
+        event: "$ai_generation",
+        properties: {
+          $ai_error: '{"requestBodyValues":{"prompt":"secret"}}',
+          $ai_is_error: true,
+          $ai_model: "gpt",
+        },
+      }) as { properties: Record<string, unknown> };
+
+      expect(result.properties).toEqual({ $ai_is_error: true, $ai_model: "gpt" });
+    });
+
+    test("no-ops when properties or $ai_error is missing", async () => {
+      setupMocks({ posthogKey: "phc_test_key" });
+      await import("./server");
+      const beforeSend = await getBeforeSend();
+
+      expect(beforeSend(null)).toBeNull();
+      const eventWithoutProperties = { event: "$mcp_tool_call" };
+      expect(beforeSend(eventWithoutProperties)).toBe(eventWithoutProperties);
+      const eventWithoutAiError = { event: "$ai_generation", properties: { $ai_model: "gpt" } };
+      expect(beforeSend(eventWithoutAiError)).toBe(eventWithoutAiError);
     });
   });
 

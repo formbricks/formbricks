@@ -3,7 +3,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
-import { AI_TRACING_FEATURE } from "@/lib/posthog";
+import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { type TV3SurveyPrepareResult, prepareV3SurveyCreateInput } from "../prepare";
 import { DEFAULT_V3_SURVEY_LANGUAGE, type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "../schemas";
 import {
