@@ -41,9 +41,15 @@ ship their own CSS rather than relying on the app to scan them:
 - `@formbricks/email` — ships no stylesheet at all; `@react-email/tailwind` compiles and inlines the
   classes into the email HTML at render time.
 
-If you ever consume a workspace package as raw source **for its styling**, add an explicit `@source`
-for it in the consuming app's CSS entry — nothing else will pick it up.
-`apps/storybook/src/index.css` is the worked example.
+If you ever consume a workspace package as raw source **for its styling**, the app has to be told
+about that package's files explicitly — detection stops at the app's own root, so nothing else will
+pick them up. `apps/storybook` is the worked example: it consumes `packages/survey-ui` as raw source
+(its `stories` glob loads `packages/survey-ui/src/**` directly, and Vite aliases the package specifier
+to that same source), and it works because `apps/storybook/src/index.css` imports **survey-ui's own
+stylesheet**, which carries the `@config` and `@source` covering `packages/survey-ui/src/**` — those
+resolve relative to survey-ui's file, so the package declares its own coverage and the app just pulls
+it in. Prefer that: let the package own its globs. Only write an `@source` in the app entry when the
+files are the app's own (as `index.css` does for `.storybook/**` and `src/**`).
 
 Tailwind is configured CSS-first everywhere. Only two JS/TS Tailwind configs remain
 (`packages/survey-ui/tailwind.config.ts` and `packages/surveys/tailwind.config.cjs`) and both are

@@ -12,11 +12,17 @@
    ============================================================================= */
 @import "../../../packages/survey-ui/src/styles/globals.css";
 
-/* Storybook wraps survey-ui components in chrome of its own: the `#fbjs` decorator
-   in `.storybook/preview.ts` and the scaffolding under `src/`. Neither is covered by
-   survey-ui's `@source`, so declare them here. Without this the classes only reach the
-   stylesheet because the bundler happens to walk those files — incidental, not
-   guaranteed. */
+/* Storybook wraps survey-ui components in chrome of its own: the `#fbjs` decorator in
+   `.storybook/preview.ts` and the scaffolding under `src/`. Neither is covered by
+   survey-ui's `@source` above.
+
+   These two globs are a written-down declaration of intent, not the thing that makes
+   the chrome work: Tailwind v4 automatic source detection already covers both paths,
+   because it roots at this app's project root (`apps/storybook`) and scans it whole —
+   removing these lines produces byte-identical CSS today. They are here so the
+   coverage is stated rather than inferred, and so it survives someone moving the
+   Vite root. Detection stops at the app boundary either way: nothing under
+   `packages/` or `node_modules/` is ever scanned from here. */
 /* NOSONAR: Tailwind CSS v4 directive - @source is a valid at-rule */
 @source "../.storybook/**/*.{ts,tsx}";
 /* NOSONAR */
