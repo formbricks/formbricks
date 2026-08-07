@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isSafeIdentifier } from "./safe-identifier";
+import { isLegacyIdCharset, isSafeIdentifier } from "./safe-identifier";
 import { RESERVED_DECLARED_FIELD_NAMES } from "./surveys/validation";
 
 /** Longest allowed field key / display name. */
@@ -67,7 +67,13 @@ export const ZEmbeddedData = z
       // `lang`, and ingestion would then refuse to fill it — a field that can never hold a value.
       .refine((key) => !RESERVED_DECLARED_FIELD_NAMES.has(key.toLowerCase()), "Key is reserved")
       .nullable(),
-    name: z.string().min(1).max(EMBEDDED_DATA_NAME_MAX_LENGTH),
+    // Blank rather than empty: `name` is the label the library and the editor render, and a
+    // whitespace-only one draws a row with nothing to read or click. Checked, not trimmed, so the
+    // stored value is never silently rewritten.
+    name: z
+      .string()
+      .refine((value) => value.trim().length > 0, "Name must not be blank")
+      .max(EMBEDDED_DATA_NAME_MAX_LENGTH),
     description: z.string().nullable(),
     source: ZEmbeddedDataSource,
     dataType: ZEmbeddedDataType.prefault("string"),
@@ -164,19 +170,32 @@ export const isLocalEmbeddedData = (field: Pick<TEmbeddedData, "surveyId">): boo
  * `workspaceId` is part of both foreign keys in the schema, so a survey cannot link a field defined
  * in another workspace.
  *
- * `storageKey` is deliberately **not** validated as a safe identifier, has no length cap, and does
- * not exclude reserved names: migrated fields keep their original address, which for a computed
- * field is a cuid and for an ingested field can be a legacy name with uppercase letters or hyphens.
- * Any restriction here that `ZSurveyHiddenFields.fieldIds` doesn't also impose would fail the
- * ENG-1835 backfill on a name a survey is currently using. The strict rule belongs on the create
- * path — see `RESERVED_DECLARED_FIELD_NAMES` and the third enforcement point on ENG-1839.
+ * `storageKey` holds exactly the restrictions `ZSurveyHiddenFields.fieldIds` already imposes on
+ * stored surveys, and no more. Migrated fields keep their original address — a cuid for a computed
+ * field, and for an ingested field a legacy name that may carry uppercase letters or hyphens — so
+ * anything stricter would fail the ENG-1835 backfill on a name a survey is using today.
+ *
+ * What that leaves in: `isLegacyIdCharset`, because the load path enforces it, so no survey that
+ * still loads can hold a name outside it. That rules out the case with a concrete failure — for an
+ * ingested field `storageKey` is the URL param name, so a padded `" plan "` never matches `?plan=`
+ * while `@@unique([surveyId, storageKey])` counts it as distinct from `"plan"`, giving one survey
+ * two fields where one can never hold a value.
+ *
+ * What that leaves out: `isSafeIdentifier`, any length cap, and the reserved names. Reserved is the
+ * subtle one — `RESERVED_DECLARED_FIELD_NAMES` is `FORBIDDEN_IDS` plus the link-survey system
+ * params, so a survey stored before those params were reserved can still hold a hidden field named
+ * `lang` and still load. Rejecting it here would strand that survey mid-backfill. The strict rule
+ * belongs on the create path instead — see the enforcement points on ENG-1839.
  */
 export const ZSurveyEmbeddedData = z.object({
   id: z.cuid2(),
   workspaceId: z.cuid2(),
   surveyId: z.cuid2(),
   embeddedDataId: z.cuid2(),
-  storageKey: z.string().refine((key) => key.trim().length > 0, "Storage key must not be blank"),
+  storageKey: z
+    .string()
+    .refine((key) => key.trim().length > 0, "Storage key must not be blank")
+    .refine(isLegacyIdCharset, "Storage key must contain only letters, digits, hyphens and underscores"),
 });
 
 export type TSurveyEmbeddedData = z.infer<typeof ZSurveyEmbeddedData>;

@@ -51,6 +51,23 @@ describe("ZEmbeddedData", () => {
     });
   });
 
+  describe("name", () => {
+    test.each([
+      ["", "empty"],
+      ["   ", "whitespace only"],
+      ["\t", "a single tab"],
+    ])("rejects a %s name", (name) => {
+      // `name` is the label the library and the editor render, so blank means an unreadable row.
+      expect(failedPaths({ ...localField, name })).toContain("name");
+    });
+
+    test("accepts a name with surrounding whitespace without trimming it", () => {
+      const result = ZEmbeddedData.safeParse({ ...localField, name: " Score " });
+      expect(result.success).toBe(true);
+      expect(result.data?.name).toBe(" Score ");
+    });
+  });
+
   describe("key naming rule", () => {
     test.each([
       ["Brand", "uppercase"],
@@ -182,14 +199,20 @@ describe("ZSurveyEmbeddedData", () => {
     ["x".repeat(300), "a name longer than any create-time cap"],
   ])("accepts %s as a storage key (%s)", (storageKey) => {
     // Migrated fields keep the address their existing recall tokens and stored responses use, so
-    // this schema stays lenient: any restriction here would fail the ENG-1835 backfill.
+    // anything the ENG-1835 backfill can move has to parse here.
     expect(ZSurveyEmbeddedData.safeParse({ ...link, storageKey }).success).toBe(true);
   });
 
   test.each([
     ["", "empty"],
     ["   ", "whitespace only"],
-  ])("rejects a %s storage key", (storageKey) => {
+    [" plan ", "padded — would never match ?plan= and counts as distinct from plan"],
+    ["page type", "contains a space"],
+    ["a;DROP TABLE", "outside the legacy charset"],
+    ["../../etc/passwd", "outside the legacy charset"],
+  ])("rejects %s as a storage key (%s)", (storageKey) => {
+    // The ceiling is `isLegacyIdCharset`, which the survey load path already enforces on hidden
+    // field ids — so no survey that still loads can hold a name this rejects.
     expect(ZSurveyEmbeddedData.safeParse({ ...link, storageKey }).success).toBe(false);
   });
 });
