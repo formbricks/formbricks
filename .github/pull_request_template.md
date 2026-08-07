@@ -33,10 +33,13 @@ self-hosted setups? Count as breaking: API/SDK request or response shape (rename
 fields, or changed values like `EN` → `en-US`), removed/renamed endpoints or routes, changed webhook
 payloads, changed defaults, new/removed/renamed env vars or config, and DB migrations that need manual
 action. If YES:
-  1. Add the `breaking-change` label to this PR.
-  2. Fill the table below — one row per change. This text feeds the GitHub release notes and the
+  1. Fill the table below — one row per change. This text feeds the GitHub release notes and the
      self-hoster migration guide, so write it for an external integrator, not for the team.
-If there are no breaking changes, leave "None" below. -->
+  2. The `breaking-change` label is applied automatically from this section — a table or prose both
+     count, so you should not need to touch it. Add it by hand if it doesn't appear.
+If there are no breaking changes, leave "None" below. A short scope reason is fine ("None — docs only",
+"N/A", "No breaking changes"); anything more specific than that reads as a declaration and applies the
+label, so spell out what changed only when it really is breaking. -->
 
 None
 
