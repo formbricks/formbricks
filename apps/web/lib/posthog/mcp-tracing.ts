@@ -4,19 +4,54 @@ import type { MCPAnalyticsOptions, McpAnalytics } from "@posthog/mcp";
 import { logger } from "@formbricks/logger";
 import { posthogTracingClient } from "./server";
 
-const CONTENT_PROPERTIES: string[] = [
-  PostHogMCPAnalyticsProperty.Parameters,
-  PostHogMCPAnalyticsProperty.Response,
-];
+// Raw PostHog properties @posthog/mcp writes that aren't part of its own
+// PostHogMCPAnalyticsProperty enum, but are structural rather than tool-call
+// content and must survive `beforeSend`. In particular `$groups` is read by
+// the SDK's sink straight off `event.properties.$groups` *after* beforeSend
+// runs (see @posthog/mcp's sink.js) - stripping it would silently break
+// organization/workspace grouping without ever throwing.
+const STRUCTURAL_PROPERTIES: string[] = ["$groups", "$process_person_profile", "$set"];
+
+// Allowlist, not a denylist: only these survive; anything else - a property
+// we haven't audited, or one a future SDK version adds - is dropped by
+// default instead of potentially leaking. This matters more here than for a
+// typical analytics nicety: the feedback-record MCP tools carry end-user
+// content (`value_text`, a respondent's open-text answer), not just survey
+// config, so "unknown defaults to stripped" is the safe failure mode.
+// Deliberately excluded: Parameters/Response (tool call I/O), ErrorMessage
+// (raw exception text - can echo back invalid input), Intent/IntentSource/
+// ConversationId (unused - context injection is off, see identifyMcpUser).
+const ALLOWED_PROPERTIES = new Set<string>([
+  ...STRUCTURAL_PROPERTIES,
+  PostHogMCPAnalyticsProperty.Source,
+  PostHogMCPAnalyticsProperty.SessionId,
+  PostHogMCPAnalyticsProperty.ResourceName,
+  PostHogMCPAnalyticsProperty.ToolName,
+  PostHogMCPAnalyticsProperty.ToolDescription,
+  PostHogMCPAnalyticsProperty.ToolCategory,
+  PostHogMCPAnalyticsProperty.ListedToolNames,
+  PostHogMCPAnalyticsProperty.DurationMs,
+  PostHogMCPAnalyticsProperty.ServerName,
+  PostHogMCPAnalyticsProperty.ServerVersion,
+  PostHogMCPAnalyticsProperty.ClientName,
+  PostHogMCPAnalyticsProperty.ClientVersion,
+  PostHogMCPAnalyticsProperty.ProtocolVersion,
+  PostHogMCPAnalyticsProperty.IsError,
+  PostHogMCPAnalyticsProperty.ErrorType,
+]);
 
 /**
- * Strips captured tool-call arguments/responses before they leave the process,
- * matching the privacy-mode default used for AI Observability (metadata only:
- * tool name, duration, errors, client info - never survey/feedback content).
+ * Strips every captured property except the allowlisted metadata above,
+ * matching the privacy-mode default used for AI Observability (metadata
+ * only - never survey/feedback content).
  */
 const beforeSend: NonNullable<MCPAnalyticsOptions["beforeSend"]> = (event) => {
-  for (const property of CONTENT_PROPERTIES) {
-    delete event.properties[property];
+  if (!event.properties) return event;
+
+  for (const key of Object.keys(event.properties)) {
+    if (!ALLOWED_PROPERTIES.has(key)) {
+      delete event.properties[key];
+    }
   }
   return event;
 };

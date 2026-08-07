@@ -1,3 +1,4 @@
+import { PostHogMCPAnalyticsProperty } from "@posthog/mcp";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { instrumentMcpServerWithTracing } from "./mcp-tracing";
 
@@ -8,12 +9,13 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@posthog/mcp", () => ({
+// Only `instrument` is mocked - `PostHogMCPAnalyticsProperty` stays the real,
+// installed enum so beforeSend's allowlist is exercised against every
+// property the actual SDK can produce, not a hand-picked subset that would
+// only ever confirm what the allowlist was written from.
+vi.mock("@posthog/mcp", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@posthog/mcp")>()),
   instrument: mocks.instrument,
-  PostHogMCPAnalyticsProperty: {
-    Parameters: "$mcp_parameters",
-    Response: "$mcp_response",
-  },
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -68,28 +70,90 @@ describe("instrumentMcpServerWithTracing", () => {
   describe("beforeSend", () => {
     const getBeforeSend = () => mocks.instrument.mock.calls[0][2].beforeSend;
 
-    test("strips captured parameters and response, keeps other properties", () => {
+    test("no-ops when properties is missing", () => {
       instrumentMcpServerWithTracing({});
 
       const event = {
         distinct_id: "user_1",
         event: "$mcp_tool_call",
-        properties: {
-          $mcp_tool_name: "get_survey",
-          $mcp_parameters: { surveyId: "survey_1" },
-          $mcp_response: { name: "Survey" },
-          $mcp_duration_ms: 42,
-        },
+        properties: undefined as never,
+        timestamp: "2026-01-01T00:00:00.000Z",
+        type: "capture" as const,
+      };
+
+      expect(() => getBeforeSend()(event)).not.toThrow();
+    });
+
+    test("keeps only allowlisted metadata and strips every other real SDK property, including content-bearing ones", () => {
+      instrumentMcpServerWithTracing({});
+
+      // Every property the real, installed @posthog/mcp SDK can ever write,
+      // populated with a distinct sentinel value each - proves the allowlist
+      // decides per-property, not by coincidentally matching a hand-picked set.
+      const properties: Record<string, unknown> = {
+        $groups: { organization: "org_1" },
+        $process_person_profile: false,
+        $set: { email: "person@example.com" },
+      };
+      for (const property of Object.values(PostHogMCPAnalyticsProperty)) {
+        properties[property] = `content-for-${property}`;
+      }
+
+      const event = {
+        distinct_id: "user_1",
+        event: "$mcp_tool_call",
+        properties,
         timestamp: "2026-01-01T00:00:00.000Z",
         type: "capture" as const,
       };
 
       const result = getBeforeSend()(event);
 
-      expect(result.properties).toEqual({
-        $mcp_tool_name: "get_survey",
-        $mcp_duration_ms: 42,
-      });
+      // Structural PostHog properties (not part of the SDK's own enum) survive.
+      expect(result.properties.$groups).toEqual({ organization: "org_1" });
+      expect(result.properties.$process_person_profile).toBe(false);
+      expect(result.properties.$set).toEqual({ email: "person@example.com" });
+
+      // Explicitly allowlisted metadata survives.
+      const allowedMetadata = [
+        PostHogMCPAnalyticsProperty.Source,
+        PostHogMCPAnalyticsProperty.SessionId,
+        PostHogMCPAnalyticsProperty.ResourceName,
+        PostHogMCPAnalyticsProperty.ToolName,
+        PostHogMCPAnalyticsProperty.ToolDescription,
+        PostHogMCPAnalyticsProperty.ToolCategory,
+        PostHogMCPAnalyticsProperty.ListedToolNames,
+        PostHogMCPAnalyticsProperty.DurationMs,
+        PostHogMCPAnalyticsProperty.ServerName,
+        PostHogMCPAnalyticsProperty.ServerVersion,
+        PostHogMCPAnalyticsProperty.ClientName,
+        PostHogMCPAnalyticsProperty.ClientVersion,
+        PostHogMCPAnalyticsProperty.ProtocolVersion,
+        PostHogMCPAnalyticsProperty.IsError,
+        PostHogMCPAnalyticsProperty.ErrorType,
+      ];
+      for (const property of allowedMetadata) {
+        expect(result.properties[property]).toBe(`content-for-${property}`);
+      }
+
+      // Everything else - including content-bearing and free-text properties -
+      // is stripped by default, not by name.
+      const deniedProperties = Object.values(PostHogMCPAnalyticsProperty).filter(
+        (property) => !(allowedMetadata as string[]).includes(property)
+      );
+      expect(deniedProperties).toEqual(
+        expect.arrayContaining([
+          PostHogMCPAnalyticsProperty.Parameters,
+          PostHogMCPAnalyticsProperty.Response,
+          PostHogMCPAnalyticsProperty.ErrorMessage,
+          PostHogMCPAnalyticsProperty.Intent,
+          PostHogMCPAnalyticsProperty.IntentSource,
+          PostHogMCPAnalyticsProperty.ConversationId,
+        ])
+      );
+      for (const property of deniedProperties) {
+        expect(result.properties[property]).toBeUndefined();
+      }
     });
   });
 });
@@ -99,9 +163,9 @@ describe("instrumentMcpServerWithTracing with null client", () => {
     vi.clearAllMocks();
     vi.resetModules();
     vi.doMock("server-only", () => ({}));
-    vi.doMock("@posthog/mcp", () => ({
+    vi.doMock("@posthog/mcp", async (importOriginal) => ({
+      ...(await importOriginal<typeof import("@posthog/mcp")>()),
       instrument: mocks.instrument,
-      PostHogMCPAnalyticsProperty: { Parameters: "$mcp_parameters", Response: "$mcp_response" },
     }));
     vi.doMock("@formbricks/logger", () => ({ logger: { warn: mocks.loggerWarn } }));
     vi.doMock("./server", () => ({ posthogTracingClient: null }));
