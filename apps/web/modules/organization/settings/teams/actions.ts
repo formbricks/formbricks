@@ -246,6 +246,55 @@ const validateTeamAdminInvitePermissions = (
   }
 };
 
+/**
+ * The capability half of "may this person send this invite", routed through the central interface.
+ *
+ * Organization owners and managers are decided once at the organization. Team admins reach this
+ * action too, and before ENG-1737 their capability was established only by `getTeamsWhereUserIsAdmin`,
+ * so a successful team-admin invite produced no central decision at all — no shadow comparison, and
+ * legacy-authoritative under enforcement. `team.manage` is that capability (legacy answers it as
+ * `teamRole === "admin" || organization owner/manager`), asked once per requested team so the answer
+ * covers exactly the teams the invite would write to.
+ *
+ * Distinct ids, checked one at a time, stopping at the first refusal: asking per team makes the
+ * number of authorization decisions follow the request body, so repeats are collapsed (naming a team
+ * twice asks the same question twice) and the array is capped in the schema. Sequential rather than
+ * `Promise.all` for the same reason — a request naming many teams should not fan out that many
+ * concurrent checks, and the answer is available as soon as one team is refused.
+ *
+ * The narrower rules stay with the caller, in `validateTeamAdminInvitePermissions`: which invitation
+ * role a team admin may grant, and that they must name at least one team, are policy about the
+ * request's content rather than capabilities the vocabulary expresses.
+ */
+const assertInviterMayInvite = async ({
+  isOrgOwnerOrManager,
+  organizationId,
+  teamIds,
+  userId,
+}: Readonly<{
+  isOrgOwnerOrManager: boolean;
+  organizationId: string;
+  teamIds: ReadonlyArray<string>;
+  userId: string;
+}>): Promise<void> => {
+  if (isOrgOwnerOrManager) {
+    await checkAuthorizationUpdated({
+      userId,
+      organizationId,
+      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    });
+    return;
+  }
+
+  const actor = { type: "user", id: userId } as const;
+
+  for (const teamId of new Set(teamIds)) {
+    if (!(await can(actor, "team.manage", { type: "team", id: teamId }))) {
+      throw new OperationNotAllowedError("Team admins can only add users to teams where they are admin");
+    }
+  }
+};
+
 const ZInviteUserAction = z.object({
   organizationId: ZId,
   email: z.string(),
@@ -289,42 +338,12 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       throw new AuthenticationError("Not authorized to invite members");
     }
 
-    if (isOrgOwnerOrManager) {
-      // Standard org-level auth check
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-        ],
-      });
-    } else {
-      // Team admins reach this action too, and until ENG-1737 their capability was established only
-      // by `getTeamsWhereUserIsAdmin`, so a successful team-admin invite produced no central decision
-      // — no shadow comparison, and legacy-authoritative under enforcement. `team.manage` is that
-      // capability (legacy answers it as `teamRole === "admin" || org owner/manager`), asked once per
-      // requested team so the answer covers exactly the teams this invite would write to.
-      //
-      // The narrower rules below stay in application logic, as they should: which invitation role a
-      // team admin may grant, and that they must name at least one team, are policy about the
-      // request's content rather than a capability the vocabulary expresses.
-      //
-      // Distinct ids, checked one at a time and stopping at the first refusal. Asking per team means
-      // the number of authorization decisions follows the request body, so it is deduplicated first
-      // (repeating a team is meaningless) and bounded by the schema above. Sequential rather than
-      // Promise.all for the same reason: a request naming many teams should not fan out that many
-      // concurrent checks, and the honest answer is available as soon as one is refused.
-      const actor = { type: "user", id: ctx.user.id } as const;
-
-      for (const teamId of new Set(parsedInput.teamIds)) {
-        if (!(await can(actor, "team.manage", { type: "team", id: teamId }))) {
-          throw new OperationNotAllowedError("Team admins can only add users to teams where they are admin");
-        }
-      }
-    }
+    await assertInviterMayInvite({
+      isOrgOwnerOrManager,
+      organizationId: parsedInput.organizationId,
+      teamIds: parsedInput.teamIds,
+      userId: ctx.user.id,
+    });
 
     // Validate team admin restrictions
     validateTeamAdminInvitePermissions(
