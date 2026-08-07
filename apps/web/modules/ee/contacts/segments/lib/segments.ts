@@ -415,17 +415,43 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
   }
 };
 
-// Batched lookup of the owning workspace for a set of surveys, used to keep segment↔survey links
-// within one workspace (ENG-1920). A single query avoids fanning out one lookup per survey id over
-// a caller-controlled, unbounded array. Missing ids are simply absent from the map.
+// Upper bound on ids per `IN (...)` lookup below. ZSegment/ZSegmentUpdateInput already cap what a
+// client can submit (MAX_SEGMENT_SURVEYS), but this helper is also reached with ids read back from
+// the database (updateSurveyInternal's skipValidation path, rows persisted before the cap existed),
+// so it bounds the query itself instead of trusting the caller's array length.
+const SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE = 200;
+
+/**
+ * Batched lookup of the owning workspace for a set of surveys, used to keep segment↔survey links
+ * within one workspace (ENG-1920). Ids are deduplicated and queried in bounded batches — one query
+ * per batch rather than one per id, so the non-N+1 shape is preserved without letting a
+ * caller-controlled array size the SQL parameter payload (ENG-2004). Batches run sequentially: the
+ * point is to cap concurrent database work, not to fan it out. Missing ids are simply absent from
+ * the returned map.
+ */
 export const getSurveyWorkspaceIdMap = reactCache(
   async (surveyIds: string[]): Promise<Map<string, string>> => {
+    const uniqueSurveyIds = Array.from(new Set(surveyIds));
+    const workspaceIdBySurveyId = new Map<string, string>();
+
+    if (uniqueSurveyIds.length === 0) {
+      return workspaceIdBySurveyId;
+    }
+
     try {
-      const surveys = await prisma.survey.findMany({
-        where: { id: { in: surveyIds } },
-        select: { id: true, workspaceId: true },
-      });
-      return new Map(surveys.map((survey) => [survey.id, survey.workspaceId]));
+      for (let i = 0; i < uniqueSurveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
+        const batch = uniqueSurveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
+        const surveys = await prisma.survey.findMany({
+          where: { id: { in: batch } },
+          select: { id: true, workspaceId: true },
+        });
+
+        for (const survey of surveys) {
+          workspaceIdBySurveyId.set(survey.id, survey.workspaceId);
+        }
+      }
+
+      return workspaceIdBySurveyId;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
