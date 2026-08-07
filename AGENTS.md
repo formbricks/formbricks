@@ -28,6 +28,28 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
 - If changes still don't appear, restart the Next.js dev server (`pnpm dev`).
 
+### Tailwind & Workspace Package CSS
+
+Tailwind v4 detects sources starting from the consuming app's own root (`apps/web` for the Next.js
+PostCSS build, the Vite root for `apps/storybook`) and **never descends into `node_modules`** — which
+is exactly where every `@formbricks/*` workspace package is linked. A utility used only inside a
+workspace package therefore never reaches the consuming app's stylesheet. Consumed workspace packages
+ship their own CSS rather than relying on the app to scan them:
+
+- `@formbricks/surveys` — prebuilt bundle served from `apps/web/public/js/` (see the section above).
+- `@formbricks/survey-ui` — exports `./styles` (`dist/survey-ui.css`), scoped to `#fbjs`.
+- `@formbricks/email` — ships no stylesheet at all; `@react-email/tailwind` compiles and inlines the
+  classes into the email HTML at render time.
+
+If you ever consume a workspace package as raw source **for its styling**, add an explicit `@source`
+for it in the consuming app's CSS entry — nothing else will pick it up.
+`apps/storybook/src/index.css` is the worked example.
+
+Tailwind is configured CSS-first everywhere. Only two JS/TS Tailwind configs remain
+(`packages/survey-ui/tailwind.config.ts` and `packages/surveys/tailwind.config.cjs`) and both are
+reached through an explicit `@config` bridge from the package's own stylesheet. Do not add a
+`tailwind.config.js` that nothing `@config`s — Tailwind v4 will not load it, and it will silently rot.
+
 ## Coding Style & Naming Conventions
 
 TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
