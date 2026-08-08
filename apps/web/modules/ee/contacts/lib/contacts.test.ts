@@ -13,6 +13,7 @@ import {
   deleteContact,
   generatePersonalLinks,
   getContact,
+  getContactInWorkspace,
   getContacts,
   getContactsInSegment,
 } from "./contacts";
@@ -22,6 +23,7 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     contact: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       delete: vi.fn(),
       create: vi.fn(),
@@ -386,6 +388,48 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contact.findUnique).mockRejectedValue(error);
 
       await expect(getContact(mockContactId)).rejects.toThrow(error);
+    });
+  });
+
+  // ENG-2290: the contact detail page authorizes the workspace in the URL and must not be able to
+  // load a contact from another workspace with it. `getContact` stays unscoped on purpose — it is
+  // what derives a contact's workspace elsewhere — so page reads go through this scoped sibling.
+  describe("getContactInWorkspace", () => {
+    test("returns the contact when it belongs to the workspace", async () => {
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockPrismaContact as any);
+
+      const result = await getContactInWorkspace(mockContactId, mockWorkspaceId);
+
+      expect(result).toEqual(mockPrismaContact);
+      expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+        where: { id: mockContactId, workspaceId: mockWorkspaceId },
+        select: expect.any(Object),
+      });
+    });
+
+    test("returns null for a contact in another workspace", async () => {
+      // The scoped where clause is what makes this null: Prisma finds no row for the pair.
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
+
+      const result = await getContactInWorkspace(mockContactId, "workspace-attacker");
+
+      expect(result).toBeNull();
+      expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+        where: { id: mockContactId, workspaceId: "workspace-attacker" },
+        select: expect.any(Object),
+      });
+      // The unscoped lookup must not be used as a fallback.
+      expect(prisma.contact.findUnique).not.toHaveBeenCalled();
+    });
+
+    test("throws DatabaseError on Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("DB Error", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.contact.findFirst).mockRejectedValue(prismaError);
+
+      await expect(getContactInWorkspace(mockContactId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
     });
   });
 

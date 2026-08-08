@@ -20,8 +20,8 @@ interface ActivitySectionProps {
 
 export const ActivitySection = async ({ workspaceId, contactId, environmentTags }: ActivitySectionProps) => {
   const [responses, displays, workspace] = await Promise.all([
-    getResponsesByContactId(contactId),
-    getDisplaysByContactId(contactId),
+    getResponsesByContactId(contactId, workspaceId),
+    getDisplaysByContactId(contactId, workspaceId),
     getWorkspace(workspaceId),
   ]);
 
