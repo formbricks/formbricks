@@ -15,6 +15,7 @@ import {
   updateFeedbackDirectoryAction,
 } from "@/modules/ee/feedback-directory/actions";
 import { ArchiveFeedbackDirectory } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory";
+import { PurgeFeedbackDirectoryData } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/purge-feedback-directory-data";
 import { getWorkspaceAccessConflictState } from "@/modules/ee/feedback-directory/lib/workspace-access-conflicts";
 import {
   TFeedbackDirectoryDetails,
@@ -380,10 +381,15 @@ export const FeedbackDirectorySettingsModal = ({
             </DialogBody>
             <DialogFooter>
               {isEdit && (
-                <div className="w-full">
+                <div className="flex w-full items-center gap-x-2">
                   <ArchiveFeedbackDirectory
                     directoryId={directory.id}
                     onArchive={closeModal}
+                    isOwnerOrManager={isOwnerOrManager}
+                  />
+                  <PurgeFeedbackDirectoryData
+                    directoryId={directory.id}
+                    onPurge={closeModal}
                     isOwnerOrManager={isOwnerOrManager}
                   />
                 </div>

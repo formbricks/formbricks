@@ -15,6 +15,7 @@ import {
 } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { ZFeedbackDirectoryUpdateInput } from "@/modules/ee/feedback-directory/types/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
+import { deleteHubTenantData } from "@/modules/hub/service";
 
 const checkFeedbackDirectoriesEnabled = async (organizationId: string) => {
   const isAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
@@ -119,5 +120,48 @@ export const updateFeedbackDirectoryAction = authenticatedActionClient
       ctx.auditLoggingCtx.oldObject = oldObject;
       ctx.auditLoggingCtx.newObject = await getFeedbackDirectoryDetails(parsedInput.directoryId);
       return result;
+    })
+  );
+
+const ZPurgeFeedbackDirectoryDataAction = z.object({
+  directoryId: ZId,
+});
+
+export const purgeFeedbackDirectoryDataAction = authenticatedActionClient
+  .inputSchema(ZPurgeFeedbackDirectoryDataAction)
+  .action(
+    withAuditLogging("updated", "feedbackDirectory", async ({ ctx, parsedInput }) => {
+      const organizationId = await getOrganizationIdFromDirectoryId(parsedInput.directoryId);
+      await checkFeedbackDirectoriesEnabled(organizationId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+        ],
+      });
+
+      const purgeResult = await deleteHubTenantData(parsedInput.directoryId);
+      if (!purgeResult.data || purgeResult.error) {
+        throw new Error(purgeResult.error?.message || "Failed to purge feedback dataset data");
+      }
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.feedbackDirectoryId = parsedInput.directoryId;
+      ctx.auditLoggingCtx.oldObject = { dataPurged: false };
+      ctx.auditLoggingCtx.newObject = { dataPurged: true, ...purgeResult.data };
+
+      capturePostHogEvent(
+        ctx.user.id,
+        "feedback_directory_data_purged",
+        { feedback_directory_id: parsedInput.directoryId, ...purgeResult.data },
+        { organizationId }
+      );
+
+      return purgeResult.data;
     })
   );
