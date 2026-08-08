@@ -29,6 +29,32 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
 - If changes still don't appear, restart the Next.js dev server (`pnpm dev`).
 
+### Stale package builds after a branch switch
+
+The same trap applies to **every** workspace package that is consumed through its built output rather than its source — `@formbricks/ai` and `@formbricks/database` resolve via `dist/` in their `exports` map, so `apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves `dist/` exactly as it was, and nothing warns you.
+
+The failure looks nothing like a stale build. A symbol added on the branch you just checked out is simply absent from `dist/`, so the import resolves to `undefined` and you get errors that read like real regressions:
+
+- `TypeError: Right-hand side of 'instanceof' is not an object` (the class exists in `src/`, not in `dist/`)
+- `Cannot find module '@formbricks/…'` or a missing named export
+- `tsc` or Vitest failures in files you never touched
+
+This has cost real time: a run of four failing tests looked like a broken `main` from an unrelated PR, when the only problem was a `dist/` built days earlier. Before trusting a local failure after any branch change, rebuild the dependency graph:
+
+```
+pnpm build --filter=@formbricks/web^...
+```
+
+(Dependencies only — `^...` excludes the Next app itself. This is the same command `.github/workflows/integration-tests.yml` runs before its suites, for exactly this reason.)
+
+To confirm the diagnosis first, check whether the symbol is actually in the built output — if `src/` has it and `dist/` doesn't, that's this problem and nothing else:
+
+```
+grep -c "MyNewExport" packages/<pkg>/src/*.ts packages/<pkg>/dist/index.js
+```
+
+CI never hits this — it builds from scratch every run — so a failure that reproduces locally but is green on CI is this until proven otherwise.
+
 ## Coding Style & Naming Conventions
 
 TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
