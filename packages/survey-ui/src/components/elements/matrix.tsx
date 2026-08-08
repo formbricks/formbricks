@@ -109,7 +109,8 @@ function Matrix({
       <fieldset
         className="w-full space-y-4"
         aria-labelledby={`${inputId}-headline`}
-        aria-invalid={Boolean(errorMessage)}>
+        aria-invalid={Boolean(errorMessage)}
+        aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
         <ElementHeader
           headlineId={`${inputId}-headline`}
           headline={headline}
@@ -121,7 +122,7 @@ function Matrix({
         />
 
         <div className="relative" data-element-input>
-          <ElementError errorMessage={errorMessage} dir={dir} />
+          <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
 
           {/* Table container with overflow for mobile */}
           <div className="overflow-x-auto">

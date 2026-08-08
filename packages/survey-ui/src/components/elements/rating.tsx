@@ -402,6 +402,7 @@ function Rating({
         aria-labelledby={`${inputId}-headline`}
         aria-required={required}
         aria-invalid={Boolean(errorMessage)}
+        aria-describedby={errorMessage ? `${inputId}-error` : undefined}
         dir={dir}>
         <ElementHeader
           headlineId={`${inputId}-headline`}
@@ -415,7 +416,7 @@ function Rating({
 
         {/* Rating Options */}
         <div className="relative" data-element-input>
-          <ElementError errorMessage={errorMessage} dir={dir} />
+          <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
           <div className="flex w-full px-[2px]">
             {ratingOptions.map((number, index) => {
               if (scale === "number") {
