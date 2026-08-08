@@ -15,8 +15,8 @@ language: en-US
 # Max 250 characters — the schema enforces it.
 tone_instructions: |
   Prettier and ESLint own formatting, import order and quote style; never comment on them.
-  Do not ask for docstrings or JSDoc. Prefer one well-evidenced comment over three
-  speculative ones: if you cannot point at the line that breaks, stay quiet.
+  No docstring or JSDoc requests. One well-evidenced comment beats three speculative
+  ones: if you cannot point at the line that breaks, say so or stay quiet.
 early_access: true
 enable_free_tier: true
 inheritance: false
