@@ -113,15 +113,74 @@ overrides:
   # load-bearing: @prisma/dev pins 1.2.0.
   valibot: 1.4.2
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
-  # ajv@6, @babel/core, body-parser, brace-expansion@1/@2/@5, dompurify, engine.io@6, fast-uri@3, hono,
-  # linkify-it, protobufjs@7, undici@7 and uuid@11 all resolve to the patched version on their own now.
+  # ajv@6, @babel/core, body-parser, dompurify, engine.io@6, fast-uri@3, hono, linkify-it, protobufjs@7,
+  # undici@7 and uuid@11 all resolve to the patched version on their own now.
   # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
   # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
-  # GHSA-mh99-v99m-4gvg (brace-expansion <=5.0.7) is still reported by `pnpm audit` as high: the range
-  # also matches 1.1.16 / 2.1.2, each the latest release in its line with no patch coming. Those paths
-  # are devDependency-only (eslint, prettier plugins and @redocly/cli, all via minimatch) and never run
-  # against untrusted input, so the residual risk is accepted until their consumers move to
-  # brace-expansion@5 — a pin cannot close it.
+  # === Fixable, deferred to its own PR (ENG-2234) — brace-expansion ===
+  # NOT in the list above: every brace-expansion line we resolve (1.1.16, 2.1.2, 5.0.8) is still
+  # vulnerable, and all three are closable by re-pinning. Re-verified 2026-08-05. Two advisories now:
+  # - GHSA-mh99-v99m-4gvg (unbounded expansion length → OOM), re-split upstream into per-major ranges:
+  #   `<1.1.17` and `>=2.0.0 <2.1.3`. The 5.x line is clear of this one.
+  # - GHSA-rgw5-rvv9-x895 (unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation) covers
+  #   all three: `<1.1.18`, `>=2.0.0 <2.1.4` and `>=4.0.0 <5.0.9`.
+  # Pinning the current maintenance releases — 1.1.18 / 2.1.4 / 5.0.9, all published 2026-07-30 and all
+  # past the `minimumReleaseAge` cooldown below — closes both advisories on all three lines. That is a
+  # dependency change needing its own lockfile and test run, so it is deferred to ENG-2234 rather than
+  # folded into an audit-comment sweep; the note here goes away with that PR. (An earlier version of this
+  # note claimed no patch was coming and that a pin could not close it. Both stopped being true on
+  # 2026-07-28.)
+  # Until then the residual risk stays acceptable — but NOT for the "devDependency-only" reason this note
+  # used to give, which was wrong. Every line reaches brace-expansion via minimatch, and they are rooted
+  # in production chains, not only dev ones: the 2.x line through `googleapis` and `@boxyhq/saml-jackson`
+  # (both apps/web `dependencies`, via gaxios>rimraf>glob and typeorm>glob) and `@ai-sdk/google-vertex`
+  # (a packages/ai `dependency`); the 1.x line through node-gyp under that same saml-jackson's
+  # typeorm>sqlite3. `pnpm audit` marks these findings `dev: false`. By contributor, the 1.x line is
+  # dominated by the eslint plugin graph (typescript-eslint, @vitest/eslint-plugin, eslint-config-next,
+  # eslint-plugin-storybook) and the 2.x line by vite-plugin-dts>@vue/language-core across six workspace
+  # packages, plus both prettier plugins. Two roots sit on both lines: @redocly/cli (mostly 2.x) and
+  # @boxyhq/saml-jackson (mostly 1.x, via the node-gyp chain above).
+  # What makes it tolerable is the input, not the dependency type: every one of these call sites expands
+  # glob patterns supplied by library code or developer config (gaxios' cache cleanup, typeorm's entity
+  # discovery, build and lint globs), never by request data.
+  # === Accepted risk, no override possible yet (pnpm audit will keep flagging this) ===
+  # ENG-1703 / GHSA-p2fr-6hmx-4528 (Dependabot alerts #612 and #613, both dismissed as tolerable risk;
+  # the ticket is closed Done with the same conclusion as here). Re-verified 2026-08-05.
+  # @better-auth/oauth-provider 1.6.23 (used for the MCP OAuth flow, ENG-1055) fails to bind
+  # access-token audiences to their authorization grant (RFC 8707 resource-indicator confusion) — a
+  # client can complete a normal authorization flow and then request a JWT scoped to a resource server
+  # the authorization never covered. No pin can close it: the whole 1.6.x stable line is in range, and the
+  # patch ships only from 1.7.0-beta.4 — a line still in pre-release. (Deliberately version-agnostic: the
+  # `latest` and `rc` tags move about weekly, so naming them here just guarantees this note rots. The
+  # rc-specific claims below are pinned to 1.7.0-rc.4, the release actually inspected.)
+  # Why this deployment isn't exposed to the escalation — and what that rests on. Note the advisory is
+  # explicit that a single-audience deployment still does not bind the resource to the authorization
+  # grant, so the spec-compliance gap remains regardless of the below; this is "not exploitable here",
+  # not "compliant":
+  # - apps/web/modules/auth/lib/mcp-oauth-provider-options.ts sets a single-entry validAudiences (the
+  #   MCP resource URL), so there is no second audience for a client to escalate into. This is the
+  #   load-bearing mitigation, and it holds only while that array stays single-entry.
+  # - apps/web/modules/mcp/auth.ts additionally pins `audience: getMcpResourceUrl()` on the resource
+  #   server's own verifyAccessToken call. That hardens the MCP endpoint but is NOT a substitute for the
+  #   above: the option flows straight into jose's jwtVerify, whose `aud` check is a membership test, so
+  #   a token whose `aud` array also lists other audiences still passes. The advisory's workaround also
+  #   requires rejecting multi-audience tokens, which verifyOptions.audience cannot express — that would
+  #   need an explicit assert on the returned payload. And if a second audience were ever added, the
+  #   party at risk is that other resource server, which our own pin does nothing for.
+  # - Test coverage is uneven: apps/web/modules/mcp/auth.test.ts asserts the audience/issuer pin, so
+  #   that leg is guarded. Single-entry validAudiences is asserted nowhere — that is the assert worth
+  #   adding before anyone touches this config.
+  # Upgrade cost, for whoever picks up 1.7.0: the renames the 1.7 upgrade guide warns about do not apply
+  # to us (migration 20260702093000_add_better_auth_oauth_provider already created `oauthClient`, not
+  # `oauthApplication`, with an `oauthAccessToken.token` column, not `.accessToken`, plus the `sessionId`
+  # that session-bound token validity needs — and we have no SCIM), and customAccessTokenClaims.resource
+  # does not apply either (ours only returns email/name). But there is still real DDL to write: as
+  # inspected at 1.7.0-rc.4, the line replaces `validAudiences` with a resources model and declares three
+  # tables we do not have — `oauthResource`, `oauthClientResource` and `oauthClientAssertion`. The bigger
+  # blocker is that the same release declares `better-auth` and `@better-auth/core` as matching
+  # `^1.7.0-rc.x` peers, making this a coupled auth-core upgrade touching login/2FA/SSO/sessions rather
+  # than a plugin-only bump. That needs its own reviewed PR once Better Auth ships 1.7.0 stable, not an
+  # audit sweep or an unattended dependency-only bump.
 
 autoInstallPeers: true
 linkWorkspacePackages: true
