@@ -73,9 +73,11 @@ test.describe("Cross-tenant contact access (ENG-2290)", () => {
     await expect(page.getByTestId("error-code")).toHaveText("404");
 
     // Assert against the full document rather than visible text: this also catches PII serialized
-    // into the RSC flight payload but never painted.
+    // into the RSC flight payload but never painted. The contact id itself is deliberately not
+    // asserted on — it is the attacker's own input and Next echoes the request path back in the
+    // router state.
     const html = await page.content();
-    for (const [field, value] of Object.entries({ ...victim.pii, contactId: victim.contactId })) {
+    for (const [field, value] of Object.entries(victim.pii)) {
       expect(html, `the page must not expose the victim's ${field}`).not.toContain(value);
     }
   });
