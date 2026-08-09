@@ -496,9 +496,10 @@ reviews:
 
 chat:
   art: true
-  # Public repo: only org members may drive the bot with commands. Outside PRs
-  # are still reviewed automatically — this only stops non-members invoking
-  # `@coderabbitai`, including the autofix and fix_ci recipes enabled above.
+  # Public repo: only org members may drive the bot with commands. Outside PRs are
+  # still reviewed automatically — this only stops non-members invoking
+  # `@coderabbitai` at all. The autofix and fix_ci write recipes are off above, so
+  # this is defence in depth rather than the thing keeping them out of reach.
   allow_non_org_members: false
   auto_reply: true
   integrations:
