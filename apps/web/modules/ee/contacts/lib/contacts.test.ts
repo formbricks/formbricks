@@ -431,6 +431,13 @@ describe("Contacts Lib", () => {
 
       await expect(getContactInWorkspace(mockContactId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
     });
+
+    test("re-throws non-Prisma errors", async () => {
+      const error = new Error("Unknown error");
+      vi.mocked(prisma.contact.findFirst).mockRejectedValue(error);
+
+      await expect(getContactInWorkspace(mockContactId, mockWorkspaceId)).rejects.toThrow(error);
+    });
   });
 
   describe("deleteContact", () => {

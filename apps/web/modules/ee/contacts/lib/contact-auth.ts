@@ -10,8 +10,15 @@ import { TWorkspaceAuth } from "@/modules/workspaces/types/workspace-auth";
 
 /**
  * Resolves the workspace a contact belongs to, or null when the contact does not exist.
+ *
+ * Deliberately not run through `validateInputs`: `contactId` arrives as a raw URL segment, and a
+ * malformed one should 404 exactly like a well-formed id belonging to someone else. Validating here
+ * would raise a `ValidationError` instead and make the two cases distinguishable.
+ *
+ * Module-private on purpose — "resolve any contact's workspace, unscoped" is not something callers
+ * should reach for from the module that owns the tenant boundary. Go through `getContactAuth`.
  */
-export const getWorkspaceIdOfContact = reactCache(async (contactId: string): Promise<string | null> => {
+const getWorkspaceIdOfContact = reactCache(async (contactId: string): Promise<string | null> => {
   try {
     const contact = await prisma.contact.findUnique({
       where: { id: contactId },

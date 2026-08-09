@@ -18,7 +18,11 @@ interface ActivitySectionProps {
   environmentTags: TTag[];
 }
 
-export const ActivitySection = async ({ workspaceId, contactId, environmentTags }: ActivitySectionProps) => {
+export const ActivitySection = async ({
+  workspaceId,
+  contactId,
+  environmentTags,
+}: Readonly<ActivitySectionProps>) => {
   const [responses, displays, workspace] = await Promise.all([
     getResponsesByContactId(contactId, workspaceId),
     getDisplaysByContactId(contactId, workspaceId),

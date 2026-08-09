@@ -1,15 +1,25 @@
 import { notFound } from "next/navigation";
 import { Mocked, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import { DatabaseError } from "@formbricks/types/errors";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TWorkspaceAuth } from "@/modules/workspaces/types/workspace-auth";
-import { getContactAuth, getWorkspaceIdOfContact } from "./contact-auth";
+import { getContactAuth } from "./contact-auth";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     contact: {
       findUnique: vi.fn(),
     },
+  },
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
@@ -38,28 +48,6 @@ const CONTACT_ID = "contact_victim";
 const buildWorkspaceAuth = (workspaceId: string) =>
   ({ workspace: { id: workspaceId }, isOwner: true }) as unknown as TWorkspaceAuth;
 
-describe("getWorkspaceIdOfContact", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test("resolves the workspace of an existing contact with a narrow select", async () => {
-    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as any);
-
-    await expect(getWorkspaceIdOfContact(CONTACT_ID)).resolves.toBe(VICTIM_WORKSPACE_ID);
-    expect(mockPrismaContact.findUnique).toHaveBeenCalledWith({
-      where: { id: CONTACT_ID },
-      select: { workspaceId: true },
-    });
-  });
-
-  test("resolves to null when the contact does not exist", async () => {
-    mockPrismaContact.findUnique.mockResolvedValueOnce(null);
-
-    await expect(getWorkspaceIdOfContact("contact_missing")).resolves.toBeNull();
-  });
-});
-
 describe("getContactAuth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,6 +61,11 @@ describe("getContactAuth", () => {
 
     expect(auth.workspace.id).toBe(VICTIM_WORKSPACE_ID);
     expect(notFound).not.toHaveBeenCalled();
+    // The contact lookup stays narrow — it exists to place the contact in a workspace, nothing else.
+    expect(mockPrismaContact.findUnique).toHaveBeenCalledWith({
+      where: { id: CONTACT_ID },
+      select: { workspaceId: true },
+    });
   });
 
   test("404s when the caller pairs their own workspace with a foreign contact", async () => {
@@ -97,5 +90,24 @@ describe("getContactAuth", () => {
     mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as any);
 
     await expect(getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow("not authorized");
+  });
+
+  test("wraps a Prisma failure of the contact lookup in a DatabaseError", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("DB Error", {
+      code: "P2002",
+      clientVersion: "5.0.0",
+    });
+    mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(VICTIM_WORKSPACE_ID));
+    mockPrismaContact.findUnique.mockRejectedValueOnce(prismaError);
+
+    await expect(getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow(DatabaseError);
+  });
+
+  test("re-throws a non-Prisma failure of the contact lookup unchanged", async () => {
+    const error = new Error("Unknown error");
+    mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(VICTIM_WORKSPACE_ID));
+    mockPrismaContact.findUnique.mockRejectedValueOnce(error);
+
+    await expect(getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow(error);
   });
 });
