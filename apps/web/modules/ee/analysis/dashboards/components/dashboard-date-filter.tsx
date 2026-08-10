@@ -18,7 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { ALL_TIME_VALUE, CUSTOM_VALUE, type TDashboardDateFilter } from "../lib/dashboard-date-filter";
+import {
+  ALL_TIME_VALUE,
+  CUSTOM_VALUE,
+  DEFAULT_VALUE,
+  type TDashboardDateFilter,
+} from "../lib/dashboard-date-filter";
 
 interface DashboardDateFilterProps {
   value: TDashboardDateFilter | null;
@@ -81,6 +86,11 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
       return;
     }
     setIsCustomMode(false);
+    if (next === DEFAULT_VALUE) {
+      // Clear the dashboard-level override so every widget falls back to its own saved range.
+      onChange(null);
+      return;
+    }
     if (next === ALL_TIME_VALUE) {
       onChange({ type: "all-time" });
       return;
@@ -95,6 +105,9 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
           <SelectValue placeholder={t("workspace.analysis.dashboards.date_filter_placeholder")} />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value={DEFAULT_VALUE}>
+            {t("workspace.analysis.dashboards.date_filter_default")}
+          </SelectItem>
           <SelectItem value={ALL_TIME_VALUE}>
             {t("workspace.analysis.dashboards.date_filter_all_time")}
           </SelectItem>

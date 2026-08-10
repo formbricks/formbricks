@@ -12,6 +12,9 @@ export const DATE_FILTER_FROM_PARAM = "dateRangeFrom";
 export const DATE_FILTER_TO_PARAM = "dateRangeTo";
 export const ALL_TIME_VALUE = "all time";
 export const CUSTOM_VALUE = "custom";
+// Sentinel for the "clear the dashboard-level filter" menu item. Radix Select rejects an
+// empty-string item value, so the null/unselected state needs a real value to be selectable.
+export const DEFAULT_VALUE = "default";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
