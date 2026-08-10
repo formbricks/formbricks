@@ -100,8 +100,12 @@ describe("survey list authorization amplification, against a real database", () 
     // running them together would race the delete/create of one against the other's read.
     const small = await countFor(50);
     const large = await countFor(3_000);
-    // Not merely "both equal 1" — a 60x growth in rows produces zero growth in checks. This is the
-    // O(1) claim the ticket asks for, stated as an equality a regression would actually break.
+    // Asserted separately: a counter that stopped incrementing would read 0 for both, and
+    // `large - small` would equal 0 vacuously — this was actually missed on first pass, caught only
+    // by re-checking which assertion a mutation run left passing rather than trusting the tally.
+    expect(small).toBeGreaterThan(0);
+    // Not merely "both equal the same thing" — a 60x growth in rows produces zero growth in checks.
+    // This is the O(1) claim the ticket asks for, stated as an equality a regression would break.
     expect(large - small).toBe(0);
   });
 });
