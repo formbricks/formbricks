@@ -32,6 +32,13 @@ export class SurveyState {
    * @param id - The survey ID
    */
   setSurveyId(id: string) {
+    // Clear the PIN auth token when switching to a different survey: it is a signed
+    // capability bound to a single surveyId and must not outlive that survey. Preserve
+    // it for same-survey resets so a user restarting the same PIN-protected survey is
+    // not re-prompted for the PIN.
+    if (id !== this.surveyId) {
+      this.pinAuthToken = null;
+    }
     this.surveyId = id;
     this.clear(); // Reset the state when setting a new surveyId
   }

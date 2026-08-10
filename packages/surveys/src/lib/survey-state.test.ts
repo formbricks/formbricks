@@ -44,6 +44,18 @@ describe("SurveyState", () => {
       expect(surveyState.responseId).toBeNull();
       expect(surveyState.responseAcc).toEqual({ finished: false, data: {}, ttc: {}, variables: {} });
     });
+
+    test("should clear the pinAuthToken when switching to a different survey", () => {
+      surveyState.pinAuthToken = "pin-token-for-survey1";
+      surveyState.setSurveyId("survey2");
+      expect(surveyState.pinAuthToken).toBeNull();
+    });
+
+    test("should preserve the pinAuthToken on a same-survey reset", () => {
+      surveyState.pinAuthToken = "pin-token-for-survey1";
+      surveyState.setSurveyId(initialSurveyId);
+      expect(surveyState.pinAuthToken).toBe("pin-token-for-survey1");
+    });
   });
 
   describe("copy", () => {

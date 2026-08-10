@@ -372,6 +372,29 @@ describe("ResponseQueue", () => {
     }
   });
 
+  test("sendResponse forwards the PIN auth token in the create payload", async () => {
+    surveyState.pinAuthToken = "pin-token-123";
+    apiMock.createResponse.mockResolvedValue({ ok: true, data: { id: "newid" } });
+
+    await queue.sendResponse(responseUpdate);
+
+    expect(apiMock.createResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ pinAuthToken: "pin-token-123" })
+    );
+  });
+
+  test("sendResponse forwards the PIN auth token in the update payload", async () => {
+    surveyState.responseId = "resp1";
+    surveyState.pinAuthToken = "pin-token-123";
+    apiMock.updateResponse.mockResolvedValue({ ok: true, data: { quotaFull: false } });
+
+    await queue.sendResponse(responseUpdate);
+
+    expect(apiMock.updateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ pinAuthToken: "pin-token-123" })
+    );
+  });
+
   test("updateSurveyState updates surveyState", () => {
     const newState = getSurveyState();
     queue.updateSurveyState(newState);
