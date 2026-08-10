@@ -208,7 +208,7 @@ const ZResponseDisplayTimeZone = z.preprocess(
     .trim()
     .min(1)
     .refine(isValidIanaTimeZone, {
-      message: "RESPONSE_DISPLAY_TIME_ZONE must be a valid IANA time zone",
+      error: "RESPONSE_DISPLAY_TIME_ZONE must be a valid IANA time zone",
     })
     .optional()
 );
