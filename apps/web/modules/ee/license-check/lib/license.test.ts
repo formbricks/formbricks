@@ -16,6 +16,9 @@ vi.mock("@/lib/env", () => ({
     FORMBRICKS_COM_URL: "https://app.formbricks.com",
     HTTPS_PROXY: undefined,
     HTTP_PROXY: undefined,
+    // getEnterpriseLicense skips its in-memory cache under NODE_ENV=test so license state cannot
+    // bleed between tests. Leaving it out of the mock would silently re-enable that cache.
+    NODE_ENV: "test",
   },
 }));
 

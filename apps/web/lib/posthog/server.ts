@@ -1,7 +1,7 @@
 import "server-only";
 import { PostHog } from "posthog-node";
 import { logger } from "@formbricks/logger";
-import { POSTHOG_KEY } from "@/lib/constants";
+import { IS_PRODUCTION, POSTHOG_KEY } from "@/lib/constants";
 
 const POSTHOG_HOST = "https://eu.i.posthog.com";
 
@@ -23,7 +23,7 @@ function createPostHogClient(): PostHog | null {
 export const posthogServerClient: PostHog | null =
   globalForPostHog.posthogServerClient ?? createPostHogClient();
 
-if (process.env.NODE_ENV !== "production" && posthogServerClient) {
+if (!IS_PRODUCTION && posthogServerClient) {
   globalForPostHog.posthogServerClient = posthogServerClient;
 }
 

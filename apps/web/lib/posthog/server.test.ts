@@ -19,7 +19,9 @@ describe("server - posthogServerClient", () => {
         this.shutdown = shutdown;
       }),
     }));
-    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: opts.posthogKey }));
+    // IS_PRODUCTION is false under test, matching the real constant (NODE_ENV=test), so the module
+    // takes its dev branch and stashes the client on globalThis.
+    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: opts.posthogKey, IS_PRODUCTION: false }));
 
     return { shutdown, loggerError };
   };

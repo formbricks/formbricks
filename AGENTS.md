@@ -48,6 +48,13 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 - Do not use Next.js `unstable_cache()`.
 - Always use `createCacheKey.*` utilities for cache keys.
 
+## Environment Variables
+
+- In `apps/web`, never read `process.env` directly. Server code reads `env` from `apps/web/lib/env.ts` (or the constants derived from it in `lib/constants.ts`); client components read `lib/env-client.ts`. `next.config.mjs` imports `lib/env.ts`, so an invalid value fails the build or start instead of the first request that needs it.
+- Adding a variable means adding it to both the `server` schema and the `runtimeEnv` map in `lib/env.ts`. If `next.config.mjs` reads it too, add it to `build.env` in `turbo.json` (enforced by `lib/turbo-build-env.test.ts`).
+- An ESLint rule enforces this. Bootstrap, config, script and test files are exempt — the list lives in `apps/web/eslint.config.mjs`. `NEXT_RUNTIME` and `NEXT_PHASE` are allowed anywhere: Next.js injects them, so there is nothing to validate.
+- Packages under `packages/*` cannot import the web app's env module and still read `process.env` directly; the rule does not apply there.
+
 ## i18n (Internationalization)
 
 - All user-facing text must use the `t()` function from `react-i18next`.
