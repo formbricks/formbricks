@@ -6,8 +6,8 @@ import {
   TFeedbackSourceWithMappings,
 } from "@formbricks/types/feedback-source";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { getResponses } from "../response/service";
+import { reconcileFeedbackRecords } from "./reconcile";
 import { transformResponseToFeedbackRecords } from "./transform";
 import { getErrorMessage } from "./utils";
 
@@ -23,7 +23,6 @@ const processBatch = async (
 ): Promise<TImportResult> => {
   let successes = 0;
   let failures = 0;
-  let duplicates = 0;
   const expectedRecords = responses.length * mappings.length;
 
   const allRecords = responses.flatMap((response) => {
@@ -42,14 +41,18 @@ const processBatch = async (
   });
 
   if (allRecords.length > 0) {
-    const { results } = await createFeedbackRecordsBatch(allRecords);
-    successes = results.filter((r) => r.data !== null).length;
-    duplicates = results.filter((r) => r.error?.status === 409).length;
-    failures = results.filter((r) => r.error !== null && r.error.status !== 409).length;
+    // Reconcile rather than count-and-drop: a 409 means the response was already ingested, and the
+    // answers may have changed since. Blindly skipping is what left Hub holding stale values.
+    const reconciled = await reconcileFeedbackRecords(allRecords, tenantId);
+    // A reconciled record was updated, so it counts as a success rather than a skip. Previously a
+    // 409 landed in `skipped`, which is how "we silently kept the stale value" read as normal.
+    successes = reconciled.created + reconciled.reconciled;
+    failures = reconciled.failures.length;
   }
 
+  // `skipped` now means only "the response had nothing to map for this field".
   const unmappedSkipped = expectedRecords - allRecords.length;
-  return { successes, failures, skipped: unmappedSkipped + duplicates };
+  return { successes, failures, skipped: unmappedSkipped };
 };
 
 export const importHistoricalResponses = async (
@@ -65,8 +68,14 @@ export const importHistoricalResponses = async (
   let skipped = 0;
   let offset = 0;
 
+  // Match the live ingestion path, which only runs on responseFinished. Without this the two
+  // disagreed: the historical import pulled partials that the pipeline would never have sent.
+  // "all" opts into partials — answers a respondent typed but never submitted.
+  const filterCriteria =
+    feedbackSource.importMode === "completedOnly" ? ({ finished: true } as const) : undefined;
+
   while (true) {
-    const responses = await getResponses(survey.id, IMPORT_BATCH_SIZE, offset);
+    const responses = await getResponses(survey.id, IMPORT_BATCH_SIZE, offset, filterCriteria);
     if (responses.length === 0) break;
 
     const batch = await processBatch(
