@@ -13,8 +13,8 @@ icon: "link"
 
 Use a custom subpath (also called a Next.js base path) when your reverse proxy reserves the root domain for another
 service, but you still want Formbricks to live under the same hostname—for example `https://example.com/feedback`.
-Support for a build-time `BASE_PATH` variable is available in the Formbricks web app so that all internal routes,
-assets, and sign-in redirects honor the prefix.
+Support for a build-time `BASE_PATH` variable is available in the Formbricks web app so that Next.js-managed routes,
+assets, and navigation honor the prefix.
 
 ### Requirements and limitations
 
@@ -25,6 +25,9 @@ assets, and sign-in redirects honor the prefix.
   app root, while `NEXTAUTH_URL` and optional `BETTER_AUTH_URL` use the full auth endpoint under
   `/custom-path/api/auth`. External webhook target URLs do not need the prefix unless they point to a Formbricks
   endpoint.
+- Known limitation: the browser auth client currently sends login and sign-up requests to `/api/auth` at the domain
+  root instead of `/custom-path/api/auth`. Authentication therefore does not work for a true subpath-only deployment,
+  and changing the URL environment variables does not correct the browser request path.
 - Your proxy must rewrite `/custom-path/*` to the Formbricks container while keeping the prefix visible to clients.
 
 ### Configure object storage separately
@@ -93,17 +96,18 @@ docker build \
 
 ### Verify the deployment
 
-1. Open `https://yourdomain.com/custom-path` and complete the onboarding flow.
-2. Create a survey and preview it—embedded scripts now load assets relative to the subpath.
-3. Sign out and confirm the login page still includes `/custom-path`.
+1. Open `https://yourdomain.com/custom-path/auth/login` and confirm the page loads under the prefix.
+2. In your browser's network panel, confirm Next.js assets and navigation requests include `/custom-path`.
+3. Do not use login or onboarding as a successful deployment check until the browser auth-client limitation above is
+   fixed.
 
 ### Troubleshooting checklist
 
 - Confirm your build pipeline actually passes `BASE_PATH` (and, if needed, `WEBAPP_URL`/`NEXTAUTH_URL`) into the build
   stage—check CI logs for the `BASE PATH /your-prefix` line and make sure custom Dockerfiles or wrappers forward
   `--build-arg BASE_PATH=...` correctly.
-- If you cannot log in, double-check that `WEBAPP_URL`, `NEXTAUTH_URL`, and `BETTER_AUTH_URL` (if set)
-  include the prefix. Formbricks derives Better Auth OAuth endpoints under `/api/auth`.
+- Keep `WEBAPP_URL`, `NEXTAUTH_URL`, and `BETTER_AUTH_URL` (if set) configured as shown above for server-side callbacks
+  and discovery, but note that they do not fix the browser auth-client request path.
 - Re-run the Docker build when changing `BASE_PATH`; simply editing the container environment is not sufficient.
 - Inspect your proxy configuration to ensure it does not rewrite paths internally (e.g., `strip_prefix` needs to stay
   disabled).
