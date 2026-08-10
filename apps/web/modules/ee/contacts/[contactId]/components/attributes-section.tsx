@@ -4,17 +4,22 @@ import { getResponsesByContactId } from "@/lib/response/service";
 import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/contact-attributes";
-import { getContact } from "@/modules/ee/contacts/lib/contacts";
+import { getContactInWorkspace } from "@/modules/ee/contacts/lib/contacts";
 import { formatAttributeValue } from "@/modules/ee/contacts/lib/format-attribute-value";
 import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
-export const AttributesSection = async ({ contactId }: { contactId: string }) => {
+interface AttributesSectionProps {
+  contactId: string;
+  workspaceId: string;
+}
+
+export const AttributesSection = async ({ contactId, workspaceId }: Readonly<AttributesSectionProps>) => {
   const t = await getTranslate();
   const [locale, contact, attributesWithKeyInfo] = await Promise.all([
     getLocale(),
-    getContact(contactId),
-    getContactAttributesWithKeyInfo(contactId),
+    getContactInWorkspace(contactId, workspaceId),
+    getContactAttributesWithKeyInfo(contactId, workspaceId),
   ]);
 
   if (!contact) {
@@ -22,8 +27,8 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
   }
 
   const [responses, displays] = await Promise.all([
-    getResponsesByContactId(contactId),
-    getDisplaysByContactId(contactId),
+    getResponsesByContactId(contactId, workspaceId),
+    getDisplaysByContactId(contactId, workspaceId),
   ]);
   const numberOfResponses = responses?.length || 0;
   const numberOfDisplays = displays?.length || 0;
