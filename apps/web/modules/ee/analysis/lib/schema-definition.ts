@@ -707,12 +707,16 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
   const labels: Record<string, string> = {
     today: t("workspace.analysis.charts.date_preset_today"),
     yesterday: t("workspace.analysis.charts.date_preset_yesterday"),
+    "last 24 hours": t("workspace.analysis.charts.date_preset_last_24_hours"),
     "last 7 days": t("workspace.analysis.charts.date_preset_last_7_days"),
     "last 30 days": t("workspace.analysis.charts.date_preset_last_30_days"),
     "this month": t("workspace.analysis.charts.date_preset_this_month"),
     "last month": t("workspace.analysis.charts.date_preset_last_month"),
     "this quarter": t("workspace.analysis.charts.date_preset_this_quarter"),
+    "last quarter": t("workspace.analysis.charts.date_preset_last_quarter"),
+    "last 6 months": t("workspace.analysis.charts.date_preset_last_6_months"),
     "this year": t("workspace.analysis.charts.date_preset_this_year"),
+    "last year": t("workspace.analysis.charts.date_preset_last_year"),
   };
   return labels[value] ?? value;
 }

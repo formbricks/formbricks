@@ -1615,9 +1615,13 @@ checksums:
     workspace/analysis/charts/dashboard: c9380ea68c8c76ea451bd9613329a07c
     workspace/analysis/charts/dashboard_select_placeholder: 9b875f2f10050d650ae63be53fe0d4e8
     workspace/analysis/charts/data_source: c29cdd1967a3d1b1a39e91e14469b047
+    workspace/analysis/charts/date_preset_last_24_hours: 0bc5386969795001992fccbe817580d3
     workspace/analysis/charts/date_preset_last_30_days: a738894cfc5e592052f1e16787744568
+    workspace/analysis/charts/date_preset_last_6_months: 1be27ca36359a3a8131f2408827f0f69
     workspace/analysis/charts/date_preset_last_7_days: 3631df3109bfecfe358ba15dcf8bd6f5
     workspace/analysis/charts/date_preset_last_month: 848086395b28875c050d56e3933dae61
+    workspace/analysis/charts/date_preset_last_quarter: 2e565a81de9b3d7b1ee709ebb6f6eda1
+    workspace/analysis/charts/date_preset_last_year: fe7c268a48bf85bc40da000e6e437637
     workspace/analysis/charts/date_preset_this_month: 50845a38865204a97773c44dcd2ebb90
     workspace/analysis/charts/date_preset_this_quarter: 9c77d94783dff2269c069389122cd7bd
     workspace/analysis/charts/date_preset_this_year: 1e69651c2ac722f8ce138f43cf2e02f9
@@ -1792,6 +1796,9 @@ checksums:
     workspace/analysis/dashboards/dashboard_name_required: 4a56c3ce1d73ad915815f5de4bcff566
     workspace/analysis/dashboards/dashboard_save_failed: 2b6c7be7947bc7ebb0389b71b5922ba6
     workspace/analysis/dashboards/dashboard_saved: 6eb27743b6b12d3d0a20b430319890b8
+    workspace/analysis/dashboards/date_filter_all_time: 62258944e7c2e83f3ebf69074b2c2156
+    workspace/analysis/dashboards/date_filter_default: cfacb900e350367581782f4078264a96
+    workspace/analysis/dashboards/date_filter_placeholder: be548c93a997ed6c2e9ac5c943faac10
     workspace/analysis/dashboards/delete_confirmation: 468a0fb0e24a985cc47a778b50b334ba
     workspace/analysis/dashboards/delete_failed: b108acc28b1f9abcb544a358a958b54b
     workspace/analysis/dashboards/delete_success: 9d161634daab9ea9d17fbfb413eeeffa

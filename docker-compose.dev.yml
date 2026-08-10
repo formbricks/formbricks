@@ -1,3 +1,49 @@
+# Google credentials for the Hub's Vertex enrichment providers (the google-gemini provider) are read
+# from a file *inside* the container, so a host path can never resolve on its own. Bind-mount
+# whatever the host points at to one fixed in-container path and set the in-container variable to
+# match (see the hub service's environment).
+#
+# The host knob is HUB_GOOGLE_APPLICATION_CREDENTIALS, deliberately *not* the standard
+# GOOGLE_APPLICATION_CREDENTIALS. That name is Google's global Application Default Credentials
+# convention and gcloud users commonly export it from a shell profile; compose gives the shell
+# environment precedence over .env, so reading it here would let ambient state nobody set for
+# Formbricks drive this mount. A stale export (key since moved) would fail hub and hub-worker
+# creation under create_host_path: false and take the whole db:up chain down with it, for someone
+# who never touched enrichment; a live one would silently bind a personal or production key into
+# both containers and activate it. HUB_ also matches the other Hub knobs here (HUB_API_KEY,
+# HUB_DATABASE_URL, HUB_IMAGE_TAG); only the in-container name stays standard, which is what the
+# Hub actually reads.
+#
+# The /dev/null default keeps the mount spec valid when the variable is unset — nothing reads the
+# file in that case, because the ${VAR:+...} form below leaves the in-container variable empty and
+# Application Default Credentials falls through exactly as it did before.
+#
+# A YAML merge key (<<:) only works on mappings, and volumes is a sequence, so this is a plain
+# alias and each service has to reference it explicitly. Both hub and hub-worker need it: the
+# worker classifies and the API embeds search queries, so mounting only one leaves the other
+# unable to authenticate.
+#
+# Long syntax on purpose. In the "source:target:ro" short form, compose reads a source that is not
+# an absolute or ./-prefixed path as a *named volume* reference, so a relative value here
+# (HUB_GOOGLE_APPLICATION_CREDENTIALS=creds.json) fails the whole project with "refers to undefined
+# volume" — taking postgres and everything else down with it, for an error that never mentions
+# credentials. With an explicit type: bind, a relative value is resolved against the project
+# directory instead.
+#
+# create_host_path: false because Docker's default is to CREATE a missing bind source, as a
+# directory. A typo'd or since-moved path would therefore leave a stray "creds.json/" directory on
+# the host and mount it as a directory here, so the read fails with "is a directory" and hub-worker
+# crash-loops on a path that looks correct. Refusing to start is the better failure: the daemon
+# names the exact path it could not find, and only the hub containers fail rather than the whole
+# project (unlike the undefined-volume case above, which fails at config parse).
+x-hub-volumes: &hub-volumes
+  - type: bind
+    source: ${HUB_GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}
+    target: /secrets/gcp.json
+    read_only: true
+    bind:
+      create_host_path: false
+
 services:
   # PostgreSQL must load the vector library so Hub (and Formbricks) can use the pgvector extension.
   postgres:
@@ -118,6 +164,7 @@ services:
         condition: service_completed_successfully
     ports:
       - "8080:8080"
+    volumes: *hub-volumes
     environment: &hub-runtime-environment
       API_KEY: ${HUB_API_KEY:-dev-api-key}
       DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/hub?sslmode=disable}
@@ -138,7 +185,16 @@ services:
       EMBEDDING_NORMALIZE: ${EMBEDDING_NORMALIZE:-false}
       EMBEDDING_GOOGLE_CLOUD_PROJECT: ${EMBEDDING_GOOGLE_CLOUD_PROJECT:-}
       EMBEDDING_GOOGLE_CLOUD_LOCATION: ${EMBEDDING_GOOGLE_CLOUD_LOCATION:-}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+      # Point at the in-container mount (see x-hub-volumes) rather than passing the host path
+      # through, which could never resolve inside the container. The ${VAR:+...} form substitutes
+      # only when the host variable is set and non-empty, so leaving it unset keeps this empty and
+      # Application Default Credentials behaves as before.
+      #
+      # Only the google-gemini (Vertex) providers need this; the plain `google` provider takes an
+      # API key instead, which is the simpler option for local dev. Note the mount reaches both
+      # containers because they share one credential — the API needs it only when embeddings use
+      # Vertex (it embeds search queries synchronously), the worker whenever it classifies.
+      GOOGLE_APPLICATION_CREDENTIALS: ${HUB_GOOGLE_APPLICATION_CREDENTIALS:+/secrets/gcp.json}
       # Hub sentiment/emotion/translation enrichment (0.7.x) are disabled unless the
       # matching *_PROVIDER and *_MODEL pair is set (translation additionally needs a
       # target language — TRANSLATION_DEFAULT_LANGUAGE, or a per-tenant setting). The
@@ -175,6 +231,7 @@ services:
     entrypoint: ["/app/hub-worker"]
     healthcheck:
       disable: true
+    volumes: *hub-volumes
     environment:
       <<: *hub-runtime-environment
 
