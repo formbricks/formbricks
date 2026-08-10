@@ -1,6 +1,8 @@
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { proxy } from "./proxy";
+import { FORMBRICKS_CLIENT_IP_HEADER } from "@/lib/utils/client-ip";
+import { config, proxy } from "./proxy";
 
 const { mockGetProxySession, mockIsPublicDomainConfigured, mockIsRequestFromPublicDomain } = vi.hoisted(
   () => ({
@@ -25,6 +27,7 @@ vi.mock("@/app/middleware/endpoint-validator", () => ({
 }));
 
 vi.mock("@/lib/constants", () => ({
+  TRUSTED_PROXY_HOP_COUNT: 1,
   WEBAPP_URL: "http://localhost:3000",
 }));
 
@@ -47,6 +50,7 @@ vi.mock("@/lib/utils/url", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -147,4 +151,64 @@ describe("proxy", () => {
 
     expect(response.cookies.get("formbricks-workspace-id")?.value).toBe("ws-456");
   });
+
+  test("overwrites a caller-supplied private IP header with the canonical trusted hop", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+    const request = new NextRequest("http://localhost:3000/api/auth/sign-in/email", {
+      headers: {
+        [FORMBRICKS_CLIENT_IP_HEADER]: "198.51.100.99",
+        "x-forwarded-for": "198.51.100.10, 203.0.113.7:54321",
+      },
+    });
+
+    const response = await proxy(request);
+
+    expect(response.headers.get(`x-middleware-request-${FORMBRICKS_CLIENT_IP_HEADER}`)).toBe("203.0.113.7");
+    expect(response.headers.get(FORMBRICKS_CLIENT_IP_HEADER)).toBeNull();
+  });
+
+  test("removes a caller-supplied private IP header when trusted-hop resolution fails", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+    const request = new NextRequest("http://localhost:3000/api/auth/sign-in/email", {
+      headers: {
+        [FORMBRICKS_CLIENT_IP_HEADER]: "198.51.100.99",
+        "x-forwarded-for": "not-an-ip",
+      },
+    });
+
+    const response = await proxy(request);
+
+    expect(response.headers.get(`x-middleware-request-${FORMBRICKS_CLIENT_IP_HEADER}`)).toBeNull();
+    expect(response.headers.get("x-middleware-override-headers")?.split(",")).not.toContain(
+      FORMBRICKS_CLIENT_IP_HEADER
+    );
+    expect(response.headers.get(FORMBRICKS_CLIENT_IP_HEADER)).toBeNull();
+  });
+});
+
+describe("proxy matcher", () => {
+  test.each([
+    "/api/auth/sign-in/email",
+    "/api/auth/sso-recovery/request",
+    "/api/auth/sso-recovery/consume/token",
+  ])("includes Better Auth request %s", (url) => {
+    expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true);
+  });
+
+  test("includes server-action requests", () => {
+    expect(
+      unstable_doesMiddlewareMatch({
+        config,
+        url: "/workspaces/workspace-1/surveys",
+        headers: { "next-action": "server-action-id" },
+      })
+    ).toBe(true);
+  });
+
+  test.each(["/_next/static/chunks/app.js", "/_next/image", "/images/logo.svg", "/favicon.ico"])(
+    "excludes static asset %s",
+    (url) => {
+      expect(unstable_doesMiddlewareMatch({ config, url })).toBe(false);
+    }
+  );
 });

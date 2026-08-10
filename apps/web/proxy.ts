@@ -3,8 +3,9 @@ import { v4 as uuidv4 } from "uuid";
 import { logger } from "@formbricks/logger";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
-import { WEBAPP_URL } from "@/lib/constants";
+import { TRUSTED_PROXY_HOP_COUNT, WEBAPP_URL } from "@/lib/constants";
 import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
+import { FORMBRICKS_CLIENT_IP_HEADER, resolveClientIp } from "@/lib/utils/client-ip";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
 
@@ -67,6 +68,15 @@ export const proxy = async (originalRequest: NextRequest) => {
   const request = new NextRequest(originalRequest, {
     headers: new Headers(originalRequest.headers),
   });
+
+  const clientIp = resolveClientIp(request.headers, TRUSTED_PROXY_HOP_COUNT);
+  if (clientIp) {
+    request.headers.set(FORMBRICKS_CLIENT_IP_HEADER, clientIp);
+  } else {
+    // A caller may send this private header directly. Removing it on failure is what makes Proxy the
+    // trust boundary; downstream code must never see an identity Proxy did not establish itself.
+    request.headers.delete(FORMBRICKS_CLIENT_IP_HEADER);
+  }
 
   request.headers.set("x-request-id", uuidv4());
   request.headers.set("x-start-time", Date.now().toString());
