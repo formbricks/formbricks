@@ -95,8 +95,11 @@ overrides:
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
   # ENG-1952 / GHSA-52cp-r559-cp3m (CVE-2026-59869): js-yaml 4.0.0–4.2.x can spend quadratic CPU on a
   # merge-key mapping chain; patched in 4.3.0. Raises the 4.x pin from 4.2.0 to 4.3.0 (still <5).
+  # ENG-2278 / ENG-2279 / GHSA-5p4m-2wfm-xmqj (CVE-2026-59870): js-yaml 4.0.0–4.3.0 can spend quadratic
+  # CPU resolving a large !!omap (linear indexOf scan per entry); patched in 4.3.1. Raises the 4.x pin
+  # from 4.3.0 to 4.3.1 (still <5).
   # load-bearing: @redocly/openapi-core and @redocly/respect-core pin 4.2.0.
-  js-yaml@4: 4.3.0
+  js-yaml@4: 4.3.1
   # === Dependabot security batch (ENG-1988..ENG-1999) ===
   # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
   # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
