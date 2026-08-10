@@ -36,6 +36,7 @@ jobs:
           trap 'rm -rf "$render_dir"' EXIT
 
           helm lint "$chart" --set formbricks.webappUrl=https://qa.example.com
+          bash charts/formbricks/tests/authzed-operations.sh
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

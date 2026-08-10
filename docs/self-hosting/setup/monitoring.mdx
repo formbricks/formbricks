@@ -154,14 +154,12 @@ The exporter listens on all network interfaces (0.0.0.0) and exposes metrics at 
 The metrics exported by the Prometheus integration include:
 
 - **Host Metrics**:
-
   - CPU usage (user, system, idle)
   - Memory usage (used, free, cached)
   - Disk I/O (reads, writes)
   - Network I/O (bytes in/out, packets in/out)
 
 - **HTTP Metrics**:
-
   - Request counts
   - Request durations
   - Error rates
@@ -201,3 +199,15 @@ GET /health
 ```
 
 Use these endpoints for monitoring system health in container orchestration and monitoring tools.
+
+## AuthZed and SpiceDB
+
+Formbricks exposes bounded projection and authorization-comparison metrics when AuthZed is enabled. Monitor
+projection failures and disabled outcomes, shadow mismatches, authorization operational errors, and authorization
+latency. Also monitor SpiceDB pod availability, datastore migrations, PostgreSQL pool saturation, dispatch
+latency, and cache behavior.
+
+The general Formbricks `/health` endpoint intentionally stays independent from SpiceDB. Use the release-matched
+`formbricks-authzed health` command for authenticated authorization health checks. The
+[AuthZed Operations guide](/self-hosting/advanced/authzed-operations) contains metric names, PromQL examples,
+starting alert thresholds, stable error codes, and the outage-repair runbook.

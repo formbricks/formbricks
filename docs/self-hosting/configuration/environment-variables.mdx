@@ -182,11 +182,16 @@ Valid endpoint, token, and system-key values may be set before enabling AuthZed.
 rejected even while it is disabled. Changing any AuthZed setting requires restarting the Formbricks process.
 Configuration validation never prints the token.
 
-From a repository checkout, validate the configured connection without installing a schema or changing data:
+In a released Docker installation, validate the configured connection without installing a schema or changing
+data:
 
 ```bash
-pnpm authzed:health
+docker compose --profile authzed-ops run --rm authzed-ops health
 ```
+
+For Helm, run `formbricks-authzed health` inside a Formbricks application pod. Repository development can keep
+using `pnpm authzed:health`. See [AuthZed Operations](/self-hosting/advanced/authzed-operations) for the complete
+Docker and Kubernetes command set, schema lifecycle, backups, and relationship repair.
 
 The command reads the repository `.env`, performs an authenticated read-only schema request, prints exactly
 one JSON result, and exits `0` only for `{"status":"healthy","latencyMs":12}` (the latency varies). Disabled
