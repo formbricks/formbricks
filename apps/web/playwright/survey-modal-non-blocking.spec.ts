@@ -22,6 +22,7 @@ declare global {
       setup: (config: { workspaceId: string; appUrl: string }) => Promise<void>;
       track: (name: string) => Promise<void>;
     };
+    __workspaceId: string;
     __hostEscapes: number;
     __hostChordDefaultPrevented: boolean | null;
   }
@@ -31,7 +32,9 @@ declare global {
 const HOST_PROSE =
   "The quick brown fox jumps over the lazy dog while the host page stays fully usable underneath.";
 
-const hostPage = (workspaceId: string) => `<!doctype html>
+// A constant page — the workspace is injected per test with `page.addInitScript` rather
+// than templated in, so nothing the test controls is ever interpolated into served HTML.
+const HOST_PAGE = `<!doctype html>
 <html>
   <head>
     <script type="text/javascript">
@@ -39,7 +42,7 @@ const hostPage = (workspaceId: string) => `<!doctype html>
         var t = document.createElement("script");
         (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
         t.onload = function () {
-          window.formbricks.setup({ workspaceId: "${workspaceId}", appUrl: "http://localhost:3000" });
+          window.formbricks.setup({ workspaceId: window.__workspaceId, appUrl: "http://localhost:3000" });
         };
         var e = document.getElementsByTagName("script")[0];
         e.parentNode.insertBefore(t, e);
@@ -72,14 +75,12 @@ test.describe("App survey widget does not block the host page", () => {
 
   test.setTimeout(3 * 60 * 1000);
 
-  // The workspace comes in on the query string so the two tests can share one server
-  // without sharing mutable state, and the port is ephemeral so parallel workers do
-  // not fight over it.
+  // The port is ephemeral so parallel workers do not fight over it, and the response is
+  // a constant so the server holds no per-test state.
   test.beforeAll(async () => {
-    server = http.createServer((req, res) => {
-      const workspaceId = new URL(req.url ?? "/", "http://localhost").searchParams.get("workspaceId") ?? "";
+    server = http.createServer((_, res) => {
       res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(hostPage(workspaceId));
+      res.end(HOST_PAGE);
     });
     await new Promise<void>((resolve) => {
       server.listen(0, () => {
@@ -96,7 +97,10 @@ test.describe("App survey widget does not block the host page", () => {
   test("overlay:none leaves the host page fully usable", async ({ page, users }) => {
     const seeded = await seedAppSurvey(users, { overlay: "none", placement: "bottomRight" });
 
-    await page.goto(`${hostUrl}/?workspaceId=${seeded.workspaceId}`);
+    await page.addInitScript((workspaceId) => {
+      window.__workspaceId = workspaceId;
+    }, seeded.workspaceId);
+    await page.goto(hostUrl);
     await page.waitForFunction(() => Boolean(window.formbricks), null, { timeout: 120000 });
 
     // Park the caret in a host field first — this is the customer's scenario: a survey
@@ -164,7 +168,10 @@ test.describe("App survey widget does not block the host page", () => {
   test("overlay:dark keeps the modal behaviour", async ({ page, users }) => {
     const seeded = await seedAppSurvey(users, { overlay: "dark", placement: "center" });
 
-    await page.goto(`${hostUrl}/?workspaceId=${seeded.workspaceId}`);
+    await page.addInitScript((workspaceId) => {
+      window.__workspaceId = workspaceId;
+    }, seeded.workspaceId);
+    await page.goto(hostUrl);
     await page.waitForFunction(() => Boolean(window.formbricks), null, { timeout: 120000 });
 
     await page.locator("#host-input").fill("BEFORE");
