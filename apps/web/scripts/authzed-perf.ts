@@ -113,6 +113,14 @@ const chunk = <T>(items: ReadonlyArray<T>, size: number): T[][] => {
   return out;
 };
 
+/** The role mix for a seeded membership: a few owners/managers, a couple of billing, mostly members. */
+const roleForSeedIndex = (index: number): "owner" | "manager" | "billing" | "member" => {
+  if (index === 0) return "owner";
+  if (index < 5) return "manager";
+  if (index < 8) return "billing";
+  return "member";
+};
+
 const seed = async (scale: TScale): Promise<void> => {
   const profile = SCALE_PROFILES[scale];
   const startedAt = performance.now();
@@ -123,7 +131,7 @@ const seed = async (scale: TScale): Promise<void> => {
   // Users and memberships. The role mix mirrors a real tenant: a few owners/managers, mostly members
   // whose access arrives through teams — which is the interesting path, since owners short-circuit.
   const users = [];
-  for (const batch of chunk([...Array(profile.users).keys()], BATCH)) {
+  for (const batch of chunk([...new Array(profile.users).keys()], BATCH)) {
     const created = await prisma.$transaction(
       batch.map((index) =>
         prisma.user.create({
@@ -141,12 +149,12 @@ const seed = async (scale: TScale): Promise<void> => {
       userId: user.id,
       organizationId: organization.id,
       accepted: true,
-      role: index === 0 ? "owner" : index < 5 ? "manager" : index < 8 ? "billing" : "member",
+      role: roleForSeedIndex(index),
     })),
   });
 
   const teams = await prisma.$transaction(
-    [...Array(profile.teams).keys()].map((index) =>
+    [...new Array(profile.teams).keys()].map((index) =>
       prisma.team.create({
         data: { name: `${SEED_TAG}-team${index}`, organizationId: organization.id },
         select: { id: true },
@@ -165,7 +173,7 @@ const seed = async (scale: TScale): Promise<void> => {
   });
 
   const workspaces = await prisma.$transaction(
-    [...Array(profile.workspaces).keys()].map((index) =>
+    [...new Array(profile.workspaces).keys()].map((index) =>
       prisma.workspace.create({
         data: { name: `${SEED_TAG}-ws${index}`, organizationId: organization.id },
         select: { id: true },
@@ -186,7 +194,7 @@ const seed = async (scale: TScale): Promise<void> => {
 
   // The hot workspace: the one the ticket describes, 5–6k surveys.
   const hotWorkspace = workspaces[0];
-  for (const batch of chunk([...Array(profile.surveysInHotWorkspace).keys()], BATCH)) {
+  for (const batch of chunk([...new Array(profile.surveysInHotWorkspace).keys()], BATCH)) {
     await prisma.survey.createMany({
       data: batch.map((index) => ({
         name: `${SEED_TAG}-survey${index}`,
@@ -196,7 +204,7 @@ const seed = async (scale: TScale): Promise<void> => {
       })),
     });
     console.log(
-      `  surveys ${Math.min(batch[batch.length - 1] + 1, profile.surveysInHotWorkspace)}/${profile.surveysInHotWorkspace}`
+      `  surveys ${Math.min(batch.at(-1)! + 1, profile.surveysInHotWorkspace)}/${profile.surveysInHotWorkspace}`
     );
   }
 
@@ -206,11 +214,11 @@ const seed = async (scale: TScale): Promise<void> => {
   });
 
   if (hotSurvey) {
-    for (const batch of chunk([...Array(profile.responsesOnHotSurvey).keys()], BATCH)) {
+    for (const batch of chunk([...new Array(profile.responsesOnHotSurvey).keys()], BATCH)) {
       await prisma.response.createMany({
         data: batch.map(() => ({ surveyId: hotSurvey.id, finished: true, data: {}, meta: {} })),
       });
-      console.log(`  responses ${batch[batch.length - 1] + 1}/${profile.responsesOnHotSurvey}`);
+      console.log(`  responses ${batch.at(-1)! + 1}/${profile.responsesOnHotSurvey}`);
     }
   }
 
@@ -292,8 +300,8 @@ const run = async (iterations: number, concurrency: number, logPath: string): Pr
 
     try {
       allowed = await can({ type: "user", id: membership.userId }, testCase.action, testCase.resource);
-    } catch (caught) {
-      error = caught instanceof Error ? caught.name : "unknown";
+    } catch (error_) {
+      error = error_ instanceof Error ? error_.name : "unknown";
     }
 
     const sample: TSample = {
@@ -311,7 +319,7 @@ const run = async (iterations: number, concurrency: number, logPath: string): Pr
   // no target to match and every check falls to the legacy evaluator no matter how enforcement is
   // configured — which is exactly how a "SpiceDB run" quietly measures Postgres instead.
   await withAuthorizationSurface("server_action", async () => {
-    for (const batch of chunk([...Array(iterations).keys()], concurrency)) {
+    for (const batch of chunk([...new Array(iterations).keys()], concurrency)) {
       await Promise.all(batch.map(runOne));
     }
   });
