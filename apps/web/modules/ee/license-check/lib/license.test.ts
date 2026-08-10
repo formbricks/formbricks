@@ -215,6 +215,26 @@ describe("License Core Logic", () => {
       expect(license).toEqual(expectedActiveLicenseState);
     });
 
+    // Tripwire for the `NODE_ENV: "test"` key in the `@/lib/env` mock at the top of this file.
+    // license.ts skips its in-memory cache only while env.NODE_ENV is "test"; drop the key and the
+    // cache goes live, letting license state bleed between tests in this file. Without this test
+    // that regression is silent — the suite just becomes order-dependent.
+    test("bypasses the in-memory cache so repeated calls re-read the license", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+
+      fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockFetchedLicenseDetails }),
+      } as any);
+
+      await getEnterpriseLicense();
+      const cacheReadsAfterFirstCall = mockCache.get.mock.calls.length;
+      await getEnterpriseLicense();
+
+      expect(mockCache.get.mock.calls.length).toBeGreaterThan(cacheReadsAfterFirstCall);
+    });
+
     test("should use previous result if fetch fails and previous result exists and is within grace period", async () => {
       const { getEnterpriseLicense } = await import("./license");
       const fetch = global.fetch as Mock;

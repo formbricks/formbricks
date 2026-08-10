@@ -10,11 +10,20 @@ import { beforeAll, describe, expect, test } from "vitest";
 
 const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+const ESLINT_ERROR_SEVERITY = 2;
+
 let eslint: ESLint;
 
+// Severity is part of what is asserted, not incidental: the web lint script is a bare `eslint .`
+// with no `--max-warnings`, so downgrading the rule to "warn" — the treatment already applied to
+// react-hooks/exhaustive-deps two lines above it — would leave the config looking intact while
+// letting every violation through. Matching only severity 2 makes that downgrade fail the suite.
 const lintErrors = async (source: string, relativeFilePath: string): Promise<string[]> => {
   const [result] = await eslint.lintText(source, { filePath: path.join(appDir, relativeFilePath) });
-  return result.messages.filter((message) => message.ruleId === "no-restricted-syntax").map((m) => m.message);
+  return result.messages
+    .filter((message) => message.ruleId === "no-restricted-syntax")
+    .filter((message) => message.severity === ESLINT_ERROR_SEVERITY)
+    .map((message) => message.message);
 };
 
 describe("direct process.env access is linted (ENG-1685)", () => {

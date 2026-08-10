@@ -7,6 +7,12 @@ import next from "@formbricks/eslint-config/next";
  * imports it, so an invalid value fails the build/start instead of the first request that needs
  * it). Reading `process.env` anywhere else opts out of that check and gives contributors a second
  * convention to copy. Client components use `lib/env-client.ts` instead — see the note there.
+ *
+ * The selectors below cover the idiomatic spellings; they are a convention guardrail, not a
+ * security boundary. Anything that hides `process` behind a binding still slips through
+ * (`globalThis.process.env.X`, `const p = process; p.env.X`, `const { env } = process; env.X`),
+ * because a lint selector cannot follow a value across assignments. Nobody reaches for those by
+ * accident, and someone determined to bypass the rule can just write an eslint-disable comment.
  */
 const PROCESS_ENV_MESSAGE =
   "Read environment variables through the validated env module: `@/lib/env` (or the derived constants in `@/lib/constants`) on the server, `@/lib/env-client` in client components. Direct `process.env` access skips schema validation, so a missing or mistyped variable fails at use-time instead of at boot. Bootstrap, config, script and test files are exempt — see apps/web/eslint.config.mjs.";
