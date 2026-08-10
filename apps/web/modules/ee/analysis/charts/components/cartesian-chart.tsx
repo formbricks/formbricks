@@ -100,13 +100,25 @@ function WrappingXAxisTick({
 
   const isFirst = pointScale && index === 0;
   const isLast = pointScale && index === (visibleTicksCount ?? 0) - 1;
+
+  // An edge label is anchored on the plot boundary while its neighbour stays centred one `spacing`
+  // away, so a full-width edge box overruns that neighbour from ~5 point-scale categories up. Cap the
+  // edge box at the room up to the neighbour's near edge (`spacing - tickWidth / 2`); centred ticks
+  // are already spaced a full band apart and keep `tickWidth`.
+  const spacing =
+    width && visibleTicksCount && visibleTicksCount > 1 ? width / (visibleTicksCount - 1) : Infinity;
+  const edgeWidth = Math.max(X_AXIS_TICK_MIN_WIDTH, Math.min(tickWidth, spacing - tickWidth / 2));
+
   let boxX = tickX - tickWidth / 2;
+  let boxWidth = tickWidth;
   let textAlign = "text-center";
   if (isFirst) {
     boxX = tickX; // left edge at the point; label extends inward (right)
+    boxWidth = edgeWidth;
     textAlign = "text-left";
   } else if (isLast) {
-    boxX = tickX - tickWidth; // right edge at the point; label extends inward (left)
+    boxX = tickX - edgeWidth; // right edge at the point; label extends inward (left)
+    boxWidth = edgeWidth;
     textAlign = "text-right";
   }
 
@@ -114,7 +126,7 @@ function WrappingXAxisTick({
     <foreignObject
       x={boxX}
       y={(y ?? 0) + X_AXIS_LABEL_TOP_OFFSET}
-      width={tickWidth}
+      width={boxWidth}
       height={X_AXIS_LABEL_BOX_HEIGHT}
       // Keep the label hit-testable so the `title` full-text tooltip works on hover. The tick sits
       // in the axis band below the plot, so this doesn't intercept hover over the bars/points.
