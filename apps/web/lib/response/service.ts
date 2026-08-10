@@ -103,14 +103,20 @@ const mapResponsePrismaToResponse = (
   tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
 });
 
+/**
+ * Scoped by workspace on purpose: this feeds the contact detail page, which is reached through a
+ * workspace id in the URL. A contact id alone is not a tenant boundary, so the responses are
+ * filtered through the workspace of the contact they belong to.
+ */
 export const getResponsesByContactId = reactCache(
-  async (contactId: string, page?: number): Promise<TResponseWithQuotas[]> => {
-    validateInputs([contactId, ZId], [page, ZOptionalNumber]);
+  async (contactId: string, workspaceId: string, page?: number): Promise<TResponseWithQuotas[]> => {
+    validateInputs([contactId, ZId], [workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
       const responsePrisma = await prisma.response.findMany({
         where: {
           contactId,
+          contact: { workspaceId },
         },
         select: {
           ...responseSelection,
