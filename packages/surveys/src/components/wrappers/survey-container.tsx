@@ -1,4 +1,4 @@
-import { type ComponentChildren } from "preact";
+import { type ComponentChildren, type JSX } from "preact";
 import { useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
@@ -28,8 +28,16 @@ export function SurveyContainer({
 }: Readonly<SurveyContainerProps>) {
   const isModal = mode === "modal";
   const { t } = useTranslation();
-  const modalRef = useFocusTrap<HTMLDivElement>({ enabled: isModal && isOpen, onEscapeKeyDown: onClose });
   const hasOverlay = overlay !== "none";
+  // The overlay is what makes a survey modal: it covers the host page and the page stops being usable.
+  // Without one the page underneath stays visible and clickable, so the survey is a notification, not a
+  // modal. Trapping focus there steals the caret and the text selection from the host page — the trap's
+  // document-level listeners pull focus back in on every click, tab and drag. Matches the gate the
+  // click-outside effect below already uses.
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    enabled: isModal && isOpen && hasOverlay,
+    onEscapeKeyDown: onClose,
+  });
 
   useEffect(() => {
     if (!isModal) return;
@@ -52,6 +60,17 @@ export function SurveyContainer({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [clickOutside, hasOverlay, modalRef, onClose, isModal, isOpen]);
+
+  // Without an overlay the focus trap is off, so nothing handles Escape. Handle it on the container
+  // instead of on `document`: Escape closes the survey only while focus is inside it, and never cancels
+  // the host page's own Escape handling.
+  const handleContainerKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLDivElement>) => {
+    if (hasOverlay) return; // the focus trap already handles Escape
+    if (event.key !== "Escape" || event.altKey || event.ctrlKey || event.metaKey) return;
+
+    event.preventDefault();
+    onClose?.();
+  };
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
@@ -97,9 +116,13 @@ export function SurveyContainer({
           <div
             ref={modalRef}
             role="dialog"
-            aria-modal="true"
+            // Only a survey that actually blocks the page is a modal dialog. `aria-modal` makes
+            // assistive tech ignore everything outside it, so setting it on a corner survey hides the
+            // host page from screen-reader users while they can still see and use it.
+            aria-modal={hasOverlay ? "true" : undefined}
             aria-label={t("common.survey_dialog")}
             tabIndex={-1}
+            onKeyDown={handleContainerKeyDown}
             className={cn(
               getPlacementStyle(placement),
               isOpen ? "opacity-100" : "opacity-0",

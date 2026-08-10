@@ -42,6 +42,21 @@ export function SubmitButton({
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled && !isProcessing) {
+        // The listener sits on `document` so the chord still works when focus is on <body>, which is
+        // the normal state for link surveys. An embedded survey shares the page with a host app that
+        // owns its own shortcuts, so don't claim the chord — or preventDefault it — while the user is
+        // focused inside their page.
+        const surveyRoot = buttonRef.current?.closest("#fbjs");
+        const activeElement = document.activeElement;
+        if (
+          surveyRoot &&
+          activeElement &&
+          activeElement !== document.body &&
+          !surveyRoot.contains(activeElement)
+        ) {
+          return;
+        }
+
         event.preventDefault();
         setIsProcessing(true);
         const button = buttonRef.current;
