@@ -29,8 +29,18 @@ describe("direct process.env access is linted (ENG-1685)", () => {
     ["spreading the whole object", "export const a = { ...process.env };"],
     ["destructuring the whole object", "export const { DATABASE_URL } = process.env;"],
     ["aliasing the whole object", "export const a = process.env;"],
+    // `env` spelled as a computed key bypasses every selector that keys off it being an
+    // identifier, so it has to be covered explicitly.
+    ["string-keyed env access", 'export const a = process["env"].DATABASE_URL;'],
+    ["string-keyed bare env", 'export const a = process["env"];'],
+    ["template-keyed env access", "export const a = process[`env`].DATABASE_URL;"],
+    ["dynamic-key access on process", "export const a = (key: string) => process[key];"],
   ])("flags %s in application code", async (_label, source) => {
     expect(await lintErrors(source, "modules/example/service.ts")).toHaveLength(1);
+  });
+
+  test("leaves non-env process members alone", async () => {
+    expect(await lintErrors("export const a = process.argv;", "modules/example/service.ts")).toEqual([]);
   });
 
   test.each(["NEXT_RUNTIME", "NEXT_PHASE"])(

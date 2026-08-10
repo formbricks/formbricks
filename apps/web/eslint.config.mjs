@@ -37,6 +37,14 @@ const noDirectProcessEnv = [
       'MemberExpression[object.name="process"][property.name="env"]:not(MemberExpression > MemberExpression)',
     message: PROCESS_ENV_MESSAGE,
   },
+  // Any computed access on `process` — `process["env"]`, process[`env`], `process[key]`. The
+  // selectors above all key off `env` being an identifier, so a string or template key would
+  // otherwise bypass the rule entirely. Computed access on `process` has no legitimate use in
+  // application code, so flagging all of it costs nothing and leaves no spelling uncovered.
+  {
+    selector: 'MemberExpression[object.name="process"][computed=true]',
+    message: PROCESS_ENV_MESSAGE,
+  },
 ];
 
 // Files that legitimately read process.env: the env modules themselves, everything that runs
