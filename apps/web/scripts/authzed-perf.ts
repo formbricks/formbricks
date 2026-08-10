@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { performance } from "node:perf_hooks";
 import { prisma } from "@formbricks/database";
 import { can } from "@/lib/authorization";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 
 /**
  * ENG-1739 — authorization performance at BI-like scale.
@@ -306,9 +307,14 @@ const run = async (iterations: number, concurrency: number, logPath: string): Pr
     appendFileSync(logPath, `${JSON.stringify(sample)}\n`);
   };
 
-  for (const batch of chunk([...Array(iterations).keys()], concurrency)) {
-    await Promise.all(batch.map(runOne));
-  }
+  // Inside a surface, so the rollout cohort can select this traffic. Without it the coordinator has
+  // no target to match and every check falls to the legacy evaluator no matter how enforcement is
+  // configured — which is exactly how a "SpiceDB run" quietly measures Postgres instead.
+  await withAuthorizationSurface("server_action", async () => {
+    for (const batch of chunk([...Array(iterations).keys()], concurrency)) {
+      await Promise.all(batch.map(runOne));
+    }
+  });
 
   const wallSeconds = (performance.now() - startedAt) / 1000;
   const byAction = new Map<string, number[]>();
@@ -333,6 +339,7 @@ const run = async (iterations: number, concurrency: number, logPath: string): Pr
     ),
     allowRate: Number((samples.filter((s) => s.allowed === true).length / samples.length).toFixed(3)),
     concurrency,
+    enforcementTargets: process.env.AUTHZED_ENFORCEMENT_TARGETS ?? "(none)",
     errorRate: Number((samples.filter((s) => s.error !== null).length / samples.length).toFixed(4)),
     iterations: samples.length,
     logPath,
