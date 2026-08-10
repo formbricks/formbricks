@@ -51,6 +51,7 @@ export interface AIConfigurationStatus {
 }
 
 export type AILanguageModel = LanguageModel;
+export type AIResolvedLanguageModel = Exclude<LanguageModel, string>;
 type GenerateTextResult = Awaited<ReturnType<typeof generateText>>;
 
 export type TGenerateObjectOptions<T = unknown> = Omit<
