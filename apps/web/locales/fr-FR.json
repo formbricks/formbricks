@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "Échec de l'enregistrement du tableau de bord",
         "dashboard_saved": "Tableau de bord enregistré avec succès",
         "date_filter_all_time": "Tout le temps",
+        "date_filter_default": "Par défaut (plages par graphique)",
         "date_filter_placeholder": "Plage de dates",
         "delete_confirmation": "Êtes-vous sûr de vouloir supprimer ce tableau de bord ? Cette action est irréversible.",
         "delete_failed": "Échec de la suppression du tableau de bord",

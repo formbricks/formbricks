@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "Не удалось сохранить дашборд",
         "dashboard_saved": "Дашборд успешно сохранён",
         "date_filter_all_time": "Всё время",
+        "date_filter_default": "По умолчанию (диапазоны по графикам)",
         "date_filter_placeholder": "Диапазон дат",
         "delete_confirmation": "Ты уверен, что хочешь удалить эту панель управления? Это действие нельзя отменить.",
         "delete_failed": "Не удалось удалить панель управления",

@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "Error al guardar el panel",
         "dashboard_saved": "Panel guardado correctamente",
         "date_filter_all_time": "Todo el tiempo",
+        "date_filter_default": "Predeterminado (rangos por gráfico)",
         "date_filter_placeholder": "Rango de fechas",
         "delete_confirmation": "¿Estás seguro de que quieres eliminar este panel de control? Esta acción no se puede deshacer.",
         "delete_failed": "Error al eliminar el panel de control",

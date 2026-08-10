@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "Gösterge paneli kaydedilemedi",
         "dashboard_saved": "Gösterge paneli başarıyla kaydedildi",
         "date_filter_all_time": "Tüm zamanlar",
+        "date_filter_default": "Varsayılan (grafik başına aralıklar)",
         "date_filter_placeholder": "Tarih aralığı",
         "delete_confirmation": "Bu gösterge panelini silmek istediğinden emin misin? Bu işlem geri alınamaz.",
         "delete_failed": "Gösterge paneli silinemedi",

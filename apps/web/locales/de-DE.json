@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "Dashboard konnte nicht gespeichert werden",
         "dashboard_saved": "Dashboard erfolgreich gespeichert",
         "date_filter_all_time": "Gesamter Zeitraum",
+        "date_filter_default": "Standard (Bereiche pro Diagramm)",
         "date_filter_placeholder": "Datumsbereich",
         "delete_confirmation": "Bist du sicher, dass du dieses Dashboard löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
         "delete_failed": "Dashboard konnte nicht gelöscht werden",

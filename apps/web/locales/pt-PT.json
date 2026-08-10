@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "Falha ao guardar o painel",
         "dashboard_saved": "Painel guardado com sucesso",
         "date_filter_all_time": "Desde sempre",
+        "date_filter_default": "Predefinição (intervalos por gráfico)",
         "date_filter_placeholder": "Intervalo de datas",
         "delete_confirmation": "Tem a certeza de que pretende eliminar este painel? Esta ação não pode ser revertida.",
         "delete_failed": "Falha ao eliminar painel",

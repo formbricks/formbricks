@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "ダッシュボードの保存に失敗しました",
         "dashboard_saved": "ダッシュボードを正常に保存しました",
         "date_filter_all_time": "全期間",
+        "date_filter_default": "デフォルト（チャートごとの範囲）",
         "date_filter_placeholder": "期間",
         "delete_confirmation": "このダッシュボードを削除してもよろしいですか？この操作は元に戻せません。",
         "delete_failed": "ダッシュボードの削除に失敗しました",

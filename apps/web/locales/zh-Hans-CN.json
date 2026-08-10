@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "保存仪表板失败",
         "dashboard_saved": "仪表板保存成功",
         "date_filter_all_time": "全部时间",
+        "date_filter_default": "默认（各图表范围）",
         "date_filter_placeholder": "日期范围",
         "delete_confirmation": "确定要删除此 Dashboard 吗？此操作无法撤销。",
         "delete_failed": "删除 Dashboard 失败",

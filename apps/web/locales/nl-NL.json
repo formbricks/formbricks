@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "Dashboard opslaan mislukt",
         "dashboard_saved": "Dashboard succesvol opgeslagen",
         "date_filter_all_time": "Alle tijd",
+        "date_filter_default": "Standaard (bereiken per grafiek)",
         "date_filter_placeholder": "Datumbereik",
         "delete_confirmation": "Weet je zeker dat je dit dashboard wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
         "delete_failed": "Dashboard verwijderen mislukt",

@@ -1862,6 +1862,7 @@
         "dashboard_save_failed": "Nem sikerült elmenteni a vezérlőpultot",
         "dashboard_saved": "A vezérlőpult sikeresen elmentve",
         "date_filter_all_time": "Teljes időszak",
+        "date_filter_default": "Alapértelmezett (diagramonkénti tartományok)",
         "date_filter_placeholder": "Dátumtartomány",
         "delete_confirmation": "Biztosan törölni szeretné ezt a vezérlőpultot? Ezt a műveletet nem lehet visszavonni.",
         "delete_failed": "Nem sikerült törölni a vezérlőpultot",
