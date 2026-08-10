@@ -10,7 +10,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
-import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
+import { NOTION_RICH_TEXT_LIMIT, RESPONSE_DISPLAY_TIME_ZONE } from "@/lib/constants";
 import { writeData } from "@/lib/googleSheet/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { writeData as writeNotionData } from "@/lib/notion/service";
@@ -108,7 +108,7 @@ const processDataForIntegration = async (
   }
   if (includeCreatedAt) {
     const date = new Date(data.response.createdAt);
-    responses.push(`${getFormattedDateTimeString(date)}`);
+    responses.push(`${getFormattedDateTimeString(date, RESPONSE_DISPLAY_TIME_ZONE ?? "UTC")}`);
     elements.push("Created At");
   }
   if (includeContactAttributes && data.response.contactAttributes) {

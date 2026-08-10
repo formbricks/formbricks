@@ -26,7 +26,7 @@ import { deleteFile } from "@/modules/storage/service";
 import { parseStorageFileUrl, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
-import { ITEMS_PER_PAGE } from "../constants";
+import { ITEMS_PER_PAGE, RESPONSE_DISPLAY_TIME_ZONE } from "../constants";
 import { deleteDisplay } from "../display/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
@@ -479,7 +479,8 @@ export const getResponseDownloadFile = async (
       elements,
       userAttributes,
       hiddenFields,
-      isQuotasAllowed
+      isQuotasAllowed,
+      RESPONSE_DISPLAY_TIME_ZONE ?? "UTC"
     );
 
     const fileName = getResponsesFileName(survey?.name || "", format);

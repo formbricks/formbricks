@@ -201,6 +201,18 @@ const emptyStringToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
 
+const ZResponseDisplayTimeZone = z.preprocess(
+  emptyStringToUndefined,
+  z
+    .string()
+    .trim()
+    .min(1)
+    .refine(isValidIanaTimeZone, {
+      message: "RESPONSE_DISPLAY_TIME_ZONE must be a valid IANA time zone",
+    })
+    .optional()
+);
+
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
   /*
@@ -390,6 +402,7 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
     SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
     SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
+    RESPONSE_DISPLAY_TIME_ZONE: ZResponseDisplayTimeZone,
   },
   client: {},
 
@@ -480,6 +493,7 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_LOCAL_HOUR: process.env.SURVEY_SCHEDULING_LOCAL_HOUR,
     SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.SURVEY_SCHEDULING_LOCAL_MINUTE,
     SURVEY_SCHEDULING_TIME_ZONE: process.env.SURVEY_SCHEDULING_TIME_ZONE,
+    RESPONSE_DISPLAY_TIME_ZONE: process.env.RESPONSE_DISPLAY_TIME_ZONE,
     SENTRY_DSN: process.env.SENTRY_DSN,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,

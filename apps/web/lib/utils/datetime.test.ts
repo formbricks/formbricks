@@ -63,8 +63,25 @@ describe("datetime utils", () => {
     expect(isValidDateString("invalid-date")).toBeFalsy();
   });
 
-  test("getFormattedDateTimeString formats a date-time string correctly", () => {
-    const date = new Date("2025-05-06T14:30:00");
+  test("getFormattedDateTimeString formats in UTC by default", () => {
+    const date = new Date("2025-05-06T14:30:00.000Z");
     expect(getFormattedDateTimeString(date)).toBe("2025-05-06 14:30:00");
+  });
+
+  test("getFormattedDateTimeString formats in the given IANA time zone", () => {
+    const date = new Date("2026-01-01T20:00:00.000Z");
+    // Asia/Manila is UTC+8, so the formatted date crosses midnight
+    expect(getFormattedDateTimeString(date, "Asia/Manila")).toBe("2026-01-02 04:00:00");
+  });
+
+  test("getFormattedDateTimeString supports half-hour offset time zones", () => {
+    const date = new Date("2026-01-01T20:00:00.000Z");
+    // Asia/Kolkata is UTC+5:30
+    expect(getFormattedDateTimeString(date, "Asia/Kolkata")).toBe("2026-01-02 01:30:00");
+  });
+
+  test("getFormattedDateTimeString formats in UTC when the time zone is explicitly UTC", () => {
+    const date = new Date("2026-01-01T20:00:00.000Z");
+    expect(getFormattedDateTimeString(date, "UTC")).toBe("2026-01-01 20:00:00");
   });
 });

@@ -60,7 +60,7 @@ export const isValidDateString = (value: string) => {
   return !Number.isNaN(date.getTime());
 };
 
-export const getFormattedDateTimeString = (date: Date): string => {
+export const getFormattedDateTimeString = (date: Date, timeZone: string = "UTC"): string => {
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "2-digit",
@@ -69,6 +69,7 @@ export const getFormattedDateTimeString = (date: Date): string => {
     minute: "2-digit",
     second: "2-digit",
     hourCycle: "h23",
+    timeZone,
   };
 
   return new Intl.DateTimeFormat("en-CA", options).format(date).replace(",", "");
