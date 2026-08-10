@@ -8,10 +8,11 @@ production SLO.
 
 ## Summary
 
-- **The N+1 claim is proven, not argued.** A workspace's survey list issues exactly **one**
-  authorization decision whether the workspace holds 50 surveys or 3,000 — confirmed
-  against real Postgres, and mutation-checked (removing the counter call fails the
-  assertion, so the test can actually catch a regression).
+- **The N+1 claim is proven, not argued, on three list/export paths.** A workspace's
+  survey list, its dashboard list, and a survey's response export each issue a
+  row-count-independent number of authorization checks — confirmed against real Postgres,
+  and mutation-checked against all three together (removing the counter call from `can()`
+  fails all 8 assertions across the three files in one run).
 - **A single authorization decision is cheap**, legacy or SpiceDB: sub-2ms p50, sub-5ms
   p99, on both evaluators, at 6,000 surveys / 2,000 users / 50,000 responses.
 - **The first cross-evaluator comparison run was misread, and the correction matters more
@@ -118,18 +119,31 @@ report can close on its own.
 
 ```
 apps/web/lib/authorization/checks-per-request.integration.test.ts
+apps/web/lib/authorization/checks-per-request-dashboards.integration.test.ts
+apps/web/lib/authorization/checks-per-request-response-export.integration.test.ts
 ```
 
-| Surveys in workspace | Authorization checks issued |
-| --- | --- |
-| 50 | 1 |
-| 3,000 | 1 |
-| **Δ (3,000 − 50)** | **0** |
+| Path | Small | Large | Δ |
+| --- | --- | --- | --- |
+| Survey list (50 → 3,000 surveys) | 1 check | 1 check | **0** |
+| Dashboard list (10 → 500 dashboards) | 1 check | 1 check | **0** |
+| Response export (1 → 6,500 responses) | *n* checks | *n* checks | **0** |
 
-One `workspace.read` decision gates the whole list; `getSurveys` runs no authorization of
-its own. The check count does not grow with the row count — the property "Prove current
-workspace-scoped list paths do not perform one AuthZed check per survey" from the ticket
-scope, stated as a passing assertion rather than a grep result.
+One `workspace.read` decision gates the survey list and the dashboard list; neither
+`getSurveys` nor `getDashboards` runs authorization of its own. The response-export path
+is different in one respect worth stating rather than hiding behind the table: it drives
+`checkAuthorizationUpdated` (the exact sequence `getResponsesDownloadUrlAction` runs),
+which itself issues **two** `can()` calls for an owner — the organization-membership gate,
+then the matching access item — before `getResponseDownloadFile` runs. That is the
+adapter's own fixed cost, not the number 1, and the test asserts the real claim instead of
+a literal: whichever constant that cost is, it does not grow between 1 and 6,500 exported
+responses, past two full internal pagination batches (`getResponseDownloadFile` paginates
+in batches of 3,000 to avoid one unbounded query — that loop fetches rows, it does not
+authorize per batch).
+
+None of the three grows with the row count — the property "Prove current workspace-scoped
+list paths do not perform one AuthZed check per survey, dashboard, or response" from the
+ticket scope, stated as passing assertions rather than a grep result.
 
 This is backed by a request-scoped counter
 (`apps/web/lib/authorization/context.ts:recordAuthorizationCheckIssued`), incremented once
@@ -137,14 +151,26 @@ inside `can()` itself — the one point every `can()`/`assertCan()` call passes 
 regardless of caller — and reported in production as
 `formbricks_authorization_checks_per_request`, a histogram tagged by surface. That metric
 is the thing to watch on a real dashboard for the general "no page regresses into an N+1"
-question; this report only exercised the one path the ticket named by name.
+question; this report exercised the three paths the ticket named explicitly by name.
 
-**What this does not cover:** other list/export paths (dashboards, responses, API-key
-scoped listing) were not individually walked with the counter. The static sweep for this
-branch (zero `can()`/`assertCan()` calls found inside a loop across 19 call sites) is
-still the only evidence for those, and — per the correction above — a static read is
-exactly the kind of claim this project has already been burned by trusting alone. Treat
-the other list paths as *likely* fine, not *proven* fine.
+**What this does not cover:** API-key scoped listing was investigated, not tested the same
+way, because it doesn't fit the pattern. The v2 API-key response-list route
+(`apps/web/modules/api/v2/management/responses/route.ts`) resolves the key's workspace
+grants directly from the `ApiKeyWorkspace` join table during authentication and filters
+the query by that set — it does not call `can()` in the read path at all today. That's a
+different, and arguably more interesting, fact than "checks stay flat": there is no check
+to count. Worth a decision on whether that read path should route through the central
+interface at all, separate from the N+1 question this report answers for the other three.
+
+**A real bug this pass caught in its own test suite.** The first version of the growth
+assertions (`expect(large - small).toBe(0)`) passes vacuously if the counter itself stops
+incrementing — both sides read 0, and 0 equals 0. Re-running the mutation check (remove
+the counter call from `can()`) against all three files *together*, rather than
+spot-checking one file and trusting the aggregate failure count, surfaced that the
+survey-list growth test was the one silently passing under that exact mutation on the
+first pass. All growth-style assertions now separately assert the baseline count is
+positive before asserting the delta is zero; re-running the mutation now fails all 8
+tests across the three files in one run.
 
 ## Environment and caveats
 
@@ -188,14 +214,17 @@ pnpm authzed:backfill --apply --scope=all
 # 3. Measure
 pnpm authzed:perf run --iterations=5000 --concurrency=16
 
-# 4. The N+1 proof
-pnpm --dir apps/web test:integration lib/authorization/checks-per-request.integration.test.ts
+# 4. The N+1 proofs (survey list, dashboard list, response export)
+pnpm --dir apps/web test:integration lib/authorization/checks-per-request.integration.test.ts \
+  lib/authorization/checks-per-request-dashboards.integration.test.ts \
+  lib/authorization/checks-per-request-response-export.integration.test.ts
 ```
 
 ## Follow-ups
 
-- Walk the dashboard, response, and API-key-scoped list paths with the same counter the
-  survey list got here, rather than resting on the static sweep.
+- Decide whether the v2 API-key-scoped response list should route through `can()` at all —
+  it currently authorizes by construction (filtering by the key's own workspace grants)
+  rather than by a checkable decision, which is a different question from N+1.
 - Quantify the `reactCache` gap: reproduce a fake request boundary per iteration in the
   perf harness (or run the counter test at BI scale for a fuller path) to see whether
   request-scoped caching meaningfully changes the coordinator's contribution.
