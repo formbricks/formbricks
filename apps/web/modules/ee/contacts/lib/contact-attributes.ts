@@ -46,13 +46,19 @@ export const getContactAttributes = reactCache(async (contactId: string) => {
   }
 });
 
-export const getContactAttributesWithKeyInfo = reactCache(async (contactId: string) => {
-  validateInputs([contactId, ZId]);
+/**
+ * Scoped by workspace on purpose: this feeds the contact detail page, which is reached through a
+ * workspace id in the URL. `ContactAttribute` has no workspace column of its own, so the tenant
+ * check goes through the contact it hangs off.
+ */
+export const getContactAttributesWithKeyInfo = reactCache(async (contactId: string, workspaceId: string) => {
+  validateInputs([contactId, ZId], [workspaceId, ZId]);
 
   try {
     const prismaAttributes = await prisma.contactAttribute.findMany({
       where: {
         contactId,
+        contact: { workspaceId },
       },
       select: selectContactAttribute,
     });

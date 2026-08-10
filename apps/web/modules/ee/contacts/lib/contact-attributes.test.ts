@@ -116,10 +116,10 @@ describe("getContactAttributesWithKeyInfo", () => {
       >
     );
 
-    const result = await getContactAttributesWithKeyInfo(contactId);
+    const result = await getContactAttributesWithKeyInfo(contactId, workspaceId);
 
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
-      where: { contactId },
+      where: { contactId, contact: { workspaceId } },
       select: {
         value: true,
         valueNumber: true,
@@ -158,7 +158,7 @@ describe("getContactAttributesWithKeyInfo", () => {
   test("returns empty array if no attributes", async () => {
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
 
-    const result = await getContactAttributesWithKeyInfo(contactId);
+    const result = await getContactAttributesWithKeyInfo(contactId, workspaceId);
 
     expect(result).toEqual([]);
   });
@@ -189,7 +189,7 @@ describe("getContactAttributesWithKeyInfo", () => {
       mixedTypeAttributes as unknown as Prisma.Result<typeof prisma.contactAttribute, unknown, "findMany">
     );
 
-    const result = await getContactAttributesWithKeyInfo(contactId);
+    const result = await getContactAttributesWithKeyInfo(contactId, workspaceId);
 
     expect(result).toHaveLength(3);
     expect(result[0].dataType).toBe("string");
@@ -209,14 +209,14 @@ describe("getContactAttributesWithKeyInfo", () => {
     });
     vi.mocked(prisma.contactAttribute.findMany).mockRejectedValue(prismaError);
 
-    await expect(getContactAttributesWithKeyInfo(contactId)).rejects.toThrow(DatabaseError);
+    await expect(getContactAttributesWithKeyInfo(contactId, workspaceId)).rejects.toThrow(DatabaseError);
   });
 
   test("rethrows non-Prisma errors", async () => {
     const genericError = new Error("Generic error");
     vi.mocked(prisma.contactAttribute.findMany).mockRejectedValue(genericError);
 
-    await expect(getContactAttributesWithKeyInfo(contactId)).rejects.toThrow("Generic error");
+    await expect(getContactAttributesWithKeyInfo(contactId, workspaceId)).rejects.toThrow("Generic error");
   });
 });
 
