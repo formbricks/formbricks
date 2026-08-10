@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TFeedbackSourceType } from "@formbricks/types/feedback-source";
+import { TFeedbackSourceImportMode, TFeedbackSourceType } from "@formbricks/types/feedback-source";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -65,6 +65,7 @@ import {
 import { CsvFeedbackSourceUI } from "./csv-feedback-source-ui";
 import { FeedbackSourceTypeSelector } from "./feedback-source-type-selector";
 import { FormbricksQuestionList } from "./formbricks-question-list";
+import { ImportModeField } from "./import-mode-field";
 
 const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/rest-api";
 const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/mcp";
@@ -77,6 +78,7 @@ interface CreateFeedbackSourceModalProps {
     name: string;
     type: TFeedbackSourceType;
     feedbackDirectoryId: string;
+    importMode?: TFeedbackSourceImportMode;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<string | undefined>;
@@ -154,6 +156,7 @@ export const CreateFeedbackSourceModal = ({
       surveyId: "",
       selectedQuestionIds: [],
       importHistorical: true,
+      importMode: "completedOnly",
     },
     mode: "onChange",
   });
@@ -252,6 +255,7 @@ export const CreateFeedbackSourceModal = ({
       surveyId: initialSurveyId,
       selectedQuestionIds: getSelectableQuestionIds(survey),
       importHistorical: true,
+      importMode: "completedOnly",
     });
   }, [open, initialSurveyId, surveys, formbricksForm, t]);
 
@@ -263,6 +267,7 @@ export const CreateFeedbackSourceModal = ({
       surveyId: "",
       selectedQuestionIds: [],
       importHistorical: true,
+      importMode: "completedOnly",
     });
     setMappings([]);
     setSourceFields([]);
@@ -302,6 +307,7 @@ export const CreateFeedbackSourceModal = ({
         surveyId: "",
         selectedQuestionIds: [],
         importHistorical: true,
+        importMode: "completedOnly",
       });
     }
 
@@ -407,10 +413,13 @@ export const CreateFeedbackSourceModal = ({
     if (!selectedDirectoryId) return;
     setIsCreating(true);
 
+    // Created before the historical import runs below, which reads importMode back off the source —
+    // so the mode chosen here is the one that import obeys.
     const feedbackSourceId = await onCreateFeedbackSource({
       name: values.sourceName.trim(),
       type: "formbricks_survey",
       feedbackDirectoryId: selectedDirectoryId,
+      importMode: values.importMode,
       surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
     });
 
@@ -616,6 +625,11 @@ export const CreateFeedbackSourceModal = ({
                       </FormItem>
                     )}
                   />
+
+                  {/* Always shown, unlike the historical-import switch below: this one is persisted
+                      on the source, so hiding it when the survey happens to have no responses yet
+                      would leave a saved setting the user never got to see. */}
+                  <ImportModeField control={formbricksForm.control} />
 
                   {selectedSurveyResponseCount !== null && selectedSurveyResponseCount > 0 && (
                     <FormField

@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import {
+  TFeedbackSourceImportMode,
   TFeedbackSourceType,
   TFeedbackSourceWithMappings,
   THubTargetField,
@@ -89,6 +90,7 @@ export function FeedbackSourcesSection({
     name: string;
     type: TFeedbackSourceType;
     feedbackDirectoryId: string;
+    importMode?: TFeedbackSourceImportMode;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
@@ -98,6 +100,7 @@ export function FeedbackSourcesSection({
         name: data.name,
         type: data.type,
         feedbackDirectoryId: data.feedbackDirectoryId,
+        importMode: data.importMode,
       },
       formbricksMappings:
         data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
@@ -124,6 +127,7 @@ export function FeedbackSourcesSection({
     feedbackSourceId: string;
     workspaceId: string;
     name: string;
+    importMode?: TFeedbackSourceImportMode;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<boolean> => {
@@ -132,6 +136,7 @@ export function FeedbackSourcesSection({
       workspaceId: workspaceId,
       feedbackSourceInput: {
         name: data.name,
+        importMode: data.importMode,
       },
       formbricksMappings: data.surveyMappings?.length ? data.surveyMappings : undefined,
       fieldMappings: data.fieldMappings?.length
