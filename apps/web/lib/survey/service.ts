@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
+import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import {
   DatabaseError,
   InvalidInputError,
@@ -13,6 +14,7 @@ import {
 import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -612,10 +614,25 @@ export const updateSurveyInternal = async (
     };
 
     delete data.createdBy;
-    const persistedSurvey = await prisma.survey.update({
-      where: { id: surveyId },
-      data,
-      select: selectSurvey,
+    const persistedSurvey = await prisma.$transaction(async (tx) => {
+      const survey = await tx.survey.update({
+        where: { id: surveyId },
+        data,
+        select: selectSurvey,
+      });
+
+      // ENG-1978: mirror the saved fields into the EmbeddedData tables in the same transaction, so a
+      // survey never commits without them. Derived from the PERSISTED survey rather than the payload:
+      // a partial update leaves `variables` / `hiddenFields` untouched in the column, and reading the
+      // payload instead would see them as absent and delete every row. workspaceId comes from the
+      // stored survey for the ENG-1749 reason above — never from the client.
+      await reconcileEmbeddedData(tx, {
+        surveyId,
+        workspaceId: currentSurvey.workspaceId,
+        desired: toDesiredEmbeddedFields(survey),
+      });
+
+      return survey;
     });
 
     return await reconcilePersistedSurveySchedulingIfDue({
@@ -855,6 +872,15 @@ export const createSurvey = async (
           },
         });
       }
+
+      // ENG-1978: a survey created from a template, the API or a duplicate can already carry
+      // variables and hidden fields, so the tables have to be populated at creation, not just on the
+      // next save.
+      await reconcileEmbeddedData(tx, {
+        surveyId: createdSurvey.id,
+        workspaceId: parsedWorkspaceId,
+        desired: toDesiredEmbeddedFields(createdSurvey),
+      });
 
       return createdSurvey;
     });
