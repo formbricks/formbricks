@@ -109,3 +109,63 @@ describe("survey list authorization amplification, against a real database", () 
     expect(large - small).toBe(0);
   });
 });
+
+describe("survey list authorization amplification (member, not owner), against a real database", () => {
+  /**
+   * Separate from the owner tests above: owners short-circuit nearly every authorization path, so an
+   * integration test that only exercises the owner role misses the scope-resolver and team-membership
+   * code that members exercise. This variant sets up a member whose workspace access arrives through
+   * team membership — the path real non-admin users take — and confirms the O(1) claim still holds.
+   */
+  const scenario = { organizationId: "", userId: "", workspaceId: "" };
+
+  beforeAll(async () => {
+    const organization = await prisma.organization.create({ data: { name: "Member Checks Org" } });
+    const user = await prisma.user.create({ data: { name: "member", email: "member@checks.test" } });
+    await prisma.membership.create({
+      data: { userId: user.id, organizationId: organization.id, role: "member", accepted: true },
+    });
+    const workspace = await prisma.workspace.create({
+      data: { name: "Member Checks Workspace", organizationId: organization.id },
+    });
+    const team = await prisma.team.create({
+      data: { name: "Member Checks Team", organizationId: organization.id },
+    });
+    await prisma.teamUser.create({
+      data: { teamId: team.id, userId: user.id, role: "contributor" },
+    });
+    await prisma.workspaceTeam.create({
+      data: { teamId: team.id, workspaceId: workspace.id, permission: "read" },
+    });
+
+    scenario.organizationId = organization.id;
+    scenario.userId = user.id;
+    scenario.workspaceId = workspace.id;
+  }, 120_000);
+
+  test("a member with team-based workspace access issues exactly one check for the survey list", async () => {
+    await prisma.survey.createMany({
+      data: Array.from({ length: 100 }, (_unused, index) => ({
+        name: `member-survey-${index}`,
+        workspaceId: scenario.workspaceId,
+        status: "inProgress" as const,
+        type: "link" as const,
+      })),
+    });
+
+    const result = await withAuthorizationSurface("server_action", async () => {
+      const canRead = await can({ type: "user", id: scenario.userId }, "workspace.read", {
+        type: "workspace",
+        id: scenario.workspaceId,
+      });
+      expect(canRead).toBe(true);
+
+      const rows = await getSurveys(scenario.workspaceId);
+      return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: rows.length };
+    });
+
+    expect(result.rowCount).toBe(100);
+    // Owner or member, the workspace-level decision is still one check.
+    expect(result.checksIssued).toBe(1);
+  });
+});

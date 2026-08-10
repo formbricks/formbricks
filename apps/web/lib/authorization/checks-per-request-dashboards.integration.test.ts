@@ -17,7 +17,7 @@ const scenario: { organizationId: string; userId: string; workspaceId: string } 
   workspaceId: "",
 };
 
-const DASHBOARD_COUNTS = [10, 500] as const;
+const DASHBOARD_COUNTS = [10, 2_000] as const;
 
 beforeAll(async () => {
   await resetDb();

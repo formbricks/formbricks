@@ -1,4 +1,5 @@
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { createWriteStream, mkdirSync, writeFileSync } from "node:fs";
+import type { WriteStream } from "node:fs";
 import { dirname } from "node:path";
 import { performance } from "node:perf_hooks";
 import { prisma } from "@formbricks/database";
@@ -288,41 +289,60 @@ const run = async (iterations: number, concurrency: number, logPath: string): Pr
   mkdirSync(dirname(logPath), { recursive: true });
   writeFileSync(logPath, "");
 
+  const logStream: WriteStream = createWriteStream(logPath, { flags: "a" });
   const samples: TSample[] = [];
-  const startedAt = performance.now();
 
-  const runOne = async (index: number): Promise<void> => {
-    const membership = memberships[index % memberships.length];
-    const testCase = cases[index % cases.length];
-    const begunAt = performance.now();
-    let allowed: boolean | null = null;
-    let error: string | null = null;
+  const runOne =
+    (collect: boolean): ((index: number) => Promise<void>) =>
+    async (index: number): Promise<void> => {
+      const membership = memberships[index % memberships.length];
+      const testCase = cases[index % cases.length];
+      const begunAt = performance.now();
+      let allowed: boolean | null = null;
+      let error: string | null = null;
 
-    try {
-      allowed = await can({ type: "user", id: membership.userId }, testCase.action, testCase.resource);
-    } catch (error_) {
-      error = error_ instanceof Error ? error_.name : "unknown";
-    }
+      try {
+        allowed = await can({ type: "user", id: membership.userId }, testCase.action, testCase.resource);
+      } catch (error_) {
+        error = error_ instanceof Error ? error_.name : "unknown";
+      }
 
-    const sample: TSample = {
-      action: testCase.action,
-      allowed,
-      durationMs: performance.now() - begunAt,
-      error,
-      role: membership.role,
+      const sample: TSample = {
+        action: testCase.action,
+        allowed,
+        durationMs: performance.now() - begunAt,
+        error,
+        role: membership.role,
+      };
+
+      if (collect) {
+        samples.push(sample);
+        logStream.write(`${JSON.stringify(sample)}\n`);
+      }
     };
-    samples.push(sample);
-    appendFileSync(logPath, `${JSON.stringify(sample)}\n`);
-  };
+
+  // Warmup: cold gRPC channel, DB connection pool, and SpiceDB cache all bias the first samples.
+  // Running a throwaway batch before the timed phase means the reported percentiles reflect a warm
+  // path, not one-time startup costs.
+  const WARMUP_ITERATIONS = 100;
+  const WARMUP_CONCURRENCY = 8;
+  await withAuthorizationSurface("server_action", async () => {
+    for (const batch of chunk([...new Array(WARMUP_ITERATIONS).keys()], WARMUP_CONCURRENCY)) {
+      await Promise.all(batch.map(runOne(false)));
+    }
+  });
 
   // Inside a surface, so the rollout cohort can select this traffic. Without it the coordinator has
   // no target to match and every check falls to the legacy evaluator no matter how enforcement is
   // configured — which is exactly how a "SpiceDB run" quietly measures Postgres instead.
+  const startedAt = performance.now();
   await withAuthorizationSurface("server_action", async () => {
     for (const batch of chunk([...new Array(iterations).keys()], concurrency)) {
-      await Promise.all(batch.map(runOne));
+      await Promise.all(batch.map(runOne(true)));
     }
   });
+
+  logStream.end();
 
   const wallSeconds = (performance.now() - startedAt) / 1000;
   const byAction = new Map<string, number[]>();

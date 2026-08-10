@@ -24,6 +24,11 @@ const evaluator: AuthorizationEvaluator = authorizationCoordinator;
  * Counted here, once, ahead of the evaluator call — the ENG-1739 per-request instrumentation. This
  * is the one place every `can()` and `assertCan()` call passes through regardless of caller, so it
  * is the only place a count taken here is guaranteed not to miss or double-count a decision.
+ *
+ * The count increments *before* the evaluator answers, so a thrown error from the evaluator still
+ * counts as one issued decision — the metric tracks "checks issued", not "checks completed". Both
+ * are useful; this one answers "how many authorization decisions did this page attempt" and is the
+ * number that catches an N+1 regression regardless of whether any individual check fails.
  */
 export const can = <TAction extends TAuthorizationAction>(
   actor: TAuthorizationActor,

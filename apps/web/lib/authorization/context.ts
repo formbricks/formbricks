@@ -30,8 +30,11 @@ type TAuthorizationContext = {
  */
 const meter = metrics.getMeter("formbricks.authorization");
 const checksPerRequest = meter.createHistogram("formbricks_authorization_checks_per_request", {
-  advice: { explicitBucketBoundaries: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 250, 500, 1000] },
+  advice: {
+    explicitBucketBoundaries: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 250, 350, 500, 750, 1000],
+  },
   description: "Number of central authorization decisions made while handling one request",
+  unit: "{check}",
 });
 
 const globalForAuthorization = globalThis as unknown as {
@@ -72,9 +75,11 @@ export const withAuthorizationSurface = async <T>(
       });
       context.scheduled = true;
     } catch {
-      // A wrapper can be invoked outside a Next.js request in scripts/tests.
-      // Rollout remains fail-safe: no background comparison is accepted when
-      // the platform cannot extend the request lifetime.
+      // A wrapper can be invoked outside a Next.js request in scripts/tests — `after()` is
+      // unavailable there. This path is expected in dev tooling (authzed:perf, authzed:backfill,
+      // integration tests); it is never reached inside a real Next.js request. When it fires,
+      // neither the histogram nor the comparison drain will execute for this surface — the
+      // per-request count is still functional via `recordAuthorizationCheckIssued`.
       context.scheduled = false;
     }
 
