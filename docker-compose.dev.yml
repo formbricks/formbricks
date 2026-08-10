@@ -1,7 +1,18 @@
 # Google credentials for the Hub's Vertex enrichment providers (the google-gemini provider) are read
-# from a file *inside* the container, so a host path in GOOGLE_APPLICATION_CREDENTIALS can never
-# resolve on its own. Bind-mount whatever the host points at to one fixed in-container path and
-# override the in-container variable to match (see the hub service's environment).
+# from a file *inside* the container, so a host path can never resolve on its own. Bind-mount
+# whatever the host points at to one fixed in-container path and set the in-container variable to
+# match (see the hub service's environment).
+#
+# The host knob is HUB_GOOGLE_APPLICATION_CREDENTIALS, deliberately *not* the standard
+# GOOGLE_APPLICATION_CREDENTIALS. That name is Google's global Application Default Credentials
+# convention and gcloud users commonly export it from a shell profile; compose gives the shell
+# environment precedence over .env, so reading it here would let ambient state nobody set for
+# Formbricks drive this mount. A stale export (key since moved) would fail hub and hub-worker
+# creation under create_host_path: false and take the whole db:up chain down with it, for someone
+# who never touched enrichment; a live one would silently bind a personal or production key into
+# both containers and activate it. HUB_ also matches the other Hub knobs here (HUB_API_KEY,
+# HUB_DATABASE_URL, HUB_IMAGE_TAG); only the in-container name stays standard, which is what the
+# Hub actually reads.
 #
 # The /dev/null default keeps the mount spec valid when the variable is unset — nothing reads the
 # file in that case, because the ${VAR:+...} form below leaves the in-container variable empty and
@@ -14,7 +25,7 @@
 #
 # Long syntax on purpose. In the "source:target:ro" short form, compose reads a source that is not
 # an absolute or ./-prefixed path as a *named volume* reference, so a relative value here
-# (GOOGLE_APPLICATION_CREDENTIALS=creds.json) fails the whole project with "refers to undefined
+# (HUB_GOOGLE_APPLICATION_CREDENTIALS=creds.json) fails the whole project with "refers to undefined
 # volume" — taking postgres and everything else down with it, for an error that never mentions
 # credentials. With an explicit type: bind, a relative value is resolved against the project
 # directory instead.
@@ -27,7 +38,7 @@
 # project (unlike the undefined-volume case above, which fails at config parse).
 x-hub-volumes: &hub-volumes
   - type: bind
-    source: ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}
+    source: ${HUB_GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}
     target: /secrets/gcp.json
     read_only: true
     bind:
@@ -183,7 +194,7 @@ services:
       # API key instead, which is the simpler option for local dev. Note the mount reaches both
       # containers because they share one credential — the API needs it only when embeddings use
       # Vertex (it embeds search queries synchronously), the worker whenever it classifies.
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:+/secrets/gcp.json}
+      GOOGLE_APPLICATION_CREDENTIALS: ${HUB_GOOGLE_APPLICATION_CREDENTIALS:+/secrets/gcp.json}
       # Hub sentiment/emotion/translation enrichment (0.7.x) are disabled unless the
       # matching *_PROVIDER and *_MODEL pair is set (translation additionally needs a
       # target language — TRANSLATION_DEFAULT_LANGUAGE, or a per-tenant setting). The
