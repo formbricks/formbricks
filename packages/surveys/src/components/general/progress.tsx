@@ -9,7 +9,7 @@ export function Progress({ progress }: Readonly<{ progress: number }>) {
   const percent = Math.floor(Math.min(Math.max(progress, 0), 1) * 100);
 
   return (
-    <div
+    <div // NOSONAR(typescript:S6819) - a native <progress> cannot be themed from the survey's CSS variables
       className="progress-track h-2 w-full overflow-hidden rounded-none"
       role="progressbar"
       aria-label={t("common.survey_progress")}
