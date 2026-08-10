@@ -21,20 +21,20 @@ export const AddVariablesDropdown: React.FC<IAddVariablesDropdown> = (props) => 
             <>
               <div className="hidden sm:flex">
                 add_variable
-                <ChevronDownIcon className="ml-1 mt-[2px] size-4" />
+                <ChevronDownIcon className="mt-[2px] ml-1 size-4" />
               </div>
               <div className="block sm:hidden">+</div>
             </>
           ) : (
             <div className="flex">
               add_variable
-              <ChevronDownIcon className="ml-1 mt-[2px] size-4" />
+              <ChevronDownIcon className="mt-[2px] ml-1 size-4" />
             </div>
           )}
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <div className="pb-1 pt-4">
+        <div className="pt-4 pb-1">
           <div className="text-subtle mb-2 px-4 text-left text-xs">
             {"add_dynamic_variables".toLocaleUpperCase()}
           </div>

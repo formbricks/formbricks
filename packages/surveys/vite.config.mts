@@ -1,11 +1,11 @@
 import preact from "@preact/preset-vite";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEnv, type Plugin } from "vite";
+import { visualizer } from "rollup-plugin-visualizer";
+import { type Plugin, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
-import { visualizer } from "rollup-plugin-visualizer";
 
 // Stubs the @formbricks/survey-ui/styles?inline import during vitest runs so that
 // tests do not require packages/survey-ui to be built first. The plugin only
@@ -145,7 +145,13 @@ const config = ({ mode }) => {
       ...sharedConfig.plugins,
       stubSurveyUiStylesForVitest(),
       copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
-      process.env.ANALYZE === "true" && visualizer({ filename: resolve(__dirname, "stats.html"), open: false, gzipSize: true, brotliSize: true }),
+      process.env.ANALYZE === "true" &&
+        visualizer({
+          filename: resolve(__dirname, "stats.html"),
+          open: false,
+          gzipSize: true,
+          brotliSize: true,
+        }),
     ],
   });
 };

@@ -47,6 +47,7 @@ export default defineConfig({
         "modules/**/*.ts",
         "lib/**/*.ts",
         "lingodotdev/**/*.ts",
+        "instrumentation-node-config.ts",
         "instrumentation-jobs.ts",
         "proxy.ts",
       ],

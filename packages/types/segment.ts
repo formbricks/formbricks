@@ -414,6 +414,19 @@ const ZRequiredSegmentFilters = ZSegmentFilters.refine((filters) => filters.leng
   error: "At least one filter is required",
 });
 
+/**
+ * Maximum number of surveys a single segment may be linked to. The links are supplied by the client
+ * (segment update, and the nested segment on a survey update) and land in a Prisma `id IN (...)`
+ * lookup, so the array has to be bounded: an unbounded one is a cheap authenticated way to blow up
+ * the SQL parameter payload. A saved segment reused by this many surveys is already far past any
+ * shape the product produces.
+ */
+export const MAX_SEGMENT_SURVEYS = 500;
+
+// `ZId` (cuid2) also keeps non-id junk from reaching the database. Ownership is still enforced at
+// write time — every id must resolve to a survey in the segment's workspace (ENG-1749/ENG-1920).
+const ZSegmentSurveyIds = z.array(ZId).max(MAX_SEGMENT_SURVEYS);
+
 export const ZSegment = z.object({
   id: z.string(),
   title: z.string(),
@@ -423,7 +436,7 @@ export const ZSegment = z.object({
   workspaceId: ZId,
   createdAt: z.date(),
   updatedAt: z.date(),
-  surveys: z.array(z.string()),
+  surveys: ZSegmentSurveyIds,
 });
 
 // Minimal segment shape for the public client API — strips sensitive targeting logic
@@ -555,7 +568,7 @@ export const ZSegmentUpdateInput = z
     description: z.string().nullable(),
     isPrivate: z.boolean().prefault(true),
     filters: ZRequiredSegmentFilters,
-    surveys: z.array(z.string()),
+    surveys: ZSegmentSurveyIds,
   })
   .partial();
 
