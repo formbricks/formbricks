@@ -104,6 +104,9 @@ export const EditOrganizationDisplayTimeZoneForm = ({
                 <FormControl>
                   <InputCombobox
                     id="display-time-zone"
+                    // The trigger renders as div[role="combobox"], which <label htmlFor> can't name;
+                    // give it an explicit accessible name matching the visible FormLabel.
+                    aria-label={t("workspace.settings.general.display_time_zone")}
                     showSearch
                     options={timeZoneOptions}
                     value={field.value ?? UTC_DEFAULT_OPTION_VALUE}
