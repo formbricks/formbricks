@@ -335,44 +335,6 @@ describe("env", () => {
     await expect(import("./env")).rejects.toThrow("Invalid environment variables");
   });
 
-  test("leaves the response display timezone undefined when env var is not set", async () => {
-    setTestEnv({
-      RESPONSE_DISPLAY_TIME_ZONE: undefined,
-    });
-
-    const { env } = await import("./env");
-
-    expect(env.RESPONSE_DISPLAY_TIME_ZONE).toBeUndefined();
-  });
-
-  test("treats an empty response display timezone as unset", async () => {
-    setTestEnv({
-      RESPONSE_DISPLAY_TIME_ZONE: "",
-    });
-
-    const { env } = await import("./env");
-
-    expect(env.RESPONSE_DISPLAY_TIME_ZONE).toBeUndefined();
-  });
-
-  test("uses the configured response display timezone", async () => {
-    setTestEnv({
-      RESPONSE_DISPLAY_TIME_ZONE: "Asia/Manila",
-    });
-
-    const { env } = await import("./env");
-
-    expect(env.RESPONSE_DISPLAY_TIME_ZONE).toBe("Asia/Manila");
-  });
-
-  test("fails to load when the response display timezone is invalid", async () => {
-    setTestEnv({
-      RESPONSE_DISPLAY_TIME_ZONE: "Manila",
-    });
-
-    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
-  });
-
   test("fails to load when the survey scheduling hour is out of range", async () => {
     setTestEnv({
       SURVEY_SCHEDULING_LOCAL_HOUR: "24",

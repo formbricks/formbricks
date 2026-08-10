@@ -26,8 +26,9 @@ import { deleteFile } from "@/modules/storage/service";
 import { parseStorageFileUrl, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
-import { ITEMS_PER_PAGE, RESPONSE_DISPLAY_TIME_ZONE } from "../constants";
+import { ITEMS_PER_PAGE } from "../constants";
 import { deleteDisplay } from "../display/service";
+import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
@@ -445,7 +446,10 @@ export const getResponseDownloadFile = async (
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    const organizationBilling = await getOrganizationBilling(organizationId);
+    const [organizationBilling, organization] = await Promise.all([
+      getOrganizationBilling(organizationId),
+      getOrganization(organizationId),
+    ]);
 
     if (!organizationBilling) {
       throw new ResourceNotFoundError("OrganizationBilling", organizationId);
@@ -480,7 +484,7 @@ export const getResponseDownloadFile = async (
       userAttributes,
       hiddenFields,
       isQuotasAllowed,
-      RESPONSE_DISPLAY_TIME_ZONE ?? "UTC"
+      organization?.displayTimeZone ?? "UTC"
     );
 
     const fileName = getResponsesFileName(survey?.name || "", format);

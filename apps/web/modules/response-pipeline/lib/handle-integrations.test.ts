@@ -364,6 +364,23 @@ describe("handleIntegrations", () => {
       );
     });
 
+    test("should format Created At in the provided display time zone", async () => {
+      vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+      await handleIntegrations([mockAirtableIntegration], mockPipelineInput, mockSurvey, "Asia/Manila");
+
+      expect(getFormattedDateTimeString).toHaveBeenCalledWith(
+        new Date("2024-01-01T12:00:00Z"),
+        "Asia/Manila"
+      );
+    });
+
+    test("should format Created At in UTC when no display time zone is provided", async () => {
+      vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+      await handleIntegrations([mockAirtableIntegration], mockPipelineInput, mockSurvey);
+
+      expect(getFormattedDateTimeString).toHaveBeenCalledWith(new Date("2024-01-01T12:00:00Z"), "UTC");
+    });
+
     test("should not call airtableWriteData if surveyId does not match", async () => {
       const differentSurveyInput = { ...mockPipelineInput, surveyId: "otherSurvey" };
       await handleIntegrations([mockAirtableIntegration], differentSurveyInput, mockSurvey);

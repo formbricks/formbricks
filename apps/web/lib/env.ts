@@ -1,6 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
+import { isValidIanaTimeZone } from "@formbricks/types/common";
 import { throwEnvValidationError } from "./env-validation-error";
 
 const ZActiveAIProvider = z.enum(AI_PROVIDERS);
@@ -182,15 +183,6 @@ const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx:
   providerValidators[values.AI_PROVIDER](values, ctx);
 };
 
-const isValidIanaTimeZone = (value: string): boolean => {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 const ZSurveySchedulingTimeZone = z.string().trim().min(1).refine(isValidIanaTimeZone, {
   message: "SURVEY_SCHEDULING_TIME_ZONE must be a valid IANA time zone",
 });
@@ -200,18 +192,6 @@ const ZSurveySchedulingLocalMinute = z.coerce.number().int().min(0).max(59);
 const emptyStringToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
-
-const ZResponseDisplayTimeZone = z.preprocess(
-  emptyStringToUndefined,
-  z
-    .string()
-    .trim()
-    .min(1)
-    .refine(isValidIanaTimeZone, {
-      error: "RESPONSE_DISPLAY_TIME_ZONE must be a valid IANA time zone",
-    })
-    .optional()
-);
 
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
@@ -402,7 +382,6 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
     SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
     SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
-    RESPONSE_DISPLAY_TIME_ZONE: ZResponseDisplayTimeZone,
   },
   client: {},
 
@@ -493,7 +472,6 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_LOCAL_HOUR: process.env.SURVEY_SCHEDULING_LOCAL_HOUR,
     SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.SURVEY_SCHEDULING_LOCAL_MINUTE,
     SURVEY_SCHEDULING_TIME_ZONE: process.env.SURVEY_SCHEDULING_TIME_ZONE,
-    RESPONSE_DISPLAY_TIME_ZONE: process.env.RESPONSE_DISPLAY_TIME_ZONE,
     SENTRY_DSN: process.env.SENTRY_DSN,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,

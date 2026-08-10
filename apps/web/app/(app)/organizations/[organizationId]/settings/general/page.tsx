@@ -2,6 +2,7 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { AISettingsToggle } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/AISettingsToggle";
 import { CreateOrganizationCard } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/CreateOrganizationCard";
 import { DeleteOrganization } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/DeleteOrganization";
+import { EditOrganizationDisplayTimeZoneForm } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/EditOrganizationDisplayTimeZoneForm";
 import { EditOrganizationNameForm } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/EditOrganizationNameForm";
 import { SecurityListTip } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/SecurityListTip";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
@@ -66,6 +67,11 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
         title={t("workspace.settings.general.organization_name")}
         description={t("workspace.settings.general.organization_name_description")}>
         <EditOrganizationNameForm organization={organization} membershipRole={currentUserRole} />
+      </SettingsCard>
+      <SettingsCard
+        title={t("workspace.settings.general.display_time_zone")}
+        description={t("workspace.settings.general.display_time_zone_description")}>
+        <EditOrganizationDisplayTimeZoneForm organization={organization} membershipRole={currentUserRole} />
       </SettingsCard>
       <SettingsCard
         title={t("workspace.settings.general.ai_enabled")}
