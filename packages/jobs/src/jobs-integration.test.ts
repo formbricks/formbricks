@@ -1,15 +1,30 @@
-import { QueueEvents } from "bullmq";
+import { type Queue, QueueEvents } from "bullmq";
 import IORedis from "ioredis";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { JOBS_DEFAULT_JOB_OPTIONS, JOBS_PREFIX, JOBS_QUEUE_NAME, JOB_NAMES } from "./constants";
 import {
   enqueueTestLogJob,
-  getBackgroundJobProducer,
   resetJobsQueueFactory,
   scheduleTestLogJobAt,
+  upsertRecurringTestLogJobSchedule,
 } from "./queue";
 import { startJobsRuntime } from "./runtime";
+import { getRecurringJobSchedulerId } from "./schedules";
+
+/**
+ * A healthy job scheduler always keeps exactly one of its jobs pending — that job is what produces the
+ * next one. An `every` schedule's first iteration is due immediately, so it starts in `waiting`; once a
+ * worker has taken it, the following iteration sits in `delayed`. BullMQ names both
+ * `repeat:<schedulerId>:<timestamp>`.
+ */
+const getPendingJobIdsForScheduler = async (queue: Queue, schedulerId: string): Promise<string[]> => {
+  const pendingJobs = await queue.getJobs(["delayed", "prioritized", "waiting"]);
+
+  return pendingJobs
+    .map((job) => job.id)
+    .filter((jobId): jobId is string => jobId !== undefined && jobId.startsWith(`repeat:${schedulerId}:`));
+};
 
 let redisUrl: string | undefined;
 let runtime: Awaited<ReturnType<typeof startJobsRuntime>> | null = null;
@@ -87,7 +102,9 @@ describe("BullMQ integration tests", () => {
 
     const job = await enqueueTestLogJob({ message: "integration success" });
 
-    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeUndefined();
+    // `null`, not `undefined`: BullMQ round-trips the processor's return value through JSON, so a
+    // handler returning nothing reads back as null.
+    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeNull();
     expect(job.name).toBe(JOB_NAMES.testLog);
     expect(job.opts.attempts).toBe(JOBS_DEFAULT_JOB_OPTIONS.attempts);
     expect(job.opts.backoff).toEqual(JOBS_DEFAULT_JOB_OPTIONS.backoff);
@@ -104,13 +121,20 @@ describe("BullMQ integration tests", () => {
 
     await expect(job.waitUntilFinished(queueEvents)).rejects.toThrow();
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        attemptsMade: JOBS_DEFAULT_JOB_OPTIONS.attempts,
-        jobId: job.id,
-        jobName: JOB_NAMES.testLog,
-      }),
-      "BullMQ job failed"
+    // `waitUntilFinished` resolves off the QueueEvents stream, which can beat the worker's own `failed`
+    // listener to logging, so poll rather than assert the final attempt has already been recorded.
+    await vi.waitFor(
+      () => {
+        expect(errorSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            attemptsMade: JOBS_DEFAULT_JOB_OPTIONS.attempts,
+            jobId: job.id,
+            jobName: JOB_NAMES.testLog,
+          }),
+          "BullMQ job failed"
+        );
+      },
+      { interval: 100, timeout: 10_000 }
     );
   }, 35000);
 
@@ -127,48 +151,92 @@ describe("BullMQ integration tests", () => {
       { message: "integration delayed success" }
     );
 
-    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeUndefined();
+    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeNull();
     expect(Date.now()).toBeGreaterThanOrEqual(scheduledFor);
   }, 15000);
 
-  test("upserts recurring schedules using the engine-neutral producer interface", async () => {
-    if (!isRedisAvailable) {
+  test("upserts a recurring schedule that actually produces jobs", async () => {
+    if (!isRedisAvailable || !runtime) {
       logger.info("Skipping BullMQ integration test: Redis not available");
       return;
     }
 
-    const producer = getBackgroundJobProducer();
+    const { queue } = runtime;
     const debugSpy = vi.spyOn(logger, "debug");
+    const scope = "integration-tests";
     const message = `integration recurring ${Date.now().toString()}`;
     const scheduleId = `integration-recurring-${Date.now().toString()}`;
+    const schedulerId = getRecurringJobSchedulerId(JOB_NAMES.testLog, { scheduleId, scope });
 
-    const scheduledJob = await producer.upsertRecurringTestLogSchedule(
-      {
-        scheduleId,
-        scope: "integration-tests",
-      },
-      {
-        everyMs: 200,
-        kind: "every",
-        limit: 2,
-      },
-      { message }
-    );
+    try {
+      const scheduledJob = await upsertRecurringTestLogJobSchedule(
+        { scheduleId, scope },
+        { everyMs: 200, kind: "every", limit: 2 },
+        { message }
+      );
 
-    await vi.waitFor(
-      () => {
-        const processorLogs = debugSpy.mock.calls.filter((call) => call[1] === message);
-        expect(processorLogs).toHaveLength(2);
-      },
-      { interval: 100, timeout: 10_000 }
-    );
+      await vi.waitFor(
+        () => {
+          const processorLogs = debugSpy.mock.calls.filter((call) => call[1] === message);
+          expect(processorLogs).toHaveLength(2);
+        },
+        { interval: 100, timeout: 10_000 }
+      );
 
-    expect(scheduledJob).toMatchObject({
-      jobName: JOB_NAMES.testLog,
-      queueName: JOBS_QUEUE_NAME,
-      scheduleId,
-      scope: "integration-tests",
-    });
-    expect(scheduledJob.jobId).toEqual(expect.any(String));
+      expect(scheduledJob.name).toBe(JOB_NAMES.testLog);
+      expect(scheduledJob.queueName).toBe(JOBS_QUEUE_NAME);
+      expect(scheduledJob.id).toEqual(expect.any(String));
+    } finally {
+      // Otherwise every run leaves a scheduler behind in the shared integration Redis.
+      await queue.removeJobScheduler(schedulerId);
+    }
+  }, 15000);
+
+  test("keeps producing work when a scheduler's repeat options change", async () => {
+    if (!isRedisAvailable || !runtime) {
+      logger.info("Skipping BullMQ integration test: Redis not available");
+      return;
+    }
+
+    const { queue } = runtime;
+    const scope = "integration-tests";
+    const scheduleId = `integration-reupsert-${Date.now().toString()}`;
+    const schedulerId = getRecurringJobSchedulerId(JOB_NAMES.testLog, { scheduleId, scope });
+    // An hour out, so the worker cannot consume the pending job while the queue is inspected.
+    const upsertEvery = async (everyMs: number): Promise<void> => {
+      await upsertRecurringTestLogJobSchedule(
+        { scheduleId, scope },
+        { everyMs, kind: "every" },
+        { message: `integration re-upsert ${scheduleId}` }
+      );
+    };
+
+    const expectExactlyOnePendingJob = async (): Promise<void> => {
+      await vi.waitFor(
+        async () => {
+          const pendingJobIds = await getPendingJobIdsForScheduler(queue, schedulerId);
+          expect(pendingJobIds).toHaveLength(1);
+        },
+        { interval: 100, timeout: 5_000 }
+      );
+    };
+
+    try {
+      await upsertEvery(60 * 60 * 1000);
+
+      await expectExactlyOnePendingJob();
+
+      // Changing the repeat options on an existing scheduler must leave it still producing work. This is
+      // the shape bullmq#3063 breaks when a remove precedes the upsert: the scheduler survives with a
+      // correct next-run time but no job pending, so it never fires again.
+      await upsertEvery(2 * 60 * 60 * 1000);
+
+      await expectExactlyOnePendingJob();
+
+      const schedulers = await queue.getJobSchedulers();
+      expect(schedulers.map((scheduler) => scheduler.key)).toContain(schedulerId);
+    } finally {
+      await queue.removeJobScheduler(schedulerId);
+    }
   }, 15000);
 });
