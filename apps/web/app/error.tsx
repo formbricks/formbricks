@@ -27,7 +27,7 @@ const getErrorMessages = (type: ClientErrorType, t: TFunction) => {
   };
 };
 
-const ErrorBoundary = ({ error, reset }: { error: Error; reset: () => void }) => {
+const ErrorBoundary = ({ error, reset }: Readonly<{ error: Error; reset: () => void }>) => {
   const { t } = useTranslation();
   const errorData = getClientErrorData(error);
   const { title, description } = getErrorMessages(errorData.type, t);

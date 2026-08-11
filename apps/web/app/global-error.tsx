@@ -5,7 +5,7 @@ import NextError from "next/error";
 import { useEffect } from "react";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 
-export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
+export default function GlobalError({ error }: Readonly<{ error: Error & { digest?: string } }>) {
   useEffect(() => {
     if (IS_DEVELOPMENT_BUILD) {
       console.error(error.message);
