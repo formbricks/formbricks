@@ -363,6 +363,7 @@ checksums:
     common/only_one_file_allowed: 171be177f2e96c4bb4c4a47b3bf6c8c9
     common/only_owners_managers_and_manage_access_members_can_perform_this_action: 3c16fc506e871935f6183793e73b6709
     common/open_options: a4578c0afbfdf4a76d5952a53085b72a
+    common/open_support_chat: 3607d302882cb2aa8c1792d00abe75f5
     common/option_id: ed21d97b8ab035ba89fb3f5f073229bd
     common/option_ids: e68c25215ce81ea7ad82ff7be0a0bf2d
     common/optional: 396fb9a0472daf401c392bdc3e248943
