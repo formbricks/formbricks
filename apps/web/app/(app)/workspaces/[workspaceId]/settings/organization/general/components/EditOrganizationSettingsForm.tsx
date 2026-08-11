@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   FormControl,
+  FormDescription,
   FormError,
   FormField,
   FormItem,
@@ -32,8 +33,8 @@ interface EditOrganizationSettingsFormProps {
   membershipRole?: TOrganizationRole;
 }
 
-const ZEditOrganizationSettingsFormSchema = ZOrganization.pick({ name: true }).merge(
-  ZOrganizationUpdateInput.pick({ displayTimeZone: true })
+const ZEditOrganizationSettingsFormSchema = ZOrganization.pick({ name: true }).extend(
+  ZOrganizationUpdateInput.pick({ displayTimeZone: true }).shape
 );
 type TEditOrganizationSettingsForm = z.infer<typeof ZEditOrganizationSettingsFormSchema>;
 
@@ -164,6 +165,10 @@ export const EditOrganizationSettingsForm = ({
                     disabled={!canEditTimeZone}
                   />
                 </FormControl>
+
+                <FormDescription>
+                  {t("workspace.settings.general.display_time_zone_description")}
+                </FormDescription>
 
                 <FormError />
               </FormItem>

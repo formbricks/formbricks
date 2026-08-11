@@ -2677,8 +2677,9 @@ checksums:
     workspace/settings/general/delete_organization_warning_1: ffa4e85d53abffc214c1dff559c0f605
     workspace/settings/general/delete_organization_warning_2: dbcbdcd5ba92a61598241a419da7a468
     workspace/settings/general/delete_organization_warning_3: 2ddf440095276a33077c0dad5e0d8382
-    workspace/settings/general/display_time_zone: c50089e57c7e966176e1845a858f0dc0
-    workspace/settings/general/display_time_zone_placeholder: 8954261f9cd7a404b8dd2735dab105d9
+    workspace/settings/general/display_time_zone: 044ae9400b9cb1842ee5f1f4a47f63f7
+    workspace/settings/general/display_time_zone_description: 7206538051bbda23f978d2ff5cda08d7
+    workspace/settings/general/display_time_zone_placeholder: 178dd196ba76661753dcb77bc6aa53da
     workspace/settings/general/display_time_zone_updated_successfully: 8080a2f198d7d3032661a1c77c5641ea
     workspace/settings/general/display_time_zone_utc_default: e971a8729df53f768ce36db91530a2ed
     workspace/settings/general/eliminate_branding_with_whitelabel: 2c7c61df65af823fee73f7ae79817b0c
