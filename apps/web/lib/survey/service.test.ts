@@ -41,6 +41,8 @@ import {
   updateSurvey,
   updateSurveyInternal,
 } from "./service";
+import { getFeedbackSourcesBySurveyId, applyReconciliationToFeedbackSource } from "@/lib/feedback-source/service";
+import { reconcileMappingsAgainstSurvey } from "@/lib/feedback-source/mappings";
 
 const SURVEY_SERVICE_TEST_TIMEOUT_MS = 30_000;
 
@@ -55,6 +57,16 @@ vi.mock("@/lib/organization/service", () => ({
 // Mock actionClass service
 vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
+}));
+
+// Mock feedback-source services used by the ENG-2064 reconciliation hook
+vi.mock("@/lib/feedback-source/service", () => ({
+  getFeedbackSourcesBySurveyId: vi.fn(),
+  applyReconciliationToFeedbackSource: vi.fn(),
+}));
+
+vi.mock("@/lib/feedback-source/mappings", () => ({
+  reconcileMappingsAgainstSurvey: vi.fn(),
 }));
 
 beforeEach(() => {
@@ -524,6 +536,77 @@ describe("Tests for updateSurvey", () => {
       await expect(updateSurveyInternal({ ...updateSurveyInput }, true)).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Feedback source reconciliation (ENG-2064)", () => {
+    const mockFeedbackSource = {
+      id: "fs-1",
+      workspaceId: "ws-1",
+      formbricksMappings: [
+        { elementId: "el-1", hubFieldType: "text" as const },
+        { elementId: "el-2", hubFieldType: "rating" as const },
+      ],
+    };
+
+    beforeEach(() => {
+      vi.mocked(getFeedbackSourcesBySurveyId).mockReset();
+      vi.mocked(applyReconciliationToFeedbackSource).mockReset();
+      vi.mocked(reconcileMappingsAgainstSurvey).mockReset();
+    });
+
+    test("reconciles feedback sources when mappings changed", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+      vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValueOnce([mockFeedbackSource] as any);
+      vi.mocked(reconcileMappingsAgainstSurvey).mockReturnValue({
+        toDelete: ["el-2"],
+        toUpdate: [],
+      });
+      vi.mocked(applyReconciliationToFeedbackSource).mockResolvedValueOnce(undefined);
+
+      await updateSurvey(updateSurveyInput);
+
+      expect(getFeedbackSourcesBySurveyId).toHaveBeenCalledWith(updateSurveyInput.id);
+      expect(reconcileMappingsAgainstSurvey).toHaveBeenCalledWith(
+        mockFeedbackSource.formbricksMappings,
+        updateSurveyInput.blocks
+      );
+      expect(applyReconciliationToFeedbackSource).toHaveBeenCalledWith(
+        "fs-1",
+        "ws-1",
+        { toDelete: ["el-2"], toUpdate: [] }
+      );
+    });
+
+    test("does not call reconciliation when no sources exist", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+      vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValueOnce([]);
+
+      await updateSurvey(updateSurveyInput);
+
+      expect(getFeedbackSourcesBySurveyId).toHaveBeenCalledWith(updateSurveyInput.id);
+      expect(applyReconciliationToFeedbackSource).not.toHaveBeenCalled();
+    });
+
+    test("does not apply reconciliation when delta is empty", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+      vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValueOnce([mockFeedbackSource] as any);
+      vi.mocked(reconcileMappingsAgainstSurvey).mockReturnValue({ toDelete: [], toUpdate: [] });
+
+      await updateSurvey(updateSurveyInput);
+
+      expect(applyReconciliationToFeedbackSource).not.toHaveBeenCalled();
+    });
+
+    test("survey update succeeds even when reconciliation throws", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+      vi.mocked(getFeedbackSourcesBySurveyId).mockRejectedValueOnce(new Error("DB down"));
+
+      await expect(updateSurvey(updateSurveyInput)).resolves.toEqual(mockTransformedSurveyOutput);
     });
   });
 });
