@@ -22,12 +22,15 @@ const VALID_DECIMAL_PORT = /^[1-9]\d{0,4}$/;
 const BRACKETED_ADDRESS = /^\[([^\[\]]+)\](?::([^:]+))?$/;
 const IPV4_SOCKET = /^([^:]+):(\d+)$/;
 
-type ClientIpWarningReason = "disabled" | "invalid-selected-hop" | "short-chain";
+type ClientIpWarningReason = "disabled" | "invalid-selected-hop" | "missing-chain" | "short-chain";
 
 const clientIpWarningMessages: Record<ClientIpWarningReason, string> = {
   disabled:
     "Client IP resolution is disabled because TRUSTED_PROXY_HOP_COUNT is 0 while forwarding headers " +
     "are present. IP-based limits and captured IP metadata will use the shared untrusted identity.",
+  "missing-chain":
+    "Client IP resolution failed because X-Forwarded-For is absent. Configure the proxy to append it; " +
+    "x-real-ip and cf-connecting-ip are not trusted client identity sources.",
   "short-chain":
     "Client IP resolution failed because X-Forwarded-For has fewer entries than " +
     "TRUSTED_PROXY_HOP_COUNT. Verify that every configured proxy appends to the forwarding chain.",
@@ -106,7 +109,7 @@ export const resolveClientIp = (headersList: Headers, hopCount: number): string 
 
   const xForwardedFor = headersList.get("x-forwarded-for");
   if (xForwardedFor === null) {
-    if (hasAnyForwardingHeader(headersList)) warnAboutClientIp("short-chain");
+    if (hasAnyForwardingHeader(headersList)) warnAboutClientIp("missing-chain");
     return null;
   }
 

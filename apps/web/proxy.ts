@@ -115,6 +115,8 @@ export const proxy = async (originalRequest: NextRequest) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|js|css|images|fonts|icons|public|animated-bgs).*)",
+    // Keep asset exclusions segment-bound: every dynamic route must traverse Proxy so callers cannot
+    // bypass the private client-IP header overwrite by choosing an asset-like route prefix.
+    "/((?!_next/(?:static|image)(?:/|$)|(?:favicon\\.ico|sitemap\\.xml|robots\\.txt)$|(?:js|css|images|fonts|icons|public|animated-bgs)(?:/|$)).*)",
   ],
 };

@@ -176,21 +176,25 @@ describe("client IP diagnostics", () => {
   test("emits throttled, reason-specific warnings without forwarding values", async () => {
     const { logger, freshResolveClientIp } = await loadFresh();
     const invalidValue = "sensitive-invalid-forwarded-value";
+    const ignoredHeaderValue = "sensitive-untrusted-forwarding-value";
 
     freshResolveClientIp(buildHeaders({ "x-forwarded-for": "203.0.113.7" }), 0);
     freshResolveClientIp(buildHeaders({ "x-forwarded-for": "203.0.113.7" }), 0);
+    freshResolveClientIp(buildHeaders({ "x-real-ip": ignoredHeaderValue }), 1);
     freshResolveClientIp(buildHeaders({ "x-forwarded-for": "203.0.113.7" }), 2);
     freshResolveClientIp(buildHeaders({ "x-forwarded-for": invalidValue }), 1);
 
-    expect(logger.warn).toHaveBeenCalledTimes(3);
+    expect(logger.warn).toHaveBeenCalledTimes(4);
     const warningText = vi
       .mocked(logger.warn)
       .mock.calls.map(([message]) => message)
       .join(" ");
     expect(warningText).toContain("disabled");
+    expect(warningText).toContain("X-Forwarded-For is absent");
     expect(warningText).toContain("fewer entries");
     expect(warningText).toContain("not a valid supported IP address");
     expect(warningText).not.toContain(invalidValue);
+    expect(warningText).not.toContain(ignoredHeaderValue);
   });
 
   test("warns again after the ten-minute throttle window", async () => {

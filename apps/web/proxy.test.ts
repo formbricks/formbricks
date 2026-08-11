@@ -191,9 +191,18 @@ describe("proxy matcher", () => {
     "/api/auth/sign-in/email",
     "/api/auth/sso-recovery/request",
     "/api/auth/sso-recovery/consume/token",
-  ])("includes Better Auth request %s", (url) => {
+    "/api/v1/client/workspace-1/responses",
+    "/api/v2/client/workspace-1/responses",
+  ])("includes client-IP consumer %s", (url) => {
     expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true);
   });
+
+  test.each(["/jsonresponse", "/iconscustom", "/publicapi/foo"])(
+    "includes dynamic route with asset-like prefix %s",
+    (url) => {
+      expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true);
+    }
+  );
 
   test("includes server-action requests", () => {
     expect(
