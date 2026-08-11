@@ -1,6 +1,5 @@
-import { sanitize } from "isomorphic-dompurify";
 import * as React from "react";
-import { cn, stripInlineStyles } from "@/lib/utils";
+import { cn, sanitizeSurveyHtml, stripInlineStyles } from "@/lib/utils";
 
 interface LabelProps extends React.ComponentProps<"label"> {
   /** Label variant for different styling contexts */
@@ -37,13 +36,7 @@ function Label({
   const childrenString = typeof children === "string" ? children : null;
   const strippedContent = childrenString ? stripInlineStyles(childrenString) : "";
   const isHtml = childrenString ? isValidHTML(strippedContent) : false;
-  const safeHtml =
-    isHtml && strippedContent
-      ? sanitize(strippedContent, {
-          ADD_ATTR: ["target"],
-          FORBID_ATTR: ["style"],
-        })
-      : "";
+  const safeHtml = isHtml && strippedContent ? sanitizeSurveyHtml(strippedContent) : "";
 
   // Determine variant class
   let variantClass = "label-default";
@@ -55,11 +48,17 @@ function Label({
     variantClass = "label-card";
   }
 
+  // Element headlines and descriptions are content respondents read (and may want to
+  // copy or have translated), so they stay selectable. Labels that act as controls —
+  // choices, cards — keep select-none so a stray drag doesn't highlight them.
+  const isReadableContent = variant === "headline" || variant === "description";
+
   // Base classes - use flex-col for HTML content to allow line breaks, flex items-center for non-HTML
-  const baseClasses =
-    isHtml && safeHtml
-      ? "flex flex-col gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
-      : "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50";
+  const baseClasses = cn(
+    isHtml && safeHtml ? "flex flex-col gap-2" : "flex items-center gap-2",
+    "leading-6 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+    isReadableContent ? "select-text" : "select-none"
+  );
 
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {
@@ -93,11 +92,7 @@ function Label({
       <label
         data-slot="label"
         data-variant={variant}
-        className={cn(
-          "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-          variantClass,
-          className
-        )}
+        className={cn(baseClasses, variantClass, className)}
         htmlFor={htmlFor}
         form={form}
         {...restProps}>
@@ -110,11 +105,7 @@ function Label({
     <span
       data-slot="label"
       data-variant={variant}
-      className={cn(
-        "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        variantClass,
-        className
-      )}
+      className={cn(baseClasses, variantClass, className)}
       {...restProps}>
       {children}
     </span>

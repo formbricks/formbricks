@@ -25,6 +25,43 @@ export const stripInlineStyles = (html: string): string => {
 };
 
 /**
+ * Force every link in survey content to open in a new tab.
+ * Links pasted as plain text are auto-linked without a target, so without this a
+ * respondent following one navigates away from the survey they are filling in.
+ * Kept on the render path so surveys authored before the editor fix behave too.
+ * @param node - The node DOMPurify is currently sanitizing
+ */
+const openLinksInNewTab = (node: Element): void => {
+  if (node.tagName !== "A" || !node.hasAttribute("href")) return;
+  if (!node.getAttribute("target")) {
+    node.setAttribute("target", "_blank");
+  }
+  if (node.getAttribute("target") === "_blank") {
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+};
+
+/**
+ * Sanitize survey content HTML for rendering: strips inline styles (CSP) and makes
+ * links open in a new tab.
+ * @param html - The HTML string to sanitize
+ * @returns Sanitized HTML string, safe to pass to dangerouslySetInnerHTML
+ */
+export const sanitizeSurveyHtml = (html: string): string => {
+  if (!html) return html;
+
+  DOMPurify.addHook("afterSanitizeAttributes", openLinksInNewTab);
+  try {
+    return DOMPurify.sanitize(stripInlineStyles(html), {
+      ADD_ATTR: ["target"],
+      FORBID_ATTR: ["style"], // Additional safeguard to remove any remaining inline styles
+    });
+  } finally {
+    DOMPurify.removeHook("afterSanitizeAttributes");
+  }
+};
+
+/**
  * Lightweight HTML detection for browser environments
  * Uses native DOMParser (built-in, 0 KB bundle size)
  * @param str - The input string to test
