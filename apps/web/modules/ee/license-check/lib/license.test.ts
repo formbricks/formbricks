@@ -7,25 +7,23 @@ import {
   TEnterpriseLicenseFeatures,
 } from "@/modules/ee/license-check/types/enterprise-license";
 
-// Hoisted so the memory-cache test below can re-mock @/lib/env with a different NODE_ENV
-// without restating every key.
-const { baseEnv } = vi.hoisted(() => ({
-  baseEnv: {
+// Hoisted so the memory-cache test below can flip NODE_ENV on the very object the module under
+// test reads. getEnterpriseLicense skips its in-memory cache while NODE_ENV is "test", so license
+// state cannot bleed between tests here; dropping that key re-enables the cache silently.
+const { envMock } = vi.hoisted(() => ({
+  envMock: {
     ENTERPRISE_LICENSE_KEY: "test-license-key",
     ENVIRONMENT: "production",
 
     FORMBRICKS_COM_URL: "https://app.formbricks.com",
     HTTPS_PROXY: undefined,
     HTTP_PROXY: undefined,
+    NODE_ENV: "test",
   },
 }));
 
 // Mock declarations must be at the top level
-vi.mock("@/lib/env", () => ({
-  // getEnterpriseLicense skips its in-memory cache under NODE_ENV=test so license state cannot
-  // bleed between tests. Leaving NODE_ENV out of the mock would silently re-enable that cache.
-  env: { ...baseEnv, NODE_ENV: "test" },
-}));
+vi.mock("@/lib/env", () => ({ env: envMock }));
 
 const mockCache = {
   get: vi.fn(),
@@ -243,18 +241,19 @@ describe("License Core Logic", () => {
     // The other side of the same guard: outside tests the in-memory cache is what keeps a busy
     // instance from re-reading license state on every call, and only this test exercises it.
     test("serves the in-memory cache within its TTL when not running under test", async () => {
-      vi.resetModules();
-      vi.doMock("@/lib/env", () => ({ env: { ...baseEnv, NODE_ENV: "production" } }));
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+
+      fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockFetchedLicenseDetails }),
+      } as any);
+
+      // The guard re-reads env.NODE_ENV on every call, so flipping it on the mock is enough.
+      // Resetting the module registry instead would rebuild every mock this file shares.
+      envMock.NODE_ENV = "production";
 
       try {
-        const { getEnterpriseLicense } = await import("./license");
-        const fetch = global.fetch as Mock;
-
-        fetch.mockResolvedValue({
-          ok: true,
-          json: async () => ({ data: mockFetchedLicenseDetails }),
-        } as any);
-
         const first = await getEnterpriseLicense();
         const cacheReadsAfterFirstCall = mockCache.get.mock.calls.length;
         const second = await getEnterpriseLicense();
@@ -262,10 +261,7 @@ describe("License Core Logic", () => {
         expect(second).toEqual(first);
         expect(mockCache.get.mock.calls.length).toBe(cacheReadsAfterFirstCall);
       } finally {
-        // Leave the module registry as the rest of the file expects: the shared top-level
-        // `vi.mock("@/lib/env")` (NODE_ENV=test) applies again on the next import.
-        vi.doUnmock("@/lib/env");
-        vi.resetModules();
+        envMock.NODE_ENV = "test";
       }
     });
 
