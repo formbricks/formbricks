@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { type Locator, type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { test } from "./lib/fixtures";
@@ -352,9 +353,11 @@ test.describe("Survey keyboard interaction @slow", () => {
 const REQUIRED_ERROR = "Please fill out this field";
 const OPEN_TEXT_HEADLINE = "What went wrong?";
 const GROUPED_HEADLINE = "How likely are you to recommend us?";
+const CONTACT_HEADLINE = "How can we contact you?";
 
 interface SeededValidationSurvey {
   url: string;
+  modalSurvey: TJsWorkspaceStateSurvey;
   /** Element ids, so the spec can address each element's `${inputId}-error` region exactly. */
   ids: {
     openText: string;
@@ -362,6 +365,10 @@ interface SeededValidationSurvey {
     ranking: string;
     date: string;
     pictureMulti: string;
+    consent: string;
+    fileUpload: string;
+    matrix: string;
+    contactInfo: string;
   };
 }
 
@@ -372,12 +379,9 @@ interface SeededValidationSurvey {
  * rating, single picture-select) hides the submit button entirely, and without a
  * submit button there is no way to trigger an empty required submit at all.
  *
- * The four element types that newly carry `aria-invalid` on a GROUP node rather
- * than on a native control (NPS + ranking fieldsets, the date fieldset that
- * replaced `div role="group"`, and the picture-select multi fieldset) share one
- * card: a block holds many elements and validation runs over all of them, so a
- * single empty submit surfaces all four errors at once instead of needing a
- * four-card walk.
+ * The element types that need an announcement regression guard share one card:
+ * a block holds many elements and validation runs over all of them, so a single
+ * empty submit surfaces every error at once instead of needing a card per type.
  */
 const seedValidationSurvey = async (
   workspaceId: string,
@@ -390,6 +394,10 @@ const seedValidationSurvey = async (
     ranking: createId(),
     date: createId(),
     pictureMulti: createId(),
+    consent: createId(),
+    fileUpload: createId(),
+    matrix: createId(),
+    contactInfo: createId(),
   };
 
   const endings = [
@@ -451,6 +459,40 @@ const seedValidationSurvey = async (
         { id: createId(), imageUrl: new URL("/favicon/android-chrome-192x192.png", baseURL).toString() },
       ],
     },
+    {
+      id: ids.consent,
+      type: "consent",
+      headline: i18nValue("Do you agree to participate?"),
+      label: i18nValue("I agree"),
+      required: true,
+    },
+    {
+      id: ids.fileUpload,
+      type: "fileUpload",
+      headline: i18nValue("Upload supporting evidence"),
+      required: true,
+      allowMultipleFiles: false,
+    },
+    {
+      id: ids.matrix,
+      type: "matrix",
+      headline: i18nValue("Rate each part of the experience"),
+      required: true,
+      shuffleOption: "none",
+      rows: ["Setup", "Support"].map((label) => ({ id: createId(), label: i18nValue(label) })),
+      columns: ["Poor", "Good"].map((label) => ({ id: createId(), label: i18nValue(label) })),
+    },
+    {
+      id: ids.contactInfo,
+      type: "contactInfo",
+      headline: i18nValue(CONTACT_HEADLINE),
+      required: true,
+      firstName: { show: true, required: false, placeholder: i18nValue("First name") },
+      lastName: { show: false, required: false, placeholder: i18nValue("Last name") },
+      email: { show: true, required: true, placeholder: i18nValue("Email") },
+      phone: { show: false, required: false, placeholder: i18nValue("Phone") },
+      company: { show: false, required: false, placeholder: i18nValue("Company") },
+    },
   ];
 
   // transformQuestionsToBlocks emits one block per question; merge the grouped
@@ -476,10 +518,18 @@ const seedValidationSurvey = async (
       blocks: blocks as unknown as Prisma.InputJsonValue[],
       endings: endings as unknown as Prisma.InputJsonValue[],
     },
-    select: { id: true },
   });
 
-  return { url: `/s/${survey.id}`, ids };
+  const modalSurvey = {
+    ...survey,
+    displayPercentage: null,
+    languages: [],
+    triggers: [],
+    segment: null,
+    followUps: [],
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  return { url: `/s/${survey.id}`, ids, modalSurvey };
 };
 
 /**
@@ -675,23 +725,78 @@ test.describe("Survey validation error announcement @slow", () => {
     }
   });
 
-  test("no assertive live region spans the whole survey", async ({ page }) => {
+  test("remaining error-capable element types keep their announcement wiring", async ({ page }) => {
     const { url, ids } = requireSeeded();
 
     await page.goto(url);
-    await expect(page.locator("#fbjs")).toBeVisible();
-    // Proves the scoped selector below can actually match live regions inside the
-    // survey, so its zero-count assertion cannot pass vacuously.
-    await expect(page.locator('#fbjs [aria-live="polite"]').first()).toBeAttached();
-
-    // The wrapper used to be aria-live="assertive", so every DOM mutation anywhere
-    // in the survey was announced assertively — which would talk over the polite
-    // error region asserted above.
-    await expect(page.locator('#fbjs [aria-live="assertive"]')).toHaveCount(0);
-
+    await page.locator(`[id="${ids.openText}-input"]`).fill("Something broke on submit");
     await navButton(page, "Next").click();
-    await expect(errorRegion(page, `${ids.openText}-input-error`)).toHaveText(REQUIRED_ERROR);
-    await expect(page.locator('#fbjs [aria-live="assertive"]')).toHaveCount(0);
+    await expect(page.getByText(GROUPED_HEADLINE)).toBeVisible();
+
+    const consentErrorId = `${ids.consent}-error`;
+    const fileUploadErrorId = `${ids.fileUpload}-error`;
+    const matrixErrorId = `${ids.matrix}-error`;
+    const contactErrorId = `${ids.contactInfo}-error`;
+    for (const errorId of [consentErrorId, fileUploadErrorId, matrixErrorId, contactErrorId]) {
+      await expectSilentLiveRegion(page, errorId);
+    }
+
+    await navButton(page, "Finish").click();
+
+    await expectAnnouncedError(page, consentErrorId);
+    await expect(
+      page.getByRole("checkbox", { name: "I agree" }),
+      "the consent checkbox should expose the invalid state and its error description"
+    ).toHaveAttribute("aria-describedby", consentErrorId);
+
+    await expectAnnouncedError(page, fileUploadErrorId);
+    await expect(page.locator(`input[type="file"][aria-describedby="${fileUploadErrorId}"]`)).toHaveCount(1);
+
+    await expectAnnouncedError(page, matrixErrorId);
+    await expect(page.locator(`fieldset[aria-describedby="${matrixErrorId}"]`)).toHaveCount(1);
+
+    // Contact and address elements share one message across several inputs. The
+    // live region must announce it, but no individual field may inherit a
+    // description that could belong to one of its siblings.
+    const contactRegion = errorRegion(page, contactErrorId);
+    await expect(contactRegion).toHaveText(REQUIRED_ERROR);
+    await expect(contactRegion).toHaveAttribute("aria-live", "polite");
+    await expect(contactRegion).not.toHaveAttribute("role");
+    await expect(controlDescribedBy(page, contactErrorId)).toHaveCount(0);
+
+    const firstName = page.getByRole("textbox", { name: "First name" });
+    await expect(firstName).toHaveAttribute("aria-invalid", "true");
+    await expect(firstName).not.toHaveAttribute("aria-describedby");
+  });
+
+  test("no assertive live region spans the modal survey", async ({ page }) => {
+    const { url, modalSurvey } = requireSeeded();
+
+    // Load the production survey bundle through the link page, then render the
+    // same fixture through its modal entry point. The removed assertive wrapper
+    // exists only in this branch of SurveyContainer.
+    await page.goto(url);
+    await expect(page.locator("#fbjs")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => Boolean(window.formbricksSurveys))).toBe(true);
+    await page.evaluate((survey) => {
+      document.getElementById("formbricks-survey-container")?.replaceChildren();
+      window.formbricksSurveys.renderSurvey({
+        survey,
+        styling: {},
+        isBrandingEnabled: false,
+        languageCode: "default",
+        mode: "modal",
+        isPreviewMode: true,
+      });
+    }, modalSurvey);
+
+    const modalRoot = page.locator("#formbricks-modal-container #fbjs");
+    await expect(modalRoot.getByRole("dialog")).toBeVisible();
+    // Proves the scoped selector can match a live region inside the modal, so the
+    // zero-count assertion cannot pass on an empty or incorrectly rendered path.
+    await expect(modalRoot.locator('[aria-live="polite"]').first()).toBeAttached();
+    await expect(modalRoot.locator('[aria-live="assertive"]')).toHaveCount(0);
+    await expect(modalRoot.locator(":scope > div")).not.toHaveAttribute("aria-live");
   });
 });
 
