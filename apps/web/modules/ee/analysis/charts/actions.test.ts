@@ -184,6 +184,8 @@ describe("chart Cube actions", () => {
 
     expect(mocks.generateAIChartQuery).toHaveBeenCalledWith({
       organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
       prompt: "responses by sentiment",
     });
     expect(result).toMatchObject({

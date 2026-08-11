@@ -39,7 +39,7 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 ## Architecture & Patterns
 
 - Next.js app router lives in `apps/web/app` with route groups like `(app)` and `(auth)`. Services live in `apps/web/lib`, feature modules in `apps/web/modules`.
-- Server actions wrap service calls and return `{ data }` or `{ error }` consistently.
+- Server actions are legacy — do not add new ones. New backend work belongs in an `/api/v3` route consumed from the client with TanStack Query, with server data living in the query cache rather than mirrored into `useState` or Jotai. The existing server actions wrap service calls and return `{ data }` or `{ error }` consistently; keep that contract when changing them.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 
 ## Caching
