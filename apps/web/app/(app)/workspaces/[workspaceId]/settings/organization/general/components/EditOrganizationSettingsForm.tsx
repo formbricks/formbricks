@@ -7,8 +7,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TOrganization, ZOrganizationUpdateInput } from "@formbricks/types/organizations";
-import { updateOrganizationDisplayTimeZoneAction } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
+import { TOrganization, ZOrganization, ZOrganizationUpdateInput } from "@formbricks/types/organizations";
+import {
+  updateOrganizationDisplayTimeZoneAction,
+  updateOrganizationNameAction,
+} from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -21,15 +24,18 @@ import {
   FormLabel,
   FormProvider,
 } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 
-interface EditOrganizationDisplayTimeZoneFormProps {
+interface EditOrganizationSettingsFormProps {
   organization: TOrganization;
   membershipRole?: TOrganizationRole;
 }
 
-const ZEditOrganizationDisplayTimeZoneFormSchema = ZOrganizationUpdateInput.pick({ displayTimeZone: true });
-type TEditOrganizationDisplayTimeZoneForm = z.infer<typeof ZEditOrganizationDisplayTimeZoneFormSchema>;
+const ZEditOrganizationSettingsFormSchema = ZOrganization.pick({ name: true }).merge(
+  ZOrganizationUpdateInput.pick({ displayTimeZone: true })
+);
+type TEditOrganizationSettingsForm = z.infer<typeof ZEditOrganizationSettingsFormSchema>;
 
 // Sentinel combobox value representing the default (null in the database, rendered as UTC).
 const UTC_DEFAULT_OPTION_VALUE = "UTC";
@@ -38,23 +44,25 @@ const IANA_TIME_ZONES = Intl.supportedValuesOf("timeZone").filter(
   (timeZone) => timeZone !== UTC_DEFAULT_OPTION_VALUE
 );
 
-export const EditOrganizationDisplayTimeZoneForm = ({
+export const EditOrganizationSettingsForm = ({
   organization,
   membershipRole,
-}: Readonly<EditOrganizationDisplayTimeZoneFormProps>) => {
+}: Readonly<EditOrganizationSettingsFormProps>) => {
   const { t } = useTranslation();
-  const form = useForm<TEditOrganizationDisplayTimeZoneForm>({
+  const form = useForm<TEditOrganizationSettingsForm>({
     defaultValues: {
+      name: organization.name,
       displayTimeZone: organization.displayTimeZone ?? null,
     },
     mode: "onChange",
-    resolver: zodResolver(ZEditOrganizationDisplayTimeZoneFormSchema),
+    resolver: zodResolver(ZEditOrganizationSettingsFormSchema),
   });
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
-  const canEdit = isOwner || isManager;
+  // Name is owner-only; display time zone can also be edited by managers.
+  const canEditTimeZone = isOwner || isManager;
 
-  const { isSubmitting, isDirty } = form.formState;
+  const { isSubmitting, isDirty, dirtyFields } = form.formState;
 
   const timeZoneOptions = useMemo<TComboboxOption[]>(
     () => [
@@ -67,20 +75,37 @@ export const EditOrganizationDisplayTimeZoneForm = ({
     [t]
   );
 
-  const handleUpdateDisplayTimeZone: SubmitHandler<TEditOrganizationDisplayTimeZoneForm> = async (data) => {
+  const handleUpdateOrganizationSettings: SubmitHandler<TEditOrganizationSettingsForm> = async (data) => {
     try {
-      const displayTimeZone = data.displayTimeZone ?? null;
-      const updatedOrganizationResponse = await updateOrganizationDisplayTimeZoneAction({
-        organizationId: organization.id,
-        data: { displayTimeZone },
-      });
+      // Only persist the fields the user changed and is allowed to change.
+      if (dirtyFields.name && isOwner) {
+        const name = data.name.trim();
+        const response = await updateOrganizationNameAction({
+          organizationId: organization.id,
+          data: { name },
+        });
 
-      if (updatedOrganizationResponse?.data) {
-        toast.success(t("workspace.settings.general.display_time_zone_updated_successfully"));
-        form.reset({ displayTimeZone: updatedOrganizationResponse.data.displayTimeZone ?? null });
-      } else {
-        const errorMessage = getFormattedErrorMessage(updatedOrganizationResponse);
-        toast.error(errorMessage);
+        if (response?.data) {
+          toast.success(t("workspace.settings.general.organization_name_updated_successfully"));
+          form.resetField("name", { defaultValue: response.data.name });
+        } else {
+          toast.error(getFormattedErrorMessage(response));
+        }
+      }
+
+      if (dirtyFields.displayTimeZone && canEditTimeZone) {
+        const displayTimeZone = data.displayTimeZone ?? null;
+        const response = await updateOrganizationDisplayTimeZoneAction({
+          organizationId: organization.id,
+          data: { displayTimeZone },
+        });
+
+        if (response?.data) {
+          toast.success(t("workspace.settings.general.display_time_zone_updated_successfully"));
+          form.resetField("displayTimeZone", { defaultValue: response.data.displayTimeZone ?? null });
+        } else {
+          toast.error(getFormattedErrorMessage(response));
+        }
       }
     } catch (err) {
       toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
@@ -91,8 +116,30 @@ export const EditOrganizationDisplayTimeZoneForm = ({
     <>
       <FormProvider {...form}>
         <form
-          className="w-full max-w-sm items-center"
-          onSubmit={form.handleSubmit(handleUpdateDisplayTimeZone)}>
+          className="w-full max-w-sm space-y-4"
+          onSubmit={form.handleSubmit(handleUpdateOrganizationSettings)}>
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>{t("workspace.settings.general.organization_name")}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="text"
+                    disabled={!isOwner}
+                    isInvalid={!!fieldState.error?.message}
+                    placeholder={t("workspace.settings.general.organization_name_placeholder")}
+                    required
+                  />
+                </FormControl>
+
+                <FormError />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="displayTimeZone"
@@ -114,7 +161,7 @@ export const EditOrganizationDisplayTimeZoneForm = ({
                       field.onChange(value === UTC_DEFAULT_OPTION_VALUE ? null : String(value));
                     }}
                     placeholder={t("workspace.settings.general.display_time_zone_placeholder")}
-                    disabled={!canEdit}
+                    disabled={!canEditTimeZone}
                   />
                 </FormControl>
 
@@ -125,15 +172,14 @@ export const EditOrganizationDisplayTimeZoneForm = ({
 
           <Button
             type="submit"
-            className="mt-4"
             size="sm"
             loading={isSubmitting}
-            disabled={isSubmitting || !isDirty || !canEdit}>
+            disabled={isSubmitting || !isDirty || (!isOwner && !canEditTimeZone)}>
             {t("common.update")}
           </Button>
         </form>
       </FormProvider>
-      {!canEdit && (
+      {!canEditTimeZone && (
         <Alert variant="warning" className="mt-4" role="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}

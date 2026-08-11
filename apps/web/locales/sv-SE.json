@@ -2824,6 +2824,7 @@
         "organization_name_placeholder": "t.ex. Acme Inc.",
         "organization_name_updated_successfully": "Organisationsnamn uppdaterat",
         "organization_settings": "Organisationsinställningar",
+        "organization_settings_description": "Hantera din organisations namn och inställningar.",
         "please_add_a_logo": "Vänligen lägg till en logotyp",
         "please_check_csv_file": "Vänligen kontrollera CSV-filen och se till att den följer vårt format",
         "please_save_logo_before_sending_test_email": "Vänligen spara logotypen innan du skickar ett test-e-postmeddelande.",

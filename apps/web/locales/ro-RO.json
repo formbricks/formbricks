@@ -2824,6 +2824,7 @@
         "organization_name_placeholder": "ex. Acme Inc.",
         "organization_name_updated_successfully": "Numele organizației actualizat cu succes",
         "organization_settings": "Setări Organizație",
+        "organization_settings_description": "Gestionează numele și preferințele organizației tale.",
         "please_add_a_logo": "Adaugă un logo",
         "please_check_csv_file": "Vă rugăm să verificați fișierul CSV și să vă asigurați că este conform formatului nostru",
         "please_save_logo_before_sending_test_email": "Vă rugăm să salvați sigla înainte de a trimite un e-mail de test.",

@@ -2824,6 +2824,7 @@
         "organization_name_placeholder": "bijv. Acme Inc.",
         "organization_name_updated_successfully": "Organisatienaam is succesvol bijgewerkt",
         "organization_settings": "Organisatie-instellingen",
+        "organization_settings_description": "Beheer de naam en voorkeuren van je organisatie.",
         "please_add_a_logo": "Voeg een logo toe",
         "please_check_csv_file": "Controleer het CSV-bestand en zorg ervoor dat het in overeenstemming is met ons formaat",
         "please_save_logo_before_sending_test_email": "Sla het logo op voordat u een testmail verzendt.",

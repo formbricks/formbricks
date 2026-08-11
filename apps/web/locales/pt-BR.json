@@ -2824,6 +2824,7 @@
         "organization_name_placeholder": "ex: Acme Inc.",
         "organization_name_updated_successfully": "Nome da organização atualizado com sucesso",
         "organization_settings": "Configurações da Organização",
+        "organization_settings_description": "Gerencie o nome e as preferências da sua organização.",
         "please_add_a_logo": "Por favor, adicione um logo",
         "please_check_csv_file": "Por favor, verifique o arquivo CSV e certifique-se de que está de acordo com o nosso formato",
         "please_save_logo_before_sending_test_email": "Por favor, salve o logo antes de enviar um e-mail de teste.",

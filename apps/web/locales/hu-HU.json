@@ -2824,6 +2824,7 @@
         "organization_name_placeholder": "például Acme Inc.",
         "organization_name_updated_successfully": "A szervezet neve sikeresen frissítve",
         "organization_settings": "Szervezet beállításai",
+        "organization_settings_description": "Kezelheti szervezete nevét és beállításait.",
         "please_add_a_logo": "Adjon hozzá egy logót",
         "please_check_csv_file": "Ellenőrizze a CSV-fájlt, és győződjön meg arról, hogy megfelel-e a formátumunknak",
         "please_save_logo_before_sending_test_email": "Mentse el a logót, mielőtt elküld egy teszt e-mailt.",

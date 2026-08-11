@@ -2824,6 +2824,7 @@
         "organization_name_placeholder": "örn. Acme A.Ş.",
         "organization_name_updated_successfully": "Organizasyon adı başarıyla güncellendi",
         "organization_settings": "Organizasyon Ayarları",
+        "organization_settings_description": "Organizasyonunuzun adını ve tercihlerini yönetin.",
         "please_add_a_logo": "Lütfen bir logo ekleyin",
         "please_check_csv_file": "Lütfen CSV dosyasını kontrol edin ve formatımıza uygun olduğundan emin olun",
         "please_save_logo_before_sending_test_email": "Lütfen test e-postası göndermeden önce logoyu kaydedin.",

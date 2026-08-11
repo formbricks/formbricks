@@ -2824,6 +2824,7 @@
         "organization_name_placeholder": "例：株式会社Acme",
         "organization_name_updated_successfully": "組織名を正常に更新しました",
         "organization_settings": "組織設定",
+        "organization_settings_description": "組織の名前と設定を管理します。",
         "please_add_a_logo": "ロゴを追加してください",
         "please_check_csv_file": "CSVファイルを確認し、当社の形式に従っているか確認してください",
         "please_save_logo_before_sending_test_email": "テストメールを送信する前にロゴを保存してください。",

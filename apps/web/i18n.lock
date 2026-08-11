@@ -2719,6 +2719,7 @@ checksums:
     workspace/settings/general/organization_name_placeholder: abcee7d91a848e573b63a763cfaf6a08
     workspace/settings/general/organization_name_updated_successfully: d36ba3a4f614d30b10e696d25da22432
     workspace/settings/general/organization_settings: d31952131ad5f0ec72ad96f1ed11bef6
+    workspace/settings/general/organization_settings_description: 6e421e524d618060d1bb9496ff8fcbd1
     workspace/settings/general/please_add_a_logo: 66d6f97a2e7b27efc04bd653240ee813
     workspace/settings/general/please_check_csv_file: c376d018b15cf05608abc4c59c1a9264
     workspace/settings/general/please_save_logo_before_sending_test_email: d6b06dbc00189f865fa78a9913e5cc9c

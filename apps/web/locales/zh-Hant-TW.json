@@ -2824,6 +2824,7 @@
         "organization_name_placeholder": "例如：Acme Inc.",
         "organization_name_updated_successfully": "組織名稱已成功更新",
         "organization_settings": "組織設定",
+        "organization_settings_description": "管理你的組織名稱和偏好設定。",
         "please_add_a_logo": "請新增標誌",
         "please_check_csv_file": "請檢查 CSV 檔案，並確保其符合我們的格式",
         "please_save_logo_before_sending_test_email": "請在發送測試電子郵件之前儲存標誌。",
