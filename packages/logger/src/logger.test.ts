@@ -1,7 +1,7 @@
 // Import pino after the mock is defined
 import Pino from "pino";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { LOG_LEVELS } from "../types/logger";
+import { LOG_LEVELS } from "./types/logger";
 
 // Store original environment variables outside any function
 const { mockStreamSym } = vi.hoisted(() => ({ mockStreamSym: Symbol("pino.stream") }));

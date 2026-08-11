@@ -1,3 +1,4 @@
+import { cookies, headers } from "next/headers";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
@@ -18,6 +19,17 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { createUserAction } from "./actions";
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(),
+  headers: vi.fn(),
+}));
+
+const requestHeaders = new Headers({ "x-formbricks-client-ip": "203.0.113.7" });
+const mockNextRequestData = () => {
+  vi.mocked(headers).mockResolvedValue(requestHeaders as never);
+  vi.mocked(cookies).mockResolvedValue({ get: () => undefined } as never);
+};
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -117,6 +129,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    mockNextRequestData();
     constantsOverrides.IS_FORMBRICKS_CLOUD = false;
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     constantsOverrides.SIGNUP_ENABLED = true;
@@ -138,6 +151,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
     expect(auth.api.signUpEmail).toHaveBeenCalledWith({
       body: { email: "ada@example.com", password: "Password123!", name: "Ada", callbackURL: undefined },
+      headers: requestHeaders,
     });
   });
 
@@ -178,6 +192,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
         password: "Password123!",
         name: "Ada",
       },
+      headers: requestHeaders,
     });
   });
 
@@ -335,6 +350,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    mockNextRequestData();
     constantsOverrides.IS_FORMBRICKS_CLOUD = true;
     constantsOverrides.SIGNUP_ENABLED = true;
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
