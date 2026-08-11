@@ -34,6 +34,7 @@ import {
   createHubResultFromError,
   getErrorMessage,
   getErrorStatus,
+  getHubErrorHint,
 } from "./utils";
 
 export type HubFeedbackRecordResult = {
@@ -59,7 +60,10 @@ export const createFeedbackRecord = async (
     const data = await client.feedbackRecords.create(input);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
+    logger.warn(
+      { err, fieldId: input.field_id, hint: getHubErrorHint(err) },
+      "Hub: createFeedbackRecord failed"
+    );
     return createHubResultFromError(err);
   }
 };
@@ -77,7 +81,7 @@ export const retrieveFeedbackRecord = async (id: string): Promise<HubFeedbackRec
     const data = await client.feedbackRecords.retrieve(id);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, id }, "Hub: retrieveFeedbackRecord failed");
+    logger.warn({ err, id, hint: getHubErrorHint(err) }, "Hub: retrieveFeedbackRecord failed");
     return createHubResultFromError(err);
   }
 };
@@ -98,7 +102,7 @@ export const updateFeedbackRecord = async (
     const data = await client.feedbackRecords.update(id, input);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, id }, "Hub: updateFeedbackRecord failed");
+    logger.warn({ err, id, hint: getHubErrorHint(err) }, "Hub: updateFeedbackRecord failed");
     return createHubResultFromError(err);
   }
 };
@@ -121,7 +125,7 @@ export const deleteFeedbackRecord = async (id: string): Promise<HubFeedbackRecor
     await client.feedbackRecords.delete(id);
     return { data: { deleted: true }, error: null };
   } catch (err) {
-    logger.warn({ err, id }, "Hub: deleteFeedbackRecord failed");
+    logger.warn({ err, id, hint: getHubErrorHint(err) }, "Hub: deleteFeedbackRecord failed");
     // Via the shared helper so callers also get the Hub's problem members — an in-progress tenant purge
     // arrives as a relayable, retryable 409 instead of an opaque failure.
     return createHubResultFromError(err);
@@ -172,7 +176,7 @@ export const deleteHubTenantData = async (tenantId: string): Promise<HubTenantDa
       error: null,
     };
   } catch (err) {
-    logger.warn({ err, tenantId }, "Hub: deleteHubTenantData failed");
+    logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: deleteHubTenantData failed");
     const status = getErrorStatus(err);
     const message = getErrorMessage(err);
     return { data: null, error: { status, message, detail: message } };
@@ -208,7 +212,7 @@ export const listFeedbackRecords = async (
     const data = await client.feedbackRecords.list(params);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err }, "Hub: listFeedbackRecords failed");
+    logger.warn({ err, hint: getHubErrorHint(err) }, "Hub: listFeedbackRecords failed");
     // Via the shared helper so callers also get the Hub's problem members (e.g. an invalid cursor or
     // malformed since/until arrives as a relayable 400 rather than an opaque failure).
     return createHubResultFromError(err);
@@ -236,7 +240,10 @@ export const countFeedbackRecords = async (
     const data = await client.feedbackRecords.count(params);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, tenantId: params.tenant_id }, "Hub: countFeedbackRecords failed");
+    logger.warn(
+      { err, tenantId: params.tenant_id, hint: getHubErrorHint(err) },
+      "Hub: countFeedbackRecords failed"
+    );
     return createHubResultFromError(err);
   }
 };
@@ -258,7 +265,10 @@ export const semanticSearchFeedbackRecords = async (
     const data = await client.feedbackRecords.search.performSemanticSearch(input);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, tenantId: input.tenant_id }, "Hub: semanticSearchFeedbackRecords failed");
+    logger.warn(
+      { err, tenantId: input.tenant_id, hint: getHubErrorHint(err) },
+      "Hub: semanticSearchFeedbackRecords failed"
+    );
     // Via the shared helper so the Hub's problem members survive — most importantly the 503 that says
     // embeddings aren't configured, which would otherwise be indistinguishable from an outage.
     return createHubResultFromError(err);
@@ -296,7 +306,7 @@ export const findSimilarFeedbackRecords = async (
     if (getErrorStatus(err) === 404) {
       logger.debug({ id }, "Hub: no embedding for feedback record yet");
     } else {
-      logger.warn({ err, id }, "Hub: findSimilarFeedbackRecords failed");
+      logger.warn({ err, id, hint: getHubErrorHint(err) }, "Hub: findSimilarFeedbackRecords failed");
     }
     return createHubResultFromError(err);
   }
@@ -320,7 +330,7 @@ export const getFeedbackRecordTenant = async (recordId: string): Promise<Feedbac
 
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, recordId }, "Hub: getFeedbackRecordTenant failed");
+    logger.warn({ err, recordId, hint: getHubErrorHint(err) }, "Hub: getFeedbackRecordTenant failed");
     const status = getErrorStatus(err);
     const message = err instanceof Error ? err.message : String(err);
     return { data: null, error: { status, message, detail: message } };
@@ -347,7 +357,10 @@ export const createFeedbackRecordsBatch = async (
         const data = await client.feedbackRecords.create(input);
         return { data, error: null as HubFeedbackRecordResult["error"] };
       } catch (err) {
-        logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
+        logger.warn(
+          { err, fieldId: input.field_id, hint: getHubErrorHint(err) },
+          "Hub: createFeedbackRecord failed"
+        );
         return createHubResultFromError<FeedbackRecordData>(err);
       }
     })
@@ -365,7 +378,7 @@ export const listTaxonomyFields = async (tenantId: string): Promise<HubResult<Ta
     const data = await client.taxonomy.listFields({ tenant_id: tenantId });
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, tenantId }, "Hub: listTaxonomyFields failed");
+    logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: listTaxonomyFields failed");
     return createHubResultFromError(err);
   }
 };
@@ -389,6 +402,7 @@ export const createTaxonomyRun = async (
         sourceType: input.source_type,
         sourceId: input.source_id,
         fieldId: input.field_id,
+        hint: getHubErrorHint(err),
       },
       "Hub: createTaxonomyRun failed"
     );
@@ -408,7 +422,10 @@ export const listTaxonomyRuns = async (
     const data = await client.taxonomy.runs.list(params);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, tenantId: params.tenant_id }, "Hub: listTaxonomyRuns failed");
+    logger.warn(
+      { err, tenantId: params.tenant_id, hint: getHubErrorHint(err) },
+      "Hub: listTaxonomyRuns failed"
+    );
     return createHubResultFromError(err);
   }
 };
@@ -429,7 +446,7 @@ export const getTaxonomyRun = async (runId: string, tenantId: string): Promise<H
     if (getErrorStatus(err) === 404) {
       logger.debug({ runId, tenantId }, "Hub: taxonomy run not found");
     } else {
-      logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyRun failed");
+      logger.warn({ err, runId, tenantId, hint: getHubErrorHint(err) }, "Hub: getTaxonomyRun failed");
     }
     return createHubResultFromError(err);
   }
@@ -450,7 +467,10 @@ export const getActiveTaxonomyTree = async (
     if (getErrorStatus(err) === 404) {
       logger.debug({ tenantId: scope.tenant_id }, "Hub: no active taxonomy tree yet");
     } else {
-      logger.warn({ err, tenantId: scope.tenant_id }, "Hub: getActiveTaxonomyTree failed");
+      logger.warn(
+        { err, tenantId: scope.tenant_id, hint: getHubErrorHint(err) },
+        "Hub: getActiveTaxonomyTree failed"
+      );
     }
     return createHubResultFromError(err);
   }
@@ -469,7 +489,7 @@ export const getTaxonomyTree = async (
     const data = await client.taxonomy.runs.getTree(runId, { tenant_id: tenantId });
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyTree failed");
+    logger.warn({ err, runId, tenantId, hint: getHubErrorHint(err) }, "Hub: getTaxonomyTree failed");
     return createHubResultFromError(err);
   }
 };
@@ -487,7 +507,10 @@ export const renameTaxonomyNode = async (
     const data = await client.taxonomy.nodes.rename(nodeId, input);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, nodeId, tenantId: input.tenant_id }, "Hub: renameTaxonomyNode failed");
+    logger.warn(
+      { err, nodeId, tenantId: input.tenant_id, hint: getHubErrorHint(err) },
+      "Hub: renameTaxonomyNode failed"
+    );
     return createHubResultFromError(err);
   }
 };
@@ -505,7 +528,10 @@ export const removeTaxonomyNode = async (
     const data = await client.taxonomy.nodes.softRemove(nodeId, params);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, nodeId, tenantId: params.tenant_id }, "Hub: removeTaxonomyNode failed");
+    logger.warn(
+      { err, nodeId, tenantId: params.tenant_id, hint: getHubErrorHint(err) },
+      "Hub: removeTaxonomyNode failed"
+    );
     return createHubResultFromError(err);
   }
 };
@@ -523,7 +549,10 @@ export const listTaxonomyNodeRecords = async (
     const data = await client.taxonomy.nodes.listRecords(nodeId, params);
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, nodeId, tenantId: params.tenant_id }, "Hub: listTaxonomyNodeRecords failed");
+    logger.warn(
+      { err, nodeId, tenantId: params.tenant_id, hint: getHubErrorHint(err) },
+      "Hub: listTaxonomyNodeRecords failed"
+    );
     return createHubResultFromError(err);
   }
 };
@@ -545,7 +574,10 @@ export const listTaxonomyNodeRecordCounts = async (
     const data = await client.taxonomy.runs.retrieveRecordCounts(runId, { tenant_id: tenantId });
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, runId, tenantId }, "Hub: listTaxonomyNodeRecordCounts failed");
+    logger.warn(
+      { err, runId, tenantId, hint: getHubErrorHint(err) },
+      "Hub: listTaxonomyNodeRecordCounts failed"
+    );
     return createHubResultFromError(err);
   }
 };

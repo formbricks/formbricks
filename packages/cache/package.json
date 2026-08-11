@@ -6,7 +6,7 @@
   "homepage": "https://formbricks.com",
   "description": "Unified Redis cache for Formbricks",
   "main": "./dist/index.js",
-  "types": "./dist/src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
@@ -21,9 +21,11 @@
     "dist"
   ],
   "exports": {
-    "types": "./dist/src/index.d.ts",
-    "import": "./dist/index.js",
-    "require": "./dist/index.cjs"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",

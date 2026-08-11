@@ -58,7 +58,7 @@ post:
                           en-US: What should we improve?
                         required: true
   responses:
-    '200':
+    "200":
       description: Validation completed. The survey document may still be invalid.
       headers:
         X-Request-Id:
@@ -102,7 +102,7 @@ post:
                       default: true
                       enabled: true
                       writeBehavior: connect_or_create
-    '400':
+    "400":
       description: >-
         Malformed validation envelope, invalid route/query data, or unsupported
         operation
@@ -110,13 +110,13 @@ post:
         application/problem+json:
           schema:
             $ref: ../components/schemas/Problem.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []

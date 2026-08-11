@@ -22,6 +22,9 @@ interface PlainChatProps {
 const PLAIN_SCRIPT_ID = "plain-chat-script";
 const PLAIN_SCRIPT_SRC = "https://chat.cdn-plain.com/index.js";
 
+// Formbricks brand teal — brands the chat panel accents.
+const BRAND_COLOR = "#00C4B8";
+
 interface PlainCustomerDetails {
   email: string;
   emailHash?: string;
@@ -34,6 +37,12 @@ interface PlainInitOptions {
   appId: string;
   hideLauncher?: boolean;
   theme?: "auto" | "light" | "dark";
+  style?: {
+    brandColor?: string;
+    brandBackgroundColor?: string;
+    launcherBackgroundColor?: string;
+    launcherIconColor?: string;
+  };
   customerDetails?: PlainCustomerDetails;
   threadDetails?: { labelTypeIds?: string[] };
 }
@@ -85,6 +94,11 @@ export const PlainChat = ({
       appId,
       theme: "auto",
       hideLauncher: isOnboarding,
+      style: {
+        brandColor: BRAND_COLOR,
+        launcherBackgroundColor: BRAND_COLOR,
+        launcherIconColor: "#FFFFFF",
+      },
       customerDetails: buildCustomerDetails(userEmail, emailHash, userName, userId),
       threadDetails: activeCustomerLabelTypeId ? { labelTypeIds: [activeCustomerLabelTypeId] } : undefined,
     };

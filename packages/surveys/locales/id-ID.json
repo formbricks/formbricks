@@ -30,6 +30,7 @@
     "select_options": "Pilih opsi",
     "sending_responses": "Mengirim respons…",
     "survey_dialog": "Dialog Survei",
+    "survey_opened_announcement": "Survei telah terbuka di akhir halaman.",
     "takes_less_than_x_minutes": "{count, plural, other {Kurang dari {count} menit}}",
     "takes_x_minutes": "{count, plural, other {{count} menit}}",
     "takes_x_plus_minutes": "{count}+ menit",

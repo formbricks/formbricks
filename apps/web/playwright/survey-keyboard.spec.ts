@@ -796,7 +796,7 @@ test.describe("Survey validation error announcement @slow", () => {
     // zero-count assertion cannot pass on an empty or incorrectly rendered path.
     await expect(modalRoot.locator('[aria-live="polite"]').first()).toBeAttached();
     await expect(modalRoot.locator('[aria-live="assertive"]')).toHaveCount(0);
-    await expect(modalRoot.locator(":scope > div")).not.toHaveAttribute("aria-live");
+    await expect(modalRoot.locator(":scope > div")).toHaveAttribute("aria-live", "polite");
   });
 });
 

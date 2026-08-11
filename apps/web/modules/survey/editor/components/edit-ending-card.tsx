@@ -202,7 +202,7 @@ export const EditEndingCard = ({
         {...attributes}
         className={cn(
           open ? "bg-slate-50" : "",
-          "flex w-10 flex-col items-center justify-between rounded-l-lg border-b border-l border-t py-2 group-aria-expanded:rounded-bl-none",
+          "flex w-10 flex-col items-center justify-between rounded-l-lg border-t border-b border-l py-2 group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <div className="mt-3 flex w-full justify-center">
@@ -214,7 +214,7 @@ export const EditEndingCard = ({
         </div>
         <button
           type="button"
-          className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
+          className="opacity-0 transition-all duration-300 group-hover:opacity-100 hover:cursor-move">
           <GripIcon className="size-4" />
         </button>
       </div>

@@ -302,6 +302,10 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
 
 ## React Native
 
+<Info>
+  **Interaction-based Segments:** targeting users by whether they have seen, started or completed a survey requires **@formbricks/react-native 3.1.0** or higher. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments).
+</Info>
+
 Install the Formbricks React Native SDK using one of the package managers, i.e., npm, pnpm, or yarn.
 
 ```bash npm
@@ -350,13 +354,17 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
 
 <Info>**Minimum iOS Version:** The Formbricks iOS SDK requires **iOS 16.4** or higher.</Info>
 
+<Info>
+  **Interaction-based Segments:** targeting users by whether they have seen, started or completed a survey requires **FormbricksSDK 2.1.0** or higher. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments).
+</Info>
+
 Install the Formbricks iOS SDK using the following steps:
 
 **Swift Package Manager**
 
 1. In Xcode choose **File → Add Packages…**
 2. Enter your repo URL (e.g. `https://github.com/formbricks/ios.git`)
-3. Choose version rule (e.g. "Up to Next Major" starting at `1.0.0`).
+3. Choose version rule (e.g. "Up to Next Major" starting at `2.1.0`).
 4. Import in your code:
 
    ```swift
@@ -372,7 +380,7 @@ Install the Formbricks iOS SDK using the following steps:
    use_frameworks! :linkage => :static
 
    target 'YourTargetName' do
-     pod 'FormbricksSDK', '1.0.0 (or the latest version)'
+     pod 'FormbricksSDK', '~> 2.1'
    end
    ```
 
@@ -438,6 +446,10 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
   **Minimum Android Version:** The Formbricks Android SDK requires **Android 10 (API level 29)** or higher.
 </Info>
 
+<Info>
+  **Interaction-based Segments:** targeting users by whether they have seen, started or completed a survey requires **com.formbricks:android 2.1.0** or higher. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments).
+</Info>
+
 Install the Formbricks Android SDK using the following steps:
 
 ### Installation
@@ -451,7 +463,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.formbricks:android:1.0.0") // replace with latest version
+    implementation("com.formbricks:android:2.1.0") // or a later version
 }
 ```
 
@@ -508,6 +520,10 @@ Formbricks.logout()
 
 <Info>
   **Platform Support:** The Formbricks Flutter SDK targets **iOS and Android only**. Flutter Web and desktop are not supported.
+</Info>
+
+<Info>
+  **Interaction-based Segments:** targeting users by whether they have seen, started or completed a survey requires **formbricks 1.1.0** or higher. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic#level-4-interaction-based-segments).
 </Info>
 
 Install the Formbricks Flutter SDK from [pub.dev](https://pub.dev/packages/formbricks):

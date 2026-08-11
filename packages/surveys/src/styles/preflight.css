@@ -74,15 +74,17 @@
 #fbjs kbd,
 #fbjs samp,
 #fbjs pre {
-  font-family: theme("fontFamily.mono",
-      ui-monospace,
-      SFMono-Regular,
-      Menlo,
-      Monaco,
-      Consolas,
-      "Liberation Mono",
-      "Courier New",
-      monospace);
+  font-family: theme(
+    "fontFamily.mono",
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    "Courier New",
+    monospace
+  );
   /* 1 */
   font-size: 1em;
   /* 2 */

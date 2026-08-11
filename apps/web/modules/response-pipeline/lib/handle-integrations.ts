@@ -74,7 +74,8 @@ const processDataForIntegration = async (
   integrationType: TIntegrationType,
   data: TIntegrationPipelineData,
   survey: TPipelineIntegrationSurvey,
-  selection: TIntegrationFieldSelection
+  selection: TIntegrationFieldSelection,
+  displayTimeZone: string = "UTC"
 ): Promise<{
   responses: string[];
   elements: string[];
@@ -108,7 +109,7 @@ const processDataForIntegration = async (
   }
   if (includeCreatedAt) {
     const date = new Date(data.response.createdAt);
-    responses.push(`${getFormattedDateTimeString(date)}`);
+    responses.push(`${getFormattedDateTimeString(date, displayTimeZone)}`);
     elements.push("Created At");
   }
   if (includeContactAttributes && data.response.contactAttributes) {
@@ -127,7 +128,8 @@ const processDataForIntegration = async (
 export const handleIntegrations = async (
   integrations: TIntegration[],
   data: TIntegrationPipelineData,
-  survey: TPipelineIntegrationSurvey
+  survey: TPipelineIntegrationSurvey,
+  displayTimeZone: string = "UTC"
 ) => {
   for (const integration of integrations) {
     switch (integration.type) {
@@ -135,7 +137,8 @@ export const handleIntegrations = async (
         const googleResult = await handleGoogleSheetsIntegration(
           integration as TIntegrationGoogleSheets,
           data,
-          survey
+          survey,
+          displayTimeZone
         );
         if (!googleResult.ok) {
           logger.error(googleResult.error, "Error in google sheets integration");
@@ -143,7 +146,12 @@ export const handleIntegrations = async (
         break;
       }
       case "slack": {
-        const slackResult = await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
+        const slackResult = await handleSlackIntegration(
+          integration as TIntegrationSlack,
+          data,
+          survey,
+          displayTimeZone
+        );
         if (!slackResult.ok) {
           logger.error(slackResult.error, "Error in slack integration");
         }
@@ -153,7 +161,8 @@ export const handleIntegrations = async (
         const airtableResult = await handleAirtableIntegration(
           integration as TIntegrationAirtable,
           data,
-          survey
+          survey,
+          displayTimeZone
         );
         if (!airtableResult.ok) {
           logger.error(airtableResult.error, "Error in airtable integration");
@@ -174,7 +183,8 @@ export const handleIntegrations = async (
 const handleAirtableIntegration = async (
   integration: TIntegrationAirtable,
   data: TIntegrationPipelineData,
-  survey: TPipelineIntegrationSurvey
+  survey: TPipelineIntegrationSurvey,
+  displayTimeZone: string
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -184,7 +194,8 @@ const handleAirtableIntegration = async (
             "airtable",
             data,
             survey,
-            toIntegrationFieldSelection(element)
+            toIntegrationFieldSelection(element),
+            displayTimeZone
           );
           await airtableWriteData(integration.config.key, element, values.responses, values.elements);
         }
@@ -206,7 +217,8 @@ const handleAirtableIntegration = async (
 const handleGoogleSheetsIntegration = async (
   integration: TIntegrationGoogleSheets,
   data: TIntegrationPipelineData,
-  survey: TPipelineIntegrationSurvey
+  survey: TPipelineIntegrationSurvey,
+  displayTimeZone: string
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -216,7 +228,8 @@ const handleGoogleSheetsIntegration = async (
             "googleSheets",
             data,
             survey,
-            toIntegrationFieldSelection(element)
+            toIntegrationFieldSelection(element),
+            displayTimeZone
           );
           const integrationData = structuredClone(integration);
           integrationData.config.data.forEach((data) => {
@@ -243,7 +256,8 @@ const handleGoogleSheetsIntegration = async (
 const handleSlackIntegration = async (
   integration: TIntegrationSlack,
   data: TIntegrationPipelineData,
-  survey: TPipelineIntegrationSurvey
+  survey: TPipelineIntegrationSurvey,
+  displayTimeZone: string
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -253,7 +267,8 @@ const handleSlackIntegration = async (
             "slack",
             data,
             survey,
-            toIntegrationFieldSelection(element)
+            toIntegrationFieldSelection(element),
+            displayTimeZone
           );
           await writeDataToSlack(
             integration.config.key,
