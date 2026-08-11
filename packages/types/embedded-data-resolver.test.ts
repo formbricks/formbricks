@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { ZEmbeddedData } from "./embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
   type TEmbeddedValueRef,
@@ -11,6 +12,7 @@ import {
   projectReservedValues,
   resolveEmbeddedValue,
 } from "./embedded-data-resolver";
+import type { TI18nString } from "./i18n";
 import type { TResponseData, TResponseVariables } from "./responses";
 import type { TSurveyBlocks } from "./surveys/blocks";
 import { TSurveyElementTypeEnum } from "./surveys/elements";
@@ -204,6 +206,18 @@ describe("resolveEmbeddedValue", () => {
       const field = makeField({ source: "reserved", defaultValue: "should-not-surface" });
       expect(resolve(field, "plan")).toBeUndefined();
     });
+
+    test("a throwing accessor reads as missing instead of crashing the resolve", () => {
+      const hostnameEntry: TReservedFieldCatalogEntry = {
+        name: "hostname",
+        dataType: "string",
+        read: (r) => new URL(r.meta.url ?? "").hostname,
+      };
+      // sparseResponse has no meta.url, so the accessor throws on `new URL("")` — the resolver must
+      // treat that like every other dirty input: one field unset, no exception escaping.
+      expect(resolveEmbeddedValue({ entry: hostnameEntry }, sparseResponse)).toBeUndefined();
+      expect(resolveEmbeddedValue({ entry: hostnameEntry }, response)).toBe("example.com");
+    });
   });
 
   describe("locked ingested fields", () => {
@@ -268,6 +282,9 @@ describe("resolveEmbeddedValue", () => {
   });
 
   test("a mixed field/link/entry shape is unrepresentable at compile time", () => {
+    // This pin is enforced by `tsc` (this package's tsconfig includes *.test.ts, and an unused
+    // expect-error directive fails the build), NOT by vitest — no CI workflow currently runs
+    // typecheck, so the pin bites on local and agent `pnpm typecheck` runs only.
     const acceptsRef = (ref: TEmbeddedValueRef): TEmbeddedValueRef => ref;
     const mixed = { field: makeField(), link: { storageKey: "plan" }, entry: countryEntry };
 
@@ -278,6 +295,13 @@ describe("resolveEmbeddedValue", () => {
     // The exclusion props must not tax the two legitimate shapes.
     expect(acceptsRef({ field: makeField(), link: { storageKey: "plan" } })).toBeTruthy();
     expect(acceptsRef({ entry: countryEntry })).toBeTruthy();
+  });
+
+  test("a degenerate ref carrying entry: undefined resolves through its field, not the entry branch", () => {
+    // The discriminator is definedness, not key presence — a `"entry" in ref` check would route
+    // this object into the entry branch and crash on `undefined.read`.
+    const ref: TEmbeddedValueRef = { field: makeField(), link: { storageKey: "plan" }, entry: undefined };
+    expect(resolveEmbeddedValue(ref, response)).toBe("premium");
   });
 });
 
@@ -305,6 +329,10 @@ describe("coerceToEmbeddedDataType", () => {
         expect(coerceToEmbeddedDataType(input, "string")).toBeUndefined();
       }
     );
+
+    test("rejects an invalid Date instance instead of throwing on toISOString", () => {
+      expect(coerceToEmbeddedDataType(new Date("banana"), "string")).toBeUndefined();
+    });
   });
 
   describe("number", () => {
@@ -323,6 +351,7 @@ describe("coerceToEmbeddedDataType", () => {
       ["", 'empty string — Number("") === 0 is an artifact, not data'],
       ["   ", "blank string"],
       ["abc", "non-numeric string"],
+      ["25 seats", "partially numeric string — parseFloat would invent 25 where Number rejects"],
       [true, "boolean"],
       [Number.NaN, "NaN"],
       [Number.POSITIVE_INFINITY, "Infinity"],
@@ -384,6 +413,41 @@ describe("coerceToEmbeddedDataType", () => {
     ])("rejects %p (%s)", (input) => {
       expect(coerceToEmbeddedDataType(input, "date")).toBeUndefined();
     });
+
+    test("accepts exactly the strings ZEmbeddedData accepts as date defaults — the two rules must not drift", () => {
+      // Both files declare the ISO rule privately on purpose (each owns its side); this corpus is
+      // the pin that keeps them the same rule. If either side alone gains offset/local acceptance,
+      // a stored default becomes unresolvable (or vice versa) and this goes red.
+      const dateDefaultRow = (defaultValue: string) => ({
+        id: "clx0000000000000000000e1",
+        createdAt: new Date("2026-08-01T09:00:00.000Z"),
+        updatedAt: new Date("2026-08-01T09:00:00.000Z"),
+        key: null,
+        name: "Signup date",
+        description: null,
+        source: "ingested",
+        dataType: "date",
+        defaultValue,
+        locked: false,
+        surveyId: "clx0000000000000000000s1",
+        workspaceId: "clx0000000000000000000w1",
+      });
+
+      const corpus = [
+        "2026-08-06",
+        "2026-08-06T10:30:00Z",
+        "2026-08-06T10:30:00.123Z",
+        "2026-08-06T10:30:00+02:00",
+        "2026-08-06T10:30:00",
+        " 2026-08-06",
+      ];
+
+      for (const candidate of corpus) {
+        const rowAccepts = ZEmbeddedData.safeParse(dateDefaultRow(candidate)).success;
+        const readAccepts = coerceToEmbeddedDataType(candidate, "date") !== undefined;
+        expect({ candidate, readAccepts }).toStrictEqual({ candidate, readAccepts: rowAccepts });
+      }
+    });
   });
 });
 
@@ -422,6 +486,59 @@ describe("projectReservedValues", () => {
 
   test("projects an empty map when nothing was captured", () => {
     expect(projectReservedValues([countryEntry, totalTimeEntry], sparseResponse)).toStrictEqual({});
+  });
+
+  test("projects through the resolver's coercion — a Date-backed entry lands as its ISO string", () => {
+    // The one entry kind where resolving differs from the raw read: a raw `Date` must never reach
+    // the recall/logic maps.
+    expect(projectReservedValues([startedAtEntry], response)).toStrictEqual({
+      started_at: "2026-08-01T09:00:00.000Z",
+    });
+  });
+
+  test("omits an entry whose raw value cannot be coerced to its dataType", () => {
+    const miscastEntry: TReservedFieldCatalogEntry = {
+      name: "total_time",
+      dataType: "number",
+      read: (r) => r.meta.source, // "web" — present, but not a number; projecting it would invent data
+    };
+    expect(projectReservedValues([miscastEntry], response)).toStrictEqual({});
+  });
+
+  test("keeps falsy-but-present values: false stringifies, empty string and zero stay in the map", () => {
+    const emptySourceEntry: TReservedFieldCatalogEntry = {
+      name: "empty_source",
+      dataType: "string",
+      read: () => "",
+    };
+    const zeroTimeEntry: TReservedFieldCatalogEntry = {
+      name: "zero_time",
+      dataType: "number",
+      read: () => 0,
+    };
+
+    // sparseResponse has finished: false — a value, not a gap, exactly like "" and 0.
+    expect(
+      projectReservedValues([completedEntry, emptySourceEntry, zeroTimeEntry], sparseResponse)
+    ).toStrictEqual({
+      completed: "false",
+      empty_source: "",
+      zero_time: 0,
+    });
+  });
+
+  test("a throwing accessor is skipped without aborting the rest of the catalog", () => {
+    const hostnameEntry: TReservedFieldCatalogEntry = {
+      name: "hostname",
+      dataType: "string",
+      read: (r) => new URL(r.meta.url ?? "").hostname,
+    };
+
+    // meta emptied: the hostname accessor throws on `new URL("")`, and the entries after it must
+    // still be evaluated.
+    expect(projectReservedValues([hostnameEntry, languageEntry], { ...response, meta: {} })).toStrictEqual({
+      response_language: "de",
+    });
   });
 
   test("the production catalog is empty until ENG-1839 and projects to an empty map", () => {
@@ -552,6 +669,80 @@ describe("listReadableFields", () => {
     expect(q1?.label).toBe("What is your name?");
   });
 
+  const singleElementBlocks = (elementId: string, headline: TI18nString): TSurveyBlocks => [
+    {
+      id: "clx0000000000000000000b3",
+      name: "Block",
+      elements: [
+        {
+          id: elementId,
+          type: TSurveyElementTypeEnum.OpenText,
+          headline,
+          required: false,
+          inputType: "text",
+          charLimit: { enabled: false },
+        },
+      ],
+    },
+  ];
+
+  test("a blank locale entry falls back to the default headline, not to a blank label", () => {
+    // Blank locale entries are a real stored shape; today's apps/web picker labels this case with
+    // the bare element id (its getLocalizedValue has no default fallback) — this pins the improved,
+    // packages/surveys-style semantics the module documents.
+    const fields = listReadableFields({
+      blocks: singleElementBlocks("q6", { default: "How likely?", de: "" }),
+      embeddedData: [],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+      languageCode: "de",
+    });
+
+    expect(fields.question).toEqual([{ key: "q6", label: "How likely?" }]);
+  });
+
+  test("flattens every recall token in a headline, not only the first", () => {
+    const fields = listReadableFields({
+      blocks: singleElementBlocks("q7", {
+        default: "#recall:q1/fallback:a# and #recall:q2/fallback:b#",
+      }),
+      embeddedData: [],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.question).toEqual([{ key: "q7", label: "___ and ___" }]);
+  });
+
+  test("a non-string default in unparsed survey JSON degrades to the id fallback instead of throwing", () => {
+    // prisma-json-types reads skip zod, so dirty i18n objects are representable at runtime.
+    const dirtyHeadline = { default: 42 } as unknown as TI18nString;
+    const fields = listReadableFields({
+      blocks: singleElementBlocks("q8", dirtyHeadline),
+      embeddedData: [],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.question).toEqual([{ key: "q8", label: "q8" }]);
+  });
+
+  test("reserved labels fall back to the entry name when title-casing yields nothing", () => {
+    const underscoreEntry: TReservedFieldCatalogEntry = {
+      name: "_",
+      dataType: "string",
+      read: () => undefined,
+    };
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [],
+      reservedEntries: [underscoreEntry],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.reserved).toEqual([{ key: "_", label: "_" }]);
+  });
+
   test("embedded data labels fall back to the storageKey when the definition name is blank", () => {
     // ZEmbeddedData forbids blank names, but derived legacy pairs carry plain variable names.
     const fields = listReadableFields({
@@ -645,7 +836,8 @@ describe("deriveLegacyEmbeddedData", () => {
   });
 
   test("derives declared hidden fields even when hiddenFields is disabled", () => {
-    // Recall and logic consult fieldIds alone today; a disabled field just never receives a value.
+    // Recall and logic consult fieldIds alone today — and the link-survey URL path ingests values
+    // even when disabled — so deriving must not hide fields that may hold data.
     const pairs = deriveLegacyEmbeddedData({
       variables: [],
       hiddenFields: { enabled: false, fieldIds: ["plan"] },
