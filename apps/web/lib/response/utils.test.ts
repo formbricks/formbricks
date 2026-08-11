@@ -726,7 +726,7 @@ describe("Response Utils", () => {
         [],
         false
       );
-      expect(result[0]["Timestamp"]).toBe("2026-01-01 20:00:00");
+      expect(result[0]["Timestamp"]).toBe("2026-01-01 20:00:00 UTC");
     });
 
     test("should format the Timestamp in the configured time zone", () => {
@@ -742,7 +742,7 @@ describe("Response Utils", () => {
         false,
         "Asia/Manila"
       );
-      expect(result[0]["Timestamp"]).toBe("2026-01-02 04:00:00");
+      expect(result[0]["Timestamp"]).toBe("2026-01-02 04:00:00 GMT+8");
     });
   });
 

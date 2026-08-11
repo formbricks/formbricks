@@ -69,8 +69,18 @@ export const getFormattedDateTimeString = (date: Date, timeZone: string = "UTC")
     minute: "2-digit",
     second: "2-digit",
     hourCycle: "h23",
+    // Append the zone (e.g. "UTC", "GMT+8") so every exported/integrated Timestamp is
+    // self-describing: rows written under different org settings stay distinguishable,
+    // and downstream ETL never has to guess the zone.
+    timeZoneName: "short",
     timeZone,
   };
 
-  return new Intl.DateTimeFormat("en-CA", options).format(date).replace(",", "");
+  // An invalid IANA zone makes Intl.DateTimeFormat throw a RangeError. Degrade to UTC
+  // rather than failing the entire export or integration delivery.
+  try {
+    return new Intl.DateTimeFormat("en-CA", options).format(date).replace(",", "");
+  } catch {
+    return new Intl.DateTimeFormat("en-CA", { ...options, timeZone: "UTC" }).format(date).replace(",", "");
+  }
 };
