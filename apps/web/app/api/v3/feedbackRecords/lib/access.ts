@@ -179,10 +179,13 @@ export async function requireFeedbackRecordMutationRole(
 /**
  * The API-key half: the dataset must be this key's alone.
  *
- * Every check re-asserts something `resolveWorkspaceFeedbackTenant` already implies, so each is
- * unreachable while its invariant holds. That is the point — they compare the *key* and the *dataset*
- * directly, so the decision stays correct read on its own rather than inheriting the resolver's word for
- * it, which is the bug class that let ENG-1980 exist.
+ * Four of the five checks below re-assert something `resolveWorkspaceFeedbackTenant` already implies
+ * and are only reachable on a TOCTOU race between the resolver's read and this function's independent
+ * read. The sharing check (`canApiKeyMutateFeedbackDirectoryRecords`) is not implied by the resolver
+ * at all — sharing is not part of what the resolver checks — and is the actual ENG-2189 enforcement
+ * point that fires deterministically on every shared-dataset request. Each check compares the *key*
+ * and the *dataset* directly, so the decision stays correct read on its own rather than inheriting
+ * the resolver's word for it, which is the bug class that let ENG-1980 exist.
  *
  * Only the sharing refusal carries the shared-dataset message. The rest reuse the generic record 403,
  * which `requireOwnedFeedbackRecord` also returns: an unresolvable, foreign or archived dataset is not a

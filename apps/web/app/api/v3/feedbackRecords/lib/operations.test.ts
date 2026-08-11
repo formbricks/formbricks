@@ -1726,6 +1726,8 @@ describe("feedback record mutation role (ENG-1770)", () => {
       const response = await updateV3FeedbackRecord({ ...updateArgs, authentication: apiKeyAuth });
 
       expect(response.status).toBe(403);
+      // The no-oracle ordering has to survive the change: a refused caller learns nothing about ids.
+      expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
       expect(updateFeedbackRecord).not.toHaveBeenCalled();
     });
 
@@ -1780,7 +1782,48 @@ describe("feedback record mutation role (ENG-1770)", () => {
 
     expect(response.status).toBe(403);
     expect(problem.detail).not.toContain("shared by more than one workspace");
+    // The no-oracle ordering must hold for each refusal reason too.
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
     expect(deleteFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["the dataset cannot be resolved", null, apiKeyAuth],
+    [
+      "the dataset belongs to another organization",
+      { organizationId: "org_other", workspaceIds: [workspaceId], isArchived: false },
+      apiKeyAuth,
+    ],
+    [
+      "the key belongs to another organization",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: false },
+      foreignOrgApiKeyAuth,
+    ],
+    [
+      "the dataset is archived",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: true },
+      apiKeyAuth,
+    ],
+    [
+      "the dataset's sole workspace is not the caller's",
+      {
+        organizationId: context.organizationId,
+        workspaceIds: ["clwz1234567890123456789012"],
+        isArchived: false,
+      },
+      apiKeyAuth,
+    ],
+  ])("refuses an API-key update when %s, without blaming sharing", async (_name, directory, auth) => {
+    vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue(directory);
+
+    const response = await updateV3FeedbackRecord({ ...updateArgs, authentication: auth });
+    const problem = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(problem.detail).not.toContain("shared by more than one workspace");
+    // The no-oracle ordering must hold for each refusal reason too.
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+    expect(updateFeedbackRecord).not.toHaveBeenCalled();
   });
 
   // The API key above is the only shape that skips the role check. Anything that resolves to no user is

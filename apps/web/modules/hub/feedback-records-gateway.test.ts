@@ -263,4 +263,15 @@ describe("feedbackRecordsGatewayAuthorizer", () => {
     expect(decision.status).toBe("deny");
     expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
   });
+
+  // The directory-not-found half of the combined guard (!feedbackDirectory ||
+  // feedbackDirectory.isArchived) — only the isArchived half is exercised above.
+  test("denies everything when the directory cannot be resolved", async () => {
+    vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue(null);
+
+    const decision = await authorize("GET", `/api/v3/feedbackRecords/${recordId}`, userPrincipal);
+
+    expect(decision.status).toBe("deny");
+    expect(decision.status === "deny" && decision.response.status).toBe(403);
+  });
 });

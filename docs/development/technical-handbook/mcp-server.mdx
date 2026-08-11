@@ -184,7 +184,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `create_feedback_record` | `write` or `manage` |
 | `create_feedback_records` | `write` or `manage` |
 | `update_feedback_record` | `write` or `manage` |
-| `delete_feedback_record` | `write` or `manage` |
+| `delete_feedback_record` | `manage` |
 
 Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` + `feedbackRecords:read`
 always; the matching `:write` scopes when the key has `write` or `manage` on any workspace. The scope
@@ -1112,7 +1112,13 @@ audit event — N creations are N events, not one summary.
 
 Corrects the value of an existing feedback record. Writes data, is annotated `destructiveHint: true` (it
 overwrites a stored value; the previous one survives only in the audit log), and requires
-`feedbackRecords:write`. Only the fields sent are changed; at least one is required.
+`feedbackRecords:write` (API keys need `write` or `manage`). Only the fields sent are changed; at least one is required.
+
+For API keys, the same dataset-exclusivity rule applies as for deletes: the key may update only a
+record in a dataset assigned to exactly one workspace, where its permission unambiguously covers every
+record present (ENG-2189). A shared dataset returns 403; an integration needing to update records in
+both workspaces should use a workspace-scoped key per workspace. Session, OAuth and MCP-person
+principals are unaffected and authorize through their organization role instead.
 
 Updatable — the Hub's own mutable set: `value_text`, `value_number`, `value_boolean`, `value_date`,
 `value_id`, `user_id`, `language`, `metadata`. The schema is `.pick()`ed from the create fields, so bounds
@@ -1164,9 +1170,15 @@ Output is the updated record.
 ### delete_feedback_record
 
 Permanently deletes one feedback record. Writes data, is not idempotent, is annotated
-`destructiveHint: true`, and requires `feedbackRecords:write` (API keys need `write` or `manage`). The
+`destructiveHint: true`, and requires `feedbackRecords:manage` (API keys need `manage`). The
 record and its derived embedding are removed with no soft delete, so this cannot be undone — the audit log
 entry keeps the deleted record as its `oldObject` and is the only remaining trace.
+
+For API keys, the dataset must be assigned to exactly one workspace — the caller's — because a key's
+workspace permission can only identify whose records these are when the dataset is not shared
+(ENG-2189). A shared dataset returns 403 with an explanation; an integration needing to delete from
+both workspaces should use a workspace-scoped key per workspace. Session, OAuth and MCP-person
+principals are unaffected and authorize through their organization role instead.
 
 Ownership is verified before the delete: the record must belong to a feedback dataset assigned to the
 workspace, and a record in another tenant is refused with the same generic authorization error as an
