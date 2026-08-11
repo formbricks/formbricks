@@ -32,6 +32,7 @@ checksums:
     common/sending_responses: 244f1aebc3f6a101ae2f8b630d7967ec
     common/survey_closes_automatically_in_x_seconds: 1f19affc14eea104a12cbadbc7f0e16e
     common/survey_dialog: 7401ad8978e423009da68141c739bda0
+    common/survey_opened_announcement: 43ffc9486130e59b034d140b3d9425dc
     common/survey_progress: 719677ca0fc2719f270f4d7fd686642d
     common/takes_less_than_x_minutes: 1208ce0d4c0a679c11c7bd209b6ccc47
     common/takes_x_minutes: 001d12366d07b406f50669e761d63e69

@@ -5,13 +5,13 @@ import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/contact-attributes";
-import { getContact } from "@/modules/ee/contacts/lib/contacts";
+import { getContactAuth } from "@/modules/ee/contacts/lib/contact-auth";
+import { getContactInWorkspace } from "@/modules/ee/contacts/lib/contacts";
 import { getPublishedLinkSurveys } from "@/modules/ee/contacts/lib/surveys";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ActivitySection } from "./components/activity-section";
 
 export const SingleContactPage = async (props: {
@@ -20,14 +20,16 @@ export const SingleContactPage = async (props: {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
+  // Ties the contact in the URL to the workspace in the URL: authorizing the workspace alone would
+  // let any authenticated user read a foreign contact's PII through their own workspace.
+  const { isReadOnly, organization, workspace } = await getContactAuth(params.workspaceId, params.contactId);
 
   const [environmentTags, contact, publishedLinkSurveys, attributesWithKeyInfo, allAttributeKeys] =
     await Promise.all([
       getTagsByWorkspaceId(workspace.id),
-      getContact(params.contactId),
+      getContactInWorkspace(params.contactId, workspace.id),
       getPublishedLinkSurveys(workspace.id),
-      getContactAttributesWithKeyInfo(params.contactId),
+      getContactAttributesWithKeyInfo(params.contactId, workspace.id),
       getContactAttributeKeys(workspace.id),
     ]);
 
@@ -63,7 +65,7 @@ export const SingleContactPage = async (props: {
       <PageHeader pageTitle={contactIdentifier} cta={getContactControlBar()} />
       <section className="pt-6 pb-24">
         <div className="grid grid-cols-4 gap-x-8">
-          <AttributesSection contactId={params.contactId} />
+          <AttributesSection contactId={params.contactId} workspaceId={workspace.id} />
           <ActivitySection
             workspaceId={workspace.id}
             contactId={params.contactId}

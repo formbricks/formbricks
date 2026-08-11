@@ -11,5 +11,3 @@ export const SURVEY_ARCHIVE_PURGE_BATCH_SIZE = 100;
 // apps/web/lib/env.ts), which already defaults to "Europe/Berlin".
 export const SURVEY_ARCHIVE_PURGE_TIME_ZONE = env.SURVEY_SCHEDULING_TIME_ZONE;
 export const SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN = "30 1 * * *";
-export const SURVEY_ARCHIVE_PURGE_GLOBAL_SCOPE = "global";
-export const SURVEY_ARCHIVE_PURGE_DAILY_SCHEDULE_ID = "daily-survey-archive-purge";

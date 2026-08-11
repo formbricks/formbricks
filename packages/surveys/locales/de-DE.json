@@ -31,6 +31,7 @@
     "sending_responses": "Antworten werden gesendet...",
     "survey_closes_automatically_in_x_seconds": "{count, plural, one {Diese Umfrage schließt sich automatisch in {count} Sekunde, wenn du nicht antwortest} other {Diese Umfrage schließt sich automatisch in {count} Sekunden, wenn du nicht antwortest}}",
     "survey_dialog": "Umfragedialog",
+    "survey_opened_announcement": "Am Ende der Seite wurde eine Umfrage geöffnet.",
     "survey_progress": "Umfragefortschritt",
     "takes_less_than_x_minutes": "{count, plural, one {Dauert weniger als 1 Minute} other {Dauert weniger als {count} Minuten}}",
     "takes_x_minutes": "{count, plural, one {Dauert 1 Minute} other {Dauert {count} Minuten}}",

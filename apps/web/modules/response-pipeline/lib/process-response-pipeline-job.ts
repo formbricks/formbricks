@@ -31,6 +31,7 @@ const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
 
 const pipelineOrganizationSelect = {
   id: true,
+  displayTimeZone: true,
   billing: {
     select: {
       stripeCustomerId: true,
@@ -618,6 +619,7 @@ const handleSurveyAutoCompleteSafely = async ({
 
 const runResponseFinishedSideEffects = async ({
   data,
+  displayTimeZone,
   logContext,
   organizationId,
   stripeCustomerId,
@@ -625,6 +627,7 @@ const runResponseFinishedSideEffects = async ({
   workspaceId,
 }: {
   data: TResponsePipelineJobData;
+  displayTimeZone: string | null;
   logContext: ReturnType<typeof getPipelineLogContext>;
   organizationId: string;
   stripeCustomerId: string | null | undefined;
@@ -669,7 +672,7 @@ const runResponseFinishedSideEffects = async ({
 
   if (integrations.length > 0) {
     try {
-      await handleIntegrations(integrations, data, survey);
+      await handleIntegrations(integrations, data, survey, displayTimeZone ?? "UTC");
     } catch (error) {
       logger.error(
         {
@@ -834,6 +837,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
     if (data.event === "responseFinished") {
       await runResponseFinishedSideEffects({
         data,
+        displayTimeZone: organization.displayTimeZone,
         logContext,
         organizationId: organization.id,
         stripeCustomerId: organization.billing?.stripeCustomerId,

@@ -1,107 +1,143 @@
+import { isValidIP, normalizeIP } from "@better-auth/core/utils/ip";
 import { headers } from "next/headers";
 import { logger } from "@formbricks/logger";
-import { TRUSTED_PROXY_HOP_COUNT } from "@/lib/constants";
 
-/**
- * Returned when no forwarding header may be believed, so the client is genuinely unidentifiable.
- *
- * Next 16 exposes no socket peer address to route handlers or server actions (`NextRequest.ip` was
- * removed and `headers()` carries only HTTP headers), so with no trusted proxy there is nothing else to
- * fall back to.
- */
+/** Private request header written by Proxy after the trusted forwarding hop has been resolved. */
+export const FORMBRICKS_CLIENT_IP_HEADER = "x-formbricks-client-ip";
+
+/** Collapse IPv6 identities to a stable network prefix before rate limiting or persistence. */
+export const CLIENT_IP_IPV6_SUBNET_PREFIX = 64;
+
+/** Better Auth must consume exactly the same private request identity as the rest of Formbricks. */
+export const BETTER_AUTH_IP_ADDRESS_CONFIG = {
+  ipAddressHeaders: [FORMBRICKS_CLIENT_IP_HEADER],
+  ipv6Subnet: CLIENT_IP_IPV6_SUBNET_PREFIX,
+};
+
+/** Stable downstream identity when Proxy could not establish a trustworthy client address. */
 export const UNTRUSTED_CLIENT_IP = "untrusted-client-ip";
 
-/**
- * Throttle window for the misconfiguration warning. Time-based rather than once-per-process: a warning
- * that fires only on the first request goes silent for the life of a long-running deployment, so an
- * ongoing misconfiguration disappears from monitoring after one line. Raised by CodeRabbit on #8680.
- */
-const UNTRUSTED_IP_WARNING_INTERVAL_MS = 10 * 60 * 1000;
+const CLIENT_IP_WARNING_INTERVAL_MS = 10 * 60 * 1000;
+const VALID_DECIMAL_PORT = /^[1-9]\d{0,4}$/;
+const BRACKETED_ADDRESS = /^\[([^\[\]]+)\](?::([^:]+))?$/;
+const IPV4_SOCKET = /^([^:]+):(\d+)$/;
 
-let lastUntrustedIpWarningAt: number | null = null;
+type ClientIpWarningReason = "disabled" | "invalid-selected-hop" | "missing-chain" | "short-chain";
 
-const warnAboutUntrustedIp = (): void => {
+const clientIpWarningMessages: Record<ClientIpWarningReason, string> = {
+  disabled:
+    "Client IP resolution is disabled because TRUSTED_PROXY_HOP_COUNT is 0 while forwarding headers " +
+    "are present. IP-based limits and captured IP metadata will use the shared untrusted identity.",
+  "missing-chain":
+    "Client IP resolution failed because X-Forwarded-For is absent. Configure the proxy to append it; " +
+    "x-real-ip and cf-connecting-ip are not trusted client identity sources.",
+  "short-chain":
+    "Client IP resolution failed because X-Forwarded-For has fewer entries than " +
+    "TRUSTED_PROXY_HOP_COUNT. Verify that every configured proxy appends to the forwarding chain.",
+  "invalid-selected-hop":
+    "Client IP resolution failed because the selected trusted X-Forwarded-For hop is not a valid " +
+    "supported IP address. The request will use the shared untrusted identity.",
+};
+
+const lastClientIpWarningAt: Partial<Record<ClientIpWarningReason, number>> = {};
+
+const warnAboutClientIp = (reason: ClientIpWarningReason): void => {
   const now = Date.now();
-  if (
-    lastUntrustedIpWarningAt !== null &&
-    now - lastUntrustedIpWarningAt < UNTRUSTED_IP_WARNING_INTERVAL_MS
-  ) {
-    return;
-  }
-  lastUntrustedIpWarningAt = now;
-  logger.error(
-    "TRUSTED_PROXY_HOP_COUNT is set to 0 but the request carries forwarding headers. IP-based rate " +
-      "limiting and IP capture cannot identify individual clients while no hop is trusted. Unset it to " +
-      "take the default of 1, or set it to the number of reverse proxies actually in front of this app."
-  );
+  const lastWarningAt = lastClientIpWarningAt[reason];
+  if (lastWarningAt !== undefined && now - lastWarningAt < CLIENT_IP_WARNING_INTERVAL_MS) return;
+
+  lastClientIpWarningAt[reason] = now;
+  logger.warn(clientIpWarningMessages[reason]);
+};
+
+const isValidPort = (port: string): boolean => {
+  if (!VALID_DECIMAL_PORT.test(port)) return false;
+  return Number(port) <= 65_535;
+};
+
+const canonicalizeIp = (ip: string): string | null => {
+  if (!isValidIP(ip)) return null;
+  return normalizeIP(ip, { ipv6Subnet: CLIENT_IP_IPV6_SUBNET_PREFIX });
 };
 
 /**
- * Resolves the client IP from forwarding headers, trusting only as many proxy hops as configured.
+ * Parse the selected X-Forwarded-For token without guessing at ambiguous socket forms.
  *
- * `X-Forwarded-For` is *appended* to by each proxy, so its leftmost entry is whatever the client itself
- * sent — reading that, as this used to, let a caller supply any value. Because the result keys the
- * IP-based rate limits (login, forgot-password, signup, the public client API), a caller could rotate
- * the header to mint a fresh bucket per request and bypass all of them, and could also forge the
- * `ipAddress` recorded on responses and in audit-log entries.
- *
- * With `hopCount` proxies in front, the address the outermost trusted proxy observed is the
- * `hopCount`-th entry from the right; everything left of it is client-supplied and ignored.
- * `TRUSTED_PROXY_HOP_COUNT` defaults to 1, matching every supported topology; `0` is an explicit
- * opt-out that trusts nothing and therefore cannot identify a client at all.
- *
- * `cf-connecting-ip` is deliberately *not* consulted. It is only trustworthy when the request provably
- * came from Cloudflare's edge, and a hop count cannot establish that: `hopCount >= 1` says "one proxy is
- * in front", which for most deployments is Traefik, Envoy or nginx — none of which strip
- * `cf-connecting-ip`. Preferring it would therefore hand the spoof straight back to the caller. Nothing
- * is lost by dropping it: Cloudflare also puts the visitor address into `X-Forwarded-For`, so a
- * Cloudflare deployment is just `hopCount = 1` (or 2 with a proxy of its own behind it).
- *
- * Exported separately from {@link getClientIpFromHeaders} so the parsing is unit-testable without
- * mocking `next/headers`.
+ * Azure Application Gateway can append an IPv4 client port. Bracketed IPv6 follows the standard
+ * unambiguous socket spelling; a valid unbracketed IPv6 value is always treated as an address.
  */
-export const resolveClientIp = (headersList: Headers, hopCount: number): string => {
-  const xForwardedFor = headersList.get("x-forwarded-for");
+const canonicalizeForwardedIp = (value: string): string | null => {
+  const plainIp = canonicalizeIp(value);
+  if (plainIp) return plainIp;
 
-  if (hopCount <= 0) {
-    if (xForwardedFor || headersList.get("cf-connecting-ip") || headersList.get("x-real-ip")) {
-      warnAboutUntrustedIp();
-    }
-    return UNTRUSTED_CLIENT_IP;
+  const bracketedMatch = BRACKETED_ADDRESS.exec(value);
+  if (bracketedMatch) {
+    const address = bracketedMatch[1];
+    const port = bracketedMatch[2];
+    if (!address?.includes(":") || (port !== undefined && !isValidPort(port))) return null;
+    return canonicalizeIp(address);
   }
 
-  if (xForwardedFor) {
-    const entries = xForwardedFor
-      .split(",")
-      .map((entry) => entry.trim())
-      .filter(Boolean);
+  const ipv4SocketMatch = IPV4_SOCKET.exec(value);
+  if (ipv4SocketMatch) {
+    const address = ipv4SocketMatch[1];
+    const port = ipv4SocketMatch[2];
+    if (!address || !port || !isValidPort(port)) return null;
 
-    if (entries.length > 0) {
-      // Clamped rather than falling back to the leftmost entry: a request with fewer hops than
-      // configured arrived through a shorter path than expected, and the earliest entry present is the
-      // closest thing to what a trusted proxy saw.
-      const index = Math.max(0, entries.length - hopCount);
-      return entries[index];
-    }
+    const canonicalAddress = canonicalizeIp(address);
+    return canonicalAddress?.includes(":") ? null : canonicalAddress;
   }
 
-  // No `x-real-ip` fallback. It is only reachable when no `X-Forwarded-For` arrived at all, and a proxy
-  // that is genuinely in front appends to XFF — so the absence of XFF means the request did not come
-  // through the trusted hop this app is configured for, and `x-real-ip` is then whatever the caller
-  // chose to send. Reading it would restore exactly the per-request bucket rotation this function
-  // exists to stop. This is the same argument the docstring makes against `cf-connecting-ip`; applying
-  // it to one header and not the other was inconsistent. Raised by @pandeymangg on #8680.
-  return UNTRUSTED_CLIENT_IP;
+  return null;
 };
 
+const hasAnyForwardingHeader = (headersList: Headers): boolean =>
+  ["x-forwarded-for", "x-real-ip", "cf-connecting-ip"].some((header) => headersList.has(header));
+
+/**
+ * Resolve and canonicalize the exact trusted hop from X-Forwarded-For.
+ *
+ * Proxy is the only caller. Entries to the left of the configured hop can be client-supplied and are
+ * ignored. A missing, short, or malformed chain fails closed instead of falling back to another raw
+ * forwarding header or clamping to the leftmost entry.
+ */
+export const resolveClientIp = (headersList: Headers, hopCount: number): string | null => {
+  if (hopCount <= 0) {
+    if (hasAnyForwardingHeader(headersList)) warnAboutClientIp("disabled");
+    return null;
+  }
+
+  const xForwardedFor = headersList.get("x-forwarded-for");
+  if (xForwardedFor === null) {
+    if (hasAnyForwardingHeader(headersList)) warnAboutClientIp("missing-chain");
+    return null;
+  }
+
+  const entries = xForwardedFor.split(",").map((entry) => entry.trim());
+  if (entries.length < hopCount) {
+    warnAboutClientIp("short-chain");
+    return null;
+  }
+
+  const selectedEntry = entries[entries.length - hopCount];
+  const clientIp = selectedEntry ? canonicalizeForwardedIp(selectedEntry) : null;
+  if (!clientIp) warnAboutClientIp("invalid-selected-hop");
+
+  return clientIp;
+};
+
+/** Read only the private identity established by Proxy; raw forwarding headers are never fallbacks. */
 export async function getClientIpFromHeaders(): Promise<string> {
   let headersList: Headers;
   try {
     headersList = await headers();
-  } catch (e) {
-    logger.error(e, "Failed to get headers in getClientIpFromHeaders");
+  } catch (error) {
+    logger.error(error, "Failed to get headers in getClientIpFromHeaders");
     return UNTRUSTED_CLIENT_IP;
   }
 
-  return resolveClientIp(headersList, TRUSTED_PROXY_HOP_COUNT);
+  const internalClientIp = headersList.get(FORMBRICKS_CLIENT_IP_HEADER);
+  if (!internalClientIp) return UNTRUSTED_CLIENT_IP;
+
+  return canonicalizeIp(internalClientIp) ?? UNTRUSTED_CLIENT_IP;
 }

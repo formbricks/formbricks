@@ -19,6 +19,7 @@ export type { TAIProvider } from "@formbricks/types/ai";
 export type {
   AIConfigurationStatus,
   AILanguageModel,
+  AIResolvedLanguageModel,
   AIEnvironment,
   AIProviderStatus,
   ActiveAIProvider,

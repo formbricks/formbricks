@@ -31,6 +31,7 @@
     "sending_responses": "Đang gửi phản hồi…",
     "survey_closes_automatically_in_x_seconds": "{count, plural, other {Khảo sát này sẽ tự động đóng sau {count} giây nếu bạn không phản hồi}}",
     "survey_dialog": "Hộp thoại khảo sát",
+    "survey_opened_announcement": "Một khảo sát đã được mở ở cuối trang.",
     "survey_progress": "Tiến độ khảo sát",
     "takes_less_than_x_minutes": "{count, plural, other {Mất ít hơn {count} phút}}",
     "takes_x_minutes": "{count, plural, other {Mất {count} phút}}",

@@ -68,6 +68,10 @@ export interface InputComboboxProps {
   emptyDropdownText?: string;
   iconClassName?: string;
   disabled?: boolean;
+  // The interactive trigger renders as a div[role="combobox"], which is not a labelable element,
+  // so a paired <label htmlFor> gives it no accessible name. Callers pass one of these instead.
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
 }
 
 // Helper to flatten all options and their children
@@ -156,6 +160,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   emptyDropdownText,
   iconClassName = "h-5 w-5 text-slate-400",
   disabled = false,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
 }) => {
   const { t } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
@@ -323,6 +329,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             id={id}
             role="combobox"
             tabIndex={disabled ? -1 : 0}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
             aria-controls="options"
             aria-expanded={open}
             aria-disabled={disabled || undefined}

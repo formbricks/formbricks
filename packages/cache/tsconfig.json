@@ -5,12 +5,12 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     },
     "resolveJsonModule": true,
     "strict": true
   },
   "exclude": ["node_modules"],
   "extends": "@formbricks/config-typescript/js-library.json",
-  "include": ["src", "types", "package.json"]
+  "include": ["src", "package.json"]
 }

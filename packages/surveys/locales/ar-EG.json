@@ -31,6 +31,7 @@
     "sending_responses": "جارٍ إرسال الردود...",
     "survey_closes_automatically_in_x_seconds": "{count, plural, zero {يُغلق هذا الاستطلاع تلقائيًا خلال {count} ثانية ما لم تستجب} one {يُغلق هذا الاستطلاع تلقائيًا خلال ثانية واحدة ما لم تستجب} two {يُغلق هذا الاستطلاع تلقائيًا خلال ثانيتين ما لم تستجب} few {يُغلق هذا الاستطلاع تلقائيًا خلال {count} ثوانٍ ما لم تستجب} many {يُغلق هذا الاستطلاع تلقائيًا خلال {count} ثانية ما لم تستجب} other {يُغلق هذا الاستطلاع تلقائيًا خلال {count} ثانية ما لم تستجب}}",
     "survey_dialog": "مربع حوار الاستبيان",
+    "survey_opened_announcement": "تم فتح استبيان في نهاية الصفحة.",
     "survey_progress": "تقدم الاستطلاع",
     "takes_less_than_x_minutes": "{count, plural, zero {يستغرق أقل من دقيقة} one {يستغرق أقل من دقيقة واحدة} two {يستغرق أقل من دقيقتين} few {يستغرق أقل من {count} دقائق} many {يستغرق أقل من {count} دقيقة} other {يستغرق أقل من {count} دقيقة}}",
     "takes_x_minutes": "{count, plural, zero {يستغرق صفر دقائق} one {يستغرق دقيقة واحدة} two {يستغرق دقيقتين} few {يستغرق {count} دقائق} many {يستغرق {count} دقيقة} other {يستغرق {count} دقيقة}}",

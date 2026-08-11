@@ -31,6 +31,7 @@
     "sending_responses": "Sending responses…",
     "survey_closes_automatically_in_x_seconds": "{count, plural, one {This survey closes automatically in {count} second unless you respond} other {This survey closes automatically in {count} seconds unless you respond}}",
     "survey_dialog": "Survey Dialog",
+    "survey_opened_announcement": "A survey has opened at the end of the page.",
     "survey_progress": "Survey progress",
     "takes_less_than_x_minutes": "{count, plural, one {Takes less than 1 minute} other {Takes less than {count} minutes}}",
     "takes_x_minutes": "{count, plural, one {Takes 1 minute} other {Takes {count} minutes}}",
