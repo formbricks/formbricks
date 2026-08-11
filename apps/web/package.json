@@ -24,6 +24,7 @@
     "i18n:generate": "dotenv -e ../../.env -- npx lingo.dev@latest run && dotenv -e ../../.env -- npx lingo.dev@latest lockfile --force"
   },
   "dependencies": {
+    "@better-auth/core": "1.6.23",
     "@better-auth/oauth-provider": "1.6.23",
     "@better-auth/utils": "0.4.2",
     "@boxyhq/saml-jackson": "26.2.0",

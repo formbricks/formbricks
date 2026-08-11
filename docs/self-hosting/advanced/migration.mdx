@@ -25,7 +25,11 @@ hops:
   load balancers in front of Formbricks (e.g. an ingress plus a CDN = `2`). An explicit `0` trusts no
   proxy at all: the runtime exposes no socket peer address, so the client IP then resolves to a fixed
   "untrusted" placeholder that rate limiting and response audit logging record in place of a real address.
-  Leave it at `1` (or your real hop count) unless you deliberately want to stop capturing client IPs.
+  A forwarding chain shorter than the configured count, or a malformed selected hop, also fails closed.
+  Ports appended by gateways such as
+  [Azure Application Gateway](https://learn.microsoft.com/en-us/azure/application-gateway/how-application-gateway-works#modifications-to-the-request)
+  are removed, and IPv6 addresses are normalized to their `/64` network. Leave the setting at `1` (or
+  your real hop count) unless you deliberately want to stop capturing client IPs.
 
 <Warning>
   Setting `TRUSTED_PROXY_HOP_COUNT` **higher** than your real hop count lets a client spoof its IP by
