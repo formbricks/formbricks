@@ -54,6 +54,11 @@ test.describe("Cross-tenant survey access (ENG-2101)", () => {
         "404"
       );
       await expect(page.getByText(SEED_SURVEY_NAME)).toHaveCount(0);
+      // generateMetadata resolves independently of the page, so a 404 body is not on its own
+      // proof the survey name stayed private — it also has to be absent from the title.
+      await expect(page, `${url} must not expose the foreign survey in the title`).not.toHaveTitle(
+        new RegExp(SEED_SURVEY_NAME)
+      );
     }
   });
 

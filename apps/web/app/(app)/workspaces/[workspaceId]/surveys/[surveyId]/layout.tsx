@@ -9,7 +9,7 @@ interface SurveyLayoutProps {
   children: React.ReactNode;
 }
 
-const SurveyLayout = async ({ params, children }: SurveyLayoutProps) => {
+const SurveyLayout = async ({ params, children }: Readonly<SurveyLayoutProps>) => {
   const resolvedParams = await params;
 
   // The layout hands the survey to a client component, so it needs the same

@@ -23,7 +23,7 @@ import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
-const Page = async (props: { params: Promise<{ workspaceId: string; surveyId: string }> }) => {
+const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; surveyId: string }> }>) => {
   const params = await props.params;
   const t = await getTranslate();
 
