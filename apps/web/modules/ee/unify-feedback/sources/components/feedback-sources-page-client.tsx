@@ -190,10 +190,16 @@ export function FeedbackSourcesSection({
       return;
     }
 
+    // Explicitly completedOnly rather than leaning on the column default: this path imports
+    // immediately with no chance to choose, and "all" pulls in answers respondents never submitted
+    // and sends them to the AI enrichments. A one-click action must not opt someone into that
+    // silently — picking partials is a decision, so it lives on the "Select questions for import"
+    // route beside this button, which opens the modal with the choice.
     const feedbackSourceId = await handleCreateFeedbackSource({
       name: t("workspace.unify.source_connector_name", { surveyName: survey.name }),
       type: "formbricks_survey",
       feedbackDirectoryId,
+      importMode: "completedOnly",
       surveyMappings: [{ surveyId: survey.id, elementIds }],
     });
 

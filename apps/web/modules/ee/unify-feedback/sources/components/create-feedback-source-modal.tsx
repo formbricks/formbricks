@@ -626,11 +626,6 @@ export const CreateFeedbackSourceModal = ({
                     )}
                   />
 
-                  {/* Always shown, unlike the historical-import switch below: this one is persisted
-                      on the source, so hiding it when the survey happens to have no responses yet
-                      would leave a saved setting the user never got to see. */}
-                  <ImportModeField control={formbricksForm.control} />
-
                   {selectedSurveyResponseCount !== null && selectedSurveyResponseCount > 0 && (
                     <FormField
                       control={formbricksForm.control}
@@ -650,6 +645,15 @@ export const CreateFeedbackSourceModal = ({
                       )}
                     />
                   )}
+
+                  {/* Only shown when the import it configures is actually going to run. importMode is
+                      read by the historical import and nothing else — the live pipeline is
+                      finish-only in both modes — so with the switch above off, or with no responses
+                      to back-fill, this choice would change nothing at all. Offering it there would
+                      be a control that silently does nothing. */}
+                  {formbricksValues.importHistorical &&
+                    selectedSurveyResponseCount !== null &&
+                    selectedSurveyResponseCount > 0 && <ImportModeField control={formbricksForm.control} />}
                 </form>
               </FormProvider>
             )}
