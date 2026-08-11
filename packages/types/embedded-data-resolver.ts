@@ -10,9 +10,13 @@ import { getTextContent } from "./surveys/validation";
 
 /**
  * What a resolved Embedded Data value can be. A `date` field resolves to its ISO 8601 string, not a
- * `Date` — recall and logic operate on strings and numbers, and recall already date-formats ISO
- * strings for display. Booleans exist only for reserved fields (e.g. `finished`); the projection
- * into the recall/logic maps stringifies them, see {@link projectReservedValues}.
+ * `Date` — machine-facing values stay ISO/UTC; display formatting is the consumer's job. One gap to
+ * inherit consciously (ENG-1837/1839): today's recall formatters recognize date-ONLY strings
+ * (`isValidDateString` in packages/surveys; `formatStoredDateForDisplay` in apps/web, which runs
+ * only on the responseData branch), so a datetime resolved from a `Date` renders verbatim until the
+ * consumers learn to format it. Booleans come from `boolean`-dataType stored fields (legal on
+ * ingested rows) as well as reserved reads; {@link projectReservedValues} stringifies them for the
+ * recall/logic maps, and direct resolver callers own their own boolean handling.
  */
 export type TResolvedEmbeddedValue = string | number | boolean;
 
@@ -60,7 +64,11 @@ export interface TReservedFieldCatalogEntry {
    */
   name: string;
   dataType: TEmbeddedDataType;
-  /** Reads the raw value off a response. Coercion to `dataType` is the resolver's job, not the accessor's. */
+  /**
+   * Reads the raw value off a response. Coercion to `dataType` is the resolver's job, not the
+   * accessor's. Accessors should be total functions; one that throws is treated as "nothing
+   * captured" by the resolver rather than crashing the caller.
+   */
   read: (response: TEmbeddedValueResponse) => TReservedFieldRawValue;
 }
 
@@ -136,10 +144,14 @@ const ZIsoDateOrDateTime = z.union([z.iso.date(), z.iso.datetime()]);
  * - `boolean`: booleans, and exactly `"true"`/`"false"` (case-insensitive, trimmed) — the URL-param
  *   spelling. `1`/`"yes"`/`"on"` stay uncoercible: guessing truthiness is write-side ingest policy
  *   (ENG-1845), and the read seam must not resolve a value ingest would have rejected.
- * - `date`: `Date` instances become ISO strings; strings must already be ISO 8601 (date or
- *   datetime — the same rule `ZEmbeddedData` enforces on date defaults) and pass through as-is, so
- *   a date-only value is not silently promoted to a midnight-UTC datetime. Epoch numbers stay
- *   uncoercible — nothing upstream produces them intentionally.
+ * - `date`: `Date` instances become ISO strings; strings must be an ISO 8601 date (`2026-08-06`)
+ *   or UTC datetime (`2026-08-06T10:30:00Z`) — the exact subset `ZEmbeddedData` pins for date
+ *   defaults. That deliberately excludes offset (`+02:00`) and zone-less datetimes, and, unlike
+ *   the number and boolean arms, tolerates no surrounding whitespace — write-side ingest
+ *   (ENG-1845) must normalize to this same subset, or consciously widen both rules together.
+ *   Accepted strings pass through as-is, so a date-only value is not silently promoted to a
+ *   midnight-UTC datetime. Epoch numbers stay uncoercible — nothing upstream produces them
+ *   intentionally.
  */
 export const coerceToEmbeddedDataType = (
   value: unknown,
@@ -185,7 +197,8 @@ export const coerceToEmbeddedDataType = (
 /**
  * The single read seam for Embedded Data: returns one field's value from a response, or `undefined`
  * when the field has no value there. Every downstream surface (recall, logic, export, pickers)
- * reads through this so "where does a field's value live" is answered exactly once:
+ * will read through this once ENG-1837 repoints them, so "where does a field's value live" is
+ * answered exactly once:
  *
  * - `computed` → `response.variables[storageKey]` (written by the logic engine)
  * - `ingested` → `response.data[storageKey]` (written from URL params / SDK)
@@ -212,6 +225,13 @@ export const coerceToEmbeddedDataType = (
  * (b) Both recall paths (`replaceRecallInfo` in packages/surveys, `parseRecallInfo` in apps/web)
  *     render whatever sits in the lookup maps with no dataType awareness, so the same stored
  *     `"abc"` renders verbatim in recall today — here it resolves to defaultValue-or-`undefined`.
+ * (c) On a key present in both maps, today's consumers disagree with each other —
+ *     `replaceRecallInfo` lets `responseData` win (its data check runs last), `parseRecallInfo`
+ *     lets `variables` win (checked first). Here the declared source is exclusive: computed reads
+ *     only `variables`, ingested reads only `data`.
+ * (d) A response missing a variable's key entirely (stored before the variable was added, or
+ *     API-created) is `0` / `""` to logic and fallback text to recall today — here it resolves to
+ *     the field's `defaultValue`, which for §8-derived pairs is the variable's declared value.
  */
 export const resolveEmbeddedValue = (
   ref: TEmbeddedValueRef,
@@ -221,7 +241,14 @@ export const resolveEmbeddedValue = (
   // from narrowing the union, and this way a degenerate `{ field, link, entry: undefined }` object
   // still resolves through its field instead of crashing on `undefined.read`.
   if (ref.entry !== undefined) {
-    return coerceToEmbeddedDataType(ref.entry.read(response), ref.entry.dataType);
+    // A throwing accessor reads as missing rather than escalating: one dirty response row fed to a
+    // computing accessor (e.g. URL parsing) must degrade like every other dirty input here — one
+    // field unset — not abort a caller's whole render or export loop over the catalog.
+    try {
+      return coerceToEmbeddedDataType(ref.entry.read(response), ref.entry.dataType);
+    } catch {
+      return undefined;
+    }
   }
 
   const { field, link } = ref;
@@ -287,10 +314,10 @@ export interface TReadableFields {
 }
 
 /**
- * Inputs are explicit because none of them live on `TSurvey` today: the field/link pairs arrive
- * with ENG-1837, contact attribute keys are workspace-level, and the reserved catalog is code.
- * Passing them in keeps this pure and lets legacy surveys participate via
- * {@link deriveLegacyEmbeddedData}.
+ * Inputs are explicit: the field/link pairs don't live on `TSurvey` until ENG-1837 inlines them,
+ * contact attribute keys are workspace-level, the reserved catalog is code — and `blocks`, which
+ * does live on `TSurvey`, is taken alone so the function needs no survey object. Passing them in
+ * keeps this pure and lets legacy surveys participate via {@link deriveLegacyEmbeddedData}.
  */
 export interface TListReadableFieldsInput {
   /** The survey's blocks — elements live here (the legacy `questions` model is not enumerated). */
@@ -314,14 +341,18 @@ const RECALL_TOKEN_REGEX = /#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/g;
 const labelOrKey = (label: string, key: string): string => (label.trim() === "" ? key : label);
 
 /**
- * Headline → picker label. Mirrors what `getRecallItemLabel` (apps/web) produces: localized with
- * blank-falls-back-to-`default` semantics, HTML stripped so rich-text markup never shows raw, and
- * nested recall tokens flattened to `___` — a headline that recalls another answer would otherwise
- * leak storage syntax into the picker. Both steps are cheap (one parse, one regex pass).
+ * Headline → picker label: localized, HTML stripped so rich-text markup never shows raw, and recall
+ * tokens flattened to `___` so storage syntax never leaks into a picker (what the apps/web pickers
+ * achieve via `replaceRecallInfoWithUnderline`). Localization follows packages/surveys'
+ * `getLocalizedValue` — a blank or missing locale entry falls back to the `default` entry. That is
+ * deliberately NOT today's apps/web picker behavior, whose `getLocalizedValue` has no default
+ * fallback, so an untranslated headline labels there as the bare element id; ENG-1840/1853 inherit
+ * this as a conscious label improvement when they swap pickers onto {@link listReadableFields}.
  */
 const toElementLabel = (headline: TI18nString, languageCode: string): string => {
   const localized = headline[languageCode];
-  const raw = typeof localized === "string" && localized.trim() !== "" ? localized : (headline.default ?? "");
+  const fallback = typeof headline.default === "string" ? headline.default : "";
+  const raw = typeof localized === "string" && localized.trim() !== "" ? localized : fallback;
   return getTextContent(raw).replace(RECALL_TOKEN_REGEX, "___").trim();
 };
 
@@ -375,8 +406,10 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
  * variable's value, addressed by its existing cuid (recall tokens and stored responses already use
  * it); a hidden field becomes an `ingested` string field with no default, addressed by its name.
  * `hiddenFields.enabled` is deliberately ignored: recall and logic consult `fieldIds` alone today,
- * and a disabled field simply never receives a value — the resolver then reports it as unset, which
- * is the same behavior with honest mechanics.
+ * and ingestion is split on the flag — the js-core SDK drops hidden fields when disabled, while the
+ * link-survey URL path fills them regardless (`getHiddenFieldsFromSearchParams` receives only
+ * `fieldIds`). Deriving from `fieldIds` alone therefore preserves today's read behavior exactly:
+ * whatever either path stored still resolves, and what nothing stored reports as unset.
  */
 export const deriveLegacyEmbeddedData = (survey: {
   variables: TSurveyVariables;
