@@ -2,7 +2,8 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@/lib/constants";
-import { verifyUserRoleAccess } from "@/lib/organization/auth";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
 import { InviteMembers } from "@/modules/setup/organization/[organizationId]/invite/components/invite-members";
@@ -27,12 +28,14 @@ export const InvitePage = async (props: InvitePageProps) => {
   const session = await getSession();
   if (!session) throw new AuthenticationError(t("common.session_not_found"));
 
-  const { hasCreateOrUpdateMembersAccess } = await verifyUserRoleAccess(
-    params.organizationId,
-    session.user.id
-  );
+  // Owner-only, matching `inviteOrganizationMemberAction`: this screen creates owner invites, so a
+  // manager must not reach it (the previous `hasCreateOrUpdateMembersAccess` flag is true for
+  // managers too). Not the security boundary — the action is — but keep the two in sync so managers
+  // get a 404 instead of a form that fails on submit.
+  const membership = await getMembershipByUserIdOrganizationId(session.user.id, params.organizationId);
+  const { isOwner } = getAccessFlags(membership?.role);
 
-  if (!hasCreateOrUpdateMembersAccess) return notFound();
+  if (!isOwner) return notFound();
 
   return <InviteMembers IS_SMTP_CONFIGURED={IS_SMTP_CONFIGURED} organizationId={params.organizationId} />;
 };

@@ -27,13 +27,19 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         throw new AuthenticationError("Invite disabled");
       }
 
+      // Owner-only, deliberately narrower than the org settings invite path: this action takes no
+      // role and `inviteUser` always persists an owner invite, so allowing managers here would let
+      // them mint owners and bypass the "managers can only invite users as members" rule enforced in
+      // `modules/organization/settings/teams/actions.ts`. Nothing legitimate is lost — the only entry
+      // to this screen is the redirect right after `createOrganizationAction`, which makes the
+      // creator an owner.
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId: parsedInput.organizationId,
         access: [
           {
             type: "organization",
-            roles: ["owner", "manager"],
+            roles: ["owner"],
           },
         ],
       });
