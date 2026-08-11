@@ -40,17 +40,18 @@ export const generateMetadata = async (props: {
   params: Promise<{ workspaceId: string; surveyId: string }>;
 }) => {
   const params = await props.params;
+  const t = await getTranslate();
 
   // The survey name belongs to whoever owns the survey, so it may only be used as the title
   // when the caller may actually read this survey through this workspace. The page 404s
   // otherwise, but metadata resolves independently of it.
   if (!(await canReadSurveyInWorkspace(params.surveyId, params.workspaceId))) {
-    return { title: "Editor" };
+    return { title: t("common.editor") };
   }
 
   const survey = await getSurvey(params.surveyId);
   return {
-    title: survey?.name ? `${survey?.name} | Editor` : "Editor",
+    title: survey?.name ? `${survey.name} | ${t("common.editor")}` : t("common.editor"),
   };
 };
 
@@ -61,6 +62,9 @@ export const SurveyEditorPage = async (props: {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
+  // Gated here rather than by a layout: the editor lives in its own route group
+  // ((survey-editor)) with its own layout, so it does not inherit the guard on
+  // (app)/workspaces/[workspaceId]/surveys/[surveyId]/layout.tsx.
   const { session, isMember, hasReadAccess, currentUserMembership, workspacePermission, workspace } =
     await getSurveyAuth(params.workspaceId, params.surveyId);
 
