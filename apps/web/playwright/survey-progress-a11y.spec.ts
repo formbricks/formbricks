@@ -410,6 +410,44 @@ test.describe("App survey auto-close countdown accessibility @slow", () => {
   });
 
   test("countdown is an indeterminate progressbar with a polite one-shot announcement", async ({ page }) => {
+    await page.addInitScript(() => {
+      const announcementStates: string[] = [];
+      const observedRegions = new WeakSet<Element>();
+      const selector = '.sr-only[aria-live="polite"][aria-atomic="true"]';
+
+      (window as typeof window & { __countdownAnnouncementStates?: string[] }).__countdownAnnouncementStates =
+        announcementStates;
+
+      const observeRegion = (region: Element) => {
+        if (
+          observedRegions.has(region) ||
+          !region.parentElement?.querySelector(
+            '[role="progressbar"][aria-label="Time remaining before the survey closes"]'
+          )
+        ) {
+          return;
+        }
+
+        observedRegions.add(region);
+        announcementStates.push(region.textContent ?? "");
+        new MutationObserver(() => announcementStates.push(region.textContent ?? "")).observe(region, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+        });
+      };
+
+      new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const addedNode of mutation.addedNodes) {
+            if (!(addedNode instanceof Element)) continue;
+            if (addedNode.matches(selector)) observeRegion(addedNode);
+            addedNode.querySelectorAll(selector).forEach(observeRegion);
+          }
+        }
+      }).observe(document, { childList: true, subtree: true });
+    });
+
     await page.goto(editorUrl ?? "");
     const preview = page.locator("#formbricks-survey-container");
     await expect(preview, "editor preview should render the app survey").toBeVisible({
@@ -438,6 +476,16 @@ test.describe("App survey auto-close countdown accessibility @slow", () => {
     await expect(announcement, "the countdown should be announced once").toHaveCount(1);
     await expect(announcement).toHaveAttribute("aria-live", "polite");
     await expect(announcement).toHaveAttribute("aria-atomic", "true");
+
+    const announcementStates = await page.evaluate(
+      () =>
+        (window as typeof window & { __countdownAnnouncementStates?: string[] })
+          .__countdownAnnouncementStates ?? []
+    );
+    expect(announcementStates[0], "the live region should mount empty").toBe("");
+    expect(announcementStates.at(-1), "the live region should be populated after mounting").toBe(
+      COUNTDOWN_ANNOUNCEMENT
+    );
   });
 
   test("countdown and its announcement leave the accessibility tree once the user interacts", async ({

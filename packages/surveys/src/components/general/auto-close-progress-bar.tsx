@@ -1,3 +1,4 @@
+import { useEffect, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 
 interface AutoCloseProgressBarProps {
@@ -6,6 +7,17 @@ interface AutoCloseProgressBarProps {
 
 export function AutoCloseProgressBar({ autoCloseTimeout }: Readonly<AutoCloseProgressBarProps>) {
   const { t } = useTranslation();
+  const announcementText = t("common.survey_closes_automatically_in_x_seconds", {
+    count: autoCloseTimeout,
+  });
+  const [announcement, setAnnouncement] = useState("");
+
+  useEffect(() => {
+    setAnnouncement("");
+    const timeoutId = setTimeout(() => setAnnouncement(announcementText), 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [announcementText]);
 
   return (
     <>
@@ -25,11 +37,11 @@ export function AutoCloseProgressBar({ autoCloseTimeout }: Readonly<AutoClosePro
           }}
         />
       </div>
-      {/* A shrinking bar conveys the deadline visually only. This states it once, politely, when the
-          countdown mounts. The bar itself stays silent — an indeterminate progressbar has nothing to
-          report — and role="timer" was avoided because it would re-announce on every tick. */}
+      {/* Mount the live region empty, then populate it after a tick so assistive technology observes
+          a content change. The bar stays silent because an indeterminate progressbar has no value to
+          report, and role="timer" would re-announce on every tick. */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {t("common.survey_closes_automatically_in_x_seconds", { count: autoCloseTimeout })}
+        {announcement}
       </div>
     </>
   );
