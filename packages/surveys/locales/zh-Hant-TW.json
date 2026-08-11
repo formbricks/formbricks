@@ -30,6 +30,7 @@
     "select_options": "選擇選項",
     "sending_responses": "正在傳送回覆…",
     "survey_dialog": "問卷對話框",
+    "survey_opened_announcement": "問卷調查已開啟。按 Tab 鍵以前往。",
     "takes_less_than_x_minutes": "{count, plural, other {少於 {count} 分鐘}}",
     "takes_x_minutes": "{count, plural, other {{count} 分鐘}}",
     "takes_x_plus_minutes": "{count}+ 分鐘",

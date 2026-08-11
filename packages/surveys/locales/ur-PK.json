@@ -30,6 +30,7 @@
     "select_options": "اختیارات منتخب کریں",
     "sending_responses": "جوابات بھیجے جا رہے ہیں…",
     "survey_dialog": "سروے ڈائیلاگ",
+    "survey_opened_announcement": "ایک سروے کھل گیا ہے۔ اس تک پہنچنے کے لیے Tab دبائیں۔",
     "takes_less_than_x_minutes": "{count, plural, one {1 منٹ سے بھی کم وقت لگتا ہے} other {{count} منٹ سے بھی کم وقت لگتا ہے}}",
     "takes_x_minutes": "{count, plural, one {1 منٹ لگتا ہے} other {{count} منٹ لگتے ہیں}}",
     "takes_x_plus_minutes": "{count}+ منٹ لگتے ہیں",

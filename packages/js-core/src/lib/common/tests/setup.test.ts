@@ -73,6 +73,7 @@ vi.mock("@/lib/survey/no-code-action", () => ({
 vi.mock("@/lib/survey/widget", () => ({
   closeSurvey: vi.fn(),
   preloadSurveysScript: vi.fn(),
+  addLiveRegionContainer: vi.fn(),
 }));
 
 describe("setup.ts", () => {

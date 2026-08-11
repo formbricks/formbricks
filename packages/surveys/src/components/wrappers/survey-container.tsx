@@ -2,8 +2,13 @@ import { type ComponentChildren } from "preact";
 import { useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
+import { ensureLiveRegion } from "@/lib/live-region";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
+
+// Give a fallback-created live region (older SDK, see live-region.ts) a beat to be registered by
+// assistive tech before the message lands. Harmless when the region already exists.
+const ANNOUNCE_DELAY_MS = 100;
 
 interface SurveyContainerProps {
   mode: "modal" | "inline";
@@ -84,6 +89,25 @@ export function SurveyContainer({
     };
   }, [isModal, isOpen, hasOverlay, onClose, modalRef]);
 
+  // A no-overlay survey never takes focus (see the trap gate above), so its opening is announced
+  // through the persistent status region — otherwise screen-reader users get no signal it appeared.
+  // With an overlay the trap moves focus into the dialog, which is its own announcement. Cleared on
+  // close because setting identical text twice is not a change, so a later open would stay silent.
+  useEffect(() => {
+    if (!isModal || !isOpen || hasOverlay) return;
+
+    const liveRegion = ensureLiveRegion();
+    liveRegion.textContent = "";
+    const announceTimeout = setTimeout(() => {
+      liveRegion.textContent = t("common.survey_opened_announcement");
+    }, ANNOUNCE_DELAY_MS);
+
+    return () => {
+      clearTimeout(announceTimeout);
+      liveRegion.textContent = "";
+    };
+  }, [isModal, isOpen, hasOverlay, t]);
+
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
       case "bottomRight":
@@ -114,7 +138,9 @@ export function SurveyContainer({
   return (
     <div id="fbjs" className="formbricks-form" dir={dir}>
       <div
-        aria-live="assertive"
+        // In-dialog updates (question changes after a submit) should wait for the reader to finish
+        // speaking, not interrupt it — a survey is never urgent enough for assertive.
+        aria-live="polite"
         className={cn(
           hasOverlay ? "pointer-events-auto" : "pointer-events-none",
           isModal && "fixed inset-0 z-999999 flex items-end"

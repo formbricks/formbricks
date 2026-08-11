@@ -30,6 +30,7 @@
     "select_options": "Selecteer opties",
     "sending_responses": "Reacties verzenden...",
     "survey_dialog": "Enquête-dialoogvenster",
+    "survey_opened_announcement": "Er is een enquête geopend. Druk op Tab om deze te bereiken.",
     "takes_less_than_x_minutes": "{count, plural, one {Duurt minder dan 1 minuut} other {Duurt minder dan {count} minuten}}",
     "takes_x_minutes": "{count, plural, one {Duurt 1 minuut} other {Duurt {count} minuten}}",
     "takes_x_plus_minutes": "Duurt {count}+ minuten",

@@ -119,6 +119,13 @@ test.describe("App survey widget does not block the host page", () => {
     await page.goto(hostUrl);
     await page.waitForFunction(() => Boolean(window.formbricks), null, { timeout: 120000 });
 
+    // The status region is mounted at SDK setup — long before any survey opens — because screen
+    // readers only reliably announce changes to a live region that already existed.
+    const liveRegion = page.locator("#formbricks-live-region");
+    await expect(liveRegion).toBeAttached({ timeout: 120000 });
+    await expect(liveRegion).toHaveAttribute("role", "status");
+    await expect(liveRegion).toBeEmpty();
+
     // Park the caret in a host field first — this is the customer's scenario: a survey
     // firing mid-form must not pull the user out of what they are typing.
     await page.locator("#host-input").fill("BEFORE");
@@ -139,6 +146,10 @@ test.describe("App survey widget does not block the host page", () => {
     // A survey that does not block the page must not claim to be a modal dialog:
     // aria-modal makes assistive tech ignore everything outside it.
     await expect(dialog).not.toHaveAttribute("aria-modal", /.*/);
+
+    // It takes nothing from the page, so the open is announced through the pre-existing status
+    // region instead of a focus move — otherwise screen-reader users get no signal it appeared.
+    await expect(liveRegion).toHaveText("A survey has opened. Press Tab to reach it.");
 
     // Text on the host page must stay selectable — the focus trap used to wipe the
     // selection ~17ms into the drag by pulling focus back into the survey.
@@ -195,6 +206,10 @@ test.describe("App survey widget does not block the host page", () => {
     // Escape closes the survey when focus is inside it.
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
+
+    // Closing clears the announcement: identical text twice is not a change, so without the clear
+    // a later open would stay silent.
+    await expect(liveRegion).toBeEmpty();
   });
 
   test("overlay:dark keeps the modal behaviour", async ({ page, users }) => {
@@ -226,5 +241,9 @@ test.describe("App survey widget does not block the host page", () => {
       Boolean(document.getElementById("fbjs")?.contains(document.activeElement))
     );
     expect(focusStayedInSurvey).toBe(true);
+
+    // With an overlay the trap's focus move is the announcement — the status region stays silent
+    // so screen readers don't hear the open twice.
+    await expect(page.locator("#formbricks-live-region")).toBeEmpty();
   });
 });
