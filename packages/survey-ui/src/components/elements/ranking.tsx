@@ -1,7 +1,7 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { cn } from "@/lib/utils";
 
@@ -164,6 +164,8 @@ function Ranking({
   imageUrl,
   videoUrl,
 }: Readonly<RankingProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   // Ensure value is always an array
   const rankedIds = React.useMemo(() => (Array.isArray(value) ? value : []), [value]);
 
@@ -224,7 +226,7 @@ function Ranking({
 
       {/* Ranking Options */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
         {/* The <fieldset> is role="group", which ARIA 1.2 gives neither aria-required nor
             aria-invalid (aria-invalid was global in ARIA 1.1 but is not in 1.2). The items are
             reorder buttons in an <ol>, not radios, so there is no accurate role that does support
@@ -234,8 +236,8 @@ function Ranking({
         <fieldset
           className="w-full"
           dir={dir}
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <legend className="sr-only">Ranking options</legend>
           {/* Semantic ordered list so screen readers announce rank position and count;
               role="list" is kept explicitly because list-style removal (Tailwind preflight)

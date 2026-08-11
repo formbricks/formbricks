@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Checkbox } from "@/components/general/checkbox";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn } from "@/lib/utils";
@@ -67,6 +67,8 @@ function PictureSelect({
   imageUrl,
   videoUrl,
 }: Readonly<PictureSelectProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   // Ensure value is always the correct type
   let selectedValues: string[] | string | undefined;
   if (allowMulti) {
@@ -115,14 +117,14 @@ function PictureSelect({
 
       {/* Picture Grid - 2 columns */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
         {allowMulti ? (
           // Native fieldset (group role) named by the headline; m-0/p-0/border-0/w-full
           // reset the fieldset UA defaults so it lays out like a plain div.
           <fieldset
             aria-labelledby={`${inputId}-headline`}
-            aria-invalid={Boolean(errorMessage)}
-            aria-describedby={errorMessage ? `${inputId}-error` : undefined}
+            aria-invalid={errorAria.ariaInvalid}
+            aria-describedby={errorAria.ariaDescribedBy}
             className="m-0 grid w-full min-w-0 grid-cols-2 gap-2 border-0 p-0">
             {options.map((option) => {
               const isSelected = (selectedValues as string[]).includes(option.id);
@@ -178,8 +180,8 @@ function PictureSelect({
             role="radiogroup"
             aria-labelledby={`${inputId}-headline`}
             aria-required={required}
-            aria-invalid={Boolean(errorMessage)}
-            aria-describedby={errorMessage ? `${inputId}-error` : undefined}
+            aria-invalid={errorAria.ariaInvalid}
+            aria-describedby={errorAria.ariaDescribedBy}
             className="grid grid-cols-2 gap-2">
             {options.map((option) => {
               const optionId = `${inputId}-${option.id}`;

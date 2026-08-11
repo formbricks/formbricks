@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
 import { cn } from "@/lib/utils";
@@ -84,6 +84,8 @@ function Matrix({
   imageUrl,
   videoUrl,
 }: Readonly<MatrixProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   // Ensure value is always an object (value already has default of {})
   const selectedValues = value;
 
@@ -109,8 +111,8 @@ function Matrix({
       <fieldset
         className="w-full space-y-4"
         aria-labelledby={`${inputId}-headline`}
-        aria-invalid={Boolean(errorMessage)}
-        aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
+        aria-invalid={errorAria.ariaInvalid}
+        aria-describedby={errorAria.ariaDescribedBy}>
         <ElementHeader
           headlineId={`${inputId}-headline`}
           headline={headline}
@@ -122,7 +124,7 @@ function Matrix({
         />
 
         <div className="relative" data-element-input>
-          <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+          <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
 
           {/* Table container with overflow for mobile */}
           <div className="overflow-x-auto">

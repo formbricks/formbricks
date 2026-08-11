@@ -1,6 +1,6 @@
 import { Star } from "lucide-react";
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
 import {
@@ -172,6 +172,8 @@ function Rating({
   imageUrl,
   videoUrl,
 }: Readonly<RatingProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
   // Ensure value is within valid range
@@ -401,8 +403,8 @@ function Rating({
         role="radiogroup"
         aria-labelledby={`${inputId}-headline`}
         aria-required={required}
-        aria-invalid={Boolean(errorMessage)}
-        aria-describedby={errorMessage ? `${inputId}-error` : undefined}
+        aria-invalid={errorAria.ariaInvalid}
+        aria-describedby={errorAria.ariaDescribedBy}
         dir={dir}>
         <ElementHeader
           headlineId={`${inputId}-headline`}
@@ -416,7 +418,7 @@ function Rating({
 
         {/* Rating Options */}
         <div className="relative" data-element-input>
-          <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+          <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
           <div className="flex w-full px-[2px]">
             {ratingOptions.map((number, index) => {
               if (scale === "number") {

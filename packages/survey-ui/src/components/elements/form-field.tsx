@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { Label } from "@/components/general/label";
@@ -108,7 +108,7 @@ function FormField({
   // would make a screen reader read "Email: ..." as the description of "First name" or "Company" —
   // a confidently wrong description, which is worse than none. The inputs still expose
   // aria-invalid, so the state is conveyed, and the live region announces the message itself.
-  const errorId = `${elementId}-error`;
+  const errorAria = getElementErrorAria(elementId, errorMessage);
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
@@ -124,7 +124,7 @@ function FormField({
 
       {/* Form Fields */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} id={errorId} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
         <div className="space-y-3">
           {visibleFields.map((field) => {
             const fieldRequired = isFieldRequired(field);
@@ -154,7 +154,7 @@ function FormField({
                   required={fieldRequired}
                   disabled={disabled}
                   dir={dir}
-                  aria-invalid={Boolean(errorMessage) || undefined}
+                  aria-invalid={errorAria.ariaInvalid || undefined}
                 />
               </div>
             );

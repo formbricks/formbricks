@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Checkbox } from "@/components/general/checkbox";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +59,7 @@ function Consent({
     onChange(checked);
   };
 
-  const errorId = `${inputId}-error`;
+  const errorAria = getElementErrorAria(inputId, errorMessage);
 
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
@@ -76,7 +76,7 @@ function Consent({
 
       {/* Consent Checkbox */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} id={errorId} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
 
         <label
           htmlFor={`${inputId}-checkbox`}
@@ -92,8 +92,8 @@ function Consent({
             checked={value}
             onCheckedChange={handleCheckboxChange}
             disabled={disabled}
-            aria-invalid={Boolean(errorMessage)}
-            aria-describedby={errorMessage ? errorId : undefined}
+            aria-invalid={errorAria.ariaInvalid}
+            aria-describedby={errorAria.ariaDescribedBy}
           />
           <span
             className="font-input-weight text-input-text flex-1 [font-size:var(--fb-input-font-size)]"

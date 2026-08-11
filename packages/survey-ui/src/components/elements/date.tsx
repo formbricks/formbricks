@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Calendar } from "@/components/general/calendar";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { getDateFnsLocale } from "@/lib/locale";
 
@@ -57,6 +57,8 @@ function DateElement({
   imageUrl,
   videoUrl,
 }: Readonly<DateElementProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   // Initialize date from value string, parsing as local time to avoid timezone issues
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (!value) return undefined;
@@ -163,7 +165,7 @@ function DateElement({
       />
 
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
         {/* Calendar - Always visible. The value is picked from a grid of day buttons, so there is
             no single native control to flag: a native <fieldset> wraps them and carries the invalid
             state. It is named by the headline via aria-labelledby rather than a <legend>, so the
@@ -178,8 +180,8 @@ function DateElement({
         <fieldset
           className="m-0 w-full min-w-0 border-0 p-0"
           aria-labelledby={`${inputId}-headline`}
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <Calendar
             mode="single"
             selected={date}

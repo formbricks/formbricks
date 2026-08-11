@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
@@ -58,6 +58,8 @@ function NPS({
   imageUrl,
   videoUrl,
 }: Readonly<NPSProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
   // Ensure value is within valid range (0-10)
@@ -170,7 +172,7 @@ function NPS({
 
       {/* NPS Options */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
         {/* The options are native radios sharing one `name`, so role="radiogroup" is accurate and
             makes aria-required/aria-invalid valid on the group — ARIA 1.2 dropped aria-invalid from
             the global attributes, and a bare <fieldset> (role="group") supports neither. A composite
@@ -184,8 +186,8 @@ function NPS({
           role="radiogroup"
           aria-labelledby={`${inputId}-headline`}
           aria-required={required}
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <div className="flex w-full">{npsOptions.map((number) => renderNPSOption(number))}</div>
 
           {/* Labels */}

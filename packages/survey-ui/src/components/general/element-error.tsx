@@ -11,8 +11,23 @@ interface ElementErrorProps {
    * Id placed on the live region so the invalid control can point at it with aria-describedby.
    * Call sites use the `${inputId}-error` convention.
    */
-  id?: string;
+  id: string;
 }
+
+interface ElementErrorAria {
+  errorId: string;
+  ariaInvalid: boolean;
+  ariaDescribedBy: string | undefined;
+}
+
+const getElementErrorAria = (inputId: string, errorMessage?: string): ElementErrorAria => {
+  const errorId = `${inputId}-error`;
+  return {
+    errorId,
+    ariaInvalid: Boolean(errorMessage),
+    ariaDescribedBy: errorMessage ? errorId : undefined,
+  };
+};
 
 function ElementError({ errorMessage, dir = "auto", id }: Readonly<ElementErrorProps>): React.JSX.Element {
   return (
@@ -49,4 +64,5 @@ function ElementError({ errorMessage, dir = "auto", id }: Readonly<ElementErrorP
 }
 
 export { ElementError };
-export type { ElementErrorProps };
+export { getElementErrorAria };
+export type { ElementErrorAria, ElementErrorProps };

@@ -12,7 +12,7 @@ import {
   SEARCH_THRESHOLD,
   useDropdownSearch,
 } from "@/components/general/dropdown-search";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { cn } from "@/lib/utils";
@@ -212,6 +212,8 @@ function DropdownVariant({
   searchPlaceholder,
   searchNoResultsText,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   const handleOptionToggle = (optionId: string): void => {
     if (selectedValues.includes(optionId)) {
       handleOptionRemove(optionId);
@@ -243,7 +245,7 @@ function DropdownVariant({
 
   return (
     <div>
-      <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
       <DropdownMenu
         onOpenChange={(open) => {
           if (open) handleDropdownOpen();
@@ -257,8 +259,8 @@ function DropdownVariant({
             variant="outline"
             disabled={disabled}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
-            aria-invalid={Boolean(errorMessage)}
-            aria-describedby={errorMessage ? `${inputId}-error` : undefined}
+            aria-invalid={errorAria.ariaInvalid}
+            aria-describedby={errorAria.ariaDescribedBy}
             aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
             <span
               id={`${inputId}-trigger-value`}
@@ -363,8 +365,8 @@ function DropdownVariant({
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
           aria-required
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? `${inputId}-error` : undefined}
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -414,6 +416,7 @@ function ListVariant({
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const isNoneSelected = value.includes("none");
   const otherTextId = otherOptionId ? `${inputId}-${otherOptionId}-input` : undefined;
+  const errorAria = getElementErrorAria(inputId, errorMessage);
 
   const renderOption = (option: MultiSelectOption): React.JSX.Element => {
     const isChecked = selectedValues.includes(option.id);
@@ -434,7 +437,7 @@ function ListVariant({
 
   return (
     <>
-      <ElementError errorMessage={errorMessage} dir={dir} id={`${inputId}-error`} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
       <div className="space-y-2">
         {options.filter((option) => option.id !== "none").map(renderOption)}
         {hasOtherOption && otherOptionId ? (
@@ -481,8 +484,8 @@ function ListVariant({
                 disabled={disabled}
                 aria-required
                 aria-label={otherOptionLabel}
-                aria-invalid={Boolean(errorMessage)}
-                aria-describedby={errorMessage ? `${inputId}-error` : undefined}
+                aria-invalid={errorAria.ariaInvalid}
+                aria-describedby={errorAria.ariaDescribedBy}
                 dir={dir}
                 className="mt-2 w-full"
                 ref={otherInputRef}
@@ -527,6 +530,7 @@ function MultiSelect({
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = Boolean(hasOtherOption && otherOptionId && selectedValues.includes(otherOptionId));
   const otherInputRef = React.useRef<HTMLInputElement>(null);
+  const errorAria = getElementErrorAria(inputId, errorMessage);
 
   React.useEffect(() => {
     if (!isOtherSelected || disabled) return;
@@ -590,8 +594,8 @@ function MultiSelect({
         <fieldset
           className="w-full space-y-4"
           aria-labelledby={`${inputId}-headline`}
-          aria-invalid={Boolean(errorMessage)}
-          aria-describedby={errorMessage ? `${inputId}-error` : undefined}>
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <ElementHeader
             headlineId={`${inputId}-headline`}
             headline={headline}
