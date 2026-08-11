@@ -149,7 +149,9 @@ test.describe("App survey widget does not block the host page", () => {
 
     // It takes nothing from the page, so the open is announced through the pre-existing status
     // region instead of a focus move — otherwise screen-reader users get no signal it appeared.
-    await expect(liveRegion).toHaveText("A survey has opened. Press Tab to reach it.");
+    // The message states where the survey is (the widget mounts last in <body>) rather than
+    // promising a keystroke: Tab follows DOM order, so one Tab press would not reach it.
+    await expect(liveRegion).toHaveText("A survey has opened at the end of the page.");
 
     // Text on the host page must stay selectable — the focus trap used to wipe the
     // selection ~17ms into the drag by pulling focus back into the survey.

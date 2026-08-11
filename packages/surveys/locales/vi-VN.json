@@ -30,7 +30,7 @@
     "select_options": "Chọn các tùy chọn",
     "sending_responses": "Đang gửi phản hồi…",
     "survey_dialog": "Hộp thoại khảo sát",
-    "survey_opened_announcement": "Một khảo sát đã được mở. Nhấn Tab để truy cập.",
+    "survey_opened_announcement": "Một khảo sát đã được mở ở cuối trang.",
     "takes_less_than_x_minutes": "{count, plural, other {Mất ít hơn {count} phút}}",
     "takes_x_minutes": "{count, plural, other {Mất {count} phút}}",
     "takes_x_plus_minutes": "Mất {count}+ phút",
