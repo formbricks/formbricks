@@ -45,27 +45,11 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/modules/auth/lib/oauth-urls", () => ({
-  MCP_OAUTH_SCOPES: [
-    "openid",
-    "profile",
-    "email",
-    "offline_access",
-    "surveys:read",
-    "surveys:write",
-    "workflows:read",
-    "workflows:write",
-    "feedbackRecords:read",
-    "feedbackRecords:write",
-  ],
-  MCP_RESOURCE_SCOPES: [
-    "surveys:read",
-    "surveys:write",
-    "workflows:read",
-    "workflows:write",
-    "feedbackRecords:read",
-    "feedbackRecords:write",
-  ],
+// Only the env-dependent URL getters are stubbed; the scope constants come from the real module.
+// Re-declaring them here would assert the mock against itself and mask scope drift — which is how
+// the challenge list silently diverged from the protected-resource metadata (ENG-2175).
+vi.mock("@/modules/auth/lib/oauth-urls", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/auth/lib/oauth-urls")>()),
   getAuthIssuerUrl: vi.fn(() => "https://app.example.com/api/auth"),
   getMcpOrigin: vi.fn(() => "https://app.example.com"),
   getMcpProtectedResourceMetadataUrl: vi.fn(
@@ -82,6 +66,16 @@ vi.mock("@formbricks/logger", () => ({
     })),
   },
 }));
+
+// Imported dynamically so it resolves against the partially-mocked module above rather than being
+// hoisted past it.
+const { MCP_CHALLENGE_SCOPE } = await import("@/modules/auth/lib/oauth-urls");
+
+// Two comma-separated quoted auth-params, per the `#auth-param` list grammar in RFC 9110 §11.6.1 (#8718).
+// Cases that care about the challenge's *shape* assert this rather than the whole string, so they do not
+// have to be rewritten every time the advertised scope list changes; the exact value is pinned once, from
+// the real constant, in app/api/mcp/route.test.ts.
+const CHALLENGE_GRAMMAR = /^Bearer resource_metadata="[^"]+", scope="[^"]+"$/;
 
 const apiKeyAuth = {
   type: "apiKey" as const,
@@ -124,10 +118,11 @@ describe("authenticateMcpRequest", () => {
     if (!result.ok) {
       expect(result.response.status).toBe(401);
       // The challenge must advertise every resource scope so clients request them at consent and can
-      // reach the write tools (advertising only read is why write was unreachable — ENG-1055 QA).
-      expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
-      );
+      // reach the write tools (advertising only read is why write was unreachable — ENG-1055 QA),
+      // plus offline_access so a client that registers from this string can still be granted a
+      // refresh token (ENG-2175). Asserted against the real constant, not a literal.
+      expect(result.response.headers.get("WWW-Authenticate")).toContain(`scope="${MCP_CHALLENGE_SCOPE}"`);
+      expect(MCP_CHALLENGE_SCOPE).toContain("offline_access");
       expect(await result.response.json()).toMatchObject({
         code: "not_authenticated",
         detail: "API key or OAuth access token required",
@@ -346,7 +341,13 @@ describe("authenticateMcpRequest", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.response.status).toBe(401);
-      expect(result.response.headers.get("WWW-Authenticate")).toContain(
+      // Auth-params are comma-separated (RFC 9110 `#auth-param`), so a strict client parser can read
+      // `resource_metadata` out of the challenge instead of choking on the whole tail. What this case is
+      // really about is the metadata URL being built from the configured origin, so assert that plus the
+      // grammar — not the scope list, which is pinned from the real constant elsewhere.
+      const challenge = result.response.headers.get("WWW-Authenticate");
+      expect(challenge).toMatch(CHALLENGE_GRAMMAR);
+      expect(challenge).toContain(
         'resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/api/mcp"'
       );
       expect(await result.response.json()).toMatchObject({
@@ -378,11 +379,37 @@ describe("authenticateMcpRequest", () => {
     if (!result.ok) {
       expect(result.response.status).toBe(403);
       expect(result.response.headers.get("WWW-Authenticate")).toContain('error="insufficient_scope"');
+      // Deliberately the RESOURCE scopes, not the challenge scope: RFC 6750 `scope` names what the
+      // resource requires, and offline_access is not one of those. If this ever needs offline_access
+      // added, the baseline auth gate has been widened and MCP is accepting a token that grants no
+      // resource access.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
         'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  // The inverse of the challenge fix: offline_access is advertised so clients can obtain a refresh
+  // token, but it grants no resource access, so it must never satisfy the baseline gate on its own.
+  test("rejects an OAuth bearer token scoped only to offline_access", async () => {
+    verifyAccessTokenMock.mockResolvedValue({
+      sub: "user_1",
+      client_id: "client_2",
+      scope: "openid profile email offline_access",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(403);
+      expect(result.response.headers.get("WWW-Authenticate")).toContain('error="insufficient_scope"');
+    }
   });
 
   // Any single resource scope is enough to authenticate: a feedbackRecords-only grant is a legitimate
@@ -439,7 +466,13 @@ describe("authenticateMcpRequest", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.response.status).toBe(401);
-      expect(result.response.headers.get("WWW-Authenticate")).toContain(
+      // Auth-params are comma-separated (RFC 9110 `#auth-param`), so a strict client parser can read
+      // `resource_metadata` out of the challenge instead of choking on the whole tail. What this case is
+      // really about is the metadata URL being built from the configured origin, so assert that plus the
+      // grammar — not the scope list, which is pinned from the real constant elsewhere.
+      const challenge = result.response.headers.get("WWW-Authenticate");
+      expect(challenge).toMatch(CHALLENGE_GRAMMAR);
+      expect(challenge).toContain(
         'resource_metadata="https://app.example.com/.well-known/oauth-protected-resource/api/mcp"'
       );
       expect(await result.response.json()).toMatchObject({

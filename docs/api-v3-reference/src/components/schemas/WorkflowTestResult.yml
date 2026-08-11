@@ -15,7 +15,7 @@ properties:
     type: boolean
     description: >
       True when the definition is executable, every trigger reference resolves, and every literal
-      `send_email` recipient is an organization member.
+      `send_email` recipient can access this workspace.
   problems:
     type: array
     description: Every problem found, so all issues can be fixed at once. Empty when `ok` is true.

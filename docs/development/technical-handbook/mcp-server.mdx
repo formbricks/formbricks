@@ -77,18 +77,18 @@ Discovery endpoints:
 
 Supported scopes:
 
-| Scope                   | Use                                                                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                                                                                                   |
-| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations                                                                                        |
-| `workflows:read`        | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`                                                                    |
-| `workflows:write`       | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations                               |
-| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
-| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record`                                                        |
-| `openid`                | OpenID Connect subject interoperability                                                                                                                        |
-| `profile`               | User profile claims                                                                                                                                            |
-| `email`                 | User email claim                                                                                                                                               |
-| `offline_access`        | Refresh tokens for MCP clients                                                                                                                                 |
+| Scope | Use |
+| --- | --- |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey` |
+| `surveys:write` | `create_survey`, `patch_survey`, `delete_survey` |
+| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
+| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
+| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
+| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
+| `openid` | OpenID Connect subject interoperability |
+| `profile` | User profile claims |
+| `email` | User email claim |
+| `offline_access` | Refresh tokens for MCP clients |
 
 **The rule:** every MCP tool is registered through `registerScopedTool`, which takes the required
 scope(s) as a mandatory argument and runs the gate before the handler. Read tools declare
@@ -103,8 +103,8 @@ read/write handler factories and register through `server.registerTool` directly
 handlers is still gated, but the guarantee is by convention there rather than by construction —
 converging them onto `registerScopedTool` is a known follow-up.
 
-**There is no single mandatory baseline scope.** Authentication requires _at least one_ resource scope
-(`MCP_MINIMUM_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
+**There is no single mandatory baseline scope.** Authentication requires *at least one* resource scope
+(`MCP_RESOURCE_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
 client. `list_workspaces` — the workspaceId-discovery prerequisite for every resource tool — therefore
 gates on any resource read scope rather than one specific one; its result is derived from the caller's
 own memberships and key grants, so admitting any read scope exposes nothing extra.
@@ -154,37 +154,37 @@ Do not pass credentials in the query string. The MCP route rejects query credent
 
 API key permissions are enforced through the same workspace access checks as the v3 REST API:
 
-| Tool                            | Minimum Workspace Permission                                                               |
-| ------------------------------- | ------------------------------------------------------------------------------------------ |
-| `list_surveys`                  | `read`                                                                                     |
-| `get_survey`                    | `read`                                                                                     |
-| `create_survey`                 | `write` or `manage`                                                                        |
-| `validate_survey`               | `write` or `manage` when the validation request checks write access                        |
-| `patch_survey`                  | `write` or `manage`                                                                        |
-| `delete_survey`                 | `write` or `manage`                                                                        |
-| `list_workflows`                | `read`                                                                                     |
-| `get_workflow`                  | `read`                                                                                     |
-| `list_workflow_runs`            | `read`                                                                                     |
-| `get_workflow_run`              | `read`                                                                                     |
-| `test_workflow`                 | `write` or `manage` — the tool mutates nothing, but the handler authorizes it like a write |
-| `create_workflow`               | `write` or `manage`                                                                        |
-| `patch_workflow`                | `write` or `manage`                                                                        |
-| `duplicate_workflow`            | `write` or `manage`                                                                        |
-| `delete_workflow`               | `write` or `manage`                                                                        |
-| `enable_workflow`               | `write` or `manage`                                                                        |
-| `disable_workflow`              | `write` or `manage`                                                                        |
-| `archive_workflow`              | `write` or `manage`                                                                        |
-| `unarchive_workflow`            | `write` or `manage`                                                                        |
-| `list_feedback_datasets`        | `read`                                                                                     |
-| `list_feedback_records`         | `read`                                                                                     |
-| `count_feedback_records`        | `read`                                                                                     |
-| `get_feedback_record`           | `read`                                                                                     |
-| `search_feedback_records`       | `read`                                                                                     |
-| `find_similar_feedback_records` | `read`                                                                                     |
-| `create_feedback_record`        | `write` or `manage`                                                                        |
-| `create_feedback_records`       | `write` or `manage`                                                                        |
-| `update_feedback_record`        | `write` or `manage`                                                                        |
-| `delete_feedback_record`        | `manage`                                                                                   |
+| Tool | Minimum Workspace Permission |
+| --- | --- |
+| `list_surveys` | `read` |
+| `get_survey` | `read` |
+| `create_survey` | `write` or `manage` |
+| `validate_survey` | `read` — a dry run; it validates a create or patch payload without writing |
+| `patch_survey` | `write` or `manage` |
+| `delete_survey` | `write` or `manage` |
+| `list_workflows` | `read` |
+| `get_workflow` | `read` |
+| `list_workflow_runs` | `read` |
+| `get_workflow_run` | `read` |
+| `test_workflow` | `read` — a dry run; it validates the definition and resolves its trigger references, creating no run |
+| `create_workflow` | `write` or `manage` |
+| `patch_workflow` | `write` or `manage` |
+| `duplicate_workflow` | `write` or `manage` |
+| `delete_workflow` | `write` or `manage` |
+| `enable_workflow` | `write` or `manage` |
+| `disable_workflow` | `write` or `manage` |
+| `archive_workflow` | `write` or `manage` |
+| `unarchive_workflow` | `write` or `manage` |
+| `list_feedback_datasets` | `read` |
+| `list_feedback_records` | `read` |
+| `count_feedback_records` | `read` |
+| `get_feedback_record` | `read` |
+| `search_feedback_records` | `read` |
+| `find_similar_feedback_records` | `read` |
+| `create_feedback_record` | `write` or `manage` |
+| `create_feedback_records` | `write` or `manage` |
+| `update_feedback_record` | `write` or `manage` |
+| `delete_feedback_record` | `manage` |
 
 Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` + `feedbackRecords:read`
 always; the matching `:write` scopes when the key has `write` or `manage` on any workspace. The scope
@@ -249,6 +249,14 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
   scopes, a client that registers with a narrower set than it later requests (e.g. it registers surveys-only
   but requests `offline_access`) is rejected with `invalid_scope`. To smoke-test the real path, omit `scope`
   and let the client adopt the advertised set, or pass exactly what the metadata advertises.
+</Note>
+
+<Note>
+  For the same reason, the `scope` in the MCP endpoint's 401 `WWW-Authenticate` challenge is exactly
+  the metadata's `scopes_supported`, not a subset — a client that hits the 401 before fetching the
+  metadata uses the challenge string as its registration scope. The two are derived from one constant
+  (`MCP_CHALLENGE_SCOPE`) and a test asserts they stay equal; when they diverged, every new client
+  failed its first connect with `invalid_scope` and only succeeded on retry.
 </Note>
 
 The consent screen is served at `/account/authorize`. Users can revoke approved MCP clients from
@@ -635,7 +643,8 @@ Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` a
 ### validate_survey
 
 Validates a create or patch payload without writing survey changes. The tool is read-only and
-idempotent, but create validation still checks workspace write access when `workspaceId` is present.
+idempotent; workspace access is still checked when `workspaceId` is present, at `read` level —
+matching the `surveys:read` scope the tool declares.
 
 Create validation input:
 
@@ -797,9 +806,9 @@ Gets one workflow run with its ordered step logs. Read-only and idempotent.
 
 Dry-runs a workflow: validates its live definition would execute and resolves the trigger's survey +
 ending cards. No run is persisted and no side effects occur; the result reports `{ ok, problems }`.
-Annotated read-only (no world mutation). Only **enabled or disabled** workflows can be tested — a
-draft or archived workflow is rejected with `422 invalid_workflow_state`, so after `create_workflow`
-(which always creates a draft), enable the workflow before testing it.
+Annotated read-only (no world mutation). **Drafts are testable** — checking the setup before going
+live is the point of a dry run — so a workflow can be tested straight after `create_workflow`. Only
+**archived** workflows are rejected, with `422 invalid_workflow_state`, since they are soft-deleted.
 
 ```json
 { "workflowId": "clwf1234567890123456789012" }

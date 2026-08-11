@@ -9,8 +9,13 @@ keep it short enough to grasp without opening files. -->
 
 ## Linear ticket
 
-<!-- Paste the full Linear ticket URL (e.g. https://linear.app/formbricks/issue/ENG-1234/…) so it
-auto-links. No ticket? Say why. Closing a GitHub issue? Add "Fixes #123". -->
+<!-- Complete the line below: `Fixes ENG-1234`. A bare URL does NOT link the PR — the magic word has
+to come first. Use `Ref ENG-1234` instead if this PR only partly addresses the ticket, so merging
+doesn't close it. A full ticket URL works in place of the ID.
+No ticket? Delete the line and say why. Closing a GitHub issue? Add "Fixes #123".
+More: https://linear.app/docs/github -->
+
+Fixes ENG-
 
 ## How this was tested
 
@@ -28,10 +33,13 @@ self-hosted setups? Count as breaking: API/SDK request or response shape (rename
 fields, or changed values like `EN` → `en-US`), removed/renamed endpoints or routes, changed webhook
 payloads, changed defaults, new/removed/renamed env vars or config, and DB migrations that need manual
 action. If YES:
-  1. Add the `breaking-change` label to this PR.
-  2. Fill the table below — one row per change. This text feeds the GitHub release notes and the
+  1. Fill the table below — one row per change. This text feeds the GitHub release notes and the
      self-hoster migration guide, so write it for an external integrator, not for the team.
-If there are no breaking changes, leave "None" below. -->
+  2. The `breaking-change` label is applied automatically from this section — a table or prose both
+     count, so you should not need to touch it. Add it by hand if it doesn't appear.
+If there are no breaking changes, leave "None" below. A short scope reason is fine ("None — docs only",
+"N/A", "No breaking changes"); anything more specific than that reads as a declaration and applies the
+label, so spell out what changed only when it really is breaking. -->
 
 None
 

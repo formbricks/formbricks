@@ -9,7 +9,7 @@ import { type TMcpListWorkspacesInput, ZMcpListWorkspacesInput } from "./schemas
 export function registerWorkspaceTools(server: McpServer): void {
   // list_workspaces is the workspaceId-discovery prerequisite for the survey, workflow AND
   // feedback-record tools, so it gates on ANY resource read scope rather than a single one. auth.ts's
-  // baseline is now "at least one resource scope" (MCP_MINIMUM_SCOPES), so a workflows-only or
+  // baseline is now "at least one resource scope" (MCP_RESOURCE_SCOPES), so a workflows-only or
   // feedbackRecords-only token is a legitimate client and must still be able to discover its
   // workspaceId. The result is derived from the caller's own memberships/key grants, so admitting any
   // read scope exposes nothing extra.

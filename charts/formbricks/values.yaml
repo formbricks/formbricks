@@ -73,6 +73,17 @@ deployment:
     #   maxSurge: 25%
     #   maxUnavailable: 25%
 
+  # Time Kubernetes allows the Pod to stop gracefully
+  # Must exceed any preStop drain below because lifecycle hooks run inside this budget
+  terminationGracePeriodSeconds: 30
+
+  # Optional app container lifecycle hooks
+  lifecycle: {}
+  # Native sleep requires Kubernetes >= 1.29; use an exec handler on older clusters
+  #   preStop:
+  #     sleep:
+  #       seconds: 20
+
   # Automatically reload deployment when ConfigMaps or Secrets change
   reloadOnChange: false
 
@@ -948,10 +959,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.1.
-    digest: "sha256:5d7e7c6138ff77984db54b7c91693d8f56017cefa74bc69390fc7191403208c5"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.3.
+    digest: "sha256:4dc0c4f26cf999b3bf4a26d7b09634fc65ae23cbb30c9ad82042da019d231458"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.8.1"
+    tag: "0.8.3"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.

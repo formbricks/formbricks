@@ -85,6 +85,8 @@ export const translateSurveyFieldsAction = authenticatedActionClient
 
     const translations = await translateFields({
       organizationId,
+      workspaceId: parsedInput.workspaceId,
+      userId: ctx.user.id,
       fields: parsedInput.fields,
       sourceLanguage: parsedInput.sourceLanguage,
       targetLanguage: parsedInput.targetLanguage,

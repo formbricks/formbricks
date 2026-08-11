@@ -194,11 +194,17 @@ export const workflowDraftSignatureAtom = atom((get) => {
 export const workflowSaveErrorAtom = atom((get) => get(workflowEditorAtom).saveError);
 
 // Drives the header pill's failed state. Gated on dirtiness so reverting the draft back to what was
-// last persisted clears the alarm: nothing is unsaved, so nothing should read "Save failed". Retry
-// semantics are unaffected — the autosave effect guards on the raw signature, not this flag.
-export const hasWorkflowSaveFailedAtom = atom(
-  (get) => get(workflowEditorAtom).saveError !== null && get(isWorkflowDirtyAtom)
-);
+// last persisted clears the alarm: nothing is unsaved, so nothing should read "Save failed". Also
+// scoped to the *exact* draft that failed (its signature): after the user edits past a rejected
+// save — most notably clearing the name, which makes the draft unsendable — this flag drops so the
+// pill can report the current state (e.g. the amber "Not saved") instead of a stale rejection whose
+// reason no longer applies. This mirrors the autosave effect's own no-retry guard, which likewise
+// keys off `saveError.draftSignature === draftSignature`.
+export const hasWorkflowSaveFailedAtom = atom((get) => {
+  const saveError = get(workflowEditorAtom).saveError;
+  if (!saveError || !get(isWorkflowDirtyAtom)) return false;
+  return saveError.draftSignature === get(workflowDraftSignatureAtom);
+});
 
 export type TWorkflowValidity = {
   /** The workflow has a non-empty name (required by the PATCH contract). */

@@ -12,7 +12,7 @@ import {
   SEARCH_THRESHOLD,
   useDropdownSearch,
 } from "@/components/general/dropdown-search";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { cn } from "@/lib/utils";
@@ -212,6 +212,8 @@ function DropdownVariant({
   searchPlaceholder,
   searchNoResultsText,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   const handleOptionToggle = (optionId: string): void => {
     if (selectedValues.includes(optionId)) {
       handleOptionRemove(optionId);
@@ -243,7 +245,7 @@ function DropdownVariant({
 
   return (
     <div>
-      <ElementError errorMessage={errorMessage} dir={dir} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
       <DropdownMenu
         onOpenChange={(open) => {
           if (open) handleDropdownOpen();
@@ -257,7 +259,8 @@ function DropdownVariant({
             variant="outline"
             disabled={disabled}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
-            aria-invalid={Boolean(errorMessage)}
+            aria-invalid={errorAria.ariaInvalid}
+            aria-describedby={errorAria.ariaDescribedBy}
             aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
             <span
               id={`${inputId}-trigger-value`}
@@ -349,6 +352,10 @@ function DropdownVariant({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
+      {/* The dropdown branch renders no fieldset/group, and this free text is a SIBLING of the
+          trigger rather than a descendant, so nothing above it would supply a description. It also
+          needs one most: validateMultiSelectOtherValue errors precisely when this box is empty, and
+          it is the only native input[aria-invalid] here, so focusFirstControl lands right on it. */}
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
@@ -358,7 +365,8 @@ function DropdownVariant({
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
           aria-required
-          aria-invalid={Boolean(errorMessage)}
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -408,6 +416,7 @@ function ListVariant({
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const isNoneSelected = value.includes("none");
   const otherTextId = otherOptionId ? `${inputId}-${otherOptionId}-input` : undefined;
+  const errorAria = getElementErrorAria(inputId, errorMessage);
 
   const renderOption = (option: MultiSelectOption): React.JSX.Element => {
     const isChecked = selectedValues.includes(option.id);
@@ -428,7 +437,7 @@ function ListVariant({
 
   return (
     <>
-      <ElementError errorMessage={errorMessage} dir={dir} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
       <div className="space-y-2">
         {options.filter((option) => option.id !== "none").map(renderOption)}
         {hasOtherOption && otherOptionId ? (
@@ -461,6 +470,10 @@ function ListVariant({
               <CheckboxIndicator />
               <span className={cn("mx-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
             </label>
+            {/* The enclosing <fieldset> carries aria-describedby, but an ancestor's description is
+                not part of a descendant's accessible description (accname): focusing this input
+                announces its own name/state/description only. Without this it would read as invalid
+                with no reason. It describes one text input, not each option, so nothing repeats. */}
             {isOtherSelected ? (
               <Input
                 type="text"
@@ -471,7 +484,8 @@ function ListVariant({
                 disabled={disabled}
                 aria-required
                 aria-label={otherOptionLabel}
-                aria-invalid={Boolean(errorMessage)}
+                aria-invalid={errorAria.ariaInvalid}
+                aria-describedby={errorAria.ariaDescribedBy}
                 dir={dir}
                 className="mt-2 w-full"
                 ref={otherInputRef}
@@ -516,6 +530,7 @@ function MultiSelect({
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = Boolean(hasOtherOption && otherOptionId && selectedValues.includes(otherOptionId));
   const otherInputRef = React.useRef<HTMLInputElement>(null);
+  const errorAria = getElementErrorAria(inputId, errorMessage);
 
   React.useEffect(() => {
     if (!isOtherSelected || disabled) return;
@@ -570,14 +585,17 @@ function MultiSelect({
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {isListVariant ? (
-        // A checkbox group is role="group", which doesn't support aria-required (only the
-        // visible "Required" badge conveys it). aria-invalid is a global attribute, so it stays.
+        // A checkbox group is role="group", which ARIA 1.2 gives neither aria-required nor
+        // aria-invalid (aria-invalid was global in ARIA 1.1 but is not in 1.2), and checkboxes have
+        // no radiogroup-equivalent role. Only the visible "Required" badge conveys requiredness;
+        // aria-invalid stays as a best-effort hook while the live region carries the announcement.
         // The group is named by its headline via aria-labelledby instead of a <legend>, so the
         // headline's media/required badge are not nested in invalid block content.
         <fieldset
           className="w-full space-y-4"
           aria-labelledby={`${inputId}-headline`}
-          aria-invalid={Boolean(errorMessage)}>
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <ElementHeader
             headlineId={`${inputId}-headline`}
             headline={headline}

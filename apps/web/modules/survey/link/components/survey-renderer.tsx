@@ -73,6 +73,11 @@ export const renderSurvey = async ({
   // Extract workspace from pre-fetched context
   const { workspace } = workspaceContext;
 
+  // Every prop passed to a client component is serialized into the RSC payload and readable in the
+  // page source, so the survey handed to them must never carry the PIN — the pin gate itself stays
+  // server-side (see the `survey.pin` branch below and `validateSurveyPinAction`).
+  const publicSurvey: TSurvey = { ...survey, pin: null };
+
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
   const isScheduled = survey.status === "paused" && survey.publishOn !== null;
 
@@ -110,7 +115,7 @@ export const renderSurvey = async ({
     if (emailVerificationStatus === "fishy") {
       return (
         <VerifyEmail
-          survey={survey}
+          survey={publicSurvey}
           isErrorComponent={true}
           languageCode={getLanguageCode(langParam, survey)}
           styling={workspace.styling}
@@ -122,7 +127,7 @@ export const renderSurvey = async ({
       <VerifyEmail
         singleUseId={searchParams.suId ?? ""}
         singleUseToken={searchParams.suToken}
-        survey={survey}
+        survey={publicSurvey}
         languageCode={getLanguageCode(langParam, survey)}
         styling={workspace.styling}
         locale={locale}
@@ -169,7 +174,7 @@ export const renderSurvey = async ({
   // Render interactive survey with client component for interactivity
   return (
     <SurveyClientWrapper
-      survey={survey}
+      survey={publicSurvey}
       workspace={workspace}
       styling={styling}
       publicDomain={publicDomain}

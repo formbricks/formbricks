@@ -43,22 +43,22 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/modules/auth/lib/oauth-urls", () => ({
-  // Must mirror the real MCP_RESOURCE_SCOPES: the route's minimum-scope gate and its WWW-Authenticate
-  // challenge are both derived from this list, so a short mock would test a world production doesn't have.
-  MCP_RESOURCE_SCOPES: [
-    "surveys:read",
-    "surveys:write",
-    "workflows:read",
-    "workflows:write",
-    "feedbackRecords:read",
-    "feedbackRecords:write",
-  ],
+// Only the env-dependent URL getters are mocked. The scope constants are the real ones: the route's
+// minimum-scope gate and its WWW-Authenticate challenge are both derived from them, so literals here
+// would test a world production doesn't have and mask scope drift (ENG-2175).
+vi.mock("@/modules/auth/lib/oauth-urls", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/auth/lib/oauth-urls")>()),
   getAuthIssuerUrl: () => "http://localhost/api/auth",
   getMcpOrigin: () => "http://localhost",
   getMcpProtectedResourceMetadataUrl: () => "http://localhost/.well-known/oauth-protected-resource/api/mcp",
   getMcpResourceUrl: () => "http://localhost/api/mcp",
 }));
+
+const { MCP_CHALLENGE_SCOPE } = await import("@/modules/auth/lib/oauth-urls");
+// The auth-params are comma-separated per RFC 9110 §11.6.1 (#8718): asserting the whole string is what
+// keeps the separator from regressing, since a strict client parser needs it to read `resource_metadata`.
+// The scope list interpolates the real constant, so this stays honest as the advertised scopes change.
+const EXPECTED_CHALLENGE = `Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp", scope="${MCP_CHALLENGE_SCOPE}"`;
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
   authenticateApiKeyFromHeaders: vi.fn(),
@@ -170,9 +170,7 @@ describe("POST /api/mcp", () => {
 
     expect(response.status).toBe(401);
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
-    expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
-    );
+    expect(response.headers.get("WWW-Authenticate")).toBe(EXPECTED_CHALLENGE);
     expect(applyIPRateLimit).toHaveBeenCalled();
   });
 
@@ -360,6 +358,7 @@ describe("POST /api/mcp", () => {
     );
 
     expect(response.status).toBe(200);
+    await readMcpResponse(response);
     expect(authenticateApiKeyFromHeaders).toHaveBeenCalledTimes(1);
     expect(verifyAccessTokenMock).not.toHaveBeenCalled();
     expect(listV3Surveys).toHaveBeenCalledWith(
@@ -406,6 +405,7 @@ describe("POST /api/mcp", () => {
       })
     );
     expect(applyRateLimit).toHaveBeenCalledWith(expect.any(Object), "oauth:user_1:client_1");
+    await readMcpResponse(response);
     expect(listV3Surveys).toHaveBeenCalledWith(
       expect.objectContaining({
         authentication: {
@@ -444,9 +444,7 @@ describe("POST /api/mcp", () => {
     expect(response.status).toBe(401);
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
     expect(applyIPRateLimit).toHaveBeenCalled();
-    expect(response.headers.get("WWW-Authenticate")).toBe(
-      'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp" scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"'
-    );
+    expect(response.headers.get("WWW-Authenticate")).toBe(EXPECTED_CHALLENGE);
   });
 
   test("blocks write tools for read-only OAuth tokens", async () => {
@@ -485,7 +483,9 @@ describe("POST /api/mcp", () => {
     expect(message.result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      // Names the scope this specific call needed, not just that some scope was missing — that is
+      // the only thing the client can act on.
+      detail: "OAuth token does not include the required MCP scope: surveys:write",
       requestId: "req_read_only",
     });
   });
@@ -528,7 +528,9 @@ describe("POST /api/mcp", () => {
     expect(message.result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope",
+      // The refusal names the scope the client must obtain, since a JSON-RPC tool result carries no
+      // WWW-Authenticate header for it to read.
+      detail: "OAuth token does not include the required MCP scope: workflows:write",
       requestId: "req_wf_read_only",
     });
     // The scope gate must fire BEFORE any mutation side effect: no audit log is built or queued for a

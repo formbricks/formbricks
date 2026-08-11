@@ -7,7 +7,7 @@ import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
 export default defineConfig({
   resolve: {
     alias: {
-      "@": resolve(__dirname, "."),
+      "@": resolve(__dirname, "src"),
     },
   },
   build: {
@@ -23,8 +23,9 @@ export default defineConfig({
   },
   plugins: [
     dts({
-      include: ["src/**/*", "types/**/*"],
-      entryRoot: ".",
+      include: ["src/**/*"],
+      exclude: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+      entryRoot: "src",
       outDir: "dist",
       beforeWriteFile: rewriteNodeNextDtsSpecifiers,
     }),

@@ -20,8 +20,8 @@ post:
     and ending cards still exist, and every `send_email` action addressing a
     *literal* email address
 
-    targets a member of this organization (an element-id `to` resolves to the
-    respondent's own
+    targets someone who can access this workspace (an element-id `to` resolves
+    to the respondent's own
 
     address and is exempt) — and then snapshots an immutable workflow
     version. Runs
@@ -43,21 +43,21 @@ post:
   parameters:
     - $ref: ../components/parameters/WorkflowIdPath.yml
   responses:
-    '200':
+    "200":
       $ref: ../components/responses/WorkflowResourceResponse.yml
-    '400':
+    "400":
       $ref: ../components/responses/V3BadRequest.yml
-    '401':
+    "401":
       $ref: ../components/responses/V3Unauthorized.yml
-    '403':
+    "403":
       $ref: ../components/responses/V3Forbidden.yml
-    '409':
+    "409":
       $ref: ../components/responses/V3Conflict.yml
-    '422':
+    "422":
       $ref: ../components/responses/V3UnprocessableContent.yml
-    '429':
+    "429":
       $ref: ../components/responses/V3TooManyRequests.yml
-    '500':
+    "500":
       $ref: ../components/responses/V3InternalServerError.yml
   security:
     - sessionAuth: []

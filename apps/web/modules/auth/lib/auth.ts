@@ -18,6 +18,7 @@ import {
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
+import { BETTER_AUTH_IP_ADDRESS_CONFIG } from "@/lib/utils/client-ip";
 import {
   accountDeletionConfig,
   requireDeletionConfirmationBeforeHandler,
@@ -325,7 +326,9 @@ export const auth = betterAuth({
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
     database: { generateId: () => createId() },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
-    ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, // pin to the trusted proxy header
+    // Proxy has already selected the configured trusted hop. Do not re-parse forwarding chains or add
+    // Better Auth trustedProxies here; the private single-value header is the canonical identity.
+    ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG,
   },
 
   // Route Better Auth's logs to @formbricks/logger and capture errors to Sentry (Phase 7 parity).

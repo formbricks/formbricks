@@ -9,7 +9,10 @@ import {
   WorkflowFieldError,
   WorkflowFieldLabel,
 } from "@/modules/ee/workflows/components/inspector/workflow-field";
-import type { EmailSendToOption } from "@/modules/survey/follow-ups/lib/email-send-to-options";
+import {
+  type EmailSendToOption,
+  findEmailSendToOption,
+} from "@/modules/survey/follow-ups/lib/email-send-to-options";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
 import {
   Select,
@@ -21,6 +24,7 @@ import {
 
 const FIELD_ID = "workflow-email-to";
 const ERROR_ID = "workflow-email-to-error";
+const UNAVAILABLE_ID = "workflow-email-to-unavailable";
 
 type TElementIconMap = ReturnType<typeof getElementIconMap>;
 
@@ -63,9 +67,10 @@ interface WorkflowEmailRecipientFieldProps {
 
 /**
  * The `send_email` recipient picker: a grouped Select over the bound survey's email-bearing
- * elements, hidden fields and the team roster. Split out of `WorkflowEmailActionForm` because it is
- * the one field there with real internal structure (option grouping, per-type icons, a no-options
- * fallback), and it owns the only icon map and item renderer in that form.
+ * elements, hidden fields and the members who can access the workspace. Split out of
+ * `WorkflowEmailActionForm` because it is the one field there with real internal structure (option
+ * grouping, per-type icons, a no-options fallback), and it owns the only icon map and item renderer
+ * in that form.
  */
 export const WorkflowEmailRecipientField = ({
   options,
@@ -92,6 +97,24 @@ export const WorkflowEmailRecipientField = ({
     { label: t("common.members"), options: optionsOfType("user") },
   ].filter((group) => group.options.length > 0);
 
+  // A stored `to` that matches no option would otherwise render as the placeholder — Radix falls back
+  // to it when nothing is selected — so the author sees an empty field while the definition still
+  // holds (and the runner still tries) that recipient. Render it as its own flagged entry instead.
+  // It covers both causes: a member who lost access to this workspace (ENG-2186) and an element or
+  // hidden-field id left dangling by a survey edit. Matching goes through the same email
+  // normalization the runtime allowlist uses, so a `to` that only differs in case from a member's
+  // address is not flagged as unavailable while it still sends.
+  const matchedOption = findEmailSendToOption(options, value);
+  const isValueUnavailable = value !== "" && !matchedOption;
+
+  // Radix selects by exact string match, so drive it with the resolved option's id — otherwise a
+  // case-differing stored `to` would render as the placeholder, i.e. an empty field.
+  const selectedValue = matchedOption?.id ?? (value || undefined);
+
+  const describedBy = [isInvalid ? ERROR_ID : null, isValueUnavailable ? UNAVAILABLE_ID : null]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div className="flex flex-col gap-2">
       <WorkflowFieldLabel htmlFor={FIELD_ID} isRequired isInvalid={isInvalid}>
@@ -100,9 +123,9 @@ export const WorkflowEmailRecipientField = ({
       <p className="text-xs text-slate-500">
         {t("workspace.surveys.edit.follow_ups_modal_action_to_description")}
       </p>
-      {groups.length > 0 ? (
+      {groups.length > 0 || isValueUnavailable ? (
         <Select
-          value={value || undefined}
+          value={selectedValue}
           disabled={!isEditable}
           onOpenChange={(isOpen) => {
             if (!isOpen) onClose();
@@ -111,7 +134,7 @@ export const WorkflowEmailRecipientField = ({
           <SelectTrigger
             id={FIELD_ID}
             aria-invalid={isInvalid}
-            aria-describedby={isInvalid ? ERROR_ID : undefined}
+            aria-describedby={describedBy || undefined}
             className={cn(
               "overflow-hidden bg-white text-ellipsis whitespace-nowrap",
               isInvalid && "border-red-500"
@@ -127,14 +150,34 @@ export const WorkflowEmailRecipientField = ({
                 {group.options.map((option) => renderSelectItem(option, elementIconMap))}
               </div>
             ))}
+            {isValueUnavailable ? (
+              <div className="flex flex-col">
+                <div className="flex items-center gap-x-2 p-2">
+                  <p className="text-sm text-slate-500">
+                    {t("workspace.workflows.email_to_unavailable_group_label")}
+                  </p>
+                </div>
+                <SelectItem value={value}>
+                  <div className="flex items-center gap-x-2 text-warning-foreground">
+                    <TriangleAlertIcon className="size-4 shrink-0 text-warning" aria-hidden="true" />
+                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">{value}</span>
+                  </div>
+                </SelectItem>
+              </div>
+            ) : null}
           </SelectContent>
         </Select>
       ) : (
-        <div className="flex items-start gap-2 text-yellow-600">
-          <TriangleAlertIcon className="mt-0.5 size-4 min-h-4 min-w-4" aria-hidden="true" />
+        <div className="flex items-start gap-2 text-warning-foreground">
+          <TriangleAlertIcon className="mt-0.5 size-4 min-h-4 min-w-4 text-warning" aria-hidden="true" />
           <p className="text-sm">{t("workspace.surveys.edit.follow_ups_modal_action_to_warning")}</p>
         </div>
       )}
+      {isValueUnavailable ? (
+        <p id={UNAVAILABLE_ID} className="text-sm text-warning-foreground">
+          {t("workspace.workflows.email_to_unavailable_warning")}
+        </p>
+      ) : null}
       {isInvalid ? (
         <WorkflowFieldError id={ERROR_ID}>{t("workspace.workflows.email_to_required")}</WorkflowFieldError>
       ) : null}

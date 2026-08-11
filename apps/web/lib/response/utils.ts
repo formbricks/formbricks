@@ -173,7 +173,8 @@ export const getResponsesJson = (
   elementsHeadlines: string[][],
   userAttributes: string[],
   hiddenFields: string[],
-  isQuotasAllowed: boolean = false
+  isQuotasAllowed: boolean = false,
+  timeZone: string = "UTC"
 ): Record<string, string | number>[] => {
   const jsonData: Record<string, string | number>[] = [];
 
@@ -182,7 +183,7 @@ export const getResponsesJson = (
     jsonData.push({
       "No.": idx + 1,
       "Response ID": response.id,
-      Timestamp: getFormattedDateTimeString(response.createdAt),
+      Timestamp: getFormattedDateTimeString(response.createdAt, timeZone),
       Finished: response.finished ? "Yes" : "No",
       "Survey ID": response.surveyId,
       "Formbricks ID (internal)": response.contact?.id || "",

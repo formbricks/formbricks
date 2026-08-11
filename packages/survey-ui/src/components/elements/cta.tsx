@@ -1,7 +1,7 @@
 import { SquareArrowOutUpRightIcon } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/general/button";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 
 /**
@@ -60,6 +60,8 @@ function CTA({
   imageUrl,
   videoUrl,
 }: Readonly<CTAProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   const handleButtonClick = (): void => {
     if (disabled) return;
     onClick();
@@ -82,9 +84,12 @@ function CTA({
         videoUrl={videoUrl}
       />
 
-      {/* CTA Button */}
-      <div className="relative space-y-2" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
+      {/* CTA Button. No `space-y-*` here: ElementError's live region is always mounted, so a
+          child-spacing utility would reserve a gap under the (empty) region in the default state
+          and shift the button down. Spacing under a *visible* error comes from the region's own
+          error-gated `mb-2`, matching every other ElementError call site. */}
+      <div className="relative" data-element-input>
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
 
         {buttonExternal ? (
           <div className="flex w-full justify-start">
@@ -93,6 +98,8 @@ function CTA({
               type="button"
               onClick={handleButtonClick}
               disabled={disabled}
+              aria-invalid={errorAria.ariaInvalid}
+              aria-describedby={errorAria.ariaDescribedBy}
               className="text-button font-button-weight flex items-center gap-2"
               variant={buttonVariant}
               size="custom">

@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
+import { getWorkspaces } from "@/lib/workspace/service";
 import {
   cleanupStripeCustomer,
   ensureCloudStripeSetupForOrganization,
@@ -11,8 +12,8 @@ import {
 import {
   createOrganization,
   deleteOrganization,
+  getMonthlyOrganizationWorkflowRunCount,
   getOrganization,
-  getOrganizationMemberEmails,
   getOrganizationsByUserId,
   select as organizationSelect,
   subscribeOrganizationMembersToSurveyResponses,
@@ -35,14 +36,18 @@ vi.mock("@formbricks/database", () => ({
     user: {
       findUnique: vi.fn(),
     },
-    membership: {
-      findMany: vi.fn(),
+    workflowRun: {
+      aggregate: vi.fn(),
     },
   },
 }));
 
 vi.mock("@/lib/user/service", () => ({
   updateUser: vi.fn(),
+}));
+
+vi.mock("@/lib/workspace/service", () => ({
+  getWorkspaces: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
@@ -84,6 +89,7 @@ describe("Organization Service", () => {
           usageCycleAnchor: new Date(),
         },
         isAISmartToolsEnabled: false,
+        displayTimeZone: null,
         whitelabel: false,
       };
 
@@ -136,6 +142,7 @@ describe("Organization Service", () => {
             usageCycleAnchor: new Date(),
           },
           isAISmartToolsEnabled: false,
+          displayTimeZone: null,
           whitelabel: false,
         },
       ];
@@ -188,6 +195,7 @@ describe("Organization Service", () => {
         updatedAt: new Date(),
         billing: expectedBilling,
         isAISmartToolsEnabled: false,
+        displayTimeZone: null,
         whitelabel: false,
       };
 
@@ -248,6 +256,7 @@ describe("Organization Service", () => {
           usageCycleAnchor: new Date(),
         },
         isAISmartToolsEnabled: false,
+        displayTimeZone: null,
         whitelabel: false,
         memberships: [{ userId: "user1" }, { userId: "user2" }],
         workspaces: [
@@ -415,50 +424,58 @@ describe("Organization Service", () => {
     });
   });
 
-  describe("getOrganizationMemberEmails (send_email recipient allowlist, ENG-2029)", () => {
-    test("queries only active members of the organization", async () => {
-      vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
+  describe("getMonthlyOrganizationWorkflowRunCount", () => {
+    const mockOrganization = {
+      id: "org_1",
+      name: "Test Org",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      billing: {
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 5, monthly: { responses: 5000, workflowRuns: 1000 } },
+        usageCycleAnchor: null,
+        stripe: null,
+      },
+      isAISmartToolsEnabled: false,
+      whitelabel: null,
+    };
 
-      await getOrganizationMemberEmails("org_1");
+    test("counts non-dry workflow runs across the organization's workspaces in the billing cycle", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
+      vi.mocked(getWorkspaces).mockResolvedValue([{ id: "ws_1" }, { id: "ws_2" }] as never);
+      vi.mocked(prisma.workflowRun.aggregate).mockResolvedValue({ _count: { id: 42 } } as never);
 
-      expect(prisma.membership.findMany).toHaveBeenCalledWith({
-        where: { organizationId: "org_1", user: { isActive: true } },
-        select: { user: { select: { email: true } } },
-      });
+      const result = await getMonthlyOrganizationWorkflowRunCount("cms634kob000001uzrelh0qeb");
+
+      expect(result).toBe(42);
+      const aggregateArgs = vi.mocked(prisma.workflowRun.aggregate).mock.calls[0][0];
+      expect(aggregateArgs.where?.AND).toEqual(
+        expect.arrayContaining([
+          { workspaceId: { in: ["ws_1", "ws_2"] } },
+          { isDryRun: false },
+          expect.objectContaining({ createdAt: expect.any(Object) }),
+        ])
+      );
     });
 
-    test("returns a lowercased, whitespace-trimmed set for case-insensitive matching", async () => {
-      vi.mocked(prisma.membership.findMany).mockResolvedValue([
-        { user: { email: "  Member@Corp.Example " } },
-        { user: { email: "second@corp.example" } },
-      ] as never);
+    test("throws ResourceNotFoundError when the organization does not exist", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
 
-      const result = await getOrganizationMemberEmails("org_1");
-
-      expect(result).toEqual(new Set(["member@corp.example", "second@corp.example"]));
-    });
-
-    test("drops memberships with a missing user or empty email", async () => {
-      vi.mocked(prisma.membership.findMany).mockResolvedValue([
-        { user: { email: "kept@corp.example" } },
-        { user: null },
-        { user: { email: null } },
-        { user: { email: "" } },
-      ] as never);
-
-      const result = await getOrganizationMemberEmails("org_1");
-
-      expect(result).toEqual(new Set(["kept@corp.example"]));
+      await expect(getMonthlyOrganizationWorkflowRunCount("cmmissingorg00000000000a")).rejects.toThrow(
+        ResourceNotFoundError
+      );
     });
 
     test("wraps a known Prisma error in DatabaseError", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("db down", {
-        code: "P2002",
-        clientVersion: "1.0.0",
-      });
-      vi.mocked(prisma.membership.findMany).mockRejectedValue(prismaError);
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as never);
+      vi.mocked(getWorkspaces).mockResolvedValue([{ id: "ws_1" }] as never);
+      vi.mocked(prisma.workflowRun.aggregate).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("db down", { code: "P2002", clientVersion: "1.0.0" })
+      );
 
-      await expect(getOrganizationMemberEmails("org_1")).rejects.toThrow(DatabaseError);
+      await expect(getMonthlyOrganizationWorkflowRunCount("cms634kob000001uzrelh0qeb")).rejects.toThrow(
+        DatabaseError
+      );
     });
   });
 });

@@ -185,10 +185,12 @@ export const FeedbackRecordsTable = ({
 
     const firstFailure = results.find((result) => !result?.data);
     if (firstFailure) {
+      // getFormattedErrorMessage returns "" (not nullish) when the action failed without a
+      // serverError, so `??` never reached the fallback and the user got a blank error.
       return {
         ok: false,
         errorMessage:
-          getFormattedErrorMessage(firstFailure) ?? t("workspace.unify.failed_to_load_feedback_records"),
+          getFormattedErrorMessage(firstFailure) || t("workspace.unify.failed_to_load_feedback_records"),
       };
     }
 

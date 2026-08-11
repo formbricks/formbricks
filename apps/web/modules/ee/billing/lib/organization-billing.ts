@@ -584,9 +584,11 @@ export const createPaidPlanCheckoutSession = async (input: {
 
   const catalogItem = await getCatalogItemForPlan(input.plan, input.interval);
   const checkoutIntervals = new Set<Stripe.Price.Recurring.Interval>(
-    [catalogItem.basePrice.recurring?.interval, catalogItem.responsePrice?.recurring?.interval].filter(
-      (interval): interval is Stripe.Price.Recurring.Interval => interval != null
-    )
+    [
+      catalogItem.basePrice.recurring?.interval,
+      catalogItem.responsePrice?.recurring?.interval,
+      catalogItem.workflowRunsPrice?.recurring?.interval,
+    ].filter((interval): interval is Stripe.Price.Recurring.Interval => interval != null)
   );
 
   if (checkoutIntervals.size > 1) {
@@ -804,6 +806,7 @@ const getScheduleItemsForPlanChange = async (
   const targetItems = mapSubscriptionItemsToScheduleItems([
     { price: targetCatalogItem.basePrice, quantity: 1 },
     ...(targetCatalogItem.responsePrice ? [{ price: targetCatalogItem.responsePrice }] : []),
+    ...(targetCatalogItem.workflowRunsPrice ? [{ price: targetCatalogItem.workflowRunsPrice }] : []),
   ]);
 
   return { currentItems, targetItems };

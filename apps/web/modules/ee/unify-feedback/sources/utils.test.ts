@@ -1,10 +1,17 @@
 import { describe, expect, test } from "vitest";
-import { CSV_HIDDEN_STATIC_MAPPINGS, MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
+import {
+  CSV_HIDDEN_STATIC_MAPPINGS,
+  MAX_CSV_VALUES,
+  TFieldMapping,
+  TSourceField,
+  TUnifySurvey,
+} from "./types";
 import {
   areAllRequiredCsvFieldsMapped,
   autoMapCsvSourceFields,
   getCsvIdentityMappingAlert,
   getFeedbackSourceOptions,
+  getSuggestedSurveys,
   inferFieldType,
   isCsvUserDefinedStaticValueMapping,
   isFeedbackSourceNameValid,
@@ -15,6 +22,52 @@ import {
 } from "./utils";
 
 const mockT = (key: string) => key;
+
+const makeUnifySurvey = (overrides: Partial<TUnifySurvey> = {}): TUnifySurvey => ({
+  id: "survey-1",
+  name: "Survey 1",
+  status: "active",
+  elements: [],
+  createdAt: new Date("2026-01-01T00:00:00Z"),
+  ...overrides,
+});
+
+describe("getSuggestedSurveys", () => {
+  test("excludes surveys already backing a feedback source", () => {
+    const surveys = [makeUnifySurvey({ id: "connected" }), makeUnifySurvey({ id: "unconnected" })];
+    const result = getSuggestedSurveys(surveys, ["connected"]);
+    expect(result.map((s) => s.id)).toEqual(["unconnected"]);
+  });
+
+  test("excludes draft surveys", () => {
+    const surveys = [
+      makeUnifySurvey({ id: "draft", status: "draft" }),
+      makeUnifySurvey({ id: "active", status: "active" }),
+      makeUnifySurvey({ id: "paused", status: "paused" }),
+      makeUnifySurvey({ id: "completed", status: "completed" }),
+    ];
+    const result = getSuggestedSurveys(surveys, []);
+    expect(result.map((s) => s.id)).toEqual(["active", "paused", "completed"]);
+  });
+
+  test("excludes surveys that are both connected and drafts", () => {
+    const surveys = [
+      makeUnifySurvey({ id: "connected-draft", status: "draft" }),
+      makeUnifySurvey({ id: "connected-active", status: "active" }),
+      makeUnifySurvey({ id: "suggestable", status: "active" }),
+    ];
+    const result = getSuggestedSurveys(surveys, ["connected-draft", "connected-active"]);
+    expect(result.map((s) => s.id)).toEqual(["suggestable"]);
+  });
+
+  test("returns an empty array when every survey is a draft or connected", () => {
+    const surveys = [
+      makeUnifySurvey({ id: "draft", status: "draft" }),
+      makeUnifySurvey({ id: "connected", status: "active" }),
+    ];
+    expect(getSuggestedSurveys(surveys, ["connected"])).toEqual([]);
+  });
+});
 
 describe("getFeedbackSourceOptions", () => {
   test("returns formbricks, csv, api ingestion, and mcp options", () => {
