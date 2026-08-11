@@ -2783,7 +2783,6 @@
         "delete_organization_warning_2": "このアクションは元に戻せません。一度削除すると、元には戻せません。",
         "delete_organization_warning_3": "この組織の完全な削除を確認するには、以下のフィールドに {organizationName} と入力してください:",
         "display_time_zone": "表示タイムゾーン",
-        "display_time_zone_description": "ファイルエクスポートやサードパーティ連携での応答タイムスタンプに使用されるタイムゾーンです。保存されたデータとAPI応答は常にUTCのまま保持されます。",
         "display_time_zone_placeholder": "タイムゾーンを選択",
         "display_time_zone_updated_successfully": "表示タイムゾーンを正常に更新しました",
         "display_time_zone_utc_default": "UTC（デフォルト）",

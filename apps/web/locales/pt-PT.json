@@ -2783,7 +2783,6 @@
         "delete_organization_warning_2": "Esta ação não pode ser desfeita. Se for eliminada, está eliminada.",
         "delete_organization_warning_3": "Por favor, insira {organizationName} no campo seguinte para confirmar a eliminação definitiva desta organização:",
         "display_time_zone": "Fuso horário de exibição",
-        "display_time_zone_description": "Fuso horário usado para carimbos temporais de respostas em exportações de ficheiros e integrações de terceiros. Os dados armazenados e as respostas da API permanecem sempre em UTC.",
         "display_time_zone_placeholder": "Seleciona um fuso horário",
         "display_time_zone_updated_successfully": "Fuso horário de exibição atualizado com sucesso",
         "display_time_zone_utc_default": "UTC (predefinição)",

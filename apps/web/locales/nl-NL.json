@@ -2783,7 +2783,6 @@
         "delete_organization_warning_2": "Deze actie kan niet ongedaan worden gemaakt. Als het weg is, is het weg.",
         "delete_organization_warning_3": "Voer {organizationName} in het volgende veld in om de definitieve verwijdering van deze organisatie te bevestigen:",
         "display_time_zone": "Weergavetijdzone",
-        "display_time_zone_description": "Tijdzone die wordt gebruikt voor responstijdstempels in bestandsexporten en integraties met derden. Opgeslagen data en API-responsen blijven altijd in UTC.",
         "display_time_zone_placeholder": "Selecteer een tijdzone",
         "display_time_zone_updated_successfully": "Weergavetijdzone succesvol bijgewerkt",
         "display_time_zone_utc_default": "UTC (standaard)",

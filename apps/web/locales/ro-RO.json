@@ -2783,7 +2783,6 @@
         "delete_organization_warning_2": "Această acțiune  este ireversibilă",
         "delete_organization_warning_3": "Vă rugăm să introduceți {organizationName} în câmpul următor pentru a confirma ștergerea definitivă a acestei organizații:",
         "display_time_zone": "Fus orar de afișare",
-        "display_time_zone_description": "Fusul orar utilizat pentru marcajele temporale ale răspunsurilor în exporturile de fișiere și integrările cu aplicații terțe. Datele stocate și răspunsurile API rămân întotdeauna în UTC.",
         "display_time_zone_placeholder": "Selectează un fus orar",
         "display_time_zone_updated_successfully": "Fusul orar de afișare a fost actualizat cu succes",
         "display_time_zone_utc_default": "UTC (implicit)",

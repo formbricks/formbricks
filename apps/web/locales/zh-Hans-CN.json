@@ -2783,7 +2783,6 @@
         "delete_organization_warning_2": "此操作无法撤消。 一旦 消失 就 消失 。",
         "delete_organization_warning_3": "请在下列字段中输入 {organizationName} 以确认此组织的最终删除:",
         "display_time_zone": "显示时区",
-        "display_time_zone_description": "用于文件导出和第三方集成中响应时间戳的时区。存储的数据和 API 响应始终保持 UTC 格式。",
         "display_time_zone_placeholder": "选择时区",
         "display_time_zone_updated_successfully": "显示时区更新成功",
         "display_time_zone_utc_default": "UTC(默认)",

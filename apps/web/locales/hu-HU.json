@@ -2783,7 +2783,6 @@
         "delete_organization_warning_2": "Ezt a műveletet nem lehet visszavonni. Ha eltűnt, akkor eltűnt.",
         "delete_organization_warning_3": "Adja meg a(z) {organizationName} szervezetnevet a következő mezőben a szervezet végleges törlésének megerősítéséhez:",
         "display_time_zone": "Megjelenített időzóna",
-        "display_time_zone_description": "A válaszok időbélyegzőihez használt időzóna a fájlexportokban és harmadik féltől származó integrációkban. A tárolt adatok és az API-válaszok mindig UTC formátumban maradnak.",
         "display_time_zone_placeholder": "Válasszon időzónát",
         "display_time_zone_updated_successfully": "A megjelenített időzóna sikeresen frissítve",
         "display_time_zone_utc_default": "UTC (alapértelmezett)",

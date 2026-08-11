@@ -2783,7 +2783,6 @@
         "delete_organization_warning_2": "Diese Aktion kann nicht rückgängig gemacht werden. Wenn es weg ist, ist es weg.",
         "delete_organization_warning_3": "Bitte gib {organizationName} in das folgende Feld ein, um die endgültige Löschung dieser Organisation zu bestätigen:",
         "display_time_zone": "Zeitzone anzeigen",
-        "display_time_zone_description": "Zeitzone, die für Antwort-Zeitstempel in Dateiexporten und Drittanbieter-Integrationen verwendet wird. Gespeicherte Daten und API-Antworten bleiben immer in UTC.",
         "display_time_zone_placeholder": "Wähle eine Zeitzone",
         "display_time_zone_updated_successfully": "Angezeigte Zeitzone erfolgreich aktualisiert",
         "display_time_zone_utc_default": "UTC (Standard)",

@@ -76,8 +76,10 @@ describe("datetime utils", () => {
 
   test("getFormattedDateTimeString supports half-hour offset time zones", () => {
     const date = new Date("2026-01-01T20:00:00.000Z");
-    // Asia/Kolkata is UTC+5:30
-    expect(getFormattedDateTimeString(date, "Asia/Kolkata")).toBe("2026-01-02 01:30:00 IST");
+    // Asia/Kolkata is UTC+5:30. The zone marker resolves to either the CLDR abbreviation
+    // ("IST") or the numeric offset ("GMT+5:30") depending on the runtime's ICU data, so
+    // assert the offset math and accept either marker form.
+    expect(getFormattedDateTimeString(date, "Asia/Kolkata")).toMatch(/^2026-01-02 01:30:00 (IST|GMT\+5:30)$/);
   });
 
   test("getFormattedDateTimeString formats in UTC when the time zone is explicitly UTC", () => {
