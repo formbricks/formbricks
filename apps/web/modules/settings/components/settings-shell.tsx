@@ -44,8 +44,6 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
       <div className="flex h-full">
         <SettingsNavigation
           user={data.user}
-          workspaceId={data.currentWorkspace?.id ?? ""}
-          workspaceName={data.currentWorkspace?.name ?? ""}
           organizationId={data.organization.id}
           organizationName={data.organization.name}
           membershipRole={data.membershipRole}

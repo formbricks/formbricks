@@ -40,24 +40,13 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
-interface SettingsSidebarContentProps {
-  workspaceId: string;
-  workspaceName: string;
+interface SettingsSidebarContentBaseProps {
   organizationId: string;
   organizationName: string;
   membershipRole?: TOrganizationRole;
   isFormbricksCloud: boolean;
   isCollapsed: boolean;
   isTextVisible: boolean;
-  // Hidden when the user has no workspace (org/account settings still render).
-  hideWorkspaceSection?: boolean;
-  // Workspace switcher
-  workspaces: { id: string; name: string }[];
-  isLoadingWorkspaces: boolean;
-  onWorkspaceChange: (id: string) => void;
-  onWorkspaceDropdownOpen: () => void;
-  errorWorkspaces?: string | null;
-  onWorkspaceRetry?: () => void;
   // Organization switcher
   organizations: { id: string; name: string }[];
   isLoadingOrganizations: boolean;
@@ -66,6 +55,27 @@ interface SettingsSidebarContentProps {
   errorOrganizations?: string | null;
   onOrganizationRetry?: () => void;
 }
+
+// The Workspace section (selector pill + workspace-scoped links) belongs to workspace-scoped routes,
+// which always know their workspace. Callers that render it must supply all of its data.
+interface WorkspaceSectionProps {
+  hideWorkspaceSection?: false;
+  workspaceId: string;
+  workspaceName: string;
+  // Workspace switcher
+  workspaces: { id: string; name: string }[];
+  isLoadingWorkspaces: boolean;
+  onWorkspaceChange: (id: string) => void;
+  onWorkspaceDropdownOpen: () => void;
+  errorWorkspaces?: string | null;
+  onWorkspaceRetry?: () => void;
+}
+
+// Workspace-agnostic routes (/organizations/[organizationId]/settings, /account/settings) opt out of
+// the Workspace section entirely, so they pass none of its data — the type makes that all-or-nothing.
+type SettingsSidebarContentProps =
+  | Readonly<SettingsSidebarContentBaseProps & WorkspaceSectionProps>
+  | Readonly<SettingsSidebarContentBaseProps & { hideWorkspaceSection: true }>;
 
 interface NavItem {
   id: string;
@@ -257,29 +267,21 @@ const SectionHeader = ({
   );
 };
 
-export const SettingsSidebarContent = ({
-  workspaceId,
-  workspaceName,
-  organizationId,
-  organizationName,
-  membershipRole,
-  isFormbricksCloud,
-  isCollapsed,
-  isTextVisible,
-  hideWorkspaceSection = false,
-  workspaces,
-  isLoadingWorkspaces,
-  onWorkspaceChange,
-  onWorkspaceDropdownOpen,
-  errorWorkspaces,
-  onWorkspaceRetry,
-  organizations,
-  isLoadingOrganizations,
-  onOrganizationChange,
-  onOrganizationDropdownOpen,
-  errorOrganizations,
-  onOrganizationRetry,
-}: SettingsSidebarContentProps) => {
+export const SettingsSidebarContent = (props: SettingsSidebarContentProps) => {
+  const {
+    organizationId,
+    organizationName,
+    membershipRole,
+    isFormbricksCloud,
+    isCollapsed,
+    isTextVisible,
+    organizations,
+    isLoadingOrganizations,
+    onOrganizationChange,
+    onOrganizationDropdownOpen,
+    errorOrganizations,
+    onOrganizationRetry,
+  } = props;
   const pathname = usePathname();
   const { t } = useTranslation();
   const { isMember, isBilling, isOwner, isManager } = getAccessFlags(membershipRole);
@@ -289,7 +291,7 @@ export const SettingsSidebarContent = ({
   // Workspace items stay nested under the workspace; organization and account settings are now
   // scoped to their own top-level routes so they work with or without a current workspace. Paths
   // come from the shared route helpers so they can't drift from redirects/other navigation.
-  const workspaceItems: NavItem[] = [
+  const getWorkspaceItems = (workspaceId: string): NavItem[] => [
     {
       id: "general",
       label: t("common.general"),
@@ -447,22 +449,22 @@ export const SettingsSidebarContent = ({
 
   return (
     <div className="flex flex-col overflow-y-auto">
-      {!hideWorkspaceSection && (
+      {!props.hideWorkspaceSection && (
         <div>
           <SectionHeader
             label={t("common.workspace")}
             isCollapsed={isCollapsed}
             isTextVisible={isTextVisible}
-            switcherName={workspaceName}
-            switcherItems={workspaces}
-            isLoadingSwitcher={isLoadingWorkspaces}
-            errorSwitcher={errorWorkspaces}
-            onSwitcherRetry={onWorkspaceRetry}
-            currentId={workspaceId}
-            onSwitcherChange={onWorkspaceChange}
-            onSwitcherOpen={onWorkspaceDropdownOpen}
+            switcherName={props.workspaceName}
+            switcherItems={props.workspaces}
+            isLoadingSwitcher={props.isLoadingWorkspaces}
+            errorSwitcher={props.errorWorkspaces}
+            onSwitcherRetry={props.onWorkspaceRetry}
+            currentId={props.workspaceId}
+            onSwitcherChange={props.onWorkspaceChange}
+            onSwitcherOpen={props.onWorkspaceDropdownOpen}
           />
-          {renderSection(workspaceItems)}
+          {renderSection(getWorkspaceItems(props.workspaceId))}
         </div>
       )}
 
