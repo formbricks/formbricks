@@ -7,6 +7,7 @@ import { handleErrorOnFirstSetup, setup, tearDown } from "@/lib/common/setup";
 import { setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired } from "@/lib/common/utils";
 import type * as Utils from "@/lib/common/utils";
+import { addLiveRegionContainer } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
 import { fetchWorkspaceState } from "@/lib/workspace/state";
@@ -157,6 +158,7 @@ describe("setup.ts", () => {
 
       const result = await setup({ workspaceId: "ws_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
+      expect(addLiveRegionContainer).toHaveBeenCalledOnce();
       expect(fetchWorkspaceState).toHaveBeenCalledWith(
         expect.objectContaining({
           workspaceId: "ws_123",

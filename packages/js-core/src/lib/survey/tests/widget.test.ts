@@ -280,6 +280,40 @@ describe("widget-file", () => {
     expect(el).not.toBeNull();
   });
 
+  test("addLiveRegionContainer creates an accessible visually hidden status region", () => {
+    widget.addLiveRegionContainer();
+
+    expect(document.createElement).toHaveBeenCalledWith("div");
+    expect(document.body.appendChild).toHaveBeenCalledTimes(1);
+
+    const liveRegion = vi.mocked(document.body.appendChild).mock.calls[0][0] as HTMLElement;
+    expect(liveRegion.id).toBe("formbricks-live-region");
+    expect(liveRegion.setAttribute).toHaveBeenCalledWith("role", "status");
+    expect(liveRegion.setAttribute).toHaveBeenCalledWith("aria-live", "polite");
+    expect(liveRegion.setAttribute).toHaveBeenCalledWith("aria-atomic", "true");
+    expect(liveRegion.style.cssText).toContain("position:absolute");
+  });
+
+  test("addLiveRegionContainer reuses an existing region", () => {
+    vi.mocked(document.getElementById).mockReturnValueOnce({} as HTMLElement);
+
+    widget.addLiveRegionContainer();
+
+    expect(document.createElement).not.toHaveBeenCalled();
+    expect(document.body.appendChild).not.toHaveBeenCalled();
+  });
+
+  test("addLiveRegionContainer is safe during server-side rendering", () => {
+    const browserDocument = globalThis.document;
+    vi.stubGlobal("document", undefined);
+
+    try {
+      expect(() => widget.addLiveRegionContainer()).not.toThrow();
+    } finally {
+      vi.stubGlobal("document", browserDocument);
+    }
+  });
+
   test("removeWidgetContainer removes #formbricks-container if it exists", () => {
     document.body.innerHTML = `<div id="formbricks-container"></div>`;
     widget.removeWidgetContainer();
