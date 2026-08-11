@@ -77,18 +77,18 @@ Discovery endpoints:
 
 Supported scopes:
 
-| Scope | Use |
-| --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, and read-only validation paths |
-| `surveys:write` | `create_survey`, `patch_survey`, `delete_survey`, and write validations |
-| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
-| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
-| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
-| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
-| `openid` | OpenID Connect subject interoperability |
-| `profile` | User profile claims |
-| `email` | User email claim |
-| `offline_access` | Refresh tokens for MCP clients |
+| Scope                   | Use                                                                                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surveys:read`          | `list_surveys`, `get_survey`, and read-only validation paths                                                                                                   |
+| `surveys:write`         | `create_survey`, `patch_survey`, `delete_survey`, and write validations                                                                                        |
+| `workflows:read`        | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`                                                                    |
+| `workflows:write`       | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations                               |
+| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
+| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record`                                                        |
+| `openid`                | OpenID Connect subject interoperability                                                                                                                        |
+| `profile`               | User profile claims                                                                                                                                            |
+| `email`                 | User email claim                                                                                                                                               |
+| `offline_access`        | Refresh tokens for MCP clients                                                                                                                                 |
 
 **The rule:** every MCP tool is registered through `registerScopedTool`, which takes the required
 scope(s) as a mandatory argument and runs the gate before the handler. Read tools declare
@@ -103,7 +103,7 @@ read/write handler factories and register through `server.registerTool` directly
 handlers is still gated, but the guarantee is by convention there rather than by construction —
 converging them onto `registerScopedTool` is a known follow-up.
 
-**There is no single mandatory baseline scope.** Authentication requires *at least one* resource scope
+**There is no single mandatory baseline scope.** Authentication requires _at least one_ resource scope
 (`MCP_MINIMUM_SCOPES`), so a workflows-only or `feedbackRecords:read`-only grant is a legitimate MCP
 client. `list_workspaces` — the workspaceId-discovery prerequisite for every resource tool — therefore
 gates on any resource read scope rather than one specific one; its result is derived from the caller's
@@ -154,37 +154,37 @@ Do not pass credentials in the query string. The MCP route rejects query credent
 
 API key permissions are enforced through the same workspace access checks as the v3 REST API:
 
-| Tool | Minimum Workspace Permission |
-| --- | --- |
-| `list_surveys` | `read` |
-| `get_survey` | `read` |
-| `create_survey` | `write` or `manage` |
-| `validate_survey` | `write` or `manage` when the validation request checks write access |
-| `patch_survey` | `write` or `manage` |
-| `delete_survey` | `write` or `manage` |
-| `list_workflows` | `read` |
-| `get_workflow` | `read` |
-| `list_workflow_runs` | `read` |
-| `get_workflow_run` | `read` |
-| `test_workflow` | `write` or `manage` — the tool mutates nothing, but the handler authorizes it like a write |
-| `create_workflow` | `write` or `manage` |
-| `patch_workflow` | `write` or `manage` |
-| `duplicate_workflow` | `write` or `manage` |
-| `delete_workflow` | `write` or `manage` |
-| `enable_workflow` | `write` or `manage` |
-| `disable_workflow` | `write` or `manage` |
-| `archive_workflow` | `write` or `manage` |
-| `unarchive_workflow` | `write` or `manage` |
-| `list_feedback_datasets` | `read` |
-| `list_feedback_records` | `read` |
-| `count_feedback_records` | `read` |
-| `get_feedback_record` | `read` |
-| `search_feedback_records` | `read` |
-| `find_similar_feedback_records` | `read` |
-| `create_feedback_record` | `write` or `manage` |
-| `create_feedback_records` | `write` or `manage` |
-| `update_feedback_record` | `write` or `manage` |
-| `delete_feedback_record` | `manage` |
+| Tool                            | Minimum Workspace Permission                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------ |
+| `list_surveys`                  | `read`                                                                                     |
+| `get_survey`                    | `read`                                                                                     |
+| `create_survey`                 | `write` or `manage`                                                                        |
+| `validate_survey`               | `write` or `manage` when the validation request checks write access                        |
+| `patch_survey`                  | `write` or `manage`                                                                        |
+| `delete_survey`                 | `write` or `manage`                                                                        |
+| `list_workflows`                | `read`                                                                                     |
+| `get_workflow`                  | `read`                                                                                     |
+| `list_workflow_runs`            | `read`                                                                                     |
+| `get_workflow_run`              | `read`                                                                                     |
+| `test_workflow`                 | `write` or `manage` — the tool mutates nothing, but the handler authorizes it like a write |
+| `create_workflow`               | `write` or `manage`                                                                        |
+| `patch_workflow`                | `write` or `manage`                                                                        |
+| `duplicate_workflow`            | `write` or `manage`                                                                        |
+| `delete_workflow`               | `write` or `manage`                                                                        |
+| `enable_workflow`               | `write` or `manage`                                                                        |
+| `disable_workflow`              | `write` or `manage`                                                                        |
+| `archive_workflow`              | `write` or `manage`                                                                        |
+| `unarchive_workflow`            | `write` or `manage`                                                                        |
+| `list_feedback_datasets`        | `read`                                                                                     |
+| `list_feedback_records`         | `read`                                                                                     |
+| `count_feedback_records`        | `read`                                                                                     |
+| `get_feedback_record`           | `read`                                                                                     |
+| `search_feedback_records`       | `read`                                                                                     |
+| `find_similar_feedback_records` | `read`                                                                                     |
+| `create_feedback_record`        | `write` or `manage`                                                                        |
+| `create_feedback_records`       | `write` or `manage`                                                                        |
+| `update_feedback_record`        | `write` or `manage`                                                                        |
+| `delete_feedback_record`        | `manage`                                                                                   |
 
 Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` + `feedbackRecords:read`
 always; the matching `:write` scopes when the key has `write` or `manage` on any workspace. The scope
@@ -242,14 +242,13 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
 ```
 
 <Note>
-  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
-  clients register with the scopes from the protected-resource metadata's `scopes_supported`
-  (`surveys:read surveys:write workflows:read workflows:write feedbackRecords:read
-  feedbackRecords:write offline_access`). Because the authorization server validates the `/authorize`
-  request against the client's **registered** scopes, a client that registers with a narrower set than
-  it later requests (e.g. it registers surveys-only but requests `offline_access`) is rejected with
-  `invalid_scope`. To smoke-test the real path, omit `scope` and let the client adopt the advertised
-  set, or pass exactly what the metadata advertises.
+  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP clients
+  register with the scopes from the protected-resource metadata's `scopes_supported` (`surveys:read
+  surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write offline_access`).
+  Because the authorization server validates the `/authorize` request against the client's **registered**
+  scopes, a client that registers with a narrower set than it later requests (e.g. it registers surveys-only
+  but requests `offline_access`) is rejected with `invalid_scope`. To smoke-test the real path, omit `scope`
+  and let the client adopt the advertised set, or pass exactly what the metadata advertises.
 </Note>
 
 The consent screen is served at `/account/authorize`. Users can revoke approved MCP clients from
@@ -747,14 +746,14 @@ Input:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "limit": 20,
   "cursor": "opaque-cursor-from-previous-response",
-  "sortBy": "updatedAt",
   "filter": {
     "name": { "contains": "welcome" },
     "status": { "in": ["draft", "enabled"] }
-  }
+  },
+  "limit": 20,
+  "sortBy": "updatedAt",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -776,11 +775,11 @@ Lists workflow runs for a workspace, newest first. Read-only and idempotent.
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
+  "filter": { "isDryRun": false, "status": { "in": ["completed"] } },
   "limit": 20,
-  "workflowId": "clwf1234567890123456789012",
   "responseId": "clrs1234567890123456789012",
-  "filter": { "status": { "in": ["completed"] }, "isDryRun": false }
+  "workflowId": "clwf1234567890123456789012",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -813,20 +812,20 @@ idempotent. Takes the full v3 create payload:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "name": "Notify on churn survey completion",
   "definition": {
-    "schemaVersion": 1,
+    "edges": [],
     "entryNodeId": "trigger",
-    "trigger": {
-      "id": "trigger",
-      "type": "trigger",
-      "triggerType": "response.completed",
-      "config": { "surveyId": "clsv1234567890123456789012", "endingCardIds": ["ending-1"] }
-    },
     "nodes": [],
-    "edges": []
-  }
+    "schemaVersion": 1,
+    "trigger": {
+      "config": { "endingCardIds": ["ending-1"], "surveyId": "clsv1234567890123456789012" },
+      "id": "trigger",
+      "triggerType": "response.completed",
+      "type": "trigger"
+    }
+  },
+  "name": "Notify on churn survey completion",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -837,8 +836,8 @@ idempotent. `definition` edits are only accepted while the workflow is draft or 
 
 ```json
 {
-  "workflowId": "clwf1234567890123456789012",
-  "data": { "name": "Renamed workflow" }
+  "data": { "name": "Renamed workflow" },
+  "workflowId": "clwf1234567890123456789012"
 }
 ```
 
@@ -847,7 +846,7 @@ idempotent. `definition` edits are only accepted while the workflow is draft or 
 Duplicates a workflow as a new draft with empty run and version history. Writes data; not idempotent.
 
 ```json
-{ "workflowId": "clwf1234567890123456789012", "name": "Copy of workflow" }
+{ "name": "Copy of workflow", "workflowId": "clwf1234567890123456789012" }
 ```
 
 `name` is optional; if omitted the server picks a non-conflicting copy name.
@@ -864,9 +863,8 @@ each take only a workflow id:
 - `enable_workflow` — validates executability, snapshots an immutable version, and makes the workflow
   live. A non-executable definition is refused with `422 workflow_not_executable`.
 
-  <Warning>
-    Once live, the workflow runs on matching survey responses and can send emails.
-  </Warning>
+  <Warning>Once live, the workflow runs on matching survey responses and can send emails.</Warning>
+
 - `disable_workflow` — stops future runs.
 - `archive_workflow` / `unarchive_workflow` — soft archive and restore (to draft).
 - `delete_workflow` — the v3 delete returns `204 No Content`; the MCP result contains the `requestId`.
@@ -1127,7 +1125,7 @@ can't drift between creating and correcting a record.
 The `value_*` field being set must be one the record's `field_type` accepts — the same table `create` enforces
 (`text` takes `value_text`, `nps`/`rating`/`number` take `value_number`, `categorical` takes `value_text`
 and/or `value_id`, and so on). Because `field_type` is immutable it is not part of the patch, so this is
-checked against the *stored* record and therefore reported after the ownership check, as a 422 naming the
+checked against the _stored_ record and therefore reported after the ownership check, as a 422 naming the
 offending field. Without it a patch could assemble what `create` rejects: putting `value_number` on a `text`
 record would leave both a text and a number set, with nothing to say which one the record means. The Hub does
 not enforce this itself.
@@ -1275,21 +1273,21 @@ defaults to 0.7, which is strict enough that a fair paraphrase often falls just 
 Like the survey tools, workflow tools run no custom database queries — each calls the shared,
 framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
 
-| MCP Tool             | REST Contract                                    |
-| -------------------- | ------------------------------------------------ |
-| `list_workflows`     | `GET /api/v3/workflows`                          |
-| `get_workflow`       | `GET /api/v3/workflows/{workflowId}`             |
-| `list_workflow_runs` | `GET /api/v3/workflows/runs`                     |
-| `get_workflow_run`   | `GET /api/v3/workflows/runs/{runId}`             |
-| `test_workflow`      | `POST /api/v3/workflows/{workflowId}/test`       |
-| `create_workflow`    | `POST /api/v3/workflows`                         |
-| `patch_workflow`     | `PATCH /api/v3/workflows/{workflowId}`           |
-| `duplicate_workflow` | `POST /api/v3/workflows/{workflowId}/duplicate`  |
-| `delete_workflow`    | `DELETE /api/v3/workflows/{workflowId}`          |
-| `enable_workflow`    | `POST /api/v3/workflows/{workflowId}/enable`     |
-| `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`    |
-| `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`    |
-| `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive`  |
+| MCP Tool             | REST Contract                                   |
+| -------------------- | ----------------------------------------------- |
+| `list_workflows`     | `GET /api/v3/workflows`                         |
+| `get_workflow`       | `GET /api/v3/workflows/{workflowId}`            |
+| `list_workflow_runs` | `GET /api/v3/workflows/runs`                    |
+| `get_workflow_run`   | `GET /api/v3/workflows/runs/{runId}`            |
+| `test_workflow`      | `POST /api/v3/workflows/{workflowId}/test`      |
+| `create_workflow`    | `POST /api/v3/workflows`                        |
+| `patch_workflow`     | `PATCH /api/v3/workflows/{workflowId}`          |
+| `duplicate_workflow` | `POST /api/v3/workflows/{workflowId}/duplicate` |
+| `delete_workflow`    | `DELETE /api/v3/workflows/{workflowId}`         |
+| `enable_workflow`    | `POST /api/v3/workflows/{workflowId}/enable`    |
+| `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`   |
+| `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`   |
+| `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive` |
 
 ## Relationship to V3 Surveys API
 
