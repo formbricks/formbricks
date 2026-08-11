@@ -1,5 +1,5 @@
 import Pino, { type Logger, type LoggerOptions, symbols as pinoSymbols, stdSerializers } from "pino";
-import { type TLogLevel, ZLogLevel } from "../types/logger";
+import { type TLogLevel, ZLogLevel } from "./types/logger";
 
 const IS_PRODUCTION = !process.env.NODE_ENV || process.env.NODE_ENV === "production";
 const IS_BUILD = process.env.NEXT_PHASE === "phase-production-build";
