@@ -19,7 +19,8 @@ const processBatch = async (
   responses: Awaited<ReturnType<typeof getResponses>>,
   survey: TSurvey,
   mappings: TFeedbackSourceFormbricksMapping[],
-  tenantId: string
+  tenantId: string,
+  snapshotAt: Date
 ): Promise<TImportResult> => {
   let successes = 0;
   let failures = 0;
@@ -43,14 +44,22 @@ const processBatch = async (
   if (allRecords.length > 0) {
     // Reconcile rather than count-and-drop: a 409 means the response was already ingested, and the
     // answers may have changed since. Blindly skipping is what left Hub holding stale values.
-    const reconciled = await reconcileFeedbackRecords(allRecords, tenantId);
+    //
+    // snapshotAt is when this page of responses was read. An import can run for a long time, so a
+    // record the live pipeline corrected in the meantime must not be reverted to this older copy.
+    const reconciled = await reconcileFeedbackRecords(allRecords, tenantId, { snapshotAt });
     // A reconciled record was updated, so it counts as a success rather than a skip. Previously a
     // 409 landed in `skipped`, which is how "we silently kept the stale value" read as normal.
-    successes = reconciled.created + reconciled.reconciled;
+    // Superseded records are successes too: Hub holds a *newer* value, so it is already correct.
+    successes = reconciled.created + reconciled.reconciled + reconciled.superseded;
     failures = reconciled.failures.length;
   }
 
-  // `skipped` now means only "the response had nothing to map for this field".
+  // Approximate, and only ever about mapping: how many (response x mapping) pairs produced no
+  // record, e.g. an unanswered question. It assumes one record per mapping, which matrix, ranking
+  // and multi-select break — those expand one mapping into several records, so this can undercount
+  // and even go negative for them. Pre-existing (unchanged by ENG-2058) and only ever a reporting
+  // number, never a control-flow input.
   const unmappedSkipped = expectedRecords - allRecords.length;
   return { successes, failures, skipped: unmappedSkipped };
 };
@@ -75,6 +84,10 @@ export const importHistoricalResponses = async (
     feedbackSource.importMode === "completedOnly" ? ({ finished: true } as const) : undefined;
 
   while (true) {
+    // Taken before the read so it can never be later than the data it describes: a guard that
+    // wrongly thinks our copy is fresh would revert a newer write, which is the failure being
+    // prevented. Erring the other way only skips a redundant PATCH.
+    const snapshotAt = new Date();
     const responses = await getResponses(survey.id, IMPORT_BATCH_SIZE, offset, filterCriteria);
     if (responses.length === 0) break;
 
@@ -82,7 +95,8 @@ export const importHistoricalResponses = async (
       responses,
       survey,
       feedbackSource.formbricksMappings,
-      feedbackSource.feedbackDirectoryId
+      feedbackSource.feedbackDirectoryId,
+      snapshotAt
     );
     successes += batch.successes;
     failures += batch.failures;

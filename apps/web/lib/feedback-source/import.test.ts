@@ -97,13 +97,49 @@ describe("importHistoricalResponses", () => {
       .mockReturnValueOnce([])
       .mockReturnValueOnce([{ field: "record3" }] as never);
 
-    reconcileFeedbackRecords.mockResolvedValue({ created: 2, reconciled: 0, failures: [] });
+    reconcileFeedbackRecords.mockResolvedValue({ created: 2, reconciled: 0, superseded: 0, failures: [] });
 
     const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     expect(result.successes).toBe(2);
     expect(result.failures).toBe(0);
     expect(result.skipped).toBe(1);
+  });
+
+  /**
+   * An import can hold a page of responses for a long time, so it passes the moment it read them and
+   * lets reconcile skip records the live pipeline has corrected since. Without this argument the
+   * guard in reconcile is dead code and the import silently reverts newer answers.
+   */
+  test("tells reconcile when its data was read, so it cannot revert newer writes", async () => {
+    getResponses.mockResolvedValueOnce([{ id: "r1" }] as never);
+    getResponses.mockResolvedValueOnce([]);
+    transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
+
+    const before = new Date();
+    await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+    const after = new Date();
+
+    const [, , options] = reconcileFeedbackRecords.mock.calls[0];
+    const snapshotAt = options?.snapshotAt;
+    expect(snapshotAt).toBeInstanceOf(Date);
+    // Taken before the read, so it can never claim the data is fresher than it is.
+    expect(snapshotAt!.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(snapshotAt!.getTime()).toBeLessThanOrEqual(after.getTime());
+  });
+
+  test("a record superseded by a newer write still counts as a success", async () => {
+    getResponses.mockResolvedValueOnce([{ id: "r1" }] as never);
+    getResponses.mockResolvedValueOnce([]);
+    transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 0, reconciled: 0, superseded: 1, failures: [] });
+
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+
+    // Hub holds a newer value, so the record is correct — not a failure and not a skip.
+    expect(result.successes).toBe(1);
+    expect(result.failures).toBe(0);
   });
 
   test("counts failures from Hub API errors", async () => {
@@ -116,6 +152,7 @@ describe("importHistoricalResponses", () => {
     reconcileFeedbackRecords.mockResolvedValue({
       created: 0,
       reconciled: 0,
+      superseded: 0,
       failures: [{ index: 0, error: { status: 500 } }],
     });
 
@@ -127,7 +164,7 @@ describe("importHistoricalResponses", () => {
 
   // Behaviour change (ENG-2058): a record that already existed used to be counted as "skipped",
   // which is how silently keeping a stale value read as normal. Reconcile updates it instead, so it
-  // is a success. `skipped` now means only "the response had nothing to map for this field".
+  // is a success. `skipped` is now only ever about mapping.
   test("counts a reconciled record as a success, not a skip", async () => {
     const mockResponses = [{ id: "r1" }, { id: "r2" }, { id: "r3" }];
     getResponses.mockResolvedValueOnce(mockResponses as never);
@@ -138,6 +175,7 @@ describe("importHistoricalResponses", () => {
     reconcileFeedbackRecords.mockResolvedValue({
       created: 1,
       reconciled: 1,
+      superseded: 0,
       failures: [{ index: 0, error: { status: 500 } }],
     });
 
@@ -157,7 +195,7 @@ describe("importHistoricalResponses", () => {
     getResponses.mockResolvedValueOnce([]);
 
     transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
-    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, failures: [] });
+    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
 
     await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
@@ -208,7 +246,7 @@ describe("importHistoricalResponses", () => {
       })
       .mockReturnValueOnce([{ field: "record2" }] as never);
 
-    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, failures: [] });
+    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
 
     const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 

@@ -51,12 +51,15 @@ const processFeedbackSource = async (
   // Reconciling rather than blind-creating: a response already ingested as a partial (historical
   // import with importMode "all") would otherwise 409 on every field it already has, leaving Hub
   // holding the partial answer and logging each conflict as an error.
-  const { created, reconciled, failures } = await reconcileFeedbackRecords(
+  const { created, reconciled, superseded, failures } = await reconcileFeedbackRecords(
     feedbackRecords,
     feedbackSource.feedbackDirectoryId
   );
 
-  const successes = created + reconciled;
+  // No snapshotAt is passed from here on purpose: this path runs on responseFinished with data read
+  // moments ago, so it is the freshest writer and should never defer. `superseded` is therefore
+  // expected to stay 0 here, but it is counted rather than dropped so the totals always add up.
+  const successes = created + reconciled + superseded;
 
   if (failures.length > 0) {
     logger.warn(
