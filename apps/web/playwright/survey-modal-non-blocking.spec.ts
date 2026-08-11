@@ -23,7 +23,7 @@ declare global {
       track: (name: string) => Promise<void>;
     };
     __workspaceId: string;
-    __hostEscapes: number;
+    __hostEscapeDefaultPrevented: boolean | null;
     __hostChordDefaultPrevented: boolean | null;
   }
 }
@@ -57,12 +57,28 @@ const HOST_PAGE = `<!doctype html>
       Host button
     </button>
     <script>
-      window.__hostEscapes = 0;
+      window.__hostEscapeDefaultPrevented = null;
       window.__hostChordDefaultPrevented = null;
+      // Both reads are deferred to the next task. This listener is registered at page load
+      // and the survey's on mount, so on the same target in the same phase they fire in
+      // registration order — a synchronous read here always sees \`defaultPrevented === false\`
+      // no matter what the survey does. The event object outlives dispatch, so a deferred
+      // read observes the final state.
       document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") window.__hostEscapes++;
+        if (e.key === "Escape") {
+          setTimeout(function () {
+            window.__hostEscapeDefaultPrevented = e.defaultPrevented;
+          }, 0);
+        }
         if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-          window.__hostChordDefaultPrevented = e.defaultPrevented;
+          // Read on the next task, not inline. Both this listener and the survey's live on
+          // \`document\` in the bubble phase, and this one was registered first (page load vs
+          // survey mount), so listeners fire in registration order and \`defaultPrevented\` is
+          // still false at this point in dispatch no matter what the survey does. The event
+          // object outlives dispatch, so a deferred read observes the final state.
+          setTimeout(function () {
+            window.__hostChordDefaultPrevented = e.defaultPrevented;
+          }, 0);
         }
       });
     </script>
@@ -128,34 +144,49 @@ test.describe("App survey widget does not block the host page", () => {
     const prose = page.locator("#prose");
     const box = await prose.boundingBox();
     if (!box) throw new Error("host prose has no bounding box");
-    const midY = box.y + box.height / 2;
-    await page.mouse.move(box.x + 2, midY);
+    // Drag corner to corner so the selection covers every line wherever the text wraps. A
+    // horizontal drag through the middle samples only the last wrapped line, whose length is
+    // a function of the machine's fonts (measured: 30 chars at 16px, 18 at 14px).
+    const startY = box.y + 4;
+    const endY = box.y + box.height - 4;
+    await page.mouse.move(box.x + 2, startY);
     await page.mouse.down();
     for (let step = 1; step <= 6; step++) {
-      await page.mouse.move(box.x + 2 + ((box.width - 6) * step) / 6, midY, { steps: 3 });
+      await page.mouse.move(box.x + 2 + ((box.width - 6) * step) / 6, startY + ((endY - startY) * step) / 6, {
+        steps: 3,
+      });
     }
     await page.mouse.up();
-    const selectedLength = await page.evaluate(() => String(window.getSelection() ?? "").length);
-    expect(selectedLength).toBeGreaterThan(20);
+    expect(await page.evaluate(() => String(window.getSelection() ?? ""))).toBe(HOST_PROSE);
+    // Pin the mechanism, not just the effect: the trap wiped the selection by pulling focus
+    // into the survey mid-drag.
+    expect(
+      await page.evaluate(() => Boolean(document.getElementById("fbjs")?.contains(document.activeElement)))
+    ).toBe(false);
 
     // Tab must be able to move through the host page instead of cycling in the survey.
     await page.locator("#host-input").focus();
     await page.keyboard.press("Tab");
     await expect(page.locator("#host-textarea")).toBeFocused();
 
-    // Escape belongs to the host page while focus is on the host page.
+    // Escape belongs to the host page while focus is on the host page: the survey neither
+    // closes on it nor cancels it.
     await page.keyboard.press("Escape");
     await expect(dialog).toBeVisible();
-    expect(await page.evaluate(() => window.__hostEscapes)).toBeGreaterThan(0);
+    await expect.poll(() => page.evaluate(() => window.__hostEscapeDefaultPrevented)).toBe(false);
 
-    // Same for the Cmd/Ctrl+Enter chord: the survey must not swallow it.
+    // Same for the Cmd/Ctrl+Enter chord: the survey must neither cancel it nor act on it.
+    const surveyInput = page.locator("#fbjs input[type='text'], #fbjs textarea").first();
+    await expect(surveyInput).toBeVisible();
     await page.locator("#host-textarea").focus();
     await page.keyboard.press("ControlOrMeta+Enter");
-    expect(await page.evaluate(() => window.__hostChordDefaultPrevented)).toBe(false);
-    await expect(dialog).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.__hostChordDefaultPrevented)).toBe(false);
+    // And the survey must still be on the question card. Asserting the dialog is visible is
+    // not enough: submitting advances to the ending card, which has no text input but still
+    // matches [role="dialog"].
+    await expect(surveyInput).toBeVisible();
 
     // The survey itself is still fully usable — it just does not grab anything.
-    const surveyInput = page.locator("#fbjs input[type='text'], #fbjs textarea").first();
     await surveyInput.click();
     await surveyInput.fill("still works");
     await expect(surveyInput).toHaveValue("still works");
@@ -184,7 +215,9 @@ test.describe("App survey widget does not block the host page", () => {
     // A survey that does block the page is a real modal: it announces itself as one,
     // takes focus, and keeps it.
     await expect(dialog).toHaveAttribute("aria-modal", "true");
-    await expect(page.locator("#host-input")).not.toBeFocused();
+    expect(
+      await page.evaluate(() => Boolean(document.getElementById("fbjs")?.contains(document.activeElement)))
+    ).toBe(true);
 
     await page.locator("#host-input").focus();
     const focusStayedInSurvey = await page.evaluate(() =>

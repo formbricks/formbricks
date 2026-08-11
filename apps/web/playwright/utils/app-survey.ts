@@ -63,8 +63,11 @@ const buildEndings = () =>
 
 /**
  * Seeds a workspace user plus one published app survey triggered by a code action.
- * The survey re-displays on every trigger (`respondMultiple`, no cooldown) so a spec
- * can open it repeatedly without recontact rules getting in the way.
+ * The survey re-displays on every trigger so a spec can open it repeatedly without
+ * recontact rules getting in the way: `respondMultiple`, plus an explicit
+ * `recontactDays: 0`. The explicit 0 matters — leaving it null falls through to
+ * `Workspace.recontactDays`, which defaults to 7 (`main.prisma:613`), so a second
+ * `track()` in the same browser context would silently show nothing.
  */
 export const seedAppSurvey = async (
   users: UsersFixture,
@@ -100,6 +103,7 @@ export const seedAppSurvey = async (
       type: "app",
       status: "inProgress",
       displayOption: "respondMultiple",
+      recontactDays: 0,
       delay: 0,
       blocks: blocks as unknown as Prisma.InputJsonValue[],
       endings: endings as unknown as Prisma.InputJsonValue[],
