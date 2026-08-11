@@ -117,7 +117,7 @@ export const EditOrganizationSettingsForm = ({
     <>
       <FormProvider {...form}>
         <form
-          className="w-full max-w-sm space-y-4"
+          className="w-full max-w-md space-y-4"
           onSubmit={form.handleSubmit(handleUpdateOrganizationSettings)}>
           <FormField
             control={form.control}
@@ -149,6 +149,10 @@ export const EditOrganizationSettingsForm = ({
                 <FormLabel htmlFor="display-time-zone">
                   {t("workspace.settings.general.display_time_zone")}
                 </FormLabel>
+
+                <FormDescription className="w-full">
+                  {t("workspace.settings.general.display_time_zone_description")}
+                </FormDescription>
                 <FormControl>
                   <InputCombobox
                     id="display-time-zone"
@@ -165,10 +169,6 @@ export const EditOrganizationSettingsForm = ({
                     disabled={!canEditTimeZone}
                   />
                 </FormControl>
-
-                <FormDescription>
-                  {t("workspace.settings.general.display_time_zone_description")}
-                </FormDescription>
 
                 <FormError />
               </FormItem>
