@@ -8,14 +8,12 @@ import { DeleteWorkspaceRender } from "@/modules/workspaces/settings/general/com
 interface DeleteWorkspaceProps {
   organizationId: string;
   currentWorkspace: TWorkspace;
-  organizationWorkspaces: TWorkspace[];
   isOwnerOrManager: boolean;
 }
 
 export const DeleteWorkspace = async ({
   organizationId,
   currentWorkspace,
-  organizationWorkspaces,
   isOwnerOrManager,
 }: DeleteWorkspaceProps) => {
   const t = await getTranslate();
@@ -33,7 +31,7 @@ export const DeleteWorkspace = async ({
       isDeleteDisabled={isDeleteDisabled}
       isOwnerOrManager={isOwnerOrManager}
       currentWorkspace={currentWorkspace}
-      organizationWorkspaces={organizationWorkspaces}
+      organizationWorkspaces={availableWorkspaces ?? []}
     />
   );
 };

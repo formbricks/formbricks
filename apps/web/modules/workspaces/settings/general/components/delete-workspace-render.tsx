@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { TWorkspace } from "@formbricks/types/workspace";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
+import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { truncate } from "@/lib/utils/strings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -15,6 +15,7 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { deleteWorkspaceAction } from "@/modules/workspaces/settings/general/actions";
 import { hasMatchingWorkspaceDeleteConfirmation } from "@/modules/workspaces/settings/general/lib/delete-workspace-confirmation";
+import { selectPostWorkspaceDeletionWorkspaceId } from "@/modules/workspaces/settings/general/lib/post-workspace-deletion-redirect";
 
 interface DeleteWorkspaceRenderProps {
   isDeleteDisabled: boolean;
@@ -59,19 +60,25 @@ export const DeleteWorkspaceRender = ({
       });
 
       if (deleteWorkspaceResponse?.data) {
-        if (organizationWorkspaces.length === 1) {
+        // Navigate to a remaining workspace of the same organization instead of "/", which resolves the
+        // last-visited workspace across every organization and would drop members of multiple
+        // organizations into an unrelated one.
+        const fallbackWorkspaceId = selectPostWorkspaceDeletionWorkspaceId(
+          organizationWorkspaces,
+          currentWorkspace
+        );
+
+        if (fallbackWorkspaceId) {
+          localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, fallbackWorkspaceId);
+          // Keep legacy environment ID in sync for backward compatibility with old SDK clients
+          localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, fallbackWorkspaceId);
+        } else {
+          localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
           localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
-        } else if (organizationWorkspaces.length > 1) {
-          // prevents changing of organization when deleting workspace
-          const remainingWorkspace = organizationWorkspaces.find(
-            (workspace) => workspace.id !== currentWorkspace.id
-          );
-          if (remainingWorkspace) {
-            localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, remainingWorkspace.id);
-          }
         }
+
         toast.success(t("workspace.general.workspace_deleted_successfully"));
-        router.push("/");
+        router.push(fallbackWorkspaceId ? `/workspaces/${fallbackWorkspaceId}/` : "/");
       } else {
         const errorMessage = getFormattedErrorMessage(deleteWorkspaceResponse);
         logger.error({ errorMessage, workspaceId: currentWorkspace.id }, "Workspace deletion action failed");
