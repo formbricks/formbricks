@@ -94,7 +94,11 @@ export const PlainChat = ({
       appId,
       theme: "auto",
       hideLauncher: isOnboarding,
-      style: { brandColor: BRAND_COLOR },
+      style: {
+        brandColor: BRAND_COLOR,
+        launcherBackgroundColor: BRAND_COLOR,
+        launcherIconColor: "#FFFFFF",
+      },
       customerDetails: buildCustomerDetails(userEmail, emailHash, userName, userId),
       threadDetails: activeCustomerLabelTypeId ? { labelTypeIds: [activeCustomerLabelTypeId] } : undefined,
     };
