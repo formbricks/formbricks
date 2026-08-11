@@ -154,8 +154,15 @@ const resetMocks = () => {
   vi.mocked(logger.error).mockClear();
 
   // copySurveyToOtherWorkspace wraps its writes in a transaction (ENG-1978) so the survey and its
-  // Embedded Data rows land together. Run the callback against the same mocked client, and start the
-  // copy with no existing links so the reconcile is a no-op unless a test says otherwise.
+  // Embedded Data rows land together. Reset first like every mock above — otherwise the call history
+  // these tests assert on accumulates across tests — then run the callback against the same mocked
+  // client, and start the copy with no existing links so the reconcile is a no-op unless a test says
+  // otherwise.
+  vi.mocked(prisma.$transaction).mockReset();
+  vi.mocked(prisma.surveyEmbeddedData.findMany).mockReset();
+  vi.mocked(prisma.surveyEmbeddedData.create).mockReset();
+  vi.mocked(prisma.embeddedData.create).mockReset();
+
   vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
     callback(prisma)) as typeof prisma.$transaction);
   vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);

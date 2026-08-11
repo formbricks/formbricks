@@ -614,26 +614,35 @@ export const updateSurveyInternal = async (
     };
 
     delete data.createdBy;
-    const persistedSurvey = await prisma.$transaction(async (tx) => {
-      const survey = await tx.survey.update({
-        where: { id: surveyId },
-        data,
-        select: selectSurvey,
-      });
+    const persistedSurvey = await prisma.$transaction(
+      async (tx) => {
+        const survey = await tx.survey.update({
+          where: { id: surveyId },
+          data,
+          select: selectSurvey,
+        });
 
-      // ENG-1978: mirror the saved fields into the EmbeddedData tables in the same transaction, so a
-      // survey never commits without them. Derived from the PERSISTED survey rather than the payload:
-      // a partial update leaves `variables` / `hiddenFields` untouched in the column, and reading the
-      // payload instead would see them as absent and delete every row. workspaceId comes from the
-      // stored survey for the ENG-1749 reason above — never from the client.
-      await reconcileEmbeddedData(tx, {
-        surveyId,
-        workspaceId: currentSurvey.workspaceId,
-        desired: toDesiredEmbeddedFields(survey),
-      });
+        // ENG-1978: mirror the saved fields into the EmbeddedData tables in the same transaction, so a
+        // survey never commits without them. Derived from the PERSISTED survey rather than the payload:
+        // a partial update leaves `variables` / `hiddenFields` untouched in the column, and reading the
+        // payload instead would see them as absent and delete every row. workspaceId comes from the
+        // stored survey for the ENG-1749 reason above — never from the client.
+        await reconcileEmbeddedData(tx, {
+          surveyId,
+          workspaceId: currentSurvey.workspaceId,
+          desired: toDesiredEmbeddedFields(survey),
+        });
 
-      return survey;
-    });
+        return survey;
+      },
+      // Prisma's default interactive-transaction ceiling is 5s, which the write above can plausibly
+      // approach on a large survey: it rewrites blocks, follow-ups, triggers and languages, then reads
+      // back through `selectSurvey`'s deep select. Failing here loses the author's edit, while the
+      // worst a slow commit costs is a held connection — so the timeout is raised rather than left to
+      // turn a slow save into a failed one. The reconcile itself adds one indexed read plus a write per
+      // changed field.
+      { timeout: 20_000, maxWait: 10_000 }
+    );
 
     return await reconcilePersistedSurveySchedulingIfDue({
       logSource: "survey-update",

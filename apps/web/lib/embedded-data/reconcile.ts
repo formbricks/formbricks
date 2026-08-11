@@ -163,13 +163,27 @@ export const reconcileEmbeddedData = async (
       .filter((fieldId): fieldId is string => fieldId !== null);
 
     if (fieldIdsToDelete.length > 0) {
-      await tx.embeddedData.deleteMany({ where: { id: { in: fieldIdsToDelete }, surveyId } });
+      await tx.embeddedData.deleteMany({
+        where: {
+          id: { in: fieldIdsToDelete },
+          surveyId,
+          // This survey's links are already gone, so any link still standing belongs to another
+          // survey — and deleting the row would cascade that link away, silently costing that survey
+          // a field. Nothing creates such a link today (the reconcile only ever links to rows it just
+          // created), so this guards an invariant rather than a live path; leaving an orphaned row
+          // behind is the better failure of the two.
+          surveyLinks: { none: {} },
+        },
+      });
     }
   }
 
   for (const entry of plan.toUpdate) {
-    await tx.embeddedData.update({
-      where: { id: entry.fieldId },
+    // Scoped by `surveyId` to match the delete above. The id provably came from a link this survey
+    // owns, so the extra clause changes nothing — it just keeps every write here tenant-scoped on its
+    // face rather than by argument.
+    await tx.embeddedData.updateMany({
+      where: { id: entry.fieldId, surveyId },
       data: {
         name: entry.name,
         dataType: entry.dataType,

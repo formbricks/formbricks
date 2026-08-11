@@ -188,6 +188,26 @@ describe("reconcileEmbeddedData (real Postgres)", () => {
     });
   });
 
+  test("keeps a definition another survey still links to, rather than cascading that link away", async () => {
+    // Unreachable today — the reconcile only ever links to rows it just created — but the schema
+    // permits the link, and deleting the row would take the other survey's link with it. Leaving an
+    // orphaned row behind is the better of the two failures.
+    const { surveyId, workspaceId } = await seedSurvey();
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan"] } });
+    const field = await prisma.embeddedData.findFirstOrThrow({ where: { surveyId } });
+
+    const borrower = await prisma.survey.create({ data: { name: "Borrower", workspaceId } });
+    await prisma.surveyEmbeddedData.create({
+      data: { workspaceId, surveyId: borrower.id, embeddedDataId: field.id, storageKey: "plan" },
+    });
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: [] } });
+
+    expect(await prisma.embeddedData.findUnique({ where: { id: field.id } })).not.toBeNull();
+    expect(await prisma.surveyEmbeddedData.count({ where: { surveyId: borrower.id } })).toBe(1);
+    expect(await prisma.surveyEmbeddedData.count({ where: { surveyId } })).toBe(0);
+  });
+
   test("cascades a survey's fields away when the survey is deleted", async () => {
     const { surveyId, workspaceId } = await seedSurvey();
     await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan"] } });
