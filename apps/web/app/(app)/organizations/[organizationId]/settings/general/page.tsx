@@ -67,11 +67,9 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
         title={t("workspace.settings.general.organization_name")}
         description={t("workspace.settings.general.organization_name_description")}>
         <EditOrganizationNameForm organization={organization} membershipRole={currentUserRole} />
-      </SettingsCard>
-      <SettingsCard
-        title={t("workspace.settings.general.display_time_zone")}
-        description={t("workspace.settings.general.display_time_zone_description")}>
-        <EditOrganizationDisplayTimeZoneForm organization={organization} membershipRole={currentUserRole} />
+        <div className="mt-6 border-t border-slate-200 pt-6">
+          <EditOrganizationDisplayTimeZoneForm organization={organization} membershipRole={currentUserRole} />
+        </div>
       </SettingsCard>
       <SettingsCard
         title={t("workspace.settings.general.ai_enabled")}
