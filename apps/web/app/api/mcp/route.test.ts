@@ -358,6 +358,7 @@ describe("POST /api/mcp", () => {
     );
 
     expect(response.status).toBe(200);
+    await readMcpResponse(response);
     expect(authenticateApiKeyFromHeaders).toHaveBeenCalledTimes(1);
     expect(verifyAccessTokenMock).not.toHaveBeenCalled();
     expect(listV3Surveys).toHaveBeenCalledWith(
@@ -404,6 +405,7 @@ describe("POST /api/mcp", () => {
       })
     );
     expect(applyRateLimit).toHaveBeenCalledWith(expect.any(Object), "oauth:user_1:client_1");
+    await readMcpResponse(response);
     expect(listV3Surveys).toHaveBeenCalledWith(
       expect.objectContaining({
         authentication: {

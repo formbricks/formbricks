@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
 import {
+  MAX_SEGMENT_SURVEYS,
   type TBaseFilters,
   type TSurveyInteractionOperator,
   ZSegmentCreateInput,
@@ -87,6 +88,38 @@ describe("segment schema validation", () => {
   test("accepts segment updates with a valid filter", () => {
     const result = ZSegmentUpdateInput.safeParse({
       filters: validFilters,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("accepts a linked survey list at the cap", () => {
+    const result = ZSegmentUpdateInput.safeParse({
+      surveys: Array.from({ length: MAX_SEGMENT_SURVEYS }, () => createId()),
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects a linked survey list over the cap", () => {
+    const result = ZSegmentUpdateInput.safeParse({
+      surveys: Array.from({ length: MAX_SEGMENT_SURVEYS + 1 }, () => createId()),
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects a linked survey id that is not a valid id", () => {
+    const result = ZSegmentUpdateInput.safeParse({
+      surveys: ["not-a-valid-id"],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("accepts an empty linked survey list", () => {
+    const result = ZSegmentUpdateInput.safeParse({
+      surveys: [],
     });
 
     expect(result.success).toBe(true);

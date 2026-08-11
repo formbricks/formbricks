@@ -11,6 +11,7 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 - `pnpm dev` — run all app and worker dev servers in parallel via Turborepo.
 - `pnpm build` — generate production builds for every package and app.
 - `pnpm lint` — apply the shared ESLint rules across the workspace.
+- `pnpm format` / `pnpm format:check` — apply or verify Prettier across the workspace; `format:check` is what CI runs, so run `pnpm format` before pushing if you committed with `--no-verify`.
 - `pnpm test` / `pnpm test:coverage` — execute Vitest suites with optional coverage.
 - `pnpm test:e2e` — launch the Playwright browser regression suite.
 - `pnpm db:migrate:dev` — apply Prisma migrations against the dev database.
@@ -31,13 +32,14 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 ## Coding Style & Naming Conventions
 
 TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
+Import order is set by `@trivago/prettier-plugin-sort-imports` and verified in CI by `pnpm format:check`, so it is not a matter of taste: `__mocks__` imports come first (they carry `vi.mock` calls), then `server-only`, then third-party packages, then `@formbricks/*`, `~/*`, `@/*`, and relative imports. Do not ask for or apply a different order in review — it will fail the check.
 We are using SonarQube to identify code smells and security hotspots.
 Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonly<MyProps>)`).
 
 ## Architecture & Patterns
 
 - Next.js app router lives in `apps/web/app` with route groups like `(app)` and `(auth)`. Services live in `apps/web/lib`, feature modules in `apps/web/modules`.
-- Server actions wrap service calls and return `{ data }` or `{ error }` consistently.
+- Server actions are legacy — do not add new ones. New backend work belongs in an `/api/v3` route consumed from the client with TanStack Query, with server data living in the query cache rather than mirrored into `useState` or Jotai. The existing server actions wrap service calls and return `{ data }` or `{ error }` consistently; keep that contract when changing them.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 
 ## Caching
