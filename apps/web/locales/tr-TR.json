@@ -4216,6 +4216,8 @@
       "duplicate_failed": "İş akışı kopyalanamadı. Lütfen tekrar deneyin.",
       "duplicate_success": "İş akışı kopyalandı.",
       "edit_blocked_active": "Değişiklik yapmak için iş akışını devre dışı bırakın.",
+      "edit_blocked_archived": "Buradan değişiklik yapmak için iş akışının arşivini kaldır.",
+      "edit_blocked_read_only": "Bu iş akışını düzenleme izniniz yok.",
       "email_attach_response_data_description": "E-posta yüküne tetikleyen anket yanıtını ekle.",
       "email_attach_response_data_label": "Yanıt verisini ekle",
       "email_body_label": "Gövde",

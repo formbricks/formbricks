@@ -99,53 +99,60 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
       {isEditTab && (
         <>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            {/* `disabled` must sit on the trigger, not only the child Button: Radix's open guard
+                reads the trigger's own prop, so a value passed solely to the Button leaves the menu
+                openable (the DOM attribute and the JS guard disagree). Belt-and-suspenders, the
+                content is also withheld from read-only members, so a bypassed trigger has nothing
+                to select — the list page hides its actions the same way. */}
+            <DropdownMenuTrigger asChild disabled={isReadOnly || isBusy}>
               <Button size="sm" loading={builder.isTransitioning} disabled={isReadOnly || isBusy}>
                 {getWorkflowStatusBadge(workflow.status, t).label}
                 <ChevronDownIcon />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              {isArchived ? (
-                <>
-                  <DropdownMenuItem
-                    icon={<ArchiveRestoreIcon className="size-4" />}
-                    onSelect={() => void builder.unarchive()}>
-                    {t("common.unarchive")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    icon={<TrashIcon className="size-4" />}
-                    className="text-red-600 focus:text-red-600"
-                    onSelect={() => setIsDeleteDialogOpen(true)}>
-                    {t("common.delete")}
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  {isActive ? (
+            {!isReadOnly && (
+              <DropdownMenuContent align="end" className="w-52">
+                {isArchived ? (
+                  <>
                     <DropdownMenuItem
-                      icon={<CirclePauseIcon className="size-4" />}
-                      onSelect={() => void builder.disable()}>
-                      {t("common.disable")}
+                      icon={<ArchiveRestoreIcon className="size-4" />}
+                      onSelect={() => void builder.unarchive()}>
+                      {t("common.unarchive")}
                     </DropdownMenuItem>
-                  ) : (
-                    // Enabling requires a workflow the server would accept; the readiness hint next
-                    // to the Save button says what is still missing.
                     <DropdownMenuItem
-                      icon={<CirclePlayIcon className="size-4" />}
-                      disabled={!validity.isReady}
-                      onSelect={() => void builder.enable()}>
-                      {t("common.enable")}
+                      icon={<TrashIcon className="size-4" />}
+                      className="text-red-600 focus:text-red-600"
+                      onSelect={() => setIsDeleteDialogOpen(true)}>
+                      {t("common.delete")}
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    icon={<ArchiveIcon className="size-4" />}
-                    onSelect={() => setIsArchiveModalOpen(true)}>
-                    {t("common.archive")}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
+                  </>
+                ) : (
+                  <>
+                    {isActive ? (
+                      <DropdownMenuItem
+                        icon={<CirclePauseIcon className="size-4" />}
+                        onSelect={() => void builder.disable()}>
+                        {t("common.disable")}
+                      </DropdownMenuItem>
+                    ) : (
+                      // Enabling requires a workflow the server would accept; the readiness hint next
+                      // to the Save button says what is still missing.
+                      <DropdownMenuItem
+                        icon={<CirclePlayIcon className="size-4" />}
+                        disabled={!validity.isReady}
+                        onSelect={() => void builder.enable()}>
+                        {t("common.enable")}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      icon={<ArchiveIcon className="size-4" />}
+                      onSelect={() => setIsArchiveModalOpen(true)}>
+                      {t("common.archive")}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            )}
           </DropdownMenu>
 
           <ConfirmationModal

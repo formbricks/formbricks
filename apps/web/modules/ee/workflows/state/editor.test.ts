@@ -197,6 +197,16 @@ describe("canEditWorkflowDefinitionAtom", () => {
     const store = createStore();
     expect(store.get(canEditWorkflowDefinitionAtom)).toBe(false);
   });
+
+  test("is false for a read-only member even on an editable status", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, {
+      workflow: workflowWithStatus("draft"),
+      flowNodes: [],
+      isReadOnly: true,
+    });
+    expect(store.get(canEditWorkflowDefinitionAtom)).toBe(false);
+  });
 });
 
 describe("canMutateCanvasAtom", () => {
@@ -217,6 +227,17 @@ describe("canMutateCanvasAtom", () => {
     // Editable status removed -> blocked again even while unlocked.
     store.set(hydrateWorkflowEditorAtom, { workflow: workflowWithStatus("enabled"), flowNodes: [] });
     store.set(isCanvasLockedAtom, false);
+    expect(store.get(canMutateCanvasAtom)).toBe(false);
+  });
+
+  test("is false for a read-only member on an editable, unlocked canvas", () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, {
+      workflow: workflowWithStatus("draft"),
+      flowNodes: [],
+      isReadOnly: true,
+    });
+    expect(store.get(isCanvasLockedAtom)).toBe(false);
     expect(store.get(canMutateCanvasAtom)).toBe(false);
   });
 });

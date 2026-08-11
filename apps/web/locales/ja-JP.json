@@ -4216,6 +4216,8 @@
       "duplicate_failed": "ワークフローの複製に失敗しました。もう一度お試しください。",
       "duplicate_success": "ワークフローを複製しました。",
       "edit_blocked_active": "ここで変更を行うには、ワークフローを無効にしてください。",
+      "edit_blocked_archived": "ここで変更を加えるには、ワークフローのアーカイブを解除してください。",
+      "edit_blocked_read_only": "このワークフローを編集する権限がありません。",
       "email_attach_response_data_description": "トリガーとなったアンケート回答をメールペイロードに含めます。",
       "email_attach_response_data_label": "回答データを添付",
       "email_body_label": "本文",

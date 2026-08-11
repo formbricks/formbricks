@@ -4216,6 +4216,8 @@
       "duplicate_failed": "Nu s-a putut duplica workflow-ul. Te rugăm să încerci din nou.",
       "duplicate_success": "Workflow duplicat.",
       "edit_blocked_active": "Dezactivează fluxul de lucru pentru a face modificări aici.",
+      "edit_blocked_archived": "Dezarhivează fluxul de lucru pentru a face modificări aici.",
+      "edit_blocked_read_only": "Nu ai permisiunea de a edita acest flux de lucru.",
       "email_attach_response_data_description": "Include răspunsul la sondaj care a declanșat fluxul împreună cu payload-ul emailului.",
       "email_attach_response_data_label": "Atașează datele răspunsului",
       "email_body_label": "Conținut",

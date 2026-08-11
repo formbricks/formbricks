@@ -4216,6 +4216,8 @@
       "duplicate_failed": "無法複製工作流程,請再試一次。",
       "duplicate_success": "工作流程已複製。",
       "edit_blocked_active": "請停用工作流程以進行變更。",
+      "edit_blocked_archived": "取消封存此工作流程以進行變更。",
+      "edit_blocked_read_only": "你沒有編輯此工作流程的權限。",
       "email_attach_response_data_description": "在電子郵件內容中包含觸發的調查回應。",
       "email_attach_response_data_label": "附加回應資料",
       "email_body_label": "內容",

@@ -77,6 +77,12 @@ export type TWorkflowSaveError = {
 
 type TWorkflowEditorState = {
   workflow: TWorkflowResource | null;
+  /**
+   * Auth-derived: the current member has read-only workspace access. Seeded at hydrate time so the
+   * canvas atoms (which the node card reads directly, bypassing the hook layer) can gate mutations
+   * on permissions, not just status. See canEditWorkflowDefinitionAtom.
+   */
+  isReadOnly: boolean;
   workflowName: string;
   workflowDescription: string;
   definition: TWorkflowDefinition | null;
@@ -95,6 +101,7 @@ type TWorkflowEditorState = {
 
 const initialWorkflowEditorState: TWorkflowEditorState = {
   workflow: null,
+  isReadOnly: false,
   workflowName: "",
   workflowDescription: "",
   definition: null,
@@ -422,12 +429,19 @@ export const workflowValidationProblemsAtom = atom((get) => get(workflowValidati
 // user-driven — nothing auto-switches it; mutations are gated separately by canMutateCanvasAtom.
 export const isCanvasLockedAtom = atom<boolean>(false);
 
-// Derived: the workflow's definition is editable when its status allows it (the API rejects
-// definition PATCHes on enabled / archived workflows). The auth-derived `isReadOnly` flag is
-// applied separately by the hook layer; this atom is the status check the canvas + inspector
-// share for hiding/disabling structural controls.
+// Auth-derived read-only flag, seeded at hydrate time. Exposed so the inspector can name the
+// actual reason edits are blocked (permission vs. status).
+export const isWorkflowReadOnlyAtom = atom((get) => get(workflowEditorAtom).isReadOnly);
+
+// Derived: the workflow's definition is editable when both status and permissions allow it. The API
+// rejects definition PATCHes on enabled / archived workflows, and a read-only member may not edit at
+// all. This atom is the single source the canvas node card reads directly — folding `isReadOnly` in
+// here (rather than only in the hook layer) keeps that card from offering add/delete/drag to a
+// read-only member on a draft workflow, where the status check alone would pass.
 export const canEditWorkflowDefinitionAtom = atom((get) => {
-  const status = get(workflowEditorAtom).workflow?.status;
+  const state = get(workflowEditorAtom);
+  if (state.isReadOnly) return false;
+  const status = state.workflow?.status;
   return status === "draft" || status === "disabled";
 });
 
@@ -475,9 +489,11 @@ export const hydrateWorkflowEditorAtom = atom(
     {
       workflow,
       flowNodes,
+      isReadOnly = false,
     }: {
       workflow: TWorkflowResource;
       flowNodes: Array<Node<TWorkflowNodeData>>;
+      isReadOnly?: boolean;
     }
   ) => {
     // Optimistic default until the builder page re-syncs it from the authoring context;
@@ -491,6 +507,7 @@ export const hydrateWorkflowEditorAtom = atom(
       workflowEditorAtom,
       produce(initialWorkflowEditorState, (draft) => {
         draft.workflow = workflow;
+        draft.isReadOnly = isReadOnly;
         draft.workflowName = workflow.name;
         draft.workflowDescription = workflow.description ?? "";
         draft.definition = workflow.definition;

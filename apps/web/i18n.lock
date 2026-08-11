@@ -4054,6 +4054,8 @@ checksums:
     workspace/workflows/duplicate_failed: 56b15c01ba3e3fafbfd226520023204f
     workspace/workflows/duplicate_success: b94c796f27301d2957a710dc06e73679
     workspace/workflows/edit_blocked_active: 11f02e65cffdf7a8533906eff1de4ffb
+    workspace/workflows/edit_blocked_archived: c288a75c4825cb3aac3b692fe15c9090
+    workspace/workflows/edit_blocked_read_only: a7b6e332e4e9b5f63e7f261fcb173f50
     workspace/workflows/email_attach_response_data_description: 7d312092941888d63361690ee8706102
     workspace/workflows/email_attach_response_data_label: 32eff1a88e1a044fc22b0bff54f3c683
     workspace/workflows/email_body_label: e88eb1ea71f5ef886aa43ea6ba292d87

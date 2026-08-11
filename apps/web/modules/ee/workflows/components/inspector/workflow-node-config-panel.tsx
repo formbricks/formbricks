@@ -5,8 +5,10 @@ import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
+  isWorkflowReadOnlyAtom,
   selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
+  workflowAtom,
   workflowDefinitionAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -50,10 +52,22 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   const { t } = useTranslation();
   const definition = useAtomValue(workflowDefinitionAtom);
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
+  const workflow = useAtomValue(workflowAtom);
+  const isReadOnly = useAtomValue(isWorkflowReadOnlyAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
 
   const selectedNode = findSelectedNode(definition, selectedNodeId);
   if (!selectedNode || !definition) return null;
+
+  // `isEditable` collapses three distinct block reasons (no permission, archived, enabled) into one
+  // boolean; name the actual reason instead of always blaming an "active" workflow. Permission wins
+  // — a read-only member sees the permission message even on an enabled/archived workflow.
+  const blockedReason = (() => {
+    if (isEditable) return null;
+    if (isReadOnly) return t("workspace.workflows.edit_blocked_read_only");
+    if (workflow?.status === "archived") return t("workspace.workflows.edit_blocked_archived");
+    return t("workspace.workflows.edit_blocked_active");
+  })();
 
   const registryEntry = getNodeRegistryEntry(selectedNode);
   const ConfigForm = registryEntry.ConfigForm;
@@ -77,9 +91,9 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
       </header>
       <div className="scroll-bar min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 px-3 pt-3 pb-4">
-          {!isEditable && (
+          {blockedReason && (
             <Alert variant="info" size="small">
-              <AlertDescription>{t("workspace.workflows.edit_blocked_active")}</AlertDescription>
+              <AlertDescription>{blockedReason}</AlertDescription>
             </Alert>
           )}
           {ConfigForm ? (

@@ -714,6 +714,24 @@ describe("transition", () => {
     expect(toastError).toHaveBeenCalledWith("workspace.workflows.archive_failed");
   });
 
+  test("read-only members never fire a lifecycle request", async () => {
+    getWorkflow.mockResolvedValue(apiWorkflow);
+
+    const { result } = renderBuilder({ workflowId: "wf-api", isReadOnly: true });
+    await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
+
+    await act(() => result.current.enable());
+    await act(() => result.current.disable());
+    await act(() => result.current.archive());
+    await act(() => result.current.unarchive());
+
+    // The server rejects these with 403; the hook must not even attempt them.
+    expect(enableWorkflow).not.toHaveBeenCalled();
+    expect(disableWorkflow).not.toHaveBeenCalled();
+    expect(archiveWorkflow).not.toHaveBeenCalled();
+    expect(unarchiveWorkflow).not.toHaveBeenCalled();
+  });
+
   test("blocks enable with a toast when the pre-flight flush fails", async () => {
     getWorkflow.mockResolvedValue(apiWorkflow);
     updateWorkflow.mockRejectedValue(offlineError());
