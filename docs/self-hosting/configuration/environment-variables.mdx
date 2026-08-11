@@ -121,7 +121,6 @@ For `AI_PROVIDER=openai-compatible`, the LLM GA v1 self-hosted path is Qwen serv
 | BULLMQ_WORKER_CONCURRENCY               | Number of jobs each in-process BullMQ worker can process concurrently. Must be a positive integer.                                                                                              | optional                                                                                 | 1                                                                         |
 | AUDIT_LOG_ENABLED                       | Set this to 1 to enable audit logging. Requires Redis to be configured with the REDIS_URL env variable.                                                                                         | optional                                                                                 | 0                                                                         |
 | AUDIT_LOG_GET_USER_IP                   | Set to 1 to include user IP addresses in audit logs from request headers                                                                                                                        | optional                                                                                 | 0                                                                         |
-
 See [Job Runner](/self-hosting/configuration/job-runner) for BullMQ architecture, scaling, and
 troubleshooting guidance.
 
