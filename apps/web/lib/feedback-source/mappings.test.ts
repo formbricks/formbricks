@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { resolveFormbricksMappingsInput } from "./mappings";
+import { resolveFormbricksMappingsInput, reconcileMappingsAgainstSurvey } from "./mappings";
 
 vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
@@ -116,5 +116,96 @@ describe("resolveFormbricksMappingsInput", () => {
     await expect(
       resolveFormbricksMappingsInput([{ surveyId: SURVEY_ID, elementIds: ["el-file"] }], WORKSPACE_ID)
     ).rejects.toThrow(InvalidInputError);
+  });
+});
+
+describe("reconcileMappingsAgainstSurvey", () => {
+  const blocks = [
+    {
+      elements: [
+        { id: "el-text", type: "openText" },
+        { id: "el-nps", type: "nps" },
+      ],
+    },
+    {
+      elements: [
+        { id: "el-rating", type: "rating" },
+        { id: "el-csat", type: "csat" },
+      ],
+    },
+  ];
+
+  test("returns empty delta when nothing changed", () => {
+    const storedMappings = [
+      { elementId: "el-text", hubFieldType: "text" as const },
+      { elementId: "el-nps", hubFieldType: "nps" as const },
+    ];
+
+    const result = reconcileMappingsAgainstSurvey(storedMappings, blocks);
+    expect(result).toEqual({ toDelete: [], toUpdate: [] });
+  });
+
+  test("returns toDelete for elements removed from survey", () => {
+    const storedMappings = [
+      { elementId: "el-text", hubFieldType: "text" as const },
+      { elementId: "el-gone", hubFieldType: "text" as const },
+      { elementId: "el-another-gone", hubFieldType: "rating" as const },
+    ];
+
+    const result = reconcileMappingsAgainstSurvey(storedMappings, blocks);
+    expect(result.toDelete).toEqual(["el-gone", "el-another-gone"]);
+    expect(result.toUpdate).toEqual([]);
+  });
+
+  test("returns toUpdate when element type changed (hubFieldType stale)", () => {
+    const storedMappings = [
+      // el-nps was mapped as "text" but the survey now has it as "nps"
+      { elementId: "el-nps", hubFieldType: "text" as const },
+      // el-csat was mapped as "rating" but the survey now has it as "csat"
+      { elementId: "el-csat", hubFieldType: "rating" as const },
+    ];
+
+    const result = reconcileMappingsAgainstSurvey(storedMappings, blocks);
+    expect(result.toDelete).toEqual([]);
+    expect(result.toUpdate).toEqual([
+      { elementId: "el-nps", hubFieldType: "nps" },
+      { elementId: "el-csat", hubFieldType: "csat" },
+    ]);
+  });
+
+  test("handles mixed delete and update", () => {
+    const storedMappings = [
+      { elementId: "el-text", hubFieldType: "text" as const },    // unchanged
+      { elementId: "el-nps", hubFieldType: "text" as const },      // type changed + update
+      { elementId: "el-gone", hubFieldType: "rating" as const },   // removed + delete
+    ];
+
+    const result = reconcileMappingsAgainstSurvey(storedMappings, blocks);
+    expect(result.toDelete).toEqual(["el-gone"]);
+    expect(result.toUpdate).toEqual([{ elementId: "el-nps", hubFieldType: "nps" }]);
+  });
+
+  test("deleted element takes priority over type mismatch", () => {
+    // If an elementId matches a removed element, it goes to toDelete even if the stored
+    // hubFieldType would differ from the (current!) element. Since it's gone, there's nothing
+    // to update.
+    const storedMappings = [{ elementId: "el-gone", hubFieldType: "text" as const }];
+
+    // There is no "el-gone" element in the survey; we can't diff types.
+    const result = reconcileMappingsAgainstSurvey(storedMappings, blocks);
+    expect(result.toDelete).toEqual(["el-gone"]);
+    expect(result.toUpdate).toEqual([]);
+  });
+
+  test("empty stored mappings produce empty delta", () => {
+    const result = reconcileMappingsAgainstSurvey([], blocks);
+    expect(result).toEqual({ toDelete: [], toUpdate: [] });
+  });
+
+  test("empty survey blocks mark all as deleted", () => {
+    const storedMappings = [{ elementId: "el-text", hubFieldType: "text" as const }];
+    const result = reconcileMappingsAgainstSurvey(storedMappings, []);
+    expect(result.toDelete).toEqual(["el-text"]);
+    expect(result.toUpdate).toEqual([]);
   });
 });

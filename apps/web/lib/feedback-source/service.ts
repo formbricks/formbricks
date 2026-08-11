@@ -21,6 +21,7 @@ import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/
 import { ITEMS_PER_PAGE } from "../constants";
 import { getUniqueConstraintFields } from "../utils/prisma-constraint";
 import { validateInputs } from "../utils/validate";
+import type { TFeedbackSourceReconciliation } from "./mappings";
 
 const selectFeedbackSourceWithMappings = {
   id: true,
@@ -287,6 +288,58 @@ export type TFieldMappingsInput = {
 };
 
 export type TMappingsInput = TFormbricksMappingsInput | TFieldMappingsInput;
+
+/**
+ * Apply a reconciliation delta to a feedback source's formbricksMappings.
+ *
+ * - Removes mappings for elements that no longer exist in the survey.
+ * - Updates hubFieldType for elements whose type has changed (preserving customFieldLabel).
+ *
+ * Runs inside a single Prisma transaction so the delete + update batch is atomic.
+ */
+export const applyReconciliationToFeedbackSource = async (
+  feedbackSourceId: string,
+  workspaceId: string,
+  reconciliation: TFeedbackSourceReconciliation
+): Promise<void> => {
+  validateInputs([feedbackSourceId, ZId], [workspaceId, ZId]);
+
+  const { toDelete, toUpdate } = reconciliation;
+  if (toDelete.length === 0 && toUpdate.length === 0) {
+    return;
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (toDelete.length > 0) {
+        await tx.feedbackSourceFormbricksMapping.deleteMany({
+          where: {
+            feedbackSourceId,
+            workspaceId,
+            elementId: { in: toDelete },
+          },
+        });
+      }
+
+      for (const { elementId, hubFieldType } of toUpdate) {
+        await tx.feedbackSourceFormbricksMapping.updateMany({
+          where: {
+            feedbackSourceId,
+            workspaceId,
+            elementId,
+          },
+          data: { hubFieldType },
+        });
+      }
+    });
+  } catch (error) {
+    logger.error(
+      { feedbackSourceId, workspaceId, toDelete, toUpdate, error },
+      "Failed to apply feedback-source reconciliation"
+    );
+    // Do not rethrow — reconciliation is best-effort and must not block the survey update.
+  }
+};
 
 export const createFeedbackSourceWithMappings = async (
   workspaceId: string,
