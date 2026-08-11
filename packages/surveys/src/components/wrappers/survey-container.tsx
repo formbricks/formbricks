@@ -1,4 +1,4 @@
-import { type ComponentChildren, type JSX } from "preact";
+import { type ComponentChildren } from "preact";
 import { useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
@@ -61,16 +61,28 @@ export function SurveyContainer({
     };
   }, [clickOutside, hasOverlay, modalRef, onClose, isModal, isOpen]);
 
-  // Without an overlay the focus trap is off, so nothing handles Escape. Handle it on the container
+  // Without an overlay the focus trap is off, so nothing handles Escape. Listen on the container node
   // instead of on `document`: Escape closes the survey only while focus is inside it, and never cancels
-  // the host page's own Escape handling.
-  const handleContainerKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLDivElement>) => {
-    if (hasOverlay) return; // the focus trap already handles Escape
-    if (event.key !== "Escape" || event.altKey || event.ctrlKey || event.metaKey) return;
+  // the host page's own Escape handling. Keep the listener imperative — a keydown JSX prop on a
+  // non-interactive role="dialog" element fails a11y linting.
+  useEffect(() => {
+    if (!isModal || !isOpen || hasOverlay) return;
 
-    event.preventDefault();
-    onClose?.();
-  };
+    const container = modalRef.current;
+    if (!container) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.altKey || event.ctrlKey || event.metaKey) return;
+
+      event.preventDefault();
+      onClose?.();
+    };
+
+    container.addEventListener("keydown", handleKeyDown);
+    return () => {
+      container.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isModal, isOpen, hasOverlay, onClose, modalRef]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
@@ -122,7 +134,6 @@ export function SurveyContainer({
             aria-modal={hasOverlay ? "true" : undefined}
             aria-label={t("common.survey_dialog")}
             tabIndex={-1}
-            onKeyDown={handleContainerKeyDown}
             className={cn(
               getPlacementStyle(placement),
               isOpen ? "opacity-100" : "opacity-0",

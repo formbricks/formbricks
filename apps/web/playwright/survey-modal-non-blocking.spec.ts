@@ -127,8 +127,9 @@ test.describe("App survey widget does not block the host page", () => {
 
     const dialog = page.locator("#fbjs [role='dialog']");
     await expect(dialog).toBeVisible({ timeout: 120000 });
-    // Let the card transition settle so any deferred focus has had its chance to land.
-    await page.waitForTimeout(1500);
+    // The card fades in over 500ms (survey-container.tsx); opacity 1 marks the survey fully open, by
+    // which point any mount-time focus move has had its chance to land.
+    await expect(dialog).toHaveCSS("opacity", "1");
 
     // The survey must not have taken the caret.
     await expect(page.locator("#host-input")).toBeFocused();
@@ -210,7 +211,8 @@ test.describe("App survey widget does not block the host page", () => {
 
     const dialog = page.locator("#fbjs [role='dialog']");
     await expect(dialog).toBeVisible({ timeout: 120000 });
-    await page.waitForTimeout(1500);
+    // Same observable wait as the no-overlay spec: fully faded in means the trap has armed and focused.
+    await expect(dialog).toHaveCSS("opacity", "1");
 
     // A survey that does block the page is a real modal: it announces itself as one,
     // takes focus, and keeps it.
