@@ -52,11 +52,17 @@ export function RenderSurvey(props: SurveyContainerProps) {
     return null;
   }
 
+  const mode = props.mode ?? "modal";
   const hasOverlay = props.overlay && props.overlay !== "none";
+  // A modal survey with no overlay appears over a page the user is still working in, often mid-form.
+  // Moving the caret into the survey on open would pull them out of the field they are typing in, so
+  // leave focus where it is. With an overlay the page is blocked anyway, so taking focus is correct.
+  // Only ever force this off — everything else keeps the existing default (see survey.tsx).
+  const autoFocus = props.autoFocus ?? (mode === "modal" && !hasOverlay ? false : undefined);
 
   return (
     <SurveyContainer
-      mode={props.mode ?? "modal"}
+      mode={mode}
       placement={props.placement}
       overlay={props.overlay}
       clickOutside={props.clickOutside}
@@ -65,6 +71,7 @@ export function RenderSurvey(props: SurveyContainerProps) {
       dir={dir}>
       <Survey
         {...props}
+        autoFocus={autoFocus}
         clickOutside={hasOverlay ? props.clickOutside : true}
         onClose={close}
         onFinished={() => {
