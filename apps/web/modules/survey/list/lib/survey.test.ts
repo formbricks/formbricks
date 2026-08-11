@@ -205,7 +205,10 @@ describe("getSurvey", () => {
   test("should return a survey if found", async () => {
     const prismaSurvey = { ...mockSurveyPrisma };
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(prismaSurvey as any);
-    vi.mocked(prisma.response.groupBy).mockResolvedValue([{ surveyId, _count: { _all: 5 } }] as any);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId, finished: true, _count: { _all: 3 } },
+      { surveyId, finished: false, _count: { _all: 2 } },
+    ] as any);
 
     const survey = await getSurvey(surveyId);
 
@@ -221,6 +224,7 @@ describe("getSurvey", () => {
       singleUse: prismaSurvey.singleUse,
       workspaceId: prismaSurvey.workspaceId,
       responseCount: 5,
+      completedResponseCount: 3,
     });
     expect(survey).not.toHaveProperty("_count");
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
@@ -279,13 +283,14 @@ describe("getSurveys", () => {
     singleUse: s.singleUse,
     workspaceId: s.workspaceId,
     responseCount: s._count.responses,
+    completedResponseCount: s._count.responses,
   }));
 
   test("should return surveys with default parameters", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys as any);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "s1", _count: { _all: 10 } },
-      { surveyId: "s2", _count: { _all: 10 } },
+      { surveyId: "s1", finished: true, _count: { _all: 10 } },
+      { surveyId: "s2", finished: true, _count: { _all: 10 } },
     ] as any);
     const surveys = await getSurveys(workspaceId);
 
@@ -302,7 +307,9 @@ describe("getSurveys", () => {
 
   test("should return surveys with limit and offset", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([mockPrismaSurveys[0]] as any);
-    vi.mocked(prisma.response.groupBy).mockResolvedValue([{ surveyId: "s1", _count: { _all: 10 } }] as any);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "s1", finished: true, _count: { _all: 10 } },
+    ] as any);
     const surveys = await getSurveys(workspaceId, 1, 1);
 
     expect(surveys).toEqual([expectedSurveys[0]]);
@@ -321,8 +328,8 @@ describe("getSurveys", () => {
     vi.mocked(buildOrderByClause).mockReturnValue([{ createdAt: "desc" }]); // Mock specific return
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys as any);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "s1", _count: { _all: 10 } },
-      { surveyId: "s2", _count: { _all: 10 } },
+      { surveyId: "s1", finished: true, _count: { _all: 10 } },
+      { surveyId: "s2", finished: true, _count: { _all: 10 } },
     ] as any);
 
     const surveys = await getSurveys(workspaceId, undefined, undefined, filterCriteria);
@@ -380,6 +387,7 @@ describe("getSurveysSortedByRelevance", () => {
     singleUse: mockInProgressPrisma.singleUse,
     workspaceId: mockInProgressPrisma.workspaceId,
     responseCount: 3,
+    completedResponseCount: 3,
   };
   const expectedOtherSurvey: TSurvey = {
     id: mockOtherPrisma.id,
@@ -393,6 +401,7 @@ describe("getSurveysSortedByRelevance", () => {
     singleUse: mockOtherPrisma.singleUse,
     workspaceId: mockOtherPrisma.workspaceId,
     responseCount: 5,
+    completedResponseCount: 5,
   };
 
   test("should fetch inProgress surveys first, then others if limit not met", async () => {
@@ -401,8 +410,8 @@ describe("getSurveysSortedByRelevance", () => {
       .mockResolvedValueOnce([mockInProgressPrisma] as any) // In-progress surveys
       .mockResolvedValueOnce([mockOtherPrisma] as any); // Additional surveys
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "s_inprog", _count: { _all: 3 } },
-      { surveyId: "s_other", _count: { _all: 5 } },
+      { surveyId: "s_inprog", finished: true, _count: { _all: 3 } },
+      { surveyId: "s_other", finished: true, _count: { _all: 5 } },
     ] as any);
 
     const surveys = await getSurveysSortedByRelevance(workspaceId, 2, 0);
@@ -432,7 +441,7 @@ describe("getSurveysSortedByRelevance", () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(1);
     vi.mocked(prisma.survey.findMany).mockResolvedValueOnce([mockInProgressPrisma] as any);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId: "s_inprog", _count: { _all: 3 } },
+      { surveyId: "s_inprog", finished: true, _count: { _all: 3 } },
     ] as any);
 
     const surveys = await getSurveysSortedByRelevance(workspaceId, 1, 0);

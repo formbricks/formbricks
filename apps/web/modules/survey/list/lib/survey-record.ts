@@ -25,13 +25,24 @@ export const surveySelect = {
 
 export type TSurveyRow = Prisma.SurveyGetPayload<{ select: typeof surveySelect }>;
 
-export async function getResponseCountsBySurveyIds(surveyIds: string[]): Promise<Map<string, number>> {
+export interface TSurveyResponseCounts {
+  /** Every response, including partial ones. */
+  total: number;
+  /** Responses the respondent actually finished. */
+  completed: number;
+}
+
+export async function getResponseCountsBySurveyIds(
+  surveyIds: string[]
+): Promise<Map<string, TSurveyResponseCounts>> {
   if (surveyIds.length === 0) {
     return new Map();
   }
 
+  // Grouping by `finished` keeps both counts in a single query: the list shows the completed
+  // count, while the total still gates the "this survey already has responses" edit warning.
   const responseCounts = await prisma.response.groupBy({
-    by: ["surveyId"],
+    by: ["surveyId", "finished"],
     where: {
       surveyId: {
         in: surveyIds,
@@ -42,20 +53,34 @@ export async function getResponseCountsBySurveyIds(surveyIds: string[]): Promise
     },
   });
 
-  return new Map(responseCounts.map(({ surveyId, _count }) => [surveyId, _count._all]));
+  const countsBySurveyId = new Map<string, TSurveyResponseCounts>();
+  for (const { surveyId, finished, _count } of responseCounts) {
+    const counts = countsBySurveyId.get(surveyId) ?? { total: 0, completed: 0 };
+    counts.total += _count._all;
+    if (finished) {
+      counts.completed += _count._all;
+    }
+    countsBySurveyId.set(surveyId, counts);
+  }
+
+  return countsBySurveyId;
 }
 
-export function mapSurveyRowToSurvey(row: TSurveyRow, responseCount = 0): TSurvey {
+export function mapSurveyRowToSurvey(
+  row: TSurveyRow,
+  responseCounts: TSurveyResponseCounts = { total: 0, completed: 0 }
+): TSurvey {
   const { _count: _ignored, ...rest } = row;
   return {
     ...rest,
-    responseCount,
+    responseCount: responseCounts.total,
+    completedResponseCount: responseCounts.completed,
   };
 }
 
 export function mapSurveyRowsToSurveys(
   rows: TSurveyRow[],
-  responseCountsBySurveyId: Map<string, number> = new Map()
+  responseCountsBySurveyId: Map<string, TSurveyResponseCounts> = new Map()
 ): TSurvey[] {
-  return rows.map((row) => mapSurveyRowToSurvey(row, responseCountsBySurveyId.get(row.id) ?? 0));
+  return rows.map((row) => mapSurveyRowToSurvey(row, responseCountsBySurveyId.get(row.id)));
 }

@@ -150,7 +150,7 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
 
     const responseCountsBySurveyId = await getResponseCountsBySurveyIds([surveyPrisma.id]);
 
-    return mapSurveyRowToSurvey(surveyPrisma, responseCountsBySurveyId.get(surveyPrisma.id) ?? 0);
+    return mapSurveyRowToSurvey(surveyPrisma, responseCountsBySurveyId.get(surveyPrisma.id));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error getting survey");
