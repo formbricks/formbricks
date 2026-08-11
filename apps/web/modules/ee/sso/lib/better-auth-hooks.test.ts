@@ -2,11 +2,16 @@ import { getOAuthState } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
-import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsSamlSsoEnabled,
+  getIsSsoEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import {
   blockedSignupDomainRedirectAfter,
   getSsoProviderFromContext,
@@ -40,10 +45,6 @@ vi.mock("better-auth/api", () => ({
 vi.mock("@formbricks/database", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
 vi.mock("@/lib/posthog", () => ({ identifyPostHogPerson: vi.fn() }));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn() }));
-vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsSsoEnabled: vi.fn(),
-  getIsSamlSsoEnabled: vi.fn(),
-}));
 vi.mock("./sso-provisioning", () => ({
   gateSsoProvisioning: vi.fn(),
   provisionSsoUserMemberships: vi.fn(),
@@ -51,6 +52,20 @@ vi.mock("./sso-provisioning", () => ({
 vi.mock("./sso-recovery", () => ({ startSsoRecovery: vi.fn() }));
 vi.mock("@/modules/auth/lib/signup-email-domain", () => ({ isSignupEmailDomainBlocked: vi.fn() }));
 vi.mock("@/modules/auth/lib/signup-request-context", () => ({ isSignupDomainAllowed: vi.fn() }));
+
+const constantsOverrides = vi.hoisted(() => ({ SIGNUP_ENABLED: true }));
+vi.mock("@/lib/constants", () => ({
+  WEBAPP_URL: "http://localhost:3000",
+  get SIGNUP_ENABLED() {
+    return constantsOverrides.SIGNUP_ENABLED;
+  },
+}));
+vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsMultiOrgEnabled: vi.fn(),
+  getIsSsoEnabled: vi.fn(),
+  getIsSamlSsoEnabled: vi.fn(),
+}));
 
 const callbackCtx = { path: "/oauth2/callback/:providerId", params: { providerId: "openid" } };
 const provisionDecision = {
@@ -62,11 +77,14 @@ const provisionDecision = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  constantsOverrides.SIGNUP_ENABLED = true;
   vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
   vi.mocked(getOAuthState).mockResolvedValue({ callbackURL: "/" } as never);
   vi.mocked(gateSsoProvisioning).mockResolvedValue(provisionDecision);
   vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
   vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+  vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+  vi.mocked(getIsFreshInstance).mockResolvedValue(false);
   vi.mocked(prisma.user.findUnique).mockResolvedValue({
     id: "u1",
     email: "a@b.com",
@@ -233,6 +251,58 @@ describe("ssoDatabaseHooks.user.create.before", () => {
       } as never
     );
     expect(result).toBeUndefined();
+  });
+
+  // ENG-2293: on a closed instance (SIGNUP_ENABLED=false, not fresh, multi-org disabled),
+  // a direct POST to Better Auth's native /sign-up/email must be blocked — the hook is the
+  // last line of defense, since the page and the server action both gate correctly.
+  describe("closed-instance policy", () => {
+    beforeEach(() => {
+      constantsOverrides.SIGNUP_ENABLED = false;
+      vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    });
+
+    test("blocks a raw credential sign-up on a closed instance", async () => {
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // raw endpoint, not through the action
+      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false); // self-hosted: domain block is a no-op
+      await expect(
+        before({ id: "u1", email: "intruder@example.com" } as never, { path: "/sign-up/email" } as never)
+      ).rejects.toThrow("Signup is disabled on this instance");
+      expect(gateSsoProvisioning).not.toHaveBeenCalled();
+    });
+
+    test("still allows the first administrator during fresh-instance setup", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
+      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
+      const result = await before(
+        { id: "u1", email: "admin@example.com" } as never,
+        { path: "/sign-up/email" } as never
+      );
+      expect(result).toBeUndefined();
+    });
+
+    test("still allows a credential sign-up when public signup is open", async () => {
+      constantsOverrides.SIGNUP_ENABLED = true;
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
+      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
+      const result = await before(
+        { id: "u1", email: "user@example.com" } as never,
+        { path: "/sign-up/email" } as never
+      );
+      expect(result).toBeUndefined();
+    });
+
+    test("still allows a credential sign-up via the action (domain already enforced)", async () => {
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(true); // action marked the scope
+      const result = await before(
+        { id: "u1", email: "user@example.com" } as never,
+        { path: "/sign-up/email" } as never
+      );
+      expect(result).toBeUndefined();
+    });
   });
 });
 

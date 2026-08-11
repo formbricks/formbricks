@@ -5,13 +5,18 @@ import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
-import { WEBAPP_URL } from "@/lib/constants";
+import { SIGNUP_ENABLED, WEBAPP_URL } from "@/lib/constants";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
-import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsSamlSsoEnabled,
+  getIsSsoEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
 import { normalizeSsoProvider } from "./provider-normalization";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
@@ -83,6 +88,22 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           // action — so re-enforce the domain block here (no invite is carried on that raw path).
           if (!isSignupDomainAllowed() && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
             return false;
+          }
+          // ENG-2293: the page and server action both enforce closed-instance policy (SIGNUP_ENABLED,
+          // multi-org, fresh-instance), but a direct POST to Better Auth's native /sign-up/email
+          // skips them. Enforce it here as the last line of defense — only when the request is not
+          // already action-scoped (isSignupDomainAllowed) to avoid redundant DB queries.
+          // Freshness is checked first: if the instance is fresh, we allow the first admin setup
+          // and skip the license-DB hit entirely; only check multi-org on non-fresh instances.
+          // Throwing APIError is Better Auth's documented pattern for signup gating — it surfaces a
+          // proper error code to the caller rather than the generic FAILED_TO_CREATE_USER that
+          // returning false produces.
+          if (!isSignupDomainAllowed()) {
+            if (!(await getIsFreshInstance()) && !(SIGNUP_ENABLED && (await getIsMultiOrgEnabled()))) {
+              throw new APIError("FORBIDDEN", {
+                message: "Signup is disabled on this instance.",
+              });
+            }
           }
           return; // otherwise keep credential-signup defaults
         }
