@@ -55,7 +55,9 @@ const mockFeedbackSource = {
   name: "Test FeedbackSource",
   type: "formbricks_survey" as const,
   status: "active" as const,
+  importMode: "completedOnly" as const,
   workspaceId: ENV_ID,
+  feedbackDirectoryId: FRD_ID,
   lastSyncAt: null,
   createdBy: null,
 };

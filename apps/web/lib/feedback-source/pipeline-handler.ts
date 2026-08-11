@@ -102,7 +102,7 @@ const processFeedbackSource = async (
  *
  * @param response - The survey response
  * @param survey - The survey
- * @param workspaceId - The workspace ID (used as tenant_id)
+ * @param workspaceId - The workspace ID (access-control context; the Hub tenant is feedbackSource.feedbackDirectoryId)
  */
 export const handleFeedbackSourcePipeline = async (
   response: TResponse,
