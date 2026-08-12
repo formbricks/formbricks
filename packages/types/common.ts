@@ -234,3 +234,12 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
 };
 
 export const ZEmail = z.email();
+
+export const isValidIanaTimeZone = (value: string): boolean => {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+};

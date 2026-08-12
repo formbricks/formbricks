@@ -195,6 +195,8 @@ jobs:
           fi
 
           yq -i ".appVersion = \"${VERSION}\"" charts/formbricks/Chart.yaml
+          perl -0pi -e "s/!\[Version: [^\]]+\]/![Version: ${VERSION}]/" charts/formbricks/README.md
+          perl -0pi -e "s/Version-[0-9A-Za-z._+-]+-informational/Version-${VERSION}-informational/" charts/formbricks/README.md
           perl -0pi -e "s/!\[AppVersion: [^\]]+\]/![AppVersion: ${VERSION}]/" charts/formbricks/README.md
           perl -0pi -e "s/AppVersion-[0-9A-Za-z._+-]+-informational/AppVersion-${VERSION}-informational/" charts/formbricks/README.md
 

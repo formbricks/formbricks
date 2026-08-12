@@ -1,6 +1,6 @@
 import { Upload, UploadIcon, X } from "lucide-react";
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { cn } from "@/lib/utils";
 
@@ -147,6 +147,8 @@ interface UploadAreaProps {
   onDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
   onDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
   showUploader: boolean;
+  ariaInvalid: boolean;
+  ariaDescribedBy?: string;
 }
 
 function UploadArea({
@@ -161,6 +163,8 @@ function UploadArea({
   onDragOver,
   onDrop,
   showUploader,
+  ariaInvalid,
+  ariaDescribedBy,
 }: Readonly<UploadAreaProps>): React.JSX.Element | null {
   if (!showUploader) {
     return null;
@@ -204,6 +208,8 @@ function UploadArea({
         onChange={onFileChange}
         disabled={disabled}
         dir={dir}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
       />
     </label>
   );
@@ -232,6 +238,7 @@ function FileUpload({
   uploadingText = "Uploading...",
 }: Readonly<FileUploadProps>): React.JSX.Element {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const errorAria = getElementErrorAria(inputId, errorMessage);
 
   // Ensure value is always an array
   const uploadedFiles = Array.isArray(value) ? value : [];
@@ -290,7 +297,7 @@ function FileUpload({
       />
 
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
 
         <div
           className={cn(
@@ -321,6 +328,8 @@ function FileUpload({
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               showUploader={showUploader}
+              ariaInvalid={errorAria.ariaInvalid}
+              ariaDescribedBy={errorAria.ariaDescribedBy}
             />
           </div>
         </div>

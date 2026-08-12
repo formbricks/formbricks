@@ -25,7 +25,10 @@ formbricks:
 # Enterprise Configuration
 ##########################################################
 enterprise:
+  # Deprecated compatibility field. Templates do not consume it; omit it from new values files.
   enabled: false
+  # Adds ENTERPRISE_LICENSE_KEY to the chart-generated app Secret when secret.enabled=true.
+  # With an existing Secret or ExternalSecret, provide ENTERPRISE_LICENSE_KEY there instead.
   licenseKey: ""
 
 ##########################################################
@@ -132,6 +135,11 @@ deployment:
     # a CDN, a corporate load balancer — in front of the ingress; setting it higher than the real chain
     # lets callers spoof their address by prepending entries.
     TRUSTED_PROXY_HOP_COUNT: "1"
+
+  # Additional pod volumes and app container mounts. These are useful for custom CA bundles and
+  # provider-specific runtime files without placing their contents directly in Helm values.
+  extraVolumes: []
+  extraVolumeMounts: []
 
   # Tolerations for scheduling pods on tainted nodes
   tolerations: []
