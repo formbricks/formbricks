@@ -11,7 +11,9 @@ import { getFeedbackSourcesToReconcile } from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    feedbackSource: { update: vi.fn() },
     feedbackSourceFormbricksMapping: {
+      count: vi.fn(),
       createMany: vi.fn(),
       deleteMany: vi.fn(),
       updateMany: vi.fn(),
@@ -46,7 +48,9 @@ const mapping = (elementId: string, hubFieldType: string, surveyId = SURVEY_ID) 
 
 const mockTx = () => {
   const tx = {
+    feedbackSource: { update: vi.fn() },
     feedbackSourceFormbricksMapping: {
+      count: vi.fn().mockResolvedValue(1),
       createMany: vi.fn(),
       deleteMany: vi.fn(),
       updateMany: vi.fn(),
@@ -430,6 +434,56 @@ describe("applyReconciliationToFeedbackSource", () => {
 
     expect(tx.feedbackSourceFormbricksMapping.deleteMany).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalled();
+  });
+
+  // A source with no rows left publishes nothing and can never be found by reconciliation again, so
+  // it would sit in the table looking healthy. `error` is already rendered as a badge and also takes
+  // the source out of the publish path until someone re-maps it.
+  test("flags the source as errored when the delete leaves it with no mappings at all", async () => {
+    const tx = mockTx();
+    tx.feedbackSourceFormbricksMapping.count.mockResolvedValue(0);
+
+    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [],
+      toDelete: ["el-last"],
+      toUpdate: [],
+    });
+
+    expect(tx.feedbackSource.update).toHaveBeenCalledWith({
+      where: { id: SOURCE_ID, workspaceId: WORKSPACE_ID },
+      data: { status: "error" },
+    });
+  });
+
+  // Counted across every survey, so a source still serving a sibling survey keeps working.
+  test("leaves the source alone when mappings for another survey survive", async () => {
+    const tx = mockTx();
+    tx.feedbackSourceFormbricksMapping.count.mockResolvedValue(2);
+
+    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [],
+      toDelete: ["el-last"],
+      toUpdate: [],
+    });
+
+    expect(tx.feedbackSource.update).not.toHaveBeenCalled();
+  });
+
+  // The count must run after the creates, or a source about to regain rows gets flagged.
+  test("does not flag the source when a create replaces everything deleted", async () => {
+    const tx = mockTx();
+    tx.feedbackSourceFormbricksMapping.count.mockResolvedValue(1);
+
+    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [{ elementId: "el-new", hubFieldType: "rating" }],
+      toDelete: ["el-old"],
+      toUpdate: [],
+    });
+
+    const countOrder = tx.feedbackSourceFormbricksMapping.count.mock.invocationCallOrder[0];
+    const createOrder = tx.feedbackSourceFormbricksMapping.createMany.mock.invocationCallOrder[0];
+    expect(countOrder).toBeGreaterThan(createOrder);
+    expect(tx.feedbackSource.update).not.toHaveBeenCalled();
   });
 
   test("logs and swallows a database failure so the survey write is never blocked", async () => {

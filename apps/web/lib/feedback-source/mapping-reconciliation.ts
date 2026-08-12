@@ -208,6 +208,31 @@ export const applyReconciliationToFeedbackSource = async (
           skipDuplicates: true,
         });
       }
+
+      // A source stripped of its last mapping has nothing left to publish, and reconciliation can
+      // never find it again (its lookup matches on `formbricksMappings: { some: { surveyId } }`), so
+      // it would sit in the sources table looking healthy while silently doing nothing. Flag it: the
+      // `error` badge already renders, and the status also takes it out of the publish path until
+      // someone re-maps it.
+      //
+      // Counted after the creates, and across every survey the source maps rather than just this one —
+      // a source still serving a sibling survey is working, and erroring it would stop that too.
+      if (toDelete.length > 0) {
+        const remainingMappings = await tx.feedbackSourceFormbricksMapping.count({
+          where: { feedbackSourceId, workspaceId },
+        });
+
+        if (remainingMappings === 0) {
+          await tx.feedbackSource.update({
+            where: { id: feedbackSourceId, workspaceId },
+            data: { status: "error" },
+          });
+          logger.error(
+            { feedbackSourceId, workspaceId, surveyId },
+            "Flagged feedback source as errored: reconciliation removed its last mapping, so it has nothing left to publish"
+          );
+        }
+      }
     });
   } catch (error) {
     logger.error(
