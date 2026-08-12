@@ -94,6 +94,18 @@ if ! grep -qE '^RATE_LIMITING_DISABLED=1' "${REPO_ROOT}/.env"; then
   info "Disabled rate limiting (matches CI E2E)"
 fi
 
+# CI runs E2E with a real ENTERPRISE_LICENSE_KEY. Without one, every paid surface is hidden and a
+# QA pass silently skips it — measured here, that accounted for 17 of 18 suite failures. Set
+# SKIP_ENTERPRISE_BYPASS=1 to test the community tier instead.
+if [[ "${SKIP_ENTERPRISE_BYPASS:-0}" != "1" ]]; then
+  node "${REPO_ROOT}/scripts/enable-enterprise-for-testing.mjs" >/dev/null \
+    || fail "Enterprise bypass codemod failed — its target file likely changed upstream."
+  if ! grep -qE '^E2E_BYPASS_LICENSE=1' "${REPO_ROOT}/.env"; then
+    printf '\nE2E_BYPASS_LICENSE=1\n' >>"${REPO_ROOT}/.env"
+  fi
+  info "Enterprise features unlocked (patched working tree — do not commit)"
+fi
+
 # ---------------------------------------------------------------------------
 # 4. Dependencies.
 # ---------------------------------------------------------------------------

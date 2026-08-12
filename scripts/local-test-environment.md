@@ -52,6 +52,26 @@ pnpm db:migrate:dev
 
 Install pgvector _before_ the first migrate and neither trap fires.
 
+## Enterprise features
+
+CI runs E2E with a real `ENTERPRISE_LICENSE_KEY`. Without one every paid surface — access control,
+quotas, contacts, dashboards, workflows, follow-ups, multi-language, SSO, whitelabel — is hidden, so
+a QA pass walks straight past it and reports nothing wrong.
+
+The setup script therefore runs `scripts/enable-enterprise-for-testing.mjs`, which inserts an early
+return into the license-check helpers in `apps/web/modules/ee/license-check/lib/utils.ts`, gated on
+`E2E_BYPASS_LICENSE=1`. Measured on a full suite run, this accounted for **17 of 18** failures in the
+affected specs.
+
+```bash
+SKIP_ENTERPRISE_BYPASS=1 bash scripts/setup-local-test-env.sh   # test the community tier instead
+node scripts/enable-enterprise-for-testing.mjs --revert          # restore the file
+```
+
+**Never commit the patched file.** Revert before branching or committing. Any finding on a paid
+feature must say the license was bypassed — a bug that only reproduces under bypass may be an
+artifact of the bypass rather than a real defect.
+
 ## Seeded data
 
 `pnpm db:seed` creates three users sharing the password `Password#123` —
