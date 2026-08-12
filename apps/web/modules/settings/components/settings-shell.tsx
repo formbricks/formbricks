@@ -65,6 +65,9 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
               isOwnerOrManager={data.isOwnerOrManager}
               isAccessControlAllowed={data.isAccessControlAllowed}
               membershipRole={data.membershipRole}
+              // These routes are workspace-agnostic, so nothing in the chrome may claim a current
+              // workspace — the organization breadcrumb is the only switcher here.
+              showWorkspaceBreadcrumb={false}
             />
           )}
           <div className="flex-1 overflow-y-auto">{children}</div>

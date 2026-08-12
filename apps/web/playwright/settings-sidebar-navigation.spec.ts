@@ -6,10 +6,11 @@ import { test } from "./lib/fixtures";
 // ENG-1705 regression: /organizations/[organizationId]/settings/** and /account/settings/** are
 // workspace-agnostic routes, so their sidebar must not render the Workspace section (a workspace
 // selector pill plus eight workspace-scoped links) for a workspace the shell only inferred from a
-// cookie — switching workspaces there is the top bar breadcrumb's job. Those routes render
-// OrganizationSettingsSidebar and the in-workspace routes render WorkspaceSettingsSidebar; both end
-// in the same OrganizationAndAccountSections, so this also guards that the in-workspace sidebar kept
-// its Workspace section.
+// cookie. Nothing in the chrome on those routes may claim a current workspace, so the top bar's
+// workspace breadcrumb is suppressed there too and only the organization breadcrumb remains. Those
+// routes render OrganizationSettingsSidebar and the in-workspace routes render
+// WorkspaceSettingsSidebar; both end in the same OrganizationAndAccountSections, so this also guards
+// that the in-workspace sidebar and breadcrumb kept their Workspace parts.
 
 // The settings shell renders exactly one <aside>, either from SettingsNavigation (the
 // workspace-agnostic routes) or from MainNavigation (the in-workspace routes).
@@ -39,8 +40,16 @@ const createOwner = async (users: UsersFixture) => {
     throw new Error("Organization or workspace not seeded for test user");
   }
 
-  return { user, organizationId: user.organizationId, workspaceId: user.workspaceId, workspaceName };
+  return {
+    user,
+    organizationId: user.organizationId,
+    workspaceId: user.workspaceId,
+    organizationName,
+    workspaceName,
+  };
 };
+
+const topBar = (page: Page) => page.getByTestId("fb__global-top-control-bar");
 
 // "Nothing is there" passes trivially against a sidebar that has not rendered yet, so wait for the
 // Account section (present on every settings route) before asserting the Workspace section's absence.
@@ -57,12 +66,12 @@ const expectNoWorkspaceSection = async (page: Page, workspaceName: string) => {
   await expect(sidebar.getByRole("button", { name: workspaceName })).toHaveCount(0);
 };
 
-test.describe("Settings sidebar workspace section (ENG-1705)", () => {
-  test("organization settings drops the Workspace section and keeps the top bar switcher", async ({
+test.describe("Settings workspace chrome (ENG-1705)", () => {
+  test("organization settings drops the Workspace section and the workspace breadcrumb", async ({
     page,
     users,
   }) => {
-    const { user, organizationId, workspaceName } = await createOwner(users);
+    const { user, organizationId, organizationName, workspaceName } = await createOwner(users);
 
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
@@ -86,19 +95,19 @@ test.describe("Settings sidebar workspace section (ENG-1705)", () => {
       await expectNoWorkspaceSection(page, workspaceName);
     });
 
-    await test.step("the top bar breadcrumb is still a workspace switcher", async () => {
-      const topBar = page.getByTestId("fb__global-top-control-bar");
-      await expect(topBar).toBeVisible();
-
-      await topBar.getByText(workspaceName, { exact: true }).click();
-
-      await expect(page.getByText("Choose workspace", { exact: true })).toBeVisible();
-      await expect(page.getByRole("menuitemcheckbox", { name: workspaceName })).toBeVisible();
+    await test.step("the top bar keeps the organization breadcrumb but drops the workspace one", async () => {
+      // Assert the organization breadcrumb first: it proves the bar has rendered, so the workspace
+      // assertion below cannot pass just because nothing is on screen yet.
+      await expect(topBar(page).getByText(organizationName, { exact: true })).toBeVisible();
+      await expect(topBar(page).getByText(workspaceName, { exact: true })).toHaveCount(0);
     });
   });
 
-  test("account settings drops the Workspace section", async ({ page, users }) => {
-    const { user, workspaceName } = await createOwner(users);
+  test("account settings drops the Workspace section and the workspace breadcrumb", async ({
+    page,
+    users,
+  }) => {
+    const { user, organizationName, workspaceName } = await createOwner(users);
 
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
@@ -110,6 +119,9 @@ test.describe("Settings sidebar workspace section (ENG-1705)", () => {
     ).toHaveAttribute("href", "/account/settings/profile");
 
     await expectNoWorkspaceSection(page, workspaceName);
+
+    await expect(topBar(page).getByText(organizationName, { exact: true })).toBeVisible();
+    await expect(topBar(page).getByText(workspaceName, { exact: true })).toHaveCount(0);
   });
 
   test("workspace settings keeps the Workspace section, its selector pill and every link", async ({
@@ -137,6 +149,9 @@ test.describe("Settings sidebar workspace section (ENG-1705)", () => {
 
     await workspacePill.click();
     await expect(page.getByRole("menuitemcheckbox", { name: workspaceName })).toBeVisible();
+
+    // The workspace breadcrumb is only suppressed on the workspace-agnostic routes — here it stays.
+    await expect(topBar(page).getByText(workspaceName, { exact: true })).toBeVisible();
   });
 
   // AC5 / ENG-1700: the sidebar back arrow is a button that router.push-es the workspace the shell
