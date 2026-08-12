@@ -447,6 +447,54 @@ describe("authenticateMcpRequest", () => {
     }
   );
 
+  // Verification is stubbed here, so these two exercise the resource server's audience check on its
+  // own — with no jose `aud` enforcement upstream of it. That is not a contrived setup: the 1.7
+  // provider drops `verifyOptions.audience` from its own verification, at which point this check is
+  // the only thing standing between a foreign-audience token and the MCP tools.
+  test("rejects an OAuth token whose audience omits the MCP resource, independently of jose", async () => {
+    verifyAccessTokenMock.mockResolvedValue({
+      aud: "https://other.example.com/api",
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+      expect(await result.response.json()).toMatchObject({ detail: "Invalid OAuth access token" });
+    }
+    expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("returns 429 when audience-rejected tokens exceed the unauthenticated MCP rate limit", async () => {
+    verifyAccessTokenMock.mockResolvedValue({
+      aud: [MCP_AUDIENCE, "https://other.example.com/api"],
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read",
+    });
+    vi.mocked(applyIPRateLimit).mockRejectedValue(new TooManyRequestsError("Too many auth requests", 45));
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(429);
+      expect(result.response.headers.get("Retry-After")).toBe("45");
+    }
+  });
+
   test("rejects OAuth bearer tokens without a user subject", async () => {
     verifyAccessTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
