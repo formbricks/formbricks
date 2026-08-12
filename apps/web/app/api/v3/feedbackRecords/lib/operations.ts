@@ -52,6 +52,7 @@ import {
   type TV3FeedbackRecordBatchCreateBody,
   type TV3FeedbackRecordCreateBody,
   type TV3FeedbackRecordFilters,
+  type TV3FeedbackRecordListFilters,
   type TV3FeedbackRecordUpdateBody,
   ZV3FeedbackRecordBatchCreateBody,
   ZV3FeedbackRecordCreateBody,
@@ -325,6 +326,10 @@ type TFeedbackRecordQueryParams = TV3FeedbackRecordFilters & {
 type TListV3FeedbackRecordsParams = TFeedbackRecordQueryParams & {
   limit?: number;
   cursor?: string;
+  // List-only: the Hub's count endpoint does not accept ordering. Named explicitly rather than left to
+  // fall through the filter rest-spread, so that a reviewer can see they are handled.
+  sort?: TV3FeedbackRecordListFilters["sort"];
+  order?: TV3FeedbackRecordListFilters["order"];
 };
 
 /** List feedback records for the resolved tenant, with cursor pagination and optional filters. */
@@ -369,6 +374,11 @@ export async function listV3FeedbackRecords({
       limit: parsed.data.limit ?? DEFAULT_LIST_LIMIT,
     };
     if (parsed.data.cursor) listParams.cursor = parsed.data.cursor;
+    // Only ever forwarded when asked for. The Hub defaults to collected_at/desc, and a cursor issued
+    // before sort control records no ordering — sending an explicit default *ought* to be equivalent, but
+    // that is an assumption about Hub internals this layer does not need to make.
+    if (parsed.data.sort) listParams.sort = parsed.data.sort;
+    if (parsed.data.order) listParams.order = parsed.data.order;
 
     const result = await listFeedbackRecords(listParams);
     if (result.error || !result.data) {

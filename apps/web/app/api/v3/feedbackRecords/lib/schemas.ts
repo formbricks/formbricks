@@ -202,7 +202,13 @@ export const ZV3FeedbackRecordFilters = z
   .strict();
 export type TV3FeedbackRecordFilters = z.infer<typeof ZV3FeedbackRecordFilters>;
 
-// Listing adds keyset pagination on top of the shared filters (the Hub's cursor/keyset contract).
+/**
+ * Listing adds keyset pagination and ordering on top of the shared filters (the Hub's cursor/keyset
+ * contract).
+ *
+ * `sort` and `order` live here rather than on the shared filter object because the Hub's count endpoint
+ * does not accept them — sending them there is a 400 on every count call.
+ */
 export const ZV3FeedbackRecordListFilters = ZV3FeedbackRecordFilters.extend({
   limit: z
     .number()
@@ -216,6 +222,18 @@ export const ZV3FeedbackRecordListFilters = ZV3FeedbackRecordFilters.extend({
     .min(1)
     .optional()
     .describe("Opaque keyset cursor from a previous response's nextCursor. Omit for the first page."),
+  sort: z
+    .enum(["collected_at", "created_at"])
+    .optional()
+    .describe(
+      "Column to order by. Defaults to collected_at. Keep this identical on every page of one traversal: a cursor is a position within one specific ordering, so presenting it with a different sort or order is rejected."
+    ),
+  order: z
+    .enum(["asc", "desc"])
+    .optional()
+    .describe(
+      "Direction to order in. Defaults to desc. Like sort, must stay identical for the whole traversal."
+    ),
 });
 export type TV3FeedbackRecordListFilters = z.infer<typeof ZV3FeedbackRecordListFilters>;
 

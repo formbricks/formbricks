@@ -1324,6 +1324,51 @@ describe("feedback-record filters with meaningful falsy values", () => {
     expect((await response.json()).invalid_params[0].name).toBe("language");
   });
 
+  test("orders the list by the requested column and direction", async () => {
+    await listV3FeedbackRecords({ ...base, sort: "created_at", order: "asc" });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: "created_at", order: "asc" })
+    );
+  });
+
+  test("sends no ordering at all when none was asked for", async () => {
+    // The Hub defaults to collected_at/desc, and a cursor issued before sort control existed records no
+    // ordering — so an explicit default is an assumption this layer does not need to make.
+    await listV3FeedbackRecords({ ...base });
+
+    const sent = vi.mocked(listFeedbackRecords).mock.calls[0][0];
+    expect(sent).not.toHaveProperty("sort");
+    expect(sent).not.toHaveProperty("order");
+  });
+
+  test("never sends ordering to the count endpoint, which does not accept it", async () => {
+    // The Hub's /count takes the filters but not sort/order/limit/cursor. Mapping them in the shared
+    // filter builder would 400 every count call.
+    await countV3FeedbackRecords({ ...base, source_type: "survey" });
+
+    const sent = vi.mocked(countFeedbackRecords).mock.calls[0][0];
+    expect(sent).not.toHaveProperty("sort");
+    expect(sent).not.toHaveProperty("order");
+  });
+
+  test("rejects ordering on the count tool rather than silently dropping it", async () => {
+    const response = await countV3FeedbackRecords({
+      ...base,
+      ...({ sort: "created_at" } as object),
+    });
+
+    expect(response.status).toBe(422);
+    expect(countFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects an unknown sort column", async () => {
+    const response = await listV3FeedbackRecords({ ...base, sort: "updated_at" as never });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("sort");
+  });
+
   test("leaves an inverted timestamp range to the Hub", async () => {
     // Deliberate asymmetry: two ISO strings with different offsets do not compare lexicographically, so a
     // local check would reject valid requests. The Hub compares real instants and returns a precise 400,
