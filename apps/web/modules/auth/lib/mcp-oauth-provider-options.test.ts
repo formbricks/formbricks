@@ -26,6 +26,9 @@ vi.mock("@/lib/env", () => ({
  * one) in modules/mcp/auth.ts, which is required by RFC 9068 §4 no matter how the provider behaves.
  */
 describe("getMcpOauthProviderOptions", () => {
+  // Also pinned in mcp-oauth-dcr.test.ts (#8828). The duplication is deliberate: this is the
+  // invariant the whole GHSA-p2fr-6hmx-4528 acceptance rests on, and the two suites can be deleted
+  // or rewritten independently. Do not "de-duplicate" this away.
   test("grants exactly one audience, so no token can be minted for a second resource server", () => {
     const { validAudiences } = getMcpOauthProviderOptions();
 
