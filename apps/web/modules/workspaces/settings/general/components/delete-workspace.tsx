@@ -4,6 +4,7 @@ import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
 import { DeleteWorkspaceRender } from "@/modules/workspaces/settings/general/components/delete-workspace-render";
+import { getPostDeletionDestination } from "@/modules/workspaces/settings/general/lib/post-workspace-deletion-redirect";
 
 interface DeleteWorkspaceProps {
   organizationId: string;
@@ -26,12 +27,24 @@ export const DeleteWorkspace = async ({
   const availableWorkspacesLength = availableWorkspaces ? availableWorkspaces.length : 0;
   const isDeleteDisabled = availableWorkspacesLength <= 1 || !isOwnerOrManager;
 
+  // Where the browser goes after the deletion succeeded. Resolved here, on the server, because
+  // choosing it needs the survey count of the workspace we land on — see
+  // getPostDeletionDestination.
+  const { workspaceId: postDeletionWorkspaceId, path: postDeletionPath } = isDeleteDisabled
+    ? { workspaceId: null, path: "/" }
+    : await getPostDeletionDestination({
+        organizationId,
+        currentWorkspace,
+        availableWorkspaces: availableWorkspaces ?? [],
+      });
+
   return (
     <DeleteWorkspaceRender
       isDeleteDisabled={isDeleteDisabled}
       isOwnerOrManager={isOwnerOrManager}
       currentWorkspace={currentWorkspace}
-      organizationWorkspaces={availableWorkspaces ?? []}
+      postDeletionWorkspaceId={postDeletionWorkspaceId}
+      postDeletionPath={postDeletionPath}
     />
   );
 };

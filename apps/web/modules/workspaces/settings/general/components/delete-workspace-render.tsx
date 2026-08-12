@@ -15,20 +15,23 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { deleteWorkspaceAction } from "@/modules/workspaces/settings/general/actions";
 import { hasMatchingWorkspaceDeleteConfirmation } from "@/modules/workspaces/settings/general/lib/delete-workspace-confirmation";
-import { selectPostWorkspaceDeletionWorkspaceId } from "@/modules/workspaces/settings/general/lib/post-workspace-deletion-redirect";
 
 interface DeleteWorkspaceRenderProps {
   isDeleteDisabled: boolean;
   isOwnerOrManager: boolean;
   currentWorkspace: TWorkspace;
-  organizationWorkspaces: TWorkspace[];
+  // Post-deletion destination, resolved on the server by getPostDeletionDestination: the workspace to
+  // remember as the last active one, and the path to navigate to.
+  postDeletionWorkspaceId: string | null;
+  postDeletionPath: string;
 }
 
 export const DeleteWorkspaceRender = ({
   isDeleteDisabled,
   isOwnerOrManager,
   currentWorkspace,
-  organizationWorkspaces,
+  postDeletionWorkspaceId,
+  postDeletionPath,
 }: DeleteWorkspaceRenderProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -63,22 +66,17 @@ export const DeleteWorkspaceRender = ({
         // Navigate to a remaining workspace of the same organization instead of "/", which resolves the
         // last-visited workspace across every organization and would drop members of multiple
         // organizations into an unrelated one.
-        const fallbackWorkspaceId = selectPostWorkspaceDeletionWorkspaceId(
-          organizationWorkspaces,
-          currentWorkspace
-        );
-
-        if (fallbackWorkspaceId) {
-          localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, fallbackWorkspaceId);
+        if (postDeletionWorkspaceId) {
+          localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, postDeletionWorkspaceId);
           // Keep legacy environment ID in sync for backward compatibility with old SDK clients
-          localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, fallbackWorkspaceId);
+          localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, postDeletionWorkspaceId);
         } else {
           localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
           localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
         }
 
         toast.success(t("workspace.general.workspace_deleted_successfully"));
-        router.push(fallbackWorkspaceId ? `/workspaces/${fallbackWorkspaceId}/` : "/");
+        router.push(postDeletionPath);
       } else {
         const errorMessage = getFormattedErrorMessage(deleteWorkspaceResponse);
         logger.error({ errorMessage, workspaceId: currentWorkspace.id }, "Workspace deletion action failed");

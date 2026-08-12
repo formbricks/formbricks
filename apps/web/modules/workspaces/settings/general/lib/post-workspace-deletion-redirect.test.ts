@@ -1,5 +1,17 @@
-import { describe, expect, test } from "vitest";
-import { selectPostWorkspaceDeletionWorkspaceId } from "./post-workspace-deletion-redirect";
+import { afterEach, describe, expect, test, vi } from "vitest";
+
+vi.mock("server-only", () => ({}));
+
+const mocks = {
+  getOnboardingRedirectPath: vi.fn(),
+};
+
+vi.mock("@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete", () => ({
+  getOnboardingRedirectPath: (...args: unknown[]) => mocks.getOnboardingRedirectPath(...args),
+}));
+
+const { getPostDeletionDestination, selectPostWorkspaceDeletionWorkspaceId } =
+  await import("./post-workspace-deletion-redirect");
 
 const workspace = (id: string, organizationId: string, createdAt: string) => ({
   id,
@@ -58,5 +70,56 @@ describe("selectPostWorkspaceDeletionWorkspaceId", () => {
     selectPostWorkspaceDeletionWorkspaceId(workspaces, deleted);
 
     expect(workspaces.map((entry) => entry.id)).toEqual(["ws-newer", "ws-older"]);
+  });
+});
+
+describe("getPostDeletionDestination", () => {
+  afterEach(() => vi.clearAllMocks());
+
+  const availableWorkspaces = [
+    workspace("ws-deleted", "org-1", "2024-01-01"),
+    workspace("ws-remaining", "org-1", "2024-02-01"),
+  ];
+
+  test("navigates to the surviving workspace when onboarding is complete", async () => {
+    mocks.getOnboardingRedirectPath.mockResolvedValue(null);
+
+    const destination = await getPostDeletionDestination({
+      organizationId: "org-1",
+      currentWorkspace: deleted,
+      availableWorkspaces,
+    });
+
+    expect(destination).toEqual({ workspaceId: "ws-remaining", path: "/workspaces/ws-remaining/" });
+    expect(mocks.getOnboardingRedirectPath).toHaveBeenCalledWith({
+      organizationId: "org-1",
+      workspace: availableWorkspaces[1],
+    });
+  });
+
+  test('keeps the onboarding redirect the removed "/" hop used to run', async () => {
+    mocks.getOnboardingRedirectPath.mockResolvedValue("/organizations/org-1/workspaces/new/survey");
+
+    const destination = await getPostDeletionDestination({
+      organizationId: "org-1",
+      currentWorkspace: deleted,
+      availableWorkspaces,
+    });
+
+    expect(destination).toEqual({
+      workspaceId: "ws-remaining",
+      path: "/organizations/org-1/workspaces/new/survey",
+    });
+  });
+
+  test('falls back to "/" without checking onboarding when the organization has no workspace left', async () => {
+    const destination = await getPostDeletionDestination({
+      organizationId: "org-1",
+      currentWorkspace: deleted,
+      availableWorkspaces: [workspace("ws-other-org", "org-2", "2023-01-01")],
+    });
+
+    expect(destination).toEqual({ workspaceId: null, path: "/" });
+    expect(mocks.getOnboardingRedirectPath).not.toHaveBeenCalled();
   });
 });

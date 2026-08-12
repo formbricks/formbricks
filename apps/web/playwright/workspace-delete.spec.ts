@@ -124,3 +124,43 @@ test("stays in the same organization when deleting a workspace as a member of mu
   await page.waitForURL(`**/workspaces/${remainingWorkspace.id}**`);
   expect(page.url()).not.toContain(otherOrganizationWorkspaceId);
 });
+
+test("still runs the onboarding redirect when the surviving workspace has no survey", async ({
+  page,
+  users,
+}) => {
+  const timestamp = Date.now();
+  const workspaceName = `Delete Workspace ${timestamp}`;
+  const user = await users.create({
+    email: `workspace-delete-onboarding-${timestamp}@example.com`,
+    name: `workspace-delete-onboarding-${timestamp}`,
+    workspaceName,
+  });
+
+  if (!user.workspaceId || !user.organizationId) {
+    throw new Error("Workspace or organization not seeded for test user");
+  }
+
+  // Deliberately no survey: the workspace we land on is the one the onboarding gate reacts to.
+  await prisma.workspace.create({
+    data: {
+      name: `Remaining Workspace ${timestamp}`,
+      organizationId: user.organizationId,
+    },
+    select: { id: true },
+  });
+
+  await user.login();
+  await page.goto(`/workspaces/${user.workspaceId}/settings/workspace/general`, {
+    waitUntil: "domcontentloaded",
+  });
+
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await page.locator("#deleteWorkspaceConfirmation").fill(workspaceName);
+  await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+
+  // Same destination the old "/" hop produced for an organization whose oldest workspace has no
+  // survey yet ("/plan" on Cloud, "/survey" self-hosted).
+  await page.waitForURL(`**/organizations/${user.organizationId}/workspaces/new/**`);
+});
