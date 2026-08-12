@@ -29,16 +29,19 @@ const findSelectedNode = (
 // `isEditable` collapses three distinct block reasons (no permission, archived, enabled) into one
 // boolean; name the actual reason instead of always blaming an "active" workflow. Precedence:
 // permission wins — a read-only member sees the permission message even on an enabled/archived
-// workflow — then archived, then active/enabled. Returns the translation key; the caller runs t().
-const getBlockedReasonKey = (
+// workflow — then archived, then active/enabled. Returns a reason discriminant, not the i18n key,
+// so the caller resolves it with literal `t("…")` calls the translation scanner can detect.
+type TBlockedReason = "readOnly" | "archived" | "active";
+
+const getBlockedReason = (
   isEditable: boolean,
   isReadOnly: boolean,
   status: TWorkflowResource["status"] | undefined | null
-): string | null => {
+): TBlockedReason | null => {
   if (isEditable) return null;
-  if (isReadOnly) return "workspace.workflows.edit_blocked_read_only";
-  if (status === "archived") return "workspace.workflows.edit_blocked_archived";
-  return "workspace.workflows.edit_blocked_active";
+  if (isReadOnly) return "readOnly";
+  if (status === "archived") return "archived";
+  return "active";
 };
 
 const replaceNode = (definition: TWorkflowDefinition, node: TWorkflowNode): TWorkflowDefinition => {
@@ -77,8 +80,15 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   const selectedNode = findSelectedNode(definition, selectedNodeId);
   if (!selectedNode || !definition) return null;
 
-  const blockedReasonKey = getBlockedReasonKey(isEditable, isReadOnly, status);
-  const blockedReason = blockedReasonKey ? t(blockedReasonKey) : null;
+  const blockedReasonType = getBlockedReason(isEditable, isReadOnly, status);
+  const blockedReason =
+    blockedReasonType === "readOnly"
+      ? t("workspace.workflows.edit_blocked_read_only")
+      : blockedReasonType === "archived"
+        ? t("workspace.workflows.edit_blocked_archived")
+        : blockedReasonType === "active"
+          ? t("workspace.workflows.edit_blocked_active")
+          : null;
 
   const registryEntry = getNodeRegistryEntry(selectedNode);
   const ConfigForm = registryEntry.ConfigForm;
