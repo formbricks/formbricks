@@ -10,13 +10,12 @@
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { purgeV3FeedbackDataset } from "../../lib/operations";
-import { ZDatasetPathParams, ZPurgeDatasetBody } from "../../lib/schemas";
+import { ZDatasetPathParams } from "../../lib/schemas";
 
 export const POST = withV3ApiWrapper({
   auth: "session",
   schemas: {
     params: ZDatasetPathParams,
-    body: ZPurgeDatasetBody,
   },
   action: "purged",
   targetType: "feedbackDirectory",
@@ -26,7 +25,6 @@ export const POST = withV3ApiWrapper({
   handler: async ({ authentication, parsedInput, requestId, instance, auditLog }) =>
     purgeV3FeedbackDataset({
       authentication,
-      workspaceId: parsedInput.body.workspaceId,
       datasetId: parsedInput.params.datasetId,
       requestId,
       instance,

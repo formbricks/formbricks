@@ -1,27 +1,24 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
-import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
-import { requireUnifyDirectoryMutationAccess } from "@/app/api/v3/unify-feedback/taxonomy/lib/access";
 import { purgeHubFeedbackRecords } from "@/modules/hub/service";
 import { NO_CONFIG_ERROR } from "@/modules/hub/utils";
+import { requireFeedbackDatasetMutationAccess } from "./access";
 import { purgeV3FeedbackDataset } from "./operations";
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@/app/api/v3/unify-feedback/taxonomy/lib/access", () => ({
-  requireUnifyDirectoryMutationAccess: vi.fn(),
+vi.mock("./access", () => ({
+  requireFeedbackDatasetMutationAccess: vi.fn(),
 }));
 
 vi.mock("@/modules/hub/service", () => ({
   purgeHubFeedbackRecords: vi.fn(),
 }));
 
-const workspaceId = "clxx1234567890123456789012";
 const datasetId = "clfd1234567890123456789012";
-const context: V3WorkspaceContext = { workspaceId, organizationId: "org_1" };
+const context = { organizationId: "org_1" };
 const base = {
   authentication: null,
-  workspaceId,
   datasetId,
   requestId: "req_1",
   instance: "/api/internal/feedback-datasets/x/purge",
@@ -32,7 +29,7 @@ const accepted = { data: { tenantId: datasetId, status: "accepted" }, error: nul
 const newAuditLog = (): TV3AuditLog => ({}) as TV3AuditLog;
 
 beforeEach(() => {
-  vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(context);
+  vi.mocked(requireFeedbackDatasetMutationAccess).mockResolvedValue(context);
   vi.mocked(purgeHubFeedbackRecords).mockResolvedValue(accepted);
 });
 
@@ -61,7 +58,7 @@ describe("purgeV3FeedbackDataset", () => {
   // workspaces, so a workspace member must not be able to destroy records other workspaces read.
   test("purges nothing when authorization fails", async () => {
     const forbidden = new Response("forbidden", { status: 403 });
-    vi.mocked(requireUnifyDirectoryMutationAccess).mockResolvedValue(forbidden);
+    vi.mocked(requireFeedbackDatasetMutationAccess).mockResolvedValue(forbidden);
 
     const response = await purgeV3FeedbackDataset(base);
 
@@ -69,12 +66,11 @@ describe("purgeV3FeedbackDataset", () => {
     expect(purgeHubFeedbackRecords).not.toHaveBeenCalled();
   });
 
-  test("authorizes the dataset through the org owner/manager gate", async () => {
+  test("authorizes the dataset through the org-scoped owner/manager gate", async () => {
     await purgeV3FeedbackDataset(base);
 
-    expect(requireUnifyDirectoryMutationAccess).toHaveBeenCalledWith(
+    expect(requireFeedbackDatasetMutationAccess).toHaveBeenCalledWith(
       null,
-      workspaceId,
       datasetId,
       "req_1",
       base.instance
