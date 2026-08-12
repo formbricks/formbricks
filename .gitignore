@@ -78,8 +78,11 @@ stats.html
 .next-docs/
 
 # robots (installed agent assets - machine-local, do not commit)
-# .claude is machine-local except committed symlinks into .agents/skills
+# .claude is machine-local except committed symlinks into .agents/skills and
+# settings.json, which carries the shared SessionStart hook (it is the only
+# settings layer that reaches Claude Code cloud sessions)
 .claude/*
+!.claude/settings.json
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/nextjs-docs
