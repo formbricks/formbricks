@@ -36,7 +36,9 @@ export const WorkspaceAndOrgSwitch = ({
   isMembershipPending,
   showWorkspaceBreadcrumb = true,
 }: Readonly<WorkspaceAndOrgSwitchProps>) => {
-  const isWorkspaceBreadcrumbVisible = Boolean(showWorkspaceBreadcrumb && currentWorkspaceId);
+  // Keep this as the id itself rather than a boolean: rendering the workspace crumb narrows it to a
+  // defined string, which a separate boolean flag would not do.
+  const workspaceCrumbId = showWorkspaceBreadcrumb ? currentWorkspaceId : undefined;
 
   return (
     <Breadcrumb>
@@ -46,11 +48,11 @@ export const WorkspaceAndOrgSwitch = ({
           currentOrganizationName={currentOrganizationName}
           currentWorkspaceId={currentWorkspaceId}
           isMultiOrgEnabled={isMultiOrgEnabled}
-          isLastCrumb={!isWorkspaceBreadcrumbVisible}
+          isLastCrumb={!workspaceCrumbId}
         />
-        {isWorkspaceBreadcrumbVisible && (
+        {workspaceCrumbId && (
           <WorkspaceBreadcrumb
-            currentWorkspaceId={currentWorkspaceId}
+            currentWorkspaceId={workspaceCrumbId}
             currentWorkspaceName={currentWorkspaceName}
             currentOrganizationId={currentOrganizationId}
             isOwnerOrManager={isOwnerOrManager}
