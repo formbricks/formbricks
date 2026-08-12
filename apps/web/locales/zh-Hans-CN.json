@@ -4222,6 +4222,8 @@
       "duplicate_failed": "复制工作流失败。请重试。",
       "duplicate_success": "工作流已复制。",
       "edit_blocked_active": "请停用工作流以进行更改。",
+      "edit_blocked_archived": "取消归档该工作流以进行更改。",
+      "edit_blocked_read_only": "你没有权限编辑此工作流。",
       "email_attach_response_data_description": "在电子邮件负载中包含触发调查的响应数据。",
       "email_attach_response_data_label": "附加响应数据",
       "email_body_label": "正文",

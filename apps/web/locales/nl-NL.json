@@ -4222,6 +4222,8 @@
       "duplicate_failed": "Dupliceren van de workflow is mislukt. Probeer het opnieuw.",
       "duplicate_success": "Workflow gedupliceerd.",
       "edit_blocked_active": "Schakel de workflow uit om hier wijzigingen aan te brengen.",
+      "edit_blocked_archived": "Dearchiveer de workflow om hier wijzigingen aan te brengen.",
+      "edit_blocked_read_only": "Je hebt geen toestemming om deze workflow te bewerken.",
       "email_attach_response_data_description": "Voeg de antwoordgegevens van de enquête toe aan de e-mailpayload.",
       "email_attach_response_data_label": "Antwoordgegevens toevoegen",
       "email_body_label": "Bericht",

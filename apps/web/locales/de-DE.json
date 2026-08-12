@@ -4222,6 +4222,8 @@
       "duplicate_failed": "Workflow konnte nicht dupliziert werden. Bitte versuche es erneut.",
       "duplicate_success": "Workflow dupliziert.",
       "edit_blocked_active": "Deaktiviere den Workflow, um hier Änderungen vorzunehmen.",
+      "edit_blocked_archived": "Hebe die Archivierung des Workflows auf, um hier Änderungen vorzunehmen.",
+      "edit_blocked_read_only": "Du hast keine Berechtigung, diesen Workflow zu bearbeiten.",
       "email_attach_response_data_description": "Füge die auslösende Umfrageantwort zur E-Mail-Payload hinzu.",
       "email_attach_response_data_label": "Antwortdaten anhängen",
       "email_body_label": "Nachricht",

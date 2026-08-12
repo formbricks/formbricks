@@ -4222,6 +4222,8 @@
       "duplicate_failed": "Failed to duplicate the workflow. Please try again.",
       "duplicate_success": "Workflow duplicated.",
       "edit_blocked_active": "Disable the workflow to make changes here.",
+      "edit_blocked_archived": "Unarchive the workflow to make changes here.",
+      "edit_blocked_read_only": "You don't have permission to edit this workflow.",
       "email_attach_response_data_description": "Include the triggering survey response with the email payload.",
       "email_attach_response_data_label": "Attach response data",
       "email_body_label": "Body",

@@ -4222,6 +4222,8 @@
       "duplicate_failed": "Falha ao duplicar o fluxo de trabalho. Por favor, tenta novamente.",
       "duplicate_success": "Fluxo de trabalho duplicado.",
       "edit_blocked_active": "Desativa o fluxo de trabalho para fazer alterações aqui.",
+      "edit_blocked_archived": "Desarquiva o fluxo de trabalho para fazer alterações aqui.",
+      "edit_blocked_read_only": "Não tens permissão para editar este fluxo de trabalho.",
       "email_attach_response_data_description": "Incluir a resposta do inquérito que desencadeou a ação no corpo do e-mail.",
       "email_attach_response_data_label": "Anexar dados da resposta",
       "email_body_label": "Corpo",

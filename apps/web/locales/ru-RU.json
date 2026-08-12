@@ -4222,6 +4222,8 @@
       "duplicate_failed": "Не удалось дублировать воркфлоу. Попробуй ещё раз.",
       "duplicate_success": "Воркфлоу дублирован.",
       "edit_blocked_active": "Отключите процесс, чтобы внести изменения.",
+      "edit_blocked_archived": "Разархивируй воркфлоу, чтобы внести изменения.",
+      "edit_blocked_read_only": "У тебя нет прав на редактирование этого воркфлоу.",
       "email_attach_response_data_description": "Включить в письмо данные ответа на опрос, который запустил рабочий процесс.",
       "email_attach_response_data_label": "Прикрепить данные ответа",
       "email_body_label": "Текст письма",

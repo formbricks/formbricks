@@ -4222,6 +4222,8 @@
       "duplicate_failed": "Échec de la duplication du workflow. Réessaye.",
       "duplicate_success": "Workflow dupliqué.",
       "edit_blocked_active": "Désactive le workflow pour apporter des modifications ici.",
+      "edit_blocked_archived": "Désarchive le workflow pour effectuer des modifications ici.",
+      "edit_blocked_read_only": "Tu n'as pas la permission de modifier ce workflow.",
       "email_attach_response_data_description": "Inclure la réponse au sondage déclencheur avec la charge utile de l'e-mail.",
       "email_attach_response_data_label": "Joindre les données de réponse",
       "email_body_label": "Corps",

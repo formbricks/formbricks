@@ -4222,6 +4222,8 @@
       "duplicate_failed": "A munkafolyamat másolása sikertelen volt. Kérjük, próbálja meg újra.",
       "duplicate_success": "A munkafolyamat lemásolva.",
       "edit_blocked_active": "A módosítások elvégzéséhez kérem, tiltsa le a munkafolyamatot.",
+      "edit_blocked_archived": "Kérem, archiválja vissza a munkafolyamatot a módosítások eszközléséhez.",
+      "edit_blocked_read_only": "Önnek nincs jogosultsága ezen munkafolyamat szerkesztéséhez.",
       "email_attach_response_data_description": "A kiváltó felmérési válasz csatolása az e-mail adatcsomaghoz.",
       "email_attach_response_data_label": "Válaszadatok csatolása",
       "email_body_label": "Törzs",
