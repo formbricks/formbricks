@@ -1,0 +1,170 @@
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.background.enabled }}
+{{- if and .Values.hub.embeddings.auth.existingSecret .Values.hub.embeddings.huggingFace.token (not .Values.hub.embeddings.huggingFace.existingSecret) }}
+  {{- fail "hub.embeddings.huggingFace.token cannot be stored when hub.embeddings.auth.existingSecret is set; put HF_TOKEN in the existing auth secret or set hub.embeddings.huggingFace.existingSecret" }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "formbricks.hubEmbeddingsBackgroundName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsBackgroundName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-embeddings-background
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  serviceName: {{ include "formbricks.hubEmbeddingsBackgroundHeadlessName" . }}
+  podManagementPolicy: Parallel
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  updateStrategy:
+    type: RollingUpdate
+  {{- if not .Values.hub.embeddings.background.autoscaling.enabled }}
+  replicas: {{ .Values.hub.embeddings.background.replicas | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsBackgroundName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsBackgroundName" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: hub-embeddings-background
+        {{- with .Values.hub.embeddings.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.hub.embeddings.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.hub.embeddings.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.embeddings.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.embeddings.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.embeddings.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.hub.embeddings.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: hub-embeddings-background
+          image: "{{ .Values.hub.embeddings.image.repository }}:{{ .Values.hub.embeddings.image.tag }}"
+          imagePullPolicy: {{ .Values.hub.embeddings.image.pullPolicy }}
+          {{- with .Values.hub.embeddings.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.hub.embeddings.args }}
+          args:
+            {{- toYaml .Values.hub.embeddings.args | nindent 12 }}
+          {{- else }}
+          args:
+            - --model-id
+            - {{ .Values.hub.embeddings.model | quote }}
+            - --port
+            - {{ .Values.hub.embeddings.port | quote }}
+            - --huggingface-hub-cache
+            - {{ .Values.hub.embeddings.background.persistence.mountPath | quote }}
+            - --served-model-name
+            - {{ include "formbricks.hubEmbeddingsServedModelName" . | quote }}
+            {{- with .Values.hub.embeddings.revision }}
+            - --revision
+            - {{ . | quote }}
+            {{- end }}
+            {{- with .Values.hub.embeddings.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.hub.embeddings.port }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.hub.embeddings.prometheusPort }}
+              protocol: TCP
+          {{- if or .Values.hub.embeddings.auth.enabled .Values.hub.embeddings.huggingFace.existingSecret .Values.hub.embeddings.huggingFace.token (gt (len .Values.hub.embeddings.env) 0) }}
+          env:
+            {{- if .Values.hub.embeddings.auth.enabled }}
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.hubEmbeddingsSecretName" . }}
+                  key: {{ .Values.hub.embeddings.auth.secretKey | default "EMBEDDING_PROVIDER_API_KEY" | quote }}
+            {{- end }}
+            {{- if or .Values.hub.embeddings.huggingFace.existingSecret .Values.hub.embeddings.huggingFace.token }}
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.hubEmbeddingsHuggingFaceSecretName" . }}
+                  key: {{ .Values.hub.embeddings.huggingFace.tokenKey | default "HF_TOKEN" | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.hub.embeddings.env }}
+            {{- if not (or (and $.Values.hub.embeddings.auth.enabled (eq $key "API_KEY")) (and (or $.Values.hub.embeddings.huggingFace.existingSecret $.Values.hub.embeddings.huggingFace.token) (eq $key "HF_TOKEN"))) }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.probes.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.probes.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.probes.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.background.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.hub.embeddings.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: model-cache
+              mountPath: {{ .Values.hub.embeddings.background.persistence.mountPath }}
+      {{- if not .Values.hub.embeddings.background.persistence.enabled }}
+      volumes:
+        - name: model-cache
+          emptyDir: {}
+      {{- end }}
+  {{- if .Values.hub.embeddings.background.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: model-cache
+      spec:
+        accessModes:
+          {{- toYaml .Values.hub.embeddings.background.persistence.accessModes | nindent 10 }}
+        resources:
+          requests:
+            storage: {{ .Values.hub.embeddings.background.persistence.size }}
+        {{- with .Values.hub.embeddings.background.persistence.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+  {{- end }}
+{{- end }}

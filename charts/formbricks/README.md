@@ -113,6 +113,47 @@ The generated Hub embedding configuration is:
 - `EMBEDDING_BASE_URL=http://<release>-hub-embeddings:8080/v1`
 - `EMBEDDING_PROVIDER_API_KEY` from a dedicated embeddings Secret
 
+For sustained background throughput, enable the worker-only TEI pool. Hub API and semantic-search
+queries continue to use the foreground service; only `hub-worker` receives the background URL and
+micro-batch settings:
+
+```yaml
+hub:
+  embeddings:
+    enabled: true
+    background:
+      enabled: true
+      maxConcurrent: "24"
+      batchSize: "8"
+      batchMaxWaitMs: "25"
+      batchMaxInFlight: "3"
+      persistence:
+        storageClass: gp3
+      resources:
+        requests:
+          cpu: "8"
+          memory: 8Gi
+      autoscaling:
+        enabled: true
+        minReplicas: 1
+        maxReplicas: 6
+```
+
+The background pool is a StatefulSet with one retained RWO cache PVC per replica. Before a planned
+backfill, temporarily set both autoscaling replica bounds to the desired pre-warmed count and wait
+for every pod to become Ready. Restore the steady-state bounds after the backlog drains.
+
+Embedding backfills are opt-in and never render a Job unless `hub.embeddingBackfill.enabled=true`.
+Each deliberate run requires a new `runId`; start with `countOnly: true`, then use `tenantId` or
+`maxRecords` to limit canary waves before an unlimited run. The selected Hub image must include
+`/app/backfill-embeddings` (a release containing [formbricks/hub#121](https://github.com/formbricks/hub/pull/121));
+older images cannot run this Job.
+
+Hub exports the durable missing-record count as
+`hub_enrichment_pending_records{enrichment="taxonomy_embedding"}`. Alert when it remains above zero
+while `hub_river_queue_depth{queue="embeddings"}` remains zero for 15 minutes; that detects a
+stranded taxonomy backfill even when the UI progress bar has stopped moving.
+
 The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. For private or gated models, provide `hub.embeddings.huggingFace.token` or set `hub.embeddings.huggingFace.existingSecret`.
 
 When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
@@ -418,6 +459,21 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.auth.enabled                                        | bool   | `true`                                                                      |                                                           |
 | hub.embeddings.auth.existingSecret                                 | string | `""`                                                                        |                                                           |
 | hub.embeddings.auth.secretKey                                      | string | `"EMBEDDING_PROVIDER_API_KEY"`                                              |                                                           |
+| hub.embeddings.background.autoscaling.enabled                      | bool   | `false`                                                                     |                                                           |
+| hub.embeddings.background.autoscaling.maxReplicas                  | int    | `6`                                                                         |                                                           |
+| hub.embeddings.background.autoscaling.minReplicas                  | int    | `1`                                                                         |                                                           |
+| hub.embeddings.background.baseUrl                                  | string | `""`                                                                        | Defaults to the worker-only background TEI service URL.   |
+| hub.embeddings.background.batchMaxInFlight                         | string | `"1"`                                                                       |                                                           |
+| hub.embeddings.background.batchMaxWaitMs                           | string | `"25"`                                                                      |                                                           |
+| hub.embeddings.background.batchSize                                | string | `"1"`                                                                       |                                                           |
+| hub.embeddings.background.enabled                                  | bool   | `false`                                                                     |                                                           |
+| hub.embeddings.background.maxConcurrent                            | string | `"5"`                                                                       |                                                           |
+| hub.embeddings.background.persistence.enabled                      | bool   | `true`                                                                      |                                                           |
+| hub.embeddings.background.persistence.size                         | string | `"10Gi"`                                                                    | One retained cache volume per StatefulSet replica.        |
+| hub.embeddings.background.persistence.storageClass                 | string | `""`                                                                        |                                                           |
+| hub.embeddings.background.replicas                                 | int    | `1`                                                                         | Used when background autoscaling is disabled.             |
+| hub.embeddings.background.resources.requests.cpu                   | string | `"8"`                                                                       |                                                           |
+| hub.embeddings.background.resources.requests.memory                | string | `"8Gi"`                                                                     |                                                           |
 | hub.embeddings.autoscaling.enabled                                 | bool   | `false`                                                                     |                                                           |
 | hub.embeddings.autoscaling.maxReplicas                             | int    | `2`                                                                         |                                                           |
 | hub.embeddings.autoscaling.minReplicas                             | int    | `1`                                                                         |                                                           |
@@ -447,6 +503,12 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.service.port                                        | int    | `8080`                                                                      |                                                           |
 | hub.embeddings.service.type                                        | string | `"ClusterIP"`                                                               |                                                           |
 | hub.env                                                            | object | `{}`                                                                        |                                                           |
+| hub.embeddingBackfill.countOnly                                    | bool   | `true`                                                                      | Preview missing records without enqueueing.               |
+| hub.embeddingBackfill.enabled                                      | bool   | `false`                                                                     |                                                           |
+| hub.embeddingBackfill.maxRecords                                   | int    | `0`                                                                         | Zero means unlimited.                                     |
+| hub.embeddingBackfill.runId                                        | string | `""`                                                                        | Required unique identifier for each enabled Job run.      |
+| hub.embeddingBackfill.taxonomy                                     | bool   | `false`                                                                     | Use taxonomy-translated embedding input.                  |
+| hub.embeddingBackfill.tenantId                                     | string | `""`                                                                        | Restrict the run to one tenant.                           |
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
 | hub.extraVolumeMounts                                              | list   | `[]`                                                                        | Additional volume mounts for Hub API and worker.          |
 | hub.extraVolumes                                                   | list   | `[]`                                                                        | Additional pod volumes for Hub API and worker.            |
