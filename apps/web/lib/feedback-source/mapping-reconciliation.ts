@@ -9,8 +9,8 @@ import {
 } from "@formbricks/types/feedback-source";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { validateInputs } from "../utils/validate";
-import { getFeedbackSourcesBySurveyId } from "./service";
-import { getSupportedHubFieldTypes } from "./survey-elements";
+import { getFeedbackSourcesToReconcile } from "./service";
+import { indexSurveyElements } from "./survey-elements";
 
 /**
  * Result of reconciling one survey's stored feedback-source mappings against that survey's current
@@ -27,13 +27,6 @@ export type TFeedbackSourceReconciliation = {
   /** Mapped elements that still exist but whose hubFieldType has changed. */
   toUpdate: { elementId: string; hubFieldType: THubFieldType }[];
 };
-
-/** Fresh object per call: the arrays are handed to callers, so a shared constant could be aliased. */
-const emptyReconciliation = (): TFeedbackSourceReconciliation => ({
-  toCreate: [],
-  toDelete: [],
-  toUpdate: [],
-});
 
 export const isEmptyReconciliation = (reconciliation: TFeedbackSourceReconciliation): boolean =>
   reconciliation.toCreate.length === 0 &&
@@ -71,21 +64,34 @@ export const reconcileMappingsAgainstSurvey = (
   elementScope: TFeedbackSourceElementScope
 ): TFeedbackSourceReconciliation => {
   const surveyMappings = storedMappings.filter((mapping) => mapping.surveyId === surveyId);
-  const supportedHubFieldTypes = getSupportedHubFieldTypes(blocks);
+  const { elementIds, supportedHubFieldTypes } = indexSurveyElements(blocks);
 
   const toCreate: { elementId: string; hubFieldType: THubFieldType }[] = [];
-  const toDelete: string[] = [];
   const toUpdate: { elementId: string; hubFieldType: THubFieldType }[] = [];
+
+  // Two different reasons a row must go, kept apart because only one of them is safe to defer.
+  //
+  // The element is GONE: the publish path looks its answer up by element id, finds nothing and skips
+  // the row (transform.ts), so the row is inert. Keeping it publishes nothing.
+  //
+  // The element still EXISTS but was retyped to something with no Hub field — contactInfo, address,
+  // cal, cta, fileUpload, consent. The id is preserved across a retype, so the publish path still
+  // finds the answer and ships it under the row's stale hubFieldType: a contactInfo answer is an
+  // array, which lands in Hub as `value_text: value.join(", ")` — name, email and phone in one
+  // string, for the element types the product refuses to map precisely because they hold that data.
+  // These rows are actively leaking and must always be deleted.
+  const removedElementIds: string[] = [];
+  const unmappableElementIds: string[] = [];
 
   for (const mapping of surveyMappings) {
     const currentHubFieldType = supportedHubFieldTypes.get(mapping.elementId);
 
-    // Absent covers both "the question was deleted" and "it was retyped to something with no Hub
-    // field". Either way the row can no longer publish anything meaningful, and the creation path in
-    // `resolveFormbricksMappingsInput` refuses to map such an element in the first place — so keeping
-    // it would let an element the product excludes keep publishing under a stale hubFieldType.
     if (!currentHubFieldType) {
-      toDelete.push(mapping.elementId);
+      if (elementIds.has(mapping.elementId)) {
+        unmappableElementIds.push(mapping.elementId);
+      } else {
+        removedElementIds.push(mapping.elementId);
+      }
       continue;
     }
 
@@ -102,22 +108,38 @@ export const reconcileMappingsAgainstSurvey = (
     }
   }
 
-  // Both action schemas require min(1) mapping and resolveFormbricksMappingsInput throws on an empty
-  // set, so a formbricks_survey source with zero rows for its survey is a state the rest of the app
-  // cannot produce or represent — and it is unrecoverable, because getFeedbackSourcesBySurveyId
-  // matches on `formbricksMappings: { some: { surveyId } }`, so the source would never be found for
-  // this survey again (no future reconcile, no re-add). Keep the rows and let a human re-map.
+  // A source with zero rows for a survey is unrecoverable: every other write path requires min(1), and
+  // getFeedbackSourcesToReconcile matches on `formbricksMappings: { some: { surveyId } }`, so the source
+  // would never be found for this survey again. Where the only rows left are inert (their elements are
+  // gone), keeping them costs nothing and preserves that handle — a pending create rescues the source
+  // too, so the hold only applies when nothing is being added.
   //
-  // A pending create rescues the source, so it only applies when nothing is being added.
-  if (toCreate.length === 0 && toDelete.length === surveyMappings.length && surveyMappings.length > 0) {
+  // Leaking rows are never held back: stopping the export outranks keeping the source discoverable.
+  const wouldRemoveEveryMapping =
+    toCreate.length === 0 &&
+    removedElementIds.length + unmappableElementIds.length === surveyMappings.length &&
+    surveyMappings.length > 0;
+  const holdBackRemovedRows = wouldRemoveEveryMapping && removedElementIds.length > 0;
+
+  if (holdBackRemovedRows) {
     logger.warn(
-      { surveyId, mappingCount: surveyMappings.length },
-      "Skipping feedback-source reconciliation: it would remove every mapping for this survey"
+      { surveyId, mappingCount: surveyMappings.length, unmappableCount: unmappableElementIds.length },
+      "Keeping inert feedback-source mappings: deleting them would leave this survey with none"
     );
-    return emptyReconciliation();
+  } else if (wouldRemoveEveryMapping) {
+    // Only leaking rows are left, so they all go and the source loses its handle on this survey. That
+    // is the lesser harm, but it needs a human, so say so loudly.
+    logger.error(
+      { surveyId, mappingCount: surveyMappings.length },
+      "Removing every feedback-source mapping for this survey: all mapped questions were retyped to types with no Hub field. The source must be re-mapped."
+    );
   }
 
-  return { toCreate, toDelete, toUpdate };
+  return {
+    toCreate,
+    toDelete: holdBackRemovedRows ? unmappableElementIds : [...removedElementIds, ...unmappableElementIds],
+    toUpdate,
+  };
 };
 
 /**
@@ -209,7 +231,7 @@ export const reconcileFeedbackSourcesForSurvey = async (
   blocks: TSurveyBlock[]
 ): Promise<void> => {
   try {
-    const feedbackSources = await getFeedbackSourcesBySurveyId(surveyId);
+    const feedbackSources = await getFeedbackSourcesToReconcile(surveyId);
     for (const source of feedbackSources) {
       const reconciliation = reconcileMappingsAgainstSurvey(
         source.formbricksMappings,

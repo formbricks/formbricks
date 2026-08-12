@@ -7,6 +7,7 @@ import {
   deleteFeedbackSource,
   getFeedbackSourceWithMappingsById,
   getFeedbackSourcesBySurveyId,
+  getFeedbackSourcesToReconcile,
   getFeedbackSourcesWithMappings,
   updateFeedbackSource,
   updateFeedbackSourceWithMappings,
@@ -210,6 +211,36 @@ describe("getFeedbackSourceWithMappingsById", () => {
     vi.mocked(prisma.feedbackSource.findUnique).mockRejectedValue(new Error("boom"));
 
     await expect(getFeedbackSourceWithMappingsById(FEEDBACK_SOURCE_ID, ENV_ID)).rejects.toThrow("boom");
+  });
+});
+
+describe("getFeedbackSourcesToReconcile", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // Deliberately NOT filtered to active, unlike the publish-path reader. A paused source is exactly
+  // the one whose rows must not drift: a question retyped to contactInfo while it is paused would keep
+  // its stale mapping, and resuming submits no mappings so nothing would fix it — the first response
+  // after the resume would publish that answer.
+  test("returns sources of every status, so a paused source's rows still get corrected", async () => {
+    vi.mocked(prisma.feedbackSource.findMany).mockResolvedValue([
+      mockFeedbackSourceWithMappingsFromDb,
+    ] as never);
+
+    const result = await getFeedbackSourcesToReconcile(SURVEY_ID);
+
+    expect(prisma.feedbackSource.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          type: "formbricks_survey",
+          formbricksMappings: { some: { surveyId: SURVEY_ID } },
+        },
+      })
+    );
+    const [[args]] = vi.mocked(prisma.feedbackSource.findMany).mock.calls as any;
+    expect(args.where).not.toHaveProperty("status");
+    expect(result).toHaveLength(1);
   });
 });
 
@@ -443,6 +474,11 @@ describe("createFeedbackSourceWithMappings", () => {
       }
     );
 
+    // The scope is the only record of whether the operator wanted every question tracked, so a create
+    // that drops it silently turns a "track everything" source into a curated one.
+    expect(tx.feedbackSource.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ elementScope: "all" }) })
+    );
     expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledTimes(2);
     expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -714,6 +750,11 @@ describe("updateFeedbackSourceWithMappings", () => {
       where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
     });
     expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledTimes(1);
+    // Re-derived on every save in the same transaction as the rows: this is also what gives sources
+    // created before the column existed their real scope.
+    expect(tx.feedbackSource.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ elementScope: "all" }) })
+    );
   });
 
   test("replaces field mappings when provided", async () => {

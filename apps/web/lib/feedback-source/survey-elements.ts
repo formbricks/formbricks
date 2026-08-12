@@ -3,28 +3,40 @@ import { THubFieldType, getHubFieldTypeFromElementType } from "@formbricks/types
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 
+export type TSurveyElementIndex = {
+  /** Every element id in the survey, mappable or not. */
+  elementIds: Set<string>;
+  /** Only the elements that can be represented as a Hub field, keyed by element id, in survey order. */
+  supportedHubFieldTypes: Map<string, THubFieldType>;
+};
+
 /**
- * Every element in `blocks` that the product can represent as a Hub field, keyed by element id and in
- * survey order.
+ * Index a survey's elements once for the two callers that must agree on what "mappable" means:
+ * resolving an operator's selection into mapping rows, and reconciling stored rows against a survey
+ * that has since changed.
  *
- * Elements whose type has no Hub field are omitted — the
- * UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES (contactInfo, address, cal, cta, fileUpload, consent).
+ * Both sets are returned because the difference between them carries meaning. An element id present
+ * in `elementIds` but absent from `supportedHubFieldTypes` was retyped to one of the
+ * UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES (contactInfo, address, cal, cta, fileUpload, consent) —
+ * which is a very different situation from an id that is missing entirely, because the element still
+ * resolves on the publish path and would keep exporting answers.
+ *
  * `getHubFieldTypeFromElementType` is declared as returning THubFieldType but is really a bare index
- * access into a Record<string, THubFieldType>, so it yields undefined for those; this is the one place
- * that cast lives.
- *
- * Shared by the two callers that must agree on what "mappable" means: resolving an operator's
- * selection into mapping rows, and reconciling stored rows against a survey that has since changed.
+ * access into a Record<string, THubFieldType>, so it yields undefined for the unsupported types; this
+ * is the one place that cast lives.
  */
-export const getSupportedHubFieldTypes = (blocks: TSurveyBlock[]): Map<string, THubFieldType> => {
-  const supported = new Map<string, THubFieldType>();
+export const indexSurveyElements = (blocks: TSurveyBlock[]): TSurveyElementIndex => {
+  const elementIds = new Set<string>();
+  const supportedHubFieldTypes = new Map<string, THubFieldType>();
 
   for (const element of getElementsFromBlocks(blocks)) {
+    elementIds.add(element.id);
+
     const hubFieldType = getHubFieldTypeFromElementType(element.type) as THubFieldType | undefined;
     if (hubFieldType) {
-      supported.set(element.id, hubFieldType);
+      supportedHubFieldTypes.set(element.id, hubFieldType);
     }
   }
 
-  return supported;
+  return { elementIds, supportedHubFieldTypes };
 };

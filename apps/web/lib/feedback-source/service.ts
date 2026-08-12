@@ -164,6 +164,39 @@ export const getFeedbackSourcesBySurveyId = reactCache(
   }
 );
 
+/**
+ * Every formbricks_survey source mapping `surveyId`, regardless of status — the reconciliation read.
+ *
+ * Deliberately not filtered to `active` like the publish-path reader above, and deliberately not
+ * request-cached: a paused source is exactly the one whose rows must not be allowed to drift. A
+ * question retyped to contactInfo while a source is paused would otherwise keep its stale mapping,
+ * and resuming the source does not reconcile (it submits no mappings), so the first response after a
+ * resume would publish that answer. Keeping paused rows correct costs nothing and is what makes
+ * resuming safe.
+ */
+export const getFeedbackSourcesToReconcile = async (
+  surveyId: string
+): Promise<TFeedbackSourceWithMappings[]> => {
+  validateInputs([surveyId, ZId]);
+
+  try {
+    const feedbackSources = await prisma.feedbackSource.findMany({
+      where: {
+        type: "formbricks_survey",
+        formbricksMappings: { some: { surveyId } },
+      },
+      select: selectFeedbackSourceWithMappings,
+    });
+
+    return feedbackSources.map(mapFeedbackSourceWithMappings);
+  } catch (error) {
+    if (isPrismaKnownRequestError(error)) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
 export const updateFeedbackSource = async (
   feedbackSourceId: string,
   workspaceId: string,

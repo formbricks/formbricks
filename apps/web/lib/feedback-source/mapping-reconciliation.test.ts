@@ -7,7 +7,7 @@ import {
   reconcileFeedbackSourcesForSurvey,
   reconcileMappingsAgainstSurvey,
 } from "./mapping-reconciliation";
-import { getFeedbackSourcesBySurveyId } from "./service";
+import { getFeedbackSourcesToReconcile } from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -25,7 +25,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("./service", () => ({
-  getFeedbackSourcesBySurveyId: vi.fn(),
+  getFeedbackSourcesToReconcile: vi.fn(),
 }));
 
 // Deliberately unmocked: @/lib/survey/utils, @formbricks/types/feedback-source and
@@ -215,11 +215,48 @@ describe("reconcileMappingsAgainstSurvey", () => {
   });
 
   // A source with zero rows for its survey is unreachable through every other write path (both
-  // action schemas require min(1)) and unrecoverable, because getFeedbackSourcesBySurveyId matches on
+  // action schemas require min(1)) and unrecoverable, because getFeedbackSourcesToReconcile matches on
   // `formbricksMappings: { some: { surveyId } }` — the source would never be found for this survey
   // again, so no later reconcile could heal it.
-  test("skips the delete when it would remove every mapping for the survey", () => {
-    const blocks = buildBlocks([{ id: "el-unrelated", type: "fileUpload" }]);
+  // The guard below must never hold back a row whose element still EXISTS but was retyped to an
+  // unmappable type. The publish path resolves such a row by element id, finds the answer and ships it
+  // under the stale hubFieldType — a contactInfo answer is an array, so it lands in Hub as
+  // `value_text: name, email, phone`. Holding it back to keep the source discoverable would trade a
+  // recoverable inconvenience for an ongoing PII export.
+  test.each([["contactInfo"], ["address"], ["fileUpload"]])(
+    "deletes a lone mapping retyped to %s even though it empties the survey",
+    (elementType) => {
+      const result = reconcileMappingsAgainstSurvey(
+        [mapping("el-only", "text")],
+        buildBlocks([{ id: "el-only", type: elementType }]),
+        SURVEY_ID,
+        "specific"
+      );
+
+      expect(result.toDelete).toEqual(["el-only"]);
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ surveyId: SURVEY_ID }),
+        expect.stringContaining("Removing every feedback-source mapping")
+      );
+    }
+  );
+
+  test("drops the leaking row but keeps the inert one when both would otherwise go", () => {
+    // el-gone publishes nothing (its element is absent), el-retyped is actively leaking. Keeping the
+    // inert row preserves the source's handle on this survey without exporting anything.
+    const result = reconcileMappingsAgainstSurvey(
+      [mapping("el-gone", "text"), mapping("el-retyped", "text")],
+      buildBlocks([{ id: "el-retyped", type: "contactInfo" }]),
+      SURVEY_ID,
+      "specific"
+    );
+
+    expect(result.toDelete).toEqual(["el-retyped"]);
+  });
+
+  test("skips the delete when every mapped element is merely gone", () => {
+    // Neither mapped id exists any more, so both rows are inert and safe to hold back.
+    const blocks = buildBlocks([{ id: "el-unrelated", type: "openText" }]);
 
     const result = reconcileMappingsAgainstSurvey(
       [mapping("el-text", "text"), mapping("el-nps", "nps")],
@@ -231,7 +268,7 @@ describe("reconcileMappingsAgainstSurvey", () => {
     expect(result).toEqual({ toCreate: [], toDelete: [], toUpdate: [] });
     expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ surveyId: SURVEY_ID }),
-      "Skipping feedback-source reconciliation: it would remove every mapping for this survey"
+      "Keeping inert feedback-source mappings: deleting them would leave this survey with none"
     );
   });
 
@@ -420,7 +457,7 @@ describe("reconcileFeedbackSourcesForSurvey", () => {
 
   test("reconciles each active source against the persisted blocks", async () => {
     const tx = mockTx();
-    vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([
+    vi.mocked(getFeedbackSourcesToReconcile).mockResolvedValue([
       {
         id: SOURCE_ID,
         workspaceId: WORKSPACE_ID,
@@ -435,7 +472,7 @@ describe("reconcileFeedbackSourcesForSurvey", () => {
 
     await reconcileFeedbackSourcesForSurvey(SURVEY_ID, buildBlocks([{ id: "el-kept", type: "rating" }]));
 
-    expect(getFeedbackSourcesBySurveyId).toHaveBeenCalledWith(SURVEY_ID);
+    expect(getFeedbackSourcesToReconcile).toHaveBeenCalledWith(SURVEY_ID);
     // The sibling survey's row must survive; only this survey's stale row is removed.
     expect(tx.feedbackSourceFormbricksMapping.deleteMany).toHaveBeenCalledWith({
       where: {
@@ -448,7 +485,7 @@ describe("reconcileFeedbackSourcesForSurvey", () => {
   });
 
   test("does nothing when the survey backs no feedback source", async () => {
-    vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([]);
+    vi.mocked(getFeedbackSourcesToReconcile).mockResolvedValue([]);
 
     await reconcileFeedbackSourcesForSurvey(SURVEY_ID, buildBlocks([{ id: "el-a", type: "openText" }]));
 
@@ -456,7 +493,7 @@ describe("reconcileFeedbackSourcesForSurvey", () => {
   });
 
   test("logs and swallows a lookup failure so the survey write is never blocked", async () => {
-    vi.mocked(getFeedbackSourcesBySurveyId).mockRejectedValue(new Error("DB down"));
+    vi.mocked(getFeedbackSourcesToReconcile).mockRejectedValue(new Error("DB down"));
 
     await expect(
       reconcileFeedbackSourcesForSurvey(SURVEY_ID, buildBlocks([{ id: "el-a", type: "openText" }]))

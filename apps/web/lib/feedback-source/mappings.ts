@@ -4,7 +4,7 @@ import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/erro
 import { THubFieldType } from "@formbricks/types/feedback-source";
 import { getSurvey } from "@/lib/survey/service";
 import type { TMappingsInput } from "./service";
-import { getSupportedHubFieldTypes } from "./survey-elements";
+import { indexSurveyElements } from "./survey-elements";
 
 type TResolvedSurveyMappings = {
   mappings: { surveyId: string; elementId: string; hubFieldType: THubFieldType }[];
@@ -33,7 +33,7 @@ const resolveSurveyMappings = async (
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const supportedHubFieldTypes = getSupportedHubFieldTypes(survey.blocks);
+  const { supportedHubFieldTypes } = indexSurveyElements(survey.blocks);
 
   const mappings = elementIds.flatMap((elementId) => {
     const hubFieldType = supportedHubFieldTypes.get(elementId);
