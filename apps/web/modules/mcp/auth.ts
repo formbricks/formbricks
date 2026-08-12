@@ -39,6 +39,12 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "authorization",
 ]);
 
+/**
+ * RFC 9068 §2.1 media type for a JWT access token. Better Auth stamps it into the JWS header from
+ * 1.7 onwards; 1.6 emitted no `typ` at all.
+ */
+const JWT_ACCESS_TOKEN_TYPE = "at+jwt";
+
 const oauthResourceClient = oauthProviderResourceClient(auth);
 
 export type TMcpAuthInfo = AuthInfo & {
@@ -395,10 +401,18 @@ async function authenticateMcpOAuthBearer(
   let payload: JWTPayload;
 
   try {
-    payload = await oauthResourceClient.getActions().verifyAccessToken(token, {
+    // Renamed from `verifyAccessToken` in Better Auth 1.7 (ENG-2343). 1.7 also stops passing
+    // `verifyOptions.audience` into its own jwtVerify, validating instead that each `aud` value
+    // resolves to a registered resource — which is not the same question as "is this token for ME".
+    // That makes hasAcceptedMcpAudience below the only check that answers it. Keep both.
+    payload = await oauthResourceClient.getActions().verifyBearerToken(token, {
       verifyOptions: {
         audience: getMcpResourceUrl(),
         issuer: getAuthIssuerUrl(),
+        // RFC 9068 §4: an access token must be typed `at+jwt`, and a resource server should refuse
+        // one that is not. Enforceable only from 1.7 — 1.6 issued no `typ` header at all, so
+        // requiring it before the upgrade would have rejected every token in circulation.
+        typ: JWT_ACCESS_TOKEN_TYPE,
       },
       jwksUrl: `${getAuthIssuerUrl()}/jwks`,
     });
