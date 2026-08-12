@@ -130,9 +130,19 @@ overrides:
   # tooling (@prisma/dev); patched in 1.4.2.
   # load-bearing: @prisma/dev pins 1.2.0.
   valibot: 1.4.2
+  # === Dependabot high-risk batch (ENG-2205, ENG-2206) ===
+  # ip-address@10 (ENG-2196), undici@6/@7 (ENG-2204/ENG-2215) were already pinned on main at the same
+  # versions (see the earlier overrides), so only socket.io-parser and fast-uri remain net-new here.
+  # ENG-2206 / GHSA-2m8v-j782-fhvr (CVE-2026-69185): socket.io-parser <4.2.7 memory exhaustion on a
+  # zero-attachment packet; patched in 4.2.7. load-bearing: socket.io resolves 4.2.6 (runtime).
+  socket.io-parser@4: 4.2.7
+  # ENG-2205 / GHSA-7p8r-x3mc-p8w7 (CVE-2026-18446): fast-uri >=3.0.0 <3.1.5 host confusion via a
+  # backslash authority introducer; patched in 3.1.5. Previously self-resolved, reopened by the new
+  # advisory. load-bearing: @redocly/ajv and ajv pull 3.1.4 (dev-only, API-docs tooling).
+  fast-uri@3: 3.1.5
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
-  # ajv@6, @babel/core, body-parser, engine.io@6, fast-uri@3, hono, linkify-it, protobufjs@7 and
-  # uuid@11 all resolve to the patched version on their own now.
+  # ajv@6, @babel/core, body-parser, engine.io@6, hono, linkify-it, protobufjs@7 and uuid@11
+  # all resolve to the patched version on their own now.
   # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
   # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
   # === Fixable, deferred to its own PR (ENG-2234) — brace-expansion ===
