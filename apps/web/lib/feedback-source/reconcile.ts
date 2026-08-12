@@ -1,6 +1,11 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { createFeedbackRecordsBatch, listFeedbackRecords, updateFeedbackRecord } from "@/modules/hub";
+import {
+  type HubFeedbackRecordResult,
+  createFeedbackRecordsBatch,
+  listFeedbackRecords,
+  updateFeedbackRecord,
+} from "@/modules/hub";
 import type { FeedbackRecordCreateParams, FeedbackRecordUpdateParams } from "@/modules/hub/types";
 
 /** Hub returns this when (tenant_id, submission_id, field_id) already exists. It is terminal. */
@@ -226,6 +231,82 @@ const mapWithConcurrency = async <TIn, TOut>(
   return results;
 };
 
+/** One record Hub rejected as already existing, with its index in the input. */
+type TConflict = { record: FeedbackRecordCreateParams; index: number };
+
+/** Hub's batch response, split by what each outcome obliges the caller to do next. */
+type TBatchPartition = {
+  created: number;
+  conflicts: TConflict[];
+  failures: TReconcileFailure[];
+};
+
+/**
+ * Sort the batch create's per-record outcomes into landed, needs-reconciling, and genuinely failed.
+ *
+ * A 409 is not a failure — see `reconcileFeedbackRecords`.
+ */
+const partitionBatchOutcomes = (
+  records: FeedbackRecordCreateParams[],
+  outcomes: HubFeedbackRecordResult[]
+): TBatchPartition => {
+  const partition: TBatchPartition = { created: 0, conflicts: [], failures: [] };
+
+  for (const [index, outcome] of outcomes.entries()) {
+    const { error } = outcome;
+
+    if (!error) {
+      partition.created += 1;
+    } else if (error.status === CONFLICT_STATUS) {
+      const record = records[index];
+      if (record) {
+        partition.conflicts.push({ record, index });
+      }
+    } else {
+      partition.failures.push({
+        index,
+        error: {
+          status: error.status,
+          message: error.message,
+          detail: error.detail,
+        },
+      });
+    }
+  }
+
+  return partition;
+};
+
+type TResolvedConflict = { index: number; fieldId: string; outcome: TConflictOutcome };
+
+type TConflictTally = {
+  reconciled: number;
+  superseded: number;
+  /** Conflicts Hub reported but this tenant cannot see. Also counted in `failures`. */
+  notVisible: { index: number; fieldId: string }[];
+  failures: TReconcileFailure[];
+};
+
+/** Fold the per-conflict outcomes into the counts the caller reports. */
+const tallyConflictOutcomes = (resolved: TResolvedConflict[]): TConflictTally => {
+  const tally: TConflictTally = { reconciled: 0, superseded: 0, notVisible: [], failures: [] };
+
+  for (const { index, fieldId, outcome } of resolved) {
+    if (outcome.status === "reconciled") {
+      tally.reconciled += 1;
+    } else if (outcome.status === "superseded") {
+      tally.superseded += 1;
+    } else if (outcome.status === "not_visible") {
+      tally.notVisible.push({ index, fieldId });
+      tally.failures.push({ index, error: { message: "conflict not visible in tenant" } });
+    } else {
+      tally.failures.push({ index, error: outcome.error });
+    }
+  }
+
+  return tally;
+};
+
 /**
  * Send feedback records to Hub, correcting any that already exist.
  *
@@ -249,68 +330,31 @@ export const reconcileFeedbackRecords = async (
   }
 
   const { results } = await createFeedbackRecordsBatch(records);
-  const result = emptyResult();
-  const conflicts: { record: FeedbackRecordCreateParams; index: number }[] = [];
+  const { created, conflicts, failures } = partitionBatchOutcomes(records, results);
 
-  for (const [index, outcome] of results.entries()) {
-    if (!outcome.error) {
-      result.created += 1;
-      continue;
-    }
+  const resolved = await mapWithConcurrency(conflicts, RECONCILE_CONCURRENCY, async ({ record, index }) => ({
+    index,
+    fieldId: record.field_id,
+    outcome: await reconcileConflict(record, tenantId, snapshotAt),
+  }));
 
-    if (outcome.error.status === CONFLICT_STATUS) {
-      const record = records[index];
-      if (record) {
-        conflicts.push({ record, index });
-      }
+  const tally = tallyConflictOutcomes(resolved);
 
-      continue;
-    }
-
-    result.failures.push({
-      index,
-      error: {
-        status: outcome.error.status,
-        message: outcome.error.message,
-        detail: outcome.error.detail,
-      },
-    });
-  }
-
-  const reconciled = await mapWithConcurrency(
-    conflicts,
-    RECONCILE_CONCURRENCY,
-    async ({ record, index }) => ({
-      index,
-      fieldId: record.field_id,
-      outcome: await reconcileConflict(record, tenantId, snapshotAt),
-    })
-  );
-
-  const notVisible: { index: number; fieldId: string }[] = [];
-
-  for (const { index, fieldId, outcome } of reconciled) {
-    if (outcome.status === "reconciled") {
-      result.reconciled += 1;
-    } else if (outcome.status === "superseded") {
-      result.superseded += 1;
-    } else if (outcome.status === "not_visible") {
-      notVisible.push({ index, fieldId });
-      result.failures.push({ index, error: { message: "conflict not visible in tenant" } });
-    } else {
-      result.failures.push({ index, error: outcome.error });
-    }
-  }
-
-  if (notVisible.length > 0) {
+  if (tally.notVisible.length > 0) {
     // One line per run, not per record — the per-record spam is what ENG-1916 removed. Still at
     // error rather than the caller's outage summary: this is the tenant boundary disagreeing with
     // Hub's uniqueness index after a retry, which is an invariant breach, not a handled outage.
     logger.error(
-      { tenantId, count: notVisible.length, fieldIds: notVisible.map(({ fieldId }) => fieldId) },
+      { tenantId, count: tally.notVisible.length, fieldIds: tally.notVisible.map(({ fieldId }) => fieldId) },
       "FeedbackSource reconcile: conflicts reported but no record visible in this tenant"
     );
   }
 
-  return result;
+  return {
+    created,
+    reconciled: tally.reconciled,
+    superseded: tally.superseded,
+    // Batch failures before conflict failures, matching the order the two passes produce them.
+    failures: [...failures, ...tally.failures],
+  };
 };
