@@ -42,11 +42,29 @@ interface TurboTask {
 }
 
 interface TurboJson {
+  globalDependencies?: string[];
   tasks: Record<string, TurboTask>;
 }
 
 const readTurboJson = (filePath: string): TurboJson =>
   JSON.parse(fs.readFileSync(filePath, "utf-8")) as TurboJson;
+
+// Root files that feed a cached build output but live outside every package, so no package's
+// `inputs` can reach them ($TURBO_DEFAULT$ is package-relative). Without a globalDependencies entry
+// they are hashed by nothing and an edit replays a stale artifact:
+//
+//   prisma.config.mjs — drives `prisma generate` in @formbricks/database#build, whose
+//     `generated/prisma/**` is a declared build output. Repointing `schema`, the generator block or
+//     the datasource would otherwise reuse a client generated from the old config.
+//   .nvmrc           — the Node version CI and local builds resolve the whole toolchain from.
+//   turbo.json, pnpm-lock.yaml, pnpm-workspace.yaml — task graph and the resolved dependency set.
+const REQUIRED_GLOBAL_DEPENDENCIES = [
+  ".nvmrc",
+  "pnpm-lock.yaml",
+  "pnpm-workspace.yaml",
+  "prisma.config.mjs",
+  "turbo.json",
+];
 
 describe("turbo.json task caching policy", () => {
   const turboJson = readTurboJson(turboJsonPath);
@@ -92,6 +110,16 @@ describe("turbo.json task caching policy", () => {
     const dbSeed = turboJson.tasks["db:seed"];
     expect(dbSeed?.env, "db:seed must declare an env array").toBeDefined();
     expect(dbSeed.env).toContain("DATABASE_URL");
+  });
+
+  test("root files that shape build outputs are declared as globalDependencies", () => {
+    const declared = turboJson.globalDependencies ?? [];
+    const missing = REQUIRED_GLOBAL_DEPENDENCIES.filter((file) => !declared.includes(file));
+    expect(
+      missing,
+      `These root files shape cached build outputs but are hashed by nothing: ${missing.join(", ")}. ` +
+        "Add them to globalDependencies — package `inputs` are package-relative and cannot reach them."
+    ).toEqual([]);
   });
 
   test("build task is cacheable (no cache: false)", () => {

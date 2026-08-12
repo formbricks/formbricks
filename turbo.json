@@ -1,7 +1,13 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "cacheMaxSize": "10GB",
-  "globalDependencies": ["turbo.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"],
+  "globalDependencies": [
+    ".nvmrc",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "prisma.config.mjs",
+    "turbo.json"
+  ],
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
   "tasks": {
     "@formbricks/ai#build": {
