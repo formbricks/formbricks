@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/reconcile";
+import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/mapping-reconciliation";
 import { selectSurvey } from "@/lib/survey/service";
 import {
   APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,

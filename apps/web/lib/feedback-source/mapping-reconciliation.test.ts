@@ -6,7 +6,7 @@ import {
   applyReconciliationToFeedbackSource,
   reconcileFeedbackSourcesForSurvey,
   reconcileMappingsAgainstSurvey,
-} from "./reconcile";
+} from "./mapping-reconciliation";
 import { getFeedbackSourcesBySurveyId } from "./service";
 
 vi.mock("@formbricks/database", () => ({

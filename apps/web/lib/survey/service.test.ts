@@ -15,7 +15,7 @@ import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/reconcile";
+import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/mapping-reconciliation";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -58,9 +58,9 @@ vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
 }));
 
-// The reconciliation itself is covered in lib/feedback-source/reconcile.test.ts; here we only pin
+// The reconciliation itself is covered in lib/feedback-source/mapping-reconciliation.test.ts; here we only pin
 // what updateSurveyInternal hands it and when.
-vi.mock("@/lib/feedback-source/reconcile", () => ({
+vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   reconcileFeedbackSourcesForSurvey: vi.fn(),
 }));
 

@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/reconcile";
+import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
@@ -52,9 +52,9 @@ vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
 }));
 
-// The reconciliation itself is covered in lib/feedback-source/reconcile.test.ts; here we only pin
+// The reconciliation itself is covered in lib/feedback-source/mapping-reconciliation.test.ts; here we only pin
 // that this route runs it, since it writes blocks without going through updateSurveyInternal.
-vi.mock("@/lib/feedback-source/reconcile", () => ({
+vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   reconcileFeedbackSourcesForSurvey: vi.fn(),
 }));
 
