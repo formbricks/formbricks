@@ -52,6 +52,13 @@ export const getMcpOrigin = (): string => new URL(getMcpResourceUrl()).origin;
  *
  * Built off the issuer for the same reason `jwksUrl` is: Better Auth mounts its OAuth endpoints
  * under the auth base path, so the issuer is the prefix the plugin itself uses.
+ *
+ * The assumption is that this equals Better Auth's own `ctx.context.baseURL`, which is what it
+ * stamps into the audience. That holds while the configured auth URL is a bare origin — Better
+ * Auth's `withPath` appends `/api/auth` exactly as `getAuthIssuerUrl` does. It does NOT hold if
+ * `BETTER_AUTH_URL` carries a subpath, because `withPath` returns a URL that already has a path
+ * unchanged while we still append. Subpath deployments cannot complete a login at all today
+ * (ENG-606), so this is not a live gap — but it is the thing to fix here when that one is fixed.
  */
 export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/userinfo`;
 

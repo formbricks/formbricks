@@ -318,7 +318,8 @@ async function rejectUnauthenticatedMcpRequest(params: {
     return { ok: false, requestId, response: rateLimitResponse };
   }
 
-  log.warn({ statusCode: 401, ...logContext }, logMessage);
+  // statusCode last: a caller's context must not be able to relabel the status this actually returns.
+  log.warn({ ...logContext, statusCode: 401 }, logMessage);
   return {
     ok: false,
     requestId,
