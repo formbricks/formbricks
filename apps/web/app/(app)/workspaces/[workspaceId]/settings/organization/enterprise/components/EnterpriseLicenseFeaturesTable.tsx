@@ -113,7 +113,7 @@ export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFe
       noPadding>
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-white">
+          <TableRow>
             <TableHead>{t("workspace.settings.enterprise.license_features_table_feature")}</TableHead>
             <TableHead>{t("workspace.settings.enterprise.license_features_table_access")}</TableHead>
             <TableHead>{t("workspace.settings.enterprise.license_features_table_value")}</TableHead>
@@ -133,7 +133,7 @@ export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFe
             }
 
             return (
-              <TableRow key={feature.key} className="hover:bg-white">
+              <TableRow key={feature.key}>
                 <TableCell className="font-medium text-slate-900">{t(feature.labelKey)}</TableCell>
                 <TableCell>
                   <Badge

@@ -18,22 +18,22 @@ export const AccessTable = ({ teams }: AccessTableProps) => {
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-100">
-            <TableHead className="font-medium text-slate-500">{t("workspace.teams.team_name")}</TableHead>
-            <TableHead className="font-medium text-slate-500">{t("common.size")}</TableHead>
-            <TableHead className="font-medium text-slate-500">{t("common.team_id")}</TableHead>
-            <TableHead className="font-medium text-slate-500">{t("workspace.teams.permission")}</TableHead>
+            <TableHead>{t("workspace.teams.team_name")}</TableHead>
+            <TableHead>{t("common.size")}</TableHead>
+            <TableHead>{t("common.team_id")}</TableHead>
+            <TableHead>{t("workspace.teams.permission")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="[&_tr:last-child]:border-b">
           {teams.length === 0 && (
-            <TableRow className="hover:bg-transparent">
+            <TableRow>
               <TableCell colSpan={4} className="text-center">
                 {t("workspace.teams.no_teams_found")}
               </TableCell>
             </TableRow>
           )}
           {teams.map((team) => (
-            <TableRow key={team.id} className="border-slate-200 hover:bg-transparent">
+            <TableRow key={team.id}>
               <TableCell className="font-medium">{team.name}</TableCell>
               <TableCell>{t("common.count_members", { count: team.memberCount })}</TableCell>
               <TableCell>

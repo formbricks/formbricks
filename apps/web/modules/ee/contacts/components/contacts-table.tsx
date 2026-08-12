@@ -258,7 +258,7 @@ export const ContactsTable = ({
         />
         <div className="w-full overflow-x-auto rounded-xl border border-slate-200">
           <Table className="w-full" style={{ tableLayout: "fixed" }}>
-            <TableHeader className="pointer-events-auto">
+            <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
@@ -302,7 +302,7 @@ export const ContactsTable = ({
                 </TableRow>
               ))}
               {table.getRowModel().rows.length === 0 && (
-                <TableRow className="hover:bg-white">
+                <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
                     <p className="text-slate-400">{t("common.no_results")}</p>
                   </TableCell>

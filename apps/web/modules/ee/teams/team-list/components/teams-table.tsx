@@ -78,10 +78,8 @@ export const TeamsTable = ({
         <Table>
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">
-              <TableHead className="font-medium text-slate-500">
-                {t("workspace.settings.teams.team_name")}
-              </TableHead>
-              <TableHead className="font-medium text-slate-500">{t("common.size")}</TableHead>
+              <TableHead>{t("workspace.settings.teams.team_name")}</TableHead>
+              <TableHead>{t("common.size")}</TableHead>
               <TableHead></TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -89,13 +87,13 @@ export const TeamsTable = ({
           <TableBody className="[&_tr:last-child]:border-b">
             {allTeams.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center hover:bg-transparent">
+                <TableCell colSpan={4} className="text-center">
                   {t("workspace.settings.teams.empty_teams_state")}
                 </TableCell>
               </TableRow>
             )}
             {userTeams.map((team) => (
-              <TableRow key={team.id} id={team.name} className="hover:bg-transparent">
+              <TableRow key={team.id} id={team.name}>
                 <TableCell>{team.name}</TableCell>
                 <TableCell>{t("common.count_members", { count: team.memberCount })}</TableCell>
                 <TableCell>
@@ -112,7 +110,7 @@ export const TeamsTable = ({
               </TableRow>
             ))}
             {otherTeams.map((team) => (
-              <TableRow key={team.id} id={team.name} className="hover:bg-transparent">
+              <TableRow key={team.id} id={team.name}>
                 <TableCell>{team.name}</TableCell>
                 <TableCell>{t("common.count_members", { count: team.memberCount })}</TableCell>
                 <TableCell></TableCell>

@@ -1,26 +1,30 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
-  ({ className, ...props }, ref) => (
-    <div className="relative overflow-auto">
-      <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
-    </div>
-  )
-);
+const Table = React.forwardRef<
+  HTMLTableElement,
+  React.HTMLAttributes<HTMLTableElement> & {
+    /** Classes for the scroll container wrapping the table — this is where a frame belongs. */
+    containerClassName?: string;
+  }
+>(({ className, containerClassName, ...props }, ref) => (
+  <div className={cn("relative overflow-auto", containerClassName)}>
+    <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
+  </div>
+));
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead
-      ref={ref}
-      className={cn("pointer-events-none text-slate-800 [&_tr]:border-b", className)}
-      {...props}
-    />
+    <thead ref={ref} className={cn("text-slate-800 [&_tr]:border-b", className)} {...props} />
   )
 );
 TableHeader.displayName = "TableHeader";
 
+/**
+ * The last row never draws a bottom border — the surrounding frame closes the table. A consumer that
+ * re-adds `[&_tr:last-child]:border-b` is compensating for a missing frame; give it a frame instead.
+ */
 const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
     <tbody ref={ref} className={cn("[&_tr:last-child]:border-0", className)} {...props} />
@@ -40,7 +44,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
     <tr
       ref={ref}
       className={cn(
-        "border-b bg-white transition-colors hover:bg-slate-100 data-[state=selected]:bg-slate-100",
+        "border-b border-slate-200 bg-white transition-colors data-[state=selected]:bg-slate-100",
         className
       )}
       {...props}
@@ -53,7 +57,10 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
-      className={cn("h-12 px-4 text-left align-middle has-[[role=checkbox]]:pr-0", className)}
+      className={cn(
+        "h-12 px-4 text-left align-middle font-medium text-slate-500 has-[[role=checkbox]]:pr-0",
+        className
+      )}
       {...props}
     />
   )

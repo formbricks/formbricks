@@ -143,24 +143,22 @@ export const FeedbackDirectoryTable = ({
         <Table>
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">
-              <TableHead className="font-medium text-slate-500">
-                {t("workspace.settings.feedback_directories.directory_name")}
-              </TableHead>
-              <TableHead className="font-medium text-slate-500">{t("common.workspaces")}</TableHead>
-              <TableHead className="font-medium text-slate-500">{t("common.status")}</TableHead>
+              <TableHead>{t("workspace.settings.feedback_directories.directory_name")}</TableHead>
+              <TableHead>{t("common.workspaces")}</TableHead>
+              <TableHead>{t("common.status")}</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="[&_tr:last-child]:border-b">
             {filteredDirectories.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center hover:bg-transparent">
+                <TableCell colSpan={4} className="text-center">
                   {t("workspace.settings.feedback_directories.empty_state")}
                 </TableCell>
               </TableRow>
             )}
             {filteredDirectories.map((directory) => (
-              <TableRow key={directory.id} className="hover:bg-transparent">
+              <TableRow key={directory.id}>
                 <TableCell>{directory.name}</TableCell>
                 <TableCell>{directory.workspaceCount}</TableCell>
                 <TableCell>
