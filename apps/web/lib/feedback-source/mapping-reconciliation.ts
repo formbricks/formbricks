@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { ZId } from "@formbricks/types/common";
 import {
   TFeedbackSourceFormbricksMapping,
   THubFieldType,
@@ -8,6 +9,7 @@ import {
 } from "@formbricks/types/feedback-source";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { validateInputs } from "../utils/validate";
 import { getFeedbackSourcesBySurveyId } from "./service";
 
 /**
@@ -133,6 +135,11 @@ export const applyReconciliationToFeedbackSource = async (
   }
 
   try {
+    // Defense in depth, matching every sibling writer in service.ts. These ids come from our own
+    // query rather than a request, so a failure here means a caller wired something wrong — inside
+    // the try so it is logged like any other failure and the remaining sources still reconcile.
+    validateInputs([feedbackSourceId, ZId], [workspaceId, ZId], [surveyId, ZId]);
+
     await prisma.$transaction(async (tx) => {
       if (toDelete.length > 0) {
         await tx.feedbackSourceFormbricksMapping.deleteMany({

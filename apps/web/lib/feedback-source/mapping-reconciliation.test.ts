@@ -331,6 +331,21 @@ describe("applyReconciliationToFeedbackSource", () => {
     expect(tx.feedbackSourceFormbricksMapping.createMany).toHaveBeenCalledTimes(1);
   });
 
+  test("rejects a malformed id without writing, and still does not throw", async () => {
+    const tx = mockTx();
+
+    await expect(
+      applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, "not-a-cuid", {
+        toCreate: [],
+        toDelete: ["el-1"],
+        toUpdate: [],
+      })
+    ).resolves.toBeUndefined();
+
+    expect(tx.feedbackSourceFormbricksMapping.deleteMany).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalled();
+  });
+
   test("logs and swallows a database failure so the survey write is never blocked", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(new Error("DB failure"));
 
