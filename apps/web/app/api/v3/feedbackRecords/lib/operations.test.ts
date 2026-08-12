@@ -1082,7 +1082,7 @@ describe("list/count validate their own input", () => {
   });
 });
 
-describe("listV3FeedbackRecords", () => {
+describe("listV3FeedbackRecords error relaying", () => {
   /**
    * Listing does not touch the vector index, so a Hub 503 here is an outage or some *other* unconfigured
    * subsystem. It used to answer with the embeddings message for every operation, which sent an operator
