@@ -38,18 +38,20 @@ type GoogleProfile = Parameters<NonNullable<SocialConfig<"google">["mapProfileTo
 /**
  * Better Auth SSO providers (ENG-1054), mirroring the NextAuth set in `./providers.ts`. Gated behind
  * `ENTERPRISE_LICENSE_KEY` (parity with the `getSSOProviders()` gate) and each provider's configured
- * credentials. Google/GitHub use Better Auth's built-in social providers; Azure/OIDC/SAML use the
- * generic-OAuth plugin (Azure keeps providerId "azuread" so existing `account.provider` rows need no
- * remap — design doc D6).
+ * credentials. Google/GitHub use Better Auth's built-in social providers; Azure/OIDC/SAML register
+ * through the `genericOAuth` plugin (Azure keeps providerId "azuread" so existing `account.provider`
+ * rows need no remap — design doc D6).
  *
  * IMPORTANT — these objects only REGISTER providers. The hardened account linking / verify-before-link
  * (SSO recovery) + org-provisioning flow (design doc D7) is re-expressed via Better Auth hooks
  * SEPARATELY (not here); `account.accountLinking.enabled` is false so nothing auto-links. That hooks
  * work is the security-sensitive part of Phase 5 and is pending review.
  *
- * ⚠ The generic-OAuth callback path is `/api/auth/oauth2/callback/{providerId}` (differs from
- * NextAuth's `/api/auth/callback/{provider}`) — at cutover, the OIDC IdP redirect URIs and the BoxyHQ
- * Jackson connection `redirect_uri` must be re-registered to match.
+ * ⚠ Callback path (ENG-2343): Better Auth 1.7 rebuilds `genericOAuth` on the built-in social-provider
+ * route, so the callback is `/api/auth/callback/{providerId}` — the same shape Google/GitHub use, and
+ * the same path these three providers used before v5.2's NextAuth→Better Auth cutover. Between v5.2
+ * and this upgrade it was `/api/auth/oauth2/callback/{providerId}`; see the "Better Auth 1.7 Upgrade"
+ * section in docs/self-hosting/advanced/migration.mdx for what self-hosters need to re-register.
  */
 export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
   ? {

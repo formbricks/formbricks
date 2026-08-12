@@ -89,7 +89,7 @@ describe("getSignInAuthMethod (signedIn audit allow-list)", () => {
     ["/two-factor/verify-totp", "password"],
     ["/two-factor/verify-backup-code", "password"],
     ["/callback/google", "sso"],
-    ["/oauth2/callback/azuread", "sso"],
+    ["/callback/azuread", "sso"],
   ])("audits sign-in completion %s as %s", (path, expected) => {
     expect(getSignInAuthMethod(path)).toBe(expected);
   });

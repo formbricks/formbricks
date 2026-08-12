@@ -96,7 +96,7 @@ same way at v5.2, so they do not all move back the same way now:
 | --- | --- | --- |
 | Azure AD / Entra ID | `https://your-domain.com/api/auth/callback/azuread` | **Yes.** The provider id changed `azure-ad` → `azuread` at v5.2, so this is a third, distinct URI — not the same as either the pre-v5.2 or the v5.2–v5.3 one. Add it under **Redirect URIs** in your app registration before upgrading. |
 | Generic OIDC / Keycloak | `https://your-domain.com/api/auth/callback/openid` | **No, if you followed the v5.2 guide and left the pre-v5.2 URI registered.** This is that same URI — v5.4 just starts using it again. Add it back only if you removed it after upgrading to v5.2. |
-| SAML (BoxyHQ / Jackson) | `https://your-domain.com/api/auth/callback/saml` | **No**, for connections created with the wildcard `redirect_uri` Jackson uses by default (`${WEBAPP_URL}/*`). Only re-register if you configured an explicit, non-wildcard `redirect_uri`. |
+| SAML (BoxyHQ / Jackson) | `https://your-domain.com/api/auth/callback/saml` | **No**, for connections preloaded through Formbricks (its default `redirect_uri` is the wildcard `${WEBAPP_URL}/*`). Only re-register if you configured an explicit, non-wildcard `redirect_uri`. |
 | Google / GitHub | unchanged | No — these already use Better Auth's built-in social-provider path, which this upgrade does not change. |
 
 <Warning>
@@ -111,11 +111,11 @@ If you deploy with the Helm chart's Envoy Gateway and `envoy.formbricks.routes.a
 route matches the path prefix `/api/auth/callback`. Today that only catches the credentials (password)
 callback and Google/GitHub sign-in — Azure AD, OIDC and SAML callbacks bypass this proxy entirely under
 `/api/auth/oauth2/callback/*`. After this upgrade those three start matching the same prefix and are
-proxied through it too. No action is required — the route's only rate-limit rule is an `Exact` match on
-`/api/auth/callback/credentials`, so SSO traffic is not newly throttled — but expect SSO callbacks to start
-appearing in this proxy's logs and metrics where they did not before.
+proxied through it too. No action is required — the route's rate-limit rules are `Exact` matches on
+`/api/auth/callback/credentials` and `/api/auth/callback/token`, so SSO traffic is not newly throttled —
+but expect SSO callbacks to start appearing in this proxy's logs and metrics where they did not before.
 
-#### Rollback
+#### Rollback (Better Auth 1.7)
 
 The `Account.issuer` column and the new `oauthResource`, `oauthClientResource` and `oauthClientAssertion`
 tables are additive and nullable, and are not read by v5.3, so rolling the application images / Helm values

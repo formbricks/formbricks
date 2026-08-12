@@ -35,7 +35,8 @@ import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
  */
 export const getSignInAuthMethod = (path: string | undefined): string | null => {
   if (!path) return null;
-  // /callback/:id (social) and /oauth2/callback/:providerId (generic OAuth/SAML) both contain /callback/
+  // /callback/:id covers both built-in social and, since Better Auth 1.7 (ENG-2343), genericOAuth/SAML
+  // too — they share the social-provider route now instead of the old /oauth2/callback/:providerId.
   if (path.includes("/callback/")) return "sso";
   if (path === "/sign-in/email") return "password";
   // Auto-login after email verification (autoSignInAfterVerification, ENG-1746) creates a session for
