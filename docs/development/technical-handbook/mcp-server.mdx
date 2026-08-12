@@ -1177,7 +1177,7 @@ Output is the updated record.
 ### delete_feedback_record
 
 Permanently deletes one feedback record. Writes data, is not idempotent, is annotated
-`destructiveHint: true`, and requires `feedbackRecords:manage` (API keys need `manage`). The
+`destructiveHint: true`, and requires `feedbackRecords:write` (API keys need `manage`). The
 record and its derived embedding are removed with no soft delete, so this cannot be undone — the audit log
 entry keeps the deleted record as its `oldObject` and is the only remaining trace.
 

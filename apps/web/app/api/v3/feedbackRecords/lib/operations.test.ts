@@ -1826,8 +1826,9 @@ describe("feedback record mutation role (ENG-1770)", () => {
     expect(updateFeedbackRecord).not.toHaveBeenCalled();
   });
 
-  // The API key above is the only shape that skips the role check. Anything that resolves to no user is
-  // refused rather than admitted by the absence of a field — the pass-through has to stay an allowlist.
+  // The API key above is the only shape routed to the sharing rule instead of the organization role.
+  // Anything else that resolves to no user is refused rather than admitted by the absence of a field —
+  // the dispatch has to stay an allowlist.
   test.each([
     ["no principal", null],
     ["a session with no user id", { user: {} } as TV3Authentication],
