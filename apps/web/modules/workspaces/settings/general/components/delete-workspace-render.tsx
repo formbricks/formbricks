@@ -63,9 +63,9 @@ export const DeleteWorkspaceRender = ({
       });
 
       if (deleteWorkspaceResponse?.data) {
-        // Navigate to a remaining workspace of the same organization instead of "/", which resolves the
-        // last-visited workspace across every organization and would drop members of multiple
-        // organizations into an unrelated one.
+        // The destination is a workspace of this organization (or its onboarding flow), never "/" —
+        // that route resolves the last-visited workspace across every organization and would drop
+        // members of multiple organizations into an unrelated one.
         if (postDeletionWorkspaceId) {
           localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, postDeletionWorkspaceId);
           // Keep legacy environment ID in sync for backward compatibility with old SDK clients
