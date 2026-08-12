@@ -50,7 +50,7 @@ const SELECT_CURRENT_FIELDS = {
  */
 const toStoredDefaultValue = (
   defaultValue: TEmbeddedDataDefaultValue
-): TEmbeddedDataDefaultValue | typeof Prisma.DbNull => (defaultValue === null ? Prisma.DbNull : defaultValue);
+): TEmbeddedDataDefaultValue | typeof Prisma.DbNull => defaultValue ?? Prisma.DbNull;
 
 /**
  * Works out what has to change for a survey's Embedded Data to match `desired`.
@@ -80,9 +80,10 @@ export const planEmbeddedDataReconcile = (
     // "is it local" also stops one survey deleting another's local row, which the schema permits.
     const isOwnedByThisSurvey = isLocalEmbeddedData(entry.field) && entry.field.surveyId === surveyId;
 
-    // A storage key whose source changed is a different field wearing the same address — replace it
-    // rather than mutating a computed field into an ingested one.
-    if (!wanted || wanted.source !== entry.field.source) {
+    // Two cases, one test: the field is gone, or a storage key whose source changed is a different
+    // field wearing the same address — replace it rather than mutating a computed field into an
+    // ingested one. `wanted?.source` is undefined in the first case, which no source ever equals.
+    if (wanted?.source !== entry.field.source) {
       plan.toUnlink.push({
         linkId: entry.linkId,
         fieldIdToDelete: isOwnedByThisSurvey ? entry.field.id : null,
@@ -109,7 +110,8 @@ export const planEmbeddedDataReconcile = (
 
   for (const entry of desired) {
     const existing = currentByKey.get(entry.storageKey);
-    if (!existing || existing.field.source !== entry.source) {
+    // Mirror of the test above: absent, or present under a different source, both mean create.
+    if (existing?.field.source !== entry.source) {
       plan.toCreate.push(entry);
     }
   }
