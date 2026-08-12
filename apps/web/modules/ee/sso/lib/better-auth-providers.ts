@@ -1,6 +1,6 @@
 import "server-only";
 import type { BetterAuthOptions } from "better-auth";
-import type { GenericOAuthConfig } from "better-auth/plugins";
+import type { GenericOAuthConfig, GenericOAuthUserInfo } from "better-auth/plugins";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,
@@ -61,7 +61,7 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
               // Capture the resolved identity for verify-before-link recovery (design doc §13).
               // ⚠ providerAccountId must equal Better Auth's account.accountId — validate at cutover.
               mapProfileToUser: (profile: GithubProfile) => {
-                captureSsoIdentity({ email: profile.email, providerAccountId: String(profile.id) });
+                captureSsoIdentity({ email: profile.email, providerAccountId: toAccountSubject(profile.id) });
                 return { email: profile.email };
               },
             },
@@ -82,6 +82,47 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
     }
   : {};
 
+/**
+ * The account-identity namespace for a generic-OAuth provider (ENG-2343).
+ *
+ * Better Auth 1.7 keys accounts on (issuer, accountId). Left to itself a provider with a
+ * `discoveryUrl` adopts the DISCOVERED issuer, which is tenant-specific — different for every
+ * self-hoster, and therefore impossible to reproduce in a portable backfill. Pinning the synthetic
+ * form Better Auth itself uses for providers without their own issuer (`local:oauth:<id>`) keeps
+ * identity scoped to the provider id, exactly as 1.6 keyed it, so existing accounts keep matching
+ * after the upgrade and the migration backfill is one portable UPDATE.
+ *
+ * This value is load-bearing: it must stay byte-identical to what
+ * migration/20260812110000_eng_2343_better_auth_17_resource_model writes into Account.issuer.
+ */
+/**
+ * Coerce a provider subject to a string WITHOUT inventing one.
+ *
+ * Better Auth 1.7 types `sub`/`id` as `string | number`, so a bare `String(...)` is tempting — but it
+ * turns a missing subject into the literal "undefined", which is truthy. `captureSsoIdentity`
+ * deliberately drops an identity whose providerAccountId is falsy, precisely so a provider that omits
+ * it cannot drive account recovery and link the wrong account. Passing "undefined" would sail past
+ * that guard.
+ */
+const toAccountSubject = (subject: string | number | null | undefined): string | undefined =>
+  subject === null || subject === undefined ? undefined : String(subject);
+
+const ssoAccountIssuer = (providerId: string): string => `local:oauth:${encodeURIComponent(providerId)}`;
+
+/** OIDC display name: `name`, else given+family, else `preferred_username`. */
+const toDisplayName = (profile: GenericOAuthUserInfo): string | undefined => {
+  const parts = [profile.given_name, profile.family_name].filter(Boolean).join(" ");
+  const name = profile.name || parts || profile.preferred_username;
+  return typeof name === "string" && name.length > 0 ? name : undefined;
+};
+
+/** BoxyHQ userinfo display name: `name`, else firstName + lastName. */
+const toSamlDisplayName = (profile: GenericOAuthUserInfo): string | undefined => {
+  const parts = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+  const name = profile.name || parts;
+  return typeof name === "string" && name.length > 0 ? name : undefined;
+};
+
 export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KEY
   ? [
       ...(AZURE_OAUTH_ENABLED
@@ -92,26 +133,25 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               clientSecret: AZUREAD_CLIENT_SECRET ?? "",
               discoveryUrl: `https://login.microsoftonline.com/${AZUREAD_TENANT_ID || "common"}/v2.0/.well-known/openid-configuration`,
               scopes: ["openid", "email", "profile"],
+              // Redundant since 1.7 defaults it to true, kept explicit: this is a security control,
+              // and an explicit value survives a future default flip.
               pkce: true,
-              // Must stay false for Azure. Better Auth's issuer check reads the RFC 9207
-              // authorization-RESPONSE `iss` query parameter, and Microsoft Entra does not implement
-              // RFC 9207 — its v2.0 metadata omits `authorization_response_iss_parameter_supported`
-              // and it never returns that param. So enabling this can only ever fail with
-              // `error=issuer_missing` (ENG-1800); it can never pass, regardless of tenant. The
-              // param's purpose (disambiguating which AS responded, to defend against mix-up) is
-              // already covered here structurally: the per-provider callback path pins the token
-              // endpoint to Azure's own, and PKCE (above) + state validation bind the exchange. OIDC
-              // (below) keeps the check on because a spec-compliant provider does return `iss`.
-              requireIssuerValidation: false,
+              // `requireIssuerValidation` is gone in 1.7 (ENG-2343) and this no longer needs an
+              // opt-out. ENG-1800 was that Better Auth rejected a MISSING RFC 9207 `iss` response
+              // parameter, which Microsoft Entra never sends — so the check could only ever fail.
+              // 1.7 only compares `iss` when the provider actually returns one
+              // (`if (iss && provider.issuer && iss !== provider.issuer)`), so Entra short-circuits
+              // and the mix-up defence still applies to providers that do implement RFC 9207.
+              accountIssuer: ssoAccountIssuer("azuread"),
               mapProfileToUser: (profile) => {
                 // Capture for verify-before-link recovery; name parity with the OIDC mapping.
-                captureSsoIdentity({ email: profile.email, providerAccountId: profile.sub });
+                captureSsoIdentity({
+                  email: profile.email,
+                  providerAccountId: toAccountSubject(profile.sub),
+                });
                 return {
                   email: profile.email,
-                  name:
-                    profile.name ||
-                    [profile.given_name, profile.family_name].filter(Boolean).join(" ") ||
-                    profile.preferred_username,
+                  name: toDisplayName(profile),
                 };
               },
             } satisfies GenericOAuthConfig,
@@ -125,17 +165,21 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               clientSecret: OIDC_CLIENT_SECRET ?? "",
               discoveryUrl: `${OIDC_ISSUER}/.well-known/openid-configuration`,
               scopes: ["openid", "email", "profile"],
+              // Redundant since 1.7 defaults it to true, kept explicit (see azuread above).
               pkce: true,
-              requireIssuerValidation: true, // RFC 9207 mix-up defense (design doc §10.3)
+              // `requireIssuerValidation: true` (RFC 9207 mix-up defence, design doc §10.3) is gone
+              // in 1.7 — the comparison is now automatic whenever the provider returns `iss`, so the
+              // defence is kept without the flag.
+              accountIssuer: ssoAccountIssuer("openid"),
               mapProfileToUser: (profile) => {
-                captureSsoIdentity({ email: profile.email, providerAccountId: profile.sub });
+                captureSsoIdentity({
+                  email: profile.email,
+                  providerAccountId: toAccountSubject(profile.sub),
+                });
                 return {
                   email: profile.email,
                   // Parity with provisionNewSsoUser (OIDC): name → given+family → preferred_username.
-                  name:
-                    profile.name ||
-                    [profile.given_name, profile.family_name].filter(Boolean).join(" ") ||
-                    profile.preferred_username,
+                  name: toDisplayName(profile),
                 };
               },
             } satisfies GenericOAuthConfig,
@@ -152,15 +196,18 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               tokenUrl: `${WEBAPP_URL}/api/auth/saml/token`,
               userInfoUrl: `${WEBAPP_URL}/api/auth/saml/userinfo`,
               scopes: [],
+              // Redundant since 1.7 defaults it to true, kept explicit (see azuread above).
               pkce: true,
+              // Already a plain string map, which is all 1.7 accepts here.
               authorizationUrlParams: { provider: "saml", tenant: SAML_TENANT, product: SAML_PRODUCT },
+              accountIssuer: ssoAccountIssuer("saml"),
               mapProfileToUser: (profile) => {
                 // ⚠ BoxyHQ's userinfo id — validate it matches Better Auth's account.accountId at cutover.
-                captureSsoIdentity({ email: profile.email, providerAccountId: String(profile.id) });
+                captureSsoIdentity({ email: profile.email, providerAccountId: toAccountSubject(profile.id) });
                 return {
                   email: profile.email,
                   // Parity with provisionNewSsoUser (SAML): name → firstName + lastName.
-                  name: profile.name || [profile.firstName, profile.lastName].filter(Boolean).join(" "),
+                  name: toSamlDisplayName(profile),
                 };
               },
             } satisfies GenericOAuthConfig,

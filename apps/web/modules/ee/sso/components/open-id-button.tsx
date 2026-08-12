@@ -31,8 +31,11 @@ export const OpenIdButton = ({
     }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
-    await authClient.signIn.oauth2({
-      providerId: "openid",
+    // Better Auth 1.7 rebuilt genericOAuth onto the built-in social path (ENG-2343):
+    // signIn.oauth2({ providerId }) became signIn.social({ provider }), and the callback moved
+    // from /api/auth/oauth2/callback/openid to /api/auth/callback/openid.
+    await authClient.signIn.social({
+      provider: "openid",
       callbackURL: returnToUrlWithSource,
       // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
       errorCallbackURL: "/auth/login",

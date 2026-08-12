@@ -36,8 +36,11 @@ export const SamlButton = ({ returnToUrl, lastUsed, source }: Readonly<SamlButto
 
     // tenant/product are static and live server-side in the SAML genericOAuth provider's
     // authorizationUrlParams (better-auth-providers.ts), so the client only selects the provider.
-    await authClient.signIn.oauth2({
-      providerId: "saml",
+    // Better Auth 1.7 rebuilt genericOAuth onto the built-in social path (ENG-2343):
+    // signIn.oauth2({ providerId }) became signIn.social({ provider }), and the callback moved
+    // from /api/auth/oauth2/callback/saml to /api/auth/callback/saml.
+    await authClient.signIn.social({
+      provider: "saml",
       callbackURL: returnToUrlWithSource,
       // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
       errorCallbackURL: "/auth/login",
