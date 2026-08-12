@@ -23,6 +23,26 @@ export const ZHubFieldType = z.enum([
 ]);
 export type THubFieldType = z.infer<typeof ZHubFieldType>;
 
+// Hub enrichment vocabularies (from Hub OpenAPI spec), in the Hub's own order. The Hub caps its
+// `sentiment` and `emotions` filters at these cardinalities rather than at the generic 100-value limit,
+// since more entries than there are labels can only be duplicates.
+//
+// NOTE: apps/web/modules/ee/analysis/lib/schema-definition.ts carries the same two vocabularies as
+// tuples, deliberately typed so that adding a label fails the build until every analysis label map is
+// updated. Keep the two in sync; de-duplicating without losing that exhaustiveness guard is a follow-up.
+export const ZHubSentiment = z.enum([
+  "very_negative",
+  "negative",
+  "neutral",
+  "positive",
+  "very_positive",
+  "mixed",
+]);
+export type THubSentiment = z.infer<typeof ZHubSentiment>;
+
+export const ZHubEmotion = z.enum(["joy", "anger", "sadness", "fear", "surprise", "disgust"]);
+export type THubEmotion = z.infer<typeof ZHubEmotion>;
+
 // Hub target fields for mapping.
 // `response_value` is a CSV-only synthetic id stored in FeedbackSourceFieldMapping; csv-transform.ts
 // resolves it to the appropriate value_* target before any Hub write — the Hub never sees it.
