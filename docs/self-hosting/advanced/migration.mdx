@@ -6,10 +6,10 @@ icon: "arrow-right"
 
 ## v5.4
 
-Formbricks v5.4 is a **drop-in upgrade for most self-hosted instances**. There are no new or renamed
-environment variables, no database migrations, and no authentication or webhook changes. The one breaking
-change is narrow: it affects **API keys** used against the Feedback Records API or the MCP server, and
-nothing else. If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do.
+v5.4 carries one breaking change, and it is narrow: it affects **API keys** used against the Feedback
+Records API or the MCP server, and nothing else. It needs no environment variables and no database
+migrations. If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do
+for it.
 
 ### Feedback Record Mutations by API Key (action required for some integrations)
 
@@ -58,24 +58,20 @@ integration that mutates records in that dataset has two ways forward — assign
 workspace under **Settings → Organization → Feedback Datasets**, or have the integration authenticate as
 an organization owner or manager instead of with a workspace-scoped key.
 
-### Upgrade Steps
+#### What to do before upgrading
 
-1. Back up your database.
-2. Run the query above. If it returns rows, decide how each affected integration should proceed before
-   deploying.
-3. Raise any API key that deletes feedback records from `write` to `manage`.
-4. Pull and restart (`docker compose pull && docker compose down && docker compose up -d`, or
-   `helm upgrade` with the new chart / tag).
-5. Smoke test your feedback-record integrations. Two log lines identify an integration caught by the new
-   rules — grep for `Feedback record mutation denied` (the MCP path, which names the reason) and for
-   `Feedback records gateway authorization denied` (the REST path, which logs `verdict: "deny"` alongside
-   the `operation` and `feedbackDirectoryId`).
+1. Run the query above. If it returns rows, decide how each affected integration should proceed.
+2. Raise any API key that deletes feedback records from `write` to `manage`.
+3. After deploying, smoke test your feedback-record integrations. Two log lines identify an integration
+   caught by the new rules — grep for `Feedback record mutation denied` (the MCP path, which names the
+   reason) and for `Feedback records gateway authorization denied` (the REST path, which logs
+   `verdict: "deny"` alongside the `operation` and `feedbackDirectoryId`).
 
-### Rollback
+#### Rollback
 
-v5.4 adds no migrations, so rolling the application images / Helm values back to v5.3 is safe without
-touching the database. An API key raised to `manage` in step 3 keeps working on v5.3 — `manage` was always
-accepted where `write` was — so that change does not need reverting.
+This change adds no migrations and touches no schema, so rolling the application images / Helm values back
+to v5.3 undoes it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
+`manage` was always accepted wherever `write` was — so that step does not need reverting either.
 
 ## v5.3
 
