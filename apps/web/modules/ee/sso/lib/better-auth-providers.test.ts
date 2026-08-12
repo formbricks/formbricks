@@ -168,9 +168,36 @@ describe("better-auth SSO providers", () => {
         "https://login.microsoftonline.com/tenant-123/v2.0/.well-known/openid-configuration"
       );
       expect(azure.scopes).toEqual(["openid", "email", "profile"]);
-      // ENG-1800: Entra never returns the RFC 9207 response `iss`, so validation must stay off even
-      // with a fixed tenant — turning it on here is exactly what caused `error=issuer_missing`.
-      expect(azure.requireIssuerValidation).toBe(false);
+      // ENG-1800 no longer needs an opt-out: Better Auth 1.7 only compares the RFC 9207 response
+      // `iss` when the provider actually sends one, and Entra never does, so the check that produced
+      // `error=issuer_missing` cannot fire. What replaces it as the load-bearing invariant is the
+      // pinned account issuer below.
+      expect(azure).not.toHaveProperty("requireIssuerValidation");
+      expect(azure.accountIssuer).toBe("local:oauth:azuread");
+    });
+
+    /**
+     * The account-identity contract with the database migration (ENG-2343).
+     *
+     * Better Auth 1.7 keys accounts on (issuer, accountId). Left unpinned, a provider with a
+     * discoveryUrl adopts the DISCOVERED issuer — tenant-specific, so different on every install and
+     * impossible to reproduce in a portable backfill. These values must stay byte-identical to what
+     * migration 20260812110000 writes into Account.issuer, or existing SSO users stop matching at
+     * sign-in and are pushed into account recovery.
+     */
+    test("pins a portable account issuer on every generic provider", async () => {
+      const m = await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        OIDC_OAUTH_ENABLED: true,
+        SAML_OAUTH_ENABLED: true,
+      });
+
+      expect(m.ssoGenericOAuthConfig.map((c) => [c.providerId, c.accountIssuer])).toEqual([
+        ["azuread", "local:oauth:azuread"],
+        ["openid", "local:oauth:openid"],
+        ["saml", "local:oauth:saml"],
+      ]);
     });
 
     test("Azure discovery URL falls back to the 'common' tenant when none is configured", async () => {
@@ -179,7 +206,7 @@ describe("better-auth SSO providers", () => {
       expect(azure?.discoveryUrl).toBe(
         "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration"
       );
-      expect(azure?.requireIssuerValidation).toBe(false);
+      expect(azure?.accountIssuer).toBe("local:oauth:azuread");
     });
 
     test("Azure mapProfileToUser resolves the display name through its fallback chain", async () => {
@@ -220,7 +247,8 @@ describe("better-auth SSO providers", () => {
         clientId: "oidc-id",
         clientSecret: "oidc-secret",
         pkce: true,
-        requireIssuerValidation: true,
+        // Issuer validation is automatic in 1.7 for providers that return `iss`, so the flag is gone.
+        accountIssuer: "local:oauth:openid",
       });
       expect(oidc.discoveryUrl).toBe("https://idp.test/.well-known/openid-configuration");
       expect(
