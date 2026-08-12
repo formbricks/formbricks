@@ -6,9 +6,10 @@ import { test } from "./lib/fixtures";
 // ENG-1705 regression: /organizations/[organizationId]/settings/** and /account/settings/** are
 // workspace-agnostic routes, so their sidebar must not render the Workspace section (a workspace
 // selector pill plus eight workspace-scoped links) for a workspace the shell only inferred from a
-// cookie — switching workspaces there is the top bar breadcrumb's job. The in-workspace settings
-// sidebar (MainNavigation) shares the same SettingsSidebarContent component, so it needs a guard
-// that its Workspace section survived the removal.
+// cookie — switching workspaces there is the top bar breadcrumb's job. Those routes render
+// OrganizationSettingsSidebar and the in-workspace routes render WorkspaceSettingsSidebar; both end
+// in the same OrganizationAndAccountSections, so this also guards that the in-workspace sidebar kept
+// its Workspace section.
 
 // The settings shell renders exactly one <aside>, either from SettingsNavigation (the
 // workspace-agnostic routes) or from MainNavigation (the in-workspace routes).

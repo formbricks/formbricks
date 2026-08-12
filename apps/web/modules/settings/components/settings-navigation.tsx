@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TUser } from "@formbricks/types/user";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
-import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
+import { OrganizationSettingsSidebar } from "@/modules/settings/components/sidebar/organization-settings-sidebar";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -24,9 +24,10 @@ interface SettingsNavigationProps {
 }
 
 // The settings-mode sidebar chrome for the workspace-agnostic settings routes
-// (/organizations/[organizationId]/settings and /account/settings). It shares SettingsSidebarContent
-// with the in-workspace sidebar (MainNavigation), minus the Workspace section: these routes carry no
-// workspaceId, and the top bar breadcrumb is where workspaces get switched.
+// (/organizations/[organizationId]/settings and /account/settings). It renders
+// OrganizationSettingsSidebar, which shares its Organization and Account sections with the
+// in-workspace sidebar (MainNavigation -> WorkspaceSettingsSidebar) but has no Workspace section:
+// these routes carry no workspaceId, and the top bar breadcrumb is where workspaces get switched.
 export const SettingsNavigation = ({
   user,
   organizationId,
@@ -63,16 +64,13 @@ export const SettingsNavigation = ({
         <div className="mb-2 px-3">
           <GoBackButton url={backUrl} />
         </div>
-        <SettingsSidebarContent
+        <OrganizationSettingsSidebar
           organizationId={organizationId}
           organizationName={organizationName}
           membershipRole={membershipRole}
           isFormbricksCloud={isFormbricksCloud}
           isCollapsed={false}
           isTextVisible={false}
-          // These routes are workspace-agnostic, so the sidebar shows organization and account
-          // settings only; the top bar breadcrumb owns switching workspaces here.
-          hideWorkspaceSection
           organizations={organizationSwitcher.items}
           isLoadingOrganizations={organizationSwitcher.isLoading}
           onOrganizationChange={handleOrganizationChange}
