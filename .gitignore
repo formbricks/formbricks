@@ -84,3 +84,6 @@ stats.html
 .claude/skills/*
 !.claude/skills/nextjs-docs
 .agents/formbricks-context
+
+# local test environment logs (scripts/setup-local-test-env.sh)
+.local-test-logs/
