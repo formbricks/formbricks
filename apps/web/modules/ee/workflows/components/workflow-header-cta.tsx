@@ -59,7 +59,11 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
 
   const isArchived = workflow.status === "archived";
   const isActive = workflow.status === "enabled";
-  const isBusy = builder.isTransitioning || builder.isSaving || isDeleting;
+  // The status dropdown stays reachable during an autosave (isSaving) so the control never goes dead
+  // mid-save with no spinner: transition() already refuses to run while a save is in flight, so
+  // writes stay serialized. A pending lifecycle transition or delete still blocks it, as does a
+  // read-only member (who also has no menu content to select).
+  const isTransitioning = builder.isTransitioning;
 
   const handleArchiveConfirm = async () => {
     await builder.archive();
@@ -104,8 +108,11 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
                 openable (the DOM attribute and the JS guard disagree). Belt-and-suspenders, the
                 content is also withheld from read-only members, so a bypassed trigger has nothing
                 to select — the list page hides its actions the same way. */}
-            <DropdownMenuTrigger asChild disabled={isReadOnly || isBusy}>
-              <Button size="sm" loading={builder.isTransitioning} disabled={isReadOnly || isBusy}>
+            <DropdownMenuTrigger asChild disabled={isReadOnly || isTransitioning || isDeleting}>
+              <Button
+                size="sm"
+                loading={builder.isTransitioning}
+                disabled={isReadOnly || isTransitioning || isDeleting}>
                 {getWorkflowStatusBadge(workflow.status, t).label}
                 <ChevronDownIcon />
               </Button>

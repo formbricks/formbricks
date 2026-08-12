@@ -586,6 +586,7 @@ describe("autosave", () => {
       store.set(hydrateWorkflowEditorAtom, {
         workflow: { ...apiWorkflow, id: "wf-other", name: "Another workflow" },
         flowNodes: [],
+        isReadOnly: false,
       });
       store.set(setWorkflowNameAtom, "Edited on the other workflow");
     });

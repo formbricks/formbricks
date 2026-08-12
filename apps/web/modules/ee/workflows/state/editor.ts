@@ -121,6 +121,7 @@ export const workflowEditorAtom = atom<TWorkflowEditorState>(initialWorkflowEdit
 
 export const workflowAtom = atom((get) => get(workflowEditorAtom).workflow);
 export const workflowNameAtom = atom((get) => get(workflowEditorAtom).workflowName);
+export const workflowStatusAtom = atom((get) => get(workflowEditorAtom).workflow?.status ?? null);
 export const workflowDescriptionAtom = atom((get) => get(workflowEditorAtom).workflowDescription);
 export const workflowDefinitionAtom = atom((get) => get(workflowEditorAtom).definition);
 export const selectedWorkflowNodeIdAtom = atom((get) => get(workflowEditorAtom).selectedNodeId);
@@ -489,11 +490,11 @@ export const hydrateWorkflowEditorAtom = atom(
     {
       workflow,
       flowNodes,
-      isReadOnly = false,
+      isReadOnly,
     }: {
       workflow: TWorkflowResource;
       flowNodes: Array<Node<TWorkflowNodeData>>;
-      isReadOnly?: boolean;
+      isReadOnly: boolean;
     }
   ) => {
     // Optimistic default until the builder page re-syncs it from the authoring context;

@@ -69,7 +69,7 @@ const workflow = {
 describe("hydrateWorkflowEditorAtom", () => {
   test("seeds name, description, definition, selection from the workflow", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
 
     expect(store.get(workflowAtom)).toBe(workflow);
     expect(store.get(workflowNameAtom)).toBe("Hello");
@@ -83,6 +83,7 @@ describe("hydrateWorkflowEditorAtom", () => {
     store.set(hydrateWorkflowEditorAtom, {
       workflow: { ...workflow, description: null } as unknown as TWorkflowResource,
       flowNodes: [],
+      isReadOnly: false,
     });
 
     expect(store.get(workflowDescriptionAtom)).toBe("");
@@ -133,7 +134,7 @@ describe("definition + flow node updaters accept value or callback", () => {
     // 'width'" as soon as it measured a node.
     const store = createStore();
     const node = { id: "n1", measured: { width: 100, height: 40 } };
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [node as never] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [node as never], isReadOnly: false });
     store.set(setWorkflowNameAtom, "renamed");
 
     const [storedNode] = store.get(workflowFlowNodesAtom);
@@ -189,7 +190,11 @@ describe("canEditWorkflowDefinitionAtom", () => {
     ["archived", false],
   ])("status %s -> %s", (status, expected) => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow: workflowWithStatus(status), flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, {
+      workflow: workflowWithStatus(status),
+      flowNodes: [],
+      isReadOnly: false,
+    });
     expect(store.get(canEditWorkflowDefinitionAtom)).toBe(expected);
   });
 
@@ -212,7 +217,11 @@ describe("canEditWorkflowDefinitionAtom", () => {
 describe("canMutateCanvasAtom", () => {
   test("requires an editable status AND an unlocked canvas", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow: workflowWithStatus("draft"), flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, {
+      workflow: workflowWithStatus("draft"),
+      flowNodes: [],
+      isReadOnly: false,
+    });
 
     // Canvas starts in pointer mode (unlocked), so a draft is mutable right away.
     expect(store.get(isCanvasLockedAtom)).toBe(false);
@@ -225,7 +234,11 @@ describe("canMutateCanvasAtom", () => {
     expect(store.get(canMutateCanvasAtom)).toBe(true);
 
     // Editable status removed -> blocked again even while unlocked.
-    store.set(hydrateWorkflowEditorAtom, { workflow: workflowWithStatus("enabled"), flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, {
+      workflow: workflowWithStatus("enabled"),
+      flowNodes: [],
+      isReadOnly: false,
+    });
     store.set(isCanvasLockedAtom, false);
     expect(store.get(canMutateCanvasAtom)).toBe(false);
   });
@@ -491,7 +504,7 @@ describe("hydrateWorkflowEditorAtom with a trigger-less draft", () => {
       ...workflow,
       definition: { ...definition, trigger: null, entryNodeId: null },
     } as unknown as TWorkflowResource;
-    store.set(hydrateWorkflowEditorAtom, { workflow: triggerlessWorkflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow: triggerlessWorkflow, flowNodes: [], isReadOnly: false });
 
     expect(store.get(selectedWorkflowNodeIdAtom)).toBeNull();
   });
@@ -519,7 +532,7 @@ describe("deleteWorkflowNodeAtom bridge without sourceHandle", () => {
 describe("isWorkflowDirtyAtom + markWorkflowDraftSavedAtom", () => {
   test("is clean right after hydrate and dirty after an edit", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
 
     expect(store.get(isWorkflowDirtyAtom)).toBe(false);
 
@@ -529,7 +542,7 @@ describe("isWorkflowDirtyAtom + markWorkflowDraftSavedAtom", () => {
 
   test("trailing whitespace the save flow trims anyway does not count as dirty", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
 
     store.set(setWorkflowNameAtom, "Hello ");
     expect(store.get(isWorkflowDirtyAtom)).toBe(false);
@@ -537,7 +550,7 @@ describe("isWorkflowDirtyAtom + markWorkflowDraftSavedAtom", () => {
 
   test("markWorkflowDraftSavedAtom records the sent draft, so mid-flight edits stay dirty", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
     store.set(setWorkflowNameAtom, "Renamed");
     // Simulates an edit landing while the PATCH for "Renamed" was in flight.
     store.set(setWorkflowDescriptionAtom, "Edited during save");
@@ -560,7 +573,7 @@ describe("isWorkflowDirtyAtom + markWorkflowDraftSavedAtom", () => {
 
   test("definition edits count as dirty", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
 
     store.set(setWorkflowDefinitionAtom, (current) =>
       current ? { ...current, edges: [...current.edges] } : current
@@ -580,7 +593,7 @@ describe("isWorkflowDirtyAtom + markWorkflowDraftSavedAtom", () => {
 describe("workflow save error", () => {
   test("a successful save clears the failed state in the same write as lastSavedAt", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
     store.set(setWorkflowNameAtom, "Renamed");
     // save() records the failure against the signature of the draft it actually sent.
     store.set(setWorkflowSaveErrorAtom, {
@@ -604,7 +617,7 @@ describe("workflow save error", () => {
 
   test("reverting the draft clears the alarm without a save", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
     store.set(setWorkflowNameAtom, "Renamed");
     const failedError = {
       draftSignature: store.get(workflowDraftSignatureAtom),
@@ -623,7 +636,7 @@ describe("workflow save error", () => {
 
   test("the failed state is scoped to the draft that failed", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
     store.set(setWorkflowNameAtom, "Renamed");
     store.set(setWorkflowSaveErrorAtom, {
       draftSignature: store.get(workflowDraftSignatureAtom),
@@ -642,7 +655,7 @@ describe("workflow save error", () => {
 
   test("a redundant clear does not churn editor state", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
     const before = store.get(workflowEditorAtom);
 
     store.set(setWorkflowSaveErrorAtom, null);
@@ -654,7 +667,7 @@ describe("workflow save error", () => {
 describe("workflowDraftSignatureAtom", () => {
   test("changes with any editable field and is stable otherwise", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow, flowNodes: [], isReadOnly: false });
     const hydrated = store.get(workflowDraftSignatureAtom);
 
     store.set(setWorkflowNameAtom, "Renamed");
@@ -708,7 +721,7 @@ describe("workflowValidityAtom", () => {
 
   test("is ready when the name is set, the definition is executable, and the survey resolves", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [], isReadOnly: false });
 
     expect(store.get(workflowValidityAtom)).toEqual({
       isNameValid: true,
@@ -720,7 +733,7 @@ describe("workflowValidityAtom", () => {
 
   test("an empty name makes the workflow not ready", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [], isReadOnly: false });
     store.set(setWorkflowNameAtom, "   ");
 
     const validity = store.get(workflowValidityAtom);
@@ -730,7 +743,7 @@ describe("workflowValidityAtom", () => {
 
   test("an incomplete send_email node makes the definition not executable", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [], isReadOnly: false });
     store.set(setWorkflowDefinitionAtom, (current) =>
       current
         ? {
@@ -749,7 +762,7 @@ describe("workflowValidityAtom", () => {
 
   test("an unresolved trigger survey makes the workflow not ready", () => {
     const store = createStore();
-    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow: executableWorkflow, flowNodes: [], isReadOnly: false });
     store.set(hasBoundTriggerSurveyAtom, false);
 
     const validity = store.get(workflowValidityAtom);
@@ -764,7 +777,7 @@ describe("workflowValidityAtom", () => {
       ...workflow,
       definition: { ...executableDefinition, trigger: null, nodes: [], edges: [], entryNodeId: null },
     } as unknown as TWorkflowResource;
-    store.set(hydrateWorkflowEditorAtom, { workflow: triggerless, flowNodes: [] });
+    store.set(hydrateWorkflowEditorAtom, { workflow: triggerless, flowNodes: [], isReadOnly: false });
 
     expect(store.get(workflowValidityAtom).isDefinitionExecutable).toBe(false);
   });
@@ -804,6 +817,7 @@ describe("workflowValidationProblemsAtom", () => {
     store.set(hydrateWorkflowEditorAtom, {
       workflow: { ...workflow, definition } as unknown as TWorkflowResource,
       flowNodes: [],
+      isReadOnly: false,
     });
   };
 
