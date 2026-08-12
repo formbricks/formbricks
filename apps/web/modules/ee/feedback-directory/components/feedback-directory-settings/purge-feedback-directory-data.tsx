@@ -59,7 +59,7 @@ export const PurgeFeedbackDirectoryData = ({
       onPurge?.();
       router.refresh();
     } catch (error) {
-      toast.error(getV3ApiErrorMessage(error) || t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
