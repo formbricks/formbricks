@@ -41,10 +41,16 @@ interface TurboTask {
   inputs?: string[];
 }
 
+interface TurboJson {
+  tasks: Record<string, TurboTask>;
+}
+
+const readTurboJson = (filePath: string): TurboJson =>
+  JSON.parse(fs.readFileSync(filePath, "utf-8")) as TurboJson;
+
 describe("turbo.json task caching policy", () => {
-  const turboJson = JSON.parse(fs.readFileSync(turboJsonPath, "utf-8")) as {
-    tasks: Record<string, TurboTask>;
-  };
+  const turboJson = readTurboJson(turboJsonPath);
+  const webTurboJson = readTurboJson(webTurboJsonPath);
 
   const REQUIRED_UNCACHED = [
     "test",
@@ -99,9 +105,6 @@ describe("turbo.json task caching policy", () => {
     // Without the $TURBO_DEFAULT$ sentinel, an `inputs` list of nothing but negations matches
     // nothing: Turbo hashes package.json alone and a source edit no longer busts the build cache,
     // so a cached artifact — including one holding a since-patched bug — replays forever.
-    const webTurboJson = JSON.parse(fs.readFileSync(webTurboJsonPath, "utf-8")) as {
-      tasks: Record<string, TurboTask>;
-    };
     const missingSentinel = [
       ...Object.entries(turboJson.tasks),
       ...Object.entries(webTurboJson.tasks).map(
@@ -124,9 +127,6 @@ describe("turbo.json task caching policy", () => {
     // Third instance of the same override trap (see turbo-build-env.test.ts): declaring `inputs` in
     // apps/web/turbo.json replaces the shared list, so an exclusion added to the root build task
     // would silently never reach the web build.
-    const webTurboJson = JSON.parse(fs.readFileSync(webTurboJsonPath, "utf-8")) as {
-      tasks: Record<string, TurboTask>;
-    };
     const webInputs = webTurboJson.tasks.build?.inputs;
     if (!webInputs) return; // no override, nothing to drift
 

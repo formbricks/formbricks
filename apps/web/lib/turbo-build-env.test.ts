@@ -18,6 +18,12 @@ import { describe, expect, test } from "vitest";
 // therefore REPLACE the root `build` lists rather than extending them — anything the shared task
 // declares has to be repeated in the web task or the web build silently loses it. The superset
 // tests below are what keep that from regressing.
+//
+// Precedence per key, highest first: apps/web/turbo.json `build` → root `@formbricks/web#build` →
+// root `build`. Verified empirically against turbo 2.9.14 with
+// `turbo run build --dry=json --filter=@formbricks/web`: a root `@formbricks/web#build` override
+// beats the shared task but loses to the package config, and it applies per key, so it still supplies
+// any key the package config omits.
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const nextConfigPath = path.resolve(here, "..", "next.config.mjs");
@@ -51,12 +57,14 @@ describe("web build env stays in sync with next.config.mjs", () => {
   const webTasks = readTasks(webTurboJsonPath);
 
   const sharedBuildTask = rootTasks.build ?? {};
-  // Mirrors Turbo's resolution: the package config's `build` wins, then a root `@formbricks/web#build`
-  // override, then the shared `build` task.
-  const webBuildTask = webTasks.build ?? rootTasks["@formbricks/web#build"] ?? sharedBuildTask;
 
-  const webBuildEnv = webBuildTask.env ?? [];
-  const webPassThroughEnv = webBuildTask.passThroughEnv ?? [];
+  // Resolved per key rather than per task, matching Turbo (see the precedence note above): picking a
+  // whole task object would report an empty list for any key the package config happens to omit.
+  const resolveWebBuild = (key: keyof TaskConfig): string[] =>
+    webTasks.build?.[key] ?? rootTasks["@formbricks/web#build"]?.[key] ?? sharedBuildTask[key] ?? [];
+
+  const webBuildEnv = resolveWebBuild("env");
+  const webPassThroughEnv = resolveWebBuild("passThroughEnv");
   const sharedBuildEnv = sharedBuildTask.env ?? [];
   const sharedPassThroughEnv = sharedBuildTask.passThroughEnv ?? [];
 
