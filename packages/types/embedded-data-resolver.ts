@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
+import { toDesiredEmbeddedFields } from "./embedded-data-mapping";
 import type { TI18nString } from "./i18n";
 import type { TResponse } from "./responses";
 import { formatSnakeCaseToTitleCase } from "./safe-identifier";
@@ -278,6 +279,9 @@ export const resolveEmbeddedValue = (
  * maps: absent values are omitted (recall then falls back to its fallback text and logic sees
  * `undefined`, exactly like an absent hidden field today), and booleans are stringified to
  * `"true"`/`"false"` — what `String()` would render anyway, in a map type that has no boolean slot.
+ *
+ * An entry name that matches an element id or hidden field name shadows it in the merged map, and
+ * `FORBIDDEN_IDS` guards none of the names §9b proposes — so ENG-1839 picks names knowing that.
  */
 export const projectReservedValues = (
   entries: readonly TReservedFieldCatalogEntry[],
@@ -329,7 +333,10 @@ export interface TListReadableFieldsInput {
   languageCode?: string;
 }
 
-/** Matches one full recall token (`#recall:<id>/fallback:<text>#`) — the editor's storage syntax. */
+/**
+ * Matches one full recall token (`#recall:<id>/fallback:<text>#`) — the editor's storage syntax.
+ * `.replace()` only: `.test()`/`.exec()` would carry `lastIndex` across calls on this shared instance.
+ */
 const RECALL_TOKEN_REGEX = /#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/g;
 
 /**
@@ -402,9 +409,10 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
  * ENG-1837 serve surveys whose rows haven't been backfilled (migration spec §8), with no fetch
  * logic here.
  *
- * Per §8: a variable becomes a `computed` field of its declared type whose `defaultValue` is the
- * variable's value, addressed by its existing cuid (recall tokens and stored responses already use
- * it); a hidden field becomes an `ingested` string field with no default, addressed by its name.
+ * The §8 rules live in `toDesiredEmbeddedFields`, shared with ENG-1978's write bridge and ENG-1835's
+ * backfill; this only reshapes them into `{field, link}` pairs and adds `locked: false`, which has no
+ * legacy equivalent.
+ *
  * `hiddenFields.enabled` is deliberately ignored: recall and logic consult `fieldIds` alone today,
  * and ingestion is split on the flag — the js-core SDK drops hidden fields when disabled, while the
  * link-survey URL path fills them regardless (`getHiddenFieldsFromSearchParams` receives only
@@ -414,32 +422,8 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
 export const deriveLegacyEmbeddedData = (survey: {
   variables: TSurveyVariables;
   hiddenFields: TSurveyHiddenFields;
-}): TLinkedEmbeddedField[] => {
-  const fromVariables = survey.variables.map(
-    (variable): TLinkedEmbeddedField => ({
-      field: {
-        name: variable.name,
-        source: "computed",
-        dataType: variable.type === "number" ? "number" : "string",
-        defaultValue: variable.value,
-        locked: false,
-      },
-      link: { storageKey: variable.id },
-    })
-  );
-
-  const fromHiddenFields = (survey.hiddenFields.fieldIds ?? []).map(
-    (fieldId): TLinkedEmbeddedField => ({
-      field: {
-        name: fieldId,
-        source: "ingested",
-        dataType: "string",
-        defaultValue: null,
-        locked: false,
-      },
-      link: { storageKey: fieldId },
-    })
-  );
-
-  return [...fromVariables, ...fromHiddenFields];
-};
+}): TLinkedEmbeddedField[] =>
+  toDesiredEmbeddedFields(survey).map(({ storageKey, ...field }) => ({
+    field: { ...field, locked: false },
+    link: { storageKey },
+  }));
