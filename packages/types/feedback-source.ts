@@ -9,6 +9,14 @@ export type TFeedbackSourceType = z.infer<typeof ZFeedbackSourceType>;
 export const ZFeedbackSourceStatus = z.enum(["active", "paused", "error"]);
 export type TFeedbackSourceStatus = z.infer<typeof ZFeedbackSourceStatus>;
 
+/**
+ * Whether a formbricks_survey source tracks every supported element of the surveys it maps, or an
+ * explicit subset. Always derived server-side from the submitted selection — never accepted from a
+ * client — so the scope can never disagree with the mapping rows it describes.
+ */
+export const ZFeedbackSourceElementScope = z.enum(["all", "specific"]);
+export type TFeedbackSourceElementScope = z.infer<typeof ZFeedbackSourceElementScope>;
+
 // Hub field types (from Hub OpenAPI spec)
 export const ZHubFieldType = z.enum([
   "text",
@@ -57,6 +65,7 @@ export const ZFeedbackSource = z.object({
   name: z.string().min(1),
   type: ZFeedbackSourceType,
   status: ZFeedbackSourceStatus,
+  elementScope: ZFeedbackSourceElementScope,
   workspaceId: z.cuid2(),
   feedbackDirectoryId: z.cuid2(),
   lastSyncAt: z.date().nullable(),

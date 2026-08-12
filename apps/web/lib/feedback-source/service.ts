@@ -10,6 +10,7 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import {
   TFeedbackSource,
   TFeedbackSourceCreateInput,
+  TFeedbackSourceElementScope,
   TFeedbackSourceFieldMappingCreateInput,
   TFeedbackSourceFormbricksMappingCreateInput,
   TFeedbackSourceUpdateInput,
@@ -29,6 +30,7 @@ const selectFeedbackSourceWithMappings = {
   name: true,
   type: true,
   status: true,
+  elementScope: true,
   workspaceId: true,
   feedbackDirectoryId: true,
   lastSyncAt: true,
@@ -66,6 +68,7 @@ const selectFeedbackSource = {
   name: true,
   type: true,
   status: true,
+  elementScope: true,
   workspaceId: true,
   feedbackDirectoryId: true,
   lastSyncAt: true,
@@ -279,6 +282,8 @@ export const isDirectoryWorkspaceFkViolation = (error: PrismaClientKnownRequestE
 export type TFormbricksMappingsInput = {
   type: "formbricks_survey";
   mappings: TFeedbackSourceFormbricksMappingCreateInput[];
+  /** Derived in `resolveFormbricksMappingsInput`, never supplied by a caller. */
+  elementScope: TFeedbackSourceElementScope;
 };
 
 export type TFieldMappingsInput = {
@@ -304,6 +309,11 @@ export const createFeedbackSourceWithMappings = async (
           workspaceId,
           feedbackDirectoryId: data.feedbackDirectoryId,
           createdBy: data.createdBy,
+          // Only formbricks_survey sources have an element selection to scope; csv sources keep the
+          // column's `specific` default, which reconciliation never reads for them.
+          ...(mappingsInput?.type === "formbricks_survey"
+            ? { elementScope: mappingsInput.elementScope }
+            : {}),
         },
       });
 
@@ -379,6 +389,12 @@ export const updateFeedbackSourceWithMappings = async (
           name: data.name,
           status: data.status,
           lastSyncAt: data.lastSyncAt,
+          // Re-derived from the selection being saved, in the same transaction as the mapping rows, so
+          // the scope and the rows it describes can never drift apart. This is also what heals sources
+          // created before the column existed: they default to `specific` until their next save.
+          ...(mappingsInput?.type === "formbricks_survey"
+            ? { elementScope: mappingsInput.elementScope }
+            : {}),
         },
       });
 

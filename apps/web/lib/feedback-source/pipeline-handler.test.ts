@@ -57,6 +57,7 @@ function createFeedbackSource(
     name: "Test FeedbackSource",
     type: "formbricks_survey",
     status: "active",
+    elementScope: "specific" as const,
     workspaceId: "env-1",
     feedbackDirectoryId: "frd-1",
     lastSyncAt: null,

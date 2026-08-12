@@ -435,6 +435,7 @@ describe("createFeedbackSourceWithMappings", () => {
       { name: "FB", type: "formbricks_survey", feedbackDirectoryId: FRD_ID },
       {
         type: "formbricks_survey",
+        elementScope: "all",
         mappings: [
           { surveyId: SURVEY_ID, elementId: "el-1", hubFieldType: "text" },
           { surveyId: SURVEY_ID, elementId: "el-2", hubFieldType: "nps" },
@@ -704,6 +705,7 @@ describe("updateFeedbackSourceWithMappings", () => {
       { name: "Updated" },
       {
         type: "formbricks_survey",
+        elementScope: "all",
         mappings: [{ surveyId: SURVEY_ID, elementId: "el-new", hubFieldType: "nps" }],
       }
     );

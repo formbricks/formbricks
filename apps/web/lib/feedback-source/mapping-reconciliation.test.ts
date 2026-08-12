@@ -12,6 +12,7 @@ import { getFeedbackSourcesBySurveyId } from "./service";
 vi.mock("@formbricks/database", () => ({
   prisma: {
     feedbackSourceFormbricksMapping: {
+      createMany: vi.fn(),
       deleteMany: vi.fn(),
       updateMany: vi.fn(),
     },
@@ -46,6 +47,7 @@ const mapping = (elementId: string, hubFieldType: string, surveyId = SURVEY_ID) 
 const mockTx = () => {
   const tx = {
     feedbackSourceFormbricksMapping: {
+      createMany: vi.fn(),
       deleteMany: vi.fn(),
       updateMany: vi.fn(),
     },
@@ -65,9 +67,10 @@ describe("reconcileMappingsAgainstSurvey", () => {
       reconcileMappingsAgainstSurvey(
         [mapping("el-text", "text"), mapping("el-nps", "nps")],
         blocks,
-        SURVEY_ID
+        SURVEY_ID,
+        "all"
       )
-    ).toEqual({ toDelete: [], toUpdate: [] });
+    ).toEqual({ toCreate: [], toDelete: [], toUpdate: [] });
   });
 
   test("deletes mappings for elements removed from the survey", () => {
@@ -76,7 +79,8 @@ describe("reconcileMappingsAgainstSurvey", () => {
     const result = reconcileMappingsAgainstSurvey(
       [mapping("el-text", "text"), mapping("el-gone", "rating")],
       blocks,
-      SURVEY_ID
+      SURVEY_ID,
+      "specific"
     );
 
     expect(result.toDelete).toEqual(["el-gone"]);
@@ -86,7 +90,7 @@ describe("reconcileMappingsAgainstSurvey", () => {
   test("updates hubFieldType when an element is retyped", () => {
     const blocks = buildBlocks([{ id: "el-q", type: "nps" }]);
 
-    const result = reconcileMappingsAgainstSurvey([mapping("el-q", "text")], blocks, SURVEY_ID);
+    const result = reconcileMappingsAgainstSurvey([mapping("el-q", "text")], blocks, SURVEY_ID, "specific");
 
     expect(result.toUpdate).toEqual([{ elementId: "el-q", hubFieldType: "nps" }]);
     expect(result.toDelete).toEqual([]);
@@ -109,26 +113,67 @@ describe("reconcileMappingsAgainstSurvey", () => {
       const result = reconcileMappingsAgainstSurvey(
         [mapping("el-q", "text"), mapping("el-keep", "text")],
         blocks,
-        SURVEY_ID
+        SURVEY_ID,
+        "specific"
       );
 
       expect(result.toDelete).toEqual(["el-q"]);
       expect(result.toUpdate).toEqual([]);
+      expect(result.toCreate).toEqual([]);
     }
   );
 
-  // A question added after the source was connected is deliberately NOT mapped here: the source's
-  // element set is the operator's explicit selection, and there is nowhere yet to record whether they
-  // wanted "everything" or a curated subset. See the follow-up ticket.
-  test("leaves a newly added supported element unmapped", () => {
+  // The elementScope gate. A newly added question is indistinguishable from one the operator
+  // deliberately excluded, so the answer comes from what they selected when the source was saved.
+  describe("elementScope gate on newly added questions", () => {
     const blocks = buildBlocks([
       { id: "el-text", type: "openText" },
       { id: "el-new", type: "rating" },
     ]);
 
-    const result = reconcileMappingsAgainstSurvey([mapping("el-text", "text")], blocks, SURVEY_ID);
+    test("maps a newly added supported element when the source tracks everything", () => {
+      const result = reconcileMappingsAgainstSurvey([mapping("el-text", "text")], blocks, SURVEY_ID, "all");
 
-    expect(result).toEqual({ toDelete: [], toUpdate: [] });
+      expect(result.toCreate).toEqual([{ elementId: "el-new", hubFieldType: "rating" }]);
+      expect(result.toDelete).toEqual([]);
+      expect(result.toUpdate).toEqual([]);
+    });
+
+    test("leaves it alone when the source tracks a curated subset", () => {
+      const result = reconcileMappingsAgainstSurvey(
+        [mapping("el-text", "text")],
+        blocks,
+        SURVEY_ID,
+        "specific"
+      );
+
+      expect(result).toEqual({ toCreate: [], toDelete: [], toUpdate: [] });
+    });
+
+    test("never maps an added element whose type has no Hub field, even when tracking everything", () => {
+      const result = reconcileMappingsAgainstSurvey(
+        [mapping("el-text", "text")],
+        buildBlocks([
+          { id: "el-text", type: "openText" },
+          { id: "el-upload", type: "fileUpload" },
+        ]),
+        SURVEY_ID,
+        "all"
+      );
+
+      expect(result.toCreate).toEqual([]);
+    });
+
+    test("does not map a sibling survey's elements when tracking everything", () => {
+      const result = reconcileMappingsAgainstSurvey(
+        [mapping("el-text", "text"), mapping("el-new", "rating"), mapping("el-x", "nps", OTHER_SURVEY_ID)],
+        blocks,
+        SURVEY_ID,
+        "all"
+      );
+
+      expect(result).toEqual({ toCreate: [], toDelete: [], toUpdate: [] });
+    });
   });
 
   // Regression: a feedback source can map several surveys (the action schema takes an array of
@@ -145,10 +190,11 @@ describe("reconcileMappingsAgainstSurvey", () => {
         mapping("el-another", "nps", OTHER_SURVEY_ID),
       ],
       blocks,
-      SURVEY_ID
+      SURVEY_ID,
+      "specific"
     );
 
-    expect(result).toEqual({ toDelete: [], toUpdate: [] });
+    expect(result).toEqual({ toCreate: [], toDelete: [], toUpdate: [] });
   });
 
   test("reconciles this survey's rows while leaving a sibling survey's alone", () => {
@@ -161,7 +207,8 @@ describe("reconcileMappingsAgainstSurvey", () => {
         mapping("el-sibling-gone", "nps", OTHER_SURVEY_ID),
       ],
       blocks,
-      SURVEY_ID
+      SURVEY_ID,
+      "specific"
     );
 
     expect(result.toDelete).toEqual(["el-gone"]);
@@ -177,10 +224,11 @@ describe("reconcileMappingsAgainstSurvey", () => {
     const result = reconcileMappingsAgainstSurvey(
       [mapping("el-text", "text"), mapping("el-nps", "nps")],
       blocks,
-      SURVEY_ID
+      SURVEY_ID,
+      "specific"
     );
 
-    expect(result).toEqual({ toDelete: [], toUpdate: [] });
+    expect(result).toEqual({ toCreate: [], toDelete: [], toUpdate: [] });
     expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ surveyId: SURVEY_ID }),
       "Skipping feedback-source reconciliation: it would remove every mapping for this survey"
@@ -193,22 +241,32 @@ describe("reconcileMappingsAgainstSurvey", () => {
     const result = reconcileMappingsAgainstSurvey(
       [mapping("el-keep", "text"), mapping("el-gone-a", "nps"), mapping("el-gone-b", "rating")],
       blocks,
-      SURVEY_ID
+      SURVEY_ID,
+      "specific"
     );
 
     expect(result.toDelete).toEqual(["el-gone-a", "el-gone-b"]);
   });
 
   test("treats an empty survey with no stored mappings as a no-op", () => {
-    expect(reconcileMappingsAgainstSurvey([], [], SURVEY_ID)).toEqual({ toDelete: [], toUpdate: [] });
+    expect(reconcileMappingsAgainstSurvey([], [], SURVEY_ID, "all")).toEqual({
+      toCreate: [],
+      toDelete: [],
+      toUpdate: [],
+    });
   });
 
   test("returns a fresh delta each call so callers cannot alias a shared object", () => {
     const blocks = buildBlocks([{ id: "el-text", type: "openText" }]);
-    const first = reconcileMappingsAgainstSurvey([mapping("el-text", "text")], blocks, SURVEY_ID);
+    const first = reconcileMappingsAgainstSurvey([mapping("el-text", "text")], blocks, SURVEY_ID, "specific");
     first.toDelete.push("mutated");
 
-    const second = reconcileMappingsAgainstSurvey([mapping("el-text", "text")], blocks, SURVEY_ID);
+    const second = reconcileMappingsAgainstSurvey(
+      [mapping("el-text", "text")],
+      blocks,
+      SURVEY_ID,
+      "specific"
+    );
     expect(second.toDelete).toEqual([]);
   });
 });
@@ -220,6 +278,7 @@ describe("applyReconciliationToFeedbackSource", () => {
 
   test("does not open a transaction for an empty delta", async () => {
     await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [],
       toDelete: [],
       toUpdate: [],
     });
@@ -233,6 +292,7 @@ describe("applyReconciliationToFeedbackSource", () => {
     const tx = mockTx();
 
     await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [],
       toDelete: ["el-1", "el-2"],
       toUpdate: [],
     });
@@ -251,6 +311,7 @@ describe("applyReconciliationToFeedbackSource", () => {
     const tx = mockTx();
 
     await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [],
       toDelete: [],
       toUpdate: [
         { elementId: "el-a", hubFieldType: "nps" },
@@ -281,10 +342,34 @@ describe("applyReconciliationToFeedbackSource", () => {
     });
   });
 
-  test("applies delete and update in a single transaction", async () => {
+  test("creates new mappings for the reconciled survey, tolerating a concurrent writer", async () => {
     const tx = mockTx();
 
     await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [{ elementId: "el-new", hubFieldType: "rating" }],
+      toDelete: [],
+      toUpdate: [],
+    });
+
+    expect(tx.feedbackSourceFormbricksMapping.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          feedbackSourceId: SOURCE_ID,
+          workspaceId: WORKSPACE_ID,
+          surveyId: SURVEY_ID,
+          elementId: "el-new",
+          hubFieldType: "rating",
+        },
+      ],
+      skipDuplicates: true,
+    });
+  });
+
+  test("applies delete, update and create in a single transaction", async () => {
+    const tx = mockTx();
+
+    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [{ elementId: "el-new", hubFieldType: "rating" }],
       toDelete: ["el-gone"],
       toUpdate: [{ elementId: "el-retyped", hubFieldType: "nps" }],
     });
@@ -292,6 +377,7 @@ describe("applyReconciliationToFeedbackSource", () => {
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.feedbackSourceFormbricksMapping.deleteMany).toHaveBeenCalledTimes(1);
     expect(tx.feedbackSourceFormbricksMapping.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.feedbackSourceFormbricksMapping.createMany).toHaveBeenCalledTimes(1);
   });
 
   test("rejects a malformed id without writing, and still does not throw", async () => {
@@ -299,6 +385,7 @@ describe("applyReconciliationToFeedbackSource", () => {
 
     await expect(
       applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, "not-a-cuid", {
+        toCreate: [],
         toDelete: ["el-1"],
         toUpdate: [],
       })
@@ -313,6 +400,7 @@ describe("applyReconciliationToFeedbackSource", () => {
 
     await expect(
       applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+        toCreate: [],
         toDelete: ["el-1"],
         toUpdate: [],
       })
@@ -336,6 +424,7 @@ describe("reconcileFeedbackSourcesForSurvey", () => {
       {
         id: SOURCE_ID,
         workspaceId: WORKSPACE_ID,
+        elementScope: "specific",
         formbricksMappings: [
           { surveyId: SURVEY_ID, elementId: "el-kept", hubFieldType: "rating" },
           { surveyId: SURVEY_ID, elementId: "el-gone", hubFieldType: "text" },
