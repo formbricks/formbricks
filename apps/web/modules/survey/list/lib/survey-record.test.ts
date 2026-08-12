@@ -30,7 +30,6 @@ const makeSurveyRow = (overrides: Partial<TSurveyRow> = {}): TSurveyRow =>
     updatedAt: new Date("2026-04-16T10:00:00.000Z"),
     creator: { name: "Alice" },
     singleUse: null,
-    _count: { responses: 0 },
     ...overrides,
   }) as TSurveyRow;
 
@@ -74,10 +73,9 @@ describe("getResponseCountsBySurveyIds", () => {
 });
 
 describe("mapSurveyRowToSurvey", () => {
-  test("drops the internal _count and maps both counts", () => {
+  test("maps both counts onto the row", () => {
     const survey = mapSurveyRowToSurvey(makeSurveyRow(), { total: 9, completed: 5 });
 
-    expect(survey).not.toHaveProperty("_count");
     expect(survey.responseCount).toBe(9);
     expect(survey.completedResponseCount).toBe(5);
   });
@@ -87,6 +85,17 @@ describe("mapSurveyRowToSurvey", () => {
 
     expect(survey.responseCount).toBe(0);
     expect(survey.completedResponseCount).toBe(0);
+  });
+
+  test("does not let one row's zero-default leak into another row", () => {
+    // The default is a shared frozen constant, so prove it can't be mutated through a mapped row.
+    const first = mapSurveyRowToSurvey(makeSurveyRow({ id: "survey_1" }));
+    first.responseCount = 42;
+
+    const second = mapSurveyRowToSurvey(makeSurveyRow({ id: "survey_2" }));
+
+    expect(second.responseCount).toBe(0);
+    expect(second.completedResponseCount).toBe(0);
   });
 });
 

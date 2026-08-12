@@ -17,7 +17,6 @@ import { TSurvey, TWorkspaceWithLanguages } from "../types/surveys";
 // Import the module to be tested
 import {
   copySurveyToOtherWorkspace,
-  getSurvey,
   getSurveyCount,
   getSurveys,
   getSurveysSortedByRelevance,
@@ -165,7 +164,6 @@ const mockSurveyPrisma = {
   publishOn: null,
   singleUse: null,
   workspaceId,
-  _count: { responses: 10 },
 };
 
 describe("getSurveyCount", () => {
@@ -197,71 +195,6 @@ describe("getSurveyCount", () => {
   });
 });
 
-describe("getSurvey", () => {
-  beforeEach(() => {
-    resetMocks();
-  });
-
-  test("should return a survey if found", async () => {
-    const prismaSurvey = { ...mockSurveyPrisma };
-    vi.mocked(prisma.survey.findUnique).mockResolvedValue(prismaSurvey as any);
-    vi.mocked(prisma.response.groupBy).mockResolvedValue([
-      { surveyId, finished: true, _count: { _all: 3 } },
-      { surveyId, finished: false, _count: { _all: 2 } },
-    ] as any);
-
-    const survey = await getSurvey(surveyId);
-
-    expect(survey).toEqual({
-      id: prismaSurvey.id,
-      createdAt: prismaSurvey.createdAt,
-      updatedAt: prismaSurvey.updatedAt,
-      name: prismaSurvey.name,
-      type: prismaSurvey.type,
-      creator: prismaSurvey.creator,
-      status: prismaSurvey.status,
-      publishOn: prismaSurvey.publishOn,
-      singleUse: prismaSurvey.singleUse,
-      workspaceId: prismaSurvey.workspaceId,
-      responseCount: 5,
-      completedResponseCount: 3,
-    });
-    expect(survey).not.toHaveProperty("_count");
-    expect(prisma.survey.findUnique).toHaveBeenCalledWith({
-      where: { id: surveyId },
-      select: surveySelect,
-    });
-  });
-
-  test("should return null if survey not found", async () => {
-    vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
-    const survey = await getSurvey(surveyId);
-    expect(survey).toBeNull();
-  });
-
-  test("should throw DatabaseError on Prisma error", async () => {
-    const prismaError = makePrismaKnownError();
-    vi.mocked(prisma.survey.findUnique).mockRejectedValue(prismaError);
-    await expect(getSurvey(surveyId)).rejects.toThrow(DatabaseError);
-    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey");
-  });
-
-  test("should throw DatabaseError when response count lookup fails", async () => {
-    const prismaError = makePrismaKnownError();
-    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurveyPrisma } as any);
-    vi.mocked(prisma.response.groupBy).mockRejectedValue(prismaError);
-
-    await expect(getSurvey(surveyId)).rejects.toThrow(DatabaseError);
-    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey");
-  });
-
-  test("should rethrow unknown error", async () => {
-    const unknownError = new Error("Unknown error");
-    vi.mocked(prisma.survey.findUnique).mockRejectedValue(unknownError);
-    await expect(getSurvey(surveyId)).rejects.toThrow(unknownError);
-  });
-});
-
 describe("getSurveys", () => {
   beforeEach(() => {
     resetMocks();
@@ -282,8 +215,9 @@ describe("getSurveys", () => {
     publishOn: s.publishOn,
     singleUse: s.singleUse,
     workspaceId: s.workspaceId,
-    responseCount: s._count.responses,
-    completedResponseCount: s._count.responses,
+    // The groupBy mocks below return a single finished bucket of 10 per survey, so both counts are 10.
+    responseCount: 10,
+    completedResponseCount: 10,
   }));
 
   test("should return surveys with default parameters", async () => {
@@ -295,7 +229,6 @@ describe("getSurveys", () => {
     const surveys = await getSurveys(workspaceId);
 
     expect(surveys).toEqual(expectedSurveys);
-    expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: { workspaceId, ...buildWhereClause() },
       select: surveySelect,
@@ -417,7 +350,6 @@ describe("getSurveysSortedByRelevance", () => {
     const surveys = await getSurveysSortedByRelevance(workspaceId, 2, 0);
 
     expect(surveys).toEqual([expectedInProgressSurvey, expectedOtherSurvey]);
-    expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.count).toHaveBeenCalledWith({
       where: { workspaceId, status: "inProgress", ...buildWhereClause() },
     });

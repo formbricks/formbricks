@@ -20,7 +20,6 @@ import type { TSurvey, TWorkspaceWithLanguages } from "@/modules/survey/list/typ
 import {
   type TSurveyRow,
   getResponseCountsBySurveyIds,
-  mapSurveyRowToSurvey,
   mapSurveyRowsToSurveys,
   surveySelect,
 } from "./survey-record";
@@ -134,31 +133,6 @@ export const getSurveysSortedByRelevance = reactCache(
     }
   }
 );
-
-export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | null> => {
-  try {
-    const surveyPrisma = await prisma.survey.findUnique({
-      where: {
-        id: surveyId,
-      },
-      select: surveySelect,
-    });
-
-    if (!surveyPrisma) {
-      return null;
-    }
-
-    const responseCountsBySurveyId = await getResponseCountsBySurveyIds([surveyPrisma.id]);
-
-    return mapSurveyRowToSurvey(surveyPrisma, responseCountsBySurveyId.get(surveyPrisma.id));
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error getting survey");
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-});
 
 const getExistingSurvey = async (surveyId: string) => {
   return await prisma.survey.findUnique({

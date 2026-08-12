@@ -18,9 +18,6 @@ export const surveySelect = {
   archivedAt: true,
   singleUse: true,
   workspaceId: true,
-  _count: {
-    select: { responses: true },
-  },
 } satisfies Prisma.SurveySelect;
 
 export type TSurveyRow = Prisma.SurveyGetPayload<{ select: typeof surveySelect }>;
@@ -66,13 +63,15 @@ export async function getResponseCountsBySurveyIds(
   return countsBySurveyId;
 }
 
+/** Shared so the default doesn't allocate a throwaway object per mapped row (Sonar S7737). */
+const NO_RESPONSES: TSurveyResponseCounts = Object.freeze({ total: 0, completed: 0 });
+
 export function mapSurveyRowToSurvey(
   row: TSurveyRow,
-  responseCounts: TSurveyResponseCounts = { total: 0, completed: 0 }
+  responseCounts: TSurveyResponseCounts = NO_RESPONSES
 ): TSurvey {
-  const { _count: _ignored, ...rest } = row;
   return {
-    ...rest,
+    ...row,
     responseCount: responseCounts.total,
     completedResponseCount: responseCounts.completed,
   };
