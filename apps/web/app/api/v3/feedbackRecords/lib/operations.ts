@@ -151,15 +151,36 @@ const DEFAULT_LIST_LIMIT = 50;
  * as undefined.
  *
  * Hub 0.8.4 made the identity filters repeatable, so the SDK types each as an array whose values are
- * OR-ed. Callers may pass one value or several; `list` normalizes both to the array form the SDK wants, and
- * a one-element array is the same request on the wire as the scalar was.
+ * OR-ed. Callers may pass one value or several; `assignList` normalizes both to the array form the SDK
+ * wants, and a one-element array is the same request on the wire as the scalar was.
  *
- * Every guard tests `!== undefined` rather than truthiness, because several filters here have meaningful
- * falsy values: `has_sentiment: false` asks for records enrichment has not labelled yet, and
- * `value_number_min: 0` / `sentiment_score_min: 0` are real bounds. A truthiness guard drops all three and
- * answers a wider question than the caller asked, without saying so.
+ * Both helpers assign only when the value is `!== undefined` rather than truthy, because several filters
+ * here have meaningful falsy values: `has_sentiment: false` asks for records enrichment has not labelled
+ * yet, and `value_number_min: 0` / `sentiment_score_min: 0` are real bounds. A truthiness guard drops all
+ * three and answers a wider question than the caller asked, without saying so. Keeping that test in one
+ * place is also what stops the next filter from reintroducing it.
  */
-const list = <T>(value: T | T[]): T[] => (Array.isArray(value) ? value : [value]);
+
+/** Assign a scalar filter, leaving it off entirely when absent. */
+const assign = <K extends keyof FeedbackRecordCountParams>(
+  params: FeedbackRecordCountParams,
+  key: K,
+  value: FeedbackRecordCountParams[K] | undefined
+): void => {
+  if (value !== undefined) params[key] = value;
+};
+
+/** Assign a repeatable filter, accepting one value or several and always sending the Hub's array form. */
+const assignList = <K extends keyof FeedbackRecordCountParams>(
+  params: FeedbackRecordCountParams,
+  key: K,
+  value: (FeedbackRecordCountParams[K] extends readonly (infer E)[] | undefined ? E | E[] : never) | undefined
+): void => {
+  if (value === undefined) return;
+  // The only cast in the mapper, and it is contained: the parameter type above already ties `value` to
+  // this key's element type, so every call site is fully checked.
+  params[key] = (Array.isArray(value) ? value : [value]) as FeedbackRecordCountParams[K];
+};
 
 function buildHubFilterParams(
   tenantId: string,
@@ -167,33 +188,33 @@ function buildHubFilterParams(
 ): FeedbackRecordCountParams {
   const params: FeedbackRecordCountParams = { tenant_id: tenantId };
 
-  if (filters.source_type !== undefined) params.source_type = list(filters.source_type);
-  if (filters.source_id !== undefined) params.source_id = list(filters.source_id);
-  if (filters.source_name !== undefined) params.source_name = list(filters.source_name);
-  if (filters.field_type !== undefined) params.field_type = list(filters.field_type);
-  if (filters.field_id !== undefined) params.field_id = list(filters.field_id);
-  if (filters.field_group_id !== undefined) params.field_group_id = list(filters.field_group_id);
-  if (filters.submission_id !== undefined) params.submission_id = list(filters.submission_id);
-  if (filters.user_id !== undefined) params.user_id = list(filters.user_id);
-  if (filters.value_id !== undefined) params.value_id = list(filters.value_id);
-  if (filters.language !== undefined) params.language = list(filters.language);
-  if (filters.sentiment !== undefined) params.sentiment = list(filters.sentiment);
-  if (filters.emotions !== undefined) params.emotions = list(filters.emotions);
+  assignList(params, "source_type", filters.source_type);
+  assignList(params, "source_id", filters.source_id);
+  assignList(params, "source_name", filters.source_name);
+  assignList(params, "field_type", filters.field_type);
+  assignList(params, "field_id", filters.field_id);
+  assignList(params, "field_group_id", filters.field_group_id);
+  assignList(params, "submission_id", filters.submission_id);
+  assignList(params, "user_id", filters.user_id);
+  assignList(params, "value_id", filters.value_id);
+  assignList(params, "language", filters.language);
+  assignList(params, "sentiment", filters.sentiment);
+  assignList(params, "emotions", filters.emotions);
 
-  if (filters.since !== undefined) params.since = filters.since;
-  if (filters.until !== undefined) params.until = filters.until;
-  if (filters.created_since !== undefined) params.created_since = filters.created_since;
-  if (filters.created_until !== undefined) params.created_until = filters.created_until;
-  if (filters.value_date_min !== undefined) params.value_date_min = filters.value_date_min;
-  if (filters.value_date_max !== undefined) params.value_date_max = filters.value_date_max;
-  if (filters.value_number_min !== undefined) params.value_number_min = filters.value_number_min;
-  if (filters.value_number_max !== undefined) params.value_number_max = filters.value_number_max;
-  if (filters.sentiment_score_min !== undefined) params.sentiment_score_min = filters.sentiment_score_min;
-  if (filters.sentiment_score_max !== undefined) params.sentiment_score_max = filters.sentiment_score_max;
+  assign(params, "since", filters.since);
+  assign(params, "until", filters.until);
+  assign(params, "created_since", filters.created_since);
+  assign(params, "created_until", filters.created_until);
+  assign(params, "value_date_min", filters.value_date_min);
+  assign(params, "value_date_max", filters.value_date_max);
+  assign(params, "value_number_min", filters.value_number_min);
+  assign(params, "value_number_max", filters.value_number_max);
+  assign(params, "sentiment_score_min", filters.sentiment_score_min);
+  assign(params, "sentiment_score_max", filters.sentiment_score_max);
 
-  if (filters.has_sentiment !== undefined) params.has_sentiment = filters.has_sentiment;
-  if (filters.has_emotions !== undefined) params.has_emotions = filters.has_emotions;
-  if (filters.has_translation !== undefined) params.has_translation = filters.has_translation;
+  assign(params, "has_sentiment", filters.has_sentiment);
+  assign(params, "has_emotions", filters.has_emotions);
+  assign(params, "has_translation", filters.has_translation);
 
   return params;
 }
@@ -328,8 +349,8 @@ type TListV3FeedbackRecordsParams = TFeedbackRecordQueryParams & {
   cursor?: string;
   // List-only: the Hub's count endpoint does not accept ordering. Named explicitly rather than left to
   // fall through the filter rest-spread, so that a reviewer can see they are handled.
-  sort?: TV3FeedbackRecordListFilters["sort"];
-  order?: TV3FeedbackRecordListFilters["order"];
+  sort?: NonNullable<TV3FeedbackRecordListFilters["sort"]>;
+  order?: NonNullable<TV3FeedbackRecordListFilters["order"]>;
 };
 
 /** List feedback records for the resolved tenant, with cursor pagination and optional filters. */

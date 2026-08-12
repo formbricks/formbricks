@@ -89,5 +89,5 @@ export function serializeHubQuery(query: object): string {
   // would read it correctly either way, but percent-encoding keeps this serializer byte-identical to the
   // SDK's for every non-array value — which is what makes "did this change the other endpoints?" a
   // question with a one-word answer. Lossless: a literal "+" in data is already "%2B" by this point.
-  return params.toString().replace(/\+/g, "%20");
+  return params.toString().replaceAll("+", "%20");
 }
