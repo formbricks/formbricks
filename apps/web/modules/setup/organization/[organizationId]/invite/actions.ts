@@ -6,11 +6,11 @@ import { AuthenticationError } from "@formbricks/types/errors";
 import { ZUserEmail, ZUserName } from "@formbricks/types/user";
 import { INVITE_DISABLED } from "@/lib/constants";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendInviteMemberEmail } from "@/modules/email";
+import { checkSetupInviteAuthorization } from "@/modules/setup/organization/[organizationId]/invite/lib/authorization";
 import { inviteUser } from "@/modules/setup/organization/[organizationId]/invite/lib/invite";
 
 const ZInviteOrganizationMemberAction = z.object({
@@ -27,22 +27,9 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         throw new AuthenticationError("Invite disabled");
       }
 
-      // Owner-only, deliberately narrower than the org settings invite path: this action takes no
-      // role and `inviteUser` always persists an owner invite, so allowing managers here would let
-      // them mint owners and bypass the "managers can only invite users as members" rule enforced in
-      // `modules/organization/settings/teams/actions.ts`. Nothing legitimate is lost — the only entry
-      // to this screen is the redirect right after `createOrganizationAction`, which makes the
-      // creator an owner.
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner"],
-          },
-        ],
-      });
+      // Owner-only — see `SETUP_INVITE_ROLES` for why this path is narrower than the org settings
+      // invite path.
+      await checkSetupInviteAuthorization(ctx.user.id, parsedInput.organizationId);
 
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
 
