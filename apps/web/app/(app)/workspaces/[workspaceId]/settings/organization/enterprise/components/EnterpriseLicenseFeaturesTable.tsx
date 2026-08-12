@@ -110,7 +110,7 @@ export const EnterpriseLicenseFeaturesTable = ({ features }: EnterpriseLicenseFe
     <SettingsCard
       title={t("workspace.settings.enterprise.license_features_table_title")}
       description={t("workspace.settings.enterprise.license_features_table_description")}
-      noPadding>
+      bodyVariant="flush">
       <Table>
         <TableHeader>
           <TableRow>
