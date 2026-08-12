@@ -5,9 +5,11 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
@@ -489,38 +491,63 @@ export const copySurveyToOtherWorkspace = async (
       }
     }
 
-    const newSurvey = await prisma.survey.create({
-      data: surveyData,
-      select: {
-        id: true,
-        workspaceId: true,
-        segment: {
+    const newSurvey = await prisma.$transaction(
+      async (tx) => {
+        const createdSurvey = await tx.survey.create({
+          data: surveyData,
           select: {
             id: true,
-          },
-        },
-        triggers: {
-          select: {
-            actionClass: {
+            workspaceId: true,
+            variables: true,
+            hiddenFields: true,
+            segment: {
               select: {
                 id: true,
-                name: true,
-                workspaceId: true,
               },
             },
-          },
-        },
-        languages: {
-          select: {
-            language: {
+            triggers: {
               select: {
-                code: true,
+                actionClass: {
+                  select: {
+                    id: true,
+                    name: true,
+                    workspaceId: true,
+                  },
+                },
+              },
+            },
+            languages: {
+              select: {
+                language: {
+                  select: {
+                    code: true,
+                  },
+                },
               },
             },
           },
-        },
+        });
+
+        // ENG-1978: the copy carries the source survey's variables and hidden fields, so the new
+        // survey needs its own rows. `workspaceId` is read off the created row rather than the
+        // function's `workspaceId` argument, which is the SOURCE workspace — a copy into a different
+        // workspace must define its fields there.
+        await reconcileEmbeddedData(tx, {
+          surveyId: createdSurvey.id,
+          workspaceId: createdSurvey.workspaceId,
+          desired: toDesiredEmbeddedFields(createdSurvey),
+        });
+
+        return createdSurvey;
       },
-    });
+      // This create was untransacted before ENG-1978, so wrapping it introduced Prisma's 5s
+      // interactive-transaction ceiling where there had been none. It is the deepest of the three
+      // reconcile call sites — it clones blocks, endings, the welcome card, variables, hidden fields,
+      // follow-ups and quotas, and resolves an action class per trigger through `connectOrCreate` —
+      // so a large survey could plausibly reach it and fail a copy that used to succeed. Matches the
+      // ceiling on `updateSurveyInternal` for the same reason.
+      { timeout: 20_000, maxWait: 10_000 }
+    );
 
     return newSurvey;
   } catch (error) {
