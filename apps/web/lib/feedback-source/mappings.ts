@@ -1,12 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import {
-  THubFieldType,
-  TFeedbackSourceFormbricksMapping,
-  getHubFieldTypeFromElementType,
-} from "@formbricks/types/feedback-source";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { THubFieldType, getHubFieldTypeFromElementType } from "@formbricks/types/feedback-source";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import type { TMappingsInput } from "./service";
@@ -71,53 +66,4 @@ export const resolveFormbricksMappingsInput = async (
   }
 
   return { type: "formbricks_survey", mappings: flattenedMappings };
-};
-
-/**
- * Result of reconciling stored feedback-source mappings against the current survey state.
- *
- * The caller applies these deltas to keep the mapping rows in sync.
- */
-export type TFeedbackSourceReconciliation = {
-  /** Mapping elements whose elementId no longer exists in the survey. */
-  toDelete: string[];
-  /** Mapping elements that still exist but whose hubFieldType has changed. */
-  toUpdate: { elementId: string; hubFieldType: THubFieldType }[];
-};
-
-/**
- * Diff stored feedback-source formbricksMappings against the current survey blocks and produce a
- * minimal reconciliation delta.
- *
- * - Elements removed from the survey → `toDelete`
- * - Elements whose type changed (and therefore hubFieldType is stale) → `toUpdate`
- * - Unchanged elements → left alone
- *
- * This is a **pure** function that works from the caller-supplied survey blocks so it can run
- * inside or outside a transaction; it does not read the database.
- */
-export const reconcileMappingsAgainstSurvey = (
-  storedMappings: Pick<TFeedbackSourceFormbricksMapping, "elementId" | "hubFieldType">[],
-  blocks: TSurveyBlock[]
-): TFeedbackSourceReconciliation => {
-  const elements = getElementsFromBlocks(blocks);
-  const elementMap = new Map(elements.map((el) => [el.id, el]));
-
-  const toDelete: string[] = [];
-  const toUpdate: { elementId: string; hubFieldType: THubFieldType }[] = [];
-
-  for (const mapping of storedMappings) {
-    const element = elementMap.get(mapping.elementId);
-    if (!element) {
-      toDelete.push(mapping.elementId);
-      continue;
-    }
-
-    const currentHubFieldType = getHubFieldTypeFromElementType(element.type);
-    if (currentHubFieldType && currentHubFieldType !== mapping.hubFieldType) {
-      toUpdate.push({ elementId: mapping.elementId, hubFieldType: currentHubFieldType });
-    }
-  }
-
-  return { toDelete, toUpdate };
 };

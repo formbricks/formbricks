@@ -13,6 +13,7 @@ import {
 import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/reconcile";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -36,11 +37,6 @@ import {
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
 } from "./utils";
-import {
-  getFeedbackSourcesBySurveyId,
-  applyReconciliationToFeedbackSource,
-} from "@/lib/feedback-source/service";
-import { reconcileMappingsAgainstSurvey } from "@/lib/feedback-source/mappings";
 
 export const selectSurvey = {
   id: true,
@@ -623,22 +619,11 @@ export const updateSurveyInternal = async (
       select: selectSurvey,
     });
 
-    // ENG-2064: reconcile feedback-source mappings so they stay in sync with the survey's
-    // current blocks. Best-effort — a reconciliation failure logs but never blocks the save.
-    try {
-      const feedbackSources = await getFeedbackSourcesBySurveyId(surveyId);
-      for (const source of feedbackSources) {
-        const reconciliation = reconcileMappingsAgainstSurvey(
-          source.formbricksMappings,
-          updatedSurvey.blocks ?? []
-        );
-        if (reconciliation.toDelete.length > 0 || reconciliation.toUpdate.length > 0) {
-          await applyReconciliationToFeedbackSource(source.id, source.workspaceId, reconciliation);
-        }
-      }
-    } catch (error) {
-      logger.error({ surveyId, error }, "Failed to reconcile feedback sources after survey update");
-    }
+    // ENG-2064: keep feedback-source mappings in sync with the survey's questions. Diff against the
+    // blocks that were actually persisted, not the caller's payload — a partial update that omits
+    // blocks leaves the stored questions untouched, and diffing its empty payload would delete every
+    // mapping. Best-effort: a failure logs inside the helper and never blocks the save.
+    await reconcileFeedbackSourcesForSurvey(surveyId, persistedSurvey.blocks);
 
     return await reconcilePersistedSurveySchedulingIfDue({
       logSource: "survey-update",

@@ -10,7 +10,6 @@ import {
   getFeedbackSourcesWithMappings,
   updateFeedbackSource,
   updateFeedbackSourceWithMappings,
-  applyReconciliationToFeedbackSource,
 } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -831,117 +830,6 @@ describe("updateFeedbackSourceWithMappings", () => {
 
     await expect(updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       "boom"
-    );
-  });
-});
-
-describe("applyReconciliationToFeedbackSource", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test("returns early when delta is empty", async () => {
-    await applyReconciliationToFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, {
-      toDelete: [],
-      toUpdate: [],
-    });
-
-    // No transaction should be started for an empty delta.
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-  });
-
-  test("deletes removed element mappings", async () => {
-    const tx = {
-      feedbackSourceFormbricksMapping: {
-        deleteMany: vi.fn(),
-        updateMany: vi.fn(),
-      },
-    };
-    vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => fn(tx));
-
-    await applyReconciliationToFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, {
-      toDelete: ["el-1", "el-2"],
-      toUpdate: [],
-    });
-
-    expect(tx.feedbackSourceFormbricksMapping.deleteMany).toHaveBeenCalledWith({
-      where: {
-        feedbackSourceId: FEEDBACK_SOURCE_ID,
-        workspaceId: ENV_ID,
-        elementId: { in: ["el-1", "el-2"] },
-      },
-    });
-    expect(tx.feedbackSourceFormbricksMapping.updateMany).not.toHaveBeenCalled();
-  });
-
-  test("updates hubFieldType for type-changed elements", async () => {
-    const tx = {
-      feedbackSourceFormbricksMapping: {
-        deleteMany: vi.fn(),
-        updateMany: vi.fn(),
-      },
-    };
-    vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => fn(tx));
-
-    await applyReconciliationToFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, {
-      toDelete: [],
-      toUpdate: [
-        { elementId: "el-nps", hubFieldType: "nps" },
-        { elementId: "el-csat", hubFieldType: "csat" },
-      ],
-    });
-
-    expect(tx.feedbackSourceFormbricksMapping.deleteMany).not.toHaveBeenCalled();
-    expect(tx.feedbackSourceFormbricksMapping.updateMany).toHaveBeenCalledTimes(2);
-    expect(tx.feedbackSourceFormbricksMapping.updateMany).toHaveBeenCalledWith({
-      where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID, elementId: "el-nps" },
-      data: { hubFieldType: "nps" },
-    });
-    expect(tx.feedbackSourceFormbricksMapping.updateMany).toHaveBeenCalledWith({
-      where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID, elementId: "el-csat" },
-      data: { hubFieldType: "csat" },
-    });
-  });
-
-  test("handles mixed delete and update in one transaction", async () => {
-    const tx = {
-      feedbackSourceFormbricksMapping: {
-        deleteMany: vi.fn(),
-        updateMany: vi.fn(),
-      },
-    };
-    vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => fn(tx));
-
-    await applyReconciliationToFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, {
-      toDelete: ["el-gone"],
-      toUpdate: [{ elementId: "el-nps", hubFieldType: "nps" }],
-    });
-
-    expect(tx.feedbackSourceFormbricksMapping.deleteMany).toHaveBeenCalledWith({
-      where: {
-        feedbackSourceId: FEEDBACK_SOURCE_ID,
-        workspaceId: ENV_ID,
-        elementId: { in: ["el-gone"] },
-      },
-    });
-    expect(tx.feedbackSourceFormbricksMapping.updateMany).toHaveBeenCalledTimes(1);
-  });
-
-  test("logs but does not throw on Prisma error", async () => {
-    const { logger } = await import("@formbricks/logger");
-    vi.mocked(prisma.$transaction).mockRejectedValue(new Error("DB failure"));
-
-    // Must not throw — reconciliation is best-effort.
-    await expect(
-      applyReconciliationToFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, {
-        toDelete: ["el-1"],
-        toUpdate: [],
-      })
-    ).resolves.toBeUndefined();
-
-    expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ feedbackSourceId: FEEDBACK_SOURCE_ID }),
-      "Failed to apply feedback-source reconciliation"
     );
   });
 });

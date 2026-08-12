@@ -15,6 +15,7 @@ import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/reconcile";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -41,8 +42,6 @@ import {
   updateSurvey,
   updateSurveyInternal,
 } from "./service";
-import { getFeedbackSourcesBySurveyId, applyReconciliationToFeedbackSource } from "@/lib/feedback-source/service";
-import { reconcileMappingsAgainstSurvey } from "@/lib/feedback-source/mappings";
 
 const SURVEY_SERVICE_TEST_TIMEOUT_MS = 30_000;
 
@@ -59,14 +58,10 @@ vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
 }));
 
-// Mock feedback-source services used by the ENG-2064 reconciliation hook
-vi.mock("@/lib/feedback-source/service", () => ({
-  getFeedbackSourcesBySurveyId: vi.fn(),
-  applyReconciliationToFeedbackSource: vi.fn(),
-}));
-
-vi.mock("@/lib/feedback-source/mappings", () => ({
-  reconcileMappingsAgainstSurvey: vi.fn(),
+// The reconciliation itself is covered in lib/feedback-source/reconcile.test.ts; here we only pin
+// what updateSurveyInternal hands it and when.
+vi.mock("@/lib/feedback-source/reconcile", () => ({
+  reconcileFeedbackSourcesForSurvey: vi.fn(),
 }));
 
 beforeEach(() => {
@@ -537,76 +532,41 @@ describe("Tests for updateSurvey", () => {
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
-  });
 
-  describe("Feedback source reconciliation (ENG-2064)", () => {
-    const mockFeedbackSource = {
-      id: "fs-1",
-      workspaceId: "ws-1",
-      formbricksMappings: [
-        { elementId: "el-1", hubFieldType: "text" as const },
-        { elementId: "el-2", hubFieldType: "rating" as const },
-      ],
-    };
+    describe("Feedback source reconciliation (ENG-2064)", () => {
+      // The blocks that come back from prisma.survey.update, deliberately distinguishable from the
+      // caller's payload. Reconciling against the payload deletes mappings for questions that are
+      // still stored: a partial update that omits blocks leaves them untouched in the database
+      // (see the `updatedSurvey.blocks?.length` guard above), so its empty payload must not be read
+      // as "this survey has no questions".
+      const persistedBlocks = [
+        { id: "persisted-block", name: "Persisted", elements: [{ id: "el-persisted", type: "openText" }] },
+      ];
 
-    beforeEach(() => {
-      vi.mocked(getFeedbackSourcesBySurveyId).mockReset();
-      vi.mocked(applyReconciliationToFeedbackSource).mockReset();
-      vi.mocked(reconcileMappingsAgainstSurvey).mockReset();
-    });
+      test("reconciles against the persisted blocks, not the caller's payload", async () => {
+        // Draft + skipValidation is the survey editor's own save path, and the one that can send a
+        // payload whose blocks differ from what ends up stored.
+        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, blocks: persistedBlocks } as any);
 
-    test("reconciles feedback sources when mappings changed", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
-      vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValueOnce([mockFeedbackSource] as any);
-      vi.mocked(reconcileMappingsAgainstSurvey).mockReturnValue({
-        toDelete: ["el-2"],
-        toUpdate: [],
+        await updateSurveyInternal({ ...updateSurveyInput, blocks: [] } as any, true);
+
+        expect(reconcileFeedbackSourcesForSurvey).toHaveBeenCalledWith(updateSurveyInput.id, persistedBlocks);
       });
-      vi.mocked(applyReconciliationToFeedbackSource).mockResolvedValueOnce(undefined);
 
-      await updateSurvey(updateSurveyInput);
+      // Reconciliation runs after the survey row is committed, so it must not be able to turn a
+      // successful save into a user-visible error. The helper owns that guarantee (it never
+      // rejects — see reconcile.test.ts); this pins the ordering the guarantee depends on.
+      test("reconciles only after the survey row has been written", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
 
-      expect(getFeedbackSourcesBySurveyId).toHaveBeenCalledWith(updateSurveyInput.id);
-      expect(reconcileMappingsAgainstSurvey).toHaveBeenCalledWith(
-        mockFeedbackSource.formbricksMappings,
-        updateSurveyInput.blocks
-      );
-      expect(applyReconciliationToFeedbackSource).toHaveBeenCalledWith(
-        "fs-1",
-        "ws-1",
-        { toDelete: ["el-2"], toUpdate: [] }
-      );
-    });
+        await updateSurvey(updateSurveyInput);
 
-    test("does not call reconciliation when no sources exist", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
-      vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValueOnce([]);
-
-      await updateSurvey(updateSurveyInput);
-
-      expect(getFeedbackSourcesBySurveyId).toHaveBeenCalledWith(updateSurveyInput.id);
-      expect(applyReconciliationToFeedbackSource).not.toHaveBeenCalled();
-    });
-
-    test("does not apply reconciliation when delta is empty", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
-      vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValueOnce([mockFeedbackSource] as any);
-      vi.mocked(reconcileMappingsAgainstSurvey).mockReturnValue({ toDelete: [], toUpdate: [] });
-
-      await updateSurvey(updateSurveyInput);
-
-      expect(applyReconciliationToFeedbackSource).not.toHaveBeenCalled();
-    });
-
-    test("survey update succeeds even when reconciliation throws", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
-      vi.mocked(getFeedbackSourcesBySurveyId).mockRejectedValueOnce(new Error("DB down"));
-
-      await expect(updateSurvey(updateSurveyInput)).resolves.toEqual(mockTransformedSurveyOutput);
+        const updateOrder = vi.mocked(prisma.survey.update).mock.invocationCallOrder[0];
+        const reconcileOrder = vi.mocked(reconcileFeedbackSourcesForSurvey).mock.invocationCallOrder[0];
+        expect(reconcileOrder).toBeGreaterThan(updateOrder);
+      });
     });
   });
 });
