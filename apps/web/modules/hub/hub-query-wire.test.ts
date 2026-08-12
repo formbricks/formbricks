@@ -47,7 +47,7 @@ vi.mock("@/lib/cache", () => ({
 }));
 
 const globalForHub = globalThis as unknown as {
-  formbricksHubClient: FormbricksHub | undefined;
+  formbricksHubClientRepeatArrays: FormbricksHub | undefined;
 };
 
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -67,12 +67,12 @@ beforeEach(() => {
   );
   // Installed before the client exists, because the SDK captures the global fetch at construction.
   vi.stubGlobal("fetch", fetchMock);
-  globalForHub.formbricksHubClient = undefined;
+  globalForHub.formbricksHubClientRepeatArrays = undefined;
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  globalForHub.formbricksHubClient = undefined;
+  globalForHub.formbricksHubClientRepeatArrays = undefined;
 });
 
 describe("feedback-record list query serialization", () => {

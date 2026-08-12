@@ -21,13 +21,33 @@ const { env } = await import("@/lib/env");
 const mutableEnv = env as unknown as Record<string, string>;
 
 const globalForHub = globalThis as unknown as {
-  formbricksHubClient: FormbricksHub | undefined;
+  formbricksHubClientRepeatArrays: FormbricksHub | undefined;
 };
+
+/**
+ * A stand-in client instance. `getHubClient` probes the freshly built client to confirm array query
+ * params still serialize as repeated ones, so every fake needs a `buildURL` — `repeated: false` produces
+ * the comma form the real SDK defaults to, which is what the probe exists to reject.
+ */
+const fakeClient = ({ repeated }: { repeated: boolean }): FormbricksHub =>
+  ({
+    feedbackRecords: {},
+    buildURL: (path: string, query: Record<string, unknown>) => {
+      const search = Object.entries(query ?? {})
+        .map(([key, value]) =>
+          Array.isArray(value) && repeated
+            ? value.map((v) => `${key}=${String(v)}`).join("&")
+            : `${key}=${Array.isArray(value) ? value.join("%2C") : String(value)}`
+        )
+        .join("&");
+      return `https://hub.test${path}?${search}`;
+    },
+  }) as unknown as FormbricksHub;
 
 describe("getHubClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    globalForHub.formbricksHubClient = undefined;
+    globalForHub.formbricksHubClientRepeatArrays = undefined;
   });
 
   test("returns null when HUB_API_KEY is not set", async () => {
@@ -42,7 +62,7 @@ describe("getHubClient", () => {
 
   test("creates and caches a new client when HUB_API_KEY is set", async () => {
     mutableEnv.HUB_API_KEY = "test-key";
-    const mockInstance = { feedbackRecords: {} } as unknown as FormbricksHub;
+    const mockInstance = fakeClient({ repeated: true });
     vi.mocked(FormbricksHub).mockImplementation(function () {
       return mockInstance as any;
     });
@@ -52,12 +72,12 @@ describe("getHubClient", () => {
 
     expect(FormbricksHub).toHaveBeenCalledWith({ apiKey: "test-key", baseURL: "https://hub.test" });
     expect(client).toBe(mockInstance);
-    expect(globalForHub.formbricksHubClient).toBe(mockInstance);
+    expect(globalForHub.formbricksHubClientRepeatArrays).toBe(mockInstance);
   });
 
   test("returns cached client on subsequent calls", async () => {
-    const cachedInstance = { feedbackRecords: {} } as unknown as FormbricksHub;
-    globalForHub.formbricksHubClient = cachedInstance;
+    const cachedInstance = fakeClient({ repeated: true });
+    globalForHub.formbricksHubClientRepeatArrays = cachedInstance;
 
     const { getHubClient } = await import("./hub-client");
     const client = getHubClient();
@@ -72,16 +92,33 @@ describe("getHubClient", () => {
     const { getHubClient } = await import("./hub-client");
     const first = getHubClient();
     expect(first).toBeNull();
-    expect(globalForHub.formbricksHubClient).toBeUndefined();
+    expect(globalForHub.formbricksHubClientRepeatArrays).toBeUndefined();
 
     mutableEnv.HUB_API_KEY = "now-set";
-    const mockInstance = { feedbackRecords: {} } as unknown as FormbricksHub;
+    const mockInstance = fakeClient({ repeated: true });
     vi.mocked(FormbricksHub).mockImplementation(function () {
       return mockInstance as any;
     });
 
     const second = getHubClient();
     expect(second).toBe(mockInstance);
-    expect(globalForHub.formbricksHubClient).toBe(mockInstance);
+    expect(globalForHub.formbricksHubClientRepeatArrays).toBe(mockInstance);
+  });
+
+  test("refuses to hand back a client that comma-joins array query params", async () => {
+    mutableEnv.HUB_API_KEY = "test-key";
+    // Stands in for a future SDK release that stops routing query serialization through
+    // `stringifyQuery`: our override would become an unused method — legal TypeScript, no type error, and
+    // filters silently stop matching. Nothing but this probe catches that.
+    const commaJoining = fakeClient({ repeated: false });
+    vi.mocked(FormbricksHub).mockImplementation(function () {
+      return commaJoining as any;
+    });
+
+    const { getHubClient } = await import("./hub-client");
+
+    expect(() => getHubClient()).toThrow(/no longer routes query serialization through stringifyQuery/);
+    // Never cached, so the next call re-probes rather than serving a known-broken client.
+    expect(globalForHub.formbricksHubClientRepeatArrays).toBeUndefined();
   });
 });
