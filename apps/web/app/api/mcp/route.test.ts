@@ -58,6 +58,10 @@ const { MCP_CHALLENGE_SCOPE } = await import("@/modules/auth/lib/oauth-urls");
 // The auth-params are comma-separated per RFC 9110 §11.6.1 (#8718): asserting the whole string is what
 // keeps the separator from regressing, since a strict client parser needs it to read `resource_metadata`.
 // The scope list interpolates the real constant, so this stays honest as the advertised scopes change.
+// Real tokens always carry `aud`; the resource server rejects any token not minted for it, so the
+// fixtures have to look like something the authorization server would actually issue.
+const MCP_AUDIENCE = "http://localhost/api/mcp";
+
 const EXPECTED_CHALLENGE = `Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp", scope="${MCP_CHALLENGE_SCOPE}"`;
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -144,6 +148,7 @@ describe("POST /api/mcp", () => {
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
     userFindUniqueMock.mockResolvedValue({ isActive: true });
     verifyAccessTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
       name: "Person",
@@ -449,6 +454,7 @@ describe("POST /api/mcp", () => {
 
   test("blocks write tools for read-only OAuth tokens", async () => {
     verifyAccessTokenMock.mockResolvedValueOnce({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
       scope: "openid profile email surveys:read",
@@ -494,6 +500,7 @@ describe("POST /api/mcp", () => {
     // A write-capable user whose OAuth token was only granted read scopes (surveys:read + workflows:read)
     // must not be able to reach a workflow mutation — the ENG-1967 token-scope boundary.
     verifyAccessTokenMock.mockResolvedValueOnce({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
       scope: "openid profile email surveys:read workflows:read",

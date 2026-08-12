@@ -188,15 +188,26 @@ overrides:
   # - apps/web/modules/auth/lib/mcp-oauth-provider-options.ts sets a single-entry validAudiences (the
   #   MCP resource URL), so there is no second audience for a client to escalate into. This is the
   #   load-bearing mitigation, and it holds only while that array stays single-entry.
-  # - apps/web/modules/mcp/auth.ts additionally pins `audience: getMcpResourceUrl()` on the resource
-  #   server's own verifyAccessToken call. That hardens the MCP endpoint but is NOT a substitute for the
-  #   above: the option flows straight into jose's jwtVerify, whose `aud` check is a membership test, so
-  #   a token whose `aud` array also lists other audiences still passes. The advisory's workaround also
-  #   requires rejecting multi-audience tokens, which verifyOptions.audience cannot express — that would
-  #   need an explicit assert on the returned payload. And if a second audience were ever added, the
-  #   party at risk is that other resource server, which our own pin does nothing for.
-  # - apps/web/modules/mcp/auth.test.ts asserts the audience/issuer pin, and
-  #   apps/web/modules/auth/lib/mcp-oauth-dcr.test.ts guards the single-entry validAudiences invariant.
+  # - apps/web/modules/mcp/auth.ts pins `audience: getMcpResourceUrl()` on the resource server's own
+  #   verify call AND, since ENG-2339, asserts the verified payload's `aud` itself. The pin alone was
+  #   never sufficient: it flows straight into jose's jwtVerify, whose `aud` check is a membership
+  #   test, so a token whose `aud` array also lists other audiences passes it. The advisory's own
+  #   workaround requires *rejecting* multi-audience tokens, which verifyOptions.audience cannot
+  #   express. The explicit assert is that rejection — an allow-list of {MCP resource, the AS's
+  #   UserInfo endpoint, which `openid` implies}, everything else refused.
+  # - What that does and does not buy: our MCP endpoint can no longer be reached with a token minted
+  #   for somebody else, which is the exploitable half. It does NOT make the AS compliant — 1.6.x
+  #   still never persists the approved resource, so there is nothing to bind the token request to.
+  #   That is unfixable from our side and is what the 1.7 upgrade (ENG-2343) is for. If a second
+  #   audience were ever added the party at risk is that other resource server, and nothing here
+  #   protects it.
+  # - Test coverage. Single-entry validAudiences is pinned twice, deliberately: in
+  #   apps/web/modules/auth/lib/mcp-oauth-dcr.test.ts (added by #8828) and in
+  #   apps/web/modules/auth/lib/mcp-oauth-provider-options.test.ts (ENG-2339), which also covers the
+  #   advertised-vs-registration scope agreement and the write-scope step-up expiry. Redundant on
+  #   purpose — it is the invariant this entire acceptance rests on. Separately,
+  #   apps/web/modules/mcp/auth.test.ts mints real signed JWTs and proves a multi-audience token is
+  #   refused (and that jose on its own accepts it).
   # Upgrade cost, for whoever picks up 1.7.0: the renames the 1.7 upgrade guide warns about do not apply
   # to us (migration 20260702093000_add_better_auth_oauth_provider already created `oauthClient`, not
   # `oauthApplication`, with an `oauthAccessToken.token` column, not `.accessToken`, plus the `sessionId`
