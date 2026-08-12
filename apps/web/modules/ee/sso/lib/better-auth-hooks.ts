@@ -3,20 +3,16 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { SIGNUP_DISABLED_ERROR_CODE, SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
-import { SIGNUP_ENABLED, WEBAPP_URL } from "@/lib/constants";
-import { getIsFreshInstance } from "@/lib/instance/service";
+import { WEBAPP_URL } from "@/lib/constants";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import { isUninvitedSignupAllowed } from "@/modules/auth/lib/signup-policy";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
-import {
-  getIsMultiOrgEnabled,
-  getIsSamlSsoEnabled,
-  getIsSsoEnabled,
-} from "@/modules/ee/license-check/lib/utils";
+import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
 import { normalizeSsoProvider } from "./provider-normalization";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
@@ -89,21 +85,21 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           if (!isSignupDomainAllowed() && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
             return false;
           }
-          // ENG-2293: the page and server action both enforce closed-instance policy (SIGNUP_ENABLED,
-          // multi-org, fresh-instance), but a direct POST to Better Auth's native /sign-up/email
-          // skips them. Enforce it here as the last line of defense — only when the request is not
-          // already action-scoped (isSignupDomainAllowed) to avoid redundant DB queries.
-          // Freshness is checked first: if the instance is fresh, we allow the first admin setup
-          // and skip the license-DB hit entirely; only check multi-org on non-fresh instances.
-          // Throwing APIError is Better Auth's documented pattern for signup gating — it surfaces a
-          // proper error code to the caller rather than the generic FAILED_TO_CREATE_USER that
-          // returning false produces.
-          if (!isSignupDomainAllowed()) {
-            if (!(await getIsFreshInstance()) && !(SIGNUP_ENABLED && (await getIsMultiOrgEnabled()))) {
-              throw new APIError("FORBIDDEN", {
-                message: "Signup is disabled on this instance.",
-              });
-            }
+          // ENG-2293 BACKSTOP: closed-instance policy (SIGNUP_ENABLED / multi-org / fresh-instance).
+          // The primary gate is `signupPolicyBeforeHandler` in auth.ts's `hooks.before`, which rejects
+          // `POST /sign-up/email` before Better Auth looks the address up — deliberately NOT here,
+          // because this hook only ever runs for an address that does not yet exist (the duplicate
+          // branch returns a synthetic 200 without creating anything), so rejecting here and nowhere
+          // else would answer "does this address have an account?". See signup-policy.ts.
+          //
+          // Kept anyway because this hook covers EVERY credential user-creation path, not just the one
+          // route the before-hook names: any future Better Auth plugin that creates a user (magic link,
+          // email OTP, admin create) lands here, and on a closed instance it should not.
+          if (!isSignupDomainAllowed() && !(await isUninvitedSignupAllowed())) {
+            throw new APIError("FORBIDDEN", {
+              message: "Signup is disabled on this instance.",
+              code: SIGNUP_DISABLED_ERROR_CODE,
+            });
           }
           return; // otherwise keep credential-signup defaults
         }
