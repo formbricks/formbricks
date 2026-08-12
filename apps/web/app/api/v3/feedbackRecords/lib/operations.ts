@@ -149,26 +149,27 @@ const DEFAULT_LIST_LIMIT = 50;
  * records than the list it is supposed to be counting. Absent filters are left off entirely rather than sent
  * as undefined.
  *
- * Hub 0.8.4 made the identity filters repeatable, so the SDK now types each as an array whose values are
- * OR-ed. Our own filters stay single-valued, so each one is wrapped into a one-element array: that is the
- * same request on the wire as before, and widening `/v3` to accept several values per filter is a feature
- * decision rather than something a version bump should make on its own.
+ * Hub 0.8.4 made the identity filters repeatable, so the SDK types each as an array whose values are
+ * OR-ed. Callers may pass one value or several; `list` normalizes both to the array form the SDK wants, and
+ * a one-element array is the same request on the wire as the scalar was.
  */
+const list = <T>(value: T | T[]): T[] => (Array.isArray(value) ? value : [value]);
+
 function buildHubFilterParams(
   tenantId: string,
   filters: TV3FeedbackRecordFilters
 ): FeedbackRecordCountParams {
   const params: FeedbackRecordCountParams = { tenant_id: tenantId };
-  if (filters.source_type) params.source_type = [filters.source_type];
-  if (filters.source_id) params.source_id = [filters.source_id];
-  if (filters.field_type) params.field_type = [filters.field_type];
-  if (filters.field_id) params.field_id = [filters.field_id];
-  if (filters.field_group_id) params.field_group_id = [filters.field_group_id];
-  if (filters.submission_id) params.submission_id = [filters.submission_id];
-  if (filters.user_id) params.user_id = [filters.user_id];
-  if (filters.value_id) params.value_id = [filters.value_id];
-  if (filters.since) params.since = filters.since;
-  if (filters.until) params.until = filters.until;
+  if (filters.source_type !== undefined) params.source_type = list(filters.source_type);
+  if (filters.source_id !== undefined) params.source_id = list(filters.source_id);
+  if (filters.field_type !== undefined) params.field_type = list(filters.field_type);
+  if (filters.field_id !== undefined) params.field_id = list(filters.field_id);
+  if (filters.field_group_id !== undefined) params.field_group_id = list(filters.field_group_id);
+  if (filters.submission_id !== undefined) params.submission_id = list(filters.submission_id);
+  if (filters.user_id !== undefined) params.user_id = list(filters.user_id);
+  if (filters.value_id !== undefined) params.value_id = list(filters.value_id);
+  if (filters.since !== undefined) params.since = filters.since;
+  if (filters.until !== undefined) params.until = filters.until;
   return params;
 }
 

@@ -32,30 +32,83 @@ import { ZHubFieldType } from "@formbricks/types/feedback-source";
  */
 const ZFeedbackRecordFilterId = z.string().trim().min(1).max(255);
 
+/**
+ * The Hub caps every repeatable string filter at 100 values; the enum filters cap at their own label-set
+ * cardinality instead, since more entries than there are labels can only be duplicates.
+ */
+const MAX_FILTER_VALUES = 100;
+
+const ID_VALUE_HINT = "a non-empty string of at most 255 characters";
+
+/**
+ * A filter the Hub OR-s: one value, or a list of them.
+ *
+ * Accepting both keeps every existing caller working — the scalar form is what the MCP tools have always
+ * sent and what the published docs show — while `["survey", "review"]` becomes expressible. The Hub reads
+ * a repeated parameter as an OR and AND-s across different parameters.
+ *
+ * A plain union, deliberately not a transform: the MCP server converts these schemas to JSON Schema with
+ * `io: "input"`, where a union renders as a clean `anyOf` carrying the description, while a transform's
+ * input side is not reliably representable — and the failure mode is a silently degraded tool schema.
+ * Normalization to an array happens in the operations mapper, so `parsed.data` keeps the caller's shape.
+ *
+ * `.min(1)` is load-bearing rather than decorative: it is what stops an empty OR-list reaching the Hub,
+ * where a dropped filter would widen the result set instead of narrowing it.
+ *
+ * The explicit `error` covers the one case zod reports uselessly. A wrong value (or a wrong element)
+ * matches neither branch, so zod emits `invalid_union` with the message "Invalid input" — which would tell
+ * an agent nothing and would be a regression on the single-value schemas this replaces. Cap violations
+ * report as `too_big`/`too_small` with their own precise messages and are left alone.
+ */
+const oneOrMany = <T extends z.ZodType>(
+  value: T,
+  maxValues: number,
+  { valueHint, description }: { valueHint: string; description: string }
+) =>
+  z
+    .union([value, z.array(value).min(1).max(maxValues)], {
+      error: `must be ${valueHint}, or an array of 1–${maxValues} of them`,
+    })
+    .optional()
+    .describe(`${description} One value, or up to ${maxValues} values which are OR-ed.`);
+
 export const ZV3FeedbackRecordFilters = z
   .object({
-    source_type: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by feedback source type, e.g. survey, review, call_notes."
-    ),
-    source_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by source id — the survey/form/ticket the feedback came from."
-    ),
-    field_type: ZHubFieldType.optional().describe("Filter by field type."),
-    field_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by field id — all answers to one question."
-    ),
-    field_group_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by field group id, which groups related fields of one question (ranking, matrix, grid)."
-    ),
-    submission_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by submission id — the sibling records of one logical submission, i.e. the rest of the answers given at the same time."
-    ),
-    user_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by end-user identifier — everything one person submitted."
-    ),
-    value_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice."
-    ),
+    source_type: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by feedback source type, e.g. survey, review, call_notes.",
+    }),
+    source_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by source id — the survey/form/ticket the feedback came from.",
+    }),
+    field_type: oneOrMany(ZHubFieldType, ZHubFieldType.options.length, {
+      valueHint: `one of ${ZHubFieldType.options.join(", ")}`,
+      description: "Filter by field type.",
+    }),
+    field_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by field id — all answers to one question.",
+    }),
+    field_group_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description:
+        "Filter by field group id, which groups related fields of one question (ranking, matrix, grid).",
+    }),
+    submission_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description:
+        "Filter by submission id — the sibling records of one logical submission, i.e. the rest of the answers given at the same time.",
+    }),
+    user_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by end-user identifier — everything one person submitted.",
+    }),
+    value_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description:
+        "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice.",
+    }),
     since: z
       .string()
       .trim()

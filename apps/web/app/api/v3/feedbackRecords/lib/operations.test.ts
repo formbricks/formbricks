@@ -1147,6 +1147,91 @@ describe("listV3FeedbackRecords filters", () => {
   });
 });
 
+describe("feedback-record filters accept multiple values", () => {
+  beforeEach(() => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+    vi.mocked(countFeedbackRecords).mockResolvedValue({ data: { count: 0 }, error: null });
+  });
+
+  test("passes a list of values straight through as the Hub's OR list", async () => {
+    await listV3FeedbackRecords({
+      ...base,
+      source_type: ["survey", "review"],
+      field_type: ["text", "rating"],
+    });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source_type: ["survey", "review"],
+        field_type: ["text", "rating"],
+      })
+    );
+  });
+
+  test("accepts a scalar and a list in the same call", async () => {
+    await listV3FeedbackRecords({ ...base, source_type: "survey", user_id: ["u1", "u2"] });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ source_type: ["survey"], user_id: ["u1", "u2"] })
+    );
+  });
+
+  test("counts the same multi-value filter set as list", async () => {
+    // One mapper serves both, so a count always describes the set the equivalent list would return.
+    await countV3FeedbackRecords({ ...base, source_type: ["survey", "review"] });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ source_type: ["survey", "review"] })
+    );
+  });
+
+  test("rejects more values than the Hub accepts, naming the filter", async () => {
+    const response = await listV3FeedbackRecords({
+      ...base,
+      user_id: Array.from({ length: 101 }, (_, i) => `u${i}`),
+    });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.invalid_params[0].name).toBe("user_id");
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects an enum filter repeated past its label count", async () => {
+    // field_type caps at its own cardinality rather than at 100: more entries can only be duplicates.
+    const response = await listV3FeedbackRecords({
+      ...base,
+      field_type: Array.from({ length: 10 }, () => "text"),
+    });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("field_type");
+  });
+
+  test("names the accepted values when a filter value is not one of them", async () => {
+    // A wrong value matches neither union branch, and zod's own `invalid_union` message is "Invalid
+    // input" — useless to an agent, and a regression on the single-value schema this replaced.
+    const response = await listV3FeedbackRecords({ ...base, field_type: "not-a-type" });
+
+    expect(response.status).toBe(422);
+    const [issue] = (await response.json()).invalid_params;
+    expect(issue.name).toBe("field_type");
+    expect(issue.reason).toContain("categorical");
+  });
+
+  test("rejects an empty list rather than running unfiltered", async () => {
+    // The dangerous direction: an empty OR list would drop the filter and widen the result set while the
+    // caller is told the request succeeded.
+    const response = await listV3FeedbackRecords({ ...base, source_type: [] });
+
+    expect(response.status).toBe(422);
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
 describe("createV3FeedbackRecords", () => {
   const record = (i: number) => ({
     source_type: "call_notes",
