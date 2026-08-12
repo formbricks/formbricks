@@ -8,17 +8,15 @@ interface LabelProps extends React.ComponentProps<"label"> {
   variant?: LabelVariant;
 }
 
-const VARIANT_CLASSES: Record<LabelVariant, string> = {
-  default: "label-default",
-  headline: "label-headline",
-  description: "label-description",
-  card: "label-card",
-};
-
 // Element headlines and descriptions are content respondents read (and may want to
 // copy or have translated), so they stay selectable. Labels that act as controls —
 // choices, cards — keep select-none so a stray drag doesn't highlight them.
-const READABLE_VARIANTS: LabelVariant[] = ["headline", "description"];
+const VARIANT_CLASSES: Record<LabelVariant, string> = {
+  default: "label-default select-none",
+  headline: "label-headline select-text",
+  description: "label-description select-text",
+  card: "label-card select-none",
+};
 
 /**
  * Checks if a string contains valid HTML markup
@@ -56,7 +54,6 @@ function Label({
   const baseClasses = cn(
     isHtml && safeHtml ? "flex flex-col gap-2" : "flex items-center gap-2",
     "leading-6 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-    READABLE_VARIANTS.includes(variant) ? "select-text" : "select-none",
     VARIANT_CLASSES[variant]
   );
 
