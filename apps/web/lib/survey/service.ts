@@ -841,58 +841,65 @@ export const createSurvey = async (
     // Create the survey and — for app surveys — its private targeting segment atomically. The survey,
     // the segment (seeded with any caller-supplied filters), and the segment connection must all land
     // or none, so a mid-write failure can't leave a survey with missing or partial targeting.
-    const survey = await prisma.$transaction(async (tx) => {
-      const createdSurvey = await tx.survey.create({
-        data: {
-          ...data,
-          workspace: {
-            connect: {
-              id: parsedWorkspaceId,
-            },
-          },
-        },
-        select: selectSurvey,
-      });
-
-      if (createdSurvey.type === "app") {
-        const newSegment = await tx.segment.create({
+    const survey = await prisma.$transaction(
+      async (tx) => {
+        const createdSurvey = await tx.survey.create({
           data: {
-            title: createdSurvey.id,
-            filters: privateSegmentFilters,
-            isPrivate: true,
+            ...data,
             workspace: {
               connect: {
                 id: parsedWorkspaceId,
               },
             },
           },
+          select: selectSurvey,
         });
 
-        await tx.survey.update({
-          where: {
-            id: createdSurvey.id,
-          },
-          data: {
-            segment: {
-              connect: {
-                id: newSegment.id,
+        if (createdSurvey.type === "app") {
+          const newSegment = await tx.segment.create({
+            data: {
+              title: createdSurvey.id,
+              filters: privateSegmentFilters,
+              isPrivate: true,
+              workspace: {
+                connect: {
+                  id: parsedWorkspaceId,
+                },
               },
             },
-          },
+          });
+
+          await tx.survey.update({
+            where: {
+              id: createdSurvey.id,
+            },
+            data: {
+              segment: {
+                connect: {
+                  id: newSegment.id,
+                },
+              },
+            },
+          });
+        }
+
+        // ENG-1978: a survey created from a template, the API or a duplicate can already carry
+        // variables and hidden fields, so the tables have to be populated at creation, not just on the
+        // next save.
+        await reconcileEmbeddedData(tx, {
+          surveyId: createdSurvey.id,
+          workspaceId: parsedWorkspaceId,
+          desired: toDesiredEmbeddedFields(createdSurvey),
         });
-      }
 
-      // ENG-1978: a survey created from a template, the API or a duplicate can already carry
-      // variables and hidden fields, so the tables have to be populated at creation, not just on the
-      // next save.
-      await reconcileEmbeddedData(tx, {
-        surveyId: createdSurvey.id,
-        workspaceId: parsedWorkspaceId,
-        desired: toDesiredEmbeddedFields(createdSurvey),
-      });
-
-      return createdSurvey;
-    });
+        return createdSurvey;
+      },
+      // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
+      // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or
+      // API create could now reach Prisma's 5s default where it used to fit. Matched to the other two
+      // reconcile call sites rather than left to inherit a ceiling this work made easier to hit.
+      { timeout: 20_000, maxWait: 10_000 }
+    );
 
     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
     // @ts-expect-error
