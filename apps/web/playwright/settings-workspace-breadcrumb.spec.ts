@@ -4,17 +4,15 @@ import type { UsersFixture } from "./fixtures/users";
 import { test } from "./lib/fixtures";
 
 // ENG-1705 regression: /organizations/[organizationId]/settings/** and /account/settings/** are
-// workspace-agnostic routes, so their sidebar must not render the Workspace section (a workspace
-// selector pill plus eight workspace-scoped links) for a workspace the shell only inferred from a
-// cookie. Nothing in the chrome on those routes may claim a current workspace, so the top bar's
-// workspace breadcrumb is suppressed there too and only the organization breadcrumb remains. Those
-// routes render OrganizationSettingsSidebar and the in-workspace routes render
-// WorkspaceSettingsSidebar; both end in the same OrganizationAndAccountSections, so this also guards
-// that the in-workspace sidebar and breadcrumb kept their Workspace parts.
+// workspace-agnostic routes — no workspaceId in the URL — so the top bar must not render the
+// workspace breadcrumb there, only the organization one. The settings sidebar is deliberately
+// untouched and still shows its Workspace section on those routes, so every test below also asserts
+// the sidebar is intact: that is the guard against the breadcrumb change leaking into the sidebar.
 
 // The settings shell renders exactly one <aside>, either from SettingsNavigation (the
 // workspace-agnostic routes) or from MainNavigation (the in-workspace routes).
 const settingsSidebar = (page: Page) => page.getByRole("complementary");
+const topBar = (page: Page) => page.getByTestId("fb__global-top-control-bar");
 
 // Every workspace-scoped settings link, in sidebar order.
 const WORKSPACE_NAV_LABELS = [
@@ -28,8 +26,8 @@ const WORKSPACE_NAV_LABELS = [
   "Tags",
 ];
 
-// Distinct, run-unique organization and workspace names so the two switcher pills (which are only
-// distinguishable by their accessible name) can never be confused with each other.
+// Distinct, run-unique organization and workspace names so the breadcrumb and the sidebar pill
+// (which are only distinguishable by their accessible name) can never be confused with each other.
 const createOwner = async (users: UsersFixture) => {
   const stamp = `${Date.now()}-${Math.round(Math.random() * 1e6)}`;
   const organizationName = `ENG1705 Org ${stamp}`;
@@ -49,82 +47,67 @@ const createOwner = async (users: UsersFixture) => {
   };
 };
 
-const topBar = (page: Page) => page.getByTestId("fb__global-top-control-bar");
-
-// "Nothing is there" passes trivially against a sidebar that has not rendered yet, so wait for the
-// Account section (present on every settings route) before asserting the Workspace section's absence.
-const expectNoWorkspaceSection = async (page: Page, workspaceName: string) => {
+// The sidebar keeps its Workspace section on every settings route. Asserting it positively also
+// makes the breadcrumb's absence assertion meaningful: the page has demonstrably rendered.
+const expectSidebarWorkspaceSection = async (page: Page, workspaceId: string, workspaceName: string) => {
   const sidebar = settingsSidebar(page);
 
-  await expect(sidebar.getByRole("link", { name: "Your Profile", exact: true })).toHaveAttribute(
-    "href",
-    "/account/settings/profile"
+  await expect(sidebar.getByText("Workspace", { exact: true })).toBeVisible();
+  await expect(sidebar.locator(`a[href^="/workspaces/${workspaceId}/settings/workspace/"]`)).toHaveText(
+    WORKSPACE_NAV_LABELS
   );
-
-  await expect(sidebar.getByText("Workspace", { exact: true })).toHaveCount(0);
-  await expect(sidebar.locator('a[href*="/settings/workspace/"]')).toHaveCount(0);
-  await expect(sidebar.getByRole("button", { name: workspaceName })).toHaveCount(0);
+  await expect(sidebar.getByRole("button", { name: workspaceName })).toBeVisible();
 };
 
-test.describe("Settings workspace chrome (ENG-1705)", () => {
-  test("organization settings drops the Workspace section and the workspace breadcrumb", async ({
+test.describe("Settings workspace breadcrumb (ENG-1705)", () => {
+  test("organization settings hides the workspace breadcrumb and keeps the sidebar section", async ({
     page,
     users,
   }) => {
-    const { user, organizationId, organizationName, workspaceName } = await createOwner(users);
+    const { user, organizationId, workspaceId, organizationName, workspaceName } = await createOwner(users);
 
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     await page.goto(`/organizations/${organizationId}/settings/general`, { waitUntil: "domcontentloaded" });
 
-    const sidebar = settingsSidebar(page);
-
-    await test.step("the Organization and Account sections still render", async () => {
-      await expect(sidebar.getByRole("link", { name: "Teams", exact: true })).toHaveAttribute(
+    await test.step("the sidebar is unchanged", async () => {
+      await expectSidebarWorkspaceSection(page, workspaceId, workspaceName);
+      await expect(settingsSidebar(page).getByRole("link", { name: "Teams", exact: true })).toHaveAttribute(
         "href",
         `/organizations/${organizationId}/settings/teams`
       );
-      await expect(sidebar.getByRole("link", { name: "Your Profile", exact: true })).toHaveAttribute(
-        "href",
-        "/account/settings/profile"
-      );
     });
 
-    await test.step("the Workspace section is gone", async () => {
-      await expectNoWorkspaceSection(page, workspaceName);
-    });
-
-    await test.step("the top bar keeps the organization breadcrumb but drops the workspace one", async () => {
-      // Assert the organization breadcrumb first: it proves the bar has rendered, so the workspace
-      // assertion below cannot pass just because nothing is on screen yet.
+    await test.step("the top bar keeps the organization breadcrumb and drops the workspace one", async () => {
+      // Scoped to the top bar: the workspace name legitimately appears in the sidebar pill, so an
+      // unscoped assertion would fail for the wrong reason.
       await expect(topBar(page).getByText(organizationName, { exact: true })).toBeVisible();
       await expect(topBar(page).getByText(workspaceName, { exact: true })).toHaveCount(0);
     });
   });
 
-  test("account settings drops the Workspace section and the workspace breadcrumb", async ({
+  test("account settings hides the workspace breadcrumb and keeps the sidebar section", async ({
     page,
     users,
   }) => {
-    const { user, organizationName, workspaceName } = await createOwner(users);
+    const { user, workspaceId, organizationName, workspaceName } = await createOwner(users);
 
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     await page.goto("/account/settings/profile", { waitUntil: "domcontentloaded" });
 
+    await expectSidebarWorkspaceSection(page, workspaceId, workspaceName);
     await expect(
       settingsSidebar(page).getByRole("link", { name: "Your Profile", exact: true })
     ).toHaveAttribute("href", "/account/settings/profile");
-
-    await expectNoWorkspaceSection(page, workspaceName);
 
     await expect(topBar(page).getByText(organizationName, { exact: true })).toBeVisible();
     await expect(topBar(page).getByText(workspaceName, { exact: true })).toHaveCount(0);
   });
 
-  test("workspace settings keeps the Workspace section, its selector pill and every link", async ({
+  test("workspace settings keeps both the workspace breadcrumb and the sidebar section", async ({
     page,
     users,
   }) => {
@@ -137,24 +120,19 @@ test.describe("Settings workspace chrome (ENG-1705)", () => {
       waitUntil: "domcontentloaded",
     });
 
-    const sidebar = settingsSidebar(page);
+    await expectSidebarWorkspaceSection(page, workspaceId, workspaceName);
 
-    await expect(sidebar.getByText("Workspace", { exact: true })).toBeVisible();
-    await expect(sidebar.locator(`a[href^="/workspaces/${workspaceId}/settings/workspace/"]`)).toHaveText(
-      WORKSPACE_NAV_LABELS
-    );
-
-    const workspacePill = sidebar.getByRole("button", { name: workspaceName });
-    await expect(workspacePill).toBeVisible();
-
+    const workspacePill = settingsSidebar(page).getByRole("button", { name: workspaceName });
     await workspacePill.click();
     await expect(page.getByRole("menuitemcheckbox", { name: workspaceName })).toBeVisible();
 
-    // The workspace breadcrumb is only suppressed on the workspace-agnostic routes — here it stays.
+    // The breadcrumb is only suppressed on the workspace-agnostic routes. Keeping this positive
+    // assertion is what stops the two tests above from passing against a top bar that never renders
+    // a workspace crumb at all.
     await expect(topBar(page).getByText(workspaceName, { exact: true })).toBeVisible();
   });
 
-  // AC5 / ENG-1700: the sidebar back arrow is a button that router.push-es the workspace the shell
+  // ENG-1700: the sidebar back arrow is a button that router.push-es the workspace the shell
   // resolved, so assert the resulting URL rather than an href. Visiting the second workspace first
   // points the proxy's formbricks-workspace-id cookie at it, while the no-cookie fallback is the
   // first-created workspace — so landing back on the second one proves the cookie wins.

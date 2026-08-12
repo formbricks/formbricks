@@ -44,6 +44,8 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
       <div className="flex h-full">
         <SettingsNavigation
           user={data.user}
+          workspaceId={data.currentWorkspace?.id ?? ""}
+          workspaceName={data.currentWorkspace?.name ?? ""}
           organizationId={data.organization.id}
           organizationName={data.organization.name}
           membershipRole={data.membershipRole}
@@ -65,8 +67,8 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
               isOwnerOrManager={data.isOwnerOrManager}
               isAccessControlAllowed={data.isAccessControlAllowed}
               membershipRole={data.membershipRole}
-              // These routes are workspace-agnostic, so nothing in the chrome may claim a current
-              // workspace — the organization breadcrumb is the only switcher here.
+              // These routes carry no workspaceId, so the top bar must not claim a current
+              // workspace. The sidebar's Workspace section stays as the way to reach one.
               showWorkspaceBreadcrumb={false}
             />
           )}

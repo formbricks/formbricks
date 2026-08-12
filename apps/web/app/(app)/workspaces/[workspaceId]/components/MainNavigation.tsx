@@ -30,6 +30,7 @@ import {
   getWorkspacesForSwitcherAction,
 } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/NavigationLink";
+import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
 import { isNewerVersion } from "@/app/(app)/workspaces/[workspaceId]/lib/utils";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
@@ -37,7 +38,6 @@ import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
-import { WorkspaceSettingsSidebar } from "@/modules/settings/components/sidebar/workspace-settings-sidebar";
 import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
@@ -382,7 +382,7 @@ export const MainNavigation = ({
               </div>
 
               {/* Settings sidebar content */}
-              <WorkspaceSettingsSidebar
+              <SettingsSidebarContent
                 workspaceId={workspace.id}
                 workspaceName={workspace.name}
                 organizationId={organization.id}

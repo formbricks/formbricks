@@ -37,11 +37,9 @@ export interface TSettingsLayoutData {
   isFormbricksCloud: boolean;
   isDevelopment: boolean;
   publicDomain: string;
-  // The "current" workspace the shell still needs even though these routes are workspace-agnostic:
-  // it gates the top bar (whose breadcrumb switches workspaces), supplies the WorkspaceContext that
-  // reused settings components depend on, backs the sidebar's back link, and scopes the storage
-  // uploads on the org settings pages. Null when the user has no workspace (the org/account settings
-  // still render — Phase 2 handles that empty state).
+  // The "current" workspace used to render the sidebar's Workspace section, back link, and the
+  // WorkspaceContext that reused settings components depend on. Null when the user has no workspace
+  // (the org/account settings still render — Phase 2 handles that empty state).
   currentWorkspace: TWorkspace | null;
   backUrl: string;
 }
@@ -50,7 +48,7 @@ export interface TSettingsLayoutData {
  * Assembles everything the shared settings shell (banners + sidebar + top bar) needs for the
  * org-scoped and account-scoped settings routes, where there is no `workspaceId` in the URL. All of
  * it is organization-level data, so no workspace is required to resolve it; we additionally surface
- * a "current" workspace so the shell's top bar, WorkspaceContext and back link keep working.
+ * the user's first accessible workspace so the sidebar's Workspace section renders identically.
  *
  * `organizationId` is optional — account settings don't carry one, so we default to the user's first
  * organization.
