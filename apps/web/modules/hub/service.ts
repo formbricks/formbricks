@@ -206,11 +206,12 @@ type FeedbackRecordsPurgeResponse = {
  * so the dataset stays usable — it is the "empty this dataset" operation, not offboarding.
  *
  * Asynchronous on the Hub side: this returns once the purge has been *accepted*, not once it has
- * run, so there is no deleted count to report. Poll `countFeedbackRecords` for the tenant to observe
- * completion. Safe to call repeatedly — a request while a purge is already running joins it.
+ * run, so there is no deleted count to report and the records are still present when it resolves.
+ * `countFeedbackRecords` is how a caller can observe completion if it needs to. Safe to call
+ * repeatedly — a request while a purge is already running joins it.
  *
- * Hits `POST /v1/feedback-records/purge` directly because the SDK has no typed method for it yet
- * (added in hub#122; regenerate and switch to the typed call after the next SDK release).
+ * Hits `DELETE /v1/tenants/{tenant_id}/feedback-records` directly because the SDK has no typed
+ * method for it yet (added in hub#122; switch to the typed call after the next SDK release).
  */
 export const purgeHubFeedbackRecords = async (tenantId: string): Promise<HubFeedbackRecordsPurgeResult> => {
   const client = getHubClient();
@@ -219,9 +220,9 @@ export const purgeHubFeedbackRecords = async (tenantId: string): Promise<HubFeed
   }
 
   try {
-    const data = await client.post<FeedbackRecordsPurgeResponse>("/v1/feedback-records/purge", {
-      body: { tenant_id: tenantId },
-    });
+    const data = await client.delete<FeedbackRecordsPurgeResponse>(
+      `/v1/tenants/${encodeURIComponent(tenantId)}/feedback-records`
+    );
     return { data: { tenantId: data.tenant_id, status: data.status }, error: null };
   } catch (err) {
     logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: purgeHubFeedbackRecords failed");

@@ -1,6 +1,6 @@
 import "server-only";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { problemForbidden, problemNotFound, problemUnauthorized } from "@/app/api/v3/lib/response";
+import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromDirectoryId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
@@ -36,26 +36,24 @@ export async function requireFeedbackDatasetMutationAccess(
     return problemUnauthorized(requestId, "Session required", instance);
   }
 
+  // One response for "no such dataset" and "not yours": a caller who is not an owner/manager of the
+  // owning organization must not be able to tell the two apart, or the endpoint becomes an oracle
+  // for whether a given dataset id exists. Mirrors the sibling taxonomy guard, and follows
+  // problemNotFound's own guidance against using it on existence-sensitive resources.
+  const denied = problemForbidden(requestId, "You are not authorized to access this resource", instance);
+
   let organizationId: string;
   try {
     organizationId = await getOrganizationIdFromDirectoryId(datasetId);
   } catch (err) {
     if (err instanceof ResourceNotFoundError) {
-      return problemNotFound(requestId, "Feedback dataset", datasetId, instance);
+      return denied;
     }
     throw err;
   }
 
-  // Entitlement before authorization: an organization without the feedback-directories license
-  // should be told that, not told it lacks permission.
-  if (!(await getIsFeedbackDirectoriesEnabled(organizationId))) {
-    return problemForbidden(
-      requestId,
-      "Feedback datasets are not enabled for this organization. It requires an Enterprise plan or license.",
-      instance
-    );
-  }
-
+  // Authorization before entitlement, so a non-member never learns anything about the owning
+  // organization — including whether it holds an Enterprise license.
   try {
     await checkAuthorizationUpdated({
       userId,
@@ -64,13 +62,17 @@ export async function requireFeedbackDatasetMutationAccess(
     });
   } catch (err) {
     if (err instanceof AuthorizationError) {
-      return problemForbidden(
-        requestId,
-        "Only organization owners and managers can purge a feedback dataset",
-        instance
-      );
+      return denied;
     }
     throw err;
+  }
+
+  if (!(await getIsFeedbackDirectoriesEnabled(organizationId))) {
+    return problemForbidden(
+      requestId,
+      "Feedback datasets are not enabled for this organization. It requires an Enterprise plan or license.",
+      instance
+    );
   }
 
   return { organizationId };

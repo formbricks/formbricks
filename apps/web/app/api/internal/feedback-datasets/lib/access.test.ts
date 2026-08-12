@@ -67,28 +67,45 @@ describe("requireFeedbackDatasetMutationAccess", () => {
     expect(getOrganizationIdFromDirectoryId).not.toHaveBeenCalled();
   });
 
-  test("returns 404 for a dataset that does not exist", async () => {
+  // A missing dataset and someone else's dataset must be indistinguishable, or the endpoint tells a
+  // stranger whether any given dataset id exists.
+  test("gives a missing dataset the same response as one the caller cannot reach", async () => {
     vi.mocked(getOrganizationIdFromDirectoryId).mockRejectedValue(
       new ResourceNotFoundError("FeedbackDirectory", datasetId)
     );
+    const missing = (await requireFeedbackDatasetMutationAccess(session, ...args)) as Response;
 
-    const result = await requireFeedbackDatasetMutationAccess(session, ...args);
+    vi.mocked(getOrganizationIdFromDirectoryId).mockResolvedValue("org_1");
+    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("nope"));
+    const forbidden = (await requireFeedbackDatasetMutationAccess(session, ...args)) as Response;
 
-    expect((result as Response).status).toBe(404);
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(missing.status).toBe(403);
+    expect(forbidden.status).toBe(missing.status);
+    await expect(forbidden.json()).resolves.toMatchObject((await missing.json()) as Record<string, unknown>);
   });
 
-  // An unlicensed organization should be told that, rather than told it lacks permission.
-  test("rejects an organization without the feedback-directories license", async () => {
+  // The entitlement message names the org's plan, so a non-member must never reach it.
+  test("checks the caller's role before revealing the organization's license state", async () => {
+    vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(false);
+    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("nope"));
+
+    const result = (await requireFeedbackDatasetMutationAccess(session, ...args)) as Response;
+
+    expect(result.status).toBe(403);
+    await expect(result.json()).resolves.toMatchObject({
+      detail: expect.not.stringContaining("Enterprise"),
+    });
+  });
+
+  test("tells an owner of an unlicensed organization why it is blocked", async () => {
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(false);
 
-    const result = await requireFeedbackDatasetMutationAccess(session, ...args);
+    const result = (await requireFeedbackDatasetMutationAccess(session, ...args)) as Response;
 
-    expect((result as Response).status).toBe(403);
-    await expect((result as Response).json()).resolves.toMatchObject({
+    expect(result.status).toBe(403);
+    await expect(result.json()).resolves.toMatchObject({
       detail: expect.stringContaining("Enterprise"),
     });
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
   });
 
   // An unexpected failure must not read as "allowed".

@@ -59,7 +59,13 @@ export const PurgeFeedbackDirectoryData = ({
       onPurge?.();
       router.refresh();
     } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      // A timeout arrives as a DOMException, which getV3ApiErrorMessage would surface verbatim
+      // ("The operation was aborted due to timeout") — untranslated and meaningless here.
+      const message =
+        error instanceof DOMException
+          ? t("common.something_went_wrong_please_try_again")
+          : getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
+      toast.error(message);
     }
   };
 
@@ -84,7 +90,7 @@ export const PurgeFeedbackDirectoryData = ({
       <DeleteDialog
         open={isPurgeDialogOpen}
         setOpen={handleDialogOpenChange}
-        deleteWhat={t("workspace.settings.feedback_directories.dataset")}
+        deleteWhat={directoryName}
         title={t("workspace.settings.feedback_directories.purge_all_data")}
         buttonLabel={t("workspace.settings.feedback_directories.purge_all_data")}
         onDelete={handlePurge}

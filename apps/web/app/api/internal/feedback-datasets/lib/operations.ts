@@ -18,18 +18,23 @@ type TPurgeDatasetParams = {
  * taxonomy. The dataset id doubles as the Hub tenant id.
  *
  * Returns 202, not 204: the Hub runs the purge as a background job, so the records are not gone when
- * this responds. The dashboard observes completion by polling the record count to zero. Reporting a
- * deleted count here would be inventing one.
+ * this responds, and reporting a deleted count here would be inventing one. The dashboard does not
+ * poll for completion — it lists datasets, not records — so its success message says the deletion
+ * has started rather than finished.
  */
 export async function purgeV3FeedbackDataset(params: TPurgeDatasetParams): Promise<Response> {
   const { authentication, datasetId, requestId, instance, auditLog } = params;
+
+  // Set before the guard so a denied attempt is still attributable to the dataset it targeted.
+  if (auditLog) {
+    auditLog.targetId = datasetId;
+  }
 
   const access = await requireFeedbackDatasetMutationAccess(authentication, datasetId, requestId, instance);
   if (access instanceof Response) return access;
 
   if (auditLog) {
     auditLog.organizationId = access.organizationId;
-    auditLog.targetId = datasetId;
   }
 
   const result = await purgeHubFeedbackRecords(datasetId);

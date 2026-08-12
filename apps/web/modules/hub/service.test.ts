@@ -551,28 +551,37 @@ describe("hub service", () => {
       expect(result.error?.message).toContain("HUB_API_KEY");
     });
 
-    // The tenant goes in the body, not the path: this must never be confused with the offboarding
-    // purge at /v1/tenants/{id}/data, which also destroys taxonomy, webhooks and settings.
-    test("posts the tenant to the records purge endpoint", async () => {
-      const postSpy = vi.fn().mockResolvedValue({
+    // Targets the tenant sub-resource, not the feedback-records collection: the collection prefix is
+    // publicly routed by the gateway, and this must stay off it. Distinct from the offboarding purge
+    // at /v1/tenants/{id}/data, which also destroys taxonomy, webhooks and settings.
+    test("targets the tenant's feedback-records sub-resource", async () => {
+      const deleteSpy = vi.fn().mockResolvedValue({
         tenant_id: "tenant-1",
         status: "accepted",
         message: "Feedback records purge accepted for tenant-1",
       });
-      vi.mocked(getHubClient).mockReturnValue({ post: postSpy } as any);
+      vi.mocked(getHubClient).mockReturnValue({ delete: deleteSpy } as any);
 
       const result = await purgeHubFeedbackRecords("tenant-1");
 
-      expect(postSpy).toHaveBeenCalledWith("/v1/feedback-records/purge", {
-        body: { tenant_id: "tenant-1" },
-      });
+      expect(deleteSpy).toHaveBeenCalledWith("/v1/tenants/tenant-1/feedback-records");
       expect(result.error).toBeNull();
       expect(result.data).toEqual({ tenantId: "tenant-1", status: "accepted" });
     });
 
+    test("escapes the tenant id in the path", async () => {
+      const deleteSpy = vi.fn().mockResolvedValue({ tenant_id: "a/b", status: "accepted" });
+      vi.mocked(getHubClient).mockReturnValue({ delete: deleteSpy } as any);
+
+      await purgeHubFeedbackRecords("a/b");
+
+      // An unescaped slash would address a different route entirely.
+      expect(deleteSpy).toHaveBeenCalledWith("/v1/tenants/a%2Fb/feedback-records");
+    });
+
     test("returns error when the purge cannot be scheduled", async () => {
       vi.mocked(getHubClient).mockReturnValue({
-        post: vi.fn().mockRejectedValue(new Error("network")),
+        delete: vi.fn().mockRejectedValue(new Error("network")),
       } as any);
 
       const result = await purgeHubFeedbackRecords("tenant-1");
