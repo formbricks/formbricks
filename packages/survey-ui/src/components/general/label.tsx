@@ -1,11 +1,22 @@
-import { sanitize } from "isomorphic-dompurify";
 import * as React from "react";
-import { cn, stripInlineStyles } from "@/lib/utils";
+import { cn, sanitizeSurveyHtml, stripInlineStyles } from "@/lib/utils";
+
+type LabelVariant = "default" | "headline" | "description" | "card";
 
 interface LabelProps extends React.ComponentProps<"label"> {
   /** Label variant for different styling contexts */
-  variant?: "default" | "headline" | "description" | "card";
+  variant?: LabelVariant;
 }
+
+// Element headlines and descriptions are content respondents read (and may want to
+// copy or have translated), so they stay selectable. Labels that act as controls —
+// choices, cards — keep select-none so a stray drag doesn't highlight them.
+const VARIANT_CLASSES: Record<LabelVariant, string> = {
+  default: "label-default select-none",
+  headline: "label-headline select-text",
+  description: "label-description select-text",
+  card: "label-card select-none",
+};
 
 /**
  * Checks if a string contains valid HTML markup
@@ -37,29 +48,14 @@ function Label({
   const childrenString = typeof children === "string" ? children : null;
   const strippedContent = childrenString ? stripInlineStyles(childrenString) : "";
   const isHtml = childrenString ? isValidHTML(strippedContent) : false;
-  const safeHtml =
-    isHtml && strippedContent
-      ? sanitize(strippedContent, {
-          ADD_ATTR: ["target"],
-          FORBID_ATTR: ["style"],
-        })
-      : "";
-
-  // Determine variant class
-  let variantClass = "label-default";
-  if (variant === "headline") {
-    variantClass = "label-headline";
-  } else if (variant === "description") {
-    variantClass = "label-description";
-  } else if (variant === "card") {
-    variantClass = "label-card";
-  }
+  const safeHtml = isHtml && strippedContent ? sanitizeSurveyHtml(strippedContent) : "";
 
   // Base classes - use flex-col for HTML content to allow line breaks, flex items-center for non-HTML
-  const baseClasses =
-    isHtml && safeHtml
-      ? "flex flex-col gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
-      : "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50";
+  const baseClasses = cn(
+    isHtml && safeHtml ? "flex flex-col gap-2" : "flex items-center gap-2",
+    "leading-6 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+    VARIANT_CLASSES[variant]
+  );
 
   // If HTML, render with dangerouslySetInnerHTML, otherwise render normally
   if (isHtml && safeHtml) {
@@ -68,7 +64,7 @@ function Label({
         <label
           data-slot="label"
           data-variant={variant}
-          className={cn(baseClasses, variantClass, className)}
+          className={cn(baseClasses, className)}
           htmlFor={htmlFor}
           form={form}
           {...restProps}
@@ -81,7 +77,7 @@ function Label({
       <span
         data-slot="label"
         data-variant={variant}
-        className={cn(baseClasses, variantClass, className)}
+        className={cn(baseClasses, className)}
         {...restProps}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
@@ -93,11 +89,7 @@ function Label({
       <label
         data-slot="label"
         data-variant={variant}
-        className={cn(
-          "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-          variantClass,
-          className
-        )}
+        className={cn(baseClasses, className)}
         htmlFor={htmlFor}
         form={form}
         {...restProps}>
@@ -107,19 +99,11 @@ function Label({
   }
 
   return (
-    <span
-      data-slot="label"
-      data-variant={variant}
-      className={cn(
-        "flex items-center gap-2 leading-6 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        variantClass,
-        className
-      )}
-      {...restProps}>
+    <span data-slot="label" data-variant={variant} className={cn(baseClasses, className)} {...restProps}>
       {children}
     </span>
   );
 }
 
 export { Label };
-export type { LabelProps };
+export type { LabelProps, LabelVariant };
