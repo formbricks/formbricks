@@ -1,3 +1,4 @@
+import { createLocalAccountIssuer } from "@better-auth/core/db";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
@@ -5,6 +6,20 @@ import { hashSecret } from "@/lib/crypto";
 import { auth } from "@/modules/auth/lib/auth";
 // The cutover data migration under test (auto-discovered by the migration runner at the flip).
 import { backfillCredentialAccounts } from "../../../packages/database/migration/20260619120000_eng_1054_credential_account_backfill/migration";
+
+/**
+ * This migration predates `Account.issuer` (ENG-2343) and, by the runner's own interleaving guarantee
+ * (data and schema migrations run in strict timestamp order), always runs BEFORE the schema migration
+ * that adds that column — so it genuinely cannot set it, and its rows are inserted with issuer=NULL.
+ * In real deployments that's fine: ENG-2343's schema migration runs immediately after this one and
+ * backfills every NULL-issuer credential row. A test calling this function standalone has to simulate
+ * that follow-up step itself before asserting a real Better Auth sign-in succeeds.
+ */
+const applyEng2343IssuerBackfill = (): Promise<{ count: number }> =>
+  prisma.account.updateMany({
+    where: { provider: "credential", issuer: null },
+    data: { issuer: createLocalAccountIssuer("credential") },
+  });
 
 /**
  * Integration coverage for the cutover credential-account backfill (ENG-1054) against real Postgres.
@@ -38,6 +53,8 @@ describe("Credential-account backfill (real Postgres)", () => {
     });
     expect(account?.userId).toBe(user.id);
     expect(account?.password).toBe(user.password);
+
+    await applyEng2343IssuerBackfill();
 
     // and BA email/password sign-in works with the ORIGINAL password
     const res = await auth.api.signInEmail({
@@ -123,6 +140,8 @@ describe("Credential-account backfill (real Postgres)", () => {
 
     const stats = await backfillCredentialAccounts(prisma);
     expect(stats.inserted).toBe(1);
+
+    await applyEng2343IssuerBackfill();
 
     // both the SSO and the new credential account coexist, and password sign-in works
     expect(await prisma.account.count({ where: { userId: user.id } })).toBe(2);

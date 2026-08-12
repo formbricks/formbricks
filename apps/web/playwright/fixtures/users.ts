@@ -1,3 +1,4 @@
+import { createLocalAccountIssuer } from "@better-auth/core/db";
 import bcrypt from "bcryptjs";
 import { Page } from "playwright";
 import { TestInfo } from "playwright/test";
@@ -103,12 +104,21 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       // not `user.password` — so a Prisma-seeded user needs an explicit credential account for
       // POST /api/auth/sign-in/email (used by `login` above) to succeed (ENG-1054). The bcrypt hash
       // of `uname` is the same secret `login` sends as the plaintext password.
+      //
+      // Better Auth 1.7 keys accounts on (issuer, accountId) — sign-in's findCredentialAccount filters
+      // on `issuer === createLocalAccountIssuer("credential")` (node_modules/better-auth/dist/api/routes/
+      // sign-in.mjs), same as the Account.issuer backfill in the ENG-2343 migration. Leaving `issuer`
+      // unset here means every fixture-created user has issuer=NULL, so that filter never matches:
+      // sign-in silently returns INVALID_EMAIL_OR_PASSWORD (no session, no cookie) for a correct
+      // password, and every helper that expects a post-login redirect (loginAndGetApiKey et al.) times
+      // out waiting for a navigation that never happens.
       await prisma.account.create({
         data: {
           userId: user.id,
           type: "credential",
           provider: "credential",
           providerAccountId: user.id,
+          issuer: createLocalAccountIssuer("credential"),
           password: hashedPassword,
         },
       });
