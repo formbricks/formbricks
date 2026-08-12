@@ -28,8 +28,7 @@ export const InvitePage = async (props: InvitePageProps) => {
   if (!session) throw new AuthenticationError(t("common.session_not_found"));
 
   // Not the security boundary — `inviteOrganizationMemberAction` is — but this shares the action's
-  // role list so a manager gets a 404 instead of a form that fails on submit. The previous
-  // `verifyUserRoleAccess().hasCreateOrUpdateMembersAccess` flag was true for managers too.
+  // role list so a manager gets a 404 instead of a form that fails on submit.
   if (!(await hasSetupInviteAccess(session.user.id, params.organizationId))) return notFound();
 
   return <InviteMembers IS_SMTP_CONFIGURED={IS_SMTP_CONFIGURED} organizationId={params.organizationId} />;
