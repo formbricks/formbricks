@@ -20,26 +20,22 @@ import { getFeedbackSourcesBySurveyId } from "./service";
  * so the delta is only ever meaningful together with the surveyId it was computed for.
  */
 export type TFeedbackSourceReconciliation = {
-  /** Supported elements added to the survey that have no mapping row yet. */
-  toCreate: { elementId: string; hubFieldType: THubFieldType }[];
   /** Mapped elements that no longer exist, or whose new type has no Hub field. */
   toDelete: string[];
   /** Mapped elements that still exist but whose hubFieldType has changed. */
   toUpdate: { elementId: string; hubFieldType: THubFieldType }[];
 };
 
-const EMPTY_RECONCILIATION: TFeedbackSourceReconciliation = { toCreate: [], toDelete: [], toUpdate: [] };
+/** Fresh object per call: the arrays are handed to callers, so a shared constant could be aliased. */
+const emptyReconciliation = (): TFeedbackSourceReconciliation => ({ toDelete: [], toUpdate: [] });
 
 export const isEmptyReconciliation = (reconciliation: TFeedbackSourceReconciliation): boolean =>
-  reconciliation.toCreate.length === 0 &&
-  reconciliation.toDelete.length === 0 &&
-  reconciliation.toUpdate.length === 0;
+  reconciliation.toDelete.length === 0 && reconciliation.toUpdate.length === 0;
 
 /**
  * Diff one survey's stored formbricksMappings against that survey's current blocks and produce a
  * minimal reconciliation delta.
  *
- * - Supported elements with no mapping row → `toCreate`
  * - Elements removed from the survey → `toDelete`
  * - Elements retyped to a type with no Hub field → `toDelete` (the creation path in
  *   `resolveFormbricksMappingsInput` refuses to map these, so keeping the row would let an element
@@ -60,24 +56,30 @@ export const reconcileMappingsAgainstSurvey = (
   surveyId: string
 ): TFeedbackSourceReconciliation => {
   const surveyMappings = storedMappings.filter((mapping) => mapping.surveyId === surveyId);
-  const elements = getElementsFromBlocks(blocks);
-  const mappedElementIds = new Set(surveyMappings.map((mapping) => mapping.elementId));
-  const elementMap = new Map(elements.map((el) => [el.id, el]));
 
-  const toCreate: { elementId: string; hubFieldType: THubFieldType }[] = [];
+  // Every element the product can represent as a Hub field, resolved once and reused below.
+  //
+  // `getHubFieldTypeFromElementType` is declared as returning THubFieldType but is really a bare
+  // index access, so it yields undefined for the UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES
+  // (contactInfo, address, cal, cta, fileUpload, consent) — hence the cast and the filter.
+  const supportedHubFieldTypes = new Map<string, THubFieldType>();
+  for (const element of getElementsFromBlocks(blocks)) {
+    const hubFieldType = getHubFieldTypeFromElementType(element.type) as THubFieldType | undefined;
+    if (hubFieldType) {
+      supportedHubFieldTypes.set(element.id, hubFieldType);
+    }
+  }
+
   const toDelete: string[] = [];
   const toUpdate: { elementId: string; hubFieldType: THubFieldType }[] = [];
 
   for (const mapping of surveyMappings) {
-    const element = elementMap.get(mapping.elementId);
-    if (!element) {
-      toDelete.push(mapping.elementId);
-      continue;
-    }
+    const currentHubFieldType = supportedHubFieldTypes.get(mapping.elementId);
 
-    // Declared as THubFieldType but really a bare index access, so this is undefined for the
-    // UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES (contactInfo, address, cal, cta, fileUpload, consent).
-    const currentHubFieldType = getHubFieldTypeFromElementType(element.type) as THubFieldType | undefined;
+    // Absent covers both "the question was deleted" and "it was retyped to something with no Hub
+    // field". Either way the row can no longer publish anything meaningful, and the creation path in
+    // `resolveFormbricksMappingsInput` refuses to map such an element in the first place — so keeping
+    // it would let an element the product excludes keep publishing under a stale hubFieldType.
     if (!currentHubFieldType) {
       toDelete.push(mapping.elementId);
       continue;
@@ -88,31 +90,20 @@ export const reconcileMappingsAgainstSurvey = (
     }
   }
 
-  // ENG-2064: a question added after the source was connected would otherwise never be mapped, and
-  // the publish path iterates mapping rows — so its answers would be dropped from the dataset for
-  // good. Connecting a source pre-selects every supported element, so tracking new ones matches the
-  // product default.
-  for (const element of elements) {
-    if (mappedElementIds.has(element.id)) continue;
-    const hubFieldType = getHubFieldTypeFromElementType(element.type) as THubFieldType | undefined;
-    if (!hubFieldType) continue;
-    toCreate.push({ elementId: element.id, hubFieldType });
-  }
-
   // Both action schemas require min(1) mapping and resolveFormbricksMappingsInput throws on an empty
   // set, so a formbricks_survey source with zero rows for its survey is a state the rest of the app
   // cannot produce or represent — and it is unrecoverable, because getFeedbackSourcesBySurveyId
   // matches on `formbricksMappings: { some: { surveyId } }`, so the source would never be found for
   // this survey again (no future reconcile, no re-add). Keep the rows and let a human re-map.
-  if (toCreate.length === 0 && toDelete.length === surveyMappings.length && surveyMappings.length > 0) {
+  if (toDelete.length === surveyMappings.length && surveyMappings.length > 0) {
     logger.warn(
       { surveyId, mappingCount: surveyMappings.length },
       "Skipping feedback-source reconciliation: it would remove every mapping for this survey"
     );
-    return EMPTY_RECONCILIATION;
+    return emptyReconciliation();
   }
 
-  return { toCreate, toDelete, toUpdate };
+  return { toDelete, toUpdate };
 };
 
 /**
@@ -121,7 +112,7 @@ export const reconcileMappingsAgainstSurvey = (
  * Every write is scoped by (feedbackSourceId, workspaceId, surveyId) so a source that maps several
  * surveys only ever has the reconciled survey's rows touched.
  *
- * Runs inside a single Prisma transaction so the create + delete + update batch is atomic.
+ * Runs inside a single Prisma transaction so the delete + update batch is atomic.
  */
 export const applyReconciliationToFeedbackSource = async (
   feedbackSourceId: string,
@@ -129,7 +120,7 @@ export const applyReconciliationToFeedbackSource = async (
   surveyId: string,
   reconciliation: TFeedbackSourceReconciliation
 ): Promise<void> => {
-  const { toCreate, toDelete, toUpdate } = reconciliation;
+  const { toDelete, toUpdate } = reconciliation;
   if (isEmptyReconciliation(reconciliation)) {
     return;
   }
@@ -165,25 +156,10 @@ export const applyReconciliationToFeedbackSource = async (
           data: { hubFieldType },
         });
       }
-
-      if (toCreate.length > 0) {
-        await tx.feedbackSourceFormbricksMapping.createMany({
-          data: toCreate.map(({ elementId, hubFieldType }) => ({
-            feedbackSourceId,
-            workspaceId,
-            surveyId,
-            elementId,
-            hubFieldType,
-          })),
-          // Concurrent saves of the same survey can both see the element as unmapped; the unique
-          // key (workspaceId, feedbackSourceId, surveyId, elementId) makes the loser a no-op.
-          skipDuplicates: true,
-        });
-      }
     });
   } catch (error) {
     logger.error(
-      { feedbackSourceId, workspaceId, surveyId, toCreate, toDelete, toUpdate, error },
+      { feedbackSourceId, workspaceId, surveyId, toDelete, toUpdate, error },
       "Failed to apply feedback-source reconciliation"
     );
     // Do not rethrow — reconciliation is best-effort and must not block the survey update.
