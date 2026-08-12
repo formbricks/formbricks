@@ -163,7 +163,9 @@ test.describe("Survey overview", () => {
     // Regression guard: the caution dialog is driven by the total, so it must still appear for a
     // survey whose displayed count is 0 but which already has (partial) responses.
     await partialsRow.locator("[data-testid='survey-dropdown-trigger']").click();
-    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    // Edit is a Link, not a button; its onClick preventDefaults and opens the caution dialog instead
+    // of navigating, precisely because the survey has responses.
+    await page.getByRole("link", { name: "Edit", exact: true }).click();
     await expect(page.getByText("Edit a published survey?")).toBeVisible();
   });
 
