@@ -850,7 +850,22 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
 
+  /// Better Auth 1.7 (ENG-2343): the account's identity namespace. 1.7 keys accounts on
+  /// (issuer, accountId) and filters EVERY lookup on it — findAccountByKey, findAccountOwnerByKey,
+  /// findCredentialAccount and updatePassword. A null here is not cosmetic: password sign-in stops
+  /// finding the credential row (rejects as if the password were wrong) and a password reset matches
+  /// zero rows, so it silently succeeds while changing nothing.
+  ///
+  /// NULLABLE on purpose, even though better-auth declares it required. A NOT NULL column would fail
+  /// every INSERT from a 1.6 pod still serving during a rolling deploy. The migration backfills every
+  /// existing row; see the migration SQL for the value derivation.
+  issuer String?
+
+  // Kept alongside the new (issuer, accountId) key rather than replaced: it is what 1.6 matched on,
+  // so it keeps a rollback to 1.6 working and guards against a backfill that collapses two providers
+  // onto one issuer.
   @@unique([provider, providerAccountId])
+  @@unique([issuer, providerAccountId])
   @@index([userId])
 }
 
@@ -916,40 +931,55 @@ model jwks {
 
 /// Better Auth OAuth 2.1 client registrations for MCP and future OAuth clients.
 model oauthClient {
-  id                      String              @id @default(cuid())
-  clientId                String              @unique
+  id                      String    @id @default(cuid())
+  clientId                String    @unique
   clientSecret            String?
-  disabled                Boolean?            @default(false)
+  disabled                Boolean?  @default(false)
   skipConsent             Boolean?
   enableEndSession        Boolean?
   subjectType             String?
-  scopes                  String[]            @default([])
+  scopes                  String[]  @default([])
   userId                  String?
-  user                    User?               @relation("OAuthClientUser", fields: [userId], references: [id], onDelete: Cascade)
+  user                    User?     @relation("OAuthClientUser", fields: [userId], references: [id], onDelete: Cascade)
   createdAt               DateTime?
   updatedAt               DateTime?
   name                    String?
   uri                     String?
   icon                    String?
-  contacts                String[]            @default([])
+  contacts                String[]  @default([])
   tos                     String?
   policy                  String?
   softwareId              String?
   softwareVersion         String?
   softwareStatement       String?
   redirectUris            String[]
-  postLogoutRedirectUris  String[]            @default([])
+  postLogoutRedirectUris  String[]  @default([])
   tokenEndpointAuthMethod String?
-  grantTypes              String[]            @default([])
-  responseTypes           String[]            @default([])
+  grantTypes              String[]  @default([])
+  responseTypes           String[]  @default([])
+  /// Unwritten by Better Auth 1.7 (it dropped both from its schema), kept deliberately: they are
+  /// nullable, so keeping them makes the 1.7 migration purely additive and a rollback to 1.6 needs no
+  /// down-migration. Drop them in a separate cleanup after a bake period.
   public                  Boolean?
   type                    String?
   requirePKCE             Boolean?
   referenceId             String?
   metadata                Json?
-  accessTokens            oauthAccessToken[]
-  refreshTokens           oauthRefreshToken[]
-  consents                oauthConsent[]
+
+  /// Better Auth 1.7 (ENG-2343).
+  clientDiscoveryId                String?
+  clientCredentialsScopes          String[] @default([])
+  backchannelLogoutUri             String?
+  backchannelLogoutSessionRequired Boolean?
+  applicationType                  String?
+  jwks                             String?
+  jwksUri                          String?
+  dpopBoundAccessTokens            Boolean? @default(false)
+
+  accessTokens  oauthAccessToken[]
+  refreshTokens oauthRefreshToken[]
+  consents      oauthConsent[]
+  resources     oauthClientResource[]
 
   @@index([userId])
 }
@@ -972,10 +1002,19 @@ model oauthAccessToken {
   createdAt   DateTime
   scopes      String[]
 
+  /// Better Auth 1.7 (ENG-2343). `resources` is the RFC 8707 resource set the grant approved — the
+  /// binding this whole upgrade exists to get (GHSA-p2fr-6hmx-4528).
+  authorizationCodeId     String?
+  resources               String[]  @default([])
+  requestedUserInfoClaims String[]  @default([])
+  revoked                 DateTime?
+  confirmation            Json?
+
   @@index([clientId])
   @@index([sessionId])
   @@index([userId])
   @@index([refreshId])
+  @@index([authorizationCodeId])
 }
 
 /// Better Auth OAuth refresh tokens used by delegated MCP clients. The token column stores a hashed lookup value.
@@ -996,9 +1035,20 @@ model oauthRefreshToken {
   scopes       String[]
   accessTokens oauthAccessToken[]
 
+  /// Better Auth 1.7 (ENG-2343). `resources` carries the full original grant so a refresh can narrow
+  /// the resource set but never widen it.
+  authorizationCodeId     String?
+  resources               String[]  @default([])
+  requestedUserInfoClaims String[]  @default([])
+  rotatedAt               DateTime?
+  rotationReplayResponse  String?
+  rotationReplayExpiresAt DateTime?
+  confirmation            Json?
+
   @@index([clientId])
   @@index([sessionId])
   @@index([userId])
+  @@index([authorizationCodeId])
 }
 
 /// Better Auth OAuth user consent grants for delegated clients.
@@ -1013,8 +1063,64 @@ model oauthConsent {
   createdAt   DateTime
   updatedAt   DateTime
 
+  /// Better Auth 1.7 (ENG-2343). /authorize compares the requested resources against these; without
+  /// them every pre-existing connection is forced back through the consent screen.
+  resources               String[] @default([])
+  requestedUserInfoClaims String[] @default([])
+
   @@index([clientId])
   @@index([userId])
+}
+
+/// Better Auth 1.7 (ENG-2343): a protected resource the authorization server issues tokens for, with
+/// its own token lifetimes, scope allow-list and claims. Replaces the flat `validAudiences` option —
+/// a token is now bound to the resource it was approved for instead of to a static allow-list.
+/// `identifier` is the RFC 8707 `resource` value and is the natural key other rows point at.
+model oauthResource {
+  id                            String                @id @default(cuid())
+  identifier                    String                @unique
+  name                          String
+  accessTokenTtl                Int?
+  refreshTokenTtl               Int?
+  signingAlgorithm              String?
+  signingKeyId                  String?
+  allowedScopes                 String[]              @default([])
+  customClaims                  Json?
+  dpopBoundAccessTokensRequired Boolean?              @default(false)
+  disabled                      Boolean?              @default(false)
+  createdAt                     DateTime?
+  updatedAt                     DateTime?
+  policyVersion                 Int?                  @default(1)
+  metadata                      Json?
+  clients                       oauthClientResource[]
+}
+
+/// Better Auth 1.7 (ENG-2343): links a client to the resources it may request tokens for. With
+/// `enforcePerClientResources` (the default) a missing row means `invalid_target` at the token
+/// endpoint, which is why the migration backfills one row per existing client.
+/// Both sides reference natural keys, matching the other oauth child tables.
+model oauthClientResource {
+  id         String        @id @default(cuid())
+  clientId   String
+  client     oauthClient   @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  resourceId String
+  resource   oauthResource @relation(fields: [resourceId], references: [identifier], onDelete: Cascade)
+  metadata   Json?
+  createdAt  DateTime?
+
+  @@unique([clientId, resourceId])
+  @@index([clientId])
+  @@index([resourceId])
+}
+
+/// Better Auth 1.7 (ENG-2343): replay store for `private_key_jwt` client assertions (the row id is the
+/// assertion jti). We use no private_key_jwt client authentication today, but the plugin declares the
+/// table, so omitting it risks an adapter error on a code path we do not control.
+model oauthClientAssertion {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }
 
 /// Stores the active password reset token for a user.
