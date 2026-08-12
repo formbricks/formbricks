@@ -83,7 +83,90 @@ const createSurveySeed = async ({
   });
 };
 
+const createResponsesSeed = async ({
+  surveyId,
+  finished,
+  unfinished,
+}: {
+  surveyId: string;
+  finished: number;
+  unfinished: number;
+}) => {
+  const rows = [
+    ...Array.from({ length: finished }, () => ({ surveyId, finished: true })),
+    ...Array.from({ length: unfinished }, () => ({ surveyId, finished: false })),
+  ];
+
+  if (rows.length > 0) {
+    await prisma.response.createMany({ data: rows });
+  }
+};
+
 test.describe("Survey overview", () => {
+  test("counts completed responses in the list, and still warns before editing a partial-only survey", async ({
+    page,
+    users,
+  }) => {
+    const timestamp = Date.now();
+    const email = `overview-completed-${timestamp}@example.com`;
+    const name = `overview-completed-${timestamp}`;
+    const mixedSurveyName = `Mixed Survey ${timestamp}`;
+    const partialsSurveyName = `Partials Survey ${timestamp}`;
+
+    const user = await users.create({ email, name, workspaceName: "Completed Counts Workspace" });
+    const userId = await getUserIdForEmail(email);
+
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId =
+      /\/workspaces\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+      (() => {
+        throw new Error("Unable to determine workspace id from surveys URL");
+      })();
+
+    const mixedSurvey = await createSurveySeed({
+      workspaceId,
+      userId,
+      name: mixedSurveyName,
+      status: "inProgress",
+    });
+    const partialsSurvey = await createSurveySeed({
+      workspaceId,
+      userId,
+      name: partialsSurveyName,
+      status: "inProgress",
+    });
+
+    // 5 finished + 6 abandoned: the list must show 5, never the total of 11.
+    await createResponsesSeed({ surveyId: mixedSurvey.id, finished: 5, unfinished: 6 });
+    // Abandoned only: the list must show 0 while the survey still *has* responses.
+    await createResponsesSeed({ surveyId: partialsSurvey.id, finished: 0, unfinished: 2 });
+
+    await page.reload();
+    await expect(page.getByText(mixedSurveyName, { exact: true })).toBeVisible({ timeout: 10000 });
+
+    const listHeader = page.locator("div.grid.grid-cols-8").first();
+    await expect(listHeader.getByText("Completed", { exact: true })).toBeVisible();
+    await expect(listHeader.getByText("Responses", { exact: true })).toHaveCount(0);
+
+    const mixedRow = page.locator("div.relative.block", {
+      has: page.getByText(mixedSurveyName, { exact: true }),
+    });
+    await expect(mixedRow.getByText("5", { exact: true })).toBeVisible();
+    await expect(mixedRow.getByText("11", { exact: true })).toHaveCount(0);
+
+    const partialsRow = page.locator("div.relative.block", {
+      has: page.getByText(partialsSurveyName, { exact: true }),
+    });
+    await expect(partialsRow.getByText("0", { exact: true })).toBeVisible();
+
+    // Regression guard: the caution dialog is driven by the total, so it must still appear for a
+    // survey whose displayed count is 0 but which already has (partial) responses.
+    await partialsRow.locator("[data-testid='survey-dropdown-trigger']").click();
+    await page.getByRole("button", { name: "Edit", exact: true }).click();
+    await expect(page.getByText("Edit a published survey?")).toBeVisible();
+  });
+
   test("loads surveys, applies filters and sort, and paginates with load more", async ({ page, users }) => {
     const timestamp = Date.now();
     const email = `overview-v3-${timestamp}@example.com`;
