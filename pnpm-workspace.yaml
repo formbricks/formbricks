@@ -277,3 +277,24 @@ minimumReleaseAgeExclude:
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
   - "@formbricks/hub"
+  # === TEMPORARY (ENG-2343) — REMOVE WHEN better-auth 1.7.0 SHIPS STABLE ===
+  # The Better Auth trio is pinned to 1.7.0-rc.5, published 2026-08-11, i.e. well inside the 72h
+  # cooldown above — so `pnpm install` refuses it without these entries. This is a deliberate, and
+  # deliberately narrow, weakening of a supply-chain control, taken to close GHSA-p2fr-6hmx-4528:
+  # the fix exists only on the 1.7 line and `latest` (1.6.27) is itself still in the affected range,
+  # so there is no patched version the cooldown would ever let through.
+  # NINE packages, not three. The three we actually pin move in lockstep (the plugin declares the
+  # other two as matching peers), but `better-auth` itself hard-depends on all five storage adapters
+  # plus telemetry at the exact same version, and every one of them was published in the same minute
+  # — so the install fails on those too until they are listed. Worth seeing plainly: the cooldown is
+  # being lifted for the whole Better Auth surface, not for one library.
+  # When 1.7.0 stable lands: bump the pins, delete this block, and let the cooldown apply again.
+  - "better-auth"
+  - "@better-auth/core"
+  - "@better-auth/oauth-provider"
+  - "@better-auth/prisma-adapter"
+  - "@better-auth/drizzle-adapter"
+  - "@better-auth/kysely-adapter"
+  - "@better-auth/memory-adapter"
+  - "@better-auth/mongo-adapter"
+  - "@better-auth/telemetry"
