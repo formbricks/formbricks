@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZHubFieldType } from "@formbricks/types/feedback-source";
+import { ZHubEmotion, ZHubFieldType, ZHubSentiment } from "@formbricks/types/feedback-source";
 
 /**
  * v3-owned schemas for the feedback-records surface. Kept in the v3 layer (not the MCP layer) so the
@@ -72,6 +72,21 @@ const oneOrMany = <T extends z.ZodType>(
     .optional()
     .describe(`${description} One value, or up to ${maxValues} values which are OR-ed.`);
 
+/**
+ * A timestamp bound, kept as an opaque non-empty string and never parsed here.
+ *
+ * The Hub validates RFC 3339 and relays a precise 400, and it is also the only side that can safely
+ * compare a pair: two ISO strings with different offsets do not compare lexicographically, so a local
+ * `min <= max` check would reject valid requests. A spurious 422 is worse than the Hub's correct 400.
+ */
+const timestampFilter = (description: string) => z.string().trim().min(1).optional().describe(description);
+
+/**
+ * A presence filter. Three states: omitted means no constraint, `true` selects records that have the
+ * value, `false` selects records that do not.
+ */
+const presenceFilter = (description: string) => z.boolean().optional().describe(description);
+
 export const ZV3FeedbackRecordFilters = z
   .object({
     source_type: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
@@ -109,22 +124,80 @@ export const ZV3FeedbackRecordFilters = z
       description:
         "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice.",
     }),
-    since: z
-      .string()
-      .trim()
-      .min(1)
+    source_name: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by source display name, e.g. the survey's name.",
+    }),
+    language: oneOrMany(z.string().trim().min(1).max(10), MAX_FILTER_VALUES, {
+      valueHint: "a language tag of at most 10 characters, e.g. en or pt-BR",
+      description: "Filter by the language the feedback was given in.",
+    }),
+
+    since: timestampFilter(
+      "Only records collected at or after this ISO 8601 timestamp (bounds collected_at, inclusive). Must fall between 1970-01-01 and 2080-12-31."
+    ),
+    until: timestampFilter(
+      "Only records collected at or before this ISO 8601 timestamp (bounds collected_at, inclusive). Must fall between 1970-01-01 and 2080-12-31."
+    ),
+    created_since: timestampFilter(
+      "Only records Hub stored at or after this ISO 8601 timestamp (bounds created_at, inclusive). Use this for 'what did this import bring in'; collected_at and created_at diverge when historical data is imported."
+    ),
+    created_until: timestampFilter(
+      "Only records Hub stored at or before this ISO 8601 timestamp (bounds created_at, inclusive)."
+    ),
+    value_date_min: timestampFilter(
+      "Only records whose date answer is at or after this ISO 8601 timestamp (inclusive). Bounds the answer itself, not when it was collected. Excludes every record that carries no date."
+    ),
+    value_date_max: timestampFilter(
+      "Only records whose date answer is at or before this ISO 8601 timestamp (inclusive). Excludes every record that carries no date."
+    ),
+
+    value_number_min: z
+      .number()
       .optional()
       .describe(
-        "Only records collected at or after this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+        "Only records whose numeric answer is at least this value (inclusive). Excludes every record that carries no number, so value_number_min=0 is not 'everything' — it drops all text answers."
       ),
-    until: z
-      .string()
-      .trim()
-      .min(1)
+    value_number_max: z
+      .number()
       .optional()
       .describe(
-        "Only records collected at or before this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+        "Only records whose numeric answer is at most this value (inclusive). Excludes every record that carries no number."
       ),
+
+    sentiment: oneOrMany(ZHubSentiment, ZHubSentiment.options.length, {
+      valueHint: `one of ${ZHubSentiment.options.join(", ")}`,
+      description: "Filter by sentiment label. Only enriched records carry one.",
+    }),
+    emotions: oneOrMany(ZHubEmotion, ZHubEmotion.options.length, {
+      valueHint: `one of ${ZHubEmotion.options.join(", ")}`,
+      description:
+        "Filter by emotion label. Matches a record carrying ANY of the labels listed, never all of them — there is no 'must carry all' form.",
+    }),
+    sentiment_score_min: z
+      .number()
+      .min(-1)
+      .max(1)
+      .optional()
+      .describe(
+        "Only records whose sentiment score is at least this value, from -1 to 1 (inclusive). Unenriched records carry no score and are therefore never matched, so this implies 'enriched only'."
+      ),
+    sentiment_score_max: z
+      .number()
+      .min(-1)
+      .max(1)
+      .optional()
+      .describe("Only records whose sentiment score is at most this value, from -1 to 1 (inclusive)."),
+
+    has_sentiment: presenceFilter(
+      "Restrict to records that do (true) or do not (false) carry a sentiment label. Use false to find records enrichment has not reached yet."
+    ),
+    has_emotions: presenceFilter(
+      "Restrict to records that do (true) or do not (false) carry emotion labels. false covers both 'not yet classified' and 'classified, no emotion detected' — the two are indistinguishable here."
+    ),
+    has_translation: presenceFilter(
+      "Restrict to records that do (true) or do not (false) have a translation."
+    ),
   })
   .strict();
 export type TV3FeedbackRecordFilters = z.infer<typeof ZV3FeedbackRecordFilters>;

@@ -1214,7 +1214,12 @@ describe("feedback-record filters accept multiple values", () => {
   test("names the accepted values when a filter value is not one of them", async () => {
     // A wrong value matches neither union branch, and zod's own `invalid_union` message is "Invalid
     // input" — useless to an agent, and a regression on the single-value schema this replaced.
-    const response = await listV3FeedbackRecords({ ...base, field_type: "not-a-type" });
+    // Cast because the params type now rejects this at compile time; the point is the runtime guard, which
+    // is what an MCP client (whose input is untyped JSON) actually hits.
+    const response = await listV3FeedbackRecords({
+      ...base,
+      field_type: "not-a-type" as never,
+    });
 
     expect(response.status).toBe(422);
     const [issue] = (await response.json()).invalid_params;
@@ -1229,6 +1234,109 @@ describe("feedback-record filters accept multiple values", () => {
 
     expect(response.status).toBe(422);
     expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe("feedback-record filters with meaningful falsy values", () => {
+  beforeEach(() => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+    vi.mocked(countFeedbackRecords).mockResolvedValue({ data: { count: 0 }, error: null });
+  });
+
+  /**
+   * The mapper guards every filter on `!== undefined`. With a truthiness guard each of these is dropped
+   * and the Hub answers a wider question than the caller asked — `has_sentiment: false` in particular
+   * silently turns "records enrichment has not labelled yet" into "all records".
+   */
+  test.each([
+    ["has_sentiment", { has_sentiment: false }],
+    ["has_emotions", { has_emotions: false }],
+    ["has_translation", { has_translation: false }],
+    ["value_number_min", { value_number_min: 0 }],
+    ["value_number_max", { value_number_max: 0 }],
+    ["sentiment_score_min", { sentiment_score_min: 0 }],
+    ["sentiment_score_max", { sentiment_score_max: 0 }],
+  ])("keeps %s when its value is falsy", async (name, override) => {
+    await listV3FeedbackRecords({ ...base, ...override });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(expect.objectContaining(override));
+    // objectContaining would also pass if the key were absent-but-undefined, so assert presence directly.
+    expect(vi.mocked(listFeedbackRecords).mock.calls[0][0]).toHaveProperty(name);
+  });
+
+  test("keeps a falsy presence filter on the count path too", async () => {
+    await countV3FeedbackRecords({ ...base, has_sentiment: false });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith(expect.objectContaining({ has_sentiment: false }));
+  });
+
+  test("sends the enrichment and range filters the Hub gained in 0.8.4", async () => {
+    await countV3FeedbackRecords({
+      ...base,
+      source_name: "Q1 NPS",
+      language: ["en", "pt-BR"],
+      sentiment: ["negative", "very_negative"],
+      emotions: ["anger"],
+      created_since: "2026-01-01T00:00:00Z",
+      created_until: "2026-03-31T00:00:00Z",
+      value_date_min: "2026-02-01T00:00:00Z",
+      value_date_max: "2026-02-28T00:00:00Z",
+      value_number_min: 1,
+      value_number_max: 5,
+      sentiment_score_min: -1,
+      sentiment_score_max: 1,
+      has_translation: true,
+    });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith({
+      tenant_id: directoryId,
+      source_name: ["Q1 NPS"],
+      language: ["en", "pt-BR"],
+      sentiment: ["negative", "very_negative"],
+      emotions: ["anger"],
+      created_since: "2026-01-01T00:00:00Z",
+      created_until: "2026-03-31T00:00:00Z",
+      value_date_min: "2026-02-01T00:00:00Z",
+      value_date_max: "2026-02-28T00:00:00Z",
+      value_number_min: 1,
+      value_number_max: 5,
+      sentiment_score_min: -1,
+      sentiment_score_max: 1,
+      has_translation: true,
+    });
+  });
+
+  test("rejects a sentiment score outside the Hub's -1..1 range", async () => {
+    const response = await listV3FeedbackRecords({ ...base, sentiment_score_min: -2 });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("sentiment_score_min");
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects a language tag longer than the Hub's column", async () => {
+    const response = await listV3FeedbackRecords({ ...base, language: "much-too-long-tag" });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("language");
+  });
+
+  test("leaves an inverted timestamp range to the Hub", async () => {
+    // Deliberate asymmetry: two ISO strings with different offsets do not compare lexicographically, so a
+    // local check would reject valid requests. The Hub compares real instants and returns a precise 400,
+    // which relays through. Do not "fix" this by adding a local superRefine.
+    await listV3FeedbackRecords({
+      ...base,
+      since: "2026-12-01T00:00:00Z",
+      until: "2026-01-01T00:00:00Z",
+    });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ since: "2026-12-01T00:00:00Z", until: "2026-01-01T00:00:00Z" })
+    );
   });
 });
 

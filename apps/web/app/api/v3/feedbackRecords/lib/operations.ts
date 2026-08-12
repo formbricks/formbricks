@@ -152,6 +152,11 @@ const DEFAULT_LIST_LIMIT = 50;
  * Hub 0.8.4 made the identity filters repeatable, so the SDK types each as an array whose values are
  * OR-ed. Callers may pass one value or several; `list` normalizes both to the array form the SDK wants, and
  * a one-element array is the same request on the wire as the scalar was.
+ *
+ * Every guard tests `!== undefined` rather than truthiness, because several filters here have meaningful
+ * falsy values: `has_sentiment: false` asks for records enrichment has not labelled yet, and
+ * `value_number_min: 0` / `sentiment_score_min: 0` are real bounds. A truthiness guard drops all three and
+ * answers a wider question than the caller asked, without saying so.
  */
 const list = <T>(value: T | T[]): T[] => (Array.isArray(value) ? value : [value]);
 
@@ -160,16 +165,35 @@ function buildHubFilterParams(
   filters: TV3FeedbackRecordFilters
 ): FeedbackRecordCountParams {
   const params: FeedbackRecordCountParams = { tenant_id: tenantId };
+
   if (filters.source_type !== undefined) params.source_type = list(filters.source_type);
   if (filters.source_id !== undefined) params.source_id = list(filters.source_id);
+  if (filters.source_name !== undefined) params.source_name = list(filters.source_name);
   if (filters.field_type !== undefined) params.field_type = list(filters.field_type);
   if (filters.field_id !== undefined) params.field_id = list(filters.field_id);
   if (filters.field_group_id !== undefined) params.field_group_id = list(filters.field_group_id);
   if (filters.submission_id !== undefined) params.submission_id = list(filters.submission_id);
   if (filters.user_id !== undefined) params.user_id = list(filters.user_id);
   if (filters.value_id !== undefined) params.value_id = list(filters.value_id);
+  if (filters.language !== undefined) params.language = list(filters.language);
+  if (filters.sentiment !== undefined) params.sentiment = list(filters.sentiment);
+  if (filters.emotions !== undefined) params.emotions = list(filters.emotions);
+
   if (filters.since !== undefined) params.since = filters.since;
   if (filters.until !== undefined) params.until = filters.until;
+  if (filters.created_since !== undefined) params.created_since = filters.created_since;
+  if (filters.created_until !== undefined) params.created_until = filters.created_until;
+  if (filters.value_date_min !== undefined) params.value_date_min = filters.value_date_min;
+  if (filters.value_date_max !== undefined) params.value_date_max = filters.value_date_max;
+  if (filters.value_number_min !== undefined) params.value_number_min = filters.value_number_min;
+  if (filters.value_number_max !== undefined) params.value_number_max = filters.value_number_max;
+  if (filters.sentiment_score_min !== undefined) params.sentiment_score_min = filters.sentiment_score_min;
+  if (filters.sentiment_score_max !== undefined) params.sentiment_score_max = filters.sentiment_score_max;
+
+  if (filters.has_sentiment !== undefined) params.has_sentiment = filters.has_sentiment;
+  if (filters.has_emotions !== undefined) params.has_emotions = filters.has_emotions;
+  if (filters.has_translation !== undefined) params.has_translation = filters.has_translation;
+
   return params;
 }
 
