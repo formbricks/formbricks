@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/reconcile";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
@@ -49,6 +50,12 @@ vi.mock("@/lib/survey/service", () => ({
 
 vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
+}));
+
+// The reconciliation itself is covered in lib/feedback-source/reconcile.test.ts; here we only pin
+// that this route runs it, since it writes blocks without going through updateSurveyInternal.
+vi.mock("@/lib/feedback-source/reconcile", () => ({
+  reconcileFeedbackSourcesForSurvey: vi.fn(),
 }));
 
 vi.mock("./targeting", () => ({
@@ -278,6 +285,15 @@ describe("patchV3Survey", () => {
         }),
       })
     );
+  });
+
+  // ENG-2064: this route writes blocks directly instead of going through updateSurveyInternal, so
+  // without its own call a survey edited over the v3 API would leave its feedback-source mappings
+  // stale — and the API is exactly the surface an automation changes questions from.
+  test("reconciles feedback-source mappings against the persisted blocks", async () => {
+    await patchV3Survey(currentSurvey, { name: "renamed via v3" }, "req_qa", "org_1");
+
+    expect(reconcileFeedbackSourcesForSurvey).toHaveBeenCalledWith(currentSurvey.id, expect.any(Array));
   });
 
   test("patches metadata and hidden fields through v3 persistence", async () => {
