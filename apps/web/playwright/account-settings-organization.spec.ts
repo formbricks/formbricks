@@ -48,6 +48,9 @@ test("keeps the current organization when opening account settings", async ({ pa
   });
 
   await user.login();
+  // Login lands on "/", which client-side redirects into a workspace — of the other organization, as
+  // it owns the first workspace id "/" collects. Let it settle so it cannot race the navigation below.
+  await page.waitForURL("**/workspaces/**");
 
   // Visiting the workspace makes it the active one (the proxy stores it in a cookie).
   await page.goto(`/workspaces/${user.workspaceId}/surveys`, { waitUntil: "domcontentloaded" });
