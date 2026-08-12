@@ -966,13 +966,25 @@ different filters.
 | `has_translation`                             | records that do or do not have a translation                         |
 
 Value limits mirror the Hub's: at most 100 values per filter (the enum filters cap at their own label
-count instead), 255 characters per value, and 10 for a `language` tag.
+count instead), 255 characters per value, and 10 for a `language` tag. Crossing either bound is a 422
+naming the filter, never a silent truncation to the first 100.
+
+An empty string is **not** the same thing here as on the Hub directly: the Hub treats `?source_type=` as
+identical to omitting the filter, but every string filter on this surface requires at least one
+character, so an empty value is rejected rather than ignored.
 
 <Callout variant="warning">
   **Every range filter excludes records whose column is empty.** `value_number_min: 0` is not
   "everything" — it drops every text answer, because they carry no number. Likewise
   `sentiment_score_min: -1` means "every *enriched* record", not every record. To find the records
   enrichment has not reached, use `has_sentiment: false` rather than a score range.
+</Callout>
+
+<Callout variant="warning">
+  **A backwards range is rejected, not run as an empty query.** `value_number_min: 5, value_number_max: 1`
+  is a `400` naming both bounds (e.g. `value_number_min` — "must be less than or equal to
+  value_number_max"). This applies to every range pair, including the timestamp ones; it is the Hub's own
+  check relayed as-is, not something validated here, so the message always names the Hub's parameters.
 </Callout>
 
 **Ordering.** `sort` accepts `collected_at` (the default) or `created_at`, and `order` accepts `asc` or
