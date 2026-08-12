@@ -2,8 +2,13 @@ import { z } from "zod";
 import { isLegacyIdCharset, isSafeIdentifier } from "./safe-identifier";
 import { RESERVED_DECLARED_FIELD_NAMES } from "./surveys/validation";
 
-/** Longest allowed field key / display name. */
-export const EMBEDDED_DATA_NAME_MAX_LENGTH = 255;
+/**
+ * Longest allowed library key.
+ *
+ * Deliberately not applied to `name`: a key is always newly authored, but a name can arrive from a
+ * migrated variable or hidden field, and the legacy schemas cap neither. See {@link ZEmbeddedData}.
+ */
+export const EMBEDDED_DATA_KEY_MAX_LENGTH = 255;
 
 /**
  * Where an Embedded Data field's value comes from.
@@ -60,7 +65,7 @@ export const ZEmbeddedData = z
     // the shared library and therefore have no library name.
     key: z
       .string()
-      .max(EMBEDDED_DATA_NAME_MAX_LENGTH)
+      .max(EMBEDDED_DATA_KEY_MAX_LENGTH)
       .refine(isSafeIdentifier, "Key must start with a lowercase letter and contain only a-z, 0-9 and _")
       // A library key is always newly authored (local fields carry `key: null`), so it goes through
       // the strict create-time rule. Without this a shared ingested field could be keyed `verify` or
@@ -70,10 +75,14 @@ export const ZEmbeddedData = z
     // Blank rather than empty: `name` is the label the library and the editor render, and a
     // whitespace-only one draws a row with nothing to read or click. Checked, not trimmed, so the
     // stored value is never silently rewritten.
-    name: z
-      .string()
-      .refine((value) => value.trim().length > 0, "Name must not be blank")
-      .max(EMBEDDED_DATA_NAME_MAX_LENGTH),
+    //
+    // No length cap, for the same reason `storageKey` has none. A migrated field's name is copied
+    // from a variable name or a hidden field id, and neither `ZSurveyVariable` nor
+    // `ZSurveyHiddenFields` bounds its length, so a stored survey can carry one longer than any cap
+    // we would pick. Capping here would let the backfill write a row that then fails to read back —
+    // a failure that only surfaces once ENG-1837 points readers at these tables. The create-time
+    // limit belongs on the authoring path, alongside the naming rule.
+    name: z.string().refine((value) => value.trim().length > 0, "Name must not be blank"),
     description: z.string().nullable(),
     source: ZEmbeddedDataSource,
     dataType: ZEmbeddedDataType.prefault("string"),

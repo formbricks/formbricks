@@ -1,6 +1,23 @@
 import { describe, expect, test } from "vitest";
-import { toDesiredEmbeddedFields } from "./embedded-data-mapping";
-import { type TSurveyVariable } from "./surveys/types";
+import { ZEmbeddedData } from "./embedded-data";
+import { type TDesiredEmbeddedField, toDesiredEmbeddedFields } from "./embedded-data-mapping";
+import { type TSurveyVariable, ZSurveyHiddenFields, ZSurveyVariable } from "./surveys/types";
+
+/** Wraps a mapped field in the row it would be written as, so the two schemas can be checked together. */
+const asStoredRow = (field: TDesiredEmbeddedField) => ({
+  id: "clx000000000000000000009",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  key: null,
+  description: null,
+  locked: false,
+  surveyId: "clx000000000000000000008",
+  workspaceId: "clx000000000000000000007",
+  name: field.name,
+  source: field.source,
+  dataType: field.dataType,
+  defaultValue: field.defaultValue,
+});
 
 const numberVariable: TSurveyVariable = {
   id: "clx000000000000000000001",
@@ -86,6 +103,39 @@ describe("toDesiredEmbeddedFields", () => {
       "plan",
       "campaign",
     ]);
+  });
+
+  describe("legacy names longer than any create-time cap", () => {
+    // The legacy schemas put no length limit on a variable name or a hidden field id, and the column
+    // is TEXT, so a stored survey can carry one of these. Everything the backfill can move therefore
+    // has to survive the round trip — a row that writes but cannot be read back is the worst outcome,
+    // because it only surfaces once ENG-1837 points readers at these tables.
+    const longName = "a".repeat(300);
+
+    test("the legacy schemas accept them, which is why this matters", () => {
+      expect(
+        ZSurveyVariable.safeParse({ id: "clx000000000000000000001", name: longName, type: "text", value: "" })
+          .success
+      ).toBe(true);
+      expect(ZSurveyHiddenFields.safeParse({ enabled: true, fieldIds: [longName] }).success).toBe(true);
+    });
+
+    test("a long hidden field name maps and reads back, keeping its storage key", () => {
+      const [field] = toDesiredEmbeddedFields({ hiddenFields: { enabled: true, fieldIds: [longName] } });
+
+      expect(field.storageKey).toBe(longName);
+      expect(ZEmbeddedData.safeParse(asStoredRow(field)).success).toBe(true);
+    });
+
+    test("a long variable name maps and reads back, keeping its cuid", () => {
+      const [field] = toDesiredEmbeddedFields({
+        variables: [{ id: "clx000000000000000000001", name: longName, type: "text", value: "" }],
+      });
+
+      expect(field.storageKey).toBe("clx000000000000000000001");
+      expect(field.name).toBe(longName);
+      expect(ZEmbeddedData.safeParse(asStoredRow(field)).success).toBe(true);
+    });
   });
 
   test("passes duplicate storage keys through rather than merging them", () => {
