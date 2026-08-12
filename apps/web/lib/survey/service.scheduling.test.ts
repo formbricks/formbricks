@@ -59,10 +59,16 @@ describe("survey service scheduling", () => {
     vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as never);
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({ id: "org123" } as never);
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
-    // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
-    // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
+    // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
+    // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
+    // the transaction.
     vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
       callback(prisma)) as typeof prisma.$transaction);
+    // Both paths also reconcile the Embedded Data tables (ENG-1978); no existing links means the
+    // reconcile is a no-op and scheduling behaviour is what these tests still measure.
+    vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
+    vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
   });
 
   afterEach(() => {

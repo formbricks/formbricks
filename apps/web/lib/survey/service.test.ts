@@ -59,10 +59,17 @@ vi.mock("@/lib/actionClass/service", () => ({
 
 beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
-  // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
-  // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
+  // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
+  // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
+  // the transaction.
   vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
     callback(prisma)) as typeof prisma.$transaction);
+  // Both paths also reconcile the Embedded Data tables (ENG-1978). Start every test with no existing
+  // links so that reconcile is a no-op; the behaviour itself is covered by its own unit and
+  // integration tests.
+  vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+  vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
+  vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
 });
 
 describe("evaluateLogic with mockSurveyWithLogic", () => {

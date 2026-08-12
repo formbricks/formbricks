@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
+import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import {
   DatabaseError,
   InvalidInputError,
@@ -13,6 +14,7 @@ import {
 import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -612,11 +614,35 @@ export const updateSurveyInternal = async (
     };
 
     delete data.createdBy;
-    const persistedSurvey = await prisma.survey.update({
-      where: { id: surveyId },
-      data,
-      select: selectSurvey,
-    });
+    const persistedSurvey = await prisma.$transaction(
+      async (tx) => {
+        const survey = await tx.survey.update({
+          where: { id: surveyId },
+          data,
+          select: selectSurvey,
+        });
+
+        // ENG-1978: mirror the saved fields into the EmbeddedData tables in the same transaction, so a
+        // survey never commits without them. Derived from the PERSISTED survey rather than the payload:
+        // a partial update leaves `variables` / `hiddenFields` untouched in the column, and reading the
+        // payload instead would see them as absent and delete every row. workspaceId comes from the
+        // stored survey for the ENG-1749 reason above — never from the client.
+        await reconcileEmbeddedData(tx, {
+          surveyId,
+          workspaceId: currentSurvey.workspaceId,
+          desired: toDesiredEmbeddedFields(survey),
+        });
+
+        return survey;
+      },
+      // Prisma's default interactive-transaction ceiling is 5s, which the write above can plausibly
+      // approach on a large survey: it rewrites blocks, follow-ups, triggers and languages, then reads
+      // back through `selectSurvey`'s deep select. Failing here loses the author's edit, while the
+      // worst a slow commit costs is a held connection — so the timeout is raised rather than left to
+      // turn a slow save into a failed one. The reconcile itself adds one indexed read plus a write per
+      // changed field.
+      { timeout: 20_000, maxWait: 10_000 }
+    );
 
     return await reconcilePersistedSurveySchedulingIfDue({
       logSource: "survey-update",
@@ -815,49 +841,65 @@ export const createSurvey = async (
     // Create the survey and — for app surveys — its private targeting segment atomically. The survey,
     // the segment (seeded with any caller-supplied filters), and the segment connection must all land
     // or none, so a mid-write failure can't leave a survey with missing or partial targeting.
-    const survey = await prisma.$transaction(async (tx) => {
-      const createdSurvey = await tx.survey.create({
-        data: {
-          ...data,
-          workspace: {
-            connect: {
-              id: parsedWorkspaceId,
-            },
-          },
-        },
-        select: selectSurvey,
-      });
-
-      if (createdSurvey.type === "app") {
-        const newSegment = await tx.segment.create({
+    const survey = await prisma.$transaction(
+      async (tx) => {
+        const createdSurvey = await tx.survey.create({
           data: {
-            title: createdSurvey.id,
-            filters: privateSegmentFilters,
-            isPrivate: true,
+            ...data,
             workspace: {
               connect: {
                 id: parsedWorkspaceId,
               },
             },
           },
+          select: selectSurvey,
         });
 
-        await tx.survey.update({
-          where: {
-            id: createdSurvey.id,
-          },
-          data: {
-            segment: {
-              connect: {
-                id: newSegment.id,
+        if (createdSurvey.type === "app") {
+          const newSegment = await tx.segment.create({
+            data: {
+              title: createdSurvey.id,
+              filters: privateSegmentFilters,
+              isPrivate: true,
+              workspace: {
+                connect: {
+                  id: parsedWorkspaceId,
+                },
               },
             },
-          },
-        });
-      }
+          });
 
-      return createdSurvey;
-    });
+          await tx.survey.update({
+            where: {
+              id: createdSurvey.id,
+            },
+            data: {
+              segment: {
+                connect: {
+                  id: newSegment.id,
+                },
+              },
+            },
+          });
+        }
+
+        // ENG-1978: a survey created from a template, the API or a duplicate can already carry
+        // variables and hidden fields, so the tables have to be populated at creation, not just on the
+        // next save.
+        await reconcileEmbeddedData(tx, {
+          surveyId: createdSurvey.id,
+          workspaceId: parsedWorkspaceId,
+          desired: toDesiredEmbeddedFields(createdSurvey),
+        });
+
+        return createdSurvey;
+      },
+      // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
+      // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or
+      // API create could now reach Prisma's 5s default where it used to fit. Matched to the other two
+      // reconcile call sites rather than left to inherit a ceiling this work made easier to hit.
+      { timeout: 20_000, maxWait: 10_000 }
+    );
 
     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
     // @ts-expect-error
