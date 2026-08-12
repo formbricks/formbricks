@@ -184,7 +184,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `create_feedback_record` | `write` or `manage` |
 | `create_feedback_records` | `write` or `manage` |
 | `update_feedback_record` | `write` or `manage` |
-| `delete_feedback_record` | `write` or `manage` |
+| `delete_feedback_record` | `manage` |
 
 Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` + `feedbackRecords:read`
 always; the matching `:write` scopes when the key has `write` or `manage` on any workspace. The scope
@@ -242,14 +242,13 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
 ```
 
 <Note>
-  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
-  clients register with the scopes from the protected-resource metadata's `scopes_supported`
-  (`surveys:read surveys:write workflows:read workflows:write feedbackRecords:read
-  feedbackRecords:write offline_access`). Because the authorization server validates the `/authorize`
-  request against the client's **registered** scopes, a client that registers with a narrower set than
-  it later requests (e.g. it registers surveys-only but requests `offline_access`) is rejected with
-  `invalid_scope`. To smoke-test the real path, omit `scope` and let the client adopt the advertised
-  set, or pass exactly what the metadata advertises.
+  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP clients
+  register with the scopes from the protected-resource metadata's `scopes_supported` (`surveys:read
+  surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write offline_access`).
+  Because the authorization server validates the `/authorize` request against the client's **registered**
+  scopes, a client that registers with a narrower set than it later requests (e.g. it registers surveys-only
+  but requests `offline_access`) is rejected with `invalid_scope`. To smoke-test the real path, omit `scope`
+  and let the client adopt the advertised set, or pass exactly what the metadata advertises.
 </Note>
 
 <Note>
@@ -756,14 +755,14 @@ Input:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "limit": 20,
   "cursor": "opaque-cursor-from-previous-response",
-  "sortBy": "updatedAt",
   "filter": {
     "name": { "contains": "welcome" },
     "status": { "in": ["draft", "enabled"] }
-  }
+  },
+  "limit": 20,
+  "sortBy": "updatedAt",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -785,11 +784,11 @@ Lists workflow runs for a workspace, newest first. Read-only and idempotent.
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
+  "filter": { "isDryRun": false, "status": { "in": ["completed"] } },
   "limit": 20,
-  "workflowId": "clwf1234567890123456789012",
   "responseId": "clrs1234567890123456789012",
-  "filter": { "status": { "in": ["completed"] }, "isDryRun": false }
+  "workflowId": "clwf1234567890123456789012",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -822,20 +821,20 @@ idempotent. Takes the full v3 create payload:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "name": "Notify on churn survey completion",
   "definition": {
-    "schemaVersion": 1,
+    "edges": [],
     "entryNodeId": "trigger",
-    "trigger": {
-      "id": "trigger",
-      "type": "trigger",
-      "triggerType": "response.completed",
-      "config": { "surveyId": "clsv1234567890123456789012", "endingCardIds": ["ending-1"] }
-    },
     "nodes": [],
-    "edges": []
-  }
+    "schemaVersion": 1,
+    "trigger": {
+      "config": { "endingCardIds": ["ending-1"], "surveyId": "clsv1234567890123456789012" },
+      "id": "trigger",
+      "triggerType": "response.completed",
+      "type": "trigger"
+    }
+  },
+  "name": "Notify on churn survey completion",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -846,8 +845,8 @@ idempotent. `definition` edits are only accepted while the workflow is draft or 
 
 ```json
 {
-  "workflowId": "clwf1234567890123456789012",
-  "data": { "name": "Renamed workflow" }
+  "data": { "name": "Renamed workflow" },
+  "workflowId": "clwf1234567890123456789012"
 }
 ```
 
@@ -856,7 +855,7 @@ idempotent. `definition` edits are only accepted while the workflow is draft or 
 Duplicates a workflow as a new draft with empty run and version history. Writes data; not idempotent.
 
 ```json
-{ "workflowId": "clwf1234567890123456789012", "name": "Copy of workflow" }
+{ "name": "Copy of workflow", "workflowId": "clwf1234567890123456789012" }
 ```
 
 `name` is optional; if omitted the server picks a non-conflicting copy name.
@@ -873,9 +872,8 @@ each take only a workflow id:
 - `enable_workflow` — validates executability, snapshots an immutable version, and makes the workflow
   live. A non-executable definition is refused with `422 workflow_not_executable`.
 
-  <Warning>
-    Once live, the workflow runs on matching survey responses and can send emails.
-  </Warning>
+  <Warning>Once live, the workflow runs on matching survey responses and can send emails.</Warning>
+
 - `disable_workflow` — stops future runs.
 - `archive_workflow` / `unarchive_workflow` — soft archive and restore (to draft).
 - `delete_workflow` — the v3 delete returns `204 No Content`; the MCP result contains the `requestId`.
@@ -1121,7 +1119,13 @@ audit event — N creations are N events, not one summary.
 
 Corrects the value of an existing feedback record. Writes data, is annotated `destructiveHint: true` (it
 overwrites a stored value; the previous one survives only in the audit log), and requires
-`feedbackRecords:write`. Only the fields sent are changed; at least one is required.
+`feedbackRecords:write` (API keys need `write` or `manage`). Only the fields sent are changed; at least one is required.
+
+For API keys, the same dataset-exclusivity rule applies as for deletes: the key may update only a
+record in a dataset assigned to exactly one workspace, where its permission unambiguously covers every
+record present (ENG-2189). A shared dataset returns 403; an integration needing to update records in
+both workspaces should use a workspace-scoped key per workspace. Session, OAuth and MCP-person
+principals are unaffected and authorize through their organization role instead.
 
 Updatable — the Hub's own mutable set: `value_text`, `value_number`, `value_boolean`, `value_date`,
 `value_id`, `user_id`, `language`, `metadata`. The schema is `.pick()`ed from the create fields, so bounds
@@ -1130,7 +1134,7 @@ can't drift between creating and correcting a record.
 The `value_*` field being set must be one the record's `field_type` accepts — the same table `create` enforces
 (`text` takes `value_text`, `nps`/`rating`/`number` take `value_number`, `categorical` takes `value_text`
 and/or `value_id`, and so on). Because `field_type` is immutable it is not part of the patch, so this is
-checked against the *stored* record and therefore reported after the ownership check, as a 422 naming the
+checked against the _stored_ record and therefore reported after the ownership check, as a 422 naming the
 offending field. Without it a patch could assemble what `create` rejects: putting `value_number` on a `text`
 record would leave both a text and a number set, with nothing to say which one the record means. The Hub does
 not enforce this itself.
@@ -1173,9 +1177,15 @@ Output is the updated record.
 ### delete_feedback_record
 
 Permanently deletes one feedback record. Writes data, is not idempotent, is annotated
-`destructiveHint: true`, and requires `feedbackRecords:write` (API keys need `write` or `manage`). The
+`destructiveHint: true`, and requires `feedbackRecords:write` (API keys need `manage`). The
 record and its derived embedding are removed with no soft delete, so this cannot be undone — the audit log
 entry keeps the deleted record as its `oldObject` and is the only remaining trace.
+
+For API keys, the dataset must be assigned to exactly one workspace — the caller's — because a key's
+workspace permission can only identify whose records these are when the dataset is not shared
+(ENG-2189). A shared dataset returns 403 with an explanation; an integration needing to delete from
+both workspaces should use a workspace-scoped key per workspace. Session, OAuth and MCP-person
+principals are unaffected and authorize through their organization role instead.
 
 Ownership is verified before the delete: the record must belong to a feedback dataset assigned to the
 workspace, and a record in another tenant is refused with the same generic authorization error as an
@@ -1272,21 +1282,21 @@ defaults to 0.7, which is strict enough that a fair paraphrase often falls just 
 Like the survey tools, workflow tools run no custom database queries — each calls the shared,
 framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
 
-| MCP Tool             | REST Contract                                    |
-| -------------------- | ------------------------------------------------ |
-| `list_workflows`     | `GET /api/v3/workflows`                          |
-| `get_workflow`       | `GET /api/v3/workflows/{workflowId}`             |
-| `list_workflow_runs` | `GET /api/v3/workflows/runs`                     |
-| `get_workflow_run`   | `GET /api/v3/workflows/runs/{runId}`             |
-| `test_workflow`      | `POST /api/v3/workflows/{workflowId}/test`       |
-| `create_workflow`    | `POST /api/v3/workflows`                         |
-| `patch_workflow`     | `PATCH /api/v3/workflows/{workflowId}`           |
-| `duplicate_workflow` | `POST /api/v3/workflows/{workflowId}/duplicate`  |
-| `delete_workflow`    | `DELETE /api/v3/workflows/{workflowId}`          |
-| `enable_workflow`    | `POST /api/v3/workflows/{workflowId}/enable`     |
-| `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`    |
-| `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`    |
-| `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive`  |
+| MCP Tool             | REST Contract                                   |
+| -------------------- | ----------------------------------------------- |
+| `list_workflows`     | `GET /api/v3/workflows`                         |
+| `get_workflow`       | `GET /api/v3/workflows/{workflowId}`            |
+| `list_workflow_runs` | `GET /api/v3/workflows/runs`                    |
+| `get_workflow_run`   | `GET /api/v3/workflows/runs/{runId}`            |
+| `test_workflow`      | `POST /api/v3/workflows/{workflowId}/test`      |
+| `create_workflow`    | `POST /api/v3/workflows`                        |
+| `patch_workflow`     | `PATCH /api/v3/workflows/{workflowId}`          |
+| `duplicate_workflow` | `POST /api/v3/workflows/{workflowId}/duplicate` |
+| `delete_workflow`    | `DELETE /api/v3/workflows/{workflowId}`         |
+| `enable_workflow`    | `POST /api/v3/workflows/{workflowId}/enable`    |
+| `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`   |
+| `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`   |
+| `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive` |
 
 ## Relationship to V3 Surveys API
 
