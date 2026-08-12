@@ -32,7 +32,6 @@ import {
   type HubResult,
   NO_CONFIG_ERROR,
   createHubResultFromError,
-  getErrorMessage,
   getErrorStatus,
   getHubErrorHint,
 } from "./utils";
@@ -150,12 +149,18 @@ type TenantDataDeleteResponse = {
 };
 
 /**
- * Purge all Hub-owned data (feedback records, derived embeddings, webhooks) for a tenant.
- * Called when the owning organization is deleted so Hub-side rows don't become orphaned.
- * Idempotent on the Hub side; the caller treats failures as best-effort.
+ * Purge ALL Hub-owned data for a tenant: feedback records, derived embeddings, the tenant's entire
+ * taxonomy, its webhooks, and its settings. This is the offboarding purge — call it when the owning
+ * organization is deleted so Hub-side rows don't become orphaned, not to empty a dataset that stays
+ * in use (see `purgeHubFeedbackRecords` for that). Idempotent on the Hub side; the caller treats
+ * failures as best-effort.
  *
- * Hits `DELETE /v1/tenants/{tenant_id}/data` directly because the SDK doesn't yet expose
- * a typed method for this endpoint.
+ * Hits `DELETE /v1/tenants/{tenant_id}/data` directly rather than `client.tenants.deleteData()`
+ * purely to keep the call shape identical for both purge helpers; the typed SDK method exists.
+ *
+ * The Hub also returns per-table taxonomy counts. They are not surfaced because the only caller is
+ * the org-delete cascade, which logs nothing and acts on nothing — add them here if a caller ever
+ * needs to report what was removed.
  */
 export const deleteHubTenantData = async (tenantId: string): Promise<HubTenantDataDeleteResult> => {
   const client = getHubClient();
@@ -177,9 +182,50 @@ export const deleteHubTenantData = async (tenantId: string): Promise<HubTenantDa
     };
   } catch (err) {
     logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: deleteHubTenantData failed");
-    const status = getErrorStatus(err);
-    const message = getErrorMessage(err);
-    return { data: null, error: { status, message, detail: message } };
+    // Via the shared helper so callers get the Hub's problem members (`code`, `problemDetail`)
+    // rather than an opaque message — same reasoning as `deleteFeedbackRecord`.
+    return createHubResultFromError(err);
+  }
+};
+
+export type HubFeedbackRecordsPurgeResult = {
+  data: { tenantId: string; status: string } | null;
+  error: HubError | null;
+};
+
+type FeedbackRecordsPurgeResponse = {
+  tenant_id: string;
+  status: string;
+  message?: string;
+};
+
+/**
+ * Purge every feedback record for a tenant, plus the data derived from those records (embeddings,
+ * taxonomy cluster memberships, and the enrichment stored on each record). Unlike
+ * `deleteHubTenantData` this leaves the tenant's taxonomy structure, webhooks and settings in place,
+ * so the dataset stays usable — it is the "empty this dataset" operation, not offboarding.
+ *
+ * Asynchronous on the Hub side: this returns once the purge has been *accepted*, not once it has
+ * run, so there is no deleted count to report. Poll `countFeedbackRecords` for the tenant to observe
+ * completion. Safe to call repeatedly — a request while a purge is already running joins it.
+ *
+ * Hits `POST /v1/feedback-records/purge` directly because the SDK has no typed method for it yet
+ * (added in hub#122; regenerate and switch to the typed call after the next SDK release).
+ */
+export const purgeHubFeedbackRecords = async (tenantId: string): Promise<HubFeedbackRecordsPurgeResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.post<FeedbackRecordsPurgeResponse>("/v1/feedback-records/purge", {
+      body: { tenant_id: tenantId },
+    });
+    return { data: { tenantId: data.tenant_id, status: data.status }, error: null };
+  } catch (err) {
+    logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: purgeHubFeedbackRecords failed");
+    return createHubResultFromError(err);
   }
 };
 

@@ -1,0 +1,35 @@
+/**
+ * POST /api/internal/feedback-datasets/{datasetId}/purge — delete every feedback record in a
+ * dataset, keeping the dataset itself, its sources and its topic taxonomy. Restricted to
+ * organization owners and managers (ENG-1770). Session-only.
+ *
+ * Internal surface: no OpenAPI entry and no stability promise, but every other v3 convention
+ * applies (ENG-1668 / the Internal API RFC). The Hub runs the purge asynchronously, so this
+ * responds 202 and the client polls the record count to observe completion.
+ */
+import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { purgeV3FeedbackDataset } from "../../lib/operations";
+import { ZDatasetPathParams, ZPurgeDatasetBody } from "../../lib/schemas";
+
+export const POST = withV3ApiWrapper({
+  auth: "session",
+  schemas: {
+    params: ZDatasetPathParams,
+    body: ZPurgeDatasetBody,
+  },
+  action: "purged",
+  targetType: "feedbackDirectory",
+  // Far below the shared v3 bucket: purging is irreversible and dataset-wide, so a burst is a bug
+  // or an attack rather than legitimate use.
+  customRateLimitConfig: rateLimitConfigs.api.internalDatasetPurge,
+  handler: async ({ authentication, parsedInput, requestId, instance, auditLog }) =>
+    purgeV3FeedbackDataset({
+      authentication,
+      workspaceId: parsedInput.body.workspaceId,
+      datasetId: parsedInput.params.datasetId,
+      requestId,
+      instance,
+      auditLog,
+    }),
+});

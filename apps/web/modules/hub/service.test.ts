@@ -18,6 +18,7 @@ import {
   listTaxonomyFields,
   listTaxonomyNodeRecords,
   listTaxonomyRuns,
+  purgeHubFeedbackRecords,
   removeTaxonomyNode,
   renameTaxonomyNode,
   retrieveFeedbackRecord,
@@ -534,6 +535,47 @@ describe("hub service", () => {
       } as any);
 
       const result = await deleteHubTenantData("tenant-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0, message: "network" });
+    });
+  });
+
+  describe("purgeHubFeedbackRecords", () => {
+    test("returns config error when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await purgeHubFeedbackRecords("tenant-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error?.message).toContain("HUB_API_KEY");
+    });
+
+    // The tenant goes in the body, not the path: this must never be confused with the offboarding
+    // purge at /v1/tenants/{id}/data, which also destroys taxonomy, webhooks and settings.
+    test("posts the tenant to the records purge endpoint", async () => {
+      const postSpy = vi.fn().mockResolvedValue({
+        tenant_id: "tenant-1",
+        status: "accepted",
+        message: "Feedback records purge accepted for tenant-1",
+      });
+      vi.mocked(getHubClient).mockReturnValue({ post: postSpy } as any);
+
+      const result = await purgeHubFeedbackRecords("tenant-1");
+
+      expect(postSpy).toHaveBeenCalledWith("/v1/feedback-records/purge", {
+        body: { tenant_id: "tenant-1" },
+      });
+      expect(result.error).toBeNull();
+      expect(result.data).toEqual({ tenantId: "tenant-1", status: "accepted" });
+    });
+
+    test("returns error when the purge cannot be scheduled", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        post: vi.fn().mockRejectedValue(new Error("network")),
+      } as any);
+
+      const result = await purgeHubFeedbackRecords("tenant-1");
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "network" });
