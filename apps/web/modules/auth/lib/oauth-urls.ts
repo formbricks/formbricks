@@ -40,6 +40,21 @@ export const getMcpProtectedResourceMetadataUrl = (): string =>
 
 export const getMcpOrigin = (): string => new URL(getMcpResourceUrl()).origin;
 
+/**
+ * The authorization server's own UserInfo endpoint, which is a legitimate second value in an access
+ * token's `aud`.
+ *
+ * The oauth-provider treats UserInfo as an implicit resource: when `openid` is in scope it appends
+ * this identifier to the audience alongside the resource the client actually requested. It is the
+ * only audience besides the MCP resource URL that a Formbricks-issued MCP token may carry, so the
+ * resource server allow-lists exactly these two and rejects anything else (see
+ * `hasAcceptedMcpAudience` in modules/mcp/auth.ts).
+ *
+ * Built off the issuer for the same reason `jwksUrl` is: Better Auth mounts its OAuth endpoints
+ * under the auth base path, so the issuer is the prefix the plugin itself uses.
+ */
+export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/userinfo`;
+
 export const MCP_OAUTH_SCOPES = [
   "openid",
   "profile",

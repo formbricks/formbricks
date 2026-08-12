@@ -25,6 +25,7 @@ import {
   getMcpOrigin,
   getMcpProtectedResourceMetadataUrl,
   getMcpResourceUrl,
+  getOAuthUserInfoUrl,
 } from "@/modules/auth/lib/oauth-urls";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -115,6 +116,36 @@ function createApiKeyMcpAuthInfo(authentication: TAuthenticationApiKey, requestI
 
 function getOAuthScopes(payload: JWTPayload): string[] {
   return typeof payload.scope === "string" ? payload.scope.split(" ").filter(Boolean) : [];
+}
+
+/**
+ * Rejects an access token that was not minted for this resource server.
+ *
+ * `verifyOptions.audience` alone does NOT do this. It is handed to jose, whose `aud` check is a
+ * *membership* test — a token carrying `aud: [".../api/mcp", "https://other.example/api"]` passes it
+ * and would be accepted here, which is exactly the cross-resource escalation GHSA-p2fr-6hmx-4528
+ * describes. RFC 9068 §4 puts the burden on the resource server: it must reject a token whose
+ * audience is not itself, so this assert is required regardless of which provider version issued the
+ * token.
+ *
+ * Written as an allow-list rather than "exactly one audience", deliberately. When `openid` is in the
+ * granted scopes the authorization server treats its own UserInfo endpoint as an implicit second
+ * resource and appends it to `aud` — that is current behaviour, not something the pending provider
+ * upgrade introduces — so a perfectly ordinary MCP token is multi-valued. Those two identifiers are
+ * the only ones a Formbricks-issued MCP token may carry; anything else means the token was minted
+ * for somebody else and must not be honoured here.
+ */
+function hasAcceptedMcpAudience(payload: JWTPayload): boolean {
+  const { aud } = payload;
+  const audiences = typeof aud === "string" ? [aud] : Array.isArray(aud) ? aud : [];
+
+  const resourceUrl = getMcpResourceUrl();
+  if (!audiences.includes(resourceUrl)) {
+    return false;
+  }
+
+  const acceptedAudiences = new Set([resourceUrl, getOAuthUserInfoUrl()]);
+  return audiences.every((audience) => acceptedAudiences.has(audience));
 }
 
 function getOAuthClientId(payload: JWTPayload): string | null {
@@ -324,6 +355,26 @@ async function authenticateMcpOAuthBearer(
     }
 
     log.warn({ statusCode: 401 }, "MCP OAuth authentication failed");
+    return {
+      ok: false,
+      requestId,
+      response: withOAuthChallenge(problemUnauthorized(requestId, "Invalid OAuth access token", instance)),
+    };
+  }
+
+  if (!hasAcceptedMcpAudience(payload)) {
+    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+    if (rateLimitResponse) {
+      return { ok: false, requestId, response: rateLimitResponse };
+    }
+
+    // Logged distinctly — a token that verifies against our own issuer and JWKS but names a
+    // different audience is a resource-confusion attempt, not the routine expired/garbage token the
+    // catch above handles. The client still gets the same opaque refusal so this is not an oracle.
+    log.warn(
+      { statusCode: 401, clientId: getOAuthClientId(payload), audience: payload.aud },
+      "MCP OAuth token audience is not bound to this resource server"
+    );
     return {
       ok: false,
       requestId,
