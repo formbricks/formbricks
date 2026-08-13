@@ -121,11 +121,13 @@ jobs:
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.embeddings.enabled=true \
+            --set-string hub.embeddings.background.batchMaxWaitMs=37 \
             --show-only templates/hub-deployment.yaml \
             --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-legacy.yaml"
           test "$(grep -c 'http://formbricks-hub-embeddings:8080/v1' "$render_dir/hub-embeddings-legacy.yaml")" -eq 2
           ! grep -q 'hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-legacy.yaml"
           grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "1"'
+          grep -A1 'name: EMBEDDING_BATCH_MAX_WAIT_MS' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "25"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

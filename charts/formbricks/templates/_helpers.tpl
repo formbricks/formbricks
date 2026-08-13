@@ -429,6 +429,13 @@ Secret used by the embeddings runtime for Hugging Face access.
 {{- default (include "formbricks.hubEmbeddingsSecretName" .) .Values.hub.embeddings.huggingFace.existingSecret -}}
 {{- end }}
 
+{{/* Reject Hugging Face tokens that cannot be written into an externally managed auth secret. */}}
+{{- define "formbricks.validateHubEmbeddingsHuggingFaceSecret" -}}
+{{- if and .Values.hub.embeddings.auth.existingSecret .Values.hub.embeddings.huggingFace.token (not .Values.hub.embeddings.huggingFace.existingSecret) -}}
+{{- fail "hub.embeddings.huggingFace.token cannot be stored when hub.embeddings.auth.existingSecret is set; put HF_TOKEN in the existing auth secret or set hub.embeddings.huggingFace.existingSecret" -}}
+{{- end -}}
+{{- end }}
+
 {{/*
 Model name Hub sends to the OpenAI-compatible embeddings endpoint.
 */}}
@@ -508,7 +515,7 @@ self-hosted runtime is enabled so Hub API and Hub worker cannot drift.
 - name: EMBEDDING_BATCH_SIZE
   value: {{ ternary $root.Values.hub.embeddings.background.batchSize "1" $root.Values.hub.embeddings.background.enabled | quote }}
 - name: EMBEDDING_BATCH_MAX_WAIT_MS
-  value: {{ $root.Values.hub.embeddings.background.batchMaxWaitMs | quote }}
+  value: {{ ternary $root.Values.hub.embeddings.background.batchMaxWaitMs "25" $root.Values.hub.embeddings.background.enabled | quote }}
 - name: EMBEDDING_BATCH_MAX_IN_FLIGHT
   value: {{ ternary $root.Values.hub.embeddings.background.batchMaxInFlight "1" $root.Values.hub.embeddings.background.enabled | quote }}
 {{- end }}
