@@ -92,7 +92,7 @@ export const WorkflowRunsTable = ({
                       setSelectedRunId(run.id);
                     }
                   }}
-                  className="cursor-pointer focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">
+                  className="cursor-pointer hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">
                   <TableCell className="min-w-0 px-4 py-2">
                     {showWorkflowColumn ? (
                       <>
@@ -116,7 +116,7 @@ export const WorkflowRunsTable = ({
               );
             })}
             {runs.length === 0 && (
-              <TableRow className="hover:bg-white">
+              <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
                   <p className="text-slate-400">{t("common.no_results")}</p>
                 </TableCell>

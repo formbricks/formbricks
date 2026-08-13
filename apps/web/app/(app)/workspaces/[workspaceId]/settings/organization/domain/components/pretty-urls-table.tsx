@@ -55,14 +55,14 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
         </TableHeader>
         <TableBody className="[&_tr:last-child]:border-b">
           {surveys.length === 0 && (
-            <TableRow className="hover:bg-transparent">
+            <TableRow>
               <TableCell colSpan={3} className="text-center text-slate-500">
                 {t("workspace.settings.domain.no_pretty_urls")}
               </TableCell>
             </TableRow>
           )}
           {surveys.map((survey) => (
-            <TableRow key={survey.id} className="border-slate-200 hover:bg-transparent">
+            <TableRow key={survey.id}>
               <TableCell className="font-medium">
                 <Link
                   href={`/workspaces/${survey.workspace.id}/surveys/${survey.id}/summary`}
