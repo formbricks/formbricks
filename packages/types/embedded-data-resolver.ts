@@ -488,11 +488,15 @@ export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] 
  *    two must agree on the same instant's definitions or the round-trip desyncs — a field added
  *    since the last save would render as a raw `#recall:…#` token, and a renamed one would stop
  *    matching. The same functions also label saved surveys for exports and summaries, where this is
- *    a provable no-op: `reconcileEmbeddedData` writes exactly `toDesiredEmbeddedFields(survey)` in
- *    the same transaction as every survey write, so a saved survey's rows and declarations agree
- *    element for element. They can only diverge once a shared library definition can be renamed
- *    independently of the survey (ENG-1851), which is also when the unified picker (ENG-1853) moves
- *    recall and the pickers onto the tables together.
+ *    a no-op — a saved survey's rows and declarations agree element for element, because every write
+ *    path that persists those columns calls `reconcileEmbeddedData` with
+ *    `toDesiredEmbeddedFields(<the persisted survey>)` in the same transaction. There are exactly
+ *    four: `updateSurveyInternal` and `createSurvey` (apps/web/lib/survey/service.ts), the copy flow
+ *    (modules/survey/list/lib/survey.ts) and the v3 patch (app/api/v3/surveys/patch.ts) — a
+ *    `reconcileEmbeddedData(` grep is the audit, and a fifth write that skips it reintroduces the
+ *    divergence. They can also diverge once a shared library definition can be renamed independently
+ *    of the survey (ENG-1851), which is when the unified picker (ENG-1853) moves recall and the
+ *    pickers onto the tables together.
  */
 // Takes the same survey slice as {@link getSurveyEmbeddedFields}, not the narrower legacy one, so a
 // caller holding a full survey can pass it and the "ignores the stored rows" contract is visible in

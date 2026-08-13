@@ -446,17 +446,19 @@ describe("recall utility functions", () => {
     });
 
     test("classifies a field declared since the last save, which the rows do not know", () => {
-      // Without this the token would stay unclassified and render as a raw `#recall:…#` tag.
+      // The rows are non-empty and omit `hidden2`, so the stored accessor would not fall back — this
+      // fails if the resolution is switched back to it. Without the declared source the token stays
+      // unclassified and renders as a raw `#recall:…#` tag.
       const survey = {
         blocks: [],
-        hiddenFields: { fieldIds: ["hidden1"] },
+        hiddenFields: { fieldIds: ["hidden1", "hidden2"] },
         variables: [],
-        embeddedFields: [],
+        embeddedFields: [embeddedField("hidden1", "hidden1", "ingested")],
       } as unknown as TSurvey;
 
-      const result = getRecallItems("Text with #recall:hidden1/fallback:b#", survey, "en");
+      const result = getRecallItems("Text with #recall:hidden2/fallback:b#", survey, "en");
 
-      expect(result).toEqual([{ id: "hidden1", label: "hidden1", type: "hiddenField" }]);
+      expect(result).toEqual([{ id: "hidden2", label: "hidden2", type: "hiddenField" }]);
     });
 
     test("a storage key that also matches an element id still resolves as a hidden field", () => {

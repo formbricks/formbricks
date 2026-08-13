@@ -35,6 +35,18 @@ vi.mock("@formbricks/database", () => {
     segment: {
       update: vi.fn(),
     },
+    // ENG-1837: the patch reconciles the EmbeddedData rows in the same transaction as the survey
+    // write, so the models the reconcile touches have to exist on the client.
+    surveyEmbeddedData: {
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+    },
+    embeddedData: {
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+    },
     // Interactive transaction: run the callback with the mocked client as the tx client.
     $transaction: vi.fn((callback: (tx: typeof prisma) => Promise<unknown>) => callback(prisma)),
   };
@@ -228,6 +240,15 @@ describe("patchV3Survey", () => {
     });
     vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
       callback(prisma)) as typeof prisma.$transaction);
+    // ENG-1837: the patch reconciles the EmbeddedData rows in the same transaction as the survey
+    // write, so the models that reconcile touches have to answer. Left as the real reconcile rather
+    // than a module mock, so these tests keep proving it runs through the transaction's client.
+    vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.surveyEmbeddedData.deleteMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
+    vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
+    vi.mocked(prisma.embeddedData.deleteMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.embeddedData.updateMany).mockResolvedValue({ count: 0 } as never);
     vi.mocked(normalizeSurveyScheduling).mockImplementation(({ closeOn, publishOn }) => ({
       closeOn,
       publishOn,
@@ -278,6 +299,92 @@ describe("patchV3Survey", () => {
         }),
       })
     );
+  });
+
+  /**
+   * ENG-1837 made the EmbeddedData tables the read source of truth for definitions, so a patch that
+   * moves `variables` / `hiddenFields` has to reconcile the rows in the same transaction — otherwise
+   * recall, the logic engine, export columns and the response filters keep reading the pre-patch set.
+   * v3 patch is the one write path that did not do this.
+   */
+  describe("Embedded Data reconcile", () => {
+    test("writes a row and a link for a variable the patch adds", async () => {
+      await patchV3Survey(
+        currentSurvey,
+        { variables: [{ id: "clvar123456789012345678901", name: "score", type: "number", value: 7 }] },
+        "req_qa",
+        "org_1"
+      );
+
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            surveyId: currentSurvey.id,
+            // Never the client payload's workspace — the stored survey's (ENG-1749).
+            workspaceId: currentSurvey.workspaceId,
+            name: "score",
+            source: "computed",
+            dataType: "number",
+          }),
+        })
+      );
+      expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            surveyId: currentSurvey.id,
+            // A variable is addressed by its cuid, which is what recall tokens and responses use.
+            storageKey: "clvar123456789012345678901",
+          }),
+        })
+      );
+    });
+
+    test("writes a row and a link for a hidden field the patch adds", async () => {
+      await patchV3Survey(
+        currentSurvey,
+        { hiddenFields: { enabled: true, fieldIds: ["utm_source"] } },
+        "req_qa",
+        "org_1"
+      );
+
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: "utm_source", source: "ingested", dataType: "string" }),
+        })
+      );
+      expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ storageKey: "utm_source" }) })
+      );
+    });
+
+    test("reconciles from the PERSISTED survey, so a patch that omits the fields keeps its rows", async () => {
+      // The patch document carries neither key. Reading it instead of the persisted row would see
+      // them as absent and unlink every field the survey has.
+      vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValueOnce([
+        {
+          id: "link_1",
+          storageKey: "utm_source",
+          embeddedData: {
+            id: "ed_existing",
+            surveyId: currentSurvey.id,
+            name: "utm_source",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+          },
+        },
+      ] as never);
+      vi.mocked(prisma.survey.update).mockResolvedValueOnce({
+        ...currentSurvey,
+        name: "Renamed",
+        hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
+      } as never);
+
+      await patchV3Survey(currentSurvey, { name: "Renamed" }, "req_qa", "org_1");
+
+      expect(prisma.surveyEmbeddedData.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.embeddedData.create).not.toHaveBeenCalled();
+    });
   });
 
   test("patches metadata and hidden fields through v3 persistence", async () => {
@@ -744,6 +851,18 @@ describe("patchV3Survey", () => {
       const tx = {
         survey: { update: vi.fn(vi.mocked(prisma.survey.update).getMockImplementation()) },
         segment: { update: vi.fn() },
+        // ENG-1837: the EmbeddedData reconcile is part of the same transaction, so it has to be
+        // reachable on the tx client — and the assertions below prove it used that client.
+        surveyEmbeddedData: {
+          findMany: vi.fn().mockResolvedValue([]),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          create: vi.fn().mockResolvedValue({}),
+        },
+        embeddedData: {
+          create: vi.fn().mockResolvedValue({ id: "ed_1" }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        },
       };
       vi.mocked(prisma.$transaction).mockImplementationOnce(((
         callback: (client: typeof tx) => Promise<unknown>
@@ -765,6 +884,9 @@ describe("patchV3Survey", () => {
       );
       expect(tx.survey.update).toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();
+      // The Embedded Data reconcile rides the same transaction — never the global client.
+      expect(tx.surveyEmbeddedData.findMany).toHaveBeenCalled();
+      expect(prisma.surveyEmbeddedData.findMany).not.toHaveBeenCalled();
     });
 
     test("rejects a targeting change when the app survey has no segment", async () => {

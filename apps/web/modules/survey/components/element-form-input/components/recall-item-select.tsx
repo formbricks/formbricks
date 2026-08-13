@@ -97,22 +97,29 @@ export const RecallItemSelect = ({
     [localSurvey.variables, localSurvey.hiddenFields]
   );
 
-  /** `[storageKey, source, label]` triples, in the definitions' own order. */
-  const embeddedFieldEntries = useMemo(
-    () =>
+  /**
+   * The definitions joined to their picker labels, in the definitions' own order. Keyed on
+   * `storageKey`, not on position: `listReadableFields` happens to emit one entry per input today,
+   * but a future filter there would silently shift every label past the first drop.
+   */
+  const embeddedFieldEntries = useMemo(() => {
+    const labelByKey = new Map(
       listReadableFields({
         blocks: [],
         embeddedData: embeddedFields,
         reservedEntries: [],
         contactAttributeKeys: [],
-      }).embeddedData.map(({ key, label }, index) => ({
-        key,
-        label,
-        source: embeddedFields[index].field.source,
-        dataType: embeddedFields[index].field.dataType,
-      })),
-    [embeddedFields]
-  );
+      }).embeddedData.map(({ key, label }) => [key, label] as const)
+    );
+
+    return embeddedFields.map(({ field, link }) => ({
+      key: link.storageKey,
+      // The enumerator's blank-name fallback is the key, so mirror it when a field is not listed.
+      label: labelByKey.get(link.storageKey) ?? link.storageKey,
+      source: field.source,
+      dataType: field.dataType,
+    }));
+  }, [embeddedFields]);
 
   const hiddenFieldRecallItems = useMemo(
     () =>

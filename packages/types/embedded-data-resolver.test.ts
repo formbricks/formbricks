@@ -1038,11 +1038,28 @@ describe("getDeclaredEmbeddedFields", () => {
     expect(getDeclaredIngestedStorageKeys(legacySurvey)).toStrictEqual(["source_page"]);
   });
 
-  test("agrees with the stored accessor whenever the rows match the declarations", () => {
-    // True for every saved survey: `reconcileEmbeddedData` writes exactly `toDesiredEmbeddedFields`
-    // in the same transaction as the survey write.
-    const inSync = { ...legacySurvey, embeddedFields: deriveLegacyEmbeddedData(legacySurvey) };
+  test("still answers from the declarations when the rows are a superset", () => {
+    // A row for a field the survey no longer declares: the stored accessor keeps it, the declared
+    // accessor does not. Asserted with a genuinely differing pair rather than two runs of the same
+    // derivation, which could not fail.
+    const withExtraRow = {
+      ...legacySurvey,
+      embeddedFields: [
+        ...deriveLegacyEmbeddedData(legacySurvey),
+        {
+          field: {
+            name: "removed",
+            source: "ingested" as const,
+            dataType: "string" as const,
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "removed" },
+        },
+      ],
+    };
 
-    expect(getDeclaredEmbeddedFields(inSync)).toStrictEqual(getSurveyEmbeddedFields(inSync));
+    expect(getDeclaredIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page"]);
+    expect(getIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page", "removed"]);
   });
 });

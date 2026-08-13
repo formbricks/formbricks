@@ -68,9 +68,9 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
  * (`headlineToRecall` matches on the label), so both sides must see the same instant's definitions —
  * against the editor's working copy the stored rows are one save behind, which would render a
  * just-added field as a raw `#recall:…#` token and stop a just-renamed one from matching. For a
- * saved survey the two agree element for element, because `reconcileEmbeddedData` writes exactly
- * `toDesiredEmbeddedFields(survey)` in the same transaction as every survey write. See the
- * accessor's own doc block for when that stops being true (ENG-1851/ENG-1853).
+ * saved survey the two agree element for element, because every write path that persists those
+ * columns reconciles the rows in the same transaction. See the accessor's own doc block for the
+ * enumeration of those paths and for when the two stop agreeing (ENG-1851/ENG-1853).
  */
 const findEmbeddedField = (
   embeddedFields: TLinkedEmbeddedField[],
