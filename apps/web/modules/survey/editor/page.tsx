@@ -29,31 +29,19 @@ import {
   getResponseCountBySurveyId,
 } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { canReadSurveyInWorkspace, getSurveyAuth } from "@/modules/survey/lib/survey-auth";
+import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SURVEY_SCHEDULING_CONFIG } from "@/modules/survey/scheduling/lib/constants";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
 
-export const generateMetadata = async (props: {
-  params: Promise<{ workspaceId: string; surveyId: string }>;
-}) => {
-  const params = await props.params;
-  const t = await getTranslate();
-
-  // The survey name belongs to whoever owns the survey, so it may only be used as the title
-  // when the caller may actually read this survey through this workspace. The page 404s
-  // otherwise, but metadata resolves independently of it.
-  if (!(await canReadSurveyInWorkspace(params.surveyId, params.workspaceId))) {
-    return { title: t("common.editor") };
-  }
-
-  const survey = await getSurvey(params.surveyId);
-  return {
-    title: survey?.name ? `${survey.name} | ${t("common.editor")}` : t("common.editor"),
-  };
-};
+// No `generateMetadata` here on purpose: Next only reads metadata from the exports of the route
+// segment's own module, and the /edit route file re-exports the default alone
+// (app/(app)/(survey-editor)/workspaces/[workspaceId]/surveys/[surveyId]/edit/page.tsx). A
+// `generateMetadata` exported from this module would never run, so the editor has no title of its
+// own and no survey name to protect. Wiring one up is a UI change, not part of this fix — see
+// ENG-2372.
 
 export const SurveyEditorPage = async (props: {
   params: Promise<{ workspaceId: string; surveyId: string }>;
