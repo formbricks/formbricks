@@ -637,6 +637,22 @@ export const updateSurveyInternal = async (
         // a partial update leaves `variables` / `hiddenFields` untouched in the column, and reading the
         // payload instead would see them as absent and delete every row. workspaceId comes from the
         // stored survey for the ENG-1749 reason above — never from the client.
+        //
+        // NOTE (ENG-1837): `survey` was read BEFORE this reconcile, so the `embeddedDataLinks` it
+        // carries — and the `embeddedFields` inlined from them by `transformPrismaSurvey` below —
+        // describe the PRE-reconcile rows. A save that renames or removes a field therefore returns a
+        // non-empty *stale* list. No consumer reads it today: the editor's save action feeds the
+        // return into `setLocalSurvey` / `surveyRef.current` and every editor surface resolves through
+        // `getDeclaredEmbeddedFields` (the cards); the v1 management route strips the key with
+        // `withoutInternalSurveyProjections`; the summary's single-use action discards the value and
+        // refreshes. The one surface that does carry it is the audit log's `newObject`.
+        //
+        // Deliberately NOT re-read here: it would put a second deep `selectSurvey` on the editor-save
+        // hot path for a value nothing consumes. If a future consumer needs it (ENG-1853 pointing a
+        // serializer at the rows), the fix must be a re-read through `selectSurvey` — which preserves
+        // the returned object's key shape. Do not strip or re-derive the key instead: this return
+        // value reaches `survey-menu-bar.tsx`, whose change detection deep-compares it against the
+        // editor's working copy and short-circuits on differing key counts.
         await reconcileEmbeddedData(tx, {
           surveyId,
           workspaceId: currentSurvey.workspaceId,

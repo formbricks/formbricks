@@ -80,14 +80,15 @@ const findEmbeddedField = (
   embeddedFields.find(({ field, link }) => link.storageKey === storageKey && field.source === source);
 
 /**
- * Takes the resolved field list rather than a survey, so callers that label several tokens — a
- * headline with nested recalls, a whole text — resolve the definitions once instead of once per
- * token. On a survey without joined rows that lookup re-derives the whole list, and these run on
- * every editor render.
+ * Takes the already-resolved element list and field list rather than a survey, so callers that label
+ * several tokens — a headline with nested recalls, a whole text — flatten the blocks and resolve the
+ * definitions once instead of once per token. Both are non-trivial (the field lookup re-derives the
+ * whole list from the declarations, and flattening walks every block), and these run on every editor
+ * render.
  */
 const resolveRecallItemLabel = (
   recallItemId: string,
-  survey: Pick<TSurvey, "blocks">,
+  elements: TSurveyElement[],
   languageCode: string,
   embeddedFields: TLinkedEmbeddedField[]
 ): string | undefined => {
@@ -96,8 +97,7 @@ const resolveRecallItemLabel = (
   const ingestedField = findEmbeddedField(embeddedFields, recallItemId, "ingested");
   if (ingestedField) return ingestedField.field.name;
 
-  const questions = getElementsFromBlocks(survey.blocks);
-  const surveyQuestion = questions.find((question) => question.id === recallItemId);
+  const surveyQuestion = elements.find((question) => question.id === recallItemId);
   if (surveyQuestion) {
     const headline = getLocalizedValue(surveyQuestion.headline, languageCode);
     // Strip HTML tags to prevent raw HTML from showing in nested recalls
@@ -113,7 +113,12 @@ export const getRecallItemLabel = <T extends TSurvey>(
   survey: T,
   languageCode: string
 ): string | undefined =>
-  resolveRecallItemLabel(recallItemId, survey, languageCode, getDeclaredEmbeddedFields(survey));
+  resolveRecallItemLabel(
+    recallItemId,
+    getElementsFromBlocks(survey.blocks),
+    languageCode,
+    getDeclaredEmbeddedFields(survey)
+  );
 
 // Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
 export const recallToHeadline = <T extends TSurvey>(
@@ -128,6 +133,7 @@ export const recallToHeadline = <T extends TSurvey>(
   if (!localizedHeadline?.includes("#recall:")) return headline;
 
   const embeddedFields = getDeclaredEmbeddedFields(survey);
+  const elements = getElementsFromBlocks(survey.blocks);
 
   const replaceNestedRecalls = (text: string): string => {
     while (text.includes("#recall:")) {
@@ -138,7 +144,7 @@ export const recallToHeadline = <T extends TSurvey>(
       if (!recallItemId) break;
 
       let recallItemLabel =
-        resolveRecallItemLabel(recallItemId, survey, languageCode, embeddedFields) || recallItemId;
+        resolveRecallItemLabel(recallItemId, elements, languageCode, embeddedFields) || recallItemId;
 
       while (recallItemLabel.includes("#recall:")) {
         const nestedRecallInfo = extractRecallInfo(recallItemLabel);
@@ -203,15 +209,16 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
   if (!text.includes("#recall:")) return [];
 
   const ids = extractIds(text);
+  // Both lists are resolved once for the whole text, not once per token.
   const embeddedFields = getDeclaredEmbeddedFields(survey);
+  const elements = getElementsFromBlocks(survey.blocks);
   let recallItems: TSurveyRecallItem[] = [];
   ids.forEach((recallItemId) => {
     const isHiddenField = findEmbeddedField(embeddedFields, recallItemId, "ingested");
-    const questions = getElementsFromBlocks(survey.blocks);
-    const isSurveyQuestion = questions.find((question) => question.id === recallItemId);
+    const isSurveyQuestion = elements.find((question) => question.id === recallItemId);
     const isVariable = findEmbeddedField(embeddedFields, recallItemId, "computed");
 
-    const recallItemLabel = resolveRecallItemLabel(recallItemId, survey, languageCode, embeddedFields);
+    const recallItemLabel = resolveRecallItemLabel(recallItemId, elements, languageCode, embeddedFields);
 
     const getRecallItemType = () => {
       if (isHiddenField) return "hiddenField";

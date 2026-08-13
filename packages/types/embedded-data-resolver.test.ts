@@ -1004,10 +1004,19 @@ describe("ZLinkedEmbeddedField mirrors TLinkedEmbeddedField", () => {
   });
 
   test("strips nothing the readers need, and rejects a blank name or storage key", () => {
+    // The valid pair parses, so the rejections below are the rules firing and not the whole shape
+    // being refused.
+    expect(ZLinkedEmbeddedField.safeParse(pair).success).toBe(true);
+
     expect(ZLinkedEmbeddedField.safeParse({ ...pair, field: { ...pair.field, name: "  " } }).success).toBe(
       false
     );
     expect(ZLinkedEmbeddedField.safeParse({ ...pair, link: { storageKey: "" } }).success).toBe(false);
+    // Whitespace-only, not just empty: an ingested field's storage key is its URL param name, so a
+    // padded `" plan "` would never match `?plan=` while still counting as a distinct field under
+    // `@@unique([surveyId, storageKey])`. Rejected twice over — by the blank check and by the
+    // legacy-charset rule — so removing either one alone keeps this passing.
+    expect(ZLinkedEmbeddedField.safeParse({ ...pair, link: { storageKey: "  " } }).success).toBe(false);
   });
 });
 

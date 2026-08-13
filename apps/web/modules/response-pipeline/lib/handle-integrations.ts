@@ -341,6 +341,15 @@ const extractResponses = async (
     // Check for ingested (hidden) field storage keys
     if (ingestedStorageKeys.includes(elementId)) {
       responses.push(processResponseData(pipelineData.response.data[elementId]));
+      // Labelled by storage key, while a computed field above is labelled by `field.name`. The
+      // asymmetry is deliberate: a computed field's storage key is an opaque cuid, whereas an
+      // ingested field's storage key IS its name today (`toDesiredEmbeddedFields` sets both to the
+      // hidden field id), and the Notion mapping modal both keys and labels on the storage key. So
+      // the two are equal today, and switching this side alone would desync the pipeline from that
+      // picker — and silently re-header the spreadsheet/Notion columns of every already-configured
+      // integration, since `elements` IS the column header. When names can diverge from storage keys
+      // (ENG-1851), this and `AddIntegrationModal.tsx` have to move together, with a migration for
+      // existing mappings.
       elements.push(elementId);
       continue;
     }
