@@ -1,0 +1,114 @@
+name: CodeRabbit Config Validation
+
+# Called from pr.yml, so it is covered by the aggregate "PR Check Summary" required check.
+# It deliberately has no `paths:` gate and no `dorny/paths-filter` step: pr.yml also fires on
+# `merge_group` and `workflow_dispatch`, where a path filter has no PR context to diff against,
+# and the summary job treats a skipped dependency as a failure. The whole job costs a checkout
+# plus a ~10s CLI download, so it just always runs.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate CodeRabbit config
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      # Runs before the CLI: this is the check that would have caught the outage the config
+      # comment in `.coderabbit.yaml` describes, it needs no network, and it takes
+      # milliseconds. `coderabbit config validate` cannot catch it — a path_filters list that
+      # silently reduces every review to two files is still perfectly schema-valid.
+      - name: Check path_filters are exclusions only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys
+
+          import yaml
+
+          CONFIG = ".coderabbit.yaml"
+
+          with open(CONFIG, encoding="utf-8") as handle:
+              config = yaml.safe_load(handle) or {}
+
+          filters = (config.get("reviews") or {}).get("path_filters") or []
+          if not isinstance(filters, list):
+              print(f"::error file={CONFIG}::reviews.path_filters must be a list")
+              sys.exit(1)
+
+          positive = [entry for entry in filters if not str(entry).strip().startswith("!")]
+          if positive:
+              print(f"::error file={CONFIG}::reviews.path_filters contains a positive pattern")
+              print(
+                  "A single non-'!' entry in reviews.path_filters turns the list into an "
+                  "allowlist: CodeRabbit then reviews only the files a positive pattern "
+                  "matches and drops every other file as 'included by none'.",
+                  file=sys.stderr,
+              )
+              print("Offending entries:", file=sys.stderr)
+              for entry in positive:
+                  print(f"  - {entry!r}", file=sys.stderr)
+              print(
+                  "\nExpress the intent with exclusions that do not match the files you want "
+                  "reviewed, rather than excluding a directory and re-including a file from it.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          print(f"reviews.path_filters: {len(filters)} entries, all exclusions.")
+          PY
+
+      - name: Install the CodeRabbit CLI
+        shell: bash
+        env:
+          # Pinned for the same reason third-party actions are pinned to a SHA. The schema is
+          # fetched at run time, so a pinned CLI still validates against current CodeRabbit
+          # behaviour; bump this when a release adds a check worth having.
+          CODERABBIT_VERSION: "0.7.2"
+          CODERABBIT_INSTALL_DIR: ${{ runner.temp }}/coderabbit-cli
+        run: |
+          set -euo pipefail
+          mkdir -p "$CODERABBIT_INSTALL_DIR"
+          curl -fsSL https://cli.coderabbit.ai/install.sh | sh
+          echo "$CODERABBIT_INSTALL_DIR" >> "$GITHUB_PATH"
+
+      # Two-stage: YAML syntax, then the schema CodeRabbit publishes — the only authority on
+      # which keys and values actually exist. Needs no authentication.
+      - name: Validate against the published schema
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          status=0
+          output="$(coderabbit config validate .coderabbit.yaml 2>&1)" || status=$?
+          printf '%s\n' "$output"
+
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+
+          # The CLI exits 1 both for an invalid config and for its own inability to fetch the
+          # schema. This check gates every merge, so a CodeRabbit outage must not block the
+          # queue — but it must be loud rather than silently green.
+          if printf '%s' "$output" | grep -qF "Could not load the current CodeRabbit configuration schema"; then
+            echo "::warning file=.coderabbit.yaml::Could not reach the CodeRabbit schema; skipped schema validation. The path_filters check above still ran."
+            exit 0
+          fi
+
+          echo "::error file=.coderabbit.yaml::CodeRabbit configuration is invalid"
+          exit "$status"

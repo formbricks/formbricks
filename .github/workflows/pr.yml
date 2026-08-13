@@ -40,6 +40,10 @@ jobs:
     name: Validate Helm Chart
     uses: ./.github/workflows/helm-chart-validation.yml
 
+  coderabbit-config-validation:
+    name: Validate CodeRabbit Config
+    uses: ./.github/workflows/coderabbit-config-validation.yml
+
   e2e-test:
     name: Run E2E Tests
     uses: ./.github/workflows/e2e.yml
@@ -47,7 +51,7 @@ jobs:
 
   required:
     name: PR Check Summary
-    needs: [lint, test, helm-chart-validation, e2e-test]
+    needs: [lint, test, helm-chart-validation, coderabbit-config-validation, e2e-test]
     if: always()
     runs-on: ubuntu-latest
     permissions:
