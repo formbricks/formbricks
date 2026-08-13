@@ -20,8 +20,8 @@ interface PurgeFeedbackDirectoryDataProps {
 }
 
 /**
- * Empties a feedback dataset: deletes every record it holds, keeping the dataset, its sources and
- * its topics.
+ * Empties a feedback dataset: deletes every record it holds and the topics generated from them,
+ * keeping the dataset and its sources.
  *
  * Confirmation requires typing the dataset's name. Unlike archiving, this is irreversible and
  * affects every workspace the dataset is shared with, so a single click is too cheap.

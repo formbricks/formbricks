@@ -14,8 +14,8 @@ type TPurgeDatasetParams = {
 };
 
 /**
- * Purge every feedback record in a dataset, keeping the dataset itself, its sources and its topic
- * taxonomy. The dataset id doubles as the Hub tenant id.
+ * Purge every feedback record in a dataset, plus the topics generated from them, keeping the dataset
+ * itself and its sources. The dataset id doubles as the Hub tenant id.
  *
  * Returns 202, not 204: the Hub runs the purge as a background job, so the records are not gone when
  * this responds, and reporting a deleted count here would be inventing one. The dashboard does not

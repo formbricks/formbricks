@@ -2749,7 +2749,7 @@
         "no_unassigned_workspaces_description": "Todos los espacios de trabajo ya están vinculados a un conjunto de datos de feedback activo. Desvincula un espacio de trabajo de su conjunto actual antes de asignarlo aquí.",
         "no_unassigned_workspaces_title": "No hay espacios de trabajo sin asignar disponibles",
         "purge_all_data": "Eliminar todos los registros",
-        "purge_all_data_warning": "Esto elimina permanentemente todos los registros de comentarios de \"{directoryName}\", incluido su enriquecimiento con IA, en todos los espacios de trabajo con los que se comparte este conjunto de datos. El conjunto de datos, sus fuentes y sus temas se conservan. Los gráficos basados en este conjunto de datos estarán vacíos hasta que lleguen nuevos comentarios.",
+        "purge_all_data_warning": "Esto elimina permanentemente todos los registros de comentarios de \"{directoryName}\", incluido su enriquecimiento con IA y los temas generados a partir de ellos, en todos los espacios de trabajo con los que se comparte este conjunto de datos. El conjunto de datos y sus fuentes se conservan, y los temas pueden volver a generarse cuando lleguen nuevos comentarios. Hasta entonces, los gráficos basados en este conjunto de datos estarán vacíos.",
         "purge_confirmation_name": "Escribe \"{directoryName}\" para confirmar",
         "purge_not_allowed": "No tienes permiso para eliminar los registros de este conjunto de datos.",
         "purge_started": "Eliminando registros. Esto puede tardar unos minutos en un conjunto de datos grande.",

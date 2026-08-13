@@ -2749,7 +2749,7 @@
         "no_unassigned_workspaces_description": "Her çalışma alanı zaten aktif bir geri bildirim veri kümesine bağlı. Burada atamadan önce bir çalışma alanını mevcut veri kümesinden kaldırın.",
         "no_unassigned_workspaces_title": "Atanmamış çalışma alanı yok",
         "purge_all_data": "Tüm kayıtları sil",
-        "purge_all_data_warning": "\"{directoryName}\" içindeki tüm geri bildirim kayıtları, yapay zekâ zenginleştirmeleri dahil, bu veri kümesinin paylaşıldığı tüm çalışma alanlarından kalıcı olarak silinir. Veri kümesi, kaynakları ve konuları korunur. Bu veri kümesine dayalı grafikler, yeni geri bildirim gelene kadar boş olacaktır.",
+        "purge_all_data_warning": "\"{directoryName}\" içindeki tüm geri bildirim kayıtları, yapay zekâ zenginleştirmeleri ve bunlardan oluşturulan konular dahil, bu veri kümesinin paylaşıldığı tüm çalışma alanlarından kalıcı olarak silinir. Veri kümesi ve kaynakları korunur; yeni geri bildirim geldiğinde konular yeniden oluşturulabilir. O zamana kadar bu veri kümesine dayalı grafikler boş olacaktır.",
         "purge_confirmation_name": "Onaylamak için \"{directoryName}\" yazın",
         "purge_not_allowed": "Bu veri kümesindeki kayıtları silme izniniz yok.",
         "purge_started": "Kayıtlar siliniyor. Büyük bir veri kümesinde bu birkaç dakika sürebilir.",

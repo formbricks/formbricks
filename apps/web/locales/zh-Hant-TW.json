@@ -2749,7 +2749,7 @@
         "no_unassigned_workspaces_description": "每個工作區都已連結至一個活躍的意見回饋資料集。請先從目前資料集中移除工作區,才能在此指派。",
         "no_unassigned_workspaces_title": "沒有可用的未指派工作區",
         "purge_all_data": "刪除所有紀錄",
-        "purge_all_data_warning": "此操作將永久刪除「{directoryName}」中的所有回饋紀錄（包含其 AI 加值內容），並套用至共用此資料集的所有工作區。資料集及其來源與主題將會保留。以此資料集為基礎的圖表在新回饋送達前將為空白。",
+        "purge_all_data_warning": "此操作將永久刪除「{directoryName}」中的所有回饋紀錄，包含其 AI 加值內容以及由此產生的主題，並套用至共用此資料集的所有工作區。資料集及其來源將會保留；待新回饋送達後可重新產生主題。在此之前，以此資料集為基礎的圖表將為空白。",
         "purge_confirmation_name": "請輸入「{directoryName}」以確認",
         "purge_not_allowed": "你沒有權限刪除此資料集中的紀錄。",
         "purge_started": "正在刪除紀錄。資料集較大時可能需要幾分鐘。",

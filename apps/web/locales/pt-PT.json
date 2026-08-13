@@ -2749,7 +2749,7 @@
         "no_unassigned_workspaces_description": "Todos os espaços de trabalho já estão associados a um conjunto de dados de feedback ativo. Remove um espaço de trabalho do seu conjunto de dados atual antes de o atribuir aqui.",
         "no_unassigned_workspaces_title": "Nenhum espaço de trabalho disponível sem atribuição",
         "purge_all_data": "Eliminar todos os registos",
-        "purge_all_data_warning": "Isto elimina permanentemente todos os registos de feedback em \"{directoryName}\", incluindo o respetivo enriquecimento por IA, em todos os espaços de trabalho com os quais este conjunto de dados é partilhado. O conjunto de dados, as suas fontes e os seus tópicos são mantidos. Os gráficos baseados neste conjunto de dados ficarão vazios até chegar novo feedback.",
+        "purge_all_data_warning": "Isto elimina permanentemente todos os registos de feedback em \"{directoryName}\", incluindo o respetivo enriquecimento por IA e os tópicos gerados a partir deles, em todos os espaços de trabalho com os quais este conjunto de dados é partilhado. O conjunto de dados e as suas fontes são mantidos, e os tópicos podem ser gerados novamente assim que chegar novo feedback. Até lá, os gráficos baseados neste conjunto de dados ficarão vazios.",
         "purge_confirmation_name": "Escreve \"{directoryName}\" para confirmar",
         "purge_not_allowed": "Não tens permissão para eliminar os registos deste conjunto de dados.",
         "purge_started": "A eliminar registos. Num conjunto de dados grande, isto pode demorar alguns minutos.",

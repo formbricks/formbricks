@@ -200,10 +200,11 @@ type FeedbackRecordsPurgeResponse = {
 };
 
 /**
- * Purge every feedback record for a tenant, plus the data derived from those records (embeddings,
- * taxonomy cluster memberships, and the enrichment stored on each record). Unlike
- * `deleteHubTenantData` this leaves the tenant's taxonomy structure, webhooks and settings in place,
- * so the dataset stays usable — it is the "empty this dataset" operation, not offboarding.
+ * Purge every feedback record for a tenant, everything derived from those records (embeddings and
+ * the enrichment stored on each record) and the taxonomy built on them. Unlike `deleteHubTenantData`
+ * it leaves the tenant's *configuration* — its webhooks and settings — in place, so the dataset
+ * stays usable and any integrator setup survives. This is the "empty this dataset" operation, not
+ * offboarding.
  *
  * Asynchronous on the Hub side: this returns once the purge has been *accepted*, not once it has
  * run, so there is no deleted count to report and the records are still present when it resolves.

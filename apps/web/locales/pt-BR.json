@@ -2749,7 +2749,7 @@
         "no_unassigned_workspaces_description": "Todos os workspaces já estão vinculados a um conjunto de dados de feedback ativo. Remova um workspace do seu conjunto de dados atual antes de atribuí-lo aqui.",
         "no_unassigned_workspaces_title": "Nenhum workspace não atribuído disponível",
         "purge_all_data": "Excluir todos os registros",
-        "purge_all_data_warning": "Isso exclui permanentemente todos os registros de feedback em \"{directoryName}\", incluindo seu enriquecimento por IA, em todos os workspaces com os quais este conjunto de dados é compartilhado. O conjunto de dados, suas fontes e seus tópicos são mantidos. Os gráficos baseados neste conjunto de dados ficarão vazios até que novos feedbacks cheguem.",
+        "purge_all_data_warning": "Isso exclui permanentemente todos os registros de feedback em \"{directoryName}\", incluindo seu enriquecimento por IA e os tópicos gerados a partir deles, em todos os workspaces com os quais este conjunto de dados é compartilhado. O conjunto de dados e suas fontes são mantidos, e os tópicos podem ser gerados novamente assim que novos feedbacks chegarem. Até lá, os gráficos baseados neste conjunto de dados ficarão vazios.",
         "purge_confirmation_name": "Digite \"{directoryName}\" para confirmar",
         "purge_not_allowed": "Você não tem permissão para excluir os registros deste conjunto de dados.",
         "purge_started": "Excluindo registros. Isso pode levar alguns minutos em um conjunto de dados grande.",

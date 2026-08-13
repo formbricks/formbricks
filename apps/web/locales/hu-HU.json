@@ -2749,7 +2749,7 @@
         "no_unassigned_workspaces_description": "Minden munkaterület már hozzá van rendelve egy aktív visszajelzési adatkészlethez. Távolítson el egy munkaterületet a jelenlegi adatkészletéből, mielőtt itt hozzárendelné.",
         "no_unassigned_workspaces_title": "Nem érhetők el hozzárendeletlen munkaterületek",
         "purge_all_data": "Összes rekord törlése",
-        "purge_all_data_warning": "Ez véglegesen törli a(z) „{directoryName}\" adatkészlet összes visszajelzési rekordját az MI-alapú kiegészítésekkel együtt, minden munkaterületen, amellyel az adatkészlet meg van osztva. Az adatkészlet, a forrásai és a témái megmaradnak. Az adatkészletre épülő diagramok üresek lesznek, amíg új visszajelzés nem érkezik.",
+        "purge_all_data_warning": "Ez véglegesen törli a(z) „{directoryName}\" adatkészlet összes visszajelzési rekordját – az MI-alapú kiegészítésekkel és a belőlük létrehozott témákkal együtt – minden munkaterületen, amellyel az adatkészlet meg van osztva. Az adatkészlet és a forrásai megmaradnak, a témák pedig újra létrehozhatók, amint új visszajelzés érkezik. Addig az adatkészletre épülő diagramok üresek lesznek.",
         "purge_confirmation_name": "A megerősítéshez írja be: „{directoryName}\"",
         "purge_not_allowed": "Önnek nincs jogosultsága ezen adatkészlet rekordjainak törléséhez.",
         "purge_started": "Rekordok törlése folyamatban. Nagy adatkészlet esetén ez néhány percet vehet igénybe.",
