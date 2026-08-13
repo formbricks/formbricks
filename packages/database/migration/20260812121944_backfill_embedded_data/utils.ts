@@ -1,12 +1,19 @@
 import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import type { TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 
-/** One survey's legacy declarations, as read from the database. */
+/**
+ * One survey's legacy declarations as they come off the database: raw JSON.
+ *
+ * Deliberately `unknown` rather than the parsed survey types. Every write path is zod-validated, but
+ * this migration reads the columns directly, so the shapes are a claim about the data rather than
+ * something the compiler knows — and a wrong claim here would throw inside the runner's single
+ * transaction and roll back every survey migrated before it.
+ */
 export interface TLegacySurveyRow {
   id: string;
   workspaceId: string;
-  variables: TSurveyVariables;
-  hiddenFields: TSurveyHiddenFields;
+  variables: unknown;
+  hiddenFields: unknown;
 }
 
 /**
@@ -33,51 +40,109 @@ export interface TSurveyEmbeddedDataInsert {
 
 export type TSurveyBackfillPlan =
   | { status: "ok"; fields: TEmbeddedDataInsert[]; links: TSurveyEmbeddedDataInsert[] }
-  | { status: "skipped"; duplicateStorageKeys: string[] };
+  | { status: "skipped"; reason: "duplicate-address"; detail: string[] }
+  | { status: "skipped"; reason: "malformed-declarations"; detail: string[] };
+
+/** `variables` must be an array of objects each carrying a string `id` — that id is the storage key. */
+const readVariables = (value: unknown): { variables: TSurveyVariables } | { problem: string } => {
+  if (value === null || value === undefined) return { variables: [] };
+  if (!Array.isArray(value)) return { problem: `variables is ${typeof value}, not an array` };
+
+  for (const entry of value) {
+    if (typeof entry !== "object" || entry === null) {
+      return { problem: "variables contains a non-object element" };
+    }
+    if (typeof (entry as { id?: unknown }).id !== "string") {
+      return { problem: "variables contains an element without a string id" };
+    }
+  }
+
+  return { variables: value as TSurveyVariables };
+};
+
+/** `hiddenFields.fieldIds` must be an array of strings — each string is both the name and the key. */
+const readHiddenFields = (value: unknown): { hiddenFields: TSurveyHiddenFields } | { problem: string } => {
+  if (value === null || value === undefined) return { hiddenFields: { enabled: false } };
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return { problem: `hiddenFields is ${Array.isArray(value) ? "an array" : typeof value}, not an object` };
+  }
+
+  const fieldIds = (value as { fieldIds?: unknown }).fieldIds;
+  if (fieldIds === null || fieldIds === undefined) return { hiddenFields: { enabled: false } };
+  if (!Array.isArray(fieldIds))
+    return { problem: `hiddenFields.fieldIds is ${typeof fieldIds}, not an array` };
+  if (fieldIds.some((fieldId) => typeof fieldId !== "string")) {
+    return { problem: "hiddenFields.fieldIds contains a non-string entry" };
+  }
+
+  return { hiddenFields: { enabled: true, fieldIds: fieldIds as string[] } };
+};
 
 /**
- * Works out the rows and links one survey needs, or reports that it can't be migrated.
+ * Works out the rows and links one survey needs, or reports why it can't be migrated.
  *
- * The §8 mapping itself lives in `toDesiredEmbeddedFields`, shared with the ENG-1978 write bridge
- * and the ENG-1836 read seam — the two invariants that keep a migrated survey resolving (a
- * variable's `storageKey` is its original cuid, a hidden field's is its original name) are stated
- * once, there.
+ * The §8 mapping itself lives in `toDesiredEmbeddedFields`, shared with the ENG-1978 write bridge and
+ * the ENG-1836 read seam — the two invariants that keep a migrated survey resolving (a variable's
+ * `storageKey` is its original cuid, a hidden field's is its original name) are stated once, there.
  *
- * What this adds is the one thing a bulk migration has to handle and a single-survey save does not:
- * **a survey whose declarations already collide.** `@@unique([surveyId, storageKey])` would reject
- * such a pair, and because the runner wraps every data migration in one transaction, a single bad
- * survey would roll back the entire backfill. Reporting it lets the caller skip that survey and
- * migrate the rest. `toDesiredEmbeddedFields` passes duplicates through rather than merging them
- * precisely so this decision belongs here.
+ * What this adds is what a bulk migration needs and a single survey save does not. The runner wraps
+ * every data migration in one transaction, so anything that throws takes every already-migrated
+ * survey down with it. Two shapes of bad survey are therefore reported and skipped rather than
+ * attempted:
+ *
+ * - **Malformed declarations.** The columns are raw JSON here. `toDesiredEmbeddedFields` maps them
+ *   with `?? []`, which catches null and undefined but not a wrong type — an object where an array
+ *   belongs throws, and an element with no id yields a null `storageKey` on a NOT NULL column.
+ * - **A duplicate address.** `@@unique([surveyId, storageKey])` would reject it. Reachable through
+ *   the legacy API rather than the editor, which prevents duplicate names.
+ *   `toDesiredEmbeddedFields` passes duplicates through instead of merging them precisely so this
+ *   decision belongs to the caller.
  *
  * Ids are generated by the caller rather than left to the column default, so the links can be built
  * in the same pass and both tables written with a plain `createMany`.
  */
 export const planSurveyBackfill = (survey: TLegacySurveyRow, newId: () => string): TSurveyBackfillPlan => {
-  const desired = toDesiredEmbeddedFields(survey);
+  const variables = readVariables(survey.variables);
+  if ("problem" in variables) {
+    return { status: "skipped", reason: "malformed-declarations", detail: [variables.problem] };
+  }
+  const hiddenFields = readHiddenFields(survey.hiddenFields);
+  if ("problem" in hiddenFields) {
+    return { status: "skipped", reason: "malformed-declarations", detail: [hiddenFields.problem] };
+  }
+
+  const desired = toDesiredEmbeddedFields({ ...variables, ...hiddenFields });
 
   const seen = new Set<string>();
-  const duplicateStorageKeys = new Set<string>();
+  const duplicates = new Set<string>();
   for (const field of desired) {
-    if (seen.has(field.storageKey)) duplicateStorageKeys.add(field.storageKey);
+    if (seen.has(field.storageKey)) duplicates.add(field.storageKey);
     seen.add(field.storageKey);
   }
-  if (duplicateStorageKeys.size > 0) {
-    return { status: "skipped", duplicateStorageKeys: [...duplicateStorageKeys] };
+  if (duplicates.size > 0) {
+    return { status: "skipped", reason: "duplicate-address", detail: [...duplicates] };
   }
 
   const fields: TEmbeddedDataInsert[] = [];
   const links: TSurveyEmbeddedDataInsert[] = [];
 
   for (const desiredField of desired) {
+    if (desiredField.source === "reserved") {
+      // Loud on purpose. Reserved fields are never stored as rows, so this means the shared mapping
+      // changed under us — writing an `ingested` row instead would manufacture exactly the row the
+      // schema forbids, and only a comment would have noticed.
+      throw new Error(
+        `toDesiredEmbeddedFields produced a reserved field (${desiredField.storageKey}); reserved fields are never stored as rows`
+      );
+    }
+
     const embeddedDataId = newId();
     fields.push({
       id: embeddedDataId,
       workspaceId: survey.workspaceId,
       surveyId: survey.id,
       name: desiredField.name,
-      // `reserved` is never a stored row, and `toDesiredEmbeddedFields` never produces one.
-      source: desiredField.source === "computed" ? "computed" : "ingested",
+      source: desiredField.source,
       dataType: desiredField.dataType,
       defaultValue: desiredField.defaultValue,
     });

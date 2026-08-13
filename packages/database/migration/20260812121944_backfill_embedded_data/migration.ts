@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { logger } from "@formbricks/logger";
-import type { MigrationScript } from "../../src/scripts/migration-runner";
+import { Prisma } from "../../src/prisma";
+import type { DataMigrationContext, MigrationScript } from "../../src/scripts/migration-runner";
 import {
   type TEmbeddedDataInsert,
   type TLegacySurveyRow,
@@ -13,15 +14,19 @@ const SURVEY_BATCH_SIZE = 200;
 export interface TEmbeddedDataBackfillStats {
   migratedSurveys: number;
   migratedFields: number;
-  skippedSurveys: { surveyId: string; duplicateStorageKeys: string[] }[];
+  skippedSurveys: { surveyId: string; reason: string; detail: string[] }[];
 }
 
-/** Only the client surface this backfill needs, so a test can pass the real prisma client. */
-interface TMigrationTx {
-  $queryRaw: <T = unknown>(query: TemplateStringsArray, ...values: readonly unknown[]) => Promise<T>;
-  embeddedData: { createMany: (args: { data: TEmbeddedDataInsert[] }) => Promise<unknown> };
-  surveyEmbeddedData: { createMany: (args: { data: TSurveyEmbeddedDataInsert[] }) => Promise<unknown> };
-}
+/**
+ * Prisma distinguishes a JSON `null` from a SQL `NULL` on a nullable Json column, so "this field has
+ * no default" has to be spelled out. The ENG-1978 write bridge does the same thing at its own write
+ * site — without this, a backfilled row and a bridge-created row hold different values in
+ * `defaultValue` for the same logical state, and a later `WHERE "defaultValue" IS NULL` sees only one
+ * of them.
+ */
+const toStoredDefaultValue = (
+  defaultValue: TEmbeddedDataInsert["defaultValue"]
+): TEmbeddedDataInsert["defaultValue"] | typeof Prisma.DbNull => defaultValue ?? Prisma.DbNull;
 
 /**
  * Moves every survey's legacy `variables` and `hiddenFields` into `EmbeddedData` rows plus
@@ -35,16 +40,24 @@ interface TMigrationTx {
  * Idempotent by construction: a survey that already has links is not a candidate, so re-running does
  * nothing. That also covers the survey the ENG-1978 write bridge migrated on its own when someone
  * edited it — in local development that is the normal state, since the bridge merged before this.
+ *
+ * A skipped survey is not stranded. It keeps resolving through ENG-1836's `deriveLegacyEmbeddedData`,
+ * which serves a survey with no rows straight from its legacy JSON, and it migrates itself the next
+ * time someone saves it in the editor — the write bridge runs the same mapping. Fixing the offending
+ * declaration and saving is the whole recovery path; this migration will not run a second time.
  */
-export const backfillEmbeddedDataRows = async (tx: TMigrationTx): Promise<TEmbeddedDataBackfillStats> => {
+export const backfillEmbeddedDataRows = async (
+  tx: DataMigrationContext["tx"]
+): Promise<TEmbeddedDataBackfillStats> => {
   const stats: TEmbeddedDataBackfillStats = { migratedSurveys: 0, migratedFields: 0, skippedSurveys: [] };
   let cursor = "";
 
   for (;;) {
     // Candidate selection runs in SQL so the walk only carries surveys that actually need work:
-    // those with at least one declaration and no links yet. `jsonb_typeof` guards the array
-    // accessors — `jsonb_array_length` raises on a non-array, and one malformed row would abort the
-    // whole migration, since the runner wraps this in a single transaction.
+    // those with at least one declaration and no links yet. The `jsonb_typeof` guards keep
+    // `jsonb_array_length` off a non-array, which would raise; `planSurveyBackfill` re-checks the
+    // same shapes in JS, because these two branches are OR'd and a row can qualify on one while the
+    // other column is malformed.
     //
     // Keyset pagination on `id`, not OFFSET: inserting links removes a survey from the candidate
     // set, so an offset would step over unprocessed rows. Walking forward past the last id also
@@ -76,10 +89,14 @@ export const backfillEmbeddedDataRows = async (tx: TMigrationTx): Promise<TEmbed
     for (const survey of batch) {
       const plan = planSurveyBackfill(survey, createId);
       if (plan.status === "skipped") {
-        stats.skippedSurveys.push({
-          surveyId: survey.id,
-          duplicateStorageKeys: plan.duplicateStorageKeys,
-        });
+        stats.skippedSurveys.push({ surveyId: survey.id, reason: plan.reason, detail: plan.detail });
+        // Logged here rather than after the walk: if a later batch throws, the transaction takes the
+        // accumulated list with it, and this is exactly the run where knowing which surveys were
+        // involved matters most.
+        logger.warn(
+          { surveyId: survey.id, reason: plan.reason, detail: plan.detail },
+          "Skipped survey during Embedded Data backfill"
+        );
         continue;
       }
       fields.push(...plan.fields);
@@ -90,20 +107,15 @@ export const backfillEmbeddedDataRows = async (tx: TMigrationTx): Promise<TEmbed
 
     if (fields.length > 0) {
       // Rows before links: the link's foreign key points at the row it was planned alongside.
-      await tx.embeddedData.createMany({ data: fields });
+      await tx.embeddedData.createMany({
+        data: fields.map((field) => ({ ...field, defaultValue: toStoredDefaultValue(field.defaultValue) })),
+      });
       await tx.surveyEmbeddedData.createMany({ data: links });
     }
 
     logger.info(
       `Embedded Data backfill progress: ${stats.migratedSurveys.toString()} surveys, ${stats.migratedFields.toString()} fields`
     );
-  }
-
-  for (const survey of stats.skippedSurveys) {
-    // Not a failure of the migration: these surveys declare the same address twice, which the unique
-    // constraint has always forbidden and which nothing could have written through the editor. They
-    // keep working on their legacy JSON until someone renames the collision.
-    logger.warn(survey, "Skipped survey with duplicate embedded data storage keys");
   }
 
   logger.info(

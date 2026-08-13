@@ -100,7 +100,7 @@ describe("planSurveyBackfill", () => {
         sequentialIds()
       );
 
-      expect(plan).toEqual({ status: "skipped", duplicateStorageKeys: ["plan"] });
+      expect(plan).toEqual({ status: "skipped", reason: "duplicate-address", detail: ["plan"] });
     });
 
     test("skips a survey whose hidden field name matches a variable's cuid", () => {
@@ -112,7 +112,11 @@ describe("planSurveyBackfill", () => {
         sequentialIds()
       );
 
-      expect(plan).toEqual({ status: "skipped", duplicateStorageKeys: ["clx000000000000000000001"] });
+      expect(plan).toEqual({
+        status: "skipped",
+        reason: "duplicate-address",
+        detail: ["clx000000000000000000001"],
+      });
     });
 
     test("reports each colliding key once", () => {
@@ -121,7 +125,47 @@ describe("planSurveyBackfill", () => {
         sequentialIds()
       );
 
-      expect(plan).toEqual({ status: "skipped", duplicateStorageKeys: ["plan", "tier"] });
+      expect(plan).toEqual({ status: "skipped", reason: "duplicate-address", detail: ["plan", "tier"] });
+    });
+  });
+
+  describe("malformed declarations", () => {
+    // The columns are raw JSON here. `toDesiredEmbeddedFields` maps them with `?? []`, which catches
+    // null and undefined but not a wrong type — so without these checks the survey reaches `.map()`
+    // and throws inside the runner's single transaction, rolling back every survey before it.
+    test.each([
+      ["variables is an object", { variables: { oops: true } }, "variables is object, not an array"],
+      ["variables is a string", { variables: "nope" }, "variables is string, not an array"],
+      ["variables holds null", { variables: [null] }, "variables contains a non-object element"],
+      [
+        "a variable has no id",
+        { variables: [{ name: "score", type: "number", value: 0 }] },
+        "variables contains an element without a string id",
+      ],
+      [
+        "fieldIds is a string",
+        { hiddenFields: { enabled: true, fieldIds: "plan" } },
+        "hiddenFields.fieldIds is string, not an array",
+      ],
+      [
+        "fieldIds holds a number",
+        { hiddenFields: { enabled: true, fieldIds: [42] } },
+        "hiddenFields.fieldIds contains a non-string entry",
+      ],
+    ])("skips a survey where %s", (_label, overrides, problem) => {
+      const plan = planSurveyBackfill(survey(overrides), sequentialIds());
+
+      expect(plan).toEqual({ status: "skipped", reason: "malformed-declarations", detail: [problem] });
+    });
+
+    test("still migrates a survey whose malformed-looking column is simply absent", () => {
+      // A SQL NULL column is not malformed — it just declares nothing.
+      const plan = planSurveyBackfill(
+        survey({ variables: null, hiddenFields: { enabled: true, fieldIds: ["plan"] } }),
+        sequentialIds()
+      );
+
+      expect(plan.status).toBe("ok");
     });
   });
 });

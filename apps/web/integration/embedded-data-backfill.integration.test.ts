@@ -173,9 +173,55 @@ describe("Embedded Data backfill (real Postgres)", () => {
     const stats = await backfillEmbeddedDataRows(prisma);
 
     expect(stats.migratedSurveys).toBe(1);
-    expect(stats.skippedSurveys).toEqual([{ surveyId: broken, duplicateStorageKeys: ["plan"] }]);
+    expect(stats.skippedSurveys).toEqual([
+      { surveyId: broken, reason: "duplicate-address", detail: ["plan"] },
+    ]);
     expect(await readFields(broken)).toEqual([]);
     expect((await readFields(healthy)).map((field) => field.storageKey)).toEqual(["campaign"]);
+  });
+
+  test("skips a survey with malformed declarations without rolling back the healthy ones", async () => {
+    // The SQL predicate ORs its two branches, so this survey qualifies on its valid `fieldIds` while
+    // `variables` is an object. Before the JS shape check it reached `.map()` and threw — inside the
+    // runner's single transaction, taking every already-migrated survey with it.
+    const workspaceId = await seedWorkspace();
+    const broken = await prisma.survey.create({
+      data: {
+        name: "Broken",
+        workspaceId,
+        variables: { oops: true } as never,
+        hiddenFields: { enabled: true, fieldIds: ["plan"] } as never,
+      },
+    });
+    const healthy = await seedSurvey(workspaceId, { fieldIds: ["campaign"] }, "Healthy");
+
+    const stats = await backfillEmbeddedDataRows(prisma);
+
+    expect(stats.migratedSurveys).toBe(1);
+    expect(stats.skippedSurveys).toEqual([
+      {
+        surveyId: broken.id,
+        reason: "malformed-declarations",
+        detail: ["variables is object, not an array"],
+      },
+    ]);
+    expect(await readFields(broken.id)).toEqual([]);
+    expect((await readFields(healthy)).map((field) => field.storageKey)).toEqual(["campaign"]);
+  });
+
+  test("stores a missing default as SQL NULL, the same as the write bridge", async () => {
+    // Prisma distinguishes JSON `null` from SQL `NULL` on a nullable Json column, and both parse back
+    // to `null` in JS — so only a raw check catches the two writers disagreeing. They must not: a
+    // later `WHERE "defaultValue" IS NULL` has to see backfilled and bridge-created rows alike.
+    const workspaceId = await seedWorkspace();
+    await seedSurvey(workspaceId, { fieldIds: ["plan"] });
+
+    await backfillEmbeddedDataRows(prisma);
+
+    const [row] = await prisma.$queryRaw<{ is_sql_null: boolean }[]>`
+      SELECT "defaultValue" IS NULL AS is_sql_null FROM "EmbeddedData" WHERE "name" = 'plan'
+    `;
+    expect(row.is_sql_null).toBe(true);
   });
 
   test("never touches Response", async () => {
