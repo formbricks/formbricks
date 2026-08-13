@@ -139,82 +139,83 @@ function buildHubUpdateParams(data: TV3FeedbackRecordUpdateBody): FeedbackRecord
 const DEFAULT_LIST_LIMIT = 50;
 
 /**
+ * Whether each filter is sent as the Hub's repeated-parameter array form or a plain scalar.
+ *
+ * `satisfies Record<keyof TV3FeedbackRecordFilters, "list" | "scalar">` ties this table's keys to the
+ * filter schema's: a filter added to `ZV3FeedbackRecordFilters` without an entry here is a **compile
+ * error**, not a filter that silently never reaches the Hub. That is the failure this table exists to
+ * rule out — `buildHubFilterParams` used to hand-enumerate every key with no such link, so a forgotten
+ * filter would still pass `.strict()` validation and simply never leave this process. A *widened* result
+ * (a dropped filter matches more, not less) is exactly the class of bug this whole surface is built to
+ * avoid, so the enumeration itself now has to fail loudly when it falls behind the schema.
+ */
+const FILTER_KEY_KIND = {
+  source_type: "list",
+  source_id: "list",
+  source_name: "list",
+  field_type: "list",
+  field_id: "list",
+  field_group_id: "list",
+  submission_id: "list",
+  user_id: "list",
+  value_id: "list",
+  language: "list",
+  sentiment: "list",
+  emotions: "list",
+  since: "scalar",
+  until: "scalar",
+  created_since: "scalar",
+  created_until: "scalar",
+  value_date_min: "scalar",
+  value_date_max: "scalar",
+  value_number_min: "scalar",
+  value_number_max: "scalar",
+  sentiment_score_min: "scalar",
+  sentiment_score_max: "scalar",
+  has_sentiment: "scalar",
+  has_emotions: "scalar",
+  has_translation: "scalar",
+} satisfies Record<keyof TV3FeedbackRecordFilters, "list" | "scalar">;
+
+const FILTER_KEYS = Object.keys(FILTER_KEY_KIND) as (keyof TV3FeedbackRecordFilters)[];
+
+/**
  * Map our filters onto the Hub's query parameters, with the resolved tenant injected.
  *
- * The names now match the Hub's, so this reads as a copy — but it stays a field-by-field allowlist rather
- * than a spread, for the same reason as the create builder: `tenant_id` is always ours, and nothing a caller
- * invents can reach the Hub by being named plausibly.
+ * Driven by `FILTER_KEY_KIND` rather than a spread, for the same reason as the create builder: `tenant_id`
+ * is always ours, and nothing a caller invents can reach the Hub by being named plausibly — only a key this
+ * table lists is ever copied across.
  *
  * Shared by list and count: the Hub documents `/count` as accepting the same parameters as the list endpoint,
  * so the two must agree about what a filter means — otherwise a count could describe a different set of
  * records than the list it is supposed to be counting. Absent filters are left off entirely rather than sent
- * as undefined.
+ * as undefined, tested with `!== undefined` rather than truthiness because several filters have meaningful
+ * falsy values: `has_sentiment: false` asks for records enrichment has not labelled yet, and
+ * `value_number_min: 0` / `sentiment_score_min: 0` are real bounds. A truthiness guard drops all three and
+ * answers a wider question than the caller asked, without saying so.
  *
- * Hub 0.8.4 made the identity filters repeatable, so the SDK types each as an array whose values are
- * OR-ed. Callers may pass one value or several; `assignList` normalizes both to the array form the SDK
- * wants, and a one-element array is the same request on the wire as the scalar was.
- *
- * Both helpers assign only when the value is `!== undefined` rather than truthy, because several filters
- * here have meaningful falsy values: `has_sentiment: false` asks for records enrichment has not labelled
- * yet, and `value_number_min: 0` / `sentiment_score_min: 0` are real bounds. A truthiness guard drops all
- * three and answers a wider question than the caller asked, without saying so. Keeping that test in one
- * place is also what stops the next filter from reintroducing it.
+ * Hub 0.8.4 made the identity filters repeatable, so the SDK types each `"list"` entry as an array whose
+ * values are OR-ed. Callers may pass one value or several; a one-element array is the same request on the
+ * wire as a scalar.
  */
-
-/** Assign a scalar filter, leaving it off entirely when absent. */
-const assign = <K extends keyof FeedbackRecordCountParams>(
-  params: FeedbackRecordCountParams,
-  key: K,
-  value: FeedbackRecordCountParams[K] | undefined
-): void => {
-  if (value !== undefined) params[key] = value;
-};
-
-/** Assign a repeatable filter, accepting one value or several and always sending the Hub's array form. */
-const assignList = <K extends keyof FeedbackRecordCountParams>(
-  params: FeedbackRecordCountParams,
-  key: K,
-  value: (FeedbackRecordCountParams[K] extends readonly (infer E)[] | undefined ? E | E[] : never) | undefined
-): void => {
-  if (value === undefined) return;
-  // The only cast in the mapper, and it is contained: the parameter type above already ties `value` to
-  // this key's element type, so every call site is fully checked.
-  params[key] = (Array.isArray(value) ? value : [value]) as FeedbackRecordCountParams[K];
-};
-
 function buildHubFilterParams(
   tenantId: string,
   filters: TV3FeedbackRecordFilters
 ): FeedbackRecordCountParams {
   const params: FeedbackRecordCountParams = { tenant_id: tenantId };
 
-  assignList(params, "source_type", filters.source_type);
-  assignList(params, "source_id", filters.source_id);
-  assignList(params, "source_name", filters.source_name);
-  assignList(params, "field_type", filters.field_type);
-  assignList(params, "field_id", filters.field_id);
-  assignList(params, "field_group_id", filters.field_group_id);
-  assignList(params, "submission_id", filters.submission_id);
-  assignList(params, "user_id", filters.user_id);
-  assignList(params, "value_id", filters.value_id);
-  assignList(params, "language", filters.language);
-  assignList(params, "sentiment", filters.sentiment);
-  assignList(params, "emotions", filters.emotions);
+  for (const key of FILTER_KEYS) {
+    const value = filters[key];
+    if (value === undefined) continue;
 
-  assign(params, "since", filters.since);
-  assign(params, "until", filters.until);
-  assign(params, "created_since", filters.created_since);
-  assign(params, "created_until", filters.created_until);
-  assign(params, "value_date_min", filters.value_date_min);
-  assign(params, "value_date_max", filters.value_date_max);
-  assign(params, "value_number_min", filters.value_number_min);
-  assign(params, "value_number_max", filters.value_number_max);
-  assign(params, "sentiment_score_min", filters.sentiment_score_min);
-  assign(params, "sentiment_score_max", filters.sentiment_score_max);
-
-  assign(params, "has_sentiment", filters.has_sentiment);
-  assign(params, "has_emotions", filters.has_emotions);
-  assign(params, "has_translation", filters.has_translation);
+    const isList = FILTER_KEY_KIND[key] === "list";
+    // The only cast in the mapper: `FILTER_KEY_KIND` ties every key to the filter schema at compile time
+    // (completeness), and the shared snake_case naming convention ties each key's value type to the Hub
+    // param of the same name — a property `satisfies` can pin per-key but can't verify through a dynamic
+    // key without this cast. `FeedbackRecordCountParams` has too many disjoint optional keys for TS to see
+    // any overlap with `Record<string, unknown>` directly, hence the `unknown` step the compiler asks for.
+    (params as unknown as Record<string, unknown>)[key] = isList && !Array.isArray(value) ? [value] : value;
+  }
 
   return params;
 }
