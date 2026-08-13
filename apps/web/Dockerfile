@@ -117,7 +117,7 @@ COPY --from=installer /app/apps/web/public ./apps/web/public
 RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
 # Create packages/database directory structure with proper ownership for runtime migrations
-RUN mkdir -p ./packages/database/migrations && chown -R nextjs:nextjs ./packages/database
+RUN mkdir -p ./packages/database/.prisma-migrations && chown -R nextjs:nextjs ./packages/database
 
 COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
 RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
