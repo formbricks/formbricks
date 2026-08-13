@@ -25,9 +25,11 @@ const globalForHub = globalThis as unknown as {
 };
 
 /**
- * A stand-in client instance. `getHubClient` probes the freshly built client to confirm array query
- * params still serialize as repeated ones, so every fake needs a `buildURL` — `repeated: false` produces
- * the comma form the real SDK defaults to, which is what the probe exists to reject.
+ * A stand-in client instance, with a `buildURL` shaped for `assertRepeatedArrayParams` below —
+ * `repeated: false` produces the comma form the real SDK defaults to, which is what the probe exists to
+ * reject. `getHubClient` itself no longer probes (see the `assertRepeatedArrayParams` tests for why), so
+ * `buildURL` is unused by the `getHubClient` tests in this file; kept on the fake because it costs nothing
+ * and keeps one shared fixture instead of two near-identical ones.
  */
 const fakeClient = ({ repeated }: { repeated: boolean }): FormbricksHub =>
   ({
@@ -105,11 +107,11 @@ describe("getHubClient", () => {
     expect(globalForHub.formbricksHubClientRepeatArrays).toBe(mockInstance);
   });
 
-  test("refuses to hand back a client that comma-joins array query params", async () => {
+  // getHubClient() no longer probes: the check is scoped to the two operations that send array filters
+  // (see modules/hub/service.ts and its tests), so a construction-time probe failure can't turn a narrow
+  // serialization regression into an outage for every other Hub consumer.
+  test("does not verify array-param support at construction", async () => {
     mutableEnv.HUB_API_KEY = "test-key";
-    // Stands in for a future SDK release that stops routing query serialization through
-    // `stringifyQuery`: our override would become an unused method — legal TypeScript, no type error, and
-    // filters silently stop matching. Nothing but this probe catches that.
     const commaJoining = fakeClient({ repeated: false });
     vi.mocked(FormbricksHub).mockImplementation(function () {
       return commaJoining as any;
@@ -117,8 +119,40 @@ describe("getHubClient", () => {
 
     const { getHubClient } = await import("./hub-client");
 
-    expect(() => getHubClient()).toThrow(/no longer routes query serialization through stringifyQuery/);
-    // Never cached, so the next call re-probes rather than serving a known-broken client.
-    expect(globalForHub.formbricksHubClientRepeatArrays).toBeUndefined();
+    expect(() => getHubClient()).not.toThrow();
+  });
+});
+
+describe("assertRepeatedArrayParams", () => {
+  test("throws when the client comma-joins array query params", async () => {
+    // Stands in for a future SDK release that stops routing query serialization through
+    // `stringifyQuery`: our override would become an unused method — legal TypeScript, no type error, and
+    // filters silently stop matching. Nothing but this probe catches that.
+    const { assertRepeatedArrayParams } = await import("./hub-client");
+    const commaJoining = fakeClient({ repeated: false });
+
+    expect(() => assertRepeatedArrayParams(commaJoining)).toThrow(
+      /no longer routes query serialization through stringifyQuery/
+    );
+  });
+
+  test("does not throw when the client repeats array query params", async () => {
+    const { assertRepeatedArrayParams } = await import("./hub-client");
+
+    expect(() => assertRepeatedArrayParams(fakeClient({ repeated: true }))).not.toThrow();
+  });
+
+  test("memoizes success, so a client that later regresses is not re-probed", async () => {
+    // The property can't change within a process once verified true — a single instance imported per
+    // test (via the module-cache reset in the shared vitest setup) proves the memoization, not a
+    // cross-test leak.
+    const { assertRepeatedArrayParams } = await import("./hub-client");
+    const goodClient = fakeClient({ repeated: true });
+    const laterBrokenBuildURL = vi.fn(() => "https://hub.test/probe?p=a%2Cb");
+    const laterBrokenClient = { ...goodClient, buildURL: laterBrokenBuildURL } as unknown as FormbricksHub;
+
+    assertRepeatedArrayParams(goodClient);
+    expect(() => assertRepeatedArrayParams(laterBrokenClient)).not.toThrow();
+    expect(laterBrokenBuildURL).not.toHaveBeenCalled();
   });
 });

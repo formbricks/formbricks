@@ -17,13 +17,30 @@ class FormbricksHubWithRepeatedArrayParams extends FormbricksHub {
   }
 }
 
+let repeatedArrayParamsVerified = false;
+
 /**
  * Guards the one failure mode the type system cannot see: if a future SDK release stops routing query
  * serialization through `stringifyQuery`, our override becomes an unused method — legal TypeScript,
  * silently back to comma-joining, and filters quietly stop matching. `buildURL` is public, so proving the
- * hook still fires costs one call at construction.
+ * hook still fires costs one call.
+ *
+ * Deliberately **not** run from `getHubClient()`. It used to be, which meant every one of `service.ts`'s
+ * ~20 Hub consumers — taxonomy, semantic search, create/update/delete, not just the two that send array
+ * filters — paid for a probe they don't need, and a real SDK regression would fail client *construction*
+ * itself: the throw happens before the `globalThis` cache assignment, so it re-probes and re-throws on
+ * every single Hub call, turning a narrow serialization regression into a total Hub outage. It also sat
+ * outside every caller's own `try`, so it depended on the outer API wrapper to turn it into a controlled
+ * response rather than an uncaught exception.
+ *
+ * Called instead from the two operations that actually depend on array serialization
+ * (`listFeedbackRecords`, `countFeedbackRecords`), inside their existing `try` — so a failure becomes the
+ * same relayed Hub error every other failure on those paths produces, and every other Hub consumer is
+ * unaffected. Memoized because the property can't change within a process once true.
  */
-const assertRepeatedArrayParams = (client: FormbricksHub): void => {
+export const assertRepeatedArrayParams = (client: FormbricksHub): void => {
+  if (repeatedArrayParamsVerified) return;
+
   const probe = new URL(client.buildURL("/probe", { p: ["a", "b"] }));
   const values = probe.searchParams.getAll("p");
 
@@ -34,6 +51,8 @@ const assertRepeatedArrayParams = (client: FormbricksHub): void => {
         "See modules/hub/hub-query.ts."
     );
   }
+
+  repeatedArrayParamsVerified = true;
 };
 
 // Renamed from `formbricksHubClient` when the override landed: globalThis survives Next's HMR, so the old
@@ -57,7 +76,6 @@ export const getHubClient = (): FormbricksHub | null => {
   const apiKey = env.HUB_API_KEY;
   if (!apiKey) return null;
   const client = new FormbricksHubWithRepeatedArrayParams({ apiKey, baseURL: env.HUB_API_URL });
-  assertRepeatedArrayParams(client);
   globalForHub.formbricksHubClientRepeatArrays = client;
   return client;
 };
