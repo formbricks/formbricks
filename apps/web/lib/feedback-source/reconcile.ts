@@ -161,8 +161,9 @@ const reconcileConflict = async (
   const lookup = async () =>
     listFeedbackRecords({
       tenant_id: tenantId,
-      submission_id: record.submission_id,
-      field_id: record.field_id,
+      // One-element OR lists: Hub 0.8.4 made these filters repeatable, this lookup stays single-valued.
+      submission_id: [record.submission_id],
+      field_id: [record.field_id],
       limit: 1,
     });
 

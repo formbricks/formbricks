@@ -234,8 +234,8 @@ describe("reconcileFeedbackRecords", () => {
       expect(lookedUp).toHaveLength(2);
       expect(lookedUp).toEqual(
         expect.arrayContaining([
-          { submission_id: "response-a", field_id: "q1" },
-          { submission_id: "response-b", field_id: "q2" },
+          { submission_id: ["response-a"], field_id: ["q1"] },
+          { submission_id: ["response-b"], field_id: ["q2"] },
         ])
       );
     });
@@ -246,7 +246,7 @@ describe("reconcileFeedbackRecords", () => {
       await reconcileFeedbackRecords([record({ submission_id: "response-7", field_id: "q9" })], TENANT_ID);
 
       expect(mockListFeedbackRecords).toHaveBeenCalledWith(
-        expect.objectContaining({ tenant_id: TENANT_ID, submission_id: "response-7", field_id: "q9" })
+        expect.objectContaining({ tenant_id: TENANT_ID, submission_id: ["response-7"], field_id: ["q9"] })
       );
     });
 
