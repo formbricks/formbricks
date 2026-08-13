@@ -1,3 +1,4 @@
+import { McpServer, createMcpHandler } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
@@ -160,8 +161,10 @@ describe("feedback-record tool input schemas", () => {
 
   test("validates a multi-value filter and rejects an unknown one", () => {
     // The schema the model is handed has to accept the array form, or the OR-ing is unreachable in
-    // practice no matter what the operations layer supports.
-    const schema = schemaOf("list_feedback_records").strict();
+    // practice no matter what the operations layer supports. No `.strict()` added here, deliberately:
+    // the registered schema carries it now (ENG-2256), so the unknown-key rejection below is a property
+    // of what the tool actually advertises rather than of this test's own construction.
+    const schema = schemaOf("list_feedback_records");
 
     expect(schema.safeParse({ workspaceId, source_type: ["survey", "review"] }).success).toBe(true);
     expect(schema.safeParse({ workspaceId, source_type: "survey" }).success).toBe(true);
@@ -176,6 +179,117 @@ describe("feedback-record tool input schemas", () => {
     for (const [name, field] of Object.entries(shape)) {
       expect(field.description, `${name} has no description`).toBeTruthy();
     }
+  });
+});
+
+/**
+ * ENG-2256's reported symptom, pinned end-to-end against the real SDK: `count_feedback_records` with the
+ * pre-#8650 spelling `userId` (instead of `user_id`) had the unknown key stripped, so the query ran
+ * unfiltered and returned the count for every record in the dataset while reporting success.
+ *
+ * Every other test in this file calls the registered handler directly, which skips the SDK's
+ * `validateToolInput` entirely — the exact reason that was invisible from our side of the boundary for as
+ * long as it was. These go through a real `McpServer` and a real `tools/call`.
+ *
+ * What this does NOT prove: that the `.strict()` on `ZMcpCountFeedbackRecordsInput` is load-bearing. That
+ * schema extends the already-`.strict()` `ZV3FeedbackRecordFilters` and Zod 4's `.extend()` carries
+ * strictness over, so these pass either way — for the feedback-record tools the hole closes on the v2
+ * migration alone (a schema instance instead of a raw `.shape`). The equivalent test in `surveys.test.ts`
+ * covers a plain `z.object` schema, where removing `.strict()` does fail.
+ */
+describe("tool arguments are validated by the SDK (ENG-2256)", () => {
+  type ToolCallOutcome = {
+    error?: { code: number; message: string };
+    result?: { isError?: boolean; content?: { type: string; text?: string }[] };
+  };
+
+  /**
+   * `era` picks which protocol leg serves the call. Both are exercised because the one endpoint answers
+   * both (`mcp-handler` serves with `legacy: "stateless"`), and validation must not differ between them.
+   * A 2026-07-28 request carries the `Mcp-Method`/`Mcp-Name` headers and the `_meta` envelope the
+   * revision requires; a legacy one is a plain JSON-RPC POST and comes back SSE-framed.
+   */
+  const callTool = async (
+    name: string,
+    args: Record<string, unknown>,
+    era: "modern" | "legacy" = "modern"
+  ): Promise<ToolCallOutcome> => {
+    const handler = createMcpHandler(() => {
+      const server = new McpServer({ name: "test", version: "0.0.0" });
+      registerFeedbackRecordTools(server);
+      return server;
+    });
+
+    const modern = era === "modern";
+    const response = await handler.fetch(
+      new Request("https://formbricks.test/api/mcp", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json, text/event-stream",
+          ...(modern ? { "Mcp-Method": "tools/call", "Mcp-Name": name } : {}),
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: {
+            name,
+            arguments: args,
+            ...(modern
+              ? {
+                  _meta: {
+                    "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                    "io.modelcontextprotocol/clientCapabilities": {},
+                  },
+                }
+              : {}),
+          },
+        }),
+      }),
+      { authInfo }
+    );
+
+    const text = await response.text();
+    // The legacy leg answers text/event-stream, the modern one application/json.
+    const payload = response.headers.get("content-type")?.includes("text/event-stream")
+      ? text
+          .split("\n")
+          .filter((line) => line.startsWith("data:"))
+          .map((line) => line.slice("data:".length).trim())
+          .join("")
+      : text;
+
+    return JSON.parse(payload) as ToolCallOutcome;
+  };
+
+  const errorText = (outcome: ToolCallOutcome) =>
+    outcome.result?.content?.map((block) => block.text ?? "").join("") ?? "";
+
+  test.each(["modern", "legacy"] as const)(
+    "rejects a misspelled filter instead of running the query unfiltered (%s era)",
+    async (era) => {
+      // Mocked to a wrong-but-plausible answer on purpose: before ENG-2256 this is the number the agent
+      // got back and reported as the count for one user.
+      vi.mocked(countV3FeedbackRecords).mockResolvedValue(successResponse({ count: 9999 }) as never);
+
+      const outcome = await callTool("count_feedback_records", { workspaceId, userId: "user_1" }, era);
+
+      expect(outcome.result?.isError).toBe(true);
+      expect(errorText(outcome)).toContain("userId");
+      // The point of the fix: the operation is never reached, so there is no count to mistake for an
+      // answer. Asserting the error alone would still pass if the query had run first.
+      expect(countV3FeedbackRecords).not.toHaveBeenCalled();
+    }
+  );
+
+  test("accepts the correct spelling and reaches the operation", async () => {
+    vi.mocked(countV3FeedbackRecords).mockResolvedValue(successResponse({ count: 3 }) as never);
+
+    const outcome = await callTool("count_feedback_records", { workspaceId, user_id: "user_1" });
+
+    expect(outcome.result?.isError).toBeUndefined();
+    expect(countV3FeedbackRecords).toHaveBeenCalled();
   });
 });
 
