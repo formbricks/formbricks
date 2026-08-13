@@ -3,7 +3,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { getComputedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import { getDeclaredComputedFields } from "@formbricks/types/embedded-data-resolver";
 import {
   TSurveyBlock,
   TSurveyBlockLogic,
@@ -60,10 +60,11 @@ export function LogicEditorActions({
 
   /**
    * ENG-1837: which input widget a calculate action gets is driven by the computed field's declared
-   * type, resolved through the survey's Embedded Data definitions (the editor cards while editing).
+   * type, read from the Variables card rather than the saved rows — the author may have just changed
+   * it, and the rows only catch up on save.
    */
   const getCalculateFieldType = (storageKey: string): "text" | "number" | undefined => {
-    const dataType = getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)
+    const dataType = getDeclaredComputedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)
       ?.field.dataType;
     if (dataType === undefined) return undefined;
     return dataType === "number" ? "number" : "text";

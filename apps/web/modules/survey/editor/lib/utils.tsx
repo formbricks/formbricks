@@ -1,7 +1,10 @@
 import { TFunction } from "i18next";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
-import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import {
+  getDeclaredComputedFields,
+  getDeclaredIngestedStorageKeys,
+} from "@formbricks/types/embedded-data-resolver";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -140,9 +143,9 @@ const getElementHeadline = (
  * filters on an id/name/type triple, so the definitions are adapted to that shape once here rather
  * than reshaped at each of the five pickers below.
  *
- * In the editor the legacy cards are still the live source of truth — `survey-editor.tsx` drops the
- * inlined `embeddedFields` for exactly that reason — so this resolves off the cards while the survey
- * is being edited, and off the rows everywhere else.
+ * Sourced from `getDeclaredEmbeddedFields`, which derives from the Variables and Hidden Fields cards
+ * and ignores the saved rows — in the editor the cards are the live source of truth, and the rows
+ * only catch up on save.
  */
 interface TComputedFieldOption {
   id: string;
@@ -151,7 +154,7 @@ interface TComputedFieldOption {
 }
 
 const getComputedFieldOptions = (localSurvey: TSurvey): TComputedFieldOption[] =>
-  getComputedEmbeddedFields(localSurvey).map(({ field, link }) => ({
+  getDeclaredComputedFields(localSurvey).map(({ field, link }) => ({
     id: link.storageKey,
     name: field.name,
     type: field.dataType === "number" ? "number" : "text",
@@ -162,7 +165,7 @@ export const getConditionValueOptions = (
   t: TFunction,
   blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
 ): TComboboxGroupedOption[] => {
-  const hiddenFields = getIngestedStorageKeys(localSurvey);
+  const hiddenFields = getDeclaredIngestedStorageKeys(localSurvey);
   const variables = getComputedFieldOptions(localSurvey);
 
   // If blockIdx is provided, get elements from current block and all previous blocks
@@ -413,7 +416,7 @@ export const getMatchValueProps = (
           .flatMap((block) => block.elements);
 
   let variables = getComputedFieldOptions(localSurvey);
-  let hiddenFields = getIngestedStorageKeys(localSurvey);
+  let hiddenFields = getDeclaredIngestedStorageKeys(localSurvey);
 
   const selectedElement = elements.find((element) => element.id === condition.leftOperand.value);
   const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.value);
@@ -1139,7 +1142,7 @@ export const getActionValueOptions = (
   const allElements = localSurvey.blocks
     .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
     .flatMap((block) => block.elements);
-  const hiddenFields = getIngestedStorageKeys(localSurvey);
+  const hiddenFields = getDeclaredIngestedStorageKeys(localSurvey);
   let variables = getComputedFieldOptions(localSurvey);
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {

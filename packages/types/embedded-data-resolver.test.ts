@@ -10,6 +10,9 @@ import {
   coerceToEmbeddedDataType,
   deriveLegacyEmbeddedData,
   getComputedEmbeddedFields,
+  getDeclaredComputedFields,
+  getDeclaredEmbeddedFields,
+  getDeclaredIngestedStorageKeys,
   getIngestedEmbeddedFields,
   getIngestedStorageKeys,
   getSurveyEmbeddedFields,
@@ -1005,5 +1008,41 @@ describe("ZLinkedEmbeddedField mirrors TLinkedEmbeddedField", () => {
       false
     );
     expect(ZLinkedEmbeddedField.safeParse({ ...pair, link: { storageKey: "" } }).success).toBe(false);
+  });
+});
+
+describe("getDeclaredEmbeddedFields", () => {
+  const legacySurvey = {
+    variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number" as const, value: 10 }],
+    hiddenFields: { enabled: true, fieldIds: ["source_page"] },
+  };
+
+  const staleRows: TLinkedEmbeddedField[] = [
+    {
+      field: { name: "old_name", source: "computed", dataType: "string", defaultValue: "", locked: false },
+      link: { storageKey: "clx0000000000000000000v1" },
+    },
+  ];
+
+  test("ignores the stored rows and answers from the declarations", () => {
+    // The editor's working copy carries the rows as of the last save, so a rename or a newly added
+    // field is only visible through this accessor.
+    expect(getDeclaredEmbeddedFields({ ...legacySurvey, embeddedFields: staleRows })).toStrictEqual(
+      deriveLegacyEmbeddedData(legacySurvey)
+    );
+    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: staleRows })).toStrictEqual(staleRows);
+  });
+
+  test("partitions the declarations the same way the stored accessor does", () => {
+    expect(getDeclaredComputedFields(legacySurvey).map(({ field }) => field.name)).toStrictEqual(["score"]);
+    expect(getDeclaredIngestedStorageKeys(legacySurvey)).toStrictEqual(["source_page"]);
+  });
+
+  test("agrees with the stored accessor whenever the rows match the declarations", () => {
+    // True for every saved survey: `reconcileEmbeddedData` writes exactly `toDesiredEmbeddedFields`
+    // in the same transaction as the survey write.
+    const inSync = { ...legacySurvey, embeddedFields: deriveLegacyEmbeddedData(legacySurvey) };
+
+    expect(getDeclaredEmbeddedFields(inSync)).toStrictEqual(getSurveyEmbeddedFields(inSync));
   });
 });

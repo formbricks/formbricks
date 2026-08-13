@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getSurveyEmbeddedFields, listReadableFields } from "@formbricks/types/embedded-data-resolver";
+import { getDeclaredEmbeddedFields, listReadableFields } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyHiddenFields, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -83,47 +83,51 @@ export const RecallItemSelect = ({
     return recallItems.map((recallItem) => recallItem.id);
   }, [recallItems]);
 
-  // ENG-1837: both groups are enumerated from the survey's Embedded Data definitions. Only the
+  // ENG-1837: both groups are enumerated from the survey's Embedded Data definitions, derived from
+  // the editor's cards (`getDeclaredEmbeddedFields`) so a rename shows here without a reload. Only the
   // `embeddedData` group of `listReadableFields` is used — its keys and labels are exactly today's
   // (storage key / field name); the element group keeps this file's own labelling, which stores the
   // raw headline HTML and searches it through `getTextContent`.
-  const embeddedDataFields = useMemo(
+  const embeddedFields = useMemo(
+    () =>
+      getDeclaredEmbeddedFields({
+        variables: localSurvey.variables,
+        hiddenFields: localSurvey.hiddenFields,
+      }),
+    [localSurvey.variables, localSurvey.hiddenFields]
+  );
+
+  /** `[storageKey, source, label]` triples, in the definitions' own order. */
+  const embeddedFieldEntries = useMemo(
     () =>
       listReadableFields({
         blocks: [],
-        embeddedData: getSurveyEmbeddedFields(localSurvey),
+        embeddedData: embeddedFields,
         reservedEntries: [],
         contactAttributeKeys: [],
-      }).embeddedData,
-    [localSurvey]
-  );
-
-  const embeddedFieldSources = useMemo(
-    () =>
-      new Map(
-        getSurveyEmbeddedFields(localSurvey).map(({ field, link }) => [link.storageKey, field] as const)
-      ),
-    [localSurvey]
+      }).embeddedData.map(({ key, label }, index) => ({
+        key,
+        label,
+        source: embeddedFields[index].field.source,
+        dataType: embeddedFields[index].field.dataType,
+      })),
+    [embeddedFields]
   );
 
   const hiddenFieldRecallItems = useMemo(
     () =>
-      embeddedDataFields
-        .filter(
-          ({ key }) => embeddedFieldSources.get(key)?.source === "ingested" && !recallItemIds.includes(key)
-        )
+      embeddedFieldEntries
+        .filter(({ key, source }) => source === "ingested" && !recallItemIds.includes(key))
         .map(({ key, label }) => ({ id: key, label, type: "hiddenField" as const })),
-    [embeddedDataFields, embeddedFieldSources, recallItemIds]
+    [embeddedFieldEntries, recallItemIds]
   );
 
   const variableRecallItems = useMemo(
     () =>
-      embeddedDataFields
-        .filter(
-          ({ key }) => embeddedFieldSources.get(key)?.source === "computed" && !recallItemIds.includes(key)
-        )
+      embeddedFieldEntries
+        .filter(({ key, source }) => source === "computed" && !recallItemIds.includes(key))
         .map(({ key, label }) => ({ id: key, label, type: "variable" as const })),
-    [embeddedDataFields, embeddedFieldSources, recallItemIds]
+    [embeddedFieldEntries, recallItemIds]
   );
 
   const surveyElementRecallItems = useMemo(() => {
@@ -175,7 +179,8 @@ export const RecallItemSelect = ({
       case "hiddenField":
         return EyeOffIcon;
       case "variable": {
-        return embeddedFieldSources.get(recallItem.id)?.dataType === "number" ? FileDigitIcon : FileTextIcon;
+        const dataType = embeddedFieldEntries.find(({ key }) => key === recallItem.id)?.dataType;
+        return dataType === "number" ? FileDigitIcon : FileTextIcon;
       }
       default:
         return null;

@@ -88,16 +88,12 @@ export const SurveyEditor = ({
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
-  // ENG-1837 — **editor surfaces derive from the cards; every other surface resolves through the
-  // rows.** `localSurvey` is cloned once at mount and never re-fetched, while the EmbeddedData rows
-  // are only written on save, so an inlined `embeddedFields` would go stale the moment a variable or
-  // hidden field is edited and every editor picker, the logic builder and the editor preview would
-  // keep showing pre-edit definitions. Dropping it here makes `getSurveyEmbeddedFields` fall back to
-  // the legacy cards — which ARE the editor's live source of truth — for all of them at once.
-  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => {
-    const { embeddedFields: _embeddedFields, ...surveyWithoutEmbeddedFields } = survey;
-    return structuredClone(surveyWithoutEmbeddedFields);
-  });
+  // `localSurvey` must stay a structural clone of `survey`: the menu bar compares the two with
+  // `isDeepEqual` to gate the draft auto-save, the back-navigation dialog and the beforeunload
+  // prompt, and that comparison short-circuits on differing key counts. ENG-1837 therefore does NOT
+  // strip the inlined `embeddedFields` here — editor surfaces read their definitions through
+  // `getDeclaredEmbeddedFields` instead, which ignores the rows and derives from the cards.
+  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
 
@@ -132,6 +128,9 @@ export const SurveyEditor = ({
     if (survey) {
       if (localSurvey) return;
 
+      // Must stay identical to the `useState` initializer above: the working copy is compared
+      // against `survey` key-for-key by the menu bar, so any reshaping has to apply to both or
+      // neither. (Unreachable today — the initializer never yields null.)
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
 

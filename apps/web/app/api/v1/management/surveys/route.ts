@@ -14,6 +14,7 @@ import {
   transformQuestionsToBlocks,
   validateSurveyInput,
   withDerivedQuestions,
+  withoutInternalSurveyProjections,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -43,7 +44,9 @@ export const GET = withV1ApiWrapper({
 
       // Always expose `questions` (derived from blocks) alongside `blocks` so API v1
       // consumers get a consistent shape regardless of how the survey was built.
-      const surveysWithQuestions = surveys.map((survey) => withDerivedQuestions(survey));
+      const surveysWithQuestions = surveys.map((survey) =>
+        withoutInternalSurveyProjections(withDerivedQuestions(survey))
+      );
 
       return {
         response: responses.successResponse(
@@ -147,7 +150,9 @@ export const POST = withV1ApiWrapper({
 
       return {
         response: responses.successResponse(
-          addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
+          addLegacyProjectOverwrites(
+            resolveStorageUrlsInObject(withoutInternalSurveyProjections(withDerivedQuestions(survey)))
+          )
         ),
       };
     } catch (error) {

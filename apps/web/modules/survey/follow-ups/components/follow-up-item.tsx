@@ -4,7 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { getDeclaredIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -76,12 +76,12 @@ export const FollowUpItem = ({
     // carries no equivalent, and this is the one reader that consults the flag — reading it here is a
     // flag read, not a field-list read, so it keeps this recipient label behaving exactly as before.
     const matchedHiddenField = localSurvey.hiddenFields?.enabled
-      ? getIngestedStorageKeys({
-          // The two slices the ingested list can come from, passed individually so this memo keeps
-          // depending on them rather than on the whole survey object.
-          hiddenFields: localSurvey.hiddenFields,
-          embeddedFields: localSurvey.embeddedFields,
-        }).find((storageKey) => storageKey === to)
+      ? // Editor surface: the ids come from the Hidden Fields card, not the saved rows. Only the
+        // slice that feeds it is passed, so this memo keeps depending on it rather than on the whole
+        // survey object.
+        getDeclaredIngestedStorageKeys({ hiddenFields: localSurvey.hiddenFields }).find(
+          (storageKey) => storageKey === to
+        )
       : undefined;
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
@@ -106,7 +106,6 @@ export const FollowUpItem = ({
   }, [
     followUp.action.properties,
     localSurvey.hiddenFields,
-    localSurvey.embeddedFields,
     localSurvey.blocks,
     teamMemberDetails,
     userEmail,

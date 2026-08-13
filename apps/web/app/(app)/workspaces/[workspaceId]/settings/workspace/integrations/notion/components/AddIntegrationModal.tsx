@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
@@ -121,19 +122,24 @@ export const AddIntegrationModal = ({
         }))
       : [];
 
-    const variables =
-      selectedSurvey?.variables.map((variable) => ({
-        id: variable.id,
-        name: variable.name,
-        type: TSurveyElementTypeEnum.OpenText,
-      })) || [];
+    // ENG-1837: the mapping list must name the same things the pipeline exports, and
+    // `handle-integrations.ts` labels a computed field by `field.name` and an ingested one by its
+    // storage key — so both come from the survey's Embedded Data definitions, not the legacy columns.
+    const variables = selectedSurvey
+      ? getComputedEmbeddedFields(selectedSurvey).map(({ field, link }) => ({
+          id: link.storageKey,
+          name: field.name,
+          type: TSurveyElementTypeEnum.OpenText,
+        }))
+      : [];
 
-    const hiddenFields =
-      selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
-        id: fId,
-        name: `${t("common.hidden_field")} : ${fId}`,
-        type: TSurveyElementTypeEnum.OpenText,
-      })) || [];
+    const hiddenFields = selectedSurvey
+      ? getIngestedStorageKeys(selectedSurvey).map((storageKey) => ({
+          id: storageKey,
+          name: `${t("common.hidden_field")} : ${storageKey}`,
+          type: TSurveyElementTypeEnum.OpenText,
+        }))
+      : [];
     const Metadata = [
       {
         id: "metadata",

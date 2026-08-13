@@ -15,13 +15,16 @@ interface HiddenFieldsProps {
 export const HiddenFields = ({ hiddenFields, responseData }: Readonly<HiddenFieldsProps>) => {
   const { t } = useTranslation();
 
-  let hiddenFieldsData: { field: string; value: string }[] = [];
+  // `storageKey` is the React key: it is unique per survey by `@@unique([surveyId, storageKey])`,
+  // whereas a field's display name carries no uniqueness constraint.
+  let hiddenFieldsData: { storageKey: string; label: string; value: string }[] = [];
 
   hiddenFields.forEach(({ field, link }) => {
     const value = responseData[link.storageKey];
     if (value) {
       hiddenFieldsData.push({
-        field: field.name,
+        storageKey: link.storageKey,
+        label: field.name,
         value: typeof value === "string" ? value : "",
       });
     }
@@ -35,9 +38,9 @@ export const HiddenFields = ({ hiddenFields, responseData }: Readonly<HiddenFiel
     <div data-testid="main-hidden-fields-div" className="mt-6 flex flex-col gap-6">
       {hiddenFieldsData.map((fieldData) => {
         return (
-          <div key={fieldData.field}>
+          <div key={fieldData.storageKey}>
             <div className="flex gap-x-2 text-sm text-slate-500">
-              <p>{fieldData.field}</p>
+              <p>{fieldData.label}</p>
               <div className="flex items-center gap-x-2 rounded-full bg-slate-100 px-2">
                 <TooltipProvider delayDuration={50}>
                   <Tooltip>

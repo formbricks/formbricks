@@ -403,11 +403,13 @@ describe("recall utility functions", () => {
   });
 
   /**
-   * ENG-1837: a recall token's label and type come from the survey's Embedded Data definitions —
-   * the joined rows when present, the legacy columns otherwise — instead of `hiddenFields.fieldIds`
-   * and `variables`. The precedence (ingested → element → computed) is load-bearing and unchanged.
+   * ENG-1837: a recall token's label and type come from the survey's Embedded Data definitions
+   * instead of `hiddenFields.fieldIds` and `variables` — specifically from what the survey
+   * *declares*, because the picker writes `@label` into the text and these functions read it back,
+   * so the two must agree on the same instant. The precedence (ingested → element → computed) is
+   * load-bearing and unchanged.
    */
-  describe("recall items resolve through the inlined EmbeddedData rows", () => {
+  describe("recall items resolve through the survey's declared Embedded Data", () => {
     const embeddedField = (
       storageKey: string,
       name: string,
@@ -418,13 +420,15 @@ describe("recall utility functions", () => {
       link: { storageKey },
     });
 
-    test("uses the rows' names as labels when the join is present", () => {
+    test("labels a token from the declarations, not from a stale inlined row", () => {
+      // The editor's working copy carries the rows as of the last save. Labelling from them would
+      // desync this from the recall picker, which offers the current name.
       const survey = {
         blocks: [],
         hiddenFields: { fieldIds: ["hidden1"] },
-        variables: [{ id: "var1", name: "Stale Name", type: "text", value: "" }],
+        variables: [{ id: "var1", name: "Renamed Variable", type: "text", value: "" }],
         embeddedFields: [
-          embeddedField("var1", "Variable One", "computed"),
+          embeddedField("var1", "Stale Name", "computed"),
           embeddedField("hidden1", "hidden1", "ingested"),
         ],
       } as unknown as TSurvey;
@@ -436,12 +440,13 @@ describe("recall utility functions", () => {
       );
 
       expect(result).toEqual([
-        { id: "var1", label: "Variable One", type: "variable" },
+        { id: "var1", label: "Renamed Variable", type: "variable" },
         { id: "hidden1", label: "hidden1", type: "hiddenField" },
       ]);
     });
 
-    test("an empty row list falls back to the legacy columns", () => {
+    test("classifies a field declared since the last save, which the rows do not know", () => {
+      // Without this the token would stay unclassified and render as a raw `#recall:…#` tag.
       const survey = {
         blocks: [],
         hiddenFields: { fieldIds: ["hidden1"] },

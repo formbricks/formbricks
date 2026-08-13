@@ -435,10 +435,11 @@ export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
 }
 
 /**
- * **The one place that decides where a survey's Embedded Data definitions come from.** Every reader
- * — recall, logic, export columns, response filters, pickers, emails, integrations — calls this and
- * nothing else; no reader may call {@link deriveLegacyEmbeddedData} directly, which is what makes
- * "exactly one fallback decision point" a property a reviewer can check with grep.
+ * **Where a saved survey's Embedded Data definitions come from.** Every reader outside the editor —
+ * recall, logic, export columns, response filters, response tables, emails, integrations — calls
+ * this and nothing else. Its counterpart is {@link getDeclaredEmbeddedFields}; between the two, no
+ * reader may call {@link deriveLegacyEmbeddedData} directly, which is what keeps "exactly two named
+ * decisions, and no third" a property a reviewer can check with grep.
  *
  * Rows win when present. The empty-list test is deliberate rather than `!== undefined`: a select
  * that omits the join yields `undefined`, and a survey read through it must still resolve, while
@@ -465,3 +466,46 @@ export const getIngestedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinke
 /** The storage keys of a survey's ingested fields — what `response.data` addresses them by. */
 export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
   getIngestedEmbeddedFields(survey).map(({ link }) => link.storageKey);
+
+/**
+ * **What a survey declares right now, ignoring what is stored.** The counterpart to
+ * {@link getSurveyEmbeddedFields}; between the two, no caller needs
+ * {@link deriveLegacyEmbeddedData} directly, so "which of two named decisions does this reader
+ * make" stays a property a reviewer can check with grep.
+ *
+ * Two groups of callers need this rather than the stored rows:
+ *
+ * 1. **The editor.** Its working copy is cloned from the server survey at mount and never
+ *    re-fetched, while the rows are only written on save — so an inlined `embeddedFields` is stale
+ *    from the first card edit until the next save. Deriving is what makes a rename or a newly added
+ *    field show up in the pickers, the logic builder, the calculate widget, the follow-up recipient
+ *    list and the preview on the next render. Note this cannot be fixed by reshaping the working
+ *    copy instead: it is compared against the server survey with a key-count-sensitive deep equal
+ *    to gate the draft auto-save, the discard-changes dialog and the beforeunload prompt, and a
+ *    save round-trip puts the server's shape back anyway.
+ * 2. **Recall labelling** (`apps/web/lib/utils/recall.ts`). A recall token's label is authoring
+ *    syntax: the picker writes `@label` into the text and the label resolver reads it back, so the
+ *    two must agree on the same instant's definitions or the round-trip desyncs — a field added
+ *    since the last save would render as a raw `#recall:…#` token, and a renamed one would stop
+ *    matching. The same functions also label saved surveys for exports and summaries, where this is
+ *    a provable no-op: `reconcileEmbeddedData` writes exactly `toDesiredEmbeddedFields(survey)` in
+ *    the same transaction as every survey write, so a saved survey's rows and declarations agree
+ *    element for element. They can only diverge once a shared library definition can be renamed
+ *    independently of the survey (ENG-1851), which is also when the unified picker (ENG-1853) moves
+ *    recall and the pickers onto the tables together.
+ */
+// Takes the same survey slice as {@link getSurveyEmbeddedFields}, not the narrower legacy one, so a
+// caller holding a full survey can pass it and the "ignores the stored rows" contract is visible in
+// the signature rather than enforced by which keys happen to be omitted at the call site.
+export const getDeclaredEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  deriveLegacyEmbeddedData(survey);
+
+/** The computed (ex-variable) fields a survey declares right now. */
+export const getDeclaredComputedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  getDeclaredEmbeddedFields(survey).filter(({ field }) => field.source === "computed");
+
+/** The storage keys of the ingested (ex-hidden) fields a survey declares right now. */
+export const getDeclaredIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
+  getDeclaredEmbeddedFields(survey)
+    .filter(({ field }) => field.source === "ingested")
+    .map(({ link }) => link.storageKey);
