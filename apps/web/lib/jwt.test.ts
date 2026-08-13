@@ -722,6 +722,23 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token cannot be bound");
       });
 
+      // The row this binds to must be the one Better Auth bumps on a password write — the full
+      // `(provider, providerAccountId)` unique tuple. Matching on `provider` alone would take an arbitrary
+      // `credential` row for a user that somehow had two, binding to a timestamp a reset never moves.
+      test("should scope the credential lookup to this user's own credential row", async () => {
+        await createEmailChangeToken(mockUser.id, "new@example.com");
+
+        expect(prisma.user.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({
+            select: expect.objectContaining({
+              accounts: expect.objectContaining({
+                where: { provider: "credential", providerAccountId: mockUser.id },
+              }),
+            }),
+          })
+        );
+      });
+
       test("should reject an unbound token in the pre-fix shape", async () => {
         const unboundToken = jwt.sign(
           { id: `encrypted_${mockUser.id}`, email: "encrypted_attacker@evil.com" },

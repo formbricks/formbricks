@@ -1,9 +1,9 @@
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
-import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { constantTimeEqual, symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { TGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "@/modules/gateway-auth/lib/service";
 
 const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
@@ -166,7 +166,15 @@ const getEmailChangeCredentialFingerprint = async (userId: string): Promise<stri
     where: { id: userId },
     select: {
       email: true,
-      accounts: { where: { provider: "credential" }, select: { updatedAt: true } },
+      // Scoped to the full `(provider, providerAccountId)` unique tuple, not just the provider: this
+      // must resolve to the one row Better Auth bumps `updatedAt` on for a password write — the same
+      // row getCredentialPasswordHash reads. Matching on `provider` alone would take an arbitrary
+      // first row if a user ever ended up with a second `credential` row under a different
+      // providerAccountId, binding the token to a timestamp that never moves on a reset.
+      accounts: {
+        where: { provider: "credential", providerAccountId: userId },
+        select: { updatedAt: true },
+      },
     },
   });
 
@@ -181,13 +189,6 @@ const getEmailChangeCredentialFingerprint = async (userId: string): Promise<stri
   return createHmac("sha256", NEXTAUTH_SECRET)
     .update(`${userId}:${user.email}:${credentialUpdatedAt.toISOString()}`)
     .digest("hex");
-};
-
-const fingerprintsMatch = (tokenFingerprint: string, currentFingerprint: string): boolean => {
-  const tokenBytes = Buffer.from(tokenFingerprint, "hex");
-  const currentBytes = Buffer.from(currentFingerprint, "hex");
-
-  return tokenBytes.length === currentBytes.length && timingSafeEqual(tokenBytes, currentBytes);
 };
 
 export const verifyEmailChangeToken = async (token: string): Promise<{ id: string; email: string }> => {
@@ -223,7 +224,9 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   const decryptedId = decryptWithFallback(payload.id, ENCRYPTION_KEY);
   const decryptedEmail = decryptWithFallback(payload.email, ENCRYPTION_KEY);
 
-  if (!fingerprintsMatch(payload.fingerprint, await getEmailChangeCredentialFingerprint(decryptedId))) {
+  const currentFingerprint = await getEmailChangeCredentialFingerprint(decryptedId);
+
+  if (!constantTimeEqual(payload.fingerprint, currentFingerprint, "hex")) {
     throw new Error("Email change token is no longer valid");
   }
 
