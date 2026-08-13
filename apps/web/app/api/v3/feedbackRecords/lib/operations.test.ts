@@ -238,8 +238,9 @@ describe("listV3FeedbackRecords", () => {
       expect.objectContaining({
         tenant_id: directoryId,
         limit: 50,
-        source_type: "survey",
-        field_type: "text",
+        // Single-valued on our side, sent as a one-element OR list since Hub 0.8.4 made these repeatable.
+        source_type: ["survey"],
+        field_type: ["text"],
       })
     );
     expect(body.meta).toEqual({
@@ -1007,16 +1008,17 @@ describe("countV3FeedbackRecords", () => {
       until: "2026-12-31T00:00:00Z",
     });
 
+    // Every identity filter goes out as a one-element OR list; the two range bounds stay scalar.
     expect(countFeedbackRecords).toHaveBeenCalledWith({
       tenant_id: directoryId,
-      source_type: "survey",
-      source_id: "svy_1",
-      field_type: "text",
-      field_id: "q1",
-      field_group_id: "grp_1",
-      submission_id: "sub-1",
-      user_id: "user-1",
-      value_id: "opt_1",
+      source_type: ["survey"],
+      source_id: ["svy_1"],
+      field_type: ["text"],
+      field_id: ["q1"],
+      field_group_id: ["grp_1"],
+      submission_id: ["sub-1"],
+      user_id: ["user-1"],
+      value_id: ["opt_1"],
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
@@ -1080,7 +1082,7 @@ describe("list/count validate their own input", () => {
   });
 });
 
-describe("listV3FeedbackRecords", () => {
+describe("listV3FeedbackRecords error relaying", () => {
   /**
    * Listing does not touch the vector index, so a Hub 503 here is an outage or some *other* unconfigured
    * subsystem. It used to answer with the embeddings message for every operation, which sent an operator
@@ -1126,21 +1128,260 @@ describe("listV3FeedbackRecords filters", () => {
       until: "2026-12-31T00:00:00Z",
     });
 
+    // Same one-element OR lists as the count path; pagination and the range bounds stay scalar.
     expect(listFeedbackRecords).toHaveBeenCalledWith({
       tenant_id: directoryId,
       limit: 10,
       cursor: "abc",
-      source_type: "survey",
-      source_id: "svy_1",
-      field_type: "text",
-      field_id: "q1",
-      field_group_id: "grp_1",
-      submission_id: "sub-1",
-      user_id: "user-1",
-      value_id: "opt_1",
+      source_type: ["survey"],
+      source_id: ["svy_1"],
+      field_type: ["text"],
+      field_id: ["q1"],
+      field_group_id: ["grp_1"],
+      submission_id: ["sub-1"],
+      user_id: ["user-1"],
+      value_id: ["opt_1"],
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
+  });
+});
+
+describe("feedback-record filters accept multiple values", () => {
+  beforeEach(() => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+    vi.mocked(countFeedbackRecords).mockResolvedValue({ data: { count: 0 }, error: null });
+  });
+
+  test("passes a list of values straight through as the Hub's OR list", async () => {
+    await listV3FeedbackRecords({
+      ...base,
+      source_type: ["survey", "review"],
+      field_type: ["text", "rating"],
+    });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source_type: ["survey", "review"],
+        field_type: ["text", "rating"],
+      })
+    );
+  });
+
+  test("accepts a scalar and a list in the same call", async () => {
+    await listV3FeedbackRecords({ ...base, source_type: "survey", user_id: ["u1", "u2"] });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ source_type: ["survey"], user_id: ["u1", "u2"] })
+    );
+  });
+
+  test("counts the same multi-value filter set as list", async () => {
+    // One mapper serves both, so a count always describes the set the equivalent list would return.
+    await countV3FeedbackRecords({ ...base, source_type: ["survey", "review"] });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ source_type: ["survey", "review"] })
+    );
+  });
+
+  test("rejects more values than the Hub accepts, naming the filter", async () => {
+    const response = await listV3FeedbackRecords({
+      ...base,
+      user_id: Array.from({ length: 101 }, (_, i) => `u${i}`),
+    });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.invalid_params[0].name).toBe("user_id");
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects an enum filter repeated past its label count", async () => {
+    // field_type caps at its own cardinality rather than at 100: more entries can only be duplicates.
+    const response = await listV3FeedbackRecords({
+      ...base,
+      field_type: Array.from({ length: 10 }, () => "text"),
+    });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("field_type");
+  });
+
+  test("names the accepted values when a filter value is not one of them", async () => {
+    // A wrong value matches neither union branch, and zod's own `invalid_union` message is "Invalid
+    // input" — useless to an agent, and a regression on the single-value schema this replaced.
+    // Cast because the params type now rejects this at compile time; the point is the runtime guard, which
+    // is what an MCP client (whose input is untyped JSON) actually hits.
+    const response = await listV3FeedbackRecords({
+      ...base,
+      field_type: "not-a-type" as never,
+    });
+
+    expect(response.status).toBe(422);
+    const [issue] = (await response.json()).invalid_params;
+    expect(issue.name).toBe("field_type");
+    expect(issue.reason).toContain("categorical");
+  });
+
+  test("rejects an empty list rather than running unfiltered", async () => {
+    // The dangerous direction: an empty OR list would drop the filter and widen the result set while the
+    // caller is told the request succeeded.
+    const response = await listV3FeedbackRecords({ ...base, source_type: [] });
+
+    expect(response.status).toBe(422);
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+});
+
+describe("feedback-record filters with meaningful falsy values", () => {
+  beforeEach(() => {
+    vi.mocked(listFeedbackRecords).mockResolvedValue({
+      data: { data: [], limit: 50, next_cursor: undefined },
+      error: null,
+    });
+    vi.mocked(countFeedbackRecords).mockResolvedValue({ data: { count: 0 }, error: null });
+  });
+
+  /**
+   * The mapper guards every filter on `!== undefined`. With a truthiness guard each of these is dropped
+   * and the Hub answers a wider question than the caller asked — `has_sentiment: false` in particular
+   * silently turns "records enrichment has not labelled yet" into "all records".
+   */
+  test.each([
+    ["has_sentiment", { has_sentiment: false }],
+    ["has_emotions", { has_emotions: false }],
+    ["has_translation", { has_translation: false }],
+    ["value_number_min", { value_number_min: 0 }],
+    ["value_number_max", { value_number_max: 0 }],
+    ["sentiment_score_min", { sentiment_score_min: 0 }],
+    ["sentiment_score_max", { sentiment_score_max: 0 }],
+  ])("keeps %s when its value is falsy", async (name, override) => {
+    await listV3FeedbackRecords({ ...base, ...override });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(expect.objectContaining(override));
+    // objectContaining would also pass if the key were absent-but-undefined, so assert presence directly.
+    expect(vi.mocked(listFeedbackRecords).mock.calls[0][0]).toHaveProperty(name);
+  });
+
+  test("keeps a falsy presence filter on the count path too", async () => {
+    await countV3FeedbackRecords({ ...base, has_sentiment: false });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith(expect.objectContaining({ has_sentiment: false }));
+  });
+
+  test("sends the enrichment and range filters the Hub gained in 0.8.4", async () => {
+    await countV3FeedbackRecords({
+      ...base,
+      source_name: "Q1 NPS",
+      language: ["en", "pt-BR"],
+      sentiment: ["negative", "very_negative"],
+      emotions: ["anger"],
+      created_since: "2026-01-01T00:00:00Z",
+      created_until: "2026-03-31T00:00:00Z",
+      value_date_min: "2026-02-01T00:00:00Z",
+      value_date_max: "2026-02-28T00:00:00Z",
+      value_number_min: 1,
+      value_number_max: 5,
+      sentiment_score_min: -1,
+      sentiment_score_max: 1,
+      has_translation: true,
+    });
+
+    expect(countFeedbackRecords).toHaveBeenCalledWith({
+      tenant_id: directoryId,
+      source_name: ["Q1 NPS"],
+      language: ["en", "pt-BR"],
+      sentiment: ["negative", "very_negative"],
+      emotions: ["anger"],
+      created_since: "2026-01-01T00:00:00Z",
+      created_until: "2026-03-31T00:00:00Z",
+      value_date_min: "2026-02-01T00:00:00Z",
+      value_date_max: "2026-02-28T00:00:00Z",
+      value_number_min: 1,
+      value_number_max: 5,
+      sentiment_score_min: -1,
+      sentiment_score_max: 1,
+      has_translation: true,
+    });
+  });
+
+  test("rejects a sentiment score outside the Hub's -1..1 range", async () => {
+    const response = await listV3FeedbackRecords({ ...base, sentiment_score_min: -2 });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("sentiment_score_min");
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects a language tag longer than the Hub's column", async () => {
+    const response = await listV3FeedbackRecords({ ...base, language: "much-too-long-tag" });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("language");
+  });
+
+  test("orders the list by the requested column and direction", async () => {
+    await listV3FeedbackRecords({ ...base, sort: "created_at", order: "asc" });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: "created_at", order: "asc" })
+    );
+  });
+
+  test("sends no ordering at all when none was asked for", async () => {
+    // The Hub defaults to collected_at/desc, and a cursor issued before sort control existed records no
+    // ordering — so an explicit default is an assumption this layer does not need to make.
+    await listV3FeedbackRecords({ ...base });
+
+    const sent = vi.mocked(listFeedbackRecords).mock.calls[0][0];
+    expect(sent).not.toHaveProperty("sort");
+    expect(sent).not.toHaveProperty("order");
+  });
+
+  test("never sends ordering to the count endpoint, which does not accept it", async () => {
+    // The Hub's /count takes the filters but not sort/order/limit/cursor. Mapping them in the shared
+    // filter builder would 400 every count call.
+    await countV3FeedbackRecords({ ...base, source_type: "survey" });
+
+    const sent = vi.mocked(countFeedbackRecords).mock.calls[0][0];
+    expect(sent).not.toHaveProperty("sort");
+    expect(sent).not.toHaveProperty("order");
+  });
+
+  test("rejects ordering on the count tool rather than silently dropping it", async () => {
+    const response = await countV3FeedbackRecords({
+      ...base,
+      ...({ sort: "created_at" } as object),
+    });
+
+    expect(response.status).toBe(422);
+    expect(countFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("rejects an unknown sort column", async () => {
+    const response = await listV3FeedbackRecords({ ...base, sort: "updated_at" as never });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("sort");
+  });
+
+  test("leaves an inverted timestamp range to the Hub", async () => {
+    // Deliberate asymmetry: two ISO strings with different offsets do not compare lexicographically, so a
+    // local check would reject valid requests. The Hub compares real instants and returns a precise 400,
+    // which relays through. Do not "fix" this by adding a local superRefine.
+    await listV3FeedbackRecords({
+      ...base,
+      since: "2026-12-01T00:00:00Z",
+      until: "2026-01-01T00:00:00Z",
+    });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({ since: "2026-12-01T00:00:00Z", until: "2026-01-01T00:00:00Z" })
+    );
   });
 });
 

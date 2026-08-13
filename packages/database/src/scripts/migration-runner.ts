@@ -45,7 +45,7 @@ const isBuilt = __filename.split(path.sep).includes("dist");
 const MIGRATIONS_DIR = isBuilt
   ? path.resolve(__dirname, "../migration") // From dist/scripts to dist/migration
   : path.resolve(__dirname, "../../migration"); // From src/scripts to migration
-const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
+const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../.prisma-migrations");
 const DATABASE_PACKAGE_DIR = isBuilt ? path.resolve(__dirname, "../..") : path.resolve(__dirname, "../..");
 const REPO_ROOT_DIR = path.resolve(DATABASE_PACKAGE_DIR, "../..");
 const PRISMA_CONFIG_PATH = path.join(DATABASE_PACKAGE_DIR, "prisma.config.ts");
@@ -186,7 +186,7 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   const startTime = Date.now();
 
   // packages/database/migration is the source of truth (checked in). We copy
-  // each schema migration into packages/database/migrations on demand for
+  // each schema migration into packages/database/.prisma-migrations on demand for
   // `prisma migrate deploy`, then wipe between runs so stale or experimental
   // migrations from a previous local invocation can't influence this one.
   await fs.rm(PRISMA_MIGRATIONS_DIR, { recursive: true, force: true });
