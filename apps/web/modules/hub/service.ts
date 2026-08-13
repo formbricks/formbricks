@@ -6,6 +6,7 @@ import { getHubClient } from "./hub-client";
 import type {
   CreateTaxonomyRunInput,
   CreateTaxonomyRunResponse,
+  EnrichmentStatusResponse,
   FeedbackRecordCountParams,
   FeedbackRecordCountResponse,
   FeedbackRecordCreateParams,
@@ -366,6 +367,27 @@ export const createFeedbackRecordsBatch = async (
     })
   );
   return { results };
+};
+
+/**
+ * Per-tenant enrichment progress (translation, sentiment, emotions) — ENG-1670.
+ *
+ * A live query on the Hub side, so there is nothing to cache here: the caller polls it while work is
+ * outstanding and stops once nothing is pending.
+ */
+export const getEnrichmentStatus = async (tenantId: string): Promise<HubResult<EnrichmentStatusResponse>> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.enrichmentStatus.retrieve({ tenant_id: tenantId });
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, tenantId, hint: getHubErrorHint(err) }, "Hub: getEnrichmentStatus failed");
+    return createHubResultFromError(err);
+  }
 };
 
 export const listTaxonomyFields = async (tenantId: string): Promise<HubResult<TaxonomyFieldsResponse>> => {
