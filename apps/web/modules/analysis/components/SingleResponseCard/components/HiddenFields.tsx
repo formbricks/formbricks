@@ -2,26 +2,27 @@
 
 import { EyeOffIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyHiddenFields } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface HiddenFieldsProps {
-  hiddenFields: TSurveyHiddenFields;
+  /** The survey's ingested Embedded Data fields, resolved through `getSurveyEmbeddedFields`. */
+  hiddenFields: TLinkedEmbeddedField[];
   responseData: TResponseData;
 }
 
-export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) => {
+export const HiddenFields = ({ hiddenFields, responseData }: Readonly<HiddenFieldsProps>) => {
   const { t } = useTranslation();
-  const fieldIds = hiddenFields.fieldIds ?? [];
 
   let hiddenFieldsData: { field: string; value: string }[] = [];
 
-  fieldIds.forEach((field) => {
-    if (responseData[field]) {
+  hiddenFields.forEach(({ field, link }) => {
+    const value = responseData[link.storageKey];
+    if (value) {
       hiddenFieldsData.push({
-        field,
-        value: typeof responseData[field] === "string" ? responseData[field] : "",
+        field: field.name,
+        value: typeof value === "string" ? value : "",
       });
     }
   });

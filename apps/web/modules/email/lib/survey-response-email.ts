@@ -7,6 +7,7 @@ import {
   ProcessedVariable,
   renderFollowUpEmail,
 } from "@formbricks/email";
+import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -97,19 +98,21 @@ const buildVariables = (
 ): ProcessedVariable[] => {
   if (!attachResponseData || !includeVariables) return [];
 
-  return survey.variables
-    .filter((variable) => {
-      const variableResponse = response.variables[variable.id];
+  // ENG-1837: definitions from the EmbeddedData tables; the value read stays the raw response slot,
+  // so a response that never captured this field is filtered out rather than shown its default.
+  return getComputedEmbeddedFields(survey)
+    .filter(({ link }) => {
+      const variableResponse = response.variables[link.storageKey];
       return (
         (typeof variableResponse === "string" || typeof variableResponse === "number") &&
         variableResponse !== undefined
       );
     })
-    .map((variable) => ({
-      id: variable.id,
-      name: variable.name,
-      type: variable.type,
-      value: response.variables[variable.id],
+    .map(({ field, link }) => ({
+      id: link.storageKey,
+      name: field.name,
+      type: field.dataType === "number" ? ("number" as const) : ("text" as const),
+      value: response.variables[link.storageKey],
     }));
 };
 
@@ -121,17 +124,15 @@ const buildHiddenFields = (
 ): ProcessedHiddenField[] => {
   if (!attachResponseData || !includeHiddenFields) return [];
 
-  return (
-    survey.hiddenFields.fieldIds
-      ?.filter((hiddenFieldId) => {
-        const hiddenFieldResponse = response.data[hiddenFieldId];
-        return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
-      })
-      .map((hiddenFieldId) => ({
-        id: hiddenFieldId,
-        value: response.data[hiddenFieldId] as string,
-      })) ?? []
-  );
+  return getIngestedStorageKeys(survey)
+    .filter((hiddenFieldId) => {
+      const hiddenFieldResponse = response.data[hiddenFieldId];
+      return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
+    })
+    .map((hiddenFieldId) => ({
+      id: hiddenFieldId,
+      value: response.data[hiddenFieldId] as string,
+    }));
 };
 
 /**

@@ -1,3 +1,4 @@
+import { type TLinkedEmbeddedField, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -54,13 +55,30 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
   return match ? match[0] : null;
 };
 
+/**
+ * A recall token addresses an Embedded Data field by its storage key. ENG-1837 resolves what that key
+ * means through the EmbeddedData tables (with the legacy columns as fallback) rather than reading
+ * `hiddenFields.fieldIds` / `variables` directly; `source` is what used to be the array a key was
+ * found in.
+ */
+const findEmbeddedField = (
+  embeddedFields: TLinkedEmbeddedField[],
+  storageKey: string,
+  source: "computed" | "ingested"
+): TLinkedEmbeddedField | undefined =>
+  embeddedFields.find(({ field, link }) => link.storageKey === storageKey && field.source === source);
+
 export const getRecallItemLabel = <T extends TSurvey>(
   recallItemId: string,
   survey: T,
   languageCode: string
 ): string | undefined => {
-  const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
-  if (isHiddenField) return recallItemId;
+  const embeddedFields = getSurveyEmbeddedFields(survey);
+
+  // Precedence is load-bearing and unchanged: ingested first, then elements, then computed — so a
+  // storage key that also matches an element id keeps resolving the way it does today.
+  const ingestedField = findEmbeddedField(embeddedFields, recallItemId, "ingested");
+  if (ingestedField) return ingestedField.field.name;
 
   const questions = getElementsFromBlocks(survey.blocks);
   const surveyQuestion = questions.find((question) => question.id === recallItemId);
@@ -70,8 +88,8 @@ export const getRecallItemLabel = <T extends TSurvey>(
     return headline ? getTextContent(headline) : headline;
   }
 
-  const variable = survey.variables?.find((variable) => variable.id === recallItemId);
-  if (variable) return variable.name;
+  const computedField = findEmbeddedField(embeddedFields, recallItemId, "computed");
+  if (computedField) return computedField.field.name;
 };
 
 // Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
@@ -159,12 +177,13 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
   if (!text.includes("#recall:")) return [];
 
   const ids = extractIds(text);
+  const embeddedFields = getSurveyEmbeddedFields(survey);
   let recallItems: TSurveyRecallItem[] = [];
   ids.forEach((recallItemId) => {
-    const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
+    const isHiddenField = findEmbeddedField(embeddedFields, recallItemId, "ingested");
     const questions = getElementsFromBlocks(survey.blocks);
     const isSurveyQuestion = questions.find((question) => question.id === recallItemId);
-    const isVariable = survey.variables.find((variable) => variable.id === recallItemId);
+    const isVariable = findEmbeddedField(embeddedFields, recallItemId, "computed");
 
     const recallItemLabel = getRecallItemLabel(recallItemId, survey, languageCode);
 

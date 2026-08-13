@@ -1,6 +1,7 @@
 import { Prisma } from "@formbricks/database/prisma";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -257,6 +258,9 @@ export const mockSyncSurveyOutput: SurveyMock = {
   segmentId: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
+  // ENG-1837: the join `selectSurvey` now carries. Empty here, so readers fall back to the legacy
+  // columns above — the shape these fixtures have always described.
+  embeddedDataLinks: [],
   ...baseSurveyProperties,
   followUps: [],
   variables: [],
@@ -284,6 +288,7 @@ export const mockSurveyOutput: SurveyMock = {
   segmentId: null,
   inlineTriggers: null,
   languages: mockSurveyLanguages,
+  embeddedDataLinks: [],
   followUps: [],
   variables: [],
   showLanguageSwitch: null,
@@ -327,13 +332,18 @@ export const updateSurveyInput: TSurvey = {
   customHeadScriptsMode: null,
 };
 
-export const mockTransformedSurveyOutput = {
-  ...mockSurveyOutput,
-};
+/**
+ * What `transformPrismaSurvey` returns: the raw `embeddedDataLinks` relation is replaced by the
+ * inlined `embeddedFields` the read seam consumes (ENG-1837).
+ */
+const withInlinedEmbeddedFields = <T extends { embeddedDataLinks: unknown[] }>({
+  embeddedDataLinks,
+  ...survey
+}: T) => ({ ...survey, embeddedFields: [] as TLinkedEmbeddedField[] });
 
-export const mockTransformedSyncSurveyOutput = {
-  ...mockSyncSurveyOutput,
-};
+export const mockTransformedSurveyOutput = withInlinedEmbeddedFields(mockSurveyOutput);
+
+export const mockTransformedSyncSurveyOutput = withInlinedEmbeddedFields(mockSyncSurveyOutput);
 
 export const mockSurveyWithLogic: TSurvey = {
   ...mockSyncSurveyOutput,

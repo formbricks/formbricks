@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { ZEmbeddedData } from "./embedded-data";
 import { type TDesiredEmbeddedField, toDesiredEmbeddedFields } from "./embedded-data-mapping";
+import { coerceToEmbeddedDataType } from "./embedded-data-resolver";
 import { type TSurveyVariable, ZSurveyHiddenFields, ZSurveyVariable } from "./surveys/types";
 
 /** Wraps a mapped field in the row it would be written as, so the two schemas can be checked together. */
@@ -142,5 +143,38 @@ describe("toDesiredEmbeddedFields", () => {
     // Each caller decides: the write bridge rejects the save, the backfill can skip the survey.
     const fields = toDesiredEmbeddedFields({ hiddenFields: { enabled: true, fieldIds: ["plan", "plan"] } });
     expect(fields).toHaveLength(2);
+  });
+});
+
+/**
+ * The proof behind ENG-1837's decision to seed the renderer's variable map from a computed field's
+ * `defaultValue` instead of `survey.variables[].value`. `ZSurveyVariable` guarantees a number
+ * variable holds a number and a text variable a string, and `toDesiredEmbeddedFields` copies that
+ * value verbatim — so coercing it back through the resolver is a pure pass-through and the seeded
+ * map is byte-identical to today's. If either schema ever loosens, this test fails before the
+ * renderer starts seeding a different value.
+ */
+describe("computed-field seeding is value-preserving", () => {
+  const variables: TSurveyVariable[] = [
+    numberVariable,
+    textVariable,
+    { id: "clx000000000000000000003", name: "zero", type: "number", value: 0 },
+    { id: "clx000000000000000000004", name: "blank", type: "text", value: "" },
+    { id: "clx000000000000000000005", name: "negative", type: "number", value: -12.5 },
+    { id: "clx000000000000000000006", name: "numeric_text", type: "text", value: "0" },
+  ];
+
+  test.each(variables)("$name coerces back to exactly its declared value", (variable) => {
+    const [field] = toDesiredEmbeddedFields({ variables: [variable] });
+
+    expect(coerceToEmbeddedDataType(field.defaultValue, field.dataType)).toBe(variable.value);
+  });
+
+  test("a variable's declared value is never dropped by the coercion", () => {
+    const fields = toDesiredEmbeddedFields({ variables });
+
+    expect(fields.map((field) => coerceToEmbeddedDataType(field.defaultValue, field.dataType))).toStrictEqual(
+      variables.map((variable) => variable.value)
+    );
   });
 });

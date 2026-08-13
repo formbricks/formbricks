@@ -1,5 +1,6 @@
 import { Column, Container, Heading, Hr, Link, Row, Section, Text } from "@react-email/components";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
+import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import type { TOrganization } from "@formbricks/types/organizations";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -13,7 +14,12 @@ import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { ProcessedResponseElement } from "../../src/types/follow-up";
 import { TFunction } from "../../src/types/translations";
 
-type TResponseFinishedEmailSurvey = Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields">;
+// `variables` / `hiddenFields` stay in the pick as the fallback the resolver reads when a survey's
+// EmbeddedData rows are not joined in; the rows themselves arrive as `embeddedFields` (ENG-1837).
+type TResponseFinishedEmailSurvey = Pick<
+  TSurvey,
+  "id" | "name" | "variables" | "hiddenFields" | "embeddedFields"
+>;
 
 export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
   readonly survey: TResponseFinishedEmailSurvey;
@@ -28,8 +34,9 @@ export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
 
 const mockGetElementResponseMapping = (survey: TResponseFinishedEmailSurvey, response: TResponse) => {
   // For preview, just return the response data as elements
+  const ingestedStorageKeys = getIngestedStorageKeys(survey);
   return Object.entries(response.data)
-    .filter(([key]) => !survey.hiddenFields.fieldIds?.includes(key))
+    .filter(([key]) => !ingestedStorageKeys.includes(key))
     .map(([key, value]) => ({
       element: key,
       response: value as string | string[],
@@ -71,26 +78,26 @@ export function ResponseFinishedEmail({
                 </Row>
               );
             })}
-            {survey.variables
-              .filter((variable) => {
-                const variableResponse = response.variables[variable.id];
+            {getComputedEmbeddedFields(survey)
+              .filter(({ link }) => {
+                const variableResponse = response.variables[link.storageKey];
                 if (typeof variableResponse !== "string" && typeof variableResponse !== "number") {
                   return false;
                 }
                 return variableResponse !== undefined;
               })
-              .map((variable) => {
-                const variableResponse = response.variables[variable.id];
+              .map(({ field, link }) => {
+                const variableResponse = response.variables[link.storageKey];
                 return (
-                  <Row key={variable.id}>
+                  <Row key={link.storageKey}>
                     <Column className="w-full text-sm font-medium">
                       <Text className="mb-1 flex items-center gap-2">
-                        {variable.type === "number" ? (
+                        {field.dataType === "number" ? (
                           <FileDigitIcon className="h-4 w-4" />
                         ) : (
                           <FileType2Icon className="h-4 w-4" />
                         )}
-                        {variable.name}
+                        {field.name}
                       </Text>
                       <Text className="mt-0 whitespace-pre-wrap break-words font-medium">
                         {variableResponse}
@@ -99,8 +106,8 @@ export function ResponseFinishedEmail({
                   </Row>
                 );
               })}
-            {survey.hiddenFields.fieldIds
-              ?.filter((hiddenFieldId) => {
+            {getIngestedStorageKeys(survey)
+              .filter((hiddenFieldId) => {
                 const hiddenFieldResponse = response.data[hiddenFieldId];
                 return hiddenFieldResponse && typeof hiddenFieldResponse === "string";
               })

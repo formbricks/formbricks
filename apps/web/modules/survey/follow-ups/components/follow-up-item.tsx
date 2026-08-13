@@ -4,6 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { CopyIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -70,8 +71,17 @@ export const FollowUpItem = ({
       return false;
     });
 
+    // ENG-1837: the id list comes from the Embedded Data definitions, but the `enabled` gate stays.
+    // `deriveLegacyEmbeddedData` ignores `hiddenFields.enabled` by design and TLinkedEmbeddedField
+    // carries no equivalent, and this is the one reader that consults the flag — reading it here is a
+    // flag read, not a field-list read, so it keeps this recipient label behaving exactly as before.
     const matchedHiddenField = localSurvey.hiddenFields?.enabled
-      ? (localSurvey.hiddenFields.fieldIds ?? []).find((fieldId) => fieldId === to)
+      ? getIngestedStorageKeys({
+          // The two slices the ingested list can come from, passed individually so this memo keeps
+          // depending on them rather than on the whole survey object.
+          hiddenFields: localSurvey.hiddenFields,
+          embeddedFields: localSurvey.embeddedFields,
+        }).find((storageKey) => storageKey === to)
       : undefined;
 
     const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) => {
@@ -95,8 +105,8 @@ export const FollowUpItem = ({
     return !matchedQuestion && !matchedHiddenField && !matchedEmail;
   }, [
     followUp.action.properties,
-    localSurvey.hiddenFields?.enabled,
-    localSurvey.hiddenFields?.fieldIds,
+    localSurvey.hiddenFields,
+    localSurvey.embeddedFields,
     localSurvey.blocks,
     teamMemberDetails,
     userEmail,
@@ -156,7 +166,7 @@ export const FollowUpItem = ({
           </div>
         </button>
 
-        <div className="absolute right-4 top-4 flex items-center">
+        <div className="absolute top-4 right-4 flex items-center">
           <TooltipRenderer tooltipContent={t("common.delete")}>
             <Button
               variant="ghost"

@@ -402,6 +402,83 @@ describe("recall utility functions", () => {
     });
   });
 
+  /**
+   * ENG-1837: a recall token's label and type come from the survey's Embedded Data definitions —
+   * the joined rows when present, the legacy columns otherwise — instead of `hiddenFields.fieldIds`
+   * and `variables`. The precedence (ingested → element → computed) is load-bearing and unchanged.
+   */
+  describe("recall items resolve through the inlined EmbeddedData rows", () => {
+    const embeddedField = (
+      storageKey: string,
+      name: string,
+      source: "computed" | "ingested",
+      dataType: "string" | "number" = "string"
+    ) => ({
+      field: { name, source, dataType, defaultValue: null, locked: false },
+      link: { storageKey },
+    });
+
+    test("uses the rows' names as labels when the join is present", () => {
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: ["hidden1"] },
+        variables: [{ id: "var1", name: "Stale Name", type: "text", value: "" }],
+        embeddedFields: [
+          embeddedField("var1", "Variable One", "computed"),
+          embeddedField("hidden1", "hidden1", "ingested"),
+        ],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems(
+        "Text with #recall:var1/fallback:a# and #recall:hidden1/fallback:b#",
+        survey,
+        "en"
+      );
+
+      expect(result).toEqual([
+        { id: "var1", label: "Variable One", type: "variable" },
+        { id: "hidden1", label: "hidden1", type: "hiddenField" },
+      ]);
+    });
+
+    test("an empty row list falls back to the legacy columns", () => {
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: ["hidden1"] },
+        variables: [],
+        embeddedFields: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Text with #recall:hidden1/fallback:b#", survey, "en");
+
+      expect(result).toEqual([{ id: "hidden1", label: "hidden1", type: "hiddenField" }]);
+    });
+
+    test("a storage key that also matches an element id still resolves as a hidden field", () => {
+      const survey = {
+        blocks: [{ id: "b1", elements: [{ id: "shared", headline: { en: "Question headline" } }] }],
+        hiddenFields: { fieldIds: ["shared"] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
+
+      expect(result).toEqual([{ id: "shared", label: "shared", type: "hiddenField" }]);
+    });
+
+    test("an element wins over a computed field on a colliding key", () => {
+      const survey = {
+        blocks: [{ id: "b1", elements: [{ id: "shared", headline: { en: "Question headline" } }] }],
+        hiddenFields: { fieldIds: [] },
+        variables: [{ id: "shared", name: "Variable One", type: "text", value: "" }],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
+
+      expect(result).toEqual([{ id: "shared", label: "Question headline", type: "element" }]);
+    });
+  });
+
   describe("getFallbackValues", () => {
     test("extracts fallback values from text", () => {
       const text = "Text #recall:id1/fallback:value1# and #recall:id2/fallback:value2#";

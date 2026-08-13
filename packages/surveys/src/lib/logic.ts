@@ -1,22 +1,39 @@
+import {
+  type TLinkedEmbeddedField,
+  type TResolvableEmbeddedField,
+  getComputedEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
-import { type TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getElementsFromSurveyBlocks } from "./utils";
 
+/** Finds a computed field by the key its value is stored under in `response.variables`. */
+const findComputedField = (
+  computedFields: TLinkedEmbeddedField[],
+  storageKey: string
+): TLinkedEmbeddedField | undefined => computedFields.find((f) => f.link.storageKey === storageKey);
+
+/**
+ * ENG-1837 repoints the *definition* lookup onto the EmbeddedData tables; the value expression below
+ * is deliberately unchanged. `resolveEmbeddedValue` would coerce a non-numeric stored value to the
+ * field's declared default instead of `0`, and render a text field holding `0` as `"0"` rather than
+ * `""` — both of which change what existing responses evaluate to. See the swap checklist on
+ * `resolveEmbeddedValue`.
+ */
 const getVariableValue = (
-  variables: TSurveyVariable[],
+  computedFields: TLinkedEmbeddedField[],
   variableId: string,
   variablesData: TResponseVariables
 ) => {
-  const variable = variables.find((v) => v.id === variableId);
-  if (!variable) return undefined;
+  const field = findComputedField(computedFields, variableId);
+  if (!field) return undefined;
   const variableValue = variablesData[variableId];
-  return variable.type === "number" ? Number(variableValue) || 0 : variableValue || "";
+  return field.field.dataType === "number" ? Number(variableValue) || 0 : variableValue || "";
 };
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -171,8 +188,7 @@ const getLeftOperandValue = (
 
       return data[leftOperand.value];
     case "variable":
-      const variables = localSurvey.variables || [];
-      return getVariableValue(variables, leftOperand.value, variablesData);
+      return getVariableValue(getComputedEmbeddedFields(localSurvey), leftOperand.value, variablesData);
     case "hiddenField":
       return data[leftOperand.value];
     default:
@@ -192,8 +208,7 @@ const getRightOperandValue = (
     case "element":
       return data[rightOperand.value];
     case "variable":
-      const variables = localSurvey.variables || [];
-      return getVariableValue(variables, rightOperand.value, variablesData);
+      return getVariableValue(getComputedEmbeddedFields(localSurvey), rightOperand.value, variablesData);
     case "hiddenField":
       return data[rightOperand.value];
     case "static":
@@ -222,27 +237,28 @@ const evaluateSingleCondition = (
       ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
       : undefined;
 
-    let leftField: TSurveyElement | TSurveyVariable | string;
+    let leftField: TSurveyElement | TResolvableEmbeddedField | string;
 
     const questions = getElementsFromSurveyBlocks(localSurvey.blocks);
+    const computedFields = getComputedEmbeddedFields(localSurvey);
     if (condition.leftOperand?.type === "element") {
       leftField = questions.find((q) => q.id === condition.leftOperand?.value) ?? "";
     } else if (condition.leftOperand?.type === "variable") {
-      leftField = localSurvey.variables.find((v) => v.id === condition.leftOperand?.value) as TSurveyVariable;
+      leftField = findComputedField(computedFields, condition.leftOperand.value)
+        ?.field as TResolvableEmbeddedField;
     } else if (condition.leftOperand?.type === "hiddenField") {
       leftField = condition.leftOperand.value as string;
     } else {
       leftField = "";
     }
 
-    let rightField: TSurveyElement | TSurveyVariable | string;
+    let rightField: TSurveyElement | TResolvableEmbeddedField | string;
 
     if (condition.rightOperand?.type === "element") {
       rightField = questions.find((q) => q.id === condition.rightOperand?.value) ?? "";
     } else if (condition.rightOperand?.type === "variable") {
-      rightField = localSurvey.variables.find(
-        (v) => v.id === condition.rightOperand?.value
-      ) as TSurveyVariable;
+      rightField = findComputedField(computedFields, condition.rightOperand.value)
+        ?.field as TResolvableEmbeddedField;
     } else if (condition.rightOperand?.type === "hiddenField") {
       rightField = condition.rightOperand.value as string;
     } else {
@@ -251,7 +267,7 @@ const evaluateSingleCondition = (
 
     if (
       condition.leftOperand.type === "variable" &&
-      (leftField as TSurveyVariable).type === "number" &&
+      (leftField as TResolvableEmbeddedField).dataType === "number" &&
       condition.rightOperand?.type === "hiddenField"
     ) {
       rightValue = Number(rightValue as string);
@@ -453,14 +469,15 @@ const performCalculation = (
   data: TResponseData,
   calculations: Record<string, number | string>
 ): number | string | undefined => {
-  const variables = survey.variables || [];
-  const variable = variables.find((v) => v.id === action.variableId);
+  const computedField = findComputedField(getComputedEmbeddedFields(survey), action.variableId);
 
-  if (!variable) return undefined;
+  if (!computedField) return undefined;
+
+  const { dataType } = computedField.field;
 
   let currentValue = calculations[action.variableId];
   if (currentValue === undefined) {
-    currentValue = variable.type === "number" ? 0 : "";
+    currentValue = dataType === "number" ? 0 : "";
   }
   let operandValue: string | number | undefined;
 
@@ -475,11 +492,14 @@ const performCalculation = (
         operandValue = value;
       }
       break;
+    // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
+    // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
+    // the calculation returns undefined, exactly as before.
     case "element":
     case "hiddenField":
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
-        if (variable.type === "number" && !isNaN(Number(val))) {
+        if (dataType === "number" && !isNaN(Number(val))) {
           operandValue = Number(val);
         }
         operandValue = val;

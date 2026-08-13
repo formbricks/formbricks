@@ -15,6 +15,7 @@ import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
+import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -124,6 +125,9 @@ export const selectSurvey = {
   },
   followUps: true,
   slug: true,
+  // ENG-1837: the definitions every reader resolves through, joined and inlined by
+  // `transformPrismaSurvey`. Read-only — the rows are written by `reconcileEmbeddedData`.
+  embeddedDataLinks: selectSurveyEmbeddedDataLinks,
 } satisfies Prisma.SurveySelect;
 
 const reconcilePersistedSurveySchedulingIfDue = async ({
@@ -329,6 +333,12 @@ export const updateSurveyInternal = async (
       id: _id,
       // archivedAt is owned exclusively by the archive/restore flows; never let a survey update touch it.
       archivedAt: _archivedAt,
+      // ENG-1837: `embeddedFields` is a read-only projection of the EmbeddedData tables, inlined by
+      // the join below. `surveyData` is spread straight into `tx.survey.update`'s `data`, and
+      // `Survey` owns relations named `embeddedData` / `embeddedDataLinks` — so leaving it in would
+      // turn a read projection into a nested relation write. The rows are written by
+      // `reconcileEmbeddedData` from the persisted legacy columns instead.
+      embeddedFields: _embeddedFields,
       ...surveyData
     } = updatedSurvey;
 
@@ -904,7 +914,11 @@ export const createSurvey = async (
     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
     // @ts-expect-error
     const transformedSurvey: TSurvey = {
-      ...survey,
+      // ENG-1837: this result is hand-built rather than routed through `transformPrismaSurvey`, so
+      // the inlining has to happen here too — otherwise the raw relation leaks onto TSurvey. The
+      // rows are reconciled *after* the create above, so the list is empty here and the accessor
+      // falls back to the freshly written legacy columns, which carry the same definitions.
+      ...withInlinedEmbeddedFields(survey),
       ...(survey.segment && {
         segment: {
           ...survey.segment,

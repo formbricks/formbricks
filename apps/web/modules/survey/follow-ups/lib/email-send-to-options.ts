@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -48,7 +49,7 @@ export const buildEmailSendToOptions = ({
     return false;
   });
 
-  const hiddenFieldIds = survey.hiddenFields.fieldIds ?? [];
+  const hiddenFieldIds = getIngestedStorageKeys(survey);
 
   const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) =>
     teamMemberDetail.email === userEmail ? { name: "Yourself", email: userEmail } : teamMemberDetail

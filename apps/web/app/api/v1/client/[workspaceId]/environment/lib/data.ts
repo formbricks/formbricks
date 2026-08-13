@@ -10,6 +10,7 @@ import {
   TJsWorkspaceStateWorkspaceSetting,
 } from "@formbricks/types/js";
 import { type TBaseFilters, buildSurveyInteractionRefreshMap } from "@formbricks/types/segment";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -161,6 +162,9 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             displayLimit: true,
             displayOption: true,
             hiddenFields: true,
+            // ENG-1837: the definitions the SDK-rendered survey's recall and logic engines resolve
+            // through. Rides in the same 60s-cached workspace-state payload as the columns above.
+            embeddedDataLinks: selectSurveyEmbeddedDataLinks,
             isBackButtonHidden: true,
             isAutoProgressingEnabled: true,
             triggers: {

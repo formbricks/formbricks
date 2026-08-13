@@ -1,6 +1,7 @@
 import { TFunction } from "i18next";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
+import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -134,13 +135,35 @@ const getElementHeadline = (
   return getTSurveyElementTypeEnumName(element.type, t) ?? "";
 };
 
+/**
+ * ENG-1837: the editor's view of one computed Embedded Data field. The logic builder renders and
+ * filters on an id/name/type triple, so the definitions are adapted to that shape once here rather
+ * than reshaped at each of the five pickers below.
+ *
+ * In the editor the legacy cards are still the live source of truth — `survey-editor.tsx` drops the
+ * inlined `embeddedFields` for exactly that reason — so this resolves off the cards while the survey
+ * is being edited, and off the rows everywhere else.
+ */
+interface TComputedFieldOption {
+  id: string;
+  name: string;
+  type: "text" | "number";
+}
+
+const getComputedFieldOptions = (localSurvey: TSurvey): TComputedFieldOption[] =>
+  getComputedEmbeddedFields(localSurvey).map(({ field, link }) => ({
+    id: link.storageKey,
+    name: field.name,
+    type: field.dataType === "number" ? "number" : "text",
+  }));
+
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   t: TFunction,
   blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
 ): TComboboxGroupedOption[] => {
-  const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
-  const variables = localSurvey.variables ?? [];
+  const hiddenFields = getIngestedStorageKeys(localSurvey);
+  const variables = getComputedFieldOptions(localSurvey);
 
   // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
@@ -326,7 +349,7 @@ export const getConditionOperatorOptions = (
   t: TFunction
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
-    const variables = localSurvey.variables ?? [];
+    const variables = getComputedFieldOptions(localSurvey);
     const variableType =
       variables.find((variable) => variable.id === condition.leftOperand.value)?.type || "text";
     return getLogicRules(t)[`variable.${variableType}`].options;
@@ -389,8 +412,8 @@ export const getMatchValueProps = (
           .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
           .flatMap((block) => block.elements);
 
-  let variables = localSurvey.variables ?? [];
-  let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
+  let variables = getComputedFieldOptions(localSurvey);
+  let hiddenFields = getIngestedStorageKeys(localSurvey);
 
   const selectedElement = elements.find((element) => element.id === condition.leftOperand.value);
   const selectedVariable = variables.find((variable) => variable.id === condition.leftOperand.value);
@@ -1050,7 +1073,7 @@ export const getActionTargetOptions = (
 };
 
 export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] => {
-  const variables = localSurvey.variables ?? [];
+  const variables = getComputedFieldOptions(localSurvey);
 
   return variables.map((variable) => {
     return {
@@ -1116,8 +1139,8 @@ export const getActionValueOptions = (
   const allElements = localSurvey.blocks
     .slice(0, blockIdx + 1) // Include blocks from 0 to blockIdx (inclusive)
     .flatMap((block) => block.elements);
-  const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
-  let variables = localSurvey.variables ?? [];
+  const hiddenFields = getIngestedStorageKeys(localSurvey);
+  let variables = getComputedFieldOptions(localSurvey);
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {
     return {

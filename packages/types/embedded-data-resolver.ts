@@ -1,12 +1,11 @@
 import { z } from "zod";
 import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
-import { toDesiredEmbeddedFields } from "./embedded-data-mapping";
+import { type TLegacyEmbeddedFields, toDesiredEmbeddedFields } from "./embedded-data-mapping";
 import type { TI18nString } from "./i18n";
 import type { TResponse } from "./responses";
 import { formatSnakeCaseToTitleCase } from "./safe-identifier";
 import type { TSurveyBlocks } from "./surveys/blocks";
-import type { TSurveyHiddenFields, TSurveyVariables } from "./surveys/types";
 import { getTextContent } from "./surveys/validation";
 
 /**
@@ -419,11 +418,50 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
  * `fieldIds`). Deriving from `fieldIds` alone therefore preserves today's read behavior exactly:
  * whatever either path stored still resolves, and what nothing stored reports as unset.
  */
-export const deriveLegacyEmbeddedData = (survey: {
-  variables: TSurveyVariables;
-  hiddenFields: TSurveyHiddenFields;
-}): TLinkedEmbeddedField[] =>
+export const deriveLegacyEmbeddedData = (survey: TLegacyEmbeddedFields): TLinkedEmbeddedField[] =>
   toDesiredEmbeddedFields(survey).map(({ storageKey, ...field }) => ({
     field: { ...field, locked: false },
     link: { storageKey },
   }));
+
+/**
+ * The survey slice {@link getSurveyEmbeddedFields} needs. Deliberately looser than `TSurvey`: the
+ * readers this serves hold everything from a full survey to a four-key `Pick`, and every one of them
+ * must be able to call the accessor without widening its own select.
+ */
+export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
+  /** The rows, joined and inlined at load. Absent when the select omitted the join. */
+  embeddedFields?: TLinkedEmbeddedField[] | null;
+}
+
+/**
+ * **The one place that decides where a survey's Embedded Data definitions come from.** Every reader
+ * — recall, logic, export columns, response filters, pickers, emails, integrations — calls this and
+ * nothing else; no reader may call {@link deriveLegacyEmbeddedData} directly, which is what makes
+ * "exactly one fallback decision point" a property a reviewer can check with grep.
+ *
+ * Rows win when present. The empty-list test is deliberate rather than `!== undefined`: a select
+ * that omits the join yields `undefined`, and a survey read through it must still resolve, while
+ * `deriveLegacyEmbeddedData` returns `[]` for a survey whose legacy columns are empty — so a survey
+ * that genuinely has zero fields answers `[]` either way, and one that missed the ENG-1835 backfill
+ * falls back instead of silently losing every field.
+ *
+ * This is a *definition* lookup only. ENG-1837 repoints where a field's name, source and dataType
+ * come from; it deliberately does not repoint value arithmetic onto {@link resolveEmbeddedValue},
+ * whose coercion and default tiers differ from today's call-site expressions (see the swap checklist
+ * on {@link resolveEmbeddedValue}) and would change what stored responses render as.
+ */
+export const getSurveyEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  survey.embeddedFields?.length ? survey.embeddedFields : deriveLegacyEmbeddedData(survey);
+
+/** The computed (ex-variable) fields of a survey, in inlined order. */
+export const getComputedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  getSurveyEmbeddedFields(survey).filter(({ field }) => field.source === "computed");
+
+/** The ingested (ex-hidden-field) fields of a survey, in inlined order. */
+export const getIngestedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  getSurveyEmbeddedFields(survey).filter(({ field }) => field.source === "ingested");
+
+/** The storage keys of a survey's ingested fields — what `response.data` addresses them by. */
+export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
+  getIngestedEmbeddedFields(survey).map(({ link }) => link.storageKey);
