@@ -743,7 +743,6 @@ describe("License Core Logic", () => {
         },
       }));
 
-      // eslint-disable-next-line turbo/no-undeclared-env-vars -- NEXT_PHASE is a Next.js env variable
       process.env.NEXT_PHASE = "phase-production-build";
 
       const { fetchLicense } = await import("./license");

@@ -3,7 +3,7 @@ import globals from "globals";
 import { base, commonIgnores, typescriptParsing } from "./base.mjs";
 
 /*
- * Flat config mirroring the old `legacy-react.js` tier (ENG-1677): turbo + prettier +
+ * Flat config mirroring the old `legacy-react.js` tier: turbo + prettier +
  * react-hooks + the vitest convention, without the full react/typescript-eslint rule sets.
  * Used by packages (email, surveys) that predate the stricter tiers — move them to
  * `react.mjs` when they are ready.

@@ -66,10 +66,8 @@ function FormField({
   imageUrl,
   videoUrl,
 }: Readonly<FormFieldProps>): React.JSX.Element {
-  // Ensure value is always an object
-  const currentValues = React.useMemo(() => {
-    return value ?? {};
-  }, [value]);
+  // `value` defaults to {} in the destructuring above, so it is always an object here.
+  const currentValues = value;
 
   // Determine if a field is required
   const isFieldRequired = (field: FormFieldConfig): boolean => {

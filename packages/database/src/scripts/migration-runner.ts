@@ -337,6 +337,7 @@ const runDataMigration = async (migration: MigrationScript): Promise<void> => {
     // Record migration failure
     logger.error(error, `Data migration ${migration.name} failed`);
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- hasLock is set inside the transaction callback; TS control-flow analysis cannot see assignments across the closure boundary
     if (hasLock) {
       // Mark migration as failed
       await prisma.$queryRaw`
@@ -470,7 +471,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
       migrations.push({
         type: "schema",
         name: dirName,
-      } as MigrationScript);
+      });
     } else if (hasDataMigration) {
       // Check for duplicates among data migrations
       if (dataMigrationNames.has(migrationName)) {

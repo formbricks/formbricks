@@ -261,7 +261,7 @@ export const MainNavigation = ({
     const ts = new Date(trialEnd).getTime();
     if (!Number.isFinite(ts)) return null;
     const msPerDay = 86_400_000;
-    // eslint-disable-next-line react-hooks/purity -- migration ENG-1677
+    // eslint-disable-next-line react-hooks/purity -- migration ENG-2366
     return Math.ceil((ts - Date.now()) / msPerDay);
   }, [
     isFormbricksCloud,

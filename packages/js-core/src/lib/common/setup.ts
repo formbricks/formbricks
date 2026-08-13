@@ -24,7 +24,7 @@ import {
   okVoid,
 } from "@/types/error";
 
-const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
+const migrateLocalStorage = (): { changed: boolean; newState?: TLegacyConfig } => {
   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
 
   if (existingConfig) {
@@ -61,7 +61,7 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
     }
 
     if (changed) {
-      return { changed: true, newState: parsedConfig as unknown as TConfig };
+      return { changed: true, newState: parsedConfig };
     }
   }
 
@@ -89,8 +89,10 @@ export const setup = async (
     // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
     // otherwise, we just sync again!
 
-    if (newState && !newState.user?.data?.userId) {
-      config.update(newState);
+    if (newState && !newState.user?.data.userId) {
+      // Old first-migration configs could be persisted without a user state — substitute the
+      // default so downstream `config.user` reads keep working and the resync path still runs.
+      config.update({ ...newState, user: newState.user ?? DEFAULT_USER_STATE_NO_USER_ID });
     }
   }
 
@@ -281,6 +283,7 @@ export const setup = async (
       });
 
       if (!workspaceResponse.ok) {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- the catch below feeds this structured ApiErrorResponse (code/responseMessage) to handleErrorOnFirstSetup
         throw workspaceResponse.error;
       }
 

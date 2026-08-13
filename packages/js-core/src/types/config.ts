@@ -268,7 +268,10 @@ export interface TLegacyConfigInput {
   attributes?: Record<string, string>;
 }
 
-export type TLegacyConfig = TConfig & {
+export type TLegacyConfig = Omit<TConfig, "user"> & {
+  // Optional, unlike TConfig: old first-migration formats persisted user-less configs
+  // to localStorage, so a parsed legacy blob may genuinely lack `user`.
+  user?: TUserState;
   apiHost?: string;
   attributes?: TAttributes;
   // Intermediate format fields (pre-workspace rename)
