@@ -10,7 +10,7 @@ import {
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { validateInputs } from "../utils/validate";
 import { getFeedbackSourcesToReconcile } from "./service";
-import { indexSurveyElements } from "./survey-elements";
+import { type TSurveyElementIndex, indexSurveyElements } from "./survey-elements";
 
 /**
  * Result of reconciling one survey's stored feedback-source mappings against that survey's current
@@ -33,14 +33,114 @@ export const isEmptyReconciliation = (reconciliation: TFeedbackSourceReconciliat
   reconciliation.toDelete.length === 0 &&
   reconciliation.toUpdate.length === 0;
 
+type TMappingElementId = Pick<TFeedbackSourceFormbricksMapping, "surveyId" | "elementId" | "hubFieldType">;
+
+type TMappingHubFieldType = { elementId: string; hubFieldType: THubFieldType };
+
+/**
+ * The stored rows for one survey, split by what has to happen to them.
+ *
+ * `removed` and `unmappable` are kept apart because only one of them is safe to defer.
+ *
+ * The element is GONE (`removed`): the publish path looks its answer up by element id, finds nothing
+ * and skips the row (transform.ts), so the row is inert. Keeping it publishes nothing.
+ *
+ * The element still EXISTS but was retyped to something with no Hub field (`unmappable`) —
+ * contactInfo, address, cal, cta, fileUpload, consent. The id is preserved across a retype, so the
+ * publish path still finds the answer and ships it under the row's stale hubFieldType: a contactInfo
+ * answer is an array, which lands in Hub as `value_text: value.join(", ")` — name, email and phone in
+ * one string, for the element types the product refuses to map precisely because they hold that data.
+ * These rows are actively leaking.
+ */
+type TClassifiedMappings = {
+  removed: string[];
+  unmappable: string[];
+  retyped: TMappingHubFieldType[];
+};
+
+const classifyStoredMappings = (
+  surveyMappings: TMappingElementId[],
+  { elementIds, supportedHubFieldTypes }: TSurveyElementIndex
+): TClassifiedMappings => {
+  const removed: string[] = [];
+  const unmappable: string[] = [];
+  const retyped: TMappingHubFieldType[] = [];
+
+  for (const mapping of surveyMappings) {
+    const currentHubFieldType = supportedHubFieldTypes.get(mapping.elementId);
+
+    if (!currentHubFieldType) {
+      (elementIds.has(mapping.elementId) ? unmappable : removed).push(mapping.elementId);
+    } else if (currentHubFieldType !== mapping.hubFieldType) {
+      retyped.push({ elementId: mapping.elementId, hubFieldType: currentHubFieldType });
+    }
+  }
+
+  return { removed, unmappable, retyped };
+};
+
+/** Supported elements of this survey that no stored row covers yet. */
+const collectUnmappedElements = (
+  surveyMappings: TMappingElementId[],
+  supportedHubFieldTypes: TSurveyElementIndex["supportedHubFieldTypes"]
+): TMappingHubFieldType[] => {
+  const mappedElementIds = new Set(surveyMappings.map((mapping) => mapping.elementId));
+
+  return [...supportedHubFieldTypes]
+    .filter(([elementId]) => !mappedElementIds.has(elementId))
+    .map(([elementId, hubFieldType]) => ({ elementId, hubFieldType }));
+};
+
+/**
+ * Which of the classified rows actually get deleted.
+ *
+ * A source with zero rows for a survey is unrecoverable: every other write path requires min(1), and
+ * getFeedbackSourcesToReconcile matches on `formbricksMappings: { some: { surveyId } }`, so the source
+ * would never be found for this survey again. Where the only rows left are inert, keeping them costs
+ * nothing and preserves that handle — a pending create rescues the source too, so the hold only
+ * applies when nothing is being added.
+ *
+ * Leaking rows are never held back: stopping the export outranks keeping the source discoverable.
+ */
+const resolveDeletions = (
+  { removed, unmappable }: TClassifiedMappings,
+  context: { surveyId: string; surveyMappingCount: number; hasPendingCreates: boolean }
+): string[] => {
+  const { surveyId, surveyMappingCount, hasPendingCreates } = context;
+
+  const wouldRemoveEveryMapping =
+    !hasPendingCreates && surveyMappingCount > 0 && removed.length + unmappable.length === surveyMappingCount;
+
+  if (!wouldRemoveEveryMapping) {
+    return [...removed, ...unmappable];
+  }
+
+  if (removed.length > 0) {
+    logger.warn(
+      { surveyId, mappingCount: surveyMappingCount, unmappableCount: unmappable.length },
+      "Keeping inert feedback-source mappings: deleting them would leave this survey with none"
+    );
+    return unmappable;
+  }
+
+  // Only leaking rows are left, so they all go and the source loses its handle on this survey. That is
+  // the lesser harm, but it needs a human, so say so loudly.
+  logger.error(
+    { surveyId, mappingCount: surveyMappingCount },
+    "Removing every feedback-source mapping for this survey: all mapped questions were retyped to types with no Hub field. The source must be re-mapped."
+  );
+  return unmappable;
+};
+
 /**
  * Diff one survey's stored formbricksMappings against that survey's current blocks and produce a
  * minimal reconciliation delta.
  *
- * - Elements removed from the survey → `toDelete`
- * - Elements retyped to a type with no Hub field → `toDelete` (the creation path in
+ * - Elements retyped to a type with no Hub field → `toDelete`, always (the creation path in
  *   `resolveFormbricksMappingsInput` refuses to map these, so keeping the row would let an element
  *   the product explicitly excludes keep publishing under a stale hubFieldType)
+ * - Elements removed from the survey → `toDelete`, unless that would leave the survey with no rows
+ *   at all; see `resolveDeletions`
  * - Elements whose Hub field type changed → `toUpdate`
  * - Supported elements with no mapping row → `toCreate`, but **only** when `elementScope` is `all`
  * - Unchanged elements → left alone
@@ -58,87 +158,28 @@ export const isEmptyReconciliation = (reconciliation: TFeedbackSourceReconciliat
  * or outside a transaction; it does not read the database.
  */
 export const reconcileMappingsAgainstSurvey = (
-  storedMappings: Pick<TFeedbackSourceFormbricksMapping, "surveyId" | "elementId" | "hubFieldType">[],
+  storedMappings: TMappingElementId[],
   blocks: TSurveyBlock[],
   surveyId: string,
   elementScope: TFeedbackSourceElementScope
 ): TFeedbackSourceReconciliation => {
   const surveyMappings = storedMappings.filter((mapping) => mapping.surveyId === surveyId);
-  const { elementIds, supportedHubFieldTypes } = indexSurveyElements(blocks);
+  const elementIndex = indexSurveyElements(blocks);
 
-  const toCreate: { elementId: string; hubFieldType: THubFieldType }[] = [];
-  const toUpdate: { elementId: string; hubFieldType: THubFieldType }[] = [];
-
-  // Two different reasons a row must go, kept apart because only one of them is safe to defer.
-  //
-  // The element is GONE: the publish path looks its answer up by element id, finds nothing and skips
-  // the row (transform.ts), so the row is inert. Keeping it publishes nothing.
-  //
-  // The element still EXISTS but was retyped to something with no Hub field — contactInfo, address,
-  // cal, cta, fileUpload, consent. The id is preserved across a retype, so the publish path still
-  // finds the answer and ships it under the row's stale hubFieldType: a contactInfo answer is an
-  // array, which lands in Hub as `value_text: value.join(", ")` — name, email and phone in one
-  // string, for the element types the product refuses to map precisely because they hold that data.
-  // These rows are actively leaking and must always be deleted.
-  const removedElementIds: string[] = [];
-  const unmappableElementIds: string[] = [];
-
-  for (const mapping of surveyMappings) {
-    const currentHubFieldType = supportedHubFieldTypes.get(mapping.elementId);
-
-    if (!currentHubFieldType) {
-      if (elementIds.has(mapping.elementId)) {
-        unmappableElementIds.push(mapping.elementId);
-      } else {
-        removedElementIds.push(mapping.elementId);
-      }
-      continue;
-    }
-
-    if (currentHubFieldType !== mapping.hubFieldType) {
-      toUpdate.push({ elementId: mapping.elementId, hubFieldType: currentHubFieldType });
-    }
-  }
-
-  if (elementScope === "all") {
-    const mappedElementIds = new Set(surveyMappings.map((mapping) => mapping.elementId));
-    for (const [elementId, hubFieldType] of supportedHubFieldTypes) {
-      if (mappedElementIds.has(elementId)) continue;
-      toCreate.push({ elementId, hubFieldType });
-    }
-  }
-
-  // A source with zero rows for a survey is unrecoverable: every other write path requires min(1), and
-  // getFeedbackSourcesToReconcile matches on `formbricksMappings: { some: { surveyId } }`, so the source
-  // would never be found for this survey again. Where the only rows left are inert (their elements are
-  // gone), keeping them costs nothing and preserves that handle — a pending create rescues the source
-  // too, so the hold only applies when nothing is being added.
-  //
-  // Leaking rows are never held back: stopping the export outranks keeping the source discoverable.
-  const wouldRemoveEveryMapping =
-    toCreate.length === 0 &&
-    removedElementIds.length + unmappableElementIds.length === surveyMappings.length &&
-    surveyMappings.length > 0;
-  const holdBackRemovedRows = wouldRemoveEveryMapping && removedElementIds.length > 0;
-
-  if (holdBackRemovedRows) {
-    logger.warn(
-      { surveyId, mappingCount: surveyMappings.length, unmappableCount: unmappableElementIds.length },
-      "Keeping inert feedback-source mappings: deleting them would leave this survey with none"
-    );
-  } else if (wouldRemoveEveryMapping) {
-    // Only leaking rows are left, so they all go and the source loses its handle on this survey. That
-    // is the lesser harm, but it needs a human, so say so loudly.
-    logger.error(
-      { surveyId, mappingCount: surveyMappings.length },
-      "Removing every feedback-source mapping for this survey: all mapped questions were retyped to types with no Hub field. The source must be re-mapped."
-    );
-  }
+  const classified = classifyStoredMappings(surveyMappings, elementIndex);
+  const toCreate =
+    elementScope === "all"
+      ? collectUnmappedElements(surveyMappings, elementIndex.supportedHubFieldTypes)
+      : [];
 
   return {
     toCreate,
-    toDelete: holdBackRemovedRows ? unmappableElementIds : [...removedElementIds, ...unmappableElementIds],
-    toUpdate,
+    toDelete: resolveDeletions(classified, {
+      surveyId,
+      surveyMappingCount: surveyMappings.length,
+      hasPendingCreates: toCreate.length > 0,
+    }),
+    toUpdate: classified.retyped,
   };
 };
 
