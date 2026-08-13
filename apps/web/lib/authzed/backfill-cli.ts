@@ -7,33 +7,24 @@ import {
   type TAuthzedBackfillResult,
   runAuthzedBackfill,
 } from "./backfill";
+import type { TAuthzedBackfillCliCommand } from "./backfill-cli-command";
 import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
-import { AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError, type TAuthzedErrorCode, mapAuthzedError } from "./errors";
 import { reconcileOrganizationMemberships } from "./organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "./team-workspace";
 
+export { parseAuthzedBackfillCommand } from "./backfill-cli-command";
+export type { TAuthzedBackfillCliCommand } from "./backfill-cli-command";
+
 /**
  * Command layer for relationship backfill and repair.
  *
- * Argument parsing lives here rather than in the script entry point, unlike the health and schema
- * commands: `apps/web/scripts/**` is excluded from coverage, and the flag matrix below — three
- * independent confirmations before anything destructive happens — is exactly the logic that must not
- * go untested.
+ * Argument parsing lives in a side-effect-free sibling module so invalid commands can be rejected before
+ * environment validation, SDK construction, or database access.
  *
  * The exit-code contract matches `authzed:schema`: 0 clean, 2 drift remains, 1 failed or misused.
  */
-
-export type TAuthzedBackfillCliCommand = Readonly<{
-  afterOrganizationId?: string;
-  expectedEndpoint?: string;
-  maxPrune: number;
-  mode: "apply" | "dry_run";
-  organizationId?: string;
-  prune: boolean;
-  workspaceId?: string;
-}>;
 
 type TAuthzedBackfillCliFailure = Readonly<{
   code: TAuthzedErrorCode;
@@ -83,192 +74,6 @@ const defaultDependencies: TAuthzedBackfillCliDependencies = {
     return runAuthzedBackfill(request, { apply, client: getAuthzedClient() });
   },
   writeOutput: (output) => process.stdout.write(output),
-};
-
-const CUID_PATTERN = /^[a-z0-9]{20,40}$/;
-const POSITIVE_INTEGER_PATTERN = /^[1-9]\d{0,6}$/;
-
-const countFlag = (args: ReadonlyArray<string>, name: string): number =>
-  args.filter((arg) => arg.startsWith(`--${name}=`)).length;
-
-const readFlag = (args: ReadonlyArray<string>, name: string): string | undefined => {
-  const prefix = `--${name}=`;
-  return args.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
-};
-
-const KNOWN_BOOLEAN_FLAGS = new Set(["--apply", "--confirm-prune", "--prune"]);
-
-const VALUE_FLAG_NAMES = [
-  "after-organization-id",
-  "expected-endpoint",
-  "max-prune",
-  "organization-id",
-  "scope",
-  "workspace-id",
-] as const;
-
-/** The values a scope can be named by, before any of them are validated against each other. */
-type TFlagSelection = Readonly<{
-  afterOrganizationId?: string;
-  expectedEndpoint?: string;
-  organizationId?: string;
-  scope?: string;
-  workspaceId?: string;
-}>;
-
-/** Every argument is either a known boolean flag or a known `--name=value` flag. */
-const hasOnlyKnownArguments = (args: ReadonlyArray<string>): boolean =>
-  args.every(
-    (arg) => KNOWN_BOOLEAN_FLAGS.has(arg) || VALUE_FLAG_NAMES.some((name) => arg.startsWith(`--${name}=`))
-  );
-
-/**
- * A repeated flag is an error rather than a silent first-wins: on a command that removes
- * relationships, an operator who typed a value twice deserves to be told which one would have applied
- * instead of finding out afterwards.
- */
-const hasRepeatedFlag = (args: ReadonlyArray<string>): boolean =>
-  VALUE_FLAG_NAMES.some((name) => countFlag(args, name) > 1);
-
-/**
- * Exactly one scope, named exactly once.
- *
- * `all` is the only accepted `--scope` value; it exists so that pruning every organization has to be
- * spelled out rather than defaulted into. Naming two scopes would leave which one applies ambiguous.
- */
-const isScopeNamedUnambiguously = ({ organizationId, scope, workspaceId }: TFlagSelection): boolean => {
-  if (scope !== undefined && scope !== "all") {
-    return false;
-  }
-
-  const named = [scope === "all", organizationId !== undefined, workspaceId !== undefined];
-
-  return named.filter(Boolean).length <= 1;
-};
-
-/**
- * Every supplied identifier is a cuid, and resuming is combined only with a scope it means something
- * for — a whole sweep. Resuming from an organization is meaningless when one organization or one
- * workspace is named outright.
- */
-const areIdentifiersValid = ({
-  afterOrganizationId,
-  organizationId,
-  workspaceId,
-}: TFlagSelection): boolean => {
-  const ids = [organizationId, afterOrganizationId, workspaceId].filter(
-    (id): id is string => id !== undefined
-  );
-  if (!ids.every((id) => CUID_PATTERN.test(id))) {
-    return false;
-  }
-
-  return afterOrganizationId === undefined || (organizationId === undefined && workspaceId === undefined);
-};
-
-/**
- * The per-run prune cap, or `undefined` when the operator supplied one this tool will not honour.
- *
- * Absent means the default. Present means it may only ever *lower* the cap.
- */
-const resolveMaxPrune = (raw: string | undefined): number | undefined => {
-  if (raw === undefined) {
-    return AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN;
-  }
-  if (!POSITIVE_INTEGER_PATTERN.test(raw)) {
-    return undefined;
-  }
-
-  const requested = Number(raw);
-
-  return requested > AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN ? undefined : requested;
-};
-
-/**
- * Whether a destructive run carries every confirmation it needs.
- *
- * `--prune` requires `--apply`, `--confirm-prune`, `--expected-endpoint`, and an explicit scope, so
- * removing relationships cannot happen as a side effect of any shorter command. `--confirm-prune`
- * without `--prune` is rejected too: it means the operator believes they are pruning and are not.
- */
-const isPruneRequestPermitted = ({
-  confirmed,
-  mode,
-  prune,
-  selection,
-}: Readonly<{
-  confirmed: boolean;
-  mode: "apply" | "dry_run";
-  prune: boolean;
-  selection: TFlagSelection;
-}>): boolean => {
-  if (!prune) {
-    return !confirmed;
-  }
-  if (mode !== "apply" || !confirmed || !selection.expectedEndpoint) {
-    return false;
-  }
-
-  // "Prune everything" must be typed, never defaulted into.
-  return (
-    selection.organizationId !== undefined || selection.workspaceId !== undefined || selection.scope === "all"
-  );
-};
-
-/**
- * Parse argv into a command, or `undefined` if the invocation is not one this tool will perform.
- *
- * Deliberately strict and deliberately inconvenient where it matters. A dry run is the default, so a
- * mistyped invocation is inert; every rule that guards the destructive path is a named predicate
- * below, so each can be read — and tested — on its own.
- *
- * On `--expected-endpoint`: the endpoint differs per environment by construction, which the AuthZed
- * system key does not — it is documented as a stable namespace and defaults to the same value
- * everywhere, so it could not tell staging from production. This is the guard against a stale `.env`
- * aiming the destructive path at the wrong instance, which matters because these commands read `.env`
- * only and ignore `.env.local`.
- */
-export const parseAuthzedBackfillCommand = (
-  args: ReadonlyArray<string>
-): TAuthzedBackfillCliCommand | undefined => {
-  if (!hasOnlyKnownArguments(args) || hasRepeatedFlag(args)) {
-    return undefined;
-  }
-
-  const mode = args.includes("--apply") ? "apply" : "dry_run";
-  const prune = args.includes("--prune");
-  const confirmed = args.includes("--confirm-prune");
-
-  const selection: TFlagSelection = {
-    afterOrganizationId: readFlag(args, "after-organization-id"),
-    expectedEndpoint: readFlag(args, "expected-endpoint"),
-    organizationId: readFlag(args, "organization-id"),
-    scope: readFlag(args, "scope"),
-    workspaceId: readFlag(args, "workspace-id"),
-  };
-
-  if (!isScopeNamedUnambiguously(selection) || !areIdentifiersValid(selection)) {
-    return undefined;
-  }
-
-  const maxPrune = resolveMaxPrune(readFlag(args, "max-prune"));
-  if (maxPrune === undefined) {
-    return undefined;
-  }
-
-  if (!isPruneRequestPermitted({ confirmed, mode, prune, selection })) {
-    return undefined;
-  }
-
-  return {
-    afterOrganizationId: selection.afterOrganizationId,
-    expectedEndpoint: selection.expectedEndpoint,
-    maxPrune,
-    mode,
-    organizationId: selection.organizationId,
-    prune,
-    workspaceId: selection.workspaceId,
-  };
 };
 
 const toFailureResult = (error: unknown): TAuthzedBackfillCliFailure => {

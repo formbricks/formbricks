@@ -152,6 +152,17 @@ The Formbricks container receives the supported AuthZed variables automatically.
 `AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
 `docker compose down` preserves the volume; `docker compose down -v` deletes both Formbricks and SpiceDB data.
 
+The release image includes an opt-in operations CLI. It does not start during normal installation:
+
+```bash
+docker compose --profile authzed-ops run --rm authzed-ops health
+docker compose --profile authzed-ops run --rm authzed-ops schema check
+docker compose --profile authzed-ops run --rm authzed-ops backfill
+```
+
+See [AuthZed Operations](/self-hosting/advanced/authzed-operations) before applying a schema, repairing
+relationships, upgrading SpiceDB, or restoring a backup.
+
 The bundled PostgreSQL service leaves `track_commit_timestamp` at its default `off` value, so SpiceDB reports
 that its Watch API is disabled. This does not affect schema writes, relationship writes, or permission checks.
 If a future integration consumes the Watch API, enable that PostgreSQL setting separately and plan for the
@@ -340,12 +351,14 @@ first release that requires the AuthZed runtime:
 1. Back up `.env`, `docker-compose.yml`, and the PostgreSQL volume.
 2. Download `authzed-postgres-bootstrap.sh` from the same Formbricks release as the Compose file.
 3. Generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with `openssl rand -hex 32` and add them to `.env`.
-4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, and `spicedb`, plus the six `AUTHZED_*` Formbricks variables,
-   from the released Compose file into your customized file. Preserve your existing proxy, storage, and SMTP
-   settings.
+4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, and the profiled `authzed-ops` service, plus the
+   six `AUTHZED_*` Formbricks variables, from the released Compose file into your customized file. Preserve your
+   existing proxy, storage, and SMTP settings.
 5. Run `docker compose config`, followed by `docker compose pull` and `docker compose up -d`.
 6. Confirm both one-shot AuthZed services completed and `spicedb` is healthy with `docker compose ps -a`.
-7. Back up the new authorization database with
+7. Run the release-matched health, schema, and dry-run audit commands from the
+   [AuthZed Operations guide](/self-hosting/advanced/authzed-operations).
+8. Back up the new authorization database with
    `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` after validation and
    include it in future database backup procedures.
 

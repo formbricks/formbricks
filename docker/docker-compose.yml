@@ -1,3 +1,6 @@
+x-formbricks-database: &formbricks-database
+  DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+
 x-environment: &environment
   environment: &app-environment
     ######################################################## REQUIRED ########################################################
@@ -10,7 +13,7 @@ x-environment: &environment
     NEXTAUTH_URL:
 
     # PostgreSQL DB for Formbricks to connect to
-    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+    <<: *formbricks-database
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
@@ -359,6 +362,36 @@ services:
       AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
       AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
       AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-minimize_latency}
+
+  # Opt-in AuthZed health, schema, and relationship-repair commands. This profile never starts with
+  # the normal stack. Example: docker compose --profile authzed-ops run --rm authzed-ops health
+  authzed-ops:
+    profiles: ["authzed-ops"]
+    image: ghcr.io/formbricks/formbricks:latest
+    entrypoint: ["formbricks-authzed"]
+    command: ["health"]
+    environment:
+      # Backfill is the only operation that reads Formbricks PostgreSQL. The other required values are
+      # inert placeholders for the shared server environment validator and are not application secrets.
+      <<: *formbricks-database
+      ENCRYPTION_KEY: authzed-ops-unused
+      CUBEJS_API_SECRET: authzed-ops-unused
+      CUBEJS_API_URL: http://localhost
+      HUB_API_KEY: authzed-ops-unused
+      HUB_API_URL: http://localhost
+      REDIS_URL: redis://localhost
+      LOG_LEVEL: fatal
+      AUTHZED_ENABLED: ${AUTHZED_ENABLED:-true}
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
+      AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-minimize_latency}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      spicedb:
+        condition: service_healthy
 
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.

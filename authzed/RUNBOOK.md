@@ -10,7 +10,9 @@ worth internalizing:
 
 Everything below exists to make that visible and recoverable.
 
-See also: [README](./README.md) for the projection contract and the backfill command reference.
+See also: [README](./README.md) for the projection development contract and
+[AuthZed Operations](../docs/self-hosting/advanced/authzed-operations.mdx) for the public self-hosted operator
+contract.
 
 ## 1. Symptoms
 

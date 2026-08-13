@@ -329,6 +329,7 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/migration",
+              "self-hosting/advanced/authzed-operations",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
               {
