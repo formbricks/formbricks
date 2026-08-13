@@ -6,21 +6,21 @@ const writeResult = (result: object): void => {
 };
 
 const run = async (): Promise<void> => {
-  const { parseAuthzedSchemaCliCommand } = await import("../lib/authzed/schema-cli-command");
-  const command = parseAuthzedSchemaCliCommand(process.argv.slice(2));
-
-  if (!command) {
-    writeResult(INVALID_REQUEST_RESULT);
-    process.exitCode = 1;
-    return;
-  }
-
   const originalConsoleError = console.error;
 
   try {
     // Environment validation logs details before throwing. Suppress that duplicate output here so this
     // automation-oriented command always emits exactly one sanitized JSON result.
     console.error = () => {};
+    const { parseAuthzedSchemaCliCommand } = await import("../lib/authzed/schema-cli-command");
+    const command = parseAuthzedSchemaCliCommand(process.argv.slice(2));
+    if (!command) {
+      console.error = originalConsoleError;
+      writeResult(INVALID_REQUEST_RESULT);
+      process.exitCode = 1;
+      return;
+    }
+
     const { runAuthzedSchemaCli } = await import("../lib/authzed/schema-cli");
     console.error = originalConsoleError;
 

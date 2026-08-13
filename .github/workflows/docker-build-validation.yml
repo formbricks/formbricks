@@ -57,6 +57,8 @@ jobs:
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     # Add PostgreSQL and Redis service containers
     services:

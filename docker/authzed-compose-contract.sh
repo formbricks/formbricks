@@ -53,6 +53,7 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services["authzed-ops"].command == ["health"] and
   .services["authzed-ops"].depends_on.postgres.condition == "service_healthy" and
   .services["authzed-ops"].depends_on.spicedb.condition == "service_healthy" and
+  .services["authzed-ops"].environment.DATABASE_URL == .services.formbricks.environment.DATABASE_URL and
   (.services["authzed-ops"] | has("ports") | not) and
   (.services["authzed-ops"] | has("volumes") | not) and
   (.services["authzed-ops"] | has("restart") | not) and

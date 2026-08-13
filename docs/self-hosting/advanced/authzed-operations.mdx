@@ -13,7 +13,7 @@ API-key changes into SpiceDB after their PostgreSQL transaction commits.
   reverse proxy, load balancer, or public Docker port.
 </Warning>
 
-## Understand The Dependency
+## Understand the dependency
 
 | Component                    | Responsibility                                                                  |
 | ---------------------------- | ------------------------------------------------------------------------------- |
@@ -67,7 +67,7 @@ the token in a `NEXT_PUBLIC_*` variable, command output, documentation, or sourc
 See [Environment Variables](/self-hosting/configuration/environment-variables#authzed--spicedb-authorization)
 for the complete validation contract.
 
-## Operate Docker And One-Click Installations
+## Operate Docker and one-click installations
 
 The released Compose stack runs one SpiceDB instance using a dedicated `spicedb` database and login in the
 bundled PostgreSQL container. Startup is ordered as follows:
@@ -102,7 +102,7 @@ starting a release that depends on SpiceDB.
 The bundled PostgreSQL service leaves `track_commit_timestamp=off`, so the SpiceDB Watch API is disabled. This
 does not affect schema operations, relationship projection, permission checks, or the repair workflow.
 
-## Operate Kubernetes And Helm Installations
+## Operate Kubernetes and Helm installations
 
 The Formbricks chart supports two modes:
 
@@ -153,20 +153,20 @@ kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed backfill
 Replace the namespace and deployment name if you override them. These commands execute inside the existing
 application pod and do not require exposing PostgreSQL or SpiceDB.
 
-## Activate Or Upgrade SpiceDB
+## Activate or upgrade SpiceDB
 
 Use the following sequence for a new deployment, schema change, SpiceDB version change, or datastore restore.
 
 <Steps>
-  <Step title="Back Up Both Datastores">
+  <Step title="Back up both datastores">
     Create a PostgreSQL-consistent backup of the Formbricks database and the dedicated `spicedb` database.
     Record the deployed Formbricks and SpiceDB versions, configuration, and schema digest.
   </Step>
-  <Step title="Complete Datastore Migrations">
+  <Step title="Complete datastore migrations">
     Deploy the reviewed SpiceDB version and wait for `spicedb datastore migrate head` to complete before the
     new SpiceDB server starts. Never run migration and serving from different image references.
   </Step>
-  <Step title="Check Connectivity">
+  <Step title="Check connectivity">
 
     ```bash
     formbricks-authzed health
@@ -175,7 +175,7 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
     A healthy command exits `0`. Disabled or unhealthy results exit `1`.
 
   </Step>
-  <Step title="Check And Apply The Schema">
+  <Step title="Check and apply the schema">
 
     ```bash
     formbricks-authzed schema check
@@ -198,7 +198,7 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
     compare-and-swap operation.
 
   </Step>
-  <Step title="Audit And Reconcile Relationships">
+  <Step title="Audit and reconcile relationships">
 
     ```bash
     formbricks-authzed backfill
@@ -208,7 +208,7 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
     Require a clean result before relying on SpiceDB authorization decisions.
 
   </Step>
-  <Step title="Restart And Observe">
+  <Step title="Restart and observe">
     Restart Formbricks after environment changes. Recheck AuthZed health, schema status, projection metrics,
     retry metrics, and SpiceDB logs.
   </Step>
@@ -217,7 +217,7 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
 The Docker examples use the `docker compose --profile authzed-ops run --rm authzed-ops` prefix. Kubernetes
 examples use `kubectl exec ... --`. The command names and arguments after those prefixes are identical.
 
-## Back Up And Restore
+## Back up and restore
 
 Back up the following together:
 
@@ -254,13 +254,13 @@ AuthZed Cloud owns datastore backup and restore guarantees. You still need Formb
 recoverable client credentials, release configuration, schema verification, and the relationship repair
 procedure.
 
-## Audit And Repair Relationships
+## Audit and repair relationships
 
 The command prints one JSON result. The output can contain source record identifiers needed to diagnose drift,
 so store it as sensitive operational data. It never prints tokens, database passwords, raw SDK errors, schema
 text, or raw relationship strings.
 
-### Interpret Exit Codes
+### Interpret exit codes
 
 | Exit code | Meaning                                                        |
 | --------- | -------------------------------------------------------------- |
@@ -268,7 +268,7 @@ text, or raw relationship strings.
 | `1`       | Invalid command, configuration failure, or operational failure |
 | `2`       | Drift remains and operator action is required                  |
 
-### Start With A Dry Run
+### Start with a dry run
 
 ```bash
 formbricks-authzed backfill
@@ -280,7 +280,7 @@ An organization or workspace run limits the repair blast radius, but reports
 `orphanScope: "known_resources"`. Only a complete deployment sweep can find relationships for resources that
 no longer exist in PostgreSQL or parent edges pointing from another tenant's resource.
 
-### Reconcile PostgreSQL State
+### Reconcile PostgreSQL state
 
 ```bash
 formbricks-authzed backfill --apply
@@ -297,7 +297,7 @@ If a sweep is interrupted, resume after the reported `lastOrganizationId`:
 formbricks-authzed backfill --apply --after-organization-id=<last-organization-id>
 ```
 
-### Prune Orphans
+### Prune orphans
 
 Pruning is the only mode that removes relationships observed only in SpiceDB. It requires every safeguard:
 
@@ -315,7 +315,7 @@ The default destructive cap is 500 orphaned resources. `--max-prune=<number>` ma
 the run observes more than the cap, it deletes nothing. Investigate a wrong endpoint, wrong database, partial
 restore, or shared SpiceDB before proceeding.
 
-### Interpret Drift Categories
+### Interpret drift categories
 
 | Category            | Meaning and response                                                                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -333,7 +333,7 @@ restore, or shared SpiceDB before proceeding.
   managers access to the resource.
 </Warning>
 
-## Diagnose Failures
+## Diagnose failures
 
 | Result or symptom                                                                        | Meaning                                               | Operator response                                                                           |
 | ---------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -388,7 +388,7 @@ On the SpiceDB side, monitor pod restarts, failed datastore migrations, PostgreS
 as `pgxpool_empty_acquire`, dispatch load, cache behavior, and datastore latency. Divide the datastore
 connection budget across replicas and their read/write pools.
 
-## Use The Incident Checklist
+## Use the incident checklist
 
 1. Confirm Formbricks `/health` independently.
 2. Run `formbricks-authzed health`.

@@ -1,3 +1,6 @@
+x-formbricks-database: &formbricks-database
+  DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+
 x-environment: &environment
   environment: &app-environment
     ######################################################## REQUIRED ########################################################
@@ -10,7 +13,7 @@ x-environment: &environment
     NEXTAUTH_URL:
 
     # PostgreSQL DB for Formbricks to connect to
-    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+    <<: *formbricks-database
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
@@ -370,7 +373,7 @@ services:
     environment:
       # Backfill is the only operation that reads Formbricks PostgreSQL. The other required values are
       # inert placeholders for the shared server environment validator and are not application secrets.
-      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+      <<: *formbricks-database
       ENCRYPTION_KEY: authzed-ops-unused
       CUBEJS_API_SECRET: authzed-ops-unused
       CUBEJS_API_URL: http://localhost

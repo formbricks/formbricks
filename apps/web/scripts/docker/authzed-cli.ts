@@ -11,6 +11,13 @@ const HEALTH_INVALID_CONFIGURATION_RESULT = {
   status: "unhealthy",
 } as const;
 
+const HEALTH_INVALID_REQUEST_RESULT = {
+  code: "authzed_invalid_request",
+  latencyMs: 0,
+  retryable: false,
+  status: "unhealthy",
+} as const;
+
 const writeResult = (result: object): void => {
   process.stdout.write(`${JSON.stringify(result)}\n`);
 };
@@ -34,7 +41,8 @@ const run = async (): Promise<void> => {
     switch (command) {
       case "health": {
         if (args.length !== 0) {
-          writeResult(INVALID_REQUEST_RESULT);
+          console.error = originalConsoleError;
+          writeResult(HEALTH_INVALID_REQUEST_RESULT);
           process.exitCode = 1;
           return;
         }

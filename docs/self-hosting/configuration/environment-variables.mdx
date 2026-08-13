@@ -193,9 +193,11 @@ For Helm, run `formbricks-authzed health` inside a Formbricks application pod. R
 using `pnpm authzed:health`. See [AuthZed Operations](/self-hosting/advanced/authzed-operations) for the complete
 Docker and Kubernetes command set, schema lifecycle, backups, and relationship repair.
 
-The command reads the repository `.env`, performs an authenticated read-only schema request, prints exactly
-one JSON result, and exits `0` only for `{"status":"healthy","latencyMs":12}` (the latency varies). Disabled
-or failed checks exit `1`. Failures use stable codes: `authzed_unauthenticated` or
+Only the repository-development `pnpm authzed:health` command reads the repository `.env`. Docker Compose
+uses the `authzed-ops` container environment, while Helm and Kubernetes use the Formbricks Pod environment.
+Each invocation performs an authenticated read-only schema request, prints exactly one JSON result, and exits
+`0` only for `{"status":"healthy","latencyMs":12}` (the latency varies). Disabled or failed checks exit `1`.
+Failures use stable codes: `authzed_unauthenticated` or
 `authzed_permission_denied` for rejected credentials or schema-read access (the bundled SpiceDB preshared-key
 check reports a wrong token as permission denied), `authzed_timeout` when an attempt exceeds its deadline,
 `authzed_overloaded` when SpiceDB is resource constrained, `authzed_unavailable` when the service cannot be

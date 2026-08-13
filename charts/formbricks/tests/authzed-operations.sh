@@ -41,6 +41,20 @@ render_notes() {
     | sed '1d; s/^    //'
 }
 
+authzed_operations_notes() {
+  sed -n '/AuthZed \/ SpiceDB Operations:/,/^---$/p' <<<"$1"
+}
+
+assert_safe_authzed_notes() {
+  local release_name="$1"
+  local notes="$2"
+
+  if grep --extended-regexp --ignore-case 'preshared|datastore_uri|token|ingress' <<<"${notes}" >/dev/null; then
+    printf '%s\n' "AuthZed operations notes for ${release_name} must not expose secrets or suggest an Ingress." >&2
+    exit 1
+  fi
+}
+
 disabled_notes="$(render_notes authzed-disabled)"
 if grep --fixed-strings "AuthZed / SpiceDB Operations:" <<<"${disabled_notes}" >/dev/null; then
   printf '%s\n' "AuthZed operations notes must be hidden when AuthZed is disabled." >&2
@@ -54,16 +68,12 @@ external_notes="$(render_notes authzed-external \
   --set authzed.insecure=false \
   --set authzed.auth.existingSecret=formbricks-authzed)"
 
-authzed_notes="$(sed -n '/AuthZed \/ SpiceDB Operations:/,/^---$/p' <<<"${external_notes}")"
+authzed_notes="$(authzed_operations_notes "${external_notes}")"
 grep --fixed-strings 'SpiceDB is configured in `external` mode.' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'formbricks-authzed health' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'formbricks-authzed schema check' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'self-hosting/advanced/authzed-operations' <<<"${authzed_notes}" >/dev/null
-
-if grep --extended-regexp --ignore-case 'preshared|datastore_uri|token|ingress' <<<"${authzed_notes}" >/dev/null; then
-  printf '%s\n' "AuthZed operations notes must not expose secrets or suggest an Ingress." >&2
-  exit 1
-fi
+assert_safe_authzed_notes authzed-external "${authzed_notes}"
 
 # Render each supported ownership and datastore shape. These are intentionally render-only checks: none
 # of the operational commands are Helm hooks or automatically created Jobs.
@@ -72,12 +82,26 @@ helm template authzed-bundled "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --set authzed.mode=selfHosted \
   --set authzed.operator.install=true >/dev/null
 
+bundled_notes="$(render_notes authzed-bundled \
+  --set authzed.enabled=true \
+  --set authzed.mode=selfHosted \
+  --set authzed.operator.install=true)"
+assert_safe_authzed_notes authzed-bundled "$(authzed_operations_notes "${bundled_notes}")"
+
 helm template authzed-existing-operator "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --set authzed.enabled=true \
   --set authzed.mode=selfHosted \
   --set authzed.operator.install=false \
   --set authzed.auth.existingSecret=formbricks-authzed \
   --set authzed.datastore.existingSecret=formbricks-authzed >/dev/null
+
+existing_operator_notes="$(render_notes authzed-existing-operator \
+  --set authzed.enabled=true \
+  --set authzed.mode=selfHosted \
+  --set authzed.operator.install=false \
+  --set authzed.auth.existingSecret=formbricks-authzed \
+  --set authzed.datastore.existingSecret=formbricks-authzed)"
+assert_safe_authzed_notes authzed-existing-operator "$(authzed_operations_notes "${existing_operator_notes}")"
 
 managed_postgresql_notes="$(render_notes authzed-managed-postgresql \
   --set postgresql.enabled=false \
@@ -92,6 +116,8 @@ if grep --fixed-strings 'notes-secret' <<<"${managed_postgresql_notes}" >/dev/nu
   printf '%s\n' "Helm notes must not render PostgreSQL credentials." >&2
   exit 1
 fi
+assert_safe_authzed_notes authzed-managed-postgresql \
+  "$(authzed_operations_notes "${managed_postgresql_notes}")"
 
 helm template authzed-external "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --set authzed.enabled=true \
