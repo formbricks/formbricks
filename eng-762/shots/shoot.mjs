@@ -4,7 +4,9 @@ import { chromium } from "/home/user/formbricks/node_modules/playwright-core/ind
 const here = new URL(".", import.meta.url).pathname;
 const pages = readdirSync(`${here}pages`).filter((f) => f.endsWith(".html"));
 
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+const browser = await chromium.launch({
+  executablePath: "/opt/pw-browsers/chromium",
+});
 const context = await browser.newContext({
   viewport: { width: 1100, height: 900 },
   deviceScaleFactor: 2,

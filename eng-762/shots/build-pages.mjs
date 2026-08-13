@@ -1,5 +1,15 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { badge, button, card, idBadge, label, page, tableAfter, tableBefore } from "./lib.mjs";
+import {
+  badge,
+  button,
+  card,
+  idBadge,
+  label,
+  page,
+  tableAfter,
+  tableAfterPr1,
+  tableBefore,
+} from "./lib.mjs";
 
 const OUT = new URL("./pages/", import.meta.url);
 mkdirSync(OUT, { recursive: true });
@@ -35,7 +45,12 @@ const teamRows = [
 }));
 
 // Enterprise features: the one table whose header was white.
-const entHeads = [{ label: "Feature" }, { label: "Access" }, { label: "Value" }, { label: "Documentation" }];
+const entHeads = [
+  { label: "Feature" },
+  { label: "Access" },
+  { label: "Value" },
+  { label: "Documentation" },
+];
 const docsLink =
   '<a class="text-sm font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900">Read docs</a>';
 const entRows = [
@@ -62,7 +77,10 @@ write(
         description: "Teams with access to this workspace.",
         body: `<div class="overflow-hidden rounded-lg">${tableBefore({
           heads: teamHeadsBefore,
-          rows: teamRows.map((r) => ({ ...r, rowCls: "border-slate-200 hover:bg-transparent" })),
+          rows: teamRows.map((r) => ({
+            ...r,
+            rowCls: "border-slate-200 hover:bg-transparent",
+          })),
           bodyClass: "[&_tr:last-child]:border-b",
         })}</div>`,
       }) +
@@ -75,8 +93,8 @@ write(
           rows: entRows.map((r) => ({ ...r, rowCls: "hover:bg-white" })),
           headRowClass: "hover:bg-white",
         }),
-      })
-  )
+      }),
+  ),
 );
 
 write(
@@ -87,8 +105,8 @@ write(
       card({
         title: "Team access",
         description: "Teams with access to this workspace.",
-        body: `<div class="overflow-hidden rounded-lg">${tableAfter({
-          heads: teamHeadsAfter,
+        body: `<div class="overflow-hidden rounded-lg">${tableAfterPr1({
+          heads: teamHeadsBefore,
           rows: teamRows,
           bodyClass: "[&_tr:last-child]:border-b",
         })}</div>`,
@@ -97,9 +115,13 @@ write(
         title: "License features",
         description: "What this license unlocks.",
         bodyClass: "",
-        body: tableAfter({ heads: entHeads, rows: entRows }),
-      })
-  )
+        body: tableAfterPr1({
+          heads: entHeads,
+          rows: entRows,
+          headRowClass: "",
+        }),
+      }),
+  ),
 );
 
 /* ------------------------------------------------------------------ PR 8838 */
@@ -115,11 +137,12 @@ write(
     label("before — noPadding") +
       card({
         title: "License features",
-        description: "noPadding removed the gutter but left the card's bottom py-4.",
+        description:
+          "noPadding removed the gutter but left the card's bottom py-4.",
         bodyClass: "",
         body: flushBody,
-      })
-  )
+      }),
+  ),
 );
 
 write(
@@ -129,12 +152,13 @@ write(
     label("after — bodyVariant=flush") +
       card({
         title: "License features",
-        description: "-mb-4 cancels the bottom padding; overflow-hidden clips at the card's radius.",
+        description:
+          "-mb-4 cancels the bottom padding; overflow-hidden clips at the card's radius.",
         bodyClass: "-mb-4",
         extra: "overflow-hidden",
         body: flushBody,
-      })
-  )
+      }),
+  ),
 );
 
 /* ------------------------------------------------------------------ PR 8839 */
@@ -150,13 +174,18 @@ const prettyHeadsAfter = [
   { label: "Workspace", cls: "w-[30%]" },
   { label: "Pretty URL", cls: "w-[30%]" },
 ];
-const surveyLink = (n) => `<a class="text-slate-900 hover:text-slate-700 hover:underline">${n}</a>`;
+const surveyLink = (n) =>
+  `<a class="text-slate-900 hover:text-slate-700 hover:underline">${n}</a>`;
 const prettyRows = [
   ["Onboarding NPS", "Acme Web", "onboarding-nps"],
   ["Churn survey", "Acme Web", "churn-2026"],
   ["Feature feedback", "Acme Mobile", "feature-feedback"],
 ].map(([name, ws, slug]) => ({
-  cells: [{ html: surveyLink(name), cls: "font-medium" }, { html: ws }, { html: idBadge(slug) }],
+  cells: [
+    { html: surveyLink(name), cls: "font-medium" },
+    { html: ws },
+    { html: idBadge(slug) },
+  ],
 }));
 
 write(
@@ -169,11 +198,14 @@ write(
         description: "Custom link slugs for surveys in this organization.",
         body: `<div class="overflow-hidden rounded-lg">${tableBefore({
           heads: prettyHeadsBefore,
-          rows: prettyRows.map((r) => ({ ...r, rowCls: "border-slate-200 hover:bg-transparent" })),
+          rows: prettyRows.map((r) => ({
+            ...r,
+            rowCls: "border-slate-200 hover:bg-transparent",
+          })),
           bodyClass: "[&_tr:last-child]:border-b",
         })}</div>`,
-      })
-  )
+      }),
+  ),
 );
 
 write(
@@ -187,8 +219,8 @@ write(
         bodyClass: "-mb-4",
         extra: "overflow-hidden",
         body: tableAfter({ heads: prettyHeadsAfter, rows: prettyRows }),
-      })
-  )
+      }),
+  ),
 );
 
 write(
@@ -214,9 +246,12 @@ write(
               rowCls: "",
             },
           ],
-        }).replace('<td class="p-4 align-middle h-24', '<td colspan="3" class="p-4 align-middle h-24'),
-      })
-  )
+        }).replace(
+          '<td class="p-4 align-middle h-24',
+          '<td colspan="3" class="p-4 align-middle h-24',
+        ),
+      }),
+  ),
 );
 
 /* ------------------------------------------------------------------ PR 8840 */
@@ -234,8 +269,8 @@ write(
           rows: entRows.map((r) => ({ ...r, rowCls: "hover:bg-white" })),
           headRowClass: "hover:bg-white",
         }),
-      })
-  )
+      }),
+  ),
 );
 
 write(
@@ -249,8 +284,8 @@ write(
         bodyClass: "-mb-4",
         extra: "overflow-hidden",
         body: tableAfter({ heads: entHeads, rows: entRows }),
-      })
-  )
+      }),
+  ),
 );
 
 /* ------------------------------------------------------------------ PR 8841 */
@@ -270,7 +305,12 @@ const dirActions = `${button("View data", "ghost")} ${button("Manage")}`;
 const dirRows = (dimSecond) =>
   [
     ["Support tickets", "3", badge("Active", "success"), dirActions],
-    ["App reviews", "1", badge("Active", "success"), `${button("View data", "ghost")} ${button("Manage")}`],
+    [
+      "App reviews",
+      "1",
+      badge("Active", "success"),
+      `${button("View data", "ghost")} ${button("Manage")}`,
+    ],
     ["Legacy imports", "0", badge("Archived", "gray"), button("Unarchive")],
   ].map(([name, count, status, actions], i) => ({
     rowCls: dimSecond && i !== 1 ? "pointer-events-none opacity-60" : "",
@@ -292,11 +332,14 @@ write(
         description: "Shared directories across workspaces.",
         body: `<div class="overflow-hidden rounded-lg border">${tableBefore({
           heads: dirHeadsBefore,
-          rows: dirRows(false).map((r) => ({ ...r, rowCls: "hover:bg-transparent" })),
+          rows: dirRows(false).map((r) => ({
+            ...r,
+            rowCls: "hover:bg-transparent",
+          })),
           bodyClass: "[&_tr:last-child]:border-b",
         })}</div>`,
-      })
-  )
+      }),
+  ),
 );
 
 write(
@@ -310,8 +353,8 @@ write(
         bodyClass: "-mb-4",
         extra: "overflow-hidden",
         body: tableAfter({ heads: dirHeadsAfter, rows: dirRows(false) }),
-      })
-  )
+      }),
+  ),
 );
 
 write(
@@ -326,8 +369,8 @@ write(
         bodyClass: "-mb-4",
         extra: "overflow-hidden",
         body: tableAfter({ heads: dirHeadsAfter, rows: dirRows(true) }),
-      })
-  )
+      }),
+  ),
 );
 
 /* ------------------------------------------------------------------ PR 8842 */
@@ -344,8 +387,18 @@ const orgTeamHeadsAfter = [
   { label: '<span class="sr-only">Actions</span>', cls: "w-[20%] text-right" },
 ];
 const orgTeamRows = [
-  ["Product", "4 members", badge("You are a member", "success"), button("Manage team")],
-  ["Design", "2 members", badge("You are a member", "success"), button("Manage team")],
+  [
+    "Product",
+    "4 members",
+    badge("You are a member", "success"),
+    button("Manage team"),
+  ],
+  [
+    "Design",
+    "2 members",
+    badge("You are a member", "success"),
+    button("Manage team"),
+  ],
   ["Growth", "7 members", "", button("Manage team")],
 ].map(([name, size, member, actions]) => ({
   cells: [
@@ -370,11 +423,14 @@ write(
           "</div>" +
           `<div class="overflow-hidden rounded-lg">${tableBefore({
             heads: orgTeamHeadsBefore,
-            rows: orgTeamRows.map((r) => ({ ...r, rowCls: "hover:bg-transparent" })),
+            rows: orgTeamRows.map((r) => ({
+              ...r,
+              rowCls: "hover:bg-transparent",
+            })),
             bodyClass: "[&_tr:last-child]:border-b",
           })}</div>`,
-      })
-  )
+      }),
+  ),
 );
 
 write(
@@ -392,8 +448,8 @@ write(
           button("Create new team", "primary") +
           "</div>" +
           tableAfter({ heads: orgTeamHeadsAfter, rows: orgTeamRows }),
-      })
-  )
+      }),
+  ),
 );
 
 console.log("pages written");
