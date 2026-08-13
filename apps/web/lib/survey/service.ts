@@ -341,13 +341,17 @@ export const updateSurveyInternal = async (
     // tenant's language. Mirrors the create path guard (covers drafts too — runs before validation).
     await assertSurveyLanguagesBelongToWorkspace(currentSurvey.workspaceId, languages);
 
-    // ENG-1939: validation may only be skipped while the survey is still a draft. Gate on the
-    // PERSISTED status, not the payload's — the lenient draft schema (ZSurveyDraft) does not validate
-    // elements at all, so without this a caller could push structurally invalid blocks onto a live
-    // survey (crashing downstream consumers that trust the schema) and silently revert it to draft,
-    // stopping it from collecting responses. Deliberately placed after the ENG-1749 tenant guards so
-    // a cross-workspace attempt still reports the authorization failure first.
-    if (skipValidation && currentSurvey.status !== "draft") {
+    // ENG-1939/ENG-2115: validation may only be skipped for a draft-to-draft write, so BOTH sides of
+    // the transition are gated. The lenient draft schema (ZSurveyDraft) does not validate elements at
+    // all, so skipping validation on any other transition lets structurally invalid blocks reach the
+    // DB and crash downstream consumers that trust the schema:
+    //   - persisted status (ENG-1939): stops a caller pushing invalid blocks onto a live survey and
+    //     silently reverting it to draft, stopping it from collecting responses.
+    //   - payload status (ENG-2115): stops a caller publishing a draft that never passed ZSurvey.
+    //     `status` is not destructured out of surveyData below, so it flows straight to the write.
+    // Deliberately placed after the ENG-1749 tenant guards so a cross-workspace attempt still reports
+    // the authorization failure first, and before prisma.survey.update so nothing is persisted.
+    if (skipValidation && (currentSurvey.status !== "draft" || updatedSurvey.status !== "draft")) {
       throw new OperationNotAllowedError("Only draft surveys can be updated without validation");
     }
 

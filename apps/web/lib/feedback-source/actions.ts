@@ -412,8 +412,9 @@ export const listFeedbackRecordsAction = authenticatedActionClient
         limit: parsedInput.limit ?? 50,
       };
       if (parsedInput.cursor) params.cursor = parsedInput.cursor;
-      if (parsedInput.sourceType) params.source_type = parsedInput.sourceType;
-      if (parsedInput.fieldType) params.field_type = parsedInput.fieldType;
+      // One-element OR lists: Hub 0.8.4 made these filters repeatable, this caller stays single-valued.
+      if (parsedInput.sourceType) params.source_type = [parsedInput.sourceType];
+      if (parsedInput.fieldType) params.field_type = [parsedInput.fieldType];
       if (parsedInput.since) params.since = parsedInput.since;
       if (parsedInput.until) params.until = parsedInput.until;
 

@@ -130,7 +130,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "List feedback records",
       description:
-        "List feedback records for a workspace's feedback dataset, with cursor pagination and optional filters. meta.datasetId and meta.datasetName report which dataset was searched, so an empty data array means that dataset holds no matching records — there is no need to call list_feedback_datasets to check. A workspace with no dataset at all fails with 422 instead.",
+        "List feedback records for a workspace's feedback dataset, with cursor pagination and optional filters. meta.datasetId and meta.datasetName report which dataset was searched, so an empty data array means that dataset holds no matching records — there is no need to call list_feedback_datasets to check. A workspace with no dataset at all fails with 422 instead. Filters: repeating one filter with several values ORs them, while different filters are AND-ed; there is no way to OR across different filters. Range filters are inclusive and exclude records whose column is empty, so value_number_min=0 drops every text answer and sentiment_score_min only ever matches enriched records — use has_sentiment=false to find the ones enrichment has not reached. Keep sort and order identical on every page of one traversal: a cursor is a position within one specific ordering, and presenting it with a different one is rejected.",
       inputSchema: ZMcpListFeedbackRecordsInput.shape,
       annotations: {
         readOnlyHint: true,
@@ -152,7 +152,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "Count feedback records",
       description:
-        "Count the feedback records matching a set of filters, without fetching them. Use this for 'how many' questions — how many responses to one question, from one person, or in a date range — instead of paging through records to count them. Returns only the total plus the dataset it came from, never record content. Takes the same filters as list_feedback_records.",
+        "Count the feedback records matching a set of filters, without fetching them. Use this for 'how many' questions — how many responses to one question, from one person, or in a date range — instead of paging through records to count them. Returns only the total plus the dataset it came from, never record content. Takes exactly the same filters as list_feedback_records, with the same OR-within-a-filter and AND-across-filters rules, so a count always describes the set the equivalent list would return. Ordering and pagination do not apply here and are rejected.",
       inputSchema: ZMcpCountFeedbackRecordsInput.shape,
       annotations: {
         readOnlyHint: true,

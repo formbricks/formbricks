@@ -56,7 +56,9 @@ const mockFeedbackSource = {
   name: "Test FeedbackSource",
   type: "formbricks_survey" as const,
   status: "active" as const,
+  importMode: "completedOnly" as const,
   workspaceId: ENV_ID,
+  feedbackDirectoryId: FRD_ID,
   lastSyncAt: null,
   createdBy: null,
 };
@@ -321,6 +323,26 @@ describe("updateFeedbackSource", () => {
     expect(result.status).toBe("paused");
   });
 
+  /**
+   * ENG-2058. The select constants are `satisfies Prisma.FeedbackSourceSelect` and the mapper casts
+   * the row, so dropping importMode from either one typechecks clean and is simply absent at
+   * runtime — the setting would silently stop round-tripping with nothing going red.
+   */
+  test("persists importMode and selects it back", async () => {
+    const updated = { ...mockFeedbackSource, importMode: "all" };
+    vi.mocked(prisma.feedbackSource.update).mockResolvedValue(updated as never);
+
+    const result = await updateFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, { importMode: "all" });
+
+    expect(prisma.feedbackSource.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ importMode: "all" }),
+        select: expect.objectContaining({ importMode: true }),
+      })
+    );
+    expect(result.importMode).toBe("all");
+  });
+
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
     vi.mocked(prisma.feedbackSource.update).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
@@ -453,6 +475,28 @@ describe("createFeedbackSourceWithMappings", () => {
     expect(tx.feedbackSourceFormbricksMapping.create).not.toHaveBeenCalled();
     expect(tx.feedbackSourceFieldMapping.create).not.toHaveBeenCalled();
     expect(result).toEqual(mockFeedbackSourceWithMappings);
+  });
+
+  // ENG-2058: the chosen import mode has to reach the row, or the historical import that reads it
+  // back moments later silently falls through to the completedOnly default.
+  test("persists importMode on create and selects it back", async () => {
+    const tx = setupTransaction();
+    tx.feedbackSource.create.mockResolvedValue({ id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID });
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
+
+    await createFeedbackSourceWithMappings(ENV_ID, {
+      name: "New",
+      type: "formbricks_survey",
+      feedbackDirectoryId: FRD_ID,
+      importMode: "all",
+    });
+
+    expect(tx.feedbackSource.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ importMode: "all" }) })
+    );
+    expect(tx.feedbackSource.findUniqueOrThrow).toHaveBeenCalledWith(
+      expect.objectContaining({ select: expect.objectContaining({ importMode: true }) })
+    );
   });
 
   test("creates feedbackSource with formbricks mappings", async () => {

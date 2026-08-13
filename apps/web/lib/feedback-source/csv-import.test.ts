@@ -33,6 +33,7 @@ const makeFeedbackSource = (
   name: "CSV Import",
   type: "csv",
   status: "active",
+  importMode: "completedOnly",
   elementScope: "specific" as const,
   workspaceId: "env-1",
   feedbackDirectoryId: "tenant-test",

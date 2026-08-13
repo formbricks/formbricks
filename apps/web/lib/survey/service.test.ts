@@ -489,8 +489,9 @@ describe("Tests for updateSurvey", () => {
     // ENG-1749/ENG-1920: the app-survey segment block connects segment.surveys by id; a survey from
     // another workspace must not be connectable (would re-point that survey's targeting).
     test("rejects connecting a survey from another workspace to the segment (app survey update)", async () => {
-      // Draft row: this exercises the skip-validation path, which the ENG-1939 guard restricts to
-      // drafts. The cross-workspace segment check under test is unaffected by the status.
+      // Draft row and draft payload: this exercises the skip-validation path, which the
+      // ENG-1939/ENG-2115 guard restricts to draft-to-draft writes. The cross-workspace segment check
+      // under test is unaffected by the status.
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" }); // getSurvey → current survey (own workspace)
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
@@ -503,6 +504,7 @@ describe("Tests for updateSurvey", () => {
         updateSurveyInternal(
           {
             ...updateSurveyInput,
+            status: "draft",
             type: "app",
             segment: {
               id: "clownsegment000000000001",
@@ -545,11 +547,12 @@ describe("Tests for updateSurvey", () => {
 
       test("reconciles against the persisted blocks, not the caller's payload", async () => {
         // Draft + skipValidation is the survey editor's own save path, and the one that can send a
-        // payload whose blocks differ from what ends up stored.
+        // payload whose blocks differ from what ends up stored. ENG-1939/ENG-2115 gate BOTH sides of
+        // the transition, so the stored survey and the payload both have to be drafts.
         prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
         prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, blocks: persistedBlocks } as any);
 
-        await updateSurveyInternal({ ...updateSurveyInput, blocks: [] } as any, true);
+        await updateSurveyInternal({ ...updateSurveyInput, status: "draft", blocks: [] } as any, true);
 
         expect(reconcileFeedbackSourcesForSurvey).toHaveBeenCalledWith(updateSurveyInput.id, persistedBlocks);
       });
@@ -1446,6 +1449,7 @@ describe("updateSurveyDraftAction", () => {
       // Create a survey with incomplete i18n/fields
       const incompleteSurvey = {
         ...updateSurveyInput,
+        status: "draft",
         questions: [
           {
             id: "q1",
@@ -1467,6 +1471,7 @@ describe("updateSurveyDraftAction", () => {
 
       const surveyWithInvalidImage = {
         ...updateSurveyInput,
+        status: "draft",
         questions: [
           {
             id: "q1",
@@ -1507,13 +1512,29 @@ describe("updateSurveyDraftAction", () => {
 
     // ENG-1939: the lenient draft schema does not validate elements, so skipping validation on an
     // already-published survey would let structurally invalid blocks reach the DB and silently
-    // revert the survey to draft. Gate on the PERSISTED status, not the payload's.
+    // revert the survey to draft. Gate on the PERSISTED status. The payload stays a draft here so
+    // the case isolates the persisted-status half of the guard.
     test.each(["inProgress", "paused", "completed"] as const)(
       "rejects a skip-validation update when the stored survey is %s",
       async (status) => {
         prisma.survey.findUnique.mockResolvedValue({ ...mockSurveyOutput, status });
 
-        await expect(updateSurveyInternal(updateSurveyInput as TSurvey, true)).rejects.toThrow(
+        await expect(
+          updateSurveyInternal({ ...updateSurveyInput, status: "draft" } as TSurvey, true)
+        ).rejects.toThrow(OperationNotAllowedError);
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      }
+    );
+
+    // ENG-2115: the mirror image of the case above. `status` flows straight through to the write, so
+    // a persisted draft could otherwise be published (or paused/completed) through the skip-validation
+    // path with blocks that never passed ZSurvey. Both sides of the transition must be a draft.
+    test.each(["inProgress", "paused", "completed"] as const)(
+      "rejects a skip-validation update that moves a stored draft to %s",
+      async (status) => {
+        prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+
+        await expect(updateSurveyInternal({ ...updateSurveyInput, status } as TSurvey, true)).rejects.toThrow(
           OperationNotAllowedError
         );
         expect(prisma.survey.update).not.toHaveBeenCalled();
