@@ -56,7 +56,7 @@ type SettingsTableBaseProps<TRow> = {
   "data-testid"?: string;
   /** Classes for the `<table>` itself. */
   className?: string;
-  /** Classes for the table's scroll container, for width and overflow tweaks. Not the frame. */
+  /** Extra classes for the frame wrapper, e.g. a width constraint. Merged after `frame`. */
   containerClassName?: string;
 };
 

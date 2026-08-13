@@ -40,8 +40,8 @@ export const SettingsTableSkeleton = <TRow,>({
   className,
   containerClassName,
 }: Readonly<TSettingsTableSkeletonProps<TRow>>) => (
-  <div className={getFrameClassName(frame)}>
-    <Table className={className} containerClassName={containerClassName}>
+  <div className={cn(getFrameClassName(frame), containerClassName)}>
+    <Table className={className}>
       <TableHeader>
         <TableRow className="bg-slate-100">
           {columns.map((column) => (

@@ -29,12 +29,15 @@ describe("getFrameClassName", () => {
 });
 
 describe("getHeaderCellClassName", () => {
-  test("carries the width, because the header cell is what sizes the whole column", () => {
-    expect(getHeaderCellClassName(column({ width: "w-[22%]" }))).toBe("w-[22%]");
+  // The settings header type lives here rather than on the shared `TableHead`: a class on the `th` beats
+  // the colour a `<thead>` passes down, so putting it in the primitive would lighten every bare
+  // `TableHead` in the app — including contacts, attributes and survey responses.
+  test("sets the settings header type itself instead of relying on the shared primitive", () => {
+    expect(getHeaderCellClassName(column())).toBe("font-medium text-slate-500");
   });
 
-  test("is empty when the column asks for nothing, leaving the primitive's defaults intact", () => {
-    expect(getHeaderCellClassName(column())).toBe("");
+  test("carries the width, because the header cell is what sizes the whole column", () => {
+    expect(getHeaderCellClassName(column({ width: "w-[22%]" }))).toBe("font-medium text-slate-500 w-[22%]");
   });
 
   test.each([
@@ -42,7 +45,7 @@ describe("getHeaderCellClassName", () => {
     ["center", "text-center"],
     ["right", "text-right"],
   ] as const)("maps align %s", (align, expected) => {
-    expect(getHeaderCellClassName(column({ align }))).toBe(expected);
+    expect(getHeaderCellClassName(column({ align }))).toBe(`font-medium text-slate-500 ${expected}`);
   });
 
   test.each([
@@ -50,11 +53,13 @@ describe("getHeaderCellClassName", () => {
     ["md", "hidden md:table-cell"],
     ["lg", "hidden lg:table-cell"],
   ] as const)("hides below %s with table-cell, not block, so the column layout survives", (bp, expected) => {
-    expect(getHeaderCellClassName(column({ hideBelow: bp }))).toBe(expected);
+    expect(getHeaderCellClassName(column({ hideBelow: bp }))).toBe(`font-medium text-slate-500 ${expected}`);
   });
 
   test("ignores cellClassName — that is for body cells only", () => {
-    expect(getHeaderCellClassName(column({ cellClassName: "font-medium text-slate-900" }))).toBe("");
+    expect(getHeaderCellClassName(column({ cellClassName: "font-medium text-slate-900" }))).toBe(
+      "font-medium text-slate-500"
+    );
   });
 });
 

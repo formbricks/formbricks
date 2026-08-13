@@ -104,13 +104,8 @@ export const SettingsTable = <TRow,>({
   };
 
   return (
-    <div className={getFrameClassName(frame)}>
-      <Table
-        id={id}
-        aria-label={ariaLabel}
-        data-testid={dataTestId}
-        className={className}
-        containerClassName={containerClassName}>
+    <div className={cn(getFrameClassName(frame), containerClassName)}>
+      <Table id={id} aria-label={ariaLabel} data-testid={dataTestId} className={className}>
         <TableHeader>
           <TableRow className="bg-slate-100">
             {columns.map((column) => (
