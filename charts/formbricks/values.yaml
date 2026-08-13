@@ -25,7 +25,10 @@ formbricks:
 # Enterprise Configuration
 ##########################################################
 enterprise:
+  # Deprecated compatibility field. Templates do not consume it; omit it from new values files.
   enabled: false
+  # Adds ENTERPRISE_LICENSE_KEY to the chart-generated app Secret when secret.enabled=true.
+  # With an existing Secret or ExternalSecret, provide ENTERPRISE_LICENSE_KEY there instead.
   licenseKey: ""
 
 ##########################################################
@@ -132,6 +135,11 @@ deployment:
     # a CDN, a corporate load balancer — in front of the ingress; setting it higher than the real chain
     # lets callers spoof their address by prepending entries.
     TRUSTED_PROXY_HOP_COUNT: "1"
+
+  # Additional pod volumes and app container mounts. These are useful for custom CA bundles and
+  # provider-specific runtime files without placing their contents directly in Helm values.
+  extraVolumes: []
+  extraVolumeMounts: []
 
   # Tolerations for scheduling pods on tainted nodes
   tolerations: []
@@ -959,10 +967,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.3.
-    digest: "sha256:4dc0c4f26cf999b3bf4a26d7b09634fc65ae23cbb30c9ad82042da019d231458"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.4.
+    digest: "sha256:5eb1e185383bcadc0fd591b9ccb475869ca2aebb81c09b493be1073f24190f10"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.8.3"
+    tag: "0.8.4"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.

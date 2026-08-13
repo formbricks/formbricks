@@ -6,23 +6,36 @@ import { describe, expect, test } from "vitest";
 // Guards the Turborepo output exclusions for the web build (see ENG-1805). The generic `build`
 // task must exclude `.next/cache/**` and `.next/dev/**` so Turbo never caches the transient
 // Next.js cache and dev directories — otherwise they fill local and CI disks (regression of the
-// ENG-1662 fix). Because `@formbricks/web` has no `#build` override today it inherits `build`,
-// but this test resolves outputs the same way Turbo does so a future package-specific override
-// cannot silently drop the exclusions again.
+// ENG-1662 fix).
+//
+// `@formbricks/web` declares no `outputs` of its own today, so it inherits the shared `build` task.
+// This resolves `outputs` the way Turbo actually does — apps/web/turbo.json `build` → root
+// `@formbricks/web#build` → root `build`, per key, with a higher-precedence declaration REPLACING the
+// list instead of merging into it — so neither kind of future override can silently drop the
+// exclusions. Since ENG-1682 moved the web build's env into apps/web/turbo.json, that file is now the
+// likelier place for such an override to appear. See lib/turbo-build-env.test.ts for the same trap on
+// `env`/`passThroughEnv`.
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const turboJsonPath = path.resolve(here, "..", "..", "..", "turbo.json");
+const repoRoot = path.resolve(here, "..", "..", "..");
+const rootTurboJsonPath = path.join(repoRoot, "turbo.json");
+const webTurboJsonPath = path.join(repoRoot, "apps", "web", "turbo.json");
 
 const REQUIRED_EXCLUSIONS = ["!.next/cache/**", "!.next/dev/**"];
 
-describe("turbo.json web build excludes transient Next.js dirs", () => {
-  const turboJson = JSON.parse(fs.readFileSync(turboJsonPath, "utf-8")) as {
-    tasks: Record<string, { outputs?: string[] }>;
-  };
+interface TaskConfig {
+  outputs?: string[];
+}
 
-  // Turbo uses the package-specific task when defined, otherwise the generic one.
+const readTasks = (filePath: string): Record<string, TaskConfig> =>
+  (JSON.parse(fs.readFileSync(filePath, "utf-8")) as { tasks?: Record<string, TaskConfig> }).tasks ?? {};
+
+describe("turbo.json web build excludes transient Next.js dirs", () => {
+  const rootTasks = readTasks(rootTurboJsonPath);
+  const webTasks = readTasks(webTurboJsonPath);
+
   const resolvedOutputs =
-    turboJson.tasks["@formbricks/web#build"]?.outputs ?? turboJson.tasks.build.outputs ?? [];
+    webTasks.build?.outputs ?? rootTasks["@formbricks/web#build"]?.outputs ?? rootTasks.build?.outputs ?? [];
 
   test("resolved @formbricks/web#build outputs exclude .next/cache and .next/dev", () => {
     const missing = REQUIRED_EXCLUSIONS.filter((exclusion) => !resolvedOutputs.includes(exclusion));

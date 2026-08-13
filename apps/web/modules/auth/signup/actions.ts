@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import {
@@ -138,6 +138,7 @@ async function signUpUserSafely(
     // legacy verification-token email.
     const signUpResult = await auth.api.signUpEmail({
       body: { email: normalizedEmail, password, name },
+      headers: await headers(),
     });
     signedUpUserId = signUpResult.user.id;
   } catch (error) {

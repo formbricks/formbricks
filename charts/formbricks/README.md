@@ -1,10 +1,13 @@
 # formbricks
 
-![Version: 0.0.0-dev](https://img.shields.io/badge/Version-0.0.0--dev-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 5.0.2](https://img.shields.io/badge/AppVersion-5.0.2-informational?style=flat-square)
+![Version: 5.3.4](https://img.shields.io/badge/Version-5.3.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 5.3.4](https://img.shields.io/badge/AppVersion-5.3.4-informational?style=flat-square)
 
 A Helm chart for Formbricks with PostgreSQL, Valkey
 
 **Homepage:** <https://formbricks.com/docs/self-hosting/setup/kubernetes>
+
+The version badges describe the latest published OCI chart. The source `Chart.yaml` keeps the development chart
+version at `0.0.0-dev`; the release workflow stamps the requested chart version into the packaged artifact.
 
 ## Maintainers
 
@@ -14,11 +17,12 @@ A Helm chart for Formbricks with PostgreSQL, Valkey
 
 ## Requirements
 
-| Repository                               | Name         | Version |
-| ---------------------------------------- | ------------ | ------- |
-| oci://registry-1.docker.io/bitnamicharts | postgresql   | 16.4.16 |
-| oci://docker.io/envoyproxy               | gateway-helm | v1.7.1  |
-| oci://registry-1.docker.io/bitnamicharts | envoyRedis   | 20.11.2 |
+| Repository                                      | Name         | Version |
+| ----------------------------------------------- | ------------ | ------- |
+| oci://registry-1.docker.io/bitnamicharts        | postgresql   | 16.4.16 |
+| oci://docker.io/envoyproxy                      | gateway-helm | v1.7.1  |
+| oci://registry-1.docker.io/bitnamicharts        | envoyRedis   | 20.11.2 |
+| https://vllm-project.github.io/production-stack | vllm-stack   | 0.1.11  |
 
 ## Envoy bundle modes
 
@@ -44,6 +48,13 @@ The intended defaults are:
 
 - self-hosted / single-tenant clusters: bundled controller mode
 - shared clusters with an existing platform controller: external-controller mode
+
+The chart leaves both `ingress.enabled` and `envoy.enabled` disabled because ingress and gateway choices are
+cluster-specific. Do not expose Formbricks v5 directly with those defaults: enable the chart-managed Envoy path
+or provide equivalent edge rate limiting for the documented route coverage. The default
+`autoscaling.minReplicas: 1` and `pdb.minAvailable: 1` are also a quick-start combination; raise the minimum to at
+least two for availability during voluntary disruptions, or change/disable the PDB for an intentional
+single-replica deployment.
 
 ## Cube
 
@@ -348,6 +359,8 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | deployment.containerSecurityContext.runAsNonRoot                   | bool   | `true`                                                                      |                                                           |
 | deployment.env                                                     | object | `{}`                                                                        | App container environment variables. Supports scalar values and `valueFrom` maps such as `secretKeyRef`. |
 | deployment.envFrom                                                 | string | `nil`                                                                       | Additional app container environment sources from ConfigMaps or Secrets. |
+| deployment.extraVolumeMounts                                       | list   | `[]`                                                                        | Additional app container volume mounts.                   |
+| deployment.extraVolumes                                            | list   | `[]`                                                                        | Additional app pod volumes.                               |
 | deployment.image.digest                                            | string | `""`                                                                        | When set, takes precedence over tag.                      |
 | deployment.image.pullPolicy                                        | string | `"IfNotPresent"`                                                            |                                                           |
 | deployment.image.repository                                        | string | `"ghcr.io/formbricks/formbricks"`                                           |                                                           |
@@ -389,8 +402,8 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | deployment.terminationGracePeriodSeconds                           | int    | `30`                                                                        | Time allowed for graceful Pod shutdown; must exceed any preStop drain. |
 | deployment.tolerations                                             | list   | `[]`                                                                        |                                                           |
 | deployment.topologySpreadConstraints                               | list   | `[]`                                                                        |                                                           |
-| enterprise.enabled                                                 | bool   | `false`                                                                     |                                                           |
-| enterprise.licenseKey                                              | string | `""`                                                                        |                                                           |
+| enterprise.enabled                                                 | bool   | `false`                                                                     | Deprecated compatibility value; it has no template effect. |
+| enterprise.licenseKey                                              | string | `""`                                                                        | Adds the license to the chart-generated app Secret.       |
 | externalSecret.enabled                                             | bool   | `false`                                                                     |                                                           |
 | externalSecret.files                                               | object | `{}`                                                                        |                                                           |
 | externalSecret.refreshInterval                                     | string | `"1h"`                                                                      |                                                           |
@@ -437,10 +450,10 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
 | hub.extraVolumeMounts                                              | list   | `[]`                                                                        | Additional volume mounts for Hub API and worker.          |
 | hub.extraVolumes                                                   | list   | `[]`                                                                        | Additional pod volumes for Hub API and worker.            |
-| hub.image.digest                                                   | string | `"sha256:4dc0c4f26cf999b3bf4a26d7b09634fc65ae23cbb30c9ad82042da019d231458"` | When set, takes precedence over tag (immutable pin).      |
+| hub.image.digest                                                   | string | `"sha256:5eb1e185383bcadc0fd591b9ccb475869ca2aebb81c09b493be1073f24190f10"` | When set, takes precedence over tag (immutable pin).      |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                                                            |                                                           |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`                                                  |                                                           |
-| hub.image.tag                                                      | string | `"0.8.3"`                                                                   | Fallback when digest is empty.                            |
+| hub.image.tag                                                      | string | `"0.8.4"`                                                                   | Fallback when digest is empty.                            |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |

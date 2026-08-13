@@ -26,7 +26,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { TFieldMapping, TUnifySurvey, getTranslatedFeedbackSourceError } from "../types";
-import { getSelectableQuestionIds } from "../utils";
+import { getSelectableQuestionIds, getSuggestedSurveys } from "../utils";
 import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
 import { CsvImportModal } from "./csv-import-modal";
 import { EditFeedbackSourceModal } from "./edit-feedback-source-modal";
@@ -71,11 +71,11 @@ export function FeedbackSourcesSection({
       ),
     [initialFeedbackSources]
   );
-  // Surveys that aren't backing a source yet are surfaced as "Suggestions" below the table.
-  const suggestedSurveys = useMemo(() => {
-    const connectedSurveyIdSet = new Set(connectedSurveyIds);
-    return initialSurveys.filter((survey) => !connectedSurveyIdSet.has(survey.id));
-  }, [initialSurveys, connectedSurveyIds]);
+  // Surveys that aren't backing a source yet (and aren't drafts) are surfaced as "Suggestions" below the table.
+  const suggestedSurveys = useMemo(
+    () => getSuggestedSurveys(initialSurveys, connectedSurveyIds),
+    [initialSurveys, connectedSurveyIds]
+  );
   const directoryNames = directories.map((directory) => directory.name).join(", ");
   const feedbackDirectoryAccessText =
     directories.length === 1

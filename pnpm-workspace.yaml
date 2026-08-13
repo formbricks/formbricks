@@ -37,6 +37,16 @@ overrides:
   # patched in 2.0.10. Pinned to 2.0.10 to close both.
   # load-bearing: @prisma/dev pins 1.19.11 and @modelcontextprotocol/sdk resolves 1.19.15.
   "@hono/node-server": 2.0.10
+  # ENG-2195 / GHSA-8j4g-w8fx-2239 (CVE-2026-69207): hono's CORS middleware has a ReDoS in the
+  # Access-Control-Request-Headers parser on preflight requests.
+  # ENG-2300 / GHSA-54fx-42gc-7vw4 (CVE-2026-71848): languageDetector middleware algorithmic-complexity
+  # DoS via a long hyphen-separated language tag.
+  # ENG-2319 / GHSA-f23p-vx2j-j53r (CVE-2026-71850): hono/jsx's memo() retains SSR output across
+  # requests, leaking one user's rendered HTML to another.
+  # ENG-2320 / GHSA-79qm-7rj5-m7r9 (CVE-2026-71849): Proxy Helper forwards response headers named in
+  # the origin's Connection header instead of stripping them. All four patched in 4.12.34.
+  # load-bearing: @hono/node-server resolves 4.x via @modelcontextprotocol/sdk and @prisma/dev (dev/MCP-only).
+  hono: 4.12.34
   # OpenTelemetry / protobuf chains.
   # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
   # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
@@ -59,13 +69,22 @@ overrides:
   node-forge: 1.4.0 # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
   # Webpack / linting / schema validation chains.
   minimatch@10: 10.2.5 # GHSA-7r86-cg39-jmmj + GHSA-23c5-xmqv-rm74: 10.0.0–10.2.2 vulnerable, patched in 10.2.3. load-bearing: @microsoft/api-extractor pins 10.2.1.
-  # GHSA-r28c-9q8g-f849: postcss <=8.5.17 auto-loads a previous sourceMappingURL
-  # without validating it stays within the project root, allowing arbitrary .map file
-  # disclosure via path traversal; patched in 8.5.18.
+  # GHSA-r28c-9q8g-f849 and GHSA-fxqj-rqcc-2cmp: postcss path traversal and parser
+  # denial-of-service findings are patched in 8.5.23.
   # load-bearing: next pins 8.4.31 and @tailwindcss/postcss pins 8.5.15.
-  postcss: 8.5.18
+  postcss: 8.5.23
   # SDK and runtime transitive security pins.
+  # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
+  # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
+  dompurify: 3.4.13
   fast-xml-parser: 5.7.0 # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # GHSA-22jq-vg5j-6vgg, GHSA-4xrf-jv44-h6hh and GHSA-mwp4-54f8-5fhr: ip-address parsing
+  # vulnerabilities are all patched in 10.3.1.
+  # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
+  ip-address@10: 10.3.1
+  # GHSA-2v37-7h3g-55p8: nanoid 3.x predictable output is patched in 3.3.17.
+  # load-bearing: postcss resolves 3.3.16.
+  nanoid@3: 3.3.17
   # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
   # ENG-1990 / GHSA-2rp8-mm9q-fp49: typeorm <0.3.31 migration:generate template-literal code injection;
   # patched in 0.3.31.
@@ -95,8 +114,17 @@ overrides:
   # lowest patched and stays <5. Scoped to the 4.x line so any 3.x consumer is untouched.
   # ENG-1952 / GHSA-52cp-r559-cp3m (CVE-2026-59869): js-yaml 4.0.0–4.2.x can spend quadratic CPU on a
   # merge-key mapping chain; patched in 4.3.0. Raises the 4.x pin from 4.2.0 to 4.3.0 (still <5).
+  # ENG-2278 / ENG-2279 / GHSA-5p4m-2wfm-xmqj (CVE-2026-59870): js-yaml 4.0.0–4.3.0 can spend quadratic
+  # CPU resolving a large !!omap (linear indexOf scan per entry); patched in 4.3.1. Raises the 4.x pin
+  # from 4.3.0 to 4.3.1 (still <5).
   # load-bearing: @redocly/openapi-core and @redocly/respect-core pin 4.2.0.
-  js-yaml@4: 4.3.0
+  js-yaml@4: 4.3.1
+  # GHSA-4cwx-7wf7-3272, GHSA-8xcm-r25x-g524, GHSA-jr45-8vmc-qm54,
+  # GHSA-m8rv-5g2x-5cg5 and GHSA-v3r7-h72x-cjcm: undici request handling findings are patched
+  # in 6.28.0 and 7.29.0 respectively.
+  # load-bearing: @redocly resolves the vulnerable 6.x line; apps/web uses the 7.x line directly.
+  undici@6: 6.28.0
+  undici@7: 7.29.0
   # === Dependabot security batch (ENG-1988..ENG-1999) ===
   # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
   # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
@@ -112,16 +140,95 @@ overrides:
   # tooling (@prisma/dev); patched in 1.4.2.
   # load-bearing: @prisma/dev pins 1.2.0.
   valibot: 1.4.2
+  # === Dependabot high-risk batch (ENG-2205, ENG-2206) ===
+  # ip-address@10 (ENG-2196), undici@6/@7 (ENG-2204/ENG-2215) were already pinned on main at the same
+  # versions (see the earlier overrides), so only socket.io-parser and fast-uri remain net-new here.
+  # ENG-2206 / GHSA-2m8v-j782-fhvr (CVE-2026-69185): socket.io-parser <4.2.7 memory exhaustion on a
+  # zero-attachment packet; patched in 4.2.7. load-bearing: socket.io resolves 4.2.6 (runtime).
+  socket.io-parser@4: 4.2.7
+  # ENG-2205 / GHSA-7p8r-x3mc-p8w7 (CVE-2026-18446): fast-uri >=3.0.0 <3.1.5 host confusion via a
+  # backslash authority introducer; patched in 3.1.5. Previously self-resolved, reopened by the new
+  # advisory. load-bearing: @redocly/ajv and ajv pull 3.1.4 (dev-only, API-docs tooling).
+  fast-uri@3: 3.1.5
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
-  # ajv@6, @babel/core, body-parser, brace-expansion@1/@2/@5, dompurify, engine.io@6, fast-uri@3, hono,
-  # linkify-it, protobufjs@7, undici@7 and uuid@11 all resolve to the patched version on their own now.
+  # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
+  # all resolve to the patched version on their own now.
   # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
   # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
-  # GHSA-mh99-v99m-4gvg (brace-expansion <=5.0.7) is still reported by `pnpm audit` as high: the range
-  # also matches 1.1.16 / 2.1.2, each the latest release in its line with no patch coming. Those paths
-  # are devDependency-only (eslint, prettier plugins and @redocly/cli, all via minimatch) and never run
-  # against untrusted input, so the residual risk is accepted until their consumers move to
-  # brace-expansion@5 — a pin cannot close it.
+  # === Fixable, deferred to its own PR (ENG-2234) — brace-expansion ===
+  # NOT in the list above: every brace-expansion line we resolve (1.1.16, 2.1.2, 5.0.8) is still
+  # vulnerable, and all three are closable by re-pinning. Re-verified 2026-08-05. Two advisories now:
+  # - GHSA-mh99-v99m-4gvg (unbounded expansion length → OOM), re-split upstream into per-major ranges:
+  #   `<1.1.17` and `>=2.0.0 <2.1.3`. The 5.x line is clear of this one.
+  # - GHSA-rgw5-rvv9-x895 (unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation) covers
+  #   all three: `<1.1.18`, `>=2.0.0 <2.1.4` and `>=4.0.0 <5.0.9`.
+  # Pinning the current maintenance releases — 1.1.18 / 2.1.4 / 5.0.9, all published 2026-07-30 and all
+  # past the `minimumReleaseAge` cooldown below — closes both advisories on all three lines. That is a
+  # dependency change needing its own lockfile and test run, so it is deferred to ENG-2234 rather than
+  # folded into an audit-comment sweep; the note here goes away with that PR. (An earlier version of this
+  # note claimed no patch was coming and that a pin could not close it. Both stopped being true on
+  # 2026-07-28.)
+  # Until then the residual risk stays acceptable — but NOT for the "devDependency-only" reason this note
+  # used to give, which was wrong. Every line reaches brace-expansion via minimatch, and they are rooted
+  # in production chains, not only dev ones: the 2.x line through `googleapis` and `@boxyhq/saml-jackson`
+  # (both apps/web `dependencies`, via gaxios>rimraf>glob and typeorm>glob) and `@ai-sdk/google-vertex`
+  # (a packages/ai `dependency`); the 1.x line through node-gyp under that same saml-jackson's
+  # typeorm>sqlite3. `pnpm audit` marks these findings `dev: false`. By contributor, the 1.x line is
+  # dominated by the eslint plugin graph (typescript-eslint, @vitest/eslint-plugin, eslint-config-next,
+  # eslint-plugin-storybook) and the 2.x line by vite-plugin-dts>@vue/language-core across six workspace
+  # packages, plus both prettier plugins. Two roots sit on both lines: @redocly/cli (mostly 2.x) and
+  # @boxyhq/saml-jackson (mostly 1.x, via the node-gyp chain above).
+  # What makes it tolerable is the input, not the dependency type: every one of these call sites expands
+  # glob patterns supplied by library code or developer config (gaxios' cache cleanup, typeorm's entity
+  # discovery, build and lint globs), never by request data.
+  # === Accepted risk, no override possible yet (pnpm audit will keep flagging this) ===
+  # ENG-1703 / GHSA-p2fr-6hmx-4528 (Dependabot alerts #612 and #613, both dismissed as tolerable risk;
+  # the ticket is closed Done with the same conclusion as here). Re-verified 2026-08-05.
+  # @better-auth/oauth-provider 1.6.23 (used for the MCP OAuth flow, ENG-1055) fails to bind
+  # access-token audiences to their authorization grant (RFC 8707 resource-indicator confusion) — a
+  # client can complete a normal authorization flow and then request a JWT scoped to a resource server
+  # the authorization never covered. No pin can close it: the whole 1.6.x stable line is in range, and the
+  # patch ships only from 1.7.0-beta.4 — a line still in pre-release. (Deliberately version-agnostic: the
+  # `latest` and `rc` tags move about weekly, so naming them here just guarantees this note rots. The
+  # rc-specific claims below are pinned to 1.7.0-rc.4, the release actually inspected.)
+  # Why this deployment isn't exposed to the escalation — and what that rests on. Note the advisory is
+  # explicit that a single-audience deployment still does not bind the resource to the authorization
+  # grant, so the spec-compliance gap remains regardless of the below; this is "not exploitable here",
+  # not "compliant":
+  # - apps/web/modules/auth/lib/mcp-oauth-provider-options.ts sets a single-entry validAudiences (the
+  #   MCP resource URL), so there is no second audience for a client to escalate into. This is the
+  #   load-bearing mitigation, and it holds only while that array stays single-entry.
+  # - apps/web/modules/mcp/auth.ts pins `audience: getMcpResourceUrl()` on the resource server's own
+  #   verify call AND, since ENG-2339, asserts the verified payload's `aud` itself. The pin alone was
+  #   never sufficient: it flows straight into jose's jwtVerify, whose `aud` check is a membership
+  #   test, so a token whose `aud` array also lists other audiences passes it. The advisory's own
+  #   workaround requires *rejecting* multi-audience tokens, which verifyOptions.audience cannot
+  #   express. The explicit assert is that rejection — an allow-list of {MCP resource, the AS's
+  #   UserInfo endpoint, which `openid` implies}, everything else refused.
+  # - What that does and does not buy: our MCP endpoint can no longer be reached with a token minted
+  #   for somebody else, which is the exploitable half. It does NOT make the AS compliant — 1.6.x
+  #   still never persists the approved resource, so there is nothing to bind the token request to.
+  #   That is unfixable from our side and is what the 1.7 upgrade (ENG-2343) is for. If a second
+  #   audience were ever added the party at risk is that other resource server, and nothing here
+  #   protects it.
+  # - Test coverage. Single-entry validAudiences is pinned twice, deliberately: in
+  #   apps/web/modules/auth/lib/mcp-oauth-dcr.test.ts (added by #8828) and in
+  #   apps/web/modules/auth/lib/mcp-oauth-provider-options.test.ts (ENG-2339), which also covers the
+  #   advertised-vs-registration scope agreement and the write-scope step-up expiry. Redundant on
+  #   purpose — it is the invariant this entire acceptance rests on. Separately,
+  #   apps/web/modules/mcp/auth.test.ts mints real signed JWTs and proves a multi-audience token is
+  #   refused (and that jose on its own accepts it).
+  # Upgrade cost, for whoever picks up 1.7.0: the renames the 1.7 upgrade guide warns about do not apply
+  # to us (migration 20260702093000_add_better_auth_oauth_provider already created `oauthClient`, not
+  # `oauthApplication`, with an `oauthAccessToken.token` column, not `.accessToken`, plus the `sessionId`
+  # that session-bound token validity needs — and we have no SCIM), and customAccessTokenClaims.resource
+  # does not apply either (ours only returns email/name). But there is still real DDL to write: as
+  # inspected at 1.7.0-rc.4, the line replaces `validAudiences` with a resources model and declares three
+  # tables we do not have — `oauthResource`, `oauthClientResource` and `oauthClientAssertion`. The bigger
+  # blocker is that the same release declares `better-auth` and `@better-auth/core` as matching
+  # `^1.7.0-rc.x` peers, making this a coupled auth-core upgrade touching login/2FA/SSO/sessions rather
+  # than a plugin-only bump. That needs its own reviewed PR once Better Auth ships 1.7.0 stable, not an
+  # audit sweep or an unattended dependency-only bump.
 
 autoInstallPeers: true
 linkWorkspacePackages: true

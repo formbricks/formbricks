@@ -40,6 +40,28 @@ export const getMcpProtectedResourceMetadataUrl = (): string =>
 
 export const getMcpOrigin = (): string => new URL(getMcpResourceUrl()).origin;
 
+/**
+ * The authorization server's own UserInfo endpoint, which is a legitimate second value in an access
+ * token's `aud`.
+ *
+ * The oauth-provider treats UserInfo as an implicit resource: when `openid` is in scope it appends
+ * this identifier to the audience alongside the resource the client actually requested. It is the
+ * only audience besides the MCP resource URL that a Formbricks-issued MCP token may carry, so the
+ * resource server allow-lists exactly these two and rejects anything else (see
+ * `hasAcceptedMcpAudience` in modules/mcp/auth.ts).
+ *
+ * Built off the issuer for the same reason `jwksUrl` is: Better Auth mounts its OAuth endpoints
+ * under the auth base path, so the issuer is the prefix the plugin itself uses.
+ *
+ * The assumption is that this equals Better Auth's own `ctx.context.baseURL`, which is what it
+ * stamps into the audience. That holds while the configured auth URL is a bare origin — Better
+ * Auth's `withPath` appends `/api/auth` exactly as `getAuthIssuerUrl` does. It does NOT hold if
+ * `BETTER_AUTH_URL` carries a subpath, because `withPath` returns a URL that already has a path
+ * unchanged while we still append. Subpath deployments cannot complete a login at all today
+ * (ENG-606), so this is not a live gap — but it is the thing to fix here when that one is fixed.
+ */
+export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/userinfo`;
+
 export const MCP_OAUTH_SCOPES = [
   "openid",
   "profile",

@@ -49,11 +49,20 @@ By default, the chart deploys:
 
 - the Formbricks application
 - Formbricks Hub
+- Cube
 - PostgreSQL
 - Redis
 - generated Kubernetes Secrets
 </Step>
 </Steps>
+
+<Warning>
+  The default values are a starting point, not a production edge or high-availability configuration. Both
+  `ingress.enabled` and `envoy.enabled` default to `false`, so the chart does not expose the application or add
+  the v5 edge rate limits unless you configure them. The defaults also combine `autoscaling.minReplicas: 1` with
+  `pdb.minAvailable: 1`; that PodDisruptionBudget can block a node drain because Kubernetes cannot voluntarily
+  evict the only app pod.
+</Warning>
 
 ## 2. Configure Secrets And External Services
 
@@ -61,6 +70,20 @@ By default, the chart deploys:
 
 The default chart path keeps `secret.enabled: true`, which lets the chart generate the required application
 secrets for you.
+
+### Adding An Enterprise License
+
+There is no separate `enterprise.enabled` switch. Enterprise features are unlocked by a valid
+`ENTERPRISE_LICENSE_KEY`. For a quick-start deployment that uses the chart-generated app Secret, set:
+
+```yaml
+enterprise:
+  licenseKey: your-enterprise-license-key
+```
+
+For production, keep the license out of a values file and provide `ENTERPRISE_LICENSE_KEY` through your existing
+Secret or ExternalSecret instead. The `enterprise.licenseKey` chart value only writes to the generated app Secret
+when `secret.enabled: true`.
 
 ### Using Managed PostgreSQL And Redis
 
@@ -103,11 +126,41 @@ The chart supports three edge patterns for the v5-covered routes:
 If you use the chart-managed Envoy rate-limiting path, enable a dedicated backend with:
 
 ```yaml
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+
 envoyRedis:
   enabled: true
 ```
 
 This keeps Envoy rate-limiting state separate from the application's own Redis traffic.
+
+The example installs the bundled controller. If your cluster already provides a compatible Envoy Gateway
+controller, set `envoy.controller.enabled: false`. In either mode, configure
+`envoy.formbricks.ingress` or your platform ingress/load balancer so public traffic reaches the Envoy-managed
+routes. If you use an equivalent external edge solution instead, verify that it covers every route in the
+[rate-limiting guide](/self-hosting/advanced/rate-limiting) before exposing Formbricks.
+
+### Production Replicas And Disruption Budgets
+
+For a production deployment that should remain available during a voluntary disruption, run at least two app
+replicas:
+
+```yaml
+autoscaling:
+  enabled: true
+  minReplicas: 2
+
+pdb:
+  enabled: true
+  minAvailable: 1
+```
+
+If you intentionally run a single app replica, either disable the PDB or use `maxUnavailable: 1` instead of
+`minAvailable` and accept downtime during the eviction. Never set both fields; set the unused field to `null` in
+your values file.
 
 ### Cube
 

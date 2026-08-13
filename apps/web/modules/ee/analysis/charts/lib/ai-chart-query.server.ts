@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { type TChartQuery } from "@formbricks/types/analysis";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import {
   FEEDBACK_DIMENSION_IDS,
@@ -102,6 +103,8 @@ export type AIChartQueryResult = {
 
 type GenerateAIChartQueryInput = {
   organizationId: string;
+  workspaceId: string;
+  userId: string;
   prompt: string;
 };
 
@@ -113,6 +116,8 @@ type GenerateAIChartQueryInput = {
  */
 export const generateAIChartQuery = async ({
   organizationId,
+  workspaceId,
+  userId,
   prompt,
 }: GenerateAIChartQueryInput): Promise<AIChartQueryResult> => {
   const schemaContext = generateSchemaContext();
@@ -121,6 +126,7 @@ export const generateAIChartQuery = async ({
   try {
     const response = await generateOrganizationAIObject<AIQueryResponse>({
       organizationId,
+      aiTracing: { distinctId: userId, feature: AI_TRACING_FEATURE.ChartQuery, workspaceId },
       schema: ZAIQueryResponse,
       system: schemaContext,
       // JSON.stringify escapes embedded quotes and newlines so a hostile prompt

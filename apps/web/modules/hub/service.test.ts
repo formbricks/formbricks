@@ -225,9 +225,9 @@ describe("hub service", () => {
       const count = vi.fn().mockResolvedValue({ count: 42 });
       vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { count } } as any);
 
-      const result = await countFeedbackRecords({ tenant_id: "env-1", user_id: "user-1" });
+      const result = await countFeedbackRecords({ tenant_id: "env-1", user_id: ["user-1"] });
 
-      expect(count).toHaveBeenCalledWith({ tenant_id: "env-1", user_id: "user-1" });
+      expect(count).toHaveBeenCalledWith({ tenant_id: "env-1", user_id: ["user-1"] });
       expect(result.data).toEqual({ count: 42 });
       expect(result.error).toBeNull();
     });

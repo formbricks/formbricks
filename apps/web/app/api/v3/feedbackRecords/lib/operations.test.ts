@@ -4,7 +4,10 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import {
+  getFeedbackDirectoriesByWorkspaceId,
+  getFeedbackDirectoryAuthContext,
+} from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   countFeedbackRecords,
@@ -44,6 +47,7 @@ vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsFeedbackDirectoriesEnabled: vi.fn() }));
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: vi.fn(),
+  getFeedbackDirectoryAuthContext: vi.fn(),
 }));
 vi.mock("@/modules/hub/service", () => ({
   listFeedbackRecords: vi.fn(),
@@ -81,13 +85,28 @@ const record: FeedbackRecordData = {
 // A person-shaped principal, as an OAuth/MCP token produces. The shared `base` passes `authentication:
 // null`, which the mutation-role gate skips, so these are used where the caller's role is the subject.
 const sessionAuth = { user: { id: "user_1" } } as TV3Authentication;
-const apiKeyAuth = { apiKeyId: "key_1" } as unknown as TV3Authentication;
+// Carries an `organizationId` because the mutation gate compares the *key's* organization against the
+// dataset's — a fixture without one would let that check pass vacuously.
+const apiKeyAuth = {
+  apiKeyId: "key_1",
+  organizationId: context.organizationId,
+} as unknown as TV3Authentication;
+const foreignOrgApiKeyAuth = {
+  apiKeyId: "key_2",
+  organizationId: "org_other",
+} as unknown as TV3Authentication;
 
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
   vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
   vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([{ id: directoryId, name: "Support" }]);
+  // Unshared by default, so only the tests that opt into sharing exercise the ENG-2189 rule.
+  vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue({
+    organizationId: context.organizationId,
+    workspaceIds: [workspaceId],
+    isArchived: false,
+  });
   vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 });
 
@@ -219,8 +238,9 @@ describe("listV3FeedbackRecords", () => {
       expect.objectContaining({
         tenant_id: directoryId,
         limit: 50,
-        source_type: "survey",
-        field_type: "text",
+        // Single-valued on our side, sent as a one-element OR list since Hub 0.8.4 made these repeatable.
+        source_type: ["survey"],
+        field_type: ["text"],
       })
     );
     expect(body.meta).toEqual({
@@ -648,13 +668,16 @@ describe("deleteV3FeedbackRecord", () => {
     vi.mocked(deleteFeedbackRecord).mockResolvedValue({ data: { deleted: true }, error: null });
   });
 
-  test("requires readWrite access", async () => {
+  // ENG-2083: DELETE is reserved for `manage` everywhere else in the API and record deletion is
+  // unrecoverable, so this path asks for `manage` rather than `readWrite`. Both delete paths moved —
+  // see the gateway's route table for the other one.
+  test("requires manage access", async () => {
     await deleteV3FeedbackRecord(deleteBase);
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
       sessionAuth,
       workspaceId,
-      "readWrite",
+      "manage",
       requestId,
       instance
     );
@@ -985,16 +1008,17 @@ describe("countV3FeedbackRecords", () => {
       until: "2026-12-31T00:00:00Z",
     });
 
+    // Every identity filter goes out as a one-element OR list; the two range bounds stay scalar.
     expect(countFeedbackRecords).toHaveBeenCalledWith({
       tenant_id: directoryId,
-      source_type: "survey",
-      source_id: "svy_1",
-      field_type: "text",
-      field_id: "q1",
-      field_group_id: "grp_1",
-      submission_id: "sub-1",
-      user_id: "user-1",
-      value_id: "opt_1",
+      source_type: ["survey"],
+      source_id: ["svy_1"],
+      field_type: ["text"],
+      field_id: ["q1"],
+      field_group_id: ["grp_1"],
+      submission_id: ["sub-1"],
+      user_id: ["user-1"],
+      value_id: ["opt_1"],
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
@@ -1104,18 +1128,19 @@ describe("listV3FeedbackRecords filters", () => {
       until: "2026-12-31T00:00:00Z",
     });
 
+    // Same one-element OR lists as the count path; pagination and the range bounds stay scalar.
     expect(listFeedbackRecords).toHaveBeenCalledWith({
       tenant_id: directoryId,
       limit: 10,
       cursor: "abc",
-      source_type: "survey",
-      source_id: "svy_1",
-      field_type: "text",
-      field_id: "q1",
-      field_group_id: "grp_1",
-      submission_id: "sub-1",
-      user_id: "user-1",
-      value_id: "opt_1",
+      source_type: ["survey"],
+      source_id: ["svy_1"],
+      field_type: ["text"],
+      field_id: ["q1"],
+      field_group_id: ["grp_1"],
+      submission_id: ["sub-1"],
+      user_id: ["user-1"],
+      value_id: ["opt_1"],
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
@@ -1664,17 +1689,149 @@ describe("feedback record mutation role (ENG-1770)", () => {
     expect(deleted.status).toBe(204);
   });
 
-  // Deliberate carve-out: an API key authorizes on its per-workspace permissions, and what a key should
-  // need in order to mutate a record is being settled in #8682.
-  test("leaves API-key callers to their workspace permissions", async () => {
+  // An API key has no organization role, so it takes the equivalent rule instead: it may mutate only a
+  // dataset assigned to exactly one workspace (ENG-2189).
+  test("lets an API key delete in a dataset assigned only to its workspace", async () => {
     const deleted = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: apiKeyAuth });
 
     expect(deleted.status).toBe(204);
     expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
   });
 
-  // The API key above is the only shape that skips the role check. Anything that resolves to no user is
-  // refused rather than admitted by the absence of a field — the pass-through has to stay an allowlist.
+  // The positive control for update: without it, a regression refusing every API-key update would still
+  // pass, since the only other update case asserts a refusal.
+  test("lets an API key update in a dataset assigned only to its workspace", async () => {
+    const updated = await updateV3FeedbackRecord({ ...updateArgs, authentication: apiKeyAuth });
+
+    expect(updated.status).toBe(200);
+    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+  });
+
+  describe("API key in a shared dataset (ENG-2189)", () => {
+    beforeEach(() => {
+      vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue({
+        organizationId: context.organizationId,
+        workspaceIds: [workspaceId, "clwb1234567890123456789012"],
+        isArchived: false,
+      });
+    });
+
+    test("refuses a delete, before the record is looked up", async () => {
+      const response = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: apiKeyAuth });
+
+      expect(response.status).toBe(403);
+      // The no-oracle ordering has to survive the change: a refused caller learns nothing about ids.
+      expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+      expect(deleteFeedbackRecord).not.toHaveBeenCalled();
+    });
+
+    test("refuses an update too", async () => {
+      const response = await updateV3FeedbackRecord({ ...updateArgs, authentication: apiKeyAuth });
+
+      expect(response.status).toBe(403);
+      // The no-oracle ordering has to survive the change: a refused caller learns nothing about ids.
+      expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+      expect(updateFeedbackRecord).not.toHaveBeenCalled();
+    });
+
+    // The body is the whole user interface for an MCP agent, so the actionable wording is pinned.
+    test("explains that the dataset is shared rather than refusing generically", async () => {
+      const response = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: apiKeyAuth });
+      const problem = await response.json();
+
+      expect(problem.detail).toContain("shared by more than one workspace");
+    });
+  });
+
+  // Defense in depth: each is already implied by how the dataset was resolved, but the values are in hand
+  // and the gateway's twin asserts them, so relying on the transitive invariant would be the same bug
+  // class as ENG-1980. None of them is a sharing problem, so none may claim to be one — an integrator told
+  // to "assign this dataset to a single workspace" would be chasing a problem they do not have.
+  //
+  // The organization case is compared against the *key's* org: asserting the dataset's org against
+  // `resolution.organizationId` would compare two values that are only equal because of the invariant
+  // being distrusted, so it would assert nothing at all.
+  test.each([
+    ["the dataset cannot be resolved", null, apiKeyAuth],
+    [
+      "the dataset belongs to another organization",
+      { organizationId: "org_other", workspaceIds: [workspaceId], isArchived: false },
+      apiKeyAuth,
+    ],
+    [
+      "the key belongs to another organization",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: false },
+      foreignOrgApiKeyAuth,
+    ],
+    [
+      "the dataset is archived",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: true },
+      apiKeyAuth,
+    ],
+    [
+      "the dataset's sole workspace is not the caller's",
+      {
+        organizationId: context.organizationId,
+        workspaceIds: ["clwz1234567890123456789012"],
+        isArchived: false,
+      },
+      apiKeyAuth,
+    ],
+  ])("refuses an API-key delete when %s, without blaming sharing", async (_name, directory, auth) => {
+    vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue(directory);
+
+    const response = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: auth });
+    const problem = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(problem.detail).not.toContain("shared by more than one workspace");
+    // The no-oracle ordering must hold for each refusal reason too.
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+    expect(deleteFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["the dataset cannot be resolved", null, apiKeyAuth],
+    [
+      "the dataset belongs to another organization",
+      { organizationId: "org_other", workspaceIds: [workspaceId], isArchived: false },
+      apiKeyAuth,
+    ],
+    [
+      "the key belongs to another organization",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: false },
+      foreignOrgApiKeyAuth,
+    ],
+    [
+      "the dataset is archived",
+      { organizationId: context.organizationId, workspaceIds: [workspaceId], isArchived: true },
+      apiKeyAuth,
+    ],
+    [
+      "the dataset's sole workspace is not the caller's",
+      {
+        organizationId: context.organizationId,
+        workspaceIds: ["clwz1234567890123456789012"],
+        isArchived: false,
+      },
+      apiKeyAuth,
+    ],
+  ])("refuses an API-key update when %s, without blaming sharing", async (_name, directory, auth) => {
+    vi.mocked(getFeedbackDirectoryAuthContext).mockResolvedValue(directory);
+
+    const response = await updateV3FeedbackRecord({ ...updateArgs, authentication: auth });
+    const problem = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(problem.detail).not.toContain("shared by more than one workspace");
+    // The no-oracle ordering must hold for each refusal reason too.
+    expect(retrieveFeedbackRecord).not.toHaveBeenCalled();
+    expect(updateFeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  // The API key above is the only shape routed to the sharing rule instead of the organization role.
+  // Anything else that resolves to no user is refused rather than admitted by the absence of a field —
+  // the dispatch has to stay an allowlist.
   test.each([
     ["no principal", null],
     ["a session with no user id", { user: {} } as TV3Authentication],

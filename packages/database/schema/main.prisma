@@ -653,6 +653,7 @@ model Workspace {
 /// @property billing - JSON field containing billing information
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
+/// @property displayTimeZone - Optional IANA time zone used for human-facing response timestamps (exports, integrations); null means UTC
 model Organization {
   id                    String               @id @default(cuid())
   createdAt             DateTime             @default(now()) @map(name: "created_at")
@@ -665,6 +666,7 @@ model Organization {
   whitelabel            Json                 @default("{}")
   invites               Invite[]
   isAISmartToolsEnabled Boolean              @default(false)
+  displayTimeZone       String?
   teams                 Team[]
   apiKeys               ApiKey[]
   feedbackDirectories   FeedbackDirectory[]

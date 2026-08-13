@@ -45,6 +45,20 @@ jobs:
             echo "Expected no lifecycle block in the default render" >&2
             exit 1
           fi
+          ! grep -q '^          volumeMounts:$' "$render_dir/deployment-default.yaml"
+          ! grep -q '^      volumes:$' "$render_dir/deployment-default.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set 'deployment.extraVolumes[0].name=custom-ca' \
+            --set 'deployment.extraVolumes[0].configMap.name=custom-ca' \
+            --set 'deployment.extraVolumeMounts[0].name=custom-ca' \
+            --set 'deployment.extraVolumeMounts[0].mountPath=/etc/ssl/formbricks-ca' \
+            --set 'deployment.extraVolumeMounts[0].readOnly=true' \
+            --show-only templates/deployment.yaml > "$render_dir/deployment-volumes.yaml"
+          test "$(grep -c 'name: custom-ca' "$render_dir/deployment-volumes.yaml")" -eq 3
+          test "$(grep -c 'mountPath: /etc/ssl/formbricks-ca' "$render_dir/deployment-volumes.yaml")" -eq 1
+          test "$(grep -c 'readOnly: true' "$render_dir/deployment-volumes.yaml")" -eq 1
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
