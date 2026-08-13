@@ -201,8 +201,8 @@
 #  12. Documentation
 # ------------------------------------------------------------------------------
 /CONTRIBUTING.md                           @jobenjada @BhagyaAmarasinghe
-/README.md                                 @jobenjada
-/docs/                                     @jobenjada
+/README.md                                 @jobenjada @pandeymangg
+/docs/                                     @jobenjada @pandeymangg
 /docs/api-v3-reference/                    @xernobyl @jobenjada
 /docs/self-hosting/                        @BhagyaAmarasinghe @jobenjada
 
