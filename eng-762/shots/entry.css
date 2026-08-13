@@ -1,0 +1,4 @@
+/* Reuse the app's own stylesheet so the theme, plugins and the Tailwind v3
+   border-colour compat shim all apply exactly as they do in the product. */
+@import "/home/user/formbricks/apps/web/modules/ui/globals.css";
+@source "/tmp/claude-0/-home-user-formbricks/0764268d-1e3e-5a9f-b182-18b5bc3dedff/scratchpad/shots/pages";
