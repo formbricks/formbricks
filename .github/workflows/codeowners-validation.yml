@@ -1,0 +1,55 @@
+name: Validate CODEOWNERS
+
+# CODEOWNERS fails silently: an unparseable line is skipped, an owner without
+# write access is dropped, and a pattern whose directory was renamed simply
+# stops matching. None of that surfaces anywhere, so it is checked here.
+#
+# This workflow is deliberately NOT part of pr.yml's `required` gate. Ownership
+# metadata going stale must never block unrelated work.
+
+on:
+  pull_request:
+    paths:
+      - ".github/CODEOWNERS"
+      - ".github/workflows/codeowners-validation.yml"
+  # The weekly run is the important one. Renaming a directory elsewhere in the
+  # repo breaks a pattern without touching CODEOWNERS, so the pull_request
+  # trigger above would never fire for it.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate CODEOWNERS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Validate CODEOWNERS
+        uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f # v0.7.4
+        with:
+          # syntax       - unparseable lines, which GitHub would skip silently
+          # duppatterns  - the same pattern declared twice
+          # files        - patterns that match nothing, i.e. a renamed directory
+          # owners       - owners who do not exist or have lost write access
+          checks: "syntax,duppatterns,files,owners"
+          # avoid-shadowing enforces the general-to-specific ordering the whole
+          # file depends on, since the last matching pattern wins.
+          experimental_checks: "avoid-shadowing"
+          # The `owners` check reads organization membership, which the default
+          # GITHUB_TOKEN cannot do. Needs a PAT with read:org.
+          github_access_token: ${{ secrets.CODEOWNERS_VALIDATOR_TOKEN }}
