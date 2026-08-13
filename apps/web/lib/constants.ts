@@ -243,7 +243,7 @@ export const IS_RECAPTCHA_CONFIGURED = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_S
 // Use the app version for Sentry release (updated during build in production)
 // Fallback to environment variable if package.json is not accessible
 export const SENTRY_RELEASE = (() => {
-  if (process.env.NODE_ENV !== "production") {
+  if (!IS_PRODUCTION) {
     return undefined;
   }
 
