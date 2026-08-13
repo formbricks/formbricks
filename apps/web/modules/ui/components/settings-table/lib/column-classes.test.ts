@@ -37,8 +37,16 @@ describe("getHeaderCellClassName", () => {
     expect(getHeaderCellClassName(column())).toBe("font-medium text-slate-500");
   });
 
-  test("carries the width, because the header cell is what sizes the whole column", () => {
-    expect(getHeaderCellClassName(column({ width: "w-[22%]" }))).toBe("font-medium text-slate-500 w-[22%]");
+  test("merges headerClassName, which is where a column's width belongs", () => {
+    expect(getHeaderCellClassName(column({ headerClassName: "w-[22%]" }))).toBe(
+      "font-medium text-slate-500 w-[22%]"
+    );
+  });
+
+  test("merges headerClassName last, so a column can override the alignment it asked for", () => {
+    expect(getHeaderCellClassName(column({ align: "center", headerClassName: "text-right" }))).toBe(
+      "font-medium text-slate-500 text-right"
+    );
   });
 
   test.each([
@@ -65,8 +73,8 @@ describe("getHeaderCellClassName", () => {
 });
 
 describe("getBodyCellClassName", () => {
-  test("omits the width, so only the header sizes the column", () => {
-    expect(getBodyCellClassName(column({ width: "w-[22%]" }))).toBe("");
+  test("ignores headerClassName — a width there must not leak onto every cell", () => {
+    expect(getBodyCellClassName(column({ headerClassName: "w-[22%]" }))).toBe("");
   });
 
   test("repeats align and hideBelow, which have to match the header cell to stay aligned", () => {

@@ -15,16 +15,19 @@ export type TSettingsTableColumn<TRow> = {
   /** Already-translated header label. `null` renders an empty header cell — pair it with `srLabel`. */
   header: ReactNode;
   cell: (row: TRow, index: number) => ReactNode;
-  /**
-   * Tailwind width class for the `<th>`, e.g. `w-[22%]` or `w-16`. Omit to let the browser size the
-   * column. Percentages are suggestions: the table is `table-auto`, so a long value can still borrow
-   * space from a short one, and when a `hideBelow` column drops out the rest rescale.
-   */
-  width?: `w-${string}`;
   /** Applies to the header cell and every body cell in this column. Defaults to `left`. */
   align?: TSettingsTableAlign;
   /** Hides the column below this breakpoint. Applied to the header and body cells together. */
   hideBelow?: TSettingsTableBreakpoint;
+  /**
+   * Extra classes merged onto the `<th>`.
+   *
+   * This is where a column's **width** belongs (`w-[22%]`, `w-16`), because the header cell is what
+   * sizes the whole column — putting a width on `cellClassName` only affects that one cell. Widths are
+   * suggestions rather than commands: the table is `table-auto`, so a long value can still borrow space
+   * from a short one, and when a `hideBelow` column drops out the remaining widths rescale.
+   */
+  headerClassName?: string;
   /** Extra classes merged onto every `<td>` in this column, e.g. `font-medium text-slate-900`. */
   cellClassName?: string;
   /** Accessible name for a header cell whose `header` is `null` — typically an actions column. */

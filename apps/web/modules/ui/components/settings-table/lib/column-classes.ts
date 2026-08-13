@@ -34,18 +34,18 @@ const FRAME_CLASSES: Record<TSettingsTableFrame, string> = {
 export const getFrameClassName = (frame: TSettingsTableFrame): string => FRAME_CLASSES[frame];
 
 /**
- * Width lives on the header cell only — the browser applies it to the whole column.
- *
  * The header's type is set here rather than on the shared `TableHead`, because a class on the `th` beats
  * the `text-slate-800` a `<thead>` passes down: putting it in the primitive would lighten every bare
  * `TableHead` in the app, including the data tables for contacts, attributes and survey responses.
+ *
+ * `headerClassName` is merged last, so a column can override the alignment it just asked for.
  */
 export const getHeaderCellClassName = <TRow>(column: TSettingsTableColumn<TRow>): string =>
   cn(
     "font-medium text-slate-500",
-    column.width,
     column.align ? ALIGN_CLASSES[column.align] : undefined,
-    column.hideBelow ? HIDE_BELOW_CLASSES[column.hideBelow] : undefined
+    column.hideBelow ? HIDE_BELOW_CLASSES[column.hideBelow] : undefined,
+    column.headerClassName
   );
 
 export const getBodyCellClassName = <TRow>(column: TSettingsTableColumn<TRow>): string =>
