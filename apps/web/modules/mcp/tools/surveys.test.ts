@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { z } from "zod";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
@@ -184,7 +185,9 @@ describe("registerSurveyTools", () => {
         idempotentHint: false,
       },
     });
-    expect(Object.keys(tools.get("create_survey")?.config.inputSchema as Record<string, unknown>)).toEqual(
+    expect(
+      Object.keys((tools.get("create_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
+    ).toEqual(
       expect.arrayContaining([
         "workspaceId",
         "name",
@@ -208,9 +211,9 @@ describe("registerSurveyTools", () => {
         idempotentHint: true,
       },
     });
-    expect(Object.keys(tools.get("validate_survey")?.config.inputSchema as Record<string, unknown>)).toEqual(
-      expect.arrayContaining(["operation", "surveyId", "data"])
-    );
+    expect(
+      Object.keys((tools.get("validate_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
+    ).toEqual(expect.arrayContaining(["operation", "surveyId", "data"]));
     expect(tools.get("patch_survey")?.config).toMatchObject({
       title: "Patch survey",
       annotations: {
@@ -245,7 +248,7 @@ describe("registerSurveyTools", () => {
         limit: 20,
         includeTotalCount: true,
       },
-      { authInfo }
+      { http: { authInfo } }
     );
 
     expect(listV3Surveys).toHaveBeenCalledWith(
@@ -277,7 +280,7 @@ describe("registerSurveyTools", () => {
         limit: 101,
         includeTotalCount: true,
       },
-      { authInfo }
+      { http: { authInfo } }
     );
 
     expect(result.isError).toBe(true);
@@ -300,7 +303,7 @@ describe("registerSurveyTools", () => {
         surveyId: "clxx1234567890123456789012",
         lang: ["en-US"],
       },
-      { authInfo }
+      { http: { authInfo } }
     );
 
     expect(getV3Survey).toHaveBeenCalledWith({
@@ -351,7 +354,7 @@ describe("registerSurveyTools", () => {
       createdResponse({ id: "clxx1234567890123456789012" }, { requestId: "req_tool", location: "/survey" })
     );
 
-    const result = await tools.get("create_survey")!.handler(createBody, { authInfo });
+    const result = await tools.get("create_survey")!.handler(createBody, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", ABSOLUTE_MCP_AUDIT_URL);
     expect(createV3SurveyResponseFromRawInput).toHaveBeenCalledWith({
@@ -382,7 +385,7 @@ describe("registerSurveyTools", () => {
       successResponse({ valid: true, operation: "create", invalid_params: [] }, { requestId: "req_tool" })
     );
 
-    const result = await tools.get("validate_survey")!.handler(validationBody, { authInfo });
+    const result = await tools.get("validate_survey")!.handler(validationBody, { http: { authInfo } });
 
     expect(validateV3SurveyFromRawInput).toHaveBeenCalledWith({
       body: validationBody,
@@ -412,7 +415,7 @@ describe("registerSurveyTools", () => {
       successResponse({ id: "clxx1234567890123456789012", name: "Updated survey" }, { requestId: "req_tool" })
     );
 
-    const result = await tools.get("patch_survey")!.handler(patchInput, { authInfo });
+    const result = await tools.get("patch_survey")!.handler(patchInput, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", ABSOLUTE_MCP_AUDIT_URL);
     expect(patchV3SurveyResponse).toHaveBeenCalledWith({
@@ -443,7 +446,7 @@ describe("registerSurveyTools", () => {
       {
         surveyId: "clxx1234567890123456789012",
       },
-      { authInfo }
+      { http: { authInfo } }
     );
 
     expect(deleteV3Survey).toHaveBeenCalledWith({
@@ -472,7 +475,7 @@ describe("registerSurveyTools", () => {
       {
         surveyId: "clxx1234567890123456789012",
       },
-      { authInfo }
+      { http: { authInfo } }
     );
 
     expect(result.isError).toBe(true);
@@ -496,7 +499,7 @@ describe("registerSurveyTools", () => {
       {
         surveyId: "clxx1234567890123456789012",
       },
-      { authInfo: readOnlyOAuthAuthInfo }
+      { http: { authInfo: readOnlyOAuthAuthInfo } }
     );
 
     expect(deleteV3Survey).not.toHaveBeenCalled();
@@ -526,7 +529,7 @@ describe("registerSurveyTools", () => {
           name: "Updated survey",
         },
       },
-      { authInfo: readOnlyOAuthAuthInfo }
+      { http: { authInfo: readOnlyOAuthAuthInfo } }
     );
 
     expect(validateV3SurveyFromRawInput).toHaveBeenCalled();
@@ -544,7 +547,7 @@ describe("registerSurveyTools", () => {
       {
         workspaceId: "clxx1234567890123456789012",
       },
-      { authInfo: writeOnlyOAuthAuthInfo }
+      { http: { authInfo: writeOnlyOAuthAuthInfo } }
     );
 
     expect(listV3Surveys).not.toHaveBeenCalled();

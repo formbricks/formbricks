@@ -1,5 +1,5 @@
 import "server-only";
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import type { AuthInfo } from "@modelcontextprotocol/server";
 import type { MCPAnalyticsOptions } from "@posthog/mcp";
 import { createMcpHandler } from "mcp-handler";
 import { logger } from "@formbricks/logger";
@@ -28,7 +28,14 @@ import { registerWorkspaceTools } from "./tools/workspaces";
  */
 export const identifyMcpUser: NonNullable<MCPAnalyticsOptions["identify"]> = async (_request, extra) => {
   try {
-    const authInfo = (extra as { authInfo?: AuthInfo } | undefined)?.authInfo;
+    // Read BOTH locations, deliberately. @posthog/mcp hands us its own compat context, where SDK v2's
+    // auth sits at `http.authInfo` while v1's sat flat on `extra.authInfo`. Reading only the flat one
+    // (as this did before the v2 migration) yields undefined and degrades every MCP event to an
+    // anonymous distinctId - and because identity here is best-effort by design, that failure is
+    // completely silent. Keeping the v1 fallback costs nothing and covers a compat context built by an
+    // older analytics SDK.
+    const context = extra as { authInfo?: AuthInfo; http?: { authInfo?: AuthInfo } } | undefined;
+    const authInfo = context?.http?.authInfo ?? context?.authInfo;
     const authentication = getMcpAuthentication(authInfo);
 
     if (!authentication) return null;
@@ -55,17 +62,15 @@ export const mcpHandler = createMcpHandler(
     registerFeedbackRecordTools(server);
     instrumentMcpServerWithTracing(server, identifyMcpUser);
   },
+  // One options object in v2 (it was three arguments in v1). The v1 handler options are gone rather
+  // than moved: `sessionIdGenerator` and `disableSse` because protocol 2026-07-28 removed sessions and
+  // the SSE transport outright, and `basePath`/`maxDuration` because the handler now serves whatever
+  // route the framework mounts it on - `app/api/mcp/route.ts` is that mount point.
   {
     serverInfo: {
       name: MCP_SERVER_NAME,
       version: MCP_SERVER_VERSION,
     },
-  },
-  {
-    basePath: "/api",
-    disableSse: true,
-    maxDuration: 60,
-    sessionIdGenerator: undefined,
     verboseLogs: false,
   }
 );

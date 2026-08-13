@@ -100,10 +100,13 @@ beforeEach(() => {
  * anything — would have gone unnoticed. These assertions run the real thing.
  */
 describe("feedback-record tool input schemas", () => {
-  const shapeOf = (tool: string) => {
+  // SDK v2 registers a schema instance rather than a raw shape, so this returns the ZodObject itself and
+  // the field-level assertions below read through `.shape`.
+  const schemaOf = (tool: string) => {
     const { tools } = createToolServer();
-    return tools.get(tool)!.config.inputSchema as Record<string, z.ZodType>;
+    return tools.get(tool)!.config.inputSchema as z.ZodObject<Record<string, z.ZodType>>;
   };
+  const shapeOf = (tool: string) => schemaOf(tool).shape;
 
   test("exposes every filter the Hub accepts on list_feedback_records", () => {
     const shape = shapeOf("list_feedback_records");
@@ -158,7 +161,7 @@ describe("feedback-record tool input schemas", () => {
   test("validates a multi-value filter and rejects an unknown one", () => {
     // The schema the model is handed has to accept the array form, or the OR-ing is unreachable in
     // practice no matter what the operations layer supports.
-    const schema = z.object(shapeOf("list_feedback_records")).strict();
+    const schema = schemaOf("list_feedback_records").strict();
 
     expect(schema.safeParse({ workspaceId, source_type: ["survey", "review"] }).success).toBe(true);
     expect(schema.safeParse({ workspaceId, source_type: "survey" }).success).toBe(true);
@@ -246,7 +249,9 @@ describe("list_feedback_datasets", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("list_feedback_datasets")!.handler({ workspaceId }, { authInfo });
+    const result = await tools
+      .get("list_feedback_datasets")!
+      .handler({ workspaceId }, { http: { authInfo } });
 
     expect(listV3FeedbackDatasets).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, authentication: apiKeyAuth, instance: "/api/mcp" })
@@ -266,7 +271,7 @@ describe("list_feedback_records", () => {
       .get("list_feedback_records")!
       .handler(
         { workspaceId, datasetId: directoryId, limit: 25, source_type: "survey", field_type: "text" },
-        { authInfo }
+        { http: { authInfo } }
       );
 
     expect(listV3FeedbackRecords).toHaveBeenCalledWith(
@@ -285,7 +290,7 @@ describe("list_feedback_records", () => {
 
     const result = await tools
       .get("list_feedback_records")!
-      .handler({ workspaceId }, { authInfo: noFeedbackScopeAuthInfo });
+      .handler({ workspaceId }, { http: { authInfo: noFeedbackScopeAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(listV3FeedbackRecords).not.toHaveBeenCalled();
@@ -301,7 +306,7 @@ describe("get_feedback_record", () => {
 
     await tools
       .get("get_feedback_record")!
-      .handler({ workspaceId, feedbackRecordId: recordId }, { authInfo });
+      .handler({ workspaceId, feedbackRecordId: recordId }, { http: { authInfo } });
 
     expect(getV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, feedbackRecordId: recordId })
@@ -326,7 +331,7 @@ describe("create_feedback_record", () => {
     );
     const { tools } = createToolServer();
 
-    await tools.get("create_feedback_record")!.handler(body, { authInfo });
+    await tools.get("create_feedback_record")!.handler(body, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(
       apiKeyAuth,
@@ -344,7 +349,9 @@ describe("create_feedback_record", () => {
   test("requires the write scope", async () => {
     const { tools } = createToolServer();
 
-    const result = await tools.get("create_feedback_record")!.handler(body, { authInfo: readOnlyAuthInfo });
+    const result = await tools
+      .get("create_feedback_record")!
+      .handler(body, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(createV3FeedbackRecord).not.toHaveBeenCalled();
@@ -358,7 +365,9 @@ describe("create_feedback_record", () => {
     vi.mocked(createV3FeedbackRecord).mockRejectedValue(new Error("boom"));
     const { tools } = createToolServer();
 
-    await expect(tools.get("create_feedback_record")!.handler(body, { authInfo })).rejects.toThrow("boom");
+    await expect(tools.get("create_feedback_record")!.handler(body, { http: { authInfo } })).rejects.toThrow(
+      "boom"
+    );
 
     expect(auditLog.eventId).toBe("req_tool");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.anything());
@@ -375,7 +384,7 @@ describe("create_feedback_record", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("create_feedback_record")!.handler(body, { authInfo });
+    const result = await tools.get("create_feedback_record")!.handler(body, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     expect(auditLog.status).toBe("failure");
@@ -393,7 +402,7 @@ describe("delete_feedback_record", () => {
     vi.mocked(deleteV3FeedbackRecord).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
     const { tools } = createToolServer();
 
-    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
+    const result = await tools.get("delete_feedback_record")!.handler(input, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(
       apiKeyAuth,
@@ -420,7 +429,9 @@ describe("delete_feedback_record", () => {
   test("requires the write scope and never reaches the operation", async () => {
     const { tools } = createToolServer();
 
-    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo: readOnlyAuthInfo });
+    const result = await tools
+      .get("delete_feedback_record")!
+      .handler(input, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(deleteV3FeedbackRecord).not.toHaveBeenCalled();
@@ -434,7 +445,7 @@ describe("delete_feedback_record", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
+    const result = await tools.get("delete_feedback_record")!.handler(input, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     expect(auditLog.status).toBe("failure");
@@ -456,7 +467,10 @@ describe("search_feedback_records", () => {
 
     const result = await tools
       .get("search_feedback_records")!
-      .handler({ workspaceId, query: "checkout is confusing", limit: 5, minScore: 0.6 }, { authInfo });
+      .handler(
+        { workspaceId, query: "checkout is confusing", limit: 5, minScore: 0.6 },
+        { http: { authInfo } }
+      );
 
     expect(searchV3FeedbackRecords).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -478,7 +492,7 @@ describe("search_feedback_records", () => {
 
     const result = await tools
       .get("search_feedback_records")!
-      .handler({ workspaceId, query: "anything" }, { authInfo: noFeedbackScopeAuthInfo });
+      .handler({ workspaceId, query: "anything" }, { http: { authInfo: noFeedbackScopeAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(searchV3FeedbackRecords).not.toHaveBeenCalled();
@@ -494,7 +508,7 @@ describe("find_similar_feedback_records", () => {
 
     await tools
       .get("find_similar_feedback_records")!
-      .handler({ workspaceId, feedbackRecordId: recordId, minScore: 0.9 }, { authInfo });
+      .handler({ workspaceId, feedbackRecordId: recordId, minScore: 0.9 }, { http: { authInfo } });
 
     expect(findSimilarV3FeedbackRecords).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, feedbackRecordId: recordId, minScore: 0.9 })
@@ -506,7 +520,7 @@ describe("find_similar_feedback_records", () => {
 
     const result = await tools
       .get("find_similar_feedback_records")!
-      .handler({ workspaceId, feedbackRecordId: recordId }, { authInfo: noFeedbackScopeAuthInfo });
+      .handler({ workspaceId, feedbackRecordId: recordId }, { http: { authInfo: noFeedbackScopeAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(findSimilarV3FeedbackRecords).not.toHaveBeenCalled();
@@ -525,7 +539,7 @@ describe("count_feedback_records", () => {
 
     const result = await tools
       .get("count_feedback_records")!
-      .handler({ workspaceId, user_id: "user-1", field_type: "text" }, { authInfo });
+      .handler({ workspaceId, user_id: "user-1", field_type: "text" }, { http: { authInfo } });
 
     expect(countV3FeedbackRecords).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, user_id: "user-1", field_type: "text", instance: "/api/mcp" })
@@ -538,7 +552,7 @@ describe("count_feedback_records", () => {
 
     const result = await tools
       .get("count_feedback_records")!
-      .handler({ workspaceId }, { authInfo: noFeedbackScopeAuthInfo });
+      .handler({ workspaceId }, { http: { authInfo: noFeedbackScopeAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(countV3FeedbackRecords).not.toHaveBeenCalled();
@@ -560,7 +574,9 @@ describe("create_feedback_records", () => {
   test("requires the write scope", async () => {
     const { tools } = createToolServer();
 
-    const result = await tools.get("create_feedback_records")!.handler(input, { authInfo: readOnlyAuthInfo });
+    const result = await tools
+      .get("create_feedback_records")!
+      .handler(input, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(createV3FeedbackRecords).not.toHaveBeenCalled();
@@ -582,7 +598,7 @@ describe("create_feedback_records", () => {
     });
     const { tools } = createToolServer();
 
-    await tools.get("create_feedback_records")!.handler(input, { authInfo });
+    await tools.get("create_feedback_records")!.handler(input, { http: { authInfo } });
 
     expect(built).toHaveLength(2);
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
@@ -604,7 +620,9 @@ describe("create_feedback_records", () => {
     vi.mocked(createV3FeedbackRecords).mockRejectedValue(new Error("boom"));
     const { tools } = createToolServer();
 
-    await expect(tools.get("create_feedback_records")!.handler(input, { authInfo })).rejects.toThrow("boom");
+    await expect(
+      tools.get("create_feedback_records")!.handler(input, { http: { authInfo } })
+    ).rejects.toThrow("boom");
 
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
     expect(built[0].eventId).toBe("req_tool");
@@ -622,7 +640,7 @@ describe("create_feedback_records", () => {
     );
     const { tools } = createToolServer();
 
-    const result = await tools.get("create_feedback_records")!.handler(input, { authInfo });
+    const result = await tools.get("create_feedback_records")!.handler(input, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
@@ -641,7 +659,7 @@ describe("update_feedback_record", () => {
     );
     const { tools } = createToolServer();
 
-    await tools.get("update_feedback_record")!.handler(input, { authInfo });
+    await tools.get("update_feedback_record")!.handler(input, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(
       apiKeyAuth,
@@ -658,7 +676,9 @@ describe("update_feedback_record", () => {
   test("requires the write scope", async () => {
     const { tools } = createToolServer();
 
-    const result = await tools.get("update_feedback_record")!.handler(input, { authInfo: readOnlyAuthInfo });
+    const result = await tools
+      .get("update_feedback_record")!
+      .handler(input, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(result.isError).toBe(true);
     expect(updateV3FeedbackRecord).not.toHaveBeenCalled();
