@@ -238,8 +238,9 @@ describe("listV3FeedbackRecords", () => {
       expect.objectContaining({
         tenant_id: directoryId,
         limit: 50,
-        source_type: "survey",
-        field_type: "text",
+        // Single-valued on our side, sent as a one-element OR list since Hub 0.8.4 made these repeatable.
+        source_type: ["survey"],
+        field_type: ["text"],
       })
     );
     expect(body.meta).toEqual({
@@ -1007,16 +1008,17 @@ describe("countV3FeedbackRecords", () => {
       until: "2026-12-31T00:00:00Z",
     });
 
+    // Every identity filter goes out as a one-element OR list; the two range bounds stay scalar.
     expect(countFeedbackRecords).toHaveBeenCalledWith({
       tenant_id: directoryId,
-      source_type: "survey",
-      source_id: "svy_1",
-      field_type: "text",
-      field_id: "q1",
-      field_group_id: "grp_1",
-      submission_id: "sub-1",
-      user_id: "user-1",
-      value_id: "opt_1",
+      source_type: ["survey"],
+      source_id: ["svy_1"],
+      field_type: ["text"],
+      field_id: ["q1"],
+      field_group_id: ["grp_1"],
+      submission_id: ["sub-1"],
+      user_id: ["user-1"],
+      value_id: ["opt_1"],
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });
@@ -1126,18 +1128,19 @@ describe("listV3FeedbackRecords filters", () => {
       until: "2026-12-31T00:00:00Z",
     });
 
+    // Same one-element OR lists as the count path; pagination and the range bounds stay scalar.
     expect(listFeedbackRecords).toHaveBeenCalledWith({
       tenant_id: directoryId,
       limit: 10,
       cursor: "abc",
-      source_type: "survey",
-      source_id: "svy_1",
-      field_type: "text",
-      field_id: "q1",
-      field_group_id: "grp_1",
-      submission_id: "sub-1",
-      user_id: "user-1",
-      value_id: "opt_1",
+      source_type: ["survey"],
+      source_id: ["svy_1"],
+      field_type: ["text"],
+      field_id: ["q1"],
+      field_group_id: ["grp_1"],
+      submission_id: ["sub-1"],
+      user_id: ["user-1"],
+      value_id: ["opt_1"],
       since: "2026-01-01T00:00:00Z",
       until: "2026-12-31T00:00:00Z",
     });

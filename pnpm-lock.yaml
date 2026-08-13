@@ -185,8 +185,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/email
       '@formbricks/hub':
-        specifier: 0.9.0
-        version: 0.9.0
+        specifier: 0.12.0
+        version: 0.12.0
       '@formbricks/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils
@@ -2544,8 +2544,8 @@ packages:
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
 
-  '@formbricks/hub@0.9.0':
-    resolution: {integrity: sha512-W0yf2o8Z5HV2AQUKmqsSlaAIgpFTtFaOQjz332NeeN6Ljn+0Pr9/iNlscEmjN6po5t3ChERp7ilDtX4/ERKstA==}
+  '@formbricks/hub@0.12.0':
+    resolution: {integrity: sha512-DsSEBaEjSN/KQ/B6w0pI2XmQgeKGUn8BHui72HdDIqWm06rMgfxbmZpB1n9f6ZsVUcBiz74wOahIPT/2WW9vnA==}
 
   '@formbricks/js@5.0.0':
     resolution: {integrity: sha512-mQGngmTKFP+x6rxTsqHawT0eDc1txHzSuyJvEZyG69cs7ACxBfesMRamBmabmw4LdMRODZ2J8WaBLuzck3v9Ig==}
@@ -14340,7 +14340,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@formbricks/hub@0.9.0': {}
+  '@formbricks/hub@0.12.0': {}
 
   '@formbricks/js@5.0.0': {}
 
