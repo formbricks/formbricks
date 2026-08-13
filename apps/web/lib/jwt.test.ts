@@ -95,6 +95,11 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+// Stand-in for the bcrypt hash on the user's `credential` account. Email-change tokens are bound to it,
+// so swapping it in the prisma mock is how these tests simulate a password reset or change.
+const TEST_CREDENTIAL_PASSWORD_HASH = "$2a$12$0123456789012345678901uOriginalHashValueForTests";
+const ROTATED_CREDENTIAL_PASSWORD_HASH = "$2a$12$0123456789012345678901uRotatedHashValueForTests.";
+
 // Mock logger
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -108,6 +113,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
   const mockUser = {
     id: "test-user-id",
     email: "test@example.com",
+    accounts: [{ password: TEST_CREDENTIAL_PASSWORD_HASH }],
   };
 
   let mockSymmetricEncrypt: any;
@@ -229,8 +235,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
   });
 
   describe("createEmailChangeToken", () => {
-    test("should create a valid email change token with 1 day expiration", () => {
-      const token = createEmailChangeToken(mockUser.id, mockUser.email);
+    test("should create a valid email change token with 1 day expiration", async () => {
+      const token = await createEmailChangeToken(mockUser.id, mockUser.email);
       expect(token).toBeDefined();
       expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.id, TEST_ENCRYPTION_KEY);
       expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.email, TEST_ENCRYPTION_KEY);
@@ -243,7 +249,17 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should throw error if NEXTAUTH_SECRET or ENCRYPTION_KEY is not set", async () => {
-      await testMissingSecretsError(createEmailChangeToken, [mockUser.id, mockUser.email]);
+      await testMissingSecretsError(createEmailChangeToken, [mockUser.id, mockUser.email], {
+        isAsync: true,
+      });
+    });
+
+    test("should refuse to mint a token for a user without a credential password", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({ ...mockUser, accounts: [] });
+
+      await expect(createEmailChangeToken(mockUser.id, "new@example.com")).rejects.toThrow(
+        "Email change token cannot be bound"
+      );
     });
   });
 
@@ -621,9 +637,9 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
   describe("verifyEmailChangeToken", () => {
     test("should verify and decrypt valid email change token", async () => {
-      const userId = "test-user-id";
-      const email = "test@example.com";
-      const token = createEmailChangeToken(userId, email);
+      const userId = mockUser.id;
+      const email = "new@example.com";
+      const token = await createEmailChangeToken(userId, email);
       const result = await verifyEmailChangeToken(token);
       expect(result).toEqual({ id: userId, email });
     });
@@ -653,17 +669,6 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       );
     });
 
-    test("should return original id/email if decryption fails", async () => {
-      mockSymmetricDecrypt.mockImplementation(() => {
-        throw new Error("Decryption failed");
-      });
-
-      const payload = { id: "plain-id", email: "plain@example.com" };
-      const token = jwt.sign(payload, TEST_NEXTAUTH_SECRET);
-      const result = await verifyEmailChangeToken(token);
-      expect(result).toEqual(payload);
-    });
-
     test("should throw error for token with wrong signature", async () => {
       const invalidToken = jwt.sign(
         {
@@ -674,6 +679,91 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       );
 
       await expect(verifyEmailChangeToken(invalidToken)).rejects.toThrow();
+    });
+
+    // ENG-2106: the link is consumable without a session, so the token must die with the credential
+    // state it was minted against — otherwise a password recovery revokes every session but leaves a
+    // token that can still move the login address (and the password-reset destination) to an attacker.
+    describe("credential-state binding", () => {
+      test("should reject a token minted before the password was reset", async () => {
+        const token = await createEmailChangeToken(mockUser.id, "attacker@evil.com");
+
+        (prisma.user.findUnique as any).mockResolvedValue({
+          ...mockUser,
+          accounts: [{ password: ROTATED_CREDENTIAL_PASSWORD_HASH }],
+        });
+
+        await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token is no longer valid");
+      });
+
+      test("should reject a token replayed after the email already changed", async () => {
+        const token = await createEmailChangeToken(mockUser.id, "new@example.com");
+
+        // First use succeeds and moves the login address...
+        await expect(verifyEmailChangeToken(token)).resolves.toEqual({
+          id: mockUser.id,
+          email: "new@example.com",
+        });
+
+        // ...which is exactly what makes the same link inert on a second click.
+        (prisma.user.findUnique as any).mockResolvedValue({ ...mockUser, email: "new@example.com" });
+
+        await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token is no longer valid");
+      });
+
+      test("should reject a token once the credential account is gone", async () => {
+        const token = await createEmailChangeToken(mockUser.id, "new@example.com");
+
+        (prisma.user.findUnique as any).mockResolvedValue({ ...mockUser, accounts: [] });
+
+        await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token cannot be bound");
+      });
+
+      test("should reject an unbound token in the pre-fix shape", async () => {
+        const unboundToken = jwt.sign(
+          { id: `encrypted_${mockUser.id}`, email: "encrypted_attacker@evil.com" },
+          TEST_NEXTAUTH_SECRET,
+          { expiresIn: "1d" }
+        );
+
+        await expect(verifyEmailChangeToken(unboundToken)).rejects.toThrow(
+          "Token is invalid or missing required fields"
+        );
+      });
+
+      test("should reject a token whose fingerprint does not match", async () => {
+        const forgedToken = jwt.sign(
+          {
+            id: `encrypted_${mockUser.id}`,
+            email: "encrypted_attacker@evil.com",
+            purpose: "email_change",
+            fingerprint: "ab".repeat(32),
+          },
+          TEST_NEXTAUTH_SECRET,
+          { expiresIn: "1d" }
+        );
+
+        await expect(verifyEmailChangeToken(forgedToken)).rejects.toThrow(
+          "Email change token is no longer valid"
+        );
+      });
+
+      test("should reject a token issued for a different flow", async () => {
+        const wrongPurposeToken = jwt.sign(
+          {
+            id: `encrypted_${mockUser.id}`,
+            email: "encrypted_attacker@evil.com",
+            purpose: "email_verification",
+            fingerprint: "ab".repeat(32),
+          },
+          TEST_NEXTAUTH_SECRET,
+          { expiresIn: "1d" }
+        );
+
+        await expect(verifyEmailChangeToken(wrongPurposeToken)).rejects.toThrow(
+          "Token is invalid or missing required fields"
+        );
+      });
     });
   });
 
@@ -977,23 +1067,26 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         expect(result.email).toBe(mockUser.email);
       });
 
-      test("should handle mixed encrypted/unencrypted fields", async () => {
+      // Email-change tokens deliberately have no legacy path — an unbound payload is rejected outright
+      // (see the credential-state binding tests) — so the per-field decryption fallback is covered here
+      // on the invite token, which still accepts pre-encryption payloads.
+      test("should handle mixed encrypted/unencrypted fields", () => {
         mockSymmetricDecrypt
-          .mockImplementationOnce(() => mockUser.id) // id decrypts successfully
+          .mockImplementationOnce(() => "test-invite-id") // inviteId decrypts successfully
           .mockImplementationOnce(() => {
             throw new Error("Email not encrypted");
           }); // email fails
 
         const token = jwt.sign(
           {
-            id: "encrypted_test-id",
+            inviteId: "encrypted_test-invite-id",
             email: "plain-email@example.com",
           },
           TEST_NEXTAUTH_SECRET
         );
 
-        const result = await verifyEmailChangeToken(token);
-        expect(result.id).toBe(mockUser.id);
+        const result = verifyInviteToken(token);
+        expect(result.inviteId).toBe("test-invite-id");
         expect(result.email).toBe("plain-email@example.com");
       });
 
