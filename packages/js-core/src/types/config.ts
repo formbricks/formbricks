@@ -269,9 +269,10 @@ export interface TLegacyConfigInput {
 }
 
 export type TLegacyConfig = Omit<TConfig, "user"> & {
-  // Optional, unlike TConfig: old first-migration formats persisted user-less configs
-  // to localStorage, so a parsed legacy blob may genuinely lack `user`.
-  user?: TUserState;
+  // Optional and partial, unlike TConfig: a legacy blob is unchecked JSON from localStorage —
+  // old first-migration formats persisted user-less configs, and a present `user` may still
+  // lack `data`/`expiresAt`, so no inner field can be trusted either.
+  user?: Partial<TUserState>;
   apiHost?: string;
   attributes?: TAttributes;
   // Intermediate format fields (pre-workspace rename)

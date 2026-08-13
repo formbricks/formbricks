@@ -89,10 +89,17 @@ export const setup = async (
     // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
     // otherwise, we just sync again!
 
-    if (newState && !newState.user?.data.userId) {
-      // Old first-migration configs could be persisted without a user state — substitute the
-      // default so downstream `config.user` reads keep working and the resync path still runs.
-      config.update({ ...newState, user: newState.user ?? DEFAULT_USER_STATE_NO_USER_ID });
+    if (newState && !newState.user?.data?.userId) {
+      // Legacy configs could be persisted without a user state, or with a user missing `data` —
+      // substitute the default (rebuilding a complete state when only `data` survived) so
+      // downstream `config.user` reads keep working and the resync path still runs.
+      const legacyUser = newState.user;
+      config.update({
+        ...newState,
+        user: legacyUser?.data
+          ? { expiresAt: legacyUser.expiresAt ?? null, data: legacyUser.data }
+          : DEFAULT_USER_STATE_NO_USER_ID,
+      });
     }
   }
 
