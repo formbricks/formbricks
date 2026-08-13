@@ -9,6 +9,7 @@ import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
+import { addLegacyEnvironmentId } from "@/app/lib/api/legacy-environment-id";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -65,7 +66,9 @@ export const GET = withV1ApiWrapper({
       // consumers get a consistent shape regardless of how the survey was built.
       return {
         response: responses.successResponse(
-          addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(result.survey)))
+          await addLegacyEnvironmentId(
+            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(result.survey)))
+          )
         ),
       };
     } catch (error) {
@@ -107,7 +110,7 @@ export const DELETE = withV1ApiWrapper({
 
       const deletedSurvey = await deleteSurvey(params.surveyId);
       return {
-        response: responses.successResponse(deletedSurvey),
+        response: responses.successResponse(await addLegacyEnvironmentId(deletedSurvey)),
       };
     } catch (error) {
       return handleErrorResponse(error);
@@ -219,7 +222,9 @@ export const PUT = withV1ApiWrapper({
 
         return {
           response: responses.successResponse(
-            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(updatedSurvey)))
+            await addLegacyEnvironmentId(
+              addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(updatedSurvey)))
+            )
           ),
         };
       } catch (error) {

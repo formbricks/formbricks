@@ -8,6 +8,7 @@ import {
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
+import { addLegacyEnvironmentId, addLegacyEnvironmentIdToList } from "@/app/lib/api/legacy-environment-id";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -47,7 +48,9 @@ export const GET = withV1ApiWrapper({
 
       return {
         response: responses.successResponse(
-          addLegacyProjectOverwritesToList(resolveStorageUrlsInObject(surveysWithQuestions))
+          await addLegacyEnvironmentIdToList(
+            addLegacyProjectOverwritesToList(resolveStorageUrlsInObject(surveysWithQuestions))
+          )
         ),
       };
     } catch (error) {
@@ -147,7 +150,9 @@ export const POST = withV1ApiWrapper({
 
       return {
         response: responses.successResponse(
-          addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
+          await addLegacyEnvironmentId(
+            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
+          )
         ),
       };
     } catch (error) {
