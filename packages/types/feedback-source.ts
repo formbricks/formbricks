@@ -29,7 +29,7 @@ export type THubFieldType = z.infer<typeof ZHubFieldType>;
 //
 // NOTE: apps/web/modules/ee/analysis/lib/schema-definition.ts carries the same two vocabularies as
 // tuples, deliberately typed so that adding a label fails the build until every analysis label map is
-// updated. Keep the two in sync; de-duplicating without losing that exhaustiveness guard is a follow-up.
+// updated. Keep the two in sync; de-duplicating without losing that exhaustiveness guard is ENG-2373.
 export const ZHubSentiment = z.enum([
   "very_negative",
   "negative",
