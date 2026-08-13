@@ -143,9 +143,11 @@ export const FeedbackDirectoryTable = ({
         <Table>
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">
-              <TableHead>{t("workspace.settings.feedback_directories.directory_name")}</TableHead>
-              <TableHead>{t("common.workspaces")}</TableHead>
-              <TableHead>{t("common.status")}</TableHead>
+              <TableHead className="font-medium text-slate-500">
+                {t("workspace.settings.feedback_directories.directory_name")}
+              </TableHead>
+              <TableHead className="font-medium text-slate-500">{t("common.workspaces")}</TableHead>
+              <TableHead className="font-medium text-slate-500">{t("common.status")}</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>

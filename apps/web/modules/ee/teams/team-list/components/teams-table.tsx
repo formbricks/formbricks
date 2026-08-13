@@ -78,8 +78,10 @@ export const TeamsTable = ({
         <Table>
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">
-              <TableHead>{t("workspace.settings.teams.team_name")}</TableHead>
-              <TableHead>{t("common.size")}</TableHead>
+              <TableHead className="font-medium text-slate-500">
+                {t("workspace.settings.teams.team_name")}
+              </TableHead>
+              <TableHead className="font-medium text-slate-500">{t("common.size")}</TableHead>
               <TableHead></TableHead>
               <TableHead></TableHead>
             </TableRow>

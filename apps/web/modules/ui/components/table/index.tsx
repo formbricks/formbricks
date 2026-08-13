@@ -1,17 +1,13 @@
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
-const Table = React.forwardRef<
-  HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement> & {
-    /** Classes for the scroll container wrapping the table — this is where a frame belongs. */
-    containerClassName?: string;
-  }
->(({ className, containerClassName, ...props }, ref) => (
-  <div className={cn("relative overflow-auto", containerClassName)}>
-    <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
-  </div>
-));
+const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
+  ({ className, ...props }, ref) => (
+    <div className="relative overflow-auto">
+      <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
+    </div>
+  )
+);
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
@@ -22,8 +18,9 @@ const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttribut
 TableHeader.displayName = "TableHeader";
 
 /**
- * The last row never draws a bottom border — the surrounding frame closes the table. A consumer that
- * re-adds `[&_tr:last-child]:border-b` is compensating for a missing frame; give it a frame instead.
+ * The last row draws no bottom border, on the assumption that a frame around the table closes it.
+ * Several consumers re-add `[&_tr:last-child]:border-b` because their container has a radius but no
+ * border, so nothing else draws that line; they lose the override once they gain a real frame.
  */
 const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
@@ -57,10 +54,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
-      className={cn(
-        "h-12 px-4 text-left align-middle font-medium text-slate-500 has-[[role=checkbox]]:pr-0",
-        className
-      )}
+      className={cn("h-12 px-4 text-left align-middle has-[[role=checkbox]]:pr-0", className)}
       {...props}
     />
   )

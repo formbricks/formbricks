@@ -47,7 +47,9 @@ export const PrettyUrlsTable = ({ surveys }: PrettyUrlsTableProps) => {
         <TableHeader>
           <TableRow className="bg-slate-100">
             {tableHeaders.map((header) => (
-              <TableHead key={header.key}>{header.label}</TableHead>
+              <TableHead key={header.key} className="font-medium text-slate-500">
+                {header.label}
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>

@@ -18,10 +18,10 @@ export const AccessTable = ({ teams }: AccessTableProps) => {
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-100">
-            <TableHead>{t("workspace.teams.team_name")}</TableHead>
-            <TableHead>{t("common.size")}</TableHead>
-            <TableHead>{t("common.team_id")}</TableHead>
-            <TableHead>{t("workspace.teams.permission")}</TableHead>
+            <TableHead className="font-medium text-slate-500">{t("workspace.teams.team_name")}</TableHead>
+            <TableHead className="font-medium text-slate-500">{t("common.size")}</TableHead>
+            <TableHead className="font-medium text-slate-500">{t("common.team_id")}</TableHead>
+            <TableHead className="font-medium text-slate-500">{t("workspace.teams.permission")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="[&_tr:last-child]:border-b">
