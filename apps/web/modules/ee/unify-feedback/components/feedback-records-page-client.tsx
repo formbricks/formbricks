@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
+import { EnrichmentStatus } from "@/modules/ee/unify-feedback/enrichment-status/components/enrichment-status";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -36,6 +37,8 @@ export function FeedbackRecordsPageClient({
       <PageHeader pageTitle={t("workspace.unify.feedback_data")}>
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="feedback-records" />
       </PageHeader>
+
+      <EnrichmentStatus workspaceId={workspaceId} />
 
       <FeedbackRecordsTable
         workspaceId={workspaceId}

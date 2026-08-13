@@ -42,6 +42,13 @@ export type SimilarRecordsResponse = FormbricksHub.FeedbackRecords.FeedbackRecor
 export type SimilarRecordsResultItem =
   FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarResponse.Data;
 
+// Tenant-scoped enrichment progress (ENG-1670). Counts are data-derived from the directory's feedback
+// records — how many qualify for an enrichment vs. how many carry it — not queue depth, so `done` never
+// exceeds `eligible` and "in progress" is the difference. `enabled: false` means the enrichment is
+// switched off for the tenant or not configured in the deployment, and its counts are zero.
+export type EnrichmentTypeStatus = FormbricksHub.TypeStatus;
+export type EnrichmentStatusResponse = FormbricksHub.EnrichmentStatusRetrieveResponse;
+
 export type TaxonomyScope = {
   tenant_id: string;
   source_type: string;
