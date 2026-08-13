@@ -50,6 +50,10 @@
       "env": ["DATABASE_URL"],
       "outputs": ["dist/**", "generated/prisma/**"]
     },
+    "@formbricks/database#generate": {
+      "dependsOn": ["^generate"],
+      "env": ["DATABASE_URL"]
+    },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
