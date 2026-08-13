@@ -33,7 +33,7 @@ const getWorkspaceIdOfSurvey = reactCache(async (surveyId: string): Promise<stri
 /**
  * True when the survey exists and lives in the given workspace.
  */
-const doesSurveyBelongToWorkspace = async (surveyId: string, workspaceId: string): Promise<boolean> => {
+const doesSurveyBelongToWorkspace = async (workspaceId: string, surveyId: string): Promise<boolean> => {
   const surveyWorkspaceId = await getWorkspaceIdOfSurvey(surveyId);
   return surveyWorkspaceId !== null && surveyWorkspaceId === workspaceId;
 };
@@ -44,11 +44,14 @@ const doesSurveyBelongToWorkspace = async (surveyId: string, workspaceId: string
  * Non-throwing variant of {@link getSurveyAuth}, for callers that must degrade gracefully
  * instead of interrupting the render — `generateMetadata`, which resolves independently of
  * the page and would otherwise put a survey name the caller may not read into the title.
+ *
+ * Takes `(workspaceId, surveyId)` in the same order as {@link getSurveyAuth}: both guards are
+ * `(string, string)`, so a swapped call would typecheck silently.
  */
-export const canReadSurveyInWorkspace = async (surveyId: string, workspaceId: string): Promise<boolean> => {
+export const canReadSurveyInWorkspace = async (workspaceId: string, surveyId: string): Promise<boolean> => {
   // Ordered so the cheap, unvalidated tie check rejects made-up ids before they reach the
   // access check, which validates its inputs.
-  if (!(await doesSurveyBelongToWorkspace(surveyId, workspaceId))) {
+  if (!(await doesSurveyBelongToWorkspace(workspaceId, surveyId))) {
     return false;
   }
 

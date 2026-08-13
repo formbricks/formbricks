@@ -3,7 +3,6 @@ import { ResponseFilterProvider } from "@/app/(app)/workspaces/[workspaceId]/sur
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getSession } from "@/modules/auth/lib/session";
 import { canReadSurveyInWorkspace } from "@/modules/survey/lib/survey-auth";
 
 type Props = {
@@ -12,26 +11,25 @@ type Props = {
 
 export const generateMetadata = async (props: Props): Promise<Metadata> => {
   const params = await props.params;
-  const session = await getSession();
+  const t = await getTranslate();
 
   // The survey name and its response count are the survey owner's data: never put them in
   // the title unless the caller may actually read this survey through this workspace. The
-  // page itself 404s in that case, but metadata resolves independently of it.
-  if (!(await canReadSurveyInWorkspace(params.surveyId, params.workspaceId))) {
-    return { title: "" };
+  // page itself 404s in that case, but metadata resolves independently of it. This is a
+  // layout, so the fallback is also the title of the 404 rendered underneath it — a neutral
+  // word rather than an empty string, which makes the browser show the raw URL instead.
+  // The guard covers the unauthenticated case too, so there is no session check here.
+  if (!(await canReadSurveyInWorkspace(params.workspaceId, params.surveyId))) {
+    return { title: t("common.survey") };
   }
 
-  const survey = await getSurvey(params.surveyId);
-  const responseCount = await getResponseCountBySurveyId(params.surveyId);
-  const t = await getTranslate();
+  const [survey, responseCount] = await Promise.all([
+    getSurvey(params.surveyId),
+    getResponseCountBySurveyId(params.surveyId),
+  ]);
 
-  if (session) {
-    return {
-      title: `${t("common.count_responses", { count: responseCount })} | ${t("workspace.surveys.summary.survey_results", { surveyName: survey?.name })}`,
-    };
-  }
   return {
-    title: "",
+    title: `${t("common.count_responses", { count: responseCount })} | ${t("workspace.surveys.summary.survey_results", { surveyName: survey?.name })}`,
   };
 };
 

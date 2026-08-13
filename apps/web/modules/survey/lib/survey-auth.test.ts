@@ -62,7 +62,8 @@ const SURVEY_ID = "survey_victim";
 // The lookup under test selects `workspaceId` alone, so fixtures are typed against that projection
 // rather than a whole Survey row — a schema rename breaks this file instead of leaving it green on a
 // stale fixture. The cast is the seam between Prisma's generic delegate typing and the concrete
-// projection, and it is the only one: every fixture below stays checked.
+// projection; the survey fixtures themselves stay checked against it. (`buildWorkspaceAuth` below
+// casts too, for its own reason.)
 type TSurveyWorkspaceIdSelection = Prisma.SurveyGetPayload<{ select: { workspaceId: true } }>;
 
 const mockSurveyLookup = (survey: TSurveyWorkspaceIdSelection | null): void => {
@@ -91,7 +92,7 @@ describe("canReadSurveyInWorkspace", () => {
   test("is true for a survey in a workspace the caller can read", async () => {
     mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
 
-    await expect(canReadSurveyInWorkspace(SURVEY_ID, VICTIM_WORKSPACE_ID)).resolves.toBe(true);
+    await expect(canReadSurveyInWorkspace(VICTIM_WORKSPACE_ID, SURVEY_ID)).resolves.toBe(true);
     expect(mockPrismaSurvey.findUnique).toHaveBeenCalledWith({
       where: { id: SURVEY_ID },
       select: { workspaceId: true },
@@ -102,13 +103,13 @@ describe("canReadSurveyInWorkspace", () => {
   test("is false when the survey does not exist", async () => {
     mockSurveyLookup(null);
 
-    await expect(canReadSurveyInWorkspace("survey_missing", VICTIM_WORKSPACE_ID)).resolves.toBe(false);
+    await expect(canReadSurveyInWorkspace(VICTIM_WORKSPACE_ID, "survey_missing")).resolves.toBe(false);
   });
 
   test("is false for a foreign survey, without even checking workspace access", async () => {
     mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
 
-    await expect(canReadSurveyInWorkspace(SURVEY_ID, ATTACKER_WORKSPACE_ID)).resolves.toBe(false);
+    await expect(canReadSurveyInWorkspace(ATTACKER_WORKSPACE_ID, SURVEY_ID)).resolves.toBe(false);
     expect(mockHasWorkspaceAccess).not.toHaveBeenCalled();
   });
 
@@ -116,14 +117,14 @@ describe("canReadSurveyInWorkspace", () => {
     mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
     mockHasWorkspaceAccess.mockResolvedValueOnce(false);
 
-    await expect(canReadSurveyInWorkspace(SURVEY_ID, VICTIM_WORKSPACE_ID)).resolves.toBe(false);
+    await expect(canReadSurveyInWorkspace(VICTIM_WORKSPACE_ID, SURVEY_ID)).resolves.toBe(false);
   });
 
   test("is false without a session", async () => {
     mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
     mockGetSession.mockResolvedValueOnce(null);
 
-    await expect(canReadSurveyInWorkspace(SURVEY_ID, VICTIM_WORKSPACE_ID)).resolves.toBe(false);
+    await expect(canReadSurveyInWorkspace(VICTIM_WORKSPACE_ID, SURVEY_ID)).resolves.toBe(false);
   });
 });
 
