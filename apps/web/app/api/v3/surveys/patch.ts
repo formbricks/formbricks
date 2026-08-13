@@ -220,7 +220,7 @@ export async function executeV3SurveyPatch(params: {
       ? await buildV3AppSurveyPatchWrites({ currentSurvey, document, data })
       : null;
 
-  const runSurveyUpdate = (client: Prisma.TransactionClient = prisma) =>
+  const runSurveyUpdate = (client: Prisma.TransactionClient) =>
     client.survey.update({ where: { id: currentSurvey.id }, data, select: selectSurvey });
 
   try {
@@ -248,6 +248,13 @@ export async function executeV3SurveyPatch(params: {
         // Derived from the PERSISTED survey, not the patch document: a patch may omit `variables` or
         // `hiddenFields` entirely, and reading the payload would see them as absent and delete every
         // row. `workspaceId` comes from the stored survey, never the client (ENG-1749).
+        //
+        // NOTE for whoever moves the v3 serializer onto the tables (ENG-1853): `survey` was read
+        // BEFORE this reconcile, so the `embeddedDataLinks` it carries — and the `embeddedFields`
+        // inlined from them below — describe the PRE-patch rows. Inert today, because
+        // `serializeV3SurveyResource` and the audit log read the legacy columns and nothing else
+        // consumes them (`updateSurveyInternal` has the same shape). The moment the serializer reads
+        // the rows, this returns a stale PATCH/MCP response and needs a re-read after the reconcile.
         await reconcileEmbeddedData(tx, {
           surveyId: currentSurvey.id,
           workspaceId: currentSurvey.workspaceId,

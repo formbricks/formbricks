@@ -541,11 +541,12 @@ export const copySurveyToOtherWorkspace = async (
         return createdSurvey;
       },
       // This create was untransacted before ENG-1978, so wrapping it introduced Prisma's 5s
-      // interactive-transaction ceiling where there had been none. It is the deepest of the three
-      // reconcile call sites — it clones blocks, endings, the welcome card, variables, hidden fields,
-      // follow-ups and quotas, and resolves an action class per trigger through `connectOrCreate` —
-      // so a large survey could plausibly reach it and fail a copy that used to succeed. Matches the
-      // ceiling on `updateSurveyInternal` for the same reason.
+      // interactive-transaction ceiling where there had been none. It is the deepest of the
+      // reconcile call sites (enumerated on `getDeclaredEmbeddedFields`) — it clones blocks, endings,
+      // the welcome card, variables, hidden fields, follow-ups and quotas, and resolves an action
+      // class per trigger through `connectOrCreate` — so a large survey could plausibly reach it and
+      // fail a copy that used to succeed. Matches the ceiling on `updateSurveyInternal` for the same
+      // reason.
       { timeout: 20_000, maxWait: 10_000 }
     );
 

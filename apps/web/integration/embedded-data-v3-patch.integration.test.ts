@@ -19,6 +19,9 @@ import { transformPrismaSurvey } from "@/lib/survey/utils";
  * real database shows that the rows actually end up agreeing with the columns.
  */
 
+/** A variable's storage key is its cuid, so a rename moves the name but never the address. */
+const VARIABLE_ID = "clvar123456789012345678901";
+
 const BLOCKS = [
   {
     id: "clbk1234567890123456789012",
@@ -109,13 +112,13 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
 
     await patchV3Survey(
       survey,
-      { variables: [{ id: "clvar123456789012345678901", name: "score", type: "number", value: 7 }] },
+      { variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }] },
       "req_v3_patch_add_variable"
     );
 
     expect(await readRows(survey.id)).toEqual([
       {
-        storageKey: "clvar123456789012345678901",
+        storageKey: VARIABLE_ID,
         name: "score",
         source: "computed",
         dataType: "number",
@@ -148,18 +151,18 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
 
   test("a patch that renames a variable updates its row rather than orphaning it", async () => {
     const survey = await seedSurvey({
-      variables: [{ id: "clvar123456789012345678901", name: "score", type: "number", value: 7 }],
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
     });
 
     await patchV3Survey(
       survey,
-      { variables: [{ id: "clvar123456789012345678901", name: "renamed_score", type: "number", value: 9 }] },
+      { variables: [{ id: VARIABLE_ID, name: "renamed_score", type: "number", value: 9 }] },
       "req_v3_patch_rename_variable"
     );
 
     expect(await readRows(survey.id)).toEqual([
       {
-        storageKey: "clvar123456789012345678901",
+        storageKey: VARIABLE_ID,
         name: "renamed_score",
         source: "computed",
         dataType: "number",
@@ -171,7 +174,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
 
   test("a patch that removes a field drops its row, so it stops appearing as a column", async () => {
     const survey = await seedSurvey({
-      variables: [{ id: "clvar123456789012345678901", name: "score", type: "number", value: 7 }],
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
       hiddenFields: { enabled: true, fieldIds: ["utm_source", "plan"] },
     });
 
@@ -181,10 +184,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
       "req_v3_patch_remove_hidden_field"
     );
 
-    expect((await readRows(survey.id)).map(({ storageKey }) => storageKey)).toEqual([
-      "clvar123456789012345678901",
-      "plan",
-    ]);
+    expect((await readRows(survey.id)).map(({ storageKey }) => storageKey)).toEqual([VARIABLE_ID, "plan"]);
     await expectRowsAgreeWithColumns(survey.id);
   });
 
@@ -192,7 +192,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     // The patch document carries no `variables` / `hiddenFields`, so the reconcile has to read the
     // persisted survey — reading the payload would see them as absent and unlink every field.
     const survey = await seedSurvey({
-      variables: [{ id: "clvar123456789012345678901", name: "score", type: "number", value: 7 }],
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
       hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
     });
     const before = await readRows(survey.id);
@@ -203,17 +203,56 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     await expectRowsAgreeWithColumns(survey.id);
   });
 
-  test("writes nothing to Response", async () => {
+  test("renaming both kinds of field leaves stored responses byte-identical (AC #4)", async () => {
+    // The realistic violation is not a Response being created — it is a reconcile that "helpfully"
+    // migrates stored answers when a field's address changes. So the response has to actually HOLD
+    // the keys being renamed, in both maps, or a mutation would have nothing to corrupt.
     const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
       hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
+    });
+
+    const storedData = { utm_source: "google", satisfaction: "great" };
+    const storedVariables = { [VARIABLE_ID]: 42 };
+    const response = await prisma.response.create({
+      data: {
+        surveyId: survey.id,
+        finished: true,
+        data: storedData as never,
+        variables: storedVariables as never,
+      },
+      select: { id: true, updatedAt: true },
     });
 
     await patchV3Survey(
       survey,
-      { hiddenFields: { enabled: true, fieldIds: ["renamed_source"] } },
+      {
+        // Both addresses move: the hidden field's storage key IS its name, and the variable keeps its
+        // cuid while its name changes — the two shapes a migration would treat differently.
+        hiddenFields: { enabled: true, fieldIds: ["renamed_source"] },
+        variables: [{ id: VARIABLE_ID, name: "renamed_score", type: "number", value: 7 }],
+      },
       "req_v3_patch_no_response_write"
     );
 
-    expect(await prisma.response.count({ where: { surveyId: survey.id } })).toBe(0);
+    // The definitions moved...
+    expect((await readRows(survey.id)).map(({ storageKey, name }) => `${storageKey}:${name}`)).toEqual([
+      `${VARIABLE_ID}:renamed_score`,
+      "renamed_source:renamed_source",
+    ]);
+
+    // ...and the response did not. Both maps compared whole, so a re-keyed, added or dropped entry
+    // fails — not just a changed value.
+    const stored = await prisma.response.findUniqueOrThrow({
+      where: { id: response.id },
+      select: { data: true, variables: true, updatedAt: true },
+    });
+    expect(stored.data).toEqual(storedData);
+    expect(stored.variables).toEqual(storedVariables);
+    // A rewrite that happened to produce the same JSON would still bump `updatedAt` (@updatedAt).
+    expect(stored.updatedAt).toEqual(response.updatedAt);
+
+    // And nothing was inserted or deleted either.
+    expect(await prisma.response.count({ where: { surveyId: survey.id } })).toBe(1);
   });
 });

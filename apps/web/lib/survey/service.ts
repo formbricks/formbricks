@@ -906,8 +906,9 @@ export const createSurvey = async (
       },
       // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
       // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or
-      // API create could now reach Prisma's 5s default where it used to fit. Matched to the other two
-      // reconcile call sites rather than left to inherit a ceiling this work made easier to hit.
+      // API create could now reach Prisma's 5s default where it used to fit. Matched to the other
+      // reconcile call sites (enumerated on `getDeclaredEmbeddedFields`) rather than left to inherit
+      // a ceiling this work made easier to hit.
       { timeout: 20_000, maxWait: 10_000 }
     );
 
