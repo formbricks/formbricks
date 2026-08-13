@@ -38,6 +38,22 @@ http://localhost:3000/api/mcp
 The route supports `POST` requests, runs with the Next.js Node.js runtime, and sets private no-store
 response headers. Browser-origin MCP requests must come from the configured Formbricks app origin.
 
+### Protocol revisions
+
+The server implements protocol revision **2026-07-28** and keeps serving the 2025 era from the same
+endpoint, so a client on an older revision does not need to change anything. The MCP TypeScript SDK
+answers the legacy `initialize` handshake alongside `server/discover`, and `mcp-handler` serves with
+`legacy: "stateless"`.
+
+Three parts of the revision are handled by the SDK rather than by our code: the `server/discover` RPC,
+the `resultType` field now required on every result, and the `ttlMs` / `cacheScope` cache hints (which
+default conservatively to `ttlMs: 0` and `cacheScope: "private"`).
+
+Notable removals in the revision that used to be configured here: protocol-level sessions and the
+`Mcp-Session-Id` header, the `initialize` handshake as a precondition, and the HTTP+SSE transport. The
+handler therefore takes no `sessionIdGenerator`, `disableSse`, `basePath`, or `maxDuration` option — the
+route this handler is mounted on is the only mount point.
+
 OAuth clients discover the protected resource metadata here:
 
 ```text
@@ -506,6 +522,29 @@ Errors are returned as MCP error tool results with a structured v3 problem paylo
   }
 }
 ```
+
+## Tool Arguments
+
+Every tool input schema is **strict**: an argument a tool does not declare is rejected, not ignored.
+The advertised JSON Schema carries `additionalProperties: false`, and the SDK validates the call before
+the handler runs, so an undeclared or misspelled key comes back as an input-validation error result and
+the underlying v3 operation is never reached.
+
+This matters most on filters. A dropped filter does not narrow, so the pre-strict behaviour ran the
+query wider than asked and reported success — `count_feedback_records` with a misspelled `userId`
+(the correct key is `user_id`) returned the count for every record in the dataset, which an agent has no
+way to tell from a real answer.
+
+Strictness binds the top level only. The fields typed as free-form objects — `blocks`, `metadata`,
+`welcomeCard` and friends on `create_survey`, and the `data` payload on `patch_survey` /
+`validate_survey` — still accept any nested shape, and are validated by the v3 survey document contract
+once the call reaches the operation.
+
+<Note>
+  A client that adds its own keys to a tool call's `arguments` will be rejected. Nothing in the MCP spec
+  invites that, but it is a behaviour change from earlier Formbricks releases, which silently dropped
+  such keys.
+</Note>
 
 ## Available Tools
 
@@ -1429,6 +1468,10 @@ query, like `create_feedback_record`.
   versions, or surveys.
 - Query-string credentials are rejected; use headers for API keys.
 - Large request bodies are rejected before the MCP handler using the same body-size policy as v3 APIs.
+- Tool arguments are strict: undeclared keys are rejected rather than ignored (see [Tool
+  Arguments](#tool-arguments)).
+- Resources and prompts are not exposed — the server registers tools only, so there is no MCP resource
+  for the survey document contract yet.
 
 ## Implementation Files
 
