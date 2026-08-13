@@ -9,12 +9,15 @@ import {
   type TReservedFieldCatalogEntry,
   coerceToEmbeddedDataType,
   deriveLegacyEmbeddedData,
+  findComputedEmbeddedField,
   getComputedEmbeddedFields,
+  getComputedFieldDataType,
   getDeclaredComputedFields,
   getDeclaredEmbeddedFields,
   getDeclaredIngestedStorageKeys,
   getIngestedEmbeddedFields,
   getIngestedStorageKeys,
+  getLogicVariableValue,
   getSurveyEmbeddedFields,
   listReadableFields,
   projectReservedValues,
@@ -1070,5 +1073,74 @@ describe("getDeclaredEmbeddedFields", () => {
 
     expect(getDeclaredIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page"]);
     expect(getIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page", "removed"]);
+  });
+});
+
+/**
+ * The logic engines' read of a computed field. Lives here because
+ * `packages/surveys/src/lib/logic.ts` and `apps/web/lib/surveyLogic/utils.ts` are near-copies and
+ * both consume it — one definition of the value-preservation rule instead of two that can drift.
+ */
+describe("getLogicVariableValue", () => {
+  const computedField = (storageKey: string, dataType: "number" | "string", defaultValue: number | string) =>
+    ({
+      field: { name: storageKey, source: "computed" as const, dataType, defaultValue, locked: false },
+      link: { storageKey },
+    }) satisfies TLinkedEmbeddedField;
+
+  const numberField = computedField("score", "number", 5);
+  const textField = computedField("tier", "string", "gold");
+  const fields = [numberField, textField];
+
+  test("reads a stored value under the field's declared type", () => {
+    expect(getLogicVariableValue(fields, "score", { score: 42 })).toBe(42);
+    expect(getLogicVariableValue(fields, "tier", { tier: "silver" })).toBe("silver");
+  });
+
+  test("a number field coerces its stored value, numeric strings included", () => {
+    expect(getLogicVariableValue(fields, "score", { score: "42" })).toBe(42);
+  });
+
+  // The four cases below are the deltas `resolveEmbeddedValue` deliberately does not reproduce.
+  // Swapping this helper onto it would change what already-stored responses evaluate to, and
+  // responses are never migrated — so each one is asserted against the declared default it must NOT
+  // fall back to.
+  test("delta (a): a non-numeric stored value is 0, never the declared default", () => {
+    expect(getLogicVariableValue(fields, "score", { score: "abc" })).toBe(0);
+  });
+
+  test('delta (a): a string field holding 0 is "", never "0"', () => {
+    expect(getLogicVariableValue(fields, "tier", { tier: 0 })).toBe("");
+  });
+
+  test('delta (d): a response missing the key is 0 / "", never the declared default', () => {
+    expect(getLogicVariableValue(fields, "score", {})).toBe(0);
+    expect(getLogicVariableValue(fields, "tier", {})).toBe("");
+  });
+
+  test("a key the survey does not declare resolves to undefined, not to a coerced blank", () => {
+    // Distinct from the "missing value" cases above: there is no field, so there is no type to
+    // evaluate under, and the caller must be able to tell the two apart.
+    expect(getLogicVariableValue(fields, "deleted_variable", { deleted_variable: 7 })).toBeUndefined();
+  });
+});
+
+describe("getComputedFieldDataType", () => {
+  const fields: TLinkedEmbeddedField[] = [
+    {
+      field: { name: "score", source: "computed", dataType: "number", defaultValue: 5, locked: false },
+      link: { storageKey: "score" },
+    },
+  ];
+
+  test("answers the declared type", () => {
+    expect(getComputedFieldDataType(fields, "score")).toBe("number");
+  });
+
+  test("answers undefined for a field the survey no longer declares, instead of throwing", () => {
+    // The guard both engines depend on: this runs before the operator switch, and a throw here is
+    // swallowed by `evaluateSingleCondition`'s try/catch into a silent `false`.
+    expect(getComputedFieldDataType(fields, "deleted_variable")).toBeUndefined();
+    expect(findComputedEmbeddedField(fields, "deleted_variable")).toBeUndefined();
   });
 });

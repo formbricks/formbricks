@@ -1708,6 +1708,57 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
     ).toBe(true);
   });
 
+  /**
+   * A condition can outlive the field it names: the variable is renamed or deleted, the logic rule
+   * keeps the old storage key. The `dataType` read that drives the number coercion runs BEFORE the
+   * operator switch, so an unguarded `undefined` throws there — and `evaluateSingleCondition`'s
+   * try/catch turns that into a silent `false` rather than a visible crash, quietly sending the
+   * respondent down the wrong branch. These assert the evaluated RESULT, not the absence of a throw,
+   * precisely because the catch would hide one.
+   */
+  describe("a condition naming a field the survey no longer declares", () => {
+    const staleOperand = (operator: TSingleCondition["operator"]): TConditionGroup => ({
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator,
+          leftOperand: { type: "variable", value: "storage_key_of_a_deleted_variable" },
+          rightOperand: { type: "hiddenField", value: "plan" },
+        },
+      ],
+    });
+
+    test("evaluates on its own merits instead of collapsing to false", () => {
+      // The left operand resolves to no value, so `isNotSet` is genuinely true. Without the guard the
+      // `.dataType` read throws first and the catch returns false.
+      expect(
+        evaluateLogic(
+          buildSurvey([], computedRow("number", 0)),
+          { plan: "42" },
+          {},
+          staleOperand("isNotSet"),
+          "default"
+        )
+      ).toBe(true);
+    });
+
+    test("does not coerce the right operand, since the left operand's type is unknown", () => {
+      // `isSet` on an unresolvable left operand is false either way; the point is that it is false by
+      // evaluating, not by throwing — paired with the case above, which would flip.
+      expect(
+        evaluateLogic(
+          buildSurvey([], computedRow("number", 0)),
+          { plan: "42" },
+          {},
+          staleOperand("isSet"),
+          "default"
+        )
+      ).toBe(false);
+    });
+  });
+
   describe("performCalculation", () => {
     const calculate = (
       survey: TJsWorkspaceStateSurvey,

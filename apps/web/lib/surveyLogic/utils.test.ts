@@ -1509,6 +1509,80 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
     ).toBe(true);
   });
 
+  test("a number field compared against a hidden field still coerces the right operand", () => {
+    // The engines' twin in packages/surveys pins this too; it is the branch the guard below sits in
+    // front of, so both directions are asserted in both engines.
+    const condition: TConditionGroup = {
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator: "equals",
+          leftOperand: { type: "variable", value: STORAGE_KEY },
+          rightOperand: { type: "hiddenField", value: "plan" },
+        },
+      ],
+    };
+
+    expect(
+      evaluateLogic(
+        buildSurvey([], computedRow("number", 0)),
+        { plan: "42" },
+        { [STORAGE_KEY]: 42 },
+        condition,
+        "default"
+      )
+    ).toBe(true);
+  });
+
+  /**
+   * A condition can outlive the field it names: the variable is renamed or deleted, the logic rule
+   * keeps the old storage key. The `dataType` read that drives the number coercion runs BEFORE the
+   * operator switch, so an unguarded `undefined` throws there — and `evaluateSingleCondition`'s
+   * try/catch turns that into a silent `false` rather than a visible crash, which on this side of the
+   * fence quietly changes a quota's or a summary's answer. These assert the evaluated RESULT, not the
+   * absence of a throw, precisely because the catch would hide one.
+   */
+  describe("a condition naming a field the survey no longer declares", () => {
+    const staleOperand = (operator: TSingleCondition["operator"]): TConditionGroup => ({
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator,
+          leftOperand: { type: "variable", value: "storage_key_of_a_deleted_variable" },
+          rightOperand: { type: "hiddenField", value: "plan" },
+        },
+      ],
+    });
+
+    test("evaluates on its own merits instead of collapsing to false", () => {
+      expect(
+        evaluateLogic(
+          buildSurvey([], computedRow("number", 0)),
+          { plan: "42" },
+          {},
+          staleOperand("isNotSet"),
+          "default"
+        )
+      ).toBe(true);
+    });
+
+    test("does not coerce the right operand, since the left operand's type is unknown", () => {
+      expect(
+        evaluateLogic(
+          buildSurvey([], computedRow("number", 0)),
+          { plan: "42" },
+          {},
+          staleOperand("isSet"),
+          "default"
+        )
+      ).toBe(false);
+    });
+  });
+
   test('performCalculation seeds from 0 / "" and skips an undeclared field', () => {
     const calculate = (
       survey: TJsWorkspaceStateSurvey,

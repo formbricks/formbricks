@@ -3826,7 +3826,18 @@ const validateBlockLogic = (
 };
 
 // ZSurvey is refined, so update/create inputs start from ZSurveyBase and reapply the same refinement.
-export const ZSurveyUpdateInput = ZSurveyBase.omit({ createdAt: true, updatedAt: true, followUps: true })
+export const ZSurveyUpdateInput = ZSurveyBase.omit({
+  createdAt: true,
+  updatedAt: true,
+  followUps: true,
+  // Read-only projection of the EmbeddedData tables (ENG-1837), omitted for the same reason as on
+  // both create inputs: nothing may reach a Prisma write through this schema. Omitting STRIPS rather
+  // than rejects, so the v1 PUT round-trip — which re-parses the loaded survey merged with the patch
+  // — is unaffected; `updateSurveyInternal` still destructures the key out, because callers that hand
+  // it a raw `TSurvey` (the editor's save actions, the summary's single-use toggle) never go through
+  // this schema at all.
+  embeddedFields: true,
+})
   .extend({
     followUps: z
       .array(

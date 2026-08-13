@@ -3,7 +3,7 @@ import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
 import { type TLegacyEmbeddedFields, toDesiredEmbeddedFields } from "./embedded-data-mapping";
 import type { TI18nString } from "./i18n";
-import type { TResponse } from "./responses";
+import type { TResponse, TResponseVariables } from "./responses";
 import { formatSnakeCaseToTitleCase } from "./safe-identifier";
 import type { TSurveyBlocks } from "./surveys/blocks";
 import { getTextContent } from "./surveys/validation";
@@ -265,6 +265,58 @@ export const resolveEmbeddedValue = (
   if (coerced !== undefined) return coerced;
   if (field.defaultValue === null) return undefined;
   return coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+};
+
+/**
+ * Finds a computed field by the key its value is stored under in `response.variables`.
+ *
+ * Returns `undefined` when nothing matches, which is a state that reaches production: a logic
+ * condition or a calculate action outlives the field it names whenever a variable is renamed or
+ * deleted and the rule keeps the old storage key.
+ */
+export const findComputedEmbeddedField = (
+  computedFields: readonly TLinkedEmbeddedField[],
+  storageKey: string
+): TLinkedEmbeddedField | undefined => computedFields.find((field) => field.link.storageKey === storageKey);
+
+/**
+ * The declared type of the computed field an operand names, or `undefined` when it names none.
+ *
+ * The optional chain is the point: both logic engines consult this to decide whether to coerce a
+ * hidden-field operand to a number, and that decision is made BEFORE the operator switch. Reading
+ * `.dataType` off a missing field throws there, and `evaluateSingleCondition`'s try/catch turns the
+ * throw into a silent `false` — so a stale operand would quietly change which branch a respondent
+ * takes, or what a quota counts, with no error anywhere. Unknown type means the coercion simply does
+ * not fire and evaluation falls through exactly as it does for a text variable.
+ */
+export const getComputedFieldDataType = (
+  computedFields: readonly TLinkedEmbeddedField[],
+  storageKey: string
+): TEmbeddedDataType | undefined => findComputedEmbeddedField(computedFields, storageKey)?.field.dataType;
+
+/**
+ * What the logic engines read a computed field's value as — **not** {@link resolveEmbeddedValue}.
+ *
+ * ENG-1837 repointed the *definition* lookup onto the EmbeddedData tables and deliberately left this
+ * value expression alone. `resolveEmbeddedValue` would coerce a non-numeric stored value to the
+ * field's declared default instead of `0`, and render a text field holding `0` as `"0"` rather than
+ * `""` — both of which change what already-stored responses evaluate to, and responses are never
+ * migrated (see the swap checklist on {@link resolveEmbeddedValue}, deltas (a) and (d)).
+ *
+ * Shared by `packages/surveys/src/lib/logic.ts` (the renderer) and `apps/web/lib/surveyLogic/utils.ts`
+ * (quotas, summaries, follow-up conditions), which are near-copies of each other. It lives here so
+ * the rule has one definition rather than two that can drift apart — the engines evaluating the same
+ * survey differently is its own bug class.
+ */
+export const getLogicVariableValue = (
+  computedFields: readonly TLinkedEmbeddedField[],
+  storageKey: string,
+  variablesData: TResponseVariables
+): string | number | undefined => {
+  const field = findComputedEmbeddedField(computedFields, storageKey);
+  if (!field) return undefined;
+  const variableValue = variablesData[storageKey];
+  return field.field.dataType === "number" ? Number(variableValue) || 0 : variableValue || "";
 };
 
 /**
