@@ -95,10 +95,11 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-// Stand-in for the bcrypt hash on the user's `credential` account. Email-change tokens are bound to it,
-// so swapping it in the prisma mock is how these tests simulate a password reset or change.
-const TEST_CREDENTIAL_PASSWORD_HASH = "$2a$12$0123456789012345678901uOriginalHashValueForTests";
-const ROTATED_CREDENTIAL_PASSWORD_HASH = "$2a$12$0123456789012345678901uRotatedHashValueForTests.";
+// `updatedAt` on the user's `credential` account, which Prisma bumps on every password write.
+// Email-change tokens are bound to it, so moving it in the prisma mock is how these tests simulate a
+// password reset or change.
+const CREDENTIAL_UPDATED_AT = new Date("2026-01-01T00:00:00.000Z");
+const CREDENTIAL_UPDATED_AT_AFTER_RESET = new Date("2026-01-02T09:30:00.000Z");
 
 // Mock logger
 vi.mock("@formbricks/logger", () => ({
@@ -113,7 +114,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
   const mockUser = {
     id: "test-user-id",
     email: "test@example.com",
-    accounts: [{ password: TEST_CREDENTIAL_PASSWORD_HASH }],
+    accounts: [{ updatedAt: CREDENTIAL_UPDATED_AT }],
   };
 
   let mockSymmetricEncrypt: any;
@@ -254,7 +255,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       });
     });
 
-    test("should refuse to mint a token for a user without a credential password", async () => {
+    test("should refuse to mint a token for a user without a credential account", async () => {
       (prisma.user.findUnique as any).mockResolvedValue({ ...mockUser, accounts: [] });
 
       await expect(createEmailChangeToken(mockUser.id, "new@example.com")).rejects.toThrow(
@@ -688,9 +689,11 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       test("should reject a token minted before the password was reset", async () => {
         const token = await createEmailChangeToken(mockUser.id, "attacker@evil.com");
 
+        // Prisma bumps the credential row's updatedAt on the password write. Note this holds even if the
+        // reset set the *same* password, which binding to the hash itself would have missed.
         (prisma.user.findUnique as any).mockResolvedValue({
           ...mockUser,
-          accounts: [{ password: ROTATED_CREDENTIAL_PASSWORD_HASH }],
+          accounts: [{ updatedAt: CREDENTIAL_UPDATED_AT_AFTER_RESET }],
         });
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token is no longer valid");

@@ -144,12 +144,18 @@ export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): s
  * before it stayed usable for the rest of its 24 hours, long enough to point the account at an
  * attacker-controlled mailbox and reset the password back (ENG-2106, CWE-613).
  *
- * Binding the token to the login email plus the credential password hash ties it to that state, so a
- * password reset or change — or any other email change — re-keys the fingerprint and kills every token
- * issued before it. It also makes the link single-use for free: consuming it changes the email.
+ * Binding the token to the login email plus the last write to the user's `credential` account ties it
+ * to that state, so a password reset or change — or any other email change — re-keys the fingerprint and
+ * kills every token issued before it. It also makes the link single-use for free: consuming it changes
+ * the email.
  *
- * HMAC rather than a bare hash so the claim, which travels in a readable JWT payload, discloses nothing
- * about the password hash it covers.
+ * The credential's `updatedAt` is the binding, deliberately not its password hash: no password-derived
+ * material then travels in the token at all, and it still invalidates a reset that happens to set the
+ * *same* password, which a hash would not. This relies on every write to that row going through Prisma,
+ * which applies `@updatedAt` — keep it that way; a raw-SQL password write would leave stale tokens live.
+ *
+ * HMAC rather than a bare hash so the claim, which travels in a readable JWT payload, cannot be
+ * recomputed or probed by whoever holds the token.
  */
 const getEmailChangeCredentialFingerprint = async (userId: string): Promise<string> => {
   if (!NEXTAUTH_SECRET) {
@@ -160,20 +166,20 @@ const getEmailChangeCredentialFingerprint = async (userId: string): Promise<stri
     where: { id: userId },
     select: {
       email: true,
-      accounts: { where: { provider: "credential" }, select: { password: true } },
+      accounts: { where: { provider: "credential" }, select: { updatedAt: true } },
     },
   });
 
-  const passwordHash = user?.accounts?.[0]?.password;
+  const credentialUpdatedAt = user?.accounts?.[0]?.updatedAt;
 
-  // Fail closed: with no credential password there is nothing to bind to, and an email change is only
+  // Fail closed: with no credential account there is nothing to bind to, and an email change is only
   // ever offered to credential users in the first place.
-  if (!user || !passwordHash) {
-    throw new Error("Email change token cannot be bound: user has no credential password");
+  if (!user || !credentialUpdatedAt) {
+    throw new Error("Email change token cannot be bound: user has no credential account");
   }
 
   return createHmac("sha256", NEXTAUTH_SECRET)
-    .update(`${userId}:${user.email}:${passwordHash}`)
+    .update(`${userId}:${user.email}:${credentialUpdatedAt.toISOString()}`)
     .digest("hex");
 };
 
