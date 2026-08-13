@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const envMock = {
   BETTER_AUTH_URL: undefined as string | undefined,
+  MCP_OAUTH_JWKS_URL: undefined as string | undefined,
   NEXTAUTH_URL: undefined as string | undefined,
   PUBLIC_URL: undefined as string | undefined,
   WEBAPP_URL: undefined as string | undefined,
@@ -19,6 +20,7 @@ const loadOAuthUrls = async () => {
 describe("OAuth URL helpers", () => {
   beforeEach(() => {
     envMock.BETTER_AUTH_URL = undefined;
+    envMock.MCP_OAUTH_JWKS_URL = undefined;
     envMock.NEXTAUTH_URL = undefined;
     envMock.PUBLIC_URL = undefined;
     envMock.WEBAPP_URL = undefined;
@@ -72,5 +74,23 @@ describe("OAuth URL helpers", () => {
     const { getAuthIssuerUrl } = await loadOAuthUrls();
 
     expect(getAuthIssuerUrl()).toBe("https://admin.example.com/app/api/auth");
+  });
+
+  test("derives the JWKS URL from the public issuer by default", async () => {
+    envMock.BETTER_AUTH_URL = "https://auth.example.com";
+
+    const { getMcpOAuthJwksUrl } = await loadOAuthUrls();
+
+    expect(getMcpOAuthJwksUrl()).toBe("https://auth.example.com/api/auth/jwks");
+  });
+
+  test("uses an internal JWKS URL without changing the public issuer", async () => {
+    envMock.BETTER_AUTH_URL = "https://auth.example.com";
+    envMock.MCP_OAUTH_JWKS_URL = "http://formbricks:3000/api/auth/jwks";
+
+    const { getAuthIssuerUrl, getMcpOAuthJwksUrl } = await loadOAuthUrls();
+
+    expect(getAuthIssuerUrl()).toBe("https://auth.example.com/api/auth");
+    expect(getMcpOAuthJwksUrl()).toBe("http://formbricks:3000/api/auth/jwks");
   });
 });

@@ -21,6 +21,11 @@ formbricks:
   # Optional: Public URL for surveys (defaults to webappUrl if not set)
   publicUrl: ""
 
+  # Optional: Server-side Better Auth JWKS endpoint for MCP OAuth verification.
+  # Defaults to the in-cluster Formbricks service so the public issuer does not need DNS hairpinning.
+  # Set the complete URL when the app is served below a custom subpath.
+  mcpOauthJwksUrl: ""
+
 ##########################################################
 # Enterprise Configuration
 ##########################################################

@@ -359,6 +359,7 @@ services:
       AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
       AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
       AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-minimize_latency}
+      MCP_OAUTH_JWKS_URL: ${MCP_OAUTH_JWKS_URL:-http://formbricks:3000/api/auth/jwks}
 
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.

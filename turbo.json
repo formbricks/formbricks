@@ -331,6 +331,7 @@
         "NEXTAUTH_SECRET",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",
+        "MCP_OAUTH_JWKS_URL",
         "npm_package_version",
         "OIDC_CLIENT_ID",
         "OIDC_CLIENT_SECRET",

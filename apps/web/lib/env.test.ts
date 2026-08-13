@@ -25,6 +25,7 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     AUTHZED_SHADOW_TARGETS: undefined,
     AUTHZED_SYSTEM_KEY: undefined,
     AUTHZED_TOKEN: undefined,
+    MCP_OAUTH_JWKS_URL: undefined,
     ...overrides,
   };
 };
@@ -99,6 +100,27 @@ describe("env", () => {
     const { env } = await import("./env");
 
     expect(env.DEBUG_SHOW_RESET_LINK).toBe("1");
+  });
+
+  test.each(["http://formbricks:3000/api/auth/jwks", "https://auth.example.com/internal/jwks?version=1"])(
+    "accepts MCP OAuth JWKS URL %s",
+    async (jwksUrl) => {
+      setTestEnv({ MCP_OAUTH_JWKS_URL: jwksUrl });
+
+      const { env } = await import("./env");
+
+      expect(env.MCP_OAUTH_JWKS_URL).toBe(jwksUrl);
+    }
+  );
+
+  test.each([
+    "ftp://formbricks/api/auth/jwks",
+    "http://user:password@formbricks:3000/api/auth/jwks",
+    "http://formbricks:3000/api/auth/jwks#key",
+  ])("rejects unsafe MCP OAuth JWKS URL %s", async (jwksUrl) => {
+    setTestEnv({ MCP_OAUTH_JWKS_URL: jwksUrl });
+
+    await expect(import("./env")).rejects.toThrow("MCP_OAUTH_JWKS_URL");
   });
 
   test.each(["true", "1"])("accepts enabled AuthZed boolean value %s", async (enabled) => {

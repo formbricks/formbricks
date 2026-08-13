@@ -68,6 +68,7 @@ vi.mock("@/modules/auth/lib/oauth-urls", () => ({
   ],
   getAuthIssuerUrl: vi.fn(() => "https://app.example.com/api/auth"),
   getMcpOrigin: vi.fn(() => "https://app.example.com"),
+  getMcpOAuthJwksUrl: vi.fn(() => "http://formbricks:3000/api/auth/jwks"),
   getMcpProtectedResourceMetadataUrl: vi.fn(
     () => "https://app.example.com/.well-known/oauth-protected-resource/api/mcp"
   ),
@@ -317,7 +318,7 @@ describe("authenticateMcpRequest", () => {
         audience: "https://app.example.com/api/mcp",
         issuer: "https://app.example.com/api/auth",
       },
-      jwksUrl: "https://app.example.com/api/auth/jwks",
+      jwksUrl: "http://formbricks:3000/api/auth/jwks",
     });
     expect(userFindUniqueMock).toHaveBeenCalledWith({
       where: { id: "user_1" },
