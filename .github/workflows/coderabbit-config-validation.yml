@@ -73,19 +73,39 @@ jobs:
           print(f"reviews.path_filters: {len(filters)} entries, all exclusions.")
           PY
 
+      # Deliberately not `curl https://cli.coderabbit.ai/install.sh | sh`: that script is
+      # mutable and fetches the release archive without verifying it, so piping it to a shell
+      # would undo the pin below. Fetch the immutable versioned artifact instead and check it
+      # against a recorded digest, which is the same posture as pinning an action to a SHA.
+      # Bump CODERABBIT_VERSION and CODERABBIT_SHA256 together — a mismatch fails loudly,
+      # which is the point of recording it.
       - name: Install the CodeRabbit CLI
         shell: bash
         env:
-          # Pinned for the same reason third-party actions are pinned to a SHA. The schema is
-          # fetched at run time, so a pinned CLI still validates against current CodeRabbit
-          # behaviour; bump this when a release adds a check worth having.
           CODERABBIT_VERSION: "0.7.2"
+          CODERABBIT_SHA256: "32dd3a5a1238fa68eb7cfa95cc19cf6ad4980882589c616c0e300b920f1bb865"
           CODERABBIT_INSTALL_DIR: ${{ runner.temp }}/coderabbit-cli
         run: |
           set -euo pipefail
+
+          archive="$(mktemp -d)/coderabbit-linux-x64.zip"
+          curl -fsSL --retry 3 --retry-delay 2 -o "$archive" \
+            "https://cli.coderabbit.ai/releases/${CODERABBIT_VERSION}/coderabbit-linux-x64.zip"
+
+          echo "${CODERABBIT_SHA256}  ${archive}" | sha256sum --check --strict -
+
           mkdir -p "$CODERABBIT_INSTALL_DIR"
-          curl -fsSL https://cli.coderabbit.ai/install.sh | sh
+          unzip -q -o "$archive" coderabbit -d "$CODERABBIT_INSTALL_DIR"
+          chmod +x "$CODERABBIT_INSTALL_DIR/coderabbit"
           echo "$CODERABBIT_INSTALL_DIR" >> "$GITHUB_PATH"
+
+          # The digest only proves what was downloaded; this proves what will run.
+          installed="$("$CODERABBIT_INSTALL_DIR/coderabbit" --version)"
+          if [ "$installed" != "$CODERABBIT_VERSION" ]; then
+            echo "::error::Expected CodeRabbit CLI ${CODERABBIT_VERSION}, got ${installed}"
+            exit 1
+          fi
+          echo "CodeRabbit CLI ${installed} verified against the recorded digest."
 
       # Two-stage: YAML syntax, then the schema CodeRabbit publishes — the only authority on
       # which keys and values actually exist. Needs no authentication.
