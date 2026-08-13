@@ -28,7 +28,7 @@ export const getPrettyUrlColumns = (t: TFunction): TSettingsTableColumn<SurveyWi
   {
     id: "name",
     header: t("workspace.settings.domain.survey_name"),
-    width: "w-[40%]",
+    headerClassName: "w-[40%]",
     cellClassName: "font-medium",
     cell: (survey) => (
       <Link
@@ -41,13 +41,13 @@ export const getPrettyUrlColumns = (t: TFunction): TSettingsTableColumn<SurveyWi
   {
     id: "workspace",
     header: t("workspace.settings.domain.workspace"),
-    width: "w-[30%]",
+    headerClassName: "w-[30%]",
     cell: (survey) => survey.workspace.name,
   },
   {
     id: "slug",
     header: t("workspace.settings.domain.pretty_url"),
-    width: "w-[30%]",
+    headerClassName: "w-[30%]",
     cell: (survey) => <IdBadge id={survey.slug ?? ""} />,
   },
 ];
