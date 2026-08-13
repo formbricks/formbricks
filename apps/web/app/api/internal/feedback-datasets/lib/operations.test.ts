@@ -118,7 +118,7 @@ describe("purgeV3FeedbackDataset", () => {
 
     expect(auditLog.organizationId).toBe("org_1");
     expect(auditLog.targetId).toBe(datasetId);
-    expect(auditLog.newObject).toEqual({ purgeRequested: true, datasetId });
+    expect(auditLog.newObject).toEqual({ purgeRequested: true });
   });
 
   // A failed purge must not leave an audit entry claiming one happened.

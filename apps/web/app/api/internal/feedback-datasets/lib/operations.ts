@@ -56,7 +56,8 @@ export async function purgeV3FeedbackDataset(params: TPurgeDatasetParams): Promi
   if (auditLog) {
     // Records what was *requested*, not what was removed: the count is not known at this point and
     // the purge may still be running.
-    auditLog.newObject = { purgeRequested: true, datasetId };
+    // targetId already carries the dataset; this records only that a purge was accepted.
+    auditLog.newObject = { purgeRequested: true };
   }
 
   return successResponse({ datasetId, status: result.data.status }, { requestId, status: 202 });

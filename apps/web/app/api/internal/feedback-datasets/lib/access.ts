@@ -23,7 +23,8 @@ import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/
  * so workspace permissions cannot draw a line between them — a member of one workspace would
  * otherwise destroy records another workspace's surveys ingested.
  *
- * Returns a `Response` (401/403/404) to short-circuit on failure, or the organization id on success.
+ * Returns a `Response` (401/403) to short-circuit on failure, or the organization id on success.
+ * Never 404: a caller who cannot reach the dataset must not learn whether it exists.
  */
 export async function requireFeedbackDatasetMutationAccess(
   authentication: TV3Authentication,

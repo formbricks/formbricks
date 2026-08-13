@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { truncate } from "@/lib/utils/strings";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { usePurgeFeedbackDataset } from "@/modules/ee/feedback-directory/hooks/use-purge-feedback-dataset";
 import { hasMatchingDatasetPurgeConfirmation } from "@/modules/ee/feedback-directory/lib/purge-confirmation";
@@ -39,6 +40,9 @@ export const PurgeFeedbackDirectoryData = ({
   const { mutateAsync: purgeDataset, isPending } = usePurgeFeedbackDataset();
 
   const hasValidConfirmation = hasMatchingDatasetPurgeConfirmation(confirmationName, directoryName);
+  // A dataset name has no length limit, so the copy shows a truncated one — the same treatment the
+  // workspace-delete confirmation gives it. The typed value is still matched against the full name.
+  const displayName = truncate(directoryName, 30);
 
   const handleDialogOpenChange = (open: boolean) => {
     setIsPurgeDialogOpen(open);
@@ -90,28 +94,36 @@ export const PurgeFeedbackDirectoryData = ({
       <DeleteDialog
         open={isPurgeDialogOpen}
         setOpen={handleDialogOpenChange}
-        deleteWhat={directoryName}
+        deleteWhat={displayName}
         title={t("workspace.settings.feedback_directories.purge_all_data")}
         buttonLabel={t("workspace.settings.feedback_directories.purge_all_data")}
         onDelete={handlePurge}
         isDeleting={isPending}
         disabled={!hasValidConfirmation}
         text={t("workspace.settings.feedback_directories.purge_all_data_warning", {
-          directoryName,
+          directoryName: displayName,
         })}>
         <div className="py-5">
-          <label htmlFor="purgeDatasetConfirmation">
-            {t("workspace.settings.feedback_directories.purge_confirmation_name", { directoryName })}
-          </label>
-          <Input
-            value={confirmationName}
-            onChange={(e) => setConfirmationName(e.target.value)}
-            placeholder={directoryName}
-            className="mt-2"
-            type="text"
-            id="purgeDatasetConfirmation"
-            name="purgeDatasetConfirmation"
-          />
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await handlePurge();
+            }}>
+            <label htmlFor="purgeDatasetConfirmation">
+              {t("workspace.settings.feedback_directories.purge_confirmation_name", {
+                directoryName: displayName,
+              })}
+            </label>
+            <Input
+              value={confirmationName}
+              onChange={(e) => setConfirmationName(e.target.value)}
+              placeholder={displayName}
+              className="mt-2"
+              type="text"
+              id="purgeDatasetConfirmation"
+              name="purgeDatasetConfirmation"
+            />
+          </form>
         </div>
       </DeleteDialog>
     </>

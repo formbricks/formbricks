@@ -16,5 +16,3 @@ export const ZDatasetPathParams = z
 
 /** No query parameters are accepted; a stray one is a caller bug, not something to ignore. */
 export const ZDatasetPurgeQuery = z.object({}).strict();
-
-export type TDatasetPathParams = z.infer<typeof ZDatasetPathParams>;
