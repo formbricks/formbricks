@@ -56,6 +56,20 @@ export const getBodyCellClassName = <TRow>(column: TSettingsTableColumn<TRow>): 
   );
 
 /**
+ * Whether a row should carry a click handler and an activator button.
+ *
+ * A disabled row must answer `false`. Dimming it with `pointer-events-none` only stops the mouse: the
+ * activator `<button>` stays in the tab order, and Enter or Space on it fires a click that bubbles to
+ * the row's handler — so a "disabled" row would still be operable from the keyboard.
+ */
+export const isRowActivatable = ({
+  isDisabled,
+  hasRowClick,
+  isRowClickable = true,
+}: Readonly<{ isDisabled: boolean; hasRowClick: boolean; isRowClickable?: boolean }>): boolean =>
+  !isDisabled && hasRowClick && isRowClickable;
+
+/**
  * The row is activated by a real `<button>` wrapping one column's content, not by `role="button"` on
  * the `<tr>` — a `row` cannot also be a `button`, and overriding the role drops the row out of the
  * table's accessibility tree. The button carries no click handler of its own: a click on it (including

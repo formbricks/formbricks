@@ -5,6 +5,7 @@ import {
   getFrameClassName,
   getHeaderCellClassName,
   getRowActivatorColumnId,
+  isRowActivatable,
 } from "./lib/column-classes";
 import { SettingsTableSkeletonRows } from "./settings-table-skeleton";
 import type { TSettingsTableProps } from "./types";
@@ -65,7 +66,11 @@ export const SettingsTable = <TRow,>({
 
     return rows.map((row, rowIndex) => {
       const isDisabled = isRowDisabled?.(row) ?? false;
-      const isClickable = Boolean(onRowClick) && (isRowClickable?.(row) ?? true);
+      const isClickable = isRowActivatable({
+        isDisabled,
+        hasRowClick: Boolean(onRowClick),
+        isRowClickable: isRowClickable?.(row),
+      });
 
       return (
         <TableRow

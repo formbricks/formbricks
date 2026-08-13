@@ -5,6 +5,7 @@ import {
   getFrameClassName,
   getHeaderCellClassName,
   getRowActivatorColumnId,
+  isRowActivatable,
 } from "./column-classes";
 
 const column = (overrides: Partial<TSettingsTableColumn<unknown>> = {}): TSettingsTableColumn<unknown> => ({
@@ -79,6 +80,34 @@ describe("getBodyCellClassName", () => {
     expect(getBodyCellClassName(column({ align: "center", cellClassName: "text-left font-medium" }))).toBe(
       "text-left font-medium"
     );
+  });
+});
+
+describe("isRowActivatable", () => {
+  test("activates a row that has a handler and is not disabled", () => {
+    expect(isRowActivatable({ isDisabled: false, hasRowClick: true })).toBe(true);
+  });
+
+  // The regression this guards: `pointer-events-none` on a disabled row stops the mouse but leaves the
+  // activator button focusable, so Enter or Space would still fire the row's handler.
+  test("refuses a disabled row, so it gets neither a handler nor a focusable activator", () => {
+    expect(isRowActivatable({ isDisabled: true, hasRowClick: true })).toBe(false);
+  });
+
+  test("still refuses a disabled row that the consumer calls clickable", () => {
+    expect(isRowActivatable({ isDisabled: true, hasRowClick: true, isRowClickable: true })).toBe(false);
+  });
+
+  test("refuses when no handler was supplied", () => {
+    expect(isRowActivatable({ isDisabled: false, hasRowClick: false })).toBe(false);
+  });
+
+  test("honours a per-row opt-out", () => {
+    expect(isRowActivatable({ isDisabled: false, hasRowClick: true, isRowClickable: false })).toBe(false);
+  });
+
+  test("treats an absent per-row predicate as clickable, so the common case needs no opt-in", () => {
+    expect(isRowActivatable({ isDisabled: false, hasRowClick: true, isRowClickable: undefined })).toBe(true);
   });
 });
 
