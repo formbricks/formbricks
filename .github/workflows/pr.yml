@@ -31,7 +31,6 @@ jobs:
   typecheck:
     name: Run Typecheck
     uses: ./.github/workflows/typecheck.yml
-    secrets: inherit
 
   # NOTE: there is deliberately no standalone "build the web app" job here. It used to run
   # `pnpm build --filter=@formbricks/web...` in parallel with e2e-test, which builds the
