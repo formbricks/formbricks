@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { deleteFile } from "@/modules/storage/service";
 import { deleteResponseFileUrls } from "./delete-response-files";
@@ -98,5 +99,32 @@ describe("deleteResponseFileUrls", () => {
 
     expect(mockedDeleteFile).toHaveBeenCalledTimes(1);
     expect(mockedDeleteFile).toHaveBeenCalledWith(OWN_WORKSPACE, "private", "mine.png", OWN_WORKSPACE);
+  });
+
+  // deleteFile returns an error result instead of throwing, so a failed storage deletion must still be
+  // logged — otherwise a leftover object looks like a clean success.
+  test("logs when deleteFile returns a failure result", async () => {
+    mockedResolve.mockResolvedValue({ id: OWN_WORKSPACE, organizationId: "org-1" });
+    mockedDeleteFile.mockResolvedValue({ ok: false, error: { code: "s3_client_error" } } as any);
+
+    await deleteResponseFileUrls([`/storage/${OWN_WORKSPACE}/private/answer.png`], OWN_WORKSPACE);
+
+    expect(mockedDeleteFile).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ error: { code: "s3_client_error" } }),
+      "Failed to delete a response file from storage"
+    );
+  });
+
+  test("resolves each distinct storage id only once for multiple files under it", async () => {
+    mockedResolve.mockResolvedValue({ id: OWN_WORKSPACE, organizationId: "org-1" });
+
+    await deleteResponseFileUrls(
+      [`/storage/${OWN_WORKSPACE}/private/one.png`, `/storage/${OWN_WORKSPACE}/private/two.png`],
+      OWN_WORKSPACE
+    );
+
+    expect(mockedResolve).toHaveBeenCalledTimes(1);
+    expect(mockedDeleteFile).toHaveBeenCalledTimes(2);
   });
 });

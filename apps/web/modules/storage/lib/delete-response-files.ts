@@ -31,6 +31,18 @@ export const deleteResponseFileUrls = async (
     return;
   }
 
+  // Several files in one response usually share a storage id (same survey/workspace prefix). Cache the
+  // resolution promise per id so the batch does one lookup per distinct id instead of one per file.
+  const workspaceByStorageId = new Map<string, ReturnType<typeof findWorkspaceByIdOrLegacyEnvId>>();
+  const resolveStorageWorkspace = (storageId: string) => {
+    const cached = workspaceByStorageId.get(storageId);
+    if (cached) return cached;
+
+    const pending = findWorkspaceByIdOrLegacyEnvId(storageId);
+    workspaceByStorageId.set(storageId, pending);
+    return pending;
+  };
+
   await Promise.all(
     fileUrls.map(async (fileUrl) => {
       try {
@@ -40,7 +52,7 @@ export const deleteResponseFileUrls = async (
           throw new Error(`Invalid storage file URL: ${fileUrl}`);
         }
 
-        const storageWorkspace = await findWorkspaceByIdOrLegacyEnvId(storageFile.storageId);
+        const storageWorkspace = await resolveStorageWorkspace(storageFile.storageId);
         if (storageWorkspace?.id !== surveyWorkspaceId) {
           logger.error(
             { fileUrl, surveyWorkspaceId, storageId: storageFile.storageId },
@@ -49,12 +61,20 @@ export const deleteResponseFileUrls = async (
           return;
         }
 
-        await deleteFile(
+        // deleteFile returns an error result (it does not throw) on S3 failures, so a discarded result
+        // would treat a failed deletion as a success and leave the object behind unlogged.
+        const result = await deleteFile(
           storageFile.storageId,
           storageFile.accessType,
           storageFile.fileName,
           surveyWorkspaceId
         );
+        if (!result.ok) {
+          logger.error(
+            { fileUrl, surveyWorkspaceId, error: result.error },
+            "Failed to delete a response file from storage"
+          );
+        }
       } catch (error) {
         logger.error({ error, fileUrl }, "Failed to delete file");
       }
