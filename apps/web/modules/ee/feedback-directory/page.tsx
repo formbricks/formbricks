@@ -1,5 +1,6 @@
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { can } from "@/lib/authorization";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackDirectoryView } from "@/modules/ee/feedback-directory/components/feedback-directory-view";
@@ -18,6 +19,16 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ organiz
   await redirectBillingRoleFromRestrictedOrgSettings(params.organizationId);
 
   const { currentUserMembership, organization, session } = await getOrganizationAuth(params.organizationId);
+
+  // ENG-2409: was a second `getAccessFlags(currentUserMembership.role)` on a role this page had
+  // already been handed, then `!isOwner && !isManager`. `organization.manage` is the same set.
+  // `membershipRole` below still comes from the row — that is a rendering prop, retained by design.
+  const canManageOrganization = await withAuthorizationSurface("page", () =>
+    can({ type: "user", id: session.user.id }, "organization.manage", {
+      type: "organization",
+      id: organization.id,
+    })
+  );
 
   const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organization.id);
   const pageTitle = t("workspace.settings.feedback_directories.title");
@@ -53,12 +64,7 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ organiz
     );
   }
 
-  const canManageFeedbackDirectories = await can(
-    { type: "user", id: session.user.id },
-    "organization.manage",
-    { type: "organization", id: organization.id }
-  );
-  if (!canManageFeedbackDirectories) {
+  if (!canManageOrganization) {
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={pageTitle} />
