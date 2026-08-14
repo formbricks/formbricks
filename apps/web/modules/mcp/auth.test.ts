@@ -12,9 +12,10 @@ import {
   handleAuthenticatedMcpRequest,
 } from "./auth";
 
-const { verifyAccessTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+const { verifyAccessTokenMock, userFindUniqueMock, warnMock } = vi.hoisted(() => ({
   verifyAccessTokenMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
+  warnMock: vi.fn(),
 }));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
@@ -64,7 +65,7 @@ vi.mock("@/modules/auth/lib/oauth-urls", async (importOriginal) => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
-      warn: vi.fn(),
+      warn: warnMock,
       error: vi.fn(),
     })),
   },
@@ -520,7 +521,10 @@ describe("authenticateMcpRequest", () => {
   });
 
   test("rejects invalid OAuth bearer tokens with an OAuth challenge", async () => {
-    verifyAccessTokenMock.mockRejectedValue(new Error("Invalid token"));
+    const invalidTokenError = Object.assign(new Error("Invalid token"), {
+      code: "ERR_JWS_SIGNATURE_VERIFICATION_FAILED",
+    });
+    verifyAccessTokenMock.mockRejectedValue(invalidTokenError);
 
     const result = await authenticateMcpRequest(
       createRequest("http://localhost/api/mcp", {
@@ -545,6 +549,44 @@ describe("authenticateMcpRequest", () => {
       });
     }
     expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
+    expect(warnMock).toHaveBeenCalledWith(
+      {
+        errorCode: "ERR_JWS_SIGNATURE_VERIFICATION_FAILED",
+        errorName: "Error",
+        failureSource: "token_verification",
+        statusCode: 401,
+      },
+      "MCP OAuth authentication failed"
+    );
+  });
+
+  test("distinguishes an unavailable JWKS endpoint without logging the raw error", async () => {
+    verifyAccessTokenMock.mockRejectedValue(
+      new TypeError("fetch failed", {
+        cause: Object.assign(new Error("connection refused"), { code: "ECONNREFUSED" }),
+      })
+    );
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+    }
+    expect(warnMock).toHaveBeenCalledWith(
+      {
+        errorCode: "ECONNREFUSED",
+        errorName: "TypeError",
+        failureSource: "jwks_fetch",
+        statusCode: 401,
+      },
+      "MCP OAuth authentication failed"
+    );
+    expect(JSON.stringify(warnMock.mock.calls)).not.toContain("connection refused");
   });
 
   test("returns 429 when OAuth requests are rate limited", async () => {

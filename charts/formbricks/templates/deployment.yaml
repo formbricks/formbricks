@@ -135,9 +135,9 @@ spec:
             - name: SKIP_STARTUP_MIGRATION
               value: "true"
             {{- end }}
-            {{- if not (hasKey .Values.deployment.env "MCP_OAUTH_JWKS_URL") }}
+            {{- if and .Values.formbricks.mcpOauthJwksUrl (not (hasKey .Values.deployment.env "MCP_OAUTH_JWKS_URL")) }}
             - name: MCP_OAUTH_JWKS_URL
-              value: {{ .Values.formbricks.mcpOauthJwksUrl | default (printf "http://%s:3000/api/auth/jwks" (include "formbricks.name" .)) | quote }}
+              value: {{ .Values.formbricks.mcpOauthJwksUrl | quote }}
             {{- end }}
             {{- if .Values.authzed.enabled }}
             {{- if not (hasKey .Values.deployment.env "AUTHZED_ENABLED") }}
