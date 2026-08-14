@@ -5,7 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
+import { getUserWorkspaces, getWorkspace, getWorkspaces } from "@/lib/workspace/service";
 import { deleteWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import {
   WORKSPACE_DELETE_CONFIRMATION_ERROR,
@@ -124,21 +124,32 @@ export const deleteWorkspaceWithConfirmation = async ({
 
   const deletedWorkspace = await deleteWorkspace(workspaceId);
 
-  // Resolved here rather than when the settings page rendered, so the surviving-workspace list and
-  // the onboarding gate are both read at navigation time. `availableWorkspaces` still contains the
-  // workspace we just deleted; getPostDeletionDestination filters it out.
+  // Resolved here rather than when the settings page rendered, so the surviving workspaces and the
+  // onboarding gate are both read at navigation time. Deliberately not `availableWorkspaces`: that
+  // is a pre-deletion snapshot, so a workspace deleted concurrently since would still be picked and
+  // we would navigate to an id that no longer exists. `getWorkspaces` has not been called in this
+  // request yet, so its React cache entry is cold and this is a fresh read. Only owners and managers
+  // reach this point, and they can open every workspace of the organization.
   let destination = FALLBACK_DESTINATION;
   try {
+    const remainingWorkspaces = await getWorkspaces(organizationId);
     destination = await getPostDeletionDestination({
       organizationId,
       currentWorkspace: workspace,
-      availableWorkspaces,
+      availableWorkspaces: remainingWorkspaces,
     });
-    await rememberActiveWorkspace(destination.workspaceId);
   } catch (error) {
     // The workspace is already gone; failing to pick where to go next must not report the deletion
     // as failed. "/" re-resolves a landing workspace on its own.
     logger.error({ error, workspaceId, organizationId }, "Post-deletion destination resolution failed");
+  }
+
+  try {
+    // Kept in its own boundary so the cookie always matches the destination we return — on the
+    // fallback that means clearing it, rather than leaving it naming the workspace just deleted.
+    await rememberActiveWorkspace(destination.workspaceId);
+  } catch (error) {
+    logger.error({ error, workspaceId, organizationId }, "Post-deletion active workspace update failed");
   }
 
   return { workspace: deletedWorkspace, destination };

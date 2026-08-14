@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   deleteWorkspace: vi.fn(),
   getWorkspace: vi.fn(),
   getUserWorkspaces: vi.fn(),
+  getWorkspaces: vi.fn(),
   getPostDeletionDestination: vi.fn(),
   cookieSet: vi.fn(),
   cookieDelete: vi.fn(),
@@ -29,6 +30,7 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/workspace/service", () => ({
   getWorkspace: mocks.getWorkspace,
   getUserWorkspaces: mocks.getUserWorkspaces,
+  getWorkspaces: mocks.getWorkspaces,
 }));
 
 vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
@@ -70,6 +72,8 @@ describe("deleteWorkspaceWithConfirmation", () => {
     mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
     mocks.getWorkspace.mockResolvedValue(baseWorkspace);
     mocks.getUserWorkspaces.mockResolvedValue([baseWorkspace, remainingWorkspace]);
+    // Post-deletion read: the deleted row is already gone.
+    mocks.getWorkspaces.mockResolvedValue([remainingWorkspace]);
     mocks.deleteWorkspace.mockResolvedValue(baseWorkspace);
     mocks.getPostDeletionDestination.mockResolvedValue({
       workspaceId: remainingWorkspace.id,
@@ -115,11 +119,16 @@ describe("deleteWorkspaceWithConfirmation", () => {
   test("resolves the destination after the deletion, from the surviving workspaces", async () => {
     await callDeleteWorkspaceWithConfirmation();
 
+    // The freshly read surviving list, not the pre-deletion snapshot from getUserWorkspaces — a
+    // workspace deleted concurrently since that snapshot must not be picked as the destination.
     expect(mocks.getPostDeletionDestination).toHaveBeenCalledWith({
       organizationId: baseWorkspace.organizationId,
       currentWorkspace: baseWorkspace,
-      availableWorkspaces: [baseWorkspace, remainingWorkspace],
+      availableWorkspaces: [remainingWorkspace],
     });
+    expect(mocks.getWorkspaces.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mocks.deleteWorkspace.mock.invocationCallOrder[0]
+    );
     // The gate and the workspace list must be read after the row is gone, not when the page rendered.
     expect(mocks.deleteWorkspace.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.getPostDeletionDestination.mock.invocationCallOrder[0]
@@ -154,6 +163,30 @@ describe("deleteWorkspaceWithConfirmation", () => {
 
     // The workspace is already gone — a failed destination lookup must not surface as a failed delete.
     expect(result).toEqual({ workspace: baseWorkspace, destination: { workspaceId: null, path: "/" } });
+  });
+
+  test("clears the workspace cookie when resolving the destination fails", async () => {
+    mocks.getPostDeletionDestination.mockRejectedValueOnce(new Error("survey count failed"));
+
+    await callDeleteWorkspaceWithConfirmation();
+
+    // Otherwise the cookie keeps naming the workspace we just deleted, disagreeing with the "/"
+    // destination we return.
+    expect(mocks.cookieDelete).toHaveBeenCalledWith("formbricks-workspace-id");
+    expect(mocks.cookieSet).not.toHaveBeenCalled();
+  });
+
+  test("still returns the destination when persisting the cookie fails", async () => {
+    mocks.cookieSet.mockImplementationOnce(() => {
+      throw new Error("cookie write failed");
+    });
+
+    const result = await callDeleteWorkspaceWithConfirmation();
+
+    expect(result.destination).toEqual({
+      workspaceId: remainingWorkspace.id,
+      path: `/workspaces/${remainingWorkspace.id}/`,
+    });
   });
 
   test("rejects invalid input before any workspace lookup", async () => {
