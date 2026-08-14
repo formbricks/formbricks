@@ -629,6 +629,73 @@ describe("Response Utils", () => {
       const result = extractSurveyDetails(linkSurvey, mockResponses as TResponse[]);
       expect(result.userAttributes).toEqual(["email"]);
     });
+
+    /**
+     * ENG-1837: the export columns are built from the survey's Embedded Data definitions rather than
+     * `variables` / `hiddenFields`. Both the grouping (variables labelled by name, hidden fields by
+     * storage key) and the order inside each group are user-visible CSV/XLSX header order, so they
+     * are asserted exactly, not by membership.
+     */
+    describe("Embedded Data columns", () => {
+      const legacySurvey = {
+        ...mockSurvey,
+        variables: [
+          { id: "clx0000000000000000000v2", name: "tier", type: "text", value: "" },
+          { id: "clx0000000000000000000v1", name: "score", type: "number", value: 0 },
+        ],
+        hiddenFields: { enabled: true, fieldIds: ["utm_source", "hidden1"] },
+      } as TSurvey;
+
+      test("derives both column groups from the legacy columns when the join is absent", () => {
+        const result = extractSurveyDetails(legacySurvey, mockResponses as TResponse[]);
+
+        expect(result.variables).toEqual(["tier", "score"]);
+        expect(result.hiddenFields).toEqual(["utm_source", "hidden1"]);
+      });
+
+      test("takes the column labels from the rows when the join is present", () => {
+        const withRows = {
+          ...legacySurvey,
+          embeddedFields: [
+            {
+              field: {
+                name: "renamed_tier",
+                source: "computed",
+                dataType: "string",
+                defaultValue: "",
+                locked: false,
+              },
+              link: { storageKey: "clx0000000000000000000v2" },
+            },
+            {
+              field: {
+                name: "score",
+                source: "computed",
+                dataType: "number",
+                defaultValue: 0,
+                locked: false,
+              },
+              link: { storageKey: "clx0000000000000000000v1" },
+            },
+            {
+              field: {
+                name: "utm_source",
+                source: "ingested",
+                dataType: "string",
+                defaultValue: null,
+                locked: false,
+              },
+              link: { storageKey: "utm_source" },
+            },
+          ],
+        } as TSurvey;
+
+        const result = extractSurveyDetails(withRows, mockResponses as TResponse[]);
+
+        expect(result.variables).toEqual(["renamed_tier", "score"]);
+        expect(result.hiddenFields).toEqual(["utm_source"]);
+      });
+    });
   });
 
   describe("getResponsesJson", () => {
@@ -695,6 +762,45 @@ describe("Response Utils", () => {
       expect(result[0]["userAgent - browser"]).toBe("Chrome");
       expect(result[0]["1. Question 1"]).toBe("answer1");
       expect(result[0]["person.email"]).toBe("test@example.com");
+    });
+
+    test("a computed field the response never captured leaves an empty cell", () => {
+      // resolveEmbeddedValue would substitute the declared default here — i.e. display a value the
+      // respondent's run never produced. The export deliberately reads the raw slot instead.
+      const surveyWithVariables = {
+        ...mockSurvey,
+        variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number", value: 5 }],
+      } as TSurvey;
+
+      const result = getResponsesJson(
+        surveyWithVariables,
+        [{ ...mockResponses[0], variables: {} }] as TResponse[],
+        [["1. Question 1"]],
+        [],
+        [],
+        false
+      );
+
+      expect(result[0]).toHaveProperty("score");
+      expect(result[0].score).toBeUndefined();
+    });
+
+    test("writes a captured computed value under the field's name, keyed by its storage key", () => {
+      const surveyWithVariables = {
+        ...mockSurvey,
+        variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number", value: 5 }],
+      } as TSurvey;
+
+      const result = getResponsesJson(
+        surveyWithVariables,
+        [{ ...mockResponses[0], variables: { clx0000000000000000000v1: 12 } }] as TResponse[],
+        [["1. Question 1"]],
+        [],
+        [],
+        false
+      );
+
+      expect(result[0].score).toBe(12);
     });
 
     test("should namespace person attributes for link surveys too", () => {

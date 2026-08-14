@@ -88,6 +88,11 @@ export const SurveyEditor = ({
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
+  // `localSurvey` must stay a structural clone of `survey`: the menu bar compares the two with
+  // `isDeepEqual` to gate the draft auto-save, the back-navigation dialog and the beforeunload
+  // prompt, and that comparison short-circuits on differing key counts. ENG-1837 therefore does NOT
+  // strip the inlined `embeddedFields` here — editor surfaces read their definitions through
+  // `getDeclaredEmbeddedFields` instead, which ignores the rows and derives from the cards.
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
@@ -123,6 +128,9 @@ export const SurveyEditor = ({
     if (survey) {
       if (localSurvey) return;
 
+      // Must stay identical to the `useState` initializer above: the working copy is compared
+      // against `survey` key-for-key by the menu bar, so any reshaping has to apply to both or
+      // neither. (Unreachable today — the initializer never yields null.)
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
 

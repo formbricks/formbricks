@@ -3,6 +3,7 @@
 import { TFunction } from "i18next";
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -72,10 +73,8 @@ const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Re
     }
   }
 
-  if (survey.hiddenFields.fieldIds) {
-    for (const fieldId of survey.hiddenFields.fieldIds) {
-      responseData[fieldId] = response.data[fieldId];
-    }
+  for (const fieldId of getIngestedStorageKeys(survey)) {
+    responseData[fieldId] = response.data[fieldId];
   }
 
   return responseData;
@@ -96,9 +95,10 @@ const mapResponsesToTableData = (
     responseId: response.id,
     singleUseId: response.singleUseId,
     tags: response.tags,
-    variables: survey.variables.reduce(
-      (acc, curr) => {
-        return Object.assign(acc, { [curr.id]: response.variables[curr.id] });
+    // The raw slot, uncoerced: a response predating a field has no key and the cell stays empty.
+    variables: getComputedEmbeddedFields(survey).reduce(
+      (acc, { link }) => {
+        return Object.assign(acc, { [link.storageKey]: response.variables[link.storageKey] });
       },
       {} as Record<string, string | number>
     ),

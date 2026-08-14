@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 
@@ -99,6 +100,9 @@ export const selectSurvey = {
     },
   },
   followUps: true,
+  // ENG-1837: the definitions every reader resolves through, joined and inlined by
+  // `transformPrismaSurvey`. Read-only — the rows are written by `reconcileEmbeddedData`.
+  embeddedDataLinks: selectSurveyEmbeddedDataLinks,
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(

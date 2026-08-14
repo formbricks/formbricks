@@ -1,4 +1,5 @@
 import { logger } from "@formbricks/logger";
+import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -26,7 +27,12 @@ type TIntegrationPipelineData = {
   response: Pick<TResponse, "createdAt" | "data" | "meta" | "variables" | "contactAttributes">;
   surveyId: string;
 };
-type TPipelineIntegrationSurvey = Pick<TSurvey, "blocks" | "hiddenFields" | "variables" | "name">;
+// `hiddenFields` / `variables` stay in the pick as the resolver's fallback; `embeddedFields` carries
+// the joined EmbeddedData rows the definitions are resolved through (ENG-1837).
+type TPipelineIntegrationSurvey = Pick<
+  TSurvey,
+  "blocks" | "hiddenFields" | "variables" | "embeddedFields" | "name"
+>;
 
 const NOTION_PERSON_ATTRIBUTE_PREFIX = "person.";
 
@@ -87,10 +93,8 @@ const processDataForIntegration = async (
     includeVariables,
     includeContactAttributes,
   } = selection;
-  const ids =
-    includeHiddenFields && survey.hiddenFields.fieldIds
-      ? [...elementIds, ...survey.hiddenFields.fieldIds]
-      : elementIds;
+  const ingestedStorageKeys = getIngestedStorageKeys(survey);
+  const ids = includeHiddenFields ? [...elementIds, ...ingestedStorageKeys] : elementIds;
   const { responses, elements } = await extractResponses(integrationType, data, ids, survey);
 
   if (includeMetadata) {
@@ -98,11 +102,13 @@ const processDataForIntegration = async (
     elements.push("Metadata");
   }
   if (includeVariables) {
-    survey.variables?.forEach((variable) => {
-      const value = data.response.variables[variable.id];
+    // The raw slot, uncoerced and with no default substituted — a response that never captured this
+    // field is skipped rather than exported with a value that run never produced.
+    getComputedEmbeddedFields(survey).forEach(({ field, link }) => {
+      const value = data.response.variables[link.storageKey];
       if (value !== undefined) {
-        responses.push(String(data.response.variables[variable.id]));
-        elements.push(variable.name);
+        responses.push(String(value));
+        elements.push(field.name);
       }
     });
   }
@@ -329,10 +335,21 @@ const extractResponses = async (
   const surveyElements = getElementsFromBlocks(survey.blocks);
   const emptyResponseObject = createEmptyResponseObject(pipelineData.response.data);
 
+  const ingestedStorageKeys = getIngestedStorageKeys(survey);
+
   for (const elementId of elementIds) {
-    // Check for hidden field Ids
-    if (survey.hiddenFields.fieldIds?.includes(elementId)) {
+    // Check for ingested (hidden) field storage keys
+    if (ingestedStorageKeys.includes(elementId)) {
       responses.push(processResponseData(pipelineData.response.data[elementId]));
+      // Labelled by storage key, while a computed field above is labelled by `field.name`. The
+      // asymmetry is deliberate: a computed field's storage key is an opaque cuid, whereas an
+      // ingested field's storage key IS its name today (`toDesiredEmbeddedFields` sets both to the
+      // hidden field id), and the Notion mapping modal both keys and labels on the storage key. So
+      // the two are equal today, and switching this side alone would desync the pipeline from that
+      // picker — and silently re-header the spreadsheet/Notion columns of every already-configured
+      // integration, since `elements` IS the column header. When names can diverge from storage keys
+      // (ENG-1851), this and `AddIntegrationModal.tsx` have to move together, with a migration for
+      // existing mappings.
       elements.push(elementId);
       continue;
     }

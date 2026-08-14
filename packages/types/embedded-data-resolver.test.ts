@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { ZEmbeddedData } from "./embedded-data";
+import { z } from "zod";
+import { ZEmbeddedData, ZLinkedEmbeddedField } from "./embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
   type TEmbeddedValueRef,
@@ -8,6 +9,16 @@ import {
   type TReservedFieldCatalogEntry,
   coerceToEmbeddedDataType,
   deriveLegacyEmbeddedData,
+  findComputedEmbeddedField,
+  getComputedEmbeddedFields,
+  getComputedFieldDataType,
+  getDeclaredComputedFields,
+  getDeclaredEmbeddedFields,
+  getDeclaredIngestedStorageKeys,
+  getIngestedEmbeddedFields,
+  getIngestedStorageKeys,
+  getLogicVariableValue,
+  getSurveyEmbeddedFields,
   listReadableFields,
   projectReservedValues,
   resolveEmbeddedValue,
@@ -878,5 +889,258 @@ describe("deriveLegacyEmbeddedData", () => {
       { key: "source_page", label: "source_page" },
       { key: "Coupon-Code", label: "Coupon-Code" },
     ]);
+  });
+});
+
+describe("getSurveyEmbeddedFields", () => {
+  const legacySurvey = {
+    variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number" as const, value: 10 }],
+    hiddenFields: { enabled: true, fieldIds: ["source_page"] },
+  };
+
+  const rows: TLinkedEmbeddedField[] = [
+    {
+      field: {
+        name: "renamed_score",
+        source: "computed",
+        dataType: "number",
+        defaultValue: 7,
+        locked: false,
+      },
+      link: { storageKey: "clx0000000000000000000v1" },
+    },
+  ];
+
+  test("uses the joined rows when the survey carries them", () => {
+    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: rows })).toStrictEqual(rows);
+  });
+
+  test("falls back to the legacy columns when the select omitted the join", () => {
+    expect(getSurveyEmbeddedFields(legacySurvey)).toStrictEqual(deriveLegacyEmbeddedData(legacySurvey));
+    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: null })).toStrictEqual(
+      deriveLegacyEmbeddedData(legacySurvey)
+    );
+  });
+
+  test("falls back on an empty row list, so a survey that missed the backfill still resolves", () => {
+    // The empty-list test is the reason this is `?.length` and not `!== undefined`.
+    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: [] })).toStrictEqual(
+      deriveLegacyEmbeddedData(legacySurvey)
+    );
+  });
+
+  test("a survey with no fields at all answers [] through either path", () => {
+    const empty = { variables: [], hiddenFields: { enabled: false, fieldIds: [] } };
+    expect(getSurveyEmbeddedFields(empty)).toEqual([]);
+    expect(getSurveyEmbeddedFields({ ...empty, embeddedFields: [] })).toEqual([]);
+  });
+
+  test("partitions by source, preserving the inlined order within each group", () => {
+    const survey = {
+      ...legacySurvey,
+      embeddedFields: [
+        ...rows,
+        {
+          field: {
+            name: "utm_source",
+            source: "ingested" as const,
+            dataType: "string" as const,
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "utm_source" },
+        },
+        {
+          field: {
+            name: "plan",
+            source: "ingested" as const,
+            dataType: "string" as const,
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "plan" },
+        },
+      ],
+    };
+
+    expect(getComputedEmbeddedFields(survey)).toStrictEqual([rows[0]]);
+    expect(getIngestedStorageKeys(survey)).toStrictEqual(["utm_source", "plan"]);
+    expect(getIngestedEmbeddedFields(survey).map(({ field }) => field.name)).toStrictEqual([
+      "utm_source",
+      "plan",
+    ]);
+  });
+
+  test("the partitions fall back too, keeping variables-then-hidden-fields order", () => {
+    expect(getComputedEmbeddedFields(legacySurvey).map(({ link }) => link.storageKey)).toStrictEqual([
+      "clx0000000000000000000v1",
+    ]);
+    expect(getIngestedStorageKeys(legacySurvey)).toStrictEqual(["source_page"]);
+  });
+});
+
+describe("ZLinkedEmbeddedField mirrors TLinkedEmbeddedField", () => {
+  const pair: TLinkedEmbeddedField = {
+    field: { name: "score", source: "computed", dataType: "number", defaultValue: 10, locked: false },
+    link: { storageKey: "clx0000000000000000000v1" },
+  };
+
+  test("a TLinkedEmbeddedField parses, and the parsed value is assignable back", () => {
+    const parsed = ZLinkedEmbeddedField.parse(pair);
+    // Compile-time half of the check: the inferred type must satisfy the interface, and vice versa.
+    const roundTripped: TLinkedEmbeddedField = parsed;
+    const asSchemaType: z.infer<typeof ZLinkedEmbeddedField> = pair;
+    expect(roundTripped).toStrictEqual(pair);
+    expect(asSchemaType).toStrictEqual(pair);
+  });
+
+  test("every field deriveLegacyEmbeddedData produces round-trips through the schema", () => {
+    const derived = deriveLegacyEmbeddedData({
+      variables: [
+        { id: "clx0000000000000000000v1", name: "score", type: "number", value: 10 },
+        { id: "clx0000000000000000000v3", name: "plan_name", type: "text", value: "basic" },
+      ],
+      hiddenFields: { enabled: true, fieldIds: ["source_page", "Coupon-Code"] },
+    });
+
+    expect(z.array(ZLinkedEmbeddedField).parse(derived)).toStrictEqual(derived);
+  });
+
+  test("strips nothing the readers need, and rejects a blank name or storage key", () => {
+    // The valid pair parses, so the rejections below are the rules firing and not the whole shape
+    // being refused.
+    expect(ZLinkedEmbeddedField.safeParse(pair).success).toBe(true);
+
+    expect(ZLinkedEmbeddedField.safeParse({ ...pair, field: { ...pair.field, name: "  " } }).success).toBe(
+      false
+    );
+    expect(ZLinkedEmbeddedField.safeParse({ ...pair, link: { storageKey: "" } }).success).toBe(false);
+    // Whitespace-only, not just empty: an ingested field's storage key is its URL param name, so a
+    // padded `" plan "` would never match `?plan=` while still counting as a distinct field under
+    // `@@unique([surveyId, storageKey])`. Rejected twice over — by the blank check and by the
+    // legacy-charset rule — so removing either one alone keeps this passing.
+    expect(ZLinkedEmbeddedField.safeParse({ ...pair, link: { storageKey: "  " } }).success).toBe(false);
+  });
+});
+
+describe("getDeclaredEmbeddedFields", () => {
+  const legacySurvey = {
+    variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number" as const, value: 10 }],
+    hiddenFields: { enabled: true, fieldIds: ["source_page"] },
+  };
+
+  const staleRows: TLinkedEmbeddedField[] = [
+    {
+      field: { name: "old_name", source: "computed", dataType: "string", defaultValue: "", locked: false },
+      link: { storageKey: "clx0000000000000000000v1" },
+    },
+  ];
+
+  test("ignores the stored rows and answers from the declarations", () => {
+    // The editor's working copy carries the rows as of the last save, so a rename or a newly added
+    // field is only visible through this accessor.
+    expect(getDeclaredEmbeddedFields({ ...legacySurvey, embeddedFields: staleRows })).toStrictEqual(
+      deriveLegacyEmbeddedData(legacySurvey)
+    );
+    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: staleRows })).toStrictEqual(staleRows);
+  });
+
+  test("partitions the declarations the same way the stored accessor does", () => {
+    expect(getDeclaredComputedFields(legacySurvey).map(({ field }) => field.name)).toStrictEqual(["score"]);
+    expect(getDeclaredIngestedStorageKeys(legacySurvey)).toStrictEqual(["source_page"]);
+  });
+
+  test("still answers from the declarations when the rows are a superset", () => {
+    // A row for a field the survey no longer declares: the stored accessor keeps it, the declared
+    // accessor does not. Asserted with a genuinely differing pair rather than two runs of the same
+    // derivation, which could not fail.
+    const withExtraRow = {
+      ...legacySurvey,
+      embeddedFields: [
+        ...deriveLegacyEmbeddedData(legacySurvey),
+        {
+          field: {
+            name: "removed",
+            source: "ingested" as const,
+            dataType: "string" as const,
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "removed" },
+        },
+      ],
+    };
+
+    expect(getDeclaredIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page"]);
+    expect(getIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page", "removed"]);
+  });
+});
+
+/**
+ * The logic engines' read of a computed field. Lives here because
+ * `packages/surveys/src/lib/logic.ts` and `apps/web/lib/surveyLogic/utils.ts` are near-copies and
+ * both consume it — one definition of the value-preservation rule instead of two that can drift.
+ */
+describe("getLogicVariableValue", () => {
+  const computedField = (storageKey: string, dataType: "number" | "string", defaultValue: number | string) =>
+    ({
+      field: { name: storageKey, source: "computed" as const, dataType, defaultValue, locked: false },
+      link: { storageKey },
+    }) satisfies TLinkedEmbeddedField;
+
+  const numberField = computedField("score", "number", 5);
+  const textField = computedField("tier", "string", "gold");
+  const fields = [numberField, textField];
+
+  test("reads a stored value under the field's declared type", () => {
+    expect(getLogicVariableValue(fields, "score", { score: 42 })).toBe(42);
+    expect(getLogicVariableValue(fields, "tier", { tier: "silver" })).toBe("silver");
+  });
+
+  test("a number field coerces its stored value, numeric strings included", () => {
+    expect(getLogicVariableValue(fields, "score", { score: "42" })).toBe(42);
+  });
+
+  // The four cases below are the deltas `resolveEmbeddedValue` deliberately does not reproduce.
+  // Swapping this helper onto it would change what already-stored responses evaluate to, and
+  // responses are never migrated — so each one is asserted against the declared default it must NOT
+  // fall back to.
+  test("delta (a): a non-numeric stored value is 0, never the declared default", () => {
+    expect(getLogicVariableValue(fields, "score", { score: "abc" })).toBe(0);
+  });
+
+  test('delta (a): a string field holding 0 is "", never "0"', () => {
+    expect(getLogicVariableValue(fields, "tier", { tier: 0 })).toBe("");
+  });
+
+  test('delta (d): a response missing the key is 0 / "", never the declared default', () => {
+    expect(getLogicVariableValue(fields, "score", {})).toBe(0);
+    expect(getLogicVariableValue(fields, "tier", {})).toBe("");
+  });
+
+  test("a key the survey does not declare resolves to undefined, not to a coerced blank", () => {
+    // Distinct from the "missing value" cases above: there is no field, so there is no type to
+    // evaluate under, and the caller must be able to tell the two apart.
+    expect(getLogicVariableValue(fields, "deleted_variable", { deleted_variable: 7 })).toBeUndefined();
+  });
+});
+
+describe("getComputedFieldDataType", () => {
+  const fields: TLinkedEmbeddedField[] = [
+    {
+      field: { name: "score", source: "computed", dataType: "number", defaultValue: 5, locked: false },
+      link: { storageKey: "score" },
+    },
+  ];
+
+  test("answers the declared type", () => {
+    expect(getComputedFieldDataType(fields, "score")).toBe("number");
+  });
+
+  test("answers undefined for a field the survey no longer declares, instead of throwing", () => {
+    // The guard both engines depend on: this runs before the operator switch, and a throw here is
+    // swallowed by `evaluateSingleCondition`'s try/catch into a silent `false`.
+    expect(getComputedFieldDataType(fields, "deleted_variable")).toBeUndefined();
+    expect(findComputedEmbeddedField(fields, "deleted_variable")).toBeUndefined();
   });
 });

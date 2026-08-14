@@ -74,7 +74,9 @@ interface SendEmailDataProps {
 }
 
 export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &
-  Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields">;
+  // `variables` / `hiddenFields` are the resolver's fallback; `embeddedFields` carries the joined
+  // EmbeddedData rows the template resolves definitions through (ENG-1837).
+  Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields" | "embeddedFields">;
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
   if (!IS_SMTP_CONFIGURED) {

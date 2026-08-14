@@ -38,6 +38,22 @@ export const ZEmbeddedDataDefaultValue = z.union([z.string(), z.number(), z.bool
 
 export type TEmbeddedDataDefaultValue = z.infer<typeof ZEmbeddedDataDefaultValue>;
 
+/**
+ * A field's display name.
+ *
+ * Blank rather than empty: `name` is the label the library and the editor render, and a
+ * whitespace-only one draws a row with nothing to read or click. Checked, not trimmed, so the
+ * stored value is never silently rewritten.
+ *
+ * No length cap, for the same reason `storageKey` has none. A migrated field's name is copied
+ * from a variable name or a hidden field id, and neither `ZSurveyVariable` nor
+ * `ZSurveyHiddenFields` bounds its length, so a stored survey can carry one longer than any cap
+ * we would pick. Capping here would let the backfill write a row that then fails to read back —
+ * a failure that only surfaces once ENG-1837 points readers at these tables. The create-time
+ * limit belongs on the authoring path, alongside the naming rule.
+ */
+const ZEmbeddedDataName = z.string().refine((value) => value.trim().length > 0, "Name must not be blank");
+
 /** A `date` default is stored as a string, so pin it to ISO 8601 — either a date or a datetime. */
 const ZIsoDateOrDateTime = z.union([z.iso.date(), z.iso.datetime()]);
 
@@ -72,17 +88,7 @@ export const ZEmbeddedData = z
       // `lang`, and ingestion would then refuse to fill it — a field that can never hold a value.
       .refine((key) => !RESERVED_DECLARED_FIELD_NAMES.has(key.toLowerCase()), "Key is reserved")
       .nullable(),
-    // Blank rather than empty: `name` is the label the library and the editor render, and a
-    // whitespace-only one draws a row with nothing to read or click. Checked, not trimmed, so the
-    // stored value is never silently rewritten.
-    //
-    // No length cap, for the same reason `storageKey` has none. A migrated field's name is copied
-    // from a variable name or a hidden field id, and neither `ZSurveyVariable` nor
-    // `ZSurveyHiddenFields` bounds its length, so a stored survey can carry one longer than any cap
-    // we would pick. Capping here would let the backfill write a row that then fails to read back —
-    // a failure that only surfaces once ENG-1837 points readers at these tables. The create-time
-    // limit belongs on the authoring path, alongside the naming rule.
-    name: z.string().refine((value) => value.trim().length > 0, "Name must not be blank"),
+    name: ZEmbeddedDataName,
     description: z.string().nullable(),
     source: ZEmbeddedDataSource,
     dataType: ZEmbeddedDataType.prefault("string"),
@@ -208,3 +214,28 @@ export const ZSurveyEmbeddedData = z.object({
 });
 
 export type TSurveyEmbeddedData = z.infer<typeof ZSurveyEmbeddedData>;
+
+/**
+ * The Zod mirror of `TLinkedEmbeddedField` (embedded-data-resolver.ts) — a stored field definition
+ * paired with the survey link that addresses it, as it rides inlined on a survey object.
+ *
+ * It exists as a schema because ENG-1837 inlines these pairs onto `ZSurveyBase`, and Zod v4 strips
+ * keys a schema does not declare: without this the join would survive the fetch and then vanish the
+ * first time a survey passed through `ZSurvey.parse` — including on the SDK and link-survey payload
+ * paths, which are exactly the ones that need it.
+ *
+ * Only the columns the read seam consumes are mirrored (the resolver's `TResolvableEmbeddedField`
+ * plus `name`), never the row's ids, ownership or timestamps: this shape ships to public survey
+ * payloads, so anything extra would be a leak rather than an unused field. A type-level
+ * assignability test in embedded-data-resolver.test.ts keeps the two definitions in step.
+ */
+export const ZLinkedEmbeddedField = z.object({
+  field: z.object({
+    name: ZEmbeddedDataName,
+    source: ZEmbeddedDataSource,
+    dataType: ZEmbeddedDataType,
+    defaultValue: ZEmbeddedDataDefaultValue,
+    locked: z.boolean(),
+  }),
+  link: ZSurveyEmbeddedData.pick({ storageKey: true }),
+});

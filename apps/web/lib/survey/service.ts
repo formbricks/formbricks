@@ -15,6 +15,7 @@ import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
+import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -124,6 +125,9 @@ export const selectSurvey = {
   },
   followUps: true,
   slug: true,
+  // ENG-1837: the definitions every reader resolves through, joined and inlined by
+  // `transformPrismaSurvey`. Read-only — the rows are written by `reconcileEmbeddedData`.
+  embeddedDataLinks: selectSurveyEmbeddedDataLinks,
 } satisfies Prisma.SurveySelect;
 
 const reconcilePersistedSurveySchedulingIfDue = async ({
@@ -329,6 +333,12 @@ export const updateSurveyInternal = async (
       id: _id,
       // archivedAt is owned exclusively by the archive/restore flows; never let a survey update touch it.
       archivedAt: _archivedAt,
+      // ENG-1837: `embeddedFields` is a read-only projection of the EmbeddedData tables, inlined by
+      // the join below. `surveyData` is spread straight into `tx.survey.update`'s `data`, and
+      // `Survey` owns relations named `embeddedData` / `embeddedDataLinks` — so leaving it in would
+      // turn a read projection into a nested relation write. The rows are written by
+      // `reconcileEmbeddedData` from the persisted legacy columns instead.
+      embeddedFields: _embeddedFields,
       ...surveyData
     } = updatedSurvey;
 
@@ -627,6 +637,22 @@ export const updateSurveyInternal = async (
         // a partial update leaves `variables` / `hiddenFields` untouched in the column, and reading the
         // payload instead would see them as absent and delete every row. workspaceId comes from the
         // stored survey for the ENG-1749 reason above — never from the client.
+        //
+        // NOTE (ENG-1837): `survey` was read BEFORE this reconcile, so the `embeddedDataLinks` it
+        // carries — and the `embeddedFields` inlined from them by `transformPrismaSurvey` below —
+        // describe the PRE-reconcile rows. A save that renames or removes a field therefore returns a
+        // non-empty *stale* list. No consumer reads it today: the editor's save action feeds the
+        // return into `setLocalSurvey` / `surveyRef.current` and every editor surface resolves through
+        // `getDeclaredEmbeddedFields` (the cards); the v1 management route strips the key with
+        // `withoutInternalSurveyProjections`; the summary's single-use action discards the value and
+        // refreshes. The one surface that does carry it is the audit log's `newObject`.
+        //
+        // Deliberately NOT re-read here: it would put a second deep `selectSurvey` on the editor-save
+        // hot path for a value nothing consumes. If a future consumer needs it (ENG-1853 pointing a
+        // serializer at the rows), the fix must be a re-read through `selectSurvey` — which preserves
+        // the returned object's key shape. Do not strip or re-derive the key instead: this return
+        // value reaches `survey-menu-bar.tsx`, whose change detection deep-compares it against the
+        // editor's working copy and short-circuits on differing key counts.
         await reconcileEmbeddedData(tx, {
           surveyId,
           workspaceId: currentSurvey.workspaceId,
@@ -896,15 +922,20 @@ export const createSurvey = async (
       },
       // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
       // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or
-      // API create could now reach Prisma's 5s default where it used to fit. Matched to the other two
-      // reconcile call sites rather than left to inherit a ceiling this work made easier to hit.
+      // API create could now reach Prisma's 5s default where it used to fit. Matched to the other
+      // reconcile call sites (enumerated on `getDeclaredEmbeddedFields`) rather than left to inherit
+      // a ceiling this work made easier to hit.
       { timeout: 20_000, maxWait: 10_000 }
     );
 
     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
     // @ts-expect-error
     const transformedSurvey: TSurvey = {
-      ...survey,
+      // ENG-1837: this result is hand-built rather than routed through `transformPrismaSurvey`, so
+      // the inlining has to happen here too — otherwise the raw relation leaks onto TSurvey. The
+      // rows are reconciled *after* the create above, so the list is empty here and the accessor
+      // falls back to the freshly written legacy columns, which carry the same definitions.
+      ...withInlinedEmbeddedFields(survey),
       ...(survey.segment && {
         segment: {
           ...survey.segment,

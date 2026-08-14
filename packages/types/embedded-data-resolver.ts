@@ -1,12 +1,11 @@
 import { z } from "zod";
 import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
-import { toDesiredEmbeddedFields } from "./embedded-data-mapping";
+import { type TLegacyEmbeddedFields, toDesiredEmbeddedFields } from "./embedded-data-mapping";
 import type { TI18nString } from "./i18n";
-import type { TResponse } from "./responses";
+import type { TResponse, TResponseVariables } from "./responses";
 import { formatSnakeCaseToTitleCase } from "./safe-identifier";
 import type { TSurveyBlocks } from "./surveys/blocks";
-import type { TSurveyHiddenFields, TSurveyVariables } from "./surveys/types";
 import { getTextContent } from "./surveys/validation";
 
 /**
@@ -269,6 +268,58 @@ export const resolveEmbeddedValue = (
 };
 
 /**
+ * Finds a computed field by the key its value is stored under in `response.variables`.
+ *
+ * Returns `undefined` when nothing matches, which is a state that reaches production: a logic
+ * condition or a calculate action outlives the field it names whenever a variable is renamed or
+ * deleted and the rule keeps the old storage key.
+ */
+export const findComputedEmbeddedField = (
+  computedFields: readonly TLinkedEmbeddedField[],
+  storageKey: string
+): TLinkedEmbeddedField | undefined => computedFields.find((field) => field.link.storageKey === storageKey);
+
+/**
+ * The declared type of the computed field an operand names, or `undefined` when it names none.
+ *
+ * The optional chain is the point: both logic engines consult this to decide whether to coerce a
+ * hidden-field operand to a number, and that decision is made BEFORE the operator switch. Reading
+ * `.dataType` off a missing field throws there, and `evaluateSingleCondition`'s try/catch turns the
+ * throw into a silent `false` — so a stale operand would quietly change which branch a respondent
+ * takes, or what a quota counts, with no error anywhere. Unknown type means the coercion simply does
+ * not fire and evaluation falls through exactly as it does for a text variable.
+ */
+export const getComputedFieldDataType = (
+  computedFields: readonly TLinkedEmbeddedField[],
+  storageKey: string
+): TEmbeddedDataType | undefined => findComputedEmbeddedField(computedFields, storageKey)?.field.dataType;
+
+/**
+ * What the logic engines read a computed field's value as — **not** {@link resolveEmbeddedValue}.
+ *
+ * ENG-1837 repointed the *definition* lookup onto the EmbeddedData tables and deliberately left this
+ * value expression alone. `resolveEmbeddedValue` would coerce a non-numeric stored value to the
+ * field's declared default instead of `0`, and render a text field holding `0` as `"0"` rather than
+ * `""` — both of which change what already-stored responses evaluate to, and responses are never
+ * migrated (see the swap checklist on {@link resolveEmbeddedValue}, deltas (a) and (d)).
+ *
+ * Shared by `packages/surveys/src/lib/logic.ts` (the renderer) and `apps/web/lib/surveyLogic/utils.ts`
+ * (quotas, summaries, follow-up conditions), which are near-copies of each other. It lives here so
+ * the rule has one definition rather than two that can drift apart — the engines evaluating the same
+ * survey differently is its own bug class.
+ */
+export const getLogicVariableValue = (
+  computedFields: readonly TLinkedEmbeddedField[],
+  storageKey: string,
+  variablesData: TResponseVariables
+): string | number | undefined => {
+  const field = findComputedEmbeddedField(computedFields, storageKey);
+  if (!field) return undefined;
+  const variableValue = variablesData[storageKey];
+  return field.field.dataType === "number" ? Number(variableValue) || 0 : variableValue || "";
+};
+
+/**
  * Resolves every catalog entry into a plain map keyed by entry name — the piece that lets reserved
  * fields ride through recall and logic with zero per-consumer special-casing. Those consumers
  * already read two maps (`variables[...]`, `responseData[...]`); merging this projection into
@@ -419,11 +470,98 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
  * `fieldIds`). Deriving from `fieldIds` alone therefore preserves today's read behavior exactly:
  * whatever either path stored still resolves, and what nothing stored reports as unset.
  */
-export const deriveLegacyEmbeddedData = (survey: {
-  variables: TSurveyVariables;
-  hiddenFields: TSurveyHiddenFields;
-}): TLinkedEmbeddedField[] =>
+export const deriveLegacyEmbeddedData = (survey: TLegacyEmbeddedFields): TLinkedEmbeddedField[] =>
   toDesiredEmbeddedFields(survey).map(({ storageKey, ...field }) => ({
     field: { ...field, locked: false },
     link: { storageKey },
   }));
+
+/**
+ * The survey slice {@link getSurveyEmbeddedFields} needs. Deliberately looser than `TSurvey`: the
+ * readers this serves hold everything from a full survey to a four-key `Pick`, and every one of them
+ * must be able to call the accessor without widening its own select.
+ */
+export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
+  /** The rows, joined and inlined at load. Absent when the select omitted the join. */
+  embeddedFields?: TLinkedEmbeddedField[] | null;
+}
+
+/**
+ * **Where a saved survey's Embedded Data definitions come from.** Every reader outside the editor —
+ * recall, logic, export columns, response filters, response tables, emails, integrations — calls
+ * this and nothing else. Its counterpart is {@link getDeclaredEmbeddedFields}; between the two, no
+ * reader may call {@link deriveLegacyEmbeddedData} directly, which is what keeps "exactly two named
+ * decisions, and no third" a property a reviewer can check with grep.
+ *
+ * Rows win when present. The empty-list test is deliberate rather than `!== undefined`: a select
+ * that omits the join yields `undefined`, and a survey read through it must still resolve, while
+ * `deriveLegacyEmbeddedData` returns `[]` for a survey whose legacy columns are empty — so a survey
+ * that genuinely has zero fields answers `[]` either way, and one that missed the ENG-1835 backfill
+ * falls back instead of silently losing every field.
+ *
+ * This is a *definition* lookup only. ENG-1837 repoints where a field's name, source and dataType
+ * come from; it deliberately does not repoint value arithmetic onto {@link resolveEmbeddedValue},
+ * whose coercion and default tiers differ from today's call-site expressions (see the swap checklist
+ * on {@link resolveEmbeddedValue}) and would change what stored responses render as.
+ */
+export const getSurveyEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  survey.embeddedFields?.length ? survey.embeddedFields : deriveLegacyEmbeddedData(survey);
+
+/** The computed (ex-variable) fields of a survey, in inlined order. */
+export const getComputedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  getSurveyEmbeddedFields(survey).filter(({ field }) => field.source === "computed");
+
+/** The ingested (ex-hidden-field) fields of a survey, in inlined order. */
+export const getIngestedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  getSurveyEmbeddedFields(survey).filter(({ field }) => field.source === "ingested");
+
+/** The storage keys of a survey's ingested fields — what `response.data` addresses them by. */
+export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
+  getIngestedEmbeddedFields(survey).map(({ link }) => link.storageKey);
+
+/**
+ * **What a survey declares right now, ignoring what is stored.** The counterpart to
+ * {@link getSurveyEmbeddedFields}; between the two, no caller needs
+ * {@link deriveLegacyEmbeddedData} directly, so "which of two named decisions does this reader
+ * make" stays a property a reviewer can check with grep.
+ *
+ * Two groups of callers need this rather than the stored rows:
+ *
+ * 1. **The editor.** Its working copy is cloned from the server survey at mount and never
+ *    re-fetched, while the rows are only written on save — so an inlined `embeddedFields` is stale
+ *    from the first card edit until the next save. Deriving is what makes a rename or a newly added
+ *    field show up in the pickers, the logic builder, the calculate widget, the follow-up recipient
+ *    list and the preview on the next render. Note this cannot be fixed by reshaping the working
+ *    copy instead: it is compared against the server survey with a key-count-sensitive deep equal
+ *    to gate the draft auto-save, the discard-changes dialog and the beforeunload prompt, and a
+ *    save round-trip puts the server's shape back anyway.
+ * 2. **Recall labelling** (`apps/web/lib/utils/recall.ts`). A recall token's label is authoring
+ *    syntax: the picker writes `@label` into the text and the label resolver reads it back, so the
+ *    two must agree on the same instant's definitions or the round-trip desyncs — a field added
+ *    since the last save would render as a raw `#recall:…#` token, and a renamed one would stop
+ *    matching. The same functions also label saved surveys for exports and summaries, where this is
+ *    a no-op — a saved survey's rows and declarations agree element for element, because every write
+ *    path that persists those columns calls `reconcileEmbeddedData` with
+ *    `toDesiredEmbeddedFields(<the persisted survey>)` in the same transaction. There are exactly
+ *    four: `updateSurveyInternal` and `createSurvey` (apps/web/lib/survey/service.ts), the copy flow
+ *    (modules/survey/list/lib/survey.ts) and the v3 patch (app/api/v3/surveys/patch.ts) — a
+ *    `reconcileEmbeddedData(` grep is the audit, and a fifth write that skips it reintroduces the
+ *    divergence. They can also diverge once a shared library definition can be renamed independently
+ *    of the survey (ENG-1851), which is when the unified picker (ENG-1853) moves recall and the
+ *    pickers onto the tables together.
+ */
+// Takes the same survey slice as {@link getSurveyEmbeddedFields}, not the narrower legacy one, so a
+// caller holding a full survey can pass it and the "ignores the stored rows" contract is visible in
+// the signature rather than enforced by which keys happen to be omitted at the call site.
+export const getDeclaredEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  deriveLegacyEmbeddedData(survey);
+
+/** The computed (ex-variable) fields a survey declares right now. */
+export const getDeclaredComputedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
+  getDeclaredEmbeddedFields(survey).filter(({ field }) => field.source === "computed");
+
+/** The storage keys of the ingested (ex-hidden) fields a survey declares right now. */
+export const getDeclaredIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
+  getDeclaredEmbeddedFields(survey)
+    .filter(({ field }) => field.source === "ingested")
+    .map(({ link }) => link.storageKey);

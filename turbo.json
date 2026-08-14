@@ -418,7 +418,8 @@
       "persistent": true
     },
     "generate": {
-      "dependsOn": ["^generate"]
+      "dependsOn": ["^generate"],
+      "outputs": ["generated/prisma/**"]
     },
     "go": {
       "cache": false,

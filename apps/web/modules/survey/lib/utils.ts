@@ -3,6 +3,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
+import { withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 
 export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurvey>(surveyPrisma: any): T => {
   let segment: TSegment | null = null;
@@ -15,7 +16,10 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurve
   }
 
   const transformedSurvey = {
-    ...surveyPrisma,
+    // ENG-1837: swaps the raw `embeddedDataLinks` relation for the inlined `embeddedFields` the read
+    // seam consumes, so the Prisma relation shape never leaks onto TSurvey. A no-op for surveys read
+    // through a select without the join — those fall back to their legacy columns in the accessor.
+    ...withInlinedEmbeddedFields(surveyPrisma),
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
     customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,

@@ -1526,3 +1526,313 @@ describe("Survey Logic", () => {
     });
   });
 });
+
+/**
+ * ENG-1837 repointed the *definition* lookup for computed fields onto the EmbeddedData tables while
+ * leaving every value expression alone. These tests pin both halves: that the inlined rows are what
+ * the engine reads, and that the four deltas `resolveEmbeddedValue` documents are NOT inherited —
+ * each case below flips if someone later "simplifies" a call site onto the resolver.
+ */
+describe("computed fields resolve through the inlined EmbeddedData rows", () => {
+  const STORAGE_KEY = "var1";
+
+  const buildSurvey = (
+    variables: TSurveyVariable[],
+    embeddedFields?: TJsWorkspaceStateSurvey["embeddedFields"]
+  ): TJsWorkspaceStateSurvey =>
+    ({
+      id: "survey1",
+      name: "Survey 1",
+      questions: [],
+      blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+      variables,
+      embeddedFields,
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      autoClose: null,
+      type: "link",
+      delay: 0,
+      displayLimit: 0,
+      displayOption: "displayMultiple",
+      displayPercentage: 0,
+      recaptcha: { enabled: false, threshold: 0.5 },
+      isBackButtonHidden: false,
+      isAutoProgressingEnabled: false,
+      segment: null,
+      welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
+      triggers: [],
+      styling: null,
+      status: "inProgress",
+      showLanguageSwitch: false,
+      languages: [],
+      endings: [],
+      workspaceOverwrites: null,
+      recontactDays: null,
+    }) as TJsWorkspaceStateSurvey;
+
+  const computedRow = (dataType: "number" | "string", defaultValue: number | string) => [
+    {
+      field: { name: "score", source: "computed" as const, dataType, defaultValue, locked: false },
+      link: { storageKey: STORAGE_KEY },
+    },
+  ];
+
+  const equalsStatic = (value: number | string): TConditionGroup => ({
+    id: "group1",
+    connector: "and",
+    conditions: [
+      {
+        id: "condition1",
+        operator: "equals",
+        leftOperand: { type: "variable", value: STORAGE_KEY },
+        rightOperand: { type: "static", value },
+      },
+    ],
+  });
+
+  test("the row's dataType wins over the legacy column's", () => {
+    const legacyTextVariable: TSurveyVariable[] = [
+      { id: STORAGE_KEY, name: "score", type: "text", value: "" },
+    ];
+
+    // Row says number: "42" is read as the number 42 and equals the static 42.
+    expect(
+      evaluateLogic(
+        buildSurvey(legacyTextVariable, computedRow("number", 0)),
+        {},
+        { [STORAGE_KEY]: "42" },
+        equalsStatic(42),
+        "default"
+      )
+    ).toBe(true);
+
+    // Same survey without the join: the legacy column's "text" applies and "42" stays a string.
+    expect(
+      evaluateLogic(buildSurvey(legacyTextVariable), {}, { [STORAGE_KEY]: "42" }, equalsStatic(42), "default")
+    ).toBe(false);
+  });
+
+  test("an empty row list falls back to the legacy column rather than losing the field", () => {
+    const legacyNumberVariable: TSurveyVariable[] = [
+      { id: STORAGE_KEY, name: "score", type: "number", value: 0 },
+    ];
+
+    expect(
+      evaluateLogic(
+        buildSurvey(legacyNumberVariable, []),
+        {},
+        { [STORAGE_KEY]: "42" },
+        equalsStatic(42),
+        "default"
+      )
+    ).toBe(true);
+  });
+
+  test("delta (a): a non-numeric stored value is still 0, not the declared default", () => {
+    // resolveEmbeddedValue would fail coercion and fall back to defaultValue (5); logic must not.
+    expect(
+      evaluateLogic(
+        buildSurvey([], computedRow("number", 5)),
+        {},
+        { [STORAGE_KEY]: "abc" },
+        equalsStatic(0),
+        "default"
+      )
+    ).toBe(true);
+  });
+
+  test('delta (a): a string field holding 0 is still "", not "0"', () => {
+    expect(
+      evaluateLogic(
+        buildSurvey([], computedRow("string", "fallback")),
+        {},
+        { [STORAGE_KEY]: 0 },
+        equalsStatic(""),
+        "default"
+      )
+    ).toBe(true);
+  });
+
+  test('delta (d): a response missing the key evaluates as 0 / "", not the declared default', () => {
+    expect(evaluateLogic(buildSurvey([], computedRow("number", 5)), {}, {}, equalsStatic(0), "default")).toBe(
+      true
+    );
+    expect(
+      evaluateLogic(buildSurvey([], computedRow("string", "gold")), {}, {}, equalsStatic(""), "default")
+    ).toBe(true);
+  });
+
+  test("an operand pointing at no declared field resolves to undefined", () => {
+    expect(
+      evaluateLogic(
+        buildSurvey([], computedRow("number", 0)),
+        {},
+        {},
+        {
+          id: "group1",
+          connector: "and",
+          conditions: [
+            {
+              id: "condition1",
+              operator: "isSet",
+              leftOperand: { type: "variable", value: "unknown_key" },
+            },
+          ],
+        },
+        "default"
+      )
+    ).toBe(false);
+  });
+
+  test("a number field compared against a hidden field still coerces the right operand", () => {
+    const condition: TConditionGroup = {
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator: "equals",
+          leftOperand: { type: "variable", value: STORAGE_KEY },
+          rightOperand: { type: "hiddenField", value: "plan" },
+        },
+      ],
+    };
+
+    expect(
+      evaluateLogic(
+        buildSurvey([], computedRow("number", 0)),
+        { plan: "42" },
+        { [STORAGE_KEY]: 42 },
+        condition,
+        "default"
+      )
+    ).toBe(true);
+  });
+
+  /**
+   * A condition can outlive the field it names: the variable is renamed or deleted, the logic rule
+   * keeps the old storage key. The `dataType` read that drives the number coercion runs BEFORE the
+   * operator switch, so an unguarded `undefined` throws there — and `evaluateSingleCondition`'s
+   * try/catch turns that into a silent `false` rather than a visible crash, quietly sending the
+   * respondent down the wrong branch. These assert the evaluated RESULT, not the absence of a throw,
+   * precisely because the catch would hide one.
+   */
+  describe("a condition naming a field the survey no longer declares", () => {
+    const staleOperand = (operator: TSingleCondition["operator"]): TConditionGroup => ({
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator,
+          leftOperand: { type: "variable", value: "storage_key_of_a_deleted_variable" },
+          rightOperand: { type: "hiddenField", value: "plan" },
+        },
+      ],
+    });
+
+    test("evaluates on its own merits instead of collapsing to false", () => {
+      // The left operand resolves to no value, so `isNotSet` is genuinely true. Without the guard the
+      // `.dataType` read throws first and the catch returns false.
+      expect(
+        evaluateLogic(
+          buildSurvey([], computedRow("number", 0)),
+          { plan: "42" },
+          {},
+          staleOperand("isNotSet"),
+          "default"
+        )
+      ).toBe(true);
+    });
+
+    test("does not coerce the right operand, since the left operand's type is unknown", () => {
+      // `isSet` on an unresolvable left operand is false either way; the point is that it is false by
+      // evaluating, not by throwing — paired with the case above, which would flip.
+      expect(
+        evaluateLogic(
+          buildSurvey([], computedRow("number", 0)),
+          { plan: "42" },
+          {},
+          staleOperand("isSet"),
+          "default"
+        )
+      ).toBe(false);
+    });
+  });
+
+  describe("performCalculation", () => {
+    const calculate = (
+      survey: TJsWorkspaceStateSurvey,
+      action: TSurveyBlockLogicAction,
+      data: TResponseData,
+      calculations: TResponseVariables
+    ) => performActions(survey, [action], data, calculations).calculations;
+
+    test('seeds an unset number field from 0 and a string field from ""', () => {
+      expect(
+        calculate(
+          buildSurvey([], computedRow("number", 5)),
+          {
+            id: "a1",
+            objective: "calculate",
+            variableId: STORAGE_KEY,
+            operator: "add",
+            value: { type: "static", value: 3 },
+          },
+          {},
+          {}
+        )
+      ).toEqual({ [STORAGE_KEY]: 3 });
+
+      expect(
+        calculate(
+          buildSurvey([], computedRow("string", "gold")),
+          {
+            id: "a1",
+            objective: "calculate",
+            variableId: STORAGE_KEY,
+            operator: "concat",
+            value: { type: "static", value: "x" },
+          },
+          {},
+          {}
+        )
+      ).toEqual({ [STORAGE_KEY]: "x" });
+    });
+
+    test("a calculation on a field the survey does not declare is skipped", () => {
+      expect(
+        calculate(
+          buildSurvey([], computedRow("number", 0)),
+          {
+            id: "a1",
+            objective: "calculate",
+            variableId: "unknown_key",
+            operator: "add",
+            value: { type: "static", value: 3 },
+          },
+          {},
+          {}
+        )
+      ).toEqual({});
+    });
+
+    test('a legacy "question" operand stays unresolved', () => {
+      expect(
+        calculate(
+          buildSurvey([], computedRow("number", 0)),
+          {
+            id: "a1",
+            objective: "calculate",
+            variableId: STORAGE_KEY,
+            operator: "add",
+            // Admitted at the type level by ZDynamicLogicFieldValueDeprecated; normalized to
+            // "element" at the API boundary, so the engines deliberately leave it unresolved.
+            value: { type: "question", value: "q1" },
+          } as unknown as TSurveyBlockLogicAction,
+          { q1: 3 },
+          {}
+        )
+      ).toEqual({});
+    });
+  });
+});

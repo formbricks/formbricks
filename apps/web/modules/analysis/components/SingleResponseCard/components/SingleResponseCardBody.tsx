@@ -2,6 +2,10 @@
 
 import { CheckCircle2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import {
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -33,6 +37,10 @@ export const SingleResponseCardBody = ({
   locale,
 }: SingleResponseCardBodyProps) => {
   const elements = getElementsFromBlocks(survey.blocks);
+  // ENG-1837: both blocks below render the survey's Embedded Data definitions, resolved through the
+  // tables with the legacy columns as fallback.
+  const computedFields = getComputedEmbeddedFields(survey);
+  const ingestedFields = getIngestedEmbeddedFields(survey);
   const dateFormats = getSurveyDateFormatMap(elements);
   const isFirstElementAnswered = elements[0] ? !!response.data[elements[0].id] : false;
   const { t } = useTranslation();
@@ -47,7 +55,7 @@ export const SingleResponseCardBody = ({
         return (
           <span
             key={index}
-            className="ml-0.5 mr-0.5 rounded-md border border-slate-200 bg-slate-50 px-1 py-0.5 text-sm first:ml-0">
+            className="mr-0.5 ml-0.5 rounded-md border border-slate-200 bg-slate-50 px-1 py-0.5 text-sm first:ml-0">
             @{part}
           </span>
         );
@@ -141,11 +149,11 @@ export const SingleResponseCardBody = ({
           );
         })}
       </div>
-      {survey.variables.length > 0 && (
-        <ResponseVariables variables={survey.variables} variablesData={response.variables} />
+      {computedFields.length > 0 && (
+        <ResponseVariables variables={computedFields} variablesData={response.variables} />
       )}
-      {survey.hiddenFields.fieldIds && (
-        <HiddenFields hiddenFields={survey.hiddenFields} responseData={response.data} />
+      {ingestedFields.length > 0 && (
+        <HiddenFields hiddenFields={ingestedFields} responseData={response.data} />
       )}
 
       <ResponseCardQuotas quotas={response.quotas} />

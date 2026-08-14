@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { getDeclaredEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -54,6 +55,21 @@ export const PreviewSurvey = ({
   isSpamProtectionAllowed,
   publicDomain,
 }: PreviewSurveyProps) => {
+  // ENG-1837: the preview is an authoring surface — the Variables and Hidden Fields cards are the
+  // live source of truth, and the saved EmbeddedData rows only catch up on save. Overriding the
+  // inlined definitions with the card-derived ones is what makes a rename or a new field show up in
+  // the preview's recall and logic on the next render, without a reload.
+  const previewSurvey = useMemo(
+    () => ({
+      ...survey,
+      embeddedFields: getDeclaredEmbeddedFields({
+        variables: survey.variables,
+        hiddenFields: survey.hiddenFields,
+      }),
+    }),
+    [survey]
+  );
+
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const { t } = useTranslation();
@@ -275,7 +291,7 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       appUrl={publicDomain}
                       isPreviewMode={true}
-                      survey={toJsWorkspaceStateSurvey(survey)}
+                      survey={toJsWorkspaceStateSurvey(previewSurvey)}
                       isBrandingEnabled={workspace.inAppSurveyBranding}
                       isRedirectDisabled={true}
                       languageCode={languageCode}
@@ -323,7 +339,7 @@ export const PreviewSurvey = ({
                           appUrl={publicDomain}
                           isPreviewMode={true}
                           isBrandingEnabled={workspace.linkSurveyBranding}
-                          survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
+                          survey={toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" })}
                           isRedirectDisabled={true}
                           languageCode={languageCode}
                           responseCount={42}
@@ -409,7 +425,7 @@ export const PreviewSurvey = ({
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
-                    survey={toJsWorkspaceStateSurvey(survey)}
+                    survey={toJsWorkspaceStateSurvey(previewSurvey)}
                     isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
@@ -464,7 +480,7 @@ export const PreviewSurvey = ({
                         <SurveyInline
                           appUrl={publicDomain}
                           isPreviewMode={true}
-                          survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
+                          survey={toJsWorkspaceStateSurvey({ ...previewSurvey, type: "link" })}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           isRedirectDisabled={true}
                           languageCode={languageCode}

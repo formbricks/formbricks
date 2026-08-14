@@ -402,6 +402,90 @@ describe("recall utility functions", () => {
     });
   });
 
+  /**
+   * ENG-1837: a recall token's label and type come from the survey's Embedded Data definitions
+   * instead of `hiddenFields.fieldIds` and `variables` — specifically from what the survey
+   * *declares*, because the picker writes `@label` into the text and these functions read it back,
+   * so the two must agree on the same instant. The precedence (ingested → element → computed) is
+   * load-bearing and unchanged.
+   */
+  describe("recall items resolve through the survey's declared Embedded Data", () => {
+    const embeddedField = (
+      storageKey: string,
+      name: string,
+      source: "computed" | "ingested",
+      dataType: "string" | "number" = "string"
+    ) => ({
+      field: { name, source, dataType, defaultValue: null, locked: false },
+      link: { storageKey },
+    });
+
+    test("labels a token from the declarations, not from a stale inlined row", () => {
+      // The editor's working copy carries the rows as of the last save. Labelling from them would
+      // desync this from the recall picker, which offers the current name.
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: ["hidden1"] },
+        variables: [{ id: "var1", name: "Renamed Variable", type: "text", value: "" }],
+        embeddedFields: [
+          embeddedField("var1", "Stale Name", "computed"),
+          embeddedField("hidden1", "hidden1", "ingested"),
+        ],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems(
+        "Text with #recall:var1/fallback:a# and #recall:hidden1/fallback:b#",
+        survey,
+        "en"
+      );
+
+      expect(result).toEqual([
+        { id: "var1", label: "Renamed Variable", type: "variable" },
+        { id: "hidden1", label: "hidden1", type: "hiddenField" },
+      ]);
+    });
+
+    test("classifies a field declared since the last save, which the rows do not know", () => {
+      // The rows are non-empty and omit `hidden2`, so the stored accessor would not fall back — this
+      // fails if the resolution is switched back to it. Without the declared source the token stays
+      // unclassified and renders as a raw `#recall:…#` tag.
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: ["hidden1", "hidden2"] },
+        variables: [],
+        embeddedFields: [embeddedField("hidden1", "hidden1", "ingested")],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Text with #recall:hidden2/fallback:b#", survey, "en");
+
+      expect(result).toEqual([{ id: "hidden2", label: "hidden2", type: "hiddenField" }]);
+    });
+
+    test("a storage key that also matches an element id still resolves as a hidden field", () => {
+      const survey = {
+        blocks: [{ id: "b1", elements: [{ id: "shared", headline: { en: "Question headline" } }] }],
+        hiddenFields: { fieldIds: ["shared"] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
+
+      expect(result).toEqual([{ id: "shared", label: "shared", type: "hiddenField" }]);
+    });
+
+    test("an element wins over a computed field on a colliding key", () => {
+      const survey = {
+        blocks: [{ id: "b1", elements: [{ id: "shared", headline: { en: "Question headline" } }] }],
+        hiddenFields: { fieldIds: [] },
+        variables: [{ id: "shared", name: "Variable One", type: "text", value: "" }],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
+
+      expect(result).toEqual([{ id: "shared", label: "Question headline", type: "element" }]);
+    });
+  });
+
   describe("getFallbackValues", () => {
     test("extracts fallback values from text", () => {
       const text = "Text #recall:id1/fallback:value1# and #recall:id2/fallback:value2#";

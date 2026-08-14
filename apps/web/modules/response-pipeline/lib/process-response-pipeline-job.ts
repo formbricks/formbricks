@@ -4,9 +4,11 @@ import { prisma } from "@formbricks/database";
 import { PipelineTriggers, Prisma, type Webhook } from "@formbricks/database/prisma";
 import { type JobHandler, type TResponsePipelineJobData, UnrecoverableError } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
+import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
 import { getIntegrations } from "@/lib/integration/service";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
@@ -49,6 +51,9 @@ const pipelineSurveySelect = {
   blocks: true,
   hiddenFields: true,
   variables: true,
+  // ENG-1837: the definitions the notification email, follow-ups and integrations below resolve
+  // through. Inlined by `getSurveyForPipeline` so the raw relation never reaches the handlers.
+  embeddedDataLinks: selectSurveyEmbeddedDataLinks,
   followUps: true,
   autoComplete: true,
   languages: {
@@ -70,7 +75,10 @@ const pipelineSurveySelect = {
 } satisfies Prisma.SurveySelect;
 
 type TPipelineOrganization = Prisma.OrganizationGetPayload<{ select: typeof pipelineOrganizationSelect }>;
-type TPipelineSurvey = Prisma.SurveyGetPayload<{ select: typeof pipelineSurveySelect }>;
+type TPipelineSurveyRow = Prisma.SurveyGetPayload<{ select: typeof pipelineSurveySelect }>;
+type TPipelineSurvey = Omit<TPipelineSurveyRow, "embeddedDataLinks"> & {
+  embeddedFields?: TLinkedEmbeddedField[];
+};
 
 const getOrganizationForPipeline = async (workspaceId: string): Promise<TPipelineOrganization | null> =>
   prisma.organization.findFirst({
@@ -84,13 +92,16 @@ const getOrganizationForPipeline = async (workspaceId: string): Promise<TPipelin
     select: pipelineOrganizationSelect,
   });
 
-const getSurveyForPipeline = async (surveyId: string): Promise<TPipelineSurvey | null> =>
-  prisma.survey.findUnique({
+const getSurveyForPipeline = async (surveyId: string): Promise<TPipelineSurvey | null> => {
+  const survey = await prisma.survey.findUnique({
     where: {
       id: surveyId,
     },
     select: pipelineSurveySelect,
   });
+
+  return survey ? withInlinedEmbeddedFields(survey) : null;
+};
 
 const getPipelineLogContext = (
   data: TResponsePipelineJobData,

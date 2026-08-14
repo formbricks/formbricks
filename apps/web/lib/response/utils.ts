@@ -1,4 +1,5 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
+import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import {
   TResponse,
   TResponseDataValue,
@@ -158,11 +159,13 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
     }
   });
 
-  const hiddenFields = survey.hiddenFields?.fieldIds || [];
+  // ENG-1837: the two column groups keep today's shape — computed fields labelled by name, ingested
+  // ones by storage key — and today's order, which `inlineSurveyEmbeddedFields` preserves.
+  const hiddenFields = getIngestedStorageKeys(survey);
   const userAttributes = Array.from(
     new Set(responses.map((response) => Object.keys(response.contactAttributes ?? {})).flat())
   );
-  const variables = survey.variables?.map((variable) => variable.name) || [];
+  const variables = getComputedEmbeddedFields(survey).map(({ field }) => field.name);
 
   return { metaDataFields, elements, hiddenFields, variables, userAttributes };
 };
@@ -246,9 +249,12 @@ export const getResponsesJson = (
       }
     });
 
-    survey.variables?.forEach((variable) => {
-      const answer = response.variables[variable.id];
-      jsonData[idx][variable.name] = answer;
+    // The raw slot, uncoerced and with no default substituted: a response written before this field
+    // existed has no key, and the cell must stay empty rather than display a value that run never
+    // produced. (This is why the export does not read through `resolveEmbeddedValue`.)
+    getComputedEmbeddedFields(survey).forEach(({ field, link }) => {
+      const answer = response.variables[link.storageKey];
+      jsonData[idx][field.name] = answer;
     });
 
     userAttributes.forEach((attribute) => {
@@ -351,18 +357,18 @@ export const getResponseHiddenFields = (
   try {
     const hiddenFields: { [key: string]: Set<string> } = {};
 
-    const surveyHiddenFields = survey?.hiddenFields.fieldIds;
-    const hasHiddenFields = surveyHiddenFields && surveyHiddenFields.length > 0;
+    const surveyHiddenFields = getIngestedStorageKeys(survey);
+    const hasHiddenFields = surveyHiddenFields.length > 0;
 
     if (hasHiddenFields) {
       // adding hidden fields to meta
-      survey?.hiddenFields.fieldIds?.forEach((fieldId) => {
+      surveyHiddenFields.forEach((fieldId) => {
         hiddenFields[fieldId] = new Set();
       });
 
       responses.forEach((response) => {
         // Handling data fields(Hidden fields)
-        surveyHiddenFields?.forEach((fieldId) => {
+        surveyHiddenFields.forEach((fieldId) => {
           const hiddenFieldValue = response.data[fieldId];
           if (hiddenFieldValue) {
             if (typeof hiddenFieldValue === "string") {

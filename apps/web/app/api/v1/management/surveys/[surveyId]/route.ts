@@ -15,6 +15,7 @@ import {
   transformQuestionsToBlocks,
   validateSurveyInput,
   withDerivedQuestions,
+  withoutInternalSurveyProjections,
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -65,7 +66,9 @@ export const GET = withV1ApiWrapper({
       // consumers get a consistent shape regardless of how the survey was built.
       return {
         response: responses.successResponse(
-          addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(result.survey)))
+          addLegacyProjectOverwrites(
+            resolveStorageUrlsInObject(withoutInternalSurveyProjections(withDerivedQuestions(result.survey)))
+          )
         ),
       };
     } catch (error) {
@@ -219,7 +222,11 @@ export const PUT = withV1ApiWrapper({
 
         return {
           response: responses.successResponse(
-            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(updatedSurvey)))
+            addLegacyProjectOverwrites(
+              resolveStorageUrlsInObject(
+                withoutInternalSurveyProjections(withDerivedQuestions(updatedSurvey))
+              )
+            )
           ),
         };
       } catch (error) {
