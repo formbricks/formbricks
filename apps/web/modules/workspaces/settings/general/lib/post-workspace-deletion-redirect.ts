@@ -1,11 +1,8 @@
 import "server-only";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { getOnboardingRedirectPath } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 
-export interface TWorkspaceRedirectCandidate {
-  id: string;
-  organizationId: string;
-  createdAt: Date;
-}
+export type TWorkspaceRedirectCandidate = Pick<TWorkspace, "id" | "organizationId" | "createdAt">;
 
 /**
  * Picks the workspace to open after a workspace was deleted.
@@ -13,7 +10,9 @@ export interface TWorkspaceRedirectCandidate {
  * Only workspaces of the deleted workspace's organization are considered: redirecting to "/" instead
  * resolves the last-visited workspace across *all* organizations the user belongs to, which drops
  * members of multiple organizations into an unrelated organization. The oldest remaining workspace is
- * used so the destination is stable regardless of the order the workspaces were queried in.
+ * used, with the id as tie-break: `getUserWorkspaces` has no `orderBy`, and workspaces seeded in one
+ * request share `createdAt` to the millisecond, so without the tie-break two calls could pick
+ * different destinations — and with them different onboarding-gate outcomes.
  *
  * Returns `null` when the organization has no other workspace left, in which case the caller has to
  * fall back to the organization-agnostic landing flow.
@@ -32,7 +31,7 @@ export const selectPostWorkspaceDeletionWorkspaceId = (
   }
 
   return [...remainingWorkspaces].sort(
-    (left, right) => left.createdAt.getTime() - right.createdAt.getTime()
+    (left, right) => left.createdAt.getTime() - right.createdAt.getTime() || left.id.localeCompare(right.id)
   )[0].id;
 };
 
@@ -51,8 +50,11 @@ export interface TPostWorkspaceDeletionDestination {
  * managers can delete a workspace, so navigating straight to the surviving workspace has to run the
  * same gate — otherwise deleting a workspace would be the one way to skip onboarding.
  *
- * Resolved on the server because the gate needs the survey count of the workspace we land on; the
- * deleted workspace does not affect that count, so it is safe to resolve before the deletion runs.
+ * Called from the delete action, *after* the deletion, so both the surviving-workspace list and the
+ * gate's survey count are read at the moment we navigate. Resolving this when the settings page
+ * rendered instead would freeze both into the page: the chosen workspace could have been deleted in
+ * the meantime (landing the user on an error page right after a successful delete), and the gate's
+ * answer could be stale (skipping onboarding for a workspace whose last survey was since removed).
  */
 export const getPostDeletionDestination = async ({
   organizationId,

@@ -123,6 +123,19 @@ test("stays in the same organization when deleting a workspace as a member of mu
 
   await page.waitForURL(`**/workspaces/${remainingWorkspace.id}**`);
   expect(page.url()).not.toContain(otherOrganizationWorkspaceId);
+
+  // The stored "last workspace" must no longer name the deleted one. Exercised through its real
+  // reader: "/" resolves a landing workspace from it across every organization the user belongs to.
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.waitForURL(`**/workspaces/${remainingWorkspace.id}**`);
+
+  // Account settings carry no organization in the URL and resolve it from the workspace cookie, which
+  // the delete action repoints; the sidebar must stay on the organization we deleted from.
+  await page.goto("/account/settings/profile", { waitUntil: "domcontentloaded" });
+  await expect(
+    page.locator(`a[href^="/organizations/${user.organizationId}/settings/"]`).first()
+  ).toBeVisible();
+  await expect(page.locator(`a[href^="/organizations/${otherOrganization.id}/"]`)).toHaveCount(0);
 });
 
 test("still runs the onboarding redirect when the surviving workspace has no survey", async ({
@@ -142,7 +155,7 @@ test("still runs the onboarding redirect when the surviving workspace has no sur
   }
 
   // Deliberately no survey: the workspace we land on is the one the onboarding gate reacts to.
-  await prisma.workspace.create({
+  const remainingWorkspace = await prisma.workspace.create({
     data: {
       name: `Remaining Workspace ${timestamp}`,
       organizationId: user.organizationId,
@@ -163,4 +176,9 @@ test("still runs the onboarding redirect when the surviving workspace has no sur
   // Same destination the old "/" hop produced for an organization whose oldest workspace has no
   // survey yet ("/plan" on Cloud, "/survey" self-hosted).
   await page.waitForURL(`**/organizations/${user.organizationId}/workspaces/new/**`);
+
+  // The gate has to win over the surviving workspace, not just eventually redirect to it.
+  expect(page.url()).toContain(`/organizations/${user.organizationId}/workspaces/new/`);
+  expect(page.url()).not.toContain(`/workspaces/${remainingWorkspace.id}`);
+  await expect.poll(async () => prisma.workspace.findUnique({ where: { id: user.workspaceId! } })).toBeNull();
 });

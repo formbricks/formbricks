@@ -20,19 +20,13 @@ interface DeleteWorkspaceRenderProps {
   isDeleteDisabled: boolean;
   isOwnerOrManager: boolean;
   currentWorkspace: TWorkspace;
-  // Post-deletion destination, resolved on the server by getPostDeletionDestination: the workspace to
-  // remember as the last active one, and the path to navigate to.
-  postDeletionWorkspaceId: string | null;
-  postDeletionPath: string;
 }
 
 export const DeleteWorkspaceRender = ({
   isDeleteDisabled,
   isOwnerOrManager,
   currentWorkspace,
-  postDeletionWorkspaceId,
-  postDeletionPath,
-}: DeleteWorkspaceRenderProps) => {
+}: Readonly<DeleteWorkspaceRenderProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -63,9 +57,13 @@ export const DeleteWorkspaceRender = ({
       });
 
       if (deleteWorkspaceResponse?.data) {
-        // The destination is a workspace of this organization (or its onboarding flow), never "/" —
-        // that route resolves the last-visited workspace across every organization and would drop
-        // members of multiple organizations into an unrelated one.
+        // Destination resolved by the action, after the deletion: a workspace of this organization
+        // (or its onboarding flow), and only "/" when the organization has none left. Never "/"
+        // otherwise — that route resolves the last-visited workspace across every organization and
+        // would drop members of multiple organizations into an unrelated one.
+        const { workspaceId: postDeletionWorkspaceId, path: postDeletionPath } =
+          deleteWorkspaceResponse.data.destination;
+
         if (postDeletionWorkspaceId) {
           localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, postDeletionWorkspaceId);
           // Keep legacy environment ID in sync for backward compatibility with old SDK clients

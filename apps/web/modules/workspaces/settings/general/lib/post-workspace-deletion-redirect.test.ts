@@ -61,6 +61,19 @@ describe("selectPostWorkspaceDeletionWorkspaceId", () => {
     expect(selectPostWorkspaceDeletionWorkspaceId([], deleted)).toBeNull();
   });
 
+  test("breaks createdAt ties by id so the destination does not depend on query order", () => {
+    const sameInstant = "2024-02-01";
+    const workspaces = [
+      workspace("ws-deleted", "org-1", "2024-01-01"),
+      workspace("ws-b", "org-1", sameInstant),
+      workspace("ws-a", "org-1", sameInstant),
+    ];
+
+    expect(selectPostWorkspaceDeletionWorkspaceId(workspaces, deleted)).toBe("ws-a");
+    // getUserWorkspaces has no orderBy, so the same set can arrive in any order.
+    expect(selectPostWorkspaceDeletionWorkspaceId([...workspaces].reverse(), deleted)).toBe("ws-a");
+  });
+
   test("does not mutate the given workspace list", () => {
     const workspaces = [
       workspace("ws-newer", "org-1", "2024-03-01"),

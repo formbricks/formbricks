@@ -17,6 +17,13 @@ const mocks = vi.hoisted(() => ({
   deleteWorkspace: vi.fn(),
   getWorkspace: vi.fn(),
   getUserWorkspaces: vi.fn(),
+  getPostDeletionDestination: vi.fn(),
+  cookieSet: vi.fn(),
+  cookieDelete: vi.fn(),
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: () => Promise.resolve({ set: mocks.cookieSet, delete: mocks.cookieDelete }),
 }));
 
 vi.mock("@/lib/workspace/service", () => ({
@@ -32,11 +39,17 @@ vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({
   deleteWorkspace: mocks.deleteWorkspace,
 }));
 
+vi.mock("./post-workspace-deletion-redirect", () => ({
+  getPostDeletionDestination: mocks.getPostDeletionDestination,
+}));
+
 const baseWorkspace = {
   id: "cmworkspace00000000000000000",
   name: "Acme Workspace",
   organizationId: "cmorg00000000000000000000",
 };
+
+const remainingWorkspace = { ...baseWorkspace, id: "cmworkspace2" };
 
 const userId = "cmuser00000000000000000000";
 
@@ -56,8 +69,12 @@ describe("deleteWorkspaceWithConfirmation", () => {
     vi.clearAllMocks();
     mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
     mocks.getWorkspace.mockResolvedValue(baseWorkspace);
-    mocks.getUserWorkspaces.mockResolvedValue([baseWorkspace, { ...baseWorkspace, id: "cmworkspace2" }]);
+    mocks.getUserWorkspaces.mockResolvedValue([baseWorkspace, remainingWorkspace]);
     mocks.deleteWorkspace.mockResolvedValue(baseWorkspace);
+    mocks.getPostDeletionDestination.mockResolvedValue({
+      workspaceId: remainingWorkspace.id,
+      path: `/workspaces/${remainingWorkspace.id}/`,
+    });
   });
 
   test("deletes a workspace when the confirmation name matches", async () => {
@@ -89,7 +106,54 @@ describe("deleteWorkspaceWithConfirmation", () => {
       workspaceId: baseWorkspace.id,
       oldObject: baseWorkspace,
     });
-    expect(result).toEqual(baseWorkspace);
+    expect(result).toEqual({
+      workspace: baseWorkspace,
+      destination: { workspaceId: remainingWorkspace.id, path: `/workspaces/${remainingWorkspace.id}/` },
+    });
+  });
+
+  test("resolves the destination after the deletion, from the surviving workspaces", async () => {
+    await callDeleteWorkspaceWithConfirmation();
+
+    expect(mocks.getPostDeletionDestination).toHaveBeenCalledWith({
+      organizationId: baseWorkspace.organizationId,
+      currentWorkspace: baseWorkspace,
+      availableWorkspaces: [baseWorkspace, remainingWorkspace],
+    });
+    // The gate and the workspace list must be read after the row is gone, not when the page rendered.
+    expect(mocks.deleteWorkspace.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.getPostDeletionDestination.mock.invocationCallOrder[0]
+    );
+  });
+
+  test("points the workspace cookie at the destination so account settings keep the organization", async () => {
+    await callDeleteWorkspaceWithConfirmation();
+
+    expect(mocks.cookieSet).toHaveBeenCalledWith(
+      "formbricks-workspace-id",
+      remainingWorkspace.id,
+      expect.objectContaining({ path: "/", httpOnly: true })
+    );
+    expect(mocks.cookieDelete).not.toHaveBeenCalled();
+  });
+
+  test("clears the workspace cookie when the organization has no workspace left", async () => {
+    mocks.getPostDeletionDestination.mockResolvedValueOnce({ workspaceId: null, path: "/" });
+
+    const result = await callDeleteWorkspaceWithConfirmation();
+
+    expect(mocks.cookieDelete).toHaveBeenCalledWith("formbricks-workspace-id");
+    expect(mocks.cookieSet).not.toHaveBeenCalled();
+    expect(result.destination).toEqual({ workspaceId: null, path: "/" });
+  });
+
+  test('reports the deletion as successful with a "/" destination when resolving it fails', async () => {
+    mocks.getPostDeletionDestination.mockRejectedValueOnce(new Error("survey count failed"));
+
+    const result = await callDeleteWorkspaceWithConfirmation();
+
+    // The workspace is already gone — a failed destination lookup must not surface as a failed delete.
+    expect(result).toEqual({ workspace: baseWorkspace, destination: { workspaceId: null, path: "/" } });
   });
 
   test("rejects invalid input before any workspace lookup", async () => {
