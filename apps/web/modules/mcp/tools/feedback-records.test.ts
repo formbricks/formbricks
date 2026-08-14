@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import {
   countV3FeedbackRecords,
@@ -90,6 +91,89 @@ function createToolServer() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+/**
+ * The registered `inputSchema` is what the model is actually shown, and until now nothing executed it:
+ * every test here calls handlers directly with already-shaped objects, so a schema that had silently
+ * degraded — `.shape` coming back undefined and the SDK registering an empty object, which accepts
+ * anything — would have gone unnoticed. These assertions run the real thing.
+ */
+describe("feedback-record tool input schemas", () => {
+  const shapeOf = (tool: string) => {
+    const { tools } = createToolServer();
+    return tools.get(tool)!.config.inputSchema as Record<string, z.ZodType>;
+  };
+
+  test("exposes every filter the Hub accepts on list_feedback_records", () => {
+    const shape = shapeOf("list_feedback_records");
+
+    expect(Object.keys(shape).sort()).toEqual([
+      "created_since",
+      "created_until",
+      "cursor",
+      "datasetId",
+      "emotions",
+      "field_group_id",
+      "field_id",
+      "field_type",
+      "has_emotions",
+      "has_sentiment",
+      "has_translation",
+      "language",
+      "limit",
+      "order",
+      "sentiment",
+      "sentiment_score_max",
+      "sentiment_score_min",
+      "since",
+      "sort",
+      "source_id",
+      "source_name",
+      "source_type",
+      "submission_id",
+      "until",
+      "user_id",
+      "value_date_max",
+      "value_date_min",
+      "value_id",
+      "value_number_max",
+      "value_number_min",
+      "workspaceId",
+    ]);
+  });
+
+  test("omits ordering from count_feedback_records, which the Hub does not accept it on", () => {
+    const shape = shapeOf("count_feedback_records");
+
+    expect(shape).not.toHaveProperty("sort");
+    expect(shape).not.toHaveProperty("order");
+    expect(shape).not.toHaveProperty("limit");
+    expect(shape).not.toHaveProperty("cursor");
+    // ...but it does take the filters, so a count describes the set the equivalent list returns.
+    expect(shape).toHaveProperty("sentiment");
+    expect(shape).toHaveProperty("has_sentiment");
+  });
+
+  test("validates a multi-value filter and rejects an unknown one", () => {
+    // The schema the model is handed has to accept the array form, or the OR-ing is unreachable in
+    // practice no matter what the operations layer supports.
+    const schema = z.object(shapeOf("list_feedback_records")).strict();
+
+    expect(schema.safeParse({ workspaceId, source_type: ["survey", "review"] }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, source_type: "survey" }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, has_sentiment: false }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, sentiment: ["nope"] }).success).toBe(false);
+    expect(schema.safeParse({ workspaceId, userId: "u1" }).success).toBe(false);
+  });
+
+  test("describes every filter, since the description is what the model reads", () => {
+    const shape = shapeOf("list_feedback_records");
+
+    for (const [name, field] of Object.entries(shape)) {
+      expect(field.description, `${name} has no description`).toBeTruthy();
+    }
+  });
 });
 
 describe("registerFeedbackRecordTools", () => {

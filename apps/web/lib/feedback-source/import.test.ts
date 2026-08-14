@@ -11,6 +11,9 @@ vi.mock("../response/service", () => ({
 vi.mock("@/modules/hub", () => ({
   createFeedbackRecordsBatch: vi.fn(),
 }));
+vi.mock("./reconcile", () => ({
+  reconcileFeedbackRecords: vi.fn(),
+}));
 
 vi.mock("./transform", () => ({
   transformResponseToFeedbackRecords: vi.fn(),
@@ -25,7 +28,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 const { getResponses } = vi.mocked(await import("../response/service"));
-const { createFeedbackRecordsBatch } = vi.mocked(await import("@/modules/hub"));
+const { reconcileFeedbackRecords } = vi.mocked(await import("./reconcile"));
 const { transformResponseToFeedbackRecords } = vi.mocked(await import("./transform"));
 const { logger } = await import("@formbricks/logger");
 
@@ -41,6 +44,7 @@ const mockFeedbackSource: TFeedbackSourceWithMappings = {
   name: "Test FeedbackSource",
   type: "formbricks_survey",
   status: "active",
+  importMode: "completedOnly",
   workspaceId: ENV_ID,
   feedbackDirectoryId: "clxxxxxxxxxxxxxxxx004",
   lastSyncAt: null,
@@ -93,18 +97,49 @@ describe("importHistoricalResponses", () => {
       .mockReturnValueOnce([])
       .mockReturnValueOnce([{ field: "record3" }] as never);
 
-    createFeedbackRecordsBatch.mockResolvedValue({
-      results: [
-        { data: { id: "fb1" }, error: null },
-        { data: { id: "fb2" }, error: null },
-      ],
-    } as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 2, reconciled: 0, superseded: 0, failures: [] });
 
     const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     expect(result.successes).toBe(2);
     expect(result.failures).toBe(0);
     expect(result.skipped).toBe(1);
+  });
+
+  /**
+   * An import can hold a page of responses for a long time, so it passes the moment it read them and
+   * lets reconcile skip records the live pipeline has corrected since. Without this argument the
+   * guard in reconcile is dead code and the import silently reverts newer answers.
+   */
+  test("tells reconcile when its data was read, so it cannot revert newer writes", async () => {
+    getResponses.mockResolvedValueOnce([{ id: "r1" }] as never);
+    getResponses.mockResolvedValueOnce([]);
+    transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
+
+    const before = new Date();
+    await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+    const after = new Date();
+
+    const [, , options] = reconcileFeedbackRecords.mock.calls[0];
+    const snapshotAt = options?.snapshotAt;
+    expect(snapshotAt).toBeInstanceOf(Date);
+    // Taken before the read, so it can never claim the data is fresher than it is.
+    expect(snapshotAt!.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(snapshotAt!.getTime()).toBeLessThanOrEqual(after.getTime());
+  });
+
+  test("a record superseded by a newer write still counts as a success", async () => {
+    getResponses.mockResolvedValueOnce([{ id: "r1" }] as never);
+    getResponses.mockResolvedValueOnce([]);
+    transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 0, reconciled: 0, superseded: 1, failures: [] });
+
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+
+    // Hub holds a newer value, so the record is correct — not a failure and not a skip.
+    expect(result.successes).toBe(1);
+    expect(result.failures).toBe(0);
   });
 
   test("counts failures from Hub API errors", async () => {
@@ -114,9 +149,12 @@ describe("importHistoricalResponses", () => {
 
     transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
 
-    createFeedbackRecordsBatch.mockResolvedValue({
-      results: [{ data: null, error: { status: 400, message: "Bad request" } }],
-    } as never);
+    reconcileFeedbackRecords.mockResolvedValue({
+      created: 0,
+      reconciled: 0,
+      superseded: 0,
+      failures: [{ index: 0, error: { status: 500 } }],
+    });
 
     const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
@@ -124,26 +162,28 @@ describe("importHistoricalResponses", () => {
     expect(result.failures).toBe(1);
   });
 
-  test("counts 409 duplicates as skipped, not failures", async () => {
+  // Behaviour change (ENG-2058): a record that already existed used to be counted as "skipped",
+  // which is how silently keeping a stale value read as normal. Reconcile updates it instead, so it
+  // is a success. `skipped` is now only ever about mapping.
+  test("counts a reconciled record as a success, not a skip", async () => {
     const mockResponses = [{ id: "r1" }, { id: "r2" }, { id: "r3" }];
     getResponses.mockResolvedValueOnce(mockResponses as never);
     getResponses.mockResolvedValueOnce([]);
 
     transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
 
-    createFeedbackRecordsBatch.mockResolvedValue({
-      results: [
-        { data: { id: "fb1" }, error: null },
-        { data: null, error: { status: 409, message: "Conflict", detail: "duplicate" } },
-        { data: null, error: { status: 500, message: "Server error", detail: "boom" } },
-      ],
-    } as never);
+    reconcileFeedbackRecords.mockResolvedValue({
+      created: 1,
+      reconciled: 1,
+      superseded: 0,
+      failures: [{ index: 0, error: { status: 500 } }],
+    });
 
     const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
-    expect(result.successes).toBe(1);
+    expect(result.successes).toBe(2);
     expect(result.failures).toBe(1);
-    expect(result.skipped).toBe(1);
+    expect(result.skipped).toBe(0);
   });
 
   test("paginates through responses in batches", async () => {
@@ -155,14 +195,30 @@ describe("importHistoricalResponses", () => {
     getResponses.mockResolvedValueOnce([]);
 
     transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
-    createFeedbackRecordsBatch.mockResolvedValue({
-      results: [{ data: { id: "fb" }, error: null }],
-    } as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
 
     await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
-    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0);
-    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 50);
+    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0, { finished: true });
+    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 50, { finished: true });
+  });
+
+  // The whole point of ENG-2058: the historical import used to pull every response, while the live
+  // pipeline only ever ran on responseFinished. These two pin that they now agree.
+  test("completedOnly asks the response service for finished responses only", async () => {
+    getResponses.mockResolvedValueOnce([]);
+
+    await importHistoricalResponses({ ...mockFeedbackSource, importMode: "completedOnly" }, mockSurvey);
+
+    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0, { finished: true });
+  });
+
+  test("all leaves the response query unfiltered so partials are included", async () => {
+    getResponses.mockResolvedValueOnce([]);
+
+    await importHistoricalResponses({ ...mockFeedbackSource, importMode: "all" }, mockSurvey);
+
+    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0, undefined);
   });
 
   test("does not call Hub API when all responses are skipped", async () => {
@@ -174,7 +230,7 @@ describe("importHistoricalResponses", () => {
 
     const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
-    expect(createFeedbackRecordsBatch).not.toHaveBeenCalled();
+    expect(reconcileFeedbackRecords).not.toHaveBeenCalled();
     expect(result).toEqual({ successes: 0, failures: 0, skipped: 2 });
   });
 
@@ -190,15 +246,13 @@ describe("importHistoricalResponses", () => {
       })
       .mockReturnValueOnce([{ field: "record2" }] as never);
 
-    createFeedbackRecordsBatch.mockResolvedValue({
-      results: [{ data: { id: "fb2" }, error: null }],
-    } as never);
+    reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
 
     const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     // The healthy response is still imported; the throwing one is contained and logged.
     expect(result.successes).toBe(1);
-    expect(createFeedbackRecordsBatch).toHaveBeenCalledTimes(1);
+    expect(reconcileFeedbackRecords).toHaveBeenCalledTimes(1);
     expect(vi.mocked(logger.error)).toHaveBeenCalledTimes(1);
   });
 });
