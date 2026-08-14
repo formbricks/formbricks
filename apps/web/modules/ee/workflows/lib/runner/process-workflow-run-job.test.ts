@@ -54,6 +54,12 @@ vi.mock("@formbricks/database", () => ({
 
 // Prisma's known-request-error shape the claim path checks for a P2002 unique-constraint conflict.
 vi.mock("@formbricks/database/prisma", () => ({
+  // The workflow runner's merged import graph reaches the AuthZed projectors, which map these
+  // Prisma enums to relation names at module scope. Values mirror the Prisma schema.
+  ApiKeyPermission: { manage: "manage", read: "read", write: "write" },
+  OrganizationRole: { billing: "billing", manager: "manager", member: "member", owner: "owner" },
+  TeamUserRole: { admin: "admin", contributor: "contributor" },
+  WorkspaceTeamPermission: { manage: "manage", read: "read", readWrite: "readWrite" },
   Prisma: {
     PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
       code: string;
