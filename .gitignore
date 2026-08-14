@@ -66,6 +66,10 @@ packages/ios/FormbricksSDK/FormbricksSDK.xcodeproj/project.xcworkspace/xcuserdat
 .cursorrules
 i18n.cache
 stats.html
+
+# authzed:perf sample logs — multi-MB JSONL written next to the tracked authzed/ assets
+authzed/perf-samples.jsonl
+authzed/*.perf.jsonl
 # next-agents-md
 .next-docs/
 

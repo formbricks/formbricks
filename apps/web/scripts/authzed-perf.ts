@@ -13,13 +13,18 @@ import { withAuthorizationSurface } from "@/lib/authorization/context";
  * relationships a measurement reads must be seeded beforehand, not written during the run, or you
  * measure your own writes and a cold cache instead of the workload.
  *
- *   pnpm authzed:perf seed [--scale=small|default|large]
- *   pnpm authzed:perf run  [--iterations=N] [--concurrency=N] [--log=path]
+ *   pnpm authzed:perf seed  [--scale=small|default|large]
+ *   pnpm authzed:perf run   [--iterations=N] [--concurrency=N] [--log=path]
+ *   pnpm authzed:perf clean
  *
  * `seed` fills Postgres only. Project the relationships into SpiceDB afterwards with the ENG-1718
  * tooling rather than duplicating relationship writes here:
  *
  *   pnpm authzed:backfill --apply --scope=all
+ *
+ * `seed` is idempotent — it removes a previous seed first — and `clean` removes every row the seed
+ * created and nothing else. Both target only rows tagged with `SEED_TAG`, but note this writes tens
+ * of thousands of rows into whatever database `.env` points at, so point it at a throwaway one.
  *
  * `run` drives the real `can()` — real evaluator, real Prisma, real SpiceDB when enforcement is on —
  * and writes one JSON object per sample to a log file plus a summary to stdout.
@@ -75,7 +80,10 @@ const SCALE_PROFILES = {
 } as const satisfies Readonly<Record<TScale, TScaleProfile>>;
 
 const SEED_TAG = "eng1739-perf";
+const SEED_ORGANIZATION_NAME = `${SEED_TAG} org`;
+const SEED_USER_EMAIL_PREFIX = `${SEED_TAG}-u`;
 const DEFAULT_LOG_PATH = "authzed/perf-samples.jsonl";
+const LOG_EXTENSION = ".jsonl";
 const BATCH = 1_000;
 
 type TSample = Readonly<{
@@ -85,6 +93,14 @@ type TSample = Readonly<{
   error: string | null;
   role: string;
 }>;
+
+const parsePositiveSafeInteger = (name: string, value: string | undefined, fallback: number): number => {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`--${name} must be a positive integer`);
+  }
+  return parsed;
+};
 
 const parseArgs = (argv: ReadonlyArray<string>) => {
   const flag = (name: string): string | undefined =>
@@ -99,13 +115,38 @@ const parseArgs = (argv: ReadonlyArray<string>) => {
     throw new Error(`Unknown --scale=${scale}. Use one of: ${Object.keys(SCALE_PROFILES).join(", ")}`);
   }
 
+  const logPath = flag("log") ?? DEFAULT_LOG_PATH;
+  if (!logPath.endsWith(LOG_EXTENSION)) {
+    // The run truncates this path before streaming to it. A mistyped `--log` should not be able to
+    // empty a source file, so require the extension the harness actually writes.
+    throw new Error(`--log must end in ${LOG_EXTENSION} (got "${logPath}"); the run truncates it.`);
+  }
+
   return {
     command: argv.find((arg) => !arg.startsWith("--")) ?? "help",
-    concurrency: Number(flag("concurrency") ?? 8),
-    iterations: Number(flag("iterations") ?? 2_000),
-    logPath: flag("log") ?? DEFAULT_LOG_PATH,
+    concurrency: parsePositiveSafeInteger("concurrency", flag("concurrency"), 8),
+    iterations: parsePositiveSafeInteger("iterations", flag("iterations"), 2_000),
+    logPath,
     scale,
   };
+};
+
+/**
+ * Remove everything a seed created, and nothing else.
+ *
+ * Deleting the organization cascades its workspaces (and their surveys and responses), teams,
+ * memberships and API keys. `User` rows are global rather than organization-owned, so they are
+ * removed separately by the seed's email prefix.
+ */
+const clean = async (): Promise<{ organizations: number; users: number }> => {
+  const { count: organizations } = await prisma.organization.deleteMany({
+    where: { name: SEED_ORGANIZATION_NAME },
+  });
+  const { count: users } = await prisma.user.deleteMany({
+    where: { email: { startsWith: SEED_USER_EMAIL_PREFIX } },
+  });
+
+  return { organizations, users };
 };
 
 const chunk = <T>(items: ReadonlyArray<T>, size: number): T[][] => {
@@ -127,7 +168,15 @@ const seed = async (scale: TScale): Promise<void> => {
   const startedAt = performance.now();
   console.log(`seeding scale=${scale}`, profile);
 
-  const organization = await prisma.organization.create({ data: { name: `${SEED_TAG} org` } });
+  // Idempotent by construction. The seed's user emails are unique-constrained, so without this a
+  // second `seed` dies partway with P2002 and leaves a half-populated organization behind — which
+  // `run` would then happily resolve and measure.
+  const removed = await clean();
+  if (removed.organizations > 0 || removed.users > 0) {
+    console.log("  removed previous seed", removed);
+  }
+
+  const organization = await prisma.organization.create({ data: { name: SEED_ORGANIZATION_NAME } });
 
   // Users and memberships. The role mix mirrors a real tenant: a few owners/managers, mostly members
   // whose access arrives through teams — which is the interesting path, since owners short-circuit.
@@ -239,6 +288,8 @@ const seed = async (scale: TScale): Promise<void> => {
   console.log("\nNext: project the relationships, then measure:");
   console.log("  pnpm authzed:backfill --apply --scope=all");
   console.log("  pnpm authzed:perf run --iterations=2000");
+  console.log("\nWhen you are done, remove every row this created:");
+  console.log("  pnpm authzed:perf clean");
 };
 
 const percentile = (sorted: ReadonlyArray<number>, fraction: number): number =>
@@ -246,12 +297,12 @@ const percentile = (sorted: ReadonlyArray<number>, fraction: number): number =>
 
 const run = async (iterations: number, concurrency: number, logPath: string): Promise<number> => {
   const organization = await prisma.organization.findFirst({
-    where: { name: `${SEED_TAG} org` },
+    where: { name: SEED_ORGANIZATION_NAME },
     select: { id: true },
   });
 
   if (!organization) {
-    console.error(`No seeded data found. Run: pnpm authzed:perf seed`);
+    console.error("No seeded data found. Run: pnpm authzed:perf seed");
     return 1;
   }
 
@@ -267,11 +318,19 @@ const run = async (iterations: number, concurrency: number, logPath: string): Pr
       where: { organizationId: organization.id },
       select: { userId: true, role: true },
       take: 200,
+      orderBy: { userId: "asc" },
     }),
   ]);
 
   if (!workspace || !survey) {
     console.error("Seeded organization has no workspace or survey; re-run seed.");
+    return 1;
+  }
+
+  if (memberships.length === 0) {
+    // Every sample picks a principal out of this list. Empty means the seed was interrupted, and
+    // letting it through would produce a full run of identical TypeErrors rather than a measurement.
+    console.error("Seeded organization has no memberships; re-run seed.");
     return 1;
   }
 
@@ -324,6 +383,8 @@ const run = async (iterations: number, concurrency: number, logPath: string): Pr
   // Warmup: cold gRPC channel, DB connection pool, and SpiceDB cache all bias the first samples.
   // Running a throwaway batch before the timed phase means the reported percentiles reflect a warm
   // path, not one-time startup costs.
+  // Concurrency is fixed at 8 regardless of the user's --concurrency flag — this is a throwaway
+  // phase that only needs to touch every codepath once, not stress the system.
   const WARMUP_ITERATIONS = 100;
   const WARMUP_CONCURRENCY = 8;
   await withAuthorizationSurface("server_action", async () => {
@@ -344,10 +405,22 @@ const run = async (iterations: number, concurrency: number, logPath: string): Pr
 
   logStream.end();
 
+  if (samples.length === 0) {
+    // Asserted rather than inferred: with no samples every rate below is 0/0, `JSON.stringify`
+    // renders NaN as null, and `errorRate > 0` is false — so the run would report measuring nothing
+    // and still exit 0. A measurement tool must not have a green path that measured nothing.
+    console.error("No samples were collected; nothing was measured.");
+    return 1;
+  }
+
   const wallSeconds = (performance.now() - startedAt) / 1000;
   const byAction = new Map<string, number[]>();
   for (const sample of samples) {
-    byAction.set(sample.action, [...(byAction.get(sample.action) ?? []), sample.durationMs]);
+    // Push into the existing array rather than rebuilding it: spreading copies every duration
+    // recorded so far on each sample, which is quadratic in samples-per-action.
+    const durations = byAction.get(sample.action);
+    if (durations) durations.push(sample.durationMs);
+    else byAction.set(sample.action, [sample.durationMs]);
   }
 
   const report = {
@@ -398,11 +471,19 @@ const main = async (): Promise<void> => {
     return;
   }
 
-  console.log(`Usage:
-  pnpm authzed:perf seed [--scale=small|default|large]
-  pnpm authzed:perf run  [--iterations=2000] [--concurrency=8] [--log=authzed/perf-samples.jsonl]
+  if (args.command === "clean") {
+    console.log("removed", await clean());
+    return;
+  }
 
-Between the two, project the seeded rows into SpiceDB:
+  console.log(`Usage:
+  pnpm authzed:perf seed  [--scale=small|default|large]
+  pnpm authzed:perf run   [--iterations=2000] [--concurrency=8] [--log=authzed/perf-samples.jsonl]
+  pnpm authzed:perf clean
+
+\`seed\` is idempotent — it removes a previous seed before writing a new one. \`clean\` removes
+every row the seed created and nothing else. Between seed and run, project the seeded rows
+into SpiceDB:
   pnpm authzed:backfill --apply --scope=all`);
   process.exitCode = 1;
 };
