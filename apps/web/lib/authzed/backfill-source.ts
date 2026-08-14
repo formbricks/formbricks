@@ -107,6 +107,143 @@ export type TAuthzedWorkspaceSource = Readonly<{
   workspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
 }>;
 
+type TOrganizationWorkspaceTeamGrant = Readonly<{
+  permission: keyof typeof WORKSPACE_TEAM_RELATIONS;
+  team: Readonly<{ organizationId: string }>;
+  teamId: string;
+  workspaceId: string;
+}>;
+
+type TOrganizationApiKeyWorkspaceGrant = Readonly<{
+  apiKeyId: string;
+  permission: keyof typeof WORKSPACE_API_KEY_RELATIONS;
+  workspace: Readonly<{ organizationId: string }>;
+  workspaceId: string;
+}>;
+
+type TOrganizationFeedbackDirectory = Readonly<{
+  id: string;
+  isArchived: boolean;
+  organizationId: string;
+  workspaces: ReadonlyArray<
+    Readonly<{ workspace: Readonly<{ organizationId: string }>; workspaceId: string }>
+  >;
+}>;
+
+const partitionByOrganization = <TGrant>(
+  grants: ReadonlyArray<TGrant>,
+  organizationId: string | null,
+  getOrganizationId: (grant: TGrant) => string
+): Readonly<{ invalid: TGrant[]; valid: TGrant[] }> => {
+  if (organizationId === null) {
+    return { invalid: [], valid: [...grants] };
+  }
+
+  const valid: TGrant[] = [];
+  const invalid: TGrant[] = [];
+  for (const grant of grants) {
+    (getOrganizationId(grant) === organizationId ? valid : invalid).push(grant);
+  }
+
+  return { invalid, valid };
+};
+
+const toWorkspaceTeamTarget = ({
+  teamId,
+  workspaceId,
+}: Pick<TOrganizationWorkspaceTeamGrant, "teamId" | "workspaceId">): TAuthzedWorkspaceTeamTarget => ({
+  teamId,
+  workspaceId,
+});
+
+const toApiKeyWorkspaceTarget = ({
+  apiKeyId,
+  workspaceId,
+}: Pick<TOrganizationApiKeyWorkspaceGrant, "apiKeyId" | "workspaceId">): TAuthzedApiKeyWorkspaceTarget => ({
+  apiKeyId,
+  workspaceId,
+});
+
+const getApiKeyRelationships = (
+  apiKey: Readonly<{ id: string; organizationAccess: unknown; organizationId: string }>
+): ReadonlyArray<TAuthzedRelationship> => {
+  const relationships: TAuthzedRelationship[] = [
+    {
+      relation: "organization",
+      resource: { objectId: apiKey.id, objectType: "api_key" },
+      subject: { objectId: apiKey.organizationId, objectType: "organization" },
+    },
+  ];
+  const access = normalizeOrganizationAccess(apiKey.organizationAccess);
+  for (const permission of Object.keys(ORGANIZATION_ACCESS_RELATIONS) as ReadonlyArray<
+    keyof typeof ORGANIZATION_ACCESS_RELATIONS
+  >) {
+    if (access[permission]) {
+      relationships.push({
+        relation: ORGANIZATION_ACCESS_RELATIONS[permission],
+        resource: { objectId: apiKey.organizationId, objectType: "organization" },
+        subject: { objectId: apiKey.id, objectType: "api_key" },
+      });
+    }
+  }
+
+  return relationships;
+};
+
+const getFeedbackDirectorySource = (
+  directories: ReadonlyArray<TOrganizationFeedbackDirectory>,
+  organizationId: string
+): Readonly<{
+  assignments: TAuthzedFeedbackDirectoryAssignmentTarget[];
+  invalidAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[];
+  relationships: TAuthzedRelationship[];
+}> => {
+  const assignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
+  const invalidAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
+  const relationships: TAuthzedRelationship[] = [];
+
+  for (const directory of directories) {
+    relationships.push({
+      relation: "organization",
+      resource: { objectId: directory.id, objectType: "feedback_directory" },
+      subject: { objectId: directory.organizationId, objectType: "organization" },
+    });
+    for (const workspace of directory.workspaces) {
+      const target = { feedbackDirectoryId: directory.id, workspaceId: workspace.workspaceId };
+      if (workspace.workspace.organizationId !== organizationId) {
+        invalidAssignments.push(target);
+        continue;
+      }
+
+      assignments.push(target);
+      if (directory.isArchived) {
+        continue;
+      }
+
+      const assignmentId = getFeedbackDirectoryAssignmentObjectId(directory.id, workspace.workspaceId);
+      relationships.push(
+        {
+          relation: "assignment",
+          resource: { objectId: directory.id, objectType: "feedback_directory" },
+          subject: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+        },
+        {
+          relation: "directory",
+          resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+          subject: { objectId: directory.id, objectType: "feedback_directory" },
+        },
+        {
+          relation: "workspace",
+          resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+          subject: { objectId: workspace.workspaceId, objectType: "workspace" },
+        }
+      );
+    }
+  }
+
+  return { assignments, invalidAssignments, relationships };
+};
+
 /**
  * One keyset page of organization IDs.
  *
@@ -179,34 +316,21 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
 
   // Only decidable when the workspace still has a row. With no row there is no organization to compare
   // against, and its grants are stale by construction — the prune path is what deals with them.
-  const partition = <TGrant>(
-    grants: ReadonlyArray<TGrant>,
-    principalOrganizationId: (grant: TGrant) => string
-  ): Readonly<{ invalid: TGrant[]; valid: TGrant[] }> => {
-    if (organizationId === null) {
-      return { invalid: [], valid: [...grants] };
-    }
-
-    const valid: TGrant[] = [];
-    const invalid: TGrant[] = [];
-    for (const grant of grants) {
-      (principalOrganizationId(grant) === organizationId ? valid : invalid).push(grant);
-    }
-
-    return { invalid, valid };
-  };
-
-  const teamGrants = partition(workspaceTeams, (grant) => grant.team.organizationId);
-  const keyGrants = partition(apiKeyWorkspaces, (grant) => grant.apiKey.organizationId);
-  const directoryGrants = partition(directoryAssignments, (grant) => grant.feedbackDirectory.organizationId);
-  const toTeamTarget = ({ teamId }: (typeof workspaceTeams)[number]): TAuthzedWorkspaceTeamTarget => ({
-    teamId,
-    workspaceId,
-  });
-  const toKeyTarget = ({ apiKeyId }: (typeof apiKeyWorkspaces)[number]): TAuthzedApiKeyWorkspaceTarget => ({
-    apiKeyId,
-    workspaceId,
-  });
+  const teamGrants = partitionByOrganization(
+    workspaceTeams,
+    organizationId,
+    (grant) => grant.team.organizationId
+  );
+  const keyGrants = partitionByOrganization(
+    apiKeyWorkspaces,
+    organizationId,
+    (grant) => grant.apiKey.organizationId
+  );
+  const directoryGrants = partitionByOrganization(
+    directoryAssignments,
+    organizationId,
+    (grant) => grant.feedbackDirectory.organizationId
+  );
 
   const expectedRelationships: TAuthzedRelationship[] = [];
   if (organizationId !== null) {
@@ -263,20 +387,20 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
   }
 
   return {
-    apiKeyWorkspaceGrants: keyGrants.valid.map(toKeyTarget),
+    apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
     expectedRelationships,
     feedbackDirectoryAssignments,
-    invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toKeyTarget),
+    invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toApiKeyWorkspaceTarget),
     invalidFeedbackDirectoryAssignments: directoryGrants.invalid.map(({ feedbackDirectoryId }) => ({
       feedbackDirectoryId,
       workspaceId,
     })),
-    invalidWorkspaceTeamGrants: teamGrants.invalid.map(toTeamTarget),
+    invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
     organizationId,
     // Truthiness rather than `!== null`, so a row is required to claim existence rather than merely the
     // absence of one particular falsy value.
     workspaceExists: Boolean(workspace),
-    workspaceTeamGrants: teamGrants.valid.map(toTeamTarget),
+    workspaceTeamGrants: teamGrants.valid.map(toWorkspaceTeamTarget),
   };
 };
 
@@ -356,154 +480,72 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     }),
   ]);
 
-  const workspaceTeamGrants: TAuthzedWorkspaceTeamTarget[] = [];
-  const invalidWorkspaceTeamGrants: TAuthzedWorkspaceTeamTarget[] = [];
-  for (const grant of workspaceTeams) {
-    const target = { teamId: grant.teamId, workspaceId: grant.workspaceId };
-    if (grant.team.organizationId === organizationId) {
-      workspaceTeamGrants.push(target);
-    } else {
-      invalidWorkspaceTeamGrants.push(target);
-    }
-  }
-
+  const teamGrants = partitionByOrganization(
+    workspaceTeams,
+    organizationId,
+    (grant) => grant.team.organizationId
+  );
   // A grant whose workspace belongs to another organization is unreachable from this one: the
   // observation only reads workspaces this organization owns, so an expected relationship naming a
   // foreign workspace could never be seen and the unit would report drift that no run can converge.
   // Excluded from the targets for the same reason as the workspace-team case — never projected, never
   // pruned, only reported.
-  const apiKeyWorkspaceGrants: TAuthzedApiKeyWorkspaceTarget[] = [];
-  const invalidApiKeyWorkspaceGrants: TAuthzedApiKeyWorkspaceTarget[] = [];
-  for (const grant of apiKeyWorkspaces) {
-    const target = { apiKeyId: grant.apiKeyId, workspaceId: grant.workspaceId };
-    if (grant.workspace.organizationId === organizationId) {
-      apiKeyWorkspaceGrants.push(target);
-    } else {
-      invalidApiKeyWorkspaceGrants.push(target);
-    }
-  }
+  const keyGrants = partitionByOrganization(
+    apiKeyWorkspaces,
+    organizationId,
+    (grant) => grant.workspace.organizationId
+  );
+  const directorySource = getFeedbackDirectorySource(feedbackDirectories, organizationId);
 
-  const expectedRelationships: TAuthzedRelationship[] = [];
-  for (const membership of memberships) {
-    expectedRelationships.push({
-      relation: ORGANIZATION_RELATIONS[membership.role],
+  const expectedRelationships: TAuthzedRelationship[] = [
+    ...memberships.map(({ role, userId }) => ({
+      relation: ORGANIZATION_RELATIONS[role],
       resource: { objectId: organizationId, objectType: "organization" },
-      subject: { objectId: membership.userId, objectType: "user" },
-    });
-  }
-  for (const team of teams) {
-    expectedRelationships.push({
+      subject: { objectId: userId, objectType: "user" },
+    })),
+    ...teams.map(({ id, organizationId: teamOrganizationId }) => ({
       relation: "organization",
-      resource: { objectId: team.id, objectType: "team" },
-      subject: { objectId: team.organizationId, objectType: "organization" },
-    });
-  }
-  for (const membership of teamMemberships) {
-    expectedRelationships.push({
-      relation: TEAM_RELATIONS[membership.role],
-      resource: { objectId: membership.teamId, objectType: "team" },
-      subject: { objectId: membership.userId, objectType: "user" },
-    });
-  }
-  for (const workspace of workspaces) {
-    expectedRelationships.push({
+      resource: { objectId: id, objectType: "team" },
+      subject: { objectId: teamOrganizationId, objectType: "organization" },
+    })),
+    ...teamMemberships.map(({ role, teamId, userId }) => ({
+      relation: TEAM_RELATIONS[role],
+      resource: { objectId: teamId, objectType: "team" },
+      subject: { objectId: userId, objectType: "user" },
+    })),
+    ...workspaces.map(({ id, organizationId: workspaceOrganizationId }) => ({
       relation: "organization",
-      resource: { objectId: workspace.id, objectType: "workspace" },
-      subject: { objectId: workspace.organizationId, objectType: "organization" },
-    });
-  }
-  for (const grant of workspaceTeams) {
-    if (grant.team.organizationId !== organizationId) {
-      continue;
-    }
-    expectedRelationships.push({
-      relation: WORKSPACE_TEAM_RELATIONS[grant.permission],
-      resource: { objectId: grant.workspaceId, objectType: "workspace" },
-      subject: { objectId: grant.teamId, objectType: "team", relation: "member" },
-    });
-  }
-  for (const apiKey of apiKeys) {
-    expectedRelationships.push({
-      relation: "organization",
-      resource: { objectId: apiKey.id, objectType: "api_key" },
-      subject: { objectId: apiKey.organizationId, objectType: "organization" },
-    });
-    const access = normalizeOrganizationAccess(apiKey.organizationAccess);
-    for (const permission of Object.keys(ORGANIZATION_ACCESS_RELATIONS) as ReadonlyArray<
-      keyof typeof ORGANIZATION_ACCESS_RELATIONS
-    >) {
-      if (access[permission]) {
-        expectedRelationships.push({
-          relation: ORGANIZATION_ACCESS_RELATIONS[permission],
-          resource: { objectId: organizationId, objectType: "organization" },
-          subject: { objectId: apiKey.id, objectType: "api_key" },
-        });
-      }
-    }
-  }
-  for (const grant of apiKeyWorkspaces) {
-    if (grant.workspace.organizationId !== organizationId) {
-      continue;
-    }
-    expectedRelationships.push({
-      relation: WORKSPACE_API_KEY_RELATIONS[grant.permission],
-      resource: { objectId: grant.workspaceId, objectType: "workspace" },
-      subject: { objectId: grant.apiKeyId, objectType: "api_key" },
-    });
-  }
-  const feedbackDirectoryAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
-  const invalidFeedbackDirectoryAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
-  for (const directory of feedbackDirectories) {
-    expectedRelationships.push({
-      relation: "organization",
-      resource: { objectId: directory.id, objectType: "feedback_directory" },
-      subject: { objectId: directory.organizationId, objectType: "organization" },
-    });
-    for (const workspace of directory.workspaces) {
-      const target = { feedbackDirectoryId: directory.id, workspaceId: workspace.workspaceId };
-      if (workspace.workspace.organizationId !== organizationId) {
-        invalidFeedbackDirectoryAssignments.push(target);
-        continue;
-      }
-      feedbackDirectoryAssignments.push(target);
-      if (directory.isArchived) {
-        continue;
-      }
-      const assignmentId = getFeedbackDirectoryAssignmentObjectId(directory.id, workspace.workspaceId);
-      expectedRelationships.push(
-        {
-          relation: "assignment",
-          resource: { objectId: directory.id, objectType: "feedback_directory" },
-          subject: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
-        },
-        {
-          relation: "directory",
-          resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
-          subject: { objectId: directory.id, objectType: "feedback_directory" },
-        },
-        {
-          relation: "workspace",
-          resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
-          subject: { objectId: workspace.workspaceId, objectType: "workspace" },
-        }
-      );
-    }
-  }
+      resource: { objectId: id, objectType: "workspace" },
+      subject: { objectId: workspaceOrganizationId, objectType: "organization" },
+    })),
+    ...teamGrants.valid.map(({ permission, teamId, workspaceId }) => ({
+      relation: WORKSPACE_TEAM_RELATIONS[permission],
+      resource: { objectId: workspaceId, objectType: "workspace" },
+      subject: { objectId: teamId, objectType: "team", relation: "member" },
+    })),
+    ...apiKeys.flatMap(getApiKeyRelationships),
+    ...keyGrants.valid.map(({ apiKeyId, permission, workspaceId }) => ({
+      relation: WORKSPACE_API_KEY_RELATIONS[permission],
+      resource: { objectId: workspaceId, objectType: "workspace" },
+      subject: { objectId: apiKeyId, objectType: "api_key" },
+    })),
+    ...directorySource.relationships,
+  ];
 
   return {
     apiKeyIds: apiKeys.map(({ id }) => id),
-    apiKeyWorkspaceGrants,
+    apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
     expectedRelationships,
-    feedbackDirectoryAssignments,
+    feedbackDirectoryAssignments: directorySource.assignments,
     feedbackDirectoryIds: feedbackDirectories.map(({ id }) => id),
-    invalidApiKeyWorkspaceGrants,
-    invalidFeedbackDirectoryAssignments,
-    invalidWorkspaceTeamGrants,
+    invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toApiKeyWorkspaceTarget),
+    invalidFeedbackDirectoryAssignments: directorySource.invalidAssignments,
+    invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
     memberships: memberships.map(({ userId }) => ({ organizationId, userId })),
     teamIds: teams.map(({ id }) => id),
     teamMemberships: teamMemberships.map(({ teamId, userId }) => ({ teamId, userId })),
     workspaceIds: workspaces.map(({ id }) => id),
-    workspaceTeamGrants,
+    workspaceTeamGrants: teamGrants.valid.map(toWorkspaceTeamTarget),
   };
 };
 

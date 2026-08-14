@@ -57,9 +57,11 @@ const FEEDBACK_DIRECTORY_WORKSPACE_ACTION = {
   write: "workspace.write",
 } as const;
 
+type TFeedbackDirectoryPermission = keyof typeof FEEDBACK_DIRECTORY_WORKSPACE_ACTION;
+
 const canFeedbackDirectory = async (
   actor: TAuthorizationActor,
-  permission: "manage" | "read" | "write",
+  permission: TFeedbackDirectoryPermission,
   feedbackDirectoryId: string
 ): Promise<boolean> => {
   const scope = await getFeedbackDirectoryAuthorizationScope(feedbackDirectoryId);
@@ -76,7 +78,7 @@ const canFeedbackDirectory = async (
 
 const canFeedbackDirectoryAssignment = async (
   actor: TAuthorizationActor,
-  permission: "manage" | "read" | "write",
+  permission: TFeedbackDirectoryPermission,
   feedbackDirectoryId: string,
   workspaceId: string
 ): Promise<boolean> => {

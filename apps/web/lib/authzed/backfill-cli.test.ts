@@ -279,6 +279,22 @@ describe("runAuthzedBackfillCli", () => {
     await expect(apply.reconcileMemberships({})).resolves.toEqual({ passes: 0, status: "projected" });
     await expect(apply.reconcileTeamWorkspace({})).resolves.toEqual({ passes: 0, status: "projected" });
     await expect(apply.reconcileApiKeys({})).resolves.toEqual({ passes: 0, status: "projected" });
+    await expect(apply.reconcileFeedbackDirectories({})).resolves.toEqual({ passes: 0, status: "projected" });
+    await expect(apply.deleteFeedbackDirectoryAssignmentResources([])).resolves.toEqual({
+      passes: 0,
+      status: "projected",
+    });
+  });
+
+  test("translates a named workspace into a single-workspace scope", async () => {
+    const dependencies = deps();
+
+    await runAuthzedBackfillCli(command({ workspaceId: WORKSPACE_ID }), dependencies);
+
+    expect(dependencies.run.mock.calls[0][0].scope).toEqual({
+      kind: "workspace",
+      workspaceId: WORKSPACE_ID,
+    });
   });
 
   test("translates a named organization into a single-organization scope", async () => {

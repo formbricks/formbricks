@@ -43,7 +43,8 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Membership: "relationship_or_grant_source",
   Organization: "direct_authorization_resource",
   OrganizationBilling: "authentication_or_application",
-  PasswordResetToken: "authentication_or_application",
+  // This is a Prisma model name and a classification label, not a credential or credential value.
+  PasswordResetToken: "authentication_or_application", // NOSONAR
   Response: "direct_authorization_resource",
   ResponseQuotaLink: "parent_derived_or_data_integrity",
   Segment: "workspace_inherited_resource",

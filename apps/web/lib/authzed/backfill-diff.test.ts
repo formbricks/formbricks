@@ -157,6 +157,14 @@ describe("toSourceRef", () => {
     ["a workspace grant with the wrong subject type", tuple("workspace", "ws-1", "reader", "user", "u")],
     ["a parent relation with the wrong subject type", tuple("team", "team-1", "organization", "user", "u")],
     ["an api_key resource with an unexpected relation", tuple("api_key", "key-1", "reader", "user", "u")],
+    [
+      "a feedback directory with an unexpected relation",
+      tuple("feedback_directory", "directory-1", "reader", "user", "u"),
+    ],
+    [
+      "a feedback directory assignment with an unexpected relation",
+      tuple("feedback_directory_assignment", "fdwa-1", "reader", "user", "u"),
+    ],
   ])("declines to name a source record for %s", (_label, relationship) => {
     expect(toSourceRef(relationship)).toBeNull();
   });
@@ -311,6 +319,38 @@ describe("summarizeObservation", () => {
     expect(summary.unmanaged).toEqual([
       { objectId: "chart-1", objectType: "chart", relation: "workspace" },
       { objectId: "org-1", objectType: "organization", relation: "superuser" },
+    ]);
+  });
+
+  test("enriches a complete feedback directory assignment from its three graph edges", () => {
+    const assignmentId = "fdwa-1";
+    const summary = summarizeObservation([
+      tuple("feedback_directory", "directory-1", "assignment", "feedback_directory_assignment", assignmentId),
+      tuple("feedback_directory_assignment", assignmentId, "directory", "feedback_directory", "directory-1"),
+      tuple("feedback_directory_assignment", assignmentId, "workspace", "workspace", "workspace-1"),
+    ]);
+
+    expect(summary.sourceRefs).toEqual([
+      {
+        assignmentId,
+        feedbackDirectoryId: "directory-1",
+        kind: "feedbackDirectoryAssignment",
+        workspaceId: "workspace-1",
+      },
+    ]);
+    expect(summary.managedRelationships).toHaveLength(3);
+  });
+
+  test("does not guess an assignment parent when conflicting graph edges are observed", () => {
+    const assignmentId = "fdwa-ambiguous";
+    const summary = summarizeObservation([
+      tuple("feedback_directory", "directory-1", "assignment", "feedback_directory_assignment", assignmentId),
+      tuple("feedback_directory_assignment", assignmentId, "directory", "feedback_directory", "directory-2"),
+      tuple("feedback_directory_assignment", assignmentId, "workspace", "workspace", "workspace-1"),
+    ]);
+
+    expect(summary.sourceRefs).toEqual([
+      { assignmentId, kind: "feedbackDirectoryAssignment", workspaceId: "workspace-1" },
     ]);
   });
 
