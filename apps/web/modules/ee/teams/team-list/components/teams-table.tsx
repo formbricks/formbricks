@@ -86,18 +86,19 @@ const getTeamColumns = ({
     header: null,
     srLabel: t("common.actions"),
     headerClassName: "w-[20%]",
-    // No `align: "right"`: the header is empty and the cell's button is block-level, so `text-align` has
-    // nothing to move in either. The flex is what right-aligns the button — and a skeleton bar, if this
-    // array is ever fed to `SettingsTableSkeleton`.
-    cellClassName: "flex justify-end",
     stopRowClick: true,
+    // The flex goes on a wrapper inside the cell, not on `cellClassName`: that class lands on the `<td>`,
+    // and `display: flex` there stops it being a table-cell, which kills the shared `align-middle` and
+    // leaves the button baseline-aligned. `align: "right"` is no help either — the wrapper is block-level.
     cell: (row) => (
-      <ManageTeamButton
-        disabled={isManageDisabled(row, isOwnerOrManager)}
-        onClick={() => {
-          onManage(row.team.id);
-        }}
-      />
+      <div className="flex justify-end">
+        <ManageTeamButton
+          disabled={isManageDisabled(row, isOwnerOrManager)}
+          onClick={() => {
+            onManage(row.team.id);
+          }}
+        />
+      </div>
     ),
   },
 ];

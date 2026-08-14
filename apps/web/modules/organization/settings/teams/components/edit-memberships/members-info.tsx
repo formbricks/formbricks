@@ -171,12 +171,14 @@ const getMemberColumns = ({
       id: "actions",
       header: t("common.actions"),
       headerClassName: "w-[24%]",
-      // Unlike the other actions columns in this series, `align` is doing real work here: this header has
+      // `align` is doing real work here, unlike the other actions columns in this series: this header has
       // visible text, and `text-align` is the only thing that moves it. Right rather than the centre the
-      // old header used, so the label sits over the controls it names. The flex below is a separate job —
-      // moving the block-level buttons, which `text-align` cannot.
+      // old header used, so the label sits over the controls it names.
+      //
+      // Nothing goes on `cellClassName`: `MemberActions` already renders its own `flex justify-end`
+      // wrapper, and putting the flex on the `<td>` would stop it being a table-cell — killing the shared
+      // `align-middle` and leaving the buttons baseline-aligned rather than centred.
       align: "right",
-      cellClassName: "flex justify-end",
       cell: (member) => (
         <MemberActions
           organization={organization}
