@@ -306,79 +306,91 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
 /**
  * Fetches all data required for workspace layout rendering.
  * Resolves the production environment automatically.
+ *
+ * Opened as the `page` surface for the same reason as its two siblings above (ENG-2388). This one
+ * backs the top-level `/workspaces/[workspaceId]` layout, so it is the highest-traffic authorization
+ * gate of the three — its `canUserNavigateWorkspace` call reaches `can()` on essentially every
+ * product navigation, and without a surface on the stack every one of those decisions resolved no
+ * rollout target and scheduled no shadow comparison.
  */
 export const getWorkspaceLayoutData = reactCache(
-  async (workspaceId: string, userId: string): Promise<TWorkspaceLayoutData> => {
-    validateInputs([workspaceId, ZId]);
-    validateInputs([userId, ZId]);
-
-    const t = await getTranslate();
-    const session = await getSession();
-
-    if (!session?.user) {
-      throw new AuthenticationError(t("common.not_authenticated"));
-    }
-
-    if (session.user.id !== userId) {
-      throw new AuthenticationError("User ID mismatch with session");
-    }
-
-    const user = await getUser(userId);
-    if (!user) {
-      throw new AuthenticationError(t("common.not_authenticated"));
-    }
-
-    // Resolved first so the navigation gate below can name the owning organization. This is
-    // the same request-memoized read the rest of this function already relied on, so it costs
-    // nothing extra; it only moves.
-    const relationData = await getWorkspaceWithRelations(workspaceId, userId);
-    if (!relationData) {
-      throw new ResourceNotFoundError(t("common.workspace"), workspaceId);
-    }
-
-    const { workspace, organization, membership } = relationData;
-
-    // Navigation, not data — the layout shell a billing-role member passes through on the way
-    // to billing. Product data on the pages inside stays gated on workspace.read.
-    const hasAccess = await canUserNavigateWorkspace(userId, {
-      id: workspace.id,
-      organizationId: organization.id,
-    });
-    if (!hasAccess) {
-      throw new AuthorizationError(t("common.not_authorized"));
-    }
-
-    if (!membership) {
-      throw new AuthorizationError(t("common.membership_not_found"));
-    }
-
-    const [isAccessControlAllowed, workspacePermission, license] = await Promise.all([
-      getAccessControlPermission(organization.id),
-      getWorkspacePermissionByUserId(userId, workspace.id),
-      getEnterpriseLicense(),
-    ]);
-
-    let responseCount = 0;
-    if (IS_FORMBRICKS_CLOUD) {
-      responseCount = await getMonthlyOrganizationResponseCount(organization.id);
-    }
-
-    return {
-      session,
-      user,
-      workspace,
-      organization: {
-        ...organization,
-        billing: {
-          ...organization.billing,
-          stripe: organization.billing.stripe ?? undefined,
-        },
-      },
-      membership,
-      isAccessControlAllowed,
-      workspacePermission,
-      license,
-      responseCount,
-    };
-  }
+  async (workspaceId: string, userId: string): Promise<TWorkspaceLayoutData> =>
+    withAuthorizationSurface("page", () => resolveWorkspaceLayoutData(workspaceId, userId))
 );
+
+const resolveWorkspaceLayoutData = async (
+  workspaceId: string,
+  userId: string
+): Promise<TWorkspaceLayoutData> => {
+  validateInputs([workspaceId, ZId]);
+  validateInputs([userId, ZId]);
+
+  const t = await getTranslate();
+  const session = await getSession();
+
+  if (!session?.user) {
+    throw new AuthenticationError(t("common.not_authenticated"));
+  }
+
+  if (session.user.id !== userId) {
+    throw new AuthenticationError("User ID mismatch with session");
+  }
+
+  const user = await getUser(userId);
+  if (!user) {
+    throw new AuthenticationError(t("common.not_authenticated"));
+  }
+
+  // Resolved first so the navigation gate below can name the owning organization. This is
+  // the same request-memoized read the rest of this function already relied on, so it costs
+  // nothing extra; it only moves.
+  const relationData = await getWorkspaceWithRelations(workspaceId, userId);
+  if (!relationData) {
+    throw new ResourceNotFoundError(t("common.workspace"), workspaceId);
+  }
+
+  const { workspace, organization, membership } = relationData;
+
+  // Navigation, not data — the layout shell a billing-role member passes through on the way
+  // to billing. Product data on the pages inside stays gated on workspace.read.
+  const hasAccess = await canUserNavigateWorkspace(userId, {
+    id: workspace.id,
+    organizationId: organization.id,
+  });
+  if (!hasAccess) {
+    throw new AuthorizationError(t("common.not_authorized"));
+  }
+
+  if (!membership) {
+    throw new AuthorizationError(t("common.membership_not_found"));
+  }
+
+  const [isAccessControlAllowed, workspacePermission, license] = await Promise.all([
+    getAccessControlPermission(organization.id),
+    getWorkspacePermissionByUserId(userId, workspace.id),
+    getEnterpriseLicense(),
+  ]);
+
+  let responseCount = 0;
+  if (IS_FORMBRICKS_CLOUD) {
+    responseCount = await getMonthlyOrganizationResponseCount(organization.id);
+  }
+
+  return {
+    session,
+    user,
+    workspace,
+    organization: {
+      ...organization,
+      billing: {
+        ...organization.billing,
+        stripe: organization.billing.stripe ?? undefined,
+      },
+    },
+    membership,
+    isAccessControlAllowed,
+    workspacePermission,
+    license,
+    responseCount,
+  };
+};
