@@ -57,18 +57,37 @@ jobs:
             //
             // No checkbox in the section at all -> leave the label alone rather than assume "not
             // breaking", so a restructured section or a hand-applied label survives.
-            const CHECKBOX = /^[ \t]*[-*+][ \t]+\[([ xX])\]/m;
+            //
+            // Each rule matches its own checkbox by the label text the template ships, rather than
+            // taking the first checkbox in the section: an unrelated item above it ("- [x] I read the
+            // list above") would otherwise flip the label. That couples this workflow to the template's
+            // wording, so a section that holds checkboxes but not *this* one warns rather than passing
+            // silently — the drift is then visible in the run instead of freezing the label.
+            const CHECKBOX_LINE = /^[ \t]*[-*+][ \t]+\[([ xX])\][ \t]*(.*)$/gm;
 
-            const isChecked = (content) => {
-              const match = CHECKBOX.exec(content);
-              if (!match) return null; // no signal in this section
-              return match[1].toLowerCase() === "x";
+            const checkboxFor = (declaration) => (content) => {
+              const boxes = [...content.matchAll(CHECKBOX_LINE)];
+              const box = boxes.find(([, , text]) => declaration.test(text.replace(/[*_`]/g, "").trim()));
+              if (box) return box[1].toLowerCase() === "x";
+              if (boxes.length > 0) {
+                core.warning(
+                  `Found ${boxes.length} checkbox(es) but none matching ${declaration} — the PR ` +
+                    "template and pr-label-sync.yml have drifted. Label left unchanged."
+                );
+              }
+              return null; // no signal in this section
             };
 
             // Label rules. Add an entry to sync a new label from a new "## <heading>" PR-body section.
             // `isActive(content)` returns true/false to set the label, or null to leave it unchanged.
             const RULES = [
-              { heading: "Breaking changes", label: "breaking-change", isActive: isChecked },
+              {
+                heading: "Breaking changes",
+                label: "breaking-change",
+                // Prefix, not exact: an author who appends a clause ("… (see the table)") still gets a
+                // working label, while "I read the list above" still does not match.
+                isActive: checkboxFor(/^this pr contains breaking changes/i),
+              },
             ];
 
             const pr = context.payload.pull_request;

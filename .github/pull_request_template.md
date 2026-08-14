@@ -36,7 +36,9 @@ vars or config, and DB migrations that need manual action.
 
 The checkbox is the only thing automation reads: ticking it applies the `breaking-change` label, which
 feeds the GitHub release notes and the self-hoster migration guide. Everything you write under it is for
-humans and is never parsed, so explain the reasoning at whatever length it needs either way.
+humans and is never parsed, so explain the reasoning at whatever length it needs either way. Leave the
+checkbox's own wording alone — `pr-label-sync.yml` finds it by that text, and any other checkbox you add
+to this section is ignored.
 
 Ticked → replace "None" with the table below, one row per change, written for an external integrator
 rather than for the team. Not ticked → keep "None" and say in a line why (a scope reason like "docs
