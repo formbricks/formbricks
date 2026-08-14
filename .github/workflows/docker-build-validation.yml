@@ -57,6 +57,8 @@ jobs:
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     # Add PostgreSQL and Redis service containers
     services:
@@ -128,6 +130,41 @@ jobs:
             ! command -v npx >/dev/null 2>&1
             node --version
           '
+
+      - name: Verify Release-Matched AuthZed Operator CLI
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+
+          IMAGE="formbricks-test:$GITHUB_SHA"
+          docker run --rm --entrypoint sh "$IMAGE" -c '
+            set -eu
+            test "$(id -u)" != "0"
+            test -x /usr/local/bin/formbricks-authzed
+            test -r /home/nextjs/authzed-cli/index.mjs
+            test -r /home/nextjs/authzed-cli/schema.zed
+          '
+
+          set +e
+          output="$(docker run --rm \
+            --entrypoint formbricks-authzed \
+            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks" \
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
+            -e REDIS_URL="redis://192.0.2.1:6379" \
+            -e HUB_API_URL="http://192.0.2.1:4000" \
+            -e HUB_API_KEY="build-time-placeholder" \
+            -e CUBEJS_API_URL="http://192.0.2.1:4000" \
+            -e CUBEJS_API_SECRET="build-time-placeholder" \
+            -e AUTHZED_ENABLED="false" \
+            "$IMAGE" health 2>&1)"
+          status=$?
+          set -e
+
+          test "$status" -eq 1
+          test "$output" = '{"status":"disabled"}'
 
       - name: Reject Invalid Environment Before Database Setup
         shell: bash

@@ -142,6 +142,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     const formbricksMigrateBlock = getServiceBlock(composeContents, "formbricks-migrate");
     const formbricksBlock = getServiceBlock(composeContents, "formbricks");
     const authzedBootstrapBlock = getServiceBlock(composeContents, "authzed-db-bootstrap");
+    const authzedOpsBlock = getServiceBlock(composeContents, "authzed-ops");
     const spicedbBlock = getServiceBlock(composeContents, "spicedb");
 
     expect(formbricksMigrateBlock).not.toContain("    labels:");
@@ -150,6 +151,8 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(authzedBootstrapBlock).not.toContain("traefik.enable=true");
     expect(spicedbBlock).toContain("authzed/spicedb:v1.52.0");
     expect(spicedbBlock).not.toContain("traefik.enable=true");
+    expect(authzedOpsBlock).toContain('profiles: ["authzed-ops"]');
+    expect(authzedOpsBlock).not.toContain("traefik.enable=true");
     expect(formbricksBlock).toContain("    labels:");
     expect(formbricksBlock.indexOf("    labels:")).toBeLessThan(formbricksBlock.indexOf("    environment:"));
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.rule=Host(`example.com`)");

@@ -26,7 +26,8 @@ export ZED_IMAGE_REF
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "${temp_dir}"' EXIT
 
-docker compose --file "${PROD_COMPOSE_FILE}" config --format json >"${temp_dir}/production.json"
+docker compose --file "${PROD_COMPOSE_FILE}" --profile authzed-ops config --format json >"${temp_dir}/production.json"
+docker compose --file "${PROD_COMPOSE_FILE}" config --services >"${temp_dir}/production-services.txt"
 docker compose --file "${DEV_COMPOSE_FILE}" --profile authzed-ui --profile authzed-tools config --format json >"${temp_dir}/development.json"
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" '
@@ -46,8 +47,23 @@ jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services.formbricks.environment.AUTHZED_INSECURE == "true" and
   .services.formbricks.environment.AUTHZED_CONSISTENCY == "minimize_latency" and
   .services.formbricks.depends_on.spicedb? == null and
-  ([.services | to_entries[] | select(.value.environment.AUTHZED_TOKEN? != null) | .key] | sort) == ["formbricks"]
+  .services["authzed-ops"].image == .services.formbricks.image and
+  .services["authzed-ops"].profiles == ["authzed-ops"] and
+  .services["authzed-ops"].entrypoint == ["formbricks-authzed"] and
+  .services["authzed-ops"].command == ["health"] and
+  .services["authzed-ops"].depends_on.postgres.condition == "service_healthy" and
+  .services["authzed-ops"].depends_on.spicedb.condition == "service_healthy" and
+  .services["authzed-ops"].environment.DATABASE_URL == .services.formbricks.environment.DATABASE_URL and
+  (.services["authzed-ops"] | has("ports") | not) and
+  (.services["authzed-ops"] | has("volumes") | not) and
+  (.services["authzed-ops"] | has("restart") | not) and
+  ([.services | to_entries[] | select(.value.environment.AUTHZED_TOKEN? != null) | .key] | sort) == ["authzed-ops", "formbricks"]
 ' "${temp_dir}/production.json" >/dev/null
+
+if grep --fixed-strings --line-regexp "authzed-ops" "${temp_dir}/production-services.txt" >/dev/null; then
+  printf '%s\n' "authzed-ops must not start without its explicit profile." >&2
+  exit 1
+fi
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" '
   .services.spicedb.image == "authzed/spicedb:v1.52.0" and

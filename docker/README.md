@@ -74,34 +74,39 @@ pnpm authzed:smoke
 Run the read-only application client health check with:
 
 ```bash
-pnpm authzed:health
+docker compose --profile authzed-ops run --rm authzed-ops health
 ```
 
-The health command loads the repository `.env`, accepts an empty schema as healthy, prints exactly one JSON
+The opt-in operations service uses the same release image and environment as Formbricks, but never starts during
+normal `docker compose up`. The health command accepts an empty schema as healthy, prints exactly one JSON
 result, and exits `0` only for a healthy connection. Disabled, invalid, authentication, permission, timeout,
 overload, unavailable, and unexpected states exit `1` with a stable `authzed_*` code. It never prints the
 token, schema, raw SDK error, or stack trace. It is intentionally not exposed through a browser or HTTP route,
 and SpiceDB availability does not affect the normal Formbricks `/health` result. Restart Formbricks after
 changing AuthZed configuration.
 
-Installations from source can check or explicitly apply the canonical Formbricks schema with:
+Check or explicitly apply the canonical Formbricks schema with:
 
 ```bash
-pnpm authzed:schema check
+docker compose --profile authzed-ops run --rm authzed-ops schema check
 
 # Empty instances only
-pnpm authzed:schema apply
+docker compose --profile authzed-ops run --rm authzed-ops schema apply
 
 # Non-empty instances: use the remoteDigest returned by the immediately preceding check
-pnpm authzed:schema apply \
+docker compose --profile authzed-ops run --rm authzed-ops schema apply \
   --expected-current-digest sha256:<digest-from-check>
+
+# Relationship audit (dry run)
+docker compose --profile authzed-ops run --rm authzed-ops backfill
 ```
 
 The first apply to an empty SpiceDB needs no additional argument. Replacing a non-empty schema requires
 `--expected-current-digest sha256:<digest-from-check>`. The command verifies the write by reading and comparing
 the schema again. It is never invoked by `docker compose up`, Formbricks startup, or `/health`. See
-[`authzed/README.md`](../authzed/README.md) for the JSON contract, exit codes, backup requirements, and rollback
-rules.
+the [public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx) for the JSON contract, exit
+codes, backup requirements, repair, and rollback rules. Repository development retains the equivalent
+`pnpm authzed:*` commands.
 
 `AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. Unset means disabled and secure
 TLS, respectively. `AUTHZED_ENDPOINT` is a bare `host:port` (including bracketed IPv6) with no scheme or path;

@@ -7,10 +7,9 @@ import {
   applyCanonicalAuthzedSchema,
   checkCanonicalAuthzedSchema,
 } from "./schema";
+import type { TAuthzedSchemaCliCommand } from "./schema-cli-command";
 
-export type TAuthzedSchemaCliCommand =
-  | Readonly<{ action: "check" }>
-  | Readonly<{ action: "apply"; expectedCurrentDigest?: string }>;
+export type { TAuthzedSchemaCliCommand } from "./schema-cli-command";
 
 type TAuthzedSchemaCliFailure = Readonly<{
   code: TAuthzedErrorCode;
