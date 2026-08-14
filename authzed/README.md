@@ -12,6 +12,12 @@ assertion-based validation suite.
 - [`RUNBOOK.md`](./RUNBOOK.md) — diagnosing and recovering from relationship-sync
   failures: the metrics, the log field contract, suggested alert rules, and the
   recovery path through `pnpm authzed:backfill`.
+- [`PERFORMANCE.md`](./PERFORMANCE.md) — measured cost of a single authorization
+  decision (legacy vs SpiceDB), the proof that the workspace-scoped list paths issue
+  a row-count-independent number of checks, and how to reproduce both with
+  `pnpm authzed:perf`.
+- [`AuthZed Operations`](../docs/self-hosting/advanced/authzed-operations.mdx) —
+  the public self-hosting contract for Docker and Kubernetes operators.
 
 ## Running the validation
 
@@ -471,9 +477,9 @@ Note also that the command reads `.env` and ignores `.env.local`, so the instanc
 it rewrites is not necessarily the one a local dev server talks to. Always pass
 `--expected-endpoint` when pruning.
 
-The command is not present in the released container image, matching
-`authzed:health` and `authzed:schema`; running it requires a checkout. Packaging it
-for self-hosted operators is ENG-1740.
+Released Formbricks images include the equivalent `formbricks-authzed backfill`
+command for self-hosted operators. Repository development retains
+`pnpm authzed:backfill`.
 
 ## Deliberately not modeled (stays in application code)
 

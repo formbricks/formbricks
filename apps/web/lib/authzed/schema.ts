@@ -1,8 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
 import { type TAuthzedClient, getAuthzedClient } from "./client";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
+import { readCanonicalAuthzedSchema } from "./schema-source";
 
 type TAuthzedSchemaDigest = `sha256:${string}`;
 
@@ -39,13 +39,9 @@ type TAuthzedSchemaDependencies = Readonly<{
   readCanonicalSchema: () => Promise<string>;
 }>;
 
-const canonicalSchemaUrl = new URL("../../../../authzed/schema.zed", import.meta.url);
-
-const readCanonicalSchema = async (): Promise<string> => readFile(canonicalSchemaUrl, "utf8");
-
 const defaultDependencies: TAuthzedSchemaDependencies = {
   getClient: getAuthzedClient,
-  readCanonicalSchema,
+  readCanonicalSchema: readCanonicalAuthzedSchema,
 };
 
 const createSchemaDigest = (schemaText: string): TAuthzedSchemaDigest =>

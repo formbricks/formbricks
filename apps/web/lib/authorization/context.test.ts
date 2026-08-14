@@ -3,8 +3,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   enqueueAuthorizationComparison,
   getAuthorizationRolloutTarget,
+  getIssuedAuthorizationCheckCount,
+  recordAuthorizationCheckIssued,
   withAuthorizationSurface,
 } from "./context";
+import { recordAuthorizationChecksPerRequest } from "./metrics";
 
 const afterCallbacks = vi.hoisted(() => [] as Array<() => Promise<void> | void>);
 
@@ -12,8 +15,14 @@ vi.mock("next/server", () => ({
   after: vi.fn((callback: () => Promise<void> | void) => afterCallbacks.push(callback)),
 }));
 
+// The histogram itself is covered against a real MeterProvider in `checks-per-request-metric.test.ts`.
+// Here it is a mock so this file can assert the *wiring* — that recording happens, with the right
+// arguments, and that a failure in it cannot take out the comparison drain.
+vi.mock("./metrics", () => ({ recordAuthorizationChecksPerRequest: vi.fn() }));
+
 beforeEach(() => {
   afterCallbacks.length = 0;
+  vi.mocked(recordAuthorizationChecksPerRequest).mockReset();
   vi.mocked(after)
     .mockReset()
     .mockImplementation((callback) => afterCallbacks.push(callback));
@@ -124,5 +133,103 @@ describe("authorization request context", () => {
     await draining;
 
     expect(maximumActive).toBe(4);
+  });
+
+  // ENG-1739: the per-request check counter. `can()` calls `recordAuthorizationCheckIssued`, not
+  // exercised here — these pin the primitive it is built on.
+  describe("authorization check counter", () => {
+    test("counts each recorded check within a surface", async () => {
+      await withAuthorizationSurface("server_action", async () => {
+        expect(getIssuedAuthorizationCheckCount()).toBe(0);
+        recordAuthorizationCheckIssued();
+        recordAuthorizationCheckIssued();
+        expect(getIssuedAuthorizationCheckCount()).toBe(2);
+        recordAuthorizationCheckIssued();
+        expect(getIssuedAuthorizationCheckCount()).toBe(3);
+      });
+    });
+
+    test("is null outside a surface, and recording outside one is a no-op", () => {
+      expect(getIssuedAuthorizationCheckCount()).toBeNull();
+      expect(() => recordAuthorizationCheckIssued()).not.toThrow();
+      expect(getIssuedAuthorizationCheckCount()).toBeNull();
+    });
+
+    test("starts fresh for each new surface rather than carrying a count over", async () => {
+      await withAuthorizationSurface("server_action", async () => {
+        recordAuthorizationCheckIssued();
+        recordAuthorizationCheckIssued();
+        expect(getIssuedAuthorizationCheckCount()).toBe(2);
+      });
+
+      await withAuthorizationSurface("server_action", async () => {
+        expect(getIssuedAuthorizationCheckCount()).toBe(0);
+      });
+    });
+
+    test("keeps concurrent surfaces' counts independent", async () => {
+      const counts = await Promise.all([
+        withAuthorizationSurface("api_v1", async () => {
+          recordAuthorizationCheckIssued();
+          await Promise.resolve();
+          recordAuthorizationCheckIssued();
+          recordAuthorizationCheckIssued();
+          return getIssuedAuthorizationCheckCount();
+        }),
+        withAuthorizationSurface("mcp", async () => {
+          recordAuthorizationCheckIssued();
+          await Promise.resolve();
+          return getIssuedAuthorizationCheckCount();
+        }),
+      ]);
+
+      expect(counts).toEqual([3, 1]);
+    });
+
+    test("nested wrappers accumulate onto the outer surface's count", async () => {
+      await withAuthorizationSurface("api_v1", () =>
+        withAuthorizationSurface("api_v3", async () => {
+          recordAuthorizationCheckIssued();
+          recordAuthorizationCheckIssued();
+          expect(getIssuedAuthorizationCheckCount()).toBe(2);
+        })
+      );
+    });
+
+    test("reports the request's total to the histogram, tagged by surface", async () => {
+      await withAuthorizationSurface("api_v3", async () => {
+        recordAuthorizationCheckIssued();
+        recordAuthorizationCheckIssued();
+      });
+
+      expect(recordAuthorizationChecksPerRequest).not.toHaveBeenCalled();
+      await afterCallbacks[0]();
+      expect(recordAuthorizationChecksPerRequest).toHaveBeenCalledExactlyOnceWith(2, "api_v3");
+    });
+
+    test("records zero for a request that never authorized anything", async () => {
+      await withAuthorizationSurface("server_action", async () => undefined);
+
+      await afterCallbacks[0]();
+      // Not skipped: "this request made no authorization decisions" is a real, distinguishable
+      // observation, which is why the histogram's lowest boundary separates 0 from 1.
+      expect(recordAuthorizationChecksPerRequest).toHaveBeenCalledExactlyOnceWith(0, "server_action");
+    });
+
+    test("a throwing histogram record does not stop the comparison drain", async () => {
+      vi.mocked(recordAuthorizationChecksPerRequest).mockImplementationOnce(() => {
+        throw new Error("meter provider exploded");
+      });
+      const job = vi.fn().mockResolvedValue(undefined);
+
+      await withAuthorizationSurface("server_action", async () => {
+        expect(enqueueAuthorizationComparison(job)).toBe(true);
+      });
+
+      // Next swallows errors thrown from `after()`, so an unguarded record would silently drop the
+      // shadow comparisons for this request rather than surfacing anything.
+      await expect(afterCallbacks[0]()).resolves.not.toThrow();
+      expect(job).toHaveBeenCalledOnce();
+    });
   });
 });

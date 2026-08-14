@@ -10,7 +10,9 @@ worth internalizing:
 
 Everything below exists to make that visible and recoverable.
 
-See also: [README](./README.md) for the projection contract and the backfill command reference.
+See also: [README](./README.md) for the projection development contract and
+[AuthZed Operations](../docs/self-hosting/advanced/authzed-operations.mdx) for the public self-hosted operator
+contract.
 
 ## 1. Symptoms
 
@@ -40,7 +42,7 @@ records `disabled` as its own outcome rather than skipping.
 
 ### Metrics
 
-All four carry only bounded attributes — never an organization, user, or relationship identifier.
+All five carry only bounded attributes — never an organization, user, or relationship identifier.
 
 | Metric | Attributes | Read it as |
 | --- | --- | --- |
@@ -48,6 +50,7 @@ All four carry only bounded attributes — never an organization, user, or relat
 | `formbricks_authzed_projection_duration_seconds` | same | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement. |
 | `formbricks_authzed_request_failures_total` | `operation`, `code`, `retryable` | Requests that exhausted their retry budget — *any* facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`. |
 | `formbricks_authzed_request_retries_total` | `operation`, `code` | Retries scheduled. Elevated but not failing = degraded, not down. |
+| `formbricks_authzed_authorization_checks_per_request` | `surface` | How many `can()` decisions one request made. Watch the upper percentiles for a page regressing into one check per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
 
 Exported through the readers already configured in `instrumentation-node.ts`: Prometheus when
 `PROMETHEUS_ENABLED=1` (scraped by the chart's ServiceMonitor), OTLP when

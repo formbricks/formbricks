@@ -38,17 +38,17 @@ const run = async (): Promise<void> => {
     // Environment validation logs details before throwing. Suppress that duplicate output so this
     // automation-oriented command always emits exactly one sanitized JSON result.
     console.error = () => {};
-    const { parseAuthzedBackfillCommand, runAuthzedBackfillCli } =
-      await import("../lib/authzed/backfill-cli");
-    console.error = originalConsoleError;
-
+    const { parseAuthzedBackfillCommand } = await import("../lib/authzed/backfill-cli-command");
     const command = parseAuthzedBackfillCommand(process.argv.slice(2));
     if (!command) {
+      console.error = originalConsoleError;
       writeResult(INVALID_REQUEST_RESULT);
       process.exitCode = 1;
       return;
     }
 
+    const { runAuthzedBackfillCli } = await import("../lib/authzed/backfill-cli");
+    console.error = originalConsoleError;
     process.exitCode = await runAuthzedBackfillCli(command);
   } catch {
     console.error = originalConsoleError;

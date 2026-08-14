@@ -153,16 +153,17 @@ the Formbricks app. Authorization checks must fail closed once product enforceme
 Formbricks readiness remains independent from transient SpiceDB availability.
 
 The chart deliberately does not install or update the Formbricks authorization schema. After SpiceDB is ready,
-run the release-matched repository command from an operator workstation or controlled deployment runner:
+run the release-matched command inside the Formbricks application deployment:
 
 ```bash
-pnpm authzed:schema check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
 
 # Empty instances only
-pnpm authzed:schema apply
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply
 
 # Non-empty instances: use the remoteDigest returned by the immediately preceding check
-pnpm authzed:schema apply \
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply \
   --expected-current-digest sha256:<digest-from-check>
 ```
 
@@ -170,6 +171,8 @@ The initial apply to an empty instance needs no digest. A non-empty instance mus
 applied with `--expected-current-digest sha256:<digest-from-check>`. This separation keeps schema changes out of
 Helm hooks, app startup, migrations, liveness, and readiness. Back up the current schema and affected
 relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
+The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
+restoration, schema lifecycle, relationship repair, and monitoring.
 
 ## Cube
 

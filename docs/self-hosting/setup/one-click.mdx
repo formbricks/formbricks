@@ -347,15 +347,21 @@ Before upgrading to a release that uses AuthZed:
 2. Download the release-matched `authzed-postgres-bootstrap.sh` into the `formbricks` directory.
 3. Generate and add `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` to `.env` using `openssl rand -hex 32`.
 4. Merge the three AuthZed services and Formbricks environment variables from the released Compose file while
-   preserving the installer-added Traefik, storage, and mail configuration.
+   preserving the installer-added Traefik, storage, and mail configuration. Also copy the profiled
+   `authzed-ops` service; it has no Traefik labels and does not start during a normal installation.
 5. Run `docker compose config`, `docker compose pull`, and `docker compose up -d` from the `formbricks` directory.
 6. Verify `authzed-db-bootstrap` and `spicedb-migrate` completed and `spicedb` is healthy.
-7. Back up the authorization database with
+7. Run the health, schema, and dry-run relationship audit in the
+   [AuthZed Operations guide](/self-hosting/advanced/authzed-operations).
+8. Back up the authorization database with
    `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` and add it to your
    regular backup procedure.
 
 Do not use `docker compose down -v` during this migration or rollback because the existing PostgreSQL volume
 stores both Formbricks and SpiceDB data.
+
+For upgrades, restoration, schema changes, and relationship repair, follow the canonical
+[AuthZed Operations guide](/self-hosting/advanced/authzed-operations).
 
 ## Stop
 
