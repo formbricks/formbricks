@@ -63,32 +63,39 @@ const checkOrganizationAccess = <T extends z.ZodRawShape>(
   return accessItem.roles.includes(role);
 };
 
+/**
+ * Compares a granted role/permission against the minimum required one.
+ *
+ * Both sides are looked up explicitly and an unrecognized value on either side is refused. Comparing
+ * the weights directly would fail open: an unknown value resolves to `undefined`, `number < undefined`
+ * is `false`, so the insufficient-permission guard would not fire and every member would be admitted.
+ */
+const meetsMinimumWeight = (
+  weights: Record<string, number>,
+  granted: string,
+  minimum: string | undefined
+): boolean => {
+  if (minimum === undefined) return true;
+
+  const grantedWeight = weights[granted];
+  const minimumWeight = weights[minimum];
+  if (grantedWeight === undefined || minimumWeight === undefined) return false;
+
+  return grantedWeight >= minimumWeight;
+};
+
 const checkWorkspaceTeamAccess = async (accessItem: any, userId: string) => {
   if (accessItem.type !== "workspaceTeam") return false;
   const workspacePermission = await getWorkspacePermissionByUserId(userId, accessItem.workspaceId);
   if (!workspacePermission) return false;
-  if (
-    accessItem.minPermission !== undefined &&
-    teamPermissionWeight[workspacePermission as keyof typeof teamPermissionWeight] <
-      teamPermissionWeight[accessItem.minPermission as keyof typeof teamPermissionWeight]
-  ) {
-    return false;
-  }
-  return true;
+  return meetsMinimumWeight(teamPermissionWeight, workspacePermission, accessItem.minPermission);
 };
 
 const checkTeamAccess = async (accessItem: any, userId: string) => {
   if (accessItem.type !== "team") return false;
   const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
   if (!teamRole) return false;
-  if (
-    accessItem.minPermission !== undefined &&
-    teamRoleWeight[teamRole as keyof typeof teamRoleWeight] <
-      teamRoleWeight[accessItem.minPermission as keyof typeof teamRoleWeight]
-  ) {
-    return false;
-  }
-  return true;
+  return meetsMinimumWeight(teamRoleWeight, teamRole, accessItem.minPermission);
 };
 
 export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
