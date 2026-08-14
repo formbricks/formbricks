@@ -34,6 +34,7 @@ const PROJECTED = { passes: 1, status: "projected" } as const;
 const emptySource: TAuthzedOrganizationSource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
+  expectedRelationships: [],
   invalidApiKeyWorkspaceGrants: [],
   invalidWorkspaceTeamGrants: [],
   memberships: [],
@@ -65,6 +66,7 @@ beforeEach(() => {
   vi.mocked(source.findMismatchedParentEdges).mockResolvedValue([]);
   vi.mocked(source.readWorkspaceSource).mockResolvedValue({
     apiKeyWorkspaceGrants: [],
+    expectedRelationships: [],
     invalidApiKeyWorkspaceGrants: [],
     invalidWorkspaceTeamGrants: [],
     organizationId: "org-1",
@@ -444,6 +446,40 @@ describe("detecting a cross-tenant parent edge", () => {
   });
 });
 
+describe("detecting mismatched permission relations", () => {
+  test("reports a stale higher workspace grant even though the source pair is present", async () => {
+    const expectedRelationship = {
+      relation: "reader_team",
+      resource: { objectId: "ws-1", objectType: "workspace" },
+      subject: { objectId: "team-1", objectType: "team", relation: "member" },
+    };
+    const observedRelationship = { ...expectedRelationship, relation: "manager_team" };
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      expectedRelationships: [expectedRelationship],
+      workspaceIds: ["ws-1"],
+      workspaceTeamGrants: [{ teamId: "team-1", workspaceId: "ws-1" }],
+    });
+    readRelationships.mockResolvedValue({
+      cursor: null,
+      relationships: [observedRelationship],
+      snapshot: { token: "revision-1" },
+    });
+
+    const result = await runAuthzedBackfill(request({ mode: "dry_run" }), dependencies);
+
+    expect(result.counters.mismatchedPermissions).toBe(1);
+    expect(result.mismatchedPermissions).toEqual([
+      {
+        expectedRelations: ["reader_team"],
+        observedRelations: ["manager_team"],
+        source: { kind: "workspaceTeamGrant", teamId: "team-1", workspaceId: "ws-1" },
+      },
+    ]);
+    expect(result.status).toBe("drifted");
+  });
+});
+
 describe("pruning", () => {
   const ghostTeamRelationship = {
     relation: "organization",
@@ -687,6 +723,7 @@ describe("workspace scope", () => {
   const missingWorkspace = (): void => {
     vi.mocked(source.readWorkspaceSource).mockResolvedValue({
       apiKeyWorkspaceGrants: [],
+      expectedRelationships: [],
       invalidApiKeyWorkspaceGrants: [],
       invalidWorkspaceTeamGrants: [],
       organizationId: null,

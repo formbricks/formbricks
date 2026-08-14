@@ -54,6 +54,8 @@ export type TAuthzedSourceRef =
 export type TAuthzedObservationSummary = Readonly<{
   /** Relationships on deliberately-unprojected resource types. Counted, never acted on. */
   ignored: number;
+  /** Managed relationships retained for exact relation-set comparison against PostgreSQL. */
+  managedRelationships: ReadonlyArray<TAuthzedRelationship>;
   /** Every parent edge observed, so the organization each resource claims can be verified. */
   parentEdges: ReadonlyArray<TAuthzedParentEdge>;
   /** Deduplicated, deterministically ordered source records the observation implies. */
@@ -66,6 +68,12 @@ export type TAuthzedObservationSummary = Readonly<{
    * tooling cannot know what source record — if any — should own them.
    */
   unmanaged: ReadonlyArray<TAuthzedRelationshipRef>;
+}>;
+
+export type TAuthzedPermissionMismatch = Readonly<{
+  expectedRelations: ReadonlyArray<string>;
+  observedRelations: ReadonlyArray<string>;
+  source: TAuthzedSourceRef;
 }>;
 
 const ORGANIZATION_ROLE_RELATIONS = new Set<string>(Object.values(ORGANIZATION_RELATIONS));
@@ -304,6 +312,81 @@ export const findUnprojectedSourceRefs = (
     .map(([, ref]) => ref);
 };
 
+const relationshipKey = ({ relation, resource, subject }: TAuthzedRelationship): string =>
+  JSON.stringify({ relation, resource, subject });
+
+const relationNames = (relationships: ReadonlyArray<TAuthzedRelationship>): ReadonlyArray<string> =>
+  [...new Set(relationships.map(({ relation }) => relation))].sort(byCodeUnit);
+
+/**
+ * Find source records that exist on both sides but carry a different exact permission relation set.
+ *
+ * Parent edges are deliberately excluded: their correctness is verified by `findMismatchedParentEdges`,
+ * which can distinguish an absent row from a cross-tenant parent. Everything else is compared as a full
+ * relationship tuple, so an API key with two independent organization flags and a role ladder with one
+ * selected value are both handled without special cases.
+ */
+export const findMismatchedPermissionRelations = (
+  expected: ReadonlyArray<TAuthzedRelationship>,
+  observed: ReadonlyArray<TAuthzedRelationship>
+): ReadonlyArray<TAuthzedPermissionMismatch> => {
+  type TRelationshipGroup = {
+    permissionRelationships: TAuthzedRelationship[];
+    source: TAuthzedSourceRef;
+  };
+
+  const groupBySource = (
+    relationships: ReadonlyArray<TAuthzedRelationship>
+  ): ReadonlyMap<string, TRelationshipGroup> => {
+    const groups = new Map<string, TRelationshipGroup>();
+
+    for (const relationship of relationships) {
+      const source = toSourceRef(relationship);
+      if (!source) {
+        continue;
+      }
+
+      const key = sourceRefKey(source);
+      const group = groups.get(key) ?? { permissionRelationships: [], source };
+      if (relationship.relation !== PARENT_RELATION) {
+        group.permissionRelationships.push(relationship);
+      }
+      groups.set(key, group);
+    }
+
+    return groups;
+  };
+
+  const expectedGroups = groupBySource(expected);
+  const observedGroups = groupBySource(observed);
+  const mismatches: Array<readonly [string, TAuthzedPermissionMismatch]> = [];
+
+  for (const [sourceKey, expectedGroup] of expectedGroups) {
+    const observedGroup = observedGroups.get(sourceKey);
+    // A wholly absent source is reported as `missing`, not duplicated as a permission mismatch.
+    if (!observedGroup) {
+      continue;
+    }
+
+    const expectedKeys = expectedGroup.permissionRelationships.map(relationshipKey).sort(byCodeUnit);
+    const observedKeys = observedGroup.permissionRelationships.map(relationshipKey).sort(byCodeUnit);
+    if (JSON.stringify(expectedKeys) === JSON.stringify(observedKeys)) {
+      continue;
+    }
+
+    mismatches.push([
+      sourceKey,
+      {
+        expectedRelations: relationNames(expectedGroup.permissionRelationships),
+        observedRelations: relationNames(observedGroup.permissionRelationships),
+        source: expectedGroup.source,
+      },
+    ]);
+  }
+
+  return mismatches.sort(([left], [right]) => byCodeUnit(left, right)).map(([, mismatch]) => mismatch);
+};
+
 const toRelationshipRef = (relationship: TAuthzedRelationship): TAuthzedRelationshipRef => ({
   objectId: relationship.resource.objectId,
   objectType: relationship.resource.objectType,
@@ -320,6 +403,7 @@ export const summarizeObservation = (
   relationships: ReadonlyArray<TAuthzedRelationship>
 ): TAuthzedObservationSummary => {
   const sourceRefs = new Map<string, TAuthzedSourceRef>();
+  const managedRelationships = new Map<string, TAuthzedRelationship>();
   const unmanaged = new Map<string, TAuthzedRelationshipRef>();
   const parentEdges = new Map<string, TAuthzedParentEdge>();
   let ignored = 0;
@@ -338,6 +422,7 @@ export const summarizeObservation = (
     const sourceRef = toSourceRef(relationship);
     if (sourceRef) {
       sourceRefs.set(sourceRefKey(sourceRef), sourceRef);
+      managedRelationships.set(relationshipKey(relationship), relationship);
       continue;
     }
 
@@ -347,6 +432,9 @@ export const summarizeObservation = (
 
   return {
     ignored,
+    managedRelationships: [...managedRelationships.entries()]
+      .sort(([left], [right]) => byCodeUnit(left, right))
+      .map(([, relationship]) => relationship),
     parentEdges: [...parentEdges.entries()]
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([, edge]) => edge),

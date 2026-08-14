@@ -59,6 +59,7 @@ const writeResult = (result: object): void => {
 const emptySource: TAuthzedOrganizationSource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
+  expectedRelationships: [],
   invalidApiKeyWorkspaceGrants: [],
   invalidWorkspaceTeamGrants: [],
   memberships: [],
@@ -152,6 +153,7 @@ const run = async (): Promise<void> => {
       readOrganizationSource: async () => emptySource,
       readWorkspaceSource: async () => ({
         apiKeyWorkspaceGrants: [],
+        expectedRelationships: [],
         invalidApiKeyWorkspaceGrants: [],
         invalidWorkspaceTeamGrants: [],
         organizationId: null,
