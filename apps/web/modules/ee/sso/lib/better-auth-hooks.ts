@@ -3,14 +3,14 @@ import type { BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { SIGNUP_DISABLED_ERROR_CODE, SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
-import { isUninvitedSignupAllowed } from "@/modules/auth/lib/signup-policy";
+import { isUninvitedSignupAllowed, signupDisabledError } from "@/modules/auth/lib/signup-policy";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
@@ -82,7 +82,9 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           // invite exemption) and marks the request scope before calling signUpEmail. If that mark is
           // absent, this is a direct POST to Better Auth's native /sign-up/email — which bypasses the
           // action — so re-enforce the domain block here (no invite is carried on that raw path).
-          if (!isSignupDomainAllowed() && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
+          // One read, two guards: both re-checks below exist only for a request that skipped the action.
+          const wentThroughAction = isSignupDomainAllowed();
+          if (!wentThroughAction && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
             return false;
           }
           // ENG-2293 BACKSTOP: closed-instance policy (SIGNUP_ENABLED / multi-org / fresh-instance).
@@ -95,11 +97,8 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           // Kept anyway because this hook covers EVERY credential user-creation path, not just the one
           // route the before-hook names: any future Better Auth plugin that creates a user (magic link,
           // email OTP, admin create) lands here, and on a closed instance it should not.
-          if (!isSignupDomainAllowed() && !(await isUninvitedSignupAllowed())) {
-            throw new APIError("FORBIDDEN", {
-              message: "Signup is disabled on this instance.",
-              code: SIGNUP_DISABLED_ERROR_CODE,
-            });
+          if (!wentThroughAction && !(await isUninvitedSignupAllowed())) {
+            throw signupDisabledError();
           }
           return; // otherwise keep credential-signup defaults
         }

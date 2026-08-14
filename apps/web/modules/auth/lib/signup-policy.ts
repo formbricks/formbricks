@@ -42,6 +42,18 @@ export const isUninvitedSignupAllowed = async (): Promise<boolean> => {
 const CREDENTIAL_SIGNUP_PATH = "/sign-up/email";
 
 /**
+ * The rejection for a sign-up the instance policy forbids. Shared because two layers raise it — the
+ * before-hook below and the `user.create.before` backstop — and they must stay byte-identical: the
+ * response is the only thing an unauthenticated caller can see, so a divergence between them would be
+ * observable. The `code` is what a client localizes against; the message is display copy.
+ */
+export const signupDisabledError = (): APIError =>
+  new APIError("FORBIDDEN", {
+    message: "Signup is disabled on this instance.",
+    code: SIGNUP_DISABLED_ERROR_CODE,
+  });
+
+/**
  * Better Auth `before` hook: enforce the closed-sign-up policy on `POST /api/auth/sign-up/email`
  * BEFORE the endpoint handler runs (ENG-2293).
  *
@@ -71,9 +83,6 @@ export const signupPolicyBeforeHandler = async (ctx: AuthHookContext): Promise<v
   if (isSignupDomainAllowed()) return;
 
   if (!(await isUninvitedSignupAllowed())) {
-    throw new APIError("FORBIDDEN", {
-      message: "Signup is disabled on this instance.",
-      code: SIGNUP_DISABLED_ERROR_CODE,
-    });
+    throw signupDisabledError();
   }
 };
