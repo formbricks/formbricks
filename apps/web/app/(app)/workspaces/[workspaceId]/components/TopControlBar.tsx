@@ -13,6 +13,8 @@ interface TopControlBarProps {
   isOwnerOrManager: boolean;
   isAccessControlAllowed: boolean;
   membershipRole?: TOrganizationRole;
+  // False on the workspace-agnostic settings routes, where no workspace is in scope.
+  showWorkspaceBreadcrumb?: boolean;
 }
 
 export const TopControlBar = ({
@@ -24,7 +26,8 @@ export const TopControlBar = ({
   isOwnerOrManager,
   isAccessControlAllowed,
   membershipRole,
-}: TopControlBarProps) => {
+  showWorkspaceBreadcrumb = true,
+}: Readonly<TopControlBarProps>) => {
   const { workspace } = useWorkspaceContext();
   const isMembershipPending = membershipRole === undefined;
 
@@ -42,6 +45,7 @@ export const TopControlBar = ({
         isOwnerOrManager={isOwnerOrManager}
         isMembershipPending={isMembershipPending}
         isAccessControlAllowed={isAccessControlAllowed}
+        showWorkspaceBreadcrumb={showWorkspaceBreadcrumb}
       />
     </div>
   );

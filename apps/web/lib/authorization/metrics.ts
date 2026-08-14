@@ -27,6 +27,35 @@ const comparisonDuration = meter.createHistogram("formbricks_authzed_authorizati
   unit: "s",
 });
 
+/**
+ * ENG-1739: how many `can()`/`assertCan()` decisions one request made.
+ *
+ * The perf harness times a single decision; it cannot see whether a page issues one decision or one
+ * per row. A workspace-scoped list path that authorizes once still reports "fast" under that harness
+ * even if a regression made it authorize per row, so this is the metric that catches an N+1.
+ *
+ * The lowest boundary is 0.5, not 1, and that is load-bearing. OpenTelemetry histogram buckets are
+ * upper-inclusive and lower-exclusive, so boundaries starting at 1 put both 0 and 1 in `(-inf, 1]`.
+ * Every wrapped request records — including the many that never authorize anything — so without the
+ * 0.5 split the healthy single-check case is indistinguishable from "no authorization happened" on
+ * the one histogram meant to make amplification visible.
+ */
+const checksPerRequest = meter.createHistogram("formbricks_authzed_authorization_checks_per_request", {
+  advice: {
+    explicitBucketBoundaries: [0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 250, 350, 500, 750, 1000],
+  },
+  description: "Number of central authorization decisions made while handling one request",
+  unit: "{check}",
+});
+
+/** Record one request's total authorization-decision count, tagged by the surface that served it. */
+export const recordAuthorizationChecksPerRequest = (
+  checksIssued: number,
+  surface: TAuthzedAuthorizationRolloutSurface
+): void => {
+  checksPerRequest.record(checksIssued, { surface });
+};
+
 export type TAuthorizationComparisonMetric = Readonly<{
   action: TAuthorizationAction;
   actorType: TAuthorizationActor["type"];

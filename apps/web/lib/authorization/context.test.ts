@@ -7,6 +7,7 @@ import {
   recordAuthorizationCheckIssued,
   withAuthorizationSurface,
 } from "./context";
+import { recordAuthorizationChecksPerRequest } from "./metrics";
 
 const afterCallbacks = vi.hoisted(() => [] as Array<() => Promise<void> | void>);
 
@@ -14,8 +15,14 @@ vi.mock("next/server", () => ({
   after: vi.fn((callback: () => Promise<void> | void) => afterCallbacks.push(callback)),
 }));
 
+// The histogram itself is covered against a real MeterProvider in `checks-per-request-metric.test.ts`.
+// Here it is a mock so this file can assert the *wiring* — that recording happens, with the right
+// arguments, and that a failure in it cannot take out the comparison drain.
+vi.mock("./metrics", () => ({ recordAuthorizationChecksPerRequest: vi.fn() }));
+
 beforeEach(() => {
   afterCallbacks.length = 0;
+  vi.mocked(recordAuthorizationChecksPerRequest).mockReset();
   vi.mocked(after)
     .mockReset()
     .mockImplementation((callback) => afterCallbacks.push(callback));
@@ -187,6 +194,42 @@ describe("authorization request context", () => {
           expect(getIssuedAuthorizationCheckCount()).toBe(2);
         })
       );
+    });
+
+    test("reports the request's total to the histogram, tagged by surface", async () => {
+      await withAuthorizationSurface("api_v3", async () => {
+        recordAuthorizationCheckIssued();
+        recordAuthorizationCheckIssued();
+      });
+
+      expect(recordAuthorizationChecksPerRequest).not.toHaveBeenCalled();
+      await afterCallbacks[0]();
+      expect(recordAuthorizationChecksPerRequest).toHaveBeenCalledExactlyOnceWith(2, "api_v3");
+    });
+
+    test("records zero for a request that never authorized anything", async () => {
+      await withAuthorizationSurface("server_action", async () => undefined);
+
+      await afterCallbacks[0]();
+      // Not skipped: "this request made no authorization decisions" is a real, distinguishable
+      // observation, which is why the histogram's lowest boundary separates 0 from 1.
+      expect(recordAuthorizationChecksPerRequest).toHaveBeenCalledExactlyOnceWith(0, "server_action");
+    });
+
+    test("a throwing histogram record does not stop the comparison drain", async () => {
+      vi.mocked(recordAuthorizationChecksPerRequest).mockImplementationOnce(() => {
+        throw new Error("meter provider exploded");
+      });
+      const job = vi.fn().mockResolvedValue(undefined);
+
+      await withAuthorizationSurface("server_action", async () => {
+        expect(enqueueAuthorizationComparison(job)).toBe(true);
+      });
+
+      // Next swallows errors thrown from `after()`, so an unguarded record would silently drop the
+      // shadow comparisons for this request rather than surfacing anything.
+      await expect(afterCallbacks[0]()).resolves.not.toThrow();
+      expect(job).toHaveBeenCalledOnce();
     });
   });
 });
