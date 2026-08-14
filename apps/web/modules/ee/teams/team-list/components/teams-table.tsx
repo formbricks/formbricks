@@ -86,7 +86,9 @@ const getTeamColumns = ({
     header: null,
     srLabel: t("common.actions"),
     headerClassName: "w-[20%]",
-    align: "right",
+    // No `align: "right"`: the header is empty and the cell's button is block-level, so `text-align` has
+    // nothing to move in either. The flex is what right-aligns the button — and a skeleton bar, if this
+    // array is ever fed to `SettingsTableSkeleton`.
     cellClassName: "flex justify-end",
     stopRowClick: true,
     cell: (row) => (
