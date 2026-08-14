@@ -76,8 +76,10 @@ jobs:
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
             --show-only templates/deployment.yaml > "$render_dir/formbricks-default.yaml"
-          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-default.yaml" \
-            | grep -q 'value: "http://formbricks:3000/api/auth/jwks"'
+          if grep -q 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-default.yaml"; then
+            echo "MCP_OAUTH_JWKS_URL must remain opt-in"
+            exit 1
+          fi
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

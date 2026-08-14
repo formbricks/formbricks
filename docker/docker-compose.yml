@@ -363,7 +363,6 @@ services:
       AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
       AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
       AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-minimize_latency}
-      MCP_OAUTH_JWKS_URL: ${MCP_OAUTH_JWKS_URL:-http://formbricks:3000/api/auth/jwks}
 
   # Opt-in AuthZed health, schema, and relationship-repair commands. This profile never starts with
   # the normal stack. Example: docker compose --profile authzed-ops run --rm authzed-ops health

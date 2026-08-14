@@ -21,19 +21,12 @@ const ZOpenAICompatibleBaseUrl = z.url().refine(isHttpUrl, {
 });
 
 const isValidMcpOauthJwksUrl = (value: string): boolean => {
-  try {
-    const url = new URL(value);
-
-    return (
-      (url.protocol === "http:" || url.protocol === "https:") &&
-      url.hostname.length > 0 &&
-      url.username === "" &&
-      url.password === "" &&
-      url.hash === ""
-    );
-  } catch {
+  if (!isHttpUrl(value)) {
     return false;
   }
+
+  const url = new URL(value);
+  return url.hostname.length > 0 && url.username === "" && url.password === "" && url.hash === "";
 };
 
 const ZMcpOauthJwksUrl = z.url().refine(isValidMcpOauthJwksUrl, {
