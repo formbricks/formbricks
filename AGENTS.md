@@ -29,6 +29,51 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
 - If changes still don't appear, restart the Next.js dev server (`pnpm dev`).
 
+### Stale package builds after a branch switch
+
+The same trap applies to **every** workspace package consumed through its built output rather than its
+source — `@formbricks/ai` and `@formbricks/database` resolve via `dist/` in their `exports` map, so
+`apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves
+`dist/` exactly as it was, and nothing warns you.
+
+**This only bites when you bypass Turborepo.** Running `vitest` or `tsc` directly inside `apps/web`,
+`pnpm --filter @formbricks/web test`, or an IDE test runner all skip the task graph — which is how you
+usually meet it, iterating on one test file. The root `pnpm test` and `pnpm typecheck` are safe:
+`@formbricks/web#test` in `turbo.json` declares `dependsOn` on `@formbricks/ai#build`,
+`@formbricks/database#build` and five more, so turbo rebuilds them before the suite runs. That is also
+why CI stays green with no build step of its own — do **not** read "green on CI, red locally" as
+evidence of a stale `dist/`; both run the same graph.
+
+The failure looks nothing like a stale build. A symbol added on the branch you just checked out is
+simply absent from `dist/`, so the import resolves to `undefined` and you get errors that read like
+real regressions:
+
+- `TypeError: Right-hand side of 'instanceof' is not an object` (the class is in `src/`, not `dist/`)
+- `Failed to resolve entry for package "@formbricks/…"`, or a missing named export
+- `tsc` or Vitest failures in files you never touched
+
+This has cost real time: four failing tests read as a broken `main` from an unrelated PR, when the only
+problem was a `dist/` built days earlier. To confirm the diagnosis, check whether a symbol you expect
+the package to *export* is in the built output — present in `src/`, absent from `dist/`, is the
+signature. (Pick one the entry really re-exports; an internal helper is legitimately absent from
+`dist/index.js` and would read as a false positive.)
+
+```
+grep -rc "MyNewExport" packages/<pkg>/src packages/<pkg>/dist/index.js
+```
+
+Recursive on purpose: `packages/ai/src` has nested directories (`providers/`), and a non-recursive
+`src/*.ts` glob reports a symbol defined in one of them as missing from *both* sides.
+
+The fix is to rebuild the dependency graph:
+
+```
+pnpm build --filter=@formbricks/web^...
+```
+
+(Dependencies only — `^...` excludes the Next app itself. This is the same command
+`.github/workflows/integration-tests.yml` runs before its suites, for exactly this reason.)
+
 ### Tailwind & Workspace Package CSS
 
 Tailwind v4 detects sources starting from the consuming app's own root (`apps/web` for the Next.js
@@ -56,32 +101,6 @@ Tailwind is configured CSS-first everywhere. Only two JS/TS Tailwind configs rem
 (`packages/survey-ui/tailwind.config.ts` and `packages/surveys/tailwind.config.cjs`) and both are
 reached through an explicit `@config` bridge from the package's own stylesheet. Do not add a
 `tailwind.config.js` that nothing `@config`s — Tailwind v4 will not load it, and it will silently rot.
-
-### Stale package builds after a branch switch
-
-The same trap applies to **every** workspace package that is consumed through its built output rather than its source — `@formbricks/ai` and `@formbricks/database` resolve via `dist/` in their `exports` map, so `apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves `dist/` exactly as it was, and nothing warns you.
-
-The failure looks nothing like a stale build. A symbol added on the branch you just checked out is simply absent from `dist/`, so the import resolves to `undefined` and you get errors that read like real regressions:
-
-- `TypeError: Right-hand side of 'instanceof' is not an object` (the class exists in `src/`, not in `dist/`)
-- `Cannot find module '@formbricks/…'` or a missing named export
-- `tsc` or Vitest failures in files you never touched
-
-This has cost real time: a run of four failing tests looked like a broken `main` from an unrelated PR, when the only problem was a `dist/` built days earlier. Before trusting a local failure after any branch change, rebuild the dependency graph:
-
-```
-pnpm build --filter=@formbricks/web^...
-```
-
-(Dependencies only — `^...` excludes the Next app itself. This is the same command `.github/workflows/integration-tests.yml` runs before its suites, for exactly this reason.)
-
-To confirm the diagnosis first, check whether the symbol is actually in the built output — if `src/` has it and `dist/` doesn't, that's this problem and nothing else:
-
-```
-grep -c "MyNewExport" packages/<pkg>/src/*.ts packages/<pkg>/dist/index.js
-```
-
-CI never hits this — it builds from scratch every run — so a failure that reproduces locally but is green on CI is this until proven otherwise.
 
 ## Coding Style & Naming Conventions
 
