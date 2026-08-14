@@ -12,6 +12,10 @@ assertion-based validation suite.
 - [`RUNBOOK.md`](./RUNBOOK.md) — diagnosing and recovering from relationship-sync
   failures: the metrics, the log field contract, suggested alert rules, and the
   recovery path through `pnpm authzed:backfill`.
+- [`PERFORMANCE.md`](./PERFORMANCE.md) — measured cost of a single authorization
+  decision (legacy vs SpiceDB), the proof that the workspace-scoped list paths issue
+  a row-count-independent number of checks, and how to reproduce both with
+  `pnpm authzed:perf`.
 
 ## Running the validation
 

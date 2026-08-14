@@ -12,9 +12,13 @@ production SLO.
   survey list, its dashboard list, and a survey's response export each issue a
   row-count-independent number of authorization checks — confirmed against real Postgres,
   and mutation-checked against all three together (removing the counter call from `can()`
-  fails all 8 assertions across the three files in one run).
-- **A single authorization decision is cheap**, legacy or SpiceDB: sub-2ms p50, sub-5ms
-  p99, on both evaluators, at 6,000 surveys / 2,000 users / 50,000 responses.
+  fails all 9 tests across the three files in one run). The suite costs 3.8s of test time
+  (8.6s including Vitest startup); the slowest single test is 889ms against a 30s budget.
+- **A single authorization decision is cheap: legacy evaluator sub-2ms p50, sub-5ms**
+  **p99; raw SpiceDB engine sub-0.5ms p50, sub-2ms p99.** The full `can()` path
+  through the coordinator (which includes Postgres scope resolution without `reactCache`
+  benefit in a plain script) measures 3.5–3.9ms p50 / 23–30ms p99 for SpiceDB — see
+  the table below and the correction for why this gap is not the SpiceDB engine itself.
 - **The first cross-evaluator comparison run was misread, and the correction matters more
   than the original number.** The gap between "legacy" and "SpiceDB" in the first run was
   not the SpiceDB engine, and it was not `fully_consistent` — it was the coordinator's
@@ -117,7 +121,7 @@ report can close on its own.
 
 ## Results — request amplification (the N+1 claim)
 
-```
+```text
 apps/web/lib/authorization/checks-per-request.integration.test.ts
 apps/web/lib/authorization/checks-per-request-dashboards.integration.test.ts
 apps/web/lib/authorization/checks-per-request-response-export.integration.test.ts
@@ -126,8 +130,15 @@ apps/web/lib/authorization/checks-per-request-response-export.integration.test.t
 | Path | Small | Large | Δ |
 | --- | --- | --- | --- |
 | Survey list (50 → 3,000 surveys) | 1 check | 1 check | **0** |
-| Dashboard list (10 → 500 dashboards) | 1 check | 1 check | **0** |
+| Survey list as a *member*, access via team (100 surveys) | 1 check | — | **0** |
+| Dashboard list (10 → 2,000 dashboards) | 1 check | 1 check | **0** |
 | Response export (1 → 6,500 responses) | *n* checks | *n* checks | **0** |
+
+The member row is the one that exercises the interesting code. Owners short-circuit
+nearly every authorization branch, so an owner-only suite never touches the scope
+resolver or the team-membership walk that real non-admin users go through; that variant
+seeds a `member` whose workspace access arrives through a `WorkspaceTeam` grant and
+confirms the count is still one.
 
 One `workspace.read` decision gates the survey list and the dashboard list; neither
 `getSurveys` nor `getDashboards` runs authorization of its own. The response-export path
@@ -149,7 +160,7 @@ This is backed by a request-scoped counter
 (`apps/web/lib/authorization/context.ts:recordAuthorizationCheckIssued`), incremented once
 inside `can()` itself — the one point every `can()`/`assertCan()` call passes through
 regardless of caller — and reported in production as
-`formbricks_authorization_checks_per_request`, a histogram tagged by surface. That metric
+`formbricks_authzed_authorization_checks_per_request`, a histogram tagged by surface. That metric
 is the thing to watch on a real dashboard for the general "no page regresses into an N+1"
 question; this report exercised the three paths the ticket named explicitly by name.
 
@@ -169,7 +180,7 @@ the counter call from `can()`) against all three files *together*, rather than
 spot-checking one file and trusting the aggregate failure count, surfaced that the
 survey-list growth test was the one silently passing under that exact mutation on the
 first pass. All growth-style assertions now separately assert the baseline count is
-positive before asserting the delta is zero; re-running the mutation now fails all 8
+positive before asserting the delta is zero; re-running the mutation now fails all 9
 tests across the three files in one run.
 
 ## Environment and caveats
@@ -207,17 +218,22 @@ docker compose -f docker-compose.dev.yml up --no-deps spicedb-migrate
 docker compose -f docker-compose.dev.yml up -d --no-deps spicedb
 pnpm authzed:schema apply
 
-# 2. Seed + project
+# 2. Seed + project. `seed` is idempotent — it removes a previous seed first — but it
+#    writes tens of thousands of rows into whatever database `.env` points at, so use a
+#    throwaway one.
 pnpm authzed:perf seed --scale=default
 pnpm authzed:backfill --apply --scope=all
 
 # 3. Measure
 pnpm authzed:perf run --iterations=5000 --concurrency=16
 
-# 4. The N+1 proofs (survey list, dashboard list, response export)
+# 4. The N+1 proofs (survey list, dashboard list, response export). 9 tests, ~4s.
 pnpm --dir apps/web test:integration lib/authorization/checks-per-request.integration.test.ts \
   lib/authorization/checks-per-request-dashboards.integration.test.ts \
   lib/authorization/checks-per-request-response-export.integration.test.ts
+
+# 5. Tear down every row the seed created, and nothing else
+pnpm authzed:perf clean
 ```
 
 ## Follow-ups
@@ -233,5 +249,5 @@ pnpm --dir apps/web test:integration lib/authorization/checks-per-request.integr
 - Run the `large` scale profile (500k responses) at least once to confirm nothing changes
   qualitatively — response volume shouldn't move the authorization graph, but that's an
   assumption this report states, not one it tested.
-- Add a `formbricks_authorization_checks_per_request` alert threshold once real production
+- Add a `formbricks_authzed_authorization_checks_per_request` alert threshold once real production
   values establish a baseline (this report has no basis for picking a number).
