@@ -2,6 +2,7 @@ import { fileUploadQuestion, openTextQuestion, responseData, workspaceId } from 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
+import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { deleteFile } from "@/modules/storage/service";
 import { findAndDeleteUploadedFilesInResponse } from "../utils";
 
@@ -11,6 +12,10 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
+vi.mock("@/lib/utils/resolve-client-id", () => ({
+  findWorkspaceByIdOrLegacyEnvId: vi.fn(),
+}));
+
 vi.mock("@/modules/storage/service", () => ({
   deleteFile: vi.fn(),
 }));
@@ -18,21 +23,48 @@ vi.mock("@/modules/storage/service", () => ({
 describe("findAndDeleteUploadedFilesInResponse", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: every storage id resolves back to the survey's own workspace, so deletion is authorized.
+    vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValue({
+      id: workspaceId,
+      organizationId: "org-1",
+    });
+    vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined });
   });
 
   test("delete files for file upload questions and return okVoid", async () => {
-    vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined });
-
-    const result = await findAndDeleteUploadedFilesInResponse(responseData, [fileUploadQuestion]);
+    const result = await findAndDeleteUploadedFilesInResponse(
+      responseData,
+      [fileUploadQuestion],
+      workspaceId
+    );
 
     expect(deleteFile).toHaveBeenCalledTimes(2);
-    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "file1.png", undefined);
-    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "file2.pdf", undefined);
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "file1.png", workspaceId);
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "file2.pdf", workspaceId);
     expect(result).toEqual(okVoid());
   });
 
   test("not call deleteFile if no file upload questions match response data", async () => {
-    const result = await findAndDeleteUploadedFilesInResponse(responseData, [openTextQuestion]);
+    const result = await findAndDeleteUploadedFilesInResponse(responseData, [openTextQuestion], workspaceId);
+
+    expect(deleteFile).not.toHaveBeenCalled();
+    expect(result).toEqual(okVoid());
+  });
+
+  // A planted URL pointing into another tenant's storage prefix must not be deleted, even though the
+  // survey now lists a file-upload question whose id matches the planted response key (the TOCTOU).
+  test("refuse to delete a file whose storage id belongs to a different workspace", async () => {
+    const foreignWorkspaceId = "foreign-workspace-id";
+    vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValue({
+      id: foreignWorkspaceId,
+      organizationId: "org-2",
+    });
+
+    const plantedData = {
+      [fileUploadQuestion.id]: [`https://example.com/storage/${foreignWorkspaceId}/public/victim.png`],
+    };
+
+    const result = await findAndDeleteUploadedFilesInResponse(plantedData, [fileUploadQuestion], workspaceId);
 
     expect(deleteFile).not.toHaveBeenCalled();
     expect(result).toEqual(okVoid());
@@ -40,13 +72,17 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
 
   test("handle invalid file URLs and log errors", async () => {
     const invalidFileUrl = "https://example.com/invalid-url";
-    const responseData = {
+    const invalidResponseData = {
       [fileUploadQuestion.id]: [invalidFileUrl],
     };
 
     const loggerSpy = vi.spyOn(logger, "error");
 
-    const result = await findAndDeleteUploadedFilesInResponse(responseData, [fileUploadQuestion]);
+    const result = await findAndDeleteUploadedFilesInResponse(
+      invalidResponseData,
+      [fileUploadQuestion],
+      workspaceId
+    );
 
     expect(deleteFile).not.toHaveBeenCalled();
     expect(loggerSpy).toHaveBeenCalled();
@@ -56,13 +92,15 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
   });
 
   test("process multiple file URLs", async () => {
-    vi.mocked(deleteFile).mockResolvedValue({ ok: true, data: undefined });
-
-    const result = await findAndDeleteUploadedFilesInResponse(responseData, [fileUploadQuestion]);
+    const result = await findAndDeleteUploadedFilesInResponse(
+      responseData,
+      [fileUploadQuestion],
+      workspaceId
+    );
 
     expect(deleteFile).toHaveBeenCalledTimes(2);
-    expect(deleteFile).toHaveBeenNthCalledWith(1, workspaceId, "private", "file1.png", undefined);
-    expect(deleteFile).toHaveBeenNthCalledWith(2, workspaceId, "private", "file2.pdf", undefined);
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "file1.png", workspaceId);
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "file2.pdf", workspaceId);
     expect(result).toEqual(okVoid());
   });
 });
