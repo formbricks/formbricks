@@ -101,6 +101,16 @@ definition organization {
 
     /** Who can create, update, or delete API keys: owners and managers (api-keys settings actions). */
     permission manage_api_keys: user = owner + manager
+
+    /**
+     * Members eligible for product data: every membership role EXCEPT `billing`.
+     *
+     * This exists to be intersected into `team#member`, so that team-derived workspace access
+     * carries the same two preconditions the application enforces before it consults the team
+     * ladder at all (`hasUserWorkspaceAccessForActionLegacy`): the principal must hold a membership
+     * in this organization, and that membership must not be `billing`.
+     */
+    permission product_member: user = owner + manager + member
 }
 
 /**
@@ -117,8 +127,21 @@ definition team {
     /** Team contributor (`TeamUser.role = contributor`). */
     relation contributor: user
 
-    /** All members of the team; carries workspace access granted to the team. */
-    permission member: user = admin + contributor
+    /**
+     * All members of the team; carries workspace access granted to the team.
+     *
+     * Intersected with the organization's non-billing membership because a `TeamUser` row is not
+     * sufficient on its own in the application. `hasUserWorkspaceAccessForActionLegacy` opens with
+     * two gates before it ever looks at `WorkspaceTeam`:
+     *
+     *     if (!orgMembership) return false;
+     *     if (orgMembership.role === "billing") return false;
+     *
+     * Without the intersection this schema would grant a billing-role member every workspace their
+     * teams can reach — surveys, responses, contact PII — which the application denies, breaking
+     * this file's own rule that moving a check here must not change who can access what.
+     */
+    permission member: user = (admin + contributor) & organization->product_member
 
     /**
      * Who can view the team: its members, organization owners/managers, and API

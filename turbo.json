@@ -3,6 +3,7 @@
   "cacheMaxSize": "10GB",
   "globalDependencies": [
     ".nvmrc",
+    "authzed/schema.zed",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
     "prisma.config.mjs",

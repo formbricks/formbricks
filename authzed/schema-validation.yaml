@@ -12,12 +12,25 @@
 #   organization:acme
 #     owner   user:olivia         manager user:mark
 #     member  user:mia            (no team — must see no product data)
-#     billing user:bella          (billing surfaces only)
+#     billing user:bella          (billing surfaces only — AND on team:product, see below)
+#     member  user:tom, user:tina, user:uma   (the team users; every TeamUser row in the
+#                                              product has a matching Membership, so the
+#                                              fixture models that rather than team rows
+#                                              floating free of the organization)
 #     api_key_reader api_key:org_reader_key   (accessControl.read)
 #     api_key_writer api_key:org_writer_key   (accessControl.write)
 #   workspace:main, workspace:other            (both owned by acme)
-#   team:product   admin user:tom, contributor user:tina  -> readWrite on workspace:main
-#   team:analysts  contributor user:uma                   -> read      on workspace:main
+#   team:product   admin user:tom, contributor user:tina, contributor user:bella
+#                                                          -> readWrite on workspace:main
+#     bella is on this team deliberately. Without that row the scenario-2 billing assertions
+#     only prove the teamless case, and the schema could grant a billing member every workspace
+#     their teams reach while this suite stayed green — which is exactly what it used to do.
+#   team:analysts  contributor user:uma, contributor user:ghost
+#                                                          -> read      on workspace:main
+#     ghost holds a team row but NO membership in acme — the state legacy denies at
+#     `if (!orgMembership) return false;` before it reaches the team ladder. No application path
+#     creates it today (every TeamUser write is org-validated), so this is defence in depth: the
+#     schema states the invariant instead of inheriting it from the writers.
 #   api_key:ci_reader                                     -> read      on workspace:main
 #   api_key:ci_writer                                     -> write     on workspace:main
 #   api_key:ci_manager                                    -> manage    on workspace:main
@@ -32,6 +45,9 @@ relationships: |-
   organization:acme#manager@user:mark
   organization:acme#member@user:mia
   organization:acme#billing@user:bella
+  organization:acme#member@user:tom
+  organization:acme#member@user:tina
+  organization:acme#member@user:uma
   organization:acme#api_key_reader@api_key:org_reader_key
   organization:acme#api_key_writer@api_key:org_writer_key
   api_key:org_reader_key#organization@organization:acme
@@ -44,8 +60,10 @@ relationships: |-
   team:product#organization@organization:acme
   team:product#admin@user:tom
   team:product#contributor@user:tina
+  team:product#contributor@user:bella
   team:analysts#organization@organization:acme
   team:analysts#contributor@user:uma
+  team:analysts#contributor@user:ghost
   workspace:main#writer_team@team:product#member
   workspace:main#reader_team@team:analysts#member
   workspace:main#reader@api_key:ci_reader
@@ -203,6 +221,12 @@ assertions:
 
     # Scenario 2 — billing is excluded from every product surface and from
     # member/API-key management.
+    #
+    # bella holds a `team:product` contributor row, so these prove the exclusion survives team
+    # membership rather than only holding for a billing user who happens to be on no team. The
+    # first assertion pins the mechanism (`team#member` intersects the organization's non-billing
+    # membership); the rest are the product surfaces that would open if it regressed.
+    - team:product#member@user:bella
     - organization:acme#manage@user:bella
     - organization:acme#write@user:bella
     - organization:acme#manage_access@user:bella
@@ -216,6 +240,13 @@ assertions:
     - response:r1#export@user:bella
     - dashboard:insights#read@user:bella
     - dashboard:insights#write@user:bella
+
+    # A team row without a membership in the team's organization grants nothing, mirroring
+    # legacy's `if (!orgMembership) return false;` ahead of the team ladder.
+    - team:analysts#member@user:ghost
+    - workspace:main#read@user:ghost
+    - survey:onboarding#read@user:ghost
+    - response:r1#export@user:ghost
 
     # Scenario 3 — readWrite teams stop below manage; team scope does not
     # leak into other workspaces; contributors do not manage the team.
@@ -280,9 +311,9 @@ validation:
     - "[team:product#member] is <workspace:main#writer_team>"
     - "[user:mark] is <organization:acme#manager>"
     - "[user:olivia] is <organization:acme#owner>"
-    - "[user:tina] is <team:product#contributor>"
-    - "[user:tom] is <team:product#admin>"
-    - "[user:uma] is <team:analysts#contributor>"
+    - "[user:tina] is <organization:acme#member>/<team:product#contributor>"
+    - "[user:tom] is <organization:acme#member>/<team:product#admin>"
+    - "[user:uma] is <organization:acme#member>/<team:analysts#contributor>"
   response:r1#export:
     - "[api_key:ci_reader] is <workspace:main#reader>"
     - "[api_key:ci_writer] is <workspace:main#writer>"
@@ -291,6 +322,6 @@ validation:
     - "[team:product#member] is <workspace:main#writer_team>"
     - "[user:mark] is <organization:acme#manager>"
     - "[user:olivia] is <organization:acme#owner>"
-    - "[user:tina] is <team:product#contributor>"
-    - "[user:tom] is <team:product#admin>"
-    - "[user:uma] is <team:analysts#contributor>"
+    - "[user:tina] is <organization:acme#member>/<team:product#contributor>"
+    - "[user:tom] is <organization:acme#member>/<team:product#admin>"
+    - "[user:uma] is <organization:acme#member>/<team:analysts#contributor>"
