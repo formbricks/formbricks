@@ -82,14 +82,15 @@ const getFeedbackDirectoryColumns = ({
     header: null,
     srLabel: t("common.actions"),
     headerClassName: "w-[25%]",
-    // No `align: "right"`. The buttons are block-level, so `text-align` cannot move them — the flex here
-    // is what right-aligns them, and it is also what right-aligns a skeleton bar if this array is ever
-    // fed to `SettingsTableSkeleton`. Declaring `align` too would leave two mechanisms for one intent,
-    // with the inert one looking authoritative.
-    cellClassName: "flex justify-end gap-2",
     stopRowClick: true,
+    // The flex belongs on a wrapper inside the cell, never on `cellClassName` — that class lands on the
+    // `<td>`, and `display: flex` there stops it being a table-cell, which silently kills the shared
+    // `align-middle` (`vertical-align` applies only to inline-level and table-cell boxes) and makes the
+    // browser wrap the cell in an anonymous table-cell defaulting to baseline. The buttons would sit high
+    // in the row instead of centred. `align: "right"` is not an alternative here: the wrapper is
+    // block-level, so `text-align` cannot move it.
     cell: (directory) => (
-      <>
+      <div className="flex justify-end gap-2">
         {/* Never disabled: it is plain navigation with nothing to race. */}
         {!directory.isArchived && viewDataWorkspaceIdByDirectory.has(directory.id) && (
           <Button size="sm" variant="ghost" asChild>
@@ -121,7 +122,7 @@ const getFeedbackDirectoryColumns = ({
             {t("workspace.settings.feedback_directories.unarchive")}
           </Button>
         )}
-      </>
+      </div>
     ),
   },
 ];
