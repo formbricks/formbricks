@@ -83,6 +83,19 @@ describe("authorization request context", () => {
     });
   });
 
+  // ENG-2388: the server-rendered route surface. A page decision reaching the coordinator without
+  // a target is the exact bug this surface exists to fix — it short-circuits to the legacy
+  // evaluator and schedules no shadow comparison, so the decision is correct but invisible.
+  test("resolves the page surface for session users, and only for session users", async () => {
+    await withAuthorizationSurface("page", async () => {
+      expect(getAuthorizationRolloutTarget("user")).toBe("page:user");
+      // Deliberate asymmetry: pages are session-authenticated. There is no `page:apiKey` target,
+      // so an API-key actor on this surface stays on the legacy path rather than silently
+      // acquiring a rollout cohort it was never meant to be part of.
+      expect(getAuthorizationRolloutTarget("apiKey")).toBeNull();
+    });
+  });
+
   test("does not accept comparison work outside a request context", () => {
     expect(getAuthorizationRolloutTarget("user")).toBeNull();
     expect(enqueueAuthorizationComparison(vi.fn())).toBe(false);

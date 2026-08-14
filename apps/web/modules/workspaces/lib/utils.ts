@@ -11,6 +11,7 @@ import {
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -36,8 +37,19 @@ import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types
  * route. Billing-role members are redirected to billing/enterprise screens; any org
  * member without a WorkspaceTeam grant (and who is not an owner/manager) is rejected
  * with an AuthorizationError instead of being silently admitted as a writer.
+ *
+ * Opened as the `page` authorization surface (ENG-2388). Every product page funnels through here,
+ * and the `can()` calls below were already central — but without a surface on the stack the
+ * coordinator has no rollout target to match, short-circuits to the legacy evaluator, and schedules
+ * no shadow comparison. So these decisions were correct and simultaneously invisible to parity
+ * evidence. Wrapping here is what makes them comparable; it changes no decision.
  */
-export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TWorkspaceAuth> => {
+export const getWorkspaceAuth = reactCache(
+  async (workspaceId: string): Promise<TWorkspaceAuth> =>
+    withAuthorizationSurface("page", () => resolveWorkspaceAuth(workspaceId))
+);
+
+const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth> => {
   const t = await getTranslate();
 
   const [workspace, session] = await Promise.all([getWorkspace(workspaceId), getSession()]);
@@ -118,12 +130,19 @@ export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<
     hasManageAccess,
     isReadOnly,
   };
-});
+};
 
 /**
  * Lightweight layout checks for workspace routes (survey editor, onboarding).
+ *
+ * Opened as the `page` surface for the same reason as `getWorkspaceAuth` (ENG-2388): the navigation
+ * gate below already routes through `can()` via `canUserNavigateWorkspace`, but a layout render is
+ * its own async context, so it needs its own surface to be comparable.
  */
-export const workspaceIdLayoutChecks = async (workspaceId: string) => {
+export const workspaceIdLayoutChecks = async (workspaceId: string) =>
+  withAuthorizationSurface("page", () => resolveWorkspaceIdLayoutChecks(workspaceId));
+
+const resolveWorkspaceIdLayoutChecks = async (workspaceId: string) => {
   const t = await getTranslate();
   const session = await getSession();
 

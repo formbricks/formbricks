@@ -8,8 +8,23 @@ import {
 import type { TAuthorizationActor } from "./contract";
 import { recordAuthorizationChecksPerRequest } from "./metrics";
 
+/**
+ * `page` is the server-rendered route surface (React Server Components), added for ENG-2388.
+ *
+ * Unlike the other five, it is not established at a single request boundary: Next.js gives no RSC
+ * equivalent of the action-client or API wrapper, and a layout's render and its page's render are
+ * separate async contexts. It is therefore opened at the authorization choke points every product
+ * route already funnels through. `withAuthorizationSurface` returns early when a surface is already
+ * open, so opening it at more than one choke point is idempotent rather than nesting.
+ *
+ * The practical consequence, stated because it affects how the checks-per-request histogram reads:
+ * one navigation that runs both a layout check and a page check records two observations rather
+ * than one. That splits the count for that request — it weakens the N+1 signal slightly, it does
+ * not make it wrong — which is why the wrapper is applied at as few and as high a point as possible.
+ */
 export type TAuthorizationSurface =
   | "server_action"
+  | "page"
   | "api_v1"
   | "api_v2"
   | "api_v3"
