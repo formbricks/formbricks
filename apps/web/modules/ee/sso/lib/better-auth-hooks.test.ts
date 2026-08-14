@@ -1,7 +1,7 @@
 import { getOAuthState } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { SIGNUP_DISABLED_ERROR_CODE, SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
@@ -34,11 +34,16 @@ vi.mock("better-auth/api", () => ({
   getOAuthState: vi.fn(),
   // Passthrough so the wrapped hook is testable directly as its inner function.
   createAuthMiddleware: (fn: unknown) => fn,
+  // Keeps `body` like the real APIError does, so a test can assert the stable error CODE rather than
+  // the English message — dropping it would leave the message as the only assertable thing, which is
+  // display copy, not the contract callers depend on.
   APIError: class APIError extends Error {
     status: string;
-    constructor(status: string, body?: { message?: string }) {
+    body?: { message?: string; code?: string };
+    constructor(status: string, body?: { message?: string; code?: string }) {
       super(body?.message);
       this.status = status;
+      this.body = body;
     }
   },
 }));
@@ -268,7 +273,9 @@ describe("ssoDatabaseHooks.user.create.before", () => {
       vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false); // self-hosted: domain block is a no-op
       await expect(
         before({ id: "u1", email: "intruder@example.com" } as never, { path: "/sign-up/email" } as never)
-      ).rejects.toThrow("Signup is disabled on this instance");
+        // The stable code is the contract callers localize against; the message is display copy, so a
+        // reworded message must not fail this test and a dropped code must.
+      ).rejects.toMatchObject({ status: "FORBIDDEN", body: { code: SIGNUP_DISABLED_ERROR_CODE } });
       expect(gateSsoProvisioning).not.toHaveBeenCalled();
     });
 
