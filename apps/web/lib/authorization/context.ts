@@ -1,5 +1,4 @@
 import "server-only";
-import { metrics } from "@opentelemetry/api";
 import { after } from "next/server";
 import { AsyncLocalStorage } from "node:async_hooks";
 import {
@@ -7,6 +6,7 @@ import {
   isAuthzedAuthorizationRolloutTarget,
 } from "@/lib/authzed/rollout-contract";
 import type { TAuthorizationActor } from "./contract";
+import { recordAuthorizationChecksPerRequest } from "./metrics";
 
 export type TAuthorizationSurface = "server_action" | "api_v1" | "api_v2" | "api_v3" | "mcp";
 
@@ -18,24 +18,6 @@ type TAuthorizationContext = {
   scheduled: boolean;
   surface: TAuthorizationSurface;
 };
-
-/**
- * ENG-1739: how many `can()`/`assertCan()` decisions one request made.
- *
- * This is the one thing the perf harness cannot measure — it times a single decision, never how many
- * a page or endpoint issues. A workspace-scoped list path that authorizes once still "works" under
- * that harness even if a regression made it authorize once per row; only a per-request count can see
- * that. `checks_per_request` is the metric this exists to produce, and it is deliberately request-
- * scoped rather than global, so the number means "this one page load", not a rate across all traffic.
- */
-const meter = metrics.getMeter("formbricks.authorization");
-const checksPerRequest = meter.createHistogram("formbricks_authorization_checks_per_request", {
-  advice: {
-    explicitBucketBoundaries: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 250, 350, 500, 750, 1000],
-  },
-  description: "Number of central authorization decisions made while handling one request",
-  unit: "{check}",
-});
 
 const globalForAuthorization = globalThis as unknown as {
   formbricksAuthorizationContext: AsyncLocalStorage<TAuthorizationContext> | undefined;
@@ -70,7 +52,15 @@ export const withAuthorizationSurface = async <T>(
       // Recorded here rather than after the callback: `after()` can run once the response has been
       // sent, so this is the last point guaranteed to execute for every request, success or thrown.
       after(() => {
-        checksPerRequest.record(context.checksIssued, { surface });
+        try {
+          recordAuthorizationChecksPerRequest(context.checksIssued, surface);
+        } catch {
+          // Instrumentation must never gate the comparison drain. Next swallows errors thrown from
+          // an `after()` callback, so an exception here would silently stop shadow comparisons for
+          // this request — a new metric taking out functionality that already worked. Every other
+          // failure path in this module is deliberately fail-safe; this one has to be too.
+        }
+
         return drainComparisons(context.jobs);
       });
       context.scheduled = true;
