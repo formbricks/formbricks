@@ -13,6 +13,8 @@ import {
   getApiKeyAuthById,
   getApiKeyOrganizationId,
   getDashboardWorkspaceId,
+  getFeedbackDirectoryAssignmentAuthorizationScope,
+  getFeedbackDirectoryAuthorizationScope,
   getResponseSurveyId,
   getSurveyWorkspaceId,
   getTeamOrganizationId,
@@ -33,6 +35,8 @@ vi.mock("./resolvers", () => ({
   getApiKeyAuthById: vi.fn(),
   getApiKeyOrganizationId: vi.fn(),
   getDashboardWorkspaceId: vi.fn(),
+  getFeedbackDirectoryAssignmentAuthorizationScope: vi.fn(),
+  getFeedbackDirectoryAuthorizationScope: vi.fn(),
   getResponseSurveyId: vi.fn(),
   getSurveyWorkspaceId: vi.fn(),
   getTeamOrganizationId: vi.fn(),
@@ -258,6 +262,78 @@ describe("legacyEvaluator — API key as a resource", () => {
     await expect(can(USER, "apiKey.read", { type: "apiKey", id: "k9" })).resolves.toBe(false);
 
     await expect(can(API_KEY, "apiKey.read", { type: "apiKey", id: "k9" })).resolves.toBe(false);
+  });
+});
+
+describe("legacyEvaluator — feedback datasets", () => {
+  test("owners and managers administer a directory without a workspace assignment", async () => {
+    vi.mocked(getFeedbackDirectoryAuthorizationScope).mockResolvedValue({
+      isArchived: false,
+      organizationId: "org1",
+      workspaceIds: [],
+    });
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(membership("manager"));
+
+    await expect(
+      can(USER, "feedbackDirectory.manage", { type: "feedbackDirectory", id: "directory-1" })
+    ).resolves.toBe(true);
+  });
+
+  test("uses the union of active workspace grants for a directory-wide decision", async () => {
+    vi.mocked(getFeedbackDirectoryAuthorizationScope).mockResolvedValue({
+      isArchived: false,
+      organizationId: "org1",
+      workspaceIds: ["workspace-a", "workspace-b"],
+    });
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(membership("member"));
+    vi.mocked(hasUserWorkspaceAccessForActionLegacy).mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+
+    await expect(
+      can(USER, "feedbackDirectory.read", { type: "feedbackDirectory", id: "directory-1" })
+    ).resolves.toBe(true);
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenNthCalledWith(1, "user1", "workspace-a", "GET");
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenNthCalledWith(2, "user1", "workspace-b", "GET");
+  });
+
+  test("checks only the exact workspace carried by an assignment resource", async () => {
+    vi.mocked(getFeedbackDirectoryAssignmentAuthorizationScope).mockResolvedValue({
+      assignmentId: "fdwa-1",
+      organizationId: "org1",
+      workspaceId: "workspace-a",
+    });
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(membership("member"));
+    vi.mocked(hasUserWorkspaceAccessForActionLegacy).mockResolvedValue(false);
+
+    await expect(
+      can(USER, "feedbackDirectoryAssignment.write", {
+        type: "feedbackDirectoryAssignment",
+        id: "directory-1",
+        workspaceId: "workspace-a",
+      })
+    ).resolves.toBe(false);
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenCalledOnce();
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenCalledWith("user1", "workspace-a", "POST");
+  });
+
+  test("denies archived, missing, and cross-organization assignments through the resolver", async () => {
+    vi.mocked(getFeedbackDirectoryAuthorizationScope).mockResolvedValue({
+      isArchived: true,
+      organizationId: "org1",
+      workspaceIds: ["workspace-a"],
+    });
+    vi.mocked(getFeedbackDirectoryAssignmentAuthorizationScope).mockResolvedValue(null);
+
+    await expect(
+      can(USER, "feedbackDirectory.read", { type: "feedbackDirectory", id: "directory-1" })
+    ).resolves.toBe(false);
+    await expect(
+      can(USER, "feedbackDirectoryAssignment.read", {
+        type: "feedbackDirectoryAssignment",
+        id: "directory-1",
+        workspaceId: "workspace-a",
+      })
+    ).resolves.toBe(false);
+    expect(hasUserWorkspaceAccessForActionLegacy).not.toHaveBeenCalled();
   });
 });
 

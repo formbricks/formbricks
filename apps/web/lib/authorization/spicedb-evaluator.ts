@@ -12,7 +12,11 @@ import type { AuthorizationEvaluator } from "./evaluator";
 import { type TResolvedAuthorizationScope, resolveAuthorizationScope } from "./source-scope";
 
 const getSpicedbObjectType = (type: TAuthorizationActor["type"] | TAuthorizationResourceType) =>
-  type === "apiKey" ? "api_key" : type;
+  ({
+    apiKey: "api_key",
+    feedbackDirectory: "feedback_directory",
+    feedbackDirectoryAssignment: "feedback_directory_assignment",
+  })[type as "apiKey" | "feedbackDirectory" | "feedbackDirectoryAssignment"] ?? type;
 
 const parseAction = (
   action: TAuthorizationAction

@@ -67,7 +67,14 @@ describe("spicedbEvaluator", () => {
             ? { objectId: "workspace-1", objectType: "workspace" }
             : {
                 objectId: "resource-1",
-                objectType: resourceType === "apiKey" ? "api_key" : resourceType,
+                objectType:
+                  resourceType === "apiKey"
+                    ? "api_key"
+                    : resourceType === "feedbackDirectory"
+                      ? "feedback_directory"
+                      : resourceType === "feedbackDirectoryAssignment"
+                        ? "feedback_directory_assignment"
+                        : resourceType,
               },
           subject: { objectId: "user-1", objectType: "user" },
         });

@@ -244,6 +244,36 @@ covers them, including a scope revoked outside a hook, which the projector alone
 cannot see. Routing API-key principals through the central interface remains
 ENG-1731, and SpiceDB comparison/cutover remains ENG-1738.
 
+## Feedback Dataset projection
+
+The product term **Feedback Dataset** maps to Prisma `FeedbackDirectory`. PostgreSQL remains the source
+of truth for each directory, its owning organization, archive state, and its
+`FeedbackDirectoryWorkspace` assignments.
+
+- A directory projects `feedback_directory#organization@organization`.
+- An active same-organization assignment projects a three-edge subgraph linking the directory, an opaque
+  `feedback_directory_assignment`, and the assigned workspace.
+- The assignment object ID is a deterministic `fdwa_`-prefixed SHA-256 digest of the length-framed
+  directory/workspace pair. Source IDs and the generated ID never appear in projection logs.
+- Archived assignments are not active grants. Reconciliation removes all three stored edges.
+- A directory and workspace belonging to different organizations is invalid source state. It is reported
+  for manual investigation and never projected.
+
+Directory administrators inherit from `organization.manage`. Team members and API keys inherit through
+the exact assigned workspace. The assignment resource ensures that an operation scoped to workspace A
+cannot use access granted through workspace B. Directory-wide checks can union all active assignments for
+gateway operations that do not carry workspace context.
+
+Projection runs after the PostgreSQL mutation commits and remains best-effort. Creation, assignment
+replacement, archive/restore, workspace deletion, and organization deletion reconcile captured previous
+and current pairs. The repair command covers existing rows, missing edges, stale archived edges, parent
+drift, and exact three-edge permission drift.
+
+Feedback records, feedback sources, charts, workflows, contacts, attributes, and segments do not receive
+standalone Phase 1 SpiceDB resources. Charts and workflows inherit workspace authorization. Chart
+`createdBy` is metadata rather than authorization ownership, and record-level tenant/integrity checks
+remain in the application and Hub layers.
+
 ## Resource parent resolution during the current-model migration
 
 The initial migration deliberately does not project one relationship for every
@@ -289,6 +319,8 @@ floor before any cohort is enabled.
 | `WorkspaceTeam.permission` (`read`/`readWrite`/`manage`)             | `workspace` relations `reader_team`/`writer_team`/`manager_team` (subject `team#member`) |
 | `ApiKeyWorkspace.permission` (`read`/`write`/`manage`)               | `workspace` relations `reader`/`writer`/`manager` (subject `api_key`)                    |
 | `ApiKey.organizationAccess.accessControl` (`read`/`write`)           | `organization` relations `api_key_reader`/`api_key_writer`                               |
+| `FeedbackDirectory.organizationId`                                   | `feedback_directory#organization@organization`                                           |
+| Active `FeedbackDirectoryWorkspace`                                  | Three-edge `feedback_directory_assignment` graph to the exact workspace                  |
 | `Survey.workspaceId` / `Dashboard.workspaceId` / `Response.surveyId` | `survey`/`dashboard` relation `workspace`; `response` relation `survey`                  |
 
 Resource permissions preserve the operation-specific gates that exist today:

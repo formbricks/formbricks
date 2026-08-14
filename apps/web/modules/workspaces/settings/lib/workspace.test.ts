@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, updateWorkspace } from "./workspace";
@@ -51,6 +52,7 @@ vi.mock("@formbricks/database", () => ({
     feedbackDirectoryWorkspace: {
       count: vi.fn(),
       create: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -63,6 +65,9 @@ const mockOrgTeams = (...ids: string[]) =>
 
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/feedback-directory", () => ({
+  reconcileFeedbackDirectoryRelationships: vi.fn(),
 }));
 
 const expectNoFrdSideEffects = () => {
@@ -93,6 +98,7 @@ describe("workspace lib", () => {
     // createWorkspace runs its ownership check and both writes in one transaction. Hand the callback
     // the same prisma mock so assertions stay on `prisma.*` and a rollback surfaces as a throw.
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
+    vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValue([]);
   });
 
   describe("updateWorkspace", () => {
@@ -319,6 +325,9 @@ describe("workspace lib", () => {
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
+      expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
+        assignments: [],
+      });
       expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", []);
     });
 

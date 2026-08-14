@@ -51,6 +51,10 @@ relationships: |-
   workspace:main#reader@api_key:ci_reader
   workspace:main#writer@api_key:ci_writer
   workspace:main#manager@api_key:ci_manager
+  feedback_directory:customer_feedback#organization@organization:acme
+  feedback_directory:customer_feedback#assignment@feedback_directory_assignment:fdwa_main
+  feedback_directory_assignment:fdwa_main#directory@feedback_directory:customer_feedback
+  feedback_directory_assignment:fdwa_main#workspace@workspace:main
   survey:onboarding#workspace@workspace:main
   survey:internal#workspace@workspace:other
   dashboard:insights#workspace@workspace:main
@@ -87,6 +91,13 @@ assertions:
     - dashboard:insights#write@user:mark
     - api_key:org_reader_key#manage@user:olivia
     - api_key:org_reader_key#manage@user:mark
+    - feedback_directory:customer_feedback#manage@user:olivia
+    - feedback_directory:customer_feedback#manage@user:mark
+    - feedback_directory:customer_feedback#write@user:tina
+    - feedback_directory:customer_feedback#read@user:uma
+    - feedback_directory:customer_feedback#read@api_key:ci_reader
+    - feedback_directory_assignment:fdwa_main#write@user:tina
+    - feedback_directory_assignment:fdwa_main#read@api_key:ci_reader
     # Members keep organization visibility (they belong to it) …
     - organization:acme#read@user:mia
     - organization:acme#read_access@user:mia
@@ -183,6 +194,12 @@ assertions:
     - survey:onboarding#read@user:mia
     - dashboard:insights#read@user:mia
     - api_key:org_reader_key#manage@user:mia
+    - feedback_directory:customer_feedback#read@user:mia
+    - feedback_directory:customer_feedback#read@user:bella
+    - feedback_directory:customer_feedback#manage@user:tina
+    - feedback_directory_assignment:fdwa_main#manage@user:tina
+    - feedback_directory_assignment:fdwa_main#write@user:uma
+    - feedback_directory_assignment:fdwa_main#read@api_key:org_writer_key
 
     # Scenario 2 — billing is excluded from every product surface and from
     # member/API-key management.

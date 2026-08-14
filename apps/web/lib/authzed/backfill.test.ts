@@ -20,7 +20,9 @@ vi.mock("./backfill-source", () => ({
 }));
 
 const apply = {
+  deleteFeedbackDirectoryAssignmentResources: vi.fn(),
   reconcileApiKeys: vi.fn(),
+  reconcileFeedbackDirectories: vi.fn(),
   reconcileMemberships: vi.fn(),
   reconcileTeamWorkspace: vi.fn(),
 };
@@ -35,7 +37,10 @@ const emptySource: TAuthzedOrganizationSource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
   expectedRelationships: [],
+  feedbackDirectoryAssignments: [],
+  feedbackDirectoryIds: [],
   invalidApiKeyWorkspaceGrants: [],
+  invalidFeedbackDirectoryAssignments: [],
   invalidWorkspaceTeamGrants: [],
   memberships: [],
   teamIds: [],
@@ -57,6 +62,8 @@ const emptyPage = { cursor: null, relationships: [], snapshot: null };
 beforeEach(() => {
   vi.clearAllMocks();
   apply.reconcileApiKeys.mockResolvedValue(PROJECTED);
+  apply.deleteFeedbackDirectoryAssignmentResources.mockResolvedValue(PROJECTED);
+  apply.reconcileFeedbackDirectories.mockResolvedValue(PROJECTED);
   apply.reconcileMemberships.mockResolvedValue(PROJECTED);
   apply.reconcileTeamWorkspace.mockResolvedValue(PROJECTED);
   readRelationships.mockResolvedValue(emptyPage);
@@ -67,7 +74,9 @@ beforeEach(() => {
   vi.mocked(source.readWorkspaceSource).mockResolvedValue({
     apiKeyWorkspaceGrants: [],
     expectedRelationships: [],
+    feedbackDirectoryAssignments: [],
     invalidApiKeyWorkspaceGrants: [],
+    invalidFeedbackDirectoryAssignments: [],
     invalidWorkspaceTeamGrants: [],
     organizationId: "org-1",
     workspaceExists: true,
@@ -602,6 +611,8 @@ describe("scope and observation completeness", () => {
     expect(result.orphanScope).toBe("all");
     expect(readRelationships.mock.calls.map(([query]) => query.filter)).toEqual([
       { resourceType: "api_key" },
+      { resourceType: "feedback_directory" },
+      { resourceType: "feedback_directory_assignment" },
       { resourceType: "organization" },
       { resourceType: "team" },
       { resourceType: "workspace" },
@@ -724,7 +735,9 @@ describe("workspace scope", () => {
     vi.mocked(source.readWorkspaceSource).mockResolvedValue({
       apiKeyWorkspaceGrants: [],
       expectedRelationships: [],
+      feedbackDirectoryAssignments: [],
       invalidApiKeyWorkspaceGrants: [],
+      invalidFeedbackDirectoryAssignments: [],
       invalidWorkspaceTeamGrants: [],
       organizationId: null,
       workspaceExists: false,

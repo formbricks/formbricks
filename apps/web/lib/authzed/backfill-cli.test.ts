@@ -9,6 +9,10 @@ vi.mock("./api-key", () => ({ reconcileApiKeyRelationships: vi.fn() }));
 vi.mock("./backfill", () => ({ runAuthzedBackfill: vi.fn() }));
 vi.mock("./client", () => ({ closeAuthzedClient: vi.fn(), getAuthzedClient: vi.fn() }));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
+vi.mock("./feedback-directory", () => ({
+  deleteFeedbackDirectoryAssignmentRelationships: vi.fn(),
+  reconcileFeedbackDirectoryRelationships: vi.fn(),
+}));
 vi.mock("./organization-membership", () => ({ reconcileOrganizationMemberships: vi.fn() }));
 vi.mock("./team-workspace", () => ({ reconcileTeamWorkspaceRelationships: vi.fn() }));
 

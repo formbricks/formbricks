@@ -6,7 +6,10 @@ import { recordAuthzedProjection } from "./metrics";
 
 export const AUTHZED_MAX_RECONCILIATION_PASSES = 3;
 
-type TAuthzedProjectionErrorCode = TAuthzedErrorCode | "authzed_projection_unstable";
+type TAuthzedProjectionErrorCode =
+  | TAuthzedErrorCode
+  | "authzed_projection_invalid_source"
+  | "authzed_projection_unstable";
 
 export type TAuthzedProjectionResult =
   | Readonly<{ status: "disabled" }>
@@ -24,6 +27,12 @@ export class AuthzedProjectionUnstableError extends Error {
   readonly retryable = false;
 }
 
+export class AuthzedProjectionInvalidSourceError extends Error {
+  readonly attempts = 1;
+  readonly code = "authzed_projection_invalid_source";
+  readonly retryable = false;
+}
+
 const getProjectionError = (
   error: unknown,
   operation: string
@@ -32,7 +41,10 @@ const getProjectionError = (
   code: TAuthzedProjectionErrorCode;
   retryable: boolean;
 }> => {
-  if (error instanceof AuthzedProjectionUnstableError) {
+  if (
+    error instanceof AuthzedProjectionUnstableError ||
+    error instanceof AuthzedProjectionInvalidSourceError
+  ) {
     return error;
   }
 

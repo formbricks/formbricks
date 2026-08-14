@@ -187,6 +187,35 @@ definition workspace {
 }
 
 /**
+ * A feedback dataset, identified by Prisma `FeedbackDirectory.id`.
+ *
+ * Owners and managers administer every dataset in their organization. Other
+ * principals receive access only through an active workspace assignment.
+ */
+definition feedback_directory {
+    relation organization: organization
+    relation assignment: feedback_directory_assignment
+
+    permission administrator: user = organization->manage
+    permission read: user | api_key = administrator + assignment->read
+    permission write: user | api_key = administrator + assignment->write
+    permission manage: user | api_key = administrator + assignment->manage
+}
+
+/**
+ * The exact `FeedbackDirectoryWorkspace` pair. The object ID is a deterministic
+ * digest of the directory/workspace IDs and is never a public product ID.
+ */
+definition feedback_directory_assignment {
+    relation directory: feedback_directory
+    relation workspace: workspace
+
+    permission read: user | api_key = directory->administrator + workspace->read
+    permission write: user | api_key = directory->administrator + workspace->write
+    permission manage: user | api_key = directory->administrator + workspace->manage
+}
+
+/**
  * A survey, identified by the Prisma `Survey.id`. Surveys carry no access
  * control of their own today (`resultShareKey` was removed): every permission
  * derives from the owning workspace.

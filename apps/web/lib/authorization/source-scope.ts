@@ -4,6 +4,8 @@ import {
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
   getDashboardAuthorizationWorkspaceScope,
+  getFeedbackDirectoryAssignmentAuthorizationScope,
+  getFeedbackDirectoryAuthorizationScope,
   getResponseAuthorizationWorkspaceScope,
   getSurveyAuthorizationWorkspaceScope,
   getTeamOrganizationId,
@@ -63,6 +65,25 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
     }
     case "response": {
       return toWorkspaceResourceScope(await getResponseAuthorizationWorkspaceScope(resource.id));
+    }
+    case "feedbackDirectory": {
+      const scope = await getFeedbackDirectoryAuthorizationScope(resource.id);
+      return scope && !scope.isArchived
+        ? { organizationId: scope.organizationId, permissionResource: resource }
+        : null;
+    }
+    case "feedbackDirectoryAssignment": {
+      const scope = await getFeedbackDirectoryAssignmentAuthorizationScope(resource.id, resource.workspaceId);
+      return scope
+        ? {
+            organizationId: scope.organizationId,
+            permissionResource: {
+              id: scope.assignmentId,
+              type: "feedbackDirectoryAssignment",
+              workspaceId: scope.workspaceId,
+            },
+          }
+        : null;
     }
   }
 };

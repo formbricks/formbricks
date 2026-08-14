@@ -21,6 +21,8 @@ import {
   getApiKeyAuthById,
   getApiKeyOrganizationId,
   getDashboardWorkspaceId,
+  getFeedbackDirectoryAssignmentAuthorizationScope,
+  getFeedbackDirectoryAuthorizationScope,
   getResponseSurveyId,
   getSurveyWorkspaceId,
   getTeamOrganizationId,
@@ -47,6 +49,42 @@ const parseAction = (
     resourceType: action.slice(0, separator) as TAuthorizationResourceType,
     permission: action.slice(separator + 1),
   };
+};
+
+const FEEDBACK_DIRECTORY_WORKSPACE_ACTION = {
+  manage: "workspace.manage",
+  read: "workspace.read",
+  write: "workspace.write",
+} as const;
+
+const canFeedbackDirectory = async (
+  actor: TAuthorizationActor,
+  permission: "manage" | "read" | "write",
+  feedbackDirectoryId: string
+): Promise<boolean> => {
+  const scope = await getFeedbackDirectoryAuthorizationScope(feedbackDirectoryId);
+  if (!scope || scope.isArchived) return false;
+  if (await canOrganization(actor, "manage", scope.organizationId)) return true;
+
+  const workspaceAction = FEEDBACK_DIRECTORY_WORKSPACE_ACTION[permission];
+  for (const workspaceId of scope.workspaceIds) {
+    if (await canWorkspaceScoped(actor, workspaceAction, workspaceId)) return true;
+  }
+
+  return false;
+};
+
+const canFeedbackDirectoryAssignment = async (
+  actor: TAuthorizationActor,
+  permission: "manage" | "read" | "write",
+  feedbackDirectoryId: string,
+  workspaceId: string
+): Promise<boolean> => {
+  const scope = await getFeedbackDirectoryAssignmentAuthorizationScope(feedbackDirectoryId, workspaceId);
+  if (!scope) return false;
+  if (await canOrganization(actor, "manage", scope.organizationId)) return true;
+
+  return canWorkspaceScoped(actor, FEEDBACK_DIRECTORY_WORKSPACE_ACTION[permission], workspaceId);
 };
 
 /**
@@ -263,6 +301,15 @@ export const legacyEvaluator: AuthorizationEvaluator = {
         const workspaceId = await getSurveyWorkspaceId(surveyId);
         return workspaceId ? canWorkspaceScoped(actor, action, workspaceId) : false;
       }
+      case "feedbackDirectory":
+        return canFeedbackDirectory(actor, permission as "manage" | "read" | "write", resource.id);
+      case "feedbackDirectoryAssignment":
+        return canFeedbackDirectoryAssignment(
+          actor,
+          permission as "manage" | "read" | "write",
+          resource.id,
+          resource.workspaceId
+        );
       default:
         return false;
     }
