@@ -73,6 +73,19 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     expect(result.limits.workspaces).toBe(10);
   });
 
+  test("keeps workspaces null (unlimited) when an active license grants unlimited workspaces", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { workspaces: null, contacts: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.limits.workspaces).toBeNull();
+  });
+
   test("defaults workspaces to 3 when license is inactive", async () => {
     mockGetOrg.mockResolvedValue({ id: "org1" } as any);
     mockGetLicense.mockResolvedValue({
