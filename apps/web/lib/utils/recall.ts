@@ -215,7 +215,7 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
   let recallItems: TSurveyRecallItem[] = [];
   ids.forEach((recallItemId) => {
     const isHiddenField = findEmbeddedField(embeddedFields, recallItemId, "ingested");
-    const isSurveyQuestion = elements.find((question) => question.id === recallItemId);
+    const isSurveyQuestion = elements.some((question) => question.id === recallItemId);
     const isVariable = findEmbeddedField(embeddedFields, recallItemId, "computed");
 
     const recallItemLabel = resolveRecallItemLabel(recallItemId, elements, languageCode, embeddedFields);

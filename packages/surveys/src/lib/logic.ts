@@ -473,7 +473,7 @@ const performCalculation = (
     case "hiddenField":
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && !isNaN(Number(val))) {
+        if (dataType === "number" && !Number.isNaN(Number(val))) {
           operandValue = Number(val);
         }
         operandValue = val;
