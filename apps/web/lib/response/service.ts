@@ -4,7 +4,6 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -22,8 +21,8 @@ import { TTag } from "@formbricks/types/tags";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
-import { deleteFile } from "@/modules/storage/service";
-import { parseStorageFileUrl, resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -643,26 +642,7 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
     .filter(([elementId]) => fileUploadElements.has(elementId))
     .flatMap(([, elementResponse]) => elementResponse as string[]);
 
-  const deletionPromises = fileUrls.map(async (fileUrl) => {
-    try {
-      const storageFile = parseStorageFileUrl(fileUrl);
-
-      if (!storageFile) {
-        throw new Error(`Invalid storage file URL: ${fileUrl}`);
-      }
-
-      return deleteFile(
-        storageFile.storageId,
-        storageFile.accessType,
-        storageFile.fileName,
-        survey.workspaceId
-      );
-    } catch (error) {
-      logger.error(error, `Failed to delete file ${fileUrl}`);
-    }
-  });
-
-  await Promise.all(deletionPromises);
+  await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };
 
 export const deleteResponse = async (
