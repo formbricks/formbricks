@@ -51,6 +51,37 @@ const MCP_MINIMUM_SCOPES = MCP_RESOURCE_SCOPES;
 const MCP_CHALLENGE_SCOPE = MCP_RESOURCE_SCOPES.join(" ");
 const oauthResourceClient = oauthProviderResourceClient(auth);
 
+const JWKS_FAILURE_CODES = new Set([
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
+  "ERR_JWKS_NO_MATCHING_KEY",
+  "ERR_JWKS_TIMEOUT",
+]);
+
+const getErrorCode = (error: unknown): string | undefined => {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  return typeof error.code === "string" ? error.code : undefined;
+};
+
+const getMcpOAuthFailureDetails = (error: unknown) => {
+  const errorName = error instanceof Error ? error.name : "UnknownError";
+  const cause = error instanceof Error ? error.cause : undefined;
+  const errorCode = getErrorCode(error) ?? getErrorCode(cause);
+  const failureSource =
+    errorName === "TypeError" || (errorCode !== undefined && JWKS_FAILURE_CODES.has(errorCode))
+      ? "jwks_fetch"
+      : "token_verification";
+
+  return { errorCode, errorName, failureSource };
+};
+
 export type TMcpAuthInfo = AuthInfo & {
   extra: {
     formbricksAuthentication: TV3Authentication;
@@ -325,13 +356,13 @@ async function authenticateMcpOAuthBearer(
       },
       jwksUrl: getMcpOAuthJwksUrl(),
     });
-  } catch {
+  } catch (error) {
     const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
     if (rateLimitResponse) {
       return { ok: false, requestId, response: rateLimitResponse };
     }
 
-    log.warn({ statusCode: 401 }, "MCP OAuth authentication failed");
+    log.warn({ ...getMcpOAuthFailureDetails(error), statusCode: 401 }, "MCP OAuth authentication failed");
     return {
       ok: false,
       requestId,
