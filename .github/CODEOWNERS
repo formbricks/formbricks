@@ -1,0 +1,282 @@
+# ==============================================================================
+#  Formbricks — Code Owners
+# ==============================================================================
+#
+#  WHAT THIS FILE IS FOR
+#
+#  Every rule below answers one question about a path: "who knows this part of
+#  the app best?" It exists so review requests can be routed automatically — by
+#  our AI review assignment, and by GitHub's own reviewer suggestions — to the
+#  people with the most context.
+#
+#  It is ADVISORY. Nothing here is wired into branch protection, no owner is
+#  required to approve a pull request, and no rule in this file can block a
+#  merge.
+#
+#  HOW TO READ IT
+#
+#  * Owners are listed PRIMARY FIRST. The first name is the person with the
+#    deepest context; the rest are fallbacks. GitHub ignores this order — it is
+#    here for humans and for review-routing tools.
+#  * Any ONE owner is enough. Extra names widen the pool, they do not multiply
+#    the review burden.
+#  * There is no catch-all `*` rule. A path with no rule means "no designated
+#    expert", and reviewer selection falls back to normal judgement. That is
+#    intentional, not an omission.
+#
+#  HOW TO EDIT IT
+#
+#  1. THE LAST MATCHING PATTERN WINS, and owners do not accumulate across
+#     rules — the winning line is the complete owner list. General rules go
+#     first, specific overrides go last. NEVER add a broad rule at the bottom
+#     of this file; it will silently take over every path above it. Section 14
+#     must stay last.
+#  2. All owners for one pattern MUST be on the SAME LINE. Split across two
+#     lines, only the last line counts. This fails silently.
+#  3. Anchor paths with a leading slash: `/apps/web/` not `apps/web/`. Without
+#     it, the pattern matches a directory of that name at ANY depth.
+#  4. `dir/` owns the whole subtree. `dir/*` owns only its direct children —
+#     almost always a bug in a monorepo.
+#  5. Unlike .gitignore, these DO NOT WORK here: `!` negation, `[a-z]` ranges,
+#     `\#` escaping, and `{a,b}` brace expansion. Never put a Next.js dynamic
+#     route segment such as `[workspaceId]` in a pattern — the brackets are
+#     unsupported. Own the `modules/` path instead of the `app/` route path.
+#  6. Owners must have WRITE access to this repo, or they are silently dropped.
+#  7. Within a section — or within a `# --- labelled group ---` inside one —
+#     keep rules in alphabetical order, with no exceptions, so there is exactly
+#     one obvious place to insert a new rule. Ordering *between* sections is
+#     what controls precedence (rule 1); ordering *within* one is purely for
+#     scannability, and no rule in this file relies on it.
+#
+#  Changes to this file only take effect once merged — GitHub always reads the
+#  version on the pull request's BASE branch.
+#
+#  CI validates this file on every change and weekly:
+#  .github/workflows/codeowners-validation.yml
+#
+#  Reference:
+#  https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+#  1. Repo, build & tooling
+# ------------------------------------------------------------------------------
+/package.json                              @xernobyl @BhagyaAmarasinghe
+/packages/config-eslint/                   @xernobyl @itsjavi
+/packages/config-prettier/                 @xernobyl @itsjavi
+/packages/config-typescript/               @xernobyl @itsjavi
+/packages/vite-plugins/                    @xernobyl @itsjavi
+/pnpm-workspace.yaml                       @xernobyl @BhagyaAmarasinghe
+/prisma.config.mjs                         @Dhruwang @xernobyl
+/scripts/                                  @BhagyaAmarasinghe @xernobyl
+/sonar-project.properties                  @BhagyaAmarasinghe @xernobyl
+/turbo.json                                @xernobyl @BhagyaAmarasinghe
+
+
+# ------------------------------------------------------------------------------
+#  2. Data & platform packages
+# ------------------------------------------------------------------------------
+/packages/ai/                              @Dhruwang @xernobyl
+/packages/cache/                           @xernobyl @BhagyaAmarasinghe
+/packages/database/                        @Dhruwang @pandeymangg @xernobyl
+/packages/email/                           @Dhruwang @itsjavi
+/packages/i18n-utils/                      @Dhruwang @pandeymangg
+/packages/logger/                          @BhagyaAmarasinghe @xernobyl
+/packages/storage/                         @BhagyaAmarasinghe @pandeymangg
+/packages/types/                           @Dhruwang @pandeymangg @xernobyl
+
+
+# ------------------------------------------------------------------------------
+#  3. Background jobs
+#
+#  Job *infrastructure* is a backend concern. The workflows product that
+#  schedules them is owned separately — see section 9.
+# ------------------------------------------------------------------------------
+/packages/jobs/                            @xernobyl @itsjavi
+
+
+# ------------------------------------------------------------------------------
+#  4. Survey experience & embeddable SDK
+#
+#  `surveys` is the embeddable runtime and `js-core` the browser SDK. Both ship
+#  to end users' websites, so they carry the strictest compatibility bar in the
+#  repo.
+# ------------------------------------------------------------------------------
+/packages/js-core/                         @pandeymangg @Dhruwang
+/packages/surveys/                         @Dhruwang @pandeymangg @itsjavi
+
+
+# ------------------------------------------------------------------------------
+#  5. UI, design system & accessibility
+# ------------------------------------------------------------------------------
+/ACCESSIBILITY.md                          @itsjavi @Dhruwang
+/apps/storybook/                           @itsjavi @Dhruwang
+/packages/survey-ui/                       @itsjavi @Dhruwang
+
+
+# ------------------------------------------------------------------------------
+#  6. Testing & QA
+# ------------------------------------------------------------------------------
+/apps/web/playwright/                      @itsjavi @Dhruwang @pandeymangg
+/playwright.config.ts                      @itsjavi @Dhruwang
+/playwright.service.config.ts              @itsjavi @Dhruwang
+
+
+# ------------------------------------------------------------------------------
+#  7. apps/web — broad defaults, app config & instrumentation
+#
+#  `app/`, `lib/` and `modules/` are the broad defaults covering the whole
+#  Next.js app; sections 8-14 override them for narrower paths. Their position
+#  inside this section does not matter — precedence comes from section order —
+#  so they sit in the same alphabetical run as everything else here.
+#
+#  `scripts/` reads deployment secrets and validates env at container start;
+#  `proxy*` is the request-routing edge. Both are more sensitive than their
+#  location suggests.
+# ------------------------------------------------------------------------------
+/apps/web/app/                             @Dhruwang @pandeymangg @xernobyl
+/apps/web/instrumentation*                 @BhagyaAmarasinghe @xernobyl
+/apps/web/integration/                     @xernobyl @itsjavi
+/apps/web/lib/                             @Dhruwang @xernobyl @pandeymangg
+/apps/web/modules/                         @Dhruwang @pandeymangg @xernobyl
+/apps/web/next.config.mjs                  @xernobyl @BhagyaAmarasinghe
+/apps/web/prometheus.yml                   @BhagyaAmarasinghe @xernobyl
+/apps/web/proxy*                           @xernobyl @BhagyaAmarasinghe
+/apps/web/scripts/                         @BhagyaAmarasinghe @xernobyl
+/apps/web/sentry.*                         @BhagyaAmarasinghe @xernobyl
+/apps/web/vite*                            @itsjavi @xernobyl
+
+
+# ------------------------------------------------------------------------------
+#  8. apps/web — feature modules
+#
+#  Only modules whose ownership differs from the section 7 default are listed.
+#  A module that is absent here is covered by the default on purpose.
+# ------------------------------------------------------------------------------
+/apps/web/modules/analysis/                @Dhruwang @pandeymangg
+/apps/web/modules/api/                     @pandeymangg @xernobyl @BhagyaAmarasinghe
+/apps/web/modules/core/                    @xernobyl @Dhruwang
+/apps/web/modules/ee/contacts/             @pandeymangg @Dhruwang
+/apps/web/modules/hub/                     @xernobyl @Dhruwang
+/apps/web/modules/mcp/                     @xernobyl @pandeymangg
+/apps/web/modules/organization/            @pandeymangg @Dhruwang
+/apps/web/modules/setup/                   @BhagyaAmarasinghe @Dhruwang
+/apps/web/modules/storage/                 @BhagyaAmarasinghe @pandeymangg
+/apps/web/modules/survey/                  @Dhruwang @itsjavi @pandeymangg
+/apps/web/modules/ui/                      @itsjavi @Dhruwang
+/apps/web/modules/workspaces/              @pandeymangg @Dhruwang
+
+
+# ------------------------------------------------------------------------------
+#  9. Workflows
+# ------------------------------------------------------------------------------
+/apps/web/modules/ee/workflows/            @itsjavi @xernobyl
+/packages/workflows/                       @itsjavi @xernobyl
+
+
+# ------------------------------------------------------------------------------
+#  10. Public API surfaces
+#
+#  v1 and v2 are published contracts that self-hosters depend on; breaking them
+#  is a release event. v3 is the current surface for new work. `(internal)`
+#  carries no compatibility promise.
+# ------------------------------------------------------------------------------
+/apps/web/app/api/(internal)/              @xernobyl @BhagyaAmarasinghe
+/apps/web/app/api/v1/                      @pandeymangg @Dhruwang
+/apps/web/app/api/v2/                      @pandeymangg @xernobyl
+/apps/web/app/api/v3/                      @xernobyl @BhagyaAmarasinghe @pandeymangg
+/apps/web/modules/api/v2/                  @pandeymangg @xernobyl
+/openapi.yml                               @pandeymangg @xernobyl
+
+
+# ------------------------------------------------------------------------------
+#  11. Infrastructure, deployment & CI
+#
+#  `/.github/` also covers this CODEOWNERS file, which is GitHub's recommended
+#  way to protect it.
+# ------------------------------------------------------------------------------
+/.github/                                  @BhagyaAmarasinghe @xernobyl
+/apps/web/Dockerfile                       @BhagyaAmarasinghe @xernobyl
+/charts/                                   @BhagyaAmarasinghe @Dhruwang
+/docker/                                   @BhagyaAmarasinghe @xernobyl
+/docker-compose.dev.yml                    @BhagyaAmarasinghe @xernobyl
+
+
+# ------------------------------------------------------------------------------
+#  12. Documentation
+# ------------------------------------------------------------------------------
+/CONTRIBUTING.md                           @jobenjada @BhagyaAmarasinghe
+/docs/                                     @jobenjada @pandeymangg
+/docs/api-v3-reference/                    @xernobyl @jobenjada
+/docs/self-hosting/                        @BhagyaAmarasinghe @jobenjada
+/README.md                                 @jobenjada @pandeymangg
+
+
+# ------------------------------------------------------------------------------
+#  13. Localization
+#
+#  `en-US.json` is the hand-written source of truth. Every other locale file is
+#  machine-generated by Lingo.dev and is deliberately left without an owner —
+#  there is nothing for a human to review. Same for `i18n.lock` and the
+#  vendored tarball under apps/web/vendor/.
+# ------------------------------------------------------------------------------
+/apps/web/locales/en-US.json               @Dhruwang @pandeymangg
+/packages/surveys/locales/en-US.json       @Dhruwang @pandeymangg
+
+
+# ==============================================================================
+#  14. HIGH-RISK OVERRIDES  —  THIS SECTION MUST STAY LAST
+#
+#  Every rule below deliberately overrides a broader rule above it. Because the
+#  last matching pattern wins, anything added after this block would shadow
+#  these paths. Do not append to this file — insert into the section above that
+#  fits.
+#
+#  Note: LICENSE and apps/web/modules/ee/LICENSE intentionally have no rule.
+#  Licensing is a founder decision and is not routed through this file.
+# ==============================================================================
+
+# --- Auth & identity ---
+/apps/web/app/(auth)/                      @xernobyl @Dhruwang
+/apps/web/app/api/auth/                    @xernobyl @pandeymangg
+/apps/web/lib/auth.ts                      @xernobyl @Dhruwang
+/apps/web/lib/crypto.ts                    @xernobyl @BhagyaAmarasinghe
+/apps/web/lib/jwt.ts                       @xernobyl @BhagyaAmarasinghe
+/apps/web/lib/oauth/                       @xernobyl @pandeymangg
+/apps/web/modules/api/v2/auth/             @xernobyl @pandeymangg
+/apps/web/modules/auth/                    @xernobyl @Dhruwang
+/apps/web/modules/ee/auth/                 @xernobyl @Dhruwang
+/apps/web/modules/ee/sso/                  @xernobyl @pandeymangg
+/apps/web/modules/ee/two-factor-auth/      @xernobyl @Dhruwang
+
+# --- Internal gateway auth (Envoy / Traefik) ---
+/apps/web/modules/envoy-auth/              @BhagyaAmarasinghe @xernobyl
+/apps/web/modules/gateway-auth/            @BhagyaAmarasinghe @xernobyl
+/apps/web/modules/traefik-auth/            @BhagyaAmarasinghe @xernobyl
+
+# --- Billing, entitlements & licensing ---
+/apps/web/app/api/billing/                 @Dhruwang @pandeymangg
+/apps/web/modules/billing/                 @Dhruwang @pandeymangg
+/apps/web/modules/ee/billing/              @Dhruwang @pandeymangg
+/apps/web/modules/ee/license-check/        @xernobyl @Dhruwang
+/apps/web/modules/ee/quotas/               @Dhruwang @xernobyl
+/apps/web/modules/entitlements/            @Dhruwang @xernobyl
+
+# --- Audit logs & compliance ---
+/apps/web/modules/ee/audit-logs/           @xernobyl @BhagyaAmarasinghe
+
+# --- Database migrations ---
+#  Reviewing a migration needs the data model AND the rollout blast radius,
+#  which is why this differs from /packages/database/ above.
+/packages/database/migration/              @Dhruwang @xernobyl @BhagyaAmarasinghe
+
+# --- Environment, secrets & supply chain ---
+/.env.example                              @BhagyaAmarasinghe @xernobyl
+/apps/web/lib/constants.ts                 @xernobyl @Dhruwang
+/apps/web/lib/env-client.ts                @xernobyl @BhagyaAmarasinghe
+/apps/web/lib/env.ts                       @xernobyl @BhagyaAmarasinghe
+/pnpm-lock.yaml                            @xernobyl @BhagyaAmarasinghe
+
+# --- Security policy ---
+/SECURITY.md                               @xernobyl @BhagyaAmarasinghe
