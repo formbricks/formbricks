@@ -42,6 +42,62 @@ jobs:
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/deployment.yaml > "$render_dir/deployment-default.yaml"
+          grep -q 'terminationGracePeriodSeconds: 30' "$render_dir/deployment-default.yaml"
+          if grep -q '^          lifecycle:$' "$render_dir/deployment-default.yaml"; then
+            echo "Expected no lifecycle block in the default render" >&2
+            exit 1
+          fi
+          ! grep -q '^          volumeMounts:$' "$render_dir/deployment-default.yaml"
+          ! grep -q '^      volumes:$' "$render_dir/deployment-default.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set 'deployment.extraVolumes[0].name=custom-ca' \
+            --set 'deployment.extraVolumes[0].configMap.name=custom-ca' \
+            --set 'deployment.extraVolumeMounts[0].name=custom-ca' \
+            --set 'deployment.extraVolumeMounts[0].mountPath=/etc/ssl/formbricks-ca' \
+            --set 'deployment.extraVolumeMounts[0].readOnly=true' \
+            --show-only templates/deployment.yaml > "$render_dir/deployment-volumes.yaml"
+          test "$(grep -c 'name: custom-ca' "$render_dir/deployment-volumes.yaml")" -eq 3
+          test "$(grep -c 'mountPath: /etc/ssl/formbricks-ca' "$render_dir/deployment-volumes.yaml")" -eq 1
+          test "$(grep -c 'readOnly: true' "$render_dir/deployment-volumes.yaml")" -eq 1
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set deployment.terminationGracePeriodSeconds=60 \
+            --set-json 'deployment.lifecycle={"preStop":{"exec":{"command":["sh","-c","sleep 30"]}}}' \
+            --show-only templates/deployment.yaml > "$render_dir/deployment-lifecycle.yaml"
+          grep -q 'terminationGracePeriodSeconds: 60' "$render_dir/deployment-lifecycle.yaml"
+          grep -q '^          lifecycle:$' "$render_dir/deployment-lifecycle.yaml"
+          grep -q '^            preStop:$' "$render_dir/deployment-lifecycle.yaml"
+          grep -q -- '- sleep 30' "$render_dir/deployment-lifecycle.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-default.yaml"
+          if grep -q 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-default.yaml"; then
+            echo "MCP_OAUTH_JWKS_URL must remain opt-in"
+            exit 1
+          fi
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set formbricks.mcpOauthJwksUrl=http://auth-internal:3000/custom/api/auth/jwks \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-jwks-value.yaml"
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-value.yaml" \
+            | grep -q 'value: "http://auth-internal:3000/custom/api/auth/jwks"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set-string deployment.env.MCP_OAUTH_JWKS_URL=http://explicit:3000/api/auth/jwks \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-jwks-env.yaml"
+          test "$(grep -c 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-env.yaml")" -eq 1
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-env.yaml" \
+            | grep -q 'value: "http://explicit:3000/api/auth/jwks"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
             --show-only templates/cube-deployment.yaml > "$render_dir/cube-default.yaml"
           grep -A1 'name: CUBEJS_EXTERNAL_DEFAULT' "$render_dir/cube-default.yaml" \
             | grep -q 'value: "false"'
@@ -87,6 +143,88 @@ jobs:
             --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-worker-disabled.yaml"
           ! grep -q 'wait-for-hub-api' "$render_dir/hub-worker-disabled.yaml"
           grep -q '/app/hub-worker' "$render_dir/hub-worker-disabled.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set-string hub.embeddings.background.batchMaxWaitMs=37 \
+            --show-only templates/hub-deployment.yaml \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-legacy.yaml"
+          test "$(grep -c 'http://formbricks-hub-embeddings:8080/v1' "$render_dir/hub-embeddings-legacy.yaml")" -eq 2
+          ! grep -q 'hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-legacy.yaml"
+          grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "1"'
+          grep -A1 'name: EMBEDDING_BATCH_MAX_WAIT_MS' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "25"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.maxConcurrent=24 \
+            --set-string hub.embeddings.background.batchSize=8 \
+            --set-string hub.embeddings.background.batchMaxWaitMs=25 \
+            --set-string hub.embeddings.background.batchMaxInFlight=3 \
+            --set hub.embeddings.background.persistence.storageClass=gp3 \
+            --set hub.embeddings.background.autoscaling.enabled=true \
+            --show-only templates/hub-deployment.yaml \
+            --show-only templates/hub-worker-deployment.yaml \
+            --show-only templates/hub-embeddings-background-statefulset.yaml \
+            --show-only templates/hub-embeddings-background-service.yaml \
+            --show-only templates/hub-hpa.yaml > "$render_dir/hub-embeddings-background.yaml"
+          test "$(grep -c 'http://formbricks-hub-embeddings:8080/v1' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          test "$(grep -c 'http://formbricks-hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_MAX_CONCURRENT' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "24"'
+          grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "8"'
+          grep -q '^kind: StatefulSet$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'podManagementPolicy: Parallel' "$render_dir/hub-embeddings-background.yaml"
+          test "$(grep -c 'whenScaled: Retain' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          grep -q '^  volumeClaimTemplates:$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'storageClassName: "gp3"' "$render_dir/hub-embeddings-background.yaml"
+          grep -A3 'kind: StatefulSet' "$render_dir/hub-embeddings-background.yaml" | grep -q 'hub-embeddings-background'
+          grep -q '^  minReplicas: 1$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q '^  maxReplicas: 6$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'stabilizationWindowSeconds: 900' "$render_dir/hub-embeddings-background.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set hub.embeddings.background.persistence.enabled=false \
+            --show-only templates/hub-embeddings-background-statefulset.yaml > "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          grep -q '^      volumes:$' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          grep -q 'emptyDir: {}' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          ! grep -q '^  volumeClaimTemplates:$' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            > "$render_dir/hub-embedding-backfill-disabled.yaml"
+          ! grep -q 'app.kubernetes.io/component: hub-embedding-backfill' "$render_dir/hub-embedding-backfill-disabled.yaml"
+
+          if helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddingBackfill.enabled=true \
+            --show-only templates/hub-embedding-backfill-job.yaml > "$render_dir/hub-embedding-backfill-invalid.yaml" 2>&1; then
+            echo "Expected an enabled embedding backfill without runId to fail" >&2
+            exit 1
+          fi
+          grep -q 'hub.embeddingBackfill.runId is required' "$render_dir/hub-embedding-backfill-invalid.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set hub.embeddingBackfill.enabled=true \
+            --set hub.embeddingBackfill.runId=eu-canary-001 \
+            --set hub.embeddingBackfill.taxonomy=true \
+            --set hub.embeddingBackfill.tenantId=tenant-a \
+            --set hub.embeddingBackfill.countOnly=false \
+            --set hub.embeddingBackfill.maxRecords=500 \
+            --show-only templates/hub-embedding-backfill-job.yaml > "$render_dir/hub-embedding-backfill.yaml"
+          grep -q '^kind: Job$' "$render_dir/hub-embedding-backfill.yaml"
+          grep -q 'embedding-backfill-eu-canary-001' "$render_dir/hub-embedding-backfill.yaml"
+          grep -q -- '- --taxonomy' "$render_dir/hub-embedding-backfill.yaml"
+          grep -A1 -- '- --tenant-id' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "tenant-a"'
+          grep -A1 -- '- --max-records' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "500"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

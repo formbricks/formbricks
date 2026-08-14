@@ -20,11 +20,14 @@ import { parseApiKeyV2 } from "@/lib/crypto";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
 import {
+  MCP_CHALLENGE_SCOPE,
   MCP_RESOURCE_SCOPES,
   getAuthIssuerUrl,
+  getMcpOAuthJwksUrl,
   getMcpOrigin,
   getMcpProtectedResourceMetadataUrl,
   getMcpResourceUrl,
+  getOAuthUserInfoUrl,
 } from "@/modules/auth/lib/oauth-urls";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -38,17 +41,38 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "authorization",
 ]);
 
-// Minimum grant required to authenticate against the MCP server at all: at least ONE resource scope.
-// Any single one is enough — a token granted only `feedbackRecords:read` is a legitimate MCP client and
-// must not be rejected here for lacking `surveys:read`. Which tools it can actually call is enforced
-// per-tool by guardMcpScopes at call time.
-const MCP_MINIMUM_SCOPES = MCP_RESOURCE_SCOPES;
-// Scopes advertised in the 401 WWW-Authenticate challenge. Clients build their DCR + authorize
-// requests from this, so it must list every resource scope (read + write) or clients only ever
-// request read and can never reach the write tools. Actual write access is still gated downstream
-// by the user's workspace permissions in the v3 layer.
-const MCP_CHALLENGE_SCOPE = MCP_RESOURCE_SCOPES.join(" ");
 const oauthResourceClient = oauthProviderResourceClient(auth);
+
+const JWKS_FAILURE_CODES = new Set([
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ERR_JWKS_MULTIPLE_MATCHING_KEYS",
+  "ERR_JWKS_NO_MATCHING_KEY",
+  "ERR_JWKS_TIMEOUT",
+]);
+
+const getErrorCode = (error: unknown): string | undefined => {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  return typeof error.code === "string" ? error.code : undefined;
+};
+
+const getMcpOAuthFailureDetails = (error: unknown) => {
+  const errorName = error instanceof Error ? error.name : "UnknownError";
+  const cause = error instanceof Error ? error.cause : undefined;
+  const errorCode = getErrorCode(error) ?? getErrorCode(cause);
+  const failureSource =
+    errorName === "TypeError" || (errorCode !== undefined && JWKS_FAILURE_CODES.has(errorCode))
+      ? "jwks_fetch"
+      : "token_verification";
+
+  return { errorCode, errorName, failureSource };
+};
 
 export type TMcpAuthInfo = AuthInfo & {
   extra: {
@@ -125,6 +149,44 @@ function createApiKeyMcpAuthInfo(authentication: TAuthenticationApiKey, requestI
 
 function getOAuthScopes(payload: JWTPayload): string[] {
   return typeof payload.scope === "string" ? payload.scope.split(" ").filter(Boolean) : [];
+}
+
+/** `aud` is a single string or an array (RFC 7519 §4.1.3); normalise both to a list. */
+function toAudienceList(aud: JWTPayload["aud"]): string[] {
+  if (typeof aud === "string") {
+    return [aud];
+  }
+
+  return Array.isArray(aud) ? aud : [];
+}
+
+/**
+ * Rejects an access token that was not minted for this resource server.
+ *
+ * `verifyOptions.audience` alone does NOT do this. It is handed to jose, whose `aud` check is a
+ * *membership* test — a token carrying `aud: [".../api/mcp", "https://other.example/api"]` passes it
+ * and would be accepted here, which is exactly the cross-resource escalation GHSA-p2fr-6hmx-4528
+ * describes. RFC 9068 §4 puts the burden on the resource server: it must reject a token whose
+ * audience is not itself, so this assert is required regardless of which provider version issued the
+ * token.
+ *
+ * Written as an allow-list rather than "exactly one audience", deliberately. When `openid` is in the
+ * granted scopes the authorization server treats its own UserInfo endpoint as an implicit second
+ * resource and appends it to `aud` — that is current behaviour, not something the pending provider
+ * upgrade introduces — so a perfectly ordinary MCP token is multi-valued. Those two identifiers are
+ * the only ones a Formbricks-issued MCP token may carry; anything else means the token was minted
+ * for somebody else and must not be honoured here.
+ */
+function hasAcceptedMcpAudience(payload: JWTPayload): boolean {
+  const audiences = toAudienceList(payload.aud);
+
+  const resourceUrl = getMcpResourceUrl();
+  if (!audiences.includes(resourceUrl)) {
+    return false;
+  }
+
+  const acceptedAudiences = new Set([resourceUrl, getOAuthUserInfoUrl()]);
+  return audiences.every((audience) => acceptedAudiences.has(audience));
 }
 
 function getOAuthClientId(payload: JWTPayload): string | null {
@@ -213,9 +275,12 @@ export function withMcpResponseHeaders(response: Response, requestId: string): R
 
 function withOAuthChallenge(response: Response, scope = MCP_CHALLENGE_SCOPE): Response {
   const headers = new Headers(response.headers);
+  // Comma-separated auth-params, per the `#auth-param` list grammar in RFC 9110 §11.6.1 (as used by
+  // RFC 6750 and RFC 9728). Space-separated, a strict parser reads the whole tail as one malformed
+  // param and misses `resource_metadata` — the pointer MCP clients follow to discover this server.
   headers.set(
     "WWW-Authenticate",
-    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}" scope="${scope}"`
+    `Bearer resource_metadata="${getMcpProtectedResourceMetadataUrl()}", scope="${scope}"`
   );
 
   return new Response(response.body, {
@@ -262,6 +327,39 @@ async function rateLimitUnauthenticatedMcpRequest(
   }
 }
 
+/**
+ * The shared refusal for a request that failed to authenticate: charge the unauthenticated rate-limit
+ * bucket first (so a bad credential cannot be retried for free), then answer 401 with the discovery
+ * challenge.
+ *
+ * `detail` is what the caller is told and defaults to the same opaque string for every OAuth failure
+ * — expired, forged, wrong audience and inactive user are deliberately indistinguishable. The reason
+ * lives in `logMessage`/`logContext` instead, where it is useful to us and not to an attacker.
+ */
+async function rejectUnauthenticatedMcpRequest(params: {
+  requestId: string;
+  instance: string;
+  log: ReturnType<typeof logger.withContext>;
+  logMessage: string;
+  detail?: string;
+  logContext?: Record<string, unknown>;
+}): Promise<TMcpAuthenticationResult> {
+  const { requestId, instance, log, logMessage, detail = "Invalid OAuth access token", logContext } = params;
+
+  const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+  if (rateLimitResponse) {
+    return { ok: false, requestId, response: rateLimitResponse };
+  }
+
+  // statusCode last: a caller's context must not be able to relabel the status this actually returns.
+  log.warn({ ...logContext, statusCode: 401 }, logMessage);
+  return {
+    ok: false,
+    requestId,
+    response: withOAuthChallenge(problemUnauthorized(requestId, detail, instance)),
+  };
+}
+
 async function authenticateMcpApiKey(
   request: NextRequest,
   requestId: string,
@@ -271,19 +369,13 @@ async function authenticateMcpApiKey(
   const authentication = await authenticateApiKeyFromHeaders(request.headers);
 
   if (!authentication) {
-    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-    if (rateLimitResponse) {
-      return { ok: false, requestId, response: rateLimitResponse };
-    }
-
-    log.warn({ statusCode: 401 }, "MCP API key authentication failed");
-    return {
-      ok: false,
+    return await rejectUnauthenticatedMcpRequest({
       requestId,
-      response: withOAuthChallenge(
-        problemUnauthorized(requestId, "API key or OAuth access token required", instance)
-      ),
-    };
+      instance,
+      log,
+      detail: "API key or OAuth access token required",
+      logMessage: "MCP API key authentication failed",
+    });
   }
 
   try {
@@ -322,63 +414,72 @@ async function authenticateMcpOAuthBearer(
         audience: getMcpResourceUrl(),
         issuer: getAuthIssuerUrl(),
       },
-      jwksUrl: `${getAuthIssuerUrl()}/jwks`,
+      jwksUrl: getMcpOAuthJwksUrl(),
     });
-  } catch {
-    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-    if (rateLimitResponse) {
-      return { ok: false, requestId, response: rateLimitResponse };
-    }
-
-    log.warn({ statusCode: 401 }, "MCP OAuth authentication failed");
-    return {
-      ok: false,
+  } catch (error) {
+    return await rejectUnauthenticatedMcpRequest({
       requestId,
-      response: withOAuthChallenge(problemUnauthorized(requestId, "Invalid OAuth access token", instance)),
-    };
+      instance,
+      log,
+      logMessage: "MCP OAuth authentication failed",
+      logContext: getMcpOAuthFailureDetails(error),
+    });
+  }
+
+  if (!hasAcceptedMcpAudience(payload)) {
+    // Logged distinctly — a token that verifies against our own issuer and JWKS but names a
+    // different audience is a resource-confusion attempt, not the routine expired/garbage token the
+    // catch above handles.
+    return await rejectUnauthenticatedMcpRequest({
+      requestId,
+      instance,
+      log,
+      logMessage: "MCP OAuth token audience is not bound to this resource server",
+      logContext: { clientId: getOAuthClientId(payload), audience: payload.aud },
+    });
   }
 
   const authInfo = createOAuthMcpAuthInfo(payload, requestId);
 
   if (!authInfo) {
-    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-    if (rateLimitResponse) {
-      return { ok: false, requestId, response: rateLimitResponse };
-    }
-
-    log.warn({ statusCode: 401 }, "MCP OAuth token has no user subject");
-    return {
-      ok: false,
+    return await rejectUnauthenticatedMcpRequest({
       requestId,
-      response: withOAuthChallenge(
-        problemUnauthorized(requestId, "User OAuth access token required", instance)
-      ),
-    };
+      instance,
+      log,
+      detail: "User OAuth access token required",
+      logMessage: "MCP OAuth token has no user subject",
+    });
   }
 
   const sessionAuthentication = authInfo.extra.formbricksAuthentication as Session;
   if (!(await isOAuthUserActive(sessionAuthentication.user.id))) {
-    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-    if (rateLimitResponse) {
-      return { ok: false, requestId, response: rateLimitResponse };
-    }
-
-    log.warn({ statusCode: 401, clientId: authInfo.clientId }, "MCP OAuth token user is inactive");
-    return {
-      ok: false,
+    return await rejectUnauthenticatedMcpRequest({
       requestId,
-      response: withOAuthChallenge(problemUnauthorized(requestId, "Invalid OAuth access token", instance)),
-    };
+      instance,
+      log,
+      logMessage: "MCP OAuth token user is inactive",
+      logContext: { clientId: authInfo.clientId },
+    });
   }
 
-  if (!hasAnyMcpScope(authInfo, MCP_MINIMUM_SCOPES)) {
+  // Minimum grant required to authenticate against the MCP server at all: at least ONE *resource*
+  // scope. Any single one is enough — a token granted only `feedbackRecords:read` is a legitimate
+  // MCP client and must not be rejected here for lacking `surveys:read`. Which tools it can actually
+  // call is enforced per-tool by guardMcpScopes at call time.
+  //
+  // Deliberately NOT MCP_CHALLENGE_SCOPE / MCP_PROTECTED_RESOURCE_SCOPES: those include
+  // `offline_access`, and an any-of gate over that list would let a token holding *only*
+  // `offline_access` — which grants no resource access at all — authenticate to the MCP server.
+  // Same reason the insufficient_scope challenge below advertises only the resource scopes: RFC 6750
+  // `scope` names the scopes *required* for the resource, and `offline_access` is not one of them.
+  if (!hasAnyMcpScope(authInfo, MCP_RESOURCE_SCOPES)) {
     log.warn({ statusCode: 403, clientId: authInfo.clientId }, "MCP OAuth token missing every MCP scope");
     return {
       ok: false,
       requestId,
       response: withInsufficientScopeChallenge(
         problemForbidden(requestId, "OAuth token does not include the required MCP scope", instance),
-        [...MCP_MINIMUM_SCOPES]
+        [...MCP_RESOURCE_SCOPES]
       ),
     };
   }
@@ -419,9 +520,20 @@ export function hasAnyMcpScope(authInfo: AuthInfo | undefined, allowedScopes: re
   return allowedScopes.some((scope) => scopes.includes(scope));
 }
 
+/**
+ * The scopes are named in `detail`, not only in the `WWW-Authenticate` challenge, because the tool path
+ * cannot carry a header: `guardMcpScopes` hands this Response to `responseToMcpToolResult`, which
+ * serializes the JSON body into a JSON-RPC result and drops every header. Without them in the body a
+ * client that is refused a tool call learns only "some scope is missing" and cannot re-authorize for the
+ * right one. The challenge is still set for the transport-level 403, where the header does reach clients.
+ */
 export function createMcpInsufficientScopeResponse(requestId: string, scopes: string[]): Response {
   return withInsufficientScopeChallenge(
-    problemForbidden(requestId, "OAuth token does not include the required MCP scope", "/api/mcp"),
+    problemForbidden(
+      requestId,
+      `OAuth token does not include the required MCP scope: ${scopes.join(" ")}`,
+      "/api/mcp"
+    ),
     scopes
   );
 }
@@ -465,19 +577,13 @@ export async function authenticateMcpRequest(request: NextRequest): Promise<TMcp
 
     const bearerToken = getBearerTokenFromHeaders(request.headers);
     if (!bearerToken) {
-      const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-      if (rateLimitResponse) {
-        return { ok: false, requestId, response: rateLimitResponse };
-      }
-
-      log.warn({ statusCode: 401 }, "MCP authentication credentials missing");
-      return {
-        ok: false,
+      return await rejectUnauthenticatedMcpRequest({
         requestId,
-        response: withOAuthChallenge(
-          problemUnauthorized(requestId, "API key or OAuth access token required", instance)
-        ),
-      };
+        instance,
+        log,
+        detail: "API key or OAuth access token required",
+        logMessage: "MCP authentication credentials missing",
+      });
     }
 
     if (parseApiKeyV2(bearerToken)) {

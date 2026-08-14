@@ -38,17 +38,27 @@ export const ZResponsePipelineJobData = z.object({
 
 export type TResponsePipelineJobData = z.infer<typeof ZResponsePipelineJobData>;
 
-export const ZSurveySchedulingJobData = z.object({
+/**
+ * Payload shared by every recurring job: each one is a single global sweep, so it carries no
+ * identifiers. A future per-tenant recurring job needs its own schema — and a handler that scopes its
+ * queries by that tenant, resolved from the database rather than trusted from the job data — instead of
+ * widening this literal.
+ */
+export const ZGlobalScopeJobData = z.object({
   scope: z.literal("global"),
 });
 
-export type TSurveySchedulingJobData = z.infer<typeof ZSurveySchedulingJobData>;
+export type TGlobalScopeJobData = z.infer<typeof ZGlobalScopeJobData>;
 
-export const ZSurveyArchivePurgeJobData = z.object({
-  scope: z.literal("global"),
-});
+// Per-job aliases: the app's handlers are typed with these, and the names document which job a payload
+// belongs to even though the three shapes are identical today.
+export const ZSurveySchedulingJobData = ZGlobalScopeJobData;
 
-export type TSurveyArchivePurgeJobData = z.infer<typeof ZSurveyArchivePurgeJobData>;
+export type TSurveySchedulingJobData = TGlobalScopeJobData;
+
+export const ZSurveyArchivePurgeJobData = ZGlobalScopeJobData;
+
+export type TSurveyArchivePurgeJobData = TGlobalScopeJobData;
 
 export const ZWorkflowRunJobData = z.object({
   workflowRunId: z.cuid2(),
@@ -59,8 +69,6 @@ export const ZWorkflowRunJobData = z.object({
 export type TWorkflowRunJobData = z.infer<typeof ZWorkflowRunJobData>;
 
 // The reconciler is a global periodic sweep, not a per-run job — it carries no run identifiers.
-export const ZWorkflowRunReconcileJobData = z.object({
-  scope: z.literal("global"),
-});
+export const ZWorkflowRunReconcileJobData = ZGlobalScopeJobData;
 
-export type TWorkflowRunReconcileJobData = z.infer<typeof ZWorkflowRunReconcileJobData>;
+export type TWorkflowRunReconcileJobData = TGlobalScopeJobData;

@@ -1,9 +1,13 @@
 import { describe, expect, test } from "vitest";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { hasApiKeyImplicitFeedbackDirectoryAccess } from "./feedback-records-gateway-authz";
+import {
+  canApiKeyMutateFeedbackDirectoryRecords,
+  hasApiKeyImplicitFeedbackDirectoryAccess,
+} from "./feedback-records-gateway-authz";
 
 const DIRECTORY_ORG_ID = "org_directory";
 const DIRECTORY_WORKSPACE_ID = "wsdirectory0000000000000";
+const OTHER_DIRECTORY_WORKSPACE_ID = "wsdirectory1111111111111";
 
 const makeApiKeyAuth = (overrides: Partial<TAuthenticationApiKey> = {}): TAuthenticationApiKey => ({
   type: "apiKey",
@@ -25,14 +29,21 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
       });
 
       expect(
-        hasApiKeyImplicitFeedbackDirectoryAccess(ownerKey, DIRECTORY_ORG_ID, [DIRECTORY_WORKSPACE_ID], "read")
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          ownerKey,
+          DIRECTORY_ORG_ID,
+          [DIRECTORY_WORKSPACE_ID],
+          "read",
+          false
+        )
       ).toBe(false);
       expect(
         hasApiKeyImplicitFeedbackDirectoryAccess(
           ownerKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
-          "write"
+          "write",
+          false
         )
       ).toBe(false);
     });
@@ -51,7 +62,8 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           foreignKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
-          "read"
+          "read",
+          false
         )
       ).toBe(false);
       expect(
@@ -59,7 +71,8 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           foreignKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
-          "write"
+          "write",
+          false
         )
       ).toBe(false);
     });
@@ -80,7 +93,8 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           workspaceKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
-          "write"
+          "write",
+          false
         )
       ).toBe(true);
     });
@@ -97,7 +111,8 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           workspaceKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
-          "read"
+          "read",
+          false
         )
       ).toBe(true);
     });
@@ -114,7 +129,8 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           workspaceKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
-          "write"
+          "write",
+          false
         )
       ).toBe(true);
     });
@@ -131,7 +147,8 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           workspaceKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
-          "write"
+          "write",
+          false
         )
       ).toBe(false);
     });
@@ -148,9 +165,130 @@ describe("hasApiKeyImplicitFeedbackDirectoryAccess", () => {
           workspaceKey,
           DIRECTORY_ORG_ID,
           [DIRECTORY_WORKSPACE_ID],
-          "read"
+          "read",
+          false
         )
       ).toBe(false);
     });
+  });
+
+  // ENG-2189: a shared directory's records carry no workspace, so a workspace permission cannot say
+  // whose they are. ENG-2083: deletes additionally require `manage`, matching DELETE everywhere else.
+  describe("record mutations in a shared directory (ENG-2189, ENG-2083)", () => {
+    const sharedDirectory = [DIRECTORY_WORKSPACE_ID, OTHER_DIRECTORY_WORKSPACE_ID];
+    const soleDirectory = [DIRECTORY_WORKSPACE_ID];
+
+    const keyWith = (permission: "read" | "write" | "manage"): TAuthenticationApiKey =>
+      makeApiKeyAuth({
+        workspacePermissions: [{ workspaceId: DIRECTORY_WORKSPACE_ID, workspaceName: "Shared", permission }],
+      });
+
+    test("refuses a mutation in a shared directory even with write on one of its workspaces", () => {
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          keyWith("write"),
+          DIRECTORY_ORG_ID,
+          sharedDirectory,
+          "write",
+          true
+        )
+      ).toBe(false);
+    });
+
+    test("refuses a mutation in a shared directory even at manage — weight cannot buy out of it", () => {
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          keyWith("manage"),
+          DIRECTORY_ORG_ID,
+          sharedDirectory,
+          "manage",
+          true
+        )
+      ).toBe(false);
+    });
+
+    test("allows a mutation when the directory belongs to exactly one workspace", () => {
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          keyWith("manage"),
+          DIRECTORY_ORG_ID,
+          soleDirectory,
+          "manage",
+          true
+        )
+      ).toBe(true);
+    });
+
+    test("still applies the permission weight in a sole-workspace directory (ENG-2083)", () => {
+      // `write` is no longer enough for a delete, which the gateway routes as `manage`.
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          keyWith("write"),
+          DIRECTORY_ORG_ID,
+          soleDirectory,
+          "manage",
+          true
+        )
+      ).toBe(false);
+    });
+
+    test("leaves creates in a shared directory alone — adding records is ordinary workspace work", () => {
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          keyWith("write"),
+          DIRECTORY_ORG_ID,
+          sharedDirectory,
+          "write",
+          false
+        )
+      ).toBe(true);
+    });
+
+    test("leaves reads in a shared directory alone — seeing everything is the point of sharing", () => {
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(
+          keyWith("read"),
+          DIRECTORY_ORG_ID,
+          sharedDirectory,
+          "read",
+          false
+        )
+      ).toBe(true);
+    });
+
+    test("still refuses a foreign-organization key on a mutation (ENG-1980)", () => {
+      const foreignKey = makeApiKeyAuth({
+        organizationId: "org_attacker",
+        workspacePermissions: [
+          { workspaceId: DIRECTORY_WORKSPACE_ID, workspaceName: "Shared", permission: "manage" },
+        ],
+      });
+
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(foreignKey, DIRECTORY_ORG_ID, soleDirectory, "manage", true)
+      ).toBe(false);
+    });
+
+    test("refuses a mutation in a directory assigned to no workspace at all", () => {
+      expect(
+        hasApiKeyImplicitFeedbackDirectoryAccess(keyWith("manage"), DIRECTORY_ORG_ID, [], "manage", true)
+      ).toBe(false);
+    });
+  });
+});
+
+describe("canApiKeyMutateFeedbackDirectoryRecords", () => {
+  test("refuses a directory with no workspaces — nobody's permission covers it", () => {
+    expect(canApiKeyMutateFeedbackDirectoryRecords([])).toBe(false);
+  });
+
+  test("allows a directory owned by exactly one workspace", () => {
+    expect(canApiKeyMutateFeedbackDirectoryRecords([DIRECTORY_WORKSPACE_ID])).toBe(true);
+  });
+
+  test("refuses as soon as a second workspace shares the directory", () => {
+    expect(
+      canApiKeyMutateFeedbackDirectoryRecords([DIRECTORY_WORKSPACE_ID, OTHER_DIRECTORY_WORKSPACE_ID])
+    ).toBe(false);
   });
 });

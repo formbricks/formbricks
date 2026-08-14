@@ -89,6 +89,10 @@ spec:
           args:
             {{- toYaml .Values.deployment.args | nindent 12 }}
           {{- end }}
+          {{- with .Values.deployment.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if .Values.deployment.ports }}
           ports:
             {{- range $name, $config := .Values.deployment.ports }}
@@ -130,6 +134,10 @@ spec:
             {{- if .Values.migration.enabled }}
             - name: SKIP_STARTUP_MIGRATION
               value: "true"
+            {{- end }}
+            {{- if and .Values.formbricks.mcpOauthJwksUrl (not (hasKey .Values.deployment.env "MCP_OAUTH_JWKS_URL")) }}
+            - name: MCP_OAUTH_JWKS_URL
+              value: {{ .Values.formbricks.mcpOauthJwksUrl | quote }}
             {{- end }}
             {{- if .Values.authzed.enabled }}
             {{- if not (hasKey .Values.deployment.env "AUTHZED_ENABLED") }}
@@ -197,6 +205,10 @@ spec:
           resources:
               {{- toYaml .Values.deployment.resources | nindent 12 }}
           {{- end }}
+          {{- with .Values.deployment.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.deployment.probes }}
           {{- if .livenessProbe }}
           livenessProbe:
@@ -211,3 +223,7 @@ spec:
             {{- toYaml .startupProbe | nindent 12 }}
           {{- end }}
           {{- end }}
+      {{- with .Values.deployment.extraVolumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

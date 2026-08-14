@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
-import { type KeyboardEvent, useEffect, useRef } from "react";
+import { type KeyboardEvent, useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { WorkflowStatusPill } from "@/modules/ee/workflows/components/workflow-status-pill";
@@ -17,6 +17,10 @@ interface WorkflowPageTitleProps {
   workflowId: string;
   isReadOnly: boolean;
 }
+
+// Mirrors the PATCH contract (`name: z.string().min(1).max(120)`) so the title input can't author a
+// value the API would reject. Keep in sync with ZPatchWorkflowInput in packages/workflows.
+const WORKFLOW_NAME_MAX_LENGTH = 120;
 
 // The layout renders PageHeader server-side while the workflow is still being fetched client-side.
 // Without a placeholder the h1 collapses to an empty row, so the title area reads as blank and the
@@ -47,6 +51,7 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   const setWorkflowName = useSetAtom(setWorkflowNameAtom);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAutoFocusedRef = useRef(false);
+  const nameErrorId = useId();
   const isNew = searchParams.get("new") === "1";
   // Actions and atom state only — the builder page owns the load and the debounced autosave.
   const { save } = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
@@ -95,38 +100,56 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   const resolved = workflow ?? data;
   if (!resolved) return <WorkflowPageTitleSkeleton />;
 
-  // flex-wrap keeps the badge inline next to the name and pushes it below on narrow widths.
+  // An empty name blocks every save (buildWorkflowPatch bails before any request). Surface that on
+  // the field itself instead of only in the validation-problems dialog, so clearing the pre-selected
+  // title isn't a silent dead end.
+  const showNameError = isEditable && workflowName.trim().length === 0;
+
   return (
-    <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-      {isEditable ? (
-        <input
-          ref={inputRef}
-          value={workflowName}
-          onChange={(event) => setWorkflowName(event.target.value)}
-          onKeyDown={handleKeyDown}
-          aria-label={t("common.workflow_name")}
-          placeholder={t("common.workflow_name")}
-          // Approximates content sizing where field-sizing is unsupported (Firefox/Safari).
-          size={Math.max(workflowName.length, 12)}
-          className={cn(
-            "-mx-2 -my-1 min-w-0 rounded-md bg-transparent px-2 py-1",
-            "text-3xl font-bold text-slate-800 placeholder:text-slate-400",
-            // Sizes to its content where supported; the max keeps long names from pushing the CTA out.
-            "[field-sizing:content] max-w-[28rem]",
-            // Dashed hover/focus box, matching the dashboard's editable title
-            // (see dashboard-page-header.tsx): slate while hovered, brand while editing.
-            "border border-dashed border-transparent transition-colors",
-            "hover:border-slate-300 focus:border-brand-dark",
-            // Same specificity means source order decides, and Tailwind emits hover last — without
-            // this the border drops back to slate when the pointer rests on a focused field.
-            "focus:hover:border-brand-dark",
-            "focus:ring-0 focus:outline-none"
-          )}
-        />
-      ) : (
-        <span className="min-w-0">{resolved.name}</span>
-      )}
-      <WorkflowStatusPill status={resolved.status} size="large" />
+    <span className="flex min-w-0 flex-col gap-y-1">
+      {/* flex-wrap keeps the badge inline next to the name and pushes it below on narrow widths. */}
+      <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        {isEditable ? (
+          <input
+            ref={inputRef}
+            value={workflowName}
+            onChange={(event) => setWorkflowName(event.target.value)}
+            onKeyDown={handleKeyDown}
+            aria-label={t("common.workflow_name")}
+            placeholder={t("common.workflow_name")}
+            maxLength={WORKFLOW_NAME_MAX_LENGTH}
+            aria-invalid={showNameError || undefined}
+            aria-describedby={showNameError ? nameErrorId : undefined}
+            // Approximates content sizing where field-sizing is unsupported (Firefox/Safari).
+            size={Math.max(workflowName.length, 12)}
+            className={cn(
+              "-mx-2 -my-1 min-w-0 rounded-md bg-transparent px-2 py-1",
+              "text-3xl font-bold text-slate-800 placeholder:text-slate-400",
+              // Sizes to its content where supported; the max keeps long names from pushing the CTA out.
+              "[field-sizing:content] max-w-[28rem]",
+              // Dashed hover/focus box, matching the dashboard's editable title
+              // (see dashboard-page-header.tsx): slate while hovered, brand while editing.
+              "border border-dashed border-transparent transition-colors",
+              "hover:border-slate-300 focus:border-brand-dark",
+              // Same specificity means source order decides, and Tailwind emits hover last — without
+              // this the border drops back to slate when the pointer rests on a focused field.
+              "focus:hover:border-brand-dark",
+              "focus:ring-0 focus:outline-none",
+              // Red box while the name is empty, matching the amber "Not saved" pill and the inline error.
+              showNameError &&
+                "border-red-300 hover:border-red-400 focus:border-red-400 focus:hover:border-red-400"
+            )}
+          />
+        ) : (
+          <span className="min-w-0">{resolved.name}</span>
+        )}
+        <WorkflowStatusPill status={resolved.status} size="large" />
+      </span>
+      {showNameError ? (
+        <span id={nameErrorId} role="alert" className="text-xs font-medium text-red-600">
+          {t("workspace.workflows.validation_problem_name_missing")}
+        </span>
+      ) : null}
     </span>
   );
 };

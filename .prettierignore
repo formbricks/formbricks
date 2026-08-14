@@ -1,0 +1,33 @@
+# Prettier already skips everything in .gitignore (that is a default ignore
+# path in Prettier 3), so this file only needs to list *tracked* files that
+# `prettier --write .` must not touch.
+
+# Generated artifacts: the tool that writes them would immediately undo any
+# formatting, which would turn `pnpm format:check` red on an unrelated PR.
+pnpm-lock.yaml
+docs/api-v3-reference/openapi.yml
+docs/api-v3-reference/.redocly.lint-ignore.yaml
+charts/**/README.md
+charts/spicedb-operator/crds/authzed.com_spicedbclusters.yaml
+charts/spicedb-operator/files/update-graph.yaml
+
+# Helm templates are Go templates that only look like YAML — Prettier's YAML
+# parser cannot parse them.
+charts/**/templates/
+
+# Prettier's MDX printer treats Markdown inside JSX children as a single text
+# block and re-wraps it, so lists and numbered steps inside Mintlify
+# components (<Step>, <Accordion>, <Tab>, …) collapse into one paragraph.
+# Formatting the docs would silently change what they render.
+*.mdx
+
+# Intentional empty list items are the fill-in placeholders of this form;
+# Prettier folds them into the label above and changes the template.
+.github/pull_request_template.md
+
+# Partly owned by a generator: .agents/install.sh rewrites the `robots:start`
+# block, and Prettier wants a blank line after that marker where the installer
+# emits none. Ignoring is per-file, not per-region, so the whole file is out —
+# otherwise every regeneration of the block turns format:check red on whichever
+# unrelated PR happens to carry it.
+AGENTS.md

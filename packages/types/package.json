@@ -2,9 +2,7 @@
   "name": "@formbricks/types",
   "version": "0.0.0",
   "private": true,
-  "main": "index.ts",
   "exports": {
-    ".": "./index.ts",
     "./integration": "./integration/index.ts",
     "./*": "./*.ts"
   },

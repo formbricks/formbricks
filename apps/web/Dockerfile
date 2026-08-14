@@ -125,7 +125,7 @@ COPY --from=installer /app/apps/web/public ./apps/web/public
 RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
 # Create packages/database directory structure with proper ownership for runtime migrations
-RUN mkdir -p ./packages/database/migrations && chown -R nextjs:nextjs ./packages/database
+RUN mkdir -p ./packages/database/.prisma-migrations && chown -R nextjs:nextjs ./packages/database
 
 COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
 RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
@@ -307,7 +307,9 @@ RUN chmod -R 755 \
       ./node_modules/@opentelemetry/exporter-logs-otlp-proto \
     && OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 node -e "\
       const pino = require('pino'); \
-      const target = process.cwd() + '/node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js'; \
+      process.chdir('/home/nextjs/apps/web'); \
+      const runtimeRoot = process.cwd().replace(/[\/\\\\]apps[\/\\\\]web$/, ''); \
+      const target = runtimeRoot + '/node_modules/pino-opentelemetry-transport/lib/pino-opentelemetry-transport.js'; \
       process.on('uncaughtException', (error) => { console.error(error); process.exit(1); }); \
       process.on('unhandledRejection', (error) => { console.error(error); process.exit(1); }); \
       const logger = pino({ \

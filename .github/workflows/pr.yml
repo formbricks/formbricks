@@ -28,14 +28,25 @@ jobs:
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
-  build:
-    name: Build Formbricks-web
-    uses: ./.github/workflows/build-web.yml
-    secrets: inherit
+  typecheck:
+    name: Run Typecheck
+    uses: ./.github/workflows/typecheck.yml
+
+  # NOTE: there is deliberately no standalone "build the web app" job here. It used to run
+  # `pnpm build --filter=@formbricks/web...` in parallel with e2e-test, which builds the
+  # very same app, and cached the output into a key nothing downstream ever read. Sharing
+  # that build with e2e-test would require `needs: build`, which serializes two jobs that
+  # are currently concurrent and makes the critical path longer, not shorter. The compile
+  # signal is still covered twice: e2e-test builds the app, and docker-build-validation.yml
+  # builds it again in production config.
 
   helm-chart-validation:
     name: Validate Helm Chart
     uses: ./.github/workflows/helm-chart-validation.yml
+
+  coderabbit-config-validation:
+    name: Validate CodeRabbit Config
+    uses: ./.github/workflows/coderabbit-config-validation.yml
 
   e2e-test:
     name: Run E2E Tests
@@ -62,7 +73,16 @@ jobs:
 
   required:
     name: PR Check Summary
-    needs: [lint, test, build, helm-chart-validation, e2e-test, validate-authzed-schema]
+    needs:
+      [
+        lint,
+        typecheck,
+        test,
+        helm-chart-validation,
+        coderabbit-config-validation,
+        e2e-test,
+        validate-authzed-schema,
+      ]
     if: always()
     runs-on: ubuntu-latest
     permissions:

@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -413,14 +412,16 @@ export const listFeedbackRecordsAction = authenticatedActionClient
         limit: parsedInput.limit ?? 50,
       };
       if (parsedInput.cursor) params.cursor = parsedInput.cursor;
-      if (parsedInput.sourceType) params.source_type = parsedInput.sourceType;
-      if (parsedInput.fieldType) params.field_type = parsedInput.fieldType;
+      // One-element OR lists: Hub 0.8.4 made these filters repeatable, this caller stays single-valued.
+      if (parsedInput.sourceType) params.source_type = [parsedInput.sourceType];
+      if (parsedInput.fieldType) params.field_type = [parsedInput.fieldType];
       if (parsedInput.since) params.since = parsedInput.since;
       if (parsedInput.until) params.until = parsedInput.until;
 
       const result = await listFeedbackRecords(params);
       if (result.error || !result.data) {
-        logger.warn({ error: result.error }, "Failed to list feedback records");
+        // listFeedbackRecords already logged this with the full error and a Hub-unreachable hint;
+        // re-logging here only produced a second, thinner line per request.
         throw new Error(result.error?.message ?? "Failed to load feedback records");
       }
 

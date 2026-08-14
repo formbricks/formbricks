@@ -58,14 +58,14 @@ wrapper, and reads `getIssuedAuthorizationCheckCount()` — a counter incremente
 5,000 checks each, same seeded tenant (2,000 users / 100 teams / 50 workspaces / 6,000
 surveys / 50,000 responses), concurrency 16, **0 errors on both**.
 
-| Action | Legacy p50 | Legacy p95 | Legacy p99 | SpiceDB p50 | SpiceDB p95 | SpiceDB p99 |
-| --- | --- | --- | --- | --- | --- | --- |
-| `organization.read` | 0.92 ms | 1.38 | 1.84 | 3.52 ms | 8.12 | 23.68 |
-| `organization.manage` | 0.93 ms | 1.41 | 1.87 | 3.52 ms | 8.12 | 23.28 |
-| `workspace.read` | 1.37 ms | 2.16 | 3.03 | 3.60 ms | 10.17 | 24.10 |
-| `workspace.write` | 1.41 ms | 2.19 | 3.09 | 3.49 ms | 10.00 | 23.84 |
-| `survey.read` | 1.99 ms | 2.94 | 4.11 | 3.88 ms | 9.58 | 29.13 |
-| `survey.response_export` | 1.97 ms | 2.93 | 4.30 | 3.78 ms | 10.14 | 29.58 |
+| Action                   | Legacy p50 | Legacy p95 | Legacy p99 | SpiceDB p50 | SpiceDB p95 | SpiceDB p99 |
+| ------------------------ | ---------- | ---------- | ---------- | ----------- | ----------- | ----------- |
+| `organization.read`      | 0.92 ms    | 1.38       | 1.84       | 3.52 ms     | 8.12        | 23.68       |
+| `organization.manage`    | 0.93 ms    | 1.41       | 1.87       | 3.52 ms     | 8.12        | 23.28       |
+| `workspace.read`         | 1.37 ms    | 2.16       | 3.03       | 3.60 ms     | 10.17       | 24.10       |
+| `workspace.write`        | 1.41 ms    | 2.19       | 3.09       | 3.49 ms     | 10.00       | 23.84       |
+| `survey.read`            | 1.99 ms    | 2.94       | 4.11       | 3.88 ms     | 9.58        | 29.13       |
+| `survey.response_export` | 1.97 ms    | 2.93       | 4.30       | 3.78 ms     | 10.14       | 29.58       |
 
 Throughput: 6,424 checks/sec (legacy) vs 2,580 checks/sec (SpiceDB, `fully_consistent`,
 required by env validation whenever enforcement rules are configured — see below).
@@ -93,11 +93,11 @@ pre-check Postgres resolution ran with a warm cache, and the consistency mode.
 directly, bypassing the coordinator entirely, at both settings, varying the subject across
 200 real seeded users the same way the full run does:
 
-| | minimize_latency | fully_consistent |
-| --- | --- | --- |
-| p50 | 0.40 ms | 0.49 ms |
-| p95 | 1.21 ms | 1.34 ms |
-| p99 | 2.02 ms | 1.94 ms |
+|     | minimize_latency | fully_consistent |
+| --- | ---------------- | ---------------- |
+| p50 | 0.40 ms          | 0.49 ms          |
+| p95 | 1.21 ms          | 1.34 ms          |
+| p99 | 2.02 ms          | 1.94 ms          |
 
 **Consistency mode costs almost nothing.** The raw SpiceDB engine is not the bottleneck —
 it is, if anything, faster per-check than the legacy Postgres evaluator (0.4–0.5 ms vs.
@@ -107,7 +107,7 @@ it is, if anything, faster per-check than the legacy Postgres evaluator (0.4–0
 Before consulting either evaluator, `resolveAuthorizationScope` resolves the actor and
 tenant boundary via Postgres (`apps/web/lib/authorization/source-scope.ts`), and the
 resolvers behind it (`apps/web/lib/authorization/resolvers.ts`) are wrapped in React's
-`cache()` — which deduplicates *within one render*, not across independent calls. The perf
+`cache()` — which deduplicates _within one render_, not across independent calls. The perf
 harness is a script, not a React render, so every one of its 5,000 iterations paid full,
 uncached Postgres resolution cost. **This script cannot see the benefit `reactCache` gives
 a real request that makes several checks against the same resource**, and its numbers are
@@ -127,12 +127,12 @@ apps/web/lib/authorization/checks-per-request-dashboards.integration.test.ts
 apps/web/lib/authorization/checks-per-request-response-export.integration.test.ts
 ```
 
-| Path | Small | Large | Δ |
-| --- | --- | --- | --- |
-| Survey list (50 → 3,000 surveys) | 1 check | 1 check | **0** |
-| Survey list as a *member*, access via team (100 surveys) | 1 check | — | **0** |
-| Dashboard list (10 → 2,000 dashboards) | 1 check | 1 check | **0** |
-| Response export (1 → 6,500 responses) | *n* checks | *n* checks | **0** |
+| Path                                                     | Small      | Large      | Δ     |
+| -------------------------------------------------------- | ---------- | ---------- | ----- |
+| Survey list (50 → 3,000 surveys)                         | 1 check    | 1 check    | **0** |
+| Survey list as a _member_, access via team (100 surveys) | 1 check    | —          | **0** |
+| Dashboard list (10 → 2,000 dashboards)                   | 1 check    | 1 check    | **0** |
+| Response export (1 → 6,500 responses)                    | _n_ checks | _n_ checks | **0** |
 
 The member row is the one that exercises the interesting code. Owners short-circuit
 nearly every authorization branch, so an owner-only suite never touches the scope
@@ -176,7 +176,7 @@ interface at all, separate from the N+1 question this report answers for the oth
 **A real bug this pass caught in its own test suite.** The first version of the growth
 assertions (`expect(large - small).toBe(0)`) passes vacuously if the counter itself stops
 incrementing — both sides read 0, and 0 equals 0. Re-running the mutation check (remove
-the counter call from `can()`) against all three files *together*, rather than
+the counter call from `can()`) against all three files _together_, rather than
 spot-checking one file and trusting the aggregate failure count, surfaced that the
 survey-list growth test was the one silently passing under that exact mutation on the
 first pass. All growth-style assertions now separately assert the baseline count is

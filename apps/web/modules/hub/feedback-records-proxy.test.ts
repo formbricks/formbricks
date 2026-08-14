@@ -35,6 +35,37 @@ vi.mock("@/modules/hub/feedback-records-gateway", () => ({
   },
 }));
 
+/**
+ * Like JSON.stringify, but renders Error values including the members that matter for a leak check.
+ * `message`, `name` and `cause` are non-enumerable or exotic, so plain stringify drops them and any
+ * "does not contain the URL" assertion built on it can never fail.
+ *
+ * Projects the same two links getHubErrorHint walks — `cause` and `AggregateError.errors` — because
+ * Node buries the errno (and the URL alongside it) down either one. Omitting `errors` would leave the
+ * multi-address case silently unchecked, which is the failure this assertion exists to avoid.
+ *
+ * Tracks visited errors because the replacer hands back a fresh object each time, which defeats
+ * stringify's own cycle detection — a self-referencing `cause` (another shape getHubErrorHint
+ * explicitly handles) would otherwise recurse until the stack blows instead of failing the assertion.
+ */
+const serializeIncludingErrors = (value: unknown): string => {
+  const seen = new WeakSet<Error>();
+
+  return JSON.stringify(value, (_key, val) => {
+    if (!(val instanceof Error)) return val;
+    if (seen.has(val)) return "[circular]";
+    seen.add(val);
+
+    return {
+      name: val.name,
+      message: val.message,
+      stack: val.stack,
+      cause: val.cause,
+      errors: (val as { errors?: unknown }).errors,
+    };
+  });
+};
+
 describe("proxyFeedbackRecordsRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -199,7 +230,16 @@ describe("proxyFeedbackRecordsRequest", () => {
   });
 
   test("returns a sanitized bad gateway response when Hub is unavailable", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED secret-url")));
+    // Carries `code` like a real Node connection failure, and keeps the URL in the message so the
+    // sanitization assertion below is still exercising something.
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockRejectedValue(
+          Object.assign(new Error("connect ECONNREFUSED secret-url"), { code: "ECONNREFUSED" })
+        )
+    );
 
     const response = await proxyFeedbackRecordsRequest(
       new NextRequest("http://localhost:3000/api/v3/feedbackRecords?tenant_id=dir_1", {
@@ -216,9 +256,19 @@ describe("proxyFeedbackRecordsRequest", () => {
         requestId: "request_1",
         method: "GET",
         pathname: "/api/v3/feedbackRecords",
+        hint: expect.stringContaining("Hub looks unreachable"),
       },
       "Feedback records local proxy request failed"
     );
+
+    // The whole point of building this payload by hand: a fetch failure carries the target URL in
+    // its message, so neither the log nor the response body may echo the error itself.
+    //
+    // Serialized with an Error-aware replacer, not plain JSON.stringify. `Error.prototype.message`
+    // is non-enumerable, so stringify renders a logged error as `{"code":"ECONNREFUSED"}` and the
+    // URL never appears — the assertion would pass even with `err` back in the payload, which is
+    // the regression it exists to catch.
+    expect(serializeIncludingErrors(mockLoggerError.mock.calls)).not.toContain("secret-url");
   });
 
   test("is unavailable in production", async () => {

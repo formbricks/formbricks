@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ApiKey, ApiKeyPermission, Prisma } from "@formbricks/database/prisma";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
-import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import {
   createApiKey,
@@ -56,6 +55,10 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("./workspaces", () => ({
+  getWorkspacesByOrganizationId: vi.fn(),
+}));
+
 vi.mock("@/lib/authzed/api-key", () => ({
   reconcileApiKeyRelationships: vi.fn(),
 }));
@@ -68,10 +71,6 @@ vi.mock("@/lib/authzed/projection-boundary", () => ({
       // Post-commit projection failures must never replace a successful source mutation.
     }
   }),
-}));
-
-vi.mock("./workspaces", () => ({
-  getWorkspacesByOrganizationId: vi.fn(),
 }));
 
 vi.mock("crypto", async () => {
@@ -511,16 +510,6 @@ describe("API Key Management", () => {
       expect(prisma.apiKey.create).toHaveBeenCalled();
     });
 
-    test("preserves the one-time API key when projection fails", async () => {
-      vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
-      vi.mocked(reconcileApiKeyRelationships).mockRejectedValueOnce(new Error("projection failed"));
-
-      await expect(createApiKey("org123", "user123", mockApiKeyData)).resolves.toEqual({
-        ...mockApiKey,
-        actualKey: "fbk_testSecret123",
-      });
-    });
-
     test("rejects a workspace permission for a workspace outside the organization (ENG-1749)", async () => {
       // The organization owns only "own-workspace"; the caller attempts to scope the key to a
       // victim organization's workspace. This must be refused before any key is persisted.
@@ -536,6 +525,16 @@ describe("API Key Management", () => {
       ).rejects.toThrow(OperationNotAllowedError);
       expect(getWorkspacesByOrganizationId).toHaveBeenCalledWith("org123");
       expect(prisma.apiKey.create).not.toHaveBeenCalled();
+    });
+
+    test("preserves the one-time API key when projection fails", async () => {
+      vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
+      vi.mocked(reconcileApiKeyRelationships).mockRejectedValueOnce(new Error("projection failed"));
+
+      await expect(createApiKey("org123", "user123", mockApiKeyData)).resolves.toEqual({
+        ...mockApiKey,
+        actualKey: "fbk_testSecret123",
+      });
     });
 
     test("rejects create input with duplicate workspaceId", async () => {

@@ -1,6 +1,6 @@
 # AuthZed relationship sync runbook
 
-PostgreSQL is the source of truth for authorization. SpiceDB holds a *projection* of it, written after
+PostgreSQL is the source of truth for authorization. SpiceDB holds a _projection_ of it, written after
 each source transaction commits, best-effort. That trade-off is deliberate — an AuthZed outage must
 never turn a successful PostgreSQL mutation into an application error — and it has one consequence
 worth internalizing:
@@ -16,13 +16,13 @@ contract.
 
 ## 1. Symptoms
 
-| What you see | What it usually means |
-| --- | --- |
-| Shadow evaluation reports mismatches (ENG-1738) | Drift. Run the backfill. |
-| A new member, team, or API key lacks access *in SpiceDB only* | A dropped projection for that record. |
-| A removed member still resolves in SpiceDB | A stale relationship. Only pruning removes it. |
-| `formbricks_authzed_projection_total{status="failed"}` is non-zero | Projections are failing now. |
-| Nothing at all, but AuthZed was recently unavailable | Assume drift. An outage never retries. |
+| What you see                                                       | What it usually means                          |
+| ------------------------------------------------------------------ | ---------------------------------------------- |
+| Shadow evaluation reports mismatches (ENG-1738)                    | Drift. Run the backfill.                       |
+| A new member, team, or API key lacks access _in SpiceDB only_      | A dropped projection for that record.          |
+| A removed member still resolves in SpiceDB                         | A stale relationship. Only pruning removes it. |
+| `formbricks_authzed_projection_total{status="failed"}` is non-zero | Projections are failing now.                   |
+| Nothing at all, but AuthZed was recently unavailable               | Assume drift. An outage never retries.         |
 
 Product authorization is unaffected in every one of these cases while enforcement is still on the
 legacy evaluator. That is what makes them easy to miss.
@@ -44,13 +44,13 @@ records `disabled` as its own outcome rather than skipping.
 
 All five carry only bounded attributes — never an organization, user, or relationship identifier.
 
-| Metric | Attributes | Read it as |
-| --- | --- | --- |
-| `formbricks_authzed_projection_total` | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`. |
-| `formbricks_authzed_projection_duration_seconds` | same | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement. |
-| `formbricks_authzed_request_failures_total` | `operation`, `code`, `retryable` | Requests that exhausted their retry budget — *any* facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`. |
-| `formbricks_authzed_request_retries_total` | `operation`, `code` | Retries scheduled. Elevated but not failing = degraded, not down. |
-| `formbricks_authzed_authorization_checks_per_request` | `surface` | How many `can()` decisions one request made. Watch the upper percentiles for a page regressing into one check per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
+| Metric                                                | Attributes                          | Read it as                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formbricks_authzed_projection_total`                 | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`.                                                                                                                                                                                                                                                                                                                                                        |
+| `formbricks_authzed_projection_duration_seconds`      | same                                | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement.                                                                                                                                                                                                                                     |
+| `formbricks_authzed_request_failures_total`           | `operation`, `code`, `retryable`    | Requests that exhausted their retry budget — _any_ facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`.                                                                                  |
+| `formbricks_authzed_request_retries_total`            | `operation`, `code`                 | Retries scheduled. Elevated but not failing = degraded, not down.                                                                                                                                                                                                                                                                                                                                                            |
+| `formbricks_authzed_authorization_checks_per_request` | `surface`                           | How many `can()` decisions one request made. Watch the upper percentiles for a page regressing into one check per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
 
 Exported through the readers already configured in `instrumentation-node.ts`: Prometheus when
 `PROMETHEUS_ENABLED=1` (scraped by the chart's ServiceMonitor), OTLP when
@@ -64,19 +64,19 @@ window; its observability is the counters in its own JSON result and its exit co
 Every AuthZed log line carries `component: "authzed"`. Failure lines share a stable field set, so one
 query covers all of them:
 
-| Field | Present on | Meaning |
-| --- | --- | --- |
-| `component` | everything | Always `"authzed"`. |
-| `operation` | everything | The facade operation or projection entry point. |
-| `status` | projection outcomes | `projected` / `failed`. |
-| `errorCode` | every failure | Sanitized `authzed_*` code. Never a raw error. |
-| `retryable` | every failure | Whether a retry could have helped. |
-| `durationMs` | requests and projections | — |
-| `projection` | projection outcomes | Which projector: `organization_membership`, `team_workspace`, `api_key`. |
-| `attempts` | projection failures | Total attempts behind the failure. |
-| `attemptCount` | request failures/retries | Which attempt this line is about. Distinct from `attempts` above — request layer, not projection layer. |
-| `grpcStatus` | request failures/retries | Numeric gRPC status. |
-| `errorName` | post-commit boundary only | Error *class* name when a projector itself threw. |
+| Field          | Present on                | Meaning                                                                                                 |
+| -------------- | ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `component`    | everything                | Always `"authzed"`.                                                                                     |
+| `operation`    | everything                | The facade operation or projection entry point.                                                         |
+| `status`       | projection outcomes       | `projected` / `failed`.                                                                                 |
+| `errorCode`    | every failure             | Sanitized `authzed_*` code. Never a raw error.                                                          |
+| `retryable`    | every failure             | Whether a retry could have helped.                                                                      |
+| `durationMs`   | requests and projections  | —                                                                                                       |
+| `projection`   | projection outcomes       | Which projector: `organization_membership`, `team_workspace`, `api_key`.                                |
+| `attempts`     | projection failures       | Total attempts behind the failure.                                                                      |
+| `attemptCount` | request failures/retries  | Which attempt this line is about. Distinct from `attempts` above — request layer, not projection layer. |
+| `grpcStatus`   | request failures/retries  | Numeric gRPC status.                                                                                    |
+| `errorName`    | post-commit boundary only | Error _class_ name when a projector itself threw.                                                       |
 
 ```
 # Projections that failed — the drift signal. `status` is on projection outcomes only, which is what
@@ -88,7 +88,7 @@ component:"authzed" AND errorCode:"authzed_unavailable"
 ```
 
 **Identifiers never appear in logs.** No organization, user, team, workspace, or API-key ID; no schema
-text; no tokens. If you need to know *which* records drifted, that comes from the backfill's stdout
+text; no tokens. If you need to know _which_ records drifted, that comes from the backfill's stdout
 (see §3), not from logs.
 
 ### Correlating with SpiceDB itself
@@ -162,12 +162,12 @@ pnpm authzed:backfill --apply --prune --confirm-prune --workspace-id=<cuid> \
 ```
 
 Narrow, but not hermetic: the API keys holding grants on that workspace are reconciled in full, which
-also converges their grants on *other* workspaces. That direction only ever writes what PostgreSQL says,
+also converges their grants on _other_ workspaces. That direction only ever writes what PostgreSQL says,
 so it is a wider repair than you asked for.
 
 **Deletion is held to the workspace, but at a cost worth knowing.** A grant ref implies its principal, and
 a principal with no PostgreSQL row makes the reconciler delete subject-wide — every workspace
-relationship for that team, or every organization *and* workspace relationship for that key. One orphan
+relationship for that team, or every organization _and_ workspace relationship for that key. One orphan
 here would then delete relationships in other tenants, none of it weighed against this run's cap. So this
 scope **withholds** any grant whose team or API key is also gone: it stays counted in `orphaned`, nothing
 is deleted for it, and the run finishes `drifted`. That cleanup belongs to `--organization-id` or
@@ -193,12 +193,12 @@ Either way, re-run before concluding anything.
 ### Reading the drift counters
 
 - **`missing`** — records PostgreSQL holds that SpiceDB has no relationship for. What an empty or stale
-  SpiceDB looks like. Step 2 fixes it. Note it compares *records*, not relations: a membership stored as
+  SpiceDB looks like. Step 2 fixes it. Note it compares _records_, not relations: a membership stored as
   `owner` in PostgreSQL but `member` in SpiceDB counts as present, and step 2 converges it regardless by
   writing the current value.
 - **`orphaned`** — relationships whose source record is gone. Only step 3 removes them.
 - **`mismatchedParents`** — **treat as a security finding, not routine drift.** A resource is attached to
-  an organization PostgreSQL says does not own it. `organization` is a relation, so the edge is *additive*:
+  an organization PostgreSQL says does not own it. `organization` is a relation, so the edge is _additive_:
   every owner and manager of the named organization has access to that resource through
   `organization->manage`, and no PostgreSQL row explains it. The backfill reports these and deliberately
   never removes them, because deleting a parent edge means deleting a relation the resource legitimately
@@ -222,7 +222,7 @@ Either way, re-run before concluding anything.
   Then re-run step 2 to confirm the correct edge is present, and work out how it was written — nothing in
   Formbricks creates one.
 
-  **Only `--scope=all` can find one.** The escalation is an edge on *another* tenant's resource naming
+  **Only `--scope=all` can find one.** The escalation is an edge on _another_ tenant's resource naming
   the organization you are investigating, and a `--organization-id` run reads only the resources
   PostgreSQL says that organization owns — so it never reads the offending resource. A single-tenant run
   reporting `mismatchedParents: 0` means "none among this tenant's own resources", **not** "this tenant
@@ -242,10 +242,10 @@ Either way, re-run before concluding anything.
 `formbricks` everywhere, so it cannot tell staging from production.
 
 **"No prune" does not mean "no deletes."** Converging a membership inherently deletes the roles it does
-not hold. What `--prune` adds is permission to reconcile records observed *only* in SpiceDB.
+not hold. What `--prune` adds is permission to reconcile records observed _only_ in SpiceDB.
 
 **A large orphan count is a symptom, not a workload.** Exceeding the per-run cap (500, lowerable with
-`--max-prune`, never raisable) prunes *nothing* — not a capped subset — and reports it. Every unit,
+`--max-prune`, never raisable) prunes _nothing_ — not a capped subset — and reports it. Every unit,
 the streamed whole-deployment sweep included, counts its orphans to completion before deleting any of
 them, so the cap aborts before the first delete rather than part-way through. Before raising your
 expectations, check: right endpoint? right database? a restore in progress? `--scope=all` on a SpiceDB
@@ -413,10 +413,10 @@ that belongs with the AuthZed deployment contract rather than the application.
 
 ## 8. Escalation
 
-| Situation | Action |
-| --- | --- |
-| Backfill reports `failures` that persist across runs | Capture the `code` values and the run's JSON. A non-retryable code (`authzed_unauthenticated`, `authzed_permission_denied`, `authzed_invalid_request`) is a configuration problem, not a transient one. |
-| Orphan count exceeds the cap and the endpoint is correct | Do not raise the cap. Establish why first — a wrong database or an in-progress restore both look like this. |
-| `unmanaged` relationships reported | Something other than Formbricks is writing to this SpiceDB, or the schema moved ahead of its projector. Never pruned; investigate before enforcing. |
-| Schema check reports `drifted` | `pnpm authzed:schema apply --expected-current-digest <remoteDigest>`. Relationship repair against a drifted schema is not meaningful. |
-| Sync cannot be restored and enforcement is pending | `AUTHZED_ENABLED=0` and note that a full backfill is required before re-enabling. |
+| Situation                                                | Action                                                                                                                                                                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backfill reports `failures` that persist across runs     | Capture the `code` values and the run's JSON. A non-retryable code (`authzed_unauthenticated`, `authzed_permission_denied`, `authzed_invalid_request`) is a configuration problem, not a transient one. |
+| Orphan count exceeds the cap and the endpoint is correct | Do not raise the cap. Establish why first — a wrong database or an in-progress restore both look like this.                                                                                             |
+| `unmanaged` relationships reported                       | Something other than Formbricks is writing to this SpiceDB, or the schema moved ahead of its projector. Never pruned; investigate before enforcing.                                                     |
+| Schema check reports `drifted`                           | `pnpm authzed:schema apply --expected-current-digest <remoteDigest>`. Relationship repair against a drifted schema is not meaningful.                                                                   |
+| Sync cannot be restored and enforcement is pending       | `AUTHZED_ENABLED=0` and note that a full backfill is required before re-enabling.                                                                                                                       |

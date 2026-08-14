@@ -1,6 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
+import { isValidIanaTimeZone } from "@formbricks/types/common";
 import { isAuthzedAuthorizationRolloutTarget } from "./authzed/rollout-contract";
 import { throwEnvValidationError } from "./env-validation-error";
 
@@ -17,6 +18,19 @@ const isHttpUrl = (value: string): boolean => {
 
 const ZOpenAICompatibleBaseUrl = z.url().refine(isHttpUrl, {
   message: "AI_OPENAI_COMPATIBLE_BASE_URL must be a valid http(s) URL",
+});
+
+const isValidMcpOauthJwksUrl = (value: string): boolean => {
+  if (!isHttpUrl(value)) {
+    return false;
+  }
+
+  const url = new URL(value);
+  return url.hostname.length > 0 && url.username === "" && url.password === "" && url.hash === "";
+};
+
+const ZMcpOauthJwksUrl = z.url().refine(isValidMcpOauthJwksUrl, {
+  message: "MCP_OAUTH_JWKS_URL must be a valid http(s) URL without credentials or a fragment",
 });
 
 const ZAIConfigurationEnv = z.object({
@@ -183,15 +197,6 @@ const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx:
   };
 
   providerValidators[values.AI_PROVIDER](values, ctx);
-};
-
-const isValidIanaTimeZone = (value: string): boolean => {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
 };
 
 const ZSurveySchedulingTimeZone = z.string().trim().min(1).refine(isValidIanaTimeZone, {
@@ -540,6 +545,7 @@ const parsedEnv = createEnv({
     // weak secret can't silently ship (it stays optional for the pre-cutover rollout).
     BETTER_AUTH_SECRET: z.string().min(32).optional(),
     BETTER_AUTH_URL: z.url().optional(),
+    MCP_OAUTH_JWKS_URL: ZMcpOauthJwksUrl.optional(),
     MAIL_FROM_NAME: z.string().optional(),
     NOTION_OAUTH_CLIENT_ID: z.string().optional(),
     NOTION_OAUTH_CLIENT_SECRET: z.string().optional(),
@@ -652,6 +658,7 @@ const parsedEnv = createEnv({
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
+    MCP_OAUTH_JWKS_URL: process.env.MCP_OAUTH_JWKS_URL,
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     BREVO_LIST_ID: process.env.BREVO_LIST_ID,
     CRON_SECRET: process.env.CRON_SECRET,

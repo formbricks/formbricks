@@ -16,7 +16,14 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 
 - A Formbricks instance running and accessible.
 
-- The callback URI for your Formbricks instance: `{WEBAPP_URL}/api/auth/callback/azure-ad`
+- The callback URI for your Formbricks instance: `{WEBAPP_URL}/api/auth/oauth2/callback/azuread`
+
+<Warning>
+  **Upgrading from v5.1 or earlier?** This path changed in v5.2. The old URI was
+  `{WEBAPP_URL}/api/auth/callback/azure-ad`. Add the new one under **Redirect URIs** in your app
+  registration or logins will fail. See the [migration guide](/self-hosting/advanced/migration) for the
+  full list of changed callback URLs.
+</Warning>
 
 ## How to connect your Formbricks instance to Microsoft Entra
 

@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-describe("server - posthogServerClient", () => {
+describe("server - posthog clients", () => {
   const g = globalThis as Record<string, unknown>;
 
   const setupMocks = (opts: {
     posthogKey?: string;
     shutdown?: ReturnType<typeof vi.fn>;
     loggerError?: ReturnType<typeof vi.fn>;
+    isProduction?: boolean;
   }) => {
     const shutdown = opts.shutdown ?? vi.fn().mockResolvedValue(undefined);
     const loggerError = opts.loggerError ?? vi.fn();
@@ -19,7 +20,12 @@ describe("server - posthogServerClient", () => {
         this.shutdown = shutdown;
       }),
     }));
-    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: opts.posthogKey }));
+    // server.ts branches on IS_PRODUCTION, so the branch is chosen here rather than through
+    // NODE_ENV. Defaults to false, matching the real constant under test (NODE_ENV=test).
+    vi.doMock("@/lib/constants", () => ({
+      POSTHOG_KEY: opts.posthogKey,
+      IS_PRODUCTION: opts.isProduction ?? false,
+    }));
 
     return { shutdown, loggerError };
   };
@@ -27,17 +33,19 @@ describe("server - posthogServerClient", () => {
   beforeEach(() => {
     vi.resetModules();
     delete g.posthogServerClient;
+    delete g.posthogTracingClient;
     delete g.posthogHandlersRegistered;
   });
 
-  test("returns null when POSTHOG_KEY is not set", async () => {
+  test("returns null for both clients when POSTHOG_KEY is not set", async () => {
     setupMocks({ posthogKey: undefined });
 
-    const { posthogServerClient } = await import("./server");
+    const { posthogServerClient, posthogTracingClient } = await import("./server");
     expect(posthogServerClient).toBeNull();
+    expect(posthogTracingClient).toBeNull();
   });
 
-  test("creates PostHog client when POSTHOG_KEY is set", async () => {
+  test("creates the server client with immediate flush", async () => {
     setupMocks({ posthogKey: "phc_test_key" });
 
     const { posthogServerClient } = await import("./server");
@@ -51,28 +59,88 @@ describe("server - posthogServerClient", () => {
     });
   });
 
-  test("reuses client from globalThis in development", async () => {
-    const fakeClient = { capture: vi.fn(), shutdown: vi.fn().mockResolvedValue(undefined) };
-    g.posthogServerClient = fakeClient;
+  test("creates the tracing client with batched flush and a before_send hook", async () => {
+    setupMocks({ posthogKey: "phc_test_key" });
+
+    const { posthogTracingClient } = await import("./server");
+    expect(posthogTracingClient).not.toBeNull();
+
+    const { PostHog } = await import("posthog-node");
+    expect(PostHog).toHaveBeenCalledWith("phc_test_key", {
+      host: "https://eu.i.posthog.com",
+      flushAt: 20,
+      flushInterval: 10_000,
+      before_send: expect.any(Function),
+    });
+  });
+
+  describe("tracing client before_send", () => {
+    const getBeforeSend = async () => {
+      const { PostHog } = await import("posthog-node");
+      const call = vi.mocked(PostHog).mock.calls.find((args) => "before_send" in args[1]);
+      return call![1].before_send as (event: unknown) => unknown;
+    };
+
+    test("strips $ai_error but keeps $ai_is_error and other properties", async () => {
+      setupMocks({ posthogKey: "phc_test_key" });
+      await import("./server");
+      const beforeSend = await getBeforeSend();
+
+      const result = beforeSend({
+        event: "$ai_generation",
+        properties: {
+          $ai_error: '{"requestBodyValues":{"prompt":"secret"}}',
+          $ai_is_error: true,
+          $ai_model: "gpt",
+        },
+      }) as { properties: Record<string, unknown> };
+
+      expect(result.properties).toEqual({ $ai_is_error: true, $ai_model: "gpt" });
+    });
+
+    test("no-ops when properties or $ai_error is missing", async () => {
+      setupMocks({ posthogKey: "phc_test_key" });
+      await import("./server");
+      const beforeSend = await getBeforeSend();
+
+      expect(beforeSend(null)).toBeNull();
+      const eventWithoutProperties = { event: "$mcp_tool_call" };
+      expect(beforeSend(eventWithoutProperties)).toBe(eventWithoutProperties);
+      const eventWithoutAiError = { event: "$ai_generation", properties: { $ai_model: "gpt" } };
+      expect(beforeSend(eventWithoutAiError)).toBe(eventWithoutAiError);
+    });
+  });
+
+  test("reuses both clients from globalThis in development", async () => {
+    const fakeServerClient = { capture: vi.fn(), shutdown: vi.fn().mockResolvedValue(undefined) };
+    const fakeTracingClient = { capture: vi.fn(), shutdown: vi.fn().mockResolvedValue(undefined) };
+    g.posthogServerClient = fakeServerClient;
+    g.posthogTracingClient = fakeTracingClient;
 
     setupMocks({ posthogKey: "phc_test_key" });
 
-    const { posthogServerClient } = await import("./server");
-    expect(posthogServerClient).toBe(fakeClient);
+    const { posthogServerClient, posthogTracingClient } = await import("./server");
+    expect(posthogServerClient).toBe(fakeServerClient);
+    expect(posthogTracingClient).toBe(fakeTracingClient);
 
     const { PostHog } = await import("posthog-node");
     expect(PostHog).not.toHaveBeenCalled();
   });
 
-  test("caches client on globalThis in non-production", async () => {
-    vi.stubEnv("NODE_ENV", "development");
+  test("caches both clients on globalThis in non-production", async () => {
+    setupMocks({ posthogKey: "phc_test_key", isProduction: false });
 
-    setupMocks({ posthogKey: "phc_test_key" });
-
-    const { posthogServerClient } = await import("./server");
+    const { posthogServerClient, posthogTracingClient } = await import("./server");
     expect(g.posthogServerClient).toBe(posthogServerClient);
+    expect(g.posthogTracingClient).toBe(posthogTracingClient);
+  });
 
-    vi.unstubAllEnvs();
+  test("does not cache either client on globalThis in production", async () => {
+    setupMocks({ posthogKey: "phc_test_key", isProduction: true });
+
+    await import("./server");
+    expect(g.posthogServerClient).toBeUndefined();
+    expect(g.posthogTracingClient).toBeUndefined();
   });
 
   test("registers signal handlers once when NEXT_RUNTIME is nodejs", async () => {
@@ -122,7 +190,23 @@ describe("server - posthogServerClient", () => {
     vi.unstubAllEnvs();
   });
 
-  test("shutdown handler calls shutdown()", async () => {
+  test("does not register signal handlers when neither client is configured", async () => {
+    vi.stubEnv("NEXT_RUNTIME", "nodejs");
+
+    setupMocks({ posthogKey: undefined });
+    const processOnSpy = vi.spyOn(process, "on");
+
+    await import("./server");
+
+    const sigCalls = processOnSpy.mock.calls.filter(([event]) => event === "SIGTERM" || event === "SIGINT");
+    expect(sigCalls).toHaveLength(0);
+    expect(g.posthogHandlersRegistered).toBeUndefined();
+
+    processOnSpy.mockRestore();
+    vi.unstubAllEnvs();
+  });
+
+  test("shutdown handler shuts down both clients", async () => {
     vi.stubEnv("NEXT_RUNTIME", "nodejs");
 
     const { shutdown } = setupMocks({ posthogKey: "phc_test_key" });
@@ -137,13 +221,13 @@ describe("server - posthogServerClient", () => {
 
     expect(sigTermHandler).toBeDefined();
     sigTermHandler!();
-    expect(shutdown).toHaveBeenCalled();
+    expect(shutdown).toHaveBeenCalledTimes(2);
 
     processOnSpy.mockRestore();
     vi.unstubAllEnvs();
   });
 
-  test("shutdown handler logs error if shutdown rejects", async () => {
+  test("shutdown handler logs an error per client if shutdown rejects", async () => {
     vi.stubEnv("NEXT_RUNTIME", "nodejs");
 
     const shutdownError = new Error("shutdown failed");
@@ -164,6 +248,7 @@ describe("server - posthogServerClient", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(loggerError).toHaveBeenCalledWith(shutdownError, "Error shutting down PostHog server client");
+    expect(loggerError).toHaveBeenCalledWith(shutdownError, "Error shutting down PostHog tracing client");
 
     processOnSpy.mockRestore();
     vi.unstubAllEnvs();

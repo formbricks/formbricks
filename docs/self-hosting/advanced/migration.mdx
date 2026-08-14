@@ -4,6 +4,75 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v5.4
+
+v5.4 carries one breaking change, and it is narrow: it affects **API keys** used against the Feedback
+Records API or the MCP server, and nothing else. It needs no environment variables and no database
+migrations. If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do
+for it.
+
+### Feedback Record Mutations by API Key (action required for some integrations)
+
+A feedback dataset can be assigned to more than one workspace, and the records inside it carry no workspace
+of their own. When a dataset is shared that way, a workspace-scoped permission cannot establish which
+workspace a given record belongs to. Two rules now follow from that:
+
+- **Deleting a feedback record requires `manage`.** A key with `write` is no longer enough. This brings
+  feedback records in line with every other `DELETE` in the API, which has always required `manage`.
+- **A key cannot update or delete records in a shared dataset.** If a dataset is assigned to two or more
+  workspaces, an API key is refused regardless of its permission level, with a `403` explaining why.
+
+| Operation | Before | After |
+| --- | --- | --- |
+| `GET`, search, similar, count | `read` | unchanged |
+| `POST /api/v3/feedbackRecords` (create) | `write` | unchanged |
+| `PATCH /api/v3/feedbackRecords/{id}` | `write` | `write`, **and** the dataset assigned to one workspace |
+| `DELETE /api/v3/feedbackRecords/{id}` | `write` | `manage`, **and** the dataset assigned to one workspace |
+| `DELETE /api/v3/feedbackRecords?tenant_id=…` | `write` | `manage`, **and** the dataset assigned to one workspace |
+
+The same applies to the MCP tools `update_feedback_record` and `delete_feedback_record` when the client
+authenticates with an API key. The required MCP **scope** is unchanged — both remain `feedbackRecords:write`.
+
+<Note>
+  **Only API keys are affected.** Users signing in through the UI, OAuth/MCP connections, and SAML/OIDC
+  sessions authorize through their organization role instead, which is unchanged: organization owners and
+  managers can still update and delete feedback records, including in a shared dataset. Reading, searching
+  and creating records are unaffected for every principal.
+</Note>
+
+To find out whether any dataset on your instance is shared, and would therefore start refusing API-key
+mutations:
+
+```sql
+SELECT d.id, d.name, d."organizationId", COUNT(w."workspaceId") AS workspaces
+FROM "FeedbackDirectory" d
+JOIN "FeedbackDirectoryWorkspace" w ON w."feedbackDirectoryId" = d.id
+WHERE d."isArchived" = false
+GROUP BY d.id, d.name, d."organizationId"
+HAVING COUNT(w."workspaceId") > 1;
+```
+
+Most instances return no rows: a workspace is normally assigned a single dataset, so sharing only exists
+where an administrator deliberately assigned a second workspace. For any row that does come back, an
+integration that mutates records in that dataset has two ways forward — assign the dataset to a single
+workspace under **Settings → Organization → Feedback Datasets**, or have the integration authenticate as
+an organization owner or manager instead of with a workspace-scoped key.
+
+#### What to do before upgrading
+
+1. Run the query above. If it returns rows, decide how each affected integration should proceed.
+2. Raise any API key that deletes feedback records from `write` to `manage`.
+3. After deploying, smoke test your feedback-record integrations. Two log lines identify an integration
+   caught by the new rules — grep for `Feedback record mutation denied` (the MCP path, which names the
+   reason) and for `Feedback records gateway authorization denied` (the REST path, which logs
+   `verdict: "deny"` alongside the `operation` and `feedbackDirectoryId`).
+
+#### Rollback
+
+This change adds no migrations and touches no schema, so rolling the application images / Helm values back
+to v5.3 undoes it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
+`manage` was always accepted wherever `write` was — so that step does not need reverting either.
+
 ## v5.3
 
 Formbricks v5.3 is a **drop-in upgrade for most self-hosted instances**. There are no breaking API,
@@ -25,7 +94,11 @@ hops:
   load balancers in front of Formbricks (e.g. an ingress plus a CDN = `2`). An explicit `0` trusts no
   proxy at all: the runtime exposes no socket peer address, so the client IP then resolves to a fixed
   "untrusted" placeholder that rate limiting and response audit logging record in place of a real address.
-  Leave it at `1` (or your real hop count) unless you deliberately want to stop capturing client IPs.
+  A forwarding chain shorter than the configured count, or a malformed selected hop, also fails closed.
+  Ports appended by gateways such as
+  [Azure Application Gateway](https://learn.microsoft.com/en-us/azure/application-gateway/how-application-gateway-works#modifications-to-the-request)
+  are removed, and IPv6 addresses are normalized to their `/64` network. Leave the setting at `1` (or
+  your real hop count) unless you deliberately want to stop capturing client IPs.
 
 <Warning>
   Setting `TRUSTED_PROXY_HOP_COUNT` **higher** than your real hop count lets a client spoof its IP by

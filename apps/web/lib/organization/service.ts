@@ -21,7 +21,6 @@ import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspac
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
-import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
 import { deleteHubTenantData } from "@/modules/hub/service";
@@ -42,6 +41,7 @@ export const select = {
   },
   isAISmartToolsEnabled: true,
   whitelabel: true,
+  displayTimeZone: true,
 } satisfies Prisma.OrganizationSelect;
 
 type TOrganizationWithBilling = Prisma.OrganizationGetPayload<{ select: typeof select }>;
@@ -82,6 +82,7 @@ const mapOrganization = (organization: TOrganizationWithBilling): TOrganization 
   billing: mapOrganizationBilling(organization.billing),
   isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
   whitelabel: organization.whitelabel as TOrganization["whitelabel"],
+  displayTimeZone: organization.displayTimeZone,
 });
 
 export const getOrganizationsTag = (organizationId: string) => `organizations-${organizationId}`;
@@ -138,42 +139,6 @@ export const getOrganizationByWorkspaceId = reactCache(
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         logger.error(error, "Error getting organization by workspace id");
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
-
-/**
- * Lowercased set of the email addresses of every active member of an organization. Used as the
- * recipient allowlist for workflow `send_email` actions (ENG-2029): a literal recipient address is
- * only permitted when it belongs to an active organization member, so a workflow cannot silently
- * forward response data to an arbitrary external inbox. Emails are lowercased for case-insensitive
- * matching.
- */
-export const getOrganizationMemberEmails = reactCache(
-  async (organizationId: string): Promise<Set<string>> => {
-    validateInputs([organizationId, ZString]);
-
-    try {
-      // Only active users: a deactivated (soft-deleted) member has had access revoked and must not
-      // remain on the send_email recipient allowlist (ENG-2029).
-      const memberships = await prisma.membership.findMany({
-        where: { organizationId, user: { isActive: true } },
-        select: { user: { select: { email: true } } },
-      });
-
-      return new Set(
-        memberships
-          .map((membership) =>
-            membership.user?.email ? normalizeEmailForComparison(membership.user.email) : undefined
-          )
-          .filter((email): email is string => Boolean(email))
-      );
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
       }
 
@@ -420,6 +385,47 @@ export const getMonthlyOrganizationResponseCount = reactCache(
 
       // The result is an aggregation of the total count
       return responseAggregations._count.id;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
+
+export const getMonthlyOrganizationWorkflowRunCount = reactCache(
+  async (organizationId: string): Promise<number> => {
+    validateInputs([organizationId, ZId]);
+
+    try {
+      const organization = await getOrganization(organizationId);
+      if (!organization) {
+        throw new ResourceNotFoundError("Organization", organizationId);
+      }
+
+      const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
+
+      const workspaces = await getWorkspaces(organizationId);
+      const workspaceIds = workspaces.map((workspace) => workspace.id);
+
+      // Mirror the metered usage: count only non-dry runs in the current billing cycle, scoped to the
+      // organization's workspaces. Dry runs are excluded from billing, so they must not show as usage.
+      const workflowRunAggregations = await prisma.workflowRun.aggregate({
+        _count: {
+          id: true,
+        },
+        where: {
+          AND: [
+            { workspaceId: { in: workspaceIds } },
+            { isDryRun: false },
+            { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
+          ],
+        },
+      });
+
+      return workflowRunAggregations._count.id;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

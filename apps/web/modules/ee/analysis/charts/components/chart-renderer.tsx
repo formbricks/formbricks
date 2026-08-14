@@ -21,6 +21,7 @@ import {
   prepareMeasureSliceData,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import {
   FEEDBACK_MEASURE_IDS,
   formatCubeColumnHeader,
@@ -156,6 +157,12 @@ const BarChartView = ({
     const measureData = pivotMeasuresToCategories(sortedData, axisKeys, (key) =>
       formatCubeColumnHeader(key, t)
     );
+    // Pivoting collapses every measure onto PIVOTED_VALUE_KEY ("value"), which carries no measure
+    // id, so an axis derived from the pivoted rows can't look up fixed-scale candidates and falls
+    // back to data-driven "nice" bounds. Resolve the scale from the original measure columns so
+    // rating/CSAT/CES/NPS averages still pin to the question scale, e.g. 3.3 on a 1-5 rating tops
+    // the axis at 5, not 4 (ENG-2226).
+    const yAxisScale = computeYAxis(sortedData, dataKeys, true);
     // Ticks use the short value label ("Very positive") — the full measure label is too
     // wide, so recharts would thin the ticks and bars would lose their name. The tooltip
     // keeps the full label via tooltipLabel.
@@ -167,6 +174,7 @@ const BarChartView = ({
         data={measureData}
         xAxisKey={PIVOTED_MEASURE_KEY}
         dataKeys={[PIVOTED_VALUE_KEY]}
+        yAxisScale={yAxisScale}
         chartConfig={chartConfig}
         tooltipCursor={false}
         zeroBaseline
@@ -414,7 +422,8 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           chartConfig={chartConfig}
           showLegend
           hasCategoryAxis={hasCategoryAxis}
-          xAxisTickFormatter={formatDimensionValue}>
+          xAxisTickFormatter={formatDimensionValue}
+          pointScale>
           <defs>
             {dataKeys.map((key) => {
               const color = chartConfig[key]?.color;
@@ -455,7 +464,8 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           chartConfig={chartConfig}
           showLegend
           hasCategoryAxis={hasCategoryAxis}
-          xAxisTickFormatter={formatDimensionValue}>
+          xAxisTickFormatter={formatDimensionValue}
+          pointScale>
           {dataKeys.map((key) => (
             <Area
               key={key}

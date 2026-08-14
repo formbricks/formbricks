@@ -86,8 +86,9 @@ x-environment: &environment
     # (Additional option for TLS (port 465) only)
     # SMTP_SECURE_ENABLED:
 
-    # If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs (default is 1).
-    # SMTP_REJECT_UNAUTHORIZED_TLS: 0
+    # Keep certificate verification enabled in production (default is 1). If your SMTP server uses a private CA,
+    # mount the CA and configure NODE_EXTRA_CA_CERTS instead of setting this to 0.
+    # SMTP_REJECT_UNAUTHORIZED_TLS: 1
 
     ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
 

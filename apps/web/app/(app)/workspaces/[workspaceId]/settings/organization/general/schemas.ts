@@ -10,3 +10,12 @@ export const ZUpdateOrganizationAISettingsAction = z.object({
   organizationId: ZId,
   data: ZOrganizationAISettingsInput,
 });
+
+export const ZOrganizationDisplayTimeZoneInput = ZOrganizationUpdateInput.pick({
+  displayTimeZone: true,
+});
+
+export const ZUpdateOrganizationDisplayTimeZoneAction = z.object({
+  organizationId: ZId,
+  data: ZOrganizationDisplayTimeZoneInput,
+});

@@ -38,7 +38,7 @@ info:
     **Workflows Scope 1**
     Workflows are a follow-up extension of the existing v3 Survey API work. The Survey API establishes API-first survey authoring; Workflows build on that same v3 style to automate actions around survey responses through workspace-scoped JSON definitions. Scope 1 models the existing Follow-ups capability as workflows: one `response.completed` trigger with an optional `endingCardIds` filter, and `send_email` actions with Follow-up email field parity. The definition and run shapes mirror the shared Zod schemas in `packages/workflows` (ENG-1100), which are the implementation source of truth for this contract.
 
-    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. Dry-run tests create real run records with `isDryRun: true` that mock action execution and never send email. Runs execute asynchronously: `POST .../test` returns a `queued` run to poll via `GET /api/v3/workflows/runs/{runId}`.
+    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. `POST .../test` is a dry run: it validates the definition and resolves the trigger's references synchronously, creating no run and sending no email, and returns `{ workflowId, ok, problems }` directly. Real runs execute asynchronously and are polled via `GET /api/v3/workflows/runs/{runId}`.
 
     **Overview migration note**
     The v3-backed survey overview page intentionally removes actions that are not yet exposed by this contract: `Created by` filtering, `Duplicate`, `Copy...`, `Preview`, and `Copy link`.
@@ -1839,7 +1839,7 @@ paths:
         edge (trigger-only drafts cannot be enabled), the graph is acyclic, every node is
         reachable from the trigger, only Scope 1 node types are present, the referenced survey
         and ending cards still exist, and every `send_email` action addressing a *literal* email address
-        targets a member of this organization (an element-id `to` resolves to the respondent's own
+        targets someone who can access this workspace (an element-id `to` resolves to the respondent's own
         address and is exempt) — and then snapshots an immutable workflow version. Runs
         reference that snapshot via `workflowVersionId`, so later draft edits never change what an
         enabled workflow executes. Validation failures return **422** with code
@@ -1969,11 +1969,11 @@ paths:
       operationId: testWorkflowV3
       summary: Dry-run (validate) a workflow
       description: |
-        Validates a workflow without running it or causing any side effect. It checks that the workflow's current definition is executable, that the trigger's referenced survey and ending cards still exist in the workspace, and that every `send_email` action addressing a *literal* email address targets a member of this organization. **No** workflow run is created and **no** email or webhook is sent.
+        Validates a workflow without running it or causing any side effect. It checks that the workflow's current definition is executable, that the trigger's referenced survey and ending cards still exist in the workspace, and that every `send_email` action addressing a *literal* email address targets someone who can access this workspace. **No** workflow run is created and **no** email or webhook is sent.
 
         The response is always `200` with `{ data: { workflowId, ok, problems } }`. `data.ok` is `true` when the workflow would execute; otherwise `data.problems` lists every issue found — each with a machine-readable `code` and the offending `field` — so they can be fixed in a single pass.
 
-        Only `enabled` and `disabled` workflows can be tested. Testing a `draft` or `archived` workflow returns **422** with code `invalid_workflow_state`.
+        Drafts are testable — validating the setup before going live is the point of a dry run. Only an `archived` workflow is rejected, with **422** and code `invalid_workflow_state`.
       tags:
         - V3 Workflows
       parameters:
@@ -2022,7 +2022,7 @@ paths:
                           field: definition.trigger.config.endingCardIds
                           message: Ending card clending000000000000000000 does not exist on the survey.
                 recipientNotAllowed:
-                  summary: A send_email action addresses a non-member literal recipient
+                  summary: A send_email action addresses a literal recipient without workspace access
                   value:
                     data:
                       workflowId: clworkflow0000000000000000
@@ -2030,7 +2030,7 @@ paths:
                       problems:
                         - code: recipient_not_allowed
                           field: definition.nodes.config.to
-                          message: Recipient outsider@external.example is not a member of this organization. A send_email action may only address an organization member or a respondent field.
+                          message: Recipient outsider@external.example cannot access this workspace. A send_email action may only address someone with access to this workspace or a respondent field.
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
@@ -2404,6 +2404,7 @@ components:
             - not_authenticated
             - not_found
             - payload_too_large
+            - service_unavailable
             - too_many_requests
             - unprocessable_content
             - workflow_not_executable
@@ -4738,8 +4739,8 @@ components:
             survey question / hidden field whose answer contains the respondent's email address
             (contact-info elements resolve index [2]) — the same semantics as the Follow-ups `to` field.
 
-            A **literal** address must belong to a member of this organization. Enabling a workflow whose
-            literal recipient is not an organization member returns **422** `workflow_not_executable`, the
+            A **literal** address must belong to someone who can access this workspace — an organization owner or manager, or a member of a team the
+            workspace is shared with. Enabling a workflow whose literal recipient cannot access the workspace returns **422** `workflow_not_executable`, the
             dry run reports a `recipient_not_allowed` problem, and the runner refuses to send to it — so a
             workflow cannot forward response data to an arbitrary external inbox. An element-id `to`
             resolves to the respondent's own address and is never allowlist-checked.
@@ -5163,7 +5164,7 @@ components:
         ok:
           type: boolean
           description: |
-            True when the definition is executable, every trigger reference resolves, and every literal `send_email` recipient is an organization member.
+            True when the definition is executable, every trigger reference resolves, and every literal `send_email` recipient can access this workspace.
         problems:
           type: array
           description: Every problem found, so all issues can be fixed at once. Empty when `ok` is true.

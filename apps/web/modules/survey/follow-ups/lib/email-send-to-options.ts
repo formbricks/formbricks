@@ -2,6 +2,8 @@ import type { TFunction } from "i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { isLiteralEmailRecipient } from "@formbricks/workflows";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { recallToHeadline } from "@/lib/utils/recall";
 import type { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -86,4 +88,38 @@ export const buildEmailSendToOptions = ({
       type: "user" as EmailSendToOption["type"],
     })),
   ];
+};
+
+/**
+ * Resolves a stored `to` value to the option it selects, or `undefined` when none matches.
+ *
+ * A `user` option's id is an email address, so it is matched through `normalizeEmailForComparison` —
+ * the exact rule the runtime allowlist uses when it builds the member-email set and checks a
+ * recipient against it (`verifyRecipientsAllowed`, and the runner's send-time backstop). Without
+ * that, a `to` stored as `Manager@Example.com` through the v3 API or an MCP tool would send fine yet
+ * be reported as unavailable in the editor. Element and hidden-field ids are opaque, case-sensitive
+ * identifiers rather than emails, so they keep matching exactly.
+ *
+ * That email rule is applied only to a value the runtime itself would treat as a literal email, so
+ * the gate is `isLiteralEmailRecipient` rather than an inline check: it is the same predicate the
+ * enable-time allowlist and the runner classify with, so the two cannot disagree about what an email
+ * is even if the underlying `z.email()` rule changes. It matters because
+ * `normalizeEmailForComparison` also trims, and `z.email()` rejects surrounding whitespace: a `to`
+ * stored as `" alice@example.com"` is *not* a literal recipient at runtime, so it is never
+ * allowlist-checked and every run fails resolving it as an element id. Trimming it into a member
+ * match here would replace the "Not available" warning — which is correct for that value — with a
+ * normal-looking selection.
+ */
+export const findEmailSendToOption = (
+  options: EmailSendToOption[],
+  value: string
+): EmailSendToOption | undefined => {
+  if (value === "") return undefined;
+
+  const normalizedEmail = isLiteralEmailRecipient(value) ? normalizeEmailForComparison(value) : null;
+  return options.find((option) =>
+    option.type === "user"
+      ? normalizedEmail !== null && normalizeEmailForComparison(option.id) === normalizedEmail
+      : option.id === value
+  );
 };

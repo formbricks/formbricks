@@ -4,7 +4,7 @@ import { CheckIcon, GiftIcon, XCircleIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import calLogo from "@/images/customer-logos/cal-logo-light.svg";
@@ -12,7 +12,6 @@ import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
-import { getPostHogClientFeatureFlag } from "@/lib/posthog/client";
 import { startHobbyAction, startProTrialAction } from "@/modules/ee/billing/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -27,8 +26,6 @@ import {
 interface SelectPlanCardProps {
   nextUrl: string;
   organizationId: string;
-  featureVariant: "control" | "variant_b";
-  ctaVariant: "control" | "variant_b" | "variant_c" | "variant_d";
 }
 
 const CUSTOMER_LOGOS = [
@@ -39,54 +36,26 @@ const CUSTOMER_LOGOS = [
   { src: ethereumLogo, alt: "Ethereum" },
 ];
 
-export const SelectPlanCard = ({
-  nextUrl,
-  organizationId,
-  featureVariant,
-  ctaVariant,
-}: Readonly<SelectPlanCardProps>) => {
+export const SelectPlanCard = ({ nextUrl, organizationId }: Readonly<SelectPlanCardProps>) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const [showHobbyConfirm, setShowHobbyConfirm] = useState(false);
-  const [hobbyConfirmEnabled, setHobbyConfirmEnabled] = useState(false);
-  useEffect(() => {
-    return posthog.onFeatureFlags(() => {
-      setHobbyConfirmEnabled(getPostHogClientFeatureFlag("a-b_billing_hobby-downgrade-confirm") === "test");
-    });
-  }, []);
   const { t } = useTranslation();
-  let ctaCopy: string;
-  if (ctaVariant === "variant_b") {
-    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_b");
-  } else if (ctaVariant === "variant_c") {
-    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_c");
-  } else if (ctaVariant === "variant_d") {
-    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_d");
-  } else {
-    ctaCopy = t("workspace.settings.billing.select_plan_cta");
-  }
 
   const copy = {
     header: t("workspace.settings.billing.select_plan_header"),
     subheader: t("workspace.settings.billing.select_plan_subheader"),
-    cta: ctaCopy,
+    cta: t("workspace.settings.billing.select_plan_cta"),
     skip: t("workspace.settings.billing.select_plan_skip"),
   };
 
-  const SELECT_PLAN_FEATURE_KEYS =
-    featureVariant === "variant_b"
-      ? [
-          t("workspace.settings.billing.select_plan_variant_b_feature_1"),
-          t("workspace.settings.billing.select_plan_variant_b_feature_2"),
-          t("workspace.settings.billing.select_plan_variant_b_feature_3"),
-          t("workspace.settings.billing.select_plan_variant_b_feature_4"),
-        ]
-      : [
-          t("workspace.settings.billing.select_plan_feature_1"),
-          t("workspace.settings.billing.select_plan_feature_2"),
-          t("workspace.settings.billing.select_plan_feature_3"),
-        ];
+  const SELECT_PLAN_FEATURE_KEYS = [
+    t("workspace.settings.billing.select_plan_feature_1"),
+    t("workspace.settings.billing.select_plan_feature_2"),
+    t("workspace.settings.billing.select_plan_feature_3"),
+    t("workspace.settings.billing.select_plan_feature_4"),
+  ];
 
   const handleStartTrial = async () => {
     setIsStartingTrial(true);
@@ -176,10 +145,10 @@ export const SelectPlanCard = ({
 
       <button
         type="button"
-        onClick={() => (hobbyConfirmEnabled ? setShowHobbyConfirm(true) : void handleContinueHobby())}
+        onClick={() => setShowHobbyConfirm(true)}
         disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {isStartingHobby && !hobbyConfirmEnabled ? t("common.loading") : copy.skip}
+        {copy.skip}
       </button>
 
       <Dialog open={showHobbyConfirm} onOpenChange={setShowHobbyConfirm}>

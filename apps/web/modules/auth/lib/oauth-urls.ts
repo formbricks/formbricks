@@ -33,12 +33,43 @@ export const getAuthIssuerUrl = (): string => {
   return appendPath(authBaseUrl, AUTH_BASE_PATH);
 };
 
+/**
+ * Returns the server-side endpoint used only to fetch Better Auth's signing keys.
+ *
+ * Token issuer validation, OAuth discovery, redirects, cookies, and audiences continue to use the public
+ * Auth/WEBAPP URLs. Deployments whose pods cannot resolve or hairpin through that public origin can point this
+ * fetch at an internal service without changing the externally visible OAuth contract.
+ */
+export const getMcpOAuthJwksUrl = (): string => env.MCP_OAUTH_JWKS_URL ?? `${getAuthIssuerUrl()}/jwks`;
+
 export const getMcpResourceUrl = (): string => appendPath(getWebAppBaseUrl(), MCP_RESOURCE_PATH);
 
 export const getMcpProtectedResourceMetadataUrl = (): string =>
   appendPath(getWebAppBaseUrl(), MCP_PROTECTED_RESOURCE_METADATA_PATH);
 
 export const getMcpOrigin = (): string => new URL(getMcpResourceUrl()).origin;
+
+/**
+ * The authorization server's own UserInfo endpoint, which is a legitimate second value in an access
+ * token's `aud`.
+ *
+ * The oauth-provider treats UserInfo as an implicit resource: when `openid` is in scope it appends
+ * this identifier to the audience alongside the resource the client actually requested. It is the
+ * only audience besides the MCP resource URL that a Formbricks-issued MCP token may carry, so the
+ * resource server allow-lists exactly these two and rejects anything else (see
+ * `hasAcceptedMcpAudience` in modules/mcp/auth.ts).
+ *
+ * Built off the issuer for the same reason `jwksUrl` is: Better Auth mounts its OAuth endpoints
+ * under the auth base path, so the issuer is the prefix the plugin itself uses.
+ *
+ * The assumption is that this equals Better Auth's own `ctx.context.baseURL`, which is what it
+ * stamps into the audience. That holds while the configured auth URL is a bare origin — Better
+ * Auth's `withPath` appends `/api/auth` exactly as `getAuthIssuerUrl` does. It does NOT hold if
+ * `BETTER_AUTH_URL` carries a subpath, because `withPath` returns a URL that already has a path
+ * unchanged while we still append. Subpath deployments cannot complete a login at all today
+ * (ENG-606), so this is not a live gap — but it is the thing to fix here when that one is fixed.
+ */
+export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/userinfo`;
 
 export const MCP_OAUTH_SCOPES = [
   "openid",
@@ -71,3 +102,18 @@ export const MCP_PROTECTED_RESOURCE_SCOPES = [
   ...MCP_RESOURCE_SCOPES,
   "offline_access",
 ] as const satisfies readonly (typeof MCP_OAUTH_SCOPES)[number][];
+
+/**
+ * The `scope` advertised in the 401 `WWW-Authenticate` challenge from the MCP endpoint.
+ *
+ * A client that hits the 401 *before* fetching the protected-resource metadata uses this string as
+ * its Dynamic Client Registration `scope`, then authorizes with the scopes the metadata advertises.
+ * The oauth-provider validates an authorize request as a *subset* of the client's registered scopes,
+ * so the invariant is that this list must **cover** the metadata list. A narrower challenge means the
+ * client registers narrow, authorizes wide, and is rejected with `invalid_scope` — failing its first
+ * connect and succeeding only on retry, once the metadata is cached (ENG-2175).
+ *
+ * Derived from the same array so the two are identical, which satisfies the invariant by construction
+ * and leaves nothing to drift.
+ */
+export const MCP_CHALLENGE_SCOPE = MCP_PROTECTED_RESOURCE_SCOPES.join(" ");

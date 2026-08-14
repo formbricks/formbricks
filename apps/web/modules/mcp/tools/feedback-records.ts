@@ -16,10 +16,13 @@ import {
 } from "@/app/api/v3/feedbackRecords/lib/operations";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { guardMcpScopes } from "./guard-scopes";
+import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCountFeedbackRecordsInput,
   type TMcpCreateFeedbackRecordInput,
@@ -86,31 +89,14 @@ function writeHandler<TInput extends { workspaceId: string }>(
       return scopeError;
     }
 
-    const authentication = getMcpAuthentication(extra.authInfo);
-    const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
-    const auditLog = buildV3AuditLog(authentication, action, "feedbackRecord", MCP_API_ROUTE);
-
-    try {
-      const response = await run(input, authentication, requestId, auditLog);
-
-      if (auditLog) {
-        if (response.ok) {
-          auditLog.status = "success";
-        } else {
-          auditLog.eventId = requestId;
-        }
-      }
-
-      await queueV3AuditLog(auditLog, requestId, log);
-      return await responseToMcpToolResult(response, requestId);
-    } catch (error) {
-      if (auditLog) {
-        auditLog.eventId = requestId;
-        await queueV3AuditLog(auditLog, requestId, log);
-      }
-
-      throw error;
-    }
+    // The scope gate above is the only part that differs from the survey/workflow tools, which get
+    // theirs from registerScopedTool; the audit lifecycle itself is shared.
+    return await runMcpMutation(
+      extra,
+      { action, resource: "feedbackRecord", logContext: { workspaceId: input.workspaceId } },
+      ({ authentication, requestId: mutationRequestId, auditLog }) =>
+        run(input, authentication, mutationRequestId, auditLog)
+    );
   };
 }
 
@@ -144,7 +130,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "List feedback records",
       description:
-        "List feedback records for a workspace's feedback dataset, with cursor pagination and optional filters. meta.datasetId and meta.datasetName report which dataset was searched, so an empty data array means that dataset holds no matching records — there is no need to call list_feedback_datasets to check. A workspace with no dataset at all fails with 422 instead.",
+        "List feedback records for a workspace's feedback dataset, with cursor pagination and optional filters. meta.datasetId and meta.datasetName report which dataset was searched, so an empty data array means that dataset holds no matching records — there is no need to call list_feedback_datasets to check. A workspace with no dataset at all fails with 422 instead. Filters: repeating one filter with several values ORs them, while different filters are AND-ed; there is no way to OR across different filters. Range filters are inclusive and exclude records whose column is empty, so value_number_min=0 drops every text answer and sentiment_score_min only ever matches enriched records — use has_sentiment=false to find the ones enrichment has not reached. Keep sort and order identical on every page of one traversal: a cursor is a position within one specific ordering, and presenting it with a different one is rejected.",
       inputSchema: ZMcpListFeedbackRecordsInput.shape,
       annotations: {
         readOnlyHint: true,
@@ -166,7 +152,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "Count feedback records",
       description:
-        "Count the feedback records matching a set of filters, without fetching them. Use this for 'how many' questions — how many responses to one question, from one person, or in a date range — instead of paging through records to count them. Returns only the total plus the dataset it came from, never record content. Takes the same filters as list_feedback_records.",
+        "Count the feedback records matching a set of filters, without fetching them. Use this for 'how many' questions — how many responses to one question, from one person, or in a date range — instead of paging through records to count them. Returns only the total plus the dataset it came from, never record content. Takes exactly the same filters as list_feedback_records, with the same OR-within-a-filter and AND-across-filters rules, so a count always describes the set the equivalent list would return. Ordering and pagination do not apply here and are rejected.",
       inputSchema: ZMcpCountFeedbackRecordsInput.shape,
       annotations: {
         readOnlyHint: true,
@@ -261,13 +247,19 @@ export function registerFeedbackRecordTools(server: McpServer): void {
       // attribute a creation to the wrong record. `buildV3AuditLog` returns undefined for every record or
       // none (it only depends on whether auditing is enabled), so the holes are all-or-nothing.
       const auditLogs = input.records.map(() =>
-        buildV3AuditLog(authentication, "created", "feedbackRecord", MCP_API_ROUTE)
+        buildV3AuditLog(authentication, "created", "feedbackRecord", getMcpResourceUrl())
       );
 
       const queueOutcome = async () => {
-        const stamped = auditLogs.filter((auditLog) => auditLog?.targetId);
+        // `targetId` must be compared against the placeholder, not just tested for truthiness:
+        // buildAuditLogBaseObject seeds it with UNKNOWN_DATA ("unknown"), so a truthy check matches
+        // every entry — including records the Hub rejected — and would emit a success event
+        // asserting a creation that never happened, with targetId "unknown" and no newObject.
+        // Only createV3FeedbackRecords overwrites it, and only for records it actually created.
+        const stamped = auditLogs.filter(
+          (auditLog): auditLog is TV3AuditLog => !!auditLog && auditLog.targetId !== UNKNOWN_DATA
+        );
         for (const auditLog of stamped) {
-          if (!auditLog) continue;
           auditLog.status = "success";
           await queueV3AuditLog(auditLog, requestId, log);
         }

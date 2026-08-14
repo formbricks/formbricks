@@ -101,6 +101,21 @@ const describeInvalidDraft = (invalid: TInvalidWorkflowDraft, t: (key: string) =
   return invalid.detail ?? t("workspace.workflows.validation_failed");
 };
 
+/**
+ * The user-facing reason a save was refused, for the header pill's tooltip. The API answers a bad
+ * payload with field-level `invalid_params` (RFC 9457) but keeps its top-level `detail` generic
+ * ("The request payload is invalid."). Prefer the field-level reason so the pill can name the field
+ * and its limit; fall back to the generic detail. Only a deliberate refusal (4xx) has a reason worth
+ * quoting — a 5xx / no-response is "unreachable" and gets the generic tooltip, so return null there.
+ */
+const describeSaveErrorDetail = (error: unknown, t: (key: string) => string): string | null => {
+  if (!(error instanceof V3ApiError) || error.status >= 500) return null;
+  const param = error.invalid_params?.[0];
+  if (param?.name === "name") return t("workspace.workflows.name_invalid");
+  if (param) return param.reason;
+  return error.detail.trim() ? error.detail : null;
+};
+
 export const useWorkflowBuilder = ({
   workspaceId,
   workflowId,
@@ -173,6 +188,7 @@ export const useWorkflowBuilder = ({
         hydrateEditor({
           workflow: loadedWorkflow,
           flowNodes: workflowDefinitionToFlowNodes(loadedWorkflow.definition, t),
+          isReadOnly,
         });
       })
       .catch((error) => {
@@ -187,7 +203,7 @@ export const useWorkflowBuilder = ({
       });
 
     return () => controller.abort();
-  }, [workspaceId, workflowId, hydrateEditor, setWorkflow, store, t, loadOnMount]);
+  }, [workspaceId, workflowId, hydrateEditor, setWorkflow, store, t, loadOnMount, isReadOnly]);
 
   const isArchived = workflow?.status === "archived";
   const isEnabled = workflow?.status === "enabled";
@@ -267,7 +283,7 @@ export const useWorkflowBuilder = ({
         setSaveError({
           draftSignature: attemptedSignature,
           kind: classifyWorkflowSaveError(error),
-          detail: error instanceof V3ApiError ? error.detail : null,
+          detail: describeSaveErrorDetail(error, t),
         });
         if (!silent) toast.error(getWorkflowApiErrorMessage(error, t("workspace.workflows.save_failed")));
         return false;
@@ -387,6 +403,10 @@ export const useWorkflowBuilder = ({
   const transition = useCallback(
     async (operation: "enable" | "disable" | "archive" | "unarchive") => {
       if (!workflow) return;
+      // Permission gate at the hook layer, not just the UI: the server rejects every lifecycle call
+      // from a read-only member with 403, so never fire the request (and never flush a save on their
+      // behalf below). The header also hides these controls, but the hook must not rely on that.
+      if (isReadOnly) return;
       // Serialize against a save or another transition in flight; overlapping lifecycle writes
       // race and the last response to land wins, desyncing the displayed status from the server.
       if (store.get(isWorkflowSavingAtom) || store.get(isWorkflowTransitioningAtom)) return;
@@ -442,7 +462,7 @@ export const useWorkflowBuilder = ({
         setIsTransitioning(false);
       }
     },
-    [store, workflow, setWorkflow, setIsTransitioning, save, t]
+    [store, workflow, setWorkflow, setIsTransitioning, save, t, isReadOnly]
   );
 
   return {

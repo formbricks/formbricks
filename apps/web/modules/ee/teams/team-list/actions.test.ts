@@ -50,12 +50,18 @@ describe("team-list authorization", () => {
   const organizationId = "org-1";
   const teamId = "team-1";
   const ctx = { user: { id: "user-1" }, auditLoggingCtx: {} };
+  const workspaceGrant = { workspaceId: "workspace-1", workspaceName: "Workspace", permission: "read" };
 
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getOrganizationIdFromTeamId.mockResolvedValue(organizationId);
     mocks.createTeam.mockResolvedValue(teamId);
-    mocks.getTeamDetails.mockResolvedValue({ id: teamId, name: "Team" });
+    mocks.getTeamDetails.mockResolvedValue({
+      id: teamId,
+      name: "Team",
+      members: [{ userId: "user-1", name: "User", role: "admin" }],
+      workspaces: [workspaceGrant],
+    });
   });
 
   test("requires organization.manage to create a team", async () => {
@@ -73,13 +79,17 @@ describe("team-list authorization", () => {
 
   test.each([
     ["read details", getTeamDetailsAction, { teamId }],
-    // `workspaces` is required by ZTeamSettingsFormSchema, and this test bypasses zod via `as never`.
-    // Supplying it keeps the fixture consistent with what the action can actually receive — main's
-    // workspace-access gate reads it, and an absent list is a shape production cannot produce.
     [
       "update",
       updateTeamDetailsAction,
-      { teamId, data: { name: "Updated", members: [], workspaces: [] } },
+      {
+        teamId,
+        data: {
+          name: "Updated",
+          members: [{ userId: "user-1", role: "admin" }],
+          workspaces: [{ workspaceId: workspaceGrant.workspaceId, permission: workspaceGrant.permission }],
+        },
+      },
     ],
   ] as const)("requires team.manage to %s", async (_name, action, parsedInput) => {
     await action({ ctx, parsedInput } as never);

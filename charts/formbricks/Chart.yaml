@@ -5,7 +5,7 @@ type: application
 # Helm chart Version
 version: 0.0.0-dev
 # This is the version number of the application being deployed.
-appVersion: "5.0.2"
+appVersion: "5.3.4"
 icon: https://formbricks.com/favicon.ico
 keywords:
   - formbricks

@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
@@ -15,6 +16,12 @@ import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
+import {
+  applyDashboardDateFilter,
+  getDateFilterCookieName,
+  parseDashboardDateFilter,
+  readStoredDateFilterFromCookie,
+} from "../lib/dashboard-date-filter";
 import { getDashboard } from "../lib/dashboards";
 import { DASHBOARD_WIDGET_LOAD_ERROR, type TDashboardWidgetError } from "../lib/widget-errors";
 
@@ -72,11 +79,21 @@ type WidgetQueryPromiseResult = Promise<WidgetQueryResult | { error: TDashboardW
 
 export async function DashboardDetailPage({
   params,
+  searchParams,
 }: Readonly<{
   params: Promise<{ workspaceId: string; dashboardId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>) {
   const t = await getTranslate();
   const { workspaceId, dashboardId } = await params;
+  // A pinned URL param (shared link, in-app navigation) always wins; otherwise fall back to the
+  // per-dashboard persisted filter from the cookie so a revisit renders filtered on the first pass
+  // rather than after a client round trip.
+  const urlDateFilter = parseDashboardDateFilter(await searchParams);
+  const cookieStore = await cookies();
+  const dateFilter =
+    urlDateFilter ??
+    readStoredDateFilterFromCookie(cookieStore.get(getDateFilterCookieName(dashboardId))?.value);
 
   const { isReadOnly, organization, session } = await getWorkspaceAuth(workspaceId);
 
@@ -132,7 +149,7 @@ export async function DashboardDetailPage({
     widgetDataPromises.set(
       widget.id,
       executeWidgetQuery(
-        widget.chart.query,
+        applyDashboardDateFilter(widget.chart.query, dateFilter),
         widget.chart.feedbackDirectoryId,
         workspaceId,
         organization.id,
@@ -146,6 +163,7 @@ export async function DashboardDetailPage({
       workspaceId={workspaceId}
       dashboard={dashboard}
       widgetDataPromises={widgetDataPromises}
+      dateFilter={dateFilter}
       directories={directories}
       isReadOnly={isReadOnly}
       isAIAvailable={isAIAvailable}

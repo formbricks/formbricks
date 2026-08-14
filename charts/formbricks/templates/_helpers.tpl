@@ -465,6 +465,17 @@ Hub embeddings runtime resource name.
 {{- printf "%s-hub-embeddings" $base | trimSuffix "-" }}
 {{- end }}
 
+{{/* Worker-only background embeddings runtime resource name. */}}
+{{- define "formbricks.hubEmbeddingsBackgroundName" -}}
+{{- $base := include "formbricks.name" . | trunc 37 | trimSuffix "-" }}
+{{- printf "%s-hub-embeddings-background" $base | trimSuffix "-" }}
+{{- end }}
+
+{{/* Headless service for stable background StatefulSet identities. */}}
+{{- define "formbricks.hubEmbeddingsBackgroundHeadlessName" -}}
+{{- printf "%s-headless" (include "formbricks.hubEmbeddingsBackgroundName" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 {{/*
 Secret used by Hub and the embeddings runtime for the embeddings API key.
 */}}
@@ -477,6 +488,13 @@ Secret used by the embeddings runtime for Hugging Face access.
 */}}
 {{- define "formbricks.hubEmbeddingsHuggingFaceSecretName" -}}
 {{- default (include "formbricks.hubEmbeddingsSecretName" .) .Values.hub.embeddings.huggingFace.existingSecret -}}
+{{- end }}
+
+{{/* Reject Hugging Face tokens that cannot be written into an externally managed auth secret. */}}
+{{- define "formbricks.validateHubEmbeddingsHuggingFaceSecret" -}}
+{{- if and .Values.hub.embeddings.auth.existingSecret .Values.hub.embeddings.huggingFace.token (not .Values.hub.embeddings.huggingFace.existingSecret) -}}
+{{- fail "hub.embeddings.huggingFace.token cannot be stored when hub.embeddings.auth.existingSecret is set; put HF_TOKEN in the existing auth secret or set hub.embeddings.huggingFace.existingSecret" -}}
+{{- end -}}
 {{- end }}
 
 {{/*
@@ -494,6 +512,15 @@ OpenAI-compatible embeddings base URL used by Hub.
 {{- .Values.hub.embeddings.baseUrl -}}
 {{- else -}}
 {{- printf "http://%s:%v/v1" (include "formbricks.hubEmbeddingsName" .) (.Values.hub.embeddings.service.port | default .Values.hub.embeddings.port) -}}
+{{- end -}}
+{{- end }}
+
+{{/* Worker-only OpenAI-compatible background embeddings base URL. */}}
+{{- define "formbricks.hubEmbeddingsBackgroundBaseURL" -}}
+{{- if .Values.hub.embeddings.background.baseUrl -}}
+{{- .Values.hub.embeddings.background.baseUrl -}}
+{{- else -}}
+{{- printf "http://%s:%v/v1" (include "formbricks.hubEmbeddingsBackgroundName" .) (.Values.hub.embeddings.background.service.port | default .Values.hub.embeddings.port) -}}
 {{- end -}}
 {{- end }}
 
@@ -520,22 +547,39 @@ self-hosted runtime is enabled so Hub API and Hub worker cannot drift.
 */}}
 {{- define "formbricks.hubEmbeddingEnv" -}}
 {{- $root := .root -}}
+{{- $worker := .worker | default false -}}
 {{- if $root.Values.hub.embeddings.enabled }}
 - name: EMBEDDING_PROVIDER
   value: "openai"
 - name: EMBEDDING_MODEL
   value: {{ include "formbricks.hubEmbeddingsServedModelName" $root | quote }}
 - name: EMBEDDING_BASE_URL
+  {{- if and $worker $root.Values.hub.embeddings.background.enabled }}
+  value: {{ include "formbricks.hubEmbeddingsBackgroundBaseURL" $root | quote }}
+  {{- else }}
   value: {{ include "formbricks.hubEmbeddingsBaseURL" $root | quote }}
+  {{- end }}
 - name: EMBEDDING_PROVIDER_API_KEY
   valueFrom:
     secretKeyRef:
       name: {{ include "formbricks.hubEmbeddingsSecretName" $root }}
       key: {{ $root.Values.hub.embeddings.auth.secretKey | default "EMBEDDING_PROVIDER_API_KEY" }}
 - name: EMBEDDING_MAX_CONCURRENT
+  {{- if and $worker $root.Values.hub.embeddings.background.enabled }}
+  value: {{ $root.Values.hub.embeddings.background.maxConcurrent | quote }}
+  {{- else }}
   value: {{ $root.Values.hub.embeddings.maxConcurrent | quote }}
+  {{- end }}
 - name: EMBEDDING_NORMALIZE
   value: {{ $root.Values.hub.embeddings.normalize | quote }}
+{{- if $worker }}
+- name: EMBEDDING_BATCH_SIZE
+  value: {{ ternary $root.Values.hub.embeddings.background.batchSize "1" $root.Values.hub.embeddings.background.enabled | quote }}
+- name: EMBEDDING_BATCH_MAX_WAIT_MS
+  value: {{ ternary $root.Values.hub.embeddings.background.batchMaxWaitMs "25" $root.Values.hub.embeddings.background.enabled | quote }}
+- name: EMBEDDING_BATCH_MAX_IN_FLIGHT
+  value: {{ ternary $root.Values.hub.embeddings.background.batchMaxInFlight "1" $root.Values.hub.embeddings.background.enabled | quote }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -544,9 +588,15 @@ Returns true when an env var is managed by hub.embeddings and should not be rend
 */}}
 {{- define "formbricks.hubEmbeddingEnvManaged" -}}
 {{- $key := .key -}}
-{{- if has $key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_NORMALIZE") -}}
+{{- if has $key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_NORMALIZE" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT") -}}
 true
 {{- end -}}
+{{- end }}
+
+{{/* Name of one deliberate embedding backfill run. */}}
+{{- define "formbricks.hubEmbeddingBackfillName" -}}
+{{- $runID := regexReplaceAll "[^a-z0-9-]+" (.Values.hub.embeddingBackfill.runId | lower) "-" | trunc 20 | trimAll "-" -}}
+{{- printf "%s-embedding-backfill-%s" (include "formbricks.hubname" . | trunc 22 | trimSuffix "-") $runID | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 

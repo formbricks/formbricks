@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
@@ -58,6 +58,8 @@ function NPS({
   imageUrl,
   videoUrl,
 }: Readonly<NPSProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
   // Ensure value is within valid range (0-10)
@@ -159,20 +161,33 @@ function NPS({
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader
+        headlineId={`${inputId}-headline`}
         headline={headline}
         description={description}
         required={required}
         requiredLabel={requiredLabel}
-        htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
       />
 
       {/* NPS Options */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
-        <fieldset className="w-full px-[2px]" dir={dir}>
-          <legend className="sr-only">NPS rating options</legend>
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
+        {/* The options are native radios sharing one `name`, so role="radiogroup" is accurate and
+            makes aria-required/aria-invalid valid on the group — ARIA 1.2 dropped aria-invalid from
+            the global attributes, and a bare <fieldset> (role="group") supports neither. A composite
+            role makes the accessible name load-bearing (screen readers announce it on entry), so the
+            group is named by the headline like every other grouping element here, rather than by an
+            untranslated <legend> that omitted the question. The roving-tabindex model lives on the
+            inputs, so the container role does not touch it. */}
+        <fieldset
+          className="w-full px-[2px]"
+          dir={dir}
+          role="radiogroup"
+          aria-labelledby={`${inputId}-headline`}
+          aria-required={required}
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <div className="flex w-full">{npsOptions.map((number) => renderNPSOption(number))}</div>
 
           {/* Labels */}

@@ -154,13 +154,13 @@ export const FeedbackDirectoryTable = ({
           <TableBody className="[&_tr:last-child]:border-b">
             {filteredDirectories.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center hover:bg-transparent">
+                <TableCell colSpan={4} className="text-center">
                   {t("workspace.settings.feedback_directories.empty_state")}
                 </TableCell>
               </TableRow>
             )}
             {filteredDirectories.map((directory) => (
-              <TableRow key={directory.id} className="hover:bg-transparent">
+              <TableRow key={directory.id}>
                 <TableCell>{directory.name}</TableCell>
                 <TableCell>{directory.workspaceCount}</TableCell>
                 <TableCell>
