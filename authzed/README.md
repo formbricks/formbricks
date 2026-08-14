@@ -389,7 +389,7 @@ deliberately will not repair** — `invalid` and `unmanaged` count toward drift
 exactly like `orphaned` and `missing`, because unrepaired authorization state is
 still authorization state and this exit code is what gates shadow evaluation and
 enforcement. The result is one line of JSON carrying counters, the offending
-record identifiers, a revision captured *after* the run's own writes (so shadow
+record identifiers, a revision captured _after_ the run's own writes (so shadow
 evaluation can use it as an `at_least_as_fresh` floor — `null` for a dry run,
 which wrote nothing to be fresh relative to), and a `truncated` flag.
 
@@ -403,7 +403,7 @@ Drift is reported in both directions:
 
 - `missing` — records PostgreSQL holds that SpiceDB has no relationship for. This
   is what an empty or stale SpiceDB looks like, so a report that could not see it
-  would be worthless. Note this compares *records*, not relations: a membership
+  would be worthless. Note this compares _records_, not relations: a membership
   stored as `owner` in PostgreSQL but `member` in SpiceDB counts as present.
   Applying converges the relation regardless, by writing the current value.
 - `orphaned` — relationships whose source record is gone.
@@ -418,7 +418,7 @@ Drift is reported in both directions:
   for a human. Any non-zero count here is a privilege-escalation finding, not
   routine drift.
 
-  **Only `--scope=all` can find one.** The escalation is an edge on *another*
+  **Only `--scope=all` can find one.** The escalation is an edge on _another_
   tenant's resource that names the organization under investigation, and a
   single-organization run reads only the resources PostgreSQL says that
   organization owns — so the offending resource is never read. A
@@ -437,8 +437,8 @@ and is the intended response to a failed unit.
 
 **"No prune" does not mean "no deletes."** Converging a membership inherently
 deletes the roles it does not hold. What `--prune` adds is permission to reconcile
-records observed *only* in SpiceDB. Even then no delete is precomputed: an
-unsourced record becomes a reconciler *target*, and the reconciler re-reads
+records observed _only_ in SpiceDB. Even then no delete is precomputed: an
+unsourced record becomes a reconciler _target_, and the reconciler re-reads
 PostgreSQL before deciding, so a row recreated in the meantime is written rather
 than deleted.
 
@@ -451,7 +451,7 @@ Guards on the destructive path:
   not usable for this** — it is a stable namespace and defaults to the same value
   everywhere, so it cannot tell staging from production;
 - exceeding the per-run prune cap (default 500, lowerable via `--max-prune`, never
-  raisable) prunes *nothing* — not a capped subset. Every unit, the streamed sweep
+  raisable) prunes _nothing_ — not a capped subset. Every unit, the streamed sweep
   included, counts its orphans to completion before deleting any of them, so the
   cap aborts before the first delete rather than part-way through. A large orphan
   count is a symptom — wrong endpoint, wrong database, a restore in progress — not
