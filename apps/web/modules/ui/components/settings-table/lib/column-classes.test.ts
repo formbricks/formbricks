@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import type { TSettingsTableColumn } from "../types";
 import {
@@ -136,5 +139,100 @@ describe("getRowActivatorColumnId", () => {
 
   test("returns undefined for no columns rather than throwing", () => {
     expect(getRowActivatorColumnId([])).toBeUndefined();
+  });
+});
+
+/**
+ * `headerClassName` and `cellClassName` are merged straight onto the `<th>`/`<td>`, so a display utility
+ * there stops the element being a table cell: the shared `align-middle` becomes a no-op (`vertical-align`
+ * applies only to inline-level and table-cell boxes) and the browser wraps the cell in an anonymous
+ * table-cell that defaults to baseline, leaving content sitting high in the row.
+ *
+ * That constraint was documented on both props and immediately violated in four column definitions
+ * anyway, so it is checked here rather than left to prose. Layout for cell content belongs on a wrapper
+ * element inside `cell`.
+ *
+ * This reads source text, so it only catches the literal form every call site actually uses
+ * (`cellClassName: "..."`). A computed value or a `cn()` call would slip past — it is a guard against the
+ * easy mistake, not a proof.
+ */
+describe("column class props never change a cell's display", () => {
+  const DISPLAY_UTILITIES = new Set([
+    "block",
+    "inline-block",
+    "inline",
+    "flex",
+    "inline-flex",
+    "table",
+    "inline-table",
+    "table-caption",
+    "table-cell",
+    "table-column",
+    "table-column-group",
+    "table-footer-group",
+    "table-header-group",
+    "table-row-group",
+    "table-row",
+    "flow-root",
+    "grid",
+    "inline-grid",
+    "contents",
+    "list-item",
+    "hidden",
+  ]);
+
+  const IGNORED_DIRS = new Set(["node_modules", ".next", "dist", "coverage"]);
+  const CLASS_PROP = /\b(cellClassName|headerClassName):\s*"([^"]*)"/g;
+
+  /** `sm:flex` and `hover:block` set display just as surely as the bare utility does. */
+  const withoutVariants = (token: string): string => token.slice(token.lastIndexOf(":") + 1);
+
+  const collectSourceFiles = (dir: string, found: string[] = []): string[] => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (!IGNORED_DIRS.has(entry.name)) collectSourceFiles(path.join(dir, entry.name), found);
+      } else if (entry.name.endsWith(".tsx") || entry.name.endsWith(".ts")) {
+        found.push(path.join(dir, entry.name));
+      }
+    }
+    return found;
+  };
+
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const appRoot = path.resolve(here, "..", "..", "..", "..", "..");
+
+  test("no column definition in the app puts a display utility on a header or body cell", () => {
+    const offenders: string[] = [];
+
+    for (const file of [
+      ...collectSourceFiles(path.join(appRoot, "modules")),
+      ...collectSourceFiles(path.join(appRoot, "app")),
+    ]) {
+      const source = fs.readFileSync(file, "utf-8");
+
+      for (const [, prop, classes] of source.matchAll(CLASS_PROP)) {
+        const display = classes
+          .split(/\s+/)
+          .filter(Boolean)
+          .map(withoutVariants)
+          .filter((token) => DISPLAY_UTILITIES.has(token));
+
+        if (display.length > 0) {
+          offenders.push(
+            `${path.relative(appRoot, file)} — ${prop}: "${classes}" sets ${display.join(", ")}`
+          );
+        }
+      }
+    }
+
+    expect(offenders).toEqual([]);
+  });
+
+  test("the scan actually reaches the settings tables it is meant to guard", () => {
+    const files = collectSourceFiles(path.join(appRoot, "modules"));
+
+    // A silently empty walk would make the test above pass for the wrong reason.
+    expect(files.some((file) => file.endsWith("feedback-directory-table.tsx"))).toBe(true);
+    expect(files.some((file) => file.endsWith("column-classes.ts"))).toBe(true);
   });
 });
