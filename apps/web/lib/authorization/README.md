@@ -152,6 +152,41 @@ migration; resource-level relationships belong to the later sharing phase.
   `member` role by name, which admitted `billing`; `organization.manage` is what
   its own message always claimed.
 
+### Migrated by ENG-2388 and ENG-2409
+
+ENG-2388 added the `page` surface for server-rendered routes. Until then a `can`
+call from a page or layout resolved no rollout target, so the coordinator
+short-circuited to the legacy evaluator and scheduled no comparison — those
+decisions were correct and invisible at the same time. The surface is opened at
+the choke points routes already funnel through (`getWorkspaceAuth`,
+`workspaceIdLayoutChecks`, `getWorkspaceLayoutData`) rather than at one boundary,
+because Next gives no RSC equivalent of the action-client wrapper.
+
+ENG-2409 then routed the organization-side gates, which a surface alone could not
+help because they never called `can` at all:
+
+| Gate | Was | Now |
+| --- | --- | --- |
+| `getOrganizationAuth` tenancy check | `if (!membership) throw` | `organization.read` |
+| `redirectBillingRoleFromRestrictedOrgSettings` (5 pages) | `isBilling` | `organization.read_access` |
+| Enterprise settings page | `isMember` | `organization.manage_billing` |
+| Feedback directories page | `isOwner \|\| isManager` | `organization.manage` |
+| API keys page | `role === "owner" \|\| "manager"` | `organization.manage_api_keys` |
+
+Two of those deserve their reasoning recorded, because the obvious mapping is
+wrong in both cases:
+
+- **`read_access`, not `read`,** for the billing redirect. `read_access` is the
+  only permission whose expansion is "holds a product-eligible membership role",
+  which is what "not the billing role" means here. `product_member` has the same
+  expansion but is deliberately absent from the permission map — it exists to
+  intersect into `team#member`, and giving it a second job would mean a future
+  edit to it silently changed team-derived workspace access.
+- **`manage_billing`, not `manage`,** for the enterprise page. On self-hosted,
+  `getOrganizationBillingPath` resolves to that very page, so it is where the
+  `billing` role is redirected _to_. Gating it on owner+manager would 404 that
+  role on its own landing page.
+
 #### Retained by design
 
 These read a role but do not decide access, so they stay as they are:
@@ -161,6 +196,12 @@ These read a role but do not decide access, so they stay as they are:
   on the action or page behind it.
 - **Context output.** `getWorkspaceAuth` and `getOrganizationAuth` _return_ the
   flags for those consumers. Their own gates are `can` calls.
+- **`getOrganizationAuth` gates on membership only.** Unlike `getWorkspaceAuth`,
+  which redirects `billing` away from product data, the organization helper asks
+  only `organization.read`. The asymmetry is required: the billing settings page
+  is the `billing` role's own page, so a billing exclusion there would lock that
+  role out of the one surface it exists to reach. Callers that need to exclude
+  it do so themselves, via `redirectBillingRoleFromRestrictedOrgSettings`.
 - **Invariants and finer rules.** An owner may not leave their organization; a
   manager may only assign the `member` role; `billing` is Cloud-only. The
   schema comments already name these as application rules — they constrain a
