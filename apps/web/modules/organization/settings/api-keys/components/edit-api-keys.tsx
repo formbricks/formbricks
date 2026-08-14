@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -17,8 +18,12 @@ import {
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
+
+/** A stored key, plus the plaintext value the create response returns once and only once. */
+type TApiKeyRow = TApiKeyWithEnvironmentPermission & { actualKey?: string };
 
 const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
   const { t } = useTranslation();
@@ -38,10 +43,15 @@ const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="break-all whitespace-pre-line">{apiKey}</span>
+      {/* `copyApiKeyIcon` is load-bearing: `playwright/lib/utils.ts` waits for and clicks it to read a
+          freshly created key, which eight API specs depend on for their bearer token. */}
       <div className="copyApiKeyIcon shrink-0">
         <FilesIcon
           className="size-4 cursor-pointer"
           onClick={(e) => {
+            // Stops the click reaching the row, which would open the permissions modal. The column is
+            // deliberately not `stopRowClick`: clicking the key *text* has always opened the modal, and
+            // only the copy affordance is an exception.
             e.stopPropagation();
             void copyToClipboard();
           }}
@@ -50,6 +60,75 @@ const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
       </div>
     </div>
   );
+};
+
+/**
+ * Exported so `loading.tsx` renders its skeleton from the same column array. That is the whole point of
+ * the factory: the old skeleton hand-rolled the header and had drifted to **three** columns against the
+ * table's four, which no test could catch.
+ *
+ * Defined at module level rather than inside the component: an inline `cell` that returns JSX reads as a
+ * nested component definition to Sonar (typescript:S6478).
+ */
+export const getApiKeyColumns = ({
+  t,
+  locale,
+  isReadOnly,
+  onDelete,
+}: Readonly<{
+  t: TFunction;
+  locale: TUserLocale;
+  isReadOnly: boolean;
+  onDelete: (event: React.MouseEvent, apiKey: TApiKeyRow) => void;
+}>): TSettingsTableColumn<TApiKeyRow>[] => {
+  const columns: TSettingsTableColumn<TApiKeyRow>[] = [
+    {
+      id: "label",
+      header: t("common.label"),
+      headerClassName: "w-[25%]",
+      cellClassName: "font-semibold",
+      skeletonWidth: "w-32",
+      cell: (apiKey) => apiKey.label,
+    },
+    {
+      id: "apiKey",
+      header: t("workspace.api_keys.api_key"),
+      headerClassName: "w-[45%]",
+      // Replaces `hidden sm:block`, which would have restored a `<td>` to `display: block` and dropped it
+      // out of the table's column layout. `hideBelow` uses `table-cell` for exactly that reason.
+      hideBelow: "sm",
+      skeletonWidth: "w-64",
+      cell: (apiKey) => <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} />,
+    },
+    {
+      id: "createdAt",
+      header: t("common.created_at"),
+      headerClassName: "w-[20%]",
+      skeletonWidth: "w-20",
+      cell: (apiKey) => timeSince(apiKey.createdAt.toString(), locale),
+    },
+  ];
+
+  if (!isReadOnly) {
+    columns.push({
+      id: "actions",
+      header: null,
+      srLabel: t("common.actions"),
+      headerClassName: "w-[10%]",
+      // The flex aligns the button; `align` would be inert here, since the button is block-level and the
+      // header has no visible text.
+      cellClassName: "flex justify-end",
+      stopRowClick: true,
+      skeletonWidth: "w-8",
+      cell: (apiKey) => (
+        <Button size="icon" variant="ghost" onClick={(event) => onDelete(event, apiKey)}>
+          <TrashIcon />
+        </Button>
+      ),
+    });
+  }
+
+  return columns;
 };
 
 interface EditAPIKeysProps {
@@ -68,12 +147,11 @@ export const EditAPIKeys = ({
   isReadOnly,
   workspaces,
   isFormbricksCloud,
-}: EditAPIKeysProps) => {
+}: Readonly<EditAPIKeysProps>) => {
   const { t } = useTranslation();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
   const [isDeleteKeyModalOpen, setIsDeleteKeyModalOpen] = useState(false);
-  const [apiKeysLocal, setApiKeysLocal] =
-    useState<(TApiKeyWithEnvironmentPermission & { actualKey?: string })[]>(apiKeys);
+  const [apiKeysLocal, setApiKeysLocal] = useState<TApiKeyRow[]>(apiKeys);
   const [activeKey, setActiveKey] = useState<TApiKeyWithEnvironmentPermission | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [viewPermissionsOpen, setViewPermissionsOpen] = useState(false);
@@ -166,66 +244,12 @@ export const EditAPIKeys = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
-          <div className="col-span-4 hidden sm:col-span-5 sm:block">{t("workspace.api_keys.api_key")}</div>
-          <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
-          <div></div>
-        </div>
-        <div className="grid-cols-9">
-          {apiKeysLocal?.length === 0 ? (
-            <div className="flex h-12 items-center justify-center px-6 text-sm font-medium whitespace-nowrap text-slate-400">
-              {t("workspace.api_keys.no_api_keys_yet")}
-            </div>
-          ) : (
-            apiKeysLocal?.map((apiKey) => (
-              <div
-                role="button"
-                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-hidden"
-                onClick={() => {
-                  setActiveKey(apiKey);
-                  setViewPermissionsOpen(true);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setActiveKey(apiKey);
-                    setViewPermissionsOpen(true);
-                  }
-                }}
-                tabIndex={0}
-                data-testid="api-key-row"
-                key={apiKey.id}>
-                <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
-                <div className="col-span-4 hidden pr-4 sm:col-span-5 sm:block">
-                  <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} />
-                </div>
-                <div className="col-span-4 sm:col-span-2">
-                  {timeSince(apiKey.createdAt.toString(), locale)}
-                </div>
-                {!isReadOnly && (
-                  <div className="col-span-1 text-center">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={(e) => {
-                        handleOpenDeleteKeyModal(e, apiKey);
-                        e.stopPropagation();
-                      }}>
-                      <TrashIcon />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
+    <>
       {!isReadOnly && (
-        <div>
+        // Moved above the table, matching every other settings table in this series — and required, since
+        // a flush card body means the table has to be the last thing in it. The control carries the card's
+        // gutter itself.
+        <div className="mb-4 flex justify-end px-4 pt-4">
           <Button
             size="sm"
             onClick={() => {
@@ -235,6 +259,21 @@ export const EditAPIKeys = ({
           </Button>
         </div>
       )}
+
+      <SettingsTable
+        columns={getApiKeyColumns({ t, locale, isReadOnly, onDelete: handleOpenDeleteKeyModal })}
+        rows={apiKeysLocal}
+        getRowId={(apiKey) => apiKey.id}
+        emptyMessage={t("workspace.api_keys.no_api_keys_yet")}
+        getRowProps={() => ({ "data-testid": "api-key-row" })}
+        aria-label={t("common.api_keys")}
+        onRowClick={(apiKey) => {
+          setActiveKey(apiKey);
+          setViewPermissionsOpen(true);
+        }}
+        getRowLabel={(apiKey) => t("workspace.api_keys.view_permissions_for", { label: apiKey.label })}
+      />
+
       <AddApiKeyModal
         open={isAddAPIKeyModalOpen}
         setOpen={setIsAddAPIKeyModalOpen}
@@ -261,6 +300,6 @@ export const EditAPIKeys = ({
         isDeleting={isLoading}
         text={t("workspace.api_keys.delete_api_key_confirmation")}
       />
-    </div>
+    </>
   );
 };

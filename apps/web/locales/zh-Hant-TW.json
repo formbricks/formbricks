@@ -1903,6 +1903,7 @@
       "unable_to_copy_api_key": "無法複製 API 金鑰",
       "unable_to_delete_api_key": "無法刪除 API 金鑰",
       "unknown_workspace": "未知工作區",
+      "view_permissions_for": "查看 {{label}} 的權限",
       "workspace_access": "工作區存取",
       "workspace_access_description": "問卷和回覆資料。每次授予一個工作區的存取權限。",
       "workspace_access_empty": "尚未新增任何工作區。"

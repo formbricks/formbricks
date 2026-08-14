@@ -3,11 +3,13 @@
 import { useTranslation } from "react-i18next";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { SettingsTableSkeleton } from "@/modules/ui/components/settings-table";
+import { getApiKeyColumns } from "./components/edit-api-keys";
 
 const LoadingCard = () => {
   const { t } = useTranslation();
   return (
-    <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-xs">
+    <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white py-4 shadow-xs">
       <div className="grid content-center border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
         <h3 className="h-6 w-full max-w-56 animate-pulse rounded-lg bg-slate-100 text-lg leading-6 font-medium">
           <span className="sr-only">{t("common.loading")}</span>
@@ -16,28 +18,30 @@ const LoadingCard = () => {
           <span className="sr-only">{t("common.loading")}</span>
         </p>
       </div>
-      <div className="w-full">
-        <div className="rounded-lg px-4 pt-4">
-          <div className="rounded-lg border border-slate-200">
-            <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
-              <div className="col-span-4 hidden sm:col-span-5 sm:block">
-                {t("workspace.api_keys.api_key")}
-              </div>
-              <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
-            </div>
-            <div className="px-6">
-              <div className="my-4 h-5 w-full animate-pulse rounded-full bg-slate-200">
-                <span className="sr-only">{t("common.loading")}</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-start">
-            <div className="mt-4 flex h-8 w-44 animate-pulse flex-col items-center justify-center rounded-md bg-black text-sm text-white">
-              {t("common.loading")}
-            </div>
+      {/* `-mb-4` mirrors `SettingsCard`'s `bodyVariant="flush"`, so the skeleton table meets the card's
+          bottom edge the way the real one does. */}
+      <div className="-mb-4">
+        <div className="mb-4 flex justify-end px-4 pt-4">
+          <div className="flex h-8 w-32 animate-pulse items-center justify-center rounded-md bg-slate-200">
+            <span className="sr-only">{t("common.loading")}</span>
           </div>
         </div>
+        {/*
+          The columns come from the table's own factory rather than being hand-rolled here. This skeleton
+          previously duplicated the header markup and had drifted to three columns against the table's
+          four — the exact failure the shared factory makes unrepresentable.
+
+          `locale` and `onDelete` are never reached: the skeleton renders each column's header and a
+          placeholder bar, and never calls `cell`.
+        */}
+        <SettingsTableSkeleton
+          columns={getApiKeyColumns({
+            t,
+            locale: "en-US",
+            isReadOnly: false,
+            onDelete: () => undefined,
+          })}
+        />
       </div>
     </div>
   );
