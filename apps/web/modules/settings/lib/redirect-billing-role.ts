@@ -26,7 +26,7 @@ import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 export const redirectBillingRoleFromRestrictedOrgSettings = async (organizationId: string): Promise<void> => {
   const { session } = await getOrganizationAuth(organizationId);
 
-  const hasOrganizationAccess = await withAuthorizationSurface("page", () =>
+  const hasOrganizationReadAccess = await withAuthorizationSurface("page", () =>
     can({ type: "user", id: session.user.id }, "organization.read_access", {
       type: "organization",
       id: organizationId,
@@ -36,7 +36,7 @@ export const redirectBillingRoleFromRestrictedOrgSettings = async (organizationI
   // Deliberately outside the surface callback: redirect() throws a Next control-flow error, and
   // keeping it out here means the drain scheduled by withAuthorizationSurface never has to survive
   // a throw from inside its own callback.
-  if (!hasOrganizationAccess) {
+  if (!hasOrganizationReadAccess) {
     redirect(getOrganizationBillingPath(organizationId, IS_FORMBRICKS_CLOUD));
   }
 };

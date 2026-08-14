@@ -52,7 +52,7 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
   // resolves organization actions through `getMembershipByUserIdOrganizationId`, the same
   // reactCache-memoized function called here, so the pair costs one query rather than two. Under
   // enforcement `can()` takes the scope-resolver path and issues no membership query at all.
-  const [hasOrganizationAccess, currentUserMembership] = await Promise.all([
+  const [hasOrganizationRead, currentUserMembership] = await Promise.all([
     withAuthorizationSurface("page", () =>
       can({ type: "user", id: session.user.id }, "organization.read", {
         type: "organization",
@@ -66,7 +66,7 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
   // could allow while the row is absent (projection drift), and `TOrganizationAuth` promises a
   // non-null membership to every caller. Keeping both conditions on one throw preserves the exact
   // error this has always raised while making the authorization half of it comparable.
-  if (!hasOrganizationAccess || !currentUserMembership) {
+  if (!hasOrganizationRead || !currentUserMembership) {
     throw new ResourceNotFoundError(t("common.membership"), null);
   }
 
