@@ -45,6 +45,7 @@ vi.mock("@formbricks/hub", () => ({
 
 vi.mock("./hub-client", () => ({
   getHubClient: vi.fn(),
+  assertRepeatedArrayParams: vi.fn(),
 }));
 
 vi.mock("@/lib/cache", () => ({
@@ -53,7 +54,7 @@ vi.mock("@/lib/cache", () => ({
   },
 }));
 
-const { getHubClient } = await import("./hub-client");
+const { getHubClient, assertRepeatedArrayParams } = await import("./hub-client");
 const { cache } = await import("@/lib/cache");
 
 const sampleInput: FeedbackRecordCreateParams = {
@@ -181,6 +182,32 @@ describe("hub service", () => {
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "Network error" });
     });
+
+    test("verifies the client before sending the request", async () => {
+      const client = { feedbackRecords: { list: vi.fn().mockResolvedValue({ data: [], limit: 50 }) } };
+      vi.mocked(getHubClient).mockReturnValue(client as any);
+
+      await listFeedbackRecords({ tenant_id: "env-1" });
+
+      expect(assertRepeatedArrayParams).toHaveBeenCalledWith(client);
+    });
+
+    // Confirms the probe now surfaces exactly like any other Hub failure — the fix for it previously
+    // running inside getHubClient(), outside every caller's own try, where it depended on the outer API
+    // wrapper to turn an uncaught exception into a controlled response.
+    test("returns a relayed error rather than throwing when the probe fails", async () => {
+      const list = vi.fn();
+      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { list } } as any);
+      vi.mocked(assertRepeatedArrayParams).mockImplementation(() => {
+        throw new Error("@formbricks/hub no longer routes query serialization through stringifyQuery");
+      });
+
+      const result = await listFeedbackRecords({ tenant_id: "env-1" });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0 });
+      expect(list).not.toHaveBeenCalled();
+    });
   });
 
   describe("retrieveFeedbackRecord", () => {
@@ -211,6 +238,39 @@ describe("hub service", () => {
     });
   });
 
+  /**
+   * `assertRepeatedArrayParams` is scoped to the two operations that send array-typed filters. It used to
+   * gate `getHubClient()` itself, which meant every consumer — a single record fetch here, taxonomy
+   * elsewhere, create/update/delete — paid for a probe that only list/count depend on, and a real SDK
+   * regression would break all of them at once. These assert the other side of the scoping fix: an
+   * unrelated call neither triggers the probe nor is affected when it would fail.
+   */
+  describe("assertRepeatedArrayParams scope", () => {
+    test("retrieveFeedbackRecord does not verify array-param support", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { retrieve: vi.fn().mockResolvedValue({ id: "rec-1" }) },
+      } as any);
+
+      await retrieveFeedbackRecord("rec-1");
+
+      expect(assertRepeatedArrayParams).not.toHaveBeenCalled();
+    });
+
+    test("listTaxonomyFields succeeds even when array-param support is broken", async () => {
+      const listFields = vi.fn().mockResolvedValue({ fields: [] });
+      vi.mocked(getHubClient).mockReturnValue({ taxonomy: { listFields } } as any);
+      vi.mocked(assertRepeatedArrayParams).mockImplementation(() => {
+        throw new Error("would fail list/count, but taxonomy never calls this");
+      });
+
+      const result = await listTaxonomyFields("tenant-1");
+
+      expect(assertRepeatedArrayParams).not.toHaveBeenCalled();
+      expect(listFields).toHaveBeenCalledWith({ tenant_id: "tenant-1" });
+      expect(result.error).toBeNull();
+    });
+  });
+
   describe("countFeedbackRecords", () => {
     test("returns config error when getHubClient returns null", async () => {
       vi.mocked(getHubClient).mockReturnValue(null);
@@ -225,9 +285,9 @@ describe("hub service", () => {
       const count = vi.fn().mockResolvedValue({ count: 42 });
       vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { count } } as any);
 
-      const result = await countFeedbackRecords({ tenant_id: "env-1", user_id: "user-1" });
+      const result = await countFeedbackRecords({ tenant_id: "env-1", user_id: ["user-1"] });
 
-      expect(count).toHaveBeenCalledWith({ tenant_id: "env-1", user_id: "user-1" });
+      expect(count).toHaveBeenCalledWith({ tenant_id: "env-1", user_id: ["user-1"] });
       expect(result.data).toEqual({ count: 42 });
       expect(result.error).toBeNull();
     });
@@ -246,6 +306,29 @@ describe("hub service", () => {
         status: 400,
         problemDetail: "since must be a valid timestamp",
       });
+    });
+
+    test("verifies the client before sending the request", async () => {
+      const client = { feedbackRecords: { count: vi.fn().mockResolvedValue({ count: 0 }) } };
+      vi.mocked(getHubClient).mockReturnValue(client as any);
+
+      await countFeedbackRecords({ tenant_id: "env-1" });
+
+      expect(assertRepeatedArrayParams).toHaveBeenCalledWith(client);
+    });
+
+    test("returns a relayed error rather than throwing when the probe fails", async () => {
+      const count = vi.fn();
+      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { count } } as any);
+      vi.mocked(assertRepeatedArrayParams).mockImplementation(() => {
+        throw new Error("@formbricks/hub no longer routes query serialization through stringifyQuery");
+      });
+
+      const result = await countFeedbackRecords({ tenant_id: "env-1" });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0 });
+      expect(count).not.toHaveBeenCalled();
     });
   });
 

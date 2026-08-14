@@ -1,6 +1,5 @@
-import DOMPurify from "isomorphic-dompurify";
 import { useTranslation } from "react-i18next";
-import { isValidHTML, stripInlineStyles } from "@/lib/html-utils";
+import { isValidHTML, sanitizeSurveyHtml, stripInlineStyles } from "@/lib/html-utils";
 
 interface HeadlineProps {
   headline: string;
@@ -24,13 +23,7 @@ export function Headline({
   // Strip inline styles BEFORE parsing to avoid CSP violations
   const strippedHeadline = stripInlineStyles(headline);
   const isHeadlineHtml = isValidHTML(strippedHeadline);
-  const safeHtml =
-    isHeadlineHtml && strippedHeadline
-      ? DOMPurify.sanitize(strippedHeadline, {
-          ADD_ATTR: ["target"],
-          FORBID_ATTR: ["style"], // Additional safeguard to remove any remaining inline styles
-        })
-      : "";
+  const safeHtml = isHeadlineHtml && strippedHeadline ? sanitizeSurveyHtml(strippedHeadline) : "";
 
   return (
     <div className="text-heading mb-[3px] flex flex-col">

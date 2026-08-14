@@ -162,7 +162,7 @@ export const exampleData = {
       {
         id: "var-1",
         name: "Customer ID",
-        type: "text",
+        type: "text" as const,
         value: "CUST-456",
       },
     ],

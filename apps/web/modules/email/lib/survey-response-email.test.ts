@@ -280,4 +280,40 @@ describe("buildSurveyResponseEmailHtml", () => {
     await buildSurveyResponseEmailHtml({ body: "Body", survey, response, attachResponseData: false });
     expect(mockGetTranslate).toHaveBeenCalledWith("en-US");
   });
+
+  // The whitelabel logo is persisted as a relative `/storage/...` path. Passed through unresolved it
+  // reaches the email as `<img src="/storage/...">`, which no mail client can resolve — the header
+  // logo rendered broken in every workflow / follow-up email.
+  test("resolves a relative whitelabel logo path to an absolute URL", async () => {
+    await buildSurveyResponseEmailHtml({
+      body: "Body",
+      survey,
+      response,
+      attachResponseData: false,
+      logoUrl: "/storage/wsp123/public/logo--fid--abc.png",
+    });
+
+    expect(mockResolveStorageUrl).toHaveBeenCalledWith("/storage/wsp123/public/logo--fid--abc.png");
+    expect(mockRenderFollowUpEmail.mock.calls[0][0].logoUrl).toBe(
+      "https://cdn.example.com//storage/wsp123/public/logo--fid--abc.png"
+    );
+  });
+
+  // Callers pass `""` when the organization has no whitelabel logo; that must stay falsy so the
+  // template falls back to the default Formbricks logo instead of resolving an empty path.
+  test.each([
+    ["an empty logo url", ""],
+    ["no logo url", undefined],
+  ])("leaves the logo unset for %s", async (_label, logoUrl) => {
+    await buildSurveyResponseEmailHtml({
+      body: "Body",
+      survey,
+      response,
+      attachResponseData: false,
+      logoUrl,
+    });
+
+    expect(mockResolveStorageUrl).not.toHaveBeenCalled();
+    expect(mockRenderFollowUpEmail.mock.calls[0][0].logoUrl).toBeUndefined();
+  });
 });

@@ -29,6 +29,34 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
 - If changes still don't appear, restart the Next.js dev server (`pnpm dev`).
 
+### Tailwind & Workspace Package CSS
+
+Tailwind v4 detects sources starting from the consuming app's own root (`apps/web` for the Next.js
+PostCSS build, the Vite root for `apps/storybook`) and **never descends into `node_modules`** — which
+is exactly where every `@formbricks/*` workspace package is linked. A utility used only inside a
+workspace package therefore never reaches the consuming app's stylesheet. Consumed workspace packages
+ship their own CSS rather than relying on the app to scan them:
+
+- `@formbricks/surveys` — prebuilt bundle served from `apps/web/public/js/` (see the section above).
+- `@formbricks/survey-ui` — exports `./styles` (`dist/survey-ui.css`), scoped to `#fbjs`.
+- `@formbricks/email` — ships no stylesheet at all; `@react-email/tailwind` compiles and inlines the
+  classes into the email HTML at render time.
+
+If you ever consume a workspace package as raw source **for its styling**, the app has to be told
+about that package's files explicitly — detection stops at the app's own root, so nothing else will
+pick them up. `apps/storybook` is the worked example: it consumes `packages/survey-ui` as raw source
+(its `stories` glob loads `packages/survey-ui/src/**` directly, and Vite aliases the package specifier
+to that same source), and it works because `apps/storybook/src/index.css` imports **survey-ui's own
+stylesheet**, which carries the `@config` and `@source` covering `packages/survey-ui/src/**` — those
+resolve relative to survey-ui's file, so the package declares its own coverage and the app just pulls
+it in. Prefer that: let the package own its globs. Only write an `@source` in the app entry when the
+files are the app's own (as `index.css` does for `.storybook/**` and `src/**`).
+
+Tailwind is configured CSS-first everywhere. Only two JS/TS Tailwind configs remain
+(`packages/survey-ui/tailwind.config.ts` and `packages/surveys/tailwind.config.cjs`) and both are
+reached through an explicit `@config` bridge from the package's own stylesheet. Do not add a
+`tailwind.config.js` that nothing `@config`s — Tailwind v4 will not load it, and it will silently rot.
+
 ## Coding Style & Naming Conventions
 
 TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
@@ -47,6 +75,13 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 - Use React `cache()` for request-level dedupe and `cache.withCache()` or explicit Redis for expensive data.
 - Do not use Next.js `unstable_cache()`.
 - Always use `createCacheKey.*` utilities for cache keys.
+
+## Environment Variables
+
+- In `apps/web`, application code must not read `process.env` directly. Server code reads `env` from `apps/web/lib/env.ts` (or the constants derived from it in `lib/constants.ts`); client components read `lib/env-client.ts`, which holds the one sanctioned client-side read. `next.config.mjs` imports `lib/env.ts`, so an invalid value fails the build or start instead of the first request that needs it.
+- Adding a variable means adding it to both the `server` schema and the `runtimeEnv` map in `lib/env.ts`. If `next.config.mjs` reads it too, add it to `build.env` in `turbo.json` (enforced by `lib/turbo-build-env.test.ts`).
+- An ESLint rule enforces this. Bootstrap, config, script and test files are exempt — the list lives in `apps/web/eslint.config.mjs`. `NEXT_RUNTIME` and `NEXT_PHASE` are allowed anywhere: Next.js injects them, so there is nothing to validate.
+- Packages under `packages/*` cannot import the web app's env module and still read `process.env` directly; the rule does not apply there.
 
 ## i18n (Internationalization)
 

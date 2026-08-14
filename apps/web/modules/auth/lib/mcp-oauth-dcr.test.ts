@@ -100,6 +100,10 @@ const requestAuthorize = async (
 };
 
 describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape)", () => {
+  test("limits access tokens to the single MCP resource audience", () => {
+    expect(getMcpOauthProviderOptions().validAudiences).toEqual([getMcpResourceUrl()]);
+  });
+
   test("PRM-advertised scopes register verbatim, including offline_access", async () => {
     const auth = createAuthInstance();
     const advertisedScopes = await fetchAdvertisedScopes();

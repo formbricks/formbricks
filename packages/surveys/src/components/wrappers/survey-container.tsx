@@ -139,7 +139,7 @@ export function SurveyContainer({
     <div id="fbjs" className="formbricks-form" dir={dir}>
       <div
         // In-dialog updates (question changes after a submit) should wait for the reader to finish
-        // speaking, not interrupt it — a survey is never urgent enough for assertive.
+        // speaking instead of interrupting it. A survey is never urgent enough for assertive speech.
         aria-live="polite"
         className={cn(
           hasOverlay ? "pointer-events-auto" : "pointer-events-none",

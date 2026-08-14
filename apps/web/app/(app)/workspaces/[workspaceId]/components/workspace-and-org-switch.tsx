@@ -16,6 +16,10 @@ interface WorkspaceAndOrgSwitchProps {
   isOwnerOrManager: boolean;
   isAccessControlAllowed: boolean;
   isMembershipPending: boolean;
+  // Workspace-agnostic routes (/organizations/[organizationId]/settings, /account/settings) opt out:
+  // there is no current workspace on those pages, so the breadcrumb must not claim one. The
+  // organization breadcrumb still receives the resolved workspace id for its own menu.
+  showWorkspaceBreadcrumb?: boolean;
 }
 
 export const WorkspaceAndOrgSwitch = ({
@@ -30,7 +34,12 @@ export const WorkspaceAndOrgSwitch = ({
   isOwnerOrManager,
   isAccessControlAllowed,
   isMembershipPending,
-}: WorkspaceAndOrgSwitchProps) => {
+  showWorkspaceBreadcrumb = true,
+}: Readonly<WorkspaceAndOrgSwitchProps>) => {
+  // Keep this as the id itself rather than a boolean: rendering the workspace crumb narrows it to a
+  // defined string, which a separate boolean flag would not do.
+  const workspaceCrumbId = showWorkspaceBreadcrumb ? currentWorkspaceId : undefined;
+
   return (
     <Breadcrumb>
       <BreadcrumbList className="gap-0">
@@ -39,10 +48,11 @@ export const WorkspaceAndOrgSwitch = ({
           currentOrganizationName={currentOrganizationName}
           currentWorkspaceId={currentWorkspaceId}
           isMultiOrgEnabled={isMultiOrgEnabled}
+          isLastCrumb={!workspaceCrumbId}
         />
-        {currentWorkspaceId && (
+        {workspaceCrumbId && (
           <WorkspaceBreadcrumb
-            currentWorkspaceId={currentWorkspaceId}
+            currentWorkspaceId={workspaceCrumbId}
             currentWorkspaceName={currentWorkspaceName}
             currentOrganizationId={currentOrganizationId}
             isOwnerOrManager={isOwnerOrManager}

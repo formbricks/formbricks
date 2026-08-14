@@ -620,11 +620,7 @@ const computeLicenseState = async (
 };
 
 export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLicenseResult> => {
-  if (
-    process.env.NODE_ENV !== "test" &&
-    memoryCache &&
-    Date.now() - memoryCache.timestamp < MEMORY_CACHE_TTL_MS
-  ) {
+  if (env.NODE_ENV !== "test" && memoryCache && Date.now() - memoryCache.timestamp < MEMORY_CACHE_TTL_MS) {
     return memoryCache.data;
   }
 

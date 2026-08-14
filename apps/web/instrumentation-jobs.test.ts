@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockStartJobsRuntime = vi.fn();
-const mockRemoveRecurringSurveySchedulingJobSchedule = vi.fn();
-const mockUpsertRecurringSurveySchedulingJobSchedule = vi.fn();
-const mockRemoveRecurringSurveyArchivePurgeJobSchedule = vi.fn();
-const mockUpsertRecurringSurveyArchivePurgeJobSchedule = vi.fn();
+const mockRemoveSurveyScheduling = vi.fn();
+const mockUpsertSurveyScheduling = vi.fn();
+const mockRemoveSurveyArchivePurge = vi.fn();
+const mockUpsertSurveyArchivePurge = vi.fn();
+const mockRemoveWorkflowRunReconcile = vi.fn();
+const mockUpsertWorkflowRunReconcile = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
@@ -14,8 +16,6 @@ const mockProcessResponsePipelineJob = vi.fn();
 const mockProcessSurveySchedulingJob = vi.fn();
 const mockProcessSurveyArchivePurgeJob = vi.fn();
 const mockProcessWorkflowRunJob = vi.fn();
-const mockRemoveRecurringWorkflowRunReconcileJobSchedule = vi.fn();
-const mockUpsertRecurringWorkflowRunReconcileJobSchedule = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
@@ -23,14 +23,37 @@ const slowTest = (name: string, fn: () => Promise<void>): void => {
   test(name, fn, TEST_TIMEOUT_MS);
 };
 
+// Only the queue calls are stubbed: `lib/jobs/recurring-registrations` runs for real against these
+// handles, so the env-derived timing it pairs with each job stays under test.
 vi.mock("@formbricks/jobs", () => ({
-  removeRecurringSurveySchedulingJobSchedule: mockRemoveRecurringSurveySchedulingJobSchedule,
-  removeRecurringSurveyArchivePurgeJobSchedule: mockRemoveRecurringSurveyArchivePurgeJobSchedule,
-  removeRecurringWorkflowRunReconcileJobSchedule: mockRemoveRecurringWorkflowRunReconcileJobSchedule,
+  ONE_SHOT_JOB_NAMES: {
+    responsePipeline: "response-pipeline.process",
+    workflowRun: "workflow-run.process",
+  },
+  recurringJobs: {
+    surveyArchivePurge: {
+      name: "survey-archive-purge.process",
+      remove: mockRemoveSurveyArchivePurge,
+      scheduleId: "daily-survey-archive-purge",
+      scope: "global",
+      upsert: mockUpsertSurveyArchivePurge,
+    },
+    surveyScheduling: {
+      name: "survey-scheduling.reconcile",
+      remove: mockRemoveSurveyScheduling,
+      scheduleId: "daily-survey-scheduling",
+      scope: "global",
+      upsert: mockUpsertSurveyScheduling,
+    },
+    workflowRunReconcile: {
+      name: "workflow-run.reconcile",
+      remove: mockRemoveWorkflowRunReconcile,
+      scheduleId: "workflow-run-reconcile",
+      scope: "global",
+      upsert: mockUpsertWorkflowRunReconcile,
+    },
+  },
   startJobsRuntime: mockStartJobsRuntime,
-  upsertRecurringSurveySchedulingJobSchedule: mockUpsertRecurringSurveySchedulingJobSchedule,
-  upsertRecurringSurveyArchivePurgeJobSchedule: mockUpsertRecurringSurveyArchivePurgeJobSchedule,
-  upsertRecurringWorkflowRunReconcileJobSchedule: mockUpsertRecurringWorkflowRunReconcileJobSchedule,
 }));
 
 vi.mock("@/lib/jobs/config", () => ({
@@ -72,14 +95,14 @@ describe("instrumentation-jobs", () => {
     vi.resetModules();
     vi.clearAllMocks();
     vi.useFakeTimers();
-    mockRemoveRecurringSurveySchedulingJobSchedule.mockResolvedValue(true);
-    mockRemoveRecurringSurveyArchivePurgeJobSchedule.mockResolvedValue(true);
-    mockUpsertRecurringSurveyArchivePurgeJobSchedule.mockResolvedValue({
+    mockRemoveSurveyScheduling.mockResolvedValue(true);
+    mockRemoveSurveyArchivePurge.mockResolvedValue(true);
+    mockUpsertSurveyArchivePurge.mockResolvedValue({
       id: "archive-purge-schedule-1",
       name: "survey-archive-purge.process",
       queueName: "background-jobs",
     });
-    mockRemoveRecurringWorkflowRunReconcileJobSchedule.mockResolvedValue(true);
+    mockRemoveWorkflowRunReconcile.mockResolvedValue(true);
     mockGetJobsQueueingConfig.mockReturnValue({
       enabled: false,
       redisUrl: null,
@@ -90,6 +113,23 @@ describe("instrumentation-jobs", () => {
     const { resetJobsWorkerRegistrationForTests } = await import("./instrumentation-jobs");
     await resetJobsWorkerRegistrationForTests();
     vi.useRealTimers();
+  });
+
+  /**
+   * Keying the registrations by `TRecurringJobKey` forces an entry to exist for every declared job, but
+   * not that the entry holds *that* job's handle — a mispairing type-checks. It would be worse than a
+   * swap: both entries would upsert the same scheduler, so one job's schedule is never registered and
+   * its handler binds to the wrong name.
+   */
+  test("each recurring registration is paired with its own job handle", async () => {
+    const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
+    const { recurringJobs } = await import("@formbricks/jobs");
+
+    for (const [key, registration] of Object.entries(RECURRING_JOB_REGISTRATIONS_BY_KEY)) {
+      expect(registration.job, `registration "${key}" holds another job's handle`).toBe(
+        recurringJobs[key as keyof typeof recurringJobs]
+      );
+    }
   });
 
   slowTest("skips worker startup when disabled", async () => {
@@ -103,7 +143,7 @@ describe("instrumentation-jobs", () => {
 
     expect(result).toBeNull();
     expect(mockStartJobsRuntime).not.toHaveBeenCalled();
-    expect(mockUpsertRecurringSurveySchedulingJobSchedule).not.toHaveBeenCalled();
+    expect(mockUpsertSurveyScheduling).not.toHaveBeenCalled();
     expect(mockDebug).toHaveBeenCalledWith("BullMQ worker startup skipped");
   });
 
@@ -351,12 +391,12 @@ describe("instrumentation-jobs", () => {
         enabled: false,
         runtimeOptions: null,
       });
-      mockUpsertRecurringSurveySchedulingJobSchedule.mockResolvedValue({
+      mockUpsertSurveyScheduling.mockResolvedValue({
         id: "schedule-job-1",
         name: "survey-scheduling.reconcile",
         queueName: "background-jobs",
       });
-      mockUpsertRecurringWorkflowRunReconcileJobSchedule.mockResolvedValue({
+      mockUpsertWorkflowRunReconcile.mockResolvedValue({
         id: "schedule-job-2",
         name: "workflow-run.reconcile",
         queueName: "background-jobs",
@@ -373,66 +413,35 @@ describe("instrumentation-jobs", () => {
       await registerRecurringJobs();
       await registerRecurringJobs();
 
+      // The schedule identity and payload now belong to the job declaration in @formbricks/jobs (and are
+      // asserted there); what this app owns, and what is asserted here, is the timing per job.
       expect(mockStartJobsRuntime).not.toHaveBeenCalled();
-      expect(mockRemoveRecurringSurveySchedulingJobSchedule).toHaveBeenCalledTimes(1);
-      expect(mockRemoveRecurringSurveySchedulingJobSchedule).toHaveBeenCalledWith({
-        scheduleId: "daily-survey-scheduling",
-        scope: "global",
+      expect(mockUpsertSurveyScheduling).toHaveBeenCalledTimes(1);
+      expect(mockUpsertSurveyScheduling).toHaveBeenCalledWith({
+        cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
+        kind: "cron",
+        timeZone: SURVEY_SCHEDULING_TIME_ZONE,
       });
-      expect(mockUpsertRecurringSurveySchedulingJobSchedule).toHaveBeenCalledTimes(1);
-      expect(mockUpsertRecurringSurveySchedulingJobSchedule).toHaveBeenCalledWith(
-        {
-          scheduleId: "daily-survey-scheduling",
-          scope: "global",
-        },
-        {
-          cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
-          kind: "cron",
-          timeZone: SURVEY_SCHEDULING_TIME_ZONE,
-        },
-        {
-          scope: "global",
-        }
-      );
-      expect(mockRemoveRecurringSurveyArchivePurgeJobSchedule).toHaveBeenCalledTimes(1);
-      expect(mockRemoveRecurringSurveyArchivePurgeJobSchedule).toHaveBeenCalledWith({
-        scheduleId: "daily-survey-archive-purge",
-        scope: "global",
+      expect(mockUpsertSurveyArchivePurge).toHaveBeenCalledTimes(1);
+      expect(mockUpsertSurveyArchivePurge).toHaveBeenCalledWith({
+        cronPattern: SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
+        kind: "cron",
+        timeZone: SURVEY_ARCHIVE_PURGE_TIME_ZONE,
       });
-      expect(mockUpsertRecurringSurveyArchivePurgeJobSchedule).toHaveBeenCalledTimes(1);
-      expect(mockUpsertRecurringSurveyArchivePurgeJobSchedule).toHaveBeenCalledWith(
-        {
-          scheduleId: "daily-survey-archive-purge",
-          scope: "global",
-        },
-        {
-          cronPattern: SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
-          kind: "cron",
-          timeZone: SURVEY_ARCHIVE_PURGE_TIME_ZONE,
-        },
-        {
-          scope: "global",
-        }
-      );
-      expect(mockRemoveRecurringWorkflowRunReconcileJobSchedule).toHaveBeenCalledTimes(1);
-      expect(mockRemoveRecurringWorkflowRunReconcileJobSchedule).toHaveBeenCalledWith({
-        scheduleId: "workflow-run-reconcile",
-        scope: "global",
+      // The purge is offset from scheduling but must run in the same zone. It used to read a
+      // NEXT_PUBLIC_ var that ENG-1665 renamed away, pinning it to the Europe/Berlin fallback
+      // regardless of configuration (ENG-2244).
+      expect(SURVEY_ARCHIVE_PURGE_TIME_ZONE).toBe(SURVEY_SCHEDULING_TIME_ZONE);
+      expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledTimes(1);
+      expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledWith({
+        everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
+        kind: "every",
       });
-      expect(mockUpsertRecurringWorkflowRunReconcileJobSchedule).toHaveBeenCalledTimes(1);
-      expect(mockUpsertRecurringWorkflowRunReconcileJobSchedule).toHaveBeenCalledWith(
-        {
-          scheduleId: "workflow-run-reconcile",
-          scope: "global",
-        },
-        {
-          everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
-          kind: "every",
-        },
-        {
-          scope: "global",
-        }
-      );
+      // Upsert is idempotent and updates repeat options in place; removing first risks leaving the
+      // scheduler with no delayed job (bullmq#3063).
+      expect(mockRemoveSurveyScheduling).not.toHaveBeenCalled();
+      expect(mockRemoveSurveyArchivePurge).not.toHaveBeenCalled();
+      expect(mockRemoveWorkflowRunReconcile).not.toHaveBeenCalled();
     }
   );
 
@@ -443,13 +452,11 @@ describe("instrumentation-jobs", () => {
       enabled: true,
       redisUrl: "redis://localhost:6379",
     });
-    mockUpsertRecurringSurveySchedulingJobSchedule
-      .mockRejectedValueOnce(scheduleError)
-      .mockResolvedValueOnce({
-        id: "schedule-job-1",
-        name: "survey-scheduling.reconcile",
-        queueName: "background-jobs",
-      });
+    mockUpsertSurveyScheduling.mockRejectedValueOnce(scheduleError).mockResolvedValueOnce({
+      id: "schedule-job-1",
+      name: "survey-scheduling.reconcile",
+      queueName: "background-jobs",
+    });
 
     const { registerRecurringJobs } = await import("./instrumentation-jobs");
 
@@ -465,7 +472,7 @@ describe("instrumentation-jobs", () => {
 
     await vi.advanceTimersByTimeAsync(30_000);
 
-    expect(mockUpsertRecurringSurveySchedulingJobSchedule).toHaveBeenCalledTimes(2);
+    expect(mockUpsertSurveyScheduling).toHaveBeenCalledTimes(2);
   });
 
   slowTest("clears registration state even when reset close fails", async () => {
