@@ -33,7 +33,7 @@ describe("turbo hashes the canonical AuthZed schema into the web build", () => {
     const cliConfig = fs.readFileSync(cliConfigPath, "utf-8");
     // If this ever stops being true the coupling is gone and the assertion below can be dropped —
     // but it should be dropped deliberately, not left asserting something that no longer exists.
-    expect(cliConfig).toContain("schema.zed");
+    expect(cliConfig).toContain(CANONICAL_SCHEMA);
   });
 
   test("a schema-only change invalidates the cached web build", () => {
