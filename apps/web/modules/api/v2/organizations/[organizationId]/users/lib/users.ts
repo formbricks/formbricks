@@ -135,10 +135,7 @@ export const createUser = async (
     await reconcileOrganizationMembership(organizationId, user.id);
     await runPostCommitProjection("api_v2_organization_user_create", () =>
       reconcileTeamWorkspaceRelationships({
-        teamMemberships: (existingTeams ?? []).map(({ id: teamId }) => ({
-          teamId,
-          userId: user.id,
-        })),
+        teamMemberships: (existingTeams ?? []).map(({ id: teamId }) => ({ teamId, userId: user.id })),
       })
     );
 
@@ -315,10 +312,7 @@ export const updateUser = async (
     ]);
     await runPostCommitProjection("api_v2_organization_user_update", () =>
       reconcileTeamWorkspaceRelationships({
-        teamMemberships: [...affectedTeamIds].map((teamId) => ({
-          teamId,
-          userId: updatedUser.id,
-        })),
+        teamMemberships: [...affectedTeamIds].map((teamId) => ({ teamId, userId: updatedUser.id })),
       })
     );
 

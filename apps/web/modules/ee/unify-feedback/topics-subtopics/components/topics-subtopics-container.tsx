@@ -16,7 +16,7 @@ import { useRenameTaxonomyNode } from "../hooks/use-rename-taxonomy-node";
 import { useTaxonomyFields } from "../hooks/use-taxonomy-fields";
 import { NODE_RECORD_LIMIT, useTaxonomyNodeRecords } from "../hooks/use-taxonomy-node-records";
 import { useTaxonomyRecordCounts } from "../hooks/use-taxonomy-record-counts";
-import { useTaxonomyRun } from "../hooks/use-taxonomy-run";
+import { isTaxonomyRunGone, useTaxonomyRun } from "../hooks/use-taxonomy-run";
 import { useTaxonomyState } from "../hooks/use-taxonomy-state";
 import { useTriggerTaxonomyRun } from "../hooks/use-trigger-taxonomy-run";
 import { MIN_OPEN_TEXT_RECORDS, computeGate } from "../lib/gate";
@@ -144,7 +144,18 @@ export const TopicsSubtopicsContainer = ({
     }
   }, [runStatus, queryClient, workspaceId, scope]);
 
-  const isRunning = runningRunId !== null || triggerMutation.isPending;
+  /**
+   * A run the service no longer has is not in flight, whatever the cached run list still says. `runningRunId`
+   * is derived from the *state* query, and a gone run never yields a terminal status — so without this the
+   * hand-off effect above never fires, `isRunning` stays true, Generate stays disabled, and the retry below
+   * only refetches the same missing run. The page would be stuck until a reload.
+   *
+   * Dropping it from `isRunning` is enough: the stale entry stops being read as running, the warning below
+   * hides with it, and the next generate refreshes the list. Invalidating the state here instead would risk
+   * a refetch loop whenever the run list and the run endpoint disagree.
+   */
+  const runIsGone = isTaxonomyRunGone(runQuery.error);
+  const isRunning = (runningRunId !== null && !runIsGone) || triggerMutation.isPending;
   // A failed run keeps generation enabled (that is the retry path); only block generation while the
   // taxonomy service itself is unreachable, since a new run can't succeed then anyway.
   const serviceUnavailable = fieldsUnavailable || stateUnavailable;
@@ -294,7 +305,8 @@ export const TopicsSubtopicsContainer = ({
         )}
 
         {/* A run is in progress but its status poll is failing. Polling self-recovers (see
-         * useTaxonomyRun), so surface a soft warning + manual retry rather than a hard error. */}
+         * useTaxonomyRun), so surface a soft warning + manual retry rather than a hard error. A *gone* run
+         * clears `isRunning` above, so this does not offer a retry that can only 404 again. */}
         {isRunning && runQuery.isError && (
           <Alert variant="warning" size="small">
             <AlertTitle>{t("common.something_went_wrong_please_try_again")}</AlertTitle>

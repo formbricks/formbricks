@@ -1,6 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
+import { isValidIanaTimeZone } from "@formbricks/types/common";
 import { isAuthzedAuthorizationRolloutTarget } from "./authzed/rollout-contract";
 import { throwEnvValidationError } from "./env-validation-error";
 
@@ -203,15 +204,6 @@ const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx:
   };
 
   providerValidators[values.AI_PROVIDER](values, ctx);
-};
-
-const isValidIanaTimeZone = (value: string): boolean => {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
 };
 
 const ZSurveySchedulingTimeZone = z.string().trim().min(1).refine(isValidIanaTimeZone, {

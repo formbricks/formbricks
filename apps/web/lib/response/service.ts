@@ -28,6 +28,7 @@ import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organizat
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
 import { deleteDisplay } from "../display/service";
+import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
@@ -103,14 +104,20 @@ const mapResponsePrismaToResponse = (
   tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
 });
 
+/**
+ * Scoped by workspace on purpose: this feeds the contact detail page, which is reached through a
+ * workspace id in the URL. A contact id alone is not a tenant boundary, so the responses are
+ * filtered through the workspace of the contact they belong to.
+ */
 export const getResponsesByContactId = reactCache(
-  async (contactId: string, page?: number): Promise<TResponseWithQuotas[]> => {
-    validateInputs([contactId, ZId], [page, ZOptionalNumber]);
+  async (contactId: string, workspaceId: string, page?: number): Promise<TResponseWithQuotas[]> => {
+    validateInputs([contactId, ZId], [workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
       const responsePrisma = await prisma.response.findMany({
         where: {
           contactId,
+          contact: { workspaceId },
         },
         select: {
           ...responseSelection,
@@ -439,7 +446,10 @@ export const getResponseDownloadFile = async (
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    const organizationBilling = await getOrganizationBilling(organizationId);
+    const [organizationBilling, organization] = await Promise.all([
+      getOrganizationBilling(organizationId),
+      getOrganization(organizationId),
+    ]);
 
     if (!organizationBilling) {
       throw new ResourceNotFoundError("OrganizationBilling", organizationId);
@@ -473,7 +483,8 @@ export const getResponseDownloadFile = async (
       elements,
       userAttributes,
       hiddenFields,
-      isQuotasAllowed
+      isQuotasAllowed,
+      organization?.displayTimeZone ?? "UTC"
     );
 
     const fileName = getResponsesFileName(survey?.name || "", format);

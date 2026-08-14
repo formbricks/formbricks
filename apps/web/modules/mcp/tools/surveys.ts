@@ -166,8 +166,8 @@ export function registerSurveyTools(server: McpServer): void {
     async (input: TMcpValidateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
       // validate_survey never persists changes (readOnlyHint) — a dry-run validation of a create or
-      // patch payload only needs read access. The actual write permission is enforced by the v3 layer
-      // when create_survey / patch_survey run.
+      // patch payload only needs read access, and validateV3Survey gates at "read" to match. The
+      // actual write permission is enforced when create_survey / patch_survey run.
       const response = await validateV3SurveyFromRawInput({
         body: input,
         authentication: getMcpAuthentication(extra.authInfo),

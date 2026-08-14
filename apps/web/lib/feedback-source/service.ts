@@ -29,6 +29,7 @@ const selectFeedbackSourceWithMappings = {
   name: true,
   type: true,
   status: true,
+  importMode: true,
   workspaceId: true,
   feedbackDirectoryId: true,
   lastSyncAt: true,
@@ -66,6 +67,7 @@ const selectFeedbackSource = {
   name: true,
   type: true,
   status: true,
+  importMode: true,
   workspaceId: true,
   feedbackDirectoryId: true,
   lastSyncAt: true,
@@ -177,6 +179,7 @@ export const updateFeedbackSource = async (
       data: {
         name: data.name,
         status: data.status,
+        importMode: data.importMode,
         lastSyncAt: data.lastSyncAt,
       },
       select: selectFeedbackSource,
@@ -301,6 +304,8 @@ export const createFeedbackSourceWithMappings = async (
         data: {
           name: data.name,
           type: data.type,
+          // Omitted by callers that do not set it, so Prisma applies the completedOnly default.
+          importMode: data.importMode,
           workspaceId,
           feedbackDirectoryId: data.feedbackDirectoryId,
           createdBy: data.createdBy,
@@ -378,6 +383,7 @@ export const updateFeedbackSourceWithMappings = async (
         data: {
           name: data.name,
           status: data.status,
+          importMode: data.importMode,
           lastSyncAt: data.lastSyncAt,
         },
       });

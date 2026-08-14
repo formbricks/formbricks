@@ -12,7 +12,11 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { getTranslate } from "@/lingodotdev/server";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { ZOrganizationAISettingsInput, ZUpdateOrganizationAISettingsAction } from "./schemas";
+import {
+  ZOrganizationAISettingsInput,
+  ZUpdateOrganizationAISettingsAction,
+  ZUpdateOrganizationDisplayTimeZoneAction,
+} from "./schemas";
 
 async function updateOrganizationAction<T extends z.ZodRawShape>({
   ctx,
@@ -140,6 +144,28 @@ export const updateOrganizationAISettingsAction = authenticatedActionClient
           action: "organization.manage",
         });
       }
+    )
+  );
+
+export const updateOrganizationDisplayTimeZoneAction = authenticatedActionClient
+  .inputSchema(ZUpdateOrganizationDisplayTimeZoneAction)
+  .action(
+    withAuditLogging(
+      "updated",
+      "organization",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: z.infer<typeof ZUpdateOrganizationDisplayTimeZoneAction>;
+      }) =>
+        updateOrganizationAction({
+          ctx,
+          organizationId: parsedInput.organizationId,
+          data: parsedInput.data,
+          action: "organization.manage",
+        })
     )
   );
 

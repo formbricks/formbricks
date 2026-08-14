@@ -2,12 +2,14 @@
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { useTranslation } from "react-i18next";
-import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
+import type { TWorkflowDefinition, TWorkflowNode, TWorkflowResource } from "@formbricks/workflows";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
+  isWorkflowReadOnlyAtom,
   selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
   workflowDefinitionAtom,
+  workflowStatusAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 
@@ -22,6 +24,24 @@ const findSelectedNode = (
   if (!definition || !selectedNodeId) return null;
   if (definition.trigger?.id === selectedNodeId) return definition.trigger;
   return definition.nodes.find((node) => node.id === selectedNodeId) ?? null;
+};
+
+// `isEditable` collapses three distinct block reasons (no permission, archived, enabled) into one
+// boolean; name the actual reason instead of always blaming an "active" workflow. Precedence:
+// permission wins — a read-only member sees the permission message even on an enabled/archived
+// workflow — then archived, then active/enabled. Returns a reason discriminant, not the i18n key,
+// so the caller resolves it with literal `t("…")` calls the translation scanner can detect.
+type TBlockedReason = "readOnly" | "archived" | "active";
+
+const getBlockedReason = (
+  isEditable: boolean,
+  isReadOnly: boolean,
+  status: TWorkflowResource["status"] | undefined | null
+): TBlockedReason | null => {
+  if (isEditable) return null;
+  if (isReadOnly) return "readOnly";
+  if (status === "archived") return "archived";
+  return "active";
 };
 
 const replaceNode = (definition: TWorkflowDefinition, node: TWorkflowNode): TWorkflowDefinition => {
@@ -50,10 +70,25 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   const { t } = useTranslation();
   const definition = useAtomValue(workflowDefinitionAtom);
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
+  // Read only the status primitive, not the whole workflow: autosave replaces the workflow atom
+  // with the API response every ~2s, and subscribing to it here would re-render this panel (and the
+  // rich-text email editor it hosts) on every save. Jotai bails out when the primitive is unchanged.
+  const status = useAtomValue(workflowStatusAtom);
+  const isReadOnly = useAtomValue(isWorkflowReadOnlyAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
 
   const selectedNode = findSelectedNode(definition, selectedNodeId);
   if (!selectedNode || !definition) return null;
+
+  const blockedReasonType = getBlockedReason(isEditable, isReadOnly, status);
+  const blockedReason =
+    blockedReasonType === "readOnly"
+      ? t("workspace.workflows.edit_blocked_read_only")
+      : blockedReasonType === "archived"
+        ? t("workspace.workflows.edit_blocked_archived")
+        : blockedReasonType === "active"
+          ? t("workspace.workflows.edit_blocked_active")
+          : null;
 
   const registryEntry = getNodeRegistryEntry(selectedNode);
   const ConfigForm = registryEntry.ConfigForm;
@@ -77,9 +112,9 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
       </header>
       <div className="scroll-bar min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 px-3 pt-3 pb-4">
-          {!isEditable && (
+          {blockedReason && (
             <Alert variant="info" size="small">
-              <AlertDescription>{t("workspace.workflows.edit_blocked_active")}</AlertDescription>
+              <AlertDescription>{blockedReason}</AlertDescription>
             </Alert>
           )}
           {ConfigForm ? (

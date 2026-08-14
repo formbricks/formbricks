@@ -4,16 +4,14 @@ import { getWorkflowEmailAuthoringContext } from "./email-authoring-context";
 const {
   mockGetSession,
   mockGetWorkflowById,
-  mockGetWorkspaceWithTeamIds,
-  mockGetTeamMemberDetails,
+  mockGetWorkspaceMembers,
   mockGetUserEmail,
   mockGetUserLocale,
   mockGetSurvey,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockGetWorkflowById: vi.fn(),
-  mockGetWorkspaceWithTeamIds: vi.fn(),
-  mockGetTeamMemberDetails: vi.fn(),
+  mockGetWorkspaceMembers: vi.fn(),
   mockGetUserEmail: vi.fn(),
   mockGetUserLocale: vi.fn(),
   mockGetSurvey: vi.fn(),
@@ -25,14 +23,13 @@ vi.mock("@formbricks/workflows/server", () => ({
 }));
 // Keep ZWorkflowDefinition real so trigger surveyId parsing is exercised end-to-end.
 vi.mock("@/lib/constants", () => ({ MAIL_FROM: undefined, DEFAULT_LOCALE: "en-US" }));
+vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMembers: mockGetWorkspaceMembers }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mockGetSession }));
-vi.mock("@/modules/survey/editor/lib/team", () => ({ getTeamMemberDetails: mockGetTeamMemberDetails }));
 vi.mock("@/modules/survey/editor/lib/user", () => ({
   getUserEmail: mockGetUserEmail,
   getUserLocale: mockGetUserLocale,
 }));
 vi.mock("@/modules/survey/lib/survey", () => ({ getSurvey: mockGetSurvey }));
-vi.mock("@/modules/survey/lib/workspace", () => ({ getWorkspaceWithTeamIds: mockGetWorkspaceWithTeamIds }));
 
 const WORKSPACE_ID = "cm9zr4wsp000508l8y6nh9r2v";
 const SURVEY_ID = "cm9zr4mps000008l8btfy1vtz";
@@ -59,20 +56,31 @@ describe("getWorkflowEmailAuthoringContext", () => {
       workspaceId: WORKSPACE_ID,
       definition: definitionForSurvey(SURVEY_ID),
     });
-    mockGetWorkspaceWithTeamIds.mockResolvedValue({ organizationId: "org1", teamIds: ["team1"] });
-    mockGetTeamMemberDetails.mockResolvedValue([{ name: "Alice", email: "alice@example.com" }]);
+    mockGetWorkspaceMembers.mockResolvedValue([{ name: "Alice", email: "alice@example.com" }]);
     mockGetUserEmail.mockResolvedValue("me@example.com");
     mockGetUserLocale.mockResolvedValue("de-DE");
     mockGetSurvey.mockResolvedValue({ id: SURVEY_ID, workspaceId: WORKSPACE_ID, blocks: [] });
   });
 
-  test("returns the bound survey + team/user/sender context for a same-workspace survey", async () => {
+  test("returns the bound survey + member/user/sender context for a same-workspace survey", async () => {
     const ctx = await getWorkflowEmailAuthoringContext({ workflowId: "wf1", workspaceId: WORKSPACE_ID });
 
     expect(ctx.survey).toMatchObject({ id: SURVEY_ID, workspaceId: WORKSPACE_ID });
     expect(ctx.teamMemberDetails).toEqual([{ name: "Alice", email: "alice@example.com" }]);
     expect(ctx.userEmail).toBe("me@example.com");
     expect(ctx.locale).toBe("de-DE");
+  });
+
+  test("offers only the members who can access the workspace (ENG-2186)", async () => {
+    // Same source as the enable gate and the runner backstop (`getWorkspaceMembers`), so the picker
+    // can never offer an address the runtime would then refuse — someone whose team lost access to
+    // this workspace simply is not in the list.
+    mockGetWorkspaceMembers.mockResolvedValue([{ name: "Alice", email: "alice@example.com" }]);
+
+    const ctx = await getWorkflowEmailAuthoringContext({ workflowId: "wf1", workspaceId: WORKSPACE_ID });
+
+    expect(mockGetWorkspaceMembers).toHaveBeenCalledWith(WORKSPACE_ID);
+    expect(ctx.teamMemberDetails).toEqual([{ name: "Alice", email: "alice@example.com" }]);
   });
 
   test("drops a survey that belongs to another workspace (IDOR guard)", async () => {

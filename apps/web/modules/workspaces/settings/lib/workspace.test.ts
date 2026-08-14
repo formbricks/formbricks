@@ -55,15 +55,15 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/authzed/team-workspace", () => ({
-  reconcileTeamWorkspaceRelationships: vi.fn(),
-}));
-
 // ENG-1922: createWorkspace's org-scope guard queries team.findMany({ select: { id: true } }).
 // Model exactly that projection for the mock — a single localized assertion instead of scattered
 // `any` casts, so the fixture can't silently drift from the query's shape.
 const mockOrgTeams = (...ids: string[]) =>
   ids.map((id) => ({ id })) as unknown as Awaited<ReturnType<typeof prisma.team.findMany>>;
+
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
 
 const expectNoFrdSideEffects = () => {
   expect(prisma.feedbackDirectory.upsert).not.toHaveBeenCalled();
@@ -309,23 +309,6 @@ describe("workspace lib", () => {
       vi.mocked(prisma.workspace.create).mockRejectedValueOnce(new Error("fail"));
       await expect(createWorkspace("org1", { name: "Workspace 1" })).rejects.toThrow("fail");
     });
-
-    test("projects nothing when the team link fails, because the create rolled back with it", async () => {
-      // Inverted deliberately when ENG-1922 wrapped the create and the team link in one transaction.
-      // Before that they were separate writes, so a failed `createMany` left a *committed* workspace
-      // that had to be projected. Now the failure rolls the create back too, so there is no workspace
-      // to project — and projecting one would name a row that does not exist, which is exactly the
-      // drift the backfill would then have to clean up.
-      vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p-partial" } as any);
-      vi.mocked(prisma.workspaceTeam.createMany).mockRejectedValueOnce(new Error("team link failed"));
-
-      await expect(createWorkspace("org1", { name: "Partial Workspace", teamIds: ["t1"] })).rejects.toThrow(
-        "team link failed"
-      );
-
-      expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
-    });
   });
 
   describe("deleteWorkspace", () => {
@@ -337,9 +320,6 @@ describe("workspace lib", () => {
       expect(result).toEqual(baseWorkspace);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
       expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", []);
-      expect(vi.mocked(reconcileTeamWorkspaceRelationships).mock.invocationCallOrder[0]).toBeLessThan(
-        vi.mocked(deleteFilesByWorkspaceId).mock.invocationCallOrder[0]
-      );
     });
 
     test("logs error if file deletion fails", async () => {

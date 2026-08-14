@@ -73,6 +73,15 @@ afterEach(() => {
   }
 });
 
+describe("docker/docker-compose.yml Cube configuration", () => {
+  test("disables external pre-aggregations by default while allowing an operator override", () => {
+    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
+    const cubeBlock = getServiceBlock(composeContents, "cube");
+
+    expect(cubeBlock).toContain("      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}");
+  });
+});
+
 describe("docker/formbricks.sh AuthZed setup", () => {
   test("writes AuthZed secrets without printing them", () => {
     const envPath = join(createTempDir(), ".env");
@@ -120,15 +129,6 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     );
     expect(checksumStart).toBeGreaterThan(downloadStart);
     expect(chmodStart).toBeGreaterThan(checksumStart);
-  });
-});
-
-describe("docker/docker-compose.yml Cube configuration", () => {
-  test("disables external pre-aggregations by default while allowing an operator override", () => {
-    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
-    const cubeBlock = getServiceBlock(composeContents, "cube");
-
-    expect(cubeBlock).toContain("      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}");
   });
 });
 

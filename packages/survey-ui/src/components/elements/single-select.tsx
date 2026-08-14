@@ -13,7 +13,7 @@ import {
   SEARCH_THRESHOLD,
   useDropdownSearch,
 } from "@/components/general/dropdown-search";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
@@ -208,6 +208,7 @@ function SingleSelectDropdownVariant({
   hasNoResults,
   options,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
   const selectedOption = options.find((opt) => opt.id === effectiveSelectedValue);
   const displayText = getDropdownDisplayText({
     isOtherSelected,
@@ -219,7 +220,7 @@ function SingleSelectDropdownVariant({
 
   return (
     <>
-      <ElementError errorMessage={errorMessage} dir={dir} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
       <DropdownMenu onOpenChange={handleDropdownOpenChange}>
         <DropdownMenuTrigger asChild>
           {/* Named via aria-labelledby (headline + visible value) instead of aria-label:
@@ -229,7 +230,8 @@ function SingleSelectDropdownVariant({
             variant="outline"
             disabled={disabled}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
-            aria-invalid={Boolean(errorMessage)}
+            aria-invalid={errorAria.ariaInvalid}
+            aria-describedby={errorAria.ariaDescribedBy}
             aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
             <span
               id={`${inputId}-trigger-value`}
@@ -303,6 +305,10 @@ function SingleSelectDropdownVariant({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
+      {/* The dropdown branch renders no fieldset/radiogroup, and this free text is a SIBLING of the
+          trigger rather than a descendant, so nothing above it would supply a description. It also
+          needs one most: validateSingleSelectOtherValue errors precisely when this box is empty, and
+          it is the only native input[aria-invalid] here, so focusFirstControl lands right on it. */}
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
@@ -312,7 +318,8 @@ function SingleSelectDropdownVariant({
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
           aria-required
-          aria-invalid={Boolean(errorMessage)}
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -469,6 +476,7 @@ function SingleSelectListVariant({
   otherInputRef,
   handleOtherInputChange,
 }: Readonly<ListVariantProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
   const regularOptions = options.filter((option) => option.id !== "none");
   const noneOptions = options.filter((option) => option.id === "none");
 
@@ -511,7 +519,7 @@ function SingleSelectListVariant({
 
   return (
     <div className="relative" data-element-input>
-      <ElementError errorMessage={errorMessage} dir={dir} />
+      <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
       <div className="w-full space-y-2">
         {regularOptions.map(renderOption)}
         {hasOtherOption && otherOptionId ? (
@@ -576,6 +584,7 @@ function OtherOptionLabel({
 }: Readonly<OtherOptionLabelProps>): React.JSX.Element {
   const optionId = `${inputId}-${otherOptionId}`;
   const otherTextId = `${optionId}-input`;
+  const errorAria = getElementErrorAria(inputId, errorMessage);
 
   return (
     // The free-text input must NOT live inside the option <label>: a label may own only one
@@ -606,6 +615,10 @@ function OtherOptionLabel({
         <RadioIndicator />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
       </label>
+      {/* The enclosing <fieldset role="radiogroup"> carries aria-describedby, but an ancestor's
+          description is not part of a descendant's accessible description (accname): focusing this
+          input announces its own name/state/description only. Without this it would read as invalid
+          with no reason. It describes one text input, not each option, so nothing repeats per row. */}
       {isOtherSelected ? (
         <Input
           ref={otherInputRef}
@@ -617,7 +630,8 @@ function OtherOptionLabel({
           disabled={disabled}
           aria-required
           aria-label={otherOptionLabel}
-          aria-invalid={Boolean(errorMessage)}
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -655,6 +669,7 @@ function SingleSelect({
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = hasOtherOption && selectedValue === otherOptionId;
   const otherInputRef = React.useRef<HTMLInputElement>(null);
+  const errorAria = getElementErrorAria(inputId, errorMessage);
 
   const allDropdownOptionCount = options.length + (hasOtherOption ? 1 : 0);
   const showSearch = variant === "dropdown" && allDropdownOptionCount > SEARCH_THRESHOLD;
@@ -724,7 +739,8 @@ function SingleSelect({
           role="radiogroup"
           aria-labelledby={`${inputId}-headline`}
           aria-required={required}
-          aria-invalid={Boolean(errorMessage)}>
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <ElementHeader
             headlineId={`${inputId}-headline`}
             headline={headline}

@@ -12,12 +12,14 @@ import type { TUserLocale } from "@formbricks/types/user";
 import {
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
+  PASSWORD_RESET_DISABLED,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
   RATE_LIMITING_DISABLED,
   SESSION_MAX_AGE,
 } from "@/lib/constants";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { env } from "@/lib/env";
+import { BETTER_AUTH_IP_ADDRESS_CONFIG } from "@/lib/utils/client-ip";
 import {
   accountDeletionConfig,
   requireDeletionConfirmationBeforeHandler,
@@ -30,6 +32,7 @@ import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gat
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
@@ -281,6 +284,9 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
+      // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
+      // has disabled password resets (PASSWORD_RESET_DISABLED=1). See better-auth-password-reset-gate.ts.
+      await requirePasswordResetEnabledBeforeHandler(ctx, PASSWORD_RESET_DISABLED);
       // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
       // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
       // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
@@ -325,7 +331,9 @@ export const auth = betterAuth({
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
     database: { generateId: () => createId() },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
-    ipAddress: { ipAddressHeaders: ["x-forwarded-for"] }, // pin to the trusted proxy header
+    // Proxy has already selected the configured trusted hop. Do not re-parse forwarding chains or add
+    // Better Auth trustedProxies here; the private single-value header is the canonical identity.
+    ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG,
   },
 
   // Route Better Auth's logs to @formbricks/logger and capture errors to Sentry (Phase 7 parity).

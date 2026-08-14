@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import {
   countV3FeedbackRecords,
@@ -20,7 +21,14 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { registerFeedbackRecordTools } from "./feedback-records";
+
+// Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
+// itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
+// invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
+// with z.url() and drops the whole event otherwise.
+const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
 
 vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
   countV3FeedbackRecords: vi.fn(),
@@ -83,6 +91,89 @@ function createToolServer() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+/**
+ * The registered `inputSchema` is what the model is actually shown, and until now nothing executed it:
+ * every test here calls handlers directly with already-shaped objects, so a schema that had silently
+ * degraded — `.shape` coming back undefined and the SDK registering an empty object, which accepts
+ * anything — would have gone unnoticed. These assertions run the real thing.
+ */
+describe("feedback-record tool input schemas", () => {
+  const shapeOf = (tool: string) => {
+    const { tools } = createToolServer();
+    return tools.get(tool)!.config.inputSchema as Record<string, z.ZodType>;
+  };
+
+  test("exposes every filter the Hub accepts on list_feedback_records", () => {
+    const shape = shapeOf("list_feedback_records");
+
+    expect(Object.keys(shape).sort()).toEqual([
+      "created_since",
+      "created_until",
+      "cursor",
+      "datasetId",
+      "emotions",
+      "field_group_id",
+      "field_id",
+      "field_type",
+      "has_emotions",
+      "has_sentiment",
+      "has_translation",
+      "language",
+      "limit",
+      "order",
+      "sentiment",
+      "sentiment_score_max",
+      "sentiment_score_min",
+      "since",
+      "sort",
+      "source_id",
+      "source_name",
+      "source_type",
+      "submission_id",
+      "until",
+      "user_id",
+      "value_date_max",
+      "value_date_min",
+      "value_id",
+      "value_number_max",
+      "value_number_min",
+      "workspaceId",
+    ]);
+  });
+
+  test("omits ordering from count_feedback_records, which the Hub does not accept it on", () => {
+    const shape = shapeOf("count_feedback_records");
+
+    expect(shape).not.toHaveProperty("sort");
+    expect(shape).not.toHaveProperty("order");
+    expect(shape).not.toHaveProperty("limit");
+    expect(shape).not.toHaveProperty("cursor");
+    // ...but it does take the filters, so a count describes the set the equivalent list returns.
+    expect(shape).toHaveProperty("sentiment");
+    expect(shape).toHaveProperty("has_sentiment");
+  });
+
+  test("validates a multi-value filter and rejects an unknown one", () => {
+    // The schema the model is handed has to accept the array form, or the OR-ing is unreachable in
+    // practice no matter what the operations layer supports.
+    const schema = z.object(shapeOf("list_feedback_records")).strict();
+
+    expect(schema.safeParse({ workspaceId, source_type: ["survey", "review"] }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, source_type: "survey" }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, has_sentiment: false }).success).toBe(true);
+    expect(schema.safeParse({ workspaceId, sentiment: ["nope"] }).success).toBe(false);
+    expect(schema.safeParse({ workspaceId, userId: "u1" }).success).toBe(false);
+  });
+
+  test("describes every filter, since the description is what the model reads", () => {
+    const shape = shapeOf("list_feedback_records");
+
+    for (const [name, field] of Object.entries(shape)) {
+      expect(field.description, `${name} has no description`).toBeTruthy();
+    }
+  });
 });
 
 describe("registerFeedbackRecordTools", () => {
@@ -237,7 +328,12 @@ describe("create_feedback_record", () => {
 
     await tools.get("create_feedback_record")!.handler(body, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "feedbackRecord", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      apiKeyAuth,
+      "created",
+      "feedbackRecord",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
     expect(createV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, body, authentication: apiKeyAuth })
     );
@@ -299,7 +395,12 @@ describe("delete_feedback_record", () => {
 
     const result = await tools.get("delete_feedback_record")!.handler(input, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "feedbackRecord", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      apiKeyAuth,
+      "deleted",
+      "feedbackRecord",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
     expect(deleteV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId,
@@ -445,6 +546,11 @@ describe("count_feedback_records", () => {
 });
 
 describe("create_feedback_records", () => {
+  // buildAuditLogBaseObject seeds `targetId` with the UNKNOWN_DATA placeholder and the batch path
+  // branches on it, so the mock has to carry it. Omitting it (as these tests used to) makes a plain
+  // truthiness check pass here while matching every entry in production — which is how the batch path
+  // came to emit success events for records the Hub had rejected.
+  const makeAuditLog = () => ({ status: "failure", targetId: UNKNOWN_DATA }) as any;
   const records = [
     { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "one" },
     { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "two" },
@@ -465,7 +571,7 @@ describe("create_feedback_records", () => {
   test("queues one success audit event per created record", async () => {
     const built: any[] = [];
     vi.mocked(buildV3AuditLog).mockImplementation(() => {
-      const auditLog = { status: "failure" } as any;
+      const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
     });
@@ -482,12 +588,16 @@ describe("create_feedback_records", () => {
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
     expect(built[0].status).toBe("success");
     expect(built[1].status).toBe("failure");
+    // The rejected record keeps the placeholder, so it must never be reported as a creation: an
+    // audit trail that invents records is worse than one with gaps.
+    expect(built[1].targetId).toBe(UNKNOWN_DATA);
+    expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toBe(built[0]);
   });
 
   test("still queues a failure event when the batch operation throws, and rethrows", async () => {
     const built: any[] = [];
     vi.mocked(buildV3AuditLog).mockImplementation(() => {
-      const auditLog = { status: "failure" } as any;
+      const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
     });
@@ -503,7 +613,7 @@ describe("create_feedback_records", () => {
   test("queues a single failure event when nothing was created", async () => {
     const built: any[] = [];
     vi.mocked(buildV3AuditLog).mockImplementation(() => {
-      const auditLog = { status: "failure" } as any;
+      const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
     });
@@ -533,7 +643,12 @@ describe("update_feedback_record", () => {
 
     await tools.get("update_feedback_record")!.handler(input, { authInfo });
 
-    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "feedbackRecord", "/api/mcp");
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      apiKeyAuth,
+      "updated",
+      "feedbackRecord",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
     expect(updateV3FeedbackRecord).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId, feedbackRecordId: recordId, body: input, auditLog })
     );

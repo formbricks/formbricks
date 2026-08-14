@@ -10,6 +10,7 @@ import { type TTemplate, type TTemplateFilter, ZTemplateRole } from "@formbricks
 import type { TUserLocale } from "@formbricks/types/user";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
 import { CUSTOM_SURVEY_TEMPLATE_ID, templates } from "@/app/lib/templates";
+import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { CreateWithAITemplate } from "./components/create-with-ai-template";
@@ -137,7 +138,7 @@ export const TemplateList = ({
             aiUnavailableReason={aiUnavailableReason}
           />
         )}
-        {(process.env.NODE_ENV === "development" ? [...filteredTemplates()] : filteredTemplates()).map(
+        {(IS_DEVELOPMENT_BUILD ? [...filteredTemplates()] : filteredTemplates()).map(
           (template: TTemplate) => {
             return (
               <Template

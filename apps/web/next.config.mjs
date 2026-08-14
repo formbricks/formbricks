@@ -40,11 +40,11 @@ const getLoopbackOriginVariants = (value) => {
 const getUniqueValues = (values) => [...new Set(values.filter(Boolean))];
 
 // NOTE: every `process.env.*` read in this file shapes the build output and MUST be listed in the
-// root turbo.json `build.env` array so Turborepo hashes it into the cache key. Adding a read here
-// without updating turbo.json serves stale cached builds — from the local Turbo cache and the CI
-// build-output cache alike. Enforced by lib/turbo-build-env.test.ts. Read env vars directly
-// (`process.env.<NAME>` or `process.env["<NAME>"]`), not via destructuring, so that guardrail can
-// detect them.
+// `build.env` array of apps/web/turbo.json — the web build's own task config since ENG-1682, not the
+// root turbo.json — so Turborepo hashes it into the cache key. Adding a read here without updating
+// that file serves stale cached builds — from the local Turbo cache and the CI build-output cache
+// alike. Enforced by lib/turbo-build-env.test.ts. Read env vars directly (`process.env.<NAME>` or
+// `process.env["<NAME>"]`), not via destructuring, so that guardrail can detect them.
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {

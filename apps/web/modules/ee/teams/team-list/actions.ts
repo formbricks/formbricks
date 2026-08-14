@@ -104,9 +104,6 @@ export const updateTeamDetailsAction = authenticatedActionClient.inputSchema(ZUp
     // list — so without this gate they could grant their own team `manage` on every workspace in the
     // organization. Changing workspace access stays owner/manager-only, matching what the UI offers.
     if (hasWorkspaceAccessChanges(oldObject?.workspaces ?? [], parsedInput.data.workspaces)) {
-      // `roles: ["owner", "manager"]` in the original gate is exactly `organization#manage` in the
-      // schema, which is how this file expresses the same requirement elsewhere. Translated rather
-      // than left calling the helper this module no longer imports.
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
         type: "organization",
         id: organizationId,

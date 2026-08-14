@@ -52,7 +52,7 @@ async function main(): Promise<void> {
   const migrationName = await promptForMigrationName();
   const migrationNameUnderscored = migrationName.replace(/\s+/g, "_");
 
-  const migrationsDir = path.resolve(__dirname, "../../migrations");
+  const migrationsDir = path.resolve(__dirname, "../../.prisma-migrations");
   const customMigrationsDir = path.resolve(__dirname, "../../migration");
 
   // Check if migration already exists in custom migrations

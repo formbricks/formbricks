@@ -76,6 +76,19 @@ describe("OAuth URL helpers", () => {
     expect(getAuthIssuerUrl()).toBe("https://admin.example.com/app/api/auth");
   });
 
+  // The MCP resource server allow-lists this exact string as the second permitted `aud` value, so
+  // a drift here would reject every token carrying the openid-implied UserInfo audience. Pinned
+  // against the issuer (not WEBAPP_URL) because that is the prefix the oauth-provider mounts under.
+  test("derives the UserInfo audience from the auth issuer, subpath included", async () => {
+    envMock.WEBAPP_URL = "https://admin.example.com";
+    envMock.BETTER_AUTH_URL = "https://auth.example.com/custom";
+
+    const { getAuthIssuerUrl, getOAuthUserInfoUrl } = await loadOAuthUrls();
+
+    expect(getOAuthUserInfoUrl()).toBe("https://auth.example.com/custom/api/auth/oauth2/userinfo");
+    expect(getOAuthUserInfoUrl()).toBe(`${getAuthIssuerUrl()}/oauth2/userinfo`);
+  });
+
   test("derives the JWKS URL from the public issuer by default", async () => {
     envMock.BETTER_AUTH_URL = "https://auth.example.com";
 

@@ -18,7 +18,7 @@ const {
   mockGetResponse,
   mockGetSurvey,
   mockGetOrganizationByWorkspaceId,
-  mockGetOrganizationMemberEmails,
+  mockGetWorkspaceMemberEmails,
 } = vi.hoisted(() => ({
   mockSendEmail: vi.fn(),
   mockBuildHtml: vi.fn(),
@@ -34,7 +34,7 @@ const {
   mockGetResponse: vi.fn(),
   mockGetSurvey: vi.fn(),
   mockGetOrganizationByWorkspaceId: vi.fn(),
-  mockGetOrganizationMemberEmails: vi.fn(),
+  mockGetWorkspaceMemberEmails: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -54,13 +54,6 @@ vi.mock("@formbricks/database", () => ({
 
 // Prisma's known-request-error shape the claim path checks for a P2002 unique-constraint conflict.
 vi.mock("@formbricks/database/prisma", () => ({
-  // Needed once this job's import graph reaches the AuthZed projectors, which map these Prisma enums
-  // to relation names at module scope. Neither branch needs them alone — only the merged graph does.
-  // Values mirror `packages/database/schema/main.prisma`.
-  ApiKeyPermission: { manage: "manage", read: "read", write: "write" },
-  OrganizationRole: { billing: "billing", manager: "manager", member: "member", owner: "owner" },
-  TeamUserRole: { admin: "admin", contributor: "contributor" },
-  WorkspaceTeamPermission: { manage: "manage", read: "read", readWrite: "readWrite" },
   Prisma: {
     PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
       code: string;
@@ -97,7 +90,10 @@ vi.mock("@/lib/survey/service", () => ({
 
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByWorkspaceId: mockGetOrganizationByWorkspaceId,
-  getOrganizationMemberEmails: mockGetOrganizationMemberEmails,
+}));
+
+vi.mock("@/lib/workspace/service", () => ({
+  getWorkspaceMemberEmails: mockGetWorkspaceMemberEmails,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -231,7 +227,7 @@ describe("processWorkflowRunJob", () => {
     mockGetSurvey.mockResolvedValue(mockSurvey);
     mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: { logoUrl: "logo.png" } });
     // Recipient allowlist (ENG-2029): the literal addresses the send tests target are org members.
-    mockGetOrganizationMemberEmails.mockResolvedValue(new Set(["teammate@example.com", "jane@example.com"]));
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set(["teammate@example.com", "jane@example.com"]));
   });
 
   afterEach(() => {
@@ -325,10 +321,10 @@ describe("processWorkflowRunJob", () => {
     expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "teammate@example.com" }));
   });
 
-  test("does not send to a literal recipient outside the organization allowlist (ENG-2029)", async () => {
-    // A literal external recipient that is not an org member: the step fails and no email is sent,
+  test("does not send to a literal recipient outside the workspace allowlist (ENG-2029)", async () => {
+    // A literal external recipient with no workspace access: the step fails and no email is sent,
     // even though the address resolves fine — the send-time backstop to the enable-time check.
-    mockGetOrganizationMemberEmails.mockResolvedValue(new Set(["teammate@example.com"]));
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set(["teammate@example.com"]));
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("attacker@external-evil.example") },
@@ -342,7 +338,32 @@ describe("processWorkflowRunJob", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           status: "failed",
-          error: expect.stringContaining("not a member of the organization"),
+          error: expect.stringContaining("cannot access this workspace"),
+        }),
+      })
+    );
+  });
+
+  test("stops sending to a member whose team lost access to this workspace (ENG-2186)", async () => {
+    // The workflow was enabled while the recipient still had access; the allowlist is workspace-
+    // scoped, so once their team is unlinked from the workspace the live run must stop delivering
+    // this workspace's response data to them — even though they are still in the organization.
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set(["still-has-access@example.com"]));
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("revoked-member@example.com") },
+      workflow: { definition: makeDefinition("revoked-member@example.com") },
+    });
+
+    await processWorkflowRunJob(data, finalAttemptContext);
+
+    expect(mockGetWorkspaceMemberEmails).toHaveBeenCalledWith(data.workspaceId);
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    expect(mockWorkflowRunLogUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "failed",
+          error: expect.stringContaining("cannot access this workspace"),
         }),
       })
     );
@@ -350,7 +371,7 @@ describe("processWorkflowRunJob", () => {
 
   test("matches a literal recipient against the allowlist case-insensitively (ENG-2029)", async () => {
     // The member allowlist is lowercased; a mixed-case literal `to` must still match and send.
-    mockGetOrganizationMemberEmails.mockResolvedValue(new Set(["teammate@example.com"]));
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set(["teammate@example.com"]));
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("Teammate@Example.com") },
@@ -362,9 +383,9 @@ describe("processWorkflowRunJob", () => {
     expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "Teammate@Example.com" }));
   });
 
-  test("fails closed for a literal recipient when the organization cannot be resolved (ENG-2029)", async () => {
-    // No organization → empty allowlist → a literal recipient is rejected rather than sent unchecked.
-    mockGetOrganizationByWorkspaceId.mockResolvedValue(null);
+  test("fails closed for a literal recipient when the workspace resolves to nobody (ENG-2029)", async () => {
+    // Empty allowlist → a literal recipient is rejected rather than sent unchecked.
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set());
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("teammate@example.com") },
@@ -378,7 +399,7 @@ describe("processWorkflowRunJob", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           status: "failed",
-          error: expect.stringContaining("not a member of the organization"),
+          error: expect.stringContaining("cannot access this workspace"),
         }),
       })
     );
@@ -386,8 +407,8 @@ describe("processWorkflowRunJob", () => {
 
   test("still sends to a respondent-field recipient even when it is outside the member allowlist", async () => {
     // A field-resolved recipient is the respondent's own address, always allowed regardless of the
-    // org allowlist — only literal addresses are gated.
-    mockGetOrganizationMemberEmails.mockResolvedValue(new Set());
+    // workspace allowlist — only literal addresses are gated.
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set());
     mockGetResponse.mockResolvedValue({
       ...mockResponse,
       data: { contact: ["Jane", "Doe", "jane@example.com", "+1"] },
@@ -418,12 +439,12 @@ describe("processWorkflowRunJob", () => {
 
     await processWorkflowRunJob(data, baseContext);
 
-    expect(mockGetOrganizationMemberEmails).not.toHaveBeenCalled();
+    expect(mockGetWorkspaceMemberEmails).not.toHaveBeenCalled();
     expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "jane@example.com" }));
   });
 
   test("queries the member allowlist once when a step has a literal recipient", async () => {
-    mockGetOrganizationMemberEmails.mockResolvedValue(new Set(["teammate@example.com"]));
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set(["teammate@example.com"]));
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("teammate@example.com") },
@@ -432,7 +453,7 @@ describe("processWorkflowRunJob", () => {
 
     await processWorkflowRunJob(data, baseContext);
 
-    expect(mockGetOrganizationMemberEmails).toHaveBeenCalledTimes(1);
+    expect(mockGetWorkspaceMemberEmails).toHaveBeenCalledTimes(1);
     expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "teammate@example.com" }));
   });
 

@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { getOrganizationMemberEmails } from "@/lib/organization/service";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { buildWorkflowApiContext } from "./context";
 
@@ -16,7 +16,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: vi.fn() }));
-vi.mock("@/lib/organization/service", () => ({ getOrganizationMemberEmails: vi.fn() }));
+vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMemberEmails: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsWorkflowsEnabled: vi.fn() }));
 
 const baseAuditLog = (): TV3AuditLog => ({
@@ -155,30 +155,47 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
   });
 });
 
-describe("verifyRecipientsAllowed (recipient allowlist for send_email, ENG-2029)", () => {
-  test("returns the literal recipients that are not organization members (case-insensitive)", async () => {
-    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_1");
-    vi.mocked(getOrganizationMemberEmails).mockResolvedValue(new Set(["member@corp.example"]));
-
-    const result = await buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").verifyRecipientsAllowed({
+describe("verifyRecipientsAllowed (recipient allowlist for send_email, ENG-2029 + ENG-2186)", () => {
+  const verifyRecipients = (emails: string[]) =>
+    buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").verifyRecipientsAllowed({
       workspaceId: "ws_1",
-      emails: ["Member@corp.example", "attacker@external-evil.example"],
+      emails,
     });
 
-    expect(getOrganizationMemberEmails).toHaveBeenCalledWith("org_1");
+  test("returns the literal recipients that cannot access the workspace (case-insensitive)", async () => {
+    vi.mocked(getWorkspaceMemberEmails).mockResolvedValue(new Set(["member@corp.example"]));
+
+    const result = await verifyRecipients(["Member@corp.example", "attacker@external-evil.example"]);
+
     expect(result).toEqual({ disallowedEmails: ["attacker@external-evil.example"] });
   });
 
-  test("allows all recipients when each is an organization member", async () => {
-    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_1");
-    vi.mocked(getOrganizationMemberEmails).mockResolvedValue(new Set(["a@corp.example", "b@corp.example"]));
+  test("allows all recipients when each can access the workspace", async () => {
+    vi.mocked(getWorkspaceMemberEmails).mockResolvedValue(new Set(["a@corp.example", "b@corp.example"]));
 
-    const result = await buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").verifyRecipientsAllowed({
-      workspaceId: "ws_1",
-      emails: ["a@corp.example", "b@corp.example"],
-    });
+    const result = await verifyRecipients(["a@corp.example", "b@corp.example"]);
 
     expect(result).toEqual({ disallowedEmails: [] });
+  });
+
+  test("scopes the allowlist to the workspace, not to its organization (ENG-2186)", async () => {
+    // The gate must ask who can access *this workspace*: an org member whose team lost access to it
+    // is rejected here, matching what the authoring picker offers and what the runner will send.
+    vi.mocked(getWorkspaceMemberEmails).mockResolvedValue(new Set(["still-has-access@corp.example"]));
+
+    const result = await verifyRecipients(["revoked-member@corp.example"]);
+
+    expect(getWorkspaceMemberEmails).toHaveBeenCalledWith("ws_1");
+    expect(getOrganizationIdFromWorkspaceId).not.toHaveBeenCalled();
+    expect(result).toEqual({ disallowedEmails: ["revoked-member@corp.example"] });
+  });
+
+  test("rejects every literal recipient when the workspace resolves to nobody (fails closed)", async () => {
+    vi.mocked(getWorkspaceMemberEmails).mockResolvedValue(new Set());
+
+    await expect(verifyRecipients(["member@corp.example"])).resolves.toEqual({
+      disallowedEmails: ["member@corp.example"],
+    });
   });
 });
 

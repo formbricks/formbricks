@@ -38,6 +38,11 @@ export interface MeasureDefinition {
  * enum dimension values: the generated emotion-count measures, the translated
  * value-label maps (typed against these tuples, so additions fail the build until
  * every map is updated), and the ordinal sentiment axis sort all derive from them.
+ *
+ * NOTE: `ZHubSentiment` / `ZHubEmotion` in `@formbricks/types/feedback-source` carry the same two
+ * vocabularies for the feedback-record filter schemas. These stay as `as const` tuples because the
+ * build-time exhaustiveness guard above depends on the literal tuple type; keep both in sync until
+ * ENG-2373 hoists them to one source.
  */
 export const SENTIMENT_VALUE_ORDER = [
   "very_negative",
@@ -707,12 +712,16 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
   const labels: Record<string, string> = {
     today: t("workspace.analysis.charts.date_preset_today"),
     yesterday: t("workspace.analysis.charts.date_preset_yesterday"),
+    "last 24 hours": t("workspace.analysis.charts.date_preset_last_24_hours"),
     "last 7 days": t("workspace.analysis.charts.date_preset_last_7_days"),
     "last 30 days": t("workspace.analysis.charts.date_preset_last_30_days"),
     "this month": t("workspace.analysis.charts.date_preset_this_month"),
     "last month": t("workspace.analysis.charts.date_preset_last_month"),
     "this quarter": t("workspace.analysis.charts.date_preset_this_quarter"),
+    "last quarter": t("workspace.analysis.charts.date_preset_last_quarter"),
+    "last 6 months": t("workspace.analysis.charts.date_preset_last_6_months"),
     "this year": t("workspace.analysis.charts.date_preset_this_year"),
+    "last year": t("workspace.analysis.charts.date_preset_last_year"),
   };
   return labels[value] ?? value;
 }

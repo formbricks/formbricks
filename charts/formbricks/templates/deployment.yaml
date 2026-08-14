@@ -89,6 +89,10 @@ spec:
           args:
             {{- toYaml .Values.deployment.args | nindent 12 }}
           {{- end }}
+          {{- with .Values.deployment.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if .Values.deployment.ports }}
           ports:
             {{- range $name, $config := .Values.deployment.ports }}
@@ -201,6 +205,10 @@ spec:
           resources:
               {{- toYaml .Values.deployment.resources | nindent 12 }}
           {{- end }}
+          {{- with .Values.deployment.extraVolumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.deployment.probes }}
           {{- if .livenessProbe }}
           livenessProbe:
@@ -215,3 +223,7 @@ spec:
             {{- toYaml .startupProbe | nindent 12 }}
           {{- end }}
           {{- end }}
+      {{- with .Values.deployment.extraVolumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

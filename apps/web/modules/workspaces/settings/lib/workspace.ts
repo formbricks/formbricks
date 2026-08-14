@@ -120,16 +120,13 @@ export const createWorkspace = async (
   // Captured out here so the guard above still narrows it: inside the transaction callback below,
   // TypeScript widens workspaceInput.name back to `string | undefined`.
   const name = workspaceInput.name;
-
-  // Assigned only once the transaction has resolved, so a rolled-back create cannot project a
-  // workspace that does not exist. The projection then runs in `finally`, i.e. strictly post-commit.
-  let committedWorkspaceId: string | undefined;
+  let workspace: TWorkspace;
 
   try {
     // The ownership check and both writes share one transaction: it keeps the check and the link
     // atomic (a team cannot leave the organization in between), and stops a failed createMany from
     // leaving an orphan workspace with no team links.
-    const created = await prisma.$transaction(async (tx) => {
+    workspace = (await prisma.$transaction(async (tx) => {
       // ENG-1922: teamIds are caller-supplied. Validate that every team belongs to this
       // organization before linking it — otherwise a caller could attach another org's team
       // to their workspace (a cross-tenant WorkspaceTeam write). The FK only enforces that the
@@ -187,11 +184,7 @@ export const createWorkspace = async (
       }
 
       return workspace;
-    });
-
-    committedWorkspaceId = created.id;
-
-    return created;
+    })) as TWorkspace;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       throw new InvalidInputError("A workspace with this name already exists in your organization");
@@ -200,22 +193,16 @@ export const createWorkspace = async (
       throw new DatabaseError(error.message);
     }
     throw error;
-  } finally {
-    if (committedWorkspaceId) {
-      const workspaceId = committedWorkspaceId;
-      // Projecting the caller's team list is safe here: a list containing a foreign team threw
-      // inside the transaction above, so nothing committed and nothing is projected.
-      await runPostCommitProjection("workspace_create", () =>
-        reconcileTeamWorkspaceRelationships({
-          workspaceIds: [workspaceId],
-          workspaceTeamGrants: (teamIds ?? []).map((teamId) => ({
-            teamId,
-            workspaceId,
-          })),
-        })
-      );
-    }
   }
+
+  await runPostCommitProjection("workspace_create", () =>
+    reconcileTeamWorkspaceRelationships({
+      workspaceIds: [workspace.id],
+      workspaceTeamGrants: (teamIds ?? []).map((teamId) => ({ teamId, workspaceId: workspace.id })),
+    })
+  );
+
+  return workspace;
 };
 
 export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> => {

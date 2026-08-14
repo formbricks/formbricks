@@ -73,14 +73,7 @@ describe("team-list authorization", () => {
 
   test.each([
     ["read details", getTeamDetailsAction, { teamId }],
-    // `workspaces` is required by ZTeamSettingsFormSchema, and this test bypasses zod via `as never`.
-    // Supplying it keeps the fixture consistent with what the action can actually receive — main's
-    // workspace-access gate reads it, and an absent list is a shape production cannot produce.
-    [
-      "update",
-      updateTeamDetailsAction,
-      { teamId, data: { name: "Updated", members: [], workspaces: [] } },
-    ],
+    ["update", updateTeamDetailsAction, { teamId, data: { name: "Updated" } }],
   ] as const)("requires team.manage to %s", async (_name, action, parsedInput) => {
     await action({ ctx, parsedInput } as never);
 

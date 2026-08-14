@@ -145,11 +145,11 @@ const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition
 const DISALLOWED_RECIPIENT_FIELD = "definition.nodes.config.to";
 
 /** Short 422 `detail` for a recipient-allowlist failure, so UI surfacing only `detail` still names the cause. */
-const DISALLOWED_RECIPIENT_DETAIL = "A send_email recipient is not a member of this organization.";
+const DISALLOWED_RECIPIENT_DETAIL = "A send_email recipient cannot access this workspace.";
 
 /** Per-recipient explanation, shared so enable's `invalid_params` and test's `problems` never diverge. */
 const disallowedRecipientMessage = (email: string): string =>
-  `Recipient ${email} is not a member of this organization. A send_email action may only address an organization member or a respondent field.`;
+  `Recipient ${email} cannot access this workspace. A send_email action may only address someone with access to this workspace or a respondent field.`;
 
 const buildDisallowedRecipientParams = (disallowedEmails: string[]): WorkflowInvalidParam[] =>
   disallowedEmails.map((email) => ({
@@ -429,9 +429,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
       }
 
-      // Recipient allowlist: a send_email action addressing a literal email may only target an
-      // organization member — otherwise enabling the workflow would let it forward response data to
-      // an arbitrary external inbox on every completed response (ENG-2029). Respondent-field
+      // Recipient allowlist: a send_email action addressing a literal email may only target someone
+      // who can access this workspace — otherwise enabling the workflow would let it forward response
+      // data to an arbitrary external inbox on every completed response (ENG-2029). Respondent-field
       // recipients resolve at send time and are not checked here.
       const literalRecipients = collectLiteralRecipientEmails(executable.data);
       if (literalRecipients.length > 0) {
@@ -505,7 +505,12 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
    */
   async testWorkflow({ ctx, params }) {
     try {
-      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "readWrite");
+      // "read", not "readWrite": as the doc comment above says, this validates the definition and
+      // resolves its trigger references — nothing is executed and no run is created, so there is no
+      // side effect to gate on. The MCP test_workflow tool is registered workflows:read and
+      // annotated readOnlyHint, so requiring write here 403'd every read-scoped caller on a tool
+      // that writes nothing (ENG-2223). Raising this back means moving that tool's scope with it.
+      const loaded = await loadAndAuthorize(service, ctx, params.workflowId, "read");
       if (loaded instanceof Response) return loaded;
       // Drafts are testable too — the whole point of a dry run is checking the setup BEFORE going
       // live. Only archived workflows are rejected: they are soft-deleted.

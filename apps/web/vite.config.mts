@@ -47,6 +47,7 @@ export default defineConfig({
         "modules/**/*.ts",
         "lib/**/*.ts",
         "lingodotdev/**/*.ts",
+        "instrumentation-node-config.ts",
         "instrumentation-jobs.ts",
         "proxy.ts",
       ],
@@ -91,6 +92,7 @@ export default defineConfig({
         "**/actions.ts", // Server actions (plural)
         "**/action.ts", // Server actions (singular)
         "lib/env.ts", // Environment configuration
+        "lib/env-client.ts", // Environment configuration (client-safe)
         "**/cache.ts", // Cache files
         "**/cache/**", // Cache directories
 
