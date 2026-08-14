@@ -330,7 +330,7 @@ describe("env", () => {
       AUTHZED_ENDPOINT: "spicedb:50051",
       AUTHZED_MINIMUM_SNAPSHOT: "opaque-snapshot-token",
       AUTHZED_SHADOW_ORGANIZATION_IDS: "org_a, org_b",
-      AUTHZED_SHADOW_TARGETS: "server_action:user,api_v3:user",
+      AUTHZED_SHADOW_TARGETS: "server_action:user,api_v3:user,feedback_gateway:user,feedback_gateway:apiKey",
       AUTHZED_SYSTEM_KEY: "formbricks",
       AUTHZED_TOKEN: "test-authzed-token",
     });
@@ -338,7 +338,9 @@ describe("env", () => {
     const { env } = await import("./env");
 
     expect(env.AUTHZED_AUTHORIZATION_COHORT).toBe("sandbox_users");
-    expect(env.AUTHZED_SHADOW_TARGETS).toBe("server_action:user,api_v3:user");
+    expect(env.AUTHZED_SHADOW_TARGETS).toBe(
+      "server_action:user,api_v3:user,feedback_gateway:user,feedback_gateway:apiKey"
+    );
   });
 
   test("treats an empty optional AuthZed snapshot as unset", async () => {

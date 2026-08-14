@@ -1,11 +1,12 @@
 import "server-only";
 import type { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
 import { problemBadRequest, problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { can } from "@/lib/authorization";
+import { getFeedbackDirectoryAssignmentActionForPermission } from "@/lib/authorization/compatibility";
 import {
   getFeedbackDirectoriesByWorkspaceId,
   getFeedbackDirectoryAuthContext,
@@ -48,6 +49,22 @@ export type TResolvedFeedbackTenant = {
 };
 
 type TResolveResult = ({ ok: true } & TResolvedFeedbackTenant) | { ok: false; response: Response };
+
+const canAccessFeedbackDirectoryAssignment = async (
+  authentication: TV3Authentication,
+  feedbackDirectoryId: string,
+  workspaceId: string,
+  minPermission: TTeamPermission
+): Promise<boolean> => {
+  const actor = getV3AuthorizationActor(authentication);
+  if (!actor) return false;
+
+  return can(actor, getFeedbackDirectoryAssignmentActionForPermission(minPermission), {
+    type: "feedbackDirectoryAssignment",
+    id: feedbackDirectoryId,
+    workspaceId,
+  });
+};
 
 /**
  * Resolve (and authorize) the Hub tenant for a feedback-records request. This is the single tenant-
@@ -97,6 +114,23 @@ export async function resolveWorkspaceFeedbackTenant({
         ),
       };
     }
+    if (
+      !(await canAccessFeedbackDirectoryAssignment(
+        authentication,
+        requested.id.trim(),
+        resolvedWorkspaceId,
+        minPermission
+      ))
+    ) {
+      return {
+        ok: false,
+        response: problemForbidden(
+          requestId,
+          "You are not authorized to access this feedback dataset",
+          instance
+        ),
+      };
+    }
     return {
       ok: true,
       workspaceId: resolvedWorkspaceId,
@@ -126,6 +160,24 @@ export async function resolveWorkspaceFeedbackTenant({
         requestId,
         "Multiple feedback datasets are assigned to this workspace; specify datasetId",
         { instance }
+      ),
+    };
+  }
+
+  if (
+    !(await canAccessFeedbackDirectoryAssignment(
+      authentication,
+      directories[0].id.trim(),
+      resolvedWorkspaceId,
+      minPermission
+    ))
+  ) {
+    return {
+      ok: false,
+      response: problemForbidden(
+        requestId,
+        "You are not authorized to access this feedback dataset",
+        instance
       ),
     };
   }
@@ -250,21 +302,16 @@ async function requireOrganizationOwnerOrManager({
     return { ok: false, response: forbidFeedbackRecordMutation(requestId, instance) };
   }
 
-  try {
-    await checkAuthorizationUpdated({
-      userId,
-      organizationId: resolution.organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
-    });
-    return { ok: true };
-  } catch (error) {
-    if (error instanceof AuthorizationError) {
-      log.warn({ statusCode: 403 }, "Feedback record mutation denied: not an organization owner or manager");
-      return { ok: false, response: forbidFeedbackRecordMutation(requestId, instance) };
-    }
-
-    throw error;
+  const allowed = await can({ type: "user", id: userId }, "organization.manage", {
+    type: "organization",
+    id: resolution.organizationId,
+  });
+  if (!allowed) {
+    log.warn({ statusCode: 403 }, "Feedback record mutation denied: not an organization owner or manager");
+    return { ok: false, response: forbidFeedbackRecordMutation(requestId, instance) };
   }
+
+  return { ok: true };
 }
 
 /** The single 403 for "you may not change records here", so every refusal reads identically. */

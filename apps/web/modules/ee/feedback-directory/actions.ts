@@ -3,9 +3,9 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   createFeedbackDirectory,
@@ -34,15 +34,9 @@ export const createFeedbackDirectoryAction = authenticatedActionClient
   .action(
     withAuditLogging("created", "feedbackDirectory", async ({ ctx, parsedInput }) => {
       await checkFeedbackDirectoriesEnabled(parsedInput.organizationId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: parsedInput.organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+        type: "organization",
+        id: parsedInput.organizationId,
       });
 
       const result = await createFeedbackDirectory(
@@ -75,15 +69,9 @@ export const getFeedbackDirectoryDetailsAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromDirectoryId(parsedInput.directoryId);
     await checkFeedbackDirectoriesEnabled(organizationId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
 
     return await getFeedbackDirectoryDetails(parsedInput.directoryId);
@@ -101,15 +89,9 @@ export const updateFeedbackDirectoryAction = authenticatedActionClient
       const organizationId = await getOrganizationIdFromDirectoryId(parsedInput.directoryId);
       await checkFeedbackDirectoriesEnabled(organizationId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+        type: "organization",
+        id: organizationId,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;

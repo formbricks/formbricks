@@ -278,6 +278,26 @@ standalone Phase 1 SpiceDB resources. Charts and workflows inherit workspace aut
 `createdBy` is metadata rather than authorization ownership, and record-level tenant/integrity checks
 remain in the application and Hub layers.
 
+### Feedback Dataset authorization routing
+
+Current feedback access is routed through the central Formbricks authorization interface without changing
+its effective rules:
+
+- dataset administration checks `organization.manage`;
+- workspace-scoped records, taxonomy, sources, CSV imports, chart queries, and server-rendered Unify
+  entry points check the exact `feedbackDirectoryAssignment` resource;
+- directory-wide gateway reads and creates check `feedbackDirectory.read` or
+  `feedbackDirectory.write` across all active assignments;
+- existing-record mutations still require organization management for users and an exclusively assigned
+  dataset plus the existing workspace permission for API keys;
+- archive, entitlement, OAuth-scope, Hub tenant, source ownership, and record-integrity checks remain in
+  the application layer and execute in their existing order.
+
+Authenticated feedback-gateway requests use the bounded rollout targets `feedback_gateway:user` and
+`feedback_gateway:apiKey`. Public and unauthenticated gateway traffic is never scoped for shadow or
+enforcement. The ENG-2398 rollout is shadow-only; moving either target into an enforcement allowlist
+requires a separate rollout decision.
+
 ## Resource parent resolution during the current-model migration
 
 The initial migration deliberately does not project one relationship for every

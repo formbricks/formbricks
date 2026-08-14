@@ -5,6 +5,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
+  assertFeedbackDirectoryAssignmentAccess,
   assertRecordBelongsToWorkspace,
   ensureDeleteAccess,
   ensureReadAccess,
@@ -42,6 +43,11 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
         recordResult.data.tenant_id,
         parsedInput.recordId
       );
+      await assertFeedbackDirectoryAssignmentAccess(
+        ctx.user.id,
+        recordResult.data.tenant_id,
+        parsedInput.workspaceId
+      );
 
       return recordResult.data;
     }
@@ -69,6 +75,11 @@ export const deleteFeedbackRecordAction = authenticatedActionClient
         workspaceDirectoryIds,
         currentRecordResult.data.tenant_id,
         parsedInput.recordId
+      );
+      await assertFeedbackDirectoryAssignmentAccess(
+        ctx.user.id,
+        currentRecordResult.data.tenant_id,
+        parsedInput.workspaceId
       );
 
       const deleteResult = await deleteFeedbackRecord(parsedInput.recordId);

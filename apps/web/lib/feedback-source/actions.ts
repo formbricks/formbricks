@@ -25,6 +25,7 @@ import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-direc
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
+import { assertFeedbackSourceDirectoryAccess } from "./access";
 import { importHistoricalResponses } from "./import";
 import { resolveFormbricksMappingsInput } from "./mappings";
 import {
@@ -71,6 +72,20 @@ export const deleteFeedbackSourceAction = authenticatedActionClient
           },
         ],
       });
+
+      const feedbackSource = await getFeedbackSourceWithMappingsById(
+        parsedInput.feedbackSourceId,
+        parsedInput.workspaceId
+      );
+      if (!feedbackSource) {
+        throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
+      }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        feedbackSource.feedbackDirectoryId,
+        parsedInput.workspaceId,
+        "write"
+      );
 
       return deleteFeedbackSource(parsedInput.feedbackSourceId, parsedInput.workspaceId);
     }
@@ -161,6 +176,12 @@ export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
     if (frd.workspaces.length === 0) {
       throw new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE");
     }
+    await assertFeedbackSourceDirectoryAccess(
+      ctx.user.id,
+      parsedInput.feedbackSourceInput.feedbackDirectoryId,
+      parsedInput.workspaceId,
+      "write"
+    );
 
     let mappingsInput: TMappingsInput | undefined;
 
@@ -227,11 +248,17 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
       // fails here rather than as a Prisma error from the update.
       const feedbackSource = await prisma.feedbackSource.findUnique({
         where: { id: parsedInput.feedbackSourceId, workspaceId: parsedInput.workspaceId },
-        select: { type: true },
+        select: { feedbackDirectoryId: true, type: true },
       });
       if (!feedbackSource) {
         throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
       }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        feedbackSource.feedbackDirectoryId,
+        parsedInput.workspaceId,
+        "write"
+      );
 
       let mappingsInput: TMappingsInput | undefined;
 
@@ -341,6 +368,12 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       if (!feedbackSource) {
         throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
       }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        feedbackSource.feedbackDirectoryId,
+        parsedInput.workspaceId,
+        "write"
+      );
 
       const survey = await getSurvey(parsedInput.surveyId);
       if (!survey) {
@@ -406,6 +439,12 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       if (!frds.some((f) => f.id === parsedInput.frdId)) {
         throw new Error("Feedback directory not accessible");
       }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        parsedInput.frdId,
+        parsedInput.workspaceId,
+        "read"
+      );
 
       const params: FeedbackRecordListParams = {
         tenant_id: parsedInput.frdId,

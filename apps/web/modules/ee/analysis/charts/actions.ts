@@ -59,9 +59,9 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
 
       await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.chartInput.feedbackDirectoryId,
-        organizationId,
         workspaceId,
         userId: ctx.user.id,
+        minPermission: "readWrite",
         source: "charts.createChartAction",
       });
 
@@ -273,9 +273,9 @@ export const executeQueryAction = authenticatedActionClient
 
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
-        organizationId,
         workspaceId,
         userId: ctx.user.id,
+        minPermission: "read",
         source: "charts.executeQueryAction",
       });
 
@@ -322,9 +322,9 @@ export const generateAIChartAction = authenticatedActionClient
 
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
-        organizationId,
         workspaceId,
         userId: ctx.user.id,
+        minPermission: "read",
         source: "charts.generateAIChartAction",
       });
 
@@ -395,9 +395,9 @@ export const getDimensionValuesAction = authenticatedActionClient
 
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
-        organizationId,
         workspaceId,
         userId: ctx.user.id,
+        minPermission: "read",
         source: "charts.getDimensionValuesAction",
       });
 

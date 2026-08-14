@@ -4,18 +4,23 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
+  assertFeedbackDirectoryAssignmentAccess,
   assertRecordBelongsToWorkspace,
   ensureDeleteAccess,
   ensureReadAccess,
+  getAuthorizedWorkspaceFeedbackDirectories,
   getWorkspaceDirectoryIds,
 } from "./access";
 
 vi.mock("server-only", () => ({}));
+
+vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
 
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: vi.fn(),
@@ -66,6 +71,45 @@ describe("getWorkspaceDirectoryIds", () => {
   });
 });
 
+describe("getAuthorizedWorkspaceFeedbackDirectories", () => {
+  test("checks every exact directory assignment before returning the source rows", async () => {
+    const directories = [
+      { id: sharedDirectoryId, name: "Shared" },
+      { id: otherOrgDirectoryId, name: "Support" },
+    ];
+    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue(directories);
+    vi.mocked(assertCan).mockResolvedValue(undefined);
+
+    await expect(getAuthorizedWorkspaceFeedbackDirectories(userId, workspaceId)).resolves.toEqual(
+      directories
+    );
+    expect(assertCan).toHaveBeenCalledTimes(2);
+    expect(assertCan).toHaveBeenNthCalledWith(
+      1,
+      { type: "user", id: userId },
+      "feedbackDirectoryAssignment.read",
+      { type: "feedbackDirectoryAssignment", id: sharedDirectoryId, workspaceId }
+    );
+    expect(assertCan).toHaveBeenNthCalledWith(
+      2,
+      { type: "user", id: userId },
+      "feedbackDirectoryAssignment.read",
+      { type: "feedbackDirectoryAssignment", id: otherOrgDirectoryId, workspaceId }
+    );
+  });
+
+  test("propagates an exact assignment refusal", async () => {
+    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([
+      { id: sharedDirectoryId, name: "Shared" },
+    ]);
+    vi.mocked(assertCan).mockRejectedValue(new AuthorizationError("Not authorized"));
+
+    await expect(getAuthorizedWorkspaceFeedbackDirectories(userId, workspaceId)).rejects.toThrow(
+      AuthorizationError
+    );
+  });
+});
+
 describe("assertRecordBelongsToWorkspace", () => {
   test("passes when the record's tenant is a directory assigned to the workspace", () => {
     expect(() =>
@@ -106,6 +150,7 @@ describe("license gating", () => {
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
     vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
+    vi.mocked(assertCan).mockResolvedValue(undefined);
   });
 
   test.each([
@@ -116,6 +161,7 @@ describe("license gating", () => {
 
     await expect(ensureAccess(userId, workspaceId)).rejects.toThrow(OperationNotAllowedError);
     expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(assertCan).not.toHaveBeenCalled();
   });
 });
 
@@ -128,6 +174,7 @@ describe("ensureDeleteAccess", () => {
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
     vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
+    vi.mocked(assertCan).mockResolvedValue(undefined);
   });
 
   // Re-adding a workspaceTeam entry to this access list is what reopens ENG-1770, so the list itself is
@@ -135,10 +182,9 @@ describe("ensureDeleteAccess", () => {
   test("requires an organization owner or manager, with no workspace-team fallback", async () => {
     await ensureDeleteAccess(userId, workspaceId);
 
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId,
-      organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    expect(assertCan).toHaveBeenCalledWith({ type: "user", id: userId }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
   });
 
@@ -147,9 +193,23 @@ describe("ensureDeleteAccess", () => {
   });
 
   test("propagates the refusal for a caller who is not an owner or manager", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+    vi.mocked(assertCan).mockRejectedValue(new AuthorizationError("Not authorized"));
 
     await expect(ensureDeleteAccess(userId, workspaceId)).rejects.toThrow(AuthorizationError);
+  });
+});
+
+describe("assertFeedbackDirectoryAssignmentAccess", () => {
+  test("checks exact directory and workspace read access", async () => {
+    vi.mocked(assertCan).mockResolvedValue(undefined);
+
+    await assertFeedbackDirectoryAssignmentAccess(userId, sharedDirectoryId, workspaceId);
+
+    expect(assertCan).toHaveBeenCalledWith({ type: "user", id: userId }, "feedbackDirectoryAssignment.read", {
+      type: "feedbackDirectoryAssignment",
+      id: sharedDirectoryId,
+      workspaceId,
+    });
   });
 });
 

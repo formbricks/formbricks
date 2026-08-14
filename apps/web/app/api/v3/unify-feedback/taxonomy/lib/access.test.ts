@@ -1,26 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { can } from "@/lib/authorization";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSessionUserId, requireUnifyDirectoryAccess, requireUnifyDirectoryMutationAccess } from "./access";
 
 vi.mock("server-only", () => ({}));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({
+  getV3AuthorizationActor: vi.fn(),
   requireV3WorkspaceAccess: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
-}));
-
-vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
-  getFeedbackDirectoriesByWorkspaceId: vi.fn(),
-}));
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsFeedbackDirectoriesEnabled: vi.fn(),
@@ -35,13 +28,30 @@ describe("requireUnifyDirectoryAccess", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
+    vi.mocked(getV3AuthorizationActor).mockImplementation((authentication) =>
+      authentication && "user" in authentication && authentication.user?.id
+        ? { type: "user", id: authentication.user.id }
+        : null
+    );
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
-    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([{ id: directoryId, name: "Dataset" }]);
+    vi.mocked(can).mockResolvedValue(true);
   });
 
   test("returns the workspace context when all checks pass", async () => {
-    const result = await requireUnifyDirectoryAccess(null, workspaceId, directoryId, "read", "req_1", "/x");
+    const result = await requireUnifyDirectoryAccess(
+      session,
+      workspaceId,
+      directoryId,
+      "read",
+      "req_1",
+      "/x"
+    );
     expect(result).toEqual(context);
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.read", {
+      type: "feedbackDirectoryAssignment",
+      id: directoryId,
+      workspaceId,
+    });
   });
 
   test("short-circuits with the auth Response and skips the extra checks when workspace access is denied", async () => {
@@ -52,7 +62,7 @@ describe("requireUnifyDirectoryAccess", () => {
 
     expect(result).toBe(denied);
     expect(getIsFeedbackDirectoriesEnabled).not.toHaveBeenCalled();
-    expect(getFeedbackDirectoriesByWorkspaceId).not.toHaveBeenCalled();
+    expect(can).not.toHaveBeenCalled();
   });
 
   test("returns 403 when the feedbackDirectories entitlement is off", async () => {
@@ -62,21 +72,33 @@ describe("requireUnifyDirectoryAccess", () => {
 
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(403);
-    expect(getFeedbackDirectoriesByWorkspaceId).not.toHaveBeenCalled();
+    expect(can).not.toHaveBeenCalled();
   });
 
   test("returns 403 when the directory is not assigned to the workspace", async () => {
-    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([{ id: "other", name: "Other" }]);
+    vi.mocked(can).mockResolvedValue(false);
 
-    const result = await requireUnifyDirectoryAccess(null, workspaceId, directoryId, "read", "req_1", "/x");
+    const result = await requireUnifyDirectoryAccess(
+      session,
+      workspaceId,
+      directoryId,
+      "read",
+      "req_1",
+      "/x"
+    );
 
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(403);
   });
 
   test("forwards the requested permission to the workspace-access check", async () => {
-    await requireUnifyDirectoryAccess(null, workspaceId, directoryId, "readWrite", "req_1", "/x");
-    expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(null, workspaceId, "readWrite", "req_1", "/x");
+    await requireUnifyDirectoryAccess(session, workspaceId, directoryId, "readWrite", "req_1", "/x");
+    expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(session, workspaceId, "readWrite", "req_1", "/x");
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.write", {
+      type: "feedbackDirectoryAssignment",
+      id: directoryId,
+      workspaceId,
+    });
   });
 });
 
@@ -86,9 +108,13 @@ describe("requireUnifyDirectoryMutationAccess", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
+    vi.mocked(getV3AuthorizationActor).mockImplementation((authentication) =>
+      authentication && "user" in authentication && authentication.user?.id
+        ? { type: "user", id: authentication.user.id }
+        : null
+    );
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
-    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([{ id: directoryId, name: "Dataset" }]);
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
+    vi.mocked(can).mockResolvedValue(true);
   });
 
   test("returns the workspace context for an organization owner or manager", async () => {
@@ -101,10 +127,9 @@ describe("requireUnifyDirectoryMutationAccess", () => {
     );
 
     expect(result).toEqual(context);
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: context.organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    expect(can).toHaveBeenLastCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
+      type: "organization",
+      id: context.organizationId,
     });
   });
 
@@ -114,7 +139,7 @@ describe("requireUnifyDirectoryMutationAccess", () => {
   });
 
   test("returns 403 for a workspace readWrite member who is not an owner or manager", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+    vi.mocked(can).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
 
     const result = await requireUnifyDirectoryMutationAccess(
       session,
@@ -133,11 +158,11 @@ describe("requireUnifyDirectoryMutationAccess", () => {
 
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(401);
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(can).not.toHaveBeenCalled();
   });
 
   test("short-circuits with the directory Response and skips the role check", async () => {
-    vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([{ id: "other", name: "Other" }]);
+    vi.mocked(can).mockResolvedValue(false);
 
     const result = await requireUnifyDirectoryMutationAccess(
       session,
@@ -149,7 +174,7 @@ describe("requireUnifyDirectoryMutationAccess", () => {
 
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(403);
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(can).toHaveBeenCalledTimes(1);
   });
 });
 

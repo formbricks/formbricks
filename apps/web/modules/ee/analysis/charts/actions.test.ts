@@ -130,9 +130,9 @@ describe("chart Cube actions", () => {
     expect(mocks.checkWorkspaceAccess).toHaveBeenCalledWith("user-1", "workspace-1", "read");
     expect(mocks.checkFeedbackDirectoryAccess).toHaveBeenCalledWith({
       feedbackDirectoryId: "frd-1",
-      organizationId: "organization-1",
       workspaceId: "workspace-1",
       userId: "user-1",
+      minPermission: "read",
       source: "charts.executeQueryAction",
     });
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
