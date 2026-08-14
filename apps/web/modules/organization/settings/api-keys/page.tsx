@@ -36,7 +36,6 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
         <ApiKeyList
           organizationId={organization.id}
           locale={locale ?? DEFAULT_LOCALE}
-          isReadOnly={!canAccessApiKeys}
           workspaces={workspaces}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         />

@@ -38,7 +38,6 @@ const LoadingCard = () => {
           columns={getApiKeyColumns({
             t,
             locale: "en-US",
-            isReadOnly: false,
             onDelete: () => undefined,
           })}
         />

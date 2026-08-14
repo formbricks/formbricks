@@ -73,69 +73,67 @@ const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
 export const getApiKeyColumns = ({
   t,
   locale,
-  isReadOnly,
   onDelete,
 }: Readonly<{
   t: TFunction;
   locale: TUserLocale;
-  isReadOnly: boolean;
   onDelete: (event: React.MouseEvent, apiKey: TApiKeyRow) => void;
-}>): TSettingsTableColumn<TApiKeyRow>[] => {
-  const columns: TSettingsTableColumn<TApiKeyRow>[] = [
-    {
-      id: "label",
-      header: t("common.label"),
-      headerClassName: "w-[25%]",
-      cellClassName: "font-semibold",
-      skeletonWidth: "w-32",
-      cell: (apiKey) => apiKey.label,
-    },
-    {
-      id: "apiKey",
-      header: t("workspace.api_keys.api_key"),
-      headerClassName: "w-[45%]",
-      // Replaces `hidden sm:block`, which would have restored a `<td>` to `display: block` and dropped it
-      // out of the table's column layout. `hideBelow` uses `table-cell` for exactly that reason.
-      hideBelow: "sm",
-      skeletonWidth: "w-64",
-      cell: (apiKey) => <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} />,
-    },
-    {
-      id: "createdAt",
-      header: t("common.created_at"),
-      headerClassName: "w-[20%]",
-      skeletonWidth: "w-20",
-      cell: (apiKey) => timeSince(apiKey.createdAt.toString(), locale),
-    },
-  ];
-
-  if (!isReadOnly) {
-    columns.push({
-      id: "actions",
-      header: null,
-      srLabel: t("common.actions"),
-      headerClassName: "w-[10%]",
-      // The flex aligns the button; `align` would be inert here, since the button is block-level and the
-      // header has no visible text.
-      cellClassName: "flex justify-end",
-      stopRowClick: true,
-      skeletonWidth: "w-8",
-      cell: (apiKey) => (
-        <Button size="icon" variant="ghost" onClick={(event) => onDelete(event, apiKey)}>
+}>): TSettingsTableColumn<TApiKeyRow>[] => [
+  {
+    id: "label",
+    header: t("common.label"),
+    headerClassName: "w-[25%]",
+    cellClassName: "font-semibold",
+    skeletonWidth: "w-32",
+    cell: (apiKey) => apiKey.label,
+  },
+  {
+    id: "apiKey",
+    header: t("workspace.api_keys.api_key"),
+    headerClassName: "w-[45%]",
+    // Replaces `hidden sm:block`, which would have restored a `<td>` to `display: block` and dropped it
+    // out of the table's column layout. `hideBelow` uses `table-cell` for exactly that reason.
+    hideBelow: "sm",
+    skeletonWidth: "w-64",
+    cell: (apiKey) => <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} />,
+  },
+  {
+    id: "createdAt",
+    header: t("common.created_at"),
+    headerClassName: "w-[20%]",
+    skeletonWidth: "w-20",
+    cell: (apiKey) => timeSince(apiKey.createdAt.toString(), locale),
+  },
+  {
+    id: "actions",
+    header: null,
+    srLabel: t("common.actions"),
+    headerClassName: "w-[10%]",
+    stopRowClick: true,
+    skeletonWidth: "w-8",
+    // The flex goes on a wrapper inside the cell, never on `cellClassName`: that class lands on the `<td>`
+    // itself, and `display: flex` there stops it being a table-cell — which silently kills the shared
+    // `align-middle` (`vertical-align` applies only to inline-level and table-cell boxes) and makes the
+    // browser wrap the cell in an anonymous table-cell that defaults to baseline alignment. The button
+    // would sit high in the row instead of centred. Same reasoning as `hideBelow` above.
+    cell: (apiKey) => (
+      <div className="flex justify-end">
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label={t("common.delete")}
+          onClick={(event) => onDelete(event, apiKey)}>
           <TrashIcon />
         </Button>
-      ),
-    });
-  }
-
-  return columns;
-};
+      </div>
+    ),
+  },
+];
 
 interface EditAPIKeysProps {
   organizationId: string;
   apiKeys: TApiKeyWithEnvironmentPermission[];
   locale: TUserLocale;
-  isReadOnly: boolean;
   workspaces: TOrganizationWorkspace[];
   isFormbricksCloud: boolean;
 }
@@ -144,7 +142,6 @@ export const EditAPIKeys = ({
   organizationId,
   apiKeys,
   locale,
-  isReadOnly,
   workspaces,
   isFormbricksCloud,
 }: Readonly<EditAPIKeysProps>) => {
@@ -245,23 +242,21 @@ export const EditAPIKeys = ({
 
   return (
     <>
-      {!isReadOnly && (
-        // Moved above the table, matching every other settings table in this series — and required, since
-        // a flush card body means the table has to be the last thing in it. The control carries the card's
-        // gutter itself.
-        <div className="mb-4 flex justify-end px-4 pt-4">
-          <Button
-            size="sm"
-            onClick={() => {
-              setIsAddAPIKeyModalOpen(true);
-            }}>
-            {t("workspace.settings.api_keys.add_api_key")}
-          </Button>
-        </div>
-      )}
+      {/* Moved above the table, matching every other settings table in this series — and required, since
+          a flush card body means the table has to be the last thing in it. The control carries the card's
+          gutter itself. */}
+      <div className="mb-4 flex justify-end px-4 pt-4">
+        <Button
+          size="sm"
+          onClick={() => {
+            setIsAddAPIKeyModalOpen(true);
+          }}>
+          {t("workspace.settings.api_keys.add_api_key")}
+        </Button>
+      </div>
 
       <SettingsTable
-        columns={getApiKeyColumns({ t, locale, isReadOnly, onDelete: handleOpenDeleteKeyModal })}
+        columns={getApiKeyColumns({ t, locale, onDelete: handleOpenDeleteKeyModal })}
         rows={apiKeysLocal}
         getRowId={(apiKey) => apiKey.id}
         emptyMessage={t("workspace.api_keys.no_api_keys_yet")}
