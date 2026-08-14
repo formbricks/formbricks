@@ -15,7 +15,15 @@ export type TSettingsTableColumn<TRow> = {
   /** Already-translated header label. `null` renders an empty header cell — pair it with `srLabel`. */
   header: ReactNode;
   cell: (row: TRow, index: number) => ReactNode;
-  /** Applies to the header cell and every body cell in this column. Defaults to `left`. */
+  /**
+   * Sets `text-align` on the header cell and every body cell in this column. Defaults to `left`.
+   *
+   * It moves **inline** content only. A cell holding block-level content — buttons, a link, a badge —
+   * is unaffected, and needs a flex `cellClassName` (`flex justify-end`) to move instead. Don't declare
+   * both for one column: the flex wins, and the `align` sitting next to it reads as load-bearing while
+   * being inert. The skeleton draws its bar through the same two class sources, so whichever mechanism
+   * aligns the real cell is also the one aligning the skeleton.
+   */
   align?: TSettingsTableAlign;
   /** Hides the column below this breakpoint. Applied to the header and body cells together. */
   hideBelow?: TSettingsTableBreakpoint;

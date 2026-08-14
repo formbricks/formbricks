@@ -82,7 +82,10 @@ const getFeedbackDirectoryColumns = ({
     header: null,
     srLabel: t("common.actions"),
     headerClassName: "w-[25%]",
-    align: "right",
+    // No `align: "right"`. The buttons are block-level, so `text-align` cannot move them — the flex here
+    // is what right-aligns them, and it is also what right-aligns a skeleton bar if this array is ever
+    // fed to `SettingsTableSkeleton`. Declaring `align` too would leave two mechanisms for one intent,
+    // with the inert one looking authoritative.
     cellClassName: "flex justify-end gap-2",
     stopRowClick: true,
     cell: (directory) => (
