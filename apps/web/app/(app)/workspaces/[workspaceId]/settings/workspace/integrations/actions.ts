@@ -77,7 +77,11 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
         { organizationId, workspaceId: parsedInput.workspaceId }
       );
 
-      return result;
+      // ENG-2292: only the id leaves this action. `result` is the full Prisma row, including the
+      // `config.key` merged back in above — returning it would serialize the provider's access and
+      // refresh tokens into the action response, for the same audience the settings pages redact them
+      // from (readWrite workspace members). The callers only branch on success.
+      return { id: result.id };
     })
   );
 
@@ -109,6 +113,10 @@ export const deleteIntegrationAction = authenticatedActionClient.inputSchema(ZDe
     ctx.auditLoggingCtx.integrationId = parsedInput.integrationId;
     const result = await deleteIntegration(parsedInput.integrationId);
     ctx.auditLoggingCtx.oldObject = result;
-    return result;
+
+    // ENG-2292: the deleted row still carries the live OAuth credentials in `config.key`, so returning
+    // it would hand a readWrite member the connecting user's tokens in one call — and the integration
+    // can simply be reconnected afterwards. The callers only check that the delete succeeded.
+    return { id: result.id };
   })
 );
