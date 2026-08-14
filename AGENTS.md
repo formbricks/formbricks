@@ -172,6 +172,8 @@ Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat
 
 Every PR must use `.github/pull_request_template.md` and follow its inline guidance — the template is the source of truth for PR structure, including the `## QA / Test Plan` section used to generate release QA. Fill every section from the actual diff on PR open, and re-update it in the same turn on every change (new commits, scope or review fixes) so it never drifts — treat a stale section as a bug.
 
+The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. The prose below the checkbox is not parsed — explain your reasoning there freely.
+
 ## Next.js Documentation
 
 Do not rely on training data for Next.js behavior in this repo. For any Next.js-related work (routing, layouts, server/client components, caching, next.config, etc.), use the `nextjs-docs` skill, which indexes the version-pinned local docs in `.next-docs/`.

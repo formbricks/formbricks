@@ -28,22 +28,25 @@ Fixes ENG-
 
 ## Breaking changes
 
-<!-- REQUIRED. Does this PR change a public contract in a way that could break existing integrations or
-self-hosted setups? Count as breaking: API/SDK request or response shape (renamed, removed, or retyped
-fields, or changed values like `EN` → `en-US`), removed/renamed endpoints or routes, changed webhook
-payloads, changed defaults, new/removed/renamed env vars or config, and DB migrations that need manual
-action. If YES:
-  1. Fill the table below — one row per change. This text feeds the GitHub release notes and the
-     self-hoster migration guide, so write it for an external integrator, not for the team.
-  2. The `breaking-change` label is applied automatically from this section — a table or prose both
-     count, so you should not need to touch it. Add it by hand if it doesn't appear.
-If there are no breaking changes, leave "None" below. A short scope reason is fine ("None — docs only",
-"N/A", "No breaking changes"); anything more specific than that reads as a declaration and applies the
-label, so spell out what changed only when it really is breaking. -->
+<!-- REQUIRED. Decide, then tick the box below if — and only if — this PR changes a public contract in a
+way that could break existing integrations or self-hosted setups. Count as breaking: API/SDK request or
+response shape (renamed, removed, or retyped fields, or changed values like `EN` → `en-US`),
+removed/renamed endpoints or routes, changed webhook payloads, changed defaults, new/removed/renamed env
+vars or config, and DB migrations that need manual action.
+
+The checkbox is the only thing automation reads: ticking it applies the `breaking-change` label, which
+feeds the GitHub release notes and the self-hoster migration guide. Everything you write under it is for
+humans and is never parsed, so explain the reasoning at whatever length it needs either way.
+
+Ticked → replace "None" with the table below, one row per change, written for an external integrator
+rather than for the team. Not ticked → keep "None" and say in a line why (a scope reason like "docs
+only" or a short argument for why the change is compatible). -->
+
+- [ ] This PR contains breaking changes
 
 None
 
-<!-- Delete "None" above and use this table when there IS a breaking change:
+<!-- Delete "None" above and use this table when the box IS ticked:
 | Change | Before | After | Who's affected | Action required |
 | --- | --- | --- | --- | --- |
 | `language` field on responses | `EN`, `DE` | `en-US`, `de-DE` | API v1 consumers | Map the new BCP-47 locale codes in your integration |
