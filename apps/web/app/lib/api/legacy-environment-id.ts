@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 
 /**
  * Backwards compatibility layer for the environment → workspace rename in API v1 responses.
@@ -40,4 +41,25 @@ export const addLegacyEnvironmentId = async <T extends { workspaceId: string }>(
 ): Promise<T & { environmentId: string }> => {
   const [entityWithLegacyId] = await addLegacyEnvironmentIdToList([entity]);
   return entityWithLegacyId;
+};
+
+/**
+ * Variant for responses that echo an already-committed destructive write.
+ *
+ * The delete cannot be undone by the time this runs, so a failed workspace lookup must not turn a
+ * successful delete into an error response — the caller would retry a delete that already happened.
+ * Degrades to the un-enriched entity instead.
+ */
+export const addLegacyEnvironmentIdBestEffort = async <T extends { workspaceId: string }>(
+  entity: T
+): Promise<T & { environmentId?: string }> => {
+  try {
+    return await addLegacyEnvironmentId(entity);
+  } catch (error) {
+    logger.error(
+      { error, workspaceId: entity.workspaceId },
+      "Failed to resolve legacy environmentId for a deleted entity"
+    );
+    return entity;
+  }
 };

@@ -9,7 +9,10 @@ import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
-import { addLegacyEnvironmentId } from "@/app/lib/api/legacy-environment-id";
+import {
+  addLegacyEnvironmentId,
+  addLegacyEnvironmentIdBestEffort,
+} from "@/app/lib/api/legacy-environment-id";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -97,6 +100,8 @@ export const DELETE = withV1ApiWrapper({
     if (auditLog) {
       auditLog.targetId = params.surveyId;
     }
+
+    let deletedSurvey: Awaited<ReturnType<typeof deleteSurvey>>;
     try {
       const result = await fetchAndAuthorizeSurvey(params.surveyId, authentication, "DELETE");
       if (result.error) {
@@ -108,13 +113,16 @@ export const DELETE = withV1ApiWrapper({
         auditLog.oldObject = result.survey;
       }
 
-      const deletedSurvey = await deleteSurvey(params.surveyId);
-      return {
-        response: responses.successResponse(await addLegacyEnvironmentId(deletedSurvey)),
-      };
+      deletedSurvey = await deleteSurvey(params.surveyId);
     } catch (error) {
       return handleErrorResponse(error);
     }
+
+    // Enrich outside the delete's try/catch: the survey is already gone, so a lookup failure here
+    // must not mask a successful delete behind a generic error response.
+    return {
+      response: responses.successResponse(await addLegacyEnvironmentIdBestEffort(deletedSurvey)),
+    };
   },
   action: "deleted",
   targetType: "survey",

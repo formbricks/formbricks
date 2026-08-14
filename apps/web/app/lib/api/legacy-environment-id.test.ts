@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { addLegacyEnvironmentId, addLegacyEnvironmentIdToList } from "./legacy-environment-id";
+import {
+  addLegacyEnvironmentId,
+  addLegacyEnvironmentIdBestEffort,
+  addLegacyEnvironmentIdToList,
+} from "./legacy-environment-id";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -8,6 +12,10 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
     },
   },
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: { error: vi.fn() },
 }));
 
 const findManyMock = vi.mocked(prisma.workspace.findMany);
@@ -89,5 +97,35 @@ describe("addLegacyEnvironmentId", () => {
       url: "https://x.co",
       environmentId: "env_1",
     });
+  });
+
+  test("propagates lookup failures so a wrong id is never handed to a client", async () => {
+    findManyMock.mockRejectedValue(new Error("connection lost"));
+
+    await expect(addLegacyEnvironmentId({ id: "survey_1", workspaceId: "ws_1" })).rejects.toThrow(
+      "connection lost"
+    );
+  });
+});
+
+describe("addLegacyEnvironmentIdBestEffort", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("enriches like addLegacyEnvironmentId when the lookup succeeds", async () => {
+    findManyMock.mockResolvedValue([{ id: "ws_1", legacyEnvironmentId: "env_1" }] as never);
+
+    const result = await addLegacyEnvironmentIdBestEffort({ id: "webhook_1", workspaceId: "ws_1" });
+
+    expect(result).toEqual({ id: "webhook_1", workspaceId: "ws_1", environmentId: "env_1" });
+  });
+
+  test("returns the un-enriched entity when the lookup throws, so a committed delete still reports success", async () => {
+    findManyMock.mockRejectedValue(new Error("connection lost"));
+
+    const result = await addLegacyEnvironmentIdBestEffort({ id: "webhook_1", workspaceId: "ws_1" });
+
+    expect(result).toEqual({ id: "webhook_1", workspaceId: "ws_1" });
   });
 });
