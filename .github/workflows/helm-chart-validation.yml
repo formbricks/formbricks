@@ -42,6 +42,27 @@ jobs:
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-default.yaml"
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-default.yaml" \
+            | grep -q 'value: "http://formbricks:3000/api/auth/jwks"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set formbricks.mcpOauthJwksUrl=http://auth-internal:3000/custom/api/auth/jwks \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-jwks-value.yaml"
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-value.yaml" \
+            | grep -q 'value: "http://auth-internal:3000/custom/api/auth/jwks"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set-string deployment.env.MCP_OAUTH_JWKS_URL=http://explicit:3000/api/auth/jwks \
+            --show-only templates/deployment.yaml > "$render_dir/formbricks-jwks-env.yaml"
+          test "$(grep -c 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-env.yaml")" -eq 1
+          grep -A1 'name: MCP_OAUTH_JWKS_URL' "$render_dir/formbricks-jwks-env.yaml" \
+            | grep -q 'value: "http://explicit:3000/api/auth/jwks"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
             --show-only templates/cube-deployment.yaml > "$render_dir/cube-default.yaml"
           grep -A1 'name: CUBEJS_EXTERNAL_DEFAULT' "$render_dir/cube-default.yaml" \
             | grep -q 'value: "false"'

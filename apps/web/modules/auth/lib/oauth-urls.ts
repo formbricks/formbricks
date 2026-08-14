@@ -33,6 +33,15 @@ export const getAuthIssuerUrl = (): string => {
   return appendPath(authBaseUrl, AUTH_BASE_PATH);
 };
 
+/**
+ * Returns the server-side endpoint used only to fetch Better Auth's signing keys.
+ *
+ * Token issuer validation, OAuth discovery, redirects, cookies, and audiences continue to use the public
+ * Auth/WEBAPP URLs. Deployments whose pods cannot resolve or hairpin through that public origin can point this
+ * fetch at an internal service without changing the externally visible OAuth contract.
+ */
+export const getMcpOAuthJwksUrl = (): string => env.MCP_OAUTH_JWKS_URL ?? `${getAuthIssuerUrl()}/jwks`;
+
 export const getMcpResourceUrl = (): string => appendPath(getWebAppBaseUrl(), MCP_RESOURCE_PATH);
 
 export const getMcpProtectedResourceMetadataUrl = (): string =>

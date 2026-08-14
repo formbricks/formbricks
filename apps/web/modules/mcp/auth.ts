@@ -22,6 +22,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import {
   MCP_RESOURCE_SCOPES,
   getAuthIssuerUrl,
+  getMcpOAuthJwksUrl,
   getMcpOrigin,
   getMcpProtectedResourceMetadataUrl,
   getMcpResourceUrl,
@@ -322,7 +323,7 @@ async function authenticateMcpOAuthBearer(
         audience: getMcpResourceUrl(),
         issuer: getAuthIssuerUrl(),
       },
-      jwksUrl: `${getAuthIssuerUrl()}/jwks`,
+      jwksUrl: getMcpOAuthJwksUrl(),
     });
   } catch {
     const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
