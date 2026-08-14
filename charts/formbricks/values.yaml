@@ -22,8 +22,9 @@ formbricks:
   publicUrl: ""
 
   # Optional: Server-side Better Auth JWKS endpoint for MCP OAuth verification.
-  # Defaults to the in-cluster Formbricks service so the public issuer does not need DNS hairpinning.
-  # Set the complete URL when the app is served below a custom subpath.
+  # Leave empty to fetch keys from the public Better Auth issuer. Set an internal HTTP URL only when
+  # the cluster cannot reach its public origin and the application network is trusted. Include the
+  # configured service port and complete custom subpath, if any.
   mcpOauthJwksUrl: ""
 
 ##########################################################
