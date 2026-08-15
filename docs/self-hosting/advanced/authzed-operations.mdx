@@ -127,6 +127,37 @@ Production deployments should use a dedicated PostgreSQL database and role. Prov
 `datastore_uri` and `preshared_key`, then reference it through `authzed.datastore.existingSecret` and
 `authzed.auth.existingSecret`. Require `sslmode=require`, `verify-ca`, or `verify-full` for managed PostgreSQL.
 
+### Bootstrap the SpiceDB role and database
+
+A short-lived Job creates the dedicated `spicedb` role and database before SpiceDB starts. It creates each only
+when it is absent, so re-running it against an already initialised database changes nothing.
+
+By default it connects as the `postgres` superuser the bundled PostgreSQL subchart creates. **An existing
+PostgreSQL installed with `postgresql.auth.enablePostgresUser=false` has no such role**, and the upgrade fails
+until the Job is told which role to use instead:
+
+```yaml
+authzed:
+  bundledPostgresqlBootstrap:
+    adminUsername: fbadmin
+    adminDatabase: formbricks # maintenance database to attach to
+    adminPasswordSecretName: existing-pg-admin
+    adminPasswordKey: password
+```
+
+The role needs `CREATEROLE` and `CREATEDB`; it does not need to be a superuser. `adminPasswordSecretName` is
+required whenever `adminUsername` is overridden — without it the Job would fall back to the bundled admin
+password and fail to authenticate.
+
+Rendering fails fast with the three available remedies named — configure an administrative role, enable
+`postgresql.auth.enablePostgresUser`, or set `authzed.bundledPostgresqlBootstrap.enabled=false` — rather than
+letting the Job fail inside the cluster. Disabling bootstrap remains the correct choice when the role and
+database are provisioned by hand or by a platform team; the SpiceDB `datastore_uri` must then already point at
+them.
+
+For an externally managed PostgreSQL server, use `authzed.externalPostgresqlBootstrap` instead, which takes a
+full administrator URL from a Secret and enforces TLS on it.
+
 For an external AuthZed endpoint:
 
 ```yaml

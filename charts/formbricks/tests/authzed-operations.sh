@@ -126,4 +126,53 @@ helm template authzed-external "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --set authzed.insecure=false \
   --set authzed.auth.existingSecret=formbricks-authzed >/dev/null
 
+# ENG-2390: the bundled database bootstrap must not hard-require a role named `postgres`.
+# An existing PostgreSQL installed without one previously had no option but to disable bootstrap
+# entirely, which left the SpiceDB role and database uncreated.
+
+render_bootstrap() {
+  helm template "$1" "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+    --set authzed.enabled=true \
+    --set authzed.mode=selfHosted \
+    "${@:2}" \
+    --show-only templates/authzed-postgresql-bootstrap.yaml
+}
+
+# The default is unchanged: the bundled `postgres` superuser on the `postgres` database.
+default_bootstrap="$(render_bootstrap authzed-bootstrap-default)"
+grep --quiet 'value: "postgres"' <<<"${default_bootstrap}"
+
+# The regression itself. Without an override this still refuses, but it must name the way out
+# rather than simply asserting that enablePostgresUser is required.
+if bootstrap_refusal="$(render_bootstrap authzed-bootstrap-no-superuser \
+  --set postgresql.auth.enablePostgresUser=false 2>&1)"; then
+  printf '%s\n' "Bootstrap must refuse a missing postgres superuser when no admin role is configured." >&2
+  exit 1
+fi
+grep --quiet 'adminUsername' <<<"${bootstrap_refusal}"
+
+# ...and configuring an existing administrative role is what unblocks it.
+existing_admin_bootstrap="$(render_bootstrap authzed-bootstrap-existing-admin \
+  --set postgresql.auth.enablePostgresUser=false \
+  --set authzed.bundledPostgresqlBootstrap.adminUsername=fbadmin \
+  --set authzed.bundledPostgresqlBootstrap.adminDatabase=formbricks \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordSecretName=existing-pg-admin \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordKey=password)"
+grep --quiet 'value: "fbadmin"' <<<"${existing_admin_bootstrap}"
+grep --quiet 'value: "formbricks"' <<<"${existing_admin_bootstrap}"
+grep --quiet 'name: existing-pg-admin' <<<"${existing_admin_bootstrap}"
+
+# A custom admin role with no Secret would silently fall back to the bundled superuser's password.
+if render_bootstrap authzed-bootstrap-admin-without-secret \
+  --set authzed.bundledPostgresqlBootstrap.adminUsername=fbadmin >/dev/null 2>&1; then
+  printf '%s\n' "Bootstrap must require adminPasswordSecretName when adminUsername is overridden." >&2
+  exit 1
+fi
+
+# Credentials reach the Job only by reference, in every mode.
+if grep --extended-regexp 'PGPASSWORD: |password: [^{]' <<<"${existing_admin_bootstrap}" >/dev/null; then
+  printf '%s\n' "Bootstrap manifests must not contain credential values." >&2
+  exit 1
+fi
+
 printf '%s\n' "AuthZed Helm operations contracts are valid."

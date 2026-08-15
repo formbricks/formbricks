@@ -647,6 +647,22 @@ authzed:
     enabled: true
     image: postgres:17-alpine
     backoffLimit: 10
+    # The administrative role the bootstrap Job connects as to create the
+    # dedicated `spicedb` role and database. It needs CREATEROLE and CREATEDB,
+    # not necessarily superuser.
+    #
+    # Defaults to the `postgres` superuser the bundled subchart creates. An
+    # existing PostgreSQL that was installed without one (see
+    # postgresql.auth.enablePostgresUser) would otherwise fail this Job, so point
+    # these at whichever role does hold those privileges instead of disabling
+    # bootstrap wholesale.
+    adminUsername: postgres
+    adminDatabase: postgres
+    # Where that role's password lives. Both default to the bundled PostgreSQL
+    # admin credentials, so overriding adminUsername alone is not enough — set
+    # these too whenever the role is not the bundled `postgres` superuser.
+    adminPasswordSecretName: ""
+    adminPasswordKey: ""
 
   # Cloud installations can bootstrap a dedicated database on an existing
   # PostgreSQL server. The admin Secret is read only by the short-lived Job.

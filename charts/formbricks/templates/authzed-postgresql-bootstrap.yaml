@@ -8,11 +8,25 @@
 {{- if and $externalBootstrap (not .Values.authzed.externalPostgresqlBootstrap.adminSecretName) -}}
 {{- fail "authzed.externalPostgresqlBootstrap.adminSecretName is required when external bootstrap is enabled" -}}
 {{- end -}}
-{{- if and $bundledBootstrap (not .Values.postgresql.auth.enablePostgresUser) -}}
-{{- fail "postgresql.auth.enablePostgresUser must be true when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- $bundledAdminUsername := .Values.authzed.bundledPostgresqlBootstrap.adminUsername | default "postgres" -}}
+{{- $bundledAdminDatabase := .Values.authzed.bundledPostgresqlBootstrap.adminDatabase | default "postgres" -}}
+{{- $bundledAdminSecret := .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName | default $postgresSecretName -}}
+{{- $bundledAdminKey := .Values.authzed.bundledPostgresqlBootstrap.adminPasswordKey | default .Values.postgresql.auth.secretKeys.adminPasswordKey -}}
+{{- $usesBundledPostgresSuperuser := eq $bundledAdminUsername "postgres" -}}
+{{- /*
+  Only the bundled `postgres` superuser depends on enablePostgresUser. An operator who pointed
+  adminUsername at their own CREATEROLE/CREATEDB role has no reason to also materialise a superuser
+  the subchart was told not to create — requiring it is what forced existing installations to turn
+  bootstrap off entirely (ENG-2390).
+*/ -}}
+{{- if and $bundledBootstrap $usesBundledPostgresSuperuser (not .Values.postgresql.auth.enablePostgresUser) -}}
+{{- fail "Set authzed.bundledPostgresqlBootstrap.adminUsername (with adminPasswordSecretName and adminPasswordKey) to an existing role with CREATEROLE and CREATEDB, or enable postgresql.auth.enablePostgresUser, or disable authzed.bundledPostgresqlBootstrap.enabled" -}}
 {{- end -}}
-{{- if and $bundledBootstrap (not .Values.postgresql.auth.secretKeys.adminPasswordKey) -}}
-{{- fail "postgresql.auth.secretKeys.adminPasswordKey is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- if and $bundledBootstrap (not $bundledAdminKey) -}}
+{{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordKey (or postgresql.auth.secretKeys.adminPasswordKey) is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- end -}}
+{{- if and $bundledBootstrap (not $usesBundledPostgresSuperuser) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
+{{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordSecretName is required when adminUsername is not the bundled postgres superuser" -}}
 {{- end -}}
 {{- $bootstrap := ternary .Values.authzed.bundledPostgresqlBootstrap .Values.authzed.externalPostgresqlBootstrap $bundledBootstrap -}}
 apiVersion: batch/v1
@@ -58,12 +72,14 @@ spec:
             - name: PGHOST
               value: formbricks-postgresql
             - name: PGUSER
-              value: postgres
+              value: {{ $bundledAdminUsername | quote }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ $postgresSecretName }}
-                  key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey }}
+                  name: {{ $bundledAdminSecret }}
+                  key: {{ $bundledAdminKey }}
+            - name: ADMIN_DATABASE_NAME
+              value: {{ $bundledAdminDatabase | quote }}
             - name: SPICEDB_DATABASE_NAME
               value: spicedb
             - name: SPICEDB_DATABASE_USERNAME
@@ -130,7 +146,10 @@ spec:
                 esac
                 admin_database_url="$ADMIN_DATABASE_URL"
               else
-                admin_database_url=postgres
+                # Bundled mode connects through PGHOST/PGUSER/PGPASSWORD; this is the maintenance
+                # database to attach to, which is not necessarily named `postgres` on an existing
+                # server (ENG-2390).
+                admin_database_url="${ADMIN_DATABASE_NAME:-postgres}"
               fi
               readiness_attempt=1
               until pg_isready --dbname "$admin_database_url"; do

@@ -131,6 +131,26 @@ The administrator URL must explicitly set `sslmode=require`, `sslmode=verify-ca`
 The bootstrap Job validates the TLS mode without logging the URL and passes the URL through unchanged, so other
 connection parameters and certificate settings are preserved.
 
+### Bootstrapping against an existing PostgreSQL without a `postgres` role
+
+The bundled bootstrap connects as the `postgres` superuser the subchart normally creates. An existing
+installation deployed with `postgresql.auth.enablePostgresUser=false` has no such role, so point the Job at a
+role that does hold `CREATEROLE` and `CREATEDB` instead:
+
+```yaml
+authzed:
+  bundledPostgresqlBootstrap:
+    adminUsername: fbadmin
+    adminDatabase: formbricks # the maintenance database to attach to
+    adminPasswordSecretName: existing-pg-admin
+    adminPasswordKey: password
+```
+
+`adminPasswordSecretName` is required whenever `adminUsername` is not the bundled superuser — otherwise the Job
+would silently fall back to the bundled admin password and fail to authenticate. The Job creates the role and
+database only when they are absent, so re-running it against an already initialised database is a no-op, and
+`authzed.bundledPostgresqlBootstrap.enabled=false` remains available for operators who provision both by hand.
+
 Then reference it from the release:
 
 ```yaml
