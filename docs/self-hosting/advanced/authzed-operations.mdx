@@ -256,9 +256,28 @@ procedure.
 
 ## Audit and repair relationships
 
-The command prints one JSON result. The output can contain source record identifiers needed to diagnose drift,
-so store it as sensitive operational data. It never prints tokens, database passwords, raw SDK errors, schema
-text, or raw relationship strings.
+The command prints one JSON result. It never prints tokens, database passwords, raw SDK errors, schema text, or
+raw relationship strings.
+
+It does print Formbricks record identifiers, deliberately: naming the affected records is what makes a drift
+report actionable. Treat the result as sensitive operational data.
+
+- The drift lists (`orphans`, `mismatchedParents`, `unmanaged`) name the records that disagree — between them
+  they can carry organization, user, workspace, team, API-key and feedback-directory IDs.
+- `failures` carries the organization ID of each unit that failed, so even a failed run emits identifiers.
+- `lastOrganizationId` is the resume cursor.
+
+The cursor is an intentional operational identifier, not an oversight. An interrupted sweep resumes with
+`--after-organization-id=<cuid>` taken straight from it, so an opaque token would have to be stored and mapped
+back somewhere to stay useful — and the value is already a subset of what the drift lists report.
+
+<Warning>
+  Handle the result like a database export, not like a log line. Store it in the same place you keep other
+  sensitive operational output, restrict access to operators, and delete it once the drift it describes is
+  resolved — retain it no longer than your incident records. Do not paste it into shared chat, ticket
+  descriptions, or support bundles without redacting the identifier fields above. Redirecting it to a file
+  (`> backfill.json`) rather than leaving it in terminal scrollback keeps it out of shell history and CI logs.
+</Warning>
 
 ### Interpret exit codes
 
