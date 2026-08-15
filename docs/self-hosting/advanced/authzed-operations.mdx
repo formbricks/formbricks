@@ -262,8 +262,11 @@ raw relationship strings.
 It does print Formbricks record identifiers, deliberately: naming the affected records is what makes a drift
 report actionable. Treat the result as sensitive operational data.
 
-- The drift lists (`orphans`, `mismatchedParents`, `unmanaged`) name the records that disagree — between them
-  they can carry organization, user, workspace, team, API-key and feedback-directory IDs.
+- `orphans` and `mismatchedParents` name the records that disagree, carrying organization, user, workspace,
+  team, API-key and feedback-directory IDs.
+- `unmanaged` reports relationships outside the managed vocabulary as an object type, an object ID and a
+  relation name. Those object IDs are not limited to the kinds above — anything else sharing the SpiceDB
+  instance appears here.
 - `failures` carries the organization ID of each unit that failed, so even a failed run emits identifiers.
 - `lastOrganizationId` is the resume cursor.
 
@@ -275,9 +278,14 @@ back somewhere to stay useful — and the value is already a subset of what the 
   Handle the result like a database export, not like a log line. Store it in the same place you keep other
   sensitive operational output, restrict access to operators, and delete it once the drift it describes is
   resolved — retain it no longer than your incident records. Do not paste it into shared chat, ticket
-  descriptions, or support bundles without redacting the identifier fields above. Redirecting it to a file
-  (`> backfill.json`) rather than leaving it in terminal scrollback keeps it out of shell history and CI logs.
+  descriptions, or support bundles without redacting the identifier fields above.
 </Warning>
+
+Redirecting to a file (`> backfill.json`) keeps the result out of terminal scrollback and out of CI logs that
+capture stdout, and lets you restrict access with file permissions. It does not keep identifiers out of your
+shell history, which records the command rather than its output — and the resume invocation is the one to watch
+there, because the cursor is an argument: `--after-organization-id=<cuid>` is recorded verbatim. On a shared or
+session-recorded host, read the cursor from the saved result instead of retyping it.
 
 ### Interpret exit codes
 
