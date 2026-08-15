@@ -12,20 +12,22 @@
 {{- $bundledAdminDatabase := .Values.authzed.bundledPostgresqlBootstrap.adminDatabase | default "postgres" -}}
 {{- $bundledAdminSecret := .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName | default $postgresSecretName -}}
 {{- $bundledAdminKey := .Values.authzed.bundledPostgresqlBootstrap.adminPasswordKey | default .Values.postgresql.auth.secretKeys.adminPasswordKey -}}
-{{- $usesBundledPostgresSuperuser := eq $bundledAdminUsername "postgres" -}}
+{{- $isBundledSuperuserName := eq $bundledAdminUsername "postgres" -}}
+{{- $reliesOnBundledAdminSecret := and $isBundledSuperuserName (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
 {{- /*
-  Only the bundled `postgres` superuser depends on enablePostgresUser. An operator who pointed
-  adminUsername at their own CREATEROLE/CREATEDB role has no reason to also materialise a superuser
-  the subchart was told not to create — requiring it is what forced existing installations to turn
-  bootstrap off entirely (ENG-2390).
+  enablePostgresUser only matters when this Job is relying on the subchart to *create* the superuser
+  and hand over its password — that is, the default name AND the default Secret. Keying off the name
+  alone would refuse an existing server whose privileged role happens to be called `postgres` and
+  whose credentials the operator supplied explicitly, which is the same over-strict refusal that
+  forced installations to disable bootstrap entirely (ENG-2390).
 */ -}}
-{{- if and $bundledBootstrap $usesBundledPostgresSuperuser (not .Values.postgresql.auth.enablePostgresUser) -}}
+{{- if and $bundledBootstrap $reliesOnBundledAdminSecret (not .Values.postgresql.auth.enablePostgresUser) -}}
 {{- fail "Set authzed.bundledPostgresqlBootstrap.adminUsername (with adminPasswordSecretName and adminPasswordKey) to an existing role with CREATEROLE and CREATEDB, or enable postgresql.auth.enablePostgresUser, or disable authzed.bundledPostgresqlBootstrap.enabled" -}}
 {{- end -}}
 {{- if and $bundledBootstrap (not $bundledAdminKey) -}}
 {{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordKey (or postgresql.auth.secretKeys.adminPasswordKey) is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
 {{- end -}}
-{{- if and $bundledBootstrap (not $usesBundledPostgresSuperuser) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
+{{- if and $bundledBootstrap (not $isBundledSuperuserName) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
 {{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordSecretName is required when adminUsername is not the bundled postgres superuser" -}}
 {{- end -}}
 {{- $bootstrap := ternary .Values.authzed.bundledPostgresqlBootstrap .Values.authzed.externalPostgresqlBootstrap $bundledBootstrap -}}

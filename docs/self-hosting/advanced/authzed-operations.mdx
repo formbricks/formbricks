@@ -130,7 +130,9 @@ Production deployments should use a dedicated PostgreSQL database and role. Prov
 ### Bootstrap the SpiceDB role and database
 
 A short-lived Job creates the dedicated `spicedb` role and database before SpiceDB starts. It creates each only
-when it is absent, so re-running it against an already initialised database changes nothing.
+when it is absent, so re-running it against an already initialised database is safe — but not inert: the role's
+password is reconciled to the chart's Secret on every run. Rotate that password outside Helm and the next
+upgrade will set it back, so update the Secret alongside it.
 
 By default it connects as the `postgres` superuser the bundled PostgreSQL subchart creates. **An existing
 PostgreSQL installed with `postgresql.auth.enablePostgresUser=false` has no such role**, and the upgrade fails

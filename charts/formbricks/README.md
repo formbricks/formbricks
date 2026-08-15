@@ -147,8 +147,11 @@ authzed:
 ```
 
 `adminPasswordSecretName` is required whenever `adminUsername` is not the bundled superuser — otherwise the Job
-would silently fall back to the bundled admin password and fail to authenticate. The Job creates the role and
-database only when they are absent, so re-running it against an already initialised database is a no-op, and
+would silently fall back to the bundled admin password and fail to authenticate.
+
+Re-running is safe but not inert: the role and the database are created only when absent, while the `spicedb`
+role's password is reconciled to the chart's Secret on **every** run. If you rotate that password outside Helm,
+update the Secret too, or the next upgrade will set it back.
 `authzed.bundledPostgresqlBootstrap.enabled=false` remains available for operators who provision both by hand.
 
 Then reference it from the release:

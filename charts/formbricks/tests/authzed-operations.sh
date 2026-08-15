@@ -162,6 +162,15 @@ grep --quiet 'value: "fbadmin"' <<<"${existing_admin_bootstrap}"
 grep --quiet 'value: "formbricks"' <<<"${existing_admin_bootstrap}"
 grep --quiet 'name: existing-pg-admin' <<<"${existing_admin_bootstrap}"
 
+# An existing server whose privileged role is called `postgres` is a configured administrator, not the
+# bundled superuser — supplying its Secret explicitly must be accepted even with enablePostgresUser=false.
+explicit_postgres_bootstrap="$(render_bootstrap authzed-bootstrap-explicit-postgres \
+  --set postgresql.auth.enablePostgresUser=false \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordSecretName=existing-pg-admin \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordKey=password)"
+grep --quiet 'value: "postgres"' <<<"${explicit_postgres_bootstrap}"
+grep --quiet 'name: existing-pg-admin' <<<"${explicit_postgres_bootstrap}"
+
 # A custom admin role with no Secret would silently fall back to the bundled superuser's password.
 if render_bootstrap authzed-bootstrap-admin-without-secret \
   --set authzed.bundledPostgresqlBootstrap.adminUsername=fbadmin >/dev/null 2>&1; then
