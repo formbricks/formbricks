@@ -129,7 +129,6 @@ type TOrganizationFeedbackDirectory = Readonly<{
     Readonly<{ workspace: Readonly<{ organizationId: string }>; workspaceId: string }>
   >;
 }>;
-
 const partitionByOrganization = <TGrant>(
   grants: ReadonlyArray<TGrant>,
   organizationId: string | null,
@@ -243,7 +242,6 @@ const getFeedbackDirectorySource = (
 
   return { assignments, invalidAssignments, relationships };
 };
-
 /**
  * One keyset page of organization IDs.
  *

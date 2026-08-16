@@ -431,7 +431,8 @@ export const findMismatchedPermissionRelations = (
     ]);
   }
 
-  return mismatches.sort(([left], [right]) => byCodeUnit(left, right)).map(([, mismatch]) => mismatch);
+  mismatches.sort(([left], [right]) => byCodeUnit(left, right));
+  return mismatches.map(([, mismatch]) => mismatch);
 };
 
 const toRelationshipRef = (relationship: TAuthzedRelationship): TAuthzedRelationshipRef => ({
