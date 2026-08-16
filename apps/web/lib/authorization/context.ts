@@ -11,7 +11,7 @@ import { recordAuthorizationChecksPerRequest } from "./metrics";
 /**
  * `page` is the server-rendered route surface (React Server Components), added for ENG-2388.
  *
- * Unlike the other five, it is not established at a single request boundary: Next.js gives no RSC
+ * Unlike every other surface, it is not established at a single request boundary: Next.js gives no RSC
  * equivalent of the action-client or API wrapper, and a layout's render and its page's render are
  * separate async contexts. It is therefore opened at the authorization choke points every product
  * route already funnels through. `withAuthorizationSurface` returns early when a surface is already
