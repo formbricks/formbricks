@@ -162,6 +162,16 @@ grep --quiet 'value: "fbadmin"' <<<"${existing_admin_bootstrap}"
 grep --quiet 'value: "formbricks"' <<<"${existing_admin_bootstrap}"
 grep --quiet 'name: existing-pg-admin' <<<"${existing_admin_bootstrap}"
 
+# Matti's finding on #8875: the key needs its own guard. `$bundledAdminKey` falls back to the
+# subchart's non-empty default, so "is it set at all" can never fail for a custom role, and forgetting
+# the key silently looks up the subchart's key name inside the operator's own Secret.
+if render_bootstrap authzed-bootstrap-admin-without-key \
+  --set authzed.bundledPostgresqlBootstrap.adminUsername=fbadmin \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordSecretName=existing-pg-admin >/dev/null 2>&1; then
+  printf '%s\n' "Bootstrap must require adminPasswordKey when adminUsername is overridden." >&2
+  exit 1
+fi
+
 # An existing server whose privileged role is called `postgres` is a configured administrator, not the
 # bundled superuser — supplying its Secret explicitly must be accepted even with enablePostgresUser=false.
 explicit_postgres_bootstrap="$(render_bootstrap authzed-bootstrap-explicit-postgres \

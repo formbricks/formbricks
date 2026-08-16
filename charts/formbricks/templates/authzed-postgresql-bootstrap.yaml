@@ -30,6 +30,17 @@
 {{- if and $bundledBootstrap (not $isBundledSuperuserName) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
 {{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordSecretName is required when adminUsername is not the bundled postgres superuser" -}}
 {{- end -}}
+{{- /*
+  The key needs its own explicit requirement, not just the non-empty check above. `$bundledAdminKey`
+  falls back to `postgresql.auth.secretKeys.adminPasswordKey`, which the subchart defaults to
+  `POSTGRES_ADMIN_PASSWORD` — never empty — so that check cannot fire for a custom role. Without this,
+  setting adminUsername and adminPasswordSecretName but forgetting the key renders happily and looks
+  up the *subchart's* key name inside the *operator's own* Secret, which fails in-cluster as
+  CreateContainerConfigError rather than at render. Fail-fast is the whole point of these guards.
+*/ -}}
+{{- if and $bundledBootstrap (not $isBundledSuperuserName) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordKey) -}}
+{{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordKey is required when adminUsername is not the bundled postgres superuser" -}}
+{{- end -}}
 {{- $bootstrap := ternary .Values.authzed.bundledPostgresqlBootstrap .Values.authzed.externalPostgresqlBootstrap $bundledBootstrap -}}
 apiVersion: batch/v1
 kind: Job
@@ -150,8 +161,10 @@ spec:
               else
                 # Bundled mode connects through PGHOST/PGUSER/PGPASSWORD; this is the maintenance
                 # database to attach to, which is not necessarily named `postgres` on an existing
-                # server (ENG-2390).
-                admin_database_url="${ADMIN_DATABASE_NAME:-postgres}"
+                # server (ENG-2390). No shell-level default: this branch only runs for bundled
+                # bootstrap, where the template always sets ADMIN_DATABASE_NAME, so a second
+                # fallback here would just be a competing source of truth for the same default.
+                admin_database_url="$ADMIN_DATABASE_NAME"
               fi
               readiness_attempt=1
               until pg_isready --dbname "$admin_database_url"; do
