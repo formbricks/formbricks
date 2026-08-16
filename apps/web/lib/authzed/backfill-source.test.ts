@@ -88,7 +88,10 @@ describe("readOrganizationSource", () => {
     await readOrganizationSource(ORGANIZATION_ID);
 
     expect(prisma.membership.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ select: { userId: true }, where: { organizationId: ORGANIZATION_ID } })
+      expect.objectContaining({
+        select: { role: true, userId: true },
+        where: { organizationId: ORGANIZATION_ID },
+      })
     );
     expect(prisma.teamUser.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { team: { organizationId: ORGANIZATION_ID } } })
@@ -108,21 +111,51 @@ describe("readOrganizationSource", () => {
   });
 
   test("collects every target kind owned by the organization", async () => {
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([{ userId: "user-1" }] as never);
-    vi.mocked(prisma.team.findMany).mockResolvedValue([{ id: "team-1" }] as never);
-    vi.mocked(prisma.workspace.findMany).mockResolvedValue([{ id: "ws-1" }] as never);
-    vi.mocked(prisma.apiKey.findMany).mockResolvedValue([{ id: "key-1" }] as never);
-    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([{ teamId: "team-1", userId: "user-1" }] as never);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([{ role: "owner", userId: "user-1" }] as never);
+    vi.mocked(prisma.team.findMany).mockResolvedValue([
+      { id: "team-1", organizationId: ORGANIZATION_ID },
+    ] as never);
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      { id: "ws-1", organizationId: ORGANIZATION_ID },
+    ] as never);
+    vi.mocked(prisma.apiKey.findMany).mockResolvedValue([
+      {
+        id: "key-1",
+        organizationAccess: { accessControl: { read: true, write: true } },
+        organizationId: ORGANIZATION_ID,
+      },
+    ] as never);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([
+      { role: "admin", teamId: "team-1", userId: "user-1" },
+    ] as never);
     vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([
-      { team: { organizationId: ORGANIZATION_ID }, teamId: "team-1", workspaceId: "ws-1" },
+      {
+        permission: "read",
+        team: { organizationId: ORGANIZATION_ID },
+        teamId: "team-1",
+        workspaceId: "ws-1",
+      },
     ] as never);
     vi.mocked(prisma.apiKeyWorkspace.findMany).mockResolvedValue([
-      { apiKeyId: "key-1", workspace: { organizationId: ORGANIZATION_ID }, workspaceId: "ws-1" },
+      {
+        apiKeyId: "key-1",
+        permission: "read",
+        workspace: { organizationId: ORGANIZATION_ID },
+        workspaceId: "ws-1",
+      },
     ] as never);
 
     await expect(readOrganizationSource(ORGANIZATION_ID)).resolves.toEqual({
       apiKeyIds: ["key-1"],
       apiKeyWorkspaceGrants: [{ apiKeyId: "key-1", workspaceId: "ws-1" }],
+      expectedRelationships: expect.arrayContaining([
+        expect.objectContaining({ relation: "owner" }),
+        expect.objectContaining({ relation: "admin" }),
+        expect.objectContaining({ relation: "reader_team" }),
+        expect.objectContaining({ relation: "reader" }),
+        expect.objectContaining({ relation: "api_key_reader" }),
+        expect.objectContaining({ relation: "api_key_writer" }),
+      ]),
       invalidApiKeyWorkspaceGrants: [],
       invalidWorkspaceTeamGrants: [],
       memberships: [{ organizationId: ORGANIZATION_ID, userId: "user-1" }],
@@ -135,7 +168,12 @@ describe("readOrganizationSource", () => {
 
   test("separates a cross-organization workspace-team grant instead of projecting it", async () => {
     vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([
-      { team: { organizationId: ORGANIZATION_ID }, teamId: "own-team", workspaceId: "ws-1" },
+      {
+        permission: "read",
+        team: { organizationId: ORGANIZATION_ID },
+        teamId: "own-team",
+        workspaceId: "ws-1",
+      },
       { team: { organizationId: "other-org" }, teamId: "foreign-team", workspaceId: "ws-1" },
     ] as never);
 
@@ -152,7 +190,12 @@ describe("readOrganizationSource", () => {
     // workspace is outside this unit's observation, so projecting the grant would leave the unit
     // reporting a missing record forever — it can never be seen and so never converges.
     vi.mocked(prisma.apiKeyWorkspace.findMany).mockResolvedValue([
-      { apiKeyId: "key-1", workspace: { organizationId: ORGANIZATION_ID }, workspaceId: "own-ws" },
+      {
+        apiKeyId: "key-1",
+        permission: "read",
+        workspace: { organizationId: ORGANIZATION_ID },
+        workspaceId: "own-ws",
+      },
       { apiKeyId: "key-1", workspace: { organizationId: "other-org" }, workspaceId: "foreign-ws" },
     ] as never);
 
@@ -167,11 +210,20 @@ describe("readOrganizationSource", () => {
       organizationId: ORGANIZATION_ID,
     } as never);
     vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([
-      { team: { organizationId: ORGANIZATION_ID }, teamId: "team-1", workspaceId: "ws-1" },
+      {
+        permission: "read",
+        team: { organizationId: ORGANIZATION_ID },
+        teamId: "team-1",
+        workspaceId: "ws-1",
+      },
     ] as never);
 
     await expect(readWorkspaceSource("ws-1")).resolves.toEqual({
       apiKeyWorkspaceGrants: [],
+      expectedRelationships: expect.arrayContaining([
+        expect.objectContaining({ relation: "organization" }),
+        expect.objectContaining({ relation: "reader_team" }),
+      ]),
       invalidApiKeyWorkspaceGrants: [],
       invalidWorkspaceTeamGrants: [],
       organizationId: ORGANIZATION_ID,
@@ -188,7 +240,12 @@ describe("readOrganizationSource", () => {
       organizationId: ORGANIZATION_ID,
     } as never);
     vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([
-      { team: { organizationId: ORGANIZATION_ID }, teamId: "own-team", workspaceId: "ws-1" },
+      {
+        permission: "read",
+        team: { organizationId: ORGANIZATION_ID },
+        teamId: "own-team",
+        workspaceId: "ws-1",
+      },
       { team: { organizationId: "other-org" }, teamId: "foreign-team", workspaceId: "ws-1" },
     ] as never);
     vi.mocked(prisma.apiKeyWorkspace.findMany).mockResolvedValue([
@@ -218,6 +275,7 @@ describe("readOrganizationSource", () => {
     expect(source).toEqual({
       apiKeyIds: [],
       apiKeyWorkspaceGrants: [],
+      expectedRelationships: [],
       invalidApiKeyWorkspaceGrants: [],
       invalidWorkspaceTeamGrants: [],
       memberships: [],

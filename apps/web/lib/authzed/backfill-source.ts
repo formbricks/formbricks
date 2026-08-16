@@ -1,7 +1,16 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { TAuthzedParentEdge, TAuthzedSourceRef } from "./backfill-diff";
+import type { TAuthzedRelationship } from "./client";
 import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE } from "./constants";
+import {
+  ORGANIZATION_ACCESS_RELATIONS,
+  ORGANIZATION_RELATIONS,
+  TEAM_RELATIONS,
+  WORKSPACE_API_KEY_RELATIONS,
+  WORKSPACE_TEAM_RELATIONS,
+  normalizeOrganizationAccess,
+} from "./relationship-map";
 
 /**
  * PostgreSQL enumeration for relationship backfill and repair.
@@ -36,6 +45,8 @@ export type TAuthzedApiKeyWorkspaceTarget = Readonly<{ apiKeyId: string; workspa
 export type TAuthzedOrganizationSource = Readonly<{
   apiKeyIds: ReadonlyArray<string>;
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  /** Exact managed relationship set derived from the same maps as the projectors. */
+  expectedRelationships: ReadonlyArray<TAuthzedRelationship>;
   /**
    * API-key workspace grants whose key and workspace belong to different organizations.
    *
@@ -59,6 +70,8 @@ export type TAuthzedOrganizationSource = Readonly<{
 /** The grants attached to one workspace, for the narrower workspace repair scope. */
 export type TAuthzedWorkspaceSource = Readonly<{
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  /** Exact managed relationship set for this workspace and its valid grants. */
+  expectedRelationships: ReadonlyArray<TAuthzedRelationship>;
   /**
    * Grants whose principal belongs to a different organization than the workspace.
    *
@@ -81,6 +94,80 @@ export type TAuthzedWorkspaceSource = Readonly<{
   workspaceExists: boolean;
   workspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
 }>;
+
+type TOrganizationWorkspaceTeamGrant = Readonly<{
+  permission: keyof typeof WORKSPACE_TEAM_RELATIONS;
+  team: Readonly<{ organizationId: string }>;
+  teamId: string;
+  workspaceId: string;
+}>;
+
+type TOrganizationApiKeyWorkspaceGrant = Readonly<{
+  apiKeyId: string;
+  permission: keyof typeof WORKSPACE_API_KEY_RELATIONS;
+  workspace: Readonly<{ organizationId: string }>;
+  workspaceId: string;
+}>;
+
+const partitionByOrganization = <TGrant>(
+  grants: ReadonlyArray<TGrant>,
+  organizationId: string | null,
+  getOrganizationId: (grant: TGrant) => string
+): Readonly<{ invalid: TGrant[]; valid: TGrant[] }> => {
+  if (organizationId === null) {
+    return { invalid: [], valid: [...grants] };
+  }
+
+  const valid: TGrant[] = [];
+  const invalid: TGrant[] = [];
+  for (const grant of grants) {
+    (getOrganizationId(grant) === organizationId ? valid : invalid).push(grant);
+  }
+
+  return { invalid, valid };
+};
+
+const toWorkspaceTeamTarget = ({
+  teamId,
+  workspaceId,
+}: Pick<TOrganizationWorkspaceTeamGrant, "teamId" | "workspaceId">): TAuthzedWorkspaceTeamTarget => ({
+  teamId,
+  workspaceId,
+});
+
+const toApiKeyWorkspaceTarget = ({
+  apiKeyId,
+  workspaceId,
+}: Pick<TOrganizationApiKeyWorkspaceGrant, "apiKeyId" | "workspaceId">): TAuthzedApiKeyWorkspaceTarget => ({
+  apiKeyId,
+  workspaceId,
+});
+
+const getApiKeyRelationships = (
+  apiKey: Readonly<{ id: string; organizationAccess: unknown; organizationId: string }>
+): ReadonlyArray<TAuthzedRelationship> => {
+  const relationships: TAuthzedRelationship[] = [
+    {
+      relation: "organization",
+      resource: { objectId: apiKey.id, objectType: "api_key" },
+      subject: { objectId: apiKey.organizationId, objectType: "organization" },
+    },
+  ];
+  const access = normalizeOrganizationAccess(apiKey.organizationAccess);
+  for (const permission of Object.keys(ORGANIZATION_ACCESS_RELATIONS) as ReadonlyArray<
+    keyof typeof ORGANIZATION_ACCESS_RELATIONS
+  >) {
+    if (access[permission]) {
+      relationships.push({
+        relation: ORGANIZATION_ACCESS_RELATIONS[permission],
+        resource: { objectId: apiKey.organizationId, objectType: "organization" },
+        subject: { objectId: apiKey.id, objectType: "api_key" },
+      });
+    }
+  }
+
+  return relationships;
+};
 
 /**
  * One keyset page of organization IDs.
@@ -121,12 +208,22 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
       where: { workspaceId },
       // The principal's organization is read so a cross-organization grant can be partitioned out
       // rather than projected, matching what the organization scope already does.
-      select: { team: { select: { organizationId: true } }, teamId: true, workspaceId: true },
+      select: {
+        permission: true,
+        team: { select: { organizationId: true } },
+        teamId: true,
+        workspaceId: true,
+      },
       orderBy: { teamId: "asc" },
     }),
     prisma.apiKeyWorkspace.findMany({
       where: { workspaceId },
-      select: { apiKey: { select: { organizationId: true } }, apiKeyId: true, workspaceId: true },
+      select: {
+        apiKey: { select: { organizationId: true } },
+        apiKeyId: true,
+        permission: true,
+        workspaceId: true,
+      },
       orderBy: { apiKeyId: "asc" },
     }),
   ]);
@@ -135,43 +232,50 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
 
   // Only decidable when the workspace still has a row. With no row there is no organization to compare
   // against, and its grants are stale by construction — the prune path is what deals with them.
-  const partition = <TGrant>(
-    grants: ReadonlyArray<TGrant>,
-    principalOrganizationId: (grant: TGrant) => string
-  ): Readonly<{ invalid: TGrant[]; valid: TGrant[] }> => {
-    if (organizationId === null) {
-      return { invalid: [], valid: [...grants] };
-    }
+  const teamGrants = partitionByOrganization(
+    workspaceTeams,
+    organizationId,
+    (grant) => grant.team.organizationId
+  );
+  const keyGrants = partitionByOrganization(
+    apiKeyWorkspaces,
+    organizationId,
+    (grant) => grant.apiKey.organizationId
+  );
 
-    const valid: TGrant[] = [];
-    const invalid: TGrant[] = [];
-    for (const grant of grants) {
-      (principalOrganizationId(grant) === organizationId ? valid : invalid).push(grant);
-    }
-
-    return { invalid, valid };
-  };
-
-  const teamGrants = partition(workspaceTeams, (grant) => grant.team.organizationId);
-  const keyGrants = partition(apiKeyWorkspaces, (grant) => grant.apiKey.organizationId);
-  const toTeamTarget = ({ teamId }: (typeof workspaceTeams)[number]): TAuthzedWorkspaceTeamTarget => ({
-    teamId,
-    workspaceId,
-  });
-  const toKeyTarget = ({ apiKeyId }: (typeof apiKeyWorkspaces)[number]): TAuthzedApiKeyWorkspaceTarget => ({
-    apiKeyId,
-    workspaceId,
-  });
+  const expectedRelationships: TAuthzedRelationship[] = [];
+  if (organizationId !== null) {
+    expectedRelationships.push({
+      relation: "organization",
+      resource: { objectId: workspaceId, objectType: "workspace" },
+      subject: { objectId: organizationId, objectType: "organization" },
+    });
+  }
+  for (const grant of teamGrants.valid) {
+    expectedRelationships.push({
+      relation: WORKSPACE_TEAM_RELATIONS[grant.permission],
+      resource: { objectId: workspaceId, objectType: "workspace" },
+      subject: { objectId: grant.teamId, objectType: "team", relation: "member" },
+    });
+  }
+  for (const grant of keyGrants.valid) {
+    expectedRelationships.push({
+      relation: WORKSPACE_API_KEY_RELATIONS[grant.permission],
+      resource: { objectId: workspaceId, objectType: "workspace" },
+      subject: { objectId: grant.apiKeyId, objectType: "api_key" },
+    });
+  }
 
   return {
-    apiKeyWorkspaceGrants: keyGrants.valid.map(toKeyTarget),
-    invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toKeyTarget),
-    invalidWorkspaceTeamGrants: teamGrants.invalid.map(toTeamTarget),
+    apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
+    expectedRelationships,
+    invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toApiKeyWorkspaceTarget),
+    invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
     organizationId,
     // Truthiness rather than `!== null`, so a row is required to claim existence rather than merely the
     // absence of one particular falsy value.
     workspaceExists: Boolean(workspace),
-    workspaceTeamGrants: teamGrants.valid.map(toTeamTarget),
+    workspaceTeamGrants: teamGrants.valid.map(toWorkspaceTeamTarget),
   };
 };
 
@@ -181,34 +285,39 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     await Promise.all([
       prisma.membership.findMany({
         where: { organizationId },
-        select: { userId: true },
+        select: { role: true, userId: true },
         orderBy: { userId: "asc" },
       }),
       prisma.team.findMany({
         where: { organizationId },
-        select: { id: true },
+        select: { id: true, organizationId: true },
         orderBy: { id: "asc" },
       }),
       prisma.workspace.findMany({
         where: { organizationId },
-        select: { id: true },
+        select: { id: true, organizationId: true },
         orderBy: { id: "asc" },
       }),
       prisma.apiKey.findMany({
         where: { organizationId },
-        select: { id: true },
+        select: { id: true, organizationAccess: true, organizationId: true },
         orderBy: { id: "asc" },
       }),
       prisma.teamUser.findMany({
         where: { team: { organizationId } },
-        select: { teamId: true, userId: true },
+        select: { role: true, teamId: true, userId: true },
         orderBy: [{ teamId: "asc" }, { userId: "asc" }],
       }),
       prisma.workspaceTeam.findMany({
         where: { workspace: { organizationId } },
         // The team's organization is read so a cross-organization grant can be detected rather than
         // silently projected as if the unit were closed.
-        select: { team: { select: { organizationId: true } }, teamId: true, workspaceId: true },
+        select: {
+          permission: true,
+          team: { select: { organizationId: true } },
+          teamId: true,
+          workspaceId: true,
+        },
         orderBy: [{ workspaceId: "asc" }, { teamId: "asc" }],
       }),
       prisma.apiKeyWorkspace.findMany({
@@ -217,6 +326,7 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
         // organizations — the same check `workspaceTeam` above performs, and for the same reason.
         select: {
           apiKeyId: true,
+          permission: true,
           workspace: { select: { organizationId: true } },
           workspaceId: true,
         },
@@ -224,43 +334,67 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       }),
     ]);
 
-  const workspaceTeamGrants: TAuthzedWorkspaceTeamTarget[] = [];
-  const invalidWorkspaceTeamGrants: TAuthzedWorkspaceTeamTarget[] = [];
-  for (const grant of workspaceTeams) {
-    const target = { teamId: grant.teamId, workspaceId: grant.workspaceId };
-    if (grant.team.organizationId === organizationId) {
-      workspaceTeamGrants.push(target);
-    } else {
-      invalidWorkspaceTeamGrants.push(target);
-    }
-  }
-
+  const teamGrants = partitionByOrganization(
+    workspaceTeams,
+    organizationId,
+    (grant) => grant.team.organizationId
+  );
   // A grant whose workspace belongs to another organization is unreachable from this one: the
   // observation only reads workspaces this organization owns, so an expected relationship naming a
   // foreign workspace could never be seen and the unit would report drift that no run can converge.
   // Excluded from the targets for the same reason as the workspace-team case — never projected, never
   // pruned, only reported.
-  const apiKeyWorkspaceGrants: TAuthzedApiKeyWorkspaceTarget[] = [];
-  const invalidApiKeyWorkspaceGrants: TAuthzedApiKeyWorkspaceTarget[] = [];
-  for (const grant of apiKeyWorkspaces) {
-    const target = { apiKeyId: grant.apiKeyId, workspaceId: grant.workspaceId };
-    if (grant.workspace.organizationId === organizationId) {
-      apiKeyWorkspaceGrants.push(target);
-    } else {
-      invalidApiKeyWorkspaceGrants.push(target);
-    }
-  }
+  const keyGrants = partitionByOrganization(
+    apiKeyWorkspaces,
+    organizationId,
+    (grant) => grant.workspace.organizationId
+  );
+
+  const expectedRelationships: TAuthzedRelationship[] = [
+    ...memberships.map(({ role, userId }) => ({
+      relation: ORGANIZATION_RELATIONS[role],
+      resource: { objectId: organizationId, objectType: "organization" },
+      subject: { objectId: userId, objectType: "user" },
+    })),
+    ...teams.map(({ id, organizationId: teamOrganizationId }) => ({
+      relation: "organization",
+      resource: { objectId: id, objectType: "team" },
+      subject: { objectId: teamOrganizationId, objectType: "organization" },
+    })),
+    ...teamMemberships.map(({ role, teamId, userId }) => ({
+      relation: TEAM_RELATIONS[role],
+      resource: { objectId: teamId, objectType: "team" },
+      subject: { objectId: userId, objectType: "user" },
+    })),
+    ...workspaces.map(({ id, organizationId: workspaceOrganizationId }) => ({
+      relation: "organization",
+      resource: { objectId: id, objectType: "workspace" },
+      subject: { objectId: workspaceOrganizationId, objectType: "organization" },
+    })),
+    ...teamGrants.valid.map(({ permission, teamId, workspaceId }) => ({
+      relation: WORKSPACE_TEAM_RELATIONS[permission],
+      resource: { objectId: workspaceId, objectType: "workspace" },
+      subject: { objectId: teamId, objectType: "team", relation: "member" },
+    })),
+    ...apiKeys.flatMap(getApiKeyRelationships),
+    ...keyGrants.valid.map(({ apiKeyId, permission, workspaceId }) => ({
+      relation: WORKSPACE_API_KEY_RELATIONS[permission],
+      resource: { objectId: workspaceId, objectType: "workspace" },
+      subject: { objectId: apiKeyId, objectType: "api_key" },
+    })),
+  ];
 
   return {
     apiKeyIds: apiKeys.map(({ id }) => id),
-    apiKeyWorkspaceGrants,
-    invalidApiKeyWorkspaceGrants,
-    invalidWorkspaceTeamGrants,
+    apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
+    expectedRelationships,
+    invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toApiKeyWorkspaceTarget),
+    invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
     memberships: memberships.map(({ userId }) => ({ organizationId, userId })),
     teamIds: teams.map(({ id }) => id),
-    teamMemberships,
+    teamMemberships: teamMemberships.map(({ teamId, userId }) => ({ teamId, userId })),
     workspaceIds: workspaces.map(({ id }) => id),
-    workspaceTeamGrants,
+    workspaceTeamGrants: teamGrants.valid.map(toWorkspaceTeamTarget),
   };
 };
 

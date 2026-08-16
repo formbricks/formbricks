@@ -403,9 +403,12 @@ Drift is reported in both directions:
 
 - `missing` — records PostgreSQL holds that SpiceDB has no relationship for. This
   is what an empty or stale SpiceDB looks like, so a report that could not see it
-  would be worthless. Note this compares _records_, not relations: a membership
-  stored as `owner` in PostgreSQL but `member` in SpiceDB counts as present.
-  Applying converges the relation regardless, by writing the current value.
+  would be worthless.
+- `mismatchedPermissions` — an existing source record whose exact role, grant, or
+  independent access-flag relationship set differs from PostgreSQL. This catches
+  stale privilege upgrades such as a `manager_team` relationship for a source row
+  that now grants only `read`. Applying reconciliation writes the current value;
+  a follow-up dry run confirms the mismatch is gone.
 - `orphaned` — relationships whose source record is gone.
 - `invalid` — source rows whose principal and resource belong to different
   organizations. Never projected and never pruned, in either scope.

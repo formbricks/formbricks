@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  findMismatchedPermissionRelations,
   getManagedResourceTypes,
   isUnprojectedResourceType,
   summarizeObservation,
@@ -243,7 +244,13 @@ describe("summarizeObservation", () => {
       tuple("response", "resp-1", "survey", "survey", "survey-1"),
     ]);
 
-    expect(summary).toEqual({ ignored: 3, parentEdges: [], sourceRefs: [], unmanaged: [] });
+    expect(summary).toEqual({
+      ignored: 3,
+      managedRelationships: [],
+      parentEdges: [],
+      sourceRefs: [],
+      unmanaged: [],
+    });
   });
 
   test("reports unrecognized relationships without naming a record for them", () => {
@@ -276,6 +283,60 @@ describe("summarizeObservation", () => {
   });
 
   test("returns an empty summary for an empty observation", () => {
-    expect(summarizeObservation([])).toEqual({ ignored: 0, parentEdges: [], sourceRefs: [], unmanaged: [] });
+    expect(summarizeObservation([])).toEqual({
+      ignored: 0,
+      managedRelationships: [],
+      parentEdges: [],
+      sourceRefs: [],
+      unmanaged: [],
+    });
+  });
+});
+
+describe("findMismatchedPermissionRelations", () => {
+  test("reports a stale higher workspace-team permission for an existing source pair", () => {
+    const expected = [tuple("workspace", "ws-1", "reader_team", "team", "team-1", "member")];
+    const observed = [tuple("workspace", "ws-1", "manager_team", "team", "team-1", "member")];
+
+    expect(findMismatchedPermissionRelations(expected, observed)).toEqual([
+      {
+        expectedRelations: ["reader_team"],
+        observedRelations: ["manager_team"],
+        source: { kind: "workspaceTeamGrant", teamId: "team-1", workspaceId: "ws-1" },
+      },
+    ]);
+  });
+
+  test("compares independent API-key organization flags as a complete set", () => {
+    const parent = tuple("api_key", "key-1", "organization", "organization", "org-1");
+    const expected = [parent, tuple("organization", "org-1", "api_key_reader", "api_key", "key-1")];
+    const observed = [
+      parent,
+      tuple("organization", "org-1", "api_key_reader", "api_key", "key-1"),
+      tuple("organization", "org-1", "api_key_writer", "api_key", "key-1"),
+    ];
+
+    expect(findMismatchedPermissionRelations(expected, observed)).toEqual([
+      {
+        expectedRelations: ["api_key_reader"],
+        observedRelations: ["api_key_reader", "api_key_writer"],
+        source: { apiKeyId: "key-1", kind: "apiKey" },
+      },
+    ]);
+  });
+
+  test("leaves wholly absent sources to the missing-source classification", () => {
+    expect(
+      findMismatchedPermissionRelations([tuple("organization", "org-1", "member", "user", "user-1")], [])
+    ).toEqual([]);
+  });
+
+  test("does not classify parent edges as permission mismatches", () => {
+    expect(
+      findMismatchedPermissionRelations(
+        [tuple("workspace", "ws-1", "organization", "organization", "org-1")],
+        [tuple("workspace", "ws-1", "organization", "organization", "org-2")]
+      )
+    ).toEqual([]);
   });
 });

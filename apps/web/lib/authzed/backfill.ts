@@ -3,7 +3,9 @@ import type { TApiKeyProjectionTargets } from "./api-key";
 import {
   type TAuthzedObservationSummary,
   type TAuthzedParentEdge,
+  type TAuthzedPermissionMismatch,
   type TAuthzedSourceRef,
+  findMismatchedPermissionRelations,
   findUnprojectedSourceRefs,
   getManagedResourceTypes,
   sourceRefKey,
@@ -136,6 +138,8 @@ export type TAuthzedBackfillCounters = Readonly<{
   invalid: number;
   /** Resources attached to an organization PostgreSQL says does not own them. Never pruned. */
   mismatchedParents: number;
+  /** Existing source records whose exact projected role or grant relation differs from PostgreSQL. */
+  mismatchedPermissions: number;
   /** Source records PostgreSQL holds that SpiceDB has no relationship for. */
   missing: number;
   orphaned: number;
@@ -188,6 +192,8 @@ export type TAuthzedBackfillResult = Readonly<{
    * for a human — see the runbook.
    */
   mismatchedParents: ReadonlyArray<TAuthzedParentEdge>;
+  /** Exact role/grant relation mismatches. Applying reconciliation repairs these deterministically. */
+  mismatchedPermissions: ReadonlyArray<TAuthzedPermissionMismatch>;
   mode: "apply" | "dry_run";
   orphanScope: "all" | "known_resources";
   orphans: ReadonlyArray<TAuthzedSourceRef>;
@@ -482,6 +488,8 @@ type TRunState = {
   lastOrganizationId: string | null;
   mismatchedParentCount: number;
   readonly mismatchedParents: TAuthzedParentEdge[];
+  mismatchedPermissionCount: number;
+  readonly mismatchedPermissions: TAuthzedPermissionMismatch[];
   missingCount: number;
   orphaned: number;
   readonly orphans: TAuthzedSourceRef[];
@@ -503,6 +511,8 @@ const createRunState = (): TRunState => ({
   lastOrganizationId: null,
   mismatchedParentCount: 0,
   mismatchedParents: [],
+  mismatchedPermissionCount: 0,
+  mismatchedPermissions: [],
   missingCount: 0,
   orphaned: 0,
   orphans: [],
@@ -561,6 +571,14 @@ const recordProjectionFailure = (
 const recordMismatchedParents = (state: TRunState, edges: ReadonlyArray<TAuthzedParentEdge>): void => {
   state.mismatchedParentCount += edges.length;
   pushCapped(state.mismatchedParents, edges);
+};
+
+const recordMismatchedPermissions = (
+  state: TRunState,
+  mismatches: ReadonlyArray<TAuthzedPermissionMismatch>
+): void => {
+  state.mismatchedPermissionCount += mismatches.length;
+  pushCapped(state.mismatchedPermissions, mismatches);
 };
 
 /**
@@ -639,6 +657,10 @@ const observeOrganization = async (
   if (ctx.mode === "dry_run") {
     // The direction an applying run converges by writing, and the only one a report can speak to.
     state.missingCount += findUnprojectedSourceRefs(toSourceRefs(source), summary.sourceRefs).length;
+    recordMismatchedPermissions(
+      state,
+      findMismatchedPermissionRelations(source.expectedRelationships, summary.managedRelationships)
+    );
   }
 
   if (!ctx.ownsOrphanAccounting) {
@@ -857,6 +879,10 @@ const observeWorkspace = async (
       toWorkspaceSourceRefs(source, workspaceId),
       summary.sourceRefs
     ).length;
+    recordMismatchedPermissions(
+      ctx.state,
+      findMismatchedPermissionRelations(source.expectedRelationships, summary.managedRelationships)
+    );
   }
 
   return recordScopedOrphans(ctx, summary);
@@ -1101,6 +1127,7 @@ const toRunStatus = (state: TRunState): TAuthzedBackfillResult["status"] => {
     state.orphaned > state.pruned ||
     state.missingCount > 0 ||
     state.mismatchedParentCount > 0 ||
+    state.mismatchedPermissionCount > 0 ||
     state.invalid > 0 ||
     state.unmanagedCount > 0 ||
     state.truncated;
@@ -1140,6 +1167,7 @@ export const runAuthzedBackfill = async (
       ignored: state.ignored,
       invalid: state.invalid,
       mismatchedParents: state.mismatchedParentCount,
+      mismatchedPermissions: state.mismatchedPermissionCount,
       missing: state.missingCount,
       orphaned: state.orphaned,
       pruned: state.pruned,
@@ -1151,6 +1179,7 @@ export const runAuthzedBackfill = async (
     failures: state.failures,
     lastOrganizationId: state.lastOrganizationId,
     mismatchedParents: state.mismatchedParents,
+    mismatchedPermissions: state.mismatchedPermissions,
     mode: request.mode,
     orphanScope: request.scope.kind === "all" ? "all" : "known_resources",
     orphans: state.orphans,
