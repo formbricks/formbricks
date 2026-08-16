@@ -88,13 +88,13 @@ describe("getAuthorizedWorkspaceFeedbackDirectories", () => {
       1,
       { type: "user", id: userId },
       "feedbackDirectoryAssignment.read",
-      { type: "feedbackDirectoryAssignment", id: sharedDirectoryId, workspaceId }
+      { type: "feedbackDirectoryAssignment", feedbackDirectoryId: sharedDirectoryId, workspaceId }
     );
     expect(assertCan).toHaveBeenNthCalledWith(
       2,
       { type: "user", id: userId },
       "feedbackDirectoryAssignment.read",
-      { type: "feedbackDirectoryAssignment", id: otherOrgDirectoryId, workspaceId }
+      { type: "feedbackDirectoryAssignment", feedbackDirectoryId: otherOrgDirectoryId, workspaceId }
     );
   });
 
@@ -207,7 +207,7 @@ describe("assertFeedbackDirectoryAssignmentAccess", () => {
 
     expect(assertCan).toHaveBeenCalledWith({ type: "user", id: userId }, "feedbackDirectoryAssignment.read", {
       type: "feedbackDirectoryAssignment",
-      id: sharedDirectoryId,
+      feedbackDirectoryId: sharedDirectoryId,
       workspaceId,
     });
   });

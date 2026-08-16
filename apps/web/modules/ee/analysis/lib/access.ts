@@ -51,7 +51,7 @@ export const checkFeedbackDirectoryAccess = async ({
   const allowed = await can(
     { type: "user", id: userId },
     getFeedbackDirectoryAssignmentActionForPermission(minPermission),
-    { type: "feedbackDirectoryAssignment", id: feedbackDirectoryId, workspaceId }
+    { type: "feedbackDirectoryAssignment", feedbackDirectoryId, workspaceId }
   );
 
   if (!allowed) {

@@ -94,7 +94,11 @@ describe("checkFeedbackDirectoryAccess", () => {
     expect(mocks.can).toHaveBeenCalledWith(
       { type: "user", id: "user-1" },
       "feedbackDirectoryAssignment.read",
-      { type: "feedbackDirectoryAssignment", id: "frd-1", workspaceId: "workspace-1" }
+      {
+        type: "feedbackDirectoryAssignment",
+        feedbackDirectoryId: "frd-1",
+        workspaceId: "workspace-1",
+      }
     );
   });
 

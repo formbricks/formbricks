@@ -44,7 +44,7 @@ export async function requireUnifyDirectoryAccess(
 
   const allowed = await can(actor, getFeedbackDirectoryAssignmentActionForPermission(minPermission), {
     type: "feedbackDirectoryAssignment",
-    id: directoryId,
+    feedbackDirectoryId: directoryId,
     workspaceId: context.workspaceId,
   });
   if (!allowed) {

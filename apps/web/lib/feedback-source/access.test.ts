@@ -18,7 +18,7 @@ describe("assertFeedbackSourceDirectoryAccess", () => {
 
     expect(assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, action, {
       type: "feedbackDirectoryAssignment",
-      id: "directory_1",
+      feedbackDirectoryId: "directory_1",
       workspaceId: "workspace_1",
     });
   });

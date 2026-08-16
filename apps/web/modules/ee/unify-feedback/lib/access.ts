@@ -69,7 +69,7 @@ export const assertFeedbackDirectoryAssignmentAccess = async (
 ): Promise<void> =>
   assertCan({ type: "user", id: userId }, "feedbackDirectoryAssignment.read", {
     type: "feedbackDirectoryAssignment",
-    id: feedbackDirectoryId,
+    feedbackDirectoryId,
     workspaceId,
   });
 

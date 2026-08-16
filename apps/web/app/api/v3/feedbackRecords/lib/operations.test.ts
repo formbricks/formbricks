@@ -145,7 +145,7 @@ describe("shared authorization + tenant resolution", () => {
     expect(response.status).toBe(403);
     expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.read", {
       type: "feedbackDirectoryAssignment",
-      id: directoryId,
+      feedbackDirectoryId: directoryId,
       workspaceId,
     });
     expect(listFeedbackRecords).not.toHaveBeenCalled();
@@ -1919,7 +1919,7 @@ describe("feedback record mutation role (ENG-1770)", () => {
 
     expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.read", {
       type: "feedbackDirectoryAssignment",
-      id: directoryId,
+      feedbackDirectoryId: directoryId,
       workspaceId,
     });
     expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
@@ -1965,7 +1965,7 @@ describe("feedback record mutation role (ENG-1770)", () => {
     expect(deleted.status).toBe(204);
     expect(can).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "feedbackDirectoryAssignment.manage", {
       type: "feedbackDirectoryAssignment",
-      id: directoryId,
+      feedbackDirectoryId: directoryId,
       workspaceId,
     });
     expect(can).not.toHaveBeenCalledWith(expect.anything(), "organization.manage", expect.anything());
@@ -1979,7 +1979,7 @@ describe("feedback record mutation role (ENG-1770)", () => {
     expect(updated.status).toBe(200);
     expect(can).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "feedbackDirectoryAssignment.write", {
       type: "feedbackDirectoryAssignment",
-      id: directoryId,
+      feedbackDirectoryId: directoryId,
       workspaceId,
     });
     expect(can).not.toHaveBeenCalledWith(expect.anything(), "organization.manage", expect.anything());

@@ -61,7 +61,7 @@ const canAccessFeedbackDirectoryAssignment = async (
 
   return can(actor, getFeedbackDirectoryAssignmentActionForPermission(minPermission), {
     type: "feedbackDirectoryAssignment",
-    id: feedbackDirectoryId,
+    feedbackDirectoryId,
     workspaceId,
   });
 };

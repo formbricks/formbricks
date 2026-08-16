@@ -49,7 +49,7 @@ describe("requireUnifyDirectoryAccess", () => {
     expect(result).toEqual(context);
     expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.read", {
       type: "feedbackDirectoryAssignment",
-      id: directoryId,
+      feedbackDirectoryId: directoryId,
       workspaceId,
     });
   });
@@ -96,7 +96,7 @@ describe("requireUnifyDirectoryAccess", () => {
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(session, workspaceId, "readWrite", "req_1", "/x");
     expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.write", {
       type: "feedbackDirectoryAssignment",
-      id: directoryId,
+      feedbackDirectoryId: directoryId,
       workspaceId,
     });
   });
