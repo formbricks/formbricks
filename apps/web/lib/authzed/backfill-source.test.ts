@@ -119,7 +119,11 @@ describe("readOrganizationSource", () => {
       { id: "ws-1", organizationId: ORGANIZATION_ID },
     ] as never);
     vi.mocked(prisma.apiKey.findMany).mockResolvedValue([
-      { id: "key-1", organizationAccess: null, organizationId: ORGANIZATION_ID },
+      {
+        id: "key-1",
+        organizationAccess: { accessControl: { read: true, write: true } },
+        organizationId: ORGANIZATION_ID,
+      },
     ] as never);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([
       { role: "admin", teamId: "team-1", userId: "user-1" },
@@ -149,6 +153,8 @@ describe("readOrganizationSource", () => {
         expect.objectContaining({ relation: "admin" }),
         expect.objectContaining({ relation: "reader_team" }),
         expect.objectContaining({ relation: "reader" }),
+        expect.objectContaining({ relation: "api_key_reader" }),
+        expect.objectContaining({ relation: "api_key_writer" }),
       ]),
       invalidApiKeyWorkspaceGrants: [],
       invalidWorkspaceTeamGrants: [],
