@@ -319,6 +319,13 @@ describe("workspace lib", () => {
 
   describe("deleteWorkspace", () => {
     test("deletes workspace, deletes files, and revalidates cache", async () => {
+      const feedbackDirectoryAssignment = {
+        feedbackDirectoryId: "feedback-directory-1",
+        workspaceId: "p1",
+      };
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([
+        feedbackDirectoryAssignment,
+      ] as any);
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
 
       vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
@@ -326,7 +333,7 @@ describe("workspace lib", () => {
       expect(result).toEqual(baseWorkspace);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
       expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
-        assignments: [],
+        assignments: [feedbackDirectoryAssignment],
       });
       expect(deleteFilesByWorkspaceId).toHaveBeenCalledWith("p1", []);
     });

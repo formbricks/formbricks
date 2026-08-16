@@ -503,7 +503,7 @@ describe("FeedbackDirectory Service", () => {
       expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
     });
 
-    test("updates workspace assignments with diff", async () => {
+    test("reconciles both previous and submitted assignments when removing a workspace", async () => {
       // getFeedbackDirectoryDetails call
       vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
 

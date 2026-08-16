@@ -48,7 +48,7 @@ type TAuthorizationResourceOfType<TResourceType extends TAuthorizationResourceTy
   TResourceType extends "feedbackDirectoryAssignment"
     ? Readonly<{
         type: TResourceType;
-        id: string;
+        feedbackDirectoryId: string;
         workspaceId: string;
       }>
     : TResourceType extends TAuthorizationResourceType

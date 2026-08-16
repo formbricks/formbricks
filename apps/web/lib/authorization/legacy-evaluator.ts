@@ -59,6 +59,24 @@ const FEEDBACK_DIRECTORY_WORKSPACE_ACTION = {
 
 type TFeedbackDirectoryPermission = keyof typeof FEEDBACK_DIRECTORY_WORKSPACE_ACTION;
 
+const FEEDBACK_DIRECTORY_WORKSPACE_CHECK_CONCURRENCY = 10;
+
+const canAccessAnyWorkspace = async (
+  workspaceIds: ReadonlyArray<string>,
+  checkAccess: (workspaceId: string) => Promise<boolean>
+): Promise<boolean> => {
+  for (let index = 0; index < workspaceIds.length; index += FEEDBACK_DIRECTORY_WORKSPACE_CHECK_CONCURRENCY) {
+    const decisions = await Promise.all(
+      workspaceIds
+        .slice(index, index + FEEDBACK_DIRECTORY_WORKSPACE_CHECK_CONCURRENCY)
+        .map((workspaceId) => checkAccess(workspaceId))
+    );
+    if (decisions.some(Boolean)) return true;
+  }
+
+  return false;
+};
+
 const canFeedbackDirectory = async (
   actor: TAuthorizationActor,
   permission: TFeedbackDirectoryPermission,
@@ -69,11 +87,9 @@ const canFeedbackDirectory = async (
   if (await canOrganization(actor, "manage", scope.organizationId)) return true;
 
   const workspaceAction = FEEDBACK_DIRECTORY_WORKSPACE_ACTION[permission];
-  for (const workspaceId of scope.workspaceIds) {
-    if (await canWorkspaceScoped(actor, workspaceAction, workspaceId)) return true;
-  }
-
-  return false;
+  return canAccessAnyWorkspace(scope.workspaceIds, (workspaceId) =>
+    canWorkspaceScoped(actor, workspaceAction, workspaceId)
+  );
 };
 
 const canFeedbackDirectoryAssignment = async (
@@ -309,7 +325,7 @@ export const legacyEvaluator: AuthorizationEvaluator = {
         return canFeedbackDirectoryAssignment(
           actor,
           permission as "manage" | "read" | "write",
-          resource.id,
+          resource.feedbackDirectoryId,
           resource.workspaceId
         );
       default:

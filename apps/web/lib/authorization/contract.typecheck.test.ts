@@ -59,7 +59,7 @@ type TExpectedResourceForAction<TAction extends TExpectedAuthorizationAction> =
   TAction extends `feedbackDirectoryAssignment.${string}`
     ? Readonly<{
         type: "feedbackDirectoryAssignment";
-        id: string;
+        feedbackDirectoryId: string;
         workspaceId: string;
       }>
     : TAction extends `${infer TResourceType}.${string}`
@@ -111,7 +111,7 @@ describe("current authorization contract types", () => {
     expect(
       checkAuthorizationTypes({ type: "user", id: "user-id" }, "feedbackDirectoryAssignment.read", {
         type: "feedbackDirectoryAssignment",
-        id: "directory-id",
+        feedbackDirectoryId: "directory-id",
         workspaceId: "workspace-id",
       })
     ).toBeUndefined();
@@ -162,7 +162,7 @@ describe("current authorization contract types", () => {
       "feedbackDirectoryAssignment.read",
       {
         type: "feedbackDirectoryAssignment",
-        id: "directory-id",
+        feedbackDirectoryId: "directory-id",
         // @ts-expect-error Exact assignment checks require the workspace scope.
         workspaceId: undefined,
       }

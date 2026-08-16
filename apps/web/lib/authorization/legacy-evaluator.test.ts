@@ -295,6 +295,32 @@ describe("legacyEvaluator — feedback datasets", () => {
     expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenNthCalledWith(2, "user1", "workspace-b", "GET");
   });
 
+  test("bounds concurrent workspace checks while preserving directory-wide union access", async () => {
+    const workspaceIds = Array.from({ length: 11 }, (_, index) => `workspace-${index + 1}`);
+    let activeChecks = 0;
+    let maximumActiveChecks = 0;
+
+    vi.mocked(getFeedbackDirectoryAuthorizationScope).mockResolvedValue({
+      isArchived: false,
+      organizationId: "org1",
+      workspaceIds,
+    });
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(membership("member"));
+    vi.mocked(hasUserWorkspaceAccessForActionLegacy).mockImplementation(async (_userId, workspaceId) => {
+      activeChecks += 1;
+      maximumActiveChecks = Math.max(maximumActiveChecks, activeChecks);
+      await Promise.resolve();
+      activeChecks -= 1;
+      return workspaceId === "workspace-11";
+    });
+
+    await expect(
+      can(USER, "feedbackDirectory.read", { type: "feedbackDirectory", id: "directory-1" })
+    ).resolves.toBe(true);
+    expect(maximumActiveChecks).toBe(10);
+    expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenCalledTimes(11);
+  });
+
   test("checks only the exact workspace carried by an assignment resource", async () => {
     vi.mocked(getFeedbackDirectoryAssignmentAuthorizationScope).mockResolvedValue({
       assignmentId: "fdwa-1",
@@ -307,12 +333,16 @@ describe("legacyEvaluator — feedback datasets", () => {
     await expect(
       can(USER, "feedbackDirectoryAssignment.write", {
         type: "feedbackDirectoryAssignment",
-        id: "directory-1",
+        feedbackDirectoryId: "directory-1",
         workspaceId: "workspace-a",
       })
     ).resolves.toBe(false);
     expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenCalledOnce();
     expect(hasUserWorkspaceAccessForActionLegacy).toHaveBeenCalledWith("user1", "workspace-a", "POST");
+    expect(getFeedbackDirectoryAssignmentAuthorizationScope).toHaveBeenCalledWith(
+      "directory-1",
+      "workspace-a"
+    );
   });
 
   test("denies archived, missing, and cross-organization assignments through the resolver", async () => {
@@ -329,7 +359,7 @@ describe("legacyEvaluator — feedback datasets", () => {
     await expect(
       can(USER, "feedbackDirectoryAssignment.read", {
         type: "feedbackDirectoryAssignment",
-        id: "directory-1",
+        feedbackDirectoryId: "directory-1",
         workspaceId: "workspace-a",
       })
     ).resolves.toBe(false);

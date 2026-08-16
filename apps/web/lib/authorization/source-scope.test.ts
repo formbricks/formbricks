@@ -113,7 +113,7 @@ describe("resolveAuthorizationScope", () => {
         { type: "user", id: "user-1" },
         {
           type: "feedbackDirectoryAssignment",
-          id: "directory-1",
+          feedbackDirectoryId: "directory-1",
           workspaceId: "workspace-1",
         }
       )
@@ -123,9 +123,12 @@ describe("resolveAuthorizationScope", () => {
       permissionResource: {
         type: "feedbackDirectoryAssignment",
         id: "fdwa-1",
-        workspaceId: "workspace-1",
       },
     });
+    expect(getFeedbackDirectoryAssignmentAuthorizationScope).toHaveBeenCalledWith(
+      "directory-1",
+      "workspace-1"
+    );
   });
 
   test("denies archived directories and invalid exact assignments", async () => {
@@ -147,7 +150,7 @@ describe("resolveAuthorizationScope", () => {
         { type: "user", id: "user-1" },
         {
           type: "feedbackDirectoryAssignment",
-          id: "directory-1",
+          feedbackDirectoryId: "directory-1",
           workspaceId: "workspace-1",
         }
       )

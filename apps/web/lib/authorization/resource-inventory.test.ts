@@ -1,12 +1,13 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import {
   AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY,
   PRISMA_AUTHORIZATION_RESOURCE_INVENTORY,
 } from "./resource-inventory";
 
-const REPOSITORY_ROOT = new URL("../../../../", import.meta.url).pathname;
+const REPOSITORY_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 
 const readPrismaModels = (): ReadonlyArray<string> => {
   const schemaDirectory = join(REPOSITORY_ROOT, "packages/database/schema");

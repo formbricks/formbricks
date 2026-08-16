@@ -26,7 +26,9 @@ beforeEach(() => {
     permissionResource:
       resource.type === "survey" || resource.type === "dashboard" || resource.type === "response"
         ? { type: "workspace", id: "workspace-1" }
-        : resource,
+        : resource.type === "feedbackDirectoryAssignment"
+          ? { type: resource.type, id: "assignment-1" }
+          : resource,
   }));
   checkPermission.mockResolvedValue({ allowed: true });
 });
@@ -38,11 +40,17 @@ describe("spicedbEvaluator", () => {
         checkPermission.mockClear();
         const action = `${resourceType}.${permission}` as TAuthorizationAction;
 
+        const resource =
+          resourceType === "feedbackDirectoryAssignment"
+            ? {
+                type: resourceType,
+                feedbackDirectoryId: "directory-1",
+                workspaceId: "workspace-1",
+              }
+            : { type: resourceType, id: "resource-1" };
+
         await expect(
-          spicedbEvaluator.can({ type: "user", id: "user-1" }, action, {
-            type: resourceType,
-            id: "resource-1",
-          } as never)
+          spicedbEvaluator.can({ type: "user", id: "user-1" }, action, resource as never)
         ).resolves.toBe(true);
 
         const derivedPermission = {
@@ -66,7 +74,7 @@ describe("spicedbEvaluator", () => {
           resource: isDerived
             ? { objectId: "workspace-1", objectType: "workspace" }
             : {
-                objectId: "resource-1",
+                objectId: resourceType === "feedbackDirectoryAssignment" ? "assignment-1" : "resource-1",
                 objectType:
                   resourceType === "apiKey"
                     ? "api_key"
