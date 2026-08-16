@@ -576,6 +576,13 @@ const executeSmokeCommand = async (
         resourceType: "workspace",
       });
       await client.deleteRelationships({
+        resourceType: "team",
+        subject: {
+          objectId: GRAPH_ORGANIZATION_ID,
+          objectType: "organization",
+        },
+      });
+      await client.deleteRelationships({
         resourceId: GRAPH_ORGANIZATION_ID,
         resourceType: "organization",
       });

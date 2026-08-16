@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { observeWorkspaceListAuthorization } from "@/lib/authorization/workspace-list-observer";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
@@ -8,7 +7,6 @@ import { listV3Workspaces } from "./operations";
 
 vi.mock("@/lib/organization/service", () => ({ getOrganizationsByUserId: vi.fn() }));
 vi.mock("@/lib/workspace/service", () => ({ getUserWorkspaces: vi.fn(), getWorkspace: vi.fn() }));
-vi.mock("@/app/api/v3/lib/auth", () => ({ getV3AuthorizationActor: vi.fn() }));
 vi.mock("@/lib/authorization/workspace-list-observer", () => ({
   observeWorkspaceListAuthorization: vi.fn(),
 }));
@@ -42,15 +40,6 @@ const ws = (id: string, name: string, organizationId: string) =>
 describe("listV3Workspaces", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getV3AuthorizationActor).mockImplementation((authentication) => {
-      if (authentication && "user" in authentication && authentication.user?.id) {
-        return { id: authentication.user.id, type: "user" };
-      }
-      if (authentication && "apiKeyId" in authentication && authentication.apiKeyId) {
-        return { id: authentication.apiKeyId, type: "apiKey" };
-      }
-      return null;
-    });
   });
 
   test("session user: aggregates + dedupes across orgs and returns the minimal DTO only", async () => {

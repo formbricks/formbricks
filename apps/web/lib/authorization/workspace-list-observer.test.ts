@@ -21,17 +21,9 @@ vi.mock("./context", () => ({
   recordAuthorizationCheckIssued: vi.fn(),
 }));
 vi.mock("./metrics", () => ({ recordAuthorizationComparison: vi.fn() }));
-vi.mock("./rollout-config", () => ({
+vi.mock("./rollout-config", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./rollout-config")>()),
   getAuthorizationRolloutConfig: vi.fn(),
-  matchesRolloutRule: vi.fn(
-    (rule, target, organizationId) =>
-      rule.targets.includes(target) &&
-      (rule.organizations.all || rule.organizations.ids.includes(organizationId))
-  ),
-  targetsRolloutSurface: vi.fn(
-    (rule, target) =>
-      rule.targets.includes(target) && (rule.organizations.all || rule.organizations.ids.length > 0)
-  ),
 }));
 vi.mock("./resolvers", () => ({ getWorkspaceOrganizationReferences: vi.fn() }));
 
