@@ -58,7 +58,7 @@ the package to *export* is in the built output — present in `src/`, absent fro
 signature. (Pick one the entry really re-exports; an internal helper is legitimately absent from
 `dist/index.js` and would read as a false positive.)
 
-```
+```shell
 grep -rc "MyNewExport" packages/<pkg>/src packages/<pkg>/dist/index.js
 ```
 
@@ -67,7 +67,7 @@ Recursive on purpose: `packages/ai/src` has nested directories (`providers/`), a
 
 The fix is to rebuild the dependency graph:
 
-```
+```shell
 pnpm build --filter=@formbricks/web^...
 ```
 
