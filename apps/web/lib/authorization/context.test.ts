@@ -76,6 +76,13 @@ describe("authorization request context", () => {
     });
   });
 
+  test("maps both authenticated feedback gateway principal types", async () => {
+    await withAuthorizationSurface("feedback_gateway", async () => {
+      expect(getAuthorizationRolloutTarget("user")).toBe("feedback_gateway:user");
+      expect(getAuthorizationRolloutTarget("apiKey")).toBe("feedback_gateway:apiKey");
+    });
+  });
+
   test("does not accept comparison work outside a request context", () => {
     expect(getAuthorizationRolloutTarget("user")).toBeNull();
     expect(enqueueAuthorizationComparison(vi.fn())).toBe(false);

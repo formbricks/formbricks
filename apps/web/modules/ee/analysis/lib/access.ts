@@ -1,9 +1,10 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { can } from "@/lib/authorization";
+import { getFeedbackDirectoryAssignmentActionForPermission } from "@/lib/authorization/compatibility";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export const checkWorkspaceAccess = async (
@@ -34,57 +35,29 @@ type TFeedbackDirectoryAccessSource =
 
 type TCheckFeedbackDirectoryAccessInput = {
   feedbackDirectoryId: string;
-  organizationId: string;
   workspaceId: string;
   userId: string;
+  minPermission: TTeamPermission;
   source: TFeedbackDirectoryAccessSource;
 };
 
 export const checkFeedbackDirectoryAccess = async ({
   feedbackDirectoryId,
-  organizationId,
   workspaceId,
   userId,
+  minPermission,
   source,
 }: TCheckFeedbackDirectoryAccessInput): Promise<{ feedbackDirectoryId: string }> => {
-  try {
-    const directory = await getFeedbackDirectoryAuthContext(feedbackDirectoryId);
-    const isAccessible =
-      directory?.organizationId === organizationId &&
-      directory.workspaceIds.includes(workspaceId) &&
-      !directory.isArchived;
+  const allowed = await can(
+    { type: "user", id: userId },
+    getFeedbackDirectoryAssignmentActionForPermission(minPermission),
+    { type: "feedbackDirectoryAssignment", feedbackDirectoryId, workspaceId }
+  );
 
-    if (!isAccessible) {
-      logger.warn(
-        {
-          feedbackDirectoryId,
-          organizationId,
-          workspaceId,
-          userId,
-          source,
-        },
-        "Feedback directory access denied for Cube query"
-      );
-      throw new AuthorizationError("Feedback directory is not accessible from this workspace");
-    }
-
-    return { feedbackDirectoryId };
-  } catch (error) {
-    if (error instanceof AuthorizationError) {
-      throw error;
-    }
-
-    logger.error(
-      {
-        error,
-        feedbackDirectoryId,
-        organizationId,
-        workspaceId,
-        userId,
-        source,
-      },
-      "Failed to verify feedback directory access for Cube query"
-    );
-    throw error;
+  if (!allowed) {
+    logger.warn({ source }, "Feedback directory access denied for Cube query");
+    throw new AuthorizationError("Feedback directory is not accessible from this workspace");
   }
+
+  return { feedbackDirectoryId };
 };

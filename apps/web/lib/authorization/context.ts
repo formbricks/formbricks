@@ -8,7 +8,13 @@ import {
 import type { TAuthorizationActor } from "./contract";
 import { recordAuthorizationChecksPerRequest } from "./metrics";
 
-export type TAuthorizationSurface = "server_action" | "api_v1" | "api_v2" | "api_v3" | "mcp";
+export type TAuthorizationSurface =
+  | "server_action"
+  | "api_v1"
+  | "api_v2"
+  | "api_v3"
+  | "mcp"
+  | "feedback_gateway";
 
 type TComparisonJob = () => Promise<void>;
 

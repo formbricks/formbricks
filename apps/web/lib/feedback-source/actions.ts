@@ -5,7 +5,6 @@ import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  TFeedbackSourceWithMappings,
   ZFeedbackSourceCreateInput,
   ZFeedbackSourceFieldMappingCreateInput,
   ZFeedbackSourceUpdateInput,
@@ -21,10 +20,14 @@ import {
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
+import { assertFeedbackSourceDirectoryAccess } from "./access";
 import { importHistoricalResponses } from "./import";
 import { resolveFormbricksMappingsInput } from "./mappings";
 import {
@@ -48,14 +51,13 @@ const ZDeleteFeedbackSourceAction = z.object({
 export const deleteFeedbackSourceAction = authenticatedActionClient
   .inputSchema(ZDeleteFeedbackSourceAction)
   .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZDeleteFeedbackSourceAction>;
-    }) => {
+    withAuditLogging("deleted", "feedbackSource", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.feedbackSourceId = parsedInput.feedbackSourceId;
+      ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
+      await applyRateLimit(rateLimitConfigs.actions.feedbackSourceMutation, ctx.user.id);
+
       const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -72,8 +74,27 @@ export const deleteFeedbackSourceAction = authenticatedActionClient
         ],
       });
 
-      return deleteFeedbackSource(parsedInput.feedbackSourceId, parsedInput.workspaceId);
-    }
+      const feedbackSource = await getFeedbackSourceWithMappingsById(
+        parsedInput.feedbackSourceId,
+        parsedInput.workspaceId
+      );
+      if (!feedbackSource) {
+        throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
+      }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        feedbackSource.feedbackDirectoryId,
+        parsedInput.workspaceId,
+        "write"
+      );
+
+      const deletedFeedbackSource = await deleteFeedbackSource(
+        parsedInput.feedbackSourceId,
+        parsedInput.workspaceId
+      );
+      ctx.auditLoggingCtx.oldObject = deletedFeedbackSource;
+      return deletedFeedbackSource;
+    })
   );
 
 const ZFormbricksSurveyMapping = z.object({
@@ -123,67 +144,82 @@ const ZCreateFeedbackSourceWithMappingsAction = z
 
 export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
   .inputSchema(ZCreateFeedbackSourceWithMappingsAction)
-  .action(async ({ ctx, parsedInput }): Promise<TFeedbackSourceWithMappings> => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
+  .action(
+    withAuditLogging("created", "feedbackSource", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
+      await applyRateLimit(rateLimitConfigs.actions.feedbackSourceMutation, ctx.user.id);
+
+      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            minPermission: "readWrite",
+            workspaceId: parsedInput.workspaceId,
+          },
+        ],
+      });
+
+      // Verify the directory belongs to the same org and is actually assigned to this workspace.
+      // The composite FK enforces the assignment at the DB level too; these checks return the
+      // friendlier errors first: a generic auth error for missing/cross-org directories, a typed
+      // error for a same-org directory that just isn't assigned to the workspace.
+      const frd = await prisma.feedbackDirectory.findUnique({
+        where: { id: parsedInput.feedbackSourceInput.feedbackDirectoryId },
+        select: {
+          organizationId: true,
+          workspaces: {
+            where: { workspaceId: parsedInput.workspaceId },
+            select: { workspaceId: true },
+          },
         },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: parsedInput.workspaceId,
-        },
-      ],
-    });
+      });
+      if (frd?.organizationId !== organizationId) {
+        throw new AuthorizationError("Invalid feedback directory");
+      }
+      if (frd.workspaces.length === 0) {
+        throw new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE");
+      }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        parsedInput.feedbackSourceInput.feedbackDirectoryId,
+        parsedInput.workspaceId,
+        "write"
+      );
 
-    // Verify the directory belongs to the same org and is actually assigned to this workspace.
-    // The composite FK enforces the assignment at the DB level too; these checks return the
-    // friendlier errors first: a generic auth error for missing/cross-org directories, a typed
-    // error for a same-org directory that just isn't assigned to the workspace.
-    const frd = await prisma.feedbackDirectory.findUnique({
-      where: { id: parsedInput.feedbackSourceInput.feedbackDirectoryId },
-      select: {
-        organizationId: true,
-        workspaces: {
-          where: { workspaceId: parsedInput.workspaceId },
-          select: { workspaceId: true },
-        },
-      },
-    });
-    if (frd?.organizationId !== organizationId) {
-      throw new AuthorizationError("Invalid feedback directory");
-    }
-    if (frd.workspaces.length === 0) {
-      throw new InvalidInputError("FEEDBACK_SOURCE_DIRECTORY_NOT_ASSIGNED_TO_WORKSPACE");
-    }
+      let mappingsInput: TMappingsInput | undefined;
 
-    let mappingsInput: TMappingsInput | undefined;
+      const { formbricksMappings, fieldMappings } = parsedInput;
 
-    const { formbricksMappings, fieldMappings } = parsedInput;
+      if (formbricksMappings?.length) {
+        mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings, parsedInput.workspaceId);
+      } else if (fieldMappings?.length) {
+        mappingsInput = {
+          type: "field",
+          mappings:
+            parsedInput.feedbackSourceInput.type === "csv"
+              ? sanitizeAndValidateCsvFieldMappings(fieldMappings)
+              : fieldMappings,
+        };
+      }
 
-    if (formbricksMappings?.length) {
-      mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings, parsedInput.workspaceId);
-    } else if (fieldMappings?.length) {
-      mappingsInput = {
-        type: "field",
-        mappings:
-          parsedInput.feedbackSourceInput.type === "csv"
-            ? sanitizeAndValidateCsvFieldMappings(fieldMappings)
-            : fieldMappings,
-      };
-    }
-
-    return createFeedbackSourceWithMappings(
-      parsedInput.workspaceId,
-      { ...parsedInput.feedbackSourceInput, createdBy: ctx.user.id },
-      mappingsInput
-    );
-  });
+      const createdFeedbackSource = await createFeedbackSourceWithMappings(
+        parsedInput.workspaceId,
+        { ...parsedInput.feedbackSourceInput, createdBy: ctx.user.id },
+        mappingsInput
+      );
+      ctx.auditLoggingCtx.feedbackSourceId = createdFeedbackSource.id;
+      ctx.auditLoggingCtx.newObject = createdFeedbackSource;
+      return createdFeedbackSource;
+    })
+  );
 
 const ZUpdateFeedbackSourceWithMappingsAction = z.object({
   feedbackSourceId: ZId,
@@ -196,14 +232,13 @@ const ZUpdateFeedbackSourceWithMappingsAction = z.object({
 export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
   .inputSchema(ZUpdateFeedbackSourceWithMappingsAction)
   .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZUpdateFeedbackSourceWithMappingsAction>;
-    }): Promise<TFeedbackSourceWithMappings> => {
+    withAuditLogging("updated", "feedbackSource", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.feedbackSourceId = parsedInput.feedbackSourceId;
+      ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
+      await applyRateLimit(rateLimitConfigs.actions.feedbackSourceMutation, ctx.user.id);
+
       const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -227,11 +262,17 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
       // fails here rather than as a Prisma error from the update.
       const feedbackSource = await prisma.feedbackSource.findUnique({
         where: { id: parsedInput.feedbackSourceId, workspaceId: parsedInput.workspaceId },
-        select: { type: true },
+        select: { feedbackDirectoryId: true, type: true },
       });
       if (!feedbackSource) {
         throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
       }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        feedbackSource.feedbackDirectoryId,
+        parsedInput.workspaceId,
+        "write"
+      );
 
       let mappingsInput: TMappingsInput | undefined;
 
@@ -250,13 +291,16 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
         };
       }
 
-      return updateFeedbackSourceWithMappings(
+      const updatedFeedbackSource = await updateFeedbackSourceWithMappings(
         parsedInput.feedbackSourceId,
         parsedInput.workspaceId,
         parsedInput.feedbackSourceInput,
         mappingsInput
       );
-    }
+      ctx.auditLoggingCtx.oldObject = feedbackSource;
+      ctx.auditLoggingCtx.newObject = updatedFeedbackSource;
+      return updatedFeedbackSource;
+    })
   );
 
 const ZGetResponseCountAction = z.object({
@@ -310,14 +354,13 @@ const ZImportHistoricalResponsesAction = z.object({
 export const importHistoricalResponsesAction = authenticatedActionClient
   .inputSchema(ZImportHistoricalResponsesAction)
   .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZImportHistoricalResponsesAction>;
-    }) => {
+    withAuditLogging("updated", "feedbackSource", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.feedbackSourceId = parsedInput.feedbackSourceId;
+      ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
+      await applyRateLimit(rateLimitConfigs.actions.historicalResponseImport, ctx.user.id);
+
       const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -341,6 +384,12 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       if (!feedbackSource) {
         throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
       }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        feedbackSource.feedbackDirectoryId,
+        parsedInput.workspaceId,
+        "write"
+      );
 
       const survey = await getSurvey(parsedInput.surveyId);
       if (!survey) {
@@ -357,8 +406,10 @@ export const importHistoricalResponsesAction = authenticatedActionClient
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
 
-      return importHistoricalResponses(feedbackSource, survey);
-    }
+      const importResult = await importHistoricalResponses(feedbackSource, survey);
+      ctx.auditLoggingCtx.newObject = importResult;
+      return importResult;
+    })
   );
 
 const ZListFeedbackRecordsAction = z.object({
@@ -406,6 +457,12 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       if (!frds.some((f) => f.id === parsedInput.frdId)) {
         throw new Error("Feedback directory not accessible");
       }
+      await assertFeedbackSourceDirectoryAccess(
+        ctx.user.id,
+        parsedInput.frdId,
+        parsedInput.workspaceId,
+        "read"
+      );
 
       const params: FeedbackRecordListParams = {
         tenant_id: parsedInput.frdId,

@@ -34,7 +34,7 @@ interface DashboardsListPageProps {
 
 export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsListPageProps>) => {
   const t = await getTranslate();
-  const { isReadOnly, organization, isOwner, isManager } = await getWorkspaceAuth(workspaceId);
+  const { isReadOnly, organization, isOwner, isManager, session } = await getWorkspaceAuth(workspaceId);
 
   const isDashboardsAllowed = await getIsDashboardsEnabled(organization.id);
   if (!isDashboardsAllowed) {
@@ -63,7 +63,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
     );
   }
 
-  const feedbackDataAvailability = await getFeedbackDataAvailability(workspaceId);
+  const feedbackDataAvailability = await getFeedbackDataAvailability(session.user.id, workspaceId);
 
   if (feedbackDataAvailability.status === "no-directory") {
     return (

@@ -11,8 +11,8 @@ import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-g
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
@@ -45,9 +45,9 @@ async function executeWidgetQuery(
   try {
     const tenant = await checkFeedbackDirectoryAccess({
       feedbackDirectoryId,
-      organizationId,
       workspaceId,
       userId,
+      minPermission: "read",
       source: "dashboards.widget",
     });
 
@@ -125,7 +125,7 @@ export async function DashboardDetailPage({
   }
 
   const [directories, aiConfig] = await Promise.all([
-    getFeedbackDirectoriesByWorkspaceId(workspaceId),
+    getAuthorizedWorkspaceFeedbackDirectories(session.user.id, workspaceId),
     getOrganizationAIConfig(organization.id),
   ]);
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);

@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { can } from "@/lib/authorization";
 import {
   getFeedbackDirectoriesByWorkspaceId,
   getFeedbackDirectoryAuthContext,
@@ -40,10 +39,11 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() })) },
 }));
 
-vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
+vi.mock("@/app/api/v3/lib/auth", () => ({
+  getV3AuthorizationActor: vi.fn(),
+  requireV3WorkspaceAccess: vi.fn(),
 }));
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsFeedbackDirectoriesEnabled: vi.fn() }));
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: vi.fn(),
@@ -99,6 +99,13 @@ const foreignOrgApiKeyAuth = {
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
+  vi.mocked(getV3AuthorizationActor).mockImplementation((authentication) => {
+    if (authentication && "apiKeyId" in authentication && authentication.apiKeyId) {
+      return { type: "apiKey", id: authentication.apiKeyId };
+    }
+    return { type: "user", id: "user_1" };
+  });
+  vi.mocked(can).mockResolvedValue(true);
   vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
   vi.mocked(getFeedbackDirectoriesByWorkspaceId).mockResolvedValue([{ id: directoryId, name: "Support" }]);
   // Unshared by default, so only the tests that opt into sharing exercise the ENG-2189 rule.
@@ -107,7 +114,6 @@ beforeEach(() => {
     workspaceIds: [workspaceId],
     isArchived: false,
   });
-  vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 });
 
 describe("shared authorization + tenant resolution", () => {
@@ -128,6 +134,29 @@ describe("shared authorization + tenant resolution", () => {
     const response = await listV3FeedbackRecords(base);
 
     expect(response.status).toBe(403);
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("denies when the exact dataset assignment is not authorized", async () => {
+    vi.mocked(can).mockResolvedValue(false);
+
+    const response = await listV3FeedbackRecords({ ...base, authentication: sessionAuth });
+
+    expect(response.status).toBe(403);
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.read", {
+      type: "feedbackDirectoryAssignment",
+      feedbackDirectoryId: directoryId,
+      workspaceId,
+    });
+    expect(listFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("keeps central evaluator failures operational instead of converting them to denial", async () => {
+    vi.mocked(can).mockRejectedValue(new Error("evaluator unavailable"));
+
+    const response = await listV3FeedbackRecords({ ...base, authentication: sessionAuth });
+
+    expect(response.status).toBe(500);
     expect(listFeedbackRecords).not.toHaveBeenCalled();
   });
 
@@ -668,16 +697,13 @@ describe("deleteV3FeedbackRecord", () => {
     vi.mocked(deleteFeedbackRecord).mockResolvedValue({ data: { deleted: true }, error: null });
   });
 
-  // ENG-2083: DELETE is reserved for `manage` everywhere else in the API and record deletion is
-  // unrecoverable, so this path asks for `manage` rather than `readWrite`. Both delete paths moved —
-  // see the gateway's route table for the other one.
-  test("requires manage access", async () => {
+  test("requires assignment read access before the organization mutation gate", async () => {
     await deleteV3FeedbackRecord(deleteBase);
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
       sessionAuth,
       workspaceId,
-      "manage",
+      "read",
       requestId,
       instance
     );
@@ -1621,13 +1647,13 @@ describe("updateV3FeedbackRecord", () => {
     vi.mocked(updateFeedbackRecord).mockResolvedValue({ data: updated, error: null });
   });
 
-  test("requires readWrite access", async () => {
+  test("requires assignment read access before the organization mutation gate", async () => {
     await updateV3FeedbackRecord({ ...updateBase, body: { value_text: "x" } });
 
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
       sessionAuth,
       workspaceId,
-      "readWrite",
+      "read",
       requestId,
       instance
     );
@@ -1891,15 +1917,19 @@ describe("feedback record mutation role (ENG-1770)", () => {
   test("asks for an organization owner or manager, with no workspace-team fallback", async () => {
     await updateV3FeedbackRecord(updateArgs);
 
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: context.organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "feedbackDirectoryAssignment.read", {
+      type: "feedbackDirectoryAssignment",
+      feedbackDirectoryId: directoryId,
+      workspaceId,
+    });
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
+      type: "organization",
+      id: context.organizationId,
     });
   });
 
   test("refuses an update from a workspace member who is not an owner or manager", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+    vi.mocked(can).mockImplementation(async (_actor, action) => action !== "organization.manage");
 
     const response = await updateV3FeedbackRecord(updateArgs);
 
@@ -1910,7 +1940,7 @@ describe("feedback record mutation role (ENG-1770)", () => {
   });
 
   test("refuses a delete from a workspace member who is not an owner or manager", async () => {
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValue(new AuthorizationError("Not authorized"));
+    vi.mocked(can).mockImplementation(async (_actor, action) => action !== "organization.manage");
 
     const response = await deleteV3FeedbackRecord(deleteArgs);
 
@@ -1933,7 +1963,12 @@ describe("feedback record mutation role (ENG-1770)", () => {
     const deleted = await deleteV3FeedbackRecord({ ...deleteArgs, authentication: apiKeyAuth });
 
     expect(deleted.status).toBe(204);
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(can).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "feedbackDirectoryAssignment.manage", {
+      type: "feedbackDirectoryAssignment",
+      feedbackDirectoryId: directoryId,
+      workspaceId,
+    });
+    expect(can).not.toHaveBeenCalledWith(expect.anything(), "organization.manage", expect.anything());
   });
 
   // The positive control for update: without it, a regression refusing every API-key update would still
@@ -1942,7 +1977,12 @@ describe("feedback record mutation role (ENG-1770)", () => {
     const updated = await updateV3FeedbackRecord({ ...updateArgs, authentication: apiKeyAuth });
 
     expect(updated.status).toBe(200);
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(can).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "feedbackDirectoryAssignment.write", {
+      type: "feedbackDirectoryAssignment",
+      feedbackDirectoryId: directoryId,
+      workspaceId,
+    });
+    expect(can).not.toHaveBeenCalledWith(expect.anything(), "organization.manage", expect.anything());
   });
 
   describe("API key in a shared dataset (ENG-2189)", () => {

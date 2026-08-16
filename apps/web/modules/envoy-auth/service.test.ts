@@ -10,7 +10,7 @@ const {
   mockVerifyFeedbackRecordsGatewayToken,
   mockGetFeedbackDirectoryAuthContext,
   mockGetFeedbackRecordTenant,
-  mockCheckAuthorizationUpdated,
+  mockCan,
   mockUserFindUnique,
   mockGetIsFeedbackDirectoriesEnabled,
 } = vi.hoisted(() => ({
@@ -21,7 +21,7 @@ const {
   mockVerifyFeedbackRecordsGatewayToken: vi.fn(),
   mockGetFeedbackDirectoryAuthContext: vi.fn(),
   mockGetFeedbackRecordTenant: vi.fn(),
-  mockCheckAuthorizationUpdated: vi.fn(),
+  mockCan: vi.fn(),
   mockUserFindUnique: vi.fn(),
   mockGetIsFeedbackDirectoriesEnabled: vi.fn(),
 }));
@@ -64,8 +64,8 @@ vi.mock("@/modules/hub/service", () => ({
   getFeedbackRecordTenant: mockGetFeedbackRecordTenant,
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mockCheckAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  can: mockCan,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -116,7 +116,7 @@ describe("authorizeEnvoyRequest", () => {
       data: { tenantId: feedbackDirectoryId },
       error: null,
     });
-    mockCheckAuthorizationUpdated.mockResolvedValue(true);
+    mockCan.mockResolvedValue(true);
     mockUserFindUnique.mockResolvedValue({ id: "user_1", isActive: true });
     mockGetIsFeedbackDirectoriesEnabled.mockResolvedValue(true);
   });
@@ -144,7 +144,10 @@ describe("authorizeEnvoyRequest", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBe("x-api-key,authorization,cookie");
-    expect(mockCheckAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(mockCan).toHaveBeenCalledWith({ type: "apiKey", id: "key_1" }, "feedbackDirectory.write", {
+      type: "feedbackDirectory",
+      id: feedbackDirectoryId,
+    });
   });
 
   test("returns 400 when bulkDelete is missing tenant_id", async () => {
@@ -292,15 +295,9 @@ describe("authorizeEnvoyRequest", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mockCheckAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_1",
-      organizationId: "org_1",
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
+      type: "organization",
+      id: "org_1",
     });
   });
 
@@ -318,20 +315,9 @@ describe("authorizeEnvoyRequest", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mockCheckAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user_2",
-      organizationId: "org_1",
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: "workspace_1",
-          minPermission: "read",
-        },
-      ],
+    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: "user_2" }, "feedbackDirectory.read", {
+      type: "feedbackDirectory",
+      id: feedbackDirectoryId,
     });
   });
 

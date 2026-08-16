@@ -14,6 +14,8 @@ export const AUTHZED_AUTHORIZATION_ROLLOUT_TARGETS = [
   "api_v3:apiKey",
   "mcp:user",
   "mcp:apiKey",
+  "feedback_gateway:user",
+  "feedback_gateway:apiKey",
 ] as const;
 
 export type TAuthzedAuthorizationRolloutTarget = (typeof AUTHZED_AUTHORIZATION_ROLLOUT_TARGETS)[number];

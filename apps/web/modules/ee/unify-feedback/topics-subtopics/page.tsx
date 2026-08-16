@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
+import { can } from "@/lib/authorization";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
+import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
@@ -61,7 +62,7 @@ export const UnifyTopicsSubtopicsPage = async (
     );
   }
 
-  const directories = await getFeedbackDirectoriesByWorkspaceId(params.workspaceId);
+  const directories = await getAuthorizedWorkspaceFeedbackDirectories(session.user.id, params.workspaceId);
 
   if (directories.length === 0) {
     return (
@@ -82,7 +83,10 @@ export const UnifyTopicsSubtopicsPage = async (
   // A directory's taxonomy is one tree shared by every workspace the directory is assigned to, and it
   // carries no workspace of its own — so changing it (generate, rename, remove) is an org-level act
   // and stays with owners and managers (ENG-1770). Everyone else gets the read-only view.
-  const canWrite = isOwner || isManager;
+  const canWrite = await can({ type: "user", id: session.user.id }, "organization.manage", {
+    type: "organization",
+    id: organization.id,
+  });
 
   return (
     <TopicsSubtopicsPage workspaceId={params.workspaceId} directoryMap={directoryMap} canWrite={canWrite} />
