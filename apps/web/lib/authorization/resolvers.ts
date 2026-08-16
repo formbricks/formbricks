@@ -104,21 +104,25 @@ export const getWorkspaceOrganizationReferences = async (
   const uniqueWorkspaceIds = [...new Set(workspaceIds)];
   if (uniqueWorkspaceIds.length === 0) return [];
 
-  const references: TWorkspaceOrganizationReference[] = [];
   try {
+    const batches: string[][] = [];
     for (
       let offset = 0;
       offset < uniqueWorkspaceIds.length;
       offset += WORKSPACE_ORGANIZATION_RESOLUTION_BATCH_SIZE
     ) {
-      const batch = uniqueWorkspaceIds.slice(offset, offset + WORKSPACE_ORGANIZATION_RESOLUTION_BATCH_SIZE);
-      const rows = await prisma.workspace.findMany({
-        where: { id: { in: batch } },
-        select: { id: true, organizationId: true },
-      });
-      references.push(...rows);
+      batches.push(uniqueWorkspaceIds.slice(offset, offset + WORKSPACE_ORGANIZATION_RESOLUTION_BATCH_SIZE));
     }
-    return references;
+
+    const references = await Promise.all(
+      batches.map((batch) =>
+        prisma.workspace.findMany({
+          where: { id: { in: batch } },
+          select: { id: true, organizationId: true },
+        })
+      )
+    );
+    return references.flat();
   } catch (error) {
     return rethrowAsDatabaseError(error);
   }

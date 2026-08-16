@@ -28,6 +28,24 @@ export const AUTHZED_BULK_REQUEST_TIMEOUT_MS = 30_000;
 export const AUTHZED_MAX_RELATIONSHIP_READS = 250;
 
 /**
+ * Resources requested per `LookupResources` page.
+ *
+ * The promise SDK buffers a server stream before resolving, so an unlimited request can consume
+ * unbounded memory and run through the channel deadline. Paging at the same conservative size as raw
+ * relationship reads keeps each individual allocation and retry bounded.
+ */
+export const AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE = 250;
+
+/**
+ * Resource IDs accumulated by one complete permission lookup.
+ *
+ * Workspace discovery must compare complete sets, so it never returns a truncated result. Crossing
+ * this guard fails the shadow comparison loudly instead of either reporting false parity or allowing a
+ * pathological relationship graph to exhaust the process.
+ */
+export const AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS = 20_000;
+
+/**
  * Observed relationships held in memory for a single backfill unit before the unit is abandoned.
  *
  * Bounds the drainer so a pathological store cannot exhaust the process. This is a *per-unit* bound and

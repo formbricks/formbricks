@@ -193,6 +193,41 @@ describe("observeWorkspaceListAuthorization", () => {
     );
   });
 
+  test("treats user results outside their PostgreSQL organizations as AuthZed-extra drift", async () => {
+    lookupResources.mockResolvedValue({ resourceIds: ["foreign-private-workspace"] });
+    vi.mocked(getWorkspaceOrganizationReferences).mockResolvedValue([
+      { id: "foreign-private-workspace", organizationId: "org-foreign" },
+    ]);
+
+    observeWorkspaceListAuthorization({ ...userObservation, workspaces: [] });
+    await queuedJobs[0]();
+
+    expect(recordAuthorizationComparison).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ outcome: "legacy_deny_authzed_allow" })
+    );
+    const logged = JSON.stringify(loggerMocks.warn.mock.calls);
+    expect(logged).not.toContain("foreign-private-workspace");
+    expect(logged).not.toContain("org-foreign");
+  });
+
+  test("ignores user results in a real organization outside the selected rollout cohort", async () => {
+    lookupResources.mockResolvedValue({
+      resourceIds: ["workspace-private-a", "workspace-private-b"],
+    });
+    vi.mocked(getWorkspaceOrganizationReferences).mockResolvedValue([
+      { id: "workspace-private-a", organizationId: "org-1" },
+      { id: "workspace-private-b", organizationId: "org-2" },
+    ]);
+
+    observeWorkspaceListAuthorization(userObservation);
+    await queuedJobs[0]();
+
+    expect(recordAuthorizationComparison).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ outcome: "match" })
+    );
+    expect(loggerMocks.warn).not.toHaveBeenCalled();
+  });
+
   test("excludes organizations selected for enforcement because list observation is shadow-only", () => {
     vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(
       config({

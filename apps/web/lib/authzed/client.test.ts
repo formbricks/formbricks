@@ -3,6 +3,7 @@ import { v1 } from "@authzed/authzed-node";
 import { status } from "@grpc/grpc-js";
 import { beforeEach, describe, expect, test } from "vitest";
 import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
+import { AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS, AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 describe("AuthZed client facade", () => {
@@ -240,7 +241,7 @@ describe("AuthZed client facade", () => {
       consistency: { requirement: { minimizeLatency: true, oneofKind: "minimizeLatency" } },
       context: undefined,
       optionalCursor: undefined,
-      optionalLimit: 0,
+      optionalLimit: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
       permission: "read",
       resourceObjectType: "workspace",
       subject: {
@@ -249,6 +250,96 @@ describe("AuthZed client facade", () => {
       },
     });
     expect(retryMocks.execute).toHaveBeenCalledWith("lookup_resources", expect.any(Function));
+  });
+
+  test("pages resource lookups with a bounded stream allocation and an advancing cursor", async () => {
+    const firstPage = Array.from({ length: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE }, (_unused, index) => ({
+      afterResultCursor:
+        index === AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE - 1 ? { token: "lookup-cursor-1" } : undefined,
+      permissionship: v1.LookupPermissionship.HAS_PERMISSION,
+      resourceObjectId: `workspace-${index}`,
+    }));
+    sdkMocks.lookupResources.mockResolvedValueOnce(firstPage).mockResolvedValueOnce([
+      {
+        permissionship: v1.LookupPermissionship.HAS_PERMISSION,
+        resourceObjectId: "workspace-final",
+      },
+    ]);
+
+    const result = await getAuthzedClient().lookupResources({
+      permission: "read",
+      resourceType: "workspace",
+      subject: { objectId: "user-1", objectType: "user" },
+    });
+
+    expect(result.resourceIds).toHaveLength(AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE + 1);
+    expect(sdkMocks.lookupResources).toHaveBeenCalledTimes(2);
+    expect(sdkMocks.lookupResources.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        optionalCursor: undefined,
+        optionalLimit: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
+      })
+    );
+    expect(sdkMocks.lookupResources.mock.calls[1][0]).toEqual(
+      expect.objectContaining({
+        optionalCursor: { token: "lookup-cursor-1" },
+        optionalLimit: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
+      })
+    );
+    expect(retryMocks.execute).toHaveBeenCalledTimes(2);
+  });
+
+  test("fails a resource lookup whose cursor does not advance", async () => {
+    const fullPage = Array.from({ length: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE }, (_unused, index) => ({
+      afterResultCursor:
+        index === AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE - 1 ? { token: "stalled-cursor" } : undefined,
+      permissionship: v1.LookupPermissionship.HAS_PERMISSION,
+      resourceObjectId: `workspace-${index}`,
+    }));
+    sdkMocks.lookupResources.mockResolvedValue(fullPage);
+
+    await expect(
+      getAuthzedClient().lookupResources({
+        permission: "read",
+        resourceType: "workspace",
+        subject: { objectId: "user-1", objectType: "user" },
+      })
+    ).rejects.toMatchObject({
+      code: AUTHZED_ERROR_CODES.INTERNAL,
+      operation: "lookup_resources",
+      retryable: false,
+    });
+    expect(sdkMocks.lookupResources).toHaveBeenCalledTimes(2);
+  });
+
+  test("fails instead of returning a truncated lookup beyond the accumulation bound", async () => {
+    let page = 0;
+    sdkMocks.lookupResources.mockImplementation(() => {
+      page += 1;
+      return Promise.resolve(
+        Array.from({ length: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE }, (_unused, index) => ({
+          afterResultCursor:
+            index === AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE - 1 ? { token: `cursor-${page}` } : undefined,
+          permissionship: v1.LookupPermissionship.HAS_PERMISSION,
+          resourceObjectId: `workspace-${page}-${index}`,
+        }))
+      );
+    });
+
+    await expect(
+      getAuthzedClient().lookupResources({
+        permission: "read",
+        resourceType: "workspace",
+        subject: { objectId: "user-1", objectType: "user" },
+      })
+    ).rejects.toMatchObject({
+      code: AUTHZED_ERROR_CODES.LIMIT_EXCEEDED,
+      operation: "lookup_resources",
+      retryable: false,
+    });
+    expect(sdkMocks.lookupResources).toHaveBeenCalledTimes(
+      Math.floor(AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS / AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE) + 1
+    );
   });
 
   test.each([v1.LookupPermissionship.CONDITIONAL_PERMISSION, v1.LookupPermissionship.UNSPECIFIED])(

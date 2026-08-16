@@ -197,6 +197,24 @@ describe("getWorkspaceOrganizationReferences", () => {
     );
   });
 
+  test("starts independent workspace-resolution batches concurrently", async () => {
+    let resolveFirstBatch!: (rows: []) => void;
+    const firstBatch = new Promise<[]>((resolve) => {
+      resolveFirstBatch = resolve;
+    });
+    vi.mocked(prisma.workspace.findMany)
+      .mockImplementationOnce(() => firstBatch as never)
+      .mockResolvedValueOnce([]);
+
+    const pending = getWorkspaceOrganizationReferences(
+      Array.from({ length: 501 }, (_unused, index) => `workspace-${index}`)
+    );
+
+    expect(prisma.workspace.findMany).toHaveBeenCalledTimes(2);
+    resolveFirstBatch([]);
+    await expect(pending).resolves.toEqual([]);
+  });
+
   test("does not query PostgreSQL for an empty set", async () => {
     await expect(getWorkspaceOrganizationReferences([])).resolves.toEqual([]);
     expect(prisma.workspace.findMany).not.toHaveBeenCalled();

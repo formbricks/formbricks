@@ -2,8 +2,9 @@ import "server-only";
 import { performance } from "node:perf_hooks";
 import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "@/lib/authzed/client";
-import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
+import { AuthzedError } from "@/lib/authzed/errors";
 import { getAuthzedAuthorizationRolloutSurface } from "@/lib/authzed/rollout-contract";
+import { normalizeAuthorizationOperationalError, toAuthorizationDecisionLabel } from "./comparison-helpers";
 import {
   enqueueAuthorizationComparison,
   getAuthorizationRolloutTarget,
@@ -12,10 +13,10 @@ import {
 import type { TAuthorizationActor } from "./contract";
 import {
   type TAuthorizationComparisonOutcome,
-  type TAuthorizationDecisionLabel,
   type TAuthorizationErrorSource,
   recordAuthorizationComparison,
 } from "./metrics";
+import { getSpicedbObjectType } from "./object-type";
 import { getWorkspaceOrganizationReferences } from "./resolvers";
 import { getAuthorizationRolloutConfig, matchesRolloutRule, targetsRolloutSurface } from "./rollout-config";
 
@@ -32,35 +33,12 @@ export type TWorkspaceListAuthorizationObservation = Readonly<{
 
 type TWorkspaceListComparisonContext = Readonly<{
   actor: TAuthorizationActor;
+  actorOrganizationIds: ReadonlySet<string>;
   cohort: string;
   selectedOrganizationIds: ReadonlySet<string>;
   target: NonNullable<ReturnType<typeof getAuthorizationRolloutTarget>>;
   workspaceIds: ReadonlySet<string>;
 }>;
-
-const toDecisionLabel = (allowed: boolean | undefined): TAuthorizationDecisionLabel => {
-  if (allowed === undefined) return "unknown";
-  return allowed ? "allow" : "deny";
-};
-
-const normalizeOperationalError = (error: unknown, operation: string): AuthzedError => {
-  if (error instanceof AuthzedError) {
-    return new AuthzedError({
-      attempts: error.attempts,
-      code: error.code,
-      grpcStatus: error.grpcStatus,
-      operation,
-      retryable: error.retryable,
-    });
-  }
-
-  return new AuthzedError({
-    attempts: 1,
-    code: AUTHZED_ERROR_CODES.INTERNAL,
-    operation,
-    retryable: false,
-  });
-};
 
 const recordComparison = (
   context: TWorkspaceListComparisonContext,
@@ -79,12 +57,12 @@ const recordComparison = (
     recordAuthorizationComparison({
       action: "workspace.read",
       actorType: context.actor.type,
-      authzedDecision: toDecisionLabel(values.authzedDecision),
+      authzedDecision: toAuthorizationDecisionLabel(values.authzedDecision),
       cohort: context.cohort,
       durationMs: values.durationMs,
       errorCode: values.error?.code,
       errorSource: values.errorSource,
-      legacyDecision: toDecisionLabel(values.legacyDecision),
+      legacyDecision: toAuthorizationDecisionLabel(values.legacyDecision),
       mode: "shadow",
       outcome: values.outcome,
       resourceType: "workspace",
@@ -102,7 +80,7 @@ const recordComparison = (
       {
         action: "workspace.read",
         actorType: context.actor.type,
-        authzedDecision: toDecisionLabel(values.authzedDecision),
+        authzedDecision: toAuthorizationDecisionLabel(values.authzedDecision),
         cohort: context.cohort,
         component: "authzed",
         differenceCount: values.differenceCount,
@@ -110,7 +88,7 @@ const recordComparison = (
         errorCode: values.error?.code,
         errorSource: values.errorSource,
         grpcStatus: values.error?.grpcStatus,
-        legacyDecision: toDecisionLabel(values.legacyDecision),
+        legacyDecision: toAuthorizationDecisionLabel(values.legacyDecision),
         mode: "shadow",
         operation: "workspace_list_authorization_comparison",
         outcome: values.outcome,
@@ -136,7 +114,7 @@ const runWorkspaceListComparison = async (context: TWorkspaceListComparisonConte
       resourceType: "workspace",
       subject: {
         objectId: context.actor.id,
-        objectType: context.actor.type === "apiKey" ? "api_key" : "user",
+        objectType: getSpicedbObjectType(context.actor.type),
       },
     });
     const references = await getWorkspaceOrganizationReferences(lookup.resourceIds);
@@ -155,10 +133,10 @@ const runWorkspaceListComparison = async (context: TWorkspaceListComparisonConte
 
       if (context.selectedOrganizationIds.has(organizationId)) {
         authzedWorkspaceIds.add(workspaceId);
-      } else if (context.actor.type === "apiKey") {
-        // An API key may only enumerate its owning organization. A relationship that crosses that
-        // boundary is security-relevant drift even when the foreign organization is outside this
-        // rollout cohort.
+      } else if (!context.actorOrganizationIds.has(organizationId)) {
+        // A result outside the actor's PostgreSQL organizations is security-relevant cross-tenant
+        // drift. A result in a real actor organization that is merely outside the selected rollout
+        // cohort is intentionally ignored.
         unattributedAuthzedCount += 1;
       }
     }
@@ -199,7 +177,10 @@ const runWorkspaceListComparison = async (context: TWorkspaceListComparisonConte
       });
     }
   } catch (error) {
-    const operationalError = normalizeOperationalError(error, "workspace_list_authorization_shadow");
+    const operationalError = normalizeAuthorizationOperationalError(
+      error,
+      "workspace_list_authorization_shadow"
+    );
     recordComparison(context, {
       durationMs: Math.max(0, performance.now() - startedAt),
       error: operationalError,
@@ -236,6 +217,7 @@ export const observeWorkspaceListAuthorization = (
 
     const context: TWorkspaceListComparisonContext = {
       actor: Object.freeze({ ...observation.actor }),
+      actorOrganizationIds: new Set(observation.organizationIds),
       cohort: config.cohort,
       selectedOrganizationIds,
       target,
@@ -249,7 +231,7 @@ export const observeWorkspaceListAuthorization = (
     if (!enqueueAuthorizationComparison(() => runWorkspaceListComparison(context))) {
       recordComparison(context, {
         durationMs: 0,
-        error: normalizeOperationalError(undefined, "workspace_list_authorization_scheduler"),
+        error: normalizeAuthorizationOperationalError(undefined, "workspace_list_authorization_scheduler"),
         errorSource: "scheduler",
         outcome: "operational_error",
       });

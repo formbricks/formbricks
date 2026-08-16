@@ -22,6 +22,7 @@ type TV3WorkspaceListItem = {
 };
 
 type TResolvedWorkspaceList = Readonly<{
+  crossOrganizationGrantCount: number;
   items: ReadonlyArray<TV3WorkspaceListItem>;
   organizationIds: ReadonlyArray<string>;
 }>;
@@ -48,6 +49,7 @@ async function fetchSessionWorkspaces(userId: string): Promise<TResolvedWorkspac
     organizations.map((organization) => getUserWorkspaces(userId, organization.id))
   );
   return {
+    crossOrganizationGrantCount: 0,
     items: workspacesPerOrg.flat().map(serializeV3WorkspaceListItem),
     organizationIds: organizations.map(({ id }) => id),
   };
@@ -57,13 +59,15 @@ async function fetchSessionWorkspaces(userId: string): Promise<TResolvedWorkspac
 async function fetchApiKeyWorkspaces(keyAuth: TAuthenticationApiKey): Promise<TResolvedWorkspaceList> {
   const workspaceIds = Array.from(new Set(keyAuth.workspacePermissions.map((p) => p.workspaceId)));
   const workspaces = await Promise.all(workspaceIds.map((id) => getWorkspace(id)));
+  const sameOrganizationWorkspaces = workspaces.filter(
+    (workspace): workspace is NonNullable<typeof workspace> =>
+      workspace !== null && workspace.organizationId === keyAuth.organizationId
+  );
   return {
-    items: workspaces
-      .filter(
-        (workspace): workspace is NonNullable<typeof workspace> =>
-          workspace !== null && workspace.organizationId === keyAuth.organizationId
-      )
-      .map(serializeV3WorkspaceListItem),
+    crossOrganizationGrantCount: workspaces.filter(
+      (workspace) => workspace !== null && workspace.organizationId !== keyAuth.organizationId
+    ).length,
+    items: sameOrganizationWorkspaces.map(serializeV3WorkspaceListItem),
     organizationIds: [keyAuth.organizationId],
   };
 }
@@ -105,6 +109,16 @@ export async function listV3Workspaces({
       resolved = await fetchApiKeyWorkspaces(authentication);
     } else {
       return problemUnauthorized(requestId, "Not authenticated", instance);
+    }
+
+    if (resolved.crossOrganizationGrantCount > 0) {
+      log.warn(
+        {
+          component: "authorization",
+          crossOrganizationGrantCount: resolved.crossOrganizationGrantCount,
+        },
+        "Cross-organization API-key workspace grants were filtered"
+      );
     }
 
     // Dedupe by id (defensive) + a stable, deterministic order — the underlying queries have no ORDER BY,

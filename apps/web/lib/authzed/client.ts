@@ -6,7 +6,9 @@ import {
   AUTHZED_BULK_REQUEST_TIMEOUT_MS,
   AUTHZED_MAX_RELATIONSHIP_READS,
   AUTHZED_MAX_RELATIONSHIP_UPDATES,
+  AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS,
   AUTHZED_REQUEST_TIMEOUT_MS,
+  AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
 } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError, mapAuthzedError } from "./errors";
 import { executeAuthzedOperation } from "./retry";
@@ -581,22 +583,29 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
     lookupResources: async (lookup) => {
       validateResourceLookup(lookup);
 
-      return executeAuthzedOperation("lookup_resources", async () => {
-        const responses = await sdkClient.promises.lookupResources({
-          consistency: getPermissionCheckConsistency(config),
-          context: undefined,
-          optionalCursor: undefined,
-          optionalLimit: 0,
-          permission: lookup.permission,
-          resourceObjectType: lookup.resourceType,
-          subject: {
-            object: {
-              objectId: lookup.subject.objectId,
-              objectType: lookup.subject.objectType,
+      const consistency = getPermissionCheckConsistency(config);
+      const resourceIds = new Set<string>();
+      let cursor: string | undefined;
+      let resultCount = 0;
+
+      do {
+        const responses = await executeAuthzedOperation("lookup_resources", () =>
+          sdkClient.promises.lookupResources({
+            consistency,
+            context: undefined,
+            optionalCursor: cursor ? { token: cursor } : undefined,
+            optionalLimit: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
+            permission: lookup.permission,
+            resourceObjectType: lookup.resourceType,
+            subject: {
+              object: {
+                objectId: lookup.subject.objectId,
+                objectType: lookup.subject.objectType,
+              },
+              optionalRelation: "",
             },
-            optionalRelation: "",
-          },
-        });
+          })
+        );
 
         if (
           responses.some(
@@ -613,14 +622,40 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
           });
         }
 
-        return {
-          resourceIds: Object.freeze(
-            [...new Set(responses.map(({ resourceObjectId }) => resourceObjectId))].sort((left, right) =>
-              left.localeCompare(right)
-            )
-          ),
-        };
-      });
+        resultCount += responses.length;
+        if (resultCount > AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS) {
+          throw new AuthzedError({
+            attempts: 0,
+            code: AUTHZED_ERROR_CODES.LIMIT_EXCEEDED,
+            operation: "lookup_resources",
+            retryable: false,
+          });
+        }
+
+        for (const { resourceObjectId } of responses) {
+          resourceIds.add(resourceObjectId);
+        }
+
+        if (responses.length < AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE) {
+          cursor = undefined;
+          continue;
+        }
+
+        const nextCursor = responses.at(-1)?.afterResultCursor?.token;
+        if (!nextCursor || nextCursor === cursor) {
+          throw new AuthzedError({
+            attempts: 0,
+            code: AUTHZED_ERROR_CODES.INTERNAL,
+            operation: "lookup_resources",
+            retryable: false,
+          });
+        }
+        cursor = nextCursor;
+      } while (cursor);
+
+      return {
+        resourceIds: Object.freeze([...resourceIds].sort((left, right) => left.localeCompare(right))),
+      };
     },
     readRelationships: async (query) => {
       validateRelationshipQuery(query);

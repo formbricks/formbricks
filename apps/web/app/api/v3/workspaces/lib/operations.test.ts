@@ -5,13 +5,15 @@ import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
 import { listV3Workspaces } from "./operations";
 
+const loggerMocks = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn() }));
+
 vi.mock("@/lib/organization/service", () => ({ getOrganizationsByUserId: vi.fn() }));
 vi.mock("@/lib/workspace/service", () => ({ getUserWorkspaces: vi.fn(), getWorkspace: vi.fn() }));
 vi.mock("@/lib/authorization/workspace-list-observer", () => ({
   observeWorkspaceListAuthorization: vi.fn(),
 }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn() })) },
+  logger: { withContext: vi.fn(() => loggerMocks) },
 }));
 
 const sessionAuth = {
@@ -130,6 +132,14 @@ describe("listV3Workspaces", () => {
       organizationIds: ["org_1"],
       workspaces: [{ id: "w1", organizationId: "org_1" }],
     });
+    expect(loggerMocks.warn).toHaveBeenCalledExactlyOnceWith(
+      { component: "authorization", crossOrganizationGrantCount: 1 },
+      "Cross-organization API-key workspace grants were filtered"
+    );
+    const logged = JSON.stringify(loggerMocks.warn.mock.calls);
+    expect(logged).not.toContain("key_1");
+    expect(logged).not.toContain("w9");
+    expect(logged).not.toContain("org_2");
   });
 
   test("no authentication → 401", async () => {
