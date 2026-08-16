@@ -98,6 +98,38 @@ describe("toSourceRef", () => {
     });
   });
 
+  test("maps feedback directory parents and all assignment edges", () => {
+    expect(
+      toSourceRef(tuple("feedback_directory", "directory-1", "organization", "organization", "org-1"))
+    ).toEqual({ feedbackDirectoryId: "directory-1", kind: "feedbackDirectory" });
+
+    expect(
+      toSourceRef(
+        tuple("feedback_directory", "directory-1", "assignment", "feedback_directory_assignment", "fdwa-1")
+      )
+    ).toEqual({
+      assignmentId: "fdwa-1",
+      feedbackDirectoryId: "directory-1",
+      kind: "feedbackDirectoryAssignment",
+    });
+    expect(
+      toSourceRef(
+        tuple("feedback_directory_assignment", "fdwa-1", "directory", "feedback_directory", "directory-1")
+      )
+    ).toEqual({
+      assignmentId: "fdwa-1",
+      feedbackDirectoryId: "directory-1",
+      kind: "feedbackDirectoryAssignment",
+    });
+    expect(
+      toSourceRef(tuple("feedback_directory_assignment", "fdwa-1", "workspace", "workspace", "workspace-1"))
+    ).toEqual({
+      assignmentId: "fdwa-1",
+      kind: "feedbackDirectoryAssignment",
+      workspaceId: "workspace-1",
+    });
+  });
+
   test("distinguishes an api-key workspace grant from a team workspace grant", () => {
     // The relations differ only by suffix and the subject type, and confusing them would name the
     // wrong source record — so a present grant would look absent, and pruning would revoke it.
@@ -125,13 +157,28 @@ describe("toSourceRef", () => {
     ["a workspace grant with the wrong subject type", tuple("workspace", "ws-1", "reader", "user", "u")],
     ["a parent relation with the wrong subject type", tuple("team", "team-1", "organization", "user", "u")],
     ["an api_key resource with an unexpected relation", tuple("api_key", "key-1", "reader", "user", "u")],
+    [
+      "a feedback directory with an unexpected relation",
+      tuple("feedback_directory", "directory-1", "reader", "user", "u"),
+    ],
+    [
+      "a feedback directory assignment with an unexpected relation",
+      tuple("feedback_directory_assignment", "fdwa-1", "reader", "user", "u"),
+    ],
   ])("declines to name a source record for %s", (_label, relationship) => {
     expect(toSourceRef(relationship)).toBeNull();
   });
 });
 
 describe("resource type classification", () => {
-  test.each(["api_key", "organization", "team", "workspace"])("treats %s as managed", (resourceType) => {
+  test.each([
+    "api_key",
+    "feedback_directory",
+    "feedback_directory_assignment",
+    "organization",
+    "team",
+    "workspace",
+  ])("treats %s as managed", (resourceType) => {
     expect(getManagedResourceTypes()).toContain(resourceType);
     expect(isUnprojectedResourceType(resourceType)).toBe(false);
   });
@@ -148,7 +195,14 @@ describe("resource type classification", () => {
   );
 
   test("exposes the managed types for a resource-type sweep", () => {
-    expect([...getManagedResourceTypes()].sort()).toEqual(["api_key", "organization", "team", "workspace"]);
+    expect([...getManagedResourceTypes()].sort()).toEqual([
+      "api_key",
+      "feedback_directory",
+      "feedback_directory_assignment",
+      "organization",
+      "team",
+      "workspace",
+    ]);
   });
 });
 
@@ -268,6 +322,38 @@ describe("summarizeObservation", () => {
     ]);
   });
 
+  test("enriches a complete feedback directory assignment from its three graph edges", () => {
+    const assignmentId = "fdwa-1";
+    const summary = summarizeObservation([
+      tuple("feedback_directory", "directory-1", "assignment", "feedback_directory_assignment", assignmentId),
+      tuple("feedback_directory_assignment", assignmentId, "directory", "feedback_directory", "directory-1"),
+      tuple("feedback_directory_assignment", assignmentId, "workspace", "workspace", "workspace-1"),
+    ]);
+
+    expect(summary.sourceRefs).toEqual([
+      {
+        assignmentId,
+        feedbackDirectoryId: "directory-1",
+        kind: "feedbackDirectoryAssignment",
+        workspaceId: "workspace-1",
+      },
+    ]);
+    expect(summary.managedRelationships).toHaveLength(3);
+  });
+
+  test("does not guess an assignment parent when conflicting graph edges are observed", () => {
+    const assignmentId = "fdwa-ambiguous";
+    const summary = summarizeObservation([
+      tuple("feedback_directory", "directory-1", "assignment", "feedback_directory_assignment", assignmentId),
+      tuple("feedback_directory_assignment", assignmentId, "directory", "feedback_directory", "directory-2"),
+      tuple("feedback_directory_assignment", assignmentId, "workspace", "workspace", "workspace-1"),
+    ]);
+
+    expect(summary.sourceRefs).toEqual([
+      { assignmentId, kind: "feedbackDirectoryAssignment", workspaceId: "workspace-1" },
+    ]);
+  });
+
   test("orders output deterministically so repeated runs are comparable", () => {
     const relationships = [
       tuple("workspace", "ws-2", "organization", "organization", "org-1"),
@@ -321,6 +407,32 @@ describe("findMismatchedPermissionRelations", () => {
         expectedRelations: ["api_key_reader"],
         observedRelations: ["api_key_reader", "api_key_writer"],
         source: { apiKeyId: "key-1", kind: "apiKey" },
+      },
+    ]);
+  });
+
+  test("compares all three feedback assignment edges as one exact relationship set", () => {
+    const assignmentId = "fdwa-assignment-1";
+    const expected = [
+      tuple("feedback_directory", "directory-1", "assignment", "feedback_directory_assignment", assignmentId),
+      tuple("feedback_directory_assignment", assignmentId, "directory", "feedback_directory", "directory-1"),
+      tuple("feedback_directory_assignment", assignmentId, "workspace", "workspace", "workspace-1"),
+    ];
+    const observed = [
+      expected[0],
+      expected[1],
+      tuple("feedback_directory_assignment", assignmentId, "workspace", "workspace", "workspace-2"),
+    ];
+
+    expect(findMismatchedPermissionRelations(expected, observed)).toEqual([
+      {
+        expectedRelations: ["assignment", "directory", "workspace"],
+        observedRelations: ["assignment", "directory", "workspace"],
+        source: {
+          assignmentId,
+          feedbackDirectoryId: "directory-1",
+          kind: "feedbackDirectoryAssignment",
+        },
       },
     ]);
   });

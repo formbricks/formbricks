@@ -45,6 +45,13 @@ export type TAuthzedRelationshipRef = Readonly<{
 export type TAuthzedSourceRef =
   | Readonly<{ apiKeyId: string; kind: "apiKey" }>
   | Readonly<{ apiKeyId: string; kind: "apiKeyWorkspaceGrant"; workspaceId: string }>
+  | Readonly<{ feedbackDirectoryId: string; kind: "feedbackDirectory" }>
+  | Readonly<{
+      assignmentId: string;
+      feedbackDirectoryId?: string;
+      kind: "feedbackDirectoryAssignment";
+      workspaceId?: string;
+    }>
   | Readonly<{ kind: "membership"; organizationId: string; userId: string }>
   | Readonly<{ kind: "team"; teamId: string }>
   | Readonly<{ kind: "teamMembership"; teamId: string; userId: string }>
@@ -140,6 +147,40 @@ const toApiKeySourceRef: TSourceRefResolver = ({ relation, resource, subject }) 
     ? { apiKeyId: resource.objectId, kind: "apiKey" }
     : null;
 
+const toFeedbackDirectorySourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (relation === PARENT_RELATION && subject.objectType === "organization") {
+    return { feedbackDirectoryId: resource.objectId, kind: "feedbackDirectory" };
+  }
+  if (relation === "assignment" && subject.objectType === "feedback_directory_assignment") {
+    return {
+      assignmentId: subject.objectId,
+      feedbackDirectoryId: resource.objectId,
+      kind: "feedbackDirectoryAssignment",
+    };
+  }
+
+  return null;
+};
+
+const toFeedbackDirectoryAssignmentSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (relation === "directory" && subject.objectType === "feedback_directory") {
+    return {
+      assignmentId: resource.objectId,
+      feedbackDirectoryId: subject.objectId,
+      kind: "feedbackDirectoryAssignment",
+    };
+  }
+  if (relation === "workspace" && subject.objectType === "workspace") {
+    return {
+      assignmentId: resource.objectId,
+      kind: "feedbackDirectoryAssignment",
+      workspaceId: subject.objectId,
+    };
+  }
+
+  return null;
+};
+
 /**
  * The vocabulary in one table: which resource types imply a source record, and how.
  *
@@ -152,6 +193,8 @@ const toApiKeySourceRef: TSourceRefResolver = ({ relation, resource, subject }) 
  */
 const SOURCE_REF_RESOLVERS = {
   api_key: toApiKeySourceRef,
+  feedback_directory: toFeedbackDirectorySourceRef,
+  feedback_directory_assignment: toFeedbackDirectoryAssignmentSourceRef,
   organization: toOrganizationSourceRef,
   team: toTeamSourceRef,
   workspace: toWorkspaceSourceRef,
@@ -206,7 +249,7 @@ export const toSourceRef = (relationship: TAuthzedRelationship): TAuthzedSourceR
  */
 export type TAuthzedParentEdge = Readonly<{
   childId: string;
-  childType: "api_key" | "team" | "workspace";
+  childType: "api_key" | "feedback_directory" | "team" | "workspace";
   organizationId: string;
   /**
    * The relation that asserted the ownership.
@@ -231,7 +274,10 @@ export type TAuthzedParentEdge = Readonly<{
  * `toSourceRefs`. Two refs for the same record must serialize identically, so both constructors keep
  * their key order aligned — the test asserting round-trip equality of every kind is what holds that.
  */
-export const sourceRefKey = (ref: TAuthzedSourceRef): string => JSON.stringify(ref);
+export const sourceRefKey = (ref: TAuthzedSourceRef): string =>
+  ref.kind === "feedbackDirectoryAssignment"
+    ? JSON.stringify({ assignmentId: ref.assignmentId, kind: ref.kind })
+    : JSON.stringify(ref);
 
 /** The parent edge an observed relationship asserts, if it asserts one. */
 const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | null => {
@@ -265,6 +311,7 @@ const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | 
   }
   if (
     resource.objectType !== "api_key" &&
+    resource.objectType !== "feedback_directory" &&
     resource.objectType !== "team" &&
     resource.objectType !== "workspace"
   ) {
@@ -394,6 +441,14 @@ const toRelationshipRef = (relationship: TAuthzedRelationship): TAuthzedRelation
   relation: relationship.relation,
 });
 
+const onlyValue = (values: ReadonlySet<string> | undefined): string | undefined => {
+  if (values?.size !== 1) {
+    return undefined;
+  }
+
+  return values.values().next().value;
+};
+
 /**
  * Classify an observation and collect the source records it implies.
  *
@@ -409,6 +464,24 @@ export const summarizeObservation = (
   const parentEdges = new Map<string, TAuthzedParentEdge>();
   let ignored = 0;
 
+  const assignmentDirectories = new Map<string, Set<string>>();
+  const assignmentWorkspaces = new Map<string, Set<string>>();
+  for (const { relation, resource, subject } of relationships) {
+    if (resource.objectType === "feedback_directory" && relation === "assignment") {
+      const directories = assignmentDirectories.get(subject.objectId) ?? new Set<string>();
+      directories.add(resource.objectId);
+      assignmentDirectories.set(subject.objectId, directories);
+    } else if (resource.objectType === "feedback_directory_assignment" && relation === "directory") {
+      const directories = assignmentDirectories.get(resource.objectId) ?? new Set<string>();
+      directories.add(subject.objectId);
+      assignmentDirectories.set(resource.objectId, directories);
+    } else if (resource.objectType === "feedback_directory_assignment" && relation === "workspace") {
+      const workspaces = assignmentWorkspaces.get(resource.objectId) ?? new Set<string>();
+      workspaces.add(subject.objectId);
+      assignmentWorkspaces.set(resource.objectId, workspaces);
+    }
+  }
+
   for (const relationship of relationships) {
     if (isUnprojectedResourceType(relationship.resource.objectType)) {
       ignored++;
@@ -422,7 +495,21 @@ export const summarizeObservation = (
 
     const sourceRef = toSourceRef(relationship);
     if (sourceRef) {
-      sourceRefs.set(sourceRefKey(sourceRef), sourceRef);
+      const enrichedSourceRef = (() => {
+        if (sourceRef.kind !== "feedbackDirectoryAssignment") {
+          return sourceRef;
+        }
+
+        const feedbackDirectoryId = onlyValue(assignmentDirectories.get(sourceRef.assignmentId));
+        const workspaceId = onlyValue(assignmentWorkspaces.get(sourceRef.assignmentId));
+
+        return {
+          ...sourceRef,
+          ...(feedbackDirectoryId ? { feedbackDirectoryId } : {}),
+          ...(workspaceId ? { workspaceId } : {}),
+        };
+      })();
+      sourceRefs.set(sourceRefKey(enrichedSourceRef), enrichedSourceRef);
       managedRelationships.set(relationshipKey(relationship), relationship);
       continue;
     }

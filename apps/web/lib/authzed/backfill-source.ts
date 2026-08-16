@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { TAuthzedParentEdge, TAuthzedSourceRef } from "./backfill-diff";
 import type { TAuthzedRelationship } from "./client";
 import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE } from "./constants";
+import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
 import {
   ORGANIZATION_ACCESS_RELATIONS,
   ORGANIZATION_RELATIONS,
@@ -35,6 +36,10 @@ export type TAuthzedMembershipTarget = Readonly<{ organizationId: string; userId
 export type TAuthzedTeamMembershipTarget = Readonly<{ teamId: string; userId: string }>;
 export type TAuthzedWorkspaceTeamTarget = Readonly<{ teamId: string; workspaceId: string }>;
 export type TAuthzedApiKeyWorkspaceTarget = Readonly<{ apiKeyId: string; workspaceId: string }>;
+export type TAuthzedFeedbackDirectoryAssignmentTarget = Readonly<{
+  feedbackDirectoryId: string;
+  workspaceId: string;
+}>;
 
 /**
  * Every authorization-relevant record owned by one organization.
@@ -47,12 +52,16 @@ export type TAuthzedOrganizationSource = Readonly<{
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
   /** Exact managed relationship set derived from the same maps as the projectors. */
   expectedRelationships: ReadonlyArray<TAuthzedRelationship>;
+  /** All valid pairs to observe/reconcile; archived pairs are targets but contribute no expected edges. */
+  feedbackDirectoryAssignments: ReadonlyArray<TAuthzedFeedbackDirectoryAssignmentTarget>;
+  feedbackDirectoryIds: ReadonlyArray<string>;
   /**
    * API-key workspace grants whose key and workspace belong to different organizations.
    *
    * Same treatment as `invalidWorkspaceTeamGrants`: reported, never projected, never pruned.
    */
   invalidApiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  invalidFeedbackDirectoryAssignments: ReadonlyArray<TAuthzedFeedbackDirectoryAssignmentTarget>;
   /**
    * Workspace-team grants whose team and workspace belong to different organizations.
    *
@@ -72,6 +81,8 @@ export type TAuthzedWorkspaceSource = Readonly<{
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
   /** Exact managed relationship set for this workspace and its valid grants. */
   expectedRelationships: ReadonlyArray<TAuthzedRelationship>;
+  /** All valid pairs to observe/reconcile; archived pairs are targets but contribute no expected edges. */
+  feedbackDirectoryAssignments: ReadonlyArray<TAuthzedFeedbackDirectoryAssignmentTarget>;
   /**
    * Grants whose principal belongs to a different organization than the workspace.
    *
@@ -81,6 +92,7 @@ export type TAuthzedWorkspaceSource = Readonly<{
    * refuses to write. Reported, never projected, never pruned.
    */
   invalidApiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  invalidFeedbackDirectoryAssignments: ReadonlyArray<TAuthzedFeedbackDirectoryAssignmentTarget>;
   invalidWorkspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
   /**
    * The owning organization, or `null` when the workspace has no row.
@@ -109,6 +121,14 @@ type TOrganizationApiKeyWorkspaceGrant = Readonly<{
   workspaceId: string;
 }>;
 
+type TOrganizationFeedbackDirectory = Readonly<{
+  id: string;
+  isArchived: boolean;
+  organizationId: string;
+  workspaces: ReadonlyArray<
+    Readonly<{ workspace: Readonly<{ organizationId: string }>; workspaceId: string }>
+  >;
+}>;
 const partitionByOrganization = <TGrant>(
   grants: ReadonlyArray<TGrant>,
   organizationId: string | null,
@@ -169,6 +189,59 @@ const getApiKeyRelationships = (
   return relationships;
 };
 
+const getFeedbackDirectorySource = (
+  directories: ReadonlyArray<TOrganizationFeedbackDirectory>,
+  organizationId: string
+): Readonly<{
+  assignments: TAuthzedFeedbackDirectoryAssignmentTarget[];
+  invalidAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[];
+  relationships: TAuthzedRelationship[];
+}> => {
+  const assignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
+  const invalidAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
+  const relationships: TAuthzedRelationship[] = [];
+
+  for (const directory of directories) {
+    relationships.push({
+      relation: "organization",
+      resource: { objectId: directory.id, objectType: "feedback_directory" },
+      subject: { objectId: directory.organizationId, objectType: "organization" },
+    });
+    for (const workspace of directory.workspaces) {
+      const target = { feedbackDirectoryId: directory.id, workspaceId: workspace.workspaceId };
+      if (workspace.workspace.organizationId !== organizationId) {
+        invalidAssignments.push(target);
+        continue;
+      }
+
+      assignments.push(target);
+      if (directory.isArchived) {
+        continue;
+      }
+
+      const assignmentId = getFeedbackDirectoryAssignmentObjectId(directory.id, workspace.workspaceId);
+      relationships.push(
+        {
+          relation: "assignment",
+          resource: { objectId: directory.id, objectType: "feedback_directory" },
+          subject: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+        },
+        {
+          relation: "directory",
+          resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+          subject: { objectId: directory.id, objectType: "feedback_directory" },
+        },
+        {
+          relation: "workspace",
+          resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+          subject: { objectId: workspace.workspaceId, objectType: "workspace" },
+        }
+      );
+    }
+  }
+
+  return { assignments, invalidAssignments, relationships };
+};
 /**
  * One keyset page of organization IDs.
  *
@@ -202,7 +275,7 @@ export const organizationExists = async (organizationId: string): Promise<boolea
  * organization ID is not needed to reach them, because the caller supplies the workspace ID directly.
  */
 export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzedWorkspaceSource> => {
-  const [workspace, workspaceTeams, apiKeyWorkspaces] = await Promise.all([
+  const [workspace, workspaceTeams, apiKeyWorkspaces, directoryAssignments] = await Promise.all([
     prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
     prisma.workspaceTeam.findMany({
       where: { workspaceId },
@@ -226,6 +299,15 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
       },
       orderBy: { apiKeyId: "asc" },
     }),
+    prisma.feedbackDirectoryWorkspace.findMany({
+      where: { workspaceId },
+      select: {
+        feedbackDirectory: { select: { isArchived: true, organizationId: true } },
+        feedbackDirectoryId: true,
+        workspaceId: true,
+      },
+      orderBy: { feedbackDirectoryId: "asc" },
+    }),
   ]);
 
   const organizationId = workspace?.organizationId ?? null;
@@ -241,6 +323,11 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
     apiKeyWorkspaces,
     organizationId,
     (grant) => grant.apiKey.organizationId
+  );
+  const directoryGrants = partitionByOrganization(
+    directoryAssignments,
+    organizationId,
+    (grant) => grant.feedbackDirectory.organizationId
   );
 
   const expectedRelationships: TAuthzedRelationship[] = [];
@@ -265,11 +352,47 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
       subject: { objectId: grant.apiKeyId, objectType: "api_key" },
     });
   }
+  const feedbackDirectoryAssignments = directoryGrants.valid.map(({ feedbackDirectoryId }) => ({
+    feedbackDirectoryId,
+    workspaceId,
+  }));
+  for (const grant of directoryGrants.valid) {
+    if (grant.feedbackDirectory.isArchived) {
+      continue;
+    }
+    const assignment = { feedbackDirectoryId: grant.feedbackDirectoryId, workspaceId };
+    const assignmentId = getFeedbackDirectoryAssignmentObjectId(
+      assignment.feedbackDirectoryId,
+      assignment.workspaceId
+    );
+    expectedRelationships.push(
+      {
+        relation: "assignment",
+        resource: { objectId: assignment.feedbackDirectoryId, objectType: "feedback_directory" },
+        subject: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+      },
+      {
+        relation: "directory",
+        resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+        subject: { objectId: assignment.feedbackDirectoryId, objectType: "feedback_directory" },
+      },
+      {
+        relation: "workspace",
+        resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+        subject: { objectId: assignment.workspaceId, objectType: "workspace" },
+      }
+    );
+  }
 
   return {
     apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
     expectedRelationships,
+    feedbackDirectoryAssignments,
     invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toApiKeyWorkspaceTarget),
+    invalidFeedbackDirectoryAssignments: directoryGrants.invalid.map(({ feedbackDirectoryId }) => ({
+      feedbackDirectoryId,
+      workspaceId,
+    })),
     invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
     organizationId,
     // Truthiness rather than `!== null`, so a row is required to claim existence rather than merely the
@@ -281,58 +404,79 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
 
 /** Enumerate every authorization-relevant record owned by one organization. */
 export const readOrganizationSource = async (organizationId: string): Promise<TAuthzedOrganizationSource> => {
-  const [memberships, teams, workspaces, apiKeys, teamMemberships, workspaceTeams, apiKeyWorkspaces] =
-    await Promise.all([
-      prisma.membership.findMany({
-        where: { organizationId },
-        select: { role: true, userId: true },
-        orderBy: { userId: "asc" },
-      }),
-      prisma.team.findMany({
-        where: { organizationId },
-        select: { id: true, organizationId: true },
-        orderBy: { id: "asc" },
-      }),
-      prisma.workspace.findMany({
-        where: { organizationId },
-        select: { id: true, organizationId: true },
-        orderBy: { id: "asc" },
-      }),
-      prisma.apiKey.findMany({
-        where: { organizationId },
-        select: { id: true, organizationAccess: true, organizationId: true },
-        orderBy: { id: "asc" },
-      }),
-      prisma.teamUser.findMany({
-        where: { team: { organizationId } },
-        select: { role: true, teamId: true, userId: true },
-        orderBy: [{ teamId: "asc" }, { userId: "asc" }],
-      }),
-      prisma.workspaceTeam.findMany({
-        where: { workspace: { organizationId } },
-        // The team's organization is read so a cross-organization grant can be detected rather than
-        // silently projected as if the unit were closed.
-        select: {
-          permission: true,
-          team: { select: { organizationId: true } },
-          teamId: true,
-          workspaceId: true,
+  const [
+    memberships,
+    teams,
+    workspaces,
+    apiKeys,
+    teamMemberships,
+    workspaceTeams,
+    apiKeyWorkspaces,
+    feedbackDirectories,
+  ] = await Promise.all([
+    prisma.membership.findMany({
+      where: { organizationId },
+      select: { role: true, userId: true },
+      orderBy: { userId: "asc" },
+    }),
+    prisma.team.findMany({
+      where: { organizationId },
+      select: { id: true, organizationId: true },
+      orderBy: { id: "asc" },
+    }),
+    prisma.workspace.findMany({
+      where: { organizationId },
+      select: { id: true, organizationId: true },
+      orderBy: { id: "asc" },
+    }),
+    prisma.apiKey.findMany({
+      where: { organizationId },
+      select: { id: true, organizationAccess: true, organizationId: true },
+      orderBy: { id: "asc" },
+    }),
+    prisma.teamUser.findMany({
+      where: { team: { organizationId } },
+      select: { role: true, teamId: true, userId: true },
+      orderBy: [{ teamId: "asc" }, { userId: "asc" }],
+    }),
+    prisma.workspaceTeam.findMany({
+      where: { workspace: { organizationId } },
+      // The team's organization is read so a cross-organization grant can be detected rather than
+      // silently projected as if the unit were closed.
+      select: {
+        permission: true,
+        team: { select: { organizationId: true } },
+        teamId: true,
+        workspaceId: true,
+      },
+      orderBy: [{ workspaceId: "asc" }, { teamId: "asc" }],
+    }),
+    prisma.apiKeyWorkspace.findMany({
+      where: { apiKey: { organizationId } },
+      // Keyed off the *key's* organization, so the workspace's is read to detect a grant that crosses
+      // organizations — the same check `workspaceTeam` above performs, and for the same reason.
+      select: {
+        apiKeyId: true,
+        permission: true,
+        workspace: { select: { organizationId: true } },
+        workspaceId: true,
+      },
+      orderBy: [{ apiKeyId: "asc" }, { workspaceId: "asc" }],
+    }),
+    prisma.feedbackDirectory.findMany({
+      where: { organizationId },
+      select: {
+        id: true,
+        isArchived: true,
+        organizationId: true,
+        workspaces: {
+          select: { workspace: { select: { organizationId: true } }, workspaceId: true },
+          orderBy: { workspaceId: "asc" },
         },
-        orderBy: [{ workspaceId: "asc" }, { teamId: "asc" }],
-      }),
-      prisma.apiKeyWorkspace.findMany({
-        where: { apiKey: { organizationId } },
-        // Keyed off the *key's* organization, so the workspace's is read to detect a grant that crosses
-        // organizations — the same check `workspaceTeam` above performs, and for the same reason.
-        select: {
-          apiKeyId: true,
-          permission: true,
-          workspace: { select: { organizationId: true } },
-          workspaceId: true,
-        },
-        orderBy: [{ apiKeyId: "asc" }, { workspaceId: "asc" }],
-      }),
-    ]);
+      },
+      orderBy: { id: "asc" },
+    }),
+  ]);
 
   const teamGrants = partitionByOrganization(
     workspaceTeams,
@@ -349,6 +493,7 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     organizationId,
     (grant) => grant.workspace.organizationId
   );
+  const directorySource = getFeedbackDirectorySource(feedbackDirectories, organizationId);
 
   const expectedRelationships: TAuthzedRelationship[] = [
     ...memberships.map(({ role, userId }) => ({
@@ -382,13 +527,17 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       resource: { objectId: workspaceId, objectType: "workspace" },
       subject: { objectId: apiKeyId, objectType: "api_key" },
     })),
+    ...directorySource.relationships,
   ];
 
   return {
     apiKeyIds: apiKeys.map(({ id }) => id),
     apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
     expectedRelationships,
+    feedbackDirectoryAssignments: directorySource.assignments,
+    feedbackDirectoryIds: feedbackDirectories.map(({ id }) => id),
     invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toApiKeyWorkspaceTarget),
+    invalidFeedbackDirectoryAssignments: directorySource.invalidAssignments,
     invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
     memberships: memberships.map(({ userId }) => ({ organizationId, userId })),
     teamIds: teams.map(({ id }) => id),
@@ -442,8 +591,9 @@ export const findMismatchedParentEdges = async (
   const teamIds = idsFor("team");
   const workspaceIds = idsFor("workspace");
   const apiKeyIds = idsFor("api_key");
+  const feedbackDirectoryIds = idsFor("feedback_directory");
 
-  const [teams, workspaces, apiKeys] = await Promise.all([
+  const [teams, workspaces, apiKeys, feedbackDirectories] = await Promise.all([
     teamIds.length === 0
       ? []
       : prisma.team.findMany({
@@ -462,12 +612,22 @@ export const findMismatchedParentEdges = async (
           where: { id: { in: [...apiKeyIds] } },
           select: { id: true, organizationId: true },
         }),
+    feedbackDirectoryIds.length === 0
+      ? []
+      : prisma.feedbackDirectory.findMany({
+          where: { id: { in: [...feedbackDirectoryIds] } },
+          select: { id: true, organizationId: true },
+        }),
   ]);
 
   const trueParents = new Map<string, string>([
     ...teams.map(({ id, organizationId }): [string, string] => [`team:${id}`, organizationId]),
     ...workspaces.map(({ id, organizationId }): [string, string] => [`workspace:${id}`, organizationId]),
     ...apiKeys.map(({ id, organizationId }): [string, string] => [`api_key:${id}`, organizationId]),
+    ...feedbackDirectories.map(({ id, organizationId }): [string, string] => [
+      `feedback_directory:${id}`,
+      organizationId,
+    ]),
   ]);
 
   // A resource with no row at all is not reported here — that is an orphan, handled by the existence
@@ -512,58 +672,87 @@ export const findMissingSourceRefs = async (
   const workspaceRefs = byKind(refs, "workspace");
   const workspaceTeamGrantRefs = byKind(refs, "workspaceTeamGrant");
   const apiKeyWorkspaceGrantRefs = byKind(refs, "apiKeyWorkspaceGrant");
+  const feedbackDirectoryRefs = byKind(refs, "feedbackDirectory");
+  const feedbackDirectoryAssignmentRefs = byKind(refs, "feedbackDirectoryAssignment");
 
-  const [apiKeys, memberships, teams, teamMemberships, workspaces, workspaceTeams, apiKeyWorkspaces] =
-    await Promise.all([
-      apiKeyRefs.length === 0
-        ? []
-        : prisma.apiKey.findMany({
-            where: { id: { in: apiKeyRefs.map(({ apiKeyId }) => apiKeyId) } },
-            select: { id: true },
-          }),
-      membershipRefs.length === 0
-        ? []
-        : prisma.membership.findMany({
-            where: {
-              OR: membershipRefs.map(({ organizationId, userId }) => ({ organizationId, userId })),
-            },
-            select: { organizationId: true, userId: true },
-          }),
-      teamRefs.length === 0
-        ? []
-        : prisma.team.findMany({
-            where: { id: { in: teamRefs.map(({ teamId }) => teamId) } },
-            select: { id: true },
-          }),
-      teamMembershipRefs.length === 0
-        ? []
-        : prisma.teamUser.findMany({
-            where: { OR: teamMembershipRefs.map(({ teamId, userId }) => ({ teamId, userId })) },
-            select: { teamId: true, userId: true },
-          }),
-      workspaceRefs.length === 0
-        ? []
-        : prisma.workspace.findMany({
-            where: { id: { in: workspaceRefs.map(({ workspaceId }) => workspaceId) } },
-            select: { id: true },
-          }),
-      workspaceTeamGrantRefs.length === 0
-        ? []
-        : prisma.workspaceTeam.findMany({
-            where: {
-              OR: workspaceTeamGrantRefs.map(({ teamId, workspaceId }) => ({ teamId, workspaceId })),
-            },
-            select: { teamId: true, workspaceId: true },
-          }),
-      apiKeyWorkspaceGrantRefs.length === 0
-        ? []
-        : prisma.apiKeyWorkspace.findMany({
-            where: {
-              OR: apiKeyWorkspaceGrantRefs.map(({ apiKeyId, workspaceId }) => ({ apiKeyId, workspaceId })),
-            },
-            select: { apiKeyId: true, workspaceId: true },
-          }),
-    ]);
+  const [
+    apiKeys,
+    memberships,
+    teams,
+    teamMemberships,
+    workspaces,
+    workspaceTeams,
+    apiKeyWorkspaces,
+    feedbackDirectories,
+    feedbackDirectoryAssignments,
+  ] = await Promise.all([
+    apiKeyRefs.length === 0
+      ? []
+      : prisma.apiKey.findMany({
+          where: { id: { in: apiKeyRefs.map(({ apiKeyId }) => apiKeyId) } },
+          select: { id: true },
+        }),
+    membershipRefs.length === 0
+      ? []
+      : prisma.membership.findMany({
+          where: {
+            OR: membershipRefs.map(({ organizationId, userId }) => ({ organizationId, userId })),
+          },
+          select: { organizationId: true, userId: true },
+        }),
+    teamRefs.length === 0
+      ? []
+      : prisma.team.findMany({
+          where: { id: { in: teamRefs.map(({ teamId }) => teamId) } },
+          select: { id: true },
+        }),
+    teamMembershipRefs.length === 0
+      ? []
+      : prisma.teamUser.findMany({
+          where: { OR: teamMembershipRefs.map(({ teamId, userId }) => ({ teamId, userId })) },
+          select: { teamId: true, userId: true },
+        }),
+    workspaceRefs.length === 0
+      ? []
+      : prisma.workspace.findMany({
+          where: { id: { in: workspaceRefs.map(({ workspaceId }) => workspaceId) } },
+          select: { id: true },
+        }),
+    workspaceTeamGrantRefs.length === 0
+      ? []
+      : prisma.workspaceTeam.findMany({
+          where: {
+            OR: workspaceTeamGrantRefs.map(({ teamId, workspaceId }) => ({ teamId, workspaceId })),
+          },
+          select: { teamId: true, workspaceId: true },
+        }),
+    apiKeyWorkspaceGrantRefs.length === 0
+      ? []
+      : prisma.apiKeyWorkspace.findMany({
+          where: {
+            OR: apiKeyWorkspaceGrantRefs.map(({ apiKeyId, workspaceId }) => ({ apiKeyId, workspaceId })),
+          },
+          select: { apiKeyId: true, workspaceId: true },
+        }),
+    feedbackDirectoryRefs.length === 0
+      ? []
+      : prisma.feedbackDirectory.findMany({
+          where: { id: { in: feedbackDirectoryRefs.map(({ feedbackDirectoryId }) => feedbackDirectoryId) } },
+          select: { id: true },
+        }),
+    feedbackDirectoryAssignmentRefs.length === 0
+      ? []
+      : prisma.feedbackDirectoryWorkspace.findMany({
+          where: {
+            feedbackDirectory: { isArchived: false },
+            OR: feedbackDirectoryAssignmentRefs.flatMap(({ feedbackDirectoryId, workspaceId }) => [
+              ...(feedbackDirectoryId === undefined ? [] : [{ feedbackDirectoryId }]),
+              ...(workspaceId === undefined ? [] : [{ workspaceId }]),
+            ]),
+          },
+          select: { feedbackDirectoryId: true, workspaceId: true },
+        }),
+  ]);
 
   const existingApiKeyIds = new Set(apiKeys.map(({ id }) => id));
   const existingTeamIds = new Set(teams.map(({ id }) => id));
@@ -580,6 +769,12 @@ export const findMissingSourceRefs = async (
   const existingApiKeyWorkspaces = new Set(
     apiKeyWorkspaces.map(({ apiKeyId, workspaceId }) => pairKey(apiKeyId, workspaceId))
   );
+  const existingFeedbackDirectoryIds = new Set(feedbackDirectories.map(({ id }) => id));
+  const existingFeedbackDirectoryAssignments = new Set(
+    feedbackDirectoryAssignments.map(({ feedbackDirectoryId, workspaceId }) =>
+      getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, workspaceId)
+    )
+  );
 
   const isPresent = (ref: TAuthzedSourceRef): boolean => {
     switch (ref.kind) {
@@ -587,6 +782,10 @@ export const findMissingSourceRefs = async (
         return existingApiKeyIds.has(ref.apiKeyId);
       case "apiKeyWorkspaceGrant":
         return existingApiKeyWorkspaces.has(pairKey(ref.apiKeyId, ref.workspaceId));
+      case "feedbackDirectory":
+        return existingFeedbackDirectoryIds.has(ref.feedbackDirectoryId);
+      case "feedbackDirectoryAssignment":
+        return existingFeedbackDirectoryAssignments.has(ref.assignmentId);
       case "membership":
         return existingMemberships.has(pairKey(ref.organizationId, ref.userId));
       case "team":

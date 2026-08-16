@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_LOCALE } from "@/lib/constants";
@@ -207,6 +208,10 @@ export const createWorkspace = async (
 
 export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> => {
   try {
+    const feedbackDirectoryAssignments = await prisma.feedbackDirectoryWorkspace.findMany({
+      where: { workspaceId },
+      select: { feedbackDirectoryId: true, workspaceId: true },
+    });
     const workspace = await prisma.workspace.delete({
       where: {
         id: workspaceId,
@@ -216,6 +221,9 @@ export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> 
 
     await runPostCommitProjection("workspace_delete", () =>
       reconcileTeamWorkspaceRelationships({ workspaceIds: [workspaceId] })
+    );
+    await runPostCommitProjection("workspace_delete_feedback_directory_cleanup", () =>
+      reconcileFeedbackDirectoryRelationships({ assignments: feedbackDirectoryAssignments })
     );
 
     if (workspace) {

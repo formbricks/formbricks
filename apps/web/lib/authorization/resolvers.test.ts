@@ -8,6 +8,8 @@ import {
   getAuthorizationOrganizationId,
   getDashboardAuthorizationWorkspaceScope,
   getDashboardWorkspaceId,
+  getFeedbackDirectoryAssignmentAuthorizationScope,
+  getFeedbackDirectoryAuthorizationScope,
   getResponseAuthorizationWorkspaceScope,
   getResponseSurveyId,
   getSurveyAuthorizationWorkspaceScope,
@@ -22,6 +24,8 @@ vi.mock("@formbricks/database", () => ({
     survey: { findUnique: vi.fn() },
     dashboard: { findUnique: vi.fn() },
     response: { findUnique: vi.fn() },
+    feedbackDirectory: { findUnique: vi.fn() },
+    feedbackDirectoryWorkspace: { findUnique: vi.fn() },
     team: { findUnique: vi.fn() },
     apiKey: { findUnique: vi.fn() },
     organization: { findUnique: vi.fn() },
@@ -169,6 +173,63 @@ describe("isAuthorizationUserActive", () => {
 
     vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(prismaKnownError);
     await expect(isAuthorizationUserActive("error-user")).rejects.toBeInstanceOf(DatabaseError);
+  });
+});
+
+describe("feedback dataset scope resolvers", () => {
+  test("resolves an active directory and its assigned workspace IDs", async () => {
+    vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce({
+      isArchived: false,
+      organizationId: "org-1",
+      workspaces: [{ workspaceId: "workspace-a" }, { workspaceId: "workspace-b" }],
+    } as never);
+
+    await expect(getFeedbackDirectoryAuthorizationScope("directory-1")).resolves.toEqual({
+      isArchived: false,
+      organizationId: "org-1",
+      workspaceIds: ["workspace-a", "workspace-b"],
+    });
+  });
+
+  test("resolves only active same-organization assignment pairs", async () => {
+    vi.mocked(prisma.feedbackDirectoryWorkspace.findUnique).mockResolvedValueOnce({
+      feedbackDirectory: { isArchived: false, organizationId: "org-1" },
+      workspace: { organizationId: "org-1" },
+    } as never);
+
+    await expect(
+      getFeedbackDirectoryAssignmentAuthorizationScope("directory-1", "workspace-1")
+    ).resolves.toMatchObject({
+      assignmentId: expect.stringMatching(/^fdwa_/),
+      organizationId: "org-1",
+      workspaceId: "workspace-1",
+    });
+
+    vi.mocked(prisma.feedbackDirectoryWorkspace.findUnique).mockResolvedValueOnce({
+      feedbackDirectory: { isArchived: true, organizationId: "org-1" },
+      workspace: { organizationId: "org-1" },
+    } as never);
+    await expect(
+      getFeedbackDirectoryAssignmentAuthorizationScope("directory-archived", "workspace-1")
+    ).resolves.toBeNull();
+
+    vi.mocked(prisma.feedbackDirectoryWorkspace.findUnique).mockResolvedValueOnce({
+      feedbackDirectory: { isArchived: false, organizationId: "org-1" },
+      workspace: { organizationId: "org-2" },
+    } as never);
+    await expect(
+      getFeedbackDirectoryAssignmentAuthorizationScope("directory-cross-org", "workspace-2")
+    ).resolves.toBeNull();
+  });
+
+  test("preserves missing rows as denials and database failures as operational errors", async () => {
+    vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(null);
+    await expect(getFeedbackDirectoryAuthorizationScope("directory-missing")).resolves.toBeNull();
+
+    vi.mocked(prisma.feedbackDirectoryWorkspace.findUnique).mockRejectedValueOnce(prismaKnownError);
+    await expect(
+      getFeedbackDirectoryAssignmentAuthorizationScope("directory-error", "workspace-error")
+    ).rejects.toBeInstanceOf(DatabaseError);
   });
 });
 

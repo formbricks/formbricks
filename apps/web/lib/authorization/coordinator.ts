@@ -10,8 +10,8 @@ import { enqueueAuthorizationComparison, getAuthorizationRolloutTarget } from ".
 import type {
   TAuthorizationAction,
   TAuthorizationActor,
+  TAuthorizationResource,
   TAuthorizationResourceForAction,
-  TAuthorizationResourceType,
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
 import { legacyEvaluator } from "./legacy-evaluator";
@@ -124,7 +124,7 @@ const matchesRuleWithoutResolvedResource = (
   config: TAuthorizationRolloutConfig,
   mode: "enforcement" | "shadow",
   target: TAuthzedAuthorizationRolloutTarget,
-  resource: Readonly<{ id: string; type: TAuthorizationResourceType }>
+  resource: TAuthorizationResource
 ): boolean => {
   const rule = config[mode];
   if (!targetsRolloutSurface(rule, target)) return false;
