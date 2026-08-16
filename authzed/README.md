@@ -248,6 +248,56 @@ covers them, including a scope revoked outside a hook, which the projector alone
 cannot see. Routing API-key principals through the central interface remains
 ENG-1731, and SpiceDB comparison/cutover remains ENG-1738.
 
+## Feedback Dataset projection
+
+The product term **Feedback Dataset** maps to Prisma `FeedbackDirectory`. PostgreSQL remains the source
+of truth for each directory, its owning organization, archive state, and its
+`FeedbackDirectoryWorkspace` assignments.
+
+- A directory projects `feedback_directory#organization@organization`.
+- An active same-organization assignment projects a three-edge subgraph linking the directory, an opaque
+  `feedback_directory_assignment`, and the assigned workspace.
+- The assignment object ID is a deterministic `fdwa_`-prefixed SHA-256 digest of the length-framed
+  directory/workspace pair. Source IDs and the generated ID never appear in projection logs.
+- Archived assignments are not active grants. Reconciliation removes all three stored edges.
+- A directory and workspace belonging to different organizations is invalid source state. It is reported
+  for manual investigation and never projected.
+
+Directory administrators inherit from `organization.manage`. Team members and API keys inherit through
+the exact assigned workspace. The assignment resource ensures that an operation scoped to workspace A
+cannot use access granted through workspace B. Directory-wide checks can union all active assignments for
+gateway operations that do not carry workspace context.
+
+Projection runs after the PostgreSQL mutation commits and remains best-effort. Creation, assignment
+replacement, archive/restore, workspace deletion, and organization deletion reconcile captured previous
+and current pairs. The repair command covers existing rows, missing edges, stale archived edges, parent
+drift, and exact three-edge permission drift.
+
+Feedback records, feedback sources, charts, workflows, contacts, attributes, and segments do not receive
+standalone Phase 1 SpiceDB resources. Charts and workflows inherit workspace authorization. Chart
+`createdBy` is metadata rather than authorization ownership, and record-level tenant/integrity checks
+remain in the application and Hub layers.
+
+### Feedback Dataset authorization routing
+
+Current feedback access is routed through the central Formbricks authorization interface without changing
+its effective rules:
+
+- dataset administration checks `organization.manage`;
+- workspace-scoped records, taxonomy, sources, CSV imports, chart queries, and server-rendered Unify
+  entry points check the exact `feedbackDirectoryAssignment` resource;
+- directory-wide gateway reads and creates check `feedbackDirectory.read` or
+  `feedbackDirectory.write` across all active assignments;
+- existing-record mutations still require organization management for users and an exclusively assigned
+  dataset plus the existing workspace permission for API keys;
+- archive, entitlement, OAuth-scope, Hub tenant, source ownership, and record-integrity checks remain in
+  the application layer and execute in their existing order.
+
+Authenticated feedback-gateway requests use the bounded rollout targets `feedback_gateway:user` and
+`feedback_gateway:apiKey`. Public and unauthenticated gateway traffic is never scoped for shadow or
+enforcement. The ENG-2398 rollout is shadow-only; moving either target into an enforcement allowlist
+requires a separate rollout decision.
+
 ## Resource parent resolution during the current-model migration
 
 The initial migration deliberately does not project one relationship for every
@@ -293,6 +343,8 @@ floor before any cohort is enabled.
 | `WorkspaceTeam.permission` (`read`/`readWrite`/`manage`)             | `workspace` relations `reader_team`/`writer_team`/`manager_team` (subject `team#member`) |
 | `ApiKeyWorkspace.permission` (`read`/`write`/`manage`)               | `workspace` relations `reader`/`writer`/`manager` (subject `api_key`)                    |
 | `ApiKey.organizationAccess.accessControl` (`read`/`write`)           | `organization` relations `api_key_reader`/`api_key_writer`                               |
+| `FeedbackDirectory.organizationId`                                   | `feedback_directory#organization@organization`                                           |
+| Active `FeedbackDirectoryWorkspace`                                  | Three-edge `feedback_directory_assignment` graph to the exact workspace                  |
 | `Survey.workspaceId` / `Dashboard.workspaceId` / `Response.surveyId` | `survey`/`dashboard` relation `workspace`; `response` relation `survey`                  |
 
 Resource permissions preserve the operation-specific gates that exist today:
@@ -403,9 +455,12 @@ Drift is reported in both directions:
 
 - `missing` — records PostgreSQL holds that SpiceDB has no relationship for. This
   is what an empty or stale SpiceDB looks like, so a report that could not see it
-  would be worthless. Note this compares _records_, not relations: a membership
-  stored as `owner` in PostgreSQL but `member` in SpiceDB counts as present.
-  Applying converges the relation regardless, by writing the current value.
+  would be worthless.
+- `mismatchedPermissions` — an existing source record whose exact role, grant, or
+  independent access-flag relationship set differs from PostgreSQL. This catches
+  stale privilege upgrades such as a `manager_team` relationship for a source row
+  that now grants only `read`. Applying reconciliation writes the current value;
+  a follow-up dry run confirms the mismatch is gone.
 - `orphaned` — relationships whose source record is gone.
 - `invalid` — source rows whose principal and resource belong to different
   organizations. Never projected and never pruned, in either scope.

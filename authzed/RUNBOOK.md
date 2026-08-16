@@ -193,9 +193,10 @@ Either way, re-run before concluding anything.
 ### Reading the drift counters
 
 - **`missing`** — records PostgreSQL holds that SpiceDB has no relationship for. What an empty or stale
-  SpiceDB looks like. Step 2 fixes it. Note it compares _records_, not relations: a membership stored as
-  `owner` in PostgreSQL but `member` in SpiceDB counts as present, and step 2 converges it regardless by
-  writing the current value.
+  SpiceDB looks like. Step 2 fixes it.
+- **`mismatchedPermissions`** — an existing source record has the wrong exact role, grant, or independent
+  access-flag relationship set. Treat a stale higher permission as a security finding. Step 2 converges
+  it; require a follow-up dry run with this counter at zero.
 - **`orphaned`** — relationships whose source record is gone. Only step 3 removes them.
 - **`mismatchedParents`** — **treat as a security finding, not routine drift.** A resource is attached to
   an organization PostgreSQL says does not own it. `organization` is a relation, so the edge is _additive_:

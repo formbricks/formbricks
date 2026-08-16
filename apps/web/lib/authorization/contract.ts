@@ -23,6 +23,8 @@ export const AUTHORIZATION_PERMISSION_MAP = {
   workspace: ["read", "write", "manage", "share"],
   survey: ["read", "write", "manage", "delete", "publish", "response_read", "response_export"],
   dashboard: ["read", "write"],
+  feedbackDirectory: ["read", "write", "manage"],
+  feedbackDirectoryAssignment: ["read", "write", "manage"],
   response: ["read", "write", "manage", "export"],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
@@ -43,12 +45,18 @@ export type TAuthorizationActor =
     }>;
 
 type TAuthorizationResourceOfType<TResourceType extends TAuthorizationResourceType> =
-  TResourceType extends TAuthorizationResourceType
+  TResourceType extends "feedbackDirectoryAssignment"
     ? Readonly<{
         type: TResourceType;
-        id: string;
+        feedbackDirectoryId: string;
+        workspaceId: string;
       }>
-    : never;
+    : TResourceType extends TAuthorizationResourceType
+      ? Readonly<{
+          type: TResourceType;
+          id: string;
+        }>
+      : never;
 
 export type TAuthorizationResource = TAuthorizationResourceOfType<TAuthorizationResourceType>;
 

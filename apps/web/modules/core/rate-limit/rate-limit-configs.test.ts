@@ -101,6 +101,11 @@ describe("rateLimitConfigs", () => {
         "inviteMember",
         "bulkInviteMembers",
         "generateExampleResponses",
+        "feedbackSourceMutation",
+        "historicalResponseImport",
+        "chartCreation",
+        "feedbackDirectoryMutation",
+        "feedbackRecordDeletion",
       ]);
 
       // Exact values, not just presence: this quota is the only thing bounding one account from
@@ -110,6 +115,11 @@ describe("rateLimitConfigs", () => {
         interval: 60,
         allowedPerInterval: 30,
         namespace: "action:unsplash",
+      });
+      expect(rateLimitConfigs.actions.historicalResponseImport).toEqual({
+        interval: 3600,
+        allowedPerInterval: 10,
+        namespace: "action:historical-response-import",
       });
     });
 

@@ -3,7 +3,9 @@ import type { TApiKeyProjectionTargets } from "./api-key";
 import {
   type TAuthzedObservationSummary,
   type TAuthzedParentEdge,
+  type TAuthzedPermissionMismatch,
   type TAuthzedSourceRef,
+  findMismatchedPermissionRelations,
   findUnprojectedSourceRefs,
   getManagedResourceTypes,
   sourceRefKey,
@@ -11,6 +13,7 @@ import {
 } from "./backfill-diff";
 import {
   type TAuthzedApiKeyWorkspaceTarget,
+  type TAuthzedFeedbackDirectoryAssignmentTarget,
   type TAuthzedMembershipTarget,
   type TAuthzedOrganizationSource,
   type TAuthzedTeamMembershipTarget,
@@ -32,6 +35,8 @@ import {
   AUTHZED_MAX_TRACKED_ORPHAN_REFS,
 } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
+import type { TFeedbackDirectoryProjectionTargets } from "./feedback-directory";
+import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
 import type { TOrganizationMembershipProjectionTargets } from "./organization-membership";
 import type { TAuthzedProjectionResult } from "./projection";
 import { forEachRelationshipPage, readAllRelationships } from "./relationship-reads";
@@ -56,9 +61,15 @@ import type { TTeamWorkspaceProjectionTargets } from "./team-workspace";
 
 /** Mutation capability. Supplied by the CLI; a dry run supplies no-ops. */
 export type TAuthzedBackfillApply = Readonly<{
+  deleteFeedbackDirectoryAssignmentResources: (
+    assignmentIds: ReadonlyArray<string>
+  ) => Promise<TAuthzedProjectionResult>;
   reconcileApiKeys: (targets: TApiKeyProjectionTargets) => Promise<TAuthzedProjectionResult>;
   reconcileMemberships: (
     targets: TOrganizationMembershipProjectionTargets
+  ) => Promise<TAuthzedProjectionResult>;
+  reconcileFeedbackDirectories: (
+    targets: TFeedbackDirectoryProjectionTargets
   ) => Promise<TAuthzedProjectionResult>;
   reconcileTeamWorkspace: (targets: TTeamWorkspaceProjectionTargets) => Promise<TAuthzedProjectionResult>;
 }>;
@@ -136,6 +147,8 @@ export type TAuthzedBackfillCounters = Readonly<{
   invalid: number;
   /** Resources attached to an organization PostgreSQL says does not own them. Never pruned. */
   mismatchedParents: number;
+  /** Existing source records whose exact projected role or grant relation differs from PostgreSQL. */
+  mismatchedPermissions: number;
   /** Source records PostgreSQL holds that SpiceDB has no relationship for. */
   missing: number;
   orphaned: number;
@@ -188,6 +201,8 @@ export type TAuthzedBackfillResult = Readonly<{
    * for a human — see the runbook.
    */
   mismatchedParents: ReadonlyArray<TAuthzedParentEdge>;
+  /** Exact role/grant relation mismatches. Applying reconciliation repairs these deterministically. */
+  mismatchedPermissions: ReadonlyArray<TAuthzedPermissionMismatch>;
   mode: "apply" | "dry_run";
   orphanScope: "all" | "known_resources";
   orphans: ReadonlyArray<TAuthzedSourceRef>;
@@ -226,6 +241,9 @@ const toErrorCode = (error: unknown): Readonly<{ attempts: number; code: string;
 type TReconcileTargets = Readonly<{
   apiKeyIds: ReadonlyArray<string>;
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  feedbackDirectoryAssignmentObjectIds: ReadonlyArray<string>;
+  feedbackDirectoryAssignments: ReadonlyArray<TAuthzedFeedbackDirectoryAssignmentTarget>;
+  feedbackDirectoryIds: ReadonlyArray<string>;
   memberships: ReadonlyArray<TAuthzedMembershipTarget>;
   teamIds: ReadonlyArray<string>;
   teamMemberships: ReadonlyArray<TAuthzedTeamMembershipTarget>;
@@ -244,6 +262,9 @@ type TReconcileTargets = Readonly<{
 const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTargets => {
   const apiKeyIds: string[] = [];
   const apiKeyWorkspaceGrants: TAuthzedApiKeyWorkspaceTarget[] = [];
+  const feedbackDirectoryAssignmentObjectIds: string[] = [];
+  const feedbackDirectoryAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
+  const feedbackDirectoryIds: string[] = [];
   const memberships: TAuthzedMembershipTarget[] = [];
   const teamIds: string[] = [];
   const teamMemberships: TAuthzedTeamMembershipTarget[] = [];
@@ -257,6 +278,19 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
         break;
       case "apiKeyWorkspaceGrant":
         apiKeyWorkspaceGrants.push({ apiKeyId: ref.apiKeyId, workspaceId: ref.workspaceId });
+        break;
+      case "feedbackDirectory":
+        feedbackDirectoryIds.push(ref.feedbackDirectoryId);
+        break;
+      case "feedbackDirectoryAssignment":
+        if (ref.feedbackDirectoryId !== undefined && ref.workspaceId !== undefined) {
+          feedbackDirectoryAssignments.push({
+            feedbackDirectoryId: ref.feedbackDirectoryId,
+            workspaceId: ref.workspaceId,
+          });
+        } else {
+          feedbackDirectoryAssignmentObjectIds.push(ref.assignmentId);
+        }
         break;
       case "membership":
         memberships.push({ organizationId: ref.organizationId, userId: ref.userId });
@@ -279,6 +313,9 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
   return {
     apiKeyIds,
     apiKeyWorkspaceGrants,
+    feedbackDirectoryAssignmentObjectIds,
+    feedbackDirectoryAssignments,
+    feedbackDirectoryIds,
     memberships,
     teamIds,
     teamMemberships,
@@ -293,31 +330,73 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
  * Lets the two sides be compared with a set difference, which is what makes a dry run able to report the
  * PostgreSQL-to-SpiceDB direction at all.
  */
-const toSourceRefs = (source: TAuthzedOrganizationSource): ReadonlyArray<TAuthzedSourceRef> => [
-  ...source.memberships.map(
-    ({ organizationId, userId }): TAuthzedSourceRef => ({ kind: "membership", organizationId, userId })
-  ),
-  ...source.teamIds.map((teamId): TAuthzedSourceRef => ({ kind: "team", teamId })),
-  ...source.teamMemberships.map(
-    ({ teamId, userId }): TAuthzedSourceRef => ({ kind: "teamMembership", teamId, userId })
-  ),
-  ...source.workspaceIds.map((workspaceId): TAuthzedSourceRef => ({ kind: "workspace", workspaceId })),
-  ...source.workspaceTeamGrants.map(
-    ({ teamId, workspaceId }): TAuthzedSourceRef => ({ kind: "workspaceTeamGrant", teamId, workspaceId })
-  ),
-  ...source.apiKeyIds.map((apiKeyId): TAuthzedSourceRef => ({ apiKeyId, kind: "apiKey" })),
-  ...source.apiKeyWorkspaceGrants.map(
-    ({ apiKeyId, workspaceId }): TAuthzedSourceRef => ({
-      apiKeyId,
-      kind: "apiKeyWorkspaceGrant",
-      workspaceId,
-    })
-  ),
-];
+const expectedFeedbackDirectoryAssignmentIds = (
+  expectedRelationships: ReadonlyArray<TAuthzedRelationship>
+): ReadonlySet<string> =>
+  new Set(
+    expectedRelationships
+      .filter(
+        ({ relation, resource, subject }) =>
+          relation === "assignment" &&
+          resource.objectType === "feedback_directory" &&
+          subject.objectType === "feedback_directory_assignment"
+      )
+      .map(({ subject }) => subject.objectId)
+  );
+
+const toSourceRefs = (source: TAuthzedOrganizationSource): ReadonlyArray<TAuthzedSourceRef> => {
+  const activeAssignmentIds = expectedFeedbackDirectoryAssignmentIds(source.expectedRelationships);
+
+  return [
+    ...source.memberships.map(
+      ({ organizationId, userId }): TAuthzedSourceRef => ({ kind: "membership", organizationId, userId })
+    ),
+    ...source.teamIds.map((teamId): TAuthzedSourceRef => ({ kind: "team", teamId })),
+    ...source.teamMemberships.map(
+      ({ teamId, userId }): TAuthzedSourceRef => ({ kind: "teamMembership", teamId, userId })
+    ),
+    ...source.workspaceIds.map((workspaceId): TAuthzedSourceRef => ({ kind: "workspace", workspaceId })),
+    ...source.workspaceTeamGrants.map(
+      ({ teamId, workspaceId }): TAuthzedSourceRef => ({ kind: "workspaceTeamGrant", teamId, workspaceId })
+    ),
+    ...source.apiKeyIds.map((apiKeyId): TAuthzedSourceRef => ({ apiKeyId, kind: "apiKey" })),
+    ...source.apiKeyWorkspaceGrants.map(
+      ({ apiKeyId, workspaceId }): TAuthzedSourceRef => ({
+        apiKeyId,
+        kind: "apiKeyWorkspaceGrant",
+        workspaceId,
+      })
+    ),
+    ...source.feedbackDirectoryIds.map(
+      (feedbackDirectoryId): TAuthzedSourceRef => ({ feedbackDirectoryId, kind: "feedbackDirectory" })
+    ),
+    ...source.feedbackDirectoryAssignments.flatMap(
+      ({ feedbackDirectoryId, workspaceId }): ReadonlyArray<TAuthzedSourceRef> => {
+        const assignmentId = getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, workspaceId);
+        return activeAssignmentIds.has(assignmentId)
+          ? [
+              {
+                assignmentId,
+                feedbackDirectoryId,
+                kind: "feedbackDirectoryAssignment",
+                workspaceId,
+              },
+            ]
+          : [];
+      }
+    ),
+  ];
+};
 
 const mergeTargets = (left: TReconcileTargets, right: TReconcileTargets): TReconcileTargets => ({
   apiKeyIds: [...left.apiKeyIds, ...right.apiKeyIds],
   apiKeyWorkspaceGrants: [...left.apiKeyWorkspaceGrants, ...right.apiKeyWorkspaceGrants],
+  feedbackDirectoryAssignmentObjectIds: [
+    ...left.feedbackDirectoryAssignmentObjectIds,
+    ...right.feedbackDirectoryAssignmentObjectIds,
+  ],
+  feedbackDirectoryAssignments: [...left.feedbackDirectoryAssignments, ...right.feedbackDirectoryAssignments],
+  feedbackDirectoryIds: [...left.feedbackDirectoryIds, ...right.feedbackDirectoryIds],
   memberships: [...left.memberships, ...right.memberships],
   teamIds: [...left.teamIds, ...right.teamIds],
   teamMemberships: [...left.teamMemberships, ...right.teamMemberships],
@@ -406,6 +485,17 @@ const reconcileTargets = async (
         apiKeyIds: targets.apiKeyIds,
         apiKeyWorkspaceGrants: targets.apiKeyWorkspaceGrants,
       }),
+    () =>
+      runChunked(apply.reconcileFeedbackDirectories, {
+        assignments: targets.feedbackDirectoryAssignments,
+        feedbackDirectoryIds: targets.feedbackDirectoryIds,
+      }),
+    () =>
+      runChunked(
+        ({ assignmentIds }: Readonly<{ assignmentIds: ReadonlyArray<string> }>) =>
+          apply.deleteFeedbackDirectoryAssignmentResources(assignmentIds),
+        { assignmentIds: targets.feedbackDirectoryAssignmentObjectIds }
+      ),
   ];
 
   for (const step of steps) {
@@ -437,6 +527,14 @@ const observeOrganizationResources = async (
     ...source.teamIds.map((teamId) => ({ resourceId: teamId, resourceType: "team" })),
     ...source.workspaceIds.map((workspaceId) => ({ resourceId: workspaceId, resourceType: "workspace" })),
     ...source.apiKeyIds.map((apiKeyId) => ({ resourceId: apiKeyId, resourceType: "api_key" })),
+    ...source.feedbackDirectoryIds.map((feedbackDirectoryId) => ({
+      resourceId: feedbackDirectoryId,
+      resourceType: "feedback_directory",
+    })),
+    ...source.feedbackDirectoryAssignments.map(({ feedbackDirectoryId, workspaceId }) => ({
+      resourceId: getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, workspaceId),
+      resourceType: "feedback_directory_assignment",
+    })),
   ];
 
   const relationships: TAuthzedRelationship[] = [];
@@ -482,6 +580,8 @@ type TRunState = {
   lastOrganizationId: string | null;
   mismatchedParentCount: number;
   readonly mismatchedParents: TAuthzedParentEdge[];
+  mismatchedPermissionCount: number;
+  readonly mismatchedPermissions: TAuthzedPermissionMismatch[];
   missingCount: number;
   orphaned: number;
   readonly orphans: TAuthzedSourceRef[];
@@ -503,6 +603,8 @@ const createRunState = (): TRunState => ({
   lastOrganizationId: null,
   mismatchedParentCount: 0,
   mismatchedParents: [],
+  mismatchedPermissionCount: 0,
+  mismatchedPermissions: [],
   missingCount: 0,
   orphaned: 0,
   orphans: [],
@@ -561,6 +663,14 @@ const recordProjectionFailure = (
 const recordMismatchedParents = (state: TRunState, edges: ReadonlyArray<TAuthzedParentEdge>): void => {
   state.mismatchedParentCount += edges.length;
   pushCapped(state.mismatchedParents, edges);
+};
+
+const recordMismatchedPermissions = (
+  state: TRunState,
+  mismatches: ReadonlyArray<TAuthzedPermissionMismatch>
+): void => {
+  state.mismatchedPermissionCount += mismatches.length;
+  pushCapped(state.mismatchedPermissions, mismatches);
 };
 
 /**
@@ -639,6 +749,10 @@ const observeOrganization = async (
   if (ctx.mode === "dry_run") {
     // The direction an applying run converges by writing, and the only one a report can speak to.
     state.missingCount += findUnprojectedSourceRefs(toSourceRefs(source), summary.sourceRefs).length;
+    recordMismatchedPermissions(
+      state,
+      findMismatchedPermissionRelations(source.expectedRelationships, summary.managedRelationships)
+    );
   }
 
   if (!ctx.ownsOrphanAccounting) {
@@ -664,7 +778,10 @@ const processOrganization = async (ctx: TRunContext, organizationId: string): Pr
     return;
   }
 
-  state.invalid += source.invalidWorkspaceTeamGrants.length + source.invalidApiKeyWorkspaceGrants.length;
+  state.invalid +=
+    source.invalidWorkspaceTeamGrants.length +
+    source.invalidApiKeyWorkspaceGrants.length +
+    source.invalidFeedbackDirectoryAssignments.length;
 
   // Observed for two reasons with different owners: a narrow scope owns everything it finds, while a
   // full scope observes only to compute the direction the sweep cannot — records PostgreSQL holds that
@@ -694,6 +811,9 @@ const processOrganization = async (ctx: TRunContext, organizationId: string): Pr
       {
         apiKeyIds: source.apiKeyIds,
         apiKeyWorkspaceGrants: source.apiKeyWorkspaceGrants,
+        feedbackDirectoryAssignmentObjectIds: [],
+        feedbackDirectoryAssignments: source.feedbackDirectoryAssignments,
+        feedbackDirectoryIds: source.feedbackDirectoryIds,
         memberships: source.memberships,
         teamIds: source.teamIds,
         teamMemberships: source.teamMemberships,
@@ -813,12 +933,11 @@ const toWorkspaceSourceRefs = (
   source: TAuthzedWorkspaceSource,
   workspaceId: string
 ): ReadonlyArray<TAuthzedSourceRef> => {
-  // Only the grants are compared: whether the workspace's own parent edge exists is decided by
-  // `workspaceExists`, and a workspace with no row should have no relationships at all.
   if (!source.workspaceExists) {
     return [];
   }
 
+  const activeAssignmentIds = expectedFeedbackDirectoryAssignmentIds(source.expectedRelationships);
   return [
     ...source.workspaceTeamGrants.map(
       ({ teamId, workspaceId: grantWorkspaceId }): TAuthzedSourceRef => ({
@@ -834,6 +953,24 @@ const toWorkspaceSourceRefs = (
         workspaceId: grantWorkspaceId,
       })
     ),
+    ...source.feedbackDirectoryAssignments.flatMap(
+      ({ feedbackDirectoryId, workspaceId: assignmentWorkspaceId }): ReadonlyArray<TAuthzedSourceRef> => {
+        const assignmentId = getFeedbackDirectoryAssignmentObjectId(
+          feedbackDirectoryId,
+          assignmentWorkspaceId
+        );
+        return activeAssignmentIds.has(assignmentId)
+          ? [
+              {
+                assignmentId,
+                feedbackDirectoryId,
+                kind: "feedbackDirectoryAssignment",
+                workspaceId: assignmentWorkspaceId,
+              },
+            ]
+          : [];
+      }
+    ),
     { kind: "workspace", workspaceId },
   ];
 };
@@ -843,11 +980,25 @@ const observeWorkspace = async (
   workspaceId: string,
   source: TAuthzedWorkspaceSource
 ): Promise<TPruneDecision> => {
-  const observation = await readAllRelationships(ctx.client, {
-    resourceId: workspaceId,
-    resourceType: "workspace",
-  });
-  const summary = summarizeObservation(observation.relationships);
+  const observations = await Promise.all([
+    readAllRelationships(ctx.client, { resourceId: workspaceId, resourceType: "workspace" }),
+    ...[
+      ...new Set(source.feedbackDirectoryAssignments.map(({ feedbackDirectoryId }) => feedbackDirectoryId)),
+    ].map((feedbackDirectoryId) =>
+      readAllRelationships(ctx.client, {
+        resourceId: feedbackDirectoryId,
+        resourceType: "feedback_directory",
+      })
+    ),
+    ...source.feedbackDirectoryAssignments.map(
+      ({ feedbackDirectoryId, workspaceId: assignmentWorkspaceId }) =>
+        readAllRelationships(ctx.client, {
+          resourceId: getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, assignmentWorkspaceId),
+          resourceType: "feedback_directory_assignment",
+        })
+    ),
+  ]);
+  const summary = summarizeObservation(observations.flatMap(({ relationships }) => relationships));
   await recordObservationSummary(ctx, summary);
 
   if (ctx.mode === "dry_run") {
@@ -857,6 +1008,10 @@ const observeWorkspace = async (
       toWorkspaceSourceRefs(source, workspaceId),
       summary.sourceRefs
     ).length;
+    recordMismatchedPermissions(
+      ctx.state,
+      findMismatchedPermissionRelations(source.expectedRelationships, summary.managedRelationships)
+    );
   }
 
   return recordScopedOrphans(ctx, summary);
@@ -941,7 +1096,10 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
   // report it.
   const failureOrganizationId = source.organizationId ?? "";
 
-  state.invalid += source.invalidWorkspaceTeamGrants.length + source.invalidApiKeyWorkspaceGrants.length;
+  state.invalid +=
+    source.invalidWorkspaceTeamGrants.length +
+    source.invalidApiKeyWorkspaceGrants.length +
+    source.invalidFeedbackDirectoryAssignments.length;
 
   // Declared without a value, like `source` above: the `catch` returns, so an initializer here would be
   // dead — and a dead initializer on a prune decision is worse than noise, since it reads as a safe
@@ -967,6 +1125,9 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
       {
         apiKeyIds: [],
         apiKeyWorkspaceGrants: source.apiKeyWorkspaceGrants,
+        feedbackDirectoryAssignmentObjectIds: [],
+        feedbackDirectoryAssignments: source.feedbackDirectoryAssignments,
+        feedbackDirectoryIds: [],
         memberships: [],
         teamIds: [],
         teamMemberships: [],
@@ -1101,6 +1262,7 @@ const toRunStatus = (state: TRunState): TAuthzedBackfillResult["status"] => {
     state.orphaned > state.pruned ||
     state.missingCount > 0 ||
     state.mismatchedParentCount > 0 ||
+    state.mismatchedPermissionCount > 0 ||
     state.invalid > 0 ||
     state.unmanagedCount > 0 ||
     state.truncated;
@@ -1140,6 +1302,7 @@ export const runAuthzedBackfill = async (
       ignored: state.ignored,
       invalid: state.invalid,
       mismatchedParents: state.mismatchedParentCount,
+      mismatchedPermissions: state.mismatchedPermissionCount,
       missing: state.missingCount,
       orphaned: state.orphaned,
       pruned: state.pruned,
@@ -1151,6 +1314,7 @@ export const runAuthzedBackfill = async (
     failures: state.failures,
     lastOrganizationId: state.lastOrganizationId,
     mismatchedParents: state.mismatchedParents,
+    mismatchedPermissions: state.mismatchedPermissions,
     mode: request.mode,
     orphanScope: request.scope.kind === "all" ? "all" : "known_resources",
     orphans: state.orphans,

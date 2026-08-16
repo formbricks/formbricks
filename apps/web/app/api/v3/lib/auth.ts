@@ -4,13 +4,25 @@
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { can } from "@/lib/authorization";
+import { type TAuthorizationActor, can } from "@/lib/authorization";
 import { getWorkspaceActionForPermission } from "@/lib/authorization/compatibility";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { problemForbidden, problemUnauthorized } from "./response";
 import type { TV3Authentication } from "./types";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
+
+export const getV3AuthorizationActor = (authentication: TV3Authentication): TAuthorizationActor | null => {
+  if (authentication && "user" in authentication && authentication.user?.id) {
+    return { type: "user", id: authentication.user.id };
+  }
+
+  if (authentication && "apiKeyId" in authentication && authentication.apiKeyId) {
+    return { type: "apiKey", id: authentication.apiKeyId };
+  }
+
+  return null;
+};
 
 /**
  * Require session and workspace access. workspaceId is resolved via the V3 workspace-context layer.

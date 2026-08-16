@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
+import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -58,6 +59,9 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 }));
 vi.mock("@/lib/authzed/api-key", () => ({
   reconcileApiKeyRelationships: vi.fn(),
+}));
+vi.mock("@/lib/authzed/feedback-directory", () => ({
+  reconcileFeedbackDirectoryRelationships: vi.fn(),
 }));
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
@@ -435,7 +439,10 @@ describe("Organization Service", () => {
         workspaces: [{ id: "workspace-1" }],
         teams: [{ id: "team-1" }],
         apiKeys: [{ id: "api-key-1" }, { id: "api-key-2" }],
-        feedbackDirectories: [{ id: "frd_1" }, { id: "frd_2" }],
+        feedbackDirectories: [
+          { id: "frd_1", workspaces: [{ workspaceId: "workspace-1" }] },
+          { id: "frd_2", workspaces: [] },
+        ],
       } as any);
 
       await deleteOrganization("org1");
@@ -449,6 +456,10 @@ describe("Organization Service", () => {
       });
       expect(reconcileApiKeyRelationships).toHaveBeenCalledWith({
         apiKeyIds: ["api-key-1", "api-key-2"],
+      });
+      expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
+        assignments: [{ feedbackDirectoryId: "frd_1", workspaceId: "workspace-1" }],
+        feedbackDirectoryIds: ["frd_1", "frd_2"],
       });
     });
   });

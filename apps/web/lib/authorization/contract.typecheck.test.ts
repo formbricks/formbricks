@@ -42,6 +42,12 @@ type TExpectedAuthorizationAction =
   | "survey.response_export"
   | "dashboard.read"
   | "dashboard.write"
+  | "feedbackDirectory.read"
+  | "feedbackDirectory.write"
+  | "feedbackDirectory.manage"
+  | "feedbackDirectoryAssignment.read"
+  | "feedbackDirectoryAssignment.write"
+  | "feedbackDirectoryAssignment.manage"
   | "response.read"
   | "response.write"
   | "response.manage"
@@ -50,12 +56,18 @@ type TExpectedAuthorizationAction =
 type TActionVocabularyIsExact = TExpect<TEqual<TAuthorizationAction, TExpectedAuthorizationAction>>;
 
 type TExpectedResourceForAction<TAction extends TExpectedAuthorizationAction> =
-  TAction extends `${infer TResourceType}.${string}`
+  TAction extends `feedbackDirectoryAssignment.${string}`
     ? Readonly<{
-        type: TResourceType;
-        id: string;
+        type: "feedbackDirectoryAssignment";
+        feedbackDirectoryId: string;
+        workspaceId: string;
       }>
-    : never;
+    : TAction extends `${infer TResourceType}.${string}`
+      ? Readonly<{
+          type: TResourceType;
+          id: string;
+        }>
+      : never;
 
 type TAllActionResourceMappingsAreExact = TExpect<
   {
@@ -94,6 +106,13 @@ describe("current authorization contract types", () => {
       checkAuthorizationTypes({ type: "apiKey", id: "api-key-id" }, "workspace.write", {
         type: "workspace",
         id: "workspace-id",
+      })
+    ).toBeUndefined();
+    expect(
+      checkAuthorizationTypes({ type: "user", id: "user-id" }, "feedbackDirectoryAssignment.read", {
+        type: "feedbackDirectoryAssignment",
+        feedbackDirectoryId: "directory-id",
+        workspaceId: "workspace-id",
       })
     ).toBeUndefined();
   });
@@ -138,11 +157,23 @@ describe("current authorization contract types", () => {
       id: "workspace-id",
     });
 
+    const assignmentWithoutWorkspaceResult = checkAuthorizationTypes(
+      actor,
+      "feedbackDirectoryAssignment.read",
+      {
+        type: "feedbackDirectoryAssignment",
+        feedbackDirectoryId: "directory-id",
+        // @ts-expect-error Exact assignment checks require the workspace scope.
+        workspaceId: undefined,
+      }
+    );
+
     expect(systemActorResult).toBeUndefined();
     expect(surveyShareResult).toBeUndefined();
     expect(dashboardManageResult).toBeUndefined();
     expect(auditLogReadResult).toBeUndefined();
     expect(mismatchedResourceResult).toBeUndefined();
+    expect(assignmentWithoutWorkspaceResult).toBeUndefined();
   });
 
   test("requires immutable actors and resources with opaque identifiers", () => {

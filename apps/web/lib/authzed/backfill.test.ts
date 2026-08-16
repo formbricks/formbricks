@@ -20,7 +20,9 @@ vi.mock("./backfill-source", () => ({
 }));
 
 const apply = {
+  deleteFeedbackDirectoryAssignmentResources: vi.fn(),
   reconcileApiKeys: vi.fn(),
+  reconcileFeedbackDirectories: vi.fn(),
   reconcileMemberships: vi.fn(),
   reconcileTeamWorkspace: vi.fn(),
 };
@@ -34,7 +36,11 @@ const PROJECTED = { passes: 1, status: "projected" } as const;
 const emptySource: TAuthzedOrganizationSource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
+  expectedRelationships: [],
+  feedbackDirectoryAssignments: [],
+  feedbackDirectoryIds: [],
   invalidApiKeyWorkspaceGrants: [],
+  invalidFeedbackDirectoryAssignments: [],
   invalidWorkspaceTeamGrants: [],
   memberships: [],
   teamIds: [],
@@ -56,6 +62,8 @@ const emptyPage = { cursor: null, relationships: [], snapshot: null };
 beforeEach(() => {
   vi.clearAllMocks();
   apply.reconcileApiKeys.mockResolvedValue(PROJECTED);
+  apply.deleteFeedbackDirectoryAssignmentResources.mockResolvedValue(PROJECTED);
+  apply.reconcileFeedbackDirectories.mockResolvedValue(PROJECTED);
   apply.reconcileMemberships.mockResolvedValue(PROJECTED);
   apply.reconcileTeamWorkspace.mockResolvedValue(PROJECTED);
   readRelationships.mockResolvedValue(emptyPage);
@@ -65,7 +73,10 @@ beforeEach(() => {
   vi.mocked(source.findMismatchedParentEdges).mockResolvedValue([]);
   vi.mocked(source.readWorkspaceSource).mockResolvedValue({
     apiKeyWorkspaceGrants: [],
+    expectedRelationships: [],
+    feedbackDirectoryAssignments: [],
     invalidApiKeyWorkspaceGrants: [],
+    invalidFeedbackDirectoryAssignments: [],
     invalidWorkspaceTeamGrants: [],
     organizationId: "org-1",
     workspaceExists: true,
@@ -444,6 +455,40 @@ describe("detecting a cross-tenant parent edge", () => {
   });
 });
 
+describe("detecting mismatched permission relations", () => {
+  test("reports a stale higher workspace grant even though the source pair is present", async () => {
+    const expectedRelationship = {
+      relation: "reader_team",
+      resource: { objectId: "ws-1", objectType: "workspace" },
+      subject: { objectId: "team-1", objectType: "team", relation: "member" },
+    };
+    const observedRelationship = { ...expectedRelationship, relation: "manager_team" };
+    vi.mocked(source.readOrganizationSource).mockResolvedValue({
+      ...emptySource,
+      expectedRelationships: [expectedRelationship],
+      workspaceIds: ["ws-1"],
+      workspaceTeamGrants: [{ teamId: "team-1", workspaceId: "ws-1" }],
+    });
+    readRelationships.mockResolvedValue({
+      cursor: null,
+      relationships: [observedRelationship],
+      snapshot: { token: "revision-1" },
+    });
+
+    const result = await runAuthzedBackfill(request({ mode: "dry_run" }), dependencies);
+
+    expect(result.counters.mismatchedPermissions).toBe(1);
+    expect(result.mismatchedPermissions).toEqual([
+      {
+        expectedRelations: ["reader_team"],
+        observedRelations: ["manager_team"],
+        source: { kind: "workspaceTeamGrant", teamId: "team-1", workspaceId: "ws-1" },
+      },
+    ]);
+    expect(result.status).toBe("drifted");
+  });
+});
+
 describe("pruning", () => {
   const ghostTeamRelationship = {
     relation: "organization",
@@ -566,6 +611,8 @@ describe("scope and observation completeness", () => {
     expect(result.orphanScope).toBe("all");
     expect(readRelationships.mock.calls.map(([query]) => query.filter)).toEqual([
       { resourceType: "api_key" },
+      { resourceType: "feedback_directory" },
+      { resourceType: "feedback_directory_assignment" },
       { resourceType: "organization" },
       { resourceType: "team" },
       { resourceType: "workspace" },
@@ -687,7 +734,10 @@ describe("workspace scope", () => {
   const missingWorkspace = (): void => {
     vi.mocked(source.readWorkspaceSource).mockResolvedValue({
       apiKeyWorkspaceGrants: [],
+      expectedRelationships: [],
+      feedbackDirectoryAssignments: [],
       invalidApiKeyWorkspaceGrants: [],
+      invalidFeedbackDirectoryAssignments: [],
       invalidWorkspaceTeamGrants: [],
       organizationId: null,
       workspaceExists: false,

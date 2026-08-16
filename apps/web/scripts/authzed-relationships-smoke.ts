@@ -1,5 +1,6 @@
 import "server-only";
 import type { TAuthzedClient, TAuthzedRelationshipUpdate } from "../lib/authzed/client";
+import { getFeedbackDirectoryAssignmentObjectId } from "../lib/authzed/feedback-directory-assignment-id";
 
 const ORGANIZATION_ID = "application-relationship-smoke";
 const USER_ID = "application-relationship-smoke";
@@ -21,22 +22,36 @@ const MANAGER_API_KEY_ID = "application-api-key-manager";
 const COMBINED_ACCESS_API_KEY_ID = "application-api-key-combined-access";
 const API_KEY_ORGANIZATION_RELATIONS = ["api_key_reader", "api_key_writer"] as const;
 const API_KEY_WORKSPACE_RELATIONS = ["manager", "reader", "writer"] as const;
+const FEEDBACK_ORGANIZATION_ID = "application-feedback-organization";
+const FEEDBACK_DIRECTORY_ID = "application-feedback-directory";
+const FEEDBACK_WORKSPACE_A_ID = "application-feedback-workspace-a";
+const FEEDBACK_WORKSPACE_B_ID = "application-feedback-workspace-b";
+const FEEDBACK_TEAM_ID = "application-feedback-team";
+const FEEDBACK_USER_ID = "application-feedback-user";
+const FEEDBACK_MANAGER_ID = "application-feedback-manager";
+const FEEDBACK_API_KEY_ID = "application-feedback-api-key";
 
 type TSmokeCommand =
   | "check-api-key-allow"
   | "check-api-key-deny"
   | "check-user-allow"
   | "check-user-deny"
+  | "check-feedback"
   | "delete"
   | "delete-api-key"
   | "delete-manager-team"
   | "delete-workspace"
+  | "delete-feedback-assignment-a"
+  | "delete-feedback-directory"
+  | "downgrade-feedback-api-key"
   | "downgrade-api-key-manager"
   | "downgrade-manager-grant"
   | "remove-alice-memberships"
   | "remove-api-key-scope"
   | "remove-reader-grant"
+  | "remove-feedback-user-membership"
   | "seed-api-key"
+  | "seed-feedback-directory"
   | "seed-team-workspace"
   | "set-billing"
   | "set-owner";
@@ -50,16 +65,22 @@ const isSmokeCommand = (value: string | undefined): value is TSmokeCommand =>
   value === "check-api-key-deny" ||
   value === "check-user-allow" ||
   value === "check-user-deny" ||
+  value === "check-feedback" ||
   value === "delete" ||
   value === "delete-api-key" ||
   value === "delete-manager-team" ||
   value === "delete-workspace" ||
+  value === "delete-feedback-assignment-a" ||
+  value === "delete-feedback-directory" ||
+  value === "downgrade-feedback-api-key" ||
   value === "downgrade-api-key-manager" ||
   value === "downgrade-manager-grant" ||
   value === "remove-alice-memberships" ||
   value === "remove-api-key-scope" ||
   value === "remove-reader-grant" ||
+  value === "remove-feedback-user-membership" ||
   value === "seed-api-key" ||
+  value === "seed-feedback-directory" ||
   value === "seed-team-workspace" ||
   value === "set-billing" ||
   value === "set-owner";
@@ -242,7 +263,155 @@ const deleteWriterApiKeyProjection = async (client: TAuthzedClient): Promise<voi
   });
 };
 
-type TSmokeResult = Readonly<{ status: "projected" }> | Readonly<{ allowed: boolean; status: "checked" }>;
+const feedbackAssignmentUpdates = (
+  workspaceId: string,
+  operation: "delete" | "touch"
+): ReadonlyArray<TAuthzedRelationshipUpdate> => {
+  const assignmentId = getFeedbackDirectoryAssignmentObjectId(FEEDBACK_DIRECTORY_ID, workspaceId);
+  return [
+    {
+      operation,
+      relationship: {
+        relation: "assignment",
+        resource: { objectId: FEEDBACK_DIRECTORY_ID, objectType: "feedback_directory" },
+        subject: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+      },
+    },
+    {
+      operation,
+      relationship: {
+        relation: "directory",
+        resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+        subject: { objectId: FEEDBACK_DIRECTORY_ID, objectType: "feedback_directory" },
+      },
+    },
+    {
+      operation,
+      relationship: {
+        relation: "workspace",
+        resource: { objectId: assignmentId, objectType: "feedback_directory_assignment" },
+        subject: { objectId: workspaceId, objectType: "workspace" },
+      },
+    },
+  ];
+};
+
+const seedFeedbackDirectoryProjection = async (client: TAuthzedClient): Promise<void> => {
+  await client.writeRelationships([
+    {
+      operation: "touch",
+      relationship: {
+        relation: "manager",
+        resource: { objectId: FEEDBACK_ORGANIZATION_ID, objectType: "organization" },
+        subject: { objectId: FEEDBACK_MANAGER_ID, objectType: "user" },
+      },
+    },
+    {
+      operation: "touch",
+      relationship: {
+        relation: "organization",
+        resource: { objectId: FEEDBACK_TEAM_ID, objectType: "team" },
+        subject: { objectId: FEEDBACK_ORGANIZATION_ID, objectType: "organization" },
+      },
+    },
+    ...[FEEDBACK_WORKSPACE_A_ID, FEEDBACK_WORKSPACE_B_ID].map((workspaceId) => ({
+      operation: "touch" as const,
+      relationship: {
+        relation: "organization",
+        resource: { objectId: workspaceId, objectType: "workspace" },
+        subject: { objectId: FEEDBACK_ORGANIZATION_ID, objectType: "organization" },
+      },
+    })),
+    {
+      operation: "touch",
+      relationship: {
+        relation: "contributor",
+        resource: { objectId: FEEDBACK_TEAM_ID, objectType: "team" },
+        subject: { objectId: FEEDBACK_USER_ID, objectType: "user" },
+      },
+    },
+    {
+      operation: "touch",
+      relationship: {
+        relation: "reader_team",
+        resource: { objectId: FEEDBACK_WORKSPACE_A_ID, objectType: "workspace" },
+        subject: { objectId: FEEDBACK_TEAM_ID, objectType: "team", relation: "member" },
+      },
+    },
+    {
+      operation: "touch",
+      relationship: {
+        relation: "organization",
+        resource: { objectId: FEEDBACK_API_KEY_ID, objectType: "api_key" },
+        subject: { objectId: FEEDBACK_ORGANIZATION_ID, objectType: "organization" },
+      },
+    },
+    ...createApiKeyWorkspaceUpdates(FEEDBACK_API_KEY_ID, FEEDBACK_WORKSPACE_B_ID, "writer"),
+    {
+      operation: "touch",
+      relationship: {
+        relation: "organization",
+        resource: { objectId: FEEDBACK_DIRECTORY_ID, objectType: "feedback_directory" },
+        subject: { objectId: FEEDBACK_ORGANIZATION_ID, objectType: "organization" },
+      },
+    },
+    ...feedbackAssignmentUpdates(FEEDBACK_WORKSPACE_A_ID, "touch"),
+    ...feedbackAssignmentUpdates(FEEDBACK_WORKSPACE_B_ID, "touch"),
+  ]);
+};
+
+const checkFeedbackDirectoryProjection = async (client: TAuthzedClient) => {
+  const check = (
+    permission: string,
+    resourceType: string,
+    resourceId: string,
+    subjectType: string,
+    subjectId: string
+  ) =>
+    client.checkPermission({
+      permission,
+      resource: { objectId: resourceId, objectType: resourceType },
+      subject: { objectId: subjectId, objectType: subjectType },
+    });
+  const assignmentA = getFeedbackDirectoryAssignmentObjectId(FEEDBACK_DIRECTORY_ID, FEEDBACK_WORKSPACE_A_ID);
+  const assignmentB = getFeedbackDirectoryAssignmentObjectId(FEEDBACK_DIRECTORY_ID, FEEDBACK_WORKSPACE_B_ID);
+  const [
+    managerManage,
+    userRead,
+    userWrite,
+    userAssignmentARead,
+    userAssignmentBRead,
+    keyWrite,
+    keyAssignmentAWrite,
+    keyAssignmentBWrite,
+  ] = await Promise.all([
+    check("manage", "feedback_directory", FEEDBACK_DIRECTORY_ID, "user", FEEDBACK_MANAGER_ID),
+    check("read", "feedback_directory", FEEDBACK_DIRECTORY_ID, "user", FEEDBACK_USER_ID),
+    check("write", "feedback_directory", FEEDBACK_DIRECTORY_ID, "user", FEEDBACK_USER_ID),
+    check("read", "feedback_directory_assignment", assignmentA, "user", FEEDBACK_USER_ID),
+    check("read", "feedback_directory_assignment", assignmentB, "user", FEEDBACK_USER_ID),
+    check("write", "feedback_directory", FEEDBACK_DIRECTORY_ID, "api_key", FEEDBACK_API_KEY_ID),
+    check("write", "feedback_directory_assignment", assignmentA, "api_key", FEEDBACK_API_KEY_ID),
+    check("write", "feedback_directory_assignment", assignmentB, "api_key", FEEDBACK_API_KEY_ID),
+  ]);
+
+  return {
+    keyAssignmentAWrite: keyAssignmentAWrite.allowed,
+    keyAssignmentBWrite: keyAssignmentBWrite.allowed,
+    keyWrite: keyWrite.allowed,
+    managerManage: managerManage.allowed,
+    status: "checked" as const,
+    userAssignmentARead: userAssignmentARead.allowed,
+    userAssignmentBRead: userAssignmentBRead.allowed,
+    userRead: userRead.allowed,
+    userWrite: userWrite.allowed,
+  };
+};
+
+type TSmokeResult =
+  | Readonly<{ status: "projected" }>
+  | Readonly<{ allowed: boolean; status: "checked" }>
+  | Awaited<ReturnType<typeof checkFeedbackDirectoryProjection>>;
 
 const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeCommand): Promise<TSmokeResult> => {
   switch (command) {
@@ -272,6 +441,8 @@ const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeComman
         })),
         status: "checked",
       };
+    case "check-feedback":
+      return checkFeedbackDirectoryProjection(client);
     case "delete":
     case "set-billing":
     case "set-owner":
@@ -282,6 +453,32 @@ const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeComman
       return { status: "projected" };
     case "seed-api-key":
       await seedApiKeyProjection(client);
+      return { status: "projected" };
+    case "seed-feedback-directory":
+      await seedFeedbackDirectoryProjection(client);
+      return { status: "projected" };
+    case "downgrade-feedback-api-key":
+      await client.writeRelationships(
+        createApiKeyWorkspaceUpdates(FEEDBACK_API_KEY_ID, FEEDBACK_WORKSPACE_B_ID, "reader")
+      );
+      return { status: "projected" };
+    case "remove-feedback-user-membership":
+      await client.writeRelationships(createTeamRoleUpdates(FEEDBACK_TEAM_ID, FEEDBACK_USER_ID));
+      return { status: "projected" };
+    case "delete-feedback-assignment-a":
+      await client.writeRelationships(feedbackAssignmentUpdates(FEEDBACK_WORKSPACE_A_ID, "delete"));
+      return { status: "projected" };
+    case "delete-feedback-directory":
+      await client.deleteRelationships({
+        resourceId: FEEDBACK_DIRECTORY_ID,
+        resourceType: "feedback_directory",
+      });
+      for (const workspaceId of [FEEDBACK_WORKSPACE_A_ID, FEEDBACK_WORKSPACE_B_ID]) {
+        await client.deleteRelationships({
+          resourceId: getFeedbackDirectoryAssignmentObjectId(FEEDBACK_DIRECTORY_ID, workspaceId),
+          resourceType: "feedback_directory_assignment",
+        });
+      }
       return { status: "projected" };
     case "downgrade-api-key-manager":
       await client.writeRelationships(

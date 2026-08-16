@@ -45,6 +45,13 @@ export type TAuthzedRelationshipRef = Readonly<{
 export type TAuthzedSourceRef =
   | Readonly<{ apiKeyId: string; kind: "apiKey" }>
   | Readonly<{ apiKeyId: string; kind: "apiKeyWorkspaceGrant"; workspaceId: string }>
+  | Readonly<{ feedbackDirectoryId: string; kind: "feedbackDirectory" }>
+  | Readonly<{
+      assignmentId: string;
+      feedbackDirectoryId?: string;
+      kind: "feedbackDirectoryAssignment";
+      workspaceId?: string;
+    }>
   | Readonly<{ kind: "membership"; organizationId: string; userId: string }>
   | Readonly<{ kind: "team"; teamId: string }>
   | Readonly<{ kind: "teamMembership"; teamId: string; userId: string }>
@@ -54,6 +61,8 @@ export type TAuthzedSourceRef =
 export type TAuthzedObservationSummary = Readonly<{
   /** Relationships on deliberately-unprojected resource types. Counted, never acted on. */
   ignored: number;
+  /** Managed relationships retained for exact relation-set comparison against PostgreSQL. */
+  managedRelationships: ReadonlyArray<TAuthzedRelationship>;
   /** Every parent edge observed, so the organization each resource claims can be verified. */
   parentEdges: ReadonlyArray<TAuthzedParentEdge>;
   /** Deduplicated, deterministically ordered source records the observation implies. */
@@ -66,6 +75,12 @@ export type TAuthzedObservationSummary = Readonly<{
    * tooling cannot know what source record — if any — should own them.
    */
   unmanaged: ReadonlyArray<TAuthzedRelationshipRef>;
+}>;
+
+export type TAuthzedPermissionMismatch = Readonly<{
+  expectedRelations: ReadonlyArray<string>;
+  observedRelations: ReadonlyArray<string>;
+  source: TAuthzedSourceRef;
 }>;
 
 const ORGANIZATION_ROLE_RELATIONS = new Set<string>(Object.values(ORGANIZATION_RELATIONS));
@@ -132,6 +147,40 @@ const toApiKeySourceRef: TSourceRefResolver = ({ relation, resource, subject }) 
     ? { apiKeyId: resource.objectId, kind: "apiKey" }
     : null;
 
+const toFeedbackDirectorySourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (relation === PARENT_RELATION && subject.objectType === "organization") {
+    return { feedbackDirectoryId: resource.objectId, kind: "feedbackDirectory" };
+  }
+  if (relation === "assignment" && subject.objectType === "feedback_directory_assignment") {
+    return {
+      assignmentId: subject.objectId,
+      feedbackDirectoryId: resource.objectId,
+      kind: "feedbackDirectoryAssignment",
+    };
+  }
+
+  return null;
+};
+
+const toFeedbackDirectoryAssignmentSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (relation === "directory" && subject.objectType === "feedback_directory") {
+    return {
+      assignmentId: resource.objectId,
+      feedbackDirectoryId: subject.objectId,
+      kind: "feedbackDirectoryAssignment",
+    };
+  }
+  if (relation === "workspace" && subject.objectType === "workspace") {
+    return {
+      assignmentId: resource.objectId,
+      kind: "feedbackDirectoryAssignment",
+      workspaceId: subject.objectId,
+    };
+  }
+
+  return null;
+};
+
 /**
  * The vocabulary in one table: which resource types imply a source record, and how.
  *
@@ -144,6 +193,8 @@ const toApiKeySourceRef: TSourceRefResolver = ({ relation, resource, subject }) 
  */
 const SOURCE_REF_RESOLVERS = {
   api_key: toApiKeySourceRef,
+  feedback_directory: toFeedbackDirectorySourceRef,
+  feedback_directory_assignment: toFeedbackDirectoryAssignmentSourceRef,
   organization: toOrganizationSourceRef,
   team: toTeamSourceRef,
   workspace: toWorkspaceSourceRef,
@@ -198,7 +249,7 @@ export const toSourceRef = (relationship: TAuthzedRelationship): TAuthzedSourceR
  */
 export type TAuthzedParentEdge = Readonly<{
   childId: string;
-  childType: "api_key" | "team" | "workspace";
+  childType: "api_key" | "feedback_directory" | "team" | "workspace";
   organizationId: string;
   /**
    * The relation that asserted the ownership.
@@ -223,7 +274,10 @@ export type TAuthzedParentEdge = Readonly<{
  * `toSourceRefs`. Two refs for the same record must serialize identically, so both constructors keep
  * their key order aligned — the test asserting round-trip equality of every kind is what holds that.
  */
-export const sourceRefKey = (ref: TAuthzedSourceRef): string => JSON.stringify(ref);
+export const sourceRefKey = (ref: TAuthzedSourceRef): string =>
+  ref.kind === "feedbackDirectoryAssignment"
+    ? JSON.stringify({ assignmentId: ref.assignmentId, kind: ref.kind })
+    : JSON.stringify(ref);
 
 /** The parent edge an observed relationship asserts, if it asserts one. */
 const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | null => {
@@ -257,6 +311,7 @@ const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | 
   }
   if (
     resource.objectType !== "api_key" &&
+    resource.objectType !== "feedback_directory" &&
     resource.objectType !== "team" &&
     resource.objectType !== "workspace"
   ) {
@@ -304,11 +359,95 @@ export const findUnprojectedSourceRefs = (
     .map(([, ref]) => ref);
 };
 
+const relationshipKey = ({ relation, resource, subject }: TAuthzedRelationship): string =>
+  JSON.stringify({ relation, resource, subject });
+
+const relationNames = (relationships: ReadonlyArray<TAuthzedRelationship>): ReadonlyArray<string> =>
+  [...new Set(relationships.map(({ relation }) => relation))].sort(byCodeUnit);
+
+/**
+ * Find source records that exist on both sides but carry a different exact permission relation set.
+ *
+ * Parent edges are deliberately excluded: their correctness is verified by `findMismatchedParentEdges`,
+ * which can distinguish an absent row from a cross-tenant parent. Everything else is compared as a full
+ * relationship tuple, so an API key with two independent organization flags and a role ladder with one
+ * selected value are both handled without special cases.
+ */
+export const findMismatchedPermissionRelations = (
+  expected: ReadonlyArray<TAuthzedRelationship>,
+  observed: ReadonlyArray<TAuthzedRelationship>
+): ReadonlyArray<TAuthzedPermissionMismatch> => {
+  type TRelationshipGroup = {
+    permissionRelationships: TAuthzedRelationship[];
+    source: TAuthzedSourceRef;
+  };
+
+  const groupBySource = (
+    relationships: ReadonlyArray<TAuthzedRelationship>
+  ): ReadonlyMap<string, TRelationshipGroup> => {
+    const groups = new Map<string, TRelationshipGroup>();
+
+    for (const relationship of relationships) {
+      const source = toSourceRef(relationship);
+      if (!source) {
+        continue;
+      }
+
+      const key = sourceRefKey(source);
+      const group = groups.get(key) ?? { permissionRelationships: [], source };
+      if (relationship.relation !== PARENT_RELATION) {
+        group.permissionRelationships.push(relationship);
+      }
+      groups.set(key, group);
+    }
+
+    return groups;
+  };
+
+  const expectedGroups = groupBySource(expected);
+  const observedGroups = groupBySource(observed);
+  const mismatches: Array<readonly [string, TAuthzedPermissionMismatch]> = [];
+
+  for (const [sourceKey, expectedGroup] of expectedGroups) {
+    const observedGroup = observedGroups.get(sourceKey);
+    // A wholly absent source is reported as `missing`, not duplicated as a permission mismatch.
+    if (!observedGroup) {
+      continue;
+    }
+
+    const expectedKeys = expectedGroup.permissionRelationships.map(relationshipKey).sort(byCodeUnit);
+    const observedKeys = observedGroup.permissionRelationships.map(relationshipKey).sort(byCodeUnit);
+    if (JSON.stringify(expectedKeys) === JSON.stringify(observedKeys)) {
+      continue;
+    }
+
+    mismatches.push([
+      sourceKey,
+      {
+        expectedRelations: relationNames(expectedGroup.permissionRelationships),
+        observedRelations: relationNames(observedGroup.permissionRelationships),
+        source: expectedGroup.source,
+      },
+    ]);
+  }
+
+  mismatches.sort(([left], [right]) => byCodeUnit(left, right));
+  return mismatches.map(([, mismatch]) => mismatch);
+};
+
 const toRelationshipRef = (relationship: TAuthzedRelationship): TAuthzedRelationshipRef => ({
   objectId: relationship.resource.objectId,
   objectType: relationship.resource.objectType,
   relation: relationship.relation,
 });
+
+const onlyValue = (values: ReadonlySet<string> | undefined): string | undefined => {
+  if (values?.size !== 1) {
+    return undefined;
+  }
+
+  return values.values().next().value;
+};
 
 /**
  * Classify an observation and collect the source records it implies.
@@ -320,9 +459,28 @@ export const summarizeObservation = (
   relationships: ReadonlyArray<TAuthzedRelationship>
 ): TAuthzedObservationSummary => {
   const sourceRefs = new Map<string, TAuthzedSourceRef>();
+  const managedRelationships = new Map<string, TAuthzedRelationship>();
   const unmanaged = new Map<string, TAuthzedRelationshipRef>();
   const parentEdges = new Map<string, TAuthzedParentEdge>();
   let ignored = 0;
+
+  const assignmentDirectories = new Map<string, Set<string>>();
+  const assignmentWorkspaces = new Map<string, Set<string>>();
+  for (const { relation, resource, subject } of relationships) {
+    if (resource.objectType === "feedback_directory" && relation === "assignment") {
+      const directories = assignmentDirectories.get(subject.objectId) ?? new Set<string>();
+      directories.add(resource.objectId);
+      assignmentDirectories.set(subject.objectId, directories);
+    } else if (resource.objectType === "feedback_directory_assignment" && relation === "directory") {
+      const directories = assignmentDirectories.get(resource.objectId) ?? new Set<string>();
+      directories.add(subject.objectId);
+      assignmentDirectories.set(resource.objectId, directories);
+    } else if (resource.objectType === "feedback_directory_assignment" && relation === "workspace") {
+      const workspaces = assignmentWorkspaces.get(resource.objectId) ?? new Set<string>();
+      workspaces.add(subject.objectId);
+      assignmentWorkspaces.set(resource.objectId, workspaces);
+    }
+  }
 
   for (const relationship of relationships) {
     if (isUnprojectedResourceType(relationship.resource.objectType)) {
@@ -337,7 +495,22 @@ export const summarizeObservation = (
 
     const sourceRef = toSourceRef(relationship);
     if (sourceRef) {
-      sourceRefs.set(sourceRefKey(sourceRef), sourceRef);
+      const enrichedSourceRef = (() => {
+        if (sourceRef.kind !== "feedbackDirectoryAssignment") {
+          return sourceRef;
+        }
+
+        const feedbackDirectoryId = onlyValue(assignmentDirectories.get(sourceRef.assignmentId));
+        const workspaceId = onlyValue(assignmentWorkspaces.get(sourceRef.assignmentId));
+
+        return {
+          ...sourceRef,
+          ...(feedbackDirectoryId ? { feedbackDirectoryId } : {}),
+          ...(workspaceId ? { workspaceId } : {}),
+        };
+      })();
+      sourceRefs.set(sourceRefKey(enrichedSourceRef), enrichedSourceRef);
+      managedRelationships.set(relationshipKey(relationship), relationship);
       continue;
     }
 
@@ -347,6 +520,9 @@ export const summarizeObservation = (
 
   return {
     ignored,
+    managedRelationships: [...managedRelationships.entries()]
+      .sort(([left], [right]) => byCodeUnit(left, right))
+      .map(([, relationship]) => relationship),
     parentEdges: [...parentEdges.entries()]
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([, edge]) => edge),

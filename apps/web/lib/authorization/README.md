@@ -73,6 +73,16 @@ Surveys, dashboards, and responses inherit access through their workspace:
 - Response updates, tags, and web-application deletion follow workspace write;
   legacy management deletion follows workspace manage.
 
+Feedback Datasets use `FeedbackDirectory` as their application resource. Organization owners and
+managers administer every dataset in their organization. Team members and API keys receive dataset
+read/write/manage through `FeedbackDirectoryWorkspace` and their existing permission on that exact
+workspace. The `feedbackDirectoryAssignment` resource therefore requires both the directory ID and a
+`workspaceId`; directory-wide gateway operations use the aggregate `feedbackDirectory` resource.
+
+The downstream SpiceDB schema names these definitions `feedback_directory` and
+`feedback_directory_assignment`. Product code must continue using the camel-case application names and
+must not depend on that downstream naming convention.
+
 ## Configuration-sensitive policy
 
 `organization.manage_access` is a stable application capability, but the legacy
@@ -163,6 +173,16 @@ These read a role but do not decide access, so they stay as they are:
 
 New authorization-sensitive code must use `can` or `assertCan`; it must not add
 callers to the deprecated action-client adapter or reintroduce a role-name gate.
+
+## Resource coverage inventory
+
+`resource-inventory.ts` classifies every Prisma model and audit target exactly once. Its regression test
+fails when a new model or target has not been reviewed. The inventory distinguishes direct authorization
+resources, relationship/grant sources, workspace-inherited resources, parent-derived integrity data,
+authentication/application concerns, and explicit public/out-of-scope data.
+
+Charts and workflows remain workspace-inherited. Feedback records remain protected by their
+dataset/workspace authorization decision plus application-level tenant and integrity validation.
 
 ## Explicit exclusions
 

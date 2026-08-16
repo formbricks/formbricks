@@ -11,6 +11,10 @@ import type { TAuthzedBackfillCliCommand } from "./backfill-cli-command";
 import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_ERROR_CODES, AuthzedError, type TAuthzedErrorCode, mapAuthzedError } from "./errors";
+import {
+  deleteFeedbackDirectoryAssignmentRelationships,
+  reconcileFeedbackDirectoryRelationships,
+} from "./feedback-directory";
 import { reconcileOrganizationMemberships } from "./organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "./team-workspace";
 
@@ -47,7 +51,9 @@ type TAuthzedBackfillCliDependencies = Readonly<{
  * `createInertApply()` cannot write regardless of any flag it is passed.
  */
 const createWritableApply = (): TAuthzedBackfillApply => ({
+  deleteFeedbackDirectoryAssignmentResources: deleteFeedbackDirectoryAssignmentRelationships,
   reconcileApiKeys: reconcileApiKeyRelationships,
+  reconcileFeedbackDirectories: reconcileFeedbackDirectoryRelationships,
   reconcileMemberships: reconcileOrganizationMemberships,
   reconcileTeamWorkspace: reconcileTeamWorkspaceRelationships,
 });
@@ -56,7 +62,9 @@ const INERT_RESULT = { passes: 0, status: "projected" } as const;
 
 /** No-op reconcilers for a dry run. */
 const createInertApply = (): TAuthzedBackfillApply => ({
+  deleteFeedbackDirectoryAssignmentResources: async () => INERT_RESULT,
   reconcileApiKeys: async () => INERT_RESULT,
+  reconcileFeedbackDirectories: async () => INERT_RESULT,
   reconcileMemberships: async () => INERT_RESULT,
   reconcileTeamWorkspace: async () => INERT_RESULT,
 });

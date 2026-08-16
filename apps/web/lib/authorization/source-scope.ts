@@ -1,9 +1,11 @@
 import "server-only";
-import type { TAuthorizationActor, TAuthorizationResource } from "./contract";
+import type { TAuthorizationActor, TAuthorizationResource, TAuthorizationResourceType } from "./contract";
 import {
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
   getDashboardAuthorizationWorkspaceScope,
+  getFeedbackDirectoryAssignmentAuthorizationScope,
+  getFeedbackDirectoryAuthorizationScope,
   getResponseAuthorizationWorkspaceScope,
   getSurveyAuthorizationWorkspaceScope,
   getTeamOrganizationId,
@@ -11,15 +13,20 @@ import {
   isAuthorizationUserActive,
 } from "./resolvers";
 
+type TResolvedPermissionResource = Readonly<{
+  type: TAuthorizationResourceType;
+  id: string;
+}>;
+
 export type TResolvedAuthorizationScope = Readonly<{
   actorValid: boolean;
   organizationId: string;
-  permissionResource: TAuthorizationResource;
+  permissionResource: TResolvedPermissionResource;
 }>;
 
 type TResourceScope = Readonly<{
   organizationId: string;
-  permissionResource: TAuthorizationResource;
+  permissionResource: TResolvedPermissionResource;
 }>;
 
 const resolveWorkspaceScope = async (workspaceId: string): Promise<TResourceScope | null> => {
@@ -43,17 +50,23 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
   switch (resource.type) {
     case "organization": {
       const organizationId = await getAuthorizationOrganizationId(resource.id);
-      return organizationId ? { organizationId, permissionResource: resource } : null;
+      return organizationId
+        ? { organizationId, permissionResource: { type: resource.type, id: resource.id } }
+        : null;
     }
     case "workspace":
       return resolveWorkspaceScope(resource.id);
     case "team": {
       const organizationId = await getTeamOrganizationId(resource.id);
-      return organizationId ? { organizationId, permissionResource: resource } : null;
+      return organizationId
+        ? { organizationId, permissionResource: { type: resource.type, id: resource.id } }
+        : null;
     }
     case "apiKey": {
       const organizationId = await getApiKeyOrganizationId(resource.id);
-      return organizationId ? { organizationId, permissionResource: resource } : null;
+      return organizationId
+        ? { organizationId, permissionResource: { type: resource.type, id: resource.id } }
+        : null;
     }
     case "survey": {
       return toWorkspaceResourceScope(await getSurveyAuthorizationWorkspaceScope(resource.id));
@@ -63,6 +76,30 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
     }
     case "response": {
       return toWorkspaceResourceScope(await getResponseAuthorizationWorkspaceScope(resource.id));
+    }
+    case "feedbackDirectory": {
+      const scope = await getFeedbackDirectoryAuthorizationScope(resource.id);
+      return scope && !scope.isArchived
+        ? {
+            organizationId: scope.organizationId,
+            permissionResource: { type: resource.type, id: resource.id },
+          }
+        : null;
+    }
+    case "feedbackDirectoryAssignment": {
+      const scope = await getFeedbackDirectoryAssignmentAuthorizationScope(
+        resource.feedbackDirectoryId,
+        resource.workspaceId
+      );
+      return scope
+        ? {
+            organizationId: scope.organizationId,
+            permissionResource: {
+              id: scope.assignmentId,
+              type: "feedbackDirectoryAssignment",
+            },
+          }
+        : null;
     }
   }
 };
