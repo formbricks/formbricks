@@ -6,6 +6,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getV3AuthorizationActor, requireSessionWorkspaceAccess, requireV3WorkspaceAccess } from "./auth";
+import type { TV3Authentication } from "./types";
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -36,11 +37,11 @@ const requestId = "req-123";
 
 describe("getV3AuthorizationActor", () => {
   test("maps session and API-key authentication to Formbricks actors", () => {
-    expect(getV3AuthorizationActor({ user: { id: "user_1" } } as any)).toEqual({
+    expect(getV3AuthorizationActor({ user: { id: "user_1" } } as unknown as TV3Authentication)).toEqual({
       type: "user",
       id: "user_1",
     });
-    expect(getV3AuthorizationActor({ apiKeyId: "key_1" } as any)).toEqual({
+    expect(getV3AuthorizationActor({ apiKeyId: "key_1" } as unknown as TV3Authentication)).toEqual({
       type: "apiKey",
       id: "key_1",
     });
@@ -48,8 +49,8 @@ describe("getV3AuthorizationActor", () => {
 
   test("rejects missing or incomplete authentication", () => {
     expect(getV3AuthorizationActor(null)).toBeNull();
-    expect(getV3AuthorizationActor({ user: {} } as any)).toBeNull();
-    expect(getV3AuthorizationActor({ apiKeyId: "" } as any)).toBeNull();
+    expect(getV3AuthorizationActor({ user: {} } as unknown as TV3Authentication)).toBeNull();
+    expect(getV3AuthorizationActor({ apiKeyId: "" } as unknown as TV3Authentication)).toBeNull();
   });
 });
 

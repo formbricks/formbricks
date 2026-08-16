@@ -88,6 +88,7 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   dashboardWidget: "parent_derived_or_data_integrity",
   feedbackDirectory: "direct_authorization_resource",
   feedbackRecord: "parent_derived_or_data_integrity",
+  feedbackSource: "parent_derived_or_data_integrity",
   file: "workspace_inherited_resource",
   integration: "workspace_inherited_resource",
   invite: "authentication_or_application",

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { assertCan } from "@/lib/authorization";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   createFeedbackDirectoryAction,
   getFeedbackDirectoryDetailsAction,
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => {
     createFeedbackDirectory: vi.fn(),
     getFeedbackDirectoryDetails: vi.fn(),
     getOrganizationIdFromDirectoryId: vi.fn(),
+    applyRateLimit: vi.fn(),
     updateFeedbackDirectory: vi.fn(),
     getIsFeedbackDirectoriesEnabled: vi.fn(),
   };
@@ -25,6 +27,7 @@ vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: { inputSchema: mocks.inputSchema },
 }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_event, _target, handler) => handler),
 }));
@@ -64,5 +67,14 @@ describe("feedback directory administration actions", () => {
       type: "organization",
       id: organizationId,
     });
+
+    if (_name === "read") {
+      expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+    } else {
+      expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+        rateLimitConfigs.actions.feedbackDirectoryMutation,
+        "user_1"
+      );
+    }
   });
 });

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { executeQueryAction, generateAIChartAction } from "./actions";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { createChartAction, executeQueryAction, generateAIChartAction } from "./actions";
 
 const mocks = vi.hoisted(() => {
   const actionClientAction = vi.fn((fn) => fn);
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => {
     executeTenantScopedQuery: vi.fn(),
     generateAIChartQuery: vi.fn(),
     updateChart: vi.fn(),
+    applyRateLimit: vi.fn(),
     getFeedbackSourcesWithMappings: vi.fn(),
     getSurvey: vi.fn(),
     getElementsFromBlocks: vi.fn(),
@@ -27,6 +29,8 @@ vi.mock("@/lib/utils/action-client", () => ({
     inputSchema: mocks.actionClientInputSchema,
   },
 }));
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -143,6 +147,25 @@ describe("chart Cube actions", () => {
       userId: "user-1",
       source: "charts.executeQueryAction",
     });
+  });
+
+  test("createChartAction applies the chart creation rate limit", async () => {
+    await createChartAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        chartInput: {
+          name: "Chart",
+          type: "bar",
+          query: { measures: ["FeedbackRecords.count"] },
+          config: {},
+          feedbackDirectoryId: "frd-1",
+        },
+      },
+    } as any);
+
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.chartCreation, "user-1");
+    expect(mocks.createChart).toHaveBeenCalled();
   });
 
   test("executeQueryAction does not delegate before workspace authorization succeeds", async () => {

@@ -6,6 +6,8 @@ import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   createFeedbackDirectory,
@@ -33,6 +35,8 @@ export const createFeedbackDirectoryAction = authenticatedActionClient
   .inputSchema(ZCreateFeedbackDirectoryAction)
   .action(
     withAuditLogging("created", "feedbackDirectory", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+      await applyRateLimit(rateLimitConfigs.actions.feedbackDirectoryMutation, ctx.user.id);
       await checkFeedbackDirectoriesEnabled(parsedInput.organizationId);
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
         type: "organization",
@@ -86,6 +90,8 @@ export const updateFeedbackDirectoryAction = authenticatedActionClient
   .inputSchema(ZUpdateFeedbackDirectoryAction)
   .action(
     withAuditLogging("updated", "feedbackDirectory", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.feedbackDirectoryId = parsedInput.directoryId;
+      await applyRateLimit(rateLimitConfigs.actions.feedbackDirectoryMutation, ctx.user.id);
       const organizationId = await getOrganizationIdFromDirectoryId(parsedInput.directoryId);
       await checkFeedbackDirectoriesEnabled(organizationId);
 
