@@ -62,11 +62,13 @@ describe("addLegacyEnvironmentIdToList", () => {
     ]);
 
     expect(result.map((entity) => entity.environmentId)).toEqual(["env_1", "env_2", "env_1"]);
+    // Three entities across two workspaces must cost one query for two ids. Deduping has no form in
+    // the return value — the mapping above passes either way — so the query is the only place it is
+    // observable. Matched loosely so adding a selected column doesn't break this.
     expect(findManyMock).toHaveBeenCalledTimes(1);
-    expect(findManyMock).toHaveBeenCalledWith({
-      where: { id: { in: ["ws_1", "ws_2"] } },
-      select: { id: true, legacyEnvironmentId: true },
-    });
+    expect(findManyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { in: ["ws_1", "ws_2"] } } })
+    );
   });
 
   test("returns an empty list without querying", async () => {
