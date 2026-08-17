@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import type { TOrganization } from "@formbricks/types/organizations";
 import { getOrganization } from "@/lib/organization/service";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
@@ -19,6 +20,27 @@ const mockGetOrg = vi.mocked(getOrganization);
 const mockGetLicense = vi.mocked(getEnterpriseLicense);
 
 type TLicenseResult = Awaited<ReturnType<typeof getEnterpriseLicense>>;
+
+/**
+ * The provider reads nothing off the organization — it only rejects a missing one — so this exists to
+ * satisfy the return type rather than to carry meaningful values. Typed so it still has to be a real
+ * `TOrganization` if the shape changes.
+ */
+const organization: TOrganization = {
+  id: "org1",
+  name: "Test Organization",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  billing: {
+    stripeCustomerId: null,
+    limits: {
+      workspaces: 3,
+      monthly: { responses: 1500, workflowRuns: null },
+    },
+    usageCycleAnchor: null,
+  },
+  isAISmartToolsEnabled: false,
+};
 
 /**
  * Complete feature set, everything off. Typed rather than cast so a new field on
@@ -83,7 +105,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("returns context with no license features", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(noLicense());
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -102,7 +124,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("maps license features to entitlements", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(
       activeLicense({
         removeBranding: true,
@@ -125,7 +147,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("keeps workspaces null (unlimited) when an active license grants unlimited workspaces", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(activeLicense({ workspaces: null, contacts: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -134,7 +156,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("defaults workspaces to 3 when license is inactive", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(
       expiredLicense({ workspaces: 10, contacts: true, spamProtection: true })
     );
@@ -146,7 +168,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("maps whitelabel feature to hide-branding", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(activeLicense({ whitelabel: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -155,7 +177,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("maps aiSmartTools feature to ai-smart-tools entitlement", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(activeLicense({ aiSmartTools: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -164,7 +186,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("maps feedbackDirectories feature to feedback-directories entitlement", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(activeLicense({ feedbackDirectories: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -174,7 +196,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("maps dashboards feature to dashboards entitlement", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(activeLicense({ dashboards: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -184,7 +206,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("maps workflows feature to workflows entitlement", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(activeLicense({ workflows: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -194,7 +216,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("does not map workflows entitlement when the license flag is off", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(activeLicense({ workflows: false, dashboards: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -203,7 +225,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("maps both Hub features when all enabled", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(activeLicense({ feedbackDirectories: true, dashboards: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
@@ -213,7 +235,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
   });
 
   test("does not map Hub features when license inactive even if flags are true", async () => {
-    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetOrg.mockResolvedValue(organization);
     mockGetLicense.mockResolvedValue(expiredLicense({ feedbackDirectories: true, dashboards: true }));
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
