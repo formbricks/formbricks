@@ -74,7 +74,10 @@ export const getSpreadsheetNameByIdAction = authenticatedActionClient
     // workspace.
     const integration = await getIntegrationByType(parsedInput.workspaceId, "googleSheets");
     if (!integration) {
-      throw new ResourceNotFoundError("Integration", "googleSheets");
+      // No ID to report: the lookup is by workspace and type, not by integration ID. The constructor
+      // renders `${resource} not found` for a null ID, which keeps the message accurate if it ever
+      // surfaces raw.
+      throw new ResourceNotFoundError("Google Sheets integration", null);
     }
 
     return await getSpreadsheetNameById(integration as TIntegrationGoogleSheets, parsedInput.spreadsheetId);
