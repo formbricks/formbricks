@@ -1,9 +1,11 @@
 import {
+  RESERVED_FIELD_CATALOG,
   type TLinkedEmbeddedField,
   getDeclaredEmbeddedFields,
 } from "@formbricks/types/embedded-data-resolver";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
+import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -106,6 +108,11 @@ const resolveRecallItemLabel = (
 
   const computedField = findEmbeddedField(embeddedFields, recallItemId, "computed");
   if (computedField) return computedField.field.name;
+
+  // Reserved is checked LAST, which is the grandfather rule in label form: a survey that declares its
+  // own `country` has already returned above, so the token keeps showing the declared field's name.
+  const reservedEntry = RESERVED_FIELD_CATALOG.find((entry) => entry.name === recallItemId);
+  if (reservedEntry) return formatSnakeCaseToTitleCase(reservedEntry.name);
 };
 
 export const getRecallItemLabel = <T extends TSurvey>(
@@ -224,6 +231,10 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
       if (isHiddenField) return "hiddenField";
       if (isSurveyQuestion) return "element";
       if (isVariable) return "variable";
+      // Same precedence as the label lookup, and load-bearing for the same reason: without this arm
+      // `getRecallItems` drops the id it could not type, and the editor renders the raw
+      // `#recall:country/fallback:x#` token as literal text instead of a chip.
+      if (RESERVED_FIELD_CATALOG.some((entry) => entry.name === recallItemId)) return "reserved";
     };
 
     if (recallItemLabel) {

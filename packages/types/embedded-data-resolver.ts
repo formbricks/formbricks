@@ -3,7 +3,7 @@ import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
 import { type TLegacyEmbeddedFields, toDesiredEmbeddedFields } from "./embedded-data-mapping";
 import type { TI18nString } from "./i18n";
-import type { TResponse, TResponseVariables } from "./responses";
+import type { TResponse, TResponseData, TResponseVariables } from "./responses";
 import { formatSnakeCaseToTitleCase } from "./safe-identifier";
 import type { TSurveyBlocks } from "./surveys/blocks";
 import { getTextContent } from "./surveys/validation";
@@ -615,6 +615,50 @@ export const projectClientReservedValues = (
     entries.filter((entry): entry is TClientReservedFieldCatalogEntry => entry.availability !== "server"),
     response
   );
+
+/**
+ * **The grandfather rule, as one expression.** Reserved values go in FIRST so `responseData` spreads
+ * over them and wins on every colliding key.
+ *
+ * `FORBIDDEN_IDS` never guarded the reserved names, so surveys stored today legitimately declare a
+ * hidden field called `country` or `url`. Its value lives at `response.data["country"]`, and
+ * `#recall:country#` in such a survey must keep resolving from there — unchanged, forever.
+ * `RESERVED_FIELD_NAMES` (reserved-field-names.ts) stops only *new* declarations, so the collision
+ * set is frozen but non-empty, and this ordering is what keeps those surveys working.
+ *
+ * Flipping the two spreads is the whole regression: reserved metadata would start overwriting
+ * answers respondents actually gave. It lives here, called from every consumer, rather than being
+ * open-coded per surface, so there is exactly one line to audit and one line to test.
+ */
+export const mergeReservedValues = (
+  reservedValues: Record<string, string | number>,
+  responseData: TResponseData
+): TResponseData => ({ ...reservedValues, ...responseData });
+
+/**
+ * Which reserved entries a **mid-survey** picker may offer for one survey (ENG-1840). Both filters
+ * exist for a reason a reviewer should be able to check separately:
+ *
+ * 1. `availability !== "server"` — recall and logic evaluate in the browser while the respondent is
+ *    answering, so offering `country` or `durationSeconds` would let an author build a condition
+ *    that can never be true. Filtering on the catalog's own field (rather than a list here) means
+ *    entries added later light up automatically, and none can be offered without declaring when it
+ *    is knowable.
+ * 2. Not shadowed by a declared field — the picker counterpart of {@link mergeReservedValues}. If a
+ *    survey declares its own `country`, that name already resolves to the declared value, so listing
+ *    the reserved entry too would show two identically-named rows with no way to tell them apart and
+ *    the reserved one would be a lie. The declared field is already offered by its own group.
+ *
+ * Pass the survey's declared storage keys (hidden/ingested fields and variables) as
+ * `declaredStorageKeys`.
+ */
+export const listMidSurveyReservedEntries = (
+  entries: readonly TReservedFieldCatalogEntry[],
+  declaredStorageKeys: readonly string[]
+): TReservedFieldCatalogEntry[] => {
+  const declared = new Set(declaredStorageKeys);
+  return entries.filter((entry) => entry.availability !== "server" && !declared.has(entry.name));
+};
 
 /** One referenceable field, carrying the key a consumer must use to address it. */
 export interface TReadableField {

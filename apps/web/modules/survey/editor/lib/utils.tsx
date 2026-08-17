@@ -1,12 +1,16 @@
 import { TFunction } from "i18next";
-import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
+import { EyeOffIcon, FileDigitIcon, FileType2Icon, GlobeIcon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
 import {
+  RESERVED_FIELD_CATALOG,
+  type TReservedFieldCatalogEntry,
   getDeclaredComputedFields,
   getDeclaredIngestedStorageKeys,
+  listMidSurveyReservedEntries,
 } from "@formbricks/types/embedded-data-resolver";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -160,13 +164,45 @@ const getComputedFieldOptions = (localSurvey: TSurvey): TComputedFieldOption[] =
     type: field.dataType === "number" ? "number" : "text",
   }));
 
+/**
+ * Every name a survey already declares — the shadow list the grandfather rule filters against. Both
+ * declaration kinds count: an ingested field and a variable are equally capable of being named
+ * `country`, and either one resolves ahead of the reserved entry at read time.
+ */
+const getDeclaredFieldNames = (localSurvey: TSurvey): string[] => [
+  ...getDeclaredIngestedStorageKeys(localSurvey),
+  ...getComputedFieldOptions(localSurvey).map((variable) => variable.id),
+];
+
+/** The reserved entries this survey may offer mid-survey, already availability- and shadow-filtered. */
+const getPickerReservedEntries = (localSurvey: TSurvey): TReservedFieldCatalogEntry[] =>
+  listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, getDeclaredFieldNames(localSurvey));
+
+const toReservedOption = (entry: TReservedFieldCatalogEntry): TComboboxOption => ({
+  icon: GlobeIcon,
+  label: formatSnakeCaseToTitleCase(entry.name),
+  value: entry.name,
+  meta: {
+    type: "reserved",
+  },
+});
+
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   t: TFunction,
-  blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
+  blockIdx?: number, // Optional - if provided, includes elements from this block and all previous blocks
+  /**
+   * Off by default because this picker is shared with the quota condition builder, whose evaluation
+   * (`evaluateQuotas`) projects no reserved values — offering them there would let an author write a
+   * condition that silently never matches. Survey block logic opts in; see ENG-1840's PR notes.
+   */
+  includeReservedFields = false
 ): TComboboxGroupedOption[] => {
   const hiddenFields = getDeclaredIngestedStorageKeys(localSurvey);
   const variables = getComputedFieldOptions(localSurvey);
+  const reservedOptions = includeReservedFields
+    ? getPickerReservedEntries(localSurvey).map(toReservedOption)
+    : [];
 
   // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
@@ -276,6 +312,14 @@ export const getConditionValueOptions = (
     });
   }
 
+  if (reservedOptions.length > 0) {
+    groupedOptions.push({
+      label: t("common.survey_data"),
+      value: "reservedFields",
+      options: reservedOptions,
+    });
+  }
+
   return groupedOptions;
 };
 
@@ -358,6 +402,14 @@ export const getConditionOperatorOptions = (
     return getLogicRules(t)[`variable.${variableType}`].options;
   } else if (condition.leftOperand.type === "hiddenField") {
     return getLogicRules(t).hiddenField.options;
+  } else if (condition.leftOperand.type === "reserved") {
+    // Read off the whole catalog, not the picker's filtered list: a condition can outlive the entry
+    // being offered (the survey later declares a field of the same name), and an operand with no
+    // operators at all would strand the author in a broken row. Unknown names fall back to string,
+    // which is the widest safe set.
+    const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
+    const dataType = entry?.dataType ?? "string";
+    return getLogicRules(t)[`reserved.${dataType}`].options;
   } else if (condition.leftOperand.type === "element") {
     // Derive elements from blocks
     const elements = getElementsFromBlocks(localSurvey.blocks);
@@ -998,6 +1050,80 @@ export const getMatchValueProps = (
       show: true,
       showInput: true,
       inputType: "text",
+      options: groupedOptions,
+    };
+  } else if (condition.leftOperand.type === "reserved") {
+    // Without this branch a reserved condition falls through to `{ show: false }` and renders with no
+    // right-hand side at all — an operator the author can never complete.
+    const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
+    const inputType: HTMLInputTypeAttribute =
+      entry?.dataType === "number" ? "number" : entry?.dataType === "date" ? "date" : "text";
+
+    const elementOptions = elements.map((element) => ({
+      icon: getElementIconMapping(t)[element.type],
+      label: getElementHeadline(localSurvey, element, "default", t),
+      value: element.id,
+      meta: { type: "element" },
+    }));
+
+    const variableOptions = variables.map((variable) => ({
+      icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
+      label: variable.name,
+      value: variable.id,
+      meta: { type: "variable" },
+    }));
+
+    const hiddenFieldsOptions = hiddenFields.map((field) => ({
+      icon: EyeOffIcon,
+      label: field,
+      value: field,
+      meta: { type: "hiddenField" },
+    }));
+
+    // Other reserved entries are comparable too (`source` equals `action`, say), minus the one
+    // already on the left — comparing a field to itself is never a useful condition.
+    const reservedOptions = getPickerReservedEntries(localSurvey)
+      .filter((candidate) => candidate.name !== condition.leftOperand.value)
+      .map(toReservedOption);
+
+    const groupedOptions: TComboboxGroupedOption[] = [];
+
+    if (elementOptions.length > 0) {
+      groupedOptions.push({
+        label: t("common.questions"),
+        value: "elements",
+        options: elementOptions,
+      });
+    }
+
+    if (variableOptions.length > 0) {
+      groupedOptions.push({
+        label: t("common.variables"),
+        value: "variables",
+        options: variableOptions,
+      });
+    }
+
+    if (hiddenFieldsOptions.length > 0) {
+      groupedOptions.push({
+        label: t("common.hidden_fields"),
+        value: "hiddenFields",
+        options: hiddenFieldsOptions,
+      });
+    }
+
+    if (reservedOptions.length > 0) {
+      groupedOptions.push({
+        label: t("common.survey_data"),
+        value: "reservedFields",
+        options: reservedOptions,
+      });
+    }
+
+    return {
+      show: true,
+      showInput: true,
+      inputType,
       options: groupedOptions,
     };
   }

@@ -20,7 +20,9 @@ import {
   getIngestedStorageKeys,
   getLogicVariableValue,
   getSurveyEmbeddedFields,
+  listMidSurveyReservedEntries,
   listReadableFields,
+  mergeReservedValues,
   projectClientReservedValues,
   projectReservedValues,
   resolveEmbeddedValue,
@@ -1410,5 +1412,92 @@ describe("getComputedFieldDataType", () => {
     // swallowed by `evaluateSingleCondition`'s try/catch into a silent `false`.
     expect(getComputedFieldDataType(fields, "deleted_variable")).toBeUndefined();
     expect(findComputedEmbeddedField(fields, "deleted_variable")).toBeUndefined();
+  });
+});
+
+describe("mergeReservedValues", () => {
+  test("reserved values fill keys the response does not have", () => {
+    expect(mergeReservedValues({ country: "DE", url: "https://x.test" }, { q1: "answer" })).toStrictEqual({
+      country: "DE",
+      url: "https://x.test",
+      q1: "answer",
+    });
+  });
+
+  test("THE GRANDFATHER RULE: response data wins on a colliding key", () => {
+    // Flip the two spreads in `mergeReservedValues` and this goes red. A survey stored today may
+    // legitimately declare a hidden field named `country`; its value lives in `response.data` and
+    // must keep resolving from there forever.
+    expect(mergeReservedValues({ country: "DE" }, { country: "Declared answer" })).toStrictEqual({
+      country: "Declared answer",
+    });
+  });
+
+  test("a declared key wins even when its value is empty or zero", () => {
+    // Falsy is still an answer — a `??`-style merge would wrongly fall through to the reserved value.
+    expect(mergeReservedValues({ country: "DE" }, { country: "" })).toStrictEqual({ country: "" });
+    expect(mergeReservedValues({ durationSeconds: 42 }, { durationSeconds: 0 })).toStrictEqual({
+      durationSeconds: 0,
+    });
+  });
+
+  test("neither input is mutated", () => {
+    const reserved = { country: "DE" };
+    const responseData = { q1: "answer" };
+
+    mergeReservedValues(reserved, responseData);
+
+    expect(reserved).toStrictEqual({ country: "DE" });
+    expect(responseData).toStrictEqual({ q1: "answer" });
+  });
+});
+
+describe("listMidSurveyReservedEntries", () => {
+  const names = (declared: string[]): string[] =>
+    listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, declared).map((entry) => entry.name);
+
+  test("offers only what a browser can resolve mid-survey", () => {
+    expect(names([]).sort()).toStrictEqual(["action", "language", "source", "url"]);
+  });
+
+  test("every server-derived field named by the ticket is absent", () => {
+    // The ticket's own description lists browser/os/deviceType as available during the survey. They
+    // are not on this branch: UAParser derives all three from the `user-agent` header in the ingest
+    // routes, so the renderer cannot know them. The catalog's `availability` is the authority.
+    const offered = names([]);
+
+    for (const serverOnly of [
+      "country",
+      "ipAddress",
+      "browser",
+      "os",
+      "deviceType",
+      "durationSeconds",
+      "finished",
+      "responseId",
+      "startedAt",
+      "finishedAt",
+    ]) {
+      expect(offered).not.toContain(serverOnly);
+    }
+  });
+
+  test("a declared field of the same name removes the reserved entry from the picker", () => {
+    // Otherwise the author sees two identically-named rows with no way to tell them apart, and the
+    // reserved one would be a lie: `mergeReservedValues` already resolves that name to the declared
+    // field's value.
+    expect(names(["url"])).not.toContain("url");
+    expect(names(["url"])).toContain("source");
+  });
+
+  test("shadowing a server-only name changes nothing, since it was never offered", () => {
+    expect(names(["country"]).sort()).toStrictEqual(["action", "language", "source", "url"]);
+  });
+
+  test("entries are returned as catalog entries, carrying their dataType", () => {
+    const entry = listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, []).find((e) => e.name === "url");
+
+    expect(entry?.dataType).toBe("string");
+    expect(entry?.availability).not.toBe("server");
   });
 });

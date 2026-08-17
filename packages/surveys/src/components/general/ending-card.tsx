@@ -20,6 +20,13 @@ interface EndingCardProps {
   autoFocusEnabled: boolean;
   isCurrent: boolean;
   languageCode: string;
+  /**
+   * The recall lookup map, not the raw response: `survey.tsx` merges reserved-field values UNDER the
+   * response data (`mergeReservedValues`) before passing it, so reserved fields resolve in ending
+   * copy *and* in the redirect URL that `processAndRedirect` interpolates. A declared field of the
+   * same name still wins. Read only by `replaceRecallInfo` — anything that needs the respondent's
+   * actual answers must take its own prop rather than reusing this one.
+   */
   responseData: TResponseData;
   variablesData: TResponseVariables;
   onOpenExternalURL?: (url: string) => void | Promise<void>;

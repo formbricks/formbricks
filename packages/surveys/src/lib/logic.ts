@@ -19,19 +19,35 @@ export const isConditionGroup = (condition: TCondition): condition is TCondition
   return (condition as TConditionGroup).connector !== undefined;
 };
 
+/**
+ * @param embeddedValues Reserved-field values merged UNDER `data` by `mergeReservedValues` — the map
+ *   a `reserved` operand reads. Only that operand consults it; the `element` and `hiddenField` arms
+ *   keep reading `data` alone, so a declared field that happens to share a reserved name can never
+ *   pick up reserved metadata just because the respondent left it blank. Defaults to `{}` so a
+ *   caller with nothing to project evaluates exactly as it does today, and every reserved operand
+ *   reads as unset rather than throwing.
+ */
 export const evaluateLogic = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   conditions: TConditionGroup,
-  selectedLanguage: string
+  selectedLanguage: string,
+  embeddedValues: TResponseData = {}
 ): boolean => {
   const evaluateConditionGroup = (group: TConditionGroup): boolean => {
     const results = group.conditions.map((condition) => {
       if (isConditionGroup(condition)) {
         return evaluateConditionGroup(condition);
       } else {
-        return evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage);
+        return evaluateSingleCondition(
+          localSurvey,
+          data,
+          variablesData,
+          condition,
+          selectedLanguage,
+          embeddedValues
+        );
       }
     });
 
@@ -80,7 +96,8 @@ const getLeftOperandValue = (
   data: TResponseData,
   variablesData: TResponseVariables,
   leftOperand: TSingleCondition["leftOperand"],
-  selectedLanguage: string
+  selectedLanguage: string,
+  embeddedValues: TResponseData
 ) => {
   switch (leftOperand.type) {
     case "element":
@@ -168,6 +185,10 @@ const getLeftOperandValue = (
       return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), leftOperand.value, variablesData);
     case "hiddenField":
       return data[leftOperand.value];
+    // Mid-survey the map holds client-available entries only, so a server-derived name
+    // (country, durationSeconds, …) is absent here and reads as unset — never a fabricated 0 or "".
+    case "reserved":
+      return embeddedValues[leftOperand.value];
     default:
       return undefined;
   }
@@ -177,7 +198,8 @@ const getRightOperandValue = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
-  rightOperand: TSingleCondition["rightOperand"]
+  rightOperand: TSingleCondition["rightOperand"],
+  embeddedValues: TResponseData
 ) => {
   if (!rightOperand) return undefined;
 
@@ -188,6 +210,8 @@ const getRightOperandValue = (
       return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), rightOperand.value, variablesData);
     case "hiddenField":
       return data[rightOperand.value];
+    case "reserved":
+      return embeddedValues[rightOperand.value];
     case "static":
       return rightOperand.value;
     default:
@@ -200,7 +224,8 @@ const evaluateSingleCondition = (
   data: TResponseData,
   variablesData: TResponseVariables,
   condition: TSingleCondition,
-  selectedLanguage: string
+  selectedLanguage: string,
+  embeddedValues: TResponseData
 ): boolean => {
   try {
     let leftValue = getLeftOperandValue(
@@ -208,10 +233,11 @@ const evaluateSingleCondition = (
       data,
       variablesData,
       condition.leftOperand,
-      selectedLanguage
+      selectedLanguage,
+      embeddedValues
     );
     let rightValue = condition.rightOperand
-      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
+      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand, embeddedValues)
       : undefined;
 
     // Only element and hiddenField operands are inspected below; a `variable` operand's declared

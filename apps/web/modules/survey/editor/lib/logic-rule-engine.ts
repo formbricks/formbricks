@@ -468,6 +468,144 @@ export const getLogicRules = (t: TFunction) => {
         },
       ],
     },
+    /*
+     * Reserved fields (ENG-1840) are keyed by the catalog entry's `dataType` rather than by name, so
+     * a new entry inherits the right operators from the type it already declares instead of needing a
+     * rule set of its own. Every family keeps isSet/isNotSet: a reserved value can legitimately be
+     * absent (`source` on a link survey opened without one), and those two are the only operators
+     * that let an author branch on that.
+     */
+    ["reserved.string"]: {
+      options: [
+        {
+          label: t("workspace.surveys.edit.equals"),
+          value: ZSurveyLogicConditionsOperator.enum.equals,
+        },
+        {
+          label: t("workspace.surveys.edit.does_not_equal"),
+          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
+        },
+        {
+          label: t("workspace.surveys.edit.contains"),
+          value: ZSurveyLogicConditionsOperator.enum.contains,
+        },
+        {
+          label: t("workspace.surveys.edit.does_not_contain"),
+          value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
+        },
+        {
+          label: t("workspace.surveys.edit.starts_with"),
+          value: ZSurveyLogicConditionsOperator.enum.startsWith,
+        },
+        {
+          label: t("workspace.surveys.edit.does_not_start_with"),
+          value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
+        },
+        {
+          label: t("workspace.surveys.edit.ends_with"),
+          value: ZSurveyLogicConditionsOperator.enum.endsWith,
+        },
+        {
+          label: t("workspace.surveys.edit.does_not_end_with"),
+          value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
+        },
+        {
+          label: t("workspace.surveys.edit.is_set"),
+          value: ZSurveyLogicConditionsOperator.enum.isSet,
+        },
+        {
+          label: t("workspace.surveys.edit.is_not_set"),
+          value: ZSurveyLogicConditionsOperator.enum.isNotSet,
+        },
+      ],
+    },
+    ["reserved.number"]: {
+      options: [
+        {
+          label: "=",
+          value: ZSurveyLogicConditionsOperator.enum.equals,
+        },
+        {
+          label: "!=",
+          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
+        },
+        {
+          label: ">",
+          value: ZSurveyLogicConditionsOperator.enum.isGreaterThan,
+        },
+        {
+          label: "<",
+          value: ZSurveyLogicConditionsOperator.enum.isLessThan,
+        },
+        {
+          label: ">=",
+          value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual,
+        },
+        {
+          label: "<=",
+          value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual,
+        },
+        {
+          label: t("workspace.surveys.edit.is_set"),
+          value: ZSurveyLogicConditionsOperator.enum.isSet,
+        },
+        {
+          label: t("workspace.surveys.edit.is_not_set"),
+          value: ZSurveyLogicConditionsOperator.enum.isNotSet,
+        },
+      ],
+    },
+    // Booleans project as the strings "true"/"false" (see `projectReservedValues`), so equality is
+    // the only comparison that means anything — ordering or substring operators would invite a
+    // condition that reads sensibly and never matches.
+    ["reserved.boolean"]: {
+      options: [
+        {
+          label: t("workspace.surveys.edit.equals"),
+          value: ZSurveyLogicConditionsOperator.enum.equals,
+        },
+        {
+          label: t("workspace.surveys.edit.does_not_equal"),
+          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
+        },
+        {
+          label: t("workspace.surveys.edit.is_set"),
+          value: ZSurveyLogicConditionsOperator.enum.isSet,
+        },
+        {
+          label: t("workspace.surveys.edit.is_not_set"),
+          value: ZSurveyLogicConditionsOperator.enum.isNotSet,
+        },
+      ],
+    },
+    ["reserved.date"]: {
+      options: [
+        {
+          label: t("workspace.surveys.edit.equals"),
+          value: ZSurveyLogicConditionsOperator.enum.equals,
+        },
+        {
+          label: t("workspace.surveys.edit.does_not_equal"),
+          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
+        },
+        {
+          label: t("workspace.surveys.edit.is_before"),
+          value: ZSurveyLogicConditionsOperator.enum.isBefore,
+        },
+        {
+          label: t("workspace.surveys.edit.is_after"),
+          value: ZSurveyLogicConditionsOperator.enum.isAfter,
+        },
+        {
+          label: t("workspace.surveys.edit.is_set"),
+          value: ZSurveyLogicConditionsOperator.enum.isSet,
+        },
+        {
+          label: t("workspace.surveys.edit.is_not_set"),
+          value: ZSurveyLogicConditionsOperator.enum.isNotSet,
+        },
+      ],
+    },
   };
 };
 
