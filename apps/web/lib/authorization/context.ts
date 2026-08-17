@@ -84,17 +84,17 @@ export const withAuthorizationSurface = async <T>(
 };
 
 /**
- * Record that one central authorization decision was made. Called from `can()` itself, so every
- * `can()`/`assertCan()` call counts once regardless of which evaluator answered it. A no-op outside a
- * surface — same fail-safe posture as the rest of this module — so scripts and tests that never
- * establish a surface are simply not counted rather than throwing.
+ * Record that one central authorization operation was made. Scalar `can()`/`assertCan()` decisions and
+ * narrow list observers each call this exactly once regardless of how much source data they process.
+ * A no-op outside a surface — same fail-safe posture as the rest of this module — so scripts and tests
+ * that never establish a surface are simply not counted rather than throwing.
  */
 export const recordAuthorizationCheckIssued = (): void => {
   const context = authorizationContext.getStore();
   if (context) context.checksIssued += 1;
 };
 
-/** The number of `can()` decisions made so far in the current surface, or `null` outside one. */
+/** The number of central authorization operations in the current surface, or `null` outside one. */
 export const getIssuedAuthorizationCheckCount = (): number | null =>
   authorizationContext.getStore()?.checksIssued ?? null;
 

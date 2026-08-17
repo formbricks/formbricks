@@ -1,5 +1,5 @@
 import "server-only";
-import type { TAuthzedClient, TAuthzedRelationshipUpdate } from "../lib/authzed/client";
+import type { TAuthzedRelationshipUpdate, TAuthzedResourceLookupClient } from "../lib/authzed/client";
 import { getFeedbackDirectoryAssignmentObjectId } from "../lib/authzed/feedback-directory-assignment-id";
 
 const ORGANIZATION_ID = "application-relationship-smoke";
@@ -7,6 +7,7 @@ const USER_ID = "application-relationship-smoke";
 const ORGANIZATION_RELATIONS = ["billing", "manager", "member", "owner"] as const;
 const GRAPH_ORGANIZATION_ID = "application-graph-smoke";
 const GRAPH_WORKSPACE_ID = "application-graph-smoke";
+const LOOKUP_SECONDARY_WORKSPACE_ID = "application-graph-lookup-secondary";
 const READER_TEAM_ID = "application-graph-reader";
 const MANAGER_TEAM_ID = "application-graph-manager";
 const ALICE_ID = "application-graph-alice";
@@ -37,6 +38,9 @@ type TSmokeCommand =
   | "check-user-allow"
   | "check-user-deny"
   | "check-feedback"
+  | "lookup-api-key-workspaces"
+  | "lookup-empty-workspaces"
+  | "lookup-user-workspaces"
   | "delete"
   | "delete-api-key"
   | "delete-manager-team"
@@ -66,6 +70,9 @@ const isSmokeCommand = (value: string | undefined): value is TSmokeCommand =>
   value === "check-user-allow" ||
   value === "check-user-deny" ||
   value === "check-feedback" ||
+  value === "lookup-api-key-workspaces" ||
+  value === "lookup-empty-workspaces" ||
+  value === "lookup-user-workspaces" ||
   value === "delete" ||
   value === "delete-api-key" ||
   value === "delete-manager-team" ||
@@ -140,7 +147,7 @@ const createApiKeyWorkspaceUpdates = (
   }));
 
 const writeOrganizationProjection = async (
-  client: TAuthzedClient,
+  client: TAuthzedResourceLookupClient,
   command: "delete" | "set-billing" | "set-owner"
 ): Promise<void> => {
   const selectedRelations = {
@@ -161,7 +168,7 @@ const writeOrganizationProjection = async (
   );
 };
 
-const seedTeamWorkspaceProjection = async (client: TAuthzedClient): Promise<void> => {
+const seedTeamWorkspaceProjection = async (client: TAuthzedResourceLookupClient): Promise<void> => {
   await client.writeRelationships([
     ...[ALICE_ID, BOB_ID].map((userId) => ({
       operation: "touch" as const,
@@ -195,15 +202,31 @@ const seedTeamWorkspaceProjection = async (client: TAuthzedClient): Promise<void
         subject: { objectId: GRAPH_ORGANIZATION_ID, objectType: "organization" },
       },
     },
+    {
+      operation: "touch",
+      relationship: {
+        relation: "organization",
+        resource: { objectId: LOOKUP_SECONDARY_WORKSPACE_ID, objectType: "workspace" },
+        subject: { objectId: GRAPH_ORGANIZATION_ID, objectType: "organization" },
+      },
+    },
     ...createTeamRoleUpdates(READER_TEAM_ID, ALICE_ID, "contributor"),
     ...createTeamRoleUpdates(MANAGER_TEAM_ID, ALICE_ID, "admin"),
     ...createTeamRoleUpdates(READER_TEAM_ID, BOB_ID, "contributor"),
     ...createWorkspaceGrantUpdates(READER_TEAM_ID, "reader_team"),
     ...createWorkspaceGrantUpdates(MANAGER_TEAM_ID, "manager_team"),
+    {
+      operation: "touch",
+      relationship: {
+        relation: "reader_team",
+        resource: { objectId: LOOKUP_SECONDARY_WORKSPACE_ID, objectType: "workspace" },
+        subject: { objectId: READER_TEAM_ID, objectType: "team", relation: "member" },
+      },
+    },
   ]);
 };
 
-const deleteManagerTeamProjection = async (client: TAuthzedClient): Promise<void> => {
+const deleteManagerTeamProjection = async (client: TAuthzedResourceLookupClient): Promise<void> => {
   await client.deleteRelationships({
     resourceId: MANAGER_TEAM_ID,
     resourceType: "team",
@@ -214,7 +237,7 @@ const deleteManagerTeamProjection = async (client: TAuthzedClient): Promise<void
   });
 };
 
-const seedApiKeyProjection = async (client: TAuthzedClient): Promise<void> => {
+const seedApiKeyProjection = async (client: TAuthzedResourceLookupClient): Promise<void> => {
   await client.writeRelationships([
     ...[READER_API_KEY_ID, WRITER_API_KEY_ID, MANAGER_API_KEY_ID, COMBINED_ACCESS_API_KEY_ID].map(
       (apiKeyId) => ({
@@ -256,7 +279,7 @@ const seedApiKeyProjection = async (client: TAuthzedClient): Promise<void> => {
   ]);
 };
 
-const deleteWriterApiKeyProjection = async (client: TAuthzedClient): Promise<void> => {
+const deleteWriterApiKeyProjection = async (client: TAuthzedResourceLookupClient): Promise<void> => {
   await client.deleteRelationships({
     resourceId: WRITER_API_KEY_ID,
     resourceType: "api_key",
@@ -304,7 +327,7 @@ const feedbackAssignmentUpdates = (
   ];
 };
 
-const seedFeedbackDirectoryProjection = async (client: TAuthzedClient): Promise<void> => {
+const seedFeedbackDirectoryProjection = async (client: TAuthzedResourceLookupClient): Promise<void> => {
   await client.writeRelationships([
     {
       operation: "touch",
@@ -376,7 +399,7 @@ const seedFeedbackDirectoryProjection = async (client: TAuthzedClient): Promise<
   ]);
 };
 
-const checkFeedbackDirectoryProjection = async (client: TAuthzedClient) => {
+const checkFeedbackDirectoryProjection = async (client: TAuthzedResourceLookupClient) => {
   const check = (
     permission: string,
     resourceType: string,
@@ -427,9 +450,13 @@ const checkFeedbackDirectoryProjection = async (client: TAuthzedClient) => {
 type TSmokeResult =
   | Readonly<{ status: "projected" }>
   | Readonly<{ allowed: boolean; status: "checked" }>
+  | Readonly<{ resourceCount: number; status: "looked_up" }>
   | Awaited<ReturnType<typeof checkFeedbackDirectoryProjection>>;
 
-const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeCommand): Promise<TSmokeResult> => {
+const executeSmokeCommand = async (
+  client: TAuthzedResourceLookupClient,
+  command: TSmokeCommand
+): Promise<TSmokeResult> => {
   switch (command) {
     case "check-user-allow":
     case "check-user-deny":
@@ -459,6 +486,21 @@ const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeComman
       };
     case "check-feedback":
       return checkFeedbackDirectoryProjection(client);
+    case "lookup-user-workspaces":
+    case "lookup-api-key-workspaces":
+    case "lookup-empty-workspaces": {
+      const subject = {
+        "lookup-api-key-workspaces": { objectId: MANAGER_API_KEY_ID, objectType: "api_key" },
+        "lookup-empty-workspaces": { objectId: "application-lookup-empty", objectType: "user" },
+        "lookup-user-workspaces": { objectId: ALICE_ID, objectType: "user" },
+      } as const;
+      const result = await client.lookupResources({
+        permission: "read",
+        resourceType: "workspace",
+        subject: subject[command],
+      });
+      return { resourceCount: result.resourceIds.length, status: "looked_up" };
+    }
     case "delete":
     case "set-billing":
     case "set-owner":
@@ -528,6 +570,14 @@ const executeSmokeCommand = async (client: TAuthzedClient, command: TSmokeComman
       await client.deleteRelationships({
         resourceId: GRAPH_WORKSPACE_ID,
         resourceType: "workspace",
+      });
+      await client.deleteRelationships({
+        resourceId: LOOKUP_SECONDARY_WORKSPACE_ID,
+        resourceType: "workspace",
+      });
+      await client.deleteRelationships({
+        resourceId: GRAPH_ORGANIZATION_ID,
+        resourceType: "organization",
       });
       return { status: "projected" };
   }

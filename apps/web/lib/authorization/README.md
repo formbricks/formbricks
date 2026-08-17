@@ -168,8 +168,11 @@ These read a role but do not decide access, so they stay as they are:
 - **Invite fan-out.** The signup and invite paths derive from the _invited_
   role whether to create `TeamUser` rows, since owners and managers get
   workspace access from the role itself. That is a statement about the invite.
-- **List scoping.** Workspace list queries narrow by role instead of asking a
-  question per row. Replacing those with a permission-aware lookup is ENG-1713.
+- **List scoping.** Workspace list queries remain PostgreSQL-authoritative and narrow by role instead
+  of asking a question per row. MCP `list_workspaces` is the one narrow Phase 1 exception: it queues a
+  single shadow-only `LookupResources(workspace, read)` comparison after the response and counts that
+  list observation as one central authorization operation. It never changes the returned list and does
+  not expose generic lookup or enforcement semantics; those remain ENG-1713.
 
 New authorization-sensitive code must use `can` or `assertCan`; it must not add
 callers to the deprecated action-client adapter or reintroduce a role-name gate.
@@ -188,5 +191,5 @@ dataset/workspace authorization decision plus application-level tenant and integ
 
 The current contract has no system/service principal, survey-level sharing,
 per-dashboard ACL, audit-log permission, contextual data-policy capability, or
-generic list-resource lookup. Those require later product decisions and must
+generic enforcement-authoritative list-resource lookup. Those require later product decisions and must
 not be added as part of the current-model migration.

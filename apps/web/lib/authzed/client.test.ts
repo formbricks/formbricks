@@ -13,6 +13,7 @@ describe("AuthZed client facade", () => {
     sdkMocks.deadlineInterceptor.mockClear();
     sdkMocks.deleteRelationships.mockReset();
     sdkMocks.diffSchema.mockReset();
+    sdkMocks.lookupResources.mockReset();
     sdkMocks.newClient.mockReset();
     sdkMocks.readRelationships.mockReset();
     sdkMocks.readSchema.mockReset();
@@ -32,6 +33,7 @@ describe("AuthZed client facade", () => {
         checkPermission: sdkMocks.checkPermission,
         deleteRelationships: sdkMocks.deleteRelationships,
         diffSchema: sdkMocks.diffSchema,
+        lookupResources: sdkMocks.lookupResources,
         readRelationships: sdkMocks.readRelationships,
         readSchema: sdkMocks.readSchema,
         writeRelationships: sdkMocks.writeRelationships,
@@ -108,6 +110,7 @@ describe("AuthZed client facade", () => {
       "consistency",
       "deleteRelationships",
       "diffSchema",
+      "lookupResources",
       "readRelationships",
       "readSchema",
       "systemKey",
@@ -207,6 +210,81 @@ describe("AuthZed client facade", () => {
     expect(retryMocks.execute).toHaveBeenCalledWith("check_permission", expect.any(Function));
   });
 
+  test("looks up resources with permission-check consistency and returns sorted unique IDs", async () => {
+    sdkMocks.lookupResources.mockResolvedValue([
+      {
+        afterResultCursor: { token: "private-cursor" },
+        lookedUpAt: { token: "private-revision" },
+        permissionship: v1.LookupPermissionship.HAS_PERMISSION,
+        resourceObjectId: "workspace-2",
+      },
+      {
+        permissionship: v1.LookupPermissionship.HAS_PERMISSION,
+        resourceObjectId: "workspace-1",
+      },
+      {
+        permissionship: v1.LookupPermissionship.HAS_PERMISSION,
+        resourceObjectId: "workspace-2",
+      },
+    ]);
+
+    await expect(
+      getAuthzedClient().lookupResources({
+        permission: "read",
+        resourceType: "workspace",
+        subject: { objectId: "user-1", objectType: "user" },
+      })
+    ).resolves.toEqual({ resourceIds: ["workspace-1", "workspace-2"] });
+
+    expect(sdkMocks.lookupResources).toHaveBeenCalledWith({
+      consistency: { requirement: { minimizeLatency: true, oneofKind: "minimizeLatency" } },
+      context: undefined,
+      optionalCursor: undefined,
+      optionalLimit: 0,
+      permission: "read",
+      resourceObjectType: "workspace",
+      subject: {
+        object: { objectId: "user-1", objectType: "user" },
+        optionalRelation: "",
+      },
+    });
+    expect(retryMocks.execute).toHaveBeenCalledWith("lookup_resources", expect.any(Function));
+  });
+
+  test.each([v1.LookupPermissionship.CONDITIONAL_PERMISSION, v1.LookupPermissionship.UNSPECIFIED])(
+    "rejects unsupported lookup permissionship %s",
+    async (permissionship) => {
+      sdkMocks.lookupResources.mockResolvedValue([{ permissionship, resourceObjectId: "workspace-1" }]);
+
+      await expect(
+        getAuthzedClient().lookupResources({
+          permission: "read",
+          resourceType: "workspace",
+          subject: { objectId: "user-1", objectType: "user" },
+        })
+      ).rejects.toMatchObject({
+        code: AUTHZED_ERROR_CODES.UNSUPPORTED,
+        operation: "lookup_resources",
+        retryable: false,
+      });
+    }
+  );
+
+  test("rejects malformed lookup requests before constructing response data", async () => {
+    await expect(
+      getAuthzedClient().lookupResources({
+        permission: "",
+        resourceType: "workspace",
+        subject: { objectId: "user-1", objectType: "user" },
+      })
+    ).rejects.toMatchObject({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+      operation: "lookup_resources",
+    });
+    expect(sdkMocks.lookupResources).not.toHaveBeenCalled();
+  });
+
   test("uses the configured minimum snapshot as an at-least-as-fresh floor", async () => {
     envMock.AUTHZED_MINIMUM_SNAPSHOT = "backfill-snapshot";
     sdkMocks.checkPermission.mockResolvedValue({
@@ -250,6 +328,38 @@ describe("AuthZed client facade", () => {
         consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
       })
     );
+  });
+
+  test.each([
+    [
+      "minimum snapshot",
+      "minimize_latency" as const,
+      "backfill-snapshot",
+      {
+        requirement: {
+          atLeastAsFresh: { token: "backfill-snapshot" },
+          oneofKind: "atLeastAsFresh",
+        },
+      },
+    ],
+    [
+      "fully consistent",
+      "fully_consistent" as const,
+      undefined,
+      { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+    ],
+  ])("uses %s consistency for resource lookup", async (_label, consistency, snapshot, expected) => {
+    envMock.AUTHZED_CONSISTENCY = consistency;
+    envMock.AUTHZED_MINIMUM_SNAPSHOT = snapshot;
+    sdkMocks.lookupResources.mockResolvedValue([]);
+
+    await getAuthzedClient().lookupResources({
+      permission: "read",
+      resourceType: "workspace",
+      subject: { objectId: "user-1", objectType: "user" },
+    });
+
+    expect(sdkMocks.lookupResources).toHaveBeenCalledWith(expect.objectContaining({ consistency: expected }));
   });
 
   test.each([

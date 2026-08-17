@@ -6,6 +6,7 @@ export const sdkMocks = {
   deadlineInterceptor: vi.fn((timeoutMs: number) => ({ timeoutMs })),
   deleteRelationships: vi.fn(),
   diffSchema: vi.fn(),
+  lookupResources: vi.fn(),
   newClient: vi.fn(),
   readRelationships: vi.fn(),
   readSchema: vi.fn(),
@@ -41,6 +42,11 @@ vi.mock("@authzed/authzed-node", () => ({
       CONDITIONAL_PERMISSION: 3,
       HAS_PERMISSION: 2,
       NO_PERMISSION: 1,
+      UNSPECIFIED: 0,
+    },
+    LookupPermissionship: {
+      CONDITIONAL_PERMISSION: 2,
+      HAS_PERMISSION: 1,
       UNSPECIFIED: 0,
     },
     // Mirrors the real enum. A mock that omitted it would make the facade's completeness assertion
