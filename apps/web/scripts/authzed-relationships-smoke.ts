@@ -163,6 +163,14 @@ const writeOrganizationProjection = async (
 
 const seedTeamWorkspaceProjection = async (client: TAuthzedClient): Promise<void> => {
   await client.writeRelationships([
+    ...[ALICE_ID, BOB_ID].map((userId) => ({
+      operation: "touch" as const,
+      relationship: {
+        relation: "member",
+        resource: { objectId: GRAPH_ORGANIZATION_ID, objectType: "organization" },
+        subject: { objectId: userId, objectType: "user" },
+      },
+    })),
     {
       operation: "touch",
       relationship: {
@@ -304,6 +312,14 @@ const seedFeedbackDirectoryProjection = async (client: TAuthzedClient): Promise<
         relation: "manager",
         resource: { objectId: FEEDBACK_ORGANIZATION_ID, objectType: "organization" },
         subject: { objectId: FEEDBACK_MANAGER_ID, objectType: "user" },
+      },
+    },
+    {
+      operation: "touch",
+      relationship: {
+        relation: "member",
+        resource: { objectId: FEEDBACK_ORGANIZATION_ID, objectType: "organization" },
+        subject: { objectId: FEEDBACK_USER_ID, objectType: "user" },
       },
     },
     {
