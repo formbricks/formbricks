@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 
 const mocks = vi.hoisted(() => ({
+  applyRateLimit: vi.fn(),
   checkAuthorizationUpdated: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
   getOrganizationIdFromIntegrationId: vi.fn(),
@@ -33,6 +35,10 @@ vi.mock("@/lib/integration/service", () => ({
 }));
 
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
+
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyRateLimit: mocks.applyRateLimit,
+}));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_action, _target, handler) => handler),
@@ -78,6 +84,7 @@ const callDelete = () =>
 describe("integration actions — ENG-2292 credential exposure in action responses", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.applyRateLimit.mockResolvedValue(undefined);
     mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
     mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org1");
     mocks.getOrganizationIdFromIntegrationId.mockResolvedValue("org1");
@@ -101,6 +108,36 @@ describe("integration actions — ENG-2292 credential exposure in action respons
     expect(result).toStrictEqual({ id: "integration1" });
     expect(JSON.stringify(result)).not.toContain("ya29.super-secret");
     expect(JSON.stringify(result)).not.toContain("1//refresh-secret");
+  });
+
+  // Both mutations are rate limited per user. Asserting the literal policy rather than importing the
+  // config, so a loosened interval or allowance fails here instead of shipping.
+  test.each([
+    ["createOrUpdateIntegrationAction", callCreateOrUpdate],
+    ["deleteIntegrationAction", callDelete],
+  ])("%s rate limits per user before mutating", async (_name, call) => {
+    await call();
+
+    expect(mocks.applyRateLimit).toHaveBeenCalledTimes(1);
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+      { interval: 60, allowedPerInterval: 30, namespace: "action:integration-mutation" },
+      "user1"
+    );
+  });
+
+  test("a tripped rate limit stops the update before the integration is written", async () => {
+    mocks.applyRateLimit.mockRejectedValue(new TooManyRequestsError("Maximum number of requests reached"));
+
+    await expect(callCreateOrUpdate()).rejects.toThrow(TooManyRequestsError);
+    expect(mocks.getIntegrationByType).not.toHaveBeenCalled();
+    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+  });
+
+  test("a tripped rate limit stops the delete before the integration is removed", async () => {
+    mocks.applyRateLimit.mockRejectedValue(new TooManyRequestsError("Maximum number of requests reached"));
+
+    await expect(callDelete()).rejects.toThrow(TooManyRequestsError);
+    expect(mocks.deleteIntegration).not.toHaveBeenCalled();
   });
 
   test("the stored credentials are still written back on update", async () => {
