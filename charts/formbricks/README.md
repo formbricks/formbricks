@@ -147,7 +147,17 @@ authzed:
 ```
 
 `adminPasswordSecretName` is required whenever `adminUsername` is not the bundled superuser — otherwise the Job
-would silently fall back to the bundled admin password and fail to authenticate.
+would silently fall back to the bundled admin password and fail to authenticate. `adminPasswordKey` is required
+whenever that Secret is configured explicitly, since it otherwise defaults to the bundled subchart's key name
+looked up inside your own Secret.
+
+`CREATEROLE` and `CREATEDB` cover the normal case, in which this administrator also creates the `spicedb` role.
+`CREATE DATABASE ... OWNER spicedb` additionally requires being able to `SET ROLE` to that owner, so the Job
+grants itself the `spicedb` role first; from PostgreSQL 16 that is only possible for a role it holds
+`ADMIN OPTION` on, which creating the role confers. A `spicedb` role that already exists and was created by
+someone else is therefore the one case the Job cannot adopt on PostgreSQL 16+ — grant it explicitly
+(`GRANT spicedb TO fbadmin WITH ADMIN OPTION`) or run the bootstrap once as a superuser. PostgreSQL 15 and
+older are unaffected.
 
 Re-running is safe but not inert: the role and the database are created only when absent, while the `spicedb`
 role's password is reconciled to the chart's Secret on **every** run. If you rotate that password outside Helm,

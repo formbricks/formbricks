@@ -291,3 +291,12 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --show-only charts/postgresql/templates/primary/statefulset.yaml > "$render_dir/postgresql.yaml"
           grep -q 'argocd.argoproj.io/sync-wave: "-2"' "$render_dir/postgresql.yaml"
+
+      # The render tests cannot execute the bootstrap SQL, and the SQL is where ENG-2390 actually
+      # broke: an administrator holding the documented CREATEROLE and CREATEDB could not run
+      # `CREATE DATABASE ... OWNER`. This runs the *rendered* script against real PostgreSQL, on both
+      # sides of the 16 CREATEROLE change. It skips itself when Docker is unavailable, so the suite
+      # stays runnable locally.
+      - name: Validate the AuthZed bootstrap against real PostgreSQL
+        shell: bash
+        run: bash charts/formbricks/tests/authzed-bootstrap-runtime.sh

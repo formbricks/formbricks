@@ -181,6 +181,16 @@ explicit_postgres_bootstrap="$(render_bootstrap authzed-bootstrap-explicit-postg
 grep --quiet 'value: "postgres"' <<<"${explicit_postgres_bootstrap}"
 grep --quiet 'name: existing-pg-admin' <<<"${explicit_postgres_bootstrap}"
 
+# ...but that administrator still supplies its own Secret, which is no likelier to carry the
+# subchart's key name than any other. Keying the key guard off the username left this configuration
+# rendering a dangling secretKeyRef (Bhagya's finding on #8875, and CodeRabbit's before it), so the
+# guard keys off the credential source and this render must be refused.
+if render_bootstrap authzed-bootstrap-explicit-postgres-without-key \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordSecretName=existing-pg-admin >/dev/null 2>&1; then
+  printf '%s\n' "Bootstrap must require adminPasswordKey when the administrator Secret is configured explicitly." >&2
+  exit 1
+fi
+
 # A custom admin role with no Secret would silently fall back to the bundled superuser's password.
 if render_bootstrap authzed-bootstrap-admin-without-secret \
   --set authzed.bundledPostgresqlBootstrap.adminUsername=fbadmin >/dev/null 2>&1; then
@@ -189,9 +199,51 @@ if render_bootstrap authzed-bootstrap-admin-without-secret \
 fi
 
 # Credentials reach the Job only by reference, in every mode.
-if grep --extended-regexp 'PGPASSWORD: |password: [^{]' <<<"${existing_admin_bootstrap}" >/dev/null; then
-  printf '%s\n' "Bootstrap manifests must not contain credential values." >&2
-  exit 1
-fi
+#
+# Asserted structurally, per Bhagya's finding on #8875. The previous check grepped for `PGPASSWORD: `,
+# a shape the renderer never emits — env entries are `- name: PGPASSWORD` followed by `value:` or
+# `valueFrom:`. A literal leak therefore matched nothing and the test passed through the exact
+# regression it existed to catch. A whole-manifest regex cannot do better: it cannot tell a `value:`
+# under PGPASSWORD from the legitimate one under PGHOST. So walk the env list instead and check how
+# each sensitive entry is supplied.
+assert_env_supplied_by_reference() {
+  local manifest="$1" variable="$2"
+
+  awk -v target="${variable}" '
+    /^[[:space:]]*-[[:space:]]+name:[[:space:]]/ {
+      if (current == target) { seen = 1; if (source != "reference") literal = 1 }
+      current = $3
+      source = ""
+      next
+    }
+    current == target && /^[[:space:]]*value:/ { source = "literal" }
+    current == target && /^[[:space:]]*valueFrom:/ { source = "reference" }
+    END {
+      if (current == target) { seen = 1; if (source != "reference") literal = 1 }
+      if (!seen) { print "absent"; exit 2 }
+      if (literal) { print "literal"; exit 1 }
+      print "reference"
+    }
+  ' <<<"${manifest}"
+}
+
+for credential_variable in PGPASSWORD SPICEDB_DATABASE_PASSWORD; do
+  if ! supplied_by="$(assert_env_supplied_by_reference "${existing_admin_bootstrap}" "${credential_variable}")"; then
+    printf '%s\n' "Bootstrap must supply ${credential_variable} by secret reference, found: ${supplied_by}." >&2
+    exit 1
+  fi
+done
+
+external_bootstrap="$(render_bootstrap authzed-bootstrap-external \
+  --set authzed.bundledPostgresqlBootstrap.enabled=false \
+  --set authzed.externalPostgresqlBootstrap.enabled=true \
+  --set authzed.externalPostgresqlBootstrap.adminSecretName=external-pg-admin \
+  --set authzed.datastore.existingSecret=external-datastore)"
+for credential_variable in ADMIN_DATABASE_URL SPICEDB_DATABASE_PASSWORD; do
+  if ! supplied_by="$(assert_env_supplied_by_reference "${external_bootstrap}" "${credential_variable}")"; then
+    printf '%s\n' "External bootstrap must supply ${credential_variable} by secret reference, found: ${supplied_by}." >&2
+    exit 1
+  fi
+done
 
 printf '%s\n' "AuthZed Helm operations contracts are valid."

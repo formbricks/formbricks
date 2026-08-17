@@ -149,7 +149,22 @@ authzed:
 
 The role needs `CREATEROLE` and `CREATEDB`; it does not need to be a superuser. `adminPasswordSecretName` is
 required whenever `adminUsername` is overridden — without it the Job would fall back to the bundled admin
-password and fail to authenticate.
+password and fail to authenticate. `adminPasswordKey` is required whenever the Secret is configured
+explicitly, since it otherwise defaults to the bundled subchart's key name inside your own Secret.
+
+<Note>
+  `CREATEROLE` and `CREATEDB` are sufficient on their own only when the administrator also creates the
+  `spicedb` role — which is the normal case, including on re-runs. `CREATE DATABASE ... OWNER spicedb`
+  additionally requires the administrator to be able to `SET ROLE` to that owner, so the Job grants itself the
+  `spicedb` role before creating the database. From PostgreSQL 16 that grant is only possible for a role the
+  administrator holds `ADMIN OPTION` on, which it gets automatically by creating it.
+
+  The one case this cannot repair is a `spicedb` role that already exists and was created by *someone else*,
+  on PostgreSQL 16 or newer: the administrator then holds no `ADMIN OPTION` on it and the Job fails rather than
+  silently skipping work. Grant it explicitly — `GRANT spicedb TO fbadmin WITH ADMIN OPTION` as a superuser or
+  as the role's owner — or run the bootstrap as a superuser once. PostgreSQL 15 and older are unaffected:
+  `CREATEROLE` there carries authority over every non-superuser role.
+</Note>
 
 Rendering fails fast with the three available remedies named — configure an administrative role, enable
 `postgresql.auth.enablePostgresUser`, or set `authzed.bundledPostgresqlBootstrap.enabled=false` — rather than
