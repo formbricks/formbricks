@@ -259,8 +259,9 @@ procedure.
 The command prints one JSON result. It never prints credentials, database passwords, raw SDK errors, schema
 text, or raw relationship strings.
 
-It does print Formbricks record identifiers, deliberately: naming the affected records is what makes a drift
-report actionable. Treat the result as sensitive operational data.
+It does print identifiers, deliberately: naming the affected records is what makes a drift report actionable.
+Most are Formbricks record IDs, but not all — `unmanaged` can surface object IDs belonging to no Formbricks
+record at all. Treat the result as sensitive operational data.
 
 - `orphans`, `mismatchedParents` and `mismatchedPermissions` name the records that disagree, carrying
   organization, user, workspace, team, API-key, feedback-directory and feedback-directory-assignment IDs.
@@ -274,9 +275,9 @@ report actionable. Treat the result as sensitive operational data.
 
 The cursor is an intentional operational identifier, not an oversight. An interrupted sweep resumes with
 `--after-organization-id=<cuid>` taken straight from it, so an opaque token would have to be stored and mapped
-back somewhere to stay useful. It is also the one field that can name a clean organization: every other
-identifier here belongs to a record that drifted or failed, while the cursor is simply wherever the sweep
-stopped. Redact it on the same terms as the rest.
+back somewhere to stay useful. It is also the one field that can name an organization with nothing wrong: every
+other identifier here comes from a record or relationship that drifted or failed, while the cursor is simply
+wherever the sweep stopped. Redact it on the same terms as the rest.
 
 <Warning>
   Handle the result like a database export, not like a log line. Store it in the same place you keep other
@@ -286,11 +287,13 @@ stopped. Redact it on the same terms as the rest.
 </Warning>
 
 Redirecting to a file keeps the result out of terminal scrollback and out of CI logs that capture stdout. Set
-`umask 077` first — `>` creates the file with the process umask, so under a typical `umask 022` the export
-lands world-readable:
+`umask 077` and remove any earlier export first. The umask governs file *creation* only, so under a typical
+`umask 022` a new `backfill.json` lands world-readable — and redirecting over one that already exists truncates
+it while leaving its existing mode untouched:
 
 ```bash
 umask 077
+rm -f backfill.json
 formbricks-authzed backfill > backfill.json
 ```
 
@@ -337,6 +340,14 @@ reached no organization, so there is nothing to resume after — rerun the sweep
 formbricks-authzed backfill --apply --after-organization-id=<last-organization-id>
 ```
 
+The cursor advances past every organization the sweep reached, and a failed organization does not stop the
+sweep — so anything listed in `failures` sits behind the cursor and a resume will not retry it. Rerun each
+failed organization explicitly, in addition to resuming from the cursor:
+
+```bash
+formbricks-authzed backfill --apply --organization-id=<failed-organization-id>
+```
+
 ### Prune orphans
 
 Pruning is the only mode that removes relationships observed only in SpiceDB. It requires every safeguard:
@@ -360,6 +371,7 @@ restore, or shared SpiceDB before proceeding.
 | Category            | Meaning and response                                                                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `missing`           | PostgreSQL contains a source record without the expected SpiceDB relationship. An applying run repairs it.                                  |
+| `mismatchedPermissions` | An existing source record's projected role or grant relation differs from PostgreSQL. An applying run repairs it deterministically.     |
 | `orphaned`          | SpiceDB contains a managed relationship whose source record is gone. A confirmed prune removes it.                                          |
 | `invalid`           | PostgreSQL contains a cross-organization source row. Investigate and correct PostgreSQL manually.                                           |
 | `unmanaged`         | A relationship outside Formbricks' managed vocabulary exists. Investigate its writer; the tool never deletes it.                            |
