@@ -171,9 +171,12 @@ export type TReservedFieldCatalogEntry = TServerReservedFieldCatalogEntry | TCli
  * - `status` — `Response` has no status column, and `finished` already carries the only distinction
  *   that exists (complete vs. partial). Deriving a second spelling of the same bit would give two
  *   names for one fact.
- * - `pageUrl`/`pagePath`/`pageReferrer`/`utm*`/`viewport*`/`timezone` — their values do not exist on
- *   this branch. `ZResponseMeta` has no home for them until the SDK captures them (ENG-1841), and an
- *   entry pointing at a field nothing writes would resolve as unset on every response.
+ *
+ * The browser-runtime block at the end of the list arrived with ENG-1841, which gave `ZResponseMeta`
+ * a home for those values and taught the renderer to snapshot them at display time. They are all
+ * `client`: the renderer reads them itself, so a mid-survey picker can offer them and the renderer
+ * really can resolve them. Responses collected before that shipped carry none of them and resolve as
+ * unset — expected, and the reason every accessor tolerates absence.
  */
 export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
   /** How the response was collected — `link`, `app`, … Set by the client on the response input. */
@@ -290,6 +293,138 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     read: (r) => r.updatedAt,
+  },
+  /**
+   * **Browser-runtime context (ENG-1841).** Captured by the renderer itself and frozen at display,
+   * which is why every one of these is `client`: unlike browser/os/deviceType — which only exist
+   * because the ingest route parses a request header — the values below are read in the page and
+   * travel in on the response input, and that is exactly what makes them resolvable mid-survey.
+   *
+   * Both link and app surveys render through the same component, so all thirteen are captured for
+   * both. What they *describe* differs: on a link survey `pageUrl`/`pageReferrer`/`utm*` are about
+   * the Formbricks-hosted survey page and how the respondent reached it; on an app survey they are
+   * about the host page the survey was triggered on.
+   */
+  /**
+   * The page the response was answered on. `pageUrl` is `redactQuery` for the same reason `url` is:
+   * the path is the analytics signal, the query string is where an identifier rides along.
+   * `pagePath` needs no redaction because it never carries one, and is the field to group on when
+   * you want the page rather than the visit.
+   *
+   * `pageUrl` and `url` are near-identical on a link survey. Expected rather than redundant: `url`
+   * is whatever the renderer was told the survey ran at and predates this block, while `pageUrl` is
+   * a direct reading of `location.href` at display time.
+   */
+  {
+    name: "pageUrl",
+    dataType: "string",
+    availability: "client",
+    privacy: "redactQuery",
+    read: (r) => r.meta.pageUrl,
+  },
+  {
+    name: "pagePath",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.pagePath,
+  },
+  /**
+   * Where the respondent came from. `redactQuery`: a referrer URL is as capable of carrying a token
+   * or an email in its query string as any other, and the referring *page* is the whole signal.
+   */
+  {
+    name: "pageReferrer",
+    dataType: "string",
+    availability: "client",
+    privacy: "redactQuery",
+    read: (r) => r.meta.pageReferrer,
+  },
+  /**
+   * Campaign attribution, parsed from the page's own `utm_*` query params. `keep`: these exist to be
+   * read — a campaign name is marketing metadata the respondent's own link advertised, not something
+   * they disclosed about themselves. A param that was absent or empty is absent here, never `""`.
+   */
+  {
+    name: "utmSource",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.utmSource,
+  },
+  {
+    name: "utmMedium",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.utmMedium,
+  },
+  {
+    name: "utmCampaign",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.utmCampaign,
+  },
+  {
+    name: "utmTerm",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.utmTerm,
+  },
+  {
+    name: "utmContent",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.utmContent,
+  },
+  /**
+   * Screen and viewport, in CSS pixels. `number`, not string, so a logic condition can compare them
+   * (`viewportWidth < 768`) instead of comparing digit strings. Screen is the device; viewport is
+   * the window the survey was actually rendered into — the pair is what distinguishes a phone from a
+   * narrow window on a large monitor.
+   */
+  {
+    name: "screenWidth",
+    dataType: "number",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.screenWidth,
+  },
+  {
+    name: "screenHeight",
+    dataType: "number",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.screenHeight,
+  },
+  {
+    name: "viewportWidth",
+    dataType: "number",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.viewportWidth,
+  },
+  {
+    name: "viewportHeight",
+    dataType: "number",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.viewportHeight,
+  },
+  /**
+   * The respondent's IANA time zone (`Europe/Berlin`), not an offset — it survives DST and is what a
+   * "best hour to send" question is actually asking about. Distinct from `language`, which is the
+   * language they are answering in: a zone is where they are, a language is how they read.
+   */
+  {
+    name: "timezone",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    read: (r) => r.meta.timezone,
   },
 ];
 

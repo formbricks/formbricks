@@ -318,7 +318,48 @@ export type TResponseContact = z.infer<typeof ZResponseContact>;
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
-export const ZResponseMeta = z.object({
+/**
+ * The browser-runtime context the survey renderer snapshots once, at display time, and attaches to
+ * every write of the response (ENG-1841). Kept as its own schema because three shapes need exactly
+ * this set of keys and must not drift: the stored `ZResponseMeta`, the ingest input
+ * `ZResponseInput.meta`, and the renderer-to-queue `ZResponseUpdate.meta`.
+ *
+ * Every key is optional, and deliberately so on two counts. Responses collected before this shipped
+ * carry none of them and must keep validating — there is no migration and nothing to backfill, since
+ * the values only ever existed in a browser that has long since closed. And a live capture is
+ * best-effort per key: a runtime without `Intl` or `screen` omits that key rather than storing a
+ * placeholder, so "absent" always reads as "we could not observe this", never as an empty string.
+ *
+ * Both link and app surveys render through the same component, so all of these are captured for
+ * both. Their *meaning* differs: on a link survey they describe the Formbricks-hosted survey page
+ * and how the respondent arrived at it; on an app survey they describe the host page the survey was
+ * triggered on.
+ */
+export const ZAutoCapturedResponseMeta = z.object({
+  /** `location.href` at display time. Near-identical to `url` on a link survey — expected. */
+  pageUrl: z.string().optional(),
+  /** `location.pathname` — the query-free page identity analytics usually groups on. */
+  pagePath: z.string().optional(),
+  /** `document.referrer`. Empty when there is no referrer, which we omit rather than store as "". */
+  pageReferrer: z.string().optional(),
+  utmSource: z.string().optional(),
+  utmMedium: z.string().optional(),
+  utmCampaign: z.string().optional(),
+  utmTerm: z.string().optional(),
+  utmContent: z.string().optional(),
+  /** Physical screen, in CSS pixels (`screen.width`/`screen.height`). */
+  screenWidth: z.number().optional(),
+  screenHeight: z.number().optional(),
+  /** Visible viewport, in CSS pixels (`window.innerWidth`/`innerHeight`). Frozen at display. */
+  viewportWidth: z.number().optional(),
+  viewportHeight: z.number().optional(),
+  /** IANA zone from `Intl.DateTimeFormat().resolvedOptions().timeZone`, e.g. `Europe/Berlin`. */
+  timezone: z.string().optional(),
+});
+
+export type TAutoCapturedResponseMeta = z.infer<typeof ZAutoCapturedResponseMeta>;
+
+export const ZResponseMeta = ZAutoCapturedResponseMeta.extend({
   source: z.string().optional(),
   url: z.string().optional(),
   userAgent: z
@@ -334,6 +375,23 @@ export const ZResponseMeta = z.object({
 });
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
+
+/**
+ * The client-supplied half of `meta`, narrowed to exactly the auto-captured keys.
+ *
+ * Both client ingest routes rebuild `meta` from scratch rather than passing the caller's object
+ * through, because these endpoints are public and anything not explicitly re-listed must not reach
+ * the database. That whitelist is hand-written in the route, which is how a field could be added to
+ * the schema, captured by the SDK, accepted by the parser — and then silently dropped one line
+ * before the write. Deriving this part of it from the schema instead means the auto-captured list
+ * cannot fall behind the shape it is supposed to mirror.
+ *
+ * Only the keys a browser can honestly observe live here. `country`, `userAgent` and `ipAddress`
+ * stay out: the routes derive those from the request itself and must keep overriding whatever the
+ * client claimed.
+ */
+export const pickAutoCapturedResponseMeta = (meta: TResponseMeta | undefined): TAutoCapturedResponseMeta =>
+  ZAutoCapturedResponseMeta.parse(meta ?? {});
 
 export const ZResponse = z.object({
   id: z.cuid2(),
@@ -374,22 +432,11 @@ export const ZResponseInput = z.object({
   data: ZResponseData,
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtcInput.optional(),
-  meta: z
-    .object({
-      source: z.string().optional(),
-      url: z.string().optional(),
-      userAgent: z
-        .object({
-          browser: z.string().optional(),
-          device: z.string().optional(),
-          os: z.string().optional(),
-        })
-        .optional(),
-      country: z.string().optional(),
-      action: z.string().optional(),
-      ipAddress: z.string().optional(),
-    })
-    .optional(),
+  // The same shape as the stored `ZResponseMeta`, and now literally it: this used to be a hand-copied
+  // duplicate, which is how a field added to one could pass review and still fail to parse on the way
+  // in. The ingest routes rebuild `meta` from a whitelist afterwards, so accepting a key here is not
+  // the same as trusting it — `country`, `userAgent` and `ipAddress` are always re-derived server-side.
+  meta: ZResponseMeta.optional(),
 });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
@@ -424,13 +471,14 @@ export const ZResponseUpdate = z.object({
   language: z.string().optional(),
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtcInput.optional(),
-  meta: z
-    .object({
-      url: z.string().optional(),
-      source: z.string().optional(),
-      action: z.string().optional(),
-    })
-    .optional(),
+  // Only what a browser can actually observe. The server-derived keys (`country`, `userAgent`,
+  // `ipAddress`) stay out on purpose: this is the renderer-to-queue shape, and the renderer has no
+  // business claiming a value the ingest route derives from the request itself.
+  meta: ZAutoCapturedResponseMeta.extend({
+    url: z.string().optional(),
+    source: z.string().optional(),
+    action: z.string().optional(),
+  }).optional(),
   hiddenFields: ZResponseHiddenFieldValue.optional(),
   displayId: z.string().nullish(),
   endingId: z.string().nullish(),
