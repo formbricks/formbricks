@@ -1315,6 +1315,14 @@ enum FeedbackSourceStatus {
   error
 }
 
+/// Which survey responses a Formbricks feedback source imports into Hub.
+/// completedOnly matches the live ingestion path, which only runs on responseFinished.
+/// all additionally imports partial responses — answers a respondent typed but never submitted.
+enum FeedbackSourceImportMode {
+  completedOnly
+  all
+}
+
 enum HubFieldType {
   text
   categorical
@@ -1346,6 +1354,9 @@ model FeedbackSource {
   name                String
   type                FeedbackSourceType
   status              FeedbackSourceStatus              @default(active)
+  /// Defaults to completedOnly so a new source agrees with the live ingestion path, which only
+  /// fires on responseFinished. Existing rows take the default; nothing is re-imported.
+  importMode          FeedbackSourceImportMode          @default(completedOnly) @map(name: "import_mode")
   workspaceId         String
   workspace           Workspace                         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   feedbackDirectoryId String

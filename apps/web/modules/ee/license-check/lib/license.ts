@@ -332,7 +332,6 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
   if (!env.ENTERPRISE_LICENSE_KEY) return null;
 
   // Skip license checks during build time
-  // eslint-disable-next-line turbo/no-undeclared-env-vars -- NEXT_PHASE is a next.js env variable
   if (process.env.NEXT_PHASE === "phase-production-build") {
     return null;
   }
@@ -436,7 +435,6 @@ export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> 
   if (!env.ENTERPRISE_LICENSE_KEY) return null;
 
   // Skip license checks during build time - check before cache access
-  // eslint-disable-next-line turbo/no-undeclared-env-vars -- NEXT_PHASE is a next.js env variable
   if (process.env.NEXT_PHASE === "phase-production-build") {
     return null;
   }

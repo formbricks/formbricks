@@ -9,6 +9,16 @@ export type TFeedbackSourceType = z.infer<typeof ZFeedbackSourceType>;
 export const ZFeedbackSourceStatus = z.enum(["active", "paused", "error"]);
 export type TFeedbackSourceStatus = z.infer<typeof ZFeedbackSourceStatus>;
 
+/**
+ * Which survey responses a Formbricks feedback source imports into Hub.
+ *
+ * `completedOnly` matches the live ingestion path, which only runs on `responseFinished`.
+ * `all` additionally imports partial responses — answers a respondent typed but never submitted —
+ * which also means that text reaches Hub's LLM enrichments. Keep `completedOnly` the default.
+ */
+export const ZFeedbackSourceImportMode = z.enum(["completedOnly", "all"]);
+export type TFeedbackSourceImportMode = z.infer<typeof ZFeedbackSourceImportMode>;
+
 // Hub field types (from Hub OpenAPI spec)
 export const ZHubFieldType = z.enum([
   "text",
@@ -77,6 +87,7 @@ export const ZFeedbackSource = z.object({
   name: z.string().min(1),
   type: ZFeedbackSourceType,
   status: ZFeedbackSourceStatus,
+  importMode: ZFeedbackSourceImportMode,
   workspaceId: z.cuid2(),
   feedbackDirectoryId: z.cuid2(),
   lastSyncAt: z.date().nullable(),
@@ -120,6 +131,8 @@ export const ZFeedbackSourceCreateInput = z.object({
   name: z.string().min(1),
   type: ZFeedbackSourceType,
   feedbackDirectoryId: z.cuid2(),
+  // Optional so callers that do not care inherit the schema default (completedOnly).
+  importMode: ZFeedbackSourceImportMode.optional(),
   createdBy: z.cuid2().optional(),
 });
 export type TFeedbackSourceCreateInput = z.infer<typeof ZFeedbackSourceCreateInput>;
@@ -147,6 +160,7 @@ export type TFeedbackSourceFieldMappingCreateInput = z.infer<typeof ZFeedbackSou
 export const ZFeedbackSourceUpdateInput = z.object({
   name: z.string().min(1).optional(),
   status: ZFeedbackSourceStatus.optional(),
+  importMode: ZFeedbackSourceImportMode.optional(),
   lastSyncAt: z.date().nullable().optional(),
 });
 export type TFeedbackSourceUpdateInput = z.infer<typeof ZFeedbackSourceUpdateInput>;

@@ -31,11 +31,11 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
       <PageHeader pageTitle={t("common.api_keys")} />
       <SettingsCard
         title={t("common.api_keys")}
-        description={t("workspace.settings.api_keys.api_keys_description")}>
+        description={t("workspace.settings.api_keys.api_keys_description")}
+        bodyVariant="flush">
         <ApiKeyList
           organizationId={organization.id}
           locale={locale ?? DEFAULT_LOCALE}
-          isReadOnly={!canAccessApiKeys}
           workspaces={workspaces}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         />
