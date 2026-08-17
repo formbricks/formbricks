@@ -50,7 +50,9 @@ export const TeamsView = async ({
   return (
     <SettingsCard
       title={t("workspace.settings.teams.teams")}
-      description={t("workspace.settings.teams.teams_description")}>
+      description={t("workspace.settings.teams.teams_description")}
+      // The table runs edge to edge; the upgrade prompt shown in its place still wants the gutter.
+      bodyVariant={isAccessControlAllowed ? "flush" : "padded"}>
       {isAccessControlAllowed ? (
         <TeamsTable
           teams={teams}
