@@ -17,10 +17,25 @@ import { recordAuthorizationChecksPerRequest } from "./metrics";
  * route already funnels through. `withAuthorizationSurface` returns early when a surface is already
  * open, so opening it at more than one choke point is idempotent rather than nesting.
  *
- * The practical consequence, stated because it affects how the checks-per-request histogram reads:
- * one navigation that runs both a layout check and a page check records two observations rather
- * than one. That splits the count for that request — it weakens the N+1 signal slightly, it does
- * not make it wrong — which is why the wrapper is applied at as few and as high a point as possible.
+ * Two consequences follow, and the second is a real coverage limit rather than a reporting quirk.
+ *
+ * The histogram splits: one navigation that runs both a layout check and a page check records two
+ * observations rather than one. That weakens the N+1 signal slightly; it does not make it wrong.
+ *
+ * **The surface does not span the whole page.** `AsyncLocalStorage` scopes to the awaited callback,
+ * so it closes when the choke-point helper returns — a page that calls `getWorkspaceAuth()` and then
+ * issues further central checks (`feedbackDirectoryAssignment.read` via
+ * `getAuthorizedWorkspaceFeedbackDirectories`, `organization.manage` on the taxonomy page) makes
+ * those checks outside any surface. `can()` then answers from the legacy evaluator whatever the
+ * rollout selects, so they produce no shadow evidence *and* would bypass enforcement. Those checks
+ * are counted by `formbricks_authzed_authorization_unscoped_checks_total`, because otherwise the
+ * gap is indistinguishable from a clean cutover: nothing compares, so nothing ever mismatches.
+ *
+ * Closing it needs a boundary that survives past the helper — a request-scoped store (React `cache`)
+ * rather than an async-scoped one. That is deliberately out of scope here, because it replaces this
+ * module's context mechanism and cannot be covered by a unit test: `cache` does not dedupe outside a
+ * render, so proving it needs a render harness or an E2E. Until that lands, `page:user` belongs in
+ * shadow only and must not be added to an enforcement list.
  */
 export type TAuthorizationSurface =
   | "server_action"

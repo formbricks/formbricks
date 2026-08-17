@@ -56,6 +56,29 @@ export const recordAuthorizationChecksPerRequest = (
   checksPerRequest.record(checksIssued, { surface });
 };
 
+const unscopedChecksTotal = meter.createCounter("formbricks_authzed_authorization_unscoped_checks_total", {
+  description: "Central authorization checks that resolved no rollout surface and fell back to legacy",
+});
+
+/**
+ * ENG-2388: a `can()` that resolves no surface silently answers from the legacy evaluator, whatever
+ * the rollout says (`coordinator.ts`). That is correct for scripts and for anything outside a request,
+ * and it is invisible — which is the problem. A surface whose boundary does not span every check it
+ * should (`page`, whose RSC boundary closes when its helper returns) would look identical to a clean
+ * cutover: no mismatches, because no comparison ran at all.
+ *
+ * `rollout_enabled` separates the two. Unscoped checks with the rollout off are ordinary background;
+ * unscoped checks with it on are coverage the cutover does not have and would otherwise never see.
+ */
+export const recordUnscopedAuthorizationCheck = (rolloutEnabled: boolean): void => {
+  try {
+    unscopedChecksTotal.add(1, { rollout_enabled: String(rolloutEnabled) });
+  } catch {
+    // Instrumentation must never gate an authorization decision — same posture as the rest of this
+    // module. A broken meter cannot be allowed to deny access.
+  }
+};
+
 export type TAuthorizationComparisonMetric = Readonly<{
   action: TAuthorizationAction;
   actorType: TAuthorizationActor["type"];

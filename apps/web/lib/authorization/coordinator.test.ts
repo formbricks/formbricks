@@ -3,7 +3,7 @@ import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
 import { enqueueAuthorizationComparison, getAuthorizationRolloutTarget } from "./context";
 import { authorizationCoordinator } from "./coordinator";
 import { legacyEvaluator } from "./legacy-evaluator";
-import { recordAuthorizationComparison } from "./metrics";
+import { recordAuthorizationComparison, recordUnscopedAuthorizationCheck } from "./metrics";
 import { type TAuthorizationRolloutConfig, getAuthorizationRolloutConfig } from "./rollout-config";
 import { resolveAuthorizationScope } from "./source-scope";
 import { checkSpicedbPermissionAtScope } from "./spicedb-evaluator";
@@ -14,7 +14,10 @@ vi.mock("./context", () => ({
   getAuthorizationRolloutTarget: vi.fn(),
 }));
 vi.mock("./legacy-evaluator", () => ({ legacyEvaluator: { can: vi.fn() } }));
-vi.mock("./metrics", () => ({ recordAuthorizationComparison: vi.fn() }));
+vi.mock("./metrics", () => ({
+  recordAuthorizationComparison: vi.fn(),
+  recordUnscopedAuthorizationCheck: vi.fn(),
+}));
 vi.mock("./rollout-config", () => ({
   getAuthorizationRolloutConfig: vi.fn(),
   matchesRolloutRule: vi.fn(
@@ -74,6 +77,44 @@ describe("authorizationCoordinator", () => {
     expect(legacyEvaluator.can).toHaveBeenCalledOnce();
     expect(resolveAuthorizationScope).not.toHaveBeenCalled();
     expect(checkSpicedbPermissionAtScope).not.toHaveBeenCalled();
+  });
+
+  // A check that resolves no surface answers from legacy whatever the rollout says — including under
+  // enforcement. That is the one gap that looks identical to a clean cutover, since no comparison runs
+  // and so nothing ever mismatches, which is why it is counted rather than left silent.
+  test.each([
+    [true, "rollout enabled"],
+    [false, "rollout disabled"],
+  ] as const)("counts an unscoped check when the surface is unresolvable (%s)", async (enabled) => {
+    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config({ enabled }));
+    vi.mocked(getAuthorizationRolloutTarget).mockReturnValue(null);
+
+    await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(true);
+
+    expect(recordUnscopedAuthorizationCheck).toHaveBeenCalledExactlyOnceWith(enabled);
+  });
+
+  test("does not count a check that resolved a surface but is outside the rollout", async () => {
+    // Guards the distinction the metric exists to make: "no surface" is a coverage gap, while
+    // "surface resolved, organization not selected" is the rollout working as configured. Counting
+    // both would make the gap invisible in the noise.
+    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config({ enabled: true }));
+    vi.mocked(getAuthorizationRolloutTarget).mockReturnValue("server_action:user");
+
+    await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(true);
+
+    expect(recordUnscopedAuthorizationCheck).not.toHaveBeenCalled();
+  });
+
+  test("does not count when the rollout is disabled but a surface is present", async () => {
+    // enabled=false short-circuits on the same branch, so without the `!target` guard this case
+    // would be miscounted as a coverage gap on every request in a deployment with the rollout off.
+    vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config({ enabled: false }));
+    vi.mocked(getAuthorizationRolloutTarget).mockReturnValue("server_action:user");
+
+    await expect(authorizationCoordinator.can(actor, "survey.read", resource)).resolves.toBe(true);
+
+    expect(recordUnscopedAuthorizationCheck).not.toHaveBeenCalled();
   });
 
   test("returns legacy inline and compares AuthZed after the response in shadow mode", async () => {
