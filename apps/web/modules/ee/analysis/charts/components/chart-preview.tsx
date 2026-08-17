@@ -1,17 +1,16 @@
 "use client";
 
-import { BarChart, DatabaseIcon } from "lucide-react";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TChartConfig } from "@formbricks/types/analysis";
 import { ChartErrorBoundary } from "@/modules/ee/analysis/charts/components/chart-error-boundary";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
-import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
 import { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 
 interface ChartPreviewProps {
   chartData: AnalyticsResponse | null;
+  /** Display settings being edited, so the preview shows what will be saved. */
+  config?: TChartConfig;
   isLoading?: boolean;
   error?: string | null;
   emptyMessage?: string;
@@ -19,20 +18,14 @@ interface ChartPreviewProps {
 
 export function ChartPreview({
   chartData,
+  config,
   isLoading = false,
   error,
   emptyMessage,
 }: Readonly<ChartPreviewProps>) {
-  const [activeTab, setActiveTab] = useState<"chart" | "data">("chart");
   const { t } = useTranslation();
 
   const data = chartData?.data ?? [];
-
-  const handleTabChange = (value: string) => {
-    if (value === "chart" || value === "data") {
-      setActiveTab(value);
-    }
-  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -67,34 +60,18 @@ export function ChartPreview({
       );
     }
 
+    // The renderer resolves the display settings, so the preview shows the chart or its data
+    // table exactly as the saved chart will render it.
     return (
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <div className="mb-4 flex justify-end">
-          <TabsList>
-            <TabsTrigger value="chart" icon={<BarChart className="size-4" />}>
-              {t("workspace.analysis.charts.chart")}
-            </TabsTrigger>
-            <TabsTrigger value="data" icon={<DatabaseIcon className="size-4" />}>
-              {t("workspace.analysis.charts.chart_data_tab")}
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="chart" className="mt-0">
-          <ChartErrorBoundary fallbackMessage={t("workspace.analysis.charts.chart_render_error")}>
-            <ChartRenderer
-              chartType={chartData.chartType}
-              data={data}
-              query={chartData.query}
-              optionLabels={chartData.optionLabels}
-            />
-          </ChartErrorBoundary>
-        </TabsContent>
-
-        <TabsContent value="data" className="mt-0">
-          <DataViewer data={data} optionLabels={chartData.optionLabels} />
-        </TabsContent>
-      </Tabs>
+      <ChartErrorBoundary fallbackMessage={t("workspace.analysis.charts.chart_render_error")}>
+        <ChartRenderer
+          chartType={chartData.chartType}
+          data={data}
+          query={chartData.query}
+          optionLabels={chartData.optionLabels}
+          config={config}
+        />
+      </ChartErrorBoundary>
     );
   };
 

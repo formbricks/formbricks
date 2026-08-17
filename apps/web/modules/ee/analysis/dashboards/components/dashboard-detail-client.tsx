@@ -131,7 +131,11 @@ const MemoizedWidgetContent = memo(function WidgetContent({
   if (widget.chart && dataPromise) {
     return (
       <Suspense fallback={<DashboardWidgetSkeleton />}>
-        <DashboardWidgetData dataPromise={dataPromise} chartType={widget.chart.type} />
+        <DashboardWidgetData
+          dataPromise={dataPromise}
+          chartType={widget.chart.type}
+          config={widget.chart.config}
+        />
       </Suspense>
     );
   }
