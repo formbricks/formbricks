@@ -69,17 +69,24 @@ const checkOrganizationAccess = <T extends z.ZodRawShape>(
  * Both sides are looked up explicitly and an unrecognized value on either side is refused. Comparing
  * the weights directly would fail open: an unknown value resolves to `undefined`, `number < undefined`
  * is `false`, so the insufficient-permission guard would not fire and every member would be admitted.
+ *
+ * `granted` is validated before the no-minimum case, so an unrecognized grant is refused even when the
+ * caller asks for no minimum. Both current callers read `granted` from a native Postgres enum, so this
+ * is unreachable today; it is here so the helper stays fail-closed for a future caller whose grant is
+ * not enum-backed.
  */
 const meetsMinimumWeight = (
   weights: Record<string, number>,
   granted: string,
   minimum: string | undefined
 ): boolean => {
+  const grantedWeight = weights[granted];
+  if (grantedWeight === undefined) return false;
+
   if (minimum === undefined) return true;
 
-  const grantedWeight = weights[granted];
   const minimumWeight = weights[minimum];
-  if (grantedWeight === undefined || minimumWeight === undefined) return false;
+  if (minimumWeight === undefined) return false;
 
   return grantedWeight >= minimumWeight;
 };
