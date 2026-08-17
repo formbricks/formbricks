@@ -52,14 +52,19 @@ what those cannot show. -->
 
 **Coverage**
 
-<!-- One row per behaviour the diff changes: how you verified it and what you observed. Name the
-account, plan or flag state where an outcome depends on it, and for a behaviour fix name the test
-that fails without the fix. For UI work, attach the screenshot or screencast that proves it — fold it
-if long. -->
+<!-- One row per behaviour the diff changes: name the test (not a count), how strong that check is, and
+what you observed. Name the account, plan or flag state where an outcome depends on it. For UI work,
+attach the screenshot or screencast that proves it — fold it if long. -->
+
+<!-- "How" uses one of: `unit (red on main)` — fails against the old code, so it proves the bug
+existed; `unit (mutation)` — only fails if you break the fix, because the code under test is new;
+`unit (guard)` — passes either way, protecting against future regressions; plus `e2e` and `manual`.
+Any red-on-main or mutation row must carry the command or the mutated `file:line`, so a reviewer can
+rerun it instead of taking the claim on trust. -->
 
 | Behaviour | How | Outcome |
 | --- | --- | --- |
-|  | unit / e2e / manual |  |
+|  | unit (red on main) / unit (mutation) / unit (guard) / e2e / manual |  |
 
 **Open gaps**
 

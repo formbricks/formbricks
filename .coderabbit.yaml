@@ -382,6 +382,8 @@ reviews:
             "Open gaps".
           - A row names a behaviour with no verification method, or a method with no observed
             outcome.
+          - A row claims `red on main` or `mutation` without naming the test, and without a command
+            or a mutated `file:line` a reviewer could rerun.
           - The diff changes rendered UI and the description attaches no screenshot or screencast.
           - The "Open gaps" subsection is absent. An explicit "none" passes.
 
