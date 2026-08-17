@@ -915,18 +915,19 @@ describe("getSurveyEmbeddedFields", () => {
     expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: rows })).toStrictEqual(rows);
   });
 
-  test("falls back to the legacy columns when the select omitted the join", () => {
-    expect(getSurveyEmbeddedFields(legacySurvey)).toStrictEqual(deriveLegacyEmbeddedData(legacySurvey));
-    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: null })).toStrictEqual(
-      deriveLegacyEmbeddedData(legacySurvey)
-    );
+  test("reports nothing when the select omitted the join, rather than reading the columns", () => {
+    // ENG-2412 removed the legacy fallback: the rows are the whole answer. The consequence is that
+    // every survey select reaching a reader has to carry `selectSurveyEmbeddedDataLinks` — one that
+    // does not makes the survey read as having no Embedded Data at all.
+    expect(getSurveyEmbeddedFields(legacySurvey)).toStrictEqual([]);
+    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: null })).toStrictEqual([]);
+    expect(deriveLegacyEmbeddedData(legacySurvey)).not.toStrictEqual([]);
   });
 
-  test("falls back on an empty row list, so a survey that missed the backfill still resolves", () => {
-    // The empty-list test is the reason this is `?.length` and not `!== undefined`.
-    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: [] })).toStrictEqual(
-      deriveLegacyEmbeddedData(legacySurvey)
-    );
+  test("an empty row list means no fields, so deleting a survey's rows removes them", () => {
+    // Previously this fell back to the columns, which is why deleting a survey's rows made its
+    // fields reappear. Now they disappear, which is what the tables being the source of truth means.
+    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: [] })).toStrictEqual([]);
   });
 
   test("a survey with no fields at all answers [] through either path", () => {
@@ -971,11 +972,9 @@ describe("getSurveyEmbeddedFields", () => {
     ]);
   });
 
-  test("the partitions fall back too, keeping variables-then-hidden-fields order", () => {
-    expect(getComputedEmbeddedFields(legacySurvey).map(({ link }) => link.storageKey)).toStrictEqual([
-      "clx0000000000000000000v1",
-    ]);
-    expect(getIngestedStorageKeys(legacySurvey)).toStrictEqual(["source_page"]);
+  test("the partitions report nothing too, rather than falling back independently", () => {
+    expect(getComputedEmbeddedFields(legacySurvey)).toStrictEqual([]);
+    expect(getIngestedStorageKeys(legacySurvey)).toStrictEqual([]);
   });
 });
 
