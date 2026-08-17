@@ -256,9 +256,52 @@ procedure.
 
 ## Audit and repair relationships
 
-The command prints one JSON result. The output can contain source record identifiers needed to diagnose drift,
-so store it as sensitive operational data. It never prints tokens, database passwords, raw SDK errors, schema
+The command prints one JSON result. It never prints credentials, database passwords, raw SDK errors, schema
 text, or raw relationship strings.
+
+It does print identifiers, deliberately: naming the affected records is what makes a drift report actionable.
+Most are Formbricks record IDs, but not all — `unmanaged` can surface object IDs belonging to no Formbricks
+record at all. Treat the result as sensitive operational data.
+
+- `orphans`, `mismatchedParents` and `mismatchedPermissions` name the records that disagree, carrying
+  organization, user, workspace, team, API-key, feedback-directory and feedback-directory-assignment IDs.
+  `mismatchedPermissions` adds the expected and observed relation names alongside the record it names.
+- `unmanaged` reports relationships outside the managed vocabulary as an object type, an object ID and a
+  relation name. Those object IDs are not limited to the kinds above — anything else sharing the SpiceDB
+  instance appears here.
+- `failures` carries an organization ID for each failed unit that has one, so even a failed run emits
+  identifiers. It is empty when the read that would have identified the organization is what failed.
+- `lastOrganizationId` is the resume cursor: the last organization the sweep reached, or `null` if it reached
+  none.
+
+The cursor is an intentional operational identifier, not an oversight. An interrupted sweep resumes with
+`--after-organization-id=<cuid>` taken straight from it, so an opaque token would have to be stored and mapped
+back somewhere to stay useful. It is also the one field that can name an organization with nothing wrong: every
+other identifier here comes from a record or relationship that drifted or failed, while the cursor is simply
+wherever the sweep stopped. Redact it on the same terms as the rest.
+
+<Warning>
+  Handle the result like a database export, not like a log line. Store it in the same place you keep other
+  sensitive operational output, restrict access to operators, and delete it once the drift it describes is
+  resolved — retain it no longer than your incident records. Do not paste it into shared chat, ticket
+  descriptions, or support bundles without redacting the identifier fields above.
+</Warning>
+
+Redirecting to a file keeps the result out of terminal scrollback and out of CI logs that capture stdout. Set
+`umask 077` and remove any earlier export first. The umask governs file *creation* only, so under a typical
+`umask 022` a new `backfill.json` lands world-readable — and redirecting over one that already exists truncates
+it while leaving its existing mode untouched:
+
+```bash
+umask 077
+rm -f backfill.json
+formbricks-authzed backfill > backfill.json
+```
+
+Redirection does not keep identifiers out of your shell history, which records the command rather than its
+output — and the resume invocation is the one to watch there, because the cursor is an argument:
+`--after-organization-id=<cuid>` is recorded verbatim. On a shared or session-recorded host, read the cursor
+from the saved result instead of retyping it.
 
 ### Interpret exit codes
 
@@ -291,11 +334,24 @@ formbricks-authzed backfill --apply --workspace-id=<workspace-id>
 Applying fixes missing and incorrect current-state relationships. It does not remove relationships with no
 remaining PostgreSQL source record.
 
-If a sweep is interrupted, resume after the reported `lastOrganizationId`:
+If a sweep is interrupted, resume after the reported `lastOrganizationId`. A `null` cursor means the run
+reached no organization, so there is nothing to resume after — rerun the sweep from the start instead:
 
 ```bash
 formbricks-authzed backfill --apply --after-organization-id=<last-organization-id>
 ```
+
+The cursor advances past every organization the sweep reached, and an organization-specific failure does not
+stop the sweep — so each failure carrying a non-empty `organizationId` sits behind the cursor, and a resume
+will not retry it. Rerun those explicitly, in addition to resuming from the cursor:
+
+```bash
+formbricks-authzed backfill --apply --organization-id=<failed-organization-id>
+```
+
+A failure with an **empty** `organizationId` is not one of those: the read that would have identified the
+organization is itself what failed, so there is nothing to target. Within a sweep those also set `truncated` —
+rerun the sweep rather than a single organization.
 
 ### Prune orphans
 
@@ -320,6 +376,7 @@ restore, or shared SpiceDB before proceeding.
 | Category            | Meaning and response                                                                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `missing`           | PostgreSQL contains a source record without the expected SpiceDB relationship. An applying run repairs it.                                  |
+| `mismatchedPermissions` | An existing source record's projected role or grant relation differs from PostgreSQL. An applying run repairs it deterministically.     |
 | `orphaned`          | SpiceDB contains a managed relationship whose source record is gone. A confirmed prune removes it.                                          |
 | `invalid`           | PostgreSQL contains a cross-organization source row. Investigate and correct PostgreSQL manually.                                           |
 | `unmanaged`         | A relationship outside Formbricks' managed vocabulary exists. Investigate its writer; the tool never deletes it.                            |
