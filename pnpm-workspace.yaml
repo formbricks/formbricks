@@ -82,9 +82,10 @@ overrides:
   # vulnerabilities are all patched in 10.3.1.
   # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
   ip-address@10: 10.3.1
-  # GHSA-2v37-7h3g-55p8: nanoid 3.x predictable output is patched in 3.3.17.
-  # load-bearing: postcss resolves 3.3.16.
-  nanoid@3: 3.3.17
+  # ENG-2403 / GHSA-2v37-7h3g-55p8 (CVE-2026-67213): nanoid <3.3.18 customAlphabet/customRandom loop
+  # indefinitely when called with size 0 (DoS). Raises the 3.x pin from 3.3.17 to 3.3.18 (still <4).
+  # load-bearing: postcss resolves 3.3.17.
+  nanoid@3: 3.3.18
   # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
   # ENG-1990 / GHSA-2rp8-mm9q-fp49: typeorm <0.3.31 migration:generate template-literal code injection;
   # patched in 0.3.31.

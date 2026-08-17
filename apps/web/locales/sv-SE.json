@@ -1903,6 +1903,7 @@
       "unable_to_copy_api_key": "Kunde inte kopiera API-nyckel",
       "unable_to_delete_api_key": "Det gick inte att radera API-nyckeln",
       "unknown_workspace": "Okänd arbetsyta",
+      "view_permissions_for": "Visa behörigheter för {{label}}",
       "workspace_access": "Arbetsyteåtkomst",
       "workspace_access_description": "Enkät- och svarsdata. Ge åtkomst en arbetsyta i taget.",
       "workspace_access_empty": "Inga arbetsytor tillagda ännu."

@@ -120,6 +120,88 @@ jobs:
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set-string hub.embeddings.background.batchMaxWaitMs=37 \
+            --show-only templates/hub-deployment.yaml \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-legacy.yaml"
+          test "$(grep -c 'http://formbricks-hub-embeddings:8080/v1' "$render_dir/hub-embeddings-legacy.yaml")" -eq 2
+          ! grep -q 'hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-legacy.yaml"
+          grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "1"'
+          grep -A1 'name: EMBEDDING_BATCH_MAX_WAIT_MS' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "25"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.maxConcurrent=24 \
+            --set-string hub.embeddings.background.batchSize=8 \
+            --set-string hub.embeddings.background.batchMaxWaitMs=25 \
+            --set-string hub.embeddings.background.batchMaxInFlight=3 \
+            --set hub.embeddings.background.persistence.storageClass=gp3 \
+            --set hub.embeddings.background.autoscaling.enabled=true \
+            --show-only templates/hub-deployment.yaml \
+            --show-only templates/hub-worker-deployment.yaml \
+            --show-only templates/hub-embeddings-background-statefulset.yaml \
+            --show-only templates/hub-embeddings-background-service.yaml \
+            --show-only templates/hub-hpa.yaml > "$render_dir/hub-embeddings-background.yaml"
+          test "$(grep -c 'http://formbricks-hub-embeddings:8080/v1' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          test "$(grep -c 'http://formbricks-hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_MAX_CONCURRENT' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "24"'
+          grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "8"'
+          grep -q '^kind: StatefulSet$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'podManagementPolicy: Parallel' "$render_dir/hub-embeddings-background.yaml"
+          test "$(grep -c 'whenScaled: Retain' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          grep -q '^  volumeClaimTemplates:$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'storageClassName: "gp3"' "$render_dir/hub-embeddings-background.yaml"
+          grep -A3 'kind: StatefulSet' "$render_dir/hub-embeddings-background.yaml" | grep -q 'hub-embeddings-background'
+          grep -q '^  minReplicas: 1$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q '^  maxReplicas: 6$' "$render_dir/hub-embeddings-background.yaml"
+          grep -q 'stabilizationWindowSeconds: 900' "$render_dir/hub-embeddings-background.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set hub.embeddings.background.persistence.enabled=false \
+            --show-only templates/hub-embeddings-background-statefulset.yaml > "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          grep -q '^      volumes:$' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          grep -q 'emptyDir: {}' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+          ! grep -q '^  volumeClaimTemplates:$' "$render_dir/hub-embeddings-background-ephemeral.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            > "$render_dir/hub-embedding-backfill-disabled.yaml"
+          ! grep -q 'app.kubernetes.io/component: hub-embedding-backfill' "$render_dir/hub-embedding-backfill-disabled.yaml"
+
+          if helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddingBackfill.enabled=true \
+            --show-only templates/hub-embedding-backfill-job.yaml > "$render_dir/hub-embedding-backfill-invalid.yaml" 2>&1; then
+            echo "Expected an enabled embedding backfill without runId to fail" >&2
+            exit 1
+          fi
+          grep -q 'hub.embeddingBackfill.runId is required' "$render_dir/hub-embedding-backfill-invalid.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set hub.embeddingBackfill.enabled=true \
+            --set hub.embeddingBackfill.runId=eu-canary-001 \
+            --set hub.embeddingBackfill.taxonomy=true \
+            --set hub.embeddingBackfill.tenantId=tenant-a \
+            --set hub.embeddingBackfill.countOnly=false \
+            --set hub.embeddingBackfill.maxRecords=500 \
+            --show-only templates/hub-embedding-backfill-job.yaml > "$render_dir/hub-embedding-backfill.yaml"
+          grep -q '^kind: Job$' "$render_dir/hub-embedding-backfill.yaml"
+          grep -q 'embedding-backfill-eu-canary-001' "$render_dir/hub-embedding-backfill.yaml"
+          grep -q -- '- --taxonomy' "$render_dir/hub-embedding-backfill.yaml"
+          grep -A1 -- '- --tenant-id' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "tenant-a"'
+          grep -A1 -- '- --max-records' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "500"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
             --show-only templates/hub-deployment.yaml \
             --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-default.yaml"
           ! grep -q 'qa-hub-credentials' "$render_dir/hub-default.yaml"

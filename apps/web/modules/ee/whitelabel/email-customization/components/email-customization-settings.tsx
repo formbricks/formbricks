@@ -203,7 +203,7 @@ export const EmailCustomizationSettings = ({
       className="overflow-hidden pb-0"
       title={t("workspace.look.email_customization")}
       description={t("workspace.look.email_customization_description")}
-      noPadding>
+      bodyVariant="bleed">
       <div className="px-6 pt-6">
         {hasWhiteLabelPermission ? (
           <div className="flex items-end justify-between gap-4">

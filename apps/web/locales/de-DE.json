@@ -1903,6 +1903,7 @@
       "unable_to_copy_api_key": "API-Schlüssel konnte nicht kopiert werden",
       "unable_to_delete_api_key": "API-Schlüssel konnte nicht gelöscht werden",
       "unknown_workspace": "Unbekannter Arbeitsbereich",
+      "view_permissions_for": "Berechtigungen anzeigen für {{label}}",
       "workspace_access": "Workspace-Zugriff",
       "workspace_access_description": "Umfrage- und Antwortdaten. Gewähre Zugriff jeweils für einen Workspace.",
       "workspace_access_empty": "Noch keine Workspaces hinzugefügt."
