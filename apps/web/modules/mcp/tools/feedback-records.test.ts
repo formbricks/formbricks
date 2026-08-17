@@ -291,6 +291,50 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
     expect(outcome.result?.isError).toBeUndefined();
     expect(countV3FeedbackRecords).toHaveBeenCalled();
   });
+
+  /**
+   * The batch tool's records are array *elements*, so the outer `.strict()` says nothing about them. Found
+   * while re-reviewing the nested-strictness fix: a misspelled `user_id` inside a record was dropped and
+   * every record was created with no user attribution, reported as success — the ticket's own field, in the
+   * one place a silent drop does the most damage.
+   *
+   * The record below is complete and valid on purpose. An earlier version of this test used an invalid
+   * `field_type` and "passed" because the batch rejected *that* instead of the unknown key — a false
+   * positive that hid the bug. Note also that a misspelled *required* value still trips the
+   * field_type/value rule; only optional fields like `user_id` vanish quietly, which is why this asserts
+   * on one of those.
+   */
+  const validRecord = {
+    source_type: "survey",
+    field_id: "q1",
+    field_type: "text" as const,
+    value_text: "it works",
+  };
+
+  test("rejects a misspelled key inside a batch record", async () => {
+    const outcome = await callTool("create_feedback_records", {
+      workspaceId,
+      records: [{ ...validRecord, userId: "user_1" }],
+    });
+
+    expect(outcome.result?.isError).toBe(true);
+    expect(errorText(outcome)).toContain("userId");
+    expect(createV3FeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("still accepts a valid batch record", async () => {
+    vi.mocked(createV3FeedbackRecords).mockResolvedValue(
+      successResponse({ data: [], meta: { failed: 0 } }) as never
+    );
+
+    const outcome = await callTool("create_feedback_records", {
+      workspaceId,
+      records: [{ ...validRecord, user_id: "user_1" }],
+    });
+
+    expect(outcome.result?.isError).toBeUndefined();
+    expect(createV3FeedbackRecords).toHaveBeenCalled();
+  });
 });
 
 describe("registerFeedbackRecordTools", () => {

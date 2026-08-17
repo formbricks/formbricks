@@ -380,7 +380,14 @@ export const ZV3FeedbackRecordCreateBodyFields = z.object({
     .describe("Additional context (device, tags, etc.)."),
 });
 
-export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.superRefine((data, ctx) => {
+/**
+ * Every `field_type` needs a matching `value_*`. Named rather than inlined so the strict variant below
+ * applies the identical rule instead of restating it.
+ */
+const requireValueForFieldType: Parameters<typeof ZV3FeedbackRecordCreateBodyFields.superRefine>[0] = (
+  data,
+  ctx
+) => {
   const accepted = VALUE_FIELD_BY_TYPE[data.field_type];
   if (accepted.some((field) => data[field as keyof typeof data] !== undefined)) {
     return;
@@ -392,7 +399,29 @@ export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.sup
     path: [accepted[0]],
     message: `is required for field_type "${data.field_type}" (expected one of: ${accepted.join(", ")})`,
   });
-});
+};
+
+export const ZV3FeedbackRecordCreateBody =
+  ZV3FeedbackRecordCreateBodyFields.superRefine(requireValueForFieldType);
+
+/**
+ * Same contract, but rejecting unknown keys — used by the MCP batch tool (ENG-2256).
+ *
+ * A batch is the one place a misspelled field can hide: `user_id` sent as `userId` inside a record was
+ * dropped, so every record was created with no user attribution and the call reported success. The
+ * single-record MCP tool was already covered, because its schema gets `.strict()` at the MCP layer; only
+ * the array elements were not.
+ *
+ * Deliberately a separate export rather than `.strict()` on the fields object itself. Making the shared
+ * body strict would also change the **v3 REST** create/batch/update routes, where three behaviours
+ * currently depend on unknown keys being ignored rather than rejected — a `tenant_id` smuggled into a
+ * body, a `tenant_id` smuggled into a batch record, and immutable provenance fields on an update are all
+ * silently dropped today, each with a test asserting exactly that. Rejecting instead is arguably safer,
+ * but it is a v3 API decision with its own blast radius (a client that round-trips a record it read would
+ * start getting 422s), so it does not belong in an MCP migration.
+ */
+export const ZV3FeedbackRecordCreateBodyStrict =
+  ZV3FeedbackRecordCreateBodyFields.strict().superRefine(requireValueForFieldType);
 
 export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreateBody>;
 

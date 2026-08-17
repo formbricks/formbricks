@@ -3,8 +3,8 @@ import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
-  ZV3FeedbackRecordCreateBody,
   ZV3FeedbackRecordCreateBodyFields,
+  ZV3FeedbackRecordCreateBodyStrict,
   ZV3FeedbackRecordFilters,
   ZV3FeedbackRecordListFilters,
   ZV3FeedbackRecordSearchFilters,
@@ -38,9 +38,13 @@ import {
  *
  * Adding a schema? Add `.strict()` with it — and to every structured object nested inside it. Prefer
  * `z.strictObject({...})` for the nested ones: `.strict()` returns a clone that drops `.describe()`, so
- * appending it after a `.describe()` silently deletes the description the model reads. And do not turn on @posthog/mcp's `context` injection
- * (`lib/posthog/mcp-tracing.ts` keeps it off): it injects a `context` argument into every tool's
- * advertised schema, which these schemas would then reject.
+ * appending it after a `.describe()` silently deletes the description the model reads.
+ *
+ * Array *elements* count as nested objects too — see `ZMcpCreateFeedbackRecordsInput.records`, where the
+ * strictness has to come from the element schema rather than the array.
+ *
+ * And do not turn on @posthog/mcp's `context` injection (`lib/posthog/mcp-tracing.ts` keeps it off): it
+ * injects a `context` argument into every tool's advertised schema, which these schemas would reject.
  */
 
 export const ZMcpListSurveysInput = z
@@ -223,7 +227,10 @@ export const ZMcpCreateFeedbackRecordsInput = z
     workspaceId: ZId.describe("Workspace ID to create the feedback records in."),
     datasetId: datasetIdField,
     records: z
-      .array(ZV3FeedbackRecordCreateBody)
+      // The strict variant: an unknown key *inside a record* must be rejected, not dropped. Without it
+      // the outer `.strict()` below covers only the top level, so a misspelled `user_id` in a batch
+      // import vanished silently — ENG-2256 in the one place it does the most damage.
+      .array(ZV3FeedbackRecordCreateBodyStrict)
       .min(1)
       .max(MAX_FEEDBACK_RECORDS_PER_BATCH)
       .describe(
