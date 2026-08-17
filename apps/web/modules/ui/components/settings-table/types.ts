@@ -15,7 +15,14 @@ export type TSettingsTableColumn<TRow> = {
   /** Already-translated header label. `null` renders an empty header cell — pair it with `srLabel`. */
   header: ReactNode;
   cell: (row: TRow, index: number) => ReactNode;
-  /** Applies to the header cell and every body cell in this column. Defaults to `left`. */
+  /**
+   * Sets `text-align` on the header cell and every body cell in this column. Defaults to `left`.
+   *
+   * It moves **inline-level** content, which covers text, badges and `Button`/`Link` (both `inline-flex`).
+   * It cannot move a block-level child, so a cell whose content is a wrapper `<div>` — or the skeleton's
+   * placeholder bar — is unaffected by it. Declaring it alongside a flex wrapper is therefore inert; pick
+   * one and let it be the only alignment source for the column.
+   */
   align?: TSettingsTableAlign;
   /** Hides the column below this breakpoint. Applied to the header and body cells together. */
   hideBelow?: TSettingsTableBreakpoint;
@@ -28,7 +35,16 @@ export type TSettingsTableColumn<TRow> = {
    * from a short one, and when a `hideBelow` column drops out the remaining widths rescale.
    */
   headerClassName?: string;
-  /** Extra classes merged onto every `<td>` in this column, e.g. `font-medium text-slate-900`. */
+  /**
+   * Extra classes merged onto every `<td>` in this column, e.g. `font-medium text-slate-900`.
+   *
+   * **Do not change the cell's `display` here** — no `flex`, `grid` or `block`. These classes land on the
+   * `<td>` itself, so overriding `display` stops it being a table-cell: the shared `align-middle` becomes
+   * a no-op (`vertical-align` applies only to inline-level and table-cell boxes) and the browser wraps the
+   * cell in an anonymous table-cell that defaults to baseline, so the content sits high in the row. To lay
+   * cell content out, put the flex on a wrapper element **inside** `cell` instead. (`hideBelow` exists for
+   * the same reason — it uses `table-cell`, not `block`.)
+   */
   cellClassName?: string;
   /** Accessible name for a header cell whose `header` is `null` — typically an actions column. */
   srLabel?: string;

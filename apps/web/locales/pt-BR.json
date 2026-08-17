@@ -1903,6 +1903,7 @@
       "unable_to_copy_api_key": "Não foi possível copiar a chave de API",
       "unable_to_delete_api_key": "Não foi possível excluir a chave de API",
       "unknown_workspace": "Workspace desconhecido",
+      "view_permissions_for": "Ver permissões para {{label}}",
       "workspace_access": "Acesso ao workspace",
       "workspace_access_description": "Dados de pesquisas e respostas. Conceda acesso a um workspace por vez.",
       "workspace_access_empty": "Nenhum workspace adicionado ainda."

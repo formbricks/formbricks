@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,8 +23,8 @@ import {
 import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { Switch } from "@/modules/ui/components/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 
 interface FeedbackDirectoryTableProps {
   directories: TFeedbackDirectory[];
@@ -32,6 +33,99 @@ interface FeedbackDirectoryTableProps {
   workspaceAccessByWorkspace: TWorkspaceFeedbackDirectoryAccess[];
   membershipRole: TOrganizationRole;
 }
+
+/**
+ * Defined at module level rather than inside the component: an inline `cell` that returns JSX reads as a
+ * nested component definition to Sonar (typescript:S6478), and re-declaring the array per render buys
+ * nothing.
+ */
+const getFeedbackDirectoryColumns = ({
+  t,
+  isOwnerOrManager,
+  loadingDirectoryId,
+  viewDataWorkspaceIdByDirectory,
+  onManage,
+  onUnarchive,
+}: Readonly<{
+  t: TFunction;
+  isOwnerOrManager: boolean;
+  loadingDirectoryId: string | null;
+  viewDataWorkspaceIdByDirectory: Map<string, string>;
+  onManage: (directoryId: string) => void;
+  onUnarchive: (directoryId: string) => void;
+}>): TSettingsTableColumn<TFeedbackDirectory>[] => [
+  {
+    id: "name",
+    header: t("workspace.settings.feedback_directories.directory_name"),
+    headerClassName: "w-[45%]",
+    cell: (directory) => directory.name,
+  },
+  {
+    id: "workspaceCount",
+    header: t("common.workspaces"),
+    headerClassName: "w-[15%]",
+    cell: (directory) => directory.workspaceCount,
+  },
+  {
+    id: "status",
+    header: t("common.status"),
+    headerClassName: "w-[15%]",
+    cell: (directory) =>
+      directory.isArchived ? (
+        <Badge type="gray" size="tiny" text={t("common.archived")} />
+      ) : (
+        <Badge type="success" size="tiny" text={t("common.active")} />
+      ),
+  },
+  {
+    id: "actions",
+    header: null,
+    srLabel: t("common.actions"),
+    headerClassName: "w-[25%]",
+    stopRowClick: true,
+    // The flex belongs on a wrapper inside the cell, never on `cellClassName` — that class lands on the
+    // `<td>`, and `display: flex` there stops it being a table-cell, which silently kills the shared
+    // `align-middle` (`vertical-align` applies only to inline-level and table-cell boxes) and makes the
+    // browser wrap the cell in an anonymous table-cell defaulting to baseline. The buttons would sit high
+    // in the row instead of centred. `align: "right"` is not an alternative here: the wrapper is
+    // block-level, so `text-align` cannot move it.
+    cell: (directory) => (
+      <div className="flex justify-end gap-2">
+        {/* Never disabled: it is plain navigation with nothing to race. */}
+        {!directory.isArchived && viewDataWorkspaceIdByDirectory.has(directory.id) && (
+          <Button size="sm" variant="ghost" asChild>
+            <Link
+              href={`/workspaces/${viewDataWorkspaceIdByDirectory.get(directory.id)}/unify/feedback-records`}>
+              {t("workspace.settings.feedback_directories.view_data")}
+            </Link>
+          </Button>
+        )}
+        {/* `disabled` on the button itself, not `pointer-events-none` on the row: the latter blocks the
+            mouse but leaves the button focusable, so Enter would still start a second request. */}
+        {isOwnerOrManager && !directory.isArchived && (
+          <Button
+            size="sm"
+            variant="secondary"
+            loading={loadingDirectoryId === directory.id}
+            disabled={loadingDirectoryId !== null}
+            onClick={() => onManage(directory.id)}>
+            {t("common.manage")}
+          </Button>
+        )}
+        {isOwnerOrManager && directory.isArchived && (
+          <Button
+            size="sm"
+            variant="secondary"
+            loading={loadingDirectoryId === directory.id}
+            disabled={loadingDirectoryId !== null}
+            onClick={() => onUnarchive(directory.id)}>
+            {t("workspace.settings.feedback_directories.unarchive")}
+          </Button>
+        )}
+      </div>
+    ),
+  },
+];
 
 export const FeedbackDirectoryTable = ({
   directories,
@@ -126,7 +220,8 @@ export const FeedbackDirectoryTable = ({
   return (
     <>
       {isOwnerOrManager && (
-        <div className="mb-4 flex items-center justify-between">
+        // The table runs edge to edge, so the controls above it carry the card's gutter themselves.
+        <div className="mb-4 flex items-center justify-between px-4 pt-4">
           <div className="flex items-center gap-2">
             <Switch checked={showArchived} onCheckedChange={setShowArchived} />
             <span className="text-sm text-slate-500">
@@ -139,72 +234,20 @@ export const FeedbackDirectoryTable = ({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border" aria-label="Feedback directories list">
-        <Table>
-          <TableHeader role="rowgroup">
-            <TableRow className="bg-slate-100" role="row">
-              <TableHead className="font-medium text-slate-500">
-                {t("workspace.settings.feedback_directories.directory_name")}
-              </TableHead>
-              <TableHead className="font-medium text-slate-500">{t("common.workspaces")}</TableHead>
-              <TableHead className="font-medium text-slate-500">{t("common.status")}</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="[&_tr:last-child]:border-b">
-            {filteredDirectories.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center">
-                  {t("workspace.settings.feedback_directories.empty_state")}
-                </TableCell>
-              </TableRow>
-            )}
-            {filteredDirectories.map((directory) => (
-              <TableRow key={directory.id}>
-                <TableCell>{directory.name}</TableCell>
-                <TableCell>{directory.workspaceCount}</TableCell>
-                <TableCell>
-                  {directory.isArchived ? (
-                    <Badge type="gray" size="tiny" text={t("common.archived")} />
-                  ) : (
-                    <Badge type="success" size="tiny" text={t("common.active")} />
-                  )}
-                </TableCell>
-                <TableCell className="flex justify-end gap-2">
-                  {!directory.isArchived && viewDataWorkspaceIdByDirectory.has(directory.id) && (
-                    <Button size="sm" variant="ghost" asChild>
-                      <Link
-                        href={`/workspaces/${viewDataWorkspaceIdByDirectory.get(directory.id)}/unify/feedback-records`}>
-                        {t("workspace.settings.feedback_directories.view_data")}
-                      </Link>
-                    </Button>
-                  )}
-                  {isOwnerOrManager && !directory.isArchived && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      loading={loadingDirectoryId === directory.id}
-                      disabled={loadingDirectoryId !== null}
-                      onClick={() => handleManageDirectory(directory.id)}>
-                      {t("common.manage")}
-                    </Button>
-                  )}
-                  {isOwnerOrManager && directory.isArchived && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      loading={loadingDirectoryId === directory.id}
-                      disabled={loadingDirectoryId !== null}
-                      onClick={() => handleUnarchiveDirectory(directory.id)}>
-                      {t("workspace.settings.feedback_directories.unarchive")}
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <SettingsTable
+        columns={getFeedbackDirectoryColumns({
+          t,
+          isOwnerOrManager,
+          loadingDirectoryId,
+          viewDataWorkspaceIdByDirectory,
+          onManage: handleManageDirectory,
+          onUnarchive: handleUnarchiveDirectory,
+        })}
+        rows={filteredDirectories}
+        getRowId={(directory) => directory.id}
+        emptyMessage={t("workspace.settings.feedback_directories.empty_state")}
+        aria-label={t("workspace.settings.feedback_directories.title")}
+      />
 
       {openCreateModal && (
         <FeedbackDirectorySettingsModal
