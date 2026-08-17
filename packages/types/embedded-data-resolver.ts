@@ -493,11 +493,16 @@ export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
  * reader may call {@link deriveLegacyEmbeddedData} directly, which is what keeps "exactly two named
  * decisions, and no third" a property a reviewer can check with grep.
  *
- * Rows win when present. The empty-list test is deliberate rather than `!== undefined`: a select
- * that omits the join yields `undefined`, and a survey read through it must still resolve, while
- * `deriveLegacyEmbeddedData` returns `[]` for a survey whose legacy columns are empty — so a survey
- * that genuinely has zero fields answers `[]` either way, and one that missed the ENG-1835 backfill
- * falls back instead of silently losing every field.
+ * **The rows are the whole answer** (ENG-2412). This used to fall back to the legacy columns for a
+ * survey with no rows, which is why deleting a survey's rows made its fields reappear rather than
+ * disappear. The write path now writes the rows from the payload, so a survey with no rows is a
+ * survey with no fields, and that is what this reports.
+ *
+ * **Every survey select that reaches a reader must therefore carry the join** —
+ * `selectSurveyEmbeddedDataLinks`, inlined by `transformPrismaSurvey`. A select that omits it yields
+ * `undefined` here and the survey reads as having no fields at all. Audited when the fallback was
+ * removed: every reader gets its survey through `selectSurvey` or a select that embeds the same
+ * constant.
  *
  * This is a *definition* lookup only. ENG-1837 repoints where a field's name, source and dataType
  * come from; it deliberately does not repoint value arithmetic onto {@link resolveEmbeddedValue},
@@ -505,7 +510,7 @@ export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
  * on {@link resolveEmbeddedValue}) and would change what stored responses render as.
  */
 export const getSurveyEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  survey.embeddedFields?.length ? survey.embeddedFields : deriveLegacyEmbeddedData(survey);
+  survey.embeddedFields ?? [];
 
 /** The computed (ex-variable) fields of a survey, in inlined order. */
 export const getComputedEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>

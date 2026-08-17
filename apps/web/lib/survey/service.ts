@@ -4,7 +4,6 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
-import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import {
   DatabaseError,
   InvalidInputError,
@@ -632,11 +631,12 @@ export const updateSurveyInternal = async (
           select: selectSurvey,
         });
 
-        // ENG-1978: mirror the saved fields into the EmbeddedData tables in the same transaction, so a
-        // survey never commits without them. Derived from the PERSISTED survey rather than the payload:
-        // a partial update leaves `variables` / `hiddenFields` untouched in the column, and reading the
-        // payload instead would see them as absent and delete every row. workspaceId comes from the
-        // stored survey for the ENG-1749 reason above — never from the client.
+        // ENG-1978: write the saved fields into the EmbeddedData tables in the same transaction, so a
+        // survey never commits without them. ENG-2412: from the PAYLOAD, which is what makes the rows
+        // the write source of truth rather than a copy of the columns `data` just wrote. A caller that
+        // omits either key is not saying "delete these" — `reconcileEmbeddedData` carries that group's
+        // current rows over untouched. workspaceId comes from the stored survey for the ENG-1749
+        // reason above — never from the client.
         //
         // NOTE (ENG-1837): `survey` was read BEFORE this reconcile, so the `embeddedDataLinks` it
         // carries — and the `embeddedFields` inlined from them by `transformPrismaSurvey` below —
@@ -656,7 +656,7 @@ export const updateSurveyInternal = async (
         await reconcileEmbeddedData(tx, {
           surveyId,
           workspaceId: currentSurvey.workspaceId,
-          desired: toDesiredEmbeddedFields(survey),
+          patch: { variables: updatedSurvey.variables, hiddenFields: updatedSurvey.hiddenFields },
         });
 
         return survey;
@@ -915,7 +915,7 @@ export const createSurvey = async (
         await reconcileEmbeddedData(tx, {
           surveyId: createdSurvey.id,
           workspaceId: parsedWorkspaceId,
-          desired: toDesiredEmbeddedFields(createdSurvey),
+          patch: { variables: createdSurvey.variables, hiddenFields: createdSurvey.hiddenFields },
         });
 
         return createdSurvey;

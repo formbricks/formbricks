@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -258,7 +257,7 @@ export async function executeV3SurveyPatch(params: {
         await reconcileEmbeddedData(tx, {
           surveyId: currentSurvey.id,
           workspaceId: currentSurvey.workspaceId,
-          desired: toDesiredEmbeddedFields(survey),
+          patch: { variables: document.variables, hiddenFields: document.hiddenFields },
         });
 
         return survey;

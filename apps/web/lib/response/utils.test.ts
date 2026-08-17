@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
+import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -16,6 +17,14 @@ import {
   getResponsesJson,
 } from "./utils";
 import { buildWhereClause } from "./where-clause";
+
+/**
+ * A survey as a reader actually receives it: `transformPrismaSurvey` inlines the EmbeddedData rows
+ * next to the legacy columns, and since ENG-2412 those rows are the only thing the accessors read.
+ * Fixtures that declare `variables` / `hiddenFields` alone describe a row nobody reads.
+ */
+const asRead = <T extends Partial<TSurvey>>(survey: T): T =>
+  ({ ...survey, embeddedFields: deriveLegacyEmbeddedData(survey) }) as T;
 
 describe("Response Utils", () => {
   describe("calculateTtcTotal", () => {
@@ -37,7 +46,7 @@ describe("Response Utils", () => {
   });
 
   describe("buildWhereClause", () => {
-    const mockSurvey: Partial<TSurvey> = {
+    const mockSurvey: Partial<TSurvey> = asRead({
       id: "survey1",
       name: "Test Survey",
       blocks: [],
@@ -49,7 +58,7 @@ describe("Response Utils", () => {
       workspaceId: "env1",
       createdBy: "user1",
       status: "draft",
-    };
+    });
 
     test("should build where clause with finished filter", () => {
       const filterCriteria = { finished: true };
@@ -553,7 +562,7 @@ describe("Response Utils", () => {
 
   // TODO: Fix this test after the survey editor poc is merged
   describe("extractSurveyDetails", () => {
-    const mockSurvey: Partial<TSurvey> = {
+    const mockSurvey: Partial<TSurvey> = asRead({
       id: "survey1",
       name: "Test Survey",
       blocks: [
@@ -600,7 +609,7 @@ describe("Response Utils", () => {
       workspaceId: "env1",
       createdBy: "user1",
       status: "draft",
-    };
+    });
 
     const mockResponses: Partial<TResponse>[] = [
       {
@@ -637,6 +646,8 @@ describe("Response Utils", () => {
      * are asserted exactly, not by membership.
      */
     describe("Embedded Data columns", () => {
+      // Legacy columns populated, join absent — `embeddedFields` is cleared explicitly because
+      // `mockSurvey` carries the inlined rows a real read would have.
       const legacySurvey = {
         ...mockSurvey,
         variables: [
@@ -644,13 +655,17 @@ describe("Response Utils", () => {
           { id: "clx0000000000000000000v1", name: "score", type: "number", value: 0 },
         ],
         hiddenFields: { enabled: true, fieldIds: ["utm_source", "hidden1"] },
-      } as TSurvey;
+        embeddedFields: undefined,
+      } as unknown as TSurvey;
 
-      test("derives both column groups from the legacy columns when the join is absent", () => {
+      test("reports no Embedded Data columns when the join is absent", () => {
+        // ENG-2412 removed the legacy fallback, so the rows are the whole answer. A survey read
+        // through a select that omits `selectSurveyEmbeddedDataLinks` exports no variable or hidden
+        // field columns at all — which is why every reader's select has to carry that join.
         const result = extractSurveyDetails(legacySurvey, mockResponses as TResponse[]);
 
-        expect(result.variables).toEqual(["tier", "score"]);
-        expect(result.hiddenFields).toEqual(["utm_source", "hidden1"]);
+        expect(result.variables).toEqual([]);
+        expect(result.hiddenFields).toEqual([]);
       });
 
       test("takes the column labels from the rows when the join is present", () => {
@@ -699,7 +714,7 @@ describe("Response Utils", () => {
   });
 
   describe("getResponsesJson", () => {
-    const mockSurvey: Partial<TSurvey> = {
+    const mockSurvey: Partial<TSurvey> = asRead({
       id: "survey1",
       name: "Test Survey",
       blocks: [
@@ -730,7 +745,7 @@ describe("Response Utils", () => {
       workspaceId: "env1",
       createdBy: "user1",
       status: "draft",
-    };
+    });
 
     const mockResponses: Partial<TResponse>[] = [
       {
@@ -767,10 +782,10 @@ describe("Response Utils", () => {
     test("a computed field the response never captured leaves an empty cell", () => {
       // resolveEmbeddedValue would substitute the declared default here — i.e. display a value the
       // respondent's run never produced. The export deliberately reads the raw slot instead.
-      const surveyWithVariables = {
+      const surveyWithVariables = asRead({
         ...mockSurvey,
         variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number", value: 5 }],
-      } as TSurvey;
+      }) as TSurvey;
 
       const result = getResponsesJson(
         surveyWithVariables,
@@ -786,10 +801,10 @@ describe("Response Utils", () => {
     });
 
     test("writes a captured computed value under the field's name, keyed by its storage key", () => {
-      const surveyWithVariables = {
+      const surveyWithVariables = asRead({
         ...mockSurvey,
         variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number", value: 5 }],
-      } as TSurvey;
+      }) as TSurvey;
 
       const result = getResponsesJson(
         surveyWithVariables,
@@ -972,7 +987,7 @@ describe("Response Utils", () => {
   });
 
   describe("getResponseHiddenFields", () => {
-    const mockSurvey: Partial<TSurvey> = {
+    const mockSurvey: Partial<TSurvey> = asRead({
       id: "survey1",
       name: "Test Survey",
       questions: [],
@@ -983,7 +998,7 @@ describe("Response Utils", () => {
       workspaceId: "env1",
       createdBy: "user1",
       status: "draft",
-    };
+    });
 
     test("should extract hidden fields correctly", () => {
       const responses = [

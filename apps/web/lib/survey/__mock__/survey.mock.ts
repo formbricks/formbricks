@@ -1,7 +1,10 @@
 import { Prisma } from "@formbricks/database/prisma";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
+import {
+  type TLinkedEmbeddedField,
+  deriveLegacyEmbeddedData,
+} from "@formbricks/types/embedded-data-resolver";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -587,6 +590,14 @@ export const mockSurveyWithLogic: TSurvey = {
     { id: "siog1dabtpo3l0a3xoxw2922", type: "text", name: "var1", value: "lmao" },
     { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },
   ],
+  // Since ENG-2412 the rows are the only thing `getSurveyEmbeddedFields` reads, so a survey that
+  // declares variables has to carry the matching rows — that is what a real read returns.
+  embeddedFields: deriveLegacyEmbeddedData({
+    variables: [
+      { id: "siog1dabtpo3l0a3xoxw2922", type: "text", name: "var1", value: "lmao" },
+      { id: "km1srr55owtn2r7lkoh5ny1u", type: "number", name: "var2", value: 32 },
+    ],
+  }),
   customHeadScripts: null,
   customHeadScriptsMode: null,
 };

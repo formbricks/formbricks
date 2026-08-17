@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import { deriveLegacyEmbeddedData, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { resetDb } from "@/integration/reset-db";
@@ -43,7 +42,7 @@ const seedSurvey = async (): Promise<{ surveyId: string; workspaceId: string }> 
     reconcileEmbeddedData(tx, {
       surveyId: survey.id,
       workspaceId: workspace.id,
-      desired: toDesiredEmbeddedFields(LEGACY),
+      patch: LEGACY,
     })
   );
 
@@ -95,14 +94,18 @@ describe("Embedded Data read seam (real Postgres)", () => {
     ]);
   });
 
-  test("a survey that missed the backfill still resolves off its legacy columns", async () => {
+  test("a survey with no rows has no fields, whatever its legacy columns still say", async () => {
+    // ENG-2412 removed the fallback. The rows are the write source of truth now, so deleting them
+    // makes the fields disappear rather than reappear — the behaviour that made the previous model
+    // hard to reason about. `deriveLegacyEmbeddedData` still has the columns; nothing consults it.
     const { surveyId } = await seedSurvey();
     await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId } });
 
     const survey = await loadSurvey(surveyId);
 
     expect(survey.embeddedFields).toEqual([]);
-    expect(getSurveyEmbeddedFields(survey)).toEqual(deriveLegacyEmbeddedData(LEGACY));
+    expect(getSurveyEmbeddedFields(survey)).toEqual([]);
+    expect(deriveLegacyEmbeddedData(LEGACY)).not.toEqual([]);
   });
 
   test("a partial row set wins outright — the rows are the source of truth once any exist", async () => {
