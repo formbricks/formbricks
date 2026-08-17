@@ -38,22 +38,16 @@ source — `@formbricks/ai` and `@formbricks/database` resolve via `dist/` in th
 
 **This only bites when you bypass Turborepo.** Running `vitest` or `tsc` directly inside `apps/web`,
 `pnpm --filter @formbricks/web test`, or an IDE test runner all skip the task graph — which is how you
-usually meet it, iterating on one test file. The root `pnpm test` and `pnpm typecheck` go through
-turbo, and `@formbricks/web#test` / `@formbricks/web#typecheck` in `turbo.json` each declare
-`dependsOn` on the workspace builds they need (`@formbricks/ai#build`, `@formbricks/database#build`,
-and the rest), so turbo rebuilds those first. That is why the unit-test workflow (`test.yml`) needs no
-build step of its own — do **not** read "green on CI, red locally" as evidence of a stale `dist/`;
-it and the root commands run the same graph.
-
-One caveat: a `dependsOn` list is only as good as its entries — though `build` is topological
-(`dependsOn: ["^build"]`), so a package left out is still built when something in the list depends on
-it. Only one that nothing in the list reaches goes unbuilt, failing exactly like a stale `dist/` from a
-different cause — as `@formbricks/jobs` did while it was absent from `#typecheck`, nothing else in the
-list depending on it. When a root command goes red, check the graph too, not just the build.
+usually meet it, iterating on one test file. The root `pnpm test` and `pnpm typecheck` are safe:
+`@formbricks/web#test` and `@formbricks/web#typecheck` in `turbo.json` each declare `dependsOn` on
+`@formbricks/ai#build`, `@formbricks/database#build` and five more, so turbo rebuilds them before the
+suite runs. That is also why the unit-test workflow (`test.yml`) stays green with no build step of its
+own — do **not** read "green on CI, red locally" as evidence of a stale `dist/`; both run the same
+graph.
 
 The failure looks nothing like a stale build. A symbol added on the branch you just checked out is
-absent from `dist/`, so depending on what is missing the import either resolves to `undefined` or
-fails outright at module resolution — and both read like real regressions:
+absent from `dist/`, so depending on what is missing the import either resolves to `undefined` or fails
+outright at module resolution — and both read like real regressions:
 
 - `TypeError: Right-hand side of 'instanceof' is not an object` (the class is in `src/`, not `dist/`)
 - a missing named export, or `Failed to resolve entry for package "@formbricks/…"` when `dist/` is
@@ -79,9 +73,8 @@ The fix is to rebuild the dependency graph:
 pnpm build --filter=@formbricks/web^...
 ```
 
-(Dependencies only — `^...` excludes the Next app itself. `integration-tests.yml` runs this before its
-suites for exactly this reason: it drives `cd apps/web && pnpm test:integration`, a plain `vitest run`
-that bypasses the task graph.)
+(Dependencies only — `^...` excludes the Next app itself. This is the same command
+`.github/workflows/integration-tests.yml` runs before its suites, for exactly this reason.)
 
 ### Tailwind & Workspace Package CSS
 
