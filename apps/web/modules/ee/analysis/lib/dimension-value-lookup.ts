@@ -1,4 +1,5 @@
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { FIELD_TYPE_OPTIONS } from "@/modules/ee/unify-feedback/lib/types";
 
 export const QUESTION_LABEL_DIMENSION_ID = "FeedbackRecords.fieldLabel";
 export const FIELD_TYPE_DIMENSION_ID = "FeedbackRecords.fieldType";
@@ -12,13 +13,15 @@ export interface TDimensionValue {
 /**
  * Rows fetched per distinct value wanted, when the query groups by label *and* field type.
  *
- * `limit` counts grouped rows, not distinct labels, so a label stored under two field types spends
- * two of them and `collectDimensionValues` dedups it back down to one entry. Without the headroom a
- * directory with fewer than `limit` distinct labels could still come back truncated. Two covers the
- * realistic case (a source re-typed a question once); a label under three or more types can still
- * truncate, which is why the caller caps the deduped list rather than trusting the row count.
+ * `limit` counts grouped rows, not distinct labels, so a label stored under several field types
+ * spends one row per type and `collectDimensionValues` dedups it back down to one entry. The
+ * multiplier is the field-type cardinality rather than a guess: a label can appear at most once per
+ * `(label, fieldType)` pair, and `field_type` is the closed `FIELD_TYPE_OPTIONS` enum, so
+ * `limit * FIELD_TYPE_OPTIONS.length` rows cannot come back with fewer than `limit` distinct labels
+ * while any remain. A smaller factor truncates a directory that does have `limit` labels — two rows
+ * per label is the common case, but nothing constrains a label to two types.
  */
-const FIELD_TYPE_ROW_OVERFETCH = 2;
+const FIELD_TYPE_ROW_OVERFETCH = FIELD_TYPE_OPTIONS.length;
 
 /**
  * The question-label lookup pairs each label with its field type so the pick-list can
