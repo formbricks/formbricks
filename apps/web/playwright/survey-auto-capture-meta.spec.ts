@@ -96,7 +96,10 @@ const submitAnswer = async (page: Page, answer: string): Promise<void> => {
   await expect(page.getByText(QUESTION)).toBeVisible();
   await page.getByPlaceholder("Type your answer here...").fill(answer);
   await page.getByRole("button", { name: "Finish" }).click();
-  await expect(page.getByText(ENDING_HEADLINE)).toBeVisible();
+  // The renderer shows "Sending responses…" until the ingest POST resolves, and the ending card only
+  // after. The default 5s is not enough for the first submission of a run, so wait for the real
+  // signal rather than a fixed sleep.
+  await expect(page.getByText(ENDING_HEADLINE)).toBeVisible({ timeout: 60000 });
 };
 
 test.describe("Auto-captured browser context on responses @slow", () => {
@@ -138,13 +141,17 @@ test.describe("Auto-captured browser context on responses @slow", () => {
     expect(meta.screenWidth).toBeGreaterThan(0);
     expect(meta.screenHeight).toBeGreaterThan(0);
 
-    // An IANA zone, not an offset.
-    expect(typeof meta.timezone).toBe("string");
-    expect(meta.timezone).toContain("/");
+    // An IANA zone name, not a numeric offset — `Europe/Berlin` on a developer machine, `UTC` on a
+    // CI container. Both are valid zone names; `+02:00` would not be, and is what this rules out.
+    expect(meta.timezone).toMatch(/^[A-Za-z][A-Za-z0-9+_-]*(\/[A-Za-z0-9+_-]+)*$/);
 
-    // The server-derived half is untouched by any of this.
-    expect(meta.source).toBe("link");
+    // The server-derived half is untouched by any of this: `userAgent` is still parsed from the
+    // request header by UAParser, not taken from anything the page sent.
     expect((meta.userAgent as Record<string, unknown>).browser).toBeTruthy();
+    // `url` predates this work and still resolves — near-identical to `pageUrl` on a link survey.
+    expect(meta.url).toContain(`/s/${surveyId}`);
+    // `source` is only set when the link carries an explicit `?source=`, which this one does not.
+    expect(meta).not.toHaveProperty("source");
   });
 
   test("omits utm fields entirely when the link carries no campaign", async ({ page }) => {
