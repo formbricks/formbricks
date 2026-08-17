@@ -1903,6 +1903,7 @@
       "unable_to_copy_api_key": "Unable to copy API key",
       "unable_to_delete_api_key": "Unable to delete API Key",
       "unknown_workspace": "Unknown workspace",
+      "view_permissions_for": "View permissions for {{label}}",
       "workspace_access": "Workspace Access",
       "workspace_access_description": "Survey and response data. Grant access one workspace at a time.",
       "workspace_access_empty": "No workspaces added yet."
