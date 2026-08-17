@@ -1472,6 +1472,11 @@ query, like `create_feedback_record`.
   Arguments](#tool-arguments)).
 - Resources and prompts are not exposed — the server registers tools only, so there is no MCP resource
   for the survey document contract yet.
+- `subscriptions/listen` is refused (`maxSubscriptions: 0`). The 2026-07-28 revision replaced the GET SSE
+  endpoint with a long-lived POST-response stream, but with no resources registered and no list-changed
+  notifications emitted, such a stream could never deliver anything — it would just hold a connection.
+  A client that opens one gets `Subscription limit reached` and should fall back to polling the list
+  endpoints.
 
 ## Implementation Files
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { identifyMcpUser } from "./server";
+import { MCP_HANDLER_OPTIONS, identifyMcpUser } from "./server";
 
 vi.mock("server-only", () => ({}));
 
@@ -28,6 +28,19 @@ vi.mock("./auth", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: { warn: mocks.loggerWarn },
 }));
+
+describe("mcpHandler options", () => {
+  /**
+   * Asserts the wiring, not the SDK's behaviour: `maxSubscriptions: 0` is what stops a 2026-era client
+   * opening a `subscriptions/listen` stream this server can never send anything on. Verified separately
+   * against the real SDK — a listen request with 0 returns `-32603 Subscription limit reached` on plain
+   * JSON with the connection closed, where the default (1024 per process) accepts it and holds it open.
+   * Worth pinning because dropping the option is invisible: nothing else fails, the stream just reopens.
+   */
+  test("refuses subscription streams", () => {
+    expect(MCP_HANDLER_OPTIONS.maxSubscriptions).toBe(0);
+  });
+});
 
 describe("identifyMcpUser", () => {
   beforeEach(() => {
