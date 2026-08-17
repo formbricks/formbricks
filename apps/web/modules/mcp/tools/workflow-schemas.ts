@@ -7,9 +7,10 @@ import {
   ZWorkflowStatus,
 } from "@formbricks/workflows";
 
-// Every schema here is `.strict()` for the reasons documented at the top of `./schemas.ts` (ENG-2256):
-// an undeclared argument must fail loudly rather than be silently dropped. Add `.strict()` to any new
-// schema you add here.
+// Every schema here rejects undeclared arguments, for the reasons documented at the top of
+// `./schemas.ts` (ENG-2256): an undeclared argument must fail loudly rather than be silently dropped.
+// Add `.strict()` to any new schema you add here — except where the base is already a `z.strictObject`,
+// in which case leave it alone and see the note on `ZMcpCreateWorkflowInput`.
 
 export const ZMcpListWorkflowsInput = z
   .object({
@@ -121,7 +122,12 @@ export type TMcpTestWorkflowInput = z.infer<typeof ZMcpTestWorkflowInput>;
 
 // Reuse the v3 create contract verbatim: workspaceId, name, optional description, and the full
 // workflow definition graph. Workflows are always created as drafts (enable makes them live).
-export const ZMcpCreateWorkflowInput = ZCreateWorkflowInput.strict();
+//
+// No `.strict()` here, unlike its siblings: `ZCreateWorkflowInput` is already a `z.strictObject`, so it
+// would add nothing - and Zod 4's `.strict()` returns a clone that drops `.describe()`, which would
+// silently strip the contract's own "Creates a draft workflow." description from what `tools/list`
+// advertises.
+export const ZMcpCreateWorkflowInput = ZCreateWorkflowInput;
 export type TMcpCreateWorkflowInput = z.infer<typeof ZMcpCreateWorkflowInput>;
 
 export const ZMcpPatchWorkflowInput = z

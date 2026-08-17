@@ -15,6 +15,9 @@ import {
   registerWorkflowTools,
 } from "./workflows";
 
+// The registered inputSchema is a Standard Schema; only these two members are read here.
+type ZodObjectLike = { description?: string; safeParse: (value: unknown) => { success: boolean } };
+
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
 // invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
@@ -563,5 +566,22 @@ describe("MCP scope enforcement (ENG-1967)", () => {
       .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { http: { authInfo: readOnlyAuthInfo } });
 
     expect(workflowsHandlers.list).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("create_workflow advertised input schema", () => {
+  /**
+   * `ZMcpCreateWorkflowInput` is the one MCP schema that deliberately does NOT append `.strict()`: its
+   * base (`ZCreateWorkflowInput`) is already a `z.strictObject`, and Zod 4's `.strict()` returns a clone
+   * that drops `.describe()`. Appending it for consistency with the sibling schemas would keep validation
+   * identical while silently deleting the contract's own description from `tools/list` — a loss nothing
+   * else here would catch, since a strictness assertion passes either way.
+   */
+  test("carries the contract description and still rejects unknown keys", () => {
+    const { tools } = createToolServer();
+    const schema = tools.get("create_workflow")!.config.inputSchema as ZodObjectLike;
+
+    expect(schema.description).toBe("Creates a draft workflow.");
+    expect(schema.safeParse({ workspaceId: "abc", name: "x", definition: {}, bogus: 1 }).success).toBe(false);
   });
 });
