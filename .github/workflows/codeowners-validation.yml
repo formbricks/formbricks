@@ -58,8 +58,15 @@ jobs:
           # an outside contributor's PR that says nothing about their change. The
           # weekly scheduled run covers `owners` against the default branch.
           checks: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'syntax,duppatterns,files,owners' || 'syntax,duppatterns,files' }}
-          # avoid-shadowing enforces the general-to-specific ordering the whole
-          # file depends on, since the last matching pattern wins.
+          # The guard that keeps CODEOWNERS to one reviewer. Only a TEAM owner can
+          # be thinned to a single reviewer by GitHub; naming individuals makes it
+          # request all of them, which is the bug this file was rewritten to fix.
+          # Rejecting individual owners here means a well-meant "just add an owner
+          # for this path" fails the build instead of quietly restoring 3-6
+          # reviewers per PR.
+          owner_checker_owners_must_be_teams: "true"
+          # Guards the last-matching-pattern-wins footgun if path rules are ever
+          # added back: a later broad rule would silently void the ones above it.
           experimental_checks: "avoid-shadowing"
           # The `owners` check reads organization membership, which the default
           # GITHUB_TOKEN cannot do. Requires a CLASSIC PAT with `read:org` —
