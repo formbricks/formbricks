@@ -1,6 +1,7 @@
 "use client";
 
 import { BarChart3Icon, ChartBarIcon, ChartColumnIcon, DatabaseIcon } from "lucide-react";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import {
@@ -28,6 +29,9 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
   const { t } = useTranslation();
   const { displayType, barOrientation } = resolveChartDisplay(config);
   const showBarOrientation = supportsBarOrientation(chartType);
+  // Generated rather than hardcoded: two of these panels on one page would otherwise share ids.
+  const displayTypeLabelId = useId();
+  const barOrientationLabelId = useId();
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-xs">
@@ -37,50 +41,48 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="chart-display-type">{t("workspace.analysis.charts.display_type")}</Label>
-          <div id="chart-display-type">
-            <OptionsSwitch
-              options={[
-                {
-                  value: "chart",
-                  label: t("workspace.analysis.charts.display_chart"),
-                  icon: <BarChart3Icon className="size-4" />,
-                },
-                {
-                  value: "table",
-                  label: t("workspace.analysis.charts.display_data_table"),
-                  icon: <DatabaseIcon className="size-4" />,
-                },
-              ]}
-              currentOption={displayType}
-              handleOptionChange={(value) => onChange({ ...config, displayType: value as TChartDisplayType })}
-            />
-          </div>
+          <Label id={displayTypeLabelId}>{t("workspace.analysis.charts.display_type")}</Label>
+          <OptionsSwitch
+            aria-labelledby={displayTypeLabelId}
+            options={[
+              {
+                value: "chart",
+                label: t("workspace.analysis.charts.display_chart"),
+                icon: <BarChart3Icon className="size-4" />,
+              },
+              {
+                value: "table",
+                label: t("workspace.analysis.charts.display_data_table"),
+                icon: <DatabaseIcon className="size-4" />,
+              },
+            ]}
+            currentOption={displayType}
+            handleOptionChange={(value) => onChange({ ...config, displayType: value as TChartDisplayType })}
+          />
         </div>
 
         {showBarOrientation && (
           <div className="flex flex-col gap-2">
-            <Label htmlFor="chart-bar-orientation">{t("workspace.analysis.charts.bar_direction")}</Label>
-            <div id="chart-bar-orientation">
-              <OptionsSwitch
-                options={[
-                  {
-                    value: "vertical",
-                    label: t("workspace.analysis.charts.vertical_bars"),
-                    icon: <ChartColumnIcon className="size-4" />,
-                  },
-                  {
-                    value: "horizontal",
-                    label: t("workspace.analysis.charts.horizontal_bars"),
-                    icon: <ChartBarIcon className="size-4" />,
-                  },
-                ]}
-                currentOption={barOrientation}
-                handleOptionChange={(value) =>
-                  onChange({ ...config, barOrientation: value as TBarOrientation })
-                }
-              />
-            </div>
+            <Label id={barOrientationLabelId}>{t("workspace.analysis.charts.bar_direction")}</Label>
+            <OptionsSwitch
+              aria-labelledby={barOrientationLabelId}
+              options={[
+                {
+                  value: "vertical",
+                  label: t("workspace.analysis.charts.vertical_bars"),
+                  icon: <ChartColumnIcon className="size-4" />,
+                },
+                {
+                  value: "horizontal",
+                  label: t("workspace.analysis.charts.horizontal_bars"),
+                  icon: <ChartBarIcon className="size-4" />,
+                },
+              ]}
+              currentOption={barOrientation}
+              handleOptionChange={(value) =>
+                onChange({ ...config, barOrientation: value as TBarOrientation })
+              }
+            />
           </div>
         )}
       </div>

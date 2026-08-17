@@ -151,33 +151,52 @@ function WrappingXAxisTick({
 
 /** Category tick for a flipped (horizontal) chart. Same `foreignObject` wrapping trick as
  * `WrappingXAxisTick`, but the box hangs to the left of the axis line and is centred on its
- * category band, since here the labels stack down the y-axis. */
+ * category band, since here the labels stack down the y-axis.
+ *
+ * The box height is clamped to the band the same way `WrappingXAxisTick` clamps its width: the
+ * chart's height comes from its container, not from the row count, so the band shrinks as categories
+ * are added. A fixed three-line box overlaps its neighbours as soon as the band falls below it, so
+ * the label sheds lines instead — down to a single line, with the full text still on hover. */
 function WrappingYAxisTick({
   x,
   y,
   payload,
   formatter,
+  height,
+  visibleTicksCount,
 }: Readonly<{
   x?: number;
   y?: number;
   payload?: { value?: unknown };
   formatter: (value: unknown) => string;
+  height?: number;
+  visibleTicksCount?: number;
 }>) {
   const label = formatter(payload?.value);
   const boxWidth = Y_AXIS_CATEGORY_WIDTH - X_AXIS_TICK_GAP;
 
+  const band = height && visibleTicksCount ? height / visibleTicksCount : X_AXIS_LABEL_BOX_HEIGHT;
+  const boxHeight = Math.max(
+    X_AXIS_LABEL_LINE_HEIGHT,
+    Math.min(X_AXIS_LABEL_BOX_HEIGHT, band - X_AXIS_TICK_GAP)
+  );
+  // Whole lines only — a box sized to 2.5 lines would clip the third mid-glyph rather than drop it.
+  const lineClamp = Math.max(1, Math.floor(boxHeight / X_AXIS_LABEL_LINE_HEIGHT));
+
   return (
     <foreignObject
       x={(x ?? 0) - boxWidth - X_AXIS_TICK_GAP}
-      y={(y ?? 0) - X_AXIS_LABEL_BOX_HEIGHT / 2}
+      y={(y ?? 0) - boxHeight / 2}
       width={boxWidth}
-      height={X_AXIS_LABEL_BOX_HEIGHT}
+      height={boxHeight}
       style={{ overflow: "visible" }}>
       <div
         title={label}
         className="text-muted-foreground flex h-full items-center justify-end text-xs leading-tight"
         style={{ textWrap: "pretty" }}>
-        <span className="line-clamp-3 text-right">{label}</span>
+        <span className="line-clamp-3 text-right" style={{ WebkitLineClamp: lineClamp }}>
+          {label}
+        </span>
       </div>
     </foreignObject>
   );
