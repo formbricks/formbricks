@@ -1,3 +1,3 @@
 import library from "@formbricks/eslint-config/library";
 
-export default library;
+export default library({ tsconfigRootDir: import.meta.dirname });

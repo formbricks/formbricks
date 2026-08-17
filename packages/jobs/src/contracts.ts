@@ -38,7 +38,7 @@ export const toAnyBackgroundJobDefinition = <TData>(
     await definition.handle(data as TData, context);
   },
   name: definition.name,
-  schema: definition.schema as ZodType,
+  schema: definition.schema,
 });
 
 /**

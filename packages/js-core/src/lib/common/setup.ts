@@ -24,7 +24,7 @@ import {
   okVoid,
 } from "@/types/error";
 
-const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
+const migrateLocalStorage = (): { changed: boolean; newState?: TLegacyConfig } => {
   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
 
   if (existingConfig) {
@@ -61,7 +61,7 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
     }
 
     if (changed) {
-      return { changed: true, newState: parsedConfig as unknown as TConfig };
+      return { changed: true, newState: parsedConfig };
     }
   }
 
@@ -90,7 +90,16 @@ export const setup = async (
     // otherwise, we just sync again!
 
     if (newState && !newState.user?.data?.userId) {
-      config.update(newState);
+      // Legacy configs could be persisted without a user state, or with a user missing `data` —
+      // substitute the default (rebuilding a complete state when only `data` survived) so
+      // downstream `config.user` reads keep working and the resync path still runs.
+      const legacyUser = newState.user;
+      config.update({
+        ...newState,
+        user: legacyUser?.data
+          ? { expiresAt: legacyUser.expiresAt ?? null, data: legacyUser.data }
+          : DEFAULT_USER_STATE_NO_USER_ID,
+      });
     }
   }
 
@@ -281,6 +290,7 @@ export const setup = async (
       });
 
       if (!workspaceResponse.ok) {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- the catch below feeds this structured ApiErrorResponse (code/responseMessage) to handleErrorOnFirstSetup
         throw workspaceResponse.error;
       }
 
