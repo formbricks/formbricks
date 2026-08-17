@@ -829,6 +829,13 @@ describe("Tests for createSurvey", () => {
 
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses as TActionClass[]);
+    // `createSurvey` re-reads the survey after reconciling its Embedded Data rows (ENG-2412), so the
+    // mock has to answer that read too. Echoing whatever the test made `survey.create` resolve to
+    // keeps each test's own fixture the single source of truth for the created shape.
+    prisma.survey.findUniqueOrThrow.mockImplementation((async () => {
+      const created = prisma.survey.create.mock.results.at(-1)?.value;
+      return created instanceof Promise ? await created : created;
+    }) as never);
   });
 
   describe("Happy Path", () => {
@@ -843,6 +850,48 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("returns the survey as it stands AFTER its Embedded Data rows are written", async () => {
+      // ENG-2412: `createSurvey` used to return the row it selected before the reconcile, whose
+      // `embeddedDataLinks` is necessarily empty — the links do not exist yet. That was survivable
+      // only while `getSurveyEmbeddedFields` fell back to the legacy columns; without the fallback it
+      // reports a survey that just persisted fields as having none. The read has to happen after.
+      //
+      // `findUniqueOrThrow` is given links here while `create` is not, so this fails if the return
+      // ever goes back to the pre-reconcile object.
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput, embeddedDataLinks: [] });
+      prisma.survey.findUniqueOrThrow.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        embeddedDataLinks: [
+          {
+            storageKey: "utm_source",
+            embeddedData: {
+              name: "utm_source",
+              source: "ingested",
+              dataType: "string",
+              defaultValue: null,
+              locked: false,
+            },
+          },
+        ],
+      } as never);
+
+      const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput);
+
+      expect(result.embeddedFields).toEqual([
+        {
+          field: {
+            name: "utm_source",
+            source: "ingested",
+            dataType: "string",
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "utm_source" },
+        },
+      ]);
     });
 
     test("strips archivedAt from a create payload so a caller can't create a pre-archived survey", async () => {

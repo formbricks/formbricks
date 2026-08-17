@@ -69,6 +69,12 @@ describe("survey service scheduling", () => {
     vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
     vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
     vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
+    // `createSurvey` re-reads the survey after that reconcile (ENG-2412), so the read has to be
+    // answered too. Echoing `survey.create`'s resolved value keeps each test's own fixture in charge.
+    vi.mocked(prisma.survey.findUniqueOrThrow).mockImplementation((async () => {
+      const created = vi.mocked(prisma.survey.create).mock.results.at(-1)?.value;
+      return created instanceof Promise ? await created : created;
+    }) as never);
   });
 
   afterEach(() => {

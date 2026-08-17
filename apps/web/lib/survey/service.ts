@@ -918,7 +918,13 @@ export const createSurvey = async (
           patch: { variables: createdSurvey.variables, hiddenFields: createdSurvey.hiddenFields },
         });
 
-        return createdSurvey;
+        // Re-read after the reconcile, not before it. `createdSurvey` was selected before the links
+        // existed, so its `embeddedDataLinks` is empty — and since ENG-2412 removed the legacy
+        // fallback, returning it would report a freshly created survey as having no Embedded Data at
+        // all. Cheap here in a way it would not be on the editor-save path: creation happens once per
+        // survey, and this also picks up the private-segment connect above, which `createdSurvey`
+        // predates.
+        return tx.survey.findUniqueOrThrow({ where: { id: createdSurvey.id }, select: selectSurvey });
       },
       // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
       // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or
@@ -933,8 +939,8 @@ export const createSurvey = async (
     const transformedSurvey: TSurvey = {
       // ENG-1837: this result is hand-built rather than routed through `transformPrismaSurvey`, so
       // the inlining has to happen here too — otherwise the raw relation leaks onto TSurvey. The
-      // rows are reconciled *after* the create above, so the list is empty here and the accessor
-      // falls back to the freshly written legacy columns, which carry the same definitions.
+      // rows are read back after the reconcile (see the transaction's return), so this list carries
+      // the definitions that were just written.
       ...withInlinedEmbeddedFields(survey),
       ...(survey.segment && {
         segment: {
