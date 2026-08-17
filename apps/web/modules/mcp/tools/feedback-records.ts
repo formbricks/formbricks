@@ -141,7 +141,8 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     },
     // The validated input is exactly the operation's filter contract, so it is spread rather than copied
     // field by field: adding a filter to the schema can't silently fail to reach the operation. Safe
-    // because MCP strips unknown keys and the operation allowlists what reaches the Hub.
+    // because the schema is `.strict()` (ENG-2256), so an undeclared key is rejected before this handler
+    // runs rather than spread onward, and the operation allowlists what reaches the Hub regardless.
     readOnlyHandler<TMcpListFeedbackRecordsInput>((input, authentication, requestId) =>
       listV3FeedbackRecords({ ...input, authentication, requestId, instance: MCP_API_ROUTE })
     )

@@ -28,9 +28,9 @@ export const ZMcpListWorkflowsInput = z
       .optional()
       .describe("Opaque pagination cursor from a previous list_workflows response."),
     filter: z
-      .object({
+      .strictObject({
         name: z
-          .object({
+          .strictObject({
             contains: z
               .string()
               .min(1)
@@ -41,7 +41,7 @@ export const ZMcpListWorkflowsInput = z
           .describe("Filter by workflow name.")
           .optional(),
         status: z
-          .object({
+          .strictObject({
             in: z
               .array(ZWorkflowStatus)
               .min(1)
@@ -85,9 +85,9 @@ export const ZMcpListWorkflowRunsInput = z
     workflowId: z.cuid2().optional().describe("Return only runs of this workflow."),
     responseId: z.cuid2().optional().describe("Return only runs triggered by this survey response."),
     filter: z
-      .object({
+      .strictObject({
         status: z
-          .object({
+          .strictObject({
             in: z
               .array(ZWorkflowRunStatus)
               .min(1)

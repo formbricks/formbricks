@@ -655,6 +655,27 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
     }
   );
 
+  /**
+   * The same failure one level down, which the first version of this change missed: `.strict()` on the
+   * outer object says nothing about `filter` or its sub-objects. A misspelled nested key was dropped and
+   * left `filter.status` as `{}` — an empty filter — so `list_surveys` returned every survey and reported
+   * success, which is ENG-2256's exact failure mode reopened inside the object it claims to have fixed.
+   * Raised in review on #8859.
+   */
+  test.each([
+    ["filter.status.include", { filter: { status: { include: ["draft"] } } }, "include"],
+    ["an unknown key on filter itself", { filter: { bogus: 1 } }, "bogus"],
+  ])("rejects a misspelled nested filter key: %s", async (_label, extra, expected) => {
+    const outcome = await callTool("list_surveys", {
+      workspaceId: "clxx1234567890123456789012",
+      ...extra,
+    });
+
+    expect(outcome.result?.isError).toBe(true);
+    expect(errorText(outcome)).toContain(expected);
+    expect(listV3Surveys).not.toHaveBeenCalled();
+  });
+
   test("accepts the declared spelling and reaches the operation", async () => {
     vi.mocked(listV3Surveys).mockResolvedValue(
       new Response(JSON.stringify({ data: [] }), {

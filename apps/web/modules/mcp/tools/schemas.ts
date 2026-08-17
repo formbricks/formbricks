@@ -25,10 +25,20 @@ import {
  * is now enforced where it is declared.
  *
  * The cost, accepted deliberately: `additionalProperties: false` is advertised on every tool, so a
- * client that adds its own keys to `arguments` is rejected rather than tolerated. Note this binds the
- * top level only — the opaque `z.record` fields on `create_survey` still accept any nested shape.
+ * client that adds its own keys to `arguments` is rejected rather than tolerated.
  *
- * Adding a schema? Add `.strict()` with it. And do not turn on @posthog/mcp's `context` injection
+ * **Structured sub-objects are strict too, not just the outer one.** `.strict()` binds a single object,
+ * so `filter` and its `name`/`status`/`type` children each need it as well — otherwise the same bug
+ * reopens one level down, and worse, quietly: a misspelled `filter.status.include` is dropped, leaves
+ * `filter.status` as `{}`, and the query runs unfiltered while reporting success. Raised in review on
+ * #8859 after the first version of this change only did the outer objects. The only things that still
+ * accept an arbitrary nested shape are the deliberately free-form `z.record` fields (`blocks`,
+ * `metadata`, `welcomeCard`, and the `data` payloads), which the v3 survey document contract validates
+ * once the call reaches the operation.
+ *
+ * Adding a schema? Add `.strict()` with it — and to every structured object nested inside it. Prefer
+ * `z.strictObject({...})` for the nested ones: `.strict()` returns a clone that drops `.describe()`, so
+ * appending it after a `.describe()` silently deletes the description the model reads. And do not turn on @posthog/mcp's `context` injection
  * (`lib/posthog/mcp-tracing.ts` keeps it off): it injects a `context` argument into every tool's
  * advertised schema, which these schemas would then reject.
  */
@@ -57,13 +67,13 @@ export const ZMcpListSurveysInput = z
     filter: z
       .object({
         name: z
-          .object({
+          .strictObject({
             contains: z.string().max(512).optional().describe("Case-insensitive survey name substring."),
           })
           .describe("Filter by survey name.")
           .optional(),
         status: z
-          .object({
+          .strictObject({
             in: z
               .array(ZSurveyStatus)
               .optional()
@@ -72,12 +82,13 @@ export const ZMcpListSurveysInput = z
           .describe("Filter by survey status.")
           .optional(),
         type: z
-          .object({
+          .strictObject({
             in: z.array(ZSurveyType).optional().describe("Survey types to include, for example link."),
           })
           .describe("Filter by survey type.")
           .optional(),
       })
+      .strict()
       .describe("Optional supported v3 survey filters.")
       .optional(),
     sortBy: ZSurveyFilters.shape.sortBy
@@ -96,7 +107,7 @@ export const ZMcpGetSurveyInput = z
   })
   .strict();
 
-const ZMcpSurveyLanguageInput = z.object({
+const ZMcpSurveyLanguageInput = z.strictObject({
   code: z.string().trim().min(1).describe("Language code or configured language alias."),
   default: z.boolean().optional().describe("Whether this language is the default language."),
   enabled: z.boolean().optional().describe("Whether this language is enabled."),
@@ -191,9 +202,10 @@ export const ZMcpGetFeedbackRecordInput = z
   })
   .strict();
 
-// Extends the plain field object (not the refined body): `inputSchema` needs a raw shape, and the
-// value/field_type rule is enforced by the operations layer, which is also where MCP-stripped unknown
-// keys become visible as a missing value.
+// Extends the plain field object rather than the refined body, so the value/field_type rule is enforced
+// by the operations layer. (Before ENG-2256 that layer was also where a stripped unknown key surfaced,
+// as a missing value; a misspelled key is now rejected by the SDK before the handler runs, so the
+// operations layer only ever sees declared keys.)
 export const ZMcpCreateFeedbackRecordInput = ZV3FeedbackRecordCreateBodyFields.extend({
   workspaceId: ZId.describe("Workspace ID to create the feedback record in."),
   datasetId: datasetIdField,
