@@ -39,6 +39,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
+      # Runs on EVERY trigger, forks included, because it needs no credentials.
+      # The validator's `owners` checks are API-backed and are skipped on fork
+      # PRs (see below), which would otherwise let an outside contributor add a
+      # path rule or an individual owner and still show green. This step also
+      # catches what `owner_checker_owners_must_be_teams` cannot: extra rules,
+      # and extra owners on the single line.
+      - name: Enforce single-team ownership
+        run: |
+          expected='*  @formbricks/engineering'
+          rules="$(grep -vE '^[[:space:]]*(#|$)' .github/CODEOWNERS || true)"
+          count="$(printf '%s' "$rules" | grep -c . || true)"
+          # Compare on collapsed, trimmed whitespace so incidental spacing does
+          # not fail the build; nothing formats this file, so spacing drifts.
+          norm() { printf '%s' "$1" | tr -s '[:space:]' ' ' | sed 's/^ //; s/ $//'; }
+          if [ "$count" != "1" ] || [ "$(norm "$rules")" != "$(norm "$expected")" ]; then
+            echo "::error file=.github/CODEOWNERS::CODEOWNERS must contain exactly one rule -- '${expected}' -- so that GitHub assigns exactly one reviewer. Adding path rules or extra owners reverts to 3-6 reviewers per PR. Found ${count} rule(s):"
+            printf '%s\n' "$rules"
+            exit 1
+          fi
+          echo "CODEOWNERS is the expected single team rule."
+
       - name: Note reduced check set on fork pull requests
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         run: |

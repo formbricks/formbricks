@@ -6,17 +6,20 @@
 #
 #  WHY IT LOOKS LIKE THIS
 #
-#  GitHub requests review from EVERY owner of EVERY matching rule, and it never
-#  thins that set. The first version of this file named two to three individuals
-#  across 98 path rules, and auto-requested 3-6 reviewers per pull request
-#  (mean 3.6, max 6, measured across 25 merged PRs) — most of the team on every
-#  change.
+#  For each changed FILE, the last matching rule wins and every owner named on
+#  that one line is requested. A pull request's reviewers are then the union of
+#  those per-file winners, and GitHub never thins the result. So the count grows
+#  two ways: several owners on a line, and several areas touched in one PR.
+#
+#  The first version of this file named two to three individuals across 98 path
+#  rules and auto-requested 3-6 reviewers per pull request (mean 3.6, max 6,
+#  measured across 25 merged PRs) — most of the team on every change.
 #
 #  Naming fewer individuals does not fix it. Even one owner per rule measured
-#  2.1 reviewers on average, because a pull request touching several areas
-#  matches several rules and the owners are unioned. Splitting into domain teams
-#  does not fix it either, and gets worse the more teams you add: three teams
-#  measured 1.6, five measured 1.8.
+#  2.1 reviewers on average, because a pull request touching several areas has
+#  several different per-file winners. Splitting into domain teams does not fix
+#  it either, and gets worse the more teams you add: three teams measured 1.6,
+#  five measured 1.8.
 #
 #  A TEAM owner is the only thing GitHub will thin, so one team owns everything.
 #  @formbricks/engineering is configured under
@@ -32,9 +35,11 @@
 #
 #  The whole engineering team is in the rotation and shares the review load.
 #
-#  DO NOT ADD PATH RULES NAMING INDIVIDUALS. It silently reintroduces the
-#  multi-reviewer problem this file exists to solve. CI enforces team-only
-#  owners, so such a change fails the build rather than shipping quietly — see
+#  DO NOT ADD PATH RULES, AND DO NOT NAME INDIVIDUALS. Either silently
+#  reintroduces the multi-reviewer problem this file exists to solve. CI blocks
+#  both: a credential-free step asserts this file is exactly the one rule below,
+#  and it runs on every pull request including those from forks, where the
+#  API-backed owner checks cannot run. See
 #  .github/workflows/codeowners-validation.yml.
 #
 #  KNOWN TRADE-OFF
