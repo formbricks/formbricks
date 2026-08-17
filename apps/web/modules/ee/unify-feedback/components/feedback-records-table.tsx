@@ -1,16 +1,7 @@
 "use client";
 
 import { TFunction } from "i18next";
-import {
-  CalendarIcon,
-  ChevronDownIcon,
-  HashIcon,
-  MessageSquareTextIcon,
-  PlusIcon,
-  RefreshCwIcon,
-  ToggleLeftIcon,
-  TypeIcon,
-} from "lucide-react";
+import { ChevronDownIcon, MessageSquareTextIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -32,6 +23,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { deleteFeedbackRecordAction } from "../actions";
+import { FieldTypeIcon } from "../lib/field-type-icons";
 import { formatFieldType, formatSourceType, resolveFeedbackDisplayText } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
@@ -41,18 +33,6 @@ import { TranslatedBadge } from "./translated-badge";
 const RECORDS_PER_PAGE = 50;
 // Must not exceed the getFeedbackRecordContactsAction input cap (`userIds` is `.max(1000)`).
 const CONTACT_RESOLVE_BATCH_SIZE = 1000;
-
-const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
-  text: <TypeIcon className="size-3.5" />,
-  categorical: <HashIcon className="size-3.5" />,
-  nps: <HashIcon className="size-3.5" />,
-  csat: <HashIcon className="size-3.5" />,
-  ces: <HashIcon className="size-3.5" />,
-  rating: <HashIcon className="size-3.5" />,
-  number: <HashIcon className="size-3.5" />,
-  boolean: <ToggleLeftIcon className="size-3.5" />,
-  date: <CalendarIcon className="size-3.5" />,
-};
 
 // resolvedText (translation-preferred) is computed once by the caller; null falls through to other types.
 const formatValue = (
@@ -592,7 +572,7 @@ const FeedbackRecordRow = ({
       </td>
       <td className="px-4 py-3 whitespace-nowrap">
         <span className="inline-flex items-center gap-1 text-slate-600">
-          {FIELD_TYPE_ICONS[record.field_type] ?? <HashIcon className="size-3.5" />}
+          <FieldTypeIcon fieldType={record.field_type} className="size-3.5" />
           {formatFieldType(record.field_type)}
         </span>
       </td>
