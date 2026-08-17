@@ -299,8 +299,8 @@ importers:
         specifier: 8.5.0
         version: 8.5.0(@ai-sdk/provider@3.0.10)(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.0))(posthog-node@5.28.11(rxjs@7.8.2))
       '@posthog/mcp':
-        specifier: 0.11.4
-        version: 0.11.4(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(posthog-node@5.28.11(rxjs@7.8.2))
+        specifier: 0.11.6
+        version: 0.11.6(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(posthog-node@5.28.11(rxjs@7.8.2))
       '@prisma/client':
         specifier: 7.8.0
         version: 7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3)
@@ -458,8 +458,8 @@ importers:
         specifier: 14.2.0
         version: 14.2.0
       mcp-handler:
-        specifier: 2.1.0
-        version: 2.1.0(@modelcontextprotocol/server@2.0.0)(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
+        specifier: 2.1.1
+        version: 2.1.1(@modelcontextprotocol/server@2.0.0)(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       next:
         specifier: 16.2.11
         version: 16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -3987,11 +3987,11 @@ packages:
   '@posthog/core@1.46.1':
     resolution: {integrity: sha512-EoCFduRkvrg9E5ylMi4QnZCjlAdRJCq6tJouWfngBVR79XSI4iPvIWYA+CdzokAjk+TfSVBFVJ++4Im3r+T0Dg==}
 
-  '@posthog/core@1.47.0':
-    resolution: {integrity: sha512-LW62V+9yx7G7mLd+EYpwW0PiaPZI8XRJ1tLuhw+9fXHpugLp8XQD5JuCQ2kIXvoUfyx1DpKfGQY3dUnzMOIn7Q==}
+  '@posthog/core@1.48.0':
+    resolution: {integrity: sha512-ezKjVLw9y3Q235PUY+2hRr5DN9t6j2jF1mFAvnvhCCu/Ha6/qBv3zmVJBaHu9PnqqSNtx2St3ggN8Z3TTu/12A==}
 
-  '@posthog/mcp@0.11.4':
-    resolution: {integrity: sha512-+ke5hLM2CVtRL6W7NmJTXSxpyo2/CC49Zo+aAmZ1auReqGoxlzADbYvF39S36y6GxXuOzXhR4CVN6XiCEB4ztA==}
+  '@posthog/mcp@0.11.6':
+    resolution: {integrity: sha512-ff3GtsYAPX05WjeJ8NX6NtYbtWlXwwjnhcuGq0YyfJX9tmkem5tzldp0LIquWCqpaeJVjiz80GRWTCofvAAveA==}
     engines: {node: ^20.20.0 || >=22.22.0}
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.26.0'
@@ -4009,8 +4009,8 @@ packages:
   '@posthog/types@1.399.0':
     resolution: {integrity: sha512-/WDwBzqIPko8VJ1B+0rlso2XQEz9+2sqtsY9Tqy3p1GhgTqsFakcz/PmMpAnA321LTEZVRcO6x5hAwABV4yrDw==}
 
-  '@posthog/types@1.402.2':
-    resolution: {integrity: sha512-ZZTiS4dLwF4/D0YTzS3gGSLFnhuNOY5yu4d9VGS9trGe5GW6FjIXo20p18K5BPW2RZSYSld8sdnSAY3AUXleUQ==}
+  '@posthog/types@1.404.0':
+    resolution: {integrity: sha512-/Y1zKv8SdwkK725SkmgT5QVYnXE7Fi23SPDCZ5Ybu27gTQub4yMTKWuUQekW+gkSKBZ0LyYCQK52mhyMMigMBw==}
 
   '@preact/preset-vite@2.10.5':
     resolution: {integrity: sha512-p0vJpxiVO7KWWazWny3LUZ+saXyZKWv6Ju0bYMWNJRp2YveufRPgSUB1C4MTqGJfz07EehMgfN+AJNwQy+w6Iw==}
@@ -9525,8 +9525,8 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
-  mcp-handler@2.1.0:
-    resolution: {integrity: sha512-mhnUpkgWrXMwwhdbJ5Uq43uUV23Emxfq3fRfsFwt8Kjc35cGUiKuYeX9wjwnvsdTiKsmjXnQ4tO4awWa3ZM4LQ==}
+  mcp-handler@2.1.1:
+    resolution: {integrity: sha512-D/PAwxF9TexmixJY+FZMgYq9SSbGm3vtcUjwUHZ8tYYuOtGT3/KgAKBjO3UJZoXgW8nHDtv8ySOICMEZPD0b/Q==}
     engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
@@ -16143,13 +16143,13 @@ snapshots:
     dependencies:
       '@posthog/types': 1.399.0
 
-  '@posthog/core@1.47.0':
+  '@posthog/core@1.48.0':
     dependencies:
-      '@posthog/types': 1.402.2
+      '@posthog/types': 1.404.0
 
-  '@posthog/mcp@0.11.4(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(posthog-node@5.28.11(rxjs@7.8.2))':
+  '@posthog/mcp@0.11.6(@modelcontextprotocol/sdk@1.26.0(zod@4.3.6))(@modelcontextprotocol/server@2.0.0)(posthog-node@5.28.11(rxjs@7.8.2))':
     dependencies:
-      '@posthog/core': 1.47.0
+      '@posthog/core': 1.48.0
       posthog-node: 5.28.11(rxjs@7.8.2)
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.26.0(zod@4.3.6)
@@ -16159,7 +16159,7 @@ snapshots:
 
   '@posthog/types@1.399.0': {}
 
-  '@posthog/types@1.402.2': {}
+  '@posthog/types@1.404.0': {}
 
   '@preact/preset-vite@2.10.5(@babel/core@7.29.6)(preact@10.29.1)(rollup@4.59.0)(vite@7.3.5(@types/node@25.4.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
@@ -22273,7 +22273,7 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mcp-handler@2.1.0(@modelcontextprotocol/server@2.0.0)(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)):
+  mcp-handler@2.1.1(@modelcontextprotocol/server@2.0.0)(next@16.2.11(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)):
     dependencies:
       '@modelcontextprotocol/server': 2.0.0
       chalk: 5.6.2
