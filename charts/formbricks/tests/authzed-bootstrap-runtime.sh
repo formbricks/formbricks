@@ -77,9 +77,13 @@ start_postgres() {
   docker run --detach --name "${container}" \
     --env POSTGRES_PASSWORD=superuser-pw "postgres:${version}-alpine" >/dev/null
   containers+=("${container}")
+  # Probe over TCP, not the Unix socket. The postgres entrypoint runs a temporary socket-only server
+  # while it initialises the data directory, so a socket probe reports ready, the entrypoint then
+  # stops that server, and the next command fails with "No such file or directory" — which is exactly
+  # how this first went red in CI while passing locally. The real server is the one listening on TCP.
   local attempt=1
-  until docker exec "${container}" pg_isready --username postgres >/dev/null 2>&1; do
-    if [ "${attempt}" -ge 60 ]; then
+  until docker exec "${container}" pg_isready --host 127.0.0.1 --username postgres >/dev/null 2>&1; do
+    if [ "${attempt}" -ge 90 ]; then
       printf '%s\n' "PostgreSQL ${version} did not become ready." >&2
       exit 1
     fi
@@ -103,7 +107,8 @@ run_bootstrap() {
 }
 
 as_superuser() {
-  docker exec "$1" psql --username postgres --dbname postgres --tuples-only --no-align --command "$2"
+  docker exec --env PGPASSWORD=superuser-pw "$1" \
+    psql --host 127.0.0.1 --username postgres --dbname postgres --tuples-only --no-align --command "$2"
 }
 
 for version in "${postgres_versions[@]}"; do
