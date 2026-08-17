@@ -305,6 +305,7 @@ Valid targets are:
 
 ```text
 server_action:user
+page:user
 api_v1:user
 api_v1:apiKey
 api_v2:apiKey
@@ -312,7 +313,15 @@ api_v3:user
 api_v3:apiKey
 mcp:user
 mcp:apiKey
+feedback_gateway:user
+feedback_gateway:apiKey
 ```
+
+`page:user` is the server-rendered route surface. It is the one target whose boundary is not a single
+request wrapper — see `apps/web/lib/authorization/context.ts` for what it does and does not cover.
+
+This block is asserted against `AUTHZED_AUTHORIZATION_ROLLOUT_TARGETS` by
+`apps/web/lib/authzed/rollout-runbook.test.ts`, so a new target cannot ship without appearing here.
 
 Use `*` as the sole organization entry only when every organization in the deployment is intentionally
 selected. Empty CSV entries, unknown targets, unsupported surface/actor pairs, or mixing `*` with
