@@ -52,9 +52,9 @@ what those cannot show. -->
 
 **Coverage**
 
-<!-- One row per behaviour the diff changes: name the test (not a count), how strong that check is, and
-what you observed. Name the account, plan or flag state where an outcome depends on it. For UI work,
-attach the screenshot or screencast that proves it — fold it if long. -->
+<!-- One row per behaviour the diff changes: for an automated row name the test or spec (not a count),
+how strong that check is, and what you observed. Name the account, plan or flag state where an outcome
+depends on it. For UI work, attach the screenshot or screencast that proves it — fold it if long. -->
 
 <!-- "How" uses one of: `unit (red on main)` — fails against the old code, so it proves the bug
 existed; `unit (mutation)` — only fails if you break the fix, because the code under test is new;
