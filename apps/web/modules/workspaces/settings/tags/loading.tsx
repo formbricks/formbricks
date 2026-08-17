@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { SettingsTableSkeleton } from "@/modules/ui/components/settings-table";
+import { getTagColumns } from "@/modules/workspaces/settings/tags/components/edit-tags-wrapper";
 
 export const TagsLoading = () => {
   const { t } = useTranslation();
@@ -12,29 +14,29 @@ export const TagsLoading = () => {
       <PageHeader pageTitle={t("common.tags")} />
       <SettingsCard
         title={t("workspace.tags.manage_tags")}
-        description={t("workspace.tags.manage_tags_description")}>
-        <div className="w-full">
-          <div className="grid grid-cols-4 content-center rounded-lg bg-white text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-2">{t("workspace.tags.tag")}</div>
-            <div className="col-span-1 text-center">{t("workspace.tags.count")}</div>
-            <div className="col-span-1 flex justify-center text-center">{t("common.actions")}</div>
-          </div>
-          <div className="w-full">
-            {[...Array(3)].map((_, idx) => (
-              <div key={`tag-skeleton-${idx}`} className="grid h-16 w-full grid-cols-4 content-center">
-                <div className="col-span-2 h-10 animate-pulse rounded-md bg-slate-200" />
+        description={t("workspace.tags.manage_tags_description")}
+        bodyVariant="flush">
+        {/*
+          Columns come from the table's own factory, so the skeleton cannot drift from the header the way
+          the hand-rolled one had.
 
-                <div className="flex items-center justify-center">
-                  <div className="size-5 animate-pulse rounded-md bg-slate-200" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-1/2 animate-pulse rounded-md bg-slate-200" />
-                  <div className="h-8 w-1/2 animate-pulse rounded-md bg-slate-200" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          `isReadOnly: false` is a genuine limitation rather than a choice: a route `loading.tsx` receives
+          no props and has no auth context, so it cannot know whether the actions column will be there. It
+          renders the editor's three columns, which is the common case. The widths do not rely on summing
+          to exactly 100% — `table-auto` rescales the rest when a column is absent — so a read-only viewer
+          sees one placeholder column disappear rather than a re-layout.
+
+          `environmentTags` and `tagCountByTagId` are never read: the skeleton renders headers and
+          placeholder bars, and never calls `cell`.
+        */}
+        <SettingsTableSkeleton
+          columns={getTagColumns({
+            t,
+            environmentTags: [],
+            tagCountByTagId: new Map(),
+            isReadOnly: false,
+          })}
+        />
       </SettingsCard>
     </PageContentWrapper>
   );
