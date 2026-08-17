@@ -269,7 +269,8 @@ record at all. Treat the result as sensitive operational data.
 - `unmanaged` reports relationships outside the managed vocabulary as an object type, an object ID and a
   relation name. Those object IDs are not limited to the kinds above — anything else sharing the SpiceDB
   instance appears here.
-- `failures` carries the organization ID of each unit that failed, so even a failed run emits identifiers.
+- `failures` carries an organization ID for each failed unit that has one, so even a failed run emits
+  identifiers. It is empty when the read that would have identified the organization is what failed.
 - `lastOrganizationId` is the resume cursor: the last organization the sweep reached, or `null` if it reached
   none.
 
@@ -340,13 +341,17 @@ reached no organization, so there is nothing to resume after — rerun the sweep
 formbricks-authzed backfill --apply --after-organization-id=<last-organization-id>
 ```
 
-The cursor advances past every organization the sweep reached, and a failed organization does not stop the
-sweep — so anything listed in `failures` sits behind the cursor and a resume will not retry it. Rerun each
-failed organization explicitly, in addition to resuming from the cursor:
+The cursor advances past every organization the sweep reached, and an organization-specific failure does not
+stop the sweep — so each failure carrying a non-empty `organizationId` sits behind the cursor, and a resume
+will not retry it. Rerun those explicitly, in addition to resuming from the cursor:
 
 ```bash
 formbricks-authzed backfill --apply --organization-id=<failed-organization-id>
 ```
+
+A failure with an **empty** `organizationId` is not one of those: the read that would have identified the
+organization is itself what failed, so there is nothing to target. Within a sweep those also set `truncated` —
+rerun the sweep rather than a single organization.
 
 ### Prune orphans
 
