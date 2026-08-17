@@ -1903,6 +1903,7 @@
       "unable_to_copy_api_key": "APIキーをコピーできません",
       "unable_to_delete_api_key": "APIキーを削除できません",
       "unknown_workspace": "不明なワークスペース",
+      "view_permissions_for": "{{label}}の権限を表示",
       "workspace_access": "ワークスペースアクセス",
       "workspace_access_description": "アンケートと回答データ。ワークスペースごとにアクセス権を付与します。",
       "workspace_access_empty": "まだワークスペースが追加されていません。"

@@ -60,7 +60,7 @@ export function AddExistingChartsDialog({
   const [isAdding, setIsAdding] = useState(false);
 
   const existingChartIdsRef = useRef(existingChartIds);
-  // eslint-disable-next-line react-hooks/refs -- migration ENG-1677
+  // eslint-disable-next-line react-hooks/refs -- migration ENG-2366
   existingChartIdsRef.current = existingChartIds;
 
   const loadCharts = useCallback(async () => {

@@ -315,14 +315,14 @@ reviews:
         Conventional Commits: `type(optional-scope): summary`, where type is one of feat, fix,
         chore, docs, refactor, perf, test, build, ci, style, or revert. The summary must describe
         what the change does, in lower case, without a trailing period. A Linear ticket reference
-        such as `(ENG-1234)` or `[ENG-1234]` may be appended.
+        such as `(ENG-<id>)` or `[ENG-<id>]` may be appended.
     description:
       mode: warning
     issue_assessment:
       mode: warning
     # `pr-label-sync.yml` reads the checkbox in the Breaking changes section; these check whether
-    # what the author ticked is true of the diff, and whether the QA plan a release tester will be
-    # handed is actually executable. Both are advisory — nothing here blocks a merge.
+    # what the author ticked is true of the diff, and whether the PR's own QA covers every behaviour
+    # it changes. Both are advisory — nothing here blocks a merge.
     custom_checks:
       - name: Breaking changes match the diff
         mode: warning
@@ -358,27 +358,46 @@ reviews:
           an API response shape — for example when the shape comes from a serializer or type that
           this PR does not touch.
 
-      - name: QA plan is executable by a tester
+      - name: Only the ticket line carries a magic word
         mode: warning
         instructions: |
-          Check the PR description's "## QA / Test Plan" section. Its audience is a manual tester
-          with no repository or CLI access, working only from the running app or the live API.
+          Linear and GitHub scan the whole PR description for a closing keyword next to an issue
+          id, so a second one in prose silently links — and on merge closes — an unrelated ticket.
+
+          FAIL if a magic word (`Fixes`, `Closes`, `Resolves`, `Ref`) sits next to a ticket id
+          (`ENG-<number>`) or a GitHub issue reference (`#<number>`) anywhere in the description
+          other than the ticket line at the top. Inline code and code fences do not exempt it —
+          the scanners read the raw body. Quote the offending text and suggest rewriting the id as
+          `ENG-…` or dropping the magic word.
+
+          PASS if the only such pair is the ticket line at the top of the description.
+
+      - name: Coverage accounts for the whole diff
+        mode: warning
+        instructions: |
+          Check the PR description's "## How this was tested" section. It holds all QA for the
+          change — there is no separate release QA pass — so it must account for every behaviour
+          the diff changes.
 
           FAIL if any of the following is true:
-          - The "How to test" subsection has no steps, or holds only the unedited template
-            placeholder text.
-          - A step cannot be performed through the app UI or an HTTP request — for example it
-            references `pnpm test`, `pnpm build`, `grep`, a source file, a function name, or
-            reading code. Those belong in "How this was tested" instead. Published documentation
-            pages are a user-facing surface and are fine to reference.
-          - A step states an action with no expected result, or an expected result with no action.
+          - The "Coverage" table is empty, or holds only the unedited template placeholder row.
+          - A behaviour the diff changes has neither a row in "Coverage" nor an entry under
+            "Open gaps".
+          - A row names a behaviour with no verification method, or a method with no observed
+            outcome.
+          - A `unit` or `e2e` row does not name the test or spec it rests on. A `manual` row has no
+            test to name and passes without one.
+          - A row claims `red on main` or `mutation` without a command or a mutated `file:line` a
+            reviewer could rerun.
+          - The diff changes rendered UI and the description attaches no screenshot or screencast.
+          - The "Open gaps" subsection is absent. An explicit "none" passes.
 
-          PASS if every step in "How to test" pairs an action such a tester can perform with an
-          observable expected result.
+          PASS if every behaviour the diff changes is either covered by a row stating how it was
+          verified and what was observed, or listed under "Open gaps" with a reason.
 
-          PASS also when the PR changes no user-facing or API behaviour — for example it only
-          touches CI configuration, repository tooling, tests, or documentation — and the section
-          says so explicitly rather than being left empty.
+          PASS also when the PR changes no product behaviour — for example it only touches CI
+          configuration, repository tooling, tests, or documentation — and the section says so
+          explicitly rather than being left empty.
 
   post_merge_actions: []
 

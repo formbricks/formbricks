@@ -6,7 +6,7 @@ name: PR Label Sync
 #
 # Currently configured:
 #   - the checkbox in the "Breaking changes" section -> `breaking-change`
-#     The Release QA audit filters on this label to compile release notes + the migration guide.
+#     Release notes and the self-hoster migration guide are compiled from the PRs carrying it.
 #
 # Uses pull_request_target because adding a label needs a write-scoped token (incl. fork PRs). This is
 # safe here: the job only reads the PR *body* (data) and never checks out or runs PR code.

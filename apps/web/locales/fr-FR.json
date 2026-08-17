@@ -1903,6 +1903,7 @@
       "unable_to_copy_api_key": "Impossible de copier la clé API",
       "unable_to_delete_api_key": "Impossible de supprimer la clé API",
       "unknown_workspace": "Espace de travail inconnu",
+      "view_permissions_for": "Voir les autorisations pour {{label}}",
       "workspace_access": "Accès à l'espace de travail",
       "workspace_access_description": "Données d'enquête et de réponse. Accorde l'accès un espace de travail à la fois.",
       "workspace_access_empty": "Aucun espace de travail ajouté pour le moment."

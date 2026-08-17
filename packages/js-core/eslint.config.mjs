@@ -1,3 +1,13 @@
 import library from "@formbricks/eslint-config/library";
 
-export default library;
+export default [
+  ...library({ tsconfigRootDir: import.meta.dirname }),
+  {
+    files: ["**/*.test.ts"],
+    rules: {
+      // vitest assertions (`expect(obj.method).toHaveBeenCalled…`, `vi.mocked(obj.method)`)
+      // reference methods without invoking them, so no `this` can go astray.
+      "@typescript-eslint/unbound-method": "off",
+    },
+  },
+];
