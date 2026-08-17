@@ -56,10 +56,7 @@ const reconcile = (
   surveyId: string,
   workspaceId: string,
   legacy: Parameters<typeof toDesiredEmbeddedFields>[0]
-) =>
-  prisma.$transaction((tx) =>
-    reconcileEmbeddedData(tx, { surveyId, workspaceId, desired: toDesiredEmbeddedFields(legacy) })
-  );
+) => prisma.$transaction((tx) => reconcileEmbeddedData(tx, { surveyId, workspaceId, patch: legacy }));
 
 beforeEach(async () => {
   await resetDb();
@@ -188,8 +185,13 @@ describe("reconcileEmbeddedData (real Postgres)", () => {
     const { surveyId, workspaceId } = await seedSurvey();
     await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["plan"] } });
 
+    // Both groups, because that is what a save sends — every caller merges over the loaded survey
+    // before calling in. Passing `variables` alone is a test-only shape now that an omitted group
+    // means "leave it alone": it would carry the ingested `plan` over and collide with the computed
+    // one, which `assertNoDuplicateStorageKeys` has always rejected.
     await reconcile(surveyId, workspaceId, {
       variables: [{ id: "plan", name: "plan", type: "text", value: "pro" }],
+      hiddenFields: { enabled: true, fieldIds: [] },
     });
 
     expect(await readFields(surveyId)).toMatchObject([{ storageKey: "plan", source: "computed" }]);

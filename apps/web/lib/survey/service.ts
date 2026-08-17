@@ -4,7 +4,6 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
-import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import {
   DatabaseError,
   InvalidInputError,
@@ -337,7 +336,7 @@ export const updateSurveyInternal = async (
       // the join below. `surveyData` is spread straight into `tx.survey.update`'s `data`, and
       // `Survey` owns relations named `embeddedData` / `embeddedDataLinks` — so leaving it in would
       // turn a read projection into a nested relation write. The rows are written by
-      // `reconcileEmbeddedData` from the persisted legacy columns instead.
+      // `reconcileEmbeddedData` from `updatedSurvey`'s legacy keys instead (ENG-2412).
       embeddedFields: _embeddedFields,
       ...surveyData
     } = updatedSurvey;
@@ -632,11 +631,12 @@ export const updateSurveyInternal = async (
           select: selectSurvey,
         });
 
-        // ENG-1978: mirror the saved fields into the EmbeddedData tables in the same transaction, so a
-        // survey never commits without them. Derived from the PERSISTED survey rather than the payload:
-        // a partial update leaves `variables` / `hiddenFields` untouched in the column, and reading the
-        // payload instead would see them as absent and delete every row. workspaceId comes from the
-        // stored survey for the ENG-1749 reason above — never from the client.
+        // ENG-1978: write the saved fields into the EmbeddedData tables in the same transaction, so a
+        // survey never commits without them. ENG-2412: from the PAYLOAD, which is what makes the rows
+        // the write source of truth rather than a copy of the columns `data` just wrote. A caller that
+        // omits either key is not saying "delete these" — `reconcileEmbeddedData` carries that group's
+        // current rows over untouched. workspaceId comes from the stored survey for the ENG-1749
+        // reason above — never from the client.
         //
         // NOTE (ENG-1837): `survey` was read BEFORE this reconcile, so the `embeddedDataLinks` it
         // carries — and the `embeddedFields` inlined from them by `transformPrismaSurvey` below —
@@ -656,7 +656,7 @@ export const updateSurveyInternal = async (
         await reconcileEmbeddedData(tx, {
           surveyId,
           workspaceId: currentSurvey.workspaceId,
-          desired: toDesiredEmbeddedFields(survey),
+          patch: { variables: updatedSurvey.variables, hiddenFields: updatedSurvey.hiddenFields },
         });
 
         return survey;
@@ -915,10 +915,16 @@ export const createSurvey = async (
         await reconcileEmbeddedData(tx, {
           surveyId: createdSurvey.id,
           workspaceId: parsedWorkspaceId,
-          desired: toDesiredEmbeddedFields(createdSurvey),
+          patch: { variables: createdSurvey.variables, hiddenFields: createdSurvey.hiddenFields },
         });
 
-        return createdSurvey;
+        // Re-read after the reconcile, not before it. `createdSurvey` was selected before the links
+        // existed, so its `embeddedDataLinks` is empty — and since ENG-2412 removed the legacy
+        // fallback, returning it would report a freshly created survey as having no Embedded Data at
+        // all. Cheap here in a way it would not be on the editor-save path: creation happens once per
+        // survey, and this also picks up the private-segment connect above, which `createdSurvey`
+        // predates.
+        return tx.survey.findUniqueOrThrow({ where: { id: createdSurvey.id }, select: selectSurvey });
       },
       // This transaction predates ENG-1978, but the reconcile above adds a read plus two writes per
       // field inside it, and neither `variables` nor `hiddenFields` is bounded — so a large template or
@@ -933,8 +939,8 @@ export const createSurvey = async (
     const transformedSurvey: TSurvey = {
       // ENG-1837: this result is hand-built rather than routed through `transformPrismaSurvey`, so
       // the inlining has to happen here too — otherwise the raw relation leaks onto TSurvey. The
-      // rows are reconciled *after* the create above, so the list is empty here and the accessor
-      // falls back to the freshly written legacy columns, which carry the same definitions.
+      // rows are read back after the reconcile (see the transaction's return), so this list carries
+      // the definitions that were just written.
       ...withInlinedEmbeddedFields(survey),
       ...(survey.segment && {
         segment: {

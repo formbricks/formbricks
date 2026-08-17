@@ -6,7 +6,11 @@ import {
   type TEmbeddedDataType,
   isLocalEmbeddedData,
 } from "@formbricks/types/embedded-data";
-import { type TDesiredEmbeddedField } from "@formbricks/types/embedded-data-mapping";
+import {
+  type TDesiredEmbeddedField,
+  type TLegacyEmbeddedFields,
+  toDesiredEmbeddedFields,
+} from "@formbricks/types/embedded-data-mapping";
 import { InvalidInputError } from "@formbricks/types/errors";
 
 /** One field a survey currently has, as the link plus the definition it points at. */
@@ -48,6 +52,47 @@ const SELECT_CURRENT_FIELDS = {
     select: { id: true, surveyId: true, name: true, source: true, dataType: true, defaultValue: true },
   },
 } satisfies Prisma.SurveyEmbeddedDataSelect;
+
+/**
+ * Works out what a survey should have after a save: whichever of the two legacy groups the payload
+ * actually carried, and its current rows for the group it did not.
+ *
+ * This is what makes the rows the write source of truth rather than a copy of the columns. It has to
+ * be a merge rather than a straight read of the payload, because `updateSurveyInternal` and the v3
+ * patch both accept partial updates: a call carrying only `{ name }` would otherwise resolve to an
+ * empty set and delete every field the survey has. Renaming a survey would wipe its Embedded Data.
+ *
+ * **Presence is `!== undefined`, not the `in` operator.** Every write seam builds one object literal
+ * with both keys spelled out and lets Prisma ignore the undefined ones, so `"variables" in patch` is
+ * true even for a payload that never mentioned variables — and would clear them.
+ *
+ * The two groups are merged independently because they arrive independently: a payload carrying
+ * `variables` alone must leave the ingested rows exactly where they are.
+ *
+ * `computed` and `ingested` are the only two sources carried over, and that is the whole set a row
+ * can have: `ZEmbeddedData` rejects `source: "reserved"` outright, because reserved fields are a
+ * code catalog projected at read time rather than anything stored. A `reserved` row is therefore
+ * unrepresentable through every write path — and if one ever appeared through raw SQL, this would
+ * drop it, which is the correct outcome for a row the schema says cannot exist.
+ */
+export const resolveDesiredEmbeddedFields = (
+  current: TDesiredEmbeddedField[],
+  patch: Partial<TLegacyEmbeddedFields>
+): TDesiredEmbeddedField[] => {
+  const carriedOver = (source: TEmbeddedDataSource): TDesiredEmbeddedField[] =>
+    current.filter((entry) => entry.source === source);
+
+  // Order matters: the index in this list becomes each field's stored position, and
+  // `toDesiredEmbeddedFields` puts every computed field before every ingested one.
+  return [
+    ...(patch.variables !== undefined
+      ? toDesiredEmbeddedFields({ variables: patch.variables })
+      : carriedOver("computed")),
+    ...(patch.hiddenFields !== undefined
+      ? toDesiredEmbeddedFields({ hiddenFields: patch.hiddenFields })
+      : carriedOver("ingested")),
+  ];
+};
 
 /**
  * Prisma distinguishes a JSON `null` from a SQL `NULL` on a nullable Json column, so "this field has
@@ -152,8 +197,13 @@ export const planEmbeddedDataReconcile = (
 };
 
 /**
- * Brings a survey's `EmbeddedData` rows and links in step with the legacy shape it was just saved
- * with.
+ * Brings a survey's `EmbeddedData` rows and links in step with the payload it was just saved with.
+ *
+ * **The payload, not the persisted survey** (ENG-2412). The rows are the write source of truth now;
+ * `survey.variables` / `survey.hiddenFields` are written from the same payload in the same
+ * transaction and kept only as a rollback path until they are dropped. Reading the persisted survey
+ * here instead would put the columns back in charge, and reading the rows would be circular — the
+ * target would always equal the current state and no edit would ever persist.
  *
  * Runs inside the caller's transaction so a survey never commits without its fields, and takes
  * `workspaceId` explicitly because the copy flow writes into a *different* workspace than the one it
@@ -167,13 +217,14 @@ export const reconcileEmbeddedData = async (
   {
     surveyId,
     workspaceId,
-    desired,
-  }: { surveyId: string; workspaceId: string; desired: TDesiredEmbeddedField[] }
+    patch,
+  }: { surveyId: string; workspaceId: string; patch: Partial<TLegacyEmbeddedFields> }
 ): Promise<void> => {
-  assertNoDuplicateStorageKeys(desired);
-
   const links = await tx.surveyEmbeddedData.findMany({
     where: { surveyId },
+    // The group the payload did not carry keeps its stored positions, and those become indexes in
+    // `desired` — so the rows have to arrive in the order they are stored in, not in Postgres' whim.
+    orderBy: [{ order: "asc" }, { storageKey: "asc" }],
     select: SELECT_CURRENT_FIELDS,
   });
 
@@ -183,6 +234,18 @@ export const reconcileEmbeddedData = async (
     order: link.order,
     field: link.embeddedData,
   }));
+
+  const desired = resolveDesiredEmbeddedFields(
+    current.map(({ storageKey, field }) => ({
+      storageKey,
+      name: field.name,
+      source: field.source,
+      dataType: field.dataType,
+      defaultValue: field.defaultValue,
+    })),
+    patch
+  );
+  assertNoDuplicateStorageKeys(desired);
 
   const plan = planEmbeddedDataReconcile(surveyId, current, desired);
 

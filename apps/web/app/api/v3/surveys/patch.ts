@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -245,9 +244,12 @@ export async function executeV3SurveyPatch(params: {
 
         const survey = await runSurveyUpdate(tx);
 
-        // Derived from the PERSISTED survey, not the patch document: a patch may omit `variables` or
-        // `hiddenFields` entirely, and reading the payload would see them as absent and delete every
-        // row. `workspaceId` comes from the stored survey, never the client (ENG-1749).
+        // ENG-2412: from the patch document, which is what makes the rows the write source of
+        // truth rather than a copy of the columns `data` just wrote. Safe on a partial patch for two
+        // reasons: `prepareV3SurveyPatchInput` merges the body over the current survey first, so both
+        // keys arrive populated; and `resolveDesiredEmbeddedFields` carries a group's current rows
+        // over untouched if its key is absent anyway. `workspaceId` comes from the stored survey,
+        // never the client (ENG-1749).
         //
         // NOTE for whoever moves the v3 serializer onto the tables (ENG-1853): `survey` was read
         // BEFORE this reconcile, so the `embeddedDataLinks` it carries — and the `embeddedFields`
@@ -258,7 +260,7 @@ export async function executeV3SurveyPatch(params: {
         await reconcileEmbeddedData(tx, {
           surveyId: currentSurvey.id,
           workspaceId: currentSurvey.workspaceId,
-          desired: toDesiredEmbeddedFields(survey),
+          patch: { variables: document.variables, hiddenFields: document.hiddenFields },
         });
 
         return survey;

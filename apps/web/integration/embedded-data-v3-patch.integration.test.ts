@@ -65,7 +65,7 @@ const seedSurvey = async (legacy?: {
     reconcileEmbeddedData(tx, {
       surveyId: survey.id,
       workspaceId: workspace.id,
-      desired: toDesiredEmbeddedFields(survey),
+      patch: survey,
     })
   );
 

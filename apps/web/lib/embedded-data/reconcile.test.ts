@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { type TDesiredEmbeddedField } from "@formbricks/types/embedded-data-mapping";
-import { type TCurrentEmbeddedField, planEmbeddedDataReconcile } from "./reconcile";
+import {
+  type TCurrentEmbeddedField,
+  planEmbeddedDataReconcile,
+  resolveDesiredEmbeddedFields,
+} from "./reconcile";
 
 const SURVEY_ID = "srv_1";
 const OTHER_SURVEY_ID = "srv_2";
@@ -43,6 +47,55 @@ const localField = (desired: TDesiredEmbeddedField, fieldId: string, order = 0):
     dataType: desired.dataType,
     defaultValue: desired.defaultValue,
   },
+});
+
+describe("resolveDesiredEmbeddedFields", () => {
+  const currentScore: TDesiredEmbeddedField = { ...desiredScore };
+  const currentPlan: TDesiredEmbeddedField = { ...desiredPlan };
+  const current = [currentScore, currentPlan];
+
+  test("carries a group over untouched when the payload does not mention it", () => {
+    // The whole reason this is a merge. `updateSurveyInternal` and the v3 patch both take partial
+    // payloads, and a save that only renames the survey must not read as "delete every field".
+    expect(resolveDesiredEmbeddedFields(current, {})).toEqual(current);
+  });
+
+  test("treats an explicitly empty list as a clear, not as an omission", () => {
+    expect(resolveDesiredEmbeddedFields(current, { variables: [] })).toEqual([currentPlan]);
+  });
+
+  test("replaces only the group the payload carried", () => {
+    const renamed = { ...desiredScore, name: "total_score" };
+    const result = resolveDesiredEmbeddedFields(current, {
+      variables: [{ id: renamed.storageKey, name: renamed.name, type: "number", value: 0 }],
+    });
+
+    expect(result).toEqual([renamed, currentPlan]);
+  });
+
+  test("the ingested group is independent of the computed one", () => {
+    const result = resolveDesiredEmbeddedFields(current, {
+      hiddenFields: { enabled: true, fieldIds: ["plan", "tier"] },
+    });
+
+    expect(result.map(({ storageKey }) => storageKey)).toEqual(["var_score", "plan", "tier"]);
+  });
+
+  test("an undefined value is an omission, not a clear", () => {
+    // Load-bearing: every write seam spells both keys out and lets Prisma ignore the undefined ones,
+    // so an `in` check would read as "the payload carried this" and wipe the rows.
+    expect(resolveDesiredEmbeddedFields(current, { variables: undefined, hiddenFields: undefined })).toEqual(
+      current
+    );
+  });
+
+  test("keeps every computed field ahead of every ingested one, which is what order means", () => {
+    const result = resolveDesiredEmbeddedFields([currentPlan, currentScore], {
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(result.map(({ source }) => source)).toEqual(["computed", "ingested"]);
+  });
 });
 
 describe("planEmbeddedDataReconcile", () => {

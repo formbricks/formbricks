@@ -5,7 +5,6 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
@@ -535,7 +534,7 @@ export const copySurveyToOtherWorkspace = async (
         await reconcileEmbeddedData(tx, {
           surveyId: createdSurvey.id,
           workspaceId: createdSurvey.workspaceId,
-          desired: toDesiredEmbeddedFields(createdSurvey),
+          patch: { variables: createdSurvey.variables, hiddenFields: createdSurvey.hiddenFields },
         });
 
         return createdSurvey;

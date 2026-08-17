@@ -358,13 +358,16 @@ describe("patchV3Survey", () => {
       );
     });
 
-    test("reconciles from the PERSISTED survey, so a patch that omits the fields keeps its rows", async () => {
-      // The patch document carries neither key. Reading it instead of the persisted row would see
-      // them as absent and unlink every field the survey has.
+    test("a patch that omits the fields keeps the survey's existing rows", async () => {
+      // ENG-2412 moved the reconcile onto the patch document rather than the persisted row. That is
+      // safe here because `prepareV3SurveyPatchInput` merges the patch over the current survey first,
+      // so a body carrying only `name` still arrives with the survey's declared fields intact — this
+      // asserts the two halves agree, since a raw read of the request body would unlink everything.
       vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValueOnce([
         {
           id: "link_1",
           storageKey: "utm_source",
+          order: 0,
           embeddedData: {
             id: "ed_existing",
             surveyId: currentSurvey.id,
@@ -375,13 +378,13 @@ describe("patchV3Survey", () => {
           },
         },
       ] as never);
-      vi.mocked(prisma.survey.update).mockResolvedValueOnce({
-        ...currentSurvey,
-        name: "Renamed",
-        hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
-      } as never);
 
-      await patchV3Survey(currentSurvey, { name: "Renamed" }, "req_qa", "org_1");
+      await patchV3Survey(
+        { ...currentSurvey, hiddenFields: { enabled: true, fieldIds: ["utm_source"] } } as never,
+        { name: "Renamed" },
+        "req_qa",
+        "org_1"
+      );
 
       expect(prisma.surveyEmbeddedData.deleteMany).not.toHaveBeenCalled();
       expect(prisma.embeddedData.create).not.toHaveBeenCalled();

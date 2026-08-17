@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -93,6 +94,11 @@ describe("surveyLogic", () => {
         value: 0,
       },
     ],
+    // The rows are the only thing `getSurveyEmbeddedFields` reads since ENG-2412, so a fixture that
+    // declares a variable has to carry the matching row — that is what a real survey read returns.
+    embeddedFields: deriveLegacyEmbeddedData({
+      variables: [{ id: "v", name: "num", type: "number", value: 0 }],
+    }),
     displayOption: "displayOnce",
     recontactDays: null,
     displayLimit: null,
@@ -109,6 +115,12 @@ describe("surveyLogic", () => {
     segment: null,
     recaptcha: null,
   };
+
+  /** Overridden by several cases below; the rows have to match, since they are what is read. */
+  const TWO_VARIABLES = [
+    { id: "numVar", name: "numberVar", type: "number" as const, value: 5 },
+    { id: "textVar", name: "textVar", type: "text" as const, value: "hello" },
+  ];
 
   const simpleGroup = (): TConditionGroup => ({
     id: "g1",
@@ -829,10 +841,8 @@ describe("surveyLogic", () => {
         },
       ],
       questions: [],
-      variables: [
-        { id: "numVar", name: "numberVar", type: "number", value: 5 },
-        { id: "textVar", name: "textVar", type: "text", value: "hello" },
-      ],
+      variables: TWO_VARIABLES,
+      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
     };
 
     const data: TResponseData = {
@@ -1027,10 +1037,8 @@ describe("surveyLogic", () => {
         },
       ],
       questions: [],
-      variables: [
-        { id: "numVar", name: "numberVar", type: "number", value: 5 },
-        { id: "textVar", name: "textVar", type: "text", value: "hello" },
-      ],
+      variables: TWO_VARIABLES,
+      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
     };
 
     const vars: TResponseVariables = {
@@ -1124,10 +1132,8 @@ describe("surveyLogic", () => {
   test("performCalculation handles different variable types and operations", () => {
     const surveyWithVars: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
-      variables: [
-        { id: "numVar", name: "numberVar", type: "number", value: 5 },
-        { id: "textVar", name: "textVar", type: "text", value: "hello" },
-      ],
+      variables: TWO_VARIABLES,
+      embeddedFields: deriveLegacyEmbeddedData({ variables: TWO_VARIABLES }),
     };
 
     const data: TResponseData = {
@@ -1460,7 +1466,10 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
     ).toBe(false);
   });
 
-  test("an empty row list falls back to the legacy column rather than losing the field", () => {
+  test("an empty row list means the survey has no computed fields, whatever the legacy column says", () => {
+    // ENG-2412 removed the fallback: the rows are the whole answer, so a condition naming a field the
+    // rows do not carry no longer resolves off `survey.variables`. Deleting a survey's rows now makes
+    // its fields disappear rather than reappear.
     const legacyNumberVariable = [
       { id: STORAGE_KEY, name: "score", type: "number" as const, value: 0 },
     ] as TJsWorkspaceStateSurvey["variables"];
@@ -1473,7 +1482,7 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
         equalsStatic(42),
         "default"
       )
-    ).toBe(true);
+    ).toBe(false);
   });
 
   test("delta (a): a non-numeric stored value is still 0, not the declared default", () => {
