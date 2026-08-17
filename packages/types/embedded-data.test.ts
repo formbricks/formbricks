@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { ZEmbeddedData, ZSurveyEmbeddedData, isLocalEmbeddedData } from "./embedded-data";
+import { RESERVED_FIELD_NAMES } from "./reserved-field-names";
 import { RESERVED_DECLARED_FIELD_NAMES } from "./surveys/validation";
 
 const localField = {
@@ -92,8 +93,22 @@ describe("ZEmbeddedData", () => {
       }
     });
 
+    test("rejects every reserved catalog name", () => {
+      // A shared field keyed `country` could be created and filled, but the reserved read of the same
+      // name would shadow it everywhere it is referenced — so it is refused at authoring time. Note
+      // these names are NOT in RESERVED_DECLARED_FIELD_NAMES on purpose: that set also drives
+      // ingest's capture refusal, and adding them there would stop `?country=DE` from filling the
+      // hidden field of a survey that already declares one (see reserved-field-names.ts).
+      for (const reserved of RESERVED_FIELD_NAMES) {
+        const result = ZEmbeddedData.safeParse({ ...sharedField, key: reserved });
+        expect(failedPaths({ ...sharedField, key: reserved })).toContain("key");
+        expect(result.error?.issues.map((issue) => issue.message)).toContain("Key is reserved");
+      }
+    });
+
     test("accepts a name that merely contains a reserved word", () => {
       expect(ZEmbeddedData.safeParse({ ...sharedField, key: "language_pref" }).success).toBe(true);
+      expect(ZEmbeddedData.safeParse({ ...sharedField, key: "country_code" }).success).toBe(true);
     });
   });
 

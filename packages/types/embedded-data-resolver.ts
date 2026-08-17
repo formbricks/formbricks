@@ -41,6 +41,22 @@ export type TEmbeddedValueResponse = Pick<
 >;
 
 /**
+ * The slice a client holds **mid-survey**, while the respondent is still answering.
+ *
+ * What it omits is the point: `id`, `createdAt` and `updatedAt` are assigned by the database, and
+ * `finished` is only true once the respondent reaches the end — so none of them exist, or are
+ * final, at the moment a survey wants to recall a reserved value into visible copy. Typing the
+ * client seam against this narrower slice is what makes {@link projectClientReservedValues} able to
+ * refuse a server-only accessor at compile time instead of fabricating `id: ""`,
+ * `createdAt: new Date()` and `finished: false` to satisfy the wider type — fabrications that would
+ * resolve to values no response ever carried.
+ */
+export type TClientEmbeddedValueResponse = Pick<
+  TEmbeddedValueResponse,
+  "surveyId" | "language" | "data" | "variables" | "ttc" | "meta"
+>;
+
+/**
  * What a reserved-catalog accessor may return. Confined to scalars and `Date` on purpose: an entry
  * that could return `meta` or `data` wholesale would leak objects into the value maps, and the
  * compiler stops that here rather than a runtime check discovering it per response.
@@ -48,15 +64,42 @@ export type TEmbeddedValueResponse = Pick<
 export type TReservedFieldRawValue = string | number | boolean | Date | null | undefined;
 
 /**
- * One reserved field: auto-captured system metadata every survey can reference without declaring
- * anything (see `ZEmbeddedDataSource` — reserved fields are never stored as rows).
+ * **When** a reserved field's value can be known — not who is allowed to see it.
  *
- * The response location is a typed accessor rather than a dot-path string. Reserved fields are a
- * static catalog in code, so the "path" can be code too — which makes an entry that points at a
- * nonexistent response field a compile error instead of a silent `undefined`, and needs no
- * path-walking machinery whose edge cases would have to be tested separately.
+ * - `client` — knowable in the browser while the respondent is still answering.
+ * - `server` — only knowable once the request reaches the API, or once the row exists.
+ * - `both` — knowable on either side, and both sides agree.
+ *
+ * This gates what the mid-survey surfaces may offer: the recall and logic pickers inside a running
+ * survey can only list fields the renderer can actually resolve at that moment (ENG-1840), and
+ * {@link projectClientReservedValues} is the seam that enforces it. Server-side readers — exports,
+ * filters, summaries — ignore this and read the whole catalog, because by then everything is known.
  */
-export interface TReservedFieldCatalogEntry {
+export type TReservedFieldAvailability = "client" | "server" | "both";
+
+/**
+ * What the "Anonymize responses" toggle does to a reserved field at ingest.
+ *
+ * - `keep` — carries no information about who or where the respondent is; stored unchanged.
+ * - `drop` — not captured at all while anonymizing.
+ * - `redactQuery` — captured, but with the query string stripped, because that is where the
+ *   identifying part hides (a `?email=` or `?uid=` carried in a page URL) while the path itself is
+ *   the part analytics needs.
+ *
+ * Declared here rather than at the ingest routes so the classification lives next to the field it
+ * describes and a new entry cannot be added without deciding it. **Nothing consumes this yet** —
+ * the toggle does not exist on this branch; this is the catalog stating its own policy ahead of the
+ * surface that will apply it, so that surface has no per-field list of its own to drift from.
+ */
+export type TReservedFieldPrivacy = "keep" | "drop" | "redactQuery";
+
+/**
+ * What every reserved field declares regardless of which side can read it.
+ *
+ * A reserved field is auto-captured system metadata every survey can reference without declaring
+ * anything (see `ZEmbeddedDataSource` — reserved fields are never stored as rows).
+ */
+interface TReservedFieldCatalogEntryBase {
   /**
    * The key consumers reference the field by — the recall token id, the logic operand, the key in
    * the projected value map. This is the "storageKey" of a reserved field, except nothing is
@@ -64,6 +107,14 @@ export interface TReservedFieldCatalogEntry {
    */
   name: string;
   dataType: TEmbeddedDataType;
+  privacy: TReservedFieldPrivacy;
+}
+
+/**
+ * A field only the server can read, because its accessor needs part of a persisted response.
+ */
+export interface TServerReservedFieldCatalogEntry extends TReservedFieldCatalogEntryBase {
+  availability: Extract<TReservedFieldAvailability, "server">;
   /**
    * Reads the raw value off a response. Coercion to `dataType` is the resolver's job, not the
    * accessor's. Accessors should be total functions; one that throws is treated as "nothing
@@ -73,12 +124,174 @@ export interface TReservedFieldCatalogEntry {
 }
 
 /**
- * The production reserved-field catalog. Deliberately empty: ENG-1836 ships the mechanism, ENG-1839
- * decides the contents. It exists now so call sites (ENG-1837) can wire
- * `projectReservedValues(RESERVED_FIELD_CATALOG, response)` today and light up when the entries
- * land, without another round of call-site changes.
+ * A field a client can read mid-survey. Its accessor is typed against
+ * {@link TClientEmbeddedValueResponse}, so marking an entry `client`/`both` while reading `finished`
+ * or `createdAt` is a **compile error** rather than a value that silently resolves to whatever the
+ * caller happened to fabricate. That is the whole reason the entry type is a union: the availability
+ * claim and the accessor's real dependencies cannot drift apart.
+ *
+ * A narrower parameter also means such an accessor stays callable with a full response, so
+ * {@link resolveEmbeddedValue} and {@link projectReservedValues} treat both variants identically.
  */
-export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [];
+export interface TClientReservedFieldCatalogEntry extends TReservedFieldCatalogEntryBase {
+  // Everything that is not `server` is client-readable, spelled as the complement rather than a
+  // second literal list so a fourth availability value cannot be added without landing in one of the
+  // two variants — and therefore without deciding which response slice its accessor may read.
+  availability: Exclude<TReservedFieldAvailability, "server">;
+  read: (response: TClientEmbeddedValueResponse) => TReservedFieldRawValue;
+}
+
+/**
+ * One reserved field.
+ *
+ * The response location is a typed accessor rather than a dot-path string. Reserved fields are a
+ * static catalog in code, so the "path" can be code too — which makes an entry that points at a
+ * nonexistent response field a compile error instead of a silent `undefined`, needs no path-walking
+ * machinery whose edge cases would have to be tested separately, and lets an entry compute (unit
+ * conversion, redaction) instead of only fetching.
+ */
+export type TReservedFieldCatalogEntry = TServerReservedFieldCatalogEntry | TClientReservedFieldCatalogEntry;
+
+/**
+ * **The production reserved-field catalog — Tier 1.** Auto-captured system metadata every survey can
+ * reference by name without declaring anything. A static list in code, never rows in the
+ * `EmbeddedData` table and never a per-survey link: the list is identical for every workspace and
+ * keeps growing, so adding a field stays a code change rather than a data migration, and there is
+ * nothing to migrate anyway — the values already sit on every response ever stored.
+ *
+ * Every entry therefore resolves against historical responses too, which is why each accessor
+ * tolerates the field being absent rather than assuming today's ingest shape.
+ *
+ * `name` collisions are real and deliberate: a survey may already declare a hidden field called
+ * `country` or `url`, and `RESERVED_FIELD_NAMES` (reserved-field-names.ts) keeps only *new*
+ * declarations off these names. Existing surveys keep resolving their own field — see the per-survey
+ * precedence rule this catalog is paired with.
+ *
+ * Not in Tier 1, on purpose:
+ * - `status` — `Response` has no status column, and `finished` already carries the only distinction
+ *   that exists (complete vs. partial). Deriving a second spelling of the same bit would give two
+ *   names for one fact.
+ * - `pageUrl`/`pagePath`/`pageReferrer`/`utm*`/`viewport*`/`timezone` — their values do not exist on
+ *   this branch. `ZResponseMeta` has no home for them until the SDK captures them (ENG-1841), and an
+ *   entry pointing at a field nothing writes would resolve as unset on every response.
+ */
+export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
+  /** How the response was collected — `link`, `app`, … Set by the client on the response input. */
+  { name: "source", dataType: "string", availability: "client", privacy: "keep", read: (r) => r.meta.source },
+  /**
+   * The page the survey ran on. `redactQuery`, not `drop`: the path is what analytics needs, while a
+   * query string is where an identifier rides along (`?email=`, `?uid=`).
+   */
+  {
+    name: "url",
+    dataType: "string",
+    availability: "client",
+    privacy: "redactQuery",
+    read: (r) => r.meta.url,
+  },
+  /**
+   * Geo-IP country, resolved from the request in the ingest routes — nothing client-side knows it.
+   */
+  {
+    name: "country",
+    dataType: "string",
+    availability: "server",
+    privacy: "drop",
+    read: (r) => r.meta.country,
+  },
+  /** The action that triggered an app survey. */
+  { name: "action", dataType: "string", availability: "client", privacy: "keep", read: (r) => r.meta.action },
+  /**
+   * browser/os/deviceType are `server` because that is where they come from: `UAParser` runs over
+   * the `user-agent` request header in the ingest routes (see the v1/v2 client response routes), and
+   * nothing client-side produces them on this branch. Marking them `client` would let a mid-survey
+   * picker offer a field the renderer cannot resolve. They flip to `both` only once a client
+   * actually captures them.
+   */
+  {
+    name: "browser",
+    dataType: "string",
+    availability: "server",
+    privacy: "drop",
+    read: (r) => r.meta.userAgent?.browser,
+  },
+  {
+    name: "os",
+    dataType: "string",
+    availability: "server",
+    privacy: "drop",
+    read: (r) => r.meta.userAgent?.os,
+  },
+  {
+    name: "deviceType",
+    dataType: "string",
+    availability: "server",
+    privacy: "drop",
+    read: (r) => r.meta.userAgent?.device,
+  },
+  /** Only captured when the survey has IP capture enabled, so unset on most responses. */
+  {
+    name: "ipAddress",
+    dataType: "string",
+    availability: "server",
+    privacy: "drop",
+    read: (r) => r.meta.ipAddress,
+  },
+  /**
+   * Complete vs. partial. `server`, because mid-survey the answer is always "not yet" — offering it
+   * to a running survey would mean offering a constant `false`.
+   */
+  { name: "finished", dataType: "boolean", availability: "server", privacy: "keep", read: (r) => r.finished },
+  /** The language the respondent is answering in; known on both sides and agreed between them. */
+  { name: "language", dataType: "string", availability: "both", privacy: "keep", read: (r) => r.language },
+  /**
+   * responseId/surveyId are `server` by decision, not by limitation — a client does know its survey
+   * id. Internal identifiers have no business being recalled into copy a respondent reads, and
+   * `availability` is what the mid-survey pickers filter on. They stay in the catalog because
+   * server-side readers (exports, filters, webhooks) legitimately want them as columns.
+   */
+  { name: "responseId", dataType: "string", availability: "server", privacy: "keep", read: (r) => r.id },
+  { name: "surveyId", dataType: "string", availability: "server", privacy: "keep", read: (r) => r.surveyId },
+  /**
+   * Total time to complete. **Only meaningful on finished responses**: `calculateTtcTotal` is the
+   * only writer of `ttc._total`, and every call site guards it behind `finished ?` (e.g.
+   * apps/web/app/api/v2/client/[workspaceId]/responses/lib/response.ts:64, the v1 client and
+   * management routes, and apps/web/lib/response/service.ts). On a partial response the key is
+   * absent and this resolves as unset — deliberately, rather than summing the per-element entries to
+   * invent a "duration so far" that no other surface reports.
+   *
+   * The stored `ttc` values are **milliseconds** (see `MAX_RESPONSE_TTC` in responses.ts), so the
+   * accessor converts. The field is named and typed in seconds, and a typed accessor is exactly what
+   * lets the catalog honor that instead of publishing a `durationSeconds` holding milliseconds.
+   */
+  {
+    name: "durationSeconds",
+    dataType: "number",
+    availability: "server",
+    privacy: "keep",
+    read: (r) => {
+      const totalMs = r.ttc?._total;
+      return typeof totalMs === "number" ? Math.round(totalMs / 1000) : undefined;
+    },
+  },
+  /**
+   * startedAt/finishedAt map onto the row's timestamps: `createdAt` is when the response record was
+   * opened, `updatedAt` when it was last written — which for a finished response is its submission.
+   * Both resolve to ISO strings, never `Date` objects (see {@link TResolvedEmbeddedValue}).
+   *
+   * `finishedAt` is `updatedAt` and therefore only means "finished at" on a finished response; on a
+   * partial one it is the last partial write. The pair is the closest honest reading of the columns
+   * that exist — `Response` stores no separate completion timestamp.
+   */
+  { name: "startedAt", dataType: "date", availability: "server", privacy: "keep", read: (r) => r.createdAt },
+  {
+    name: "finishedAt",
+    dataType: "date",
+    availability: "server",
+    privacy: "keep",
+    read: (r) => r.updatedAt,
+  },
+];
 
 /**
  * The slice of a stored field definition the resolver needs — `TEmbeddedData` minus the ownership
@@ -195,6 +408,50 @@ export const coerceToEmbeddedDataType = (
 };
 
 /**
+ * Resolves one catalog entry against whatever response slice its accessor asks for.
+ *
+ * A throwing accessor reads as missing rather than escalating: one dirty response fed to a computing
+ * accessor (URL parsing, unit conversion) must degrade like every other dirty input here — one field
+ * unset — not abort a caller's whole render or export loop over the catalog.
+ *
+ * Generic over the slice so "how a reserved read resolves" has exactly one definition shared by the
+ * server seam ({@link resolveEmbeddedValue}) and the mid-survey one
+ * ({@link projectClientReservedValues}), which is what keeps the two from drifting on coercion or on
+ * error handling.
+ */
+const resolveCatalogEntry = <TSlice>(
+  entry: { dataType: TEmbeddedDataType; read: (response: TSlice) => TReservedFieldRawValue },
+  response: TSlice
+): TResolvedEmbeddedValue | undefined => {
+  try {
+    return coerceToEmbeddedDataType(entry.read(response), entry.dataType);
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * The shared body of the two projections: entry name → resolved value, absent values omitted,
+ * booleans stringified because the recall/logic map types have no boolean slot.
+ */
+const projectEntries = <TSlice>(
+  entries: readonly {
+    name: string;
+    dataType: TEmbeddedDataType;
+    read: (response: TSlice) => TReservedFieldRawValue;
+  }[],
+  response: TSlice
+): Record<string, string | number> => {
+  const values: Record<string, string | number> = {};
+  for (const entry of entries) {
+    const value = resolveCatalogEntry(entry, response);
+    if (value === undefined) continue;
+    values[entry.name] = typeof value === "boolean" ? String(value) : value;
+  }
+  return values;
+};
+
+/**
  * The single read seam for Embedded Data: returns one field's value from a response, or `undefined`
  * when the field has no value there. Every downstream surface (recall, logic, export, pickers)
  * will read through this once ENG-1837 repoints them, so "where does a field's value live" is
@@ -240,16 +497,7 @@ export const resolveEmbeddedValue = (
   // Definedness, not `"entry" in ref`: the `entry?: never` exclusion prop keeps the `in` operator
   // from narrowing the union, and this way a degenerate `{ field, link, entry: undefined }` object
   // still resolves through its field instead of crashing on `undefined.read`.
-  if (ref.entry !== undefined) {
-    // A throwing accessor reads as missing rather than escalating: one dirty response row fed to a
-    // computing accessor (e.g. URL parsing) must degrade like every other dirty input here — one
-    // field unset — not abort a caller's whole render or export loop over the catalog.
-    try {
-      return coerceToEmbeddedDataType(ref.entry.read(response), ref.entry.dataType);
-    } catch {
-      return undefined;
-    }
-  }
+  if (ref.entry !== undefined) return resolveCatalogEntry(ref.entry, response);
 
   const { field, link } = ref;
   if (field.source === "reserved") return undefined;
@@ -331,21 +579,42 @@ export const getLogicVariableValue = (
  * `undefined`, exactly like an absent hidden field today), and booleans are stringified to
  * `"true"`/`"false"` — what `String()` would render anyway, in a map type that has no boolean slot.
  *
- * An entry name that matches an element id or hidden field name shadows it in the merged map, and
- * `FORBIDDEN_IDS` guards none of the names §9b proposes — so ENG-1839 picks names knowing that.
+ * An entry name that matches an element id or hidden field name shadows it in the merged map, which
+ * is why the caller — not this function — owns precedence. `FORBIDDEN_IDS` never guarded these names
+ * (only `source` overlaps), so surveys stored today can and do declare a field called `country` or
+ * `url`; `RESERVED_FIELD_NAMES` (reserved-field-names.ts) stops only *new* declarations, and a
+ * consumer merging this map must let an existing declared field win inside its own survey.
  */
 export const projectReservedValues = (
   entries: readonly TReservedFieldCatalogEntry[],
   response: TEmbeddedValueResponse
-): Record<string, string | number> => {
-  const values: Record<string, string | number> = {};
-  for (const entry of entries) {
-    const value = resolveEmbeddedValue({ entry }, response);
-    if (value === undefined) continue;
-    values[entry.name] = typeof value === "boolean" ? String(value) : value;
-  }
-  return values;
-};
+): Record<string, string | number> => projectEntries(entries, response);
+
+/**
+ * The mid-survey counterpart of {@link projectReservedValues}: what a **client** can project while
+ * the respondent is still answering.
+ *
+ * Two things make it a separate function rather than a flag:
+ *
+ * 1. It takes {@link TClientEmbeddedValueResponse}, the shape a running survey actually holds. The
+ *    persisted-only fields are not optional here, they are absent — so a caller cannot be tempted to
+ *    pass `id: ""`, `createdAt: new Date()` or `finished: false` and get values back that describe
+ *    the fabrication rather than the response.
+ * 2. It drops every `server` entry, and the type system guarantees the survivors never needed those
+ *    fields in the first place (see {@link TClientReservedFieldCatalogEntry}). A server-only accessor
+ *    is filtered out before it is ever invoked, so nothing throws and nothing resolves from a stub.
+ *
+ * Same output contract as {@link projectReservedValues} — absent values omitted, booleans
+ * stringified — so a consumer can merge either one into the same recall/logic map.
+ */
+export const projectClientReservedValues = (
+  entries: readonly TReservedFieldCatalogEntry[],
+  response: TClientEmbeddedValueResponse
+): Record<string, string | number> =>
+  projectEntries(
+    entries.filter((entry): entry is TClientReservedFieldCatalogEntry => entry.availability !== "server"),
+    response
+  );
 
 /** One referenceable field, carrying the key a consumer must use to address it. */
 export interface TReadableField {

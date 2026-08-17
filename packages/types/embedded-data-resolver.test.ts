@@ -1,8 +1,9 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { ZEmbeddedData, ZLinkedEmbeddedField } from "./embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
+  type TClientEmbeddedValueResponse,
   type TEmbeddedValueRef,
   type TEmbeddedValueResponse,
   type TLinkedEmbeddedField,
@@ -20,10 +21,12 @@ import {
   getLogicVariableValue,
   getSurveyEmbeddedFields,
   listReadableFields,
+  projectClientReservedValues,
   projectReservedValues,
   resolveEmbeddedValue,
 } from "./embedded-data-resolver";
 import type { TI18nString } from "./i18n";
+import { RESERVED_FIELD_NAMES } from "./reserved-field-names";
 import type { TResponseData, TResponseVariables } from "./responses";
 import type { TSurveyBlocks } from "./surveys/blocks";
 import { TSurveyElementTypeEnum } from "./surveys/elements";
@@ -96,40 +99,58 @@ const resolve = (
   onResponse: TEmbeddedValueResponse = response
 ) => resolveEmbeddedValue({ field, link: { storageKey } }, onResponse);
 
-/** Sample catalog entries — contents live in the tests only; the production catalog is ENG-1839's. */
+/**
+ * Sample catalog entries — synthetic names on purpose, so the mechanism tests keep exercising the
+ * seam rather than accidentally re-asserting the production catalog's contents (which have their own
+ * describe block below).
+ */
 const countryEntry: TReservedFieldCatalogEntry = {
   name: "country",
   dataType: "string",
+  availability: "server",
+  privacy: "drop",
   read: (r) => r.meta.country,
 };
 const browserEntry: TReservedFieldCatalogEntry = {
   name: "browser",
   dataType: "string",
+  availability: "server",
+  privacy: "drop",
   read: (r) => r.meta.userAgent?.browser,
 };
 const totalTimeEntry: TReservedFieldCatalogEntry = {
   name: "total_time",
   dataType: "number",
+  availability: "server",
+  privacy: "keep",
   read: (r) => r.ttc?._total,
 };
 const languageEntry: TReservedFieldCatalogEntry = {
   name: "response_language",
   dataType: "string",
+  availability: "both",
+  privacy: "keep",
   read: (r) => r.language,
 };
 const completedEntry: TReservedFieldCatalogEntry = {
   name: "completed",
   dataType: "boolean",
+  availability: "server",
+  privacy: "keep",
   read: (r) => r.finished,
 };
 const startedAtEntry: TReservedFieldCatalogEntry = {
   name: "started_at",
   dataType: "date",
+  availability: "server",
+  privacy: "keep",
   read: (r) => r.createdAt,
 };
 const actionEntry: TReservedFieldCatalogEntry = {
   name: "action",
   dataType: "string",
+  availability: "client",
+  privacy: "keep",
   read: (r) => r.meta.action,
 };
 
@@ -222,6 +243,8 @@ describe("resolveEmbeddedValue", () => {
       const hostnameEntry: TReservedFieldCatalogEntry = {
         name: "hostname",
         dataType: "string",
+        availability: "client",
+        privacy: "redactQuery",
         read: (r) => new URL(r.meta.url ?? "").hostname,
       };
       // sparseResponse has no meta.url, so the accessor throws on `new URL("")` — the resolver must
@@ -511,6 +534,8 @@ describe("projectReservedValues", () => {
     const miscastEntry: TReservedFieldCatalogEntry = {
       name: "total_time",
       dataType: "number",
+      availability: "server",
+      privacy: "keep",
       read: (r) => r.meta.source, // "web" — present, but not a number; projecting it would invent data
     };
     expect(projectReservedValues([miscastEntry], response)).toStrictEqual({});
@@ -520,11 +545,15 @@ describe("projectReservedValues", () => {
     const emptySourceEntry: TReservedFieldCatalogEntry = {
       name: "empty_source",
       dataType: "string",
+      availability: "client",
+      privacy: "keep",
       read: () => "",
     };
     const zeroTimeEntry: TReservedFieldCatalogEntry = {
       name: "zero_time",
       dataType: "number",
+      availability: "server",
+      privacy: "keep",
       read: () => 0,
     };
 
@@ -542,6 +571,8 @@ describe("projectReservedValues", () => {
     const hostnameEntry: TReservedFieldCatalogEntry = {
       name: "hostname",
       dataType: "string",
+      availability: "client",
+      privacy: "redactQuery",
       read: (r) => new URL(r.meta.url ?? "").hostname,
     };
 
@@ -551,10 +582,246 @@ describe("projectReservedValues", () => {
       response_language: "de",
     });
   });
+});
 
-  test("the production catalog is empty until ENG-1839 and projects to an empty map", () => {
-    expect(RESERVED_FIELD_CATALOG).toHaveLength(0);
-    expect(projectReservedValues(RESERVED_FIELD_CATALOG, response)).toStrictEqual({});
+describe("RESERVED_FIELD_CATALOG", () => {
+  /** Every Tier-1 location captured — today's ingest shape, with IP capture enabled. */
+  const capturedResponse: TEmbeddedValueResponse = {
+    id: "clx0000000000000000000r3",
+    surveyId: "clx0000000000000000000s2",
+    createdAt: new Date("2026-08-01T09:00:00.000Z"),
+    updatedAt: new Date("2026-08-01T09:02:30.000Z"),
+    finished: true,
+    language: "de",
+    data: { plan: "premium" },
+    variables: {},
+    // Milliseconds, and deliberately not a whole number of seconds.
+    ttc: { q1: 40_000, q2: 50_400, _total: 90_400 },
+    meta: {
+      source: "link",
+      url: "https://example.com/pricing?utm_source=news&email=a@b.co",
+      userAgent: { browser: "Chrome", os: "macOS", device: "desktop" },
+      country: "DE",
+      action: "Clicked Upgrade",
+      ipAddress: "203.0.113.7",
+    },
+  };
+
+  /**
+   * A response stored years before this catalog existed: `meta` holds only what was captured then
+   * (source + url), there is no `ttc` at all, and no language was selected. The catalog must resolve
+   * what is there and report the rest as unset — never throw, and never invent a value.
+   */
+  const historicalResponse: TEmbeddedValueResponse = {
+    id: "clx0000000000000000000r4",
+    surveyId: "clx0000000000000000000s2",
+    createdAt: new Date("2024-03-04T08:00:00.000Z"),
+    updatedAt: new Date("2024-03-04T08:01:00.000Z"),
+    finished: true,
+    language: null,
+    data: { plan: "free" },
+    variables: {},
+    meta: { source: "link", url: "https://example.com/old" },
+  };
+
+  const projectCatalog = (onResponse: TEmbeddedValueResponse) =>
+    projectReservedValues(RESERVED_FIELD_CATALOG, onResponse);
+
+  /** The named entry, failing loudly instead of resolving `undefined.read` if it is ever removed. */
+  const catalogEntry = (name: string): TReservedFieldCatalogEntry => {
+    const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === name);
+    if (!entry) throw new Error(`No reserved catalog entry named ${name}`);
+    return entry;
+  };
+
+  test("declares exactly the Tier-1 entries, with their dataType, availability and privacy", () => {
+    // The catalog is a product decision, so it is pinned as a table rather than probed field by
+    // field: adding, removing or reclassifying an entry has to be a deliberate edit here too.
+    // `status` is absent on purpose — `Response` has no status column and `finished` already carries
+    // the complete/partial distinction.
+    expect(
+      RESERVED_FIELD_CATALOG.map(({ name, dataType, availability, privacy }) => ({
+        name,
+        dataType,
+        availability,
+        privacy,
+      }))
+    ).toStrictEqual([
+      { name: "source", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "url", dataType: "string", availability: "client", privacy: "redactQuery" },
+      { name: "country", dataType: "string", availability: "server", privacy: "drop" },
+      { name: "action", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "browser", dataType: "string", availability: "server", privacy: "drop" },
+      { name: "os", dataType: "string", availability: "server", privacy: "drop" },
+      { name: "deviceType", dataType: "string", availability: "server", privacy: "drop" },
+      { name: "ipAddress", dataType: "string", availability: "server", privacy: "drop" },
+      { name: "finished", dataType: "boolean", availability: "server", privacy: "keep" },
+      { name: "language", dataType: "string", availability: "both", privacy: "keep" },
+      { name: "responseId", dataType: "string", availability: "server", privacy: "keep" },
+      { name: "surveyId", dataType: "string", availability: "server", privacy: "keep" },
+      { name: "durationSeconds", dataType: "number", availability: "server", privacy: "keep" },
+      { name: "startedAt", dataType: "date", availability: "server", privacy: "keep" },
+      { name: "finishedAt", dataType: "date", availability: "server", privacy: "keep" },
+    ]);
+  });
+
+  test("every entry resolves against a fully captured response", () => {
+    // One exact-map assertion rather than fifteen lookups: a missing key is a failed entry, and an
+    // extra key is an entry nobody declared in the table above.
+    expect(projectCatalog(capturedResponse)).toStrictEqual({
+      source: "link",
+      url: "https://example.com/pricing?utm_source=news&email=a@b.co",
+      country: "DE",
+      action: "Clicked Upgrade",
+      browser: "Chrome",
+      os: "macOS",
+      deviceType: "desktop",
+      ipAddress: "203.0.113.7",
+      finished: "true",
+      language: "de",
+      responseId: "clx0000000000000000000r3",
+      surveyId: "clx0000000000000000000s2",
+      durationSeconds: 90,
+      startedAt: "2026-08-01T09:00:00.000Z",
+      finishedAt: "2026-08-01T09:02:30.000Z",
+    });
+  });
+
+  test("resolves what a historical response captured and reports the rest as unset", () => {
+    expect(projectCatalog(historicalResponse)).toStrictEqual({
+      source: "link",
+      url: "https://example.com/old",
+      finished: "true",
+      responseId: "clx0000000000000000000r4",
+      surveyId: "clx0000000000000000000s2",
+      startedAt: "2024-03-04T08:00:00.000Z",
+      finishedAt: "2024-03-04T08:01:00.000Z",
+    });
+  });
+
+  test("durationSeconds converts the stored milliseconds to whole seconds", () => {
+    // ttc is milliseconds (MAX_RESPONSE_TTC in responses.ts), so a raw read would publish 90400
+    // under a field named — and typed — in seconds.
+    expect(projectCatalog(capturedResponse).durationSeconds).toBe(90);
+  });
+
+  test("durationSeconds is unset on a partial response rather than a duration-so-far", () => {
+    // calculateTtcTotal is the only writer of `_total`, and every call site guards it behind
+    // `finished ?` — so a partial response has per-element timings and no total. Summing them here
+    // would report a duration no other surface agrees with.
+    const partialResponse: TEmbeddedValueResponse = {
+      ...capturedResponse,
+      finished: false,
+      ttc: { q1: 40_000, q2: 50_400 },
+    };
+    const projected = projectCatalog(partialResponse);
+
+    expect("durationSeconds" in projected).toBe(false);
+    expect(projected.finished).toBe("false");
+  });
+
+  test("startedAt and finishedAt resolve to ISO strings, never Date objects", () => {
+    const startedAt = resolveEmbeddedValue({ entry: catalogEntry("startedAt") }, capturedResponse);
+    const finishedAt = resolveEmbeddedValue({ entry: catalogEntry("finishedAt") }, capturedResponse);
+
+    expect(startedAt).toBe("2026-08-01T09:00:00.000Z");
+    expect(finishedAt).toBe("2026-08-01T09:02:30.000Z");
+    // A raw Date reaching the recall/logic maps would render as a locale-dependent string.
+    expect(startedAt).not.toBeInstanceOf(Date);
+    expect(finishedAt).not.toBeInstanceOf(Date);
+  });
+
+  test("finished resolves as a boolean and projects as the string the maps can hold", () => {
+    const entry = catalogEntry("finished");
+
+    expect(resolveEmbeddedValue({ entry }, capturedResponse)).toBe(true);
+    expect(resolveEmbeddedValue({ entry }, { ...capturedResponse, finished: false })).toBe(false);
+    // false is a value, not a gap: it must survive the projection as "false", not vanish.
+    expect(projectCatalog({ ...capturedResponse, finished: false }).finished).toBe("false");
+  });
+
+  test("no accessor throws on a response where every optional location is absent", () => {
+    // The catalog runs over responses nobody curated; an accessor that assumed today's meta shape
+    // would take a whole export loop down. sparseResponse is that worst case.
+    expect(() => projectCatalog(sparseResponse)).not.toThrow();
+    expect(projectCatalog(sparseResponse)).toStrictEqual({
+      finished: "false",
+      responseId: sparseResponse.id,
+      surveyId: sparseResponse.surveyId,
+      startedAt: "2026-08-02T12:00:00.000Z",
+      finishedAt: "2026-08-02T12:00:00.000Z",
+    });
+  });
+
+  test("RESERVED_FIELD_NAMES is exactly the catalog's names, lowercased", () => {
+    // The blocklist is a hand-written leaf module (it cannot import the catalog without closing an
+    // import cycle — see reserved-field-names.ts), so this is the only thing keeping the two in
+    // step. A name added to one side and not the other fails here.
+    expect([...RESERVED_FIELD_NAMES].sort()).toStrictEqual(
+      RESERVED_FIELD_CATALOG.map((entry) => entry.name.toLowerCase()).sort()
+    );
+  });
+});
+
+describe("projectClientReservedValues", () => {
+  /** What a running survey holds: no `id`, no `createdAt`/`updatedAt`, no final `finished`. */
+  const midSurvey: TClientEmbeddedValueResponse = {
+    surveyId: "clx0000000000000000000s2",
+    language: "de",
+    data: { plan: "premium" },
+    variables: {},
+    ttc: { q1: 40_000 },
+    meta: { source: "link", url: "https://example.com/pricing", action: "Clicked Upgrade" },
+  };
+
+  test("projects only the entries a client can read mid-survey", () => {
+    expect(projectClientReservedValues(RESERVED_FIELD_CATALOG, midSurvey)).toStrictEqual({
+      source: "link",
+      url: "https://example.com/pricing",
+      action: "Clicked Upgrade",
+      language: "de",
+    });
+  });
+
+  test("never invokes a server-only accessor", () => {
+    // Filtering by availability is not enough on its own: a server accessor invoked against the
+    // client slice would read `undefined` and be dropped by coercion anyway, so the output would look
+    // identical while the accessor had in fact run. Spies are what distinguish the two.
+    const serverRead = vi.fn(() => "should never be read");
+    const clientRead = vi.fn(() => "link");
+    const bothRead = vi.fn(() => "de");
+
+    const projected = projectClientReservedValues(
+      [
+        {
+          name: "server_only",
+          dataType: "string",
+          availability: "server",
+          privacy: "keep",
+          read: serverRead,
+        },
+        {
+          name: "client_only",
+          dataType: "string",
+          availability: "client",
+          privacy: "keep",
+          read: clientRead,
+        },
+        { name: "either_side", dataType: "string", availability: "both", privacy: "keep", read: bothRead },
+      ],
+      midSurvey
+    );
+
+    expect(projected).toStrictEqual({ client_only: "link", either_side: "de" });
+    expect(serverRead).not.toHaveBeenCalled();
+    expect(clientRead).toHaveBeenCalledTimes(1);
+    expect(bothRead).toHaveBeenCalledTimes(1);
+  });
+
+  test("omits a client entry whose value has not been captured yet", () => {
+    expect(
+      projectClientReservedValues(RESERVED_FIELD_CATALOG, { ...midSurvey, language: null, meta: {} })
+    ).toStrictEqual({});
   });
 });
 
@@ -742,6 +1009,8 @@ describe("listReadableFields", () => {
     const underscoreEntry: TReservedFieldCatalogEntry = {
       name: "_",
       dataType: "string",
+      availability: "server",
+      privacy: "keep",
       read: () => undefined,
     };
     const fields = listReadableFields({
