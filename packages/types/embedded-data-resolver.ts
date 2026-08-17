@@ -546,12 +546,12 @@ export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] 
  *    since the last save would render as a raw `#recall:…#` token, and a renamed one would stop
  *    matching. The same functions also label saved surveys for exports and summaries, where this is
  *    a no-op — a saved survey's rows and declarations agree element for element, because every write
- *    path that persists those columns calls `reconcileEmbeddedData` with
- *    `toDesiredEmbeddedFields(<the persisted survey>)` in the same transaction. There are exactly
- *    four: `updateSurveyInternal` and `createSurvey` (apps/web/lib/survey/service.ts), the copy flow
- *    (modules/survey/list/lib/survey.ts) and the v3 patch (app/api/v3/surveys/patch.ts) — a
- *    `reconcileEmbeddedData(` grep is the audit, and a fifth write that skips it reintroduces the
- *    divergence. They can also diverge once a shared library definition can be renamed independently
+ *    path that persists those columns calls `reconcileEmbeddedData` in the same transaction with the
+ *    same payload it wrote them from (ENG-2412 moved that call onto the payload; before it, onto the
+ *    row just written). There are exactly four: `updateSurveyInternal` and `createSurvey`
+ *    (apps/web/lib/survey/service.ts), the copy flow (modules/survey/list/lib/survey.ts) and the v3
+ *    patch (app/api/v3/surveys/patch.ts) — a `reconcileEmbeddedData(` grep is the audit, and a fifth
+ *    write that skips it reintroduces the divergence. They can also diverge once a shared library definition can be renamed independently
  *    of the survey (ENG-1851), which is when the unified picker (ENG-1853) moves recall and the
  *    pickers onto the tables together.
  */

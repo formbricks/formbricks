@@ -68,6 +68,12 @@ const SELECT_CURRENT_FIELDS = {
  *
  * The two groups are merged independently because they arrive independently: a payload carrying
  * `variables` alone must leave the ingested rows exactly where they are.
+ *
+ * `computed` and `ingested` are the only two sources carried over, and that is the whole set a row
+ * can have: `ZEmbeddedData` rejects `source: "reserved"` outright, because reserved fields are a
+ * code catalog projected at read time rather than anything stored. A `reserved` row is therefore
+ * unrepresentable through every write path — and if one ever appeared through raw SQL, this would
+ * drop it, which is the correct outcome for a row the schema says cannot exist.
  */
 export const resolveDesiredEmbeddedFields = (
   current: TDesiredEmbeddedField[],

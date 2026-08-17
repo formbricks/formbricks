@@ -336,7 +336,7 @@ export const updateSurveyInternal = async (
       // the join below. `surveyData` is spread straight into `tx.survey.update`'s `data`, and
       // `Survey` owns relations named `embeddedData` / `embeddedDataLinks` — so leaving it in would
       // turn a read projection into a nested relation write. The rows are written by
-      // `reconcileEmbeddedData` from the persisted legacy columns instead.
+      // `reconcileEmbeddedData` from `updatedSurvey`'s legacy keys instead (ENG-2412).
       embeddedFields: _embeddedFields,
       ...surveyData
     } = updatedSurvey;
