@@ -111,6 +111,7 @@ export const button = (label, variant = "secondary") => {
       "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50",
     ghost: "text-slate-900 hover:bg-slate-100",
     primary: "bg-slate-900 text-white",
+    destructive: "bg-red-500 text-slate-50",
   };
   return `<button type="button" class="inline-flex h-8 items-center rounded-md px-3 text-sm font-medium ${variants[variant]}">${label}</button>`;
 };
