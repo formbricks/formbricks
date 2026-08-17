@@ -83,6 +83,12 @@ export const MCP_HANDLER_OPTIONS = {
   // against the SDK - a listen request comes back `-32603 Subscription limit reached` on plain JSON
   // with the connection closed, instead of a held-open `text/event-stream`.
   //
+  // Refusing it is safe for a real 2026-era client, which was the open question: Claude Code takes the
+  // refusal, goes straight on to `tools/list`, retries the stream three times with exponential backoff
+  // (1s/2s/4s), gives up, and calls tools normally. Not fatal, and not a hot loop. If a future client
+  // does treat it as fatal, prefer `maxSubscriptions: 1` (accepted but capped) over reverting to the
+  // default.
+  //
   // Revisit when we actually have something to notify about (resources, or tools that change at
   // runtime); `mcp-handler` 2.1.1 is the version that forwards this option.
   maxSubscriptions: 0,
