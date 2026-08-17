@@ -315,7 +315,7 @@ reviews:
         Conventional Commits: `type(optional-scope): summary`, where type is one of feat, fix,
         chore, docs, refactor, perf, test, build, ci, style, or revert. The summary must describe
         what the change does, in lower case, without a trailing period. A Linear ticket reference
-        such as `(ENG-1234)` or `[ENG-1234]` may be appended.
+        such as `(ENG-<id>)` or `[ENG-<id>]` may be appended.
     description:
       mode: warning
     issue_assessment:
@@ -354,6 +354,20 @@ reviews:
           Return inconclusive rather than failing when the diff alone does not let you determine
           an API response shape — for example when the shape comes from a serializer or type that
           this PR does not touch.
+
+      - name: Only the ticket line carries a magic word
+        mode: warning
+        instructions: |
+          Linear and GitHub scan the whole PR description for a closing keyword next to an issue
+          id, so a second one in prose silently links — and on merge closes — an unrelated ticket.
+
+          FAIL if a magic word (`Fixes`, `Closes`, `Resolves`, `Ref`) sits next to a ticket id
+          (`ENG-<number>`) or a GitHub issue reference (`#<number>`) anywhere in the description
+          other than the ticket line at the top. Inline code and code fences do not exempt it —
+          the scanners read the raw body. Quote the offending text and suggest rewriting the id as
+          `ENG-…` or dropping the magic word.
+
+          PASS if the only such pair is the ticket line at the top of the description.
 
       - name: Coverage accounts for the whole diff
         mode: warning

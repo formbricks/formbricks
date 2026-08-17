@@ -7,9 +7,11 @@ or Breaking changes. -->
 <!-- AI agents: no promotional footers, don't advertise yourself or any tool/service (e.g. "Generated
 by …"). The model note at the bottom is the one exception. -->
 
-<!-- Complete the line below: `Fixes ENG-1234`. A bare URL does NOT link the PR — the magic word has
-to come first. Use `Ref ENG-1234` instead if this PR only partly addresses the ticket, so merging
-doesn't close it. No ticket? Delete the line and say why. Closing a GitHub issue? Add "Fixes #123".
+<!-- Complete the line below: `Fixes ENG-<id>`. A bare URL does NOT link the PR — the magic word has
+to come first. Use `Ref ENG-<id>` instead if this PR only partly addresses the ticket, so merging
+doesn't close it. No ticket? Delete the line and say why. Closing a GitHub issue? Add `Fixes #<number>`.
+This line is the only place a magic word belongs: `Fixes ENG-…` written anywhere else in the
+description links and closes that ticket too, backticks included.
 More: https://linear.app/docs/github -->
 
 Fixes ENG-
