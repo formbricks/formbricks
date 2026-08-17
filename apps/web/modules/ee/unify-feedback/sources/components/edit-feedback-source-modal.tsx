@@ -51,7 +51,6 @@ import {
 } from "../utils";
 import { getFeedbackSourceIcon, getFeedbackSourceTypeLabelKey } from "./feedback-source-display";
 import { FormbricksQuestionList } from "./formbricks-question-list";
-import { ImportModeField } from "./import-mode-field";
 import { MappingUI } from "./mapping-ui";
 
 interface EditFeedbackSourceModalProps {
@@ -119,8 +118,9 @@ export const EditFeedbackSourceModal = ({
           surveyId: mappedSurveyId,
           selectedQuestionIds: mappedQuestionIds,
           importHistorical: true,
-          // The persisted value, not the default — this dialog has to round-trip it, or saving any
-          // other field would silently reset the source back to completedOnly.
+          // Round-tripped, never edited here: importMode is read only by the historical import, and
+          // editing a source never runs one, so this dialog renders no control for it. Seeding the
+          // persisted value keeps saving any other field from resetting the source to completedOnly.
           importMode: feedbackSource.importMode,
         });
         setCsvFeedbackSourceName("");
@@ -350,8 +350,6 @@ export const EditFeedbackSourceModal = ({
                     </FormItem>
                   )}
                 />
-
-                <ImportModeField control={formbricksForm.control} disabled={isReadOnly} />
               </form>
             </FormProvider>
           ) : (
