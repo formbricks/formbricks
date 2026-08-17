@@ -65,9 +65,32 @@ describe("planSurveyBackfill", () => {
           surveyId: "srv_1",
           embeddedDataId: "id_1",
           storageKey: "plan",
+          order: 0,
         },
       ],
     });
+  });
+
+  test("orders links by declaration — every variable, then every hidden field", () => {
+    // The order the rows are created with has to be the one the read seam will sort by, because
+    // after ENG-2401 nothing re-derives it from the JSON. `toDesiredEmbeddedFields` concatenates
+    // computed then ingested, so a hidden field added before a variable still sorts after it.
+    const plan = planSurveyBackfill(
+      survey({
+        variables: [{ id: "clx000000000000000000001", name: "score", type: "number", value: 7 }],
+        hiddenFields: { enabled: true, fieldIds: ["h1", "h2", "h3"] },
+      }),
+      sequentialIds()
+    );
+
+    expect(plan.status).toBe("ok");
+    if (plan.status !== "ok") return;
+    expect(plan.links.map((link) => [link.storageKey, link.order])).toEqual([
+      ["clx000000000000000000001", 0],
+      ["h1", 1],
+      ["h2", 2],
+      ["h3", 3],
+    ]);
   });
 
   test("carries a variable's declared type and value onto the row", () => {

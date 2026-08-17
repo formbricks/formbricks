@@ -79,13 +79,14 @@ describe("Embedded Data read seam (real Postgres)", () => {
     expect(await loadSurvey(surveyId)).not.toHaveProperty("embeddedDataLinks");
   });
 
-  test("the inlined order is the declared order, not the database's", async () => {
+  test("the inlined order is the declared order, not the storage keys'", async () => {
     const { surveyId } = await seedSurvey();
 
     const survey = await loadSurvey(surveyId);
 
     // Declared order is variables-then-hidden-fields, and `tier` is declared before `score` even
-    // though `clx…001` sorts before `clx…002`. This is CSV/XLSX header order and picker order.
+    // though `clx…001` sorts before `clx…002`. Storage key is only the tie-break, so this passing
+    // means the `order` column is what decided it — and this is CSV/XLSX header and picker order.
     expect(survey.embeddedFields?.map(({ link }) => link.storageKey)).toEqual([
       "clx000000000000000000002",
       "clx000000000000000000001",
@@ -121,63 +122,35 @@ describe("Embedded Data read seam (real Postgres)", () => {
 
   /**
    * `variables` and `hiddenFields` are unvalidated `Json` columns, so a row can hold an object where
-   * an array belongs. `toDesiredEmbeddedFields` maps both with `?? []`, which does not catch a wrong
-   * type — so before the read-boundary guards this threw `(variables ?? []).map is not a function`
-   * inside `transformPrismaSurvey` and failed the whole survey read.
+   * an array belongs. That used to matter here: the read seam ranked the joined rows against those
+   * columns, so a malformed one first threw `(variables ?? []).map is not a function` and failed the
+   * whole survey read, and then — once guarded — cost that group its ordering.
+   *
+   * ENG-2401 removes the dependency outright. Order comes from the `order` column, the read never
+   * touches the legacy JSON, and a malformed column is simply irrelevant to it. These stay as the
+   * proof of that, since the guards they were written for are gone.
    *
    * The malformation is written with raw SQL on purpose: Prisma's generated types make the bad shape
    * unrepresentable through the client, so a fixture built in TypeScript would only resemble the row
    * this is defending against. These write the actual bytes.
    */
   describe("a survey whose legacy JSON is malformed", () => {
-    test("still loads when `variables` holds an object instead of an array", async () => {
+    const DECLARED_ORDER = ["clx000000000000000000002", "clx000000000000000000001", "utm_source", "plan"];
+
+    test.each([
+      ["`variables` holds an object instead of an array", `variables = '{}'::jsonb`],
+      [
+        "`hiddenFields.fieldIds` holds a string instead of an array",
+        `"hiddenFields" = '{"enabled": true, "fieldIds": "utm_source"}'::jsonb`,
+      ],
+      ["both columns are malformed", `variables = '"not-an-array"'::jsonb, "hiddenFields" = '[]'::jsonb`],
+    ])("reads in declared order when %s", async (_label, assignment) => {
       const { surveyId } = await seedSurvey();
-      await prisma.$executeRaw`UPDATE "Survey" SET variables = '{}'::jsonb WHERE id = ${surveyId}`;
+      await prisma.$executeRawUnsafe(`UPDATE "Survey" SET ${assignment} WHERE id = $1`, surveyId);
 
       const survey = await loadSurvey(surveyId);
 
-      // The hidden fields — the well-formed group — keep their declared order; only the malformed
-      // group loses its ranking and sorts last, in the select's storageKey order.
-      expect(getSurveyEmbeddedFields(survey).map(({ link }) => link.storageKey)).toEqual([
-        "utm_source",
-        "plan",
-        "clx000000000000000000001",
-        "clx000000000000000000002",
-      ]);
-    });
-
-    test("still loads when `hiddenFields.fieldIds` holds a string instead of an array", async () => {
-      const { surveyId } = await seedSurvey();
-      await prisma.$executeRaw`
-        UPDATE "Survey" SET "hiddenFields" = '{"enabled": true, "fieldIds": "utm_source"}'::jsonb
-        WHERE id = ${surveyId}`;
-
-      const survey = await loadSurvey(surveyId);
-
-      expect(getSurveyEmbeddedFields(survey).map(({ link }) => link.storageKey)).toEqual([
-        "clx000000000000000000002",
-        "clx000000000000000000001",
-        "plan",
-        "utm_source",
-      ]);
-    });
-
-    test("still loads when both columns are malformed", async () => {
-      const { surveyId } = await seedSurvey();
-      await prisma.$executeRaw`
-        UPDATE "Survey" SET variables = '"not-an-array"'::jsonb, "hiddenFields" = '[]'::jsonb
-        WHERE id = ${surveyId}`;
-
-      const survey = await loadSurvey(surveyId);
-
-      // Nothing ranks, so every row falls back to the select's storageKey order — and crucially the
-      // definitions are all still there.
-      expect(getSurveyEmbeddedFields(survey).map(({ link }) => link.storageKey)).toEqual([
-        "clx000000000000000000001",
-        "clx000000000000000000002",
-        "plan",
-        "utm_source",
-      ]);
+      expect(getSurveyEmbeddedFields(survey).map(({ link }) => link.storageKey)).toEqual(DECLARED_ORDER);
     });
   });
 

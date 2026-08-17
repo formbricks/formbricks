@@ -13,6 +13,8 @@ import { InvalidInputError } from "@formbricks/types/errors";
 export interface TCurrentEmbeddedField {
   linkId: string;
   storageKey: string;
+  /** On the link, not on `field`: one shared definition sits at a different position per survey. */
+  order: number;
   field: {
     id: string;
     /** The owning survey for a local definition, null for a shared library one. */
@@ -25,13 +27,15 @@ export interface TCurrentEmbeddedField {
 }
 
 export interface TEmbeddedDataReconcilePlan {
-  toCreate: TDesiredEmbeddedField[];
+  toCreate: (TDesiredEmbeddedField & { order: number })[];
   toUpdate: {
     fieldId: string;
     name: string;
     dataType: TEmbeddedDataType;
     defaultValue: TEmbeddedDataDefaultValue;
   }[];
+  /** Links whose position moved. Separate from `toUpdate`, which is keyed by definition, not link. */
+  toReorder: { linkId: string; order: number }[];
   /** Links to drop. `fieldIdToDelete` is null when the definition must outlive the link. */
   toUnlink: { linkId: string; fieldIdToDelete: string | null }[];
 }
@@ -39,6 +43,7 @@ export interface TEmbeddedDataReconcilePlan {
 const SELECT_CURRENT_FIELDS = {
   id: true,
   storageKey: true,
+  order: true,
   embeddedData: {
     select: { id: true, surveyId: true, name: true, source: true, dataType: true, defaultValue: true },
   },
@@ -63,6 +68,12 @@ const toStoredDefaultValue = (
  * it and leaves the row alone, and a change to its name or type is ignored rather than written back.
  * In v1 no shared rows exist yet (the manager is ENG-1851), but this reconcile keeps running once
  * they do.
+ *
+ * A field's position is its index in `desired`, and it is compared against the stored one rather
+ * than against how the other links are arranged. That makes every save self-healing: a link left at
+ * the wrong position by any route repairs itself the next time the survey is saved, so the ENG-1835
+ * backfill is not the only thing standing between a survey and a correct order. It matters on a
+ * fresh database in particular, where data migrations are baselined as applied without ever running.
  */
 export const planEmbeddedDataReconcile = (
   surveyId: string,
@@ -70,9 +81,9 @@ export const planEmbeddedDataReconcile = (
   desired: TDesiredEmbeddedField[]
 ): TEmbeddedDataReconcilePlan => {
   const currentByKey = new Map(current.map((entry) => [entry.storageKey, entry]));
-  const desiredByKey = new Map(desired.map((entry) => [entry.storageKey, entry]));
+  const desiredByKey = new Map(desired.map((entry, order) => [entry.storageKey, { entry, order }] as const));
 
-  const plan: TEmbeddedDataReconcilePlan = { toCreate: [], toUpdate: [], toUnlink: [] };
+  const plan: TEmbeddedDataReconcilePlan = { toCreate: [], toUpdate: [], toReorder: [], toUnlink: [] };
 
   for (const entry of current) {
     const wanted = desiredByKey.get(entry.storageKey);
@@ -82,8 +93,8 @@ export const planEmbeddedDataReconcile = (
 
     // Two cases, one test: the field is gone, or a storage key whose source changed is a different
     // field wearing the same address — replace it rather than mutating a computed field into an
-    // ingested one. `wanted?.source` is undefined in the first case, which no source ever equals.
-    if (wanted?.source !== entry.field.source) {
+    // ingested one. `wanted?.entry.source` is undefined in the first case, which no source ever equals.
+    if (wanted?.entry.source !== entry.field.source) {
       plan.toUnlink.push({
         linkId: entry.linkId,
         fieldIdToDelete: isOwnedByThisSurvey ? entry.field.id : null,
@@ -91,28 +102,36 @@ export const planEmbeddedDataReconcile = (
       continue;
     }
 
+    // Above the ownership guard on purpose: position belongs to the link, not to the definition, so
+    // a shared field this survey does not own still moves when the fields around it change.
+    if (entry.order !== wanted.order) {
+      plan.toReorder.push({ linkId: entry.linkId, order: wanted.order });
+    }
+
     if (!isOwnedByThisSurvey) continue;
 
     const changed =
-      wanted.name !== entry.field.name ||
-      wanted.dataType !== entry.field.dataType ||
-      wanted.defaultValue !== entry.field.defaultValue;
+      wanted.entry.name !== entry.field.name ||
+      wanted.entry.dataType !== entry.field.dataType ||
+      wanted.entry.defaultValue !== entry.field.defaultValue;
 
     if (changed) {
       plan.toUpdate.push({
         fieldId: entry.field.id,
-        name: wanted.name,
-        dataType: wanted.dataType,
-        defaultValue: wanted.defaultValue,
+        name: wanted.entry.name,
+        dataType: wanted.entry.dataType,
+        defaultValue: wanted.entry.defaultValue,
       });
     }
   }
 
-  for (const entry of desired) {
+  for (const [order, entry] of desired.entries()) {
     const existing = currentByKey.get(entry.storageKey);
     // Mirror of the test above: absent, or present under a different source, both mean create.
+    // `order` is carried on the plan item rather than re-derived when the row is written, because
+    // `toCreate` is a filtered subset of `desired` and its own index is not the field's position.
     if (existing?.field.source !== entry.source) {
-      plan.toCreate.push(entry);
+      plan.toCreate.push({ ...entry, order });
     }
   }
 
@@ -148,6 +167,7 @@ export const reconcileEmbeddedData = async (
   const current: TCurrentEmbeddedField[] = links.map((link) => ({
     linkId: link.id,
     storageKey: link.storageKey,
+    order: link.order,
     field: link.embeddedData,
   }));
 
@@ -194,6 +214,15 @@ export const reconcileEmbeddedData = async (
     });
   }
 
+  // Only links that actually moved. Rewriting every position on every save would turn a one-word
+  // rename on a field-heavy survey into an UPDATE per field, and survey saves are a hot path.
+  for (const entry of plan.toReorder) {
+    await tx.surveyEmbeddedData.updateMany({
+      where: { id: entry.linkId, surveyId },
+      data: { order: entry.order },
+    });
+  }
+
   // Sequential rather than batched: the link needs the id of the row it points at, and a survey
   // holds a handful of fields, not thousands.
   for (const entry of plan.toCreate) {
@@ -212,7 +241,13 @@ export const reconcileEmbeddedData = async (
     });
 
     await tx.surveyEmbeddedData.create({
-      data: { surveyId, workspaceId, embeddedDataId: field.id, storageKey: entry.storageKey },
+      data: {
+        surveyId,
+        workspaceId,
+        embeddedDataId: field.id,
+        storageKey: entry.storageKey,
+        order: entry.order,
+      },
     });
   }
 };

@@ -41,6 +41,7 @@ vi.mock("@formbricks/database", () => {
       findMany: vi.fn(),
       deleteMany: vi.fn(),
       create: vi.fn(),
+      updateMany: vi.fn(),
     },
     embeddedData: {
       create: vi.fn(),
@@ -857,6 +858,7 @@ describe("patchV3Survey", () => {
           findMany: vi.fn().mockResolvedValue([]),
           deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
           create: vi.fn().mockResolvedValue({}),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
         embeddedData: {
           create: vi.fn().mockResolvedValue({ id: "ed_1" }),

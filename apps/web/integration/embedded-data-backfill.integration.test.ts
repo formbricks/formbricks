@@ -117,7 +117,7 @@ describe("Embedded Data backfill (real Postgres)", () => {
       data: { workspaceId, surveyId, name: "plan", source: "ingested" },
     });
     await prisma.surveyEmbeddedData.create({
-      data: { workspaceId, surveyId, embeddedDataId: existing.id, storageKey: "plan" },
+      data: { workspaceId, surveyId, embeddedDataId: existing.id, storageKey: "plan", order: 0 },
     });
 
     const stats = await backfillEmbeddedDataRows(prisma);

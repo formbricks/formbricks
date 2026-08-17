@@ -29,6 +29,7 @@ CREATE TABLE "SurveyEmbeddedData" (
     "surveyId" TEXT NOT NULL,
     "embeddedDataId" TEXT NOT NULL,
     "storageKey" TEXT NOT NULL,
+    "order" INTEGER NOT NULL,
 
     CONSTRAINT "SurveyEmbeddedData_pkey" PRIMARY KEY ("id")
 );
@@ -44,6 +45,9 @@ CREATE UNIQUE INDEX "EmbeddedData_id_workspaceId_key" ON "EmbeddedData"("id", "w
 
 -- CreateIndex
 CREATE INDEX "SurveyEmbeddedData_embeddedDataId_idx" ON "SurveyEmbeddedData"("embeddedDataId");
+
+-- CreateIndex
+CREATE INDEX "SurveyEmbeddedData_surveyId_order_idx" ON "SurveyEmbeddedData"("surveyId", "order");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SurveyEmbeddedData_surveyId_embeddedDataId_key" ON "SurveyEmbeddedData"("surveyId", "embeddedDataId");
