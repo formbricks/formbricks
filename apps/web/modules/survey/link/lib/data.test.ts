@@ -474,3 +474,26 @@ describe("data", () => {
     });
   });
 });
+
+/**
+ * ENG-1838. The link-survey page renders through a bundled `packages/surveys`, so this payload is
+ * never version-skewed the way an embedded SDK bundle is — but the shape is still a contract the
+ * renderer's recall and logic engines read, and it is the same two columns ENG-2404 will drop.
+ *
+ * This fails the moment `variables` / `hiddenFields` leave the select, which is exactly when someone
+ * has to replace them with a projection derived from the EmbeddedData rows.
+ */
+describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
+  test("the link-survey query asks for both legacy columns", async () => {
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ id: "survey-1" } as never);
+    vi.mocked(transformPrismaSurvey).mockReturnValue({ id: "survey-1" } as never);
+
+    await getSurveyWithMetadata("survey-1");
+
+    const [call] = vi.mocked(prisma.survey.findUnique).mock.calls;
+    const select = (call[0] as { select: Record<string, unknown> }).select;
+
+    expect(select.variables).toBe(true);
+    expect(select.hiddenFields).toBe(true);
+  });
+});
