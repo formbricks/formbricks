@@ -342,10 +342,26 @@ Comparison telemetry contains only bounded dimensions: cohort, surface, actor ty
 actor/resource type, action, decisions, outcome, stable error source, and stable AuthZed code. IDs,
 relationship strings, snapshots, tokens, raw SDK errors, requests, and responses are never emitted.
 
+The comparison counter records directional outcomes, not requests. A scalar comparison and a matching
+workspace-list observation each emit one sample. A workspace-list observation with drift in both
+directions emits two samples: one for each mismatch direction. Therefore, use the checks-per-request
+histogram for request amplification and inspect list mismatch directions independently; do not treat the
+comparison-counter sample total as a workspace-list request count.
+
 ```promql
 # Completed comparisons by mode, surface, actor type, cohort, and outcome.
 sum by (mode, surface, actor_type, cohort, outcome) (
   rate(formbricks_authzed_authorization_comparisons_total[5m])
+)
+
+# MCP workspace-list outcomes for one rollout cohort. Both mismatch series must remain at zero.
+sum by (outcome) (
+  increase(formbricks_authzed_authorization_comparisons_total{
+    surface="mcp",
+    action="workspace.read",
+    resource_type="workspace",
+    cohort="$cohort"
+  }[$window])
 )
 
 # Mismatch rate. Operational errors are measured separately.
