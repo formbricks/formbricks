@@ -91,15 +91,22 @@ const meetsMinimumWeight = (
   return grantedWeight >= minimumWeight;
 };
 
-const checkWorkspaceTeamAccess = async (accessItem: any, userId: string) => {
-  if (accessItem.type !== "workspaceTeam") return false;
+/**
+ * The `workspaceTeam` and `team` variants of `TAccess` carry no schema, so neither depends on `T` —
+ * hence the concrete `z.ZodRawShape` here rather than threading the generic through these two helpers.
+ * `checkAuthorizationUpdated` narrows on `type` before calling either, so each receives exactly its
+ * own variant and `workspaceId` / `teamId` / `minPermission` are checked at compile time.
+ */
+type TWorkspaceTeamAccess = Extract<TAccess<z.ZodRawShape>, { type: "workspaceTeam" }>;
+type TTeamAccess = Extract<TAccess<z.ZodRawShape>, { type: "team" }>;
+
+const checkWorkspaceTeamAccess = async (accessItem: TWorkspaceTeamAccess, userId: string) => {
   const workspacePermission = await getWorkspacePermissionByUserId(userId, accessItem.workspaceId);
   if (!workspacePermission) return false;
   return meetsMinimumWeight(teamPermissionWeight, workspacePermission, accessItem.minPermission);
 };
 
-const checkTeamAccess = async (accessItem: any, userId: string) => {
-  if (accessItem.type !== "team") return false;
+const checkTeamAccess = async (accessItem: TTeamAccess, userId: string) => {
   const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
   if (!teamRole) return false;
   return meetsMinimumWeight(teamRoleWeight, teamRole, accessItem.minPermission);
