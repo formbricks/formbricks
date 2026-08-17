@@ -8,7 +8,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getDimensionValuesAction } from "@/modules/ee/analysis/charts/actions";
 import { QUESTION_LABEL_DIMENSION_ID } from "@/modules/ee/analysis/lib/dimension-value-lookup";
 import { FieldTypeIcon } from "@/modules/ee/unify-feedback/lib/field-type-icons";
-import { formatFieldType } from "@/modules/ee/unify-feedback/lib/utils";
+import { formatFieldTypeLabel } from "@/modules/ee/unify-feedback/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -193,7 +193,7 @@ export function FilterValueCombobox({
                         <FieldTypeIcon
                           fieldType={item.fieldType}
                           className="mr-2 size-4 shrink-0 text-slate-500"
-                          aria-label={item.fieldType ? formatFieldType(item.fieldType) : undefined}
+                          aria-label={item.fieldType ? formatFieldTypeLabel(item.fieldType, t) : undefined}
                         />
                       )}
                       <span className="truncate" title={item.value}>

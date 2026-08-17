@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 import type { FeedbackRecordData } from "@/modules/hub/types";
+import { FIELD_TYPE_ICON_MAP } from "./field-type-icons";
 import {
   formatFieldType,
+  formatFieldTypeLabel,
   formatSourceType,
   getReadOnlyMetadataEntries,
   getValueFieldByType,
@@ -167,6 +169,24 @@ describe("formatFieldType", () => {
 
   test("returns empty string unchanged", () => {
     expect(formatFieldType("")).toBe("");
+  });
+});
+
+describe("formatFieldTypeLabel", () => {
+  const t = ((key: string) => key) as any;
+
+  test("maps every icon-mapped field type to a translation key", () => {
+    // The keys of FIELD_TYPE_ICON_MAP are the types the pick-list can render an icon for, and the
+    // icon's aria-label is their only textual form — so each one must resolve to a key, not to the
+    // re-cased raw value.
+    for (const fieldType of Object.keys(FIELD_TYPE_ICON_MAP)) {
+      expect(formatFieldTypeLabel(fieldType, t)).toBe(`workspace.unify.field_type_label_${fieldType}`);
+    }
+  });
+
+  test("falls back to the re-cased raw value for an unmapped type", () => {
+    expect(formatFieldTypeLabel("ranking", t)).toBe("Ranking");
+    expect(formatFieldTypeLabel("", t)).toBe("");
   });
 });
 

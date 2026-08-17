@@ -417,6 +417,6 @@ export const getDimensionValuesAction = authenticatedActionClient
         source: "charts.getDimensionValuesAction",
       });
 
-      return collectDimensionValues(rows, dimension);
+      return collectDimensionValues(rows, dimension, DIMENSION_VALUE_LOOKUP_LIMIT);
     }
   );
