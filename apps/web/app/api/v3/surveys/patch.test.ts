@@ -226,7 +226,7 @@ describe("patchV3Survey", () => {
         publishOn: data.publishOn ?? currentSurvey.publishOn,
       }) as unknown as TSurveyUpdateReturn;
     });
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     vi.mocked(normalizeSurveyScheduling).mockImplementation(({ closeOn, publishOn }) => ({
       closeOn,
       publishOn,

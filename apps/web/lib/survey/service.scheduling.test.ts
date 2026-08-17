@@ -61,7 +61,7 @@ describe("survey service scheduling", () => {
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
     // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
   });
 
   afterEach(() => {
