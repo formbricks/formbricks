@@ -45,9 +45,11 @@ and the rest), so turbo rebuilds those first. That is why the unit-test workflow
 build step of its own — do **not** read "green on CI, red locally" as evidence of a stale `dist/`;
 it and the root commands run the same graph.
 
-One caveat: a `dependsOn` list is only as good as its entries. A package missing from
-`@formbricks/web#test`/`#typecheck` is never built at all, which fails exactly like a stale `dist/` —
-so when a root command goes red, check the task graph too, not just the build.
+One caveat: a `dependsOn` list is only as good as its entries — though `build` is topological
+(`dependsOn: ["^build"]`), so a package left out is still built when something in the list depends on
+it. Only one that nothing in the list reaches goes unbuilt, failing exactly like a stale `dist/` from a
+different cause — as `@formbricks/jobs` did while it was absent from `#typecheck`, nothing else in the
+list depending on it. When a root command goes red, check the graph too, not just the build.
 
 The failure looks nothing like a stale build. A symbol added on the branch you just checked out is
 absent from `dist/`, so depending on what is missing the import either resolves to `undefined` or
