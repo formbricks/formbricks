@@ -229,8 +229,11 @@ export const PUT = withV1ApiWrapper({
         }
 
         return {
+          // Best-effort, not strict: the update has committed by now, so a failed workspace lookup
+          // would report a failure for an update that succeeded — and mark the audit entry failed
+          // with it.
           response: responses.successResponse(
-            await addLegacyEnvironmentId(
+            await addLegacyEnvironmentIdBestEffort(
               addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(updatedSurvey)))
             )
           ),

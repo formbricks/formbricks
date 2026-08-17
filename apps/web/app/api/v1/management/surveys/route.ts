@@ -8,7 +8,10 @@ import {
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
-import { addLegacyEnvironmentId, addLegacyEnvironmentIdToList } from "@/app/lib/api/legacy-environment-id";
+import {
+  addLegacyEnvironmentIdBestEffort,
+  addLegacyEnvironmentIdToList,
+} from "@/app/lib/api/legacy-environment-id";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -149,8 +152,11 @@ export const POST = withV1ApiWrapper({
       }
 
       return {
+        // Best-effort, not strict: the insert has committed by now, so a failed workspace lookup here
+        // would return an error for a survey that exists. `Survey` has no unique constraint to dedup
+        // on, so a client retrying that false error creates a second survey.
         response: responses.successResponse(
-          await addLegacyEnvironmentId(
+          await addLegacyEnvironmentIdBestEffort(
             addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
           )
         ),
