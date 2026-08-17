@@ -293,4 +293,66 @@ describe("reconcileEmbeddedData (real Postgres)", () => {
     // storage key, which is exactly why no response migration is needed.
     expect(response.data).toEqual({ plan: "pro" });
   });
+
+  /**
+   * ENG-1839. The reserved-name guard is deliberately NOT in this file's production counterpart:
+   * `reconcileEmbeddedData` must keep accepting a reserved name, because a survey COPY feeds the
+   * whole source survey's fields in as "new" against zero existing rows. A guard here would make
+   * duplicating a grandfathered survey fail — which is why these live at the three input boundaries
+   * (`updateSurveyInternal`, `createSurvey`, the v3 patch) instead.
+   */
+  describe("grandfathered reserved names (ENG-1839)", () => {
+    test("reconciles a survey that declares `country`, creating the row and the link", async () => {
+      const { surveyId, workspaceId } = await seedSurvey();
+
+      await reconcile(surveyId, workspaceId, {
+        hiddenFields: { enabled: true, fieldIds: ["country", "url"] },
+      });
+
+      expect(await readFields(surveyId)).toEqual([
+        expect.objectContaining({ storageKey: "country", name: "country", source: "ingested" }),
+        expect.objectContaining({ storageKey: "url", name: "url", source: "ingested" }),
+      ]);
+    });
+
+    test("DUPLICATING a survey that declares `country` still succeeds", async () => {
+      // The shape of `copySurveyToOtherWorkspace`: the copy is its own `survey.create`, and the
+      // source survey's declared fields are then reconciled onto it with no rows of its own — every
+      // name arrives as "new", reserved ones included.
+      const { surveyId, workspaceId } = await seedSurvey();
+      const declared = { enabled: true, fieldIds: ["country", "team_size"] };
+      await reconcile(surveyId, workspaceId, { hiddenFields: declared });
+
+      const copy = await prisma.survey.create({
+        data: { name: "Survey (copy)", workspaceId, hiddenFields: declared },
+      });
+
+      await expect(reconcile(copy.id, workspaceId, { hiddenFields: declared })).resolves.not.toThrow();
+
+      // The duplicate has its own rows, and the original is untouched.
+      expect(await readFields(copy.id)).toEqual([
+        expect.objectContaining({ storageKey: "country", name: "country" }),
+        expect.objectContaining({ storageKey: "team_size", name: "team_size" }),
+      ]);
+      expect(await readFields(surveyId)).toHaveLength(2);
+    });
+
+    test("a copy into ANOTHER workspace defines `country` there too", async () => {
+      const { surveyId, workspaceId } = await seedSurvey();
+      const declared = { enabled: true, fieldIds: ["country"] };
+      await reconcile(surveyId, workspaceId, { hiddenFields: declared });
+
+      const { workspaceId: otherWorkspaceId } = await seedSurvey();
+      const copy = await prisma.survey.create({
+        data: { name: "Survey (copy)", workspaceId: otherWorkspaceId, hiddenFields: declared },
+      });
+
+      await reconcile(copy.id, otherWorkspaceId, { hiddenFields: declared });
+
+      expect(await readFields(copy.id)).toEqual([
+        expect.objectContaining({ storageKey: "country", name: "country" }),
+      ]);
+      expect(await prisma.embeddedData.count({ where: { workspaceId: otherWorkspaceId } })).toBe(1);
+    });
+  });
 });

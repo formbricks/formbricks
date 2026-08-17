@@ -308,4 +308,59 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await expect(page.locator("#action-0-variableId")).toContainText(renamedVariableName);
     await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "number");
   });
+
+  /**
+   * ENG-1839. `country` is a Tier-1 reserved field, read off every response. A newly declared hidden
+   * field may not take that name — the two would collide in the recall/logic namespace, and
+   * `getHiddenFieldsFromSearchParams` would refuse to fill it, leaving it silently empty forever.
+   *
+   * Surveys that ALREADY declare `country` are grandfathered and keep working; that half is covered
+   * below the browser boundary (service, v3 patch and reconcile suites), because reaching it here
+   * would mean authoring a state the editor now refuses to create.
+   */
+  test("refuses a hidden field named after a reserved field", async ({ page, users }) => {
+    const allowedName = uniqueName("plan_tier");
+
+    const user = await users.create();
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const surveyId = await createSurveyFromScratch(page);
+
+    await openCard(page, "Hidden fields");
+    const input = editorPanel(page).locator("#hiddenField");
+    const addButton = editorPanel(page).getByRole("button", { name: "Add hidden field ID", exact: true });
+
+    await input.fill("country");
+    await addButton.click();
+
+    // The error names the field, and the field is NOT added to the card.
+    await expect(
+      page.getByText('Hidden field ID "country" is not allowed. It is a reserved keyword.')
+    ).toBeVisible();
+    await expect(
+      editorPanel(page).getByText("country", { exact: true }),
+      "the refused name must not be added to the hidden fields card"
+    ).toHaveCount(0);
+
+    // Uppercase is refused too: the reserved match is case-insensitive, and a survey declaring
+    // `Country` would collide with the same reserved read.
+    await input.fill("Country");
+    await addButton.click();
+    await expect(
+      page.getByText('Hidden field ID "Country" is not allowed. It is a reserved keyword.')
+    ).toBeVisible();
+
+    // An ordinary name still works, so the guard rejects the reserved name rather than the card.
+    await input.fill(allowedName);
+    await addButton.click();
+    await expect(editorPanel(page).getByText(allowedName, { exact: true })).toBeVisible();
+
+    // And the refusal really did not reach the database: the save writes one field, not three.
+    await saveDraft(page);
+    const stored = await prisma.surveyEmbeddedData.findMany({
+      where: { surveyId },
+      select: { storageKey: true },
+    });
+    expect(stored.map((field) => field.storageKey)).toEqual([allowedName]);
+  });
 });
