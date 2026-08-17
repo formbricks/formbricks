@@ -175,32 +175,40 @@ export function FilterValueCombobox({
               )}
               {!isLoading && !error && values.length > 0 && (
                 <CommandGroup className="overflow-visible">
-                  {values.map((item) => (
-                    <CommandItem
-                      key={item.value}
-                      value={item.value}
-                      onSelect={() => {
-                        onChange(item.value);
-                        setOpen(false);
-                      }}>
-                      <CheckIcon
-                        className={cn(
-                          "mr-2 size-4 shrink-0",
-                          value === item.value ? "opacity-100" : "opacity-0"
+                  {values.map((item) => {
+                    const isSelected = value === item.value;
+
+                    // Three columns: type icon, label, and the tick — which only renders when
+                    // selected and sits on the right, so an unselected row spends none of its
+                    // width on an empty checkmark gutter.
+                    return (
+                      <CommandItem
+                        key={item.value}
+                        value={item.value}
+                        className="gap-2"
+                        onSelect={() => {
+                          onChange(item.value);
+                          setOpen(false);
+                        }}>
+                        {showFieldTypeIcons && (
+                          <FieldTypeIcon
+                            fieldType={item.fieldType}
+                            className={cn(
+                              "size-4 shrink-0",
+                              isSelected ? "text-slate-900" : "text-slate-500"
+                            )}
+                            aria-label={item.fieldType ? formatFieldTypeLabel(item.fieldType, t) : undefined}
+                          />
                         )}
-                      />
-                      {showFieldTypeIcons && (
-                        <FieldTypeIcon
-                          fieldType={item.fieldType}
-                          className="mr-2 size-4 shrink-0 text-slate-500"
-                          aria-label={item.fieldType ? formatFieldTypeLabel(item.fieldType, t) : undefined}
-                        />
-                      )}
-                      <span className="truncate" title={item.value}>
-                        {item.value}
-                      </span>
-                    </CommandItem>
-                  ))}
+                        <span
+                          className={cn("flex-1 truncate", isSelected && "font-medium text-slate-900")}
+                          title={item.value}>
+                          {item.value}
+                        </span>
+                        {isSelected && <CheckIcon className="ml-auto size-4 shrink-0" />}
+                      </CommandItem>
+                    );
+                  })}
                 </CommandGroup>
               )}
             </CommandList>
