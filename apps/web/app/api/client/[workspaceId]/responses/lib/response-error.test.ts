@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { handleClientResponseCreateError } from "./response-error";
 
 // Real Prisma 7 + adapter-pg P2002 shape (no meta.target; columns nested under the driver adapter).
-const uniqueViolation = (fields: string[]): Prisma.PrismaClientKnownRequestError =>
+const uniqueViolation = (fields: string[]): PrismaClientKnownRequestError =>
   new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
     code: "P2002",
     clientVersion: "test",

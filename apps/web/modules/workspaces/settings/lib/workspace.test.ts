@@ -10,13 +10,16 @@ import { createWorkspace, deleteWorkspace, updateWorkspace } from "./workspace";
 
 vi.mock("server-only", () => ({}));
 
-const baseWorkspace: TWorkspace = {
+// `satisfies` (not a `: TWorkspace` annotation) keeps the literal type, whose required-and-null
+// fields also satisfy the Prisma row shape that `prisma.workspace.update` mocks resolve to.
+const baseWorkspace = {
   id: "p1",
   createdAt: new Date(),
   updatedAt: new Date(),
   name: "Workspace 1",
   appSetupCompleted: false,
   organizationId: "org1",
+  legacyEnvironmentId: null,
   languages: [],
   recontactDays: 0,
   linkSurveyBranding: false,
@@ -27,7 +30,8 @@ const baseWorkspace: TWorkspace = {
   overlay: "none",
   styling: { allowStyleOverwrite: true },
   logo: null,
-};
+  customHeadScripts: null,
+} satisfies TWorkspace;
 
 vi.mock("@formbricks/database", () => ({
   prisma: {

@@ -26,7 +26,11 @@ import { registerWorkspaceTools } from "./tools/workspaces";
  * best-effort. Any failure here falls back to an anonymous event, not a thrown
  * error into the MCP request path.
  */
-export const identifyMcpUser: NonNullable<MCPAnalyticsOptions["identify"]> = async (_request, extra) => {
+// `identify` is a union of callback | static identity | null — pick the callback member so
+// callers (and tests) can invoke this directly.
+type TMcpIdentifyFn = Extract<NonNullable<MCPAnalyticsOptions["identify"]>, CallableFunction>;
+
+export const identifyMcpUser: TMcpIdentifyFn = async (_request, extra) => {
   try {
     const authInfo = (extra as { authInfo?: AuthInfo } | undefined)?.authInfo;
     const authentication = getMcpAuthentication(authInfo);

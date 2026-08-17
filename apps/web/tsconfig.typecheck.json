@@ -1,15 +1,5 @@
 {
-  "exclude": [
-    "../../.env",
-    ".next",
-    "node_modules",
-    "playwright",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/tests/**",
-    "**/__mocks__/**",
-    "**/__tests__/**"
-  ],
+  "exclude": ["../../.env", ".next", "node_modules", "playwright"],
   "extends": "./tsconfig.json",
   "include": [
     "next-env.d.ts",
