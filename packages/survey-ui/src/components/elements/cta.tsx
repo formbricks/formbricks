@@ -3,6 +3,7 @@ import * as React from "react";
 import { Button } from "@/components/general/button";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
+import { isSafeLinkUrl } from "@/lib/url";
 
 /**
  * Props for the CTA (Call to Action) element component
@@ -66,8 +67,12 @@ function CTA({
     if (disabled) return;
     onClick();
 
-    if (buttonExternal && buttonUrl) {
-      window.open(buttonUrl, "_blank")?.focus();
+    // `isSafeLinkUrl` gate: `buttonUrl` is an editable survey field, and a `javascript:` value reaching
+    // `window.open()` executes on the survey's own origin. `noopener` is what keeps the opened tab from
+    // reaching back through `window.opener` into the authenticated page that opened it; it also makes
+    // `window.open` return null, so there is no handle left to `focus()`.
+    if (buttonExternal && buttonUrl && isSafeLinkUrl(buttonUrl)) {
+      window.open(buttonUrl, "_blank", "noopener,noreferrer");
     }
   };
 
