@@ -58,6 +58,32 @@ const toStoredDefaultValue = (
 ): TEmbeddedDataDefaultValue | typeof Prisma.DbNull => defaultValue ?? Prisma.DbNull;
 
 /**
+ * Whether the stored definition says something different from what the survey now declares. Named
+ * apart from a position change on purpose: the two live on different rows — this one on
+ * `EmbeddedData`, position on the link — and take different writes.
+ */
+const definitionDiffers = (wanted: TDesiredEmbeddedField, field: TCurrentEmbeddedField["field"]): boolean =>
+  wanted.name !== field.name ||
+  wanted.dataType !== field.dataType ||
+  wanted.defaultValue !== field.defaultValue;
+
+/**
+ * The desired fields with no current row at the same address under the same source — the mirror of
+ * the unlink test in {@link planEmbeddedDataReconcile}'s first pass.
+ *
+ * `order` is stamped from the index in the **full** desired list and only then filtered, because a
+ * field's position is where it sits among everything the survey declares, not among the subset that
+ * happens to need creating.
+ */
+const plannedCreates = (
+  currentByKey: Map<string, TCurrentEmbeddedField>,
+  desired: TDesiredEmbeddedField[]
+): TEmbeddedDataReconcilePlan["toCreate"] =>
+  desired
+    .map((entry, order) => ({ ...entry, order }))
+    .filter((entry) => currentByKey.get(entry.storageKey)?.field.source !== entry.source);
+
+/**
  * Works out what has to change for a survey's Embedded Data to match `desired`.
  *
  * Pure, so the branching that actually matters — what may be edited, what may be deleted — is
@@ -110,12 +136,7 @@ export const planEmbeddedDataReconcile = (
 
     if (!isOwnedByThisSurvey) continue;
 
-    const changed =
-      wanted.entry.name !== entry.field.name ||
-      wanted.entry.dataType !== entry.field.dataType ||
-      wanted.entry.defaultValue !== entry.field.defaultValue;
-
-    if (changed) {
+    if (definitionDiffers(wanted.entry, entry.field)) {
       plan.toUpdate.push({
         fieldId: entry.field.id,
         name: wanted.entry.name,
@@ -125,15 +146,7 @@ export const planEmbeddedDataReconcile = (
     }
   }
 
-  for (const [order, entry] of desired.entries()) {
-    const existing = currentByKey.get(entry.storageKey);
-    // Mirror of the test above: absent, or present under a different source, both mean create.
-    // `order` is carried on the plan item rather than re-derived when the row is written, because
-    // `toCreate` is a filtered subset of `desired` and its own index is not the field's position.
-    if (existing?.field.source !== entry.source) {
-      plan.toCreate.push({ ...entry, order });
-    }
-  }
+  plan.toCreate.push(...plannedCreates(currentByKey, desired));
 
   return plan;
 };
