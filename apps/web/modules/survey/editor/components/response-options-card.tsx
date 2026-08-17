@@ -56,6 +56,9 @@ export const ResponseOptionsCard = ({
     localSurvey.isSingleResponsePerEmailEnabled
   );
   const [captureIpToggle, setCaptureIpToggle] = useState(localSurvey.isCaptureIpEnabled);
+  const [anonymizeResponsesToggle, setAnonymizeResponsesToggle] = useState(
+    localSurvey.isAnonymizeResponsesEnabled
+  );
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
     heading: t("workspace.surveys.edit.survey_completed_heading"),
@@ -162,6 +165,14 @@ export const ResponseOptionsCard = ({
   const handleCaptureIpToggle = () => {
     setCaptureIpToggle(!captureIpToggle);
     setLocalSurvey({ ...localSurvey, isCaptureIpEnabled: !localSurvey.isCaptureIpEnabled });
+  };
+
+  const handleAnonymizeResponsesToggle = () => {
+    setAnonymizeResponsesToggle(!anonymizeResponsesToggle);
+    setLocalSurvey({
+      ...localSurvey,
+      isAnonymizeResponsesEnabled: !localSurvey.isAnonymizeResponsesEnabled,
+    });
   };
 
   useEffect(() => {
@@ -586,6 +597,13 @@ export const ResponseOptionsCard = ({
             onToggle={handleCaptureIpToggle}
             title={t("workspace.surveys.edit.capture_ip_address")}
             description={t("workspace.surveys.edit.capture_ip_address_description")}
+          />
+          <AdvancedOptionToggle
+            htmlId="anonymizeResponses"
+            isChecked={anonymizeResponsesToggle}
+            onToggle={handleAnonymizeResponsesToggle}
+            title={t("workspace.surveys.edit.anonymize_responses")}
+            description={t("workspace.surveys.edit.anonymize_responses_description")}
           />
         </div>
       </Collapsible.CollapsibleContent>

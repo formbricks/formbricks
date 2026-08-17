@@ -57,6 +57,7 @@ describe("Survey Editor Library Tests", () => {
     isSingleResponsePerEmailEnabled: false,
     isBackButtonHidden: false,
     isCaptureIpEnabled: false,
+    isAnonymizeResponsesEnabled: false,
     pin: null,
     displayPercentage: null,
     languages: [],

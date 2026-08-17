@@ -10,6 +10,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -220,14 +221,16 @@ export const POST = withV1ApiWrapper({
 
       // Capture IP address if the survey has IP capture enabled
       // Server-derived IP always overwrites any client-provided value
-      if (survey.isCaptureIpEnabled) {
+      if (survey.isCaptureIpEnabled && !survey.isAnonymizeResponsesEnabled) {
         const ipAddress = await getClientIpFromHeaders();
         meta.ipAddress = ipAddress;
       }
 
+      const metaToStore = applyAnonymizePolicy(meta, survey.isAnonymizeResponsesEnabled);
+
       response = await createResponseWithQuotaEvaluation({
         ...responseInputData,
-        meta,
+        meta: metaToStore,
       });
     } catch (error) {
       return handleApiError(error, { cors: true });

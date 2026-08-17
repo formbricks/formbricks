@@ -210,6 +210,7 @@ const baseSurveyProperties = {
   isBackButtonHidden: false,
   isAutoProgressingEnabled: false,
   isCaptureIpEnabled: false,
+  isAnonymizeResponsesEnabled: false,
   endings: [
     {
       id: "umyknohldc7w26ocjdhaa62c",

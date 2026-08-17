@@ -157,6 +157,7 @@ const currentSurvey = {
   isBackButtonHidden: false,
   isAutoProgressingEnabled: false,
   isCaptureIpEnabled: false,
+  isAnonymizeResponsesEnabled: false,
   pin: null,
   displayPercentage: null,
   languages: [

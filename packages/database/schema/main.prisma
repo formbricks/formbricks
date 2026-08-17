@@ -402,6 +402,11 @@ model Survey {
   isBackButtonHidden              Boolean                           @default(false)
   isAutoProgressingEnabled        Boolean                           @default(false)
   isCaptureIpEnabled              Boolean                           @default(false)
+  // Survey-level "Anonymize responses". A column of its own rather than a reading of
+  // `isCaptureIpEnabled`: that flag also defaults to false, so deriving anonymize from
+  // `!isCaptureIpEnabled` would switch every survey that exists to anonymized and silently stop
+  // capturing country and userAgent.
+  isAnonymizeResponsesEnabled     Boolean                           @default(false) @map("is_anonymize_responses_enabled")
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]

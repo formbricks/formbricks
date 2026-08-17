@@ -993,6 +993,14 @@ export const ZSurveyBase = z.object({
   isBackButtonHidden: z.boolean(),
   isAutoProgressingEnabled: z.boolean().optional().prefault(false),
   isCaptureIpEnabled: z.boolean(),
+  /**
+   * "Anonymize responses". Suppresses the privacy-sensitive reserved fields **at ingest**, so the
+   * response is stored without them rather than stored and filtered on read.
+   *
+   * A field of its own and deliberately not `!isCaptureIpEnabled`: that flag also defaults to false,
+   * so reading anonymize off it would retroactively anonymize every survey that already exists.
+   */
+  isAnonymizeResponsesEnabled: z.boolean(),
   pin: z
     .string()
     .length(4, {

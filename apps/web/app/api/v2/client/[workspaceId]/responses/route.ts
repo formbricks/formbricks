@@ -6,6 +6,7 @@ import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -161,13 +162,15 @@ const createResponseForRequest = async ({
       action: responseInputData?.meta?.action,
     };
 
-    if (survey.isCaptureIpEnabled) {
+    if (survey.isCaptureIpEnabled && !survey.isAnonymizeResponsesEnabled) {
       meta.ipAddress = await getClientIpFromHeaders();
     }
 
+    const metaToStore = applyAnonymizePolicy(meta, survey.isAnonymizeResponsesEnabled);
+
     return await createResponseWithQuotaEvaluation({
       ...responseInputData,
-      meta,
+      meta: metaToStore,
     });
   } catch (error) {
     if (error instanceof InvalidInputError) {

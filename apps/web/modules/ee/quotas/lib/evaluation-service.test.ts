@@ -123,6 +123,7 @@ describe("Quota Evaluation Service", () => {
     updatedAt: new Date("2024-01-01"),
     blocks: [],
     isCaptureIpEnabled: false,
+    isAnonymizeResponsesEnabled: false,
     slug: null,
   };
 
