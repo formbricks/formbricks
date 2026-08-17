@@ -174,3 +174,18 @@ describe("getSurveys (Management API)", () => {
     expect(prisma.survey.findMany).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * ENG-1838. `GET /api/v1/management/surveys` is a public contract: external integrations read
+ * `variables` and `hiddenFields` off it, and both come straight from `selectSurvey`. The Embedded
+ * Data work added the joined rows alongside them; ENG-2404 will drop the columns underneath.
+ *
+ * Asserting the select rather than a response body keeps this cheap and still catches the only way
+ * it breaks — the keys leaving `selectSurvey`. v2 reads the same constant.
+ */
+describe("legacy Embedded Data shape on the wire (ENG-1838)", () => {
+  test("selectSurvey still carries variables and hiddenFields", () => {
+    expect(selectSurvey.variables).toBe(true);
+    expect(selectSurvey.hiddenFields).toBe(true);
+  });
+});
