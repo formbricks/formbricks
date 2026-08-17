@@ -118,6 +118,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       create: vi.fn(),
       deleteMany: vi.fn(),
+      updateMany: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -653,13 +654,17 @@ describe("copySurveyToOtherWorkspace", () => {
   test("re-creates the copied survey's variables and hidden fields under their original keys", async () => {
     await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
 
-    const storageKeys = vi
+    const links = vi
       .mocked(prisma.surveyEmbeddedData.create)
-      .mock.calls.map(([args]) => (args as { data: { storageKey: string } }).data.storageKey);
+      .mock.calls.map(([args]) => (args as { data: { storageKey: string; order: number } }).data);
 
     // A variable keeps its cuid and a hidden field its name, so the copy's recall tokens — cloned
-    // verbatim from the source — still resolve.
-    expect(storageKeys).toEqual(["var_cuid", "plan"]);
+    // verbatim from the source — still resolve. The positions come across too, so the copy exports
+    // its columns in the same order as the survey it was made from.
+    expect(links.map(({ storageKey, order }) => [storageKey, order])).toEqual([
+      ["var_cuid", 0],
+      ["plan", 1],
+    ]);
   });
 
   test("should copy survey to the same workspace successfully", async () => {

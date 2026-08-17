@@ -114,6 +114,7 @@ describe("Embedded Data is scoped to a workspace by the database (real Postgres)
           surveyId: surveyB,
           embeddedDataId: fieldInA.id,
           storageKey: "plan_tier",
+          order: 0,
         },
       })
     );
@@ -134,6 +135,7 @@ describe("Embedded Data is scoped to a workspace by the database (real Postgres)
           surveyId: surveyB,
           embeddedDataId: fieldInA.id,
           storageKey: "plan_tier",
+          order: 0,
         },
       })
     );
@@ -163,6 +165,7 @@ describe("Embedded Data is scoped to a workspace by the database (real Postgres)
         surveyId: surveyA,
         embeddedDataId: shared.id,
         storageKey: "plan_tier",
+        order: 0,
       },
     });
 

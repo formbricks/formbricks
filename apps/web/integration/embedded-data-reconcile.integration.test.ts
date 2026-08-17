@@ -42,6 +42,16 @@ const readFields = async (surveyId: string) =>
       }))
     );
 
+/** Stored positions, read back the way `selectSurveyEmbeddedDataLinks` reads them. */
+const readOrder = async (surveyId: string) =>
+  prisma.surveyEmbeddedData
+    .findMany({
+      where: { surveyId },
+      orderBy: [{ order: "asc" }, { storageKey: "asc" }],
+      select: { storageKey: true, order: true },
+    })
+    .then((links) => links.map((link) => [link.storageKey, link.order]));
+
 const reconcile = (
   surveyId: string,
   workspaceId: string,
@@ -84,6 +94,55 @@ describe("reconcileEmbeddedData (real Postgres)", () => {
         key: null,
         surveyId,
       },
+    ]);
+  });
+
+  test("numbers fields by declaration — every variable, then every hidden field", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+
+    // Added in the editor as h1, h2, then the variable, then h3 — but the cards write to two
+    // separate arrays, so what survives is "variables first", not the order they were typed in.
+    await reconcile(surveyId, workspaceId, {
+      variables: [{ id: "clx000000000000000000001", name: "score", type: "number", value: 7 }],
+      hiddenFields: { enabled: true, fieldIds: ["h1", "h2", "h3"] },
+    });
+
+    expect(await readOrder(surveyId)).toEqual([
+      ["clx000000000000000000001", 0],
+      ["h1", 1],
+      ["h2", 2],
+      ["h3", 3],
+    ]);
+  });
+
+  test("re-numbers the tail when a field is removed from the middle", async () => {
+    // The only thing that moves a position in v1 — the cards can append and delete, not reorder.
+    // Without this the tail keeps its stale numbers and the next inserted field collides with one.
+    const { surveyId, workspaceId } = await seedSurvey();
+    await reconcile(surveyId, workspaceId, {
+      hiddenFields: { enabled: true, fieldIds: ["h1", "h2", "h3"] },
+    });
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["h1", "h3"] } });
+
+    expect(await readOrder(surveyId)).toEqual([
+      ["h1", 0],
+      ["h3", 1],
+    ]);
+  });
+
+  test("repairs positions left behind by something that did not set them", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    const legacy = { hiddenFields: { enabled: true, fieldIds: ["h1", "h2", "h3"] } };
+    await reconcile(surveyId, workspaceId, legacy);
+    await prisma.surveyEmbeddedData.updateMany({ where: { surveyId }, data: { order: 0 } });
+
+    await reconcile(surveyId, workspaceId, legacy);
+
+    expect(await readOrder(surveyId)).toEqual([
+      ["h1", 0],
+      ["h2", 1],
+      ["h3", 2],
     ]);
   });
 
@@ -174,7 +233,7 @@ describe("reconcileEmbeddedData (real Postgres)", () => {
       data: { workspaceId, key: "plan_tier", name: "Plan tier", source: "ingested" },
     });
     await prisma.surveyEmbeddedData.create({
-      data: { workspaceId, surveyId, embeddedDataId: shared.id, storageKey: "plan_tier" },
+      data: { workspaceId, surveyId, embeddedDataId: shared.id, storageKey: "plan_tier", order: 0 },
     });
 
     // The legacy cards know nothing about the shared library, so a save that omits the field must
@@ -198,7 +257,7 @@ describe("reconcileEmbeddedData (real Postgres)", () => {
 
     const borrower = await prisma.survey.create({ data: { name: "Borrower", workspaceId } });
     await prisma.surveyEmbeddedData.create({
-      data: { workspaceId, surveyId: borrower.id, embeddedDataId: field.id, storageKey: "plan" },
+      data: { workspaceId, surveyId: borrower.id, embeddedDataId: field.id, storageKey: "plan", order: 0 },
     });
 
     await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: [] } });

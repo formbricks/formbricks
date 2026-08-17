@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { isDeepEqual } from "@/lib/utils/object";
 import { inlineSurveyEmbeddedFields, withInlinedEmbeddedFields } from "./survey-fields";
 
@@ -14,29 +13,30 @@ const link = (storageKey: string, name: string, source: "computed" | "ingested")
   },
 });
 
-const LEGACY = {
-  variables: [
-    { id: "clx000000000000000000002", name: "tier", type: "text" as const, value: "free" },
-    { id: "clx000000000000000000001", name: "score", type: "number" as const, value: 7 },
-  ],
-  hiddenFields: { enabled: true, fieldIds: ["utm_source", "plan"] },
-};
-
-/** The join's own output order: `orderBy: { storageKey: "asc" }`. */
+/**
+ * As the join returns them: `orderBy: [{ order: "asc" }, { storageKey: "asc" }]`. `tier` is declared
+ * before `score` even though its cuid sorts after, which is what the `order` column records.
+ */
 const JOINED_LINKS = [
-  link("clx000000000000000000001", "score", "computed"),
   link("clx000000000000000000002", "tier", "computed"),
-  link("plan", "plan", "ingested"),
+  link("clx000000000000000000001", "score", "computed"),
   link("utm_source", "utm_source", "ingested"),
+  link("plan", "plan", "ingested"),
 ];
+
+interface TTestSurvey {
+  id: string;
+  updatedAt?: Date;
+  embeddedDataLinks?: typeof JOINED_LINKS;
+}
 
 describe("inlineSurveyEmbeddedFields", () => {
   test("returns undefined when the select omitted the join, so the accessor can fall back", () => {
-    expect(inlineSurveyEmbeddedFields({ ...LEGACY })).toBeUndefined();
+    expect(inlineSurveyEmbeddedFields({})).toBeUndefined();
   });
 
   test("reshapes the rows into {field, link} pairs", () => {
-    const fields = inlineSurveyEmbeddedFields({ ...LEGACY, embeddedDataLinks: JOINED_LINKS });
+    const fields = inlineSurveyEmbeddedFields({ embeddedDataLinks: JOINED_LINKS });
 
     expect(fields?.[0]).toStrictEqual({
       field: { name: "tier", source: "computed", dataType: "string", defaultValue: null, locked: false },
@@ -44,40 +44,24 @@ describe("inlineSurveyEmbeddedFields", () => {
     });
   });
 
-  test("orders by the legacy declaration, not by storage key", () => {
-    // `tier` is declared before `score` even though its cuid sorts after. This is CSV/XLSX header
-    // order and picker order, so the join's `storageKey asc` is only the tie-break.
+  test("preserves the order the query returned, rather than re-sorting", () => {
+    // Load-bearing: ordering lives entirely in `selectSurveyEmbeddedDataLinks`' `orderBy` (ENG-2401).
+    // If this ever re-sorted, the `order` column would stop deciding CSV/XLSX header and picker order.
     expect(
-      inlineSurveyEmbeddedFields({ ...LEGACY, embeddedDataLinks: JOINED_LINKS })?.map(
+      inlineSurveyEmbeddedFields({ embeddedDataLinks: JOINED_LINKS })?.map(
         ({ link: { storageKey } }) => storageKey
       )
     ).toStrictEqual(["clx000000000000000000002", "clx000000000000000000001", "utm_source", "plan"]);
   });
 
-  test("keeps a row the legacy columns do not know, sorted last", () => {
-    const fields = inlineSurveyEmbeddedFields({
-      ...LEGACY,
-      embeddedDataLinks: [...JOINED_LINKS, link("orphan", "orphan", "ingested")],
-    });
-
-    expect(fields?.map(({ link: { storageKey } }) => storageKey).at(-1)).toBe("orphan");
-    expect(fields).toHaveLength(5);
-  });
-
-  test("a survey with no declarations and no rows inlines an empty list", () => {
-    expect(
-      inlineSurveyEmbeddedFields({
-        variables: [],
-        hiddenFields: { enabled: false, fieldIds: [] },
-        embeddedDataLinks: [],
-      })
-    ).toStrictEqual([]);
+  test("a survey with no rows inlines an empty list", () => {
+    expect(inlineSurveyEmbeddedFields({ embeddedDataLinks: [] })).toStrictEqual([]);
   });
 });
 
 describe("withInlinedEmbeddedFields", () => {
   test("swaps the raw relation for the inlined pairs", () => {
-    const survey = { id: "s1", ...LEGACY, embeddedDataLinks: JOINED_LINKS };
+    const survey: TTestSurvey = { id: "s1", embeddedDataLinks: JOINED_LINKS };
     const transformed = withInlinedEmbeddedFields(survey);
 
     expect(transformed).not.toHaveProperty("embeddedDataLinks");
@@ -85,7 +69,7 @@ describe("withInlinedEmbeddedFields", () => {
   });
 
   test("leaves a survey read without the join untouched, adding no key", () => {
-    const survey = { id: "s1", ...LEGACY };
+    const survey: TTestSurvey = { id: "s1" };
 
     expect(withInlinedEmbeddedFields(survey)).toStrictEqual(survey);
     expect(withInlinedEmbeddedFields(survey)).not.toHaveProperty("embeddedFields");
@@ -94,14 +78,9 @@ describe("withInlinedEmbeddedFields", () => {
   test("adds the key even when the survey has no fields at all", () => {
     // Load-bearing for the editor invariant below: once a select carries the join, EVERY survey read
     // through it has an `embeddedFields` key, empty list included.
-    const transformed = withInlinedEmbeddedFields({
-      id: "s1",
-      variables: [],
-      hiddenFields: { enabled: false, fieldIds: [] },
-      embeddedDataLinks: [],
-    });
+    const survey: TTestSurvey = { id: "s1", embeddedDataLinks: [] };
 
-    expect(transformed).toHaveProperty("embeddedFields", []);
+    expect(withInlinedEmbeddedFields(survey)).toHaveProperty("embeddedFields", []);
   });
 });
 
@@ -119,15 +98,12 @@ describe("the editor's clone stays comparable to the server survey", () => {
   const surveyWithRows = withInlinedEmbeddedFields({
     id: "s1",
     updatedAt: new Date("2026-08-13T10:00:00.000Z"),
-    ...LEGACY,
     embeddedDataLinks: JOINED_LINKS,
   });
 
   const surveyWithoutFields = withInlinedEmbeddedFields({
     id: "s1",
     updatedAt: new Date("2026-08-13T10:00:00.000Z"),
-    variables: [],
-    hiddenFields: { enabled: false, fieldIds: [] },
     embeddedDataLinks: [],
   });
 

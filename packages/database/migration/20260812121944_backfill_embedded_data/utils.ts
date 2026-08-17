@@ -36,6 +36,8 @@ export interface TSurveyEmbeddedDataInsert {
   surveyId: string;
   embeddedDataId: string;
   storageKey: string;
+  /** Index within `toDesiredEmbeddedFields` — variables in declaration order, then hidden fields. */
+  order: number;
 }
 
 export type TSurveyBackfillPlan =
@@ -126,7 +128,7 @@ export const planSurveyBackfill = (survey: TLegacySurveyRow, newId: () => string
   const fields: TEmbeddedDataInsert[] = [];
   const links: TSurveyEmbeddedDataInsert[] = [];
 
-  for (const desiredField of desired) {
+  for (const [order, desiredField] of desired.entries()) {
     if (desiredField.source === "reserved") {
       // Loud on purpose. Reserved fields are never stored as rows, so this means the shared mapping
       // changed under us — writing an `ingested` row instead would manufacture exactly the row the
@@ -152,6 +154,7 @@ export const planSurveyBackfill = (survey: TLegacySurveyRow, newId: () => string
       surveyId: survey.id,
       embeddedDataId,
       storageKey: desiredField.storageKey,
+      order,
     });
   }
 

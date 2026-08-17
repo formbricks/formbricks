@@ -1226,12 +1226,18 @@ model EmbeddedData {
 /// @property storageKey - The key the value lives under: a cuid for computed fields, the field
 /// name for ingested ones. Migrated fields keep their original key, which is what lets existing
 /// recall tokens, logic conditions and stored responses keep resolving untouched.
+///
+/// @property order - Position within this survey's field list, dense from 0. Lives on the link
+/// rather than on `EmbeddedData` because a shared definition sits at a different position in each
+/// survey that links it. Deliberately has no default: every writer knows the position it is writing,
+/// so a missing one should be a type error rather than a row that silently sorts to the front.
 model SurveyEmbeddedData {
   id             String @id @default(cuid())
   workspaceId    String
   surveyId       String
   embeddedDataId String
   storageKey     String
+  order          Int
 
   survey       Survey       @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
   embeddedData EmbeddedData @relation(fields: [embeddedDataId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
@@ -1239,6 +1245,7 @@ model SurveyEmbeddedData {
   @@unique([surveyId, embeddedDataId])
   @@unique([surveyId, storageKey])
   @@index([embeddedDataId])
+  @@index([surveyId, order])
 }
 
 /// Represents a team within an organization.
