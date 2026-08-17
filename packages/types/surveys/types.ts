@@ -2752,9 +2752,9 @@ const validateConditions = (
     group.conditions.forEach((condition) => {
       // Check if it's a group by checking for "conditions" property
       if ("conditions" in condition && "connector" in condition) {
-        validateConditionGroup(condition as TConditionGroup | TConditionGroupDeprecated);
+        validateConditionGroup(condition);
       } else {
-        validateSingleCondition(condition as TSingleCondition);
+        validateSingleCondition(condition);
       }
     });
   };
@@ -3834,9 +3834,7 @@ const makeSchemaOptional = <T extends z.ZodRawShape>(
 ): z.ZodObject<{
   [K in keyof T]: z.ZodOptional<T[K]>;
 }> => {
-  return schema.partial() as z.ZodObject<{
-    [K in keyof T]: z.ZodOptional<T[K]>;
-  }>;
+  return schema.partial();
 };
 
 export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)

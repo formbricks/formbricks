@@ -180,14 +180,16 @@ export const ZV3FeedbackRecordFilters = z
       .max(1)
       .optional()
       .describe(
-        "Only records whose sentiment score is at least this value, from -1 to 1 (inclusive). Unenriched records carry no score and are therefore never matched, so this implies 'enriched only'."
+        "Only records whose sentiment score is at least this value (inclusive). Sentiment scores range from -1 to 1, but that is the validation bound, not a default to fill in — omit this filter to leave the lower end unbounded rather than passing -1. Unenriched records carry no score and are therefore never matched, so this implies 'enriched only'."
       ),
     sentiment_score_max: z
       .number()
       .min(-1)
       .max(1)
       .optional()
-      .describe("Only records whose sentiment score is at most this value, from -1 to 1 (inclusive)."),
+      .describe(
+        "Only records whose sentiment score is at most this value (inclusive). Sentiment scores range from -1 to 1, but that is the validation bound, not a default to fill in — omit this filter to leave the upper end unbounded rather than passing 1."
+      ),
 
     has_sentiment: presenceFilter(
       "Restrict to records that do (true) or do not (false) carry a sentiment label. Use false to find records enrichment has not reached yet."

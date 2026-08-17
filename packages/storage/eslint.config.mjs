@@ -1,7 +1,7 @@
 import library from "@formbricks/eslint-config/library";
 
 export default [
-  ...library,
+  ...library({ tsconfigRootDir: import.meta.dirname }),
   {
     rules: {
       // test-only read of process.env.PATH; hashing it in turbo.json is tracked separately (ENG-1682)
