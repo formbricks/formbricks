@@ -35,11 +35,11 @@
 #
 #  The whole engineering team is in the rotation and shares the review load.
 #
-#  DO NOT ADD PATH RULES, AND DO NOT NAME INDIVIDUALS. Either silently
-#  reintroduces the multi-reviewer problem this file exists to solve. CI blocks
-#  both: a credential-free step asserts this file is exactly the one rule below,
-#  and it runs on every pull request including those from forks, where the
-#  API-backed owner checks cannot run. See
+#  DO NOT ADD PATH RULES, AND DO NOT NAME INDIVIDUALS. Adding either one
+#  silently reintroduces the multi-reviewer problem this file exists to solve.
+#  CI blocks both: a credential-free step asserts this file is exactly the one
+#  rule below, and it runs on every pull request including those from forks,
+#  where the API-backed owner checks cannot run. See
 #  .github/workflows/codeowners-validation.yml.
 #
 #  KNOWN TRADE-OFF
