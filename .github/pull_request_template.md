@@ -1,8 +1,8 @@
 <!-- PR title must follow Conventional Commits: https://www.conventionalcommits.org/en/v1.0.0/#summary -->
 
 <!-- Keep it skimmable: bullets over paragraphs, and `<details>` folds for anything a reviewer only
-opens on demand (background, file audits, setup steps, long media). Never fold Coverage, Open gaps
-or Breaking changes. -->
+opens on demand (background, file audits, setup steps). Never fold the Coverage table, Open gaps or
+Breaking changes — long media inside Coverage may still be folded. -->
 
 <!-- AI agents: no promotional footers, don't advertise yourself or any tool/service (e.g. "Generated
 by …"). The model note at the bottom is the one exception. -->
@@ -37,6 +37,13 @@ None
 | `language` field on responses | `EN`, `DE` | `en-US`, `de-DE` | API v1 consumers | Map the new BCP-47 locale codes in your integration |
 -->
 
+## Migrations & env
+
+<!-- New or changed env vars, DB migrations and cutover steps — including non-breaking ones, since
+this is what a deployer or self-hoster acts on. Write "none". -->
+
+- none
+
 ## How this was tested
 
 <!-- REQUIRED. All QA for this change happens here, before review — there is no separate release QA
@@ -45,8 +52,10 @@ what those cannot show. -->
 
 **Coverage**
 
-<!-- One row per behaviour the diff changes: how you verified it and what you observed. For UI work,
-attach the screenshot or screencast that proves it — fold it if long. -->
+<!-- One row per behaviour the diff changes: how you verified it and what you observed. Name the
+account, plan or flag state where an outcome depends on it, and for a behaviour fix name the test
+that fails without the fix. For UI work, attach the screenshot or screencast that proves it — fold it
+if long. -->
 
 | Behaviour | How | Outcome |
 | --- | --- | --- |
@@ -63,7 +72,7 @@ to challenge this list, so an empty one is a claim rather than a formality. -->
 
 <!-- What nearby behaviour could break, and what to re-check if it does. -->
 
--
+- none
 
 ---
 
