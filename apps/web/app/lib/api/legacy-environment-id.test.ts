@@ -121,7 +121,7 @@ describe("addLegacyEnvironmentIdBestEffort", () => {
     expect(result).toEqual({ id: "webhook_1", workspaceId: "ws_1", environmentId: "env_1" });
   });
 
-  test("returns the un-enriched entity when the lookup throws, so a committed delete still reports success", async () => {
+  test("returns the un-enriched entity when the lookup throws, so a committed write still reports success", async () => {
     findManyMock.mockRejectedValue(new Error("connection lost"));
 
     const result = await addLegacyEnvironmentIdBestEffort({ id: "webhook_1", workspaceId: "ws_1" });

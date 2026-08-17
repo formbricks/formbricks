@@ -44,11 +44,12 @@ export const addLegacyEnvironmentId = async <T extends { workspaceId: string }>(
 };
 
 /**
- * Variant for responses that echo an already-committed destructive write.
+ * Variant for responses that echo an already-committed write.
  *
- * The delete cannot be undone by the time this runs, so a failed workspace lookup must not turn a
- * successful delete into an error response — the caller would retry a delete that already happened.
- * Degrades to the un-enriched entity instead.
+ * The write cannot be undone by the time this runs, so a failed workspace lookup must not turn it
+ * into an error response — the caller would retry an operation that already happened. On a delete
+ * that means deleting twice; on a create it means a duplicate row, since `Webhook` has no
+ * uniqueness on `(url, workspaceId)`. Degrades to the un-enriched entity instead.
  */
 export const addLegacyEnvironmentIdBestEffort = async <T extends { workspaceId: string }>(
   entity: T
@@ -58,7 +59,7 @@ export const addLegacyEnvironmentIdBestEffort = async <T extends { workspaceId: 
   } catch (error) {
     logger.error(
       { error, workspaceId: entity.workspaceId },
-      "Failed to resolve legacy environmentId for a deleted entity"
+      "Failed to resolve legacy environmentId for a committed write"
     );
     return entity;
   }
