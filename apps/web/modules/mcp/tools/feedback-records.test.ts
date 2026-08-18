@@ -24,6 +24,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { registerFeedbackRecordTools } from "./feedback-records";
+import { ZMcpUpdateFeedbackRecordInput } from "./schemas";
 
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
@@ -840,5 +841,49 @@ describe("update_feedback_record", () => {
 
     expect(result.isError).toBe(true);
     expect(updateV3FeedbackRecord).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Pins the sharpest consequence of the ENG-2256 strictness: `update_feedback_record` accepts only the eight
+ * mutable fields, so the obvious read-modify-write loop — fetch a record, change one value, send it back —
+ * is now rejected where it used to have its provenance silently ignored.
+ *
+ * Deliberate (a misspelled `value_text` would otherwise vanish and the update would change nothing), but
+ * only defensible because the rejection is actionable, which is what this asserts: every offending key is
+ * named, so a caller can strip them and retry rather than guessing. Raised in review on #8859.
+ */
+describe("update_feedback_record round-trip", () => {
+  const immutableOnARecord = {
+    source_type: "survey",
+    source_id: "srv_1",
+    source_name: "NPS Q3",
+    field_id: "q1",
+    field_type: "text",
+    field_label: "What could be better?",
+    submission_id: "sub_1",
+    collected_at: "2026-08-01T10:00:00Z",
+  };
+
+  test("rejects an echoed record and names every provenance key to strip", () => {
+    const mutableEdit = {
+      workspaceId,
+      feedbackRecordId: recordId,
+      value_text: "edited answer",
+      user_id: "u_1",
+      language: "en",
+    };
+
+    const result = ZMcpUpdateFeedbackRecordInput.safeParse({ ...mutableEdit, ...immutableOnARecord });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      code: "unrecognized_keys",
+      keys: Object.keys(immutableOnARecord),
+    });
+
+    // The same edit with provenance stripped is accepted, so those keys are the only reason for the
+    // rejection above — without this the assertion would hold even if the schema were broken some other way.
+    expect(ZMcpUpdateFeedbackRecordInput.safeParse(mutableEdit).success).toBe(true);
   });
 });

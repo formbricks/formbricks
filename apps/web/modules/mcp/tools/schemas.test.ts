@@ -30,46 +30,76 @@ import * as workflowSchemas from "./workflow-schemas";
  * `else`, `prefixItems`, `unevaluatedProperties`) is walked without this needing to know about it. Keys that
  * carry no schema (`required`, `type`, `description`) hold strings, so recursing into them finds nothing.
  */
-function collectObjectNodes(node: unknown, path: string, open: string[], freeForm: string[]): void {
+const DEFS_PREFIX = "$defs:";
+
+interface Walked {
+  /** Object nodes with no unknown-keys policy at all. The bug. */
+  open: string[];
+  /** Object nodes advertising `additionalProperties: true`/a schema — a `z.record`, legitimate if listed. */
+  freeForm: string[];
+  /** Where each `$defs` entry is referenced from, so a hoisted node's real reachability can be checked. */
+  refs: { def: string; at: string }[];
+}
+
+function collectObjectNodes(node: unknown, path: string, walked: Walked): void {
   if (!node || typeof node !== "object") return;
 
   if (Array.isArray(node)) {
-    node.forEach((member, index) => collectObjectNodes(member, `${path}|${index}`, open, freeForm));
+    node.forEach((member, index) => collectObjectNodes(member, `${path}|${index}`, walked));
     return;
   }
 
   const schema = node as Record<string, unknown>;
 
+  if (typeof schema.$ref === "string") {
+    walked.refs.push({ def: schema.$ref.replace("#/$defs/", ""), at: path });
+  }
+
   if (schema.type === "object" || schema.properties) {
     if (schema.additionalProperties === undefined) {
-      open.push(path);
+      walked.open.push(path);
     } else if (schema.additionalProperties !== false) {
-      freeForm.push(path);
+      walked.freeForm.push(path);
     }
   }
 
   for (const [key, value] of Object.entries(schema)) {
-    // `properties` and `$defs` are maps of name -> schema, so the child's name belongs in the path.
-    if (key === "properties" || key === "$defs") {
+    if (key === "properties") {
       for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
-        collectObjectNodes(childValue, `${path}.${childKey}`, open, freeForm);
+        collectObjectNodes(childValue, `${path}.${childKey}`, walked);
+      }
+    } else if (key === "$defs") {
+      // Keyed by definition name, not by this path: a `$defs` entry is not reachable *here*, it is reachable
+      // wherever something `$ref`s it. `walked.refs` is what recovers that, so an exclusion can be checked
+      // against where the node really sits instead of waving every hoisted node through.
+      for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+        collectObjectNodes(childValue, `${DEFS_PREFIX}${childKey}`, walked);
       }
     } else if (key === "items") {
-      collectObjectNodes(value, `${path}[]`, open, freeForm);
+      collectObjectNodes(value, `${path}[]`, walked);
     } else if (key === "additionalProperties") {
-      collectObjectNodes(value, `${path}{}`, open, freeForm);
+      collectObjectNodes(value, `${path}{}`, walked);
     } else {
-      collectObjectNodes(value, `${path}.${key}`, open, freeForm);
+      collectObjectNodes(value, `${path}.${key}`, walked);
     }
   }
 }
 
-function classifyObjectNodes(name: string, schema: z.ZodType): { open: string[]; freeForm: string[] } {
-  const open: string[] = [];
-  const freeForm: string[] = [];
-  // `io: "input"` matches how the tool schemas are advertised — the same conversion the SDK performs.
-  collectObjectNodes(z.toJSONSchema(schema, { io: "input", unrepresentable: "any" }), name, open, freeForm);
-  return { open, freeForm };
+function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
+  const walked: Walked = { open: [], freeForm: [], refs: [] };
+  const json = z.toJSONSchema(schema, {
+    // `io: "input"` matches how the tool schemas are advertised — the same conversion the SDK performs.
+    io: "input",
+    unrepresentable: "any",
+    // Inline anything referenced more than once instead of hoisting it into `$defs`, so every node reports
+    // the path it is really reachable from. With the default (`"ref"`) a twice-referenced sub-schema lands
+    // in `$defs` under a generated name and its true location is lost — which would force the workflow
+    // exclusion below to skip `$defs` wholesale, and so to skip a future open node reachable from a
+    // top-level argument as well.
+    reused: "inline",
+  });
+  collectObjectNodes(json, name, walked);
+  return walked;
 }
 
 const allSchemas = Object.entries({ ...surveyAndFeedbackSchemas, ...workflowSchemas }).filter(
@@ -125,19 +155,39 @@ describe("MCP tool input schemas reject undeclared arguments (ENG-2256)", () => 
   test.each(allSchemas.filter(([name]) => SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION.includes(name)))(
     "%s is open only inside the shared workflow definition",
     (name, schema) => {
-      const { open } = classifyObjectNodes(name, schema);
+      const { open, refs } = classifyObjectNodes(name, schema);
 
-      // The known gap is bounded: it must stay confined to the `definition` subtree (or a `$defs` entry,
-      // which exists only because a definition sub-schema is referenced twice). A new open object on a
+      /**
+       * A `$defs` entry is only excusable if every reference to it sits inside `definition`. `reused:
+       * "inline"` above removes plain reuse from `$defs`, but a *recursive* schema still has to be a `$ref`
+       * — that is what the workflow if/else condition group is — so one hoisted entry survives and needs
+       * checking rather than waving through. Excluding `$defs` unconditionally would hide a future open node
+       * that is reachable from a top-level argument, since `$defs` is where the emitter puts anything
+       * referenced twice, definition-related or not.
+       */
+      const reachedOnlyViaDefinition = (path: string): boolean => {
+        if (!path.startsWith(DEFS_PREFIX)) return false;
+        const def = path.slice(DEFS_PREFIX.length).split(/[.[|{]/)[0];
+        const referencedFrom = refs.filter((ref) => ref.def === def).map((ref) => ref.at);
+
+        return (
+          referencedFrom.length > 0 &&
+          referencedFrom.every((at) => at.includes(".definition") || at.startsWith(DEFS_PREFIX))
+        );
+      };
+
+      // The known gap is bounded: it must stay confined to the `definition` subtree. A new open object on a
       // *top-level* tool argument is a new bug and fails here.
       const outsideDefinition = open.filter(
-        (path) => !path.includes(".definition") && !path.includes(".__schema")
+        (path) => !path.includes(".definition") && !reachedOnlyViaDefinition(path)
       );
 
       expect(outsideDefinition).toEqual([]);
-      // Guards the premise of the exclusion itself: if this ever empties, the shared definition became
-      // strict and both this test and the exclusion list above should be deleted.
-      expect(open.length).toBeGreaterThan(0);
+      // Guards the premise of the exclusion itself: when the shared definition becomes strict this empties,
+      // and both this test and the exclusion list above should be deleted. Counted inside the `definition`
+      // subtree specifically — a bare `open.length` could be held above zero by an unrelated open node
+      // elsewhere, and would quietly stop being a tripwire.
+      expect(open.filter((path) => path.includes(".definition"))).not.toEqual([]);
     }
   );
 

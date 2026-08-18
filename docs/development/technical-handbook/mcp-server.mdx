@@ -555,6 +555,13 @@ Two kinds of exception:
   A client that adds its own keys to a tool call's `arguments` will be rejected. Nothing in the MCP spec
   invites that, but it is a behaviour change from earlier Formbricks releases, which silently dropped
   such keys.
+
+  Two consequences worth knowing. **Read-modify-write needs trimming:** `update_feedback_record` accepts
+  only the eight mutable fields, so echoing a record straight back from `get_feedback_record` is rejected
+  — strip the provenance (`source_*`, `field_*`, `submission_id`, `collected_at`) and the derived
+  sentiment/emotions/translation first. The error names every key to remove. And **`list_workspaces`
+  takes no arguments at all**, so a client that pads zero-argument calls with a placeholder key will fail
+  on the one tool every other workspace-scoped tool depends on for its `workspaceId`.
 </Note>
 
 ## Available Tools

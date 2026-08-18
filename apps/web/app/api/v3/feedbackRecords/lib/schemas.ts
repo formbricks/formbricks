@@ -440,7 +440,12 @@ export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreate
  *
  * At least one field is required: an empty patch is a caller mistake, not a no-op worth a round trip.
  */
-/** The plain object form first, because `inputSchema` needs a raw shape rather than a refined schema. */
+/**
+ * The plain object form first, so callers that need to extend or restrict it (the MCP tools add
+ * `workspaceId`/`datasetId` and `.strict()`) have an object schema to work from, and the refined form below
+ * is derived from it. Not a hard requirement — Zod 4 allows `refined.extend({...}).strict()` and keeps the
+ * refinement — but it keeps the mutable field list defined exactly once.
+ */
 export const ZV3FeedbackRecordUpdateBodyFields = ZV3FeedbackRecordCreateBodyFields.pick({
   value_text: true,
   value_number: true,

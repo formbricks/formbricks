@@ -185,6 +185,16 @@ export const ZMcpDeleteSurveyInput = z
   .strict();
 
 // list_workspaces takes no arguments — it returns the workspaces the authenticated caller can access.
+//
+// The one schema where `.strict()` buys no ENG-2256 protection: with no declared keys there is nothing to
+// misspell, so this is uniformity rather than a fix. Kept strict anyway, as a deliberate call rather than an
+// oversight, but the asymmetry is worth knowing if a client ever trips on it. It advertises
+// `{"type":"object","properties":{},"additionalProperties":false}`, and a client that pads a zero-argument
+// call with a placeholder key would now fail here where v1 dropped it — costly out of proportion, because
+// this is the discovery tool every workspace-scoped tool takes its `workspaceId` from, so losing it looks
+// like the whole server being broken. Raised in review on #8859; no such client is confirmed, and our own
+// QA only exercises Claude Code, so treat a report of "the Formbricks MCP server won't connect" from
+// another client as a reason to look here first.
 export const ZMcpListWorkspacesInput = z.object({}).strict();
 
 // Feedback records live in the Hub, addressed by a tenant that is always resolved server-side from the
@@ -227,8 +237,10 @@ export const ZMcpCountFeedbackRecordsInput = ZV3FeedbackRecordFilters.extend({
   datasetId: datasetIdField,
 }).strict();
 
-// The refined body is used here (unlike the single-record tool): a batch is a nested array, so there is no
-// raw shape to flatten, and the value/field_type rule can be enforced per element right in the schema.
+// The refined body is used here, unlike the single-record tool: an element schema is not extended with
+// `workspaceId`/`datasetId` (those live on the outer object), so the refined form drops straight in and the
+// value/field_type rule is enforced per element by the schema itself. The single-record tool could do the
+// same — see the note there — it just doesn't need to.
 export const ZMcpCreateFeedbackRecordsInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID to create the feedback records in."),
@@ -246,8 +258,21 @@ export const ZMcpCreateFeedbackRecordsInput = z
   })
   .strict();
 
-// The plain field object again (not the refined one): `inputSchema` needs a raw shape. The
-// at-least-one-field rule is enforced by the operations layer.
+// The plain field object again (not the refined one), so the at-least-one-field rule is enforced by the
+// operations layer. A choice, not a constraint: `refined.extend({...}).strict()` does work in Zod 4 —
+// verified, including that the refinement survives both calls — so this could equally be enforced here.
+// It is left in the operations layer because that is the one place both the MCP tools and the v3 REST
+// routes pass through, so the rule exists once.
+//
+// `.strict()` here has a sharper edge than on the other tools, and deliberately so: the update set is a
+// `.pick()` of eight mutable fields, so echoing back a record from `get_feedback_record` — the obvious
+// read-modify-write loop — is now rejected rather than having its provenance quietly ignored. That is the
+// ENG-2256 trade taken on purpose: a misspelled `value_text` would otherwise vanish and the "update" would
+// silently change nothing. The rejection is recoverable (Zod's `unrecognized_keys` names every offending
+// key) and the tool description tells the caller to strip them, so the loud version costs one retry where
+// the quiet version cost a lost correction. Note this is the opposite call to the one made for the shared
+// v3 REST body in `app/api/v3/feedbackRecords/lib/schemas.ts` — different clients: an agent re-reads the
+// advertised schema and the error text on every call, a REST integration does not.
 export const ZMcpUpdateFeedbackRecordInput = ZV3FeedbackRecordUpdateBodyFields.extend({
   workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
   feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to update."),
