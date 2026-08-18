@@ -1,6 +1,7 @@
 import { TFunction } from "i18next";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon, GlobeIcon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
+import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
   RESERVED_FIELD_CATALOG,
   type TReservedFieldCatalogEntry,
@@ -177,6 +178,19 @@ const getDeclaredFieldNames = (localSurvey: TSurvey): string[] => [
 /** The reserved entries this survey may offer mid-survey, already availability- and shadow-filtered. */
 const getPickerReservedEntries = (localSurvey: TSurvey): TReservedFieldCatalogEntry[] =>
   listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, getDeclaredFieldNames(localSurvey));
+
+/**
+ * Which HTML input the literal comparison value gets, per reserved dataType. A map rather than a
+ * chain of ternaries so it stays exhaustive: adding a dataType is a compile error here instead of
+ * silently falling through to a text box. `boolean` is deliberately text — the value is compared as
+ * the string "true"/"false" (see `projectReservedValues`).
+ */
+const INPUT_TYPE_BY_DATA_TYPE: Record<TEmbeddedDataType, HTMLInputTypeAttribute> = {
+  string: "text",
+  number: "number",
+  boolean: "text",
+  date: "date",
+};
 
 const toReservedOption = (entry: TReservedFieldCatalogEntry): TComboboxOption => ({
   icon: GlobeIcon,
@@ -1057,8 +1071,7 @@ export const getMatchValueProps = (
     // right-hand side at all — an operator the author can never complete.
     const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
     const dataType = entry?.dataType ?? "string";
-    const inputType: HTMLInputTypeAttribute =
-      dataType === "number" ? "number" : dataType === "date" ? "date" : "text";
+    const inputType = INPUT_TYPE_BY_DATA_TYPE[dataType];
 
     /*
      * Only operands that can actually hold this field's dataType. Without the filter a
