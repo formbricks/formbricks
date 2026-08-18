@@ -13,7 +13,6 @@ import {
 import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
-  type TDeclaredFieldSource,
   collectDeclaredFieldNames,
   describeDeclaredFieldNameErrors,
   validateNewDeclaredFieldNames,
