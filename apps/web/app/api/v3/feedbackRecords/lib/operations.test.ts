@@ -508,12 +508,14 @@ describe("createV3FeedbackRecord", () => {
     expect(body.invalid_params).toEqual([{ name: "value_text", reason: "must not contain NULL bytes" }]);
   });
 
-  // The Hub accepts a record with no value at all, and MCP strips unknown keys before we see them, so a
-  // mistyped field name would otherwise store an empty record and report success.
+  // The Hub accepts a record with no value at all, and this body ignores unknown keys, so a mistyped
+  // field name would otherwise store an empty record and report success. Reachable over REST, where the
+  // body is parsed as-is; the MCP tools wrap it in a strict schema and reject the typo before this runs
+  // (ENG-2256), so REST is what this rule now protects.
   test("rejects a body whose field_type has no matching value, naming the expected field", async () => {
     const response = await createV3FeedbackRecord({
       ...base,
-      // `valueText` is what an agent typo looks like after MCP has stripped it: no value at all.
+      // `valueText` is what the typo looks like once the unknown key has been dropped: no value at all.
       body: { source_type: "call_notes", field_id: "note", field_type: "text" },
     });
     const body = await response.json();

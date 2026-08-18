@@ -31,10 +31,17 @@ import {
  * so `filter` and its `name`/`status`/`type` children each need it as well — otherwise the same bug
  * reopens one level down, and worse, quietly: a misspelled `filter.status.include` is dropped, leaves
  * `filter.status` as `{}`, and the query runs unfiltered while reporting success. Raised in review on
- * #8859 after the first version of this change only did the outer objects. The only things that still
- * accept an arbitrary nested shape are the deliberately free-form `z.record` fields (`blocks`,
+ * #8859 after the first version of this change only did the outer objects.
+ *
+ * What still accepts an arbitrary nested shape, deliberately: the free-form `z.record` fields (`blocks`,
  * `metadata`, `welcomeCard`, and the `data` payloads), which the v3 survey document contract validates
  * once the call reaches the operation.
+ *
+ * What still accepts one *undeliberately*: everything below `definition` on the two workflow tools. That
+ * subtree is `ZWorkflowDefinition` from `packages/workflows`, shared with the v3 Workflows REST route and
+ * the builder, so it is not this layer's to tighten — see the note in `./workflow-schemas.ts` (ENG-2437).
+ * It is the one remaining hole, and `./schemas.test.ts` holds it there: every other structured object in
+ * every MCP tool schema, at any depth, must be strict or the suite fails.
  *
  * Adding a schema? Add `.strict()` with it — and to every structured object nested inside it. Prefer
  * `z.strictObject({...})` for the nested ones: `.strict()` returns a clone that drops `.describe()`, so

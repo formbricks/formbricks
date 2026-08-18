@@ -26,9 +26,10 @@ import { ZHubEmotion, ZHubFieldType, ZHubSentiment } from "@formbricks/types/fee
  *
  * `.strict()` so a key this surface does not have is an error rather than a silent no-op. On a *filter* the
  * silent direction is the dangerous one: a dropped `user_id` widens the result set instead of narrowing it,
- * and the caller cannot tell it happened. This guards the operation contract rather than the MCP boundary —
- * the SDK validates against its own non-strict copy of the shape and strips unknown keys before an operation
- * sees them, which is why the names above do more work here than this does.
+ * and the caller cannot tell it happened. This guards the operation contract, and since ENG-2256 the MCP
+ * boundary enforces the same rule independently: the SDK now validates the strict schema instance itself
+ * instead of a rebuilt non-strict copy, so a misspelled argument is rejected before an operation is reached
+ * rather than arriving here already stripped.
  */
 const ZFeedbackRecordFilterId = z.string().trim().min(1).max(255);
 
@@ -305,8 +306,11 @@ export type TV3FeedbackRecordSearchFilters = z.infer<typeof ZV3FeedbackRecordSea
  *
  * The Hub does NOT check that the populated `value_*` matches `field_type` (it accepts `field_type:
  * "text"` carrying only `value_number`, and even a record with no value at all), so we enforce it here.
- * Without this a mistyped field name — MCP strips unknown keys before we ever see them, so `valueText`
- * simply vanishes — would store a permanently empty record and report success.
+ * Without this a mistyped field name would store a permanently empty record and report success: this
+ * object is not strict, so `valueText` is dropped and the record arrives with no value at all. That is
+ * still reachable over the v3 REST routes, which parse this shape directly. The MCP tools no longer get
+ * there — since ENG-2256 they wrap it in a strict schema and reject the typo outright — so this rule now
+ * backs the REST surface rather than the MCP one.
  */
 const VALUE_FIELD_BY_TYPE: Record<z.infer<typeof ZHubFieldType>, string[]> = {
   text: ["value_text"],

@@ -11,6 +11,15 @@ import {
 // `./schemas.ts` (ENG-2256): an undeclared argument must fail loudly rather than be silently dropped.
 // Add `.strict()` to any new schema you add here — except where the base is already a `z.strictObject`,
 // in which case leave it alone and see the note on `ZMcpCreateWorkflowInput`.
+//
+// One exception, and it is not a small one: the `definition` payload on create/patch is open at every
+// level below `definition` itself, so a misspelled key inside a trigger, node, edge or node `config` is
+// still dropped rather than rejected — ENG-2256's failure mode, in a mutation. It cannot be closed here.
+// `definition` is `ZWorkflowDefinition` from `packages/workflows`, which the v3 Workflows REST route
+// parses and the workflow builder posts, so making it strict is a v3 API change (the builder sends `ui`
+// metadata and would have to be checked first) rather than part of an MCP migration. Tracked as
+// ENG-2437; `./schemas.test.ts` pins the hole to this subtree so it cannot quietly spread to a
+// top-level workflow argument.
 
 export const ZMcpListWorkflowsInput = z
   .object({

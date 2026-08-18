@@ -535,10 +535,21 @@ query wider than asked and reported success — `count_feedback_records` with a 
 (the correct key is `user_id`) returned the count for every record in the dataset, which an agent has no
 way to tell from a real answer.
 
-Strictness binds the top level only. The fields typed as free-form objects — `blocks`, `metadata`,
-`welcomeCard` and friends on `create_survey`, and the `data` payload on `patch_survey` /
-`validate_survey` — still accept any nested shape, and are validated by the v3 survey document contract
-once the call reaches the operation.
+Strictness applies at every depth, not just to the outermost object: a misspelled key inside
+`filter.status` is rejected the same way a misspelled top-level argument is. This matters because a
+dropped nested filter key does not merely lose the key — it leaves the filter object empty, so the query
+runs wider than asked.
+
+Two kinds of exception:
+
+- **Free-form by design.** `blocks`, `metadata`, `welcomeCard` and friends on `create_survey`, and the
+  `data` payload on `patch_survey` / `validate_survey`, accept any nested shape. They are validated by the
+  v3 survey document contract once the call reaches the operation.
+- **The workflow `definition`.** Everything below `definition` on `create_workflow` and `patch_workflow`
+  is still open, so a misspelled key inside a trigger, node, edge or node `config` is dropped rather than
+  rejected. That schema is shared with the v3 Workflows REST API and the workflow builder, so tightening it
+  is a v3 API change rather than an MCP one; it is tracked as ENG-2437. Treat a `create_workflow` result as
+  confirming only what it echoes back.
 
 <Note>
   A client that adds its own keys to a tool call's `arguments` will be rejected. Nothing in the MCP spec
