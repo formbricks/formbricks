@@ -70,24 +70,11 @@ describe("getSuggestedSurveys", () => {
 });
 
 describe("getFeedbackSourceOptions", () => {
-  test("returns formbricks, csv, api ingestion, and mcp options", () => {
+  test("returns formbricks and csv options", () => {
     const options = getFeedbackSourceOptions(mockT as never);
-    expect(options).toHaveLength(4);
+    expect(options).toHaveLength(2);
     expect(options[0].id).toBe("formbricks_survey");
     expect(options[1].id).toBe("csv");
-    expect(options[2].id).toBe("api_ingestion");
-    expect(options[3].id).toBe("feedback_record_mcp");
-  });
-
-  test("formbricks and csv are enabled; api ingestion and mcp are coming soon (disabled)", () => {
-    const options = getFeedbackSourceOptions(mockT as never);
-    const byId = Object.fromEntries(options.map((o) => [o.id, o]));
-    expect(byId.formbricks_survey.disabled).toBe(false);
-    expect(byId.csv.disabled).toBe(false);
-    expect(byId.api_ingestion.disabled).toBe(true);
-    expect(byId.api_ingestion.badge?.text).toBe("common.coming_soon");
-    expect(byId.feedback_record_mcp.disabled).toBe(true);
-    expect(byId.feedback_record_mcp.badge?.text).toBe("common.coming_soon");
   });
 
   test("uses translation keys for name and description", () => {
@@ -96,10 +83,6 @@ describe("getFeedbackSourceOptions", () => {
     expect(options[0].description).toBe("workspace.unify.source_connect_formbricks_description");
     expect(options[1].name).toBe("workspace.unify.csv_import");
     expect(options[1].description).toBe("workspace.unify.source_connect_csv_description");
-    expect(options[2].name).toBe("workspace.unify.api_ingestion");
-    expect(options[2].description).toBe("workspace.unify.api_ingestion_settings_description");
-    expect(options[3].name).toBe("workspace.unify.feedback_record_mcp");
-    expect(options[3].description).toBe("workspace.unify.source_connect_feedback_record_mcp_description");
   });
 });
 
