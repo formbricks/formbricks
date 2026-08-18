@@ -118,6 +118,9 @@ describe("applyAnonymizePolicy", () => {
    * that hardcoded the names would pass just as happily against a hardcoded implementation.
    */
   test("suppresses a newly added `drop` catalog entry with no code change", async () => {
+    // Both names are deliberately hypothetical - they are not in the real catalog. The point is
+    // that the policy is driven by the catalog's `privacy` field, so a future entry is covered
+    // without touching anonymize.ts.
     const newlyAddedEntry: TReservedFieldCatalogEntry = {
       name: "respondentEmail",
       dataType: "string",
@@ -126,7 +129,7 @@ describe("applyAnonymizePolicy", () => {
       read: (response) => response.meta.source,
     };
     const newlyAddedRedactedEntry: TReservedFieldCatalogEntry = {
-      name: "pageUrl",
+      name: "landingUrl",
       dataType: "string",
       availability: "client",
       privacy: "redactQuery",
@@ -151,13 +154,13 @@ describe("applyAnonymizePolicy", () => {
         {
           source: "link",
           respondentEmail: "a@b.c",
-          pageUrl: "https://example.com/checkout?session=secret",
+          landingUrl: "https://example.com/checkout?session=secret",
         } as TResponseMeta,
         true
       );
 
       expect(anonymized).not.toHaveProperty("respondentEmail");
-      expect(anonymized).toHaveProperty("pageUrl", "https://example.com/checkout");
+      expect(anonymized).toHaveProperty("landingUrl", "https://example.com/checkout");
       expect(anonymized.source).toBe("link");
     } finally {
       vi.doUnmock("@formbricks/types/embedded-data-resolver");
