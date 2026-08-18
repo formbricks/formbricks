@@ -21,15 +21,7 @@ import * as workflowSchemas from "./workflow-schemas";
  *   - `additionalProperties` absent — an open structured object. The bug.
  */
 
-/**
- * Recurses into every value rather than an allowlist of JSON Schema keywords.
- *
- * Deliberate: a keyword-driven walker is only as complete as the keyword list, and the first version of
- * this file proved the point by missing `$defs` — which is where a `$ref`'d sub-schema lives, and so where
- * the workflow if/else condition group was hiding. Anything the generator emits now or later (`if`/`then`/
- * `else`, `prefixItems`, `unevaluatedProperties`) is walked without this needing to know about it. Keys that
- * carry no schema (`required`, `type`, `description`) hold strings, so recursing into them finds nothing.
- */
+/** Marks a path as living in `$defs`, i.e. reachable only through whatever `$ref`s it. */
 const DEFS_PREFIX = "$defs:";
 
 interface Walked {
@@ -41,6 +33,15 @@ interface Walked {
   refs: { def: string; at: string }[];
 }
 
+/**
+ * Recurses into every value rather than an allowlist of JSON Schema keywords.
+ *
+ * Deliberate: a keyword-driven walker is only as complete as the keyword list, and the first version of
+ * this file proved the point by missing `$defs` — which is where a `$ref`'d sub-schema lives, and so where
+ * the workflow if/else condition group was hiding. Anything the generator emits now or later (`if`/`then`/
+ * `else`, `prefixItems`, `unevaluatedProperties`) is walked without this needing to know about it. Keys that
+ * carry no schema (`required`, `type`, `description`) hold strings, so recursing into them finds nothing.
+ */
 function collectObjectNodes(node: unknown, path: string, walked: Walked): void {
   if (!node || typeof node !== "object") return;
 
@@ -91,11 +92,12 @@ function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
     // `io: "input"` matches how the tool schemas are advertised — the same conversion the SDK performs.
     io: "input",
     unrepresentable: "any",
-    // Inline anything referenced more than once instead of hoisting it into `$defs`, so every node reports
-    // the path it is really reachable from. With the default (`"ref"`) a twice-referenced sub-schema lands
-    // in `$defs` under a generated name and its true location is lost — which would force the workflow
-    // exclusion below to skip `$defs` wholesale, and so to skip a future open node reachable from a
-    // top-level argument as well.
+    // Inline plain reuse instead of hoisting it into `$defs`, so a sub-schema that merely appears twice
+    // still reports the path it is reachable from. It does NOT eliminate `$defs`: a *recursive* schema has
+    // to be a `$ref` whatever this is set to, and the workflow if/else condition group is exactly that — so
+    // one hoisted entry survives and the workflow test below has to check where it is referenced from
+    // rather than excusing `$defs` wholesale. This setting shrinks that problem to the recursive case; it
+    // does not remove it.
     reused: "inline",
   });
   collectObjectNodes(json, name, walked);
