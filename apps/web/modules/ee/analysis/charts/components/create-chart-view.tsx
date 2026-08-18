@@ -14,6 +14,7 @@ import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart
 import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
+import { QuestionPresetSection } from "@/modules/ee/analysis/charts/components/question-preset-section";
 import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
@@ -169,6 +170,27 @@ export function CreateChartView({
                         </span>
                       </div>
                     </div>
+                  )}
+
+                  {!isEditing && (
+                    <>
+                      <QuestionPresetSection
+                        workspaceId={workspaceId}
+                        feedbackDirectoryId={selectedDirectoryId}
+                        onChartGenerated={handleChartGenerated}
+                      />
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                          <div className="w-full border-t border-gray-200" />
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-white px-2 text-sm text-gray-500">
+                            {t("workspace.analysis.charts.OR")}
+                          </span>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   <ManualChartBuilder
