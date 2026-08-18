@@ -93,7 +93,13 @@ assertions:
     - organization:acme#manage_access@user:olivia
     - organization:acme#manage_access@user:mark
     - organization:acme#manage_api_keys@user:mark
+    - organization:acme#manage_api_keys@user:olivia
     - organization:acme#manage_billing@user:mark
+    # ENG-2409: read_access is the "holds a product-eligible membership role" permission, and it
+    # now gates five organization settings pages. Its owner/manager arms were never asserted —
+    # only the member arm below was — so the permission could have narrowed without a red suite.
+    - organization:acme#read_access@user:olivia
+    - organization:acme#read_access@user:mark
     - workspace:main#manage@user:olivia
     - workspace:main#manage@user:mark
     - workspace:other#read@user:olivia
@@ -206,8 +212,16 @@ assertions:
     # Scenario 1 — managers must not update/delete the organization itself;
     # a teamless member has organization visibility but zero product access.
     - organization:acme#write@user:mark
+    - organization:acme#write@user:mia
     - organization:acme#manage@user:mia
     - organization:acme#manage_access@user:mia
+    - organization:acme#manage_api_keys@user:mia
+    # ENG-2409: the enterprise settings page maps `isMember -> notFound` onto `manage_billing`, and
+    # that mapping is only correct because a plain member does not hold it. `manage_billing` had no
+    # assertFalse anywhere — both mentions were assertTrue — so adding `+ member` to it in the schema
+    # would have kept this suite green while opening the billing surface to every member. Same shape
+    # as the read_access gap closed above.
+    - organization:acme#manage_billing@user:mia
     - workspace:main#read@user:mia
     - survey:onboarding#read@user:mia
     - dashboard:insights#read@user:mia
@@ -231,6 +245,13 @@ assertions:
     - organization:acme#write@user:bella
     - organization:acme#manage_access@user:bella
     - organization:acme#manage_api_keys@user:bella
+    # ENG-2409: the load-bearing one. `read_access` is the only permission whose expansion is
+    # "holds a product-eligible membership role", which is what makes it the central expression of
+    # "not the billing role" — and it is what five organization settings pages now gate on. Until
+    # this line existed the suite had NO assertFalse for read_access at all, so adding `billing` to
+    # it in the schema kept every assertion green. Exactly the shape of the ENG-2340 gap: a
+    # guarantee written in prose and asserted nowhere.
+    - organization:acme#read_access@user:bella
     - workspace:main#read@user:bella
     - survey:onboarding#read@user:bella
     - survey:onboarding#response_read@user:bella
@@ -298,6 +319,10 @@ assertions:
     - team:product#manage@api_key:org_reader_key
     - team:product#delete@api_key:org_reader_key
     - organization:acme#manage_api_keys@api_key:org_writer_key
+    # ENG-2409: a workspace-scoped key holds no organization-level access-control right. Asserted
+    # because `read_access` gained org-page gates and its api_key arm is granted by the
+    # `api_key_reader`/`api_key_writer` relations on the organization, which ci_reader lacks.
+    - organization:acme#read_access@api_key:ci_reader
 
 # Expected-relations documentation: enumerates, for key permissions, every
 # subject that holds them and through which relation. Kept exact so any
@@ -314,6 +339,39 @@ validation:
     - "[user:tina] is <organization:acme#member>/<team:product#contributor>"
     - "[user:tom] is <organization:acme#member>/<team:product#admin>"
     - "[user:uma] is <organization:acme#member>/<team:analysts#contributor>"
+  # ENG-2409: both of these became organization page gates, so enumerate their subjects here as
+  # well. The assertions above prove the roles that must and must not hold them; this block is what
+  # turns a *widening* into a visible diff rather than a still-green suite.
+  organization:acme#read_access:
+    - "[api_key:org_reader_key] is <organization:acme#api_key_reader>"
+    - "[api_key:org_writer_key] is <organization:acme#api_key_writer>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:mia] is <organization:acme#member>"
+    - "[user:olivia] is <organization:acme#owner>"
+    - "[user:tina] is <organization:acme#member>"
+    - "[user:tom] is <organization:acme#member>"
+    - "[user:uma] is <organization:acme#member>"
+  organization:acme#manage_api_keys:
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:olivia] is <organization:acme#owner>"
+  # ENG-2409: `read` backs the getOrganizationAuth tenancy gate and `manage_billing` backs the
+  # enterprise settings page, so both are page-gate permissions now and both are enumerated for the
+  # same reason as the two above — an assertion proves a role holds it, only this block makes a
+  # *widening* show up as a diff.
+  organization:acme#read:
+    - "[api_key:org_reader_key] is <organization:acme#api_key_reader>"
+    - "[api_key:org_writer_key] is <organization:acme#api_key_writer>"
+    - "[user:bella] is <organization:acme#billing>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:mia] is <organization:acme#member>"
+    - "[user:olivia] is <organization:acme#owner>"
+    - "[user:tina] is <organization:acme#member>"
+    - "[user:tom] is <organization:acme#member>"
+    - "[user:uma] is <organization:acme#member>"
+  organization:acme#manage_billing:
+    - "[user:bella] is <organization:acme#billing>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:olivia] is <organization:acme#owner>"
   response:r1#export:
     - "[api_key:ci_reader] is <workspace:main#reader>"
     - "[api_key:ci_writer] is <workspace:main#writer>"

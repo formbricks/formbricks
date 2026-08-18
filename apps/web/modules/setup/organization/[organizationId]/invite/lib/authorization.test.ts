@@ -4,9 +4,11 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { checkSetupInviteAuthorization, hasSetupInviteAccess } from "./authorization";
 
-// Only the storage boundary is mocked: the real `checkAuthorizationUpdated` role matching runs, so
-// these assertions describe the actual authorization outcome per role rather than the arguments a
-// mock was called with.
+// Only the storage boundary is mocked: the real `can`/`assertCan` path runs (the rollout is off in
+// the unit environment, so the coordinator resolves through the legacy evaluator), so these
+// assertions describe the actual authorization outcome per role rather than the arguments a mock was
+// called with. ENG-2409 swapped the implementation from a role list to `organization.write` without
+// touching a single assertion below — that equivalence is the point.
 vi.mock("@/lib/membership/service", () => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
 }));

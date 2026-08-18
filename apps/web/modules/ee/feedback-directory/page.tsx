@@ -1,5 +1,6 @@
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { can } from "@/lib/authorization";
+import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackDirectoryView } from "@/modules/ee/feedback-directory/components/feedback-directory-view";
@@ -19,7 +20,25 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ organiz
 
   const { currentUserMembership, organization, session } = await getOrganizationAuth(params.organizationId);
 
-  const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organization.id);
+  // ENG-2409: was a second `getAccessFlags(currentUserMembership.role)` on a role this page had
+  // already been handed, then `!isOwner && !isManager`. `organization.manage` is the same set.
+  // `membershipRole` below still comes from the row — that is a rendering prop, retained by design.
+  //
+  // Run alongside the license lookup rather than before it: the two are independent (one asks about
+  // the caller's role, the other about the organization's plan), and the flag test this replaced was
+  // synchronous, so awaiting them in series would have made every load of this page pay for both
+  // round trips end to end. The *branches* below keep their original order — an unlicensed
+  // organization must still see the upgrade prompt rather than a no-access message.
+  const [canManageOrganization, isFeedbackDirectoriesAllowed] = await Promise.all([
+    withAuthorizationSurface("page", () =>
+      can({ type: "user", id: session.user.id }, "organization.manage", {
+        type: "organization",
+        id: organization.id,
+      })
+    ),
+    getIsFeedbackDirectoriesEnabled(organization.id),
+  ]);
+
   const pageTitle = t("workspace.settings.feedback_directories.title");
 
   if (!isFeedbackDirectoriesAllowed) {
@@ -53,12 +72,7 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ organiz
     );
   }
 
-  const canManageFeedbackDirectories = await can(
-    { type: "user", id: session.user.id },
-    "organization.manage",
-    { type: "organization", id: organization.id }
-  );
-  if (!canManageFeedbackDirectories) {
+  if (!canManageOrganization) {
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={pageTitle} />
