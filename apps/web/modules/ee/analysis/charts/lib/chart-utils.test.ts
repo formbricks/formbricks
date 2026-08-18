@@ -27,9 +27,9 @@ describe("chart-utils", () => {
       const rows = [{ "m.joy": 1163, "m.anger": 1050, "m.fear": 3 }];
       const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger", "m.fear"], label);
       expect(result).toEqual([
-        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 1163 },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 1050 },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.fear", [PIE_MEASURE_VALUE_KEY]: 3 },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 1163, tooltipLabel: "L:m.joy" },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 1050, tooltipLabel: "L:m.anger" },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.fear", [PIE_MEASURE_VALUE_KEY]: 3, tooltipLabel: "L:m.fear" },
       ]);
     });
 
@@ -40,9 +40,17 @@ describe("chart-utils", () => {
       ];
       const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger"], label);
       expect(result).toEqual([
-        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 15 },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 2 },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 15, tooltipLabel: "L:m.joy" },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 2, tooltipLabel: "L:m.anger" },
       ]);
+    });
+
+    // ENG-2346: the tooltip falls back to formatting a row's dataKey when the row carries no
+    // `tooltipLabel`, and the slice value lives under a synthetic key that is not a Cube column —
+    // so a missing label surfaced to users as the literal "__measure Value".
+    test("carries the translated measure label so the tooltip never formats the synthetic value key", () => {
+      const result = prepareMeasureSliceData([{ "m.joy": 236 }], ["m.joy"], label);
+      expect(result[0].tooltipLabel).toBe("L:m.joy");
     });
   });
 
