@@ -3,26 +3,24 @@
 import { Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TFeedbackSourceImportMode } from "@formbricks/types/feedback-source";
-import { cn } from "@/lib/cn";
 import { FormControl, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { TFormbricksFeedbackSourceForm } from "../types";
 
 interface ImportModeFieldProps {
   control: Control<TFormbricksFeedbackSourceForm>;
-  disabled?: boolean;
 }
 
 /**
  * Which responses this source imports: completed only, or partials too.
  *
- * Shared by the create and edit dialogs — unlike `importHistorical`, which is a one-shot toggle for
- * the create dialog, this is persisted on the source and has to round-trip on edit.
+ * Create dialog only. The value is persisted on the source, but the edit dialog never sent it, so
+ * the control it rendered there could not do anything and was removed.
  *
  * Deliberately a radio group rather than a switch: "all" carries a privacy consequence the user has
  * to be able to read before choosing it, and a switch has nowhere to put that.
  */
-export const ImportModeField = ({ control, disabled = false }: Readonly<ImportModeFieldProps>) => {
+export const ImportModeField = ({ control }: Readonly<ImportModeFieldProps>) => {
   const { t } = useTranslation();
 
   // Built here, with literal keys, rather than hoisted to a module constant holding key strings:
@@ -46,14 +44,13 @@ export const ImportModeField = ({ control, disabled = false }: Readonly<ImportMo
       control={control}
       name="importMode"
       render={({ field }) => (
-        <FormItem className={cn("rounded-md border border-slate-200 p-3", disabled && "opacity-70")}>
+        <FormItem className="rounded-md border border-slate-200 p-3">
           <FormLabel>{t("workspace.unify.import_mode_label")}</FormLabel>
           <FormControl>
             <RadioGroup
               className="mt-2 gap-y-3"
               value={field.value}
               onValueChange={field.onChange}
-              disabled={disabled}
               aria-label={t("workspace.unify.import_mode_label")}>
               {options.map((option) => (
                 <div key={option.value} className="flex items-start gap-3">

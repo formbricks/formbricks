@@ -1,6 +1,6 @@
 import { createId, isCuid } from "@paralleldrive/cuid2";
-import { createHmac, timingSafeEqual } from "node:crypto";
-import { symmetricEncrypt } from "@/lib/crypto";
+import { createHmac } from "node:crypto";
+import { constantTimeEqual, symmetricEncrypt } from "@/lib/crypto";
 import { env } from "@/lib/env";
 
 const SINGLE_USE_SIGNATURE_PAYLOAD_PREFIX = "formbricks.single-use.v1";
@@ -58,11 +58,7 @@ export const validateSurveySingleUseSignature = (
     return false;
   }
 
-  const expectedSignature = generateSurveySingleUseSignature(surveyId, singleUseId);
-  const expected = Buffer.from(expectedSignature);
-  const received = Buffer.from(signature);
-
-  return expected.length === received.length && timingSafeEqual(expected, received);
+  return constantTimeEqual(generateSurveySingleUseSignature(surveyId, singleUseId), signature);
 };
 
 export const generateSurveySingleUseLinkParams = (

@@ -1,8 +1,9 @@
 import { promises as fs } from "fs";
 import { glob } from "glob";
 import { dirname, resolve } from "path";
-import { Plugin, UserConfig, defineConfig } from "vite";
+import { Plugin } from "vite";
 import dts from "vite-plugin-dts";
+import { ViteUserConfig, defineConfig } from "vitest/config";
 import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
 
 const copySqlMigrationsPlugin: Plugin = {
@@ -21,7 +22,7 @@ const copySqlMigrationsPlugin: Plugin = {
   },
 };
 
-export default defineConfig(async (): Promise<UserConfig> => {
+export default defineConfig(async (): Promise<ViteUserConfig> => {
   const migrationTsFiles = await glob("migration/**/migration.ts", { cwd: __dirname });
   const generatedPrismaTsFiles = await glob("generated/prisma/**/*.ts", { cwd: __dirname });
   const migrationEntries = migrationTsFiles.reduce((acc: Record<string, string>, file: string) => {
@@ -32,6 +33,11 @@ export default defineConfig(async (): Promise<UserConfig> => {
   }, {});
 
   return {
+    test: {
+      coverage: {
+        reporter: ["text", "json", "html", "lcov"],
+      },
+    },
     resolve: {
       alias: {
         "@": resolve(__dirname, "src"),

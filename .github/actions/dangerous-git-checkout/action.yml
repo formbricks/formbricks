@@ -8,3 +8,6 @@ runs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 2
+        # This checks out PR-controlled code that later steps execute (pnpm scripts),
+        # so never leave the token behind in .git/config.
+        persist-credentials: false

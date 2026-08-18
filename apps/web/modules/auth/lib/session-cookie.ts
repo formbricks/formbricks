@@ -1,4 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
+import { constantTimeEqual } from "@/lib/crypto";
 import { env } from "@/lib/env";
 
 /**
@@ -53,9 +54,7 @@ const verifyAndExtractSessionToken = (signedValue: string | null): string | null
   const signature = signedValue.slice(lastDot + 1);
   const expected = createHmac("sha256", secret).update(token).digest("base64");
 
-  const expectedBuf = Buffer.from(expected);
-  const signatureBuf = Buffer.from(signature);
-  if (expectedBuf.length !== signatureBuf.length || !timingSafeEqual(expectedBuf, signatureBuf)) {
+  if (!constantTimeEqual(expected, signature)) {
     return null;
   }
 
