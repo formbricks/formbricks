@@ -37,10 +37,20 @@ test.describe("Anonymize responses", () => {
       await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
       await page.locator("#howToSendCardOption-link").click();
 
-      await page.getByText("Response Options", { exact: true }).click();
-
       const anonymizeToggle = page.locator("#anonymizeResponses");
-      await expect(anonymizeToggle).toBeVisible();
+
+      // The Response Options card is a collapsible whose initial open state is derived from the
+      // survey type at mount, and a survey created from scratch is already a link survey, so the
+      // card starts expanded — clicking its header blindly would COLLAPSE it and unmount the
+      // toggle. Open it only when the toggle is not on screen, the same idempotent
+      // "click until the content is there" shape the other editor specs use.
+      await expect(async () => {
+        if (!(await anonymizeToggle.isVisible().catch(() => false))) {
+          await page.getByText("Response Options", { exact: true }).click();
+        }
+        await expect(anonymizeToggle).toBeVisible({ timeout: 5000 });
+      }).toPass({ timeout: 30000 });
+
       await expect(anonymizeToggle).not.toBeChecked(); // off by default
       await anonymizeToggle.click();
       await expect(anonymizeToggle).toBeChecked();
@@ -59,12 +69,17 @@ test.describe("Anonymize responses", () => {
     });
 
     let surveyUrl: string | null = null;
+    let summaryUrl = "";
 
     await test.step("publish and copy the link", async () => {
       await Promise.all([
         page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 120000 }),
         page.getByRole("button", { name: "Publish", exact: true }).click(),
       ]);
+
+      // Remembered here because the steps below navigate away to the public survey page: by the
+      // time the response card is asserted on, `page.url()` is no longer the summary URL.
+      summaryUrl = page.url();
 
       await page.getByLabel("Copy survey link to clipboard").click();
       surveyUrl = (await page.evaluate("navigator.clipboard.readText()")) as string;
@@ -76,7 +91,10 @@ test.describe("Anonymize responses", () => {
 
       await expect(page.getByText(QUESTION_HEADLINE)).toBeVisible();
       await page.getByRole("textbox").first().fill(ANSWER);
-      await page.getByRole("button", { name: "Finish" }).click();
+      // The submit label is the block's own `buttonLabel` when it has one, and only falls back to
+      // "Finish"/"Next" when it does not — a survey created from scratch ships "Next" on its single
+      // block, so match either rather than assuming the fallback.
+      await page.getByRole("button", { name: /^(Next|Finish)$/ }).click();
 
       await expect(page.getByText("Thank you!")).toBeVisible({ timeout: 30000 });
     });
@@ -103,7 +121,7 @@ test.describe("Anonymize responses", () => {
     });
 
     await test.step("the response card shows no country and no device", async () => {
-      await page.goto(page.url().replace(/\/summary(\?.*)?$/, "/responses"));
+      await page.goto(summaryUrl.replace(/\/summary(\?.*)?$/, "/responses"));
 
       await expect(page.getByText(ANSWER).first()).toBeVisible({ timeout: 30000 });
 
