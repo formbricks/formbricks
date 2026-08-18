@@ -51,6 +51,22 @@ describe("authorization request context", () => {
     expect(afterCallbacks).toHaveLength(2);
   });
 
+  // ENG-2444 made `page` request-scoped via a React `cache()` slot. Nothing in this project has such a
+  // scope — the shared vitestSetup mocks `cache` to identity, and the non-server React build ships it
+  // as a no-op anyway — so `page` here exercises the async-scoped fallback, which is what scripts and
+  // any non-RSC caller get. It must still work inside the callback and must not leak past it. The
+  // request-scoped behaviour is covered in context.rsc.test.ts, which runs React's real `cache`.
+  test("page falls back to the async-scoped boundary when there is no request scope", async () => {
+    await withAuthorizationSurface("page", async () => {
+      expect(getAuthorizationSurface()).toBe("page");
+      recordAuthorizationCheckIssued();
+      expect(getIssuedAuthorizationCheckCount()).toBe(1);
+    });
+
+    expect(getAuthorizationSurface()).toBe("unscoped");
+    expect(getIssuedAuthorizationCheckCount()).toBeNull();
+  });
+
   test("is unscoped outside a request context", () => {
     expect(getAuthorizationSurface()).toBe("unscoped");
   });

@@ -1,6 +1,7 @@
 import "server-only";
 import { after } from "next/server";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { cache as reactCache } from "react";
 import { recordAuthorizationChecksPerRequest } from "./metrics";
 
 /**
@@ -9,22 +10,30 @@ import { recordAuthorizationChecksPerRequest } from "./metrics";
  * Unlike every other surface, it is not established at a single request boundary: Next.js gives no RSC
  * equivalent of the action-client or API wrapper, and a layout's render and its page's render are
  * separate async contexts. It is therefore opened at the authorization choke points every product
- * route already funnels through. `withAuthorizationSurface` returns early when a surface is already
- * open, so opening it at more than one choke point is idempotent rather than nesting.
+ * route already funnels through, and opening it more than once is idempotent rather than nesting.
  *
- * Two consequences follow, and the second is a real coverage limit rather than a reporting quirk.
+ * **`page` is request-scoped; every other surface is callback-scoped.** That difference is ENG-2444.
+ * `AsyncLocalStorage` closes when the awaited callback returns, so the surface used to end with the
+ * choke-point helper: a page that awaited `getWorkspaceAuth()` and then authorized anything else did
+ * so with no surface, and those decisions were labelled `unscoped` in the authoritative decision
+ * telemetry the direct-authority rollout is monitored on. Nine routes were affected, two of them
+ * issuing one such check *per feedback directory* or *per dashboard widget*.
  *
- * The histogram splits: one navigation that runs both a layout check and a page check records two
- * observations rather than one. That weakens the N+1 signal slightly; it does not make it wrong.
+ * `page` is now held in a React `cache()` slot, which is scoped to the whole render pass, so a layout
+ * and its page share one context and it outlives every helper. Two consequences, both improvements on
+ * what this comment used to record:
  *
- * **The surface does not span the whole page.** `AsyncLocalStorage` scopes to the awaited callback,
- * so it closes when the choke-point helper returns — a page that calls `getWorkspaceAuth()` and then
- * issues further central checks makes those checks without a page label. They still use authoritative
- * SpiceDB, but are tagged `unscoped` in decision telemetry.
+ * A navigation records ONE checks-per-request observation rather than one per choke point, which is
+ * the N+1 signal that histogram exists for.
  *
- * Closing it needs a boundary that survives past the helper — a request-scoped store (React `cache`)
- * rather than an async-scoped one. That telemetry attribution improvement is separate from evaluator
- * authority and requires a render harness or E2E proof.
+ * `getAuthorizationSurface()` reports `page` for the whole render instead of `unscoped` after the first
+ * helper returns, so `formbricks_authzed_authorization_decisions_total` attributes page traffic
+ * correctly.
+ *
+ * Outside a React request scope — scripts, unit tests, any non-RSC caller — `cache()` does not
+ * memoize, so there is no slot to hold. `page` then falls back to the `AsyncLocalStorage` boundary,
+ * which is the pre-ENG-2444 behaviour: narrower than a render scope, but correct for a caller with no
+ * render to scope to.
  */
 export type TAuthorizationSurface =
   | "server_action"
@@ -49,6 +58,58 @@ const authorizationContext =
 
 globalForAuthorization.formbricksAuthorizationContext = authorizationContext;
 
+type TPageSurfaceSlot = { context: TAuthorizationContext | null };
+
+/**
+ * One slot per React request scope. In an RSC render that is the whole render pass, so a layout and
+ * its page resolve the same slot — which is what lets the `page` surface outlive the choke-point
+ * helper that opened it.
+ *
+ * `reactCache` is already this codebase's memoization idiom (resolvers.ts, and both choke-point
+ * modules); here it is used for its scope rather than to cache a value.
+ */
+const getPageSurfaceSlot = reactCache((): TPageSurfaceSlot => ({ context: null }));
+
+/**
+ * Whether React is holding a request scope we can hang the `page` surface on.
+ *
+ * `cache()` only memoizes inside one — outside it (scripts, unit tests, the non-RSC bundle, where the
+ * client build's `cache` is a permanent no-op) every call returns a fresh object, so identity is a
+ * direct, dependency-free probe. Deliberately not named "is rendering": Next also establishes a scope
+ * outside component rendering, and `page` is only ever *selected* by the caller — the ALS store is
+ * consulted first, so an enclosing server-action or API surface always keeps precedence.
+ */
+const hasReactRequestScope = (slot: TPageSurfaceSlot): boolean => slot === getPageSurfaceSlot();
+
+const createSurfaceContext = (surface: TAuthorizationSurface): TAuthorizationContext => ({
+  checksIssued: 0,
+  surface,
+});
+
+/**
+ * Register the one post-response observation for a surface. Shared by both boundaries so they cannot
+ * drift, and fail-safe: an unavailable `after()` costs the histogram observation, never the decision.
+ */
+const scheduleChecksPerRequestObservation = (context: TAuthorizationContext): void => {
+  try {
+    after(() => {
+      try {
+        recordAuthorizationChecksPerRequest(context.checksIssued, context.surface);
+      } catch {
+        // Telemetry must never alter an authoritative response.
+      }
+    });
+  } catch {
+    // A wrapper can be invoked outside a Next.js request in scripts/tests — `after()` is unavailable
+    // there. The authorization decision remains authoritative; only the request histogram observation
+    // is omitted.
+  }
+};
+
+/** The surface answering for the current caller: an explicit ALS boundary first, else the page slot. */
+const getActiveContext = (): TAuthorizationContext | null =>
+  authorizationContext.getStore() ?? getPageSurfaceSlot().context;
+
 export const withAuthorizationSurface = async <T>(
   surface: TAuthorizationSurface,
   callback: () => T | Promise<T>
@@ -57,23 +118,25 @@ export const withAuthorizationSurface = async <T>(
     return callback();
   }
 
-  const context: TAuthorizationContext = { checksIssued: 0, surface };
+  if (surface === "page") {
+    const slot = getPageSurfaceSlot();
+    if (hasReactRequestScope(slot)) {
+      // Opened once per render, then left open: every later check in the same render — including the
+      // ones a page issues long after this helper returned — resolves through this slot.
+      if (!slot.context) {
+        slot.context = createSurfaceContext(surface);
+        scheduleChecksPerRequestObservation(slot.context);
+      }
+      return callback();
+    }
+    // No render to scope to: fall through to the async-scoped boundary, which is what this surface did
+    // before ENG-2444. Narrower, but correct for a caller with no request scope.
+  }
+
+  const context = createSurfaceContext(surface);
 
   return authorizationContext.run(context, async () => {
-    try {
-      after(() => {
-        try {
-          recordAuthorizationChecksPerRequest(context.checksIssued, surface);
-        } catch {
-          // Telemetry must never alter an authoritative response.
-        }
-      });
-    } catch {
-      // A wrapper can be invoked outside a Next.js request in scripts/tests — `after()` is
-      // unavailable there. The authorization decision remains authoritative; only the request
-      // histogram observation is omitted.
-    }
-
+    scheduleChecksPerRequestObservation(context);
     return callback();
   });
 };
@@ -85,14 +148,13 @@ export const withAuthorizationSurface = async <T>(
  * that never establish a surface are simply not counted rather than throwing.
  */
 export const recordAuthorizationCheckIssued = (): void => {
-  const context = authorizationContext.getStore();
+  const context = getActiveContext();
   if (context) context.checksIssued += 1;
 };
 
 /** The number of central authorization operations in the current surface, or `null` outside one. */
-export const getIssuedAuthorizationCheckCount = (): number | null =>
-  authorizationContext.getStore()?.checksIssued ?? null;
+export const getIssuedAuthorizationCheckCount = (): number | null => getActiveContext()?.checksIssued ?? null;
 
 /** The current bounded request surface, or `unscoped` for scripts and non-request authorization calls. */
 export const getAuthorizationSurface = (): TAuthorizationSurface | "unscoped" =>
-  authorizationContext.getStore()?.surface ?? "unscoped";
+  getActiveContext()?.surface ?? "unscoped";
