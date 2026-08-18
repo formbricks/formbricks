@@ -13,8 +13,8 @@ interface OptionsSwitchProps {
   handleOptionChange: (value: string) => void;
   /**
    * Id of the element naming this group. A plain `<label htmlFor>` cannot name the switch — the
-   * container is a `div`, which is not a labelable element, so the association is silently dropped.
-   * Point this at the label instead.
+   * container is a `fieldset`, which is not a labelable element, so the association is silently
+   * dropped. Point this at the label instead.
    */
   "aria-labelledby"?: string;
 }
@@ -26,7 +26,7 @@ export const OptionsSwitch = ({
   "aria-labelledby": ariaLabelledBy,
 }: OptionsSwitchProps) => {
   const [highlightStyle, setHighlightStyle] = useState({});
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLFieldSetElement>(null);
   useEffect(() => {
     const updateHighlight = () => {
       if (containerRef.current) {
@@ -52,11 +52,14 @@ export const OptionsSwitch = ({
   }, [currentOption]);
 
   return (
-    <div
+    // A fieldset rather than a div with role="group": it carries the grouping semantics natively, so
+    // the label referenced by aria-labelledby names the whole switch. `min-w-0` undoes the browser's
+    // default `min-width: min-content` on fieldset, which would otherwise stop it shrinking in a
+    // flex parent.
+    <fieldset
       ref={containerRef}
-      role="group"
       aria-labelledby={ariaLabelledBy}
-      className="relative flex w-full items-center justify-between rounded-md border bg-white p-1">
+      className="relative flex w-full min-w-0 items-center justify-between rounded-md border bg-white p-1">
       <div
         className="absolute top-1 bottom-1 rounded-md bg-slate-100 transition-all duration-300 ease-in-out"
         style={highlightStyle}
@@ -86,6 +89,6 @@ export const OptionsSwitch = ({
           </div>
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 };
