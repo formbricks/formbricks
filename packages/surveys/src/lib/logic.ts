@@ -10,6 +10,7 @@ import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
+import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getElementsFromSurveyBlocks } from "./utils";
 
@@ -34,28 +35,10 @@ export const evaluateLogic = (
   conditions: TConditionGroup,
   selectedLanguage: string,
   embeddedValues: TResponseData = {}
-): boolean => {
-  const evaluateConditionGroup = (group: TConditionGroup): boolean => {
-    const results = group.conditions.map((condition) => {
-      if (isConditionGroup(condition)) {
-        return evaluateConditionGroup(condition);
-      } else {
-        return evaluateSingleCondition(
-          localSurvey,
-          data,
-          variablesData,
-          condition,
-          selectedLanguage,
-          embeddedValues
-        );
-      }
-    });
-
-    return group.connector === "or" ? results.some((r) => r) : results.every((r) => r);
-  };
-
-  return evaluateConditionGroup(conditions);
-};
+): boolean =>
+  evaluateConditionGroup(conditions, (condition) =>
+    evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
+  );
 
 export const performActions = (
   survey: TJsWorkspaceStateSurvey,
