@@ -1122,8 +1122,10 @@ model oauthClientResource {
   metadata   Json?
   createdAt  DateTime?
 
+  // No separate @@index([clientId]): the composite unique above is a btree led by clientId, so it
+  // already serves every lookup and range scan on clientId alone. The sibling oauthClient* models do
+  // carry one, but none of them has a composite unique starting with clientId.
   @@unique([clientId, resourceId])
-  @@index([clientId])
   @@index([resourceId])
 }
 

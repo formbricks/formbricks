@@ -250,6 +250,11 @@ minimumReleaseAgeExclude:
   # matching peers), but `better-auth` hard-depends on all five storage adapters plus telemetry at the
   # exact same version, published in the same minute — so the install fails on those too until they are
   # listed. Worth seeing plainly: the cooldown is lifted for the whole Better Auth surface.
+  # Note the scope, because it is wider than the reason: these entries match by NAME, not by version
+  # (a version-pinned scoped entry is not reliably matched — see the @formbricks/hub note above). So
+  # until ENG-2349 lands this exempts ANY later Better Auth release too — 1.7.1, 1.8.0 — not just the
+  # 1.7.0 that needs it. A bump landing in that window would bypass the cooldown silently, and nothing
+  # in CI would say so. That is the cost of leaving this in past the date below.
   # On or after 2026-08-21: delete every better-auth entry below (keep @formbricks/hub) and re-run
   # `pnpm install` to confirm the cooldown accepts 1.7.0 on its own. That is the whole of ENG-2349.
   - "better-auth"

@@ -274,8 +274,18 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
     expect(registration.body.scope?.split(" ")).toEqual(expect.arrayContaining(["surveys:write"]));
 
     // Consequence: a scope the client never requested is now accepted at authorize.
+    //
+    // Asserted as a positive outcome, not as the absence of one error string. `requestAuthorize`
+    // defaults `location` to "" when the header is missing, and "" satisfies every `not.toContain` —
+    // so a negative assertion here would also pass if authorize returned a different error, or no
+    // redirect at all. What an accepted request actually does, unauthenticated, is bounce to the
+    // configured loginPage carrying no `error`.
     const authorize = await requestAuthorize(auth, clientId as string, ["surveys:read", "offline_access"]);
-    expect(authorize.location).not.toContain("error=invalid_scope");
+    expect(authorize.location).toBeTruthy();
+
+    const location = new URL(authorize.location, BASE_URL);
+    expect(location.pathname).toBe("/auth/login");
+    expect(location.searchParams.get("error")).toBeNull();
   });
 
   test("authorize still rejects a scope outside the advertised set entirely", async () => {

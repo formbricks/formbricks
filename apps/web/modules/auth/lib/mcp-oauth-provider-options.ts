@@ -40,6 +40,20 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   // Boot-time config never overwrites a row an operator edited through the CRUD endpoints. This is
   // the upstream default; pinned explicitly because a silent policy revert on restart would be very
   // hard to attribute.
+  //
+  // ⚠ The flip side, for whoever changes a deployment's WEBAPP_URL after install: the resource
+  // identifier above is derived from it, so a new URL is a NEW resource. insertOnly means boot adds a
+  // second `oauthResource` row and points `clientRegistrationDefaultResources` at it, while every
+  // already-registered client keeps its `oauthClientResource` link to the OLD identifier — and with
+  // `enforcePerClientResources` on, those clients then fail `invalid_target` at the token endpoint,
+  // after the user has already consented. Nothing self-heals it, because insertOnly is what stops boot
+  // from rewriting operator-owned rows.
+  //
+  // Migrating the URL therefore means repointing the links, not just restarting: update the existing
+  // `oauthResource.identifier` in place (the FK from `oauthClientResource.resourceId` is
+  // ON UPDATE CASCADE, so the link rows follow), rather than letting a second row appear. The
+  // alternative — telling every MCP user to re-register their client — is the thing the ENG-2343
+  // backfill exists to avoid.
   resourceSeedMode: "insertOnly",
   // Mandatory, not optional. `enforcePerClientResources` defaults to true, and with no registration
   // resources configured the plugin rejects every explicit resource request — which would break each

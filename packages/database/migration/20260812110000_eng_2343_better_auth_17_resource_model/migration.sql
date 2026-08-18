@@ -11,37 +11,37 @@
 -- every user out of password login, and their password reset silently matches zero rows.
 
 -- AlterTable
-ALTER TABLE "oauthClient" ADD COLUMN     "applicationType" TEXT,
-ADD COLUMN     "backchannelLogoutSessionRequired" BOOLEAN,
-ADD COLUMN     "backchannelLogoutUri" TEXT,
-ADD COLUMN     "clientCredentialsScopes" TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN     "clientDiscoveryId" TEXT,
-ADD COLUMN     "dpopBoundAccessTokens" BOOLEAN DEFAULT false,
-ADD COLUMN     "jwks" TEXT,
-ADD COLUMN     "jwksUri" TEXT;
+ALTER TABLE "oauthClient" ADD COLUMN IF NOT EXISTS "applicationType" TEXT,
+ADD COLUMN IF NOT EXISTS "backchannelLogoutSessionRequired" BOOLEAN,
+ADD COLUMN IF NOT EXISTS "backchannelLogoutUri" TEXT,
+ADD COLUMN IF NOT EXISTS "clientCredentialsScopes" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "clientDiscoveryId" TEXT,
+ADD COLUMN IF NOT EXISTS "dpopBoundAccessTokens" BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS "jwks" TEXT,
+ADD COLUMN IF NOT EXISTS "jwksUri" TEXT;
 
 -- AlterTable
-ALTER TABLE "oauthAccessToken" ADD COLUMN     "authorizationCodeId" TEXT,
-ADD COLUMN     "confirmation" JSONB,
-ADD COLUMN     "requestedUserInfoClaims" TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN     "resources" TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN     "revoked" TIMESTAMP(3);
+ALTER TABLE "oauthAccessToken" ADD COLUMN IF NOT EXISTS "authorizationCodeId" TEXT,
+ADD COLUMN IF NOT EXISTS "confirmation" JSONB,
+ADD COLUMN IF NOT EXISTS "requestedUserInfoClaims" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "resources" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "revoked" TIMESTAMP(3);
 
 -- AlterTable
-ALTER TABLE "oauthRefreshToken" ADD COLUMN     "authorizationCodeId" TEXT,
-ADD COLUMN     "confirmation" JSONB,
-ADD COLUMN     "requestedUserInfoClaims" TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN     "resources" TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN     "rotatedAt" TIMESTAMP(3),
-ADD COLUMN     "rotationReplayExpiresAt" TIMESTAMP(3),
-ADD COLUMN     "rotationReplayResponse" TEXT;
+ALTER TABLE "oauthRefreshToken" ADD COLUMN IF NOT EXISTS "authorizationCodeId" TEXT,
+ADD COLUMN IF NOT EXISTS "confirmation" JSONB,
+ADD COLUMN IF NOT EXISTS "requestedUserInfoClaims" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "resources" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "rotatedAt" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "rotationReplayExpiresAt" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "rotationReplayResponse" TEXT;
 
 -- AlterTable
-ALTER TABLE "oauthConsent" ADD COLUMN     "requestedUserInfoClaims" TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN     "resources" TEXT[] DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "oauthConsent" ADD COLUMN IF NOT EXISTS "requestedUserInfoClaims" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "resources" TEXT[] DEFAULT ARRAY[]::TEXT[];
 
 -- CreateTable
-CREATE TABLE "oauthResource" (
+CREATE TABLE IF NOT EXISTS "oauthResource" (
     "id" TEXT NOT NULL,
     "identifier" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE "oauthResource" (
 );
 
 -- CreateTable
-CREATE TABLE "oauthClientResource" (
+CREATE TABLE IF NOT EXISTS "oauthClientResource" (
     "id" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "resourceId" TEXT NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE "oauthClientResource" (
 );
 
 -- CreateTable
-CREATE TABLE "oauthClientAssertion" (
+CREATE TABLE IF NOT EXISTS "oauthClientAssertion" (
     "id" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
 
@@ -81,31 +81,41 @@ CREATE TABLE "oauthClientAssertion" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "oauthResource_identifier_key" ON "oauthResource"("identifier");
+CREATE UNIQUE INDEX IF NOT EXISTS "oauthResource_identifier_key" ON "oauthResource"("identifier");
 
 -- CreateIndex
-CREATE INDEX "oauthClientResource_clientId_idx" ON "oauthClientResource"("clientId");
+CREATE INDEX IF NOT EXISTS "oauthClientResource_resourceId_idx" ON "oauthClientResource"("resourceId");
 
 -- CreateIndex
-CREATE INDEX "oauthClientResource_resourceId_idx" ON "oauthClientResource"("resourceId");
+CREATE UNIQUE INDEX IF NOT EXISTS "oauthClientResource_clientId_resourceId_key" ON "oauthClientResource"("clientId", "resourceId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "oauthClientResource_clientId_resourceId_key" ON "oauthClientResource"("clientId", "resourceId");
+CREATE INDEX IF NOT EXISTS "oauthClientAssertion_expiresAt_idx" ON "oauthClientAssertion"("expiresAt");
 
 -- CreateIndex
-CREATE INDEX "oauthClientAssertion_expiresAt_idx" ON "oauthClientAssertion"("expiresAt");
+CREATE INDEX IF NOT EXISTS "oauthAccessToken_authorizationCodeId_idx" ON "oauthAccessToken"("authorizationCodeId");
 
 -- CreateIndex
-CREATE INDEX "oauthAccessToken_authorizationCodeId_idx" ON "oauthAccessToken"("authorizationCodeId");
-
--- CreateIndex
-CREATE INDEX "oauthRefreshToken_authorizationCodeId_idx" ON "oauthRefreshToken"("authorizationCodeId");
+CREATE INDEX IF NOT EXISTS "oauthRefreshToken_authorizationCodeId_idx" ON "oauthRefreshToken"("authorizationCodeId");
 
 -- AddForeignKey
-ALTER TABLE "oauthClientResource" ADD CONSTRAINT "oauthClientResource_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "oauthClient"("clientId") ON DELETE CASCADE ON UPDATE CASCADE;
+-- Guarded with DO/EXCEPTION rather than IF NOT EXISTS: Postgres has no IF NOT EXISTS for
+-- ADD CONSTRAINT, and this migration must stay convergent against a database created with `db:push`,
+-- where these constraints already exist.
+DO $$
+BEGIN
+  ALTER TABLE "oauthClientResource" ADD CONSTRAINT "oauthClientResource_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "oauthClient"("clientId") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "oauthClientResource" ADD CONSTRAINT "oauthClientResource_resourceId_fkey" FOREIGN KEY ("resourceId") REFERENCES "oauthResource"("identifier") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+  ALTER TABLE "oauthClientResource" ADD CONSTRAINT "oauthClientResource_resourceId_fkey" FOREIGN KEY ("resourceId") REFERENCES "oauthResource"("identifier") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- JWT signing keyring (Better Auth 1.7)
@@ -122,8 +132,8 @@ ALTER TABLE "oauthClientResource" ADD CONSTRAINT "oauthClientResource_resourceId
 -- Nullable because rows written before 1.7 carry no value, and upstream reads are explicit about it:
 -- getLatestKeyByAlg treats `alg: null` as the configured default alg, so keys already in the table
 -- keep signing without a backfill.
-ALTER TABLE "jwks" ADD COLUMN     "alg" TEXT,
-ADD COLUMN     "crv" TEXT;
+ALTER TABLE "jwks" ADD COLUMN IF NOT EXISTS "alg" TEXT,
+ADD COLUMN IF NOT EXISTS "crv" TEXT;
 
 COMMENT ON COLUMN "jwks"."alg" IS 'JWS algorithm for this key. NULL on pre-1.7 rows, read as the configured default alg.';
 COMMENT ON COLUMN "jwks"."crv" IS 'Curve for EC/OKP keys (Ed25519 under the default keyring).';
@@ -134,7 +144,7 @@ COMMENT ON COLUMN "jwks"."crv" IS 'Curve for EC/OKP keys (Ed25519 under the defa
 
 -- Nullable on purpose, although better-auth declares `issuer` required: a NOT NULL column would fail
 -- every INSERT from a 1.6 pod still serving during a rolling deploy.
-ALTER TABLE "Account" ADD COLUMN "issuer" TEXT;
+ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "issuer" TEXT;
 
 -- Backfill BEFORE the unique index, so a collision fails the migration here rather than surfacing as
 -- a login bug later. Values mirror better-auth's own helpers (@better-auth/core db/schema/account):
@@ -163,7 +173,7 @@ SET "issuer" = CASE
 END
 WHERE "issuer" IS NULL;
 
-CREATE UNIQUE INDEX "Account_issuer_providerAccountId_key" ON "Account"("issuer", "providerAccountId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Account_issuer_providerAccountId_key" ON "Account"("issuer", "providerAccountId");
 
 COMMENT ON COLUMN "Account"."issuer" IS 'Better Auth 1.7 account identity namespace; half of the (issuer, accountId) key. Backfilled by ENG-2343.';
 COMMENT ON COLUMN "oauthAccessToken"."resources" IS 'RFC 8707 resource indicators this token was approved for (GHSA-p2fr-6hmx-4528).';
