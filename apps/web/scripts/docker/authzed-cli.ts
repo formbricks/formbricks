@@ -102,6 +102,23 @@ const run = async (): Promise<void> => {
         process.exitCode = await runAuthzedOutboxCli(outboxCommand);
         return;
       }
+      case "upgrade": {
+        const { parseAuthzedUpgradeCliCommand } = await import("../../lib/authzed/upgrade-cli-command");
+        const upgradeCommand = parseAuthzedUpgradeCliCommand(args);
+
+        if (!upgradeCommand) {
+          console.error = originalConsoleError;
+          writeResult(INVALID_REQUEST_RESULT);
+          process.exitCode = 1;
+          return;
+        }
+
+        shouldCloseDatabase = true;
+        const { runAuthzedUpgradeCli } = await import("../../lib/authzed/upgrade-cli");
+        console.error = originalConsoleError;
+        process.exitCode = await runAuthzedUpgradeCli(upgradeCommand);
+        return;
+      }
       default:
         console.error = originalConsoleError;
         writeResult(INVALID_REQUEST_RESULT);

@@ -166,6 +166,24 @@ jobs:
           test "$status" -eq 1
           test "$output" = '{"status":"disabled"}'
 
+          set +e
+          upgrade_output="$(docker run --rm \
+            --entrypoint formbricks-authzed \
+            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks" \
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
+            -e REDIS_URL="redis://192.0.2.1:6379" \
+            -e HUB_API_URL="http://192.0.2.1:4000" \
+            -e HUB_API_KEY="build-time-placeholder" \
+            -e CUBEJS_API_URL="http://192.0.2.1:4000" \
+            -e CUBEJS_API_SECRET="build-time-placeholder" \
+            -e AUTHZED_ENABLED="false" \
+            "$IMAGE" upgrade check 2>&1)"
+          upgrade_status=$?
+          set -e
+
+          test "$upgrade_status" -eq 1
+          test "$upgrade_output" = '{"code":"authzed_disabled","retryable":false,"status":"failed"}'
+
       - name: Reject Invalid Environment Before Database Setup
         shell: bash
         env:

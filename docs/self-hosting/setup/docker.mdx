@@ -144,9 +144,10 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 ## AuthZed and SpiceDB
 
 The bundled SpiceDB service stores its data in a dedicated `spicedb` database and login inside the existing
-PostgreSQL container. The bootstrap and datastore migration containers run on every `docker compose up` and
-are idempotent. SpiceDB is reachable only inside the Compose network at `spicedb:50051`; it is not published
-on the host or routed through Traefik.
+PostgreSQL container. Database bootstrap, datastore migration, and the release-matched `authzed-initialize`
+service are idempotent. Fresh installs apply the canonical schema and verify an empty or reconciled graph
+without making Formbricks startup or `/health` depend on SpiceDB. SpiceDB is reachable only inside the Compose
+network at `spicedb:50051`; it is not published on the host or routed through Traefik.
 
 The Formbricks container receives the supported AuthZed variables automatically. Keep `AUTHZED_TOKEN` and
 `AUTHZED_DATABASE_PASSWORD` private and include `.env` and the PostgreSQL volume in your backup plan. Running
@@ -158,6 +159,7 @@ The release image includes an opt-in operations CLI. It does not start during no
 docker compose --profile authzed-ops run --rm authzed-ops health
 docker compose --profile authzed-ops run --rm authzed-ops schema check
 docker compose --profile authzed-ops run --rm authzed-ops backfill
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
 See [AuthZed Operations](/self-hosting/advanced/authzed-operations) before applying a schema, repairing
@@ -351,19 +353,32 @@ first release that requires the AuthZed runtime:
 1. Back up `.env`, `docker-compose.yml`, and the PostgreSQL volume.
 2. Download `authzed-postgres-bootstrap.sh` from the same Formbricks release as the Compose file.
 3. Generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with `openssl rand -hex 32` and add them to `.env`.
-4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, and the profiled `authzed-ops` service, plus the
-   six `AUTHZED_*` Formbricks variables, from the released Compose file into your customized file. Preserve your
-   existing proxy, storage, and SMTP settings.
-5. Run `docker compose config`, followed by `docker compose pull` and `docker compose up -d`.
-6. Confirm both one-shot AuthZed services completed and `spicedb` is healthy with `docker compose ps -a`.
-7. Run the release-matched health, schema, and dry-run audit commands from the
-   [AuthZed Operations guide](/self-hosting/advanced/authzed-operations).
-8. Back up the new authorization database with
+4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
+   `authzed-ops` service, plus the six `AUTHZED_*` Formbricks variables, from the released Compose file into your
+   customized file. Use `AUTHZED_CONSISTENCY=fully_consistent`. Preserve proxy, storage, and SMTP settings.
+5. Run `docker compose config` and `docker compose pull`. Apply the release's Formbricks database migrations
+   while the old application remains available: `docker compose run --rm formbricks-migrate`.
+6. Start PostgreSQL and SpiceDB, then run the guarded preparation and read-only gate:
+
+   ```bash
+   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
+   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+   ```
+
+   A non-empty mismatched schema requires the reviewed `remoteDigest` as described in
+   [AuthZed Operations](/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6).
+7. Only after `upgrade check` exits `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
+   run `docker compose up -d`. The one-click updater performs the same preparation before it stops the old app.
+8. Confirm `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy
+   with `docker compose ps -a`.
+9. Back up the new authorization database with
    `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` after validation and
    include it in future database backup procedures.
 
-To roll back the runtime before application enforcement is enabled, restore the backed-up Compose and `.env`
-files and run `docker compose up -d`. Do not delete or replace the PostgreSQL volume.
+To roll back v6, restore the exact bridge-compatible v5 image and configuration kept for the migration. Keep
+outbox delivery enabled, require a clean audit, and do not delete or replace either PostgreSQL database. See the
+rollback procedure in [AuthZed Operations](/self-hosting/advanced/authzed-operations#roll-back-a-v6-upgrade).
 
 <Info>
   For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.

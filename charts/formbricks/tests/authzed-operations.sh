@@ -55,7 +55,7 @@ assert_safe_authzed_notes() {
   fi
 }
 
-disabled_notes="$(render_notes authzed-disabled)"
+disabled_notes="$(render_notes authzed-disabled --set authzed.enabled=false)"
 if grep --fixed-strings "AuthZed / SpiceDB Operations:" <<<"${disabled_notes}" >/dev/null; then
   printf '%s\n' "AuthZed operations notes must be hidden when AuthZed is disabled." >&2
   exit 1
@@ -64,6 +64,7 @@ fi
 external_notes="$(render_notes authzed-external \
   --set authzed.enabled=true \
   --set authzed.mode=external \
+  --set authzed.operator.install=false \
   --set authzed.endpoint=grpc.authzed.com:443 \
   --set authzed.insecure=false \
   --set authzed.auth.existingSecret=formbricks-authzed)"
@@ -72,8 +73,40 @@ authzed_notes="$(authzed_operations_notes "${external_notes}")"
 grep --fixed-strings 'SpiceDB is configured in `external` mode.' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'formbricks-authzed health' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'formbricks-authzed schema check' <<<"${authzed_notes}" >/dev/null
+grep --fixed-strings 'formbricks-authzed upgrade prepare' <<<"${authzed_notes}" >/dev/null
+grep --fixed-strings 'formbricks-authzed upgrade check' <<<"${authzed_notes}" >/dev/null
 grep --fixed-strings 'self-hosting/advanced/authzed-operations' <<<"${authzed_notes}" >/dev/null
 assert_safe_authzed_notes authzed-external "${authzed_notes}"
+
+# AuthZed is the v6 authorization engine. Fresh installs render the initialization Job, while an
+# existing release must explicitly acknowledge the completed release-matched preparation.
+default_install="$(helm template authzed-default "${CHART_DIR}" "${COMMON_ARGS[@]}")"
+grep --fixed-strings 'name: formbricks-authzed-initialize' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'helm.sh/hook-weight: "10"' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'helm.sh/hook-weight: "-10"' <<<"${default_install}" >/dev/null
+grep --fixed-strings 'value: fully_consistent' <<<"${default_install}" >/dev/null
+
+if helm template authzed-disabled "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set authzed.enabled=false >/dev/null 2>&1; then
+  printf '%s\n' "Formbricks v6 must refuse a chart deployment with AuthZed disabled." >&2
+  exit 1
+fi
+
+if helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade >/dev/null 2>&1; then
+  printf '%s\n' "An existing Helm release must acknowledge the AuthZed v6 migration." >&2
+  exit 1
+fi
+
+acknowledged_upgrade="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password \
+  --set authzed.migrationAcknowledged=true)"
+if ! grep --fixed-strings 'helm.sh/hook: pre-upgrade' <<<"${acknowledged_upgrade}" >/dev/null; then
+  printf '%s\n' "An acknowledged Helm upgrade must run the release-matched AuthZed gate before rollout." >&2
+  exit 1
+fi
 
 # Render each supported ownership and datastore shape. These are intentionally render-only checks: none
 # of the operational commands are Helm hooks or automatically created Jobs.
@@ -122,6 +155,7 @@ assert_safe_authzed_notes authzed-managed-postgresql \
 helm template authzed-external "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --set authzed.enabled=true \
   --set authzed.mode=external \
+  --set authzed.operator.install=false \
   --set authzed.endpoint=grpc.authzed.com:443 \
   --set authzed.insecure=false \
   --set authzed.auth.existingSecret=formbricks-authzed >/dev/null

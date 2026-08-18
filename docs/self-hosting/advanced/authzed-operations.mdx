@@ -9,10 +9,10 @@ authorization. PostgreSQL remains the source of truth. Formbricks projects membe
 API-key changes into SpiceDB after their PostgreSQL transaction commits.
 
 <Note>
-  Current v5 releases use AuthZed as a rebuildable projection while the legacy evaluator remains available. The
-  planned v6 authorization upgrade makes SpiceDB the sole decision engine, uses durable outbox delivery, and has
-  no runtime legacy fallback. Existing installations must complete the release-matched migration preflight before
-  upgrading; do not infer v6 readiness from a healthy v5 connection alone.
+  Formbricks v6 makes SpiceDB the sole authorization decision engine and has no runtime legacy fallback.
+  PostgreSQL remains the relationship source of truth, with durable outbox delivery into SpiceDB. Existing
+  installations must complete the release-matched preparation and read-only gate before upgrading; a healthy
+  connection alone is not sufficient.
 </Note>
 
 <Warning>
@@ -30,14 +30,10 @@ API-key changes into SpiceDB after their PostgreSQL transaction commits.
 | Formbricks projection layer  | Copies committed PostgreSQL authorization changes into SpiceDB                  |
 | AuthZed operator commands    | Check health and schema state, then audit or repair relationship drift          |
 
-In current v5 bridge releases, projection is synchronous but best-effort: Formbricks waits for an attempted
-projection, but a projection failure never changes the result of an already committed PostgreSQL mutation. A
-SpiceDB outage can therefore leave the graph behind PostgreSQL. Run a relationship audit after recovery.
-
-The v6 direct-authority release adds a PostgreSQL transactional outbox, bounded revocation freshness, automatic
-scheduled audit, and fail-closed authorization. Its migration preflight requires a drained outbox and clean graph
-before the application can rely on SpiceDB decisions. The detailed v6 commands remain release-specific until the
-upgrade implementation ships.
+Formbricks writes projection intent in the same PostgreSQL transaction as the source mutation. BullMQ wakes the
+delivery worker, but PostgreSQL is the durable queue. A failed delivery is retried idempotently and a stale or
+dead-lettered revocation makes protected operations fail closed. A six-hour audit repairs attributable missing
+or mismatched edges; operators must investigate state that cannot be repaired safely.
 
 The general Formbricks `/health` endpoint, application startup, and Kubernetes readiness and liveness probes
 do not depend on SpiceDB. This prevents a SpiceDB outage from restarting unrelated Formbricks workloads. It
@@ -49,12 +45,12 @@ There is no browser health or administration page. Use the release-matched opera
 
 | Variable                    | Purpose                                                             | Default                                             |
 | --------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
-| `AUTHZED_ENABLED`           | Enables the AuthZed client and relationship projection              | `true` in bundled Docker, `false` in Helm           |
+| `AUTHZED_ENABLED`           | Enables the required AuthZed authorization engine                    | `true` in bundled Docker and Helm                    |
 | `AUTHZED_ENDPOINT`          | Bare gRPC `host:port` endpoint                                      | `spicedb:50051` in Docker                           |
 | `AUTHZED_TOKEN`             | SpiceDB preshared authentication token                              | No default                                          |
 | `AUTHZED_SYSTEM_KEY`        | Stable Formbricks authorization namespace identifier                | `formbricks`                                        |
 | `AUTHZED_INSECURE`          | Uses plaintext gRPC when enabled                                    | `true` for bundled Docker and chart-managed SpiceDB |
-| `AUTHZED_CONSISTENCY`       | Default read consistency                                            | `minimize_latency`                                  |
+| `AUTHZED_CONSISTENCY`       | Authorization read consistency                                      | `fully_consistent`                                  |
 | `AUTHZED_DATABASE_PASSWORD` | Password for Docker's dedicated `spicedb` PostgreSQL role           | No default                                          |
 | `SPICEDB_IMAGE_REF`         | Reviewed override used by both Docker migration and server services | `authzed/spicedb:v1.52.0`                           |
 
@@ -86,25 +82,28 @@ bundled PostgreSQL container. Startup is ordered as follows:
 
 ```text
 postgres → authzed-db-bootstrap → spicedb-migrate → spicedb
+        ↘ formbricks-migrate ───────────────↗ authzed-initialize
 ```
 
 Database bootstrap and datastore migration are idempotent. Migration and serving always use the same
 `SPICEDB_IMAGE_REF`. SpiceDB is reachable only as `spicedb:50051` inside the Compose network.
 
-The `authzed-ops` profile is a short-lived operator container. It uses the same Formbricks image as the
-application and does not start during a normal `docker compose up`.
+`authzed-initialize` is an idempotent, one-shot service that prepares fresh installations. Formbricks does not
+depend on it, so application startup and `/health` remain independent from SpiceDB. The `authzed-ops` profile is
+a short-lived operator container using the same release image and never starts during a normal Compose run.
 
 ```bash
 docker compose --profile authzed-ops run --rm authzed-ops health
 docker compose --profile authzed-ops run --rm authzed-ops schema check
 docker compose --profile authzed-ops run --rm authzed-ops backfill
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
-Fresh one-click installations generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` without printing them.
-The update command preserves customized Compose files, so an older installation must merge the released
-AuthZed services, environment, bootstrap helper, and `authzed-ops` profile manually. Follow the
-[Docker migration steps](/self-hosting/setup/docker#add-spicedb-to-an-existing-docker-installation) before
-starting a release that depends on SpiceDB.
+Fresh one-click installations generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD`, prepare the graph, and
+run the read-only gate before reporting success. The update command preserves customized Compose files. An older
+installation must merge the released AuthZed services and environment manually, then explicitly acknowledge the
+v6 migration. The updater refuses to stop the existing application until `upgrade prepare` and `upgrade check`
+succeed.
 
 <Warning>
   `docker compose down` preserves PostgreSQL data. `docker compose down -v` deletes the volume containing both
@@ -125,7 +124,6 @@ For a chart-managed cluster:
 
 ```yaml
 authzed:
-  enabled: true
   mode: selfHosted
   operator:
     install: true
@@ -195,14 +193,18 @@ For an external AuthZed endpoint:
 authzed:
   enabled: true
   mode: external
+  operator:
+    install: false
   endpoint: grpc.authzed.com:443
   insecure: false
   auth:
     existingSecret: formbricks-authzed
 ```
 
-The operator runs SpiceDB datastore migrations. The Formbricks chart deliberately does not install the
-Formbricks authorization schema and does not run relationship repair as a Helm hook.
+AuthZed and `fully_consistent` authorization are enabled by default. The operator runs SpiceDB datastore
+migrations. A fresh Helm installation runs a release-matched, aggregate-only initialization Job after the
+datastore and Formbricks migrations become available. Application startup and probes do not depend on this Job.
+Existing releases never run it as an upgrade hook; they must use the explicit upgrade commands below.
 
 The release notes print the exact deployment command. With the default release:
 
@@ -210,10 +212,44 @@ The release notes print the exact deployment command. With the default release:
 kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed health
 kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed schema check
 kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed backfill
+kubectl exec -n formbricks deployment/formbricks -- formbricks-authzed upgrade check
 ```
 
 Replace the namespace and deployment name if you override them. These commands execute inside the existing
 application pod and do not require exposing PostgreSQL or SpiceDB.
+
+## Upgrade an existing installation to v6
+
+Formbricks v6 has no legacy authorization fallback. Do not deploy it over an installation whose graph has not
+been proven complete. First upgrade to the bridge-compatible v5 release named in the v6 release notes, enable
+durable projection, and take coordinated Formbricks and SpiceDB backups.
+
+Run the release-matched v6 image as the operator container or executable while the bridge release still serves
+traffic:
+
+```bash
+formbricks-authzed upgrade prepare
+formbricks-authzed upgrade check
+```
+
+`prepare` verifies configuration and datastore readiness, applies an empty or already-matching canonical schema,
+drains the outbox, reconciles attributable relationships, and runs a final audit. If the remote schema is
+non-empty and differs, first run `schema check`, review the diff and backup, then pass its exact `remoteDigest`:
+
+```bash
+formbricks-authzed upgrade prepare \
+  --expected-current-digest sha256:<reviewed-remote-digest>
+```
+
+`check` is read-only. It exits `0` only when AuthZed is enabled with `fully_consistent`, authenticated health is
+good, the canonical schema matches, the outbox has no pending or dead-lettered work, no revocation has crossed a
+warning threshold, and a complete dry-run relationship audit is clean. Exit `2` means the release remains
+blocked; exit `1` means configuration or an operation failed. Output contains only aggregate counters and stable
+error codes.
+
+For one-click, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` only after those commands pass.
+For Helm, set `authzed.migrationAcknowledged=true` only in the v6 upgrade values. The chart refuses an upgrade
+without it and refuses `authzed.enabled=false` or consistency weaker than `fully_consistent`.
 
 ## Activate or upgrade SpiceDB
 
@@ -270,6 +306,15 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
     Require a clean result before relying on SpiceDB authorization decisions.
 
   </Step>
+  <Step title="Run the release gate">
+
+    ```bash
+    formbricks-authzed upgrade check
+    ```
+
+    Do not start a direct-authority release unless this exits `0`.
+
+  </Step>
   <Step title="Restart and observe">
     Restart Formbricks after environment changes. Recheck AuthZed health, schema status, projection metrics,
     retry metrics, and SpiceDB logs.
@@ -278,6 +323,17 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
 
 The Docker examples use the `docker compose --profile authzed-ops run --rm authzed-ops` prefix. Kubernetes
 examples use `kubectl exec ... --`. The command names and arguments after those prefixes are identical.
+
+### Roll back a v6 upgrade
+
+Keep the exact bridge-compatible v5 image, Compose or Helm values, application database backup, SpiceDB backup,
+and schema digest until v6 acceptance is complete. Rollback means restoring that bridge image and its matching
+configuration; do not disable AuthZed inside a v6 image. Verify outbox delivery and a clean audit before resuming
+mutations. If either datastore was restored, use coordinated restore points or rebuild SpiceDB from PostgreSQL.
+
+The moving `latest` tag remains on the bridge-compatible v5 release for at least 30 days after v6 stable is
+published. Existing installations must select v6 explicitly during that window; this prevents an unattended
+image pull from bypassing the migration gate.
 
 ## Back up and restore
 

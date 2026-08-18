@@ -63,6 +63,12 @@ describe("AuthZed script entrypoints", () => {
       name: "packaged health",
       script: "scripts/docker/authzed-cli.ts",
     },
+    {
+      args: ["upgrade", "--unknown"],
+      expected: INVALID_REQUEST_RESULT,
+      name: "packaged upgrade",
+      script: "scripts/docker/authzed-cli.ts",
+    },
   ])("$name rejects invalid arguments with one sanitized JSON result", ({ args, expected, script }) => {
     expectSingleJsonFailure(runEntrypoint(script, args), expected);
   });
@@ -89,6 +95,12 @@ describe("AuthZed script entrypoints", () => {
         status: "unhealthy",
       },
       name: "packaged health",
+      script: "scripts/docker/authzed-cli.ts",
+    },
+    {
+      args: ["upgrade", "check"],
+      expected: INVALID_CONFIGURATION_RESULT,
+      name: "packaged upgrade",
       script: "scripts/docker/authzed-cli.ts",
     },
   ])("$name sanitizes runtime-loading failures", ({ args, expected, script }) => {

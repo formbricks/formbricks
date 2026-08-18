@@ -1,9 +1,21 @@
+{{- if not .Values.authzed.enabled -}}
+{{- fail "Formbricks v6 requires AuthZed. Follow the v6 migration guide instead of upgrading with authzed.enabled=false" -}}
+{{- end -}}
+{{- if and .Release.IsUpgrade (not .Values.authzed.migrationAcknowledged) -}}
+{{- fail "AuthZed v6 upgrade preparation is not acknowledged. Complete formbricks-authzed upgrade prepare and upgrade check, then set authzed.migrationAcknowledged=true" -}}
+{{- end -}}
+{{- if ne .Values.authzed.consistency "fully_consistent" -}}
+{{- fail "Formbricks v6 requires authzed.consistency=fully_consistent" -}}
+{{- end -}}
 {{- if .Values.authzed.enabled -}}
 {{- if not (has .Values.authzed.mode (list "selfHosted" "external")) -}}
 {{- fail "authzed.mode must be one of: selfHosted, external" -}}
 {{- end -}}
 {{- if and (eq .Values.authzed.mode "external") (not .Values.authzed.auth.existingSecret) -}}
 {{- fail "authzed.auth.existingSecret is required when authzed.mode=external" -}}
+{{- end -}}
+{{- if and (eq .Values.authzed.mode "external") .Values.authzed.operator.install -}}
+{{- fail "Set authzed.operator.install=false when authzed.mode=external" -}}
 {{- end -}}
 {{- if and (ne .Values.authzed.insecure nil) (not (kindIs "bool" .Values.authzed.insecure)) -}}
 {{- fail "authzed.insecure must be true, false, or null" -}}
