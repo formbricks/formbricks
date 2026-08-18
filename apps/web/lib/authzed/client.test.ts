@@ -77,12 +77,12 @@ describe("AuthZed client facade", () => {
     expect(sdkMocks.deadlineInterceptor).toHaveBeenCalledWith(1_000);
   });
 
-  test("uses the consistency default and preserves the configured token only inside the SDK", () => {
+  test("exposes authoritative consistency and preserves the configured token only inside the SDK", () => {
     envMock.AUTHZED_TOKEN = " token-with-significant-spacing ";
 
     const client = getAuthzedClient();
 
-    expect(client.consistency).toBe("minimize_latency");
+    expect(client.consistency).toBe("fully_consistent");
     expect(client.systemKey).toBe("formbricks");
     expect(sdkMocks.newClient).toHaveBeenCalledWith(
       " token-with-significant-spacing ",
@@ -94,8 +94,9 @@ describe("AuthZed client facade", () => {
     expect(client).not.toHaveProperty("token");
   });
 
-  test("exposes the configured consistency through the Formbricks facade", () => {
-    envMock.AUTHZED_CONSISTENCY = "fully_consistent";
+  test("does not let migration consistency weaken authoritative checks", () => {
+    envMock.AUTHZED_CONSISTENCY = "minimize_latency";
+    envMock.AUTHZED_MINIMUM_SNAPSHOT = "historical-shadow-floor";
 
     expect(getAuthzedClient().consistency).toBe("fully_consistent");
   });
@@ -183,7 +184,7 @@ describe("AuthZed client facade", () => {
     expect(retryMocks.execute).toHaveBeenCalledWith("read_schema", expect.any(Function));
   });
 
-  test("checks permission with minimize-latency consistency and returns only the decision", async () => {
+  test("checks permission with fully-consistent authority and returns only the decision", async () => {
     sdkMocks.checkPermission.mockResolvedValue({
       checkedAt: { token: "private-revision" },
       permissionship: v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION,
@@ -198,7 +199,7 @@ describe("AuthZed client facade", () => {
     ).resolves.toEqual({ allowed: true });
 
     expect(sdkMocks.checkPermission).toHaveBeenCalledWith({
-      consistency: { requirement: { minimizeLatency: true, oneofKind: "minimizeLatency" } },
+      consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
       context: undefined,
       permission: "read",
       resource: { objectId: "workspace-1", objectType: "workspace" },
@@ -238,7 +239,7 @@ describe("AuthZed client facade", () => {
     ).resolves.toEqual({ resourceIds: ["workspace-1", "workspace-2"] });
 
     expect(sdkMocks.lookupResources).toHaveBeenCalledWith({
-      consistency: { requirement: { minimizeLatency: true, oneofKind: "minimizeLatency" } },
+      consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
       context: undefined,
       optionalCursor: undefined,
       optionalLimit: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
@@ -376,7 +377,7 @@ describe("AuthZed client facade", () => {
     expect(sdkMocks.lookupResources).not.toHaveBeenCalled();
   });
 
-  test("uses the configured minimum snapshot as an at-least-as-fresh floor", async () => {
+  test("does not let a historical shadow snapshot weaken an authoritative permission check", async () => {
     envMock.AUTHZED_MINIMUM_SNAPSHOT = "backfill-snapshot";
     sdkMocks.checkPermission.mockResolvedValue({
       permissionship: v1.CheckPermissionResponse_Permissionship.NO_PERMISSION,
@@ -394,8 +395,8 @@ describe("AuthZed client facade", () => {
       expect.objectContaining({
         consistency: {
           requirement: {
-            atLeastAsFresh: { token: "backfill-snapshot" },
-            oneofKind: "atLeastAsFresh",
+            fullyConsistent: true,
+            oneofKind: "fullyConsistent",
           },
         },
       })
@@ -421,37 +422,26 @@ describe("AuthZed client facade", () => {
     );
   });
 
-  test.each([
-    [
-      "minimum snapshot",
-      "minimize_latency" as const,
-      "backfill-snapshot",
-      {
-        requirement: {
-          atLeastAsFresh: { token: "backfill-snapshot" },
-          oneofKind: "atLeastAsFresh",
-        },
-      },
-    ],
-    [
-      "fully consistent",
-      "fully_consistent" as const,
-      undefined,
-      { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
-    ],
-  ])("uses %s consistency for resource lookup", async (_label, consistency, snapshot, expected) => {
-    envMock.AUTHZED_CONSISTENCY = consistency;
-    envMock.AUTHZED_MINIMUM_SNAPSHOT = snapshot;
-    sdkMocks.lookupResources.mockResolvedValue([]);
+  test.each(["minimize_latency", "fully_consistent"] as const)(
+    "uses fully-consistent resource lookup when configured as %s",
+    async (consistency) => {
+      envMock.AUTHZED_CONSISTENCY = consistency;
+      envMock.AUTHZED_MINIMUM_SNAPSHOT = "historical-shadow-floor";
+      sdkMocks.lookupResources.mockResolvedValue([]);
 
-    await getAuthzedClient().lookupResources({
-      permission: "read",
-      resourceType: "workspace",
-      subject: { objectId: "user-1", objectType: "user" },
-    });
+      await getAuthzedClient().lookupResources({
+        permission: "read",
+        resourceType: "workspace",
+        subject: { objectId: "user-1", objectType: "user" },
+      });
 
-    expect(sdkMocks.lookupResources).toHaveBeenCalledWith(expect.objectContaining({ consistency: expected }));
-  });
+      expect(sdkMocks.lookupResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+        })
+      );
+    }
+  );
 
   test.each([
     v1.CheckPermissionResponse_Permissionship.CONDITIONAL_PERMISSION,

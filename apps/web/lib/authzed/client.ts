@@ -295,22 +295,9 @@ const validateResourceLookup = (lookup: TAuthzedResourceLookup): void => {
   }
 };
 
-const getPermissionCheckConsistency = (config: Extract<TAuthzedConfig, { enabled: true }>) => {
-  if (config.consistency === "fully_consistent") {
-    return { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" as const } };
-  }
-
-  if (config.minimumSnapshot) {
-    return {
-      requirement: {
-        atLeastAsFresh: { token: config.minimumSnapshot },
-        oneofKind: "atLeastAsFresh" as const,
-      },
-    };
-  }
-
-  return { requirement: { minimizeLatency: true, oneofKind: "minimizeLatency" as const } };
-};
+const getAuthorizationConsistency = () => ({
+  requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" as const },
+});
 
 const validateRelationshipUpdates = (updates: ReadonlyArray<TAuthzedRelationshipUpdate>): void => {
   if (updates.length === 0 || updates.length > AUTHZED_MAX_RELATIONSHIP_UPDATES) {
@@ -485,7 +472,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
 
       return executeAuthzedOperation("check_permission", async () => {
         const response = await sdkClient.promises.checkPermission({
-          consistency: getPermissionCheckConsistency(config),
+          consistency: getAuthorizationConsistency(),
           context: undefined,
           permission: check.permission,
           resource: {
@@ -518,7 +505,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
         });
       });
     },
-    consistency: config.consistency,
+    consistency: "fully_consistent",
     deleteRelationships: async (filter) => {
       validateRelationshipFilter(filter);
 
@@ -583,7 +570,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
     lookupResources: async (lookup) => {
       validateResourceLookup(lookup);
 
-      const consistency = getPermissionCheckConsistency(config);
+      const consistency = getAuthorizationConsistency();
       const resourceIds = new Set<string>();
       let cursor: string | undefined;
       let resultCount = 0;
