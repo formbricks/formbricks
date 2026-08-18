@@ -15,14 +15,12 @@ import {
   ZResponseFilterCriteria,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
-import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import { getSurveyFileUploadConfigs, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -632,14 +630,17 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const elements = getElementsFromBlocks(survey.blocks);
-
-  const fileUploadElements = new Set(
-    elements.filter((element) => element.type === TSurveyElementTypeEnum.FileUpload).map((q) => q.id)
+  // Match write-time validation: a survey holds file uploads in either blocks or questions, so build
+  // the id set from the union of both rather than one shape (getSurveyFileUploadConfigs is exactly what
+  // validateClientFileUploads uses). Keying off a single shape silently skips deletes for the other.
+  const fileUploadElementIds = new Set(
+    getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
+      (config) => config.id
+    )
   );
 
   const fileUrls = Object.entries(response.data)
-    .filter(([elementId]) => fileUploadElements.has(elementId))
+    .filter(([elementId]) => fileUploadElementIds.has(elementId))
     .flatMap(([, elementResponse]) => elementResponse as string[]);
 
   await deleteResponseFileUrls(fileUrls, survey.workspaceId);

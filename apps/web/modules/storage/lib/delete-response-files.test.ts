@@ -127,4 +127,14 @@ describe("deleteResponseFileUrls", () => {
     expect(mockedResolve).toHaveBeenCalledTimes(1);
     expect(mockedDeleteFile).toHaveBeenCalledTimes(2);
   });
+
+  // The URL carries a percent-encoded file name but the object is stored under the decoded name, so the
+  // helper must decode before building the S3 key, or files with spaces/non-ASCII names never delete.
+  test("decodes the percent-encoded file name before deleting", async () => {
+    mockedResolve.mockResolvedValue({ id: OWN_WORKSPACE, organizationId: "org-1" });
+
+    await deleteResponseFileUrls([`/storage/${OWN_WORKSPACE}/private/my%20file%20(1).png`], OWN_WORKSPACE);
+
+    expect(mockedDeleteFile).toHaveBeenCalledWith(OWN_WORKSPACE, "private", "my file (1).png", OWN_WORKSPACE);
+  });
 });

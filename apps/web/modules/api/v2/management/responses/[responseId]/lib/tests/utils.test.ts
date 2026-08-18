@@ -2,6 +2,7 @@ import { fileUploadQuestion, openTextQuestion, responseData, workspaceId } from 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { deleteFile } from "@/modules/storage/service";
 import { findAndDeleteUploadedFilesInResponse } from "../utils";
@@ -20,6 +21,9 @@ vi.mock("@/modules/storage/service", () => ({
   deleteFile: vi.fn(),
 }));
 
+// The delete helper takes a survey shape ({ blocks, questions }); most cases here only use questions.
+const questionsSurvey = (questions: unknown[]) => ({ questions, blocks: [] }) as any;
+
 describe("findAndDeleteUploadedFilesInResponse", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,7 +38,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
   test("delete files for file upload questions and return okVoid", async () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       responseData,
-      [fileUploadQuestion],
+      questionsSurvey([fileUploadQuestion]),
       workspaceId
     );
 
@@ -44,8 +48,31 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     expect(result).toEqual(okVoid());
   });
 
+  // File uploads can live in blocks instead of questions; this path used to key off questions only, so
+  // it silently deleted nothing for block-based surveys and leaked their uploads.
+  test("delete files for block-based file-upload elements", async () => {
+    const elementId = "block-file-upload-element";
+    const blockSurvey = {
+      questions: [],
+      blocks: [{ id: "block-1", elements: [{ id: elementId, type: TSurveyElementTypeEnum.FileUpload }] }],
+    } as any;
+    const blockResponseData = {
+      [elementId]: [`https://example.com/storage/${workspaceId}/private/block-file.png`],
+    } as any;
+
+    const result = await findAndDeleteUploadedFilesInResponse(blockResponseData, blockSurvey, workspaceId);
+
+    expect(deleteFile).toHaveBeenCalledTimes(1);
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "block-file.png", workspaceId);
+    expect(result).toEqual(okVoid());
+  });
+
   test("not call deleteFile if no file upload questions match response data", async () => {
-    const result = await findAndDeleteUploadedFilesInResponse(responseData, [openTextQuestion], workspaceId);
+    const result = await findAndDeleteUploadedFilesInResponse(
+      responseData,
+      questionsSurvey([openTextQuestion]),
+      workspaceId
+    );
 
     expect(deleteFile).not.toHaveBeenCalled();
     expect(result).toEqual(okVoid());
@@ -62,9 +89,13 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
 
     const plantedData = {
       [fileUploadQuestion.id]: [`https://example.com/storage/${foreignWorkspaceId}/public/victim.png`],
-    };
+    } as any;
 
-    const result = await findAndDeleteUploadedFilesInResponse(plantedData, [fileUploadQuestion], workspaceId);
+    const result = await findAndDeleteUploadedFilesInResponse(
+      plantedData,
+      questionsSurvey([fileUploadQuestion]),
+      workspaceId
+    );
 
     expect(deleteFile).not.toHaveBeenCalled();
     expect(result).toEqual(okVoid());
@@ -74,13 +105,13 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const invalidFileUrl = "https://example.com/invalid-url";
     const invalidResponseData = {
       [fileUploadQuestion.id]: [invalidFileUrl],
-    };
+    } as any;
 
     const loggerSpy = vi.spyOn(logger, "error");
 
     const result = await findAndDeleteUploadedFilesInResponse(
       invalidResponseData,
-      [fileUploadQuestion],
+      questionsSurvey([fileUploadQuestion]),
       workspaceId
     );
 
@@ -94,7 +125,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
   test("process multiple file URLs", async () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       responseData,
-      [fileUploadQuestion],
+      questionsSurvey([fileUploadQuestion]),
       workspaceId
     );
 

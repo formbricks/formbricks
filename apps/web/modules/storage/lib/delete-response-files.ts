@@ -61,12 +61,18 @@ export const deleteResponseFileUrls = async (
           return;
         }
 
+        // The URL carries the percent-encoded file name, but the object is stored under the decoded
+        // name (upload encodes it into the URL; the download path decodes before hitting S3). Decode
+        // here too, or files with spaces/non-ASCII names miss their key and never get deleted. Decoding
+        // before deleteFile also lets its hasTraversalSegment check run on the decoded segments.
+        const fileName = decodeURIComponent(storageFile.fileName);
+
         // deleteFile returns an error result (it does not throw) on S3 failures, so a discarded result
         // would treat a failed deletion as a success and leave the object behind unlogged.
         const result = await deleteFile(
           storageFile.storageId,
           storageFile.accessType,
-          storageFile.fileName,
+          fileName,
           surveyWorkspaceId
         );
         if (!result.ok) {
