@@ -277,6 +277,10 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --set postgresql.enabled=false \
             --set-string postgresql.externalDatabaseUrl=postgresql://user:password@external-postgresql:5432/formbricks \
+            --set authzed.mode=external \
+            --set authzed.operator.install=false \
+            --set authzed.endpoint=grpc.authzed.com:443 \
+            --set authzed.auth.existingSecret=formbricks-authzed \
             --show-only templates/migration-job.yaml > "$render_dir/external.yaml"
           grep -q 'packages/database/dist/scripts/wait-for-database.js' "$render_dir/external.yaml"
 
