@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { isSafeLinkUrl } from "@formbricks/survey-ui";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
@@ -85,12 +86,18 @@ export function EndingCard({
     (urlString: string) => {
       try {
         const url = replaceRecallInfo(urlString, responseData, variablesData, languageCode);
-        if (url && new URL(url)) {
+        // The scheme has to be constrained, not just parseable: `new URL()` accepts `javascript:`, which
+        // executes on the survey's own origin once it reaches `location.replace()`. Recall values are
+        // substituted into the URL first, so the check has to run on the final string. Draft surveys are
+        // written without schema validation, so a stored link can carry an unsafe scheme.
+        if (url && isSafeLinkUrl(url)) {
           if (onOpenExternalURL) {
             onOpenExternalURL(url);
           } else {
             window.top?.location.replace(url);
           }
+        } else if (url) {
+          console.error("Refusing to redirect to an unsafe URL after recall processing");
         }
       } catch (error) {
         console.error("Invalid URL after recall processing:", error);

@@ -127,7 +127,7 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
     await page.getByRole("button", { name: "Create" }).click();
-    await expect(page.locator("#E2E")).toBeVisible();
+    await expect(page.getByTestId("team-row").filter({ hasText: "E2E" })).toBeVisible();
 
     await page.getByRole("button", { name: "Manage team" }).click();
 

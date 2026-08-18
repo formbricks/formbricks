@@ -1,7 +1,12 @@
 import { resolve } from "node:path";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  test: {
+    coverage: {
+      reporter: ["text", "json", "html", "lcov"],
+    },
+  },
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.ts"),

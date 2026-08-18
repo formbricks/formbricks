@@ -317,7 +317,7 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
       if (globalThis.window.formbricksSurveys) {
         const storedNonce = globalThis.window.__formbricksNonce;
         if (storedNonce) {
-          globalThis.window.formbricksSurveys.setNonce(storedNonce);
+          globalThis.window.formbricksSurveys.setNonce?.(storedNonce);
         }
         resolve(globalThis.window.formbricksSurveys);
         return;

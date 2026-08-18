@@ -60,6 +60,13 @@ export const rateLimitConfigs = {
       allowedPerInterval: 1,
       namespace: "action:generate-example-responses",
     }, // 1 per minute per user — closes the multi-click race and bounds LLM spend
+    integrationMutation: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "action:integration-mutation",
+    }, // 30 per minute per user — one save or delete per UI interaction, so this bounds a readWrite
+    // member churning integration rows (each write hits the provider config and the audit log) without
+    // getting in the way of legitimate mapping edits
   },
 
   storage: {
