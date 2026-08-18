@@ -165,13 +165,13 @@ because Next gives no RSC equivalent of the action-client wrapper.
 ENG-2409 then routed the organization-side gates, which a surface alone could not
 help because they never called `can` at all:
 
-| Gate | Was | Now |
-| --- | --- | --- |
-| `getOrganizationAuth` tenancy check | `if (!membership) throw` | `organization.read` |
-| `redirectBillingRoleFromRestrictedOrgSettings` (5 pages) | `isBilling` | `organization.read_access` |
-| Enterprise settings page | `isMember` | `organization.manage_billing` |
-| Feedback directories page | `isOwner \|\| isManager` | `organization.manage` |
-| API keys page | `role === "owner" \|\| "manager"` | `organization.manage_api_keys` |
+| Gate                                                     | Was                               | Now                            |
+| -------------------------------------------------------- | --------------------------------- | ------------------------------ |
+| `getOrganizationAuth` tenancy check                      | `if (!membership) throw`          | `organization.read`            |
+| `redirectBillingRoleFromRestrictedOrgSettings` (5 pages) | `isBilling`                       | `organization.read_access`     |
+| Enterprise settings page                                 | `isMember`                        | `organization.manage_billing`  |
+| Feedback directories page                                | `isOwner \|\| isManager`          | `organization.manage`          |
+| API keys page                                            | `role === "owner" \|\| "manager"` | `organization.manage_api_keys` |
 
 Two of those deserve their reasoning recorded, because the obvious mapping is
 wrong in both cases:
