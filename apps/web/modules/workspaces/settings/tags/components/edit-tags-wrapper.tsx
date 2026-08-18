@@ -88,6 +88,9 @@ export const EditTagsWrapper = ({ workspaceId, isReadOnly }: Readonly<EditTagsWr
       columns={getTagColumns({ t, workspaceId, tags, isReadOnly })}
       rows={tags}
       getRowId={(tag) => tag.id}
+      // Keyed by the id the API returned, so `settings-tags.spec.ts` can address a row without matching
+      // on the name — the one thing a rename changes.
+      getRowProps={(tag) => ({ "data-testid": `tag-row-${tag.id}` })}
       isLoading={isPending}
       emptyMessage={t("workspace.tags.no_tag_found")}
       aria-label={t("common.tags")}
