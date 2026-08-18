@@ -8,6 +8,7 @@ import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { getBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
@@ -149,7 +150,16 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
   level: "warn",
   disableColors: true,
   log: (level, message, ...args) => {
-    const contextLogger = logger.withContext({ source: "better-auth" });
+    // Endpoint label for the request being served, or undefined outside the HTTP handler (instance
+    // construction, a server-side `auth.api.*` call). Already reduced to a safe label — never a raw
+    // path, which on `/reset-password/:token` would be a live credential (better-auth-path-label.ts).
+    const request = getBetterAuthRequestContext();
+    const contextLogger = logger.withContext({
+      source: "better-auth",
+      // Self-hosters have no Sentry, so the label has to reach the application log too — otherwise
+      // their copy of this fault stays as untriageable as FORMBRICKS-183 was.
+      ...(request && { authPath: request.path, authMethod: request.method }),
+    });
     const safeMessage = redactEmailsInLogMessage(message);
     if (level === "error") {
       contextLogger.error(safeMessage);
@@ -159,7 +169,17 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
         // Skip handled rejections: a bare string code (no Error) or a client-facing APIError. Capture
         // only genuine internal faults so Sentry stays actionable (see the reason-split above).
         if (cause && !isAPIError(cause)) {
-          Sentry.captureException(cause);
+          // ENG-2259: Better Auth's router logs a non-APIError as `(e.name, e)` and discards the
+          // endpoint (`better-auth/dist/api/index.mjs:210`), so a bare capture arrives with no
+          // transaction, URL or route — which is why FORMBRICKS-183 sat at ~242 events untriageable.
+          // Tags don't affect grouping, so the issue stays one issue with `auth.path` as a facet.
+          Sentry.captureException(cause, {
+            tags: {
+              component: "better-auth",
+              ...(request && { "auth.path": request.path, "auth.method": request.method }),
+            },
+            extra: { betterAuthMessage: safeMessage },
+          });
         }
       }
     } else if (level === "warn") {

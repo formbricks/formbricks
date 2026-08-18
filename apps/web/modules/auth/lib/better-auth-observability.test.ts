@@ -13,6 +13,7 @@ import {
   redactEmailsInLogMessage,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
+import { runWithBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
@@ -344,7 +345,12 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
 
     log("error", "Better auth was unable to query your database.\nError: ", dbError);
 
-    expect(Sentry.captureException).toHaveBeenCalledWith(dbError);
+    // Outside the HTTP handler there is no request context, so the endpoint tags are absent — the
+    // capture still happens, which is what keeps `auth.api.*` faults reportable (ENG-2259).
+    expect(Sentry.captureException).toHaveBeenCalledWith(dbError, {
+      tags: { component: "better-auth" },
+      extra: { betterAuthMessage: "Better auth was unable to query your database.\nError: " },
+    });
   });
 
   test("captures the deadlock DriverAdapterError so the ENG-2038 signal stays visible", () => {
@@ -353,7 +359,10 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
 
     log("error", deadlock);
 
-    expect(Sentry.captureException).toHaveBeenCalledWith(deadlock);
+    expect(Sentry.captureException).toHaveBeenCalledWith(deadlock, {
+      tags: { component: "better-auth" },
+      extra: { betterAuthMessage: deadlock },
+    });
   });
 
   test("warn-level logs are never captured", () => {
@@ -368,5 +377,66 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
 
     expect(Sentry.captureException).not.toHaveBeenCalled();
     expect(contextLoggerMock.info).toHaveBeenCalledWith("some info");
+  });
+});
+
+// ENG-2259: Better Auth's router logs a non-APIError as `(e.name, e)` and drops the endpoint, so the
+// capture arrived with no transaction, URL or route and FORMBRICKS-183 could not be triaged at all.
+// The request context supplies the endpoint; these cases pin that it reaches Sentry AND the local log,
+// and that its absence degrades rather than breaking the capture.
+describe("betterAuthLogger (request-path tagging, ENG-2259)", () => {
+  const log = betterAuthLogger.log!;
+  const fault = () => new TypeError("Cannot read properties of null (reading 'id')");
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("tags the capture with the endpoint label and method", () => {
+    const cause = fault();
+
+    runWithBetterAuthRequestContext({ path: "/oauth2/userinfo", method: "GET" }, () => {
+      log("error", "TypeError", cause);
+    });
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(cause, {
+      tags: { component: "better-auth", "auth.path": "/oauth2/userinfo", "auth.method": "GET" },
+      extra: { betterAuthMessage: "TypeError" },
+    });
+  });
+
+  test("puts the endpoint in the local log context too, for self-hosters with no Sentry", () => {
+    runWithBetterAuthRequestContext({ path: "/sign-in/email", method: "POST" }, () => {
+      log("error", "TypeError", fault());
+    });
+
+    expect(logger.withContext).toHaveBeenCalledWith({
+      source: "better-auth",
+      authPath: "/sign-in/email",
+      authMethod: "POST",
+    });
+  });
+
+  test("still captures, untagged, when there is no request context", () => {
+    const cause = fault();
+
+    log("error", "TypeError", cause);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(cause, {
+      tags: { component: "better-auth" },
+      extra: { betterAuthMessage: "TypeError" },
+    });
+    // An untagged capture is itself diagnostic: it means the throw did not come through auth.handler.
+    const [, captureContext] = vi.mocked(Sentry.captureException).mock.calls[0];
+    expect(captureContext).not.toHaveProperty("tags.auth.path");
+    expect(logger.withContext).toHaveBeenCalledWith({ source: "better-auth" });
+  });
+
+  test("does not tag a handled APIError into Sentry — the ENG-2037 gate still wins", () => {
+    runWithBetterAuthRequestContext({ path: "/sign-in/email", method: "POST" }, () => {
+      log("error", "Invalid email or password", new APIError("UNAUTHORIZED", { message: "nope" }));
+    });
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 });
