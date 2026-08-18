@@ -85,6 +85,11 @@ but for self-hosted instances it needs no manual database step. Every schema cha
 and the required backfills (account identity, existing OAuth clients, refresh tokens, consents) run
 automatically on startup.
 
+The migration also adds two nullable columns, `alg` and `crv`, to the `jwks` table that holds your
+instance's JWT signing keys. Keys created before the upgrade keep working untouched — Better Auth reads a
+null `alg` as the default algorithm — so there is nothing to backfill, but the columns must exist before
+the new version mints its next key.
+
 #### SSO Callback Path Reverts
 
 v5.2 moved every SSO callback to `/api/auth/oauth2/callback/{providerId}`. Better Auth 1.7 rebuilds generic
