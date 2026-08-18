@@ -572,7 +572,9 @@ describe("recall utility functions", () => {
         mergeReservedValues(reserved, { country: "" })
       );
 
-      expect(result).not.toContain("DE");
+      // Asserted exactly, not as "does not contain DE": that weaker form also passes on an empty
+      // string or an unrendered raw token, neither of which would prove the declared field won.
+      expect(result).toBe("You are in your-country");
     });
   });
 

@@ -1056,17 +1056,55 @@ export const getMatchValueProps = (
     // Without this branch a reserved condition falls through to `{ show: false }` and renders with no
     // right-hand side at all — an operator the author can never complete.
     const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
+    const dataType = entry?.dataType ?? "string";
     const inputType: HTMLInputTypeAttribute =
-      entry?.dataType === "number" ? "number" : entry?.dataType === "date" ? "date" : "text";
+      dataType === "number" ? "number" : dataType === "date" ? "date" : "text";
 
-    const elementOptions = elements.map((element) => ({
+    /*
+     * Only operands that can actually hold this field's dataType. Without the filter a
+     * `reserved.number` condition could be pointed at a text variable, and a `reserved.date` one at a
+     * numeric answer — selectable, and silently never true. The per-type rules mirror the element and
+     * variable branches above. Hidden fields stay in every list because they are untyped strings,
+     * exactly as they do for a number variable.
+     */
+    const comparableElements = elements.filter((element) => {
+      if (dataType === "number") {
+        return (
+          [
+            TSurveyElementTypeEnum.Rating,
+            TSurveyElementTypeEnum.NPS,
+            TSurveyElementTypeEnum.CSAT,
+            TSurveyElementTypeEnum.CES,
+          ].includes(element.type) ||
+          (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
+        );
+      }
+      if (dataType === "date") return element.type === TSurveyElementTypeEnum.Date;
+      // No element type answers with a boolean, so a boolean reserved field has no comparable answer.
+      if (dataType === "boolean") return false;
+
+      const allowedTextTypes = [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.MultipleChoiceSingle];
+      if (["equals", "doesNotEqual"].includes(condition.operator)) {
+        allowedTextTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
+      }
+      return allowedTextTypes.includes(element.type);
+    });
+
+    // Variables are only ever text or number, so date and boolean reserved fields have none to offer.
+    const comparableVariables = variables.filter((variable) => {
+      if (dataType === "number") return variable.type === "number";
+      if (dataType === "string") return variable.type === "text";
+      return false;
+    });
+
+    const elementOptions = comparableElements.map((element) => ({
       icon: getElementIconMapping(t)[element.type],
       label: getElementHeadline(localSurvey, element, "default", t),
       value: element.id,
       meta: { type: "element" },
     }));
 
-    const variableOptions = variables.map((variable) => ({
+    const variableOptions = comparableVariables.map((variable) => ({
       icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
       label: variable.name,
       value: variable.id,
@@ -1080,10 +1118,12 @@ export const getMatchValueProps = (
       meta: { type: "hiddenField" },
     }));
 
-    // Other reserved entries are comparable too (`source` equals `action`, say), minus the one
-    // already on the left — comparing a field to itself is never a useful condition.
+    // Other reserved entries of the SAME dataType are comparable (`source` equals `action`, say),
+    // minus the one already on the left — comparing a field to itself is never a useful condition.
     const reservedOptions = getPickerReservedEntries(localSurvey)
-      .filter((candidate) => candidate.name !== condition.leftOperand.value)
+      .filter(
+        (candidate) => candidate.name !== condition.leftOperand.value && candidate.dataType === dataType
+      )
       .map(toReservedOption);
 
     const groupedOptions: TComboboxGroupedOption[] = [];
