@@ -1,6 +1,6 @@
 "use client";
 
-import { type ElementType, type ReactNode } from "react";
+import { type ElementType, type ReactNode, useMemo } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import { formatXAxisTick } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
@@ -45,9 +45,17 @@ export interface CartesianChartProps {
   horizontal?: boolean;
 }
 
-/** Width (px) reserved for the category labels of a horizontal (flipped) chart. Wide enough for a
- * short question label, capped so the bars keep most of the plot. */
-const Y_AXIS_CATEGORY_WIDTH = 160;
+/** Ceiling (px) on the gutter reserved for the category labels of a horizontal (flipped) chart:
+ * wide enough for a short question label, capped so the bars keep most of the plot. The gutter is
+ * sized to the labels actually present (see `getCategoryAxisWidth`) rather than always claiming the
+ * ceiling — numeric categories like "3" or "10" would otherwise leave most of it empty. */
+const Y_AXIS_CATEGORY_MAX_WIDTH = 160;
+/** Floor (px), so a one-character label still has a readable gutter and a little breathing room. */
+const Y_AXIS_CATEGORY_MIN_WIDTH = 28;
+/** Approximate advance width (px) of one character at `text-xs`. Only used to pick the gutter
+ * width, and it errs wide: over-estimating leaves a little slack, under-estimating would wrap a
+ * label that had room to fit on one line. */
+const Y_AXIS_CHAR_WIDTH = 6.5;
 
 /** Upper bound (px) on a single x-axis label before wrapping. The per-category band clamp below
  * already stops neighbours colliding, so this is only a ceiling for charts with lots of room (few
@@ -162,6 +170,7 @@ function WrappingYAxisTick({
   y,
   payload,
   formatter,
+  axisWidth,
   height,
   visibleTicksCount,
 }: Readonly<{
@@ -169,11 +178,13 @@ function WrappingYAxisTick({
   y?: number;
   payload?: { value?: unknown };
   formatter: (value: unknown) => string;
+  /** Gutter the axis reserved, so the label box matches it instead of a fixed maximum. */
+  axisWidth: number;
   height?: number;
   visibleTicksCount?: number;
 }>) {
   const label = formatter(payload?.value);
-  const boxWidth = Y_AXIS_CATEGORY_WIDTH - X_AXIS_TICK_GAP;
+  const boxWidth = Math.max(1, axisWidth - X_AXIS_TICK_GAP);
 
   const band = height && visibleTicksCount ? height / visibleTicksCount : X_AXIS_LABEL_BOX_HEIGHT;
   const boxHeight = Math.max(
@@ -222,6 +233,18 @@ export function CartesianChart({
 }: Readonly<CartesianChartProps>) {
   const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
   const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
+  // Reserve only as much of the plot as the longest category label needs. A flat maximum reads as a
+  // broken layout on short labels: three numeric categories left ~150px of empty gutter before the
+  // bars started. Long labels still cap at the ceiling and wrap, as before.
+  const categoryAxisWidth = useMemo(() => {
+    if (!horizontal || !hasCategoryAxis) return 0;
+    const longestLabel = data.reduce((longest, row) => {
+      const label = tickFormatter(row[xAxisKey]);
+      return Math.max(longest, label.length);
+    }, 0);
+    const needed = Math.ceil(longestLabel * Y_AXIS_CHAR_WIDTH) + X_AXIS_TICK_GAP * 2;
+    return Math.min(Y_AXIS_CATEGORY_MAX_WIDTH, Math.max(Y_AXIS_CATEGORY_MIN_WIDTH, needed));
+  }, [horizontal, hasCategoryAxis, data, xAxisKey, tickFormatter]);
 
   return (
     <div className="h-full min-h-64 w-full">
@@ -269,9 +292,15 @@ export function CartesianChart({
               dataKey={xAxisKey}
               tickLine={false}
               axisLine={false}
-              width={hasCategoryAxis ? Y_AXIS_CATEGORY_WIDTH : 0}
+              width={categoryAxisWidth}
               interval={0}
-              tick={hasCategoryAxis ? <WrappingYAxisTick formatter={tickFormatter} /> : false}
+              tick={
+                hasCategoryAxis ? (
+                  <WrappingYAxisTick formatter={tickFormatter} axisWidth={categoryAxisWidth} />
+                ) : (
+                  false
+                )
+              }
             />
           ) : (
             <YAxis
