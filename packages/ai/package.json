@@ -49,8 +49,8 @@
     "ai": "6.0.177"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.6",
     "rimraf": "6.1.3",
     "typescript": "5.9.3",

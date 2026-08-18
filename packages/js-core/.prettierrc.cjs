@@ -1,5 +1,5 @@
 // packages/js-core/.prettierrc.cjs
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS config file; migration ENG-1677
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- CJS config file
 const base = require("../config-prettier/prettier-preset");
 
 module.exports = {

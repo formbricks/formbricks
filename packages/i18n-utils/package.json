@@ -49,8 +49,8 @@
     "object-hash": "3.0.0"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@types/node": "25.4.0",
     "@types/object-hash": "3.0.6",
     "rimraf": "6.1.3",

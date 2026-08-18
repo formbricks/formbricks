@@ -8,12 +8,36 @@ import { base, commonIgnores, unusedVarsConvention } from "./base.mjs";
 
 /*
  * Flat config for React component libraries — the successor of the
- * @vercel/style-guide based `react.js` (ENG-1677).
+ * @vercel/style-guide based `react.js`, with the same type-aware
+ * typescript-eslint baseline as the library tier.
+ *
+ * Exported as a factory: consumers must pass their own `import.meta.dirname`
+ * as `tsconfigRootDir` so type-aware rules resolve against the right tsconfig.
  */
-export const react = [
+export const react = ({ tsconfigRootDir }) => [
   commonIgnores,
+  // Config files (tailwind.config.ts, vite.config.mts, ...) sit outside the package
+  // tsconfigs; ignore them like the library tier does so type-aware linting can't
+  // hard-error on them. Declaration files are generated, not authored.
+  { ignores: ["**/*.config.{js,cjs,mjs,ts,mts}", "**/*.d.{ts,cts,mts}"] },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+  {
+    files: ["**/*.{ts,tsx,mts,cts}"],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir,
+      },
+    },
+    rules: {
+      // from strictTypeChecked (adopted individually, not the whole strict tier)
+      "@typescript-eslint/no-unnecessary-condition": "error",
+    },
+  },
+  // Plain JS files (scripts, .cjs/.mjs configs) live outside the tsconfigs; without
+  // this block the type-aware rules hard-error on them.
+  { files: ["**/*.{js,cjs,mjs}"], ...tseslint.configs.disableTypeChecked },
   unusedVarsConvention,
   reactPlugin.configs.flat.recommended,
   reactPlugin.configs.flat["jsx-runtime"],

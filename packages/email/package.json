@@ -19,7 +19,8 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "vitest run",
-    "clean": "rimraf .turbo node_modules dist"
+    "test:coverage": "vitest run --coverage",
+    "clean": "rimraf .turbo node_modules coverage dist"
   },
   "dependencies": {
     "@formbricks/types": "workspace:*",
@@ -32,9 +33,10 @@
     "tailwind-merge": "3.5.0"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@types/react": "19.2.14",
+    "@vitest/coverage-v8": "4.1.6",
     "typescript": "5.9.3",
     "vitest": "4.1.6"
   }

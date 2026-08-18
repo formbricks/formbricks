@@ -101,6 +101,7 @@ describe("rateLimitConfigs", () => {
         "inviteMember",
         "bulkInviteMembers",
         "generateExampleResponses",
+        "integrationMutation",
         "feedbackSourceMutation",
         "historicalResponseImport",
         "chartCreation",
