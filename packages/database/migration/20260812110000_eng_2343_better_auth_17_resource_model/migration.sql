@@ -108,6 +108,27 @@ ALTER TABLE "oauthClientResource" ADD CONSTRAINT "oauthClientResource_clientId_f
 ALTER TABLE "oauthClientResource" ADD CONSTRAINT "oauthClientResource_resourceId_fkey" FOREIGN KEY ("resourceId") REFERENCES "oauthResource"("identifier") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- ---------------------------------------------------------------------------
+-- JWT signing keyring (Better Auth 1.7)
+-- ---------------------------------------------------------------------------
+
+-- Not cosmetic, despite both being declared `required: false` upstream. `createJwk`
+-- (better-auth/plugins/jwt/utils) always puts `alg` in the row it writes — defaulting to EdDSA — and
+-- adds `crv` whenever it can derive one, which it can for the default EdDSA/Ed25519 keyring we run.
+-- Without these columns Prisma rejects that INSERT as an unknown argument, so the first key mint
+-- fails, and with it JWT signing and the whole MCP OAuth flow. It surfaces only against a real
+-- database on a deployment that has not minted a key yet (a fresh self-host, or after rotation) —
+-- mocked unit tests and the in-memory DCR harness both write nothing here.
+--
+-- Nullable because rows written before 1.7 carry no value, and upstream reads are explicit about it:
+-- getLatestKeyByAlg treats `alg: null` as the configured default alg, so keys already in the table
+-- keep signing without a backfill.
+ALTER TABLE "jwks" ADD COLUMN     "alg" TEXT,
+ADD COLUMN     "crv" TEXT;
+
+COMMENT ON COLUMN "jwks"."alg" IS 'JWS algorithm for this key. NULL on pre-1.7 rows, read as the configured default alg.';
+COMMENT ON COLUMN "jwks"."crv" IS 'Curve for EC/OKP keys (Ed25519 under the default keyring).';
+
+-- ---------------------------------------------------------------------------
 -- Account identity (Better Auth 1.7)
 -- ---------------------------------------------------------------------------
 
