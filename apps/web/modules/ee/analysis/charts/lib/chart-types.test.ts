@@ -18,10 +18,11 @@ describe("chart-types", () => {
   });
 
   describe("getChartTypePrefillQuery", () => {
-    test("pre-populates response count grouped by sentiment", () => {
+    test("pre-populates response count grouped by sentiment, enriched records only", () => {
       expect(getChartTypePrefillQuery("sentiment")).toEqual({
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sentiment"],
+        filters: [{ member: "FeedbackRecords.sentiment", operator: "set" }],
       });
     });
 
@@ -61,6 +62,7 @@ describe("chart-types", () => {
       ).toEqual({
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sentiment"],
+        filters: [{ member: "FeedbackRecords.sentiment", operator: "set" }],
       });
     });
   });

@@ -463,6 +463,7 @@ describe("useChartDialog", () => {
       expect(result.current.prefillQuery).toEqual({
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sentiment"],
+        filters: [{ member: "FeedbackRecords.sentiment", operator: "set" }],
       });
     });
 

@@ -68,6 +68,10 @@ const isSentimentQuery = (query: TChartQuery): boolean =>
  * and so does a config that already reads sentiment — switching type must not throw away a
  * sentiment query the user (or a saved chart) already had.
  *
+ * The prefill also filters sentiment to `set`. Records are enriched asynchronously, so an
+ * unfiltered breakdown spends a section on "Not enriched", which says nothing about how people
+ * feel. Removing the filter brings that section back.
+ *
  * A fresh object every call on purpose — the builder re-initialises on `initialQuery` identity, so
  * re-picking the same type after editing the config restores the prefill.
  */
@@ -77,5 +81,9 @@ export const getChartTypePrefillQuery = (
 ): TChartQuery | undefined => {
   if (type !== "sentiment") return undefined;
   if (currentQuery && isSentimentQuery(currentQuery)) return undefined;
-  return { measures: [RESPONSE_COUNT_MEASURE_ID], dimensions: [SENTIMENT_DIMENSION_ID] };
+  return {
+    measures: [RESPONSE_COUNT_MEASURE_ID],
+    dimensions: [SENTIMENT_DIMENSION_ID],
+    filters: [{ member: SENTIMENT_DIMENSION_ID, operator: "set" }],
+  };
 };
