@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { authClient } from "@/modules/auth/lib/auth-client";
@@ -14,26 +14,35 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
   const { t } = useTranslation();
   const [status, setStatus] = useState<"success" | "error" | "loading">("loading");
 
+  // The token this component has already sent for verification. Consuming a token changes the email,
+  // which re-keys its fingerprint and makes the token single-use — so a second call for the same token
+  // is always rejected. React StrictMode double-invokes effects in dev, and without this guard the
+  // rejected second call overwrites the first call's success: the email really does change, but the page
+  // reports failure. The action was idempotent before the binding landed, which is why this is new.
+  const submittedTokenRef = useRef<string | null>(null);
+
   useEffect(() => {
-    const validateToken = async () => {
-      if (typeof token === "string" && token.trim() !== "") {
-        const result = await verifyEmailChangeAction({ token });
-
-        if (!result?.data) {
-          setStatus("error");
-        } else {
-          setStatus("success");
-        }
-      } else {
-        setStatus("error");
-      }
-    };
-
-    if (token) {
-      validateToken();
-    } else {
+    if (typeof token !== "string" || token.trim() === "") {
       setStatus("error");
+      return;
     }
+
+    if (submittedTokenRef.current === token) {
+      return;
+    }
+    submittedTokenRef.current = token;
+
+    verifyEmailChangeAction({ token })
+      .then((result) => {
+        setStatus(result?.data ? "success" : "error");
+      })
+      .catch((error) => {
+        logger.error(
+          error instanceof Error ? error : new Error(String(error)),
+          "Email-change verification failed"
+        );
+        setStatus("error");
+      });
   }, [token]);
 
   useEffect(() => {

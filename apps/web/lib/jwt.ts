@@ -2,6 +2,7 @@ import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 import { createHmac } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { constantTimeEqual, symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { TGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "@/modules/gateway-auth/lib/service";
@@ -200,15 +201,28 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
     throw new Error("ENCRYPTION_KEY is not set");
   }
 
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as {
+  // Every rejection below is an InvalidInputError, i.e. an *expected* failure: a stale or malformed
+  // link is routine here, and this flow now produces two common rejection classes it did not before —
+  // every link still in flight when the binding shipped, and every second click of a consumed link.
+  // Plain Errors would send each of those through handleServerError's Sentry capture. State that should
+  // be impossible (unset secrets, a user with no credential row) stays a plain Error so it still pages.
+  let payload: {
     id: string;
     email: string;
     purpose?: string;
     fingerprint?: string;
   };
 
+  try {
+    payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as typeof payload;
+  } catch {
+    // jsonwebtoken raises plain JsonWebTokenError / TokenExpiredError for a bad signature, a malformed
+    // token, or an expired one — all of them ordinary here.
+    throw new InvalidInputError("Email change token is invalid or expired");
+  }
+
   if (!payload?.id || !payload?.email) {
-    throw new Error("Token is invalid or missing required fields");
+    throw new InvalidInputError("Token is invalid or missing required fields");
   }
 
   // Every token in this file is signed with the same NEXTAUTH_SECRET, so require the claims that say
@@ -217,7 +231,7 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   // this check exists to reject. Links already in flight when this shipped stop working; re-requesting
   // the change issues a bound one.
   if (payload.purpose !== EMAIL_CHANGE_TOKEN_PURPOSE || !payload.fingerprint) {
-    throw new Error("Token is invalid or missing required fields");
+    throw new InvalidInputError("Token is invalid or missing required fields");
   }
 
   // Decrypt both fields with fallback
@@ -227,7 +241,7 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   const currentFingerprint = await getEmailChangeCredentialFingerprint(decryptedId);
 
   if (!constantTimeEqual(payload.fingerprint, currentFingerprint, "hex")) {
-    throw new Error("Email change token is no longer valid");
+    throw new InvalidInputError("Email change token is no longer valid");
   }
 
   return {

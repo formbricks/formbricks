@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { isExpectedError } from "@formbricks/types/errors";
 import * as crypto from "@/lib/crypto";
 import {
   createEmailChangeToken,
@@ -783,6 +784,56 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         await expect(verifyEmailChangeToken(wrongPurposeToken)).rejects.toThrow(
           "Token is invalid or missing required fields"
         );
+      });
+    });
+
+    // A stale link is routine — every link in flight when the binding shipped, and every second click
+    // of a consumed one — so rejections must classify as expected failures. Otherwise handleServerError
+    // captures each to Sentry as an unexpected server error. Genuine config faults must still page.
+    describe("error classification", () => {
+      const rejectionOf = async (promise: Promise<unknown>): Promise<Error> =>
+        promise.then(
+          () => {
+            throw new Error("expected the token to be rejected");
+          },
+          (error: Error) => error
+        );
+
+      test("should reject a malformed or expired token as an expected error", async () => {
+        const expiredToken = jwt.sign(
+          {
+            id: `encrypted_${mockUser.id}`,
+            email: "encrypted_new@example.com",
+            purpose: "email_change",
+            fingerprint: "ab".repeat(32),
+          },
+          TEST_NEXTAUTH_SECRET,
+          { expiresIn: -1 }
+        );
+
+        expect(isExpectedError(await rejectionOf(verifyEmailChangeToken(expiredToken)))).toBe(true);
+        expect(isExpectedError(await rejectionOf(verifyEmailChangeToken("not-a-jwt")))).toBe(true);
+      });
+
+      test("should reject a token whose binding no longer matches as an expected error", async () => {
+        const token = await createEmailChangeToken(mockUser.id, "new@example.com");
+
+        (prisma.user.findUnique as any).mockResolvedValue({
+          ...mockUser,
+          accounts: [{ updatedAt: CREDENTIAL_UPDATED_AT_AFTER_RESET }],
+        });
+
+        expect(isExpectedError(await rejectionOf(verifyEmailChangeToken(token)))).toBe(true);
+      });
+
+      test("should keep a missing signing secret an unexpected error", async () => {
+        const constants = await import("@/lib/constants");
+        const originalSecret = (constants as any).NEXTAUTH_SECRET;
+        (constants as any).NEXTAUTH_SECRET = undefined;
+
+        expect(isExpectedError(await rejectionOf(verifyEmailChangeToken("any-token")))).toBe(false);
+
+        (constants as any).NEXTAUTH_SECRET = originalSecret;
       });
     });
   });
