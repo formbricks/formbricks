@@ -16,6 +16,14 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 - `pnpm test:e2e` — launch the Playwright browser regression suite.
 - `pnpm db:migrate:dev` — apply Prisma migrations against the dev database.
 
+Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
+Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
+`test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
+`config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
+to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
+`apps/storybook` has no unit tests by policy (UI is covered by Playwright). Keep new packages on this
+matrix or document the exception here.
+
 ### Survey Packages Build & Cache
 
 The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:

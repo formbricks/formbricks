@@ -63,6 +63,7 @@
     "lint:fix": "eslint ./src --fix",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
@@ -85,6 +86,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@types/pg": "8.16.0",
+    "@vitest/coverage-v8": "4.1.6",
     "dotenv": "17.3.1",
     "dotenv-cli": "11.0.0",
     "glob": "13.0.6",
