@@ -19,14 +19,39 @@ import { createSurveyFromScratch, fillRichTextEditor } from "./utils/helper";
  *    proves nothing about the running survey. This drives the real link survey.
  */
 
+const QUESTION_HEADLINE = "What would you like to know?";
+
 const editorPanel = (page: Page): Locator => page.getByRole("main");
 
 /** The recall dropdown the `@` trigger opens inside a rich-text editor. */
 const recallDropdown = (page: Page): Locator => page.locator("[data-recall-dropdown]");
 
 /**
+ * Expands the first question's card if it is collapsed.
+ *
+ * The editor activates the first element of the first block on mount, so the card is already open
+ * on arrival — clicking its headline would COLLAPSE it and take the rich-text editor with it. Open
+ * it only when the editor is not already there, the same idempotent shape `createSurveyFromScratch`
+ * and the embedded-fields spec use. The heading is matched by role because the headline text also
+ * appears inside the editor's own content, which is what made a plain text match ambiguous.
+ */
+const openQuestionCard = async (page: Page): Promise<void> => {
+  const questionLabel = editorPanel(page).locator('label:has-text("Question*")');
+
+  await expect(async () => {
+    if (!(await questionLabel.isVisible().catch(() => false))) {
+      await editorPanel(page).getByRole("heading", { name: QUESTION_HEADLINE }).click();
+    }
+    await expect(questionLabel).toBeVisible({ timeout: 5000 });
+  }).toPass({ timeout: 30000 });
+};
+
+/**
  * Types `@` into a rich-text editor to open the recall picker. The editor commits the trigger
  * character before the dropdown mounts, so the dropdown is awaited rather than assumed.
+ *
+ * The caret is moved to the end first: a click lands it wherever the pointer happened to fall, which
+ * on non-empty content splices the recall token into the middle of a word.
  */
 const openRecallPicker = async (page: Page, labelText: string): Promise<void> => {
   const label = editorPanel(page).locator(`label:has-text("${labelText}")`);
@@ -34,6 +59,7 @@ const openRecallPicker = async (page: Page, labelText: string): Promise<void> =>
   const editable = container.locator('[contenteditable="true"]').first();
 
   await editable.click();
+  await editable.press("End");
   await editable.pressSequentially("@");
   await expect(recallDropdown(page)).toBeVisible({ timeout: 15000 });
 };
@@ -51,7 +77,7 @@ test.describe("Reserved fields in recall and logic", () => {
 
     await createSurveyFromScratch(page);
 
-    await editorPanel(page).getByText("What would you like to know?").first().click();
+    await openQuestionCard(page);
     await openRecallPicker(page, "Question*");
 
     const dropdown = recallDropdown(page);
@@ -85,11 +111,23 @@ test.describe("Reserved fields in recall and logic", () => {
     await createSurveyFromScratch(page);
 
     await test.step("recall the url into the headline", async () => {
-      await editorPanel(page).getByText("What would you like to know?").first().click();
+      await openQuestionCard(page);
+      // Appends to the headline rather than replacing it: `fillRichTextEditor` clears with `Meta+A`,
+      // which selects nothing on Linux/Chromium where CI runs. What matters here is that the recall
+      // token that follows resolves, not what precedes it.
       await fillRichTextEditor(page, "Question*", "You came from ");
       await openRecallPicker(page, "Question*");
       await recallDropdown(page).getByText("Url", { exact: true }).click();
       await expect(recallDropdown(page)).toBeHidden();
+
+      // Picking a recall item opens the fallback popover, and its Save button stays disabled until
+      // a fallback is entered. Skipping it leaves the survey with an empty fallback, which the
+      // editor refuses to publish ("Fallback missing") — so the survey would never go live.
+      const fallbackInput = page.getByPlaceholder("Enter fallback value");
+      await expect(fallbackInput).toBeVisible();
+      await fallbackInput.fill("somewhere");
+      await page.getByRole("button", { name: "Save", exact: true }).click();
+      await expect(fallbackInput).toBeHidden();
     });
 
     const surveyUrl = await test.step("publish as a link survey", async () => {
@@ -117,7 +155,10 @@ test.describe("Reserved fields in recall and logic", () => {
 
       // `url` is the page the survey runs on, so the headline must echo the link just opened —
       // and must not still contain the raw storage token or fall through to its fallback text.
-      const headline = page.getByText(/You came from/);
+      // The resolved value renders as a text node beside the typed copy, so the assertions sit on
+      // the paragraph holding the whole headline rather than on the inner element a text matcher
+      // would return, which carries only the typed half.
+      const headline = editorPanel(page).locator("p").filter({ hasText: "You came from" }).first();
       await expect(headline).toBeVisible({ timeout: 30000 });
       await expect(headline).toContainText(surveyUrl.split("?")[0]);
       await expect(headline).not.toContainText("#recall:");
