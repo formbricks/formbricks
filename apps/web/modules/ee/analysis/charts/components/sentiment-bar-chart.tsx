@@ -130,6 +130,23 @@ export function SentimentBarChart({
           })}
         </div>
       </TooltipProvider>
+      {/* Every section named, in bar order — the sections too narrow for an inline label are
+          otherwise only identifiable by hovering them. */}
+      <ul className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+        {segments.map((segment) => (
+          <li key={segment.key} className="flex items-center gap-1.5 text-xs">
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: segment.color }}
+              aria-hidden="true"
+            />
+            <span className="text-foreground">{segment.label}</span>
+            <span className="text-muted-foreground tabular-nums">
+              {formatPercent(segment.percent)} ({formatCellValue(segment.value)})
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
