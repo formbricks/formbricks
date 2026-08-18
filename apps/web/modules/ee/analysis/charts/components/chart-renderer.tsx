@@ -6,6 +6,7 @@ import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, Pi
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
+import { SentimentBarChart } from "@/modules/ee/analysis/charts/components/sentiment-bar-chart";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
@@ -491,6 +492,17 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           timeDimKey={timeDimKey}
           xAxisKey={xAxisKey}
           chartConfig={chartConfig}
+          formatDimensionValue={formatDimensionValue}
+        />
+      );
+    case "sentiment":
+      return (
+        <SentimentBarChart
+          sortedData={sortedData}
+          dataKeys={dataKeys}
+          dataKey={dataKey}
+          hasCategoryAxis={hasCategoryAxis}
+          xAxisKey={xAxisKey}
           formatDimensionValue={formatDimensionValue}
         />
       );

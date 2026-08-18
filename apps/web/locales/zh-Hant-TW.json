@@ -1666,6 +1666,7 @@
         "chart_type_line": "折線圖",
         "chart_type_not_supported": "尚不支援圖表類型「{chartType}」",
         "chart_type_pie": "圓餅圖",
+        "chart_type_sentiment": "情緒",
         "chart_updated_successfully": "圖表已成功更新！",
         "configure_description": "修改此視覺化的圖表類型及其他設定。",
         "configure_title": "設定圖表",

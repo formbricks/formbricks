@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TChartQuery } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createChartAction,
@@ -12,6 +13,7 @@ import {
   getChartAction,
   updateChartAction,
 } from "@/modules/ee/analysis/charts/actions";
+import { getChartTypePrefillQuery } from "@/modules/ee/analysis/charts/lib/chart-types";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import type {
@@ -48,6 +50,9 @@ export function useChartDialog({
   const pathname = usePathname();
   const [, startTransition] = useTransition();
   const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
+  // Query a data-specific chart type (e.g. "sentiment") pre-populates the builder with. Cleared as
+  // soon as that query has run, so later edits are the user's own (ENG-1558).
+  const [prefillQuery, setPrefillQuery] = useState<TChartQuery | undefined>();
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [chartName, setChartName] = useState("");
@@ -92,6 +97,7 @@ export function useChartDialog({
       setSavedChartName("");
       lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
+      setPrefillQuery(undefined);
       setCurrentChartId(undefined);
       setSelectedDirectoryId(directories?.[0]?.id ?? null);
       return;
@@ -175,7 +181,10 @@ export function useChartDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, chartId, workspaceId, initialChart?.id]);
 
+  const initialQuery = initialChart && initialChart.id === chartId ? initialChart.query : undefined;
+
   const handleChartGenerated = (data: AnalyticsResponse) => {
+    setPrefillQuery(undefined);
     setChartData(data);
     setSelectedChartType(data.chartType);
     const suggestedName = data.suggestedName?.trim();
@@ -385,6 +394,7 @@ export function useChartDialog({
       setSavedChartName("");
       lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
+      setPrefillQuery(undefined);
       setCurrentChartId(undefined);
       setChartLoadError(null);
       setSelectedDirectoryId(directories?.[0]?.id ?? null);
@@ -395,9 +405,11 @@ export function useChartDialog({
   const handleChartTypeChange = (type: TChartType) => {
     setSelectedChartType(type);
     setChartData((prev) => (prev ? { ...prev, chartType: type } : null));
+    // Data-specific types carry the query that makes them meaningful; shape-only types (and a
+    // config that already reads that data) leave the builder untouched. A fresh object every pick,
+    // so re-picking restores the prefill.
+    setPrefillQuery(getChartTypePrefillQuery(type, chartData?.query ?? initialQuery));
   };
-
-  const initialQuery = initialChart && initialChart.id === chartId ? initialChart.query : undefined;
 
   return {
     chartData,
@@ -406,6 +418,7 @@ export function useChartDialog({
     savedChartName,
     selectedChartType,
     initialQuery,
+    prefillQuery,
     setSelectedChartType,
     currentChartId,
     setCurrentChartId,

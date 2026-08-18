@@ -1666,6 +1666,7 @@
         "chart_type_line": "Линейный график",
         "chart_type_not_supported": "Тип диаграммы \"{chartType}\" пока не поддерживается",
         "chart_type_pie": "Круговая диаграмма",
+        "chart_type_sentiment": "Тональность",
         "chart_updated_successfully": "График успешно обновлён!",
         "configure_description": "Измени тип графика и другие настройки этой визуализации.",
         "configure_title": "Настроить график",

@@ -1666,6 +1666,7 @@
         "chart_type_line": "Gráfico de linhas",
         "chart_type_not_supported": "Tipo de gráfico \"{chartType}\" ainda não é suportado",
         "chart_type_pie": "Gráfico de pizza",
+        "chart_type_sentiment": "Sentimento",
         "chart_updated_successfully": "Gráfico atualizado com sucesso!",
         "configure_description": "Modifique o tipo de gráfico e outras configurações para esta visualização.",
         "configure_title": "Configurar gráfico",

@@ -1666,6 +1666,7 @@
         "chart_type_line": "Vonaldiagram",
         "chart_type_not_supported": "A(z) „{chartType}” diagramtípus még nem támogatott",
         "chart_type_pie": "Tortadiagram",
+        "chart_type_sentiment": "Hangulat",
         "chart_updated_successfully": "A diagram sikeresen frissítve!",
         "configure_description": "A diagramtípus és egyéb beállítások módosítása ehhez a megjelenítéshez.",
         "configure_title": "Diagram beállítása",

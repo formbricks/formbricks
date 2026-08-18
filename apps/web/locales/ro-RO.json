@@ -1666,6 +1666,7 @@
         "chart_type_line": "Grafic de tip linie",
         "chart_type_not_supported": "Tipul de diagramă \"{chartType}\" nu este încă acceptat",
         "chart_type_pie": "Grafic de tip plăcintă",
+        "chart_type_sentiment": "Sentiment",
         "chart_updated_successfully": "Graficul a fost actualizat cu succes!",
         "configure_description": "Modifică tipul graficului și alte setări pentru această vizualizare.",
         "configure_title": "Configurează graficul",

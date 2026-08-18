@@ -1666,6 +1666,7 @@
         "chart_type_line": "Çizgi Grafik",
         "chart_type_not_supported": "\"{chartType}\" grafik türü henüz desteklenmiyor",
         "chart_type_pie": "Pasta Grafik",
+        "chart_type_sentiment": "Duygu Analizi",
         "chart_updated_successfully": "Grafik başarıyla güncellendi!",
         "configure_description": "Bu görselleştirme için grafik türünü ve diğer ayarları değiştir.",
         "configure_title": "Grafiği Yapılandır",

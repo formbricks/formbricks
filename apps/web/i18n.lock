@@ -1603,6 +1603,7 @@ checksums:
     workspace/analysis/charts/chart_type_line: f42dd53238ed4d44def306a61d47d5c4
     workspace/analysis/charts/chart_type_not_supported: c25334de42fd6192ff8355158865a3e8
     workspace/analysis/charts/chart_type_pie: 068a797404233ccf68d07ad63af7b50c
+    workspace/analysis/charts/chart_type_sentiment: 9ba5719c80c0136c2d0644217619aff6
     workspace/analysis/charts/chart_updated_successfully: a2c210523902c726aa1328bbeda0b357
     workspace/analysis/charts/configure_description: 2939321f78e4ffbc57b4259ddaddb09d
     workspace/analysis/charts/configure_title: ab767b11da1d386b98b3f634f79d3abe

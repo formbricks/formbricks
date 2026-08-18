@@ -20,8 +20,14 @@ import {
 
 const MAX_NAME_ATTEMPTS = 5;
 
+const DEFAULT_WIDGET_LAYOUTS: Partial<Record<TChartType, TWidgetLayout>> = {
+  big_number: { x: 0, y: 0, w: 3, h: 2 },
+  // One horizontal bar: needs the width to split into readable sections, but none of the height.
+  sentiment: { x: 0, y: 0, w: 6, h: 2 },
+};
+
 const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout =>
-  chartType === "big_number" ? { x: 0, y: 0, w: 3, h: 2 } : { x: 0, y: 0, w: 4, h: 4 };
+  DEFAULT_WIDGET_LAYOUTS[chartType] ?? { x: 0, y: 0, w: 4, h: 4 };
 
 const selectDashboard = {
   id: true,

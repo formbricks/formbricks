@@ -1666,6 +1666,7 @@
         "chart_type_line": "Linjediagram",
         "chart_type_not_supported": "Diagramtypen \"{chartType}\" stöds inte ännu",
         "chart_type_pie": "Cirkeldiagram",
+        "chart_type_sentiment": "Sentiment",
         "chart_updated_successfully": "Diagram uppdaterat!",
         "configure_description": "Ändra diagramtyp och andra inställningar för den här visualiseringen.",
         "configure_title": "Konfigurera diagram",

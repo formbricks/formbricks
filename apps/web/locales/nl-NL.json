@@ -1666,6 +1666,7 @@
         "chart_type_line": "Lijndiagram",
         "chart_type_not_supported": "Grafiektype \"{chartType}\" wordt nog niet ondersteund",
         "chart_type_pie": "Cirkeldiagram",
+        "chart_type_sentiment": "Sentiment",
         "chart_updated_successfully": "Grafiek succesvol bijgewerkt!",
         "configure_description": "Pas het diagramtype en andere instellingen voor deze visualisatie aan.",
         "configure_title": "Diagram configureren",

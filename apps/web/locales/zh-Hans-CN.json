@@ -1666,6 +1666,7 @@
         "chart_type_line": "折线图",
         "chart_type_not_supported": "暂不支持图表类型 “{chartType}”",
         "chart_type_pie": "饼图",
+        "chart_type_sentiment": "情感",
         "chart_updated_successfully": "图表更新成功！",
         "configure_description": "修改此可视化的图表类型和其他设置。",
         "configure_title": "配置图表",

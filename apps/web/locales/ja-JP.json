@@ -1666,6 +1666,7 @@
         "chart_type_line": "折れ線グラフ",
         "chart_type_not_supported": "チャートタイプ「{chartType}」はまだサポートされていません",
         "chart_type_pie": "円グラフ",
+        "chart_type_sentiment": "センチメント",
         "chart_updated_successfully": "チャートを更新しました!",
         "configure_description": "このビジュアライゼーションのチャートタイプやその他の設定を変更します。",
         "configure_title": "チャートを設定",

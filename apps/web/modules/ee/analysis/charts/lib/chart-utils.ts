@@ -81,7 +81,7 @@ export const resolveChartType = (raw: string): TChartType => {
   return parsed.success ? parsed.data : "bar";
 };
 
-const isNumericValue = (val: TChartDataRow[string]): boolean => {
+const isNumericValue = (val: unknown): boolean => {
   if (val === null || val === undefined || val === "") return false;
   const num = Number(val);
   return !Number.isNaN(num) && Number.isFinite(num);
@@ -138,6 +138,64 @@ export const prepareMeasureSliceData = (
       0
     ),
   }));
+
+/** One section of the single-bar distribution chart (the "sentiment" chart type). */
+export interface TDistributionSegment {
+  /** Stable react key: the dimension value or the measure id the segment came from. */
+  key: string;
+  label: string;
+  value: number;
+  /** Share of the total, 0-1. */
+  percent: number;
+  color: string;
+}
+
+/** Input to {@link buildDistributionSegments}: one candidate section, color optional. */
+export interface TDistributionEntry {
+  key: string;
+  label: string;
+  value: unknown;
+  /** Meaning-bound color (sentiment scale, "not enriched" gray); palette color when absent. */
+  color?: string;
+}
+
+/**
+ * Turn labelled values into the sections of a single 100% bar: coerce to numbers, compute each
+ * section's share, and hand out palette colors to the entries that carry no semantic color (so a
+ * semantic bucket never consumes a categorical hue, as in preparePieData).
+ *
+ * Zero and negative entries are dropped: they would render as a zero-width, unhoverable section.
+ * Entry order is preserved — callers sort first (e.g. into the sentiment scale order) so the bar
+ * reads in the same direction as a sentiment-grouped bar chart. Returns null when nothing is left
+ * to show, i.e. the total is not positive.
+ */
+export function buildDistributionSegments(
+  entries: readonly TDistributionEntry[]
+): { segments: TDistributionSegment[]; total: number } | null {
+  let paletteIndex = 0;
+  const scaled = entries
+    .map((entry) => ({
+      key: entry.key,
+      label: entry.label,
+      value: isNumericValue(entry.value) ? Number(entry.value) : 0,
+      color: entry.color,
+    }))
+    .filter((entry) => entry.value > 0);
+
+  const total = scaled.reduce((sum, entry) => sum + entry.value, 0);
+  if (total <= 0) return null;
+
+  const segments = scaled.map(({ key, label, value, color }) => {
+    let resolvedColor = color;
+    if (!resolvedColor) {
+      resolvedColor = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
+      paletteIndex++;
+    }
+    return { key, label, value, percent: value / total, color: resolvedColor };
+  });
+
+  return { segments, total };
+}
 
 /** Category key for rows produced by {@link pivotMeasuresToCategories}. */
 export const PIVOTED_MEASURE_KEY = "measure";

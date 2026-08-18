@@ -29,6 +29,12 @@ interface AdvancedChartBuilderProps {
   workspaceId: string;
   chartType: TChartType;
   initialQuery?: TChartQuery;
+  /**
+   * Treat `initialQuery` as a config to run rather than one that already ran. Set it for a query
+   * the builder is being pre-populated with (the sentiment chart type, ENG-1558); leave it off for
+   * an AI result or a saved chart, whose data is already on screen and must not be re-fetched.
+   */
+  runInitialQuery?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
   onQueryStateChange?: (state: ChartQueryState) => void;
   feedbackDirectoryId: string | null;
@@ -87,6 +93,7 @@ export function AdvancedChartBuilder({
   workspaceId,
   chartType,
   initialQuery,
+  runInitialQuery = false,
   onChartGenerated,
   onQueryStateChange,
   feedbackDirectoryId,
@@ -121,9 +128,10 @@ export function AdvancedChartBuilder({
   const currentQueryJson = JSON.stringify(currentQuery);
 
   // The last query that was executed (or arrived pre-executed via initialQuery, e.g. from the
-  // AI section or a saved chart). Auto-run only fires when the form drifts away from it.
+  // AI section or a saved chart). Auto-run only fires when the form drifts away from it — so a
+  // prefilled query is left unrecorded, which reads as drift and runs it.
   const lastRunQueryJsonRef = useRef<string | null>(
-    initialQuery ? toComparableQueryJson(initialQuery) : null
+    initialQuery && !runInitialQuery ? toComparableQueryJson(initialQuery) : null
   );
 
   const appliedInitialQueryRef = useRef<TChartQuery | null>(null);
@@ -132,10 +140,12 @@ export function AdvancedChartBuilder({
     if (appliedInitialQueryRef.current === initialQuery) return;
     appliedInitialQueryRef.current = initialQuery;
     const parsed = parseQueryToState(initialQuery);
-    lastRunQueryJsonRef.current = JSON.stringify(buildCubeQuery({ ...initialState, ...parsed }));
+    lastRunQueryJsonRef.current = runInitialQuery
+      ? null
+      : JSON.stringify(buildCubeQuery({ ...initialState, ...parsed }));
     dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
     setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
-  }, [initialQuery]);
+  }, [initialQuery, runInitialQuery]);
 
   // Incomplete configs (no measure yet, half-filled filter row) are skipped silently instead of
   // surfacing validation toasts on every keystroke; the preview keeps its last valid state.

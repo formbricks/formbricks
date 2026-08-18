@@ -1666,6 +1666,7 @@
         "chart_type_line": "Liniendiagramm",
         "chart_type_not_supported": "Diagrammtyp \"{chartType}\" wird noch nicht unterstützt",
         "chart_type_pie": "Kreisdiagramm",
+        "chart_type_sentiment": "Stimmung",
         "chart_updated_successfully": "Diagramm erfolgreich aktualisiert!",
         "configure_description": "Ändere den Diagrammtyp und andere Einstellungen für diese Visualisierung.",
         "configure_title": "Diagramm konfigurieren",

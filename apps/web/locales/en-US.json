@@ -1666,6 +1666,7 @@
         "chart_type_line": "Line Chart",
         "chart_type_not_supported": "Chart type \"{chartType}\" not yet supported",
         "chart_type_pie": "Pie Chart",
+        "chart_type_sentiment": "Sentiment",
         "chart_updated_successfully": "Chart updated successfully!",
         "configure_description": "Modify the chart type and other settings for this visualization.",
         "configure_title": "Configure Chart",

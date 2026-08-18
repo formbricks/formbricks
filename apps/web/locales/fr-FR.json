@@ -1666,6 +1666,7 @@
         "chart_type_line": "Graphique linéaire",
         "chart_type_not_supported": "Le type de graphique \"{chartType}\" n'est pas encore pris en charge",
         "chart_type_pie": "Graphique circulaire",
+        "chart_type_sentiment": "Sentiment",
         "chart_updated_successfully": "Graphique mis à jour avec succès !",
         "configure_description": "Modifiez le type de graphique et d'autres paramètres pour cette visualisation.",
         "configure_title": "Configurer le graphique",
