@@ -542,7 +542,7 @@ describe("Workspace Service", () => {
 
     test("selects the members who can access the workspace: org owner/manager, or a team linked to it", async () => {
       // The filter is the behavior here — it decides who may receive a workspace's response data, so
-      // it is asserted directly. It mirrors `checkAuthorizationUpdated`'s workspace access: an
+      // it is asserted directly. It mirrors the central `workspace.read` permission: an
       // owner/manager reaches every workspace in the org, everyone else only through a linked team
       // (any `WorkspaceTeam` permission, since `read` already grants access). The organization comes
       // from the workspace itself, never from a caller-supplied id.

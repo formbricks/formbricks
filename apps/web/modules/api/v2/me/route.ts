@@ -1,18 +1,25 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
+import { can } from "@/lib/authorization";
+import { getOrganizationAuthorizationActionForAccessType } from "@/lib/authorization/permission-action";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { hasApiKeyOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
     allowOrganizationOnlyApiKey: true,
     handler: async ({ authentication }) => {
-      if (!(await hasApiKeyOrganizationAccess(authentication, OrganizationAccessType.Read))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getOrganizationAuthorizationActionForAccessType(OrganizationAccessType.Read),
+          { type: "organization", id: authentication.organizationId }
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "organizationId", issue: "unauthorized" }],

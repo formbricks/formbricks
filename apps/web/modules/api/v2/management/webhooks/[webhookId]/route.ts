@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -14,7 +16,6 @@ import {
   ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = async (request: NextRequest, props: { params: Promise<{ webhookId: string }> }) =>
   authenticatedApiClient({
@@ -39,7 +40,13 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
         return handleApiError(request, webhook.error as ApiErrorResponseV2);
       }
 
-      if (!(await hasApiKeyWorkspaceAccess(authentication, webhook.data.workspaceId, "GET"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("GET"),
+          { type: "workspace", id: webhook.data.workspaceId }
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "webhook", issue: "unauthorized" }],
@@ -90,7 +97,13 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
         return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!(await hasApiKeyWorkspaceAccess(authentication, webhook.data.workspaceId, "PUT"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("PUT"),
+          { type: "workspace", id: webhook.data.workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {
@@ -162,7 +175,13 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
         return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!(await hasApiKeyWorkspaceAccess(authentication, webhook.data.workspaceId, "DELETE"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("DELETE"),
+          { type: "workspace", id: webhook.data.workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {

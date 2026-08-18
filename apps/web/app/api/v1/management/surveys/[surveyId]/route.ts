@@ -18,9 +18,10 @@ import {
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 
 type TSurveyUpdateBody = Record<string, unknown> & {
@@ -38,7 +39,13 @@ const fetchAndAuthorizeSurvey = async (
   if (!survey) {
     return { error: responses.notFoundResponse("Survey", surveyId) };
   }
-  if (!(await hasApiKeyWorkspaceAccess(authentication, survey.workspaceId, requiredPermission))) {
+  if (
+    !(await can(
+      { type: "apiKey", id: authentication.apiKeyId },
+      getWorkspaceAuthorizationActionForMethod(requiredPermission),
+      { type: "workspace", id: survey.workspaceId }
+    ))
+  ) {
     return { error: responses.unauthorizedResponse() };
   }
 

@@ -9,12 +9,11 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
-import { can } from "@/lib/authorization";
+import { assertCan, can } from "@/lib/authorization";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
@@ -51,17 +50,9 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
       throw new AuthenticationError("User not a member of this organization");
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          data: parsedInput.data,
-          schema: ZInviteUpdateInput,
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
 
     if (!IS_FORMBRICKS_CLOUD && parsedInput.data.role === "billing") {
@@ -100,11 +91,10 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
     }
-    // `organization.manage_access` *is* this decision in the central vocabulary: the legacy
-    // evaluator answers it with `getUserManagementAccess(role, USER_MANAGEMENT_MINIMUM_ROLE)`, and
-    // the SpiceDB evaluator maps the same setting onto the schema (`owner` → write, `manager` →
-    // manage_access, `disabled` → deny). Asking centrally is what puts this role mutation — the
-    // highest-risk one in the product — in front of shadow comparison and enforcement. The check
+    // `organization.manage_access` *is* this decision in the central vocabulary. The SpiceDB
+    // evaluator maps `USER_MANAGEMENT_MINIMUM_ROLE` onto the schema (`owner` → write, `manager` →
+    // manage_access, `disabled` → deny). Asking centrally makes SpiceDB authoritative for this role
+    // mutation — the highest-risk one in the product. The check
     // below it stays `organization.manage`, which is a different and additionally required
     // capability, so both remain.
     const canManageAccess = await can({ type: "user", id: ctx.user.id }, "organization.manage_access", {
@@ -116,17 +106,9 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
       throw new OperationNotAllowedError("User management is not allowed for your role");
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          data: parsedInput.data,
-          schema: ZMembershipUpdateInput,
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     if (!IS_FORMBRICKS_CLOUD && parsedInput.data.role === "billing") {

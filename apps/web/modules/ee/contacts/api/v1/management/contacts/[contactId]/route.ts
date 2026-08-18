@@ -1,8 +1,9 @@
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { deleteContact, getContact } from "./lib/contact";
 
 // Please use the methods provided by the client API to update a person
@@ -18,7 +19,13 @@ const fetchAndAuthorizeContact = async (
     return { error: responses.notFoundResponse("Contact", contactId) };
   }
 
-  if (!(await hasApiKeyWorkspaceAccess(authentication, contact.workspaceId, requiredPermission))) {
+  if (
+    !(await can(
+      { type: "apiKey", id: authentication.apiKeyId },
+      getWorkspaceAuthorizationActionForMethod(requiredPermission),
+      { type: "workspace", id: contact.workspaceId }
+    ))
+  ) {
     return { error: responses.unauthorizedResponse() };
   }
 

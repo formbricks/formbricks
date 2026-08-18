@@ -22,7 +22,6 @@ export const envMock = {
   AUTHZED_CONSISTENCY: undefined as "minimize_latency" | "fully_consistent" | undefined,
   AUTHZED_ENDPOINT: "spicedb:50051" as string | undefined,
   AUTHZED_INSECURE: "true" as "true" | "false" | "1" | "0" | undefined,
-  AUTHZED_MINIMUM_SNAPSHOT: undefined as string | undefined,
   AUTHZED_SYSTEM_KEY: "formbricks" as string | undefined,
   AUTHZED_TOKEN: "private-token" as string | undefined,
 };

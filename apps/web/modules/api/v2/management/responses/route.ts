@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { Response } from "@formbricks/database/prisma";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -12,7 +14,6 @@ import { getResponseForPipeline } from "@/modules/api/v2/management/responses/[r
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
 
@@ -79,7 +80,13 @@ export const POST = async (request: Request) =>
 
       const { workspaceId } = workspaceIdResult.data;
 
-      if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {

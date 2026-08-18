@@ -1,8 +1,9 @@
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -38,7 +39,13 @@ export const resolveBodyIdsV2 = async (
       return err({ type: "forbidden" });
     }
 
-    if (!(await hasApiKeyWorkspaceAccess(authentication, workspace.id, method))) {
+    if (
+      !(await can(
+        { type: "apiKey", id: authentication.apiKeyId },
+        getWorkspaceAuthorizationActionForMethod(method),
+        { type: "workspace", id: workspace.id }
+      ))
+    ) {
       return err({ type: "forbidden" });
     }
 

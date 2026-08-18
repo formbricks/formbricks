@@ -7,14 +7,13 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
-import { can } from "@/lib/authorization";
+import { assertCan, can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { assertRateLimitAvailable, recordRateLimitUsage } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -46,15 +45,9 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
   withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
@@ -71,15 +64,9 @@ export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCr
   withAuditLogging("updated", "invite", async ({ parsedInput, ctx }) => {
     const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
 
     // Get old expiresAt for audit logging before update
@@ -116,15 +103,9 @@ const ZDeleteMembershipAction = z.object({
 
 export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDeleteMembershipAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     if (parsedInput.userId === ctx.user.id) {
@@ -187,15 +168,9 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       throw new ValidationError("Invite does not belong to the organization");
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     const invite = await getInvite(parsedInput.inviteId);
@@ -250,10 +225,8 @@ const validateTeamAdminInvitePermissions = (
  * The capability half of "may this person send this invite", routed through the central interface.
  *
  * Organization owners and managers are decided once at the organization. Team admins reach this
- * action too, and before ENG-1737 their capability was established only by `getTeamsWhereUserIsAdmin`,
- * so a successful team-admin invite produced no central decision at all — no shadow comparison, and
- * legacy-authoritative under enforcement. `team.manage` is that capability (legacy answers it as
- * `teamRole === "admin" || organization owner/manager`), asked once per requested team so the answer
+ * action too, and before ENG-1737 their capability was established only by `getTeamsWhereUserIsAdmin`.
+ * `team.manage` is that capability, asked once per requested team so the answer
  * covers exactly the teams the invite would write to.
  *
  * Distinct ids, checked one at a time, stopping at the first refusal: asking per team makes the
@@ -278,10 +251,9 @@ const assertInviterMayInvite = async ({
   userId: string;
 }>): Promise<void> => {
   if (isOrgOwnerOrManager) {
-    await checkAuthorizationUpdated({
-      userId,
-      organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    await assertCan({ type: "user", id: userId }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
     return;
   }
@@ -436,10 +408,9 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       throw new AuthenticationError("User not a member of this organization");
     }
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [{ type: "organization", roles: ["owner", "manager"] }],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
+      type: "organization",
+      id: organizationId,
     });
 
     // Entitlement gate: bulk invite is a paid feature. Mitigates the invite-spam abuse vector by
@@ -527,15 +498,9 @@ const ZLeaveOrganizationAction = z.object({
 
 export const leaveOrganizationAction = authenticatedActionClient.inputSchema(ZLeaveOrganizationAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "billing", "member"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);

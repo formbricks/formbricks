@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { assertCan } from "@/lib/authorization";
 import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
 import { deleteWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import {
@@ -69,15 +69,9 @@ export const deleteWorkspaceWithConfirmation = async ({
 
   const organizationId = workspace.organizationId;
 
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-    ],
+  await assertCan({ type: "user", id: userId }, "organization.manage", {
+    type: "organization",
+    id: organizationId,
   });
 
   const availableWorkspaces = await getUserWorkspaces(userId, organizationId);

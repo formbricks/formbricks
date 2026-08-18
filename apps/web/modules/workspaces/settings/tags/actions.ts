@@ -2,9 +2,9 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { assertCan } from "@/lib/authorization";
 import { getTag } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromTagId,
   getOrganizationIdFromWorkspaceId,
@@ -20,20 +20,9 @@ const ZDeleteTagAction = z.object({
 export const deleteTagAction = authenticatedActionClient.inputSchema(ZDeleteTagAction).action(
   withAuditLogging("deleted", "tag", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromTagId(parsedInput.tagId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromTagId(parsedInput.tagId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromTagId(parsedInput.tagId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -57,20 +46,9 @@ const ZUpdateTagNameAction = z.object({
 export const updateTagNameAction = authenticatedActionClient.inputSchema(ZUpdateTagNameAction).action(
   withAuditLogging("updated", "tag", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromTagId(parsedInput.tagId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromTagId(parsedInput.tagId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromTagId(parsedInput.tagId),
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -104,20 +82,9 @@ export const mergeTagsAction = authenticatedActionClient.inputSchema(ZMergeTagsA
 
     const workspaceId = newTagWorkspaceId;
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;

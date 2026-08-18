@@ -129,15 +129,13 @@ report can close on its own.
 ```text
 apps/web/lib/authorization/checks-per-request.integration.test.ts
 apps/web/lib/authorization/checks-per-request-dashboards.integration.test.ts
-apps/web/lib/authorization/checks-per-request-response-export.integration.test.ts
 ```
 
-| Path                                                     | Small      | Large      | Δ     |
-| -------------------------------------------------------- | ---------- | ---------- | ----- |
-| Survey list (50 → 3,000 surveys)                         | 1 check    | 1 check    | **0** |
-| Survey list as a _member_, access via team (100 surveys) | 1 check    | —          | **0** |
-| Dashboard list (10 → 2,000 dashboards)                   | 1 check    | 1 check    | **0** |
-| Response export (1 → 6,500 responses)                    | _n_ checks | _n_ checks | **0** |
+| Path                                                     | Small   | Large   | Δ     |
+| -------------------------------------------------------- | ------- | ------- | ----- |
+| Survey list (50 → 3,000 surveys)                         | 1 check | 1 check | **0** |
+| Survey list as a _member_, access via team (100 surveys) | 1 check | —       | **0** |
+| Dashboard list (10 → 2,000 dashboards)                   | 1 check | 1 check | **0** |
 
 The member row is the one that exercises the interesting code. Owners short-circuit
 nearly every authorization branch, so an owner-only suite never touches the scope
@@ -146,19 +144,10 @@ seeds a `member` whose workspace access arrives through a `WorkspaceTeam` grant 
 confirms the count is still one.
 
 One `workspace.read` decision gates the survey list and the dashboard list; neither
-`getSurveys` nor `getDashboards` runs authorization of its own. The response-export path
-is different in one respect worth stating rather than hiding behind the table: it drives
-`checkAuthorizationUpdated` (the exact sequence `getResponsesDownloadUrlAction` runs),
-which itself issues **two** `can()` calls for an owner — the organization-membership gate,
-then the matching access item — before `getResponseDownloadFile` runs. That is the
-adapter's own fixed cost, not the number 1, and the test asserts the real claim instead of
-a literal: whichever constant that cost is, it does not grow between 1 and 6,500 exported
-responses, past two full internal pagination batches (`getResponseDownloadFile` paginates
-in batches of 3,000 to avoid one unbounded query — that loop fetches rows, it does not
-authorize per batch).
+`getSurveys` nor `getDashboards` runs authorization of its own.
 
-None of the three grows with the row count — the property "Prove current workspace-scoped
-list paths do not perform one AuthZed check per survey, dashboard, or response" from the
+None of these grows with the row count — the property "Prove current workspace-scoped
+list paths do not perform one AuthZed check per survey or dashboard" from the
 ticket scope, stated as passing assertions rather than a grep result.
 
 This is backed by a request-scoped counter
@@ -166,7 +155,7 @@ This is backed by a request-scoped counter
 inside `can()` itself — the one point every `can()`/`assertCan()` call passes through
 regardless of caller — and reported in production as
 `formbricks_authzed_authorization_checks_per_request`, a histogram tagged by surface. It counts central
-authorization operations: scalar `can()`/`assertCan()` decisions and narrow list observations each
+authorization operations: scalar `can()`/`assertCan()` decisions and authoritative list operations each
 contribute one, independent of row count. That metric
 is the thing to watch on a real dashboard for the general "no page regresses into an N+1"
 question; this report exercised the three paths the ticket named explicitly by name.

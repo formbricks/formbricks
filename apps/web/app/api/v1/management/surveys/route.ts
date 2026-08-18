@@ -17,9 +17,10 @@ import {
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
@@ -103,7 +104,11 @@ export const POST = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: workspaceId }
+        ))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

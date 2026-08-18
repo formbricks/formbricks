@@ -8,7 +8,8 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 
 const fetchAndAuthorizeActionClass = async (
   authentication: TAuthenticationApiKey,
@@ -22,7 +23,13 @@ const fetchAndAuthorizeActionClass = async (
   }
 
   // Check if API key has permission to access this workspace with appropriate permissions
-  if (!(await hasApiKeyWorkspaceAccess(authentication, actionClass.workspaceId, method))) {
+  if (
+    !(await can(
+      { type: "apiKey", id: authentication.apiKeyId },
+      getWorkspaceAuthorizationActionForMethod(method),
+      { type: "workspace", id: actionClass.workspaceId }
+    ))
+  ) {
     throw new Error("Unauthorized");
   }
 
@@ -113,7 +120,11 @@ export const PUT = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !(await hasApiKeyWorkspaceAccess(authentication, inputValidation.data.workspaceId, "PUT"))
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("PUT"),
+          { type: "workspace", id: inputValidation.data.workspaceId }
+        ))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

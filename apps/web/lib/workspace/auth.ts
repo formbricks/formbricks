@@ -1,34 +1,7 @@
 import "server-only";
 import { ZId } from "@formbricks/types/common";
 import { can } from "@/lib/authorization";
-import type { LegacyWorkspaceAction } from "@/lib/authorization/legacy-workspace-access";
 import { validateInputs } from "../utils/validate";
-
-export type WorkspaceAction = LegacyWorkspaceAction;
-
-const ACTION_PERMISSION = {
-  GET: "workspace.read",
-  POST: "workspace.write",
-  PUT: "workspace.write",
-  PATCH: "workspace.write",
-  DELETE: "workspace.manage",
-} as const satisfies Record<WorkspaceAction, "workspace.read" | "workspace.write" | "workspace.manage">;
-
-/**
- * Compatibility wrapper for action-aware workspace access.
- *
- * @deprecated New authorization-sensitive code must call `can` or `assertCan`
- * with the semantic workspace action directly.
- */
-export const hasUserWorkspaceAccessForAction = async (
-  userId: string,
-  workspaceId: string,
-  action: WorkspaceAction
-): Promise<boolean> => {
-  validateInputs([userId, ZId], [workspaceId, ZId]);
-
-  return can({ type: "user", id: userId }, ACTION_PERMISSION[action], { type: "workspace", id: workspaceId });
-};
 
 /**
  * Authorization for the integration OAuth routes (Notion / Airtable / Slack / Google Sheets).
@@ -44,7 +17,10 @@ export const hasUserWorkspaceAccessForAction = async (
 export const canUserWriteWorkspaceIntegrations = async (
   userId: string,
   workspaceId: string
-): Promise<boolean> => hasUserWorkspaceAccessForAction(userId, workspaceId, "POST");
+): Promise<boolean> => {
+  validateInputs([userId, ZId], [workspaceId, ZId]);
+  return can({ type: "user", id: userId }, "workspace.write", { type: "workspace", id: workspaceId });
+};
 
 /**
  * Read-only counterpart for routes that only surface a connected integration's data. Unlike
@@ -53,7 +29,10 @@ export const canUserWriteWorkspaceIntegrations = async (
 export const canUserReadWorkspaceIntegrations = async (
   userId: string,
   workspaceId: string
-): Promise<boolean> => hasUserWorkspaceAccessForAction(userId, workspaceId, "GET");
+): Promise<boolean> => {
+  validateInputs([userId, ZId], [workspaceId, ZId]);
+  return can({ type: "user", id: userId }, "workspace.read", { type: "workspace", id: workspaceId });
+};
 
 /**
  * Whether a user may land on a workspace URL at all — the navigation/layout gate,
@@ -73,9 +52,8 @@ export const canUserReadWorkspaceIntegrations = async (
  * and is still refused. It is ordered second so the common case costs one check.
  *
  * Membership in the owning organization is asked for first so that this
- * composition does not depend on which evaluator backs `workspace.read`. Today the
- * legacy evaluator opens with the same membership query the deleted helper used, so
- * the check is redundant — but the SpiceDB definition is `reader + reader_team +
+ * composition does not depend on a projected team edge carrying current organization membership.
+ * The SpiceDB definition is `reader + reader_team +
  * write`, where `reader_team` is a projected `team#member` edge that carries no
  * membership requirement of its own. `TeamUser` has no foreign key to `Membership`
  * (it cascades from `Team` and `User` only), so "removed from the organization" and

@@ -3,10 +3,10 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
@@ -25,20 +25,9 @@ export const updateWorkspaceBrandingAction = authenticatedActionClient
     withAuditLogging("updated", "workspace", async ({ ctx, parsedInput }) => {
       const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            workspaceId: parsedInput.workspaceId,
-            minPermission: "manage",
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       if (

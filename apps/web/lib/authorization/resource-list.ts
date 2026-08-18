@@ -3,11 +3,11 @@ import { performance } from "node:perf_hooks";
 import { cache as reactCache } from "react";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
-import { normalizeAuthorizationOperationalError } from "./comparison-helpers";
 import { getAuthorizationSurface, recordAuthorizationCheckIssued } from "./context";
 import type { TAuthorizationAction, TAuthorizationActor } from "./contract";
 import { recordAuthorizationDecision } from "./metrics";
 import { getSpicedbObjectType } from "./object-type";
+import { normalizeAuthorizationOperationalError } from "./operational-error";
 
 type TCurrentListResource = "organization" | "workspace";
 type TCurrentListPermission = "read" | "write";

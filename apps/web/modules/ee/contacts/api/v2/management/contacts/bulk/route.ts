@@ -1,3 +1,5 @@
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -5,7 +7,6 @@ import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-reso
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const PUT = async (request: Request) =>
   authenticatedApiClient({
@@ -47,7 +48,14 @@ export const PUT = async (request: Request) =>
       const { contacts } = parsedInput.body ?? { contacts: [] };
 
       const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
-      if (!perm || !(await hasApiKeyWorkspaceAccess(authentication, perm.workspaceId, "PUT"))) {
+      if (
+        !perm ||
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("PUT"),
+          { type: "workspace", id: perm.workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { can } from "@/lib/authorization";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
-import { hasApiKeyOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 const { mockAuthenticatedApiClient, mockHandleApiError, mockSuccessResponse } = vi.hoisted(() => ({
   mockAuthenticatedApiClient: vi.fn(),
@@ -13,6 +13,7 @@ const { mockAuthenticatedApiClient, mockHandleApiError, mockSuccessResponse } = 
 vi.mock("@formbricks/database", () => ({
   prisma: { workspace: { findMany: vi.fn() } },
 }));
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedWorkspaceIds: vi.fn() }));
 vi.mock("@/modules/api/v2/auth/authenticated-api-client", () => ({
   authenticatedApiClient: mockAuthenticatedApiClient,
@@ -21,9 +22,6 @@ vi.mock("@/modules/api/v2/lib/response", () => ({
   responses: { successResponse: mockSuccessResponse },
 }));
 vi.mock("@/modules/api/v2/lib/utils", () => ({ handleApiError: mockHandleApiError }));
-vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
-  hasApiKeyOrganizationAccess: vi.fn(),
-}));
 
 const authentication = {
   apiKeyId: "api-key-1",
@@ -42,7 +40,7 @@ const request = new Request("http://localhost/api/v2/me");
 describe("GET /api/v2/me", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(hasApiKeyOrganizationAccess).mockResolvedValue(true);
+    vi.mocked(can).mockResolvedValue(true);
     mockAuthenticatedApiClient.mockImplementation(
       async ({ handler }: Parameters<typeof authenticatedApiClient>[0]) =>
         handler({ authentication, request } as never)

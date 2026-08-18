@@ -128,8 +128,8 @@ corresponding SpiceDB `organization` relationship:
 - If the source role changes concurrently, reconciliation reads PostgreSQL
   again and converges for up to three passes.
 
-The current legacy evaluator authorizes every `Membership` row without checking
-`Membership.accepted`. The initial projection deliberately preserves that
+The current authorization contract treats every `Membership` row as active without checking
+`Membership.accepted`. The projection deliberately preserves that
 behavior: accepted and pending membership rows project identically. An
 `Invite` alone is not projected.
 
@@ -350,10 +350,9 @@ its effective rules:
 - archive, entitlement, OAuth-scope, Hub tenant, source ownership, and record-integrity checks remain in
   the application layer and execute in their existing order.
 
-Authenticated feedback-gateway requests currently carry the bounded migration targets
-`feedback_gateway:user` and `feedback_gateway:apiKey`. Public and unauthenticated gateway traffic is never
-authorized as an authenticated actor. These targets are migration-only telemetry and are removed with the
-shadow/cohort selector before direct authority; the final evaluator does not depend on a request surface.
+Authenticated feedback-gateway requests carry the bounded `feedback_gateway` telemetry surface. Public and
+unauthenticated gateway traffic is never authorized as an authenticated actor. The surface only attributes
+authoritative metrics; it does not select an evaluator.
 
 ## Resource parent resolution during the current-model migration
 
@@ -368,7 +367,7 @@ It then checks the equivalent workspace permission in SpiceDB. This preserves
 the current authorization boundary and avoids adding a high-cardinality
 `response#survey` projection to every response mutation before direct authority.
 Resolver database failures remain operational errors and missing resources
-remain denials, matching the legacy evaluator.
+remain denials, preserving the current authorization contract.
 
 The `survey#workspace`, `dashboard#workspace`, and `response#survey` relations
 remain in the schema for later resource-level sharing. They must not be queried
@@ -379,12 +378,11 @@ enforcement.
 
 ## Authorization evaluation and direct cutover
 
-The private SpiceDB evaluator currently sits behind the existing server-only
-`can()` and `assertCan()` contract while the migration bridge is being built.
-The approved release does not use shadow/cohort rollout: the bridge keeps legacy
-decisions authoritative only while the durable outbox establishes a complete
-graph, and the direct-authority image makes SpiceDB the sole evaluator with no
-runtime legacy fallback.
+The private SpiceDB evaluator sits behind the existing server-only `can()` and
+`assertCan()` contract. The direct-authority image makes SpiceDB the sole evaluator
+with no runtime legacy fallback or cohort selector. The separately pinned bridge
+image remains the deployment rollback artifact while the durable outbox keeps its
+relationship graph current.
 
 The immutable bridge/candidate artifacts, fail-closed behavior, sandbox-first
 sequence, staging and regional production gates, abort triggers, rollback, and
@@ -425,18 +423,16 @@ doc comments):
 
 - `apps/web/lib/authorization` — the engine-independent current-model
   authorization contract and role/grant mapping.
-- `apps/web/lib/utils/action-client/action-client-middleware.ts` —
-  `checkAuthorizationUpdated`: org-role OR team-permission, weighted
-  `read < readWrite < manage`.
+- `apps/web/lib/authorization/permission-action.ts` — exhaustive translation of
+  HTTP/team permission ladders into semantic actions.
 - `apps/web/lib/organization/auth.ts` — `verifyUserRoleAccess`: managers manage
   members/billing/API keys but cannot update or delete the organization.
-- `apps/web/lib/workspace/auth.ts` — `hasUserWorkspaceAccessForAction`: the
-  billing role is excluded from all product data.
+- `apps/web/lib/workspace/auth.ts` — navigation and integration-specific compositions;
+  the billing role is excluded from product data.
 - `apps/web/modules/ee/teams/lib/roles.ts` — a member without a team has no
   workspace access; the highest team permission wins.
-- `apps/web/modules/organization/settings/api-keys/lib/utils.ts` — API key
-  method map (GET→read, POST/PUT/PATCH→write, DELETE→manage) and
-  organization `accessControl` checks.
+- `apps/web/lib/authorization/spicedb-evaluator.ts` — tenant-safe scope resolution,
+  API-key ownership checks, and authoritative permission evaluation.
 
 ## Semantics guaranteed by the assertions
 
