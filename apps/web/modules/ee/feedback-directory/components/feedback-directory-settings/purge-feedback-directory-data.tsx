@@ -40,8 +40,11 @@ export const PurgeFeedbackDirectoryData = ({
   const { mutateAsync: purgeDataset, isPending } = usePurgeFeedbackDataset();
 
   const hasValidConfirmation = hasMatchingDatasetPurgeConfirmation(confirmationName, directoryName);
-  // A dataset name has no length limit, so the copy shows a truncated one — the same treatment the
-  // workspace-delete confirmation gives it. The typed value is still matched against the full name.
+  // A dataset name has no length limit, so the *warning copy* shows a truncated one — the same
+  // treatment the workspace-delete confirmation gives it. It is deliberately not used for the
+  // confirmation label or placeholder: those tell the user what to type, and the typed value is
+  // matched against the full name, so showing a truncated string there asks for something that can
+  // never match (delete-workspace-render.tsx does the same, full name at :136 and :142).
   const displayName = truncate(directoryName, 30);
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -107,17 +110,20 @@ export const PurgeFeedbackDirectoryData = ({
           <form
             onSubmit={async (e) => {
               e.preventDefault();
+              // Enter bypasses the footer button, which is the only thing carrying `isDeleting`, so
+              // without this a held Enter fires a second purge while the first is still in flight.
+              if (isPending) return;
               await handlePurge();
             }}>
             <label htmlFor="purgeDatasetConfirmation">
               {t("workspace.settings.feedback_directories.purge_confirmation_name", {
-                directoryName: displayName,
+                directoryName,
               })}
             </label>
             <Input
               value={confirmationName}
               onChange={(e) => setConfirmationName(e.target.value)}
-              placeholder={displayName}
+              placeholder={directoryName}
               className="mt-2"
               type="text"
               id="purgeDatasetConfirmation"

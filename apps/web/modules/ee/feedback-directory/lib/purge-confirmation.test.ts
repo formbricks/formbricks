@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { truncate } from "@/lib/utils/strings";
 import { hasMatchingDatasetPurgeConfirmation } from "./purge-confirmation";
 
 describe("hasMatchingDatasetPurgeConfirmation", () => {
@@ -25,5 +26,18 @@ describe("hasMatchingDatasetPurgeConfirmation", () => {
     expect(hasMatchingDatasetPurgeConfirmation("", "Support tickets")).toBe(false);
     expect(hasMatchingDatasetPurgeConfirmation("", "")).toBe(false);
     expect(hasMatchingDatasetPurgeConfirmation("   ", "  ")).toBe(false);
+  });
+
+  // ENG-2129 review: the dialog used to render `truncate(name, 30)` in the confirmation label *and*
+  // the input placeholder while matching against the full name, so any dataset with a name longer
+  // than 30 characters could never be purged — typing exactly what the UI asked for produced a
+  // string ending in "..." that this function rejects. The copy now shows the full name there.
+  // Pinned here rather than in the component, since UI is covered by Playwright by policy.
+  test("rejects the truncated form of a long name, which is why the dialog must show it in full", () => {
+    const longName = "Customer support tickets from the EMEA region";
+    expect(longName.length).toBeGreaterThan(30);
+
+    expect(hasMatchingDatasetPurgeConfirmation(truncate(longName, 30), longName)).toBe(false);
+    expect(hasMatchingDatasetPurgeConfirmation(longName, longName)).toBe(true);
   });
 });
