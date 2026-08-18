@@ -83,7 +83,6 @@ export const readBrowserContextMeta = (): TWebSurveyMeta => {
     // being re-read on every submit.
     url: readString(() => window.location.href),
     source: readString(() => searchParams?.get("source")),
-    pageUrl: readString(() => window.location.href),
     pagePath: readString(() => window.location.pathname),
     pageReferrer: readString(() => document.referrer),
     ...utm,

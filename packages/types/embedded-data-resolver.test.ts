@@ -605,7 +605,6 @@ describe("RESERVED_FIELD_CATALOG", () => {
       action: "Clicked Upgrade",
       ipAddress: "203.0.113.7",
       // Browser-runtime context, snapshotted by the renderer at display time (ENG-1841).
-      pageUrl: "https://example.com/pricing?utm_source=news&email=a@b.co",
       pagePath: "/pricing",
       pageReferrer: "https://news.example.org/weekly?issue=42",
       utmSource: "news",
@@ -677,9 +676,9 @@ describe("RESERVED_FIELD_CATALOG", () => {
       { name: "startedAt", dataType: "date", availability: "server", privacy: "keep" },
       { name: "finishedAt", dataType: "date", availability: "server", privacy: "keep" },
       // Browser-runtime context (ENG-1841). All `client`: the renderer captures them itself, so a
-      // mid-survey picker may offer them. `pageUrl`/`pageReferrer` are `redactQuery` because a URL's
-      // query string is where an identifier hides; the rest carry nothing identifying on their own.
-      { name: "pageUrl", dataType: "string", availability: "client", privacy: "redactQuery" },
+      // mid-survey picker may offer them. `pageReferrer` is `redactQuery` because a URL's query
+      // string is where an identifier hides; the rest carry nothing identifying on their own. There
+      // is no `pageUrl` - it read the same `location.href` as `url`, so the two were identical.
       { name: "pagePath", dataType: "string", availability: "client", privacy: "keep" },
       { name: "pageReferrer", dataType: "string", availability: "client", privacy: "redactQuery" },
       { name: "utmSource", dataType: "string", availability: "client", privacy: "keep" },
@@ -714,7 +713,6 @@ describe("RESERVED_FIELD_CATALOG", () => {
       durationSeconds: 90,
       startedAt: "2026-08-01T09:00:00.000Z",
       finishedAt: "2026-08-01T09:02:30.000Z",
-      pageUrl: "https://example.com/pricing?utm_source=news&email=a@b.co",
       pagePath: "/pricing",
       pageReferrer: "https://news.example.org/weekly?issue=42",
       utmSource: "news",
@@ -738,7 +736,6 @@ describe("RESERVED_FIELD_CATALOG", () => {
     const projected = projectCatalog(historicalResponse);
 
     for (const name of [
-      "pageUrl",
       "pagePath",
       "pageReferrer",
       "utmSource",

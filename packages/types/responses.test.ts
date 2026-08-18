@@ -3,7 +3,6 @@ import { ZResponseInput, ZResponseMeta, ZResponseUpdate, pickAutoCapturedRespons
 
 /** Everything the renderer snapshots at display time, in one object (ENG-1841). */
 const fullAutoCapturedMeta = {
-  pageUrl: "https://shop.example.com/checkout?utm_source=news&token=abc123",
   pagePath: "/checkout",
   pageReferrer: "https://news.example.org/weekly",
   utmSource: "news",
@@ -132,7 +131,7 @@ describe("pickAutoCapturedResponseMeta", () => {
   });
 
   test("omits absent keys rather than emitting them as undefined", () => {
-    // Spread into the route's `meta` literal, an explicit `pageUrl: undefined` would still create
+    // Spread into the route's `meta` literal, an explicit `pagePath: undefined` would still create
     // the key and land in the JSON column as a null.
     const picked = pickAutoCapturedResponseMeta({ pagePath: "/checkout" });
 

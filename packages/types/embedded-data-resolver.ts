@@ -300,28 +300,20 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
    * because the ingest route parses a request header — the values below are read in the page and
    * travel in on the response input, and that is exactly what makes them resolvable mid-survey.
    *
-   * Both link and app surveys render through the same component, so all thirteen are captured for
-   * both. What they *describe* differs: on a link survey `pageUrl`/`pageReferrer`/`utm*` are about
+   * Both link and app surveys render through the same component, so all twelve are captured for
+   * both. What they *describe* differs: on a link survey `pagePath`/`pageReferrer`/`utm*` are about
    * the Formbricks-hosted survey page and how the respondent reached it; on an app survey they are
    * about the host page the survey was triggered on.
    */
   /**
-   * The page the response was answered on. `pageUrl` is `redactQuery` for the same reason `url` is:
-   * the path is the analytics signal, the query string is where an identifier rides along.
-   * `pagePath` needs no redaction because it never carries one, and is the field to group on when
-   * you want the page rather than the visit.
+   * The page the response was answered on, without the query string — the field to group on when you
+   * want the page rather than the visit. It needs no redaction because it never carries an
+   * identifier; the full URL lives on `url`, which is `redactQuery` for exactly that reason.
    *
-   * `pageUrl` and `url` are near-identical on a link survey. Expected rather than redundant: `url`
-   * is whatever the renderer was told the survey ran at and predates this block, while `pageUrl` is
-   * a direct reading of `location.href` at display time.
+   * There is deliberately no `pageUrl`: it read `location.href`, which is the same expression `url`
+   * already reads in the same snapshot, so the two were byte-identical on every response rather
+   * than merely similar. `url` plus `pagePath` covers it with nothing duplicated.
    */
-  {
-    name: "pageUrl",
-    dataType: "string",
-    availability: "client",
-    privacy: "redactQuery",
-    read: (r) => r.meta.pageUrl,
-  },
   {
     name: "pagePath",
     dataType: "string",

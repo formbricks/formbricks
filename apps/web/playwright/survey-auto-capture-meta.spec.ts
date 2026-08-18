@@ -83,9 +83,9 @@ const readStoredMeta = async (surveyId: string): Promise<Record<string, unknown>
           select: { meta: true },
         });
         meta = (response?.meta ?? undefined) as Record<string, unknown> | undefined;
-        return meta?.pageUrl ?? null;
+        return meta?.pagePath ?? null;
       },
-      { timeout: 20000, message: "No response with an auto-captured pageUrl was stored" }
+      { timeout: 20000, message: "No response with an auto-captured pagePath was stored" }
     )
     .not.toBeNull();
 
@@ -123,9 +123,10 @@ test.describe("Auto-captured browser context on responses @slow", () => {
     const meta = await readStoredMeta(surveyId ?? "");
 
     // The page the respondent answered on. On a link survey this is the Formbricks-hosted survey
-    // page itself — near-identical to `meta.url`, which is expected rather than a duplicate.
-    expect(meta.pageUrl).toContain(`/s/${surveyId}`);
-    expect(meta.pageUrl).toContain("utm_source=newsletter");
+    // page itself. `url` carries the whole thing including the query; `pagePath` is the query-free
+    // page identity. There is no `pageUrl` - it read the same `location.href` as `url`.
+    expect(meta.url).toContain(`/s/${surveyId}`);
+    expect(meta.url).toContain("utm_source=newsletter");
     expect(meta.pagePath).toBe(`/s/${surveyId}`);
 
     // Campaign attribution, parsed off that same query string.
@@ -148,8 +149,6 @@ test.describe("Auto-captured browser context on responses @slow", () => {
     // The server-derived half is untouched by any of this: `userAgent` is still parsed from the
     // request header by UAParser, not taken from anything the page sent.
     expect((meta.userAgent as Record<string, unknown>).browser).toBeTruthy();
-    // `url` predates this work and still resolves — near-identical to `pageUrl` on a link survey.
-    expect(meta.url).toContain(`/s/${surveyId}`);
     // `source` is only set when the link carries an explicit `?source=`, which this one does not.
     expect(meta).not.toHaveProperty("source");
   });

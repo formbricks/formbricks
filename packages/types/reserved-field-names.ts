@@ -47,7 +47,6 @@ export const RESERVED_FIELD_NAMES: ReadonlySet<string> = new Set([
   "startedat",
   "finishedat",
   // Browser-runtime context, auto-captured by the renderer and frozen at display (ENG-1841).
-  "pageurl",
   "pagepath",
   "pagereferrer",
   "utmsource",

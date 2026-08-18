@@ -336,8 +336,6 @@ export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
  * triggered on.
  */
 export const ZAutoCapturedResponseMeta = z.object({
-  /** `location.href` at display time. Near-identical to `url` on a link survey — expected. */
-  pageUrl: z.string().optional(),
   /** `location.pathname` — the query-free page identity analytics usually groups on. */
   pagePath: z.string().optional(),
   /** `document.referrer`. Empty when there is no referrer, which we omit rather than store as "". */

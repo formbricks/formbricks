@@ -57,7 +57,7 @@ describe("readBrowserContextMeta", () => {
 
     const meta = readBrowserContextMeta();
 
-    expect(meta.pageUrl).toBe(`${ORIGIN}/pricing?plan=team`);
+    expect(meta.url).toBe(`${ORIGIN}/pricing?plan=team`);
     expect(meta.pagePath).toBe("/pricing");
     expect(meta.pageReferrer).toBe("https://news.example.org/weekly");
     expect(meta.screenWidth).toBe(2560);
@@ -178,7 +178,7 @@ describe("createWebSurveyMetaSnapshot", () => {
     expect(createWebSurveyMetaSnapshot(true)().viewportWidth).toBe(390);
   });
 
-  test("freezes the page too: a mid-survey pushState does not rewrite pageUrl", () => {
+  test("freezes the page too: a mid-survey pushState does not rewrite the url", () => {
     setLocation("/pricing");
 
     const getMeta = createWebSurveyMetaSnapshot(true);
@@ -188,7 +188,7 @@ describe("createWebSurveyMetaSnapshot", () => {
     setLocation("/checkout?step=2");
 
     expect(getMeta().pagePath).toBe("/pricing");
-    expect(getMeta().pageUrl).toBe(`${ORIGIN}/pricing`);
+    expect(getMeta().url).toBe(`${ORIGIN}/pricing`);
   });
 
   test("captures nothing off the web, where there is no runtime to read", () => {
