@@ -316,6 +316,32 @@ AuthZed Cloud owns datastore backup and restore guarantees. You still need Formb
 recoverable client credentials, release configuration, schema verification, and the relationship repair
 procedure.
 
+## Inspect and drain durable delivery
+
+The v6 bridge writes projection intent in the same PostgreSQL transaction as an authorization source change.
+BullMQ wakes the delivery worker, but PostgreSQL remains the durable queue. Updates and deletes are treated as
+revocations; direct authority fails closed when a revocation remains unresolved for 60 seconds or enters dead
+letter.
+
+```bash
+formbricks-authzed outbox status
+formbricks-authzed outbox drain
+formbricks-authzed outbox drain --max-batches=500
+formbricks-authzed outbox replay
+```
+
+`status` prints aggregate queue counts and ages only. It exits `0` when healthy, `2` at the 15-second warning or
+45-second critical thresholds (and for any dead letter), and `1` for an operational failure. `drain` processes
+revocations first. `replay` resets unresolved dead letters so the normal idempotent reconcilers can retry them;
+investigate the cause before replaying.
+
+These results contain no source IDs, relationship strings, credentials, or raw errors. This is different from
+the detailed backfill report below, which intentionally contains operational identifiers.
+
+Every six hours Formbricks also runs a full applying audit without prune. It automatically repairs attributable
+missing and mismatched-permission relationships. It never deletes orphaned or unmanaged data and never repairs
+a mismatched parent automatically.
+
 ## Audit and repair relationships
 
 The command prints one JSON result. It never prints credentials, database passwords, raw SDK errors, schema
@@ -463,7 +489,8 @@ restore, or shared SpiceDB before proceeding.
 | `authzed_unavailable`                                                                    | SpiceDB or its network path is unavailable            | Restore the service, verify health, then run a full relationship audit                      |
 | `authzed_internal`                                                                       | Unexpected client or runtime failure                  | Check sanitized Formbricks and SpiceDB logs and the deployed version                        |
 | Schema status `drifted`                                                                  | Connected schema differs from this Formbricks release | Back up first, review the diff counts and digest, then perform a guarded schema apply       |
-| Projection status `failed`                                                               | A committed PostgreSQL change may not be in SpiceDB   | Restore connectivity and run backfill; projections are not retried automatically            |
+| Projection status `failed`                                                               | A fast-path or outbox reconciliation attempt failed   | Restore connectivity, inspect outbox status, and drain or replay durable delivery             |
+| `authzed_projection_stale`                                                               | A revocation exceeded 60 seconds or entered dead letter | Investigate immediately, restore delivery, replay, drain, and require a clean audit          |
 
 Formbricks AuthZed logs use `component="authzed"`, stable `errorCode` values, and bounded fields such as
 `operation`, `projection`, `status`, `retryable`, `attemptCount`, `grpcStatus`, and `durationMs`. They must not
@@ -481,6 +508,12 @@ Enable the existing Formbricks Prometheus or OTLP metrics exporter. Current v5 b
 | `formbricks_authzed_request_retries_total`           | Retry attempts caused by transient failures                                 |
 | `formbricks_authzed_authorization_comparisons_total` | Match, mismatch, and operational-error outcomes where comparison is enabled |
 | `formbricks_authzed_authorization_duration_seconds`  | Authorization comparison latency where comparison is enabled                |
+| `formbricks_authzed_projection_outbox_delivery_total` | Durable outbox events delivered or failed                                   |
+| `formbricks_authzed_projection_outbox_delivery_duration_seconds` | Durable delivery batch latency                                    |
+| `formbricks_authzed_projection_outbox_status`        | Point-in-time pending, dead-letter, warning, and critical counts             |
+| `formbricks_authzed_projection_outbox_oldest_pending_age_seconds` | Age of the oldest pending event                                  |
+| `formbricks_authzed_reconciliation_audit_total`      | Scheduled audit outcomes                                                     |
+| `formbricks_authzed_reconciliation_drift_total`      | Attributable drift and failures observed by scheduled audits                 |
 
 Starting PromQL checks:
 
@@ -504,8 +537,7 @@ sum(rate(formbricks_authzed_authorization_comparisons_total{
 ```
 
 The v6 direct-authority release replaces comparison outcomes with bounded authoritative decision and latency
-metrics and adds outbox backlog/age, revocation latency, dead-letter, scheduled-audit, drift, and repair metrics.
-Use the exact metric names shipped by the v6 release. Required gates are no dead-letter revocations, no
+metrics. Required gates are no dead-letter revocations, no
 normal-operation 60-second freshness guard, clean scheduled audits, operational errors at or below 0.1%, p95
 below 250 ms, and p99 below one second.
 

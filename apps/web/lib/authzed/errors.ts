@@ -13,6 +13,7 @@ export const AUTHZED_ERROR_CODES = {
   NOT_FOUND: "authzed_not_found",
   OVERLOADED: "authzed_overloaded",
   PERMISSION_DENIED: "authzed_permission_denied",
+  PROJECTION_STALE: "authzed_projection_stale",
   SCHEMA_CHANGED: "authzed_schema_changed",
   SCHEMA_VERIFICATION_FAILED: "authzed_schema_verification_failed",
   TIMEOUT: "authzed_timeout",

@@ -1,5 +1,6 @@
 import "server-only";
 import { getAuthzedClient } from "@/lib/authzed/client";
+import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import {
   AUTHORIZATION_PERMISSION_MAP,
@@ -78,6 +79,8 @@ export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizati
   scope: TResolvedAuthorizationScope
 ): Promise<boolean> => {
   if (!scope.actorValid) return false;
+
+  await assertAuthzedProjectionFreshness();
 
   const permission = getPermission(actor, action, resource.type);
   if (!permission) return false;

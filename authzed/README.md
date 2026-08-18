@@ -133,15 +133,25 @@ The current legacy evaluator authorizes every `Membership` row without checking
 behavior: accepted and pending membership rows project identically. An
 `Invite` alone is not projected.
 
-Projection runs after the source transaction commits and is best-effort.
-AuthZed being disabled performs no projection work. An AuthZed outage never
-changes a successful PostgreSQL mutation into an application error; it produces
-only a sanitized operational result and warning. Existing records and any drift
-an outage leaves behind are reconciled by `pnpm authzed:backfill` (see
-[Backfill and repair](#backfill-and-repair)), which must report a clean run
-before direct authority. ENG-2408 replaces this temporary bridge behavior with
-the transactional outbox required by the [direct cutover
-contract](./CUTOVER.md); the best-effort projector is not eligible for cutover.
+Every authorization-bearing source table has a PostgreSQL trigger that inserts a
+projection event in the same transaction as the source mutation. The existing
+post-commit projector remains as a low-latency fast path, but the PostgreSQL
+outbox is the durable delivery contract: BullMQ wakes a worker every five
+seconds, the worker claims rows with leases and `FOR UPDATE SKIP LOCKED`, and the
+idempotent reconcilers retry failures up to 20 times before dead-lettering.
+
+AuthZed being disabled performs no delivery work. An AuthZed outage never
+changes a successful PostgreSQL mutation into an application error; committed
+outbox rows remain recoverable and are replayed when SpiceDB returns. Existing
+records and independent drift are reconciled by the six-hour applying audit and
+by `pnpm authzed:backfill` (see [Backfill and repair](#backfill-and-repair)). A
+clean graph and drained outbox are mandatory before direct authority.
+
+Updates and deletes are conservatively classified as revocations. If a source
+pair moves, the trigger enqueues both the previous pair as a revocation and the
+current pair, preventing a stale old edge from becoming undiscoverable. Direct
+authority refuses protected operations with `authzed_projection_stale` when an
+unresolved revocation reaches 60 seconds or enters dead letter.
 
 The organization-membership projection boundary covers:
 
@@ -543,6 +553,32 @@ it rewrites is not necessarily the one a local dev server talks to. Always pass
 Released Formbricks images include the equivalent `formbricks-authzed backfill`
 command for self-hosted operators. Repository development retains
 `pnpm authzed:backfill`.
+
+## Durable projection outbox
+
+Release images expose bounded, identifier-free outbox operations:
+
+```bash
+formbricks-authzed outbox status
+formbricks-authzed outbox drain
+formbricks-authzed outbox drain --max-batches=500
+formbricks-authzed outbox replay
+```
+
+`status` reports aggregate pending, dead-letter, oldest-age, and revocation-age
+counts. `drain` claims revocations first and stops after the requested number of
+batches or the first failed batch. `replay` resets all unresolved dead letters
+to attempt zero; it does not bypass normal reconciliation, retry, or freshness
+checks. These commands never print target IDs, relationships, credentials, or
+raw errors.
+
+The recurring six-hour audit runs the normal full-deployment applying backfill
+without prune. It can repair attributable missing and mismatched-permission
+edges, but it never automatically deletes orphaned or unmanaged relationships or
+changes a mismatched parent. Those categories still require the guarded operator
+workflow above. Successfully delivered outbox rows are retained for seven days;
+the scheduled audit removes at most 10,000 expired rows per run. Pending and
+dead-letter rows are never removed by retention cleanup.
 
 ## Deliberately not modeled (stays in application code)
 

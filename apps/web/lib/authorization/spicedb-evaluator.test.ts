@@ -12,6 +12,7 @@ vi.mock("@/lib/constants", () => ({
   },
 }));
 vi.mock("@/lib/authzed/client", () => ({ getAuthzedClient: vi.fn() }));
+vi.mock("@/lib/authzed/outbox-freshness", () => ({ assertAuthzedProjectionFreshness: vi.fn() }));
 vi.mock("./source-scope", () => ({ resolveAuthorizationScope: vi.fn() }));
 
 const checkPermission = vi.fn();

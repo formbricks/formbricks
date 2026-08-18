@@ -1487,3 +1487,30 @@ model FeedbackDirectoryWorkspace {
   @@id([feedbackDirectoryId, workspaceId])
   @@index([workspaceId])
 }
+
+/// Durable PostgreSQL queue for rebuilding SpiceDB relationships after an authorization source changes.
+/// Source-table triggers insert these rows in the same transaction as the mutation. Identifiers are
+/// operationally sensitive and must never be included in logs, metrics, or CLI output.
+model AuthzedProjectionOutbox {
+  id             String    @id @default(uuid())
+  targetType     String
+  primaryId      String
+  secondaryId    String?
+  isRevocation   Boolean   @default(false)
+  attempts       Int       @default(0)
+  availableAt    DateTime  @default(now())
+  leasedAt       DateTime?
+  leaseExpiresAt DateTime?
+  leaseOwner     String?
+  processedAt    DateTime?
+  deadLetteredAt DateTime?
+  lastAttemptAt  DateTime?
+  lastErrorCode  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([processedAt, deadLetteredAt, availableAt, createdAt], map: "AuthzedProjectionOutbox_pending_idx")
+  @@index([isRevocation, processedAt, deadLetteredAt, createdAt], map: "AuthzedProjectionOutbox_revocation_idx")
+  @@index([leaseExpiresAt], map: "AuthzedProjectionOutbox_leaseExpiresAt_idx")
+  @@index([targetType, primaryId, secondaryId], map: "AuthzedProjectionOutbox_target_idx")
+}

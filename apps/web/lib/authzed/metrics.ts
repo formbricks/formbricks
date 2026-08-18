@@ -80,6 +80,42 @@ const requestRetriesTotal = meter.createCounter("formbricks_authzed_request_retr
   description: "AuthZed requests retried after a retryable failure",
 });
 
+const outboxDeliveryTotal = meter.createCounter("formbricks_authzed_projection_outbox_delivery_total", {
+  description: "Authorization projection outbox events processed by outcome",
+});
+
+const outboxDeliveryDuration = meter.createHistogram(
+  "formbricks_authzed_projection_outbox_delivery_duration_seconds",
+  {
+    advice: {
+      explicitBucketBoundaries: [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30],
+    },
+    description: "Duration of an authorization projection outbox delivery batch",
+    unit: "s",
+  }
+);
+
+const reconciliationAuditTotal = meter.createCounter("formbricks_authzed_reconciliation_audit_total", {
+  description: "Scheduled authorization relationship audits by outcome",
+});
+
+const reconciliationDriftTotal = meter.createCounter("formbricks_authzed_reconciliation_drift_total", {
+  description: "Attributable relationship differences observed by scheduled audits",
+});
+
+const outboxStatus = meter.createGauge("formbricks_authzed_projection_outbox_status", {
+  description: "Point-in-time authorization projection outbox counts by bounded state",
+  unit: "{event}",
+});
+
+const outboxOldestPendingAge = meter.createGauge(
+  "formbricks_authzed_projection_outbox_oldest_pending_age_seconds",
+  {
+    description: "Point-in-time age of the oldest pending authorization projection event",
+    unit: "s",
+  }
+);
+
 export type TAuthzedProjectionMetric = Readonly<{
   durationMs: number;
   operation: string;
@@ -123,4 +159,51 @@ export const recordAuthzedRequestRetry = ({
   operation,
 }: Readonly<{ code: string; operation: string }>): void => {
   requestRetriesTotal.add(1, { code, operation });
+};
+
+export const recordAuthzedOutboxDelivery = ({
+  count,
+  durationMs,
+  status,
+}: Readonly<{
+  count: number;
+  durationMs: number;
+  status: "delivered" | "failed";
+}>): void => {
+  outboxDeliveryTotal.add(count, { status });
+  outboxDeliveryDuration.record(durationMs / 1000, { status });
+};
+
+export const recordAuthzedOutboxStatus = ({
+  deadLettered,
+  oldestPendingAgeSeconds,
+  pending,
+  revocationsPastCritical,
+  revocationsPastWarning,
+}: Readonly<{
+  deadLettered: number;
+  oldestPendingAgeSeconds: number | null;
+  pending: number;
+  revocationsPastCritical: number;
+  revocationsPastWarning: number;
+}>): void => {
+  outboxStatus.record(pending, { state: "pending" });
+  outboxStatus.record(deadLettered, { state: "dead_lettered" });
+  outboxStatus.record(revocationsPastWarning, { state: "revocation_warning" });
+  outboxStatus.record(revocationsPastCritical, { state: "revocation_critical" });
+  outboxOldestPendingAge.record(oldestPendingAgeSeconds ?? 0);
+};
+
+export const recordAuthzedReconciliationAudit = ({
+  drift,
+  failures,
+  status,
+}: Readonly<{
+  drift: number;
+  failures: number;
+  status: "drifted" | "failed" | "reconciled";
+}>): void => {
+  reconciliationAuditTotal.add(1, { status });
+  if (drift > 0) reconciliationDriftTotal.add(drift, { kind: "attributable" });
+  if (failures > 0) reconciliationDriftTotal.add(failures, { kind: "failure" });
 };
