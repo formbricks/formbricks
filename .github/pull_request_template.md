@@ -28,11 +28,13 @@ self-hosters. It is breaking if it changes an API/SDK shape or emitted value (e.
 removes or renames an endpoint, route, env var or config key, changes a default or webhook payload, or
 needs manual migration action.
 
-The checkbox is the only thing automation reads: ticking it applies the `breaking-change` label, which
-feeds the release notes and the self-hoster migration guide. Leave its wording alone — `pr-label-sync.yml`
-finds it by that text, and any other checkbox in this section is ignored. Everything underneath is for
-humans: ticked → replace "None" with the table below, one row per change, written for an external
-integrator; not ticked → keep "None" and say in a line why. -->
+The checkbox alone drives the label: ticking it applies `breaking-change`, which feeds the release notes
+and the self-hoster migration guide. Leave its wording alone — `pr-label-sync.yml` finds it by that text,
+ignores every other checkbox in this section, and never reads the prose. What you write underneath is
+still read: by reviewers, and by the CodeRabbit "Breaking changes match the diff" check, which compares
+the tick against the diff and expects a ticked box to be explained. Ticked → replace "None" with the
+table below, one row per change, written for an external integrator; not ticked → keep "None" and say in
+a line why. -->
 
 - [ ] This PR contains breaking changes
 
