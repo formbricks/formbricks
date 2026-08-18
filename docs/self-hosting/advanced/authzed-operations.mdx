@@ -148,9 +148,11 @@ authzed:
 ```
 
 The role needs `CREATEROLE` and `CREATEDB`; it does not need to be a superuser. `adminPasswordSecretName` is
-required whenever `adminUsername` is overridden — without it the Job would fall back to the bundled admin
-password and fail to authenticate. `adminPasswordKey` is required whenever the Secret is configured
-explicitly, since it otherwise defaults to the bundled subchart's key name inside your own Secret.
+required whenever `adminUsername` is overridden, and `adminPasswordKey` whenever that Secret is configured
+explicitly. **Both are checked while the chart renders**, so omitting one fails the render with the missing
+value named — no Job is created. Without those guards the first would silently fall back to the bundled admin
+password and the second would look up the subchart's key name inside your own Secret, and neither shows up
+until the Pod fails to start in the cluster.
 
 <Note>
   `CREATEROLE` and `CREATEDB` are sufficient on their own only when the administrator also creates the

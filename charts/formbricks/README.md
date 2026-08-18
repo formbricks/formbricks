@@ -146,10 +146,12 @@ authzed:
     adminPasswordKey: password
 ```
 
-`adminPasswordSecretName` is required whenever `adminUsername` is not the bundled superuser — otherwise the Job
-would silently fall back to the bundled admin password and fail to authenticate. `adminPasswordKey` is required
-whenever that Secret is configured explicitly, since it otherwise defaults to the bundled subchart's key name
-looked up inside your own Secret.
+`adminPasswordSecretName` is required whenever `adminUsername` is not the bundled superuser, and
+`adminPasswordKey` whenever that Secret is configured explicitly. **Both are enforced when the chart renders**,
+so a missing one fails `helm template`/`upgrade` with a named value rather than producing a Job. That is the
+point of the guards: without them the first would silently fall back to the bundled admin password and the
+second would look up the subchart's key name inside your own Secret — neither of which surfaces until the Pod
+is created in the cluster.
 
 `CREATEROLE` and `CREATEDB` cover the normal case, in which this administrator also creates the `spicedb` role.
 `CREATE DATABASE ... OWNER spicedb` additionally requires being able to `SET ROLE` to that owner, so the Job
