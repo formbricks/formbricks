@@ -35,19 +35,21 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (
 - **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API starts. Both migration services run on every `docker compose up` and are idempotent.
 - **Production** (`docker/docker-compose.yml`): Set `POSTGRES_PASSWORD` to a unique random value and set
   non-empty `HUB_API_KEY` and `CUBEJS_API_SECRET` in `.env` before starting the stack. Keep
-  `POSTGRES_PASSWORD` unchanged after the database volume has been initialized. The
-  `docker compose config >/dev/null` command validates Compose syntax and fails when `POSTGRES_PASSWORD` is
-  missing; other missing secrets are reported by the service that needs them at startup. `HUB_API_URL`
-  defaults to `http://hub:8080` and `CUBEJS_API_URL` defaults to `http://cube:4000` so the Formbricks app
-  reaches Hub and Cube inside the Compose network. Cube JWT issuer/audience default to `formbricks-web` and
-  `formbricks-cube`, and the bundled Cube service exposes only `meta,data` API scopes. The bundled
-  single-replica Cube uses in-memory cache and queue storage and defaults `CUBEJS_EXTERNAL_DEFAULT` to
-  `false`, so it does not require Cube Store. If you add external pre-aggregations, configure Cube Store
-  before overriding `CUBEJS_EXTERNAL_DEFAULT=true`. Override `HUB_DATABASE_URL` and `CUBEJS_DB_*` only if Hub
-  or Cube should use a separate database. The Hub image tracks `:latest` by default so `formbricks.sh update`
-  advances Hub in lockstep with the app. `hub` and `hub-migrate` always resolve to the same image. To pin to
-  an immutable reference, set `HUB_IMAGE_REF` in `docker/.env` to either a tag (e.g. `:0.3.0`) or a digest
-  (e.g. `@sha256:14db7b3d...`).
+  `POSTGRES_PASSWORD` unchanged after the database volume has been initialized. The installer also writes a
+  URL-encoded companion for connection strings. Manual installs only need to set
+  `POSTGRES_PASSWORD_URL_ENCODED` when the raw password contains URI-reserved characters; existing URL-safe
+  passwords continue to work through the raw-value fallback. The `docker compose config >/dev/null` command
+  validates Compose syntax and fails when `POSTGRES_PASSWORD` is missing; other missing secrets are reported by
+  the service that needs them at startup. `HUB_API_URL` defaults to `http://hub:8080` and `CUBEJS_API_URL`
+  defaults to `http://cube:4000` so the Formbricks app reaches Hub and Cube inside the Compose network. Cube JWT
+  issuer/audience default to `formbricks-web` and `formbricks-cube`, and the bundled Cube service exposes only
+  `meta,data` API scopes. The bundled single-replica Cube uses in-memory cache and queue storage and defaults
+  `CUBEJS_EXTERNAL_DEFAULT` to `false`, so it does not require Cube Store. If you add external pre-aggregations,
+  configure Cube Store before overriding `CUBEJS_EXTERNAL_DEFAULT=true`. Override `HUB_DATABASE_URL` and
+  `CUBEJS_DB_*` only if Hub or Cube should use a separate database. The Hub image tracks `:latest` by default so
+  `formbricks.sh update` advances Hub in lockstep with the app. `hub` and `hub-migrate` always resolve to the same
+  image. To pin to an immutable reference, set `HUB_IMAGE_REF` in `docker/.env` to either a tag (e.g. `:0.3.0`)
+  or a digest (e.g. `@sha256:14db7b3d...`).
 - **Existing production installs**: Pulling new images does not replace an existing
   `docker-compose.yml`. Add `CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}` to the Cube
   service's `environment` block, then run `docker compose up -d --no-deps --force-recreate cube`.

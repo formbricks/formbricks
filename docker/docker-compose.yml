@@ -10,7 +10,7 @@ x-environment: &environment
     NEXTAUTH_URL:
 
     # PostgreSQL DB for Formbricks to connect to
-    DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/formbricks?schema=public"
+    DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?schema=public"
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
@@ -320,7 +320,7 @@ services:
         'if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres "$$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$$DATABASE_URL"; else echo ''Migration tools (goose/river) not in image.''; exit 1; fi',
       ]
     environment:
-      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/formbricks?sslmode=disable}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?sslmode=disable}
     depends_on:
       formbricks-migrate:
         condition: service_completed_successfully
@@ -336,7 +336,7 @@ services:
         condition: service_healthy
     environment:
       API_KEY: ${HUB_API_KEY:-}
-      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/formbricks?sslmode=disable}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?sslmode=disable}
       TAXONOMY_SERVICE_URL: ${TAXONOMY_SERVICE_URL:-}
       TAXONOMY_SERVICE_TOKEN: ${TAXONOMY_SERVICE_TOKEN:-}
       HUB_INTERNAL_API_TOKEN: ${HUB_INTERNAL_API_TOKEN:-}

@@ -199,9 +199,32 @@ read_existing_postgres_password() {
   fi
 }
 
+url_encode() {
+  local LC_ALL=C
+  local value="$1"
+  local encoded=""
+  local char
+  local byte
+  local i
+
+  for ((i = 0; i < ${#value}; i++)); do
+    char=${value:i:1}
+    case "$char" in
+      [a-zA-Z0-9.~_-]) encoded+="$char" ;;
+      *)
+        printf -v byte '%d' "'$char"
+        printf -v encoded '%s%%%02X' "$encoded" "$((byte & 255))"
+        ;;
+    esac
+  done
+
+  printf '%s' "$encoded"
+}
+
 write_generated_env_file() (
   local env_file="${1:-.env}"
   local postgres_password="${2:-}"
+  local postgres_password_url_encoded
   local hub_api_key
   local cubejs_api_secret
 
@@ -211,10 +234,12 @@ write_generated_env_file() (
   if [ -z "$postgres_password" ]; then
     postgres_password=$(openssl rand -hex 32)
   fi
+  postgres_password_url_encoded=$(url_encode "$postgres_password")
   hub_api_key=$(openssl rand -hex 32)
   cubejs_api_secret=$(openssl rand -hex 32)
   cat <<EOF > "$env_file"
 POSTGRES_PASSWORD=$postgres_password
+POSTGRES_PASSWORD_URL_ENCODED=$postgres_password_url_encoded
 HUB_API_KEY=$hub_api_key
 CUBEJS_API_SECRET=$cubejs_api_secret
 CUBEJS_JWT_ISSUER=formbricks-web
