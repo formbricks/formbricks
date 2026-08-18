@@ -17,6 +17,13 @@ import { getSurveys } from "@/modules/survey/list/lib/survey";
  * decision (what `getWorkspaceAuth` asks), then `getSurveys` to fetch the rows. `getSurveys` runs no
  * authorization of its own — access was already established by the workspace check — so the claim
  * under test is that fetching many rows costs the same ONE check as fetching few.
+ *
+ * ENG-2388: these declare the `page` surface. They previously declared `server_action`, which was a
+ * stand-in — the scenario is a page render, but no page surface existed to name. That substitution is
+ * itself the bug ENG-2388 fixes, and it made the test quietly unfaithful: the checks it counted were
+ * attributed to the wrong surface, so the histogram this file exists to defend reported page renders
+ * as server-action traffic. Saying `page` here is both the accurate declaration and the end-to-end
+ * proof that the new surface resolves a rollout target through the real `can()` and coordinator.
  */
 const scenario: { organizationId: string; userId: string; workspaceId: string } = {
   organizationId: "",
@@ -57,7 +64,7 @@ describe("survey list authorization amplification, against a real database", () 
         })),
       });
 
-      const surveys = await withAuthorizationSurface("server_action", async () => {
+      const surveys = await withAuthorizationSurface("page", async () => {
         const canRead = await can({ type: "user", id: scenario.userId }, "workspace.read", {
           type: "workspace",
           id: scenario.workspaceId,
@@ -86,7 +93,7 @@ describe("survey list authorization amplification, against a real database", () 
         })),
       });
 
-      return withAuthorizationSurface("server_action", async () => {
+      return withAuthorizationSurface("page", async () => {
         await can({ type: "user", id: scenario.userId }, "workspace.read", {
           type: "workspace",
           id: scenario.workspaceId,
@@ -153,7 +160,7 @@ describe("survey list authorization amplification (member, not owner), against a
       })),
     });
 
-    const result = await withAuthorizationSurface("server_action", async () => {
+    const result = await withAuthorizationSurface("page", async () => {
       const canRead = await can({ type: "user", id: scenario.userId }, "workspace.read", {
         type: "workspace",
         id: scenario.workspaceId,

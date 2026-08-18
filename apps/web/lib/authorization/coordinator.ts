@@ -20,6 +20,7 @@ import {
   type TAuthorizationComparisonOutcome,
   type TAuthorizationErrorSource,
   recordAuthorizationComparison,
+  recordUnscopedAuthorizationCheck,
 } from "./metrics";
 import {
   type TAuthorizationRolloutConfig,
@@ -211,6 +212,11 @@ export const authorizationCoordinator: AuthorizationEvaluator = {
     const config = getAuthorizationRolloutConfig();
     const target = getAuthorizationRolloutTarget(actor.type);
     if (!config.enabled || !target) {
+      // A check with no resolvable surface answers from legacy no matter what the rollout selects,
+      // enforcement included. Counted rather than left silent: this is the one path where partial
+      // coverage looks exactly like a clean cutover — no comparison runs, so no mismatch is ever
+      // reported. See `recordUnscopedAuthorizationCheck`.
+      if (!target) recordUnscopedAuthorizationCheck(config.enabled);
       return legacyEvaluator.can(actor, action, resource);
     }
 

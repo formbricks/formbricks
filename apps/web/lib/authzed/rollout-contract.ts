@@ -7,6 +7,7 @@
  */
 export const AUTHZED_AUTHORIZATION_ROLLOUT_TARGETS = [
   "server_action:user",
+  "page:user",
   "api_v1:user",
   "api_v1:apiKey",
   "api_v2:apiKey",
