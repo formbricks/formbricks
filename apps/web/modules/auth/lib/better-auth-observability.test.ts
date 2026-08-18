@@ -359,9 +359,10 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
 
     log("error", deadlock);
 
+    // No `extra`: Better Auth passed the Error as `message` here, and forwarding it would put an
+    // unredacted non-string into Sentry for no diagnostic gain (the Error is the capture itself).
     expect(Sentry.captureException).toHaveBeenCalledWith(deadlock, {
       tags: { component: "better-auth" },
-      extra: { betterAuthMessage: deadlock },
     });
   });
 

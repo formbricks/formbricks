@@ -178,7 +178,11 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
               component: "better-auth",
               ...(request && { "auth.path": request.path, "auth.method": request.method }),
             },
-            extra: { betterAuthMessage: safeMessage },
+            // Only when it is a string. `redactEmailsInLogMessage` passes non-strings through
+            // UNTOUCHED, so an object message would reach Sentry unredacted — and the only non-string
+            // Better Auth passes as `message` is the Error already being captured here, so there is
+            // nothing to gain by forwarding it.
+            ...(typeof safeMessage === "string" && { extra: { betterAuthMessage: safeMessage } }),
           });
         }
       }

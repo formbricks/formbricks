@@ -2,6 +2,8 @@ import * as Sentry from "@sentry/nextjs";
 import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { GET, POST } from "@/app/api/auth/[...all]/route";
+import { auth } from "@/modules/auth/lib/auth";
+import { createAuthPathLabeller } from "@/modules/auth/lib/better-auth-path-label";
 
 /**
  * ENG-2259 / FORMBRICKS-183 — the endpoint label must survive the real Better Auth request.
@@ -105,5 +107,63 @@ describe("Better Auth internal fault — Sentry capture carries the endpoint (re
 
     expect(response.status).toBe(403);
     expect(Sentry.captureException).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The labeller's unit tests prove the rules against a hand-written fixture, which cannot notice the
+ * registry changing underneath them: a Better Auth upgrade that adds a parameterized endpoint — or
+ * moves a parameter to the first segment — leaves every one of them green. These bind the same rules
+ * to the REAL registry, so the upgrade breaks a test instead of leaking quietly.
+ */
+describe("the label vocabulary matches the real Better Auth registry", () => {
+  const endpoints = Object.values(auth.api) as { path?: string; options?: { metadata?: unknown } }[];
+  const declaredPaths = endpoints
+    .map((endpoint) => endpoint.path)
+    .filter((path): path is string => typeof path === "string");
+  const label = createAuthPathLabeller(declaredPaths);
+
+  test("the vocabulary is actually populated, and names a real endpoint in full", () => {
+    // Guards the degenerate failure: if `auth` ever became lazy, the module-scope build in route.ts
+    // would read an empty registry and label every request "unknown" — degraded, not leaky, but
+    // silently useless.
+    expect(declaredPaths.length).toBeGreaterThan(50);
+    expect(label("http://localhost/api/auth/sign-in/email")).toBe("/sign-in/email");
+  });
+
+  test("no declared parameter sits in the first segment", () => {
+    // The fallback emits the first segment, so a first-segment parameter is the one shape that could
+    // put a caller-supplied value in a tag. It cannot today (a random value is not in the vocabulary,
+    // so it labels "unknown"), but this keeps the assumption stated rather than assumed.
+    const firstSegmentParams = declaredPaths.filter((path) => path.split("/")[1]?.startsWith(":"));
+
+    expect(firstSegmentParams).toEqual([]);
+  });
+
+  test("every parameterized endpoint in the real registry degrades instead of emitting its parameter", () => {
+    const parameterized = declaredPaths.filter((path) => path.includes(":"));
+    // /callback/:id, /reset-password/:token, /oauth2/callback/:providerId at better-auth 1.6.23.
+    expect(parameterized.length).toBeGreaterThan(0);
+
+    for (const pattern of parameterized) {
+      const secret = "faketokenfaketokenfaketoken00001";
+      const concrete = pattern.replace(/:[^/]+/g, secret);
+
+      expect(label(`http://localhost/api/auth${concrete}`)).not.toContain(secret);
+    }
+  });
+
+  test("endpoints with no declared path are all server-only, so the vocabulary covers the HTTP surface", () => {
+    // The vocabulary is derived from declared paths, so anything routable that lacks one would label
+    // "unknown". Today the only path-less endpoints are SERVER_ONLY (setPassword, signJWT, verifyJWT,
+    // generateTOTP, viewBackupCodes) and unreachable through auth.handler. better-call is moving
+    // toward path-less endpoints in general, so if a routable one ever loses its path this fails.
+    const routablePathless = endpoints.filter((endpoint) => {
+      if (typeof endpoint.path === "string") return false;
+      const metadata = endpoint.options?.metadata as { SERVER_ONLY?: boolean } | undefined;
+      return metadata?.SERVER_ONLY !== true;
+    });
+
+    expect(routablePathless).toEqual([]);
   });
 });
