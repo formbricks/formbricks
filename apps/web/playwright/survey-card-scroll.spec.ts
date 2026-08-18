@@ -214,7 +214,12 @@ for (const arrangement of ARRANGEMENTS) {
       await expect(navButton(page, WELCOME_BUTTON_LABEL)).toBeFocused({ timeout: 5000 });
       await page.keyboard.press("Space");
 
-      const headline = page.getByRole("heading", { name: CTA_HEADLINE });
+      // Matched by text, not by role: an element's headline is a <Label> (survey-ui's
+      // `ElementHeader` ties it to the control via htmlFor), where the welcome card's is a heading.
+      // The welcome headline going away first pins a later failure on the card that did not open at
+      // the top, rather than on navigation that never happened.
+      const headline = page.getByText(CTA_HEADLINE, { exact: true });
+      await expect(page.getByRole("heading", { name: WELCOME_HEADLINE })).toBeHidden();
       await expect(headline).toBeVisible();
 
       // Mount focus lands on the block's Next button — the CTA element has no control of its own.
