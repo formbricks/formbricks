@@ -178,11 +178,11 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
               component: "better-auth",
               ...(request && { "auth.path": request.path, "auth.method": request.method }),
             },
-            // Only when it is a string. `redactEmailsInLogMessage` passes non-strings through
-            // UNTOUCHED, so an object message would reach Sentry unredacted — and the only non-string
-            // Better Auth passes as `message` is the Error already being captured here, so there is
-            // nothing to gain by forwarding it.
-            ...(typeof safeMessage === "string" && { extra: { betterAuthMessage: safeMessage } }),
+            // No `extra`. Forwarding `message` was considered and dropped: `redactEmailsInLogMessage`
+            // strips emails and nothing else, so a plugin logging `error("… <token> …", err)` would
+            // put that token in Sentry verbatim — while the message adds nothing, being either the
+            // error's own name or a sentence accompanying the Error already captured here. Keeping
+            // Sentry to `Error`-or-nothing is what makes the header note above stay true.
           });
         }
       }

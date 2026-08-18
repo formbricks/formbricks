@@ -32,7 +32,7 @@ describe("createAuthPathLabeller — the security invariant (ENG-2259)", () => {
     const result = label(`https://app.formbricks.com/api/auth/reset-password/${RESET_TOKEN}`);
 
     // The endpoint is still named — only the secret in it is dropped.
-    expect(result).toBe("reset-password");
+    expect(result).toBe("/reset-password/*");
     expect(result).not.toContain(RESET_TOKEN);
   });
 
@@ -73,7 +73,7 @@ describe("createAuthPathLabeller — labelling rules", () => {
   });
 
   test("falls back to the first segment for an undeclared deeper path", () => {
-    expect(label("https://app.formbricks.com/api/auth/sign-in/passkey")).toBe("sign-in");
+    expect(label("https://app.formbricks.com/api/auth/sign-in/passkey")).toBe("/sign-in/*");
   });
 
   test("labels an unrecognized first segment unknown, bounding tag cardinality", () => {
@@ -88,6 +88,36 @@ describe("createAuthPathLabeller — labelling rules", () => {
   test("labels a URL outside the auth base path, or an unparseable one, unknown", () => {
     expect(label("https://app.formbricks.com/api/v1/surveys")).toBe(UNKNOWN_AUTH_PATH_LABEL);
     expect(label("not-a-url")).toBe(UNKNOWN_AUTH_PATH_LABEL);
+  });
+
+  test("every emitted label is rooted or the unknown marker, so one Sentry facet stays filterable", () => {
+    const labels = [
+      "/api/auth/sign-in/email",
+      "/api/auth/sign-in/passkey",
+      "/api/auth/reset-password",
+      `/api/auth/reset-password/${RESET_TOKEN}`,
+      "/api/auth/oauth2/token",
+      "/api/auth/not-an-endpoint",
+    ].map((path) => label(`https://app.formbricks.com${path}`));
+
+    for (const emitted of labels) {
+      expect(emitted === UNKNOWN_AUTH_PATH_LABEL || emitted.startsWith("/")).toBe(true);
+    }
+  });
+
+  test("a trailing slash does not split a known endpoint across two facet values", () => {
+    expect(label("https://app.formbricks.com/api/auth/get-session/")).toBe("/get-session");
+    expect(label("https://app.formbricks.com/api/auth/sign-in/email//")).toBe("/sign-in/email");
+  });
+
+  test("a truncated label never collides with the same-named literal endpoint", () => {
+    // `/reset-password` (POST, performs the reset) and `/reset-password/:token` (GET callback) are
+    // different endpoints; merging them into one bucket would lose the distinction that matters when
+    // reading which one is throwing.
+    expect(label("https://app.formbricks.com/api/auth/reset-password")).toBe("/reset-password");
+    expect(label(`https://app.formbricks.com/api/auth/reset-password/${RESET_TOKEN}`)).toBe(
+      "/reset-password/*"
+    );
   });
 
   test("ignores declared entries that are not usable paths", () => {

@@ -85,7 +85,7 @@ describe("Better Auth internal fault — Sentry capture carries the endpoint (re
 
     const { context } = capturedFault();
     // The endpoint is still named — only the secret in its path is dropped.
-    expect(context?.tags).toMatchObject({ "auth.path": "reset-password", "auth.method": "GET" });
+    expect(context?.tags).toMatchObject({ "auth.path": "/reset-password/*", "auth.method": "GET" });
     // Belt and braces: nothing anywhere in the captured payload, tags or extra.
     expect(JSON.stringify(context)).not.toContain(token);
     expect(JSON.stringify(context)).not.toContain(callbackSecret);

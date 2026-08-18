@@ -349,7 +349,6 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     // capture still happens, which is what keeps `auth.api.*` faults reportable (ENG-2259).
     expect(Sentry.captureException).toHaveBeenCalledWith(dbError, {
       tags: { component: "better-auth" },
-      extra: { betterAuthMessage: "Better auth was unable to query your database.\nError: " },
     });
   });
 
@@ -359,8 +358,6 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
 
     log("error", deadlock);
 
-    // No `extra`: Better Auth passed the Error as `message` here, and forwarding it would put an
-    // unredacted non-string into Sentry for no diagnostic gain (the Error is the capture itself).
     expect(Sentry.captureException).toHaveBeenCalledWith(deadlock, {
       tags: { component: "better-auth" },
     });
@@ -402,7 +399,6 @@ describe("betterAuthLogger (request-path tagging, ENG-2259)", () => {
 
     expect(Sentry.captureException).toHaveBeenCalledWith(cause, {
       tags: { component: "better-auth", "auth.path": "/oauth2/userinfo", "auth.method": "GET" },
-      extra: { betterAuthMessage: "TypeError" },
     });
   });
 
@@ -425,12 +421,24 @@ describe("betterAuthLogger (request-path tagging, ENG-2259)", () => {
 
     expect(Sentry.captureException).toHaveBeenCalledWith(cause, {
       tags: { component: "better-auth" },
-      extra: { betterAuthMessage: "TypeError" },
     });
     // An untagged capture is itself diagnostic: it means the throw did not come through auth.handler.
     const [, captureContext] = vi.mocked(Sentry.captureException).mock.calls[0];
     expect(captureContext).not.toHaveProperty("tags.auth.path");
     expect(logger.withContext).toHaveBeenCalledWith({ source: "better-auth" });
+  });
+
+  test("never forwards the Better Auth message to Sentry, only tags", () => {
+    // `redactEmailsInLogMessage` strips emails and nothing else, so a message string is not a safe
+    // Sentry payload — a plugin logging a token in one would forward it verbatim. The capture stays
+    // `Error` + bounded tags, which is what keeps the module header's claim true.
+    runWithBetterAuthRequestContext({ path: "/sign-in/email", method: "POST" }, () => {
+      log("error", "failure for reset token faketokenfaketokenfaketoken00001", fault());
+    });
+
+    const [, captureContext] = vi.mocked(Sentry.captureException).mock.calls[0];
+    expect(captureContext).not.toHaveProperty("extra");
+    expect(JSON.stringify(captureContext)).not.toContain("faketokenfaketokenfaketoken00001");
   });
 
   test("does not tag a handled APIError into Sentry — the ENG-2037 gate still wins", () => {

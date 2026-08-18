@@ -23,6 +23,10 @@ import "server-only";
  *
  * The query string is never read. `/verify-email?token=…` and OAuth callbacks with `?code=&state=`
  * carry credentials there.
+ *
+ * Two emitted shapes, both starting with `/` so they sort and filter together in one Sentry facet:
+ * an exact declared path (`/sign-in/email`), or a truncated one (`/reset-password/*`) when the request
+ * named an endpoint we will not spell out in full. Anything else is `unknown`.
  */
 
 // Deliberately a local copy of the literal in oauth-urls.ts rather than an import: that module reads
@@ -63,11 +67,19 @@ export const createAuthPathLabeller = (declaredPaths: Iterable<string>): ((url: 
     const baseIndex = pathname.indexOf(AUTH_BASE_PATH);
     if (baseIndex === -1) return UNKNOWN_AUTH_PATH_LABEL;
 
-    const authPath = pathname.slice(baseIndex + AUTH_BASE_PATH.length);
+    // Trailing slashes are trimmed before matching: the declared set holds `/get-session`, so
+    // `/api/auth/get-session/` would otherwise miss the exact match and degrade to `/get-session/*`,
+    // splitting one endpoint across two facet values for nothing.
+    const authPath = pathname.slice(baseIndex + AUTH_BASE_PATH.length).replace(/\/+$/, "");
     if (literalPaths.has(authPath)) return authPath;
 
+    // `/<segment>/*`, not a bare segment: the emitted values all land in one Sentry facet, so a mix of
+    // `/sign-in/email` and `sign-in` would make `auth.path:/sign-in*` miss the truncated bucket. The
+    // trailing `*` also keeps the degraded form distinct from a same-named literal — `/reset-password`
+    // (the POST that performs the reset) and `/reset-password/*` (the GET callback carrying a token)
+    // are different endpoints and must not merge into one bucket.
     const firstSegment = getFirstSegment(authPath);
-    if (firstSegment && knownFirstSegments.has(firstSegment)) return firstSegment;
+    if (firstSegment && knownFirstSegments.has(firstSegment)) return `/${firstSegment}/*`;
 
     return UNKNOWN_AUTH_PATH_LABEL;
   };

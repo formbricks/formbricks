@@ -107,7 +107,7 @@ describe("[...all] Better Auth route — observability context (ENG-2259)", () =
     );
 
     // The endpoint is still identified; the credential in its path is not carried anywhere.
-    expect(seen).toEqual({ path: "reset-password", method: "POST" });
+    expect(seen).toEqual({ path: "/reset-password/*", method: "POST" });
     expect(JSON.stringify(seen)).not.toContain(token);
   });
 });
