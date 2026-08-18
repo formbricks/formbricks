@@ -85,8 +85,8 @@
     "tailwind-merge": "3.5.0"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@storybook/react": "10.3.6",
     "@storybook/react-vite": "10.3.6",
     "@tailwindcss/postcss": "4.2.4",

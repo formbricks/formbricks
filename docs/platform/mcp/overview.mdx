@@ -70,9 +70,12 @@ workspace id.
   previous value is kept only in the audit log.
 </Warning>
 
-Feedback records can be filtered by source, question, submission, end user, chosen option and date range,
-and `count_feedback_records` answers "how many" without fetching the records themselves — so an agent can
-report totals without pulling anyone's feedback text into the conversation.
+Feedback records can be filtered by source, question, submission, end user, chosen option, language, date
+range, and by enrichment output — sentiment, emotions and whether a record has been enriched or translated
+at all. Any filter accepts several values, which are OR-ed, while different filters are AND-ed, and the
+listing can be ordered by when feedback was collected or when it was stored. `count_feedback_records`
+answers "how many" without fetching the records themselves — so an agent can report totals without pulling
+anyone's feedback text into the conversation.
 
 The two search tools match by meaning rather than keywords ("checkout is confusing" finds "I couldn't
 figure out how to pay"), and `find_similar_feedback_records` shows how widely one piece of feedback is

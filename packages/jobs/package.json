@@ -19,6 +19,7 @@
     "clean": "rimraf .turbo node_modules coverage dist",
     "build": "tsc && vite build",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
@@ -31,8 +32,8 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.6",
     "typescript": "5.9.3",
     "vite": "7.3.5",

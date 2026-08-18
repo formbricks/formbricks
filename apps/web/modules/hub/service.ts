@@ -2,7 +2,7 @@ import "server-only";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
-import { getHubClient } from "./hub-client";
+import { assertRepeatedArrayParams, getHubClient } from "./hub-client";
 import type {
   CreateTaxonomyRunInput,
   CreateTaxonomyRunResponse,
@@ -257,6 +257,10 @@ export const listFeedbackRecords = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
+    // Scoped here rather than in getHubClient(): only list/count send array-typed filters, so only they
+    // need to pay for (and fail loudly on) this check. Inside the try so a failure is the same relayed
+    // Hub error as any other, not an uncaught exception.
+    assertRepeatedArrayParams(client);
     const data = await client.feedbackRecords.list(params);
     return { data, error: null };
   } catch (err) {
@@ -285,6 +289,8 @@ export const countFeedbackRecords = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
+    // See the matching comment in listFeedbackRecords: scoped to the two paths that send array filters.
+    assertRepeatedArrayParams(client);
     const data = await client.feedbackRecords.count(params);
     return { data, error: null };
   } catch (err) {

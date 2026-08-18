@@ -12,6 +12,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import {
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
+  PASSWORD_RESET_DISABLED,
   PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
   RATE_LIMITING_DISABLED,
   SESSION_MAX_AGE,
@@ -31,9 +32,11 @@ import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gat
 import { createBrevoCustomerAfterEmailVerification } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
+import { signupPolicyBeforeHandler } from "./signup-policy";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
@@ -282,6 +285,16 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
+      // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
+      // has disabled password resets (PASSWORD_RESET_DISABLED=1). See better-auth-password-reset-gate.ts.
+      await requirePasswordResetEnabledBeforeHandler(ctx, PASSWORD_RESET_DISABLED);
+      // ENG-2293: enforce the closed-sign-up policy on Better Auth's native /sign-up/email, which is
+      // served beside createUserAction and used to bypass it entirely. Runs BEFORE the endpoint so the
+      // rejection can't double as an account-existence oracle (the handler looks the address up first,
+      // and an address that already has one never reaches a create hook). See signup-policy.ts.
+      // Ordered ahead of the breach check so a sign-up on a closed instance costs no outbound HIBP call.
+      // Path-disjoint from the reset gate above, so their relative order is not load-bearing.
+      await signupPolicyBeforeHandler(ctx);
       // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
       // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
       // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.

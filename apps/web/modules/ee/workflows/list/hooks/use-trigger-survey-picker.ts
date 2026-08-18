@@ -81,7 +81,6 @@ export const useWorkflowSurveyOptions = (workspaceId: string) => {
         cursor = page.meta.nextCursor;
         pages += 1;
         if (pages >= SURVEY_LIST_MAX_PAGES && cursor) {
-          // eslint-disable-next-line no-console
           console.warn(
             `Workflow trigger survey picker truncated at ${SURVEY_LIST_MAX_PAGES * SURVEY_LIST_PAGE_SIZE} surveys.`
           );

@@ -90,7 +90,7 @@ describe("Config", () => {
     // Now we call update()
     const newStatus = { value: "error", expiresAt: "2100-01-01T00:00:00Z" } as unknown as TConfig["status"];
 
-    configInstance.update({ ...mockConfig, status: newStatus } as unknown as TConfigUpdateInput);
+    configInstance.update({ ...mockConfig, status: newStatus });
 
     // The update call should eventually call setItem on AsyncStorage
     expect(setItemMock).toHaveBeenCalledWith(JS_LOCAL_STORAGE_KEY, expect.any(String));

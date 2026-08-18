@@ -38,14 +38,18 @@ export const fetchWorkspaceState = async ({
     }
 
     // The server responds with `data.workspace` but SDK internals use `data.settings`
-    // to avoid `workspace.workspace` nesting. Map the field name here.
-    const rawData = response.data as TWorkspaceState & {
-      data: { workspace?: TWorkspaceState["data"]["settings"] };
+    // to avoid `workspace.workspace` nesting. Map the field name here. Until that has
+    // happened, `settings` may genuinely be absent, so view the payload through a type
+    // that says so.
+    const rawData = response.data;
+    const legacyData = rawData.data as {
+      settings?: TWorkspaceState["data"]["settings"];
+      workspace?: TWorkspaceState["data"]["settings"];
     };
 
-    if (rawData.data.workspace && !rawData.data.settings) {
-      rawData.data.settings = rawData.data.workspace;
-      delete rawData.data.workspace;
+    if (legacyData.workspace && !legacyData.settings) {
+      legacyData.settings = legacyData.workspace;
+      delete legacyData.workspace;
     }
 
     return ok(rawData);
@@ -75,9 +79,9 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
       const expiresAt = appConfig.get().workspace.expiresAt;
 
       try {
-        // check if the environmentState has not expired yet
+        // check if the workspace state has not expired yet
 
-        if (expiresAt && new Date(expiresAt) >= new Date()) {
+        if (new Date(expiresAt) >= new Date()) {
           return;
         }
 
@@ -99,7 +103,9 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
             filteredSurveys,
           });
         } else {
-          throw workspace.error;
+          throw new Error(
+            `Error fetching workspace state: ${workspace.error.code} - ${workspace.error.responseMessage ?? workspace.error.message}`
+          );
         }
       } catch (e) {
         console.error(`Error during expiry check: `, e);
@@ -115,10 +121,7 @@ export const addWorkspaceStateExpiryCheckListener = (): void => {
       }
     };
 
-    workspaceSyncIntervalId = window.setInterval(
-      () => void intervalHandler(),
-      updateInterval
-    ) as unknown as number;
+    workspaceSyncIntervalId = window.setInterval(() => void intervalHandler(), updateInterval);
   }
 };
 

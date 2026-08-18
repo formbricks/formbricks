@@ -38,6 +38,11 @@ export interface MeasureDefinition {
  * enum dimension values: the generated emotion-count measures, the translated
  * value-label maps (typed against these tuples, so additions fail the build until
  * every map is updated), and the ordinal sentiment axis sort all derive from them.
+ *
+ * NOTE: `ZHubSentiment` / `ZHubEmotion` in `@formbricks/types/feedback-source` carry the same two
+ * vocabularies for the feedback-record filter schemas. These stay as `as const` tuples because the
+ * build-time exhaustiveness guard above depends on the literal tuple type; keep both in sync until
+ * ENG-2373 hoists them to one source.
  */
 export const SENTIMENT_VALUE_ORDER = [
   "very_negative",

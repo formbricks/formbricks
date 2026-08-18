@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
+import { TFeedbackSourceImportMode, TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -61,6 +61,7 @@ interface EditFeedbackSourceModalProps {
     feedbackSourceId: string;
     workspaceId: string;
     name: string;
+    importMode?: TFeedbackSourceImportMode;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<boolean>;
@@ -91,6 +92,7 @@ export const EditFeedbackSourceModal = ({
       surveyId: "",
       selectedQuestionIds: [],
       importHistorical: true,
+      importMode: "completedOnly",
     },
     mode: "onChange",
   });
@@ -116,6 +118,10 @@ export const EditFeedbackSourceModal = ({
           surveyId: mappedSurveyId,
           selectedQuestionIds: mappedQuestionIds,
           importHistorical: true,
+          // Round-tripped, never edited here: importMode is read only by the historical import, and
+          // editing a source never runs one, so this dialog renders no control for it. Seeding the
+          // persisted value keeps saving any other field from resetting the source to completedOnly.
+          importMode: feedbackSource.importMode,
         });
         setCsvFeedbackSourceName("");
         setSourceFields([]);
@@ -142,6 +148,7 @@ export const EditFeedbackSourceModal = ({
           surveyId: "",
           selectedQuestionIds: [],
           importHistorical: true,
+          importMode: "completedOnly",
         });
       } else {
         setCsvFeedbackSourceName("");
@@ -152,6 +159,7 @@ export const EditFeedbackSourceModal = ({
           surveyId: "",
           selectedQuestionIds: [],
           importHistorical: true,
+          importMode: "completedOnly",
         });
       }
     }
@@ -166,6 +174,7 @@ export const EditFeedbackSourceModal = ({
       surveyId: "",
       selectedQuestionIds: [],
       importHistorical: true,
+      importMode: "completedOnly",
     });
     setIsUpdating(false);
   };
@@ -184,6 +193,7 @@ export const EditFeedbackSourceModal = ({
       feedbackSourceId: feedbackSource.id,
       workspaceId: feedbackSource.workspaceId,
       name: values.sourceName.trim(),
+      importMode: values.importMode,
       surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
       fieldMappings: undefined,
     });

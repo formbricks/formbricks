@@ -37,7 +37,7 @@
     "@formbricks/cache": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/email": "workspace:*",
-    "@formbricks/hub": "0.9.0",
+    "@formbricks/hub": "0.12.0",
     "@formbricks/i18n-utils": "workspace:*",
     "@formbricks/jobs": "workspace:*",
     "@formbricks/js": "5.0.0",
@@ -168,8 +168,8 @@
     "zod-openapi": "5.4.6"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.58.2",
     "@storybook/react": "10.3.6",
     "@storybook/react-vite": "10.3.6",

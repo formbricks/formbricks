@@ -1,4 +1,4 @@
 {
-  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "exclude": ["node_modules", "dist"],
   "extends": "@formbricks/config-typescript/js-library.json"
 }

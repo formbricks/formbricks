@@ -102,6 +102,7 @@ describe("rateLimitConfigs", () => {
         "inviteMember",
         "bulkInviteMembers",
         "generateExampleResponses",
+        "integrationMutation",
       ]);
 
       // Exact values, not just presence: this quota is the only thing bounding one account from

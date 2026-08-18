@@ -37,6 +37,16 @@ overrides:
   # patched in 2.0.10. Pinned to 2.0.10 to close both.
   # load-bearing: @prisma/dev pins 1.19.11 and @modelcontextprotocol/sdk resolves 1.19.15.
   "@hono/node-server": 2.0.10
+  # ENG-2195 / GHSA-8j4g-w8fx-2239 (CVE-2026-69207): hono's CORS middleware has a ReDoS in the
+  # Access-Control-Request-Headers parser on preflight requests.
+  # ENG-2300 / GHSA-54fx-42gc-7vw4 (CVE-2026-71848): languageDetector middleware algorithmic-complexity
+  # DoS via a long hyphen-separated language tag.
+  # ENG-2319 / GHSA-f23p-vx2j-j53r (CVE-2026-71850): hono/jsx's memo() retains SSR output across
+  # requests, leaking one user's rendered HTML to another.
+  # ENG-2320 / GHSA-79qm-7rj5-m7r9 (CVE-2026-71849): Proxy Helper forwards response headers named in
+  # the origin's Connection header instead of stripping them. All four patched in 4.12.34.
+  # load-bearing: @hono/node-server resolves 4.x via @modelcontextprotocol/sdk and @prisma/dev (dev/MCP-only).
+  hono: 4.12.34
   # OpenTelemetry / protobuf chains.
   # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
   # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
@@ -72,9 +82,10 @@ overrides:
   # vulnerabilities are all patched in 10.3.1.
   # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
   ip-address@10: 10.3.1
-  # GHSA-2v37-7h3g-55p8: nanoid 3.x predictable output is patched in 3.3.17.
-  # load-bearing: postcss resolves 3.3.16.
-  nanoid@3: 3.3.17
+  # ENG-2403 / GHSA-2v37-7h3g-55p8 (CVE-2026-67213): nanoid <3.3.18 customAlphabet/customRandom loop
+  # indefinitely when called with size 0 (DoS). Raises the 3.x pin from 3.3.17 to 3.3.18 (still <4).
+  # load-bearing: postcss resolves 3.3.17.
+  nanoid@3: 3.3.18
   # GHSA-9ggv-8w38-r7pm: @boxyhq/saml-jackson still resolves typeorm 0.3.28; patched in 0.3.29.
   # ENG-1990 / GHSA-2rp8-mm9q-fp49: typeorm <0.3.31 migration:generate template-literal code injection;
   # patched in 0.3.31.
@@ -141,7 +152,7 @@ overrides:
   # advisory. load-bearing: @redocly/ajv and ajv pull 3.1.4 (dev-only, API-docs tooling).
   fast-uri@3: 3.1.5
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
-  # ajv@6, @babel/core, body-parser, engine.io@6, hono, linkify-it, protobufjs@7 and uuid@11
+  # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
   # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
   # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.

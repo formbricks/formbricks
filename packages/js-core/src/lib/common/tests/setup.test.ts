@@ -352,6 +352,7 @@ describe("setup.ts", () => {
       // config updated
       expect(mockConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- vitest asymmetric matchers are any-typed
           user: expect.objectContaining({
             data: { userId: "user_abc", segments: [] },
           }),
@@ -398,12 +399,149 @@ describe("setup.ts", () => {
         workspace: {
           data: {
             surveys: [{ name: "SurveyA" }],
-
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- vitest asymmetric matchers are any-typed
             expiresAt: expect.any(Date),
           },
         },
         filteredSurveys: [{ name: "SurveyA" }],
       });
+    });
+
+    test("migrates a user-less legacy config and still resets + resyncs instead of throwing", async () => {
+      // Old first-migration configs could be persisted without a `user` state.
+      (localStorage.getItem as unknown as Mock).mockReturnValueOnce(
+        JSON.stringify({
+          appUrl: "https://urlX",
+          environmentId: "ws_123",
+        })
+      );
+
+      const mockConfig = {
+        get: () => {
+          throw new Error("no config found");
+        },
+        resetConfig: vi.fn(),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+      (fetchWorkspaceState as unknown as Mock).mockResolvedValueOnce({
+        ok: true,
+        data: {
+          data: {
+            surveys: [],
+            expiresAt: new Date(Date.now() + 60000),
+          },
+        },
+      });
+
+      (filterSurveys as unknown as Mock).mockReturnValueOnce([]);
+
+      const result = await setup({ workspaceId: "ws_123", appUrl: "https://urlX" });
+
+      expect(result.ok).toBe(true);
+      // the migrated user-less state was stored with the default user substituted
+      expect(mockConfig.update).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ workspaceId: "ws_123", user: DEFAULT_USER_STATE_NO_USER_ID })
+      );
+      // and the fresh-sync path still ran
+      expect(mockConfig.resetConfig).toHaveBeenCalled();
+      expect(fetchWorkspaceState).toHaveBeenCalled();
+    });
+
+    test("migrates a legacy config whose user has no data instead of throwing", async () => {
+      // A legacy blob can carry a shapeless `user` (present but without `data`).
+      (localStorage.getItem as unknown as Mock).mockReturnValueOnce(
+        JSON.stringify({
+          appUrl: "https://urlX",
+          environmentId: "ws_123",
+          user: {},
+        })
+      );
+
+      const mockConfig = {
+        get: () => {
+          throw new Error("no config found");
+        },
+        resetConfig: vi.fn(),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+      (fetchWorkspaceState as unknown as Mock).mockResolvedValueOnce({
+        ok: true,
+        data: {
+          data: {
+            surveys: [],
+            expiresAt: new Date(Date.now() + 60000),
+          },
+        },
+      });
+
+      (filterSurveys as unknown as Mock).mockReturnValueOnce([]);
+
+      const result = await setup({ workspaceId: "ws_123", appUrl: "https://urlX" });
+
+      expect(result.ok).toBe(true);
+      // the shapeless user was replaced by the default user state
+      expect(mockConfig.update).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ workspaceId: "ws_123", user: DEFAULT_USER_STATE_NO_USER_ID })
+      );
+      expect(mockConfig.resetConfig).toHaveBeenCalled();
+      expect(fetchWorkspaceState).toHaveBeenCalled();
+    });
+
+    test("rebuilds a complete user state when a legacy user has data but no expiresAt", async () => {
+      const legacyUserData = {
+        userId: null,
+        contactId: null,
+        segments: [],
+        displays: [],
+        responses: [],
+        lastDisplayAt: null,
+      };
+      (localStorage.getItem as unknown as Mock).mockReturnValueOnce(
+        JSON.stringify({
+          appUrl: "https://urlX",
+          environmentId: "ws_123",
+          user: { data: legacyUserData },
+        })
+      );
+
+      const mockConfig = {
+        get: () => {
+          throw new Error("no config found");
+        },
+        resetConfig: vi.fn(),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+
+      (fetchWorkspaceState as unknown as Mock).mockResolvedValueOnce({
+        ok: true,
+        data: {
+          data: {
+            surveys: [],
+            expiresAt: new Date(Date.now() + 60000),
+          },
+        },
+      });
+
+      (filterSurveys as unknown as Mock).mockReturnValueOnce([]);
+
+      const result = await setup({ workspaceId: "ws_123", appUrl: "https://urlX" });
+
+      expect(result.ok).toBe(true);
+      // the surviving data was kept and the missing expiresAt filled in
+      expect(mockConfig.update).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ user: { expiresAt: null, data: legacyUserData } })
+      );
     });
 
     test("calls handleErrorOnFirstSetup if workspace state fetch fails initially", async () => {

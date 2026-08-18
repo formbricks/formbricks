@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 // Import after unmocking
 import {
+  constantTimeEqual,
   generateStandardWebhookSignature,
   generateWebhookSecret,
   getWebhookSecretBytes,
@@ -116,6 +117,37 @@ describe("Crypto Utils", () => {
       const expectedHash = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
 
       expect(hashSha256(input)).toBe(expectedHash);
+    });
+  });
+
+  describe("constantTimeEqual", () => {
+    test("should return true for identical values", () => {
+      expect(constantTimeEqual("a-signature-value", "a-signature-value")).toBe(true);
+    });
+
+    test("should return false for values that differ", () => {
+      expect(constantTimeEqual("a-signature-value", "a-signature-valuf")).toBe(false);
+    });
+
+    test("should return false for values of different lengths", () => {
+      expect(constantTimeEqual("short", "considerably-longer")).toBe(false);
+    });
+
+    test("should compare hex values by their decoded bytes", () => {
+      expect(constantTimeEqual("ab".repeat(32), "ab".repeat(32), "hex")).toBe(true);
+      expect(constantTimeEqual("ab".repeat(32), "cd".repeat(32), "hex")).toBe(false);
+    });
+
+    test("should return false rather than matching when either value is empty", () => {
+      expect(constantTimeEqual("", "")).toBe(false);
+      expect(constantTimeEqual("a-signature-value", "")).toBe(false);
+    });
+
+    // Buffer.from drops input that is invalid for the encoding, so both of these decode to zero bytes.
+    // Without the empty-buffer guard they would compare equal and pass as a valid signature.
+    test("should return false for values that are invalid for the encoding", () => {
+      expect(constantTimeEqual("zz", "yy", "hex")).toBe(false);
+      expect(constantTimeEqual("zz", "ab".repeat(32), "hex")).toBe(false);
     });
   });
 
