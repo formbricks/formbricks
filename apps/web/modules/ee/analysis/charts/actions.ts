@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
+import { ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -19,6 +19,11 @@ import {
 } from "@/modules/ee/analysis/charts/lib/charts";
 import { resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
+import {
+  type TDimensionValue,
+  buildDimensionValueQuery,
+  collectDimensionValues,
+} from "@/modules/ee/analysis/lib/dimension-value-lookup";
 import { isSelectableValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -384,7 +389,7 @@ export const getDimensionValuesAction = authenticatedActionClient
     }: {
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetDimensionValuesAction>;
-    }): Promise<string[]> => {
+    }): Promise<TDimensionValue[]> => {
       const { organizationId, workspaceId } = await checkWorkspaceAccess(
         ctx.user.id,
         parsedInput.workspaceId,
@@ -403,15 +408,8 @@ export const getDimensionValuesAction = authenticatedActionClient
 
       const { dimension, search } = parsedInput;
 
-      const query: TChartQuery = {
-        dimensions: [dimension],
-        order: [[dimension, "asc"]],
-        limit: DIMENSION_VALUE_LOOKUP_LIMIT,
-        ...(search ? { filters: [{ member: dimension, operator: "contains", values: [search] }] } : {}),
-      };
-
       const rows = await executeTenantScopedQuery({
-        query,
+        query: buildDimensionValueQuery({ dimension, limit: DIMENSION_VALUE_LOOKUP_LIMIT, search }),
         feedbackDirectoryId,
         workspaceId,
         organizationId,
@@ -419,17 +417,6 @@ export const getDimensionValuesAction = authenticatedActionClient
         source: "charts.getDimensionValuesAction",
       });
 
-      const seen = new Set<string>();
-      const values: string[] = [];
-      for (const row of Array.isArray(rows) ? rows : []) {
-        const raw = (row as Record<string, unknown>)[dimension];
-        if (typeof raw !== "string") continue;
-        const value = raw.trim();
-        if (!value || seen.has(value)) continue;
-        seen.add(value);
-        values.push(value);
-      }
-
-      return values;
+      return collectDimensionValues(rows, dimension, DIMENSION_VALUE_LOOKUP_LIMIT);
     }
   );
