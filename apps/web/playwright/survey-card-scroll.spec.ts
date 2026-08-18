@@ -204,7 +204,15 @@ for (const arrangement of ARRANGEMENTS) {
 
     test("CTA card shows the start of its text, with the next button focused", async ({ page }) => {
       await page.goto(surveyUrl ?? "");
-      await navButton(page, WELCOME_BUTTON_LABEL).click();
+
+      // Advance from the keyboard once the start button has focus, rather than clicking it:
+      // Playwright scrolls a locator into view before clicking, and the cardless arrangement's
+      // scroll wrapper outlives the card — so that scroll would still be in place when the CTA
+      // card mounts and would fake the very symptom under test. Space activates the focused
+      // button natively; Enter is not equivalent, because the welcome card passes an `onKeyDown`
+      // that suppresses the button's own Enter activation.
+      await expect(navButton(page, WELCOME_BUTTON_LABEL)).toBeFocused({ timeout: 5000 });
+      await page.keyboard.press("Space");
 
       const headline = page.getByRole("heading", { name: CTA_HEADLINE });
       await expect(headline).toBeVisible();
