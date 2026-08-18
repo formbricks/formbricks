@@ -112,6 +112,12 @@ test.describe("Feedback source reconciliation @slow", () => {
     const supported = elements.filter((element) => !UNMAPPABLE_ELEMENT_TYPES.has(element.type));
     expect(supported.length).toBeGreaterThan(0);
 
+    // The retype target is pinned to a known element type so the expectation below can be a literal.
+    // Asserting "not nps" would pass for any wrong value the reconciler happened to write.
+    const retypeTarget = supported.find((element) => element.type === "openText");
+    expect(retypeTarget, "fixture must contain an openText question").toBeDefined();
+    const RETYPE_EXPECTED_HUB_FIELD_TYPE = "text";
+
     const feedbackDirectoryId = await seedDirectory(organizationId, workspaceId);
     const STALE = "el-deleted-from-the-survey";
     const SIBLING_ELEMENT = "el-belongs-to-the-sibling-survey";
@@ -153,7 +159,7 @@ test.describe("Feedback source reconciliation @slow", () => {
       elementScope: "specific",
       mappings: [
         { surveyId, elementId: STALE, hubFieldType: "text" },
-        { surveyId, elementId: supported[0].id, hubFieldType: "nps" },
+        { surveyId, elementId: retypeTarget!.id, hubFieldType: "nps" },
       ],
     });
 
@@ -174,17 +180,21 @@ test.describe("Feedback source reconciliation @slow", () => {
     // ran, never matched the source, or threw.
     await expect
       .poll(() => mappedElementIds(curatedRetypedSourceId, surveyId), { timeout: 15000 })
-      .toEqual([supported[0].id]);
+      .toEqual([retypeTarget!.id]);
 
     // ...and it was retyped rather than left stale.
     const retyped = await prisma.feedbackSourceFormbricksMapping.findFirstOrThrow({
-      where: { feedbackSourceId: curatedRetypedSourceId, surveyId, elementId: supported[0].id },
+      where: { feedbackSourceId: curatedRetypedSourceId, surveyId, elementId: retypeTarget!.id },
       select: { hubFieldType: true },
     });
-    expect(retyped.hubFieldType).not.toBe("nps");
+    // The exact type openText maps to, not merely "something other than nps" — that weaker form
+    // passes for any wrong value reconciliation might write.
+    expect(retyped.hubFieldType).toBe(RETYPE_EXPECTED_HUB_FIELD_TYPE);
 
     // Neither curated source adopted the questions it was never mapped to.
-    expect(await mappedElementIds(curatedRetypedSourceId, surveyId)).not.toContain(supported[1]?.id);
+    expect(await mappedElementIds(curatedRetypedSourceId, surveyId)).not.toContain(
+      supported.find((element) => element.id !== retypeTarget!.id)?.id
+    );
 
     // The held-back source kept its single stale row instead of being orphaned. Credible now: the
     // poll above proves this save already reconciled a specific-scope source.

@@ -735,6 +735,9 @@ describe("updateFeedbackSourceWithMappings", () => {
     const txMethods = {
       feedbackSource: {
         update: vi.fn(),
+        // The error -> active reset runs as its own updateMany, so that a healthy source is a no-op
+        // rather than a P2025 from a `status` filter on the main update.
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         findUniqueOrThrow: vi.fn(),
       },
       feedbackSourceFormbricksMapping: {
@@ -799,6 +802,65 @@ describe("updateFeedbackSourceWithMappings", () => {
     expect(tx.feedbackSource.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ elementScope: "all" }) })
     );
+  });
+
+  // ENG-2064: nothing else clears `status`. The edit modal sends only {name, importMode}, `status` is
+  // optional on the input so Prisma leaves it alone, and getFeedbackSourcesBySurveyId filters on
+  // "active" — so a source reconciliation flagged `error` was repaired by a re-map and then stayed
+  // dark forever, reachable only through the unrelated pause/resume toggle.
+  const seedUpdateTransaction = () => {
+    const tx = setupTransaction();
+    tx.feedbackSource.update.mockResolvedValue(undefined);
+    tx.feedbackSourceFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
+    tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
+    return tx;
+  };
+  const formbricksMappings = {
+    type: "formbricks_survey" as const,
+    elementScope: "all" as const,
+    mappings: [{ surveyId: SURVEY_ID, elementId: "el-new", hubFieldType: "nps" as const }],
+  };
+
+  test("returns an errored source to active when a re-map gives it rows again", async () => {
+    const tx = seedUpdateTransaction();
+
+    await updateFeedbackSourceWithMappings(
+      FEEDBACK_SOURCE_ID,
+      ENV_ID,
+      { name: "Updated" },
+      formbricksMappings
+    );
+
+    // updateMany, not update: `status` in the where of the main update would miss every healthy
+    // source and throw P2025 on the normal save path.
+    expect(tx.feedbackSource.updateMany).toHaveBeenCalledWith({
+      where: { id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID, status: "error" },
+      data: { status: "active" },
+    });
+  });
+
+  test("leaves status alone when the caller set it explicitly", async () => {
+    const tx = seedUpdateTransaction();
+
+    // The pause/resume toggle. Reviving a source it just paused would fight the operator.
+    await updateFeedbackSourceWithMappings(
+      FEEDBACK_SOURCE_ID,
+      ENV_ID,
+      { name: "Updated", status: "paused" },
+      formbricksMappings
+    );
+
+    expect(tx.feedbackSource.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("does not revive a source when the save supplies no mappings", async () => {
+    const tx = seedUpdateTransaction();
+
+    await updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "Renamed only" });
+
+    // A rename does not repair anything, so there is nothing to come back from.
+    expect(tx.feedbackSource.updateMany).not.toHaveBeenCalled();
   });
 
   test("replaces field mappings when provided", async () => {

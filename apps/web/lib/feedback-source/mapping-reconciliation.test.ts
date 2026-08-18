@@ -6,12 +6,14 @@ import {
   applyReconciliationToFeedbackSource,
   reconcileFeedbackSourcesForSurvey,
   reconcileMappingsAgainstSurvey,
+  scheduleFeedbackSourceReconciliation,
 } from "./mapping-reconciliation";
 import { getFeedbackSourcesToReconcile } from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    feedbackSource: { update: vi.fn() },
+    feedbackSource: { update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    survey: { findUnique: vi.fn() },
     feedbackSourceFormbricksMapping: {
       count: vi.fn(),
       createMany: vi.fn(),
@@ -24,6 +26,13 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@formbricks/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
+
+const scheduled: Array<() => Promise<void>> = [];
+vi.mock("next/server", () => ({
+  after: vi.fn((cb: () => Promise<void>) => {
+    scheduled.push(cb);
+  }),
 }));
 
 vi.mock("./service", () => ({
@@ -48,7 +57,7 @@ const mapping = (elementId: string, hubFieldType: string, surveyId = SURVEY_ID) 
 
 const mockTx = () => {
   const tx = {
-    feedbackSource: { update: vi.fn() },
+    feedbackSource: { update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     feedbackSourceFormbricksMapping: {
       count: vi.fn().mockResolvedValue(1),
       createMany: vi.fn(),
@@ -449,10 +458,31 @@ describe("applyReconciliationToFeedbackSource", () => {
       toUpdate: [],
     });
 
-    expect(tx.feedbackSource.update).toHaveBeenCalledWith({
-      where: { id: SOURCE_ID, workspaceId: WORKSPACE_ID },
+    // Scoped to `active`: the write used to be unconditional and also overwrote `paused`, and the
+    // resume toggle would then flip that source to `active` — silently resuming something an
+    // operator had deliberately disabled.
+    expect(tx.feedbackSource.updateMany).toHaveBeenCalledWith({
+      where: { id: SOURCE_ID, workspaceId: WORKSPACE_ID, status: "active" },
       data: { status: "error" },
     });
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  test("does not flag, or log, a source that was already paused", async () => {
+    const tx = mockTx();
+    tx.feedbackSourceFormbricksMapping.count.mockResolvedValue(0);
+    // No row matched the `active` filter — the source is paused.
+    tx.feedbackSource.updateMany.mockResolvedValue({ count: 0 });
+
+    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [],
+      toDelete: ["el-last"],
+      toUpdate: [],
+    });
+
+    // The log has to follow the write: claiming "flagged as errored" when nothing changed would send
+    // an operator looking for a state the source is not in.
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   // Counted across every survey, so a source still serving a sibling survey keeps working.
@@ -557,5 +587,87 @@ describe("reconcileFeedbackSourcesForSurvey", () => {
       expect.objectContaining({ surveyId: SURVEY_ID }),
       "Failed to reconcile feedback sources after survey update"
     );
+  });
+});
+
+/**
+ * The interleaving `after()` makes possible.
+ *
+ * Deferring the work off the request path means two saves can have their callbacks run in either
+ * order, and the editor autosaves every 10 seconds — so this is routine, not exotic. Reconciling
+ * against the blocks each request captured would let the older callback undo the newer save. The
+ * deferred task therefore re-reads the survey, and these tests fire the callbacks in reverse order
+ * to prove it.
+ */
+describe("scheduleFeedbackSourceReconciliation", () => {
+  const OLD_BLOCKS = [
+    { id: "b1", elements: [{ id: "el-old", type: "openText" }] },
+  ] as unknown as TSurveyBlock[];
+  const NEW_BLOCKS = [
+    {
+      id: "b1",
+      elements: [
+        { id: "el-old", type: "openText" },
+        { id: "el-new", type: "openText" },
+      ],
+    },
+  ] as unknown as TSurveyBlock[];
+
+  beforeEach(() => {
+    scheduled.length = 0;
+    vi.mocked(getFeedbackSourcesToReconcile).mockResolvedValue([]);
+  });
+
+  test("a stale callback does not delete the mapping a newer save created", async () => {
+    const tx = mockTx();
+    // The source is mapped to both questions, which is the state after the *newer* save.
+    vi.mocked(getFeedbackSourcesToReconcile).mockResolvedValue([
+      {
+        id: SOURCE_ID,
+        workspaceId: WORKSPACE_ID,
+        elementScope: "specific",
+        formbricksMappings: [
+          { surveyId: SURVEY_ID, elementId: "el-old", hubFieldType: "text" },
+          { surveyId: SURVEY_ID, elementId: "el-new", hubFieldType: "text" },
+        ],
+      },
+    ] as never);
+
+    // Two saves. The second added `el-new`, and it is what is actually stored.
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, OLD_BLOCKS);
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, NEW_BLOCKS);
+    expect(scheduled).toHaveLength(2);
+
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ blocks: NEW_BLOCKS } as never);
+
+    // Reverse order on purpose: the older request's callback runs last. Against the blocks it
+    // captured, `el-new` is absent from the survey and would be classified as removed — deleting
+    // the mapping the newer save had just created.
+    await scheduled[1]();
+    await scheduled[0]();
+
+    const deleted = vi
+      .mocked(tx.feedbackSourceFormbricksMapping.deleteMany)
+      .mock.calls.flatMap((call: any) => call[0]?.where?.elementId?.in ?? []);
+    expect(deleted).not.toContain("el-new");
+    expect(deleted).toEqual([]);
+  });
+
+  test("skips a survey deleted between the save and the callback", async () => {
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, OLD_BLOCKS);
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue(null as never);
+
+    await scheduled[0]();
+
+    // Diffing against nothing would read as "this survey has no questions" and delete every mapping.
+    expect(getFeedbackSourcesToReconcile).not.toHaveBeenCalled();
+  });
+
+  test("a failing read is logged rather than lost, since Next swallows after() throws", async () => {
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, OLD_BLOCKS);
+    vi.mocked(prisma.survey.findUnique).mockRejectedValue(new Error("connection reset"));
+
+    await expect(scheduled[0]()).resolves.toBeUndefined();
+    expect(logger.error).toHaveBeenCalled();
   });
 });

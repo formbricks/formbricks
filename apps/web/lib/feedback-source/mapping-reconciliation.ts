@@ -337,24 +337,63 @@ export const reconcileFeedbackSourcesForSurvey = async (
 };
 
 /**
- * Reconcile after the response has been sent, when the runtime allows it.
+ * The survey's blocks as they are stored *right now*.
  *
- * Both callers persist the survey and then reconcile before responding, so every save — including the
- * editor's 10-second draft autosave — paid for a `findMany` (and a transaction on a real delta) on the
- * request path, for work whose result the response does not contain. It is already best-effort and
- * swallows its own errors, so nothing downstream depends on it having finished.
+ * Deliberately a fresh read rather than anything cached: its whole purpose is to observe writes that
+ * landed after the caller captured its own snapshot.
+ */
+const readPersistedSurveyBlocks = async (surveyId: string): Promise<TSurveyBlock[] | null> => {
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    select: { blocks: true },
+  });
+
+  return survey ? (survey.blocks as unknown as TSurveyBlock[]) : null;
+};
+
+/**
+ * Reconcile after the response has been sent, against the survey's *current* persisted blocks.
  *
- * Deferred with `after()` rather than simply dropped: an un-awaited promise in a serverless runtime can
- * be killed when the response is sent, which would turn "slower saves" into "mappings that silently
- * stop reconciling". Outside a request — scripts, jobs, tests — `after()` throws, and there the inline
- * await is correct anyway, so that path falls back to it.
+ * Both callers persist the survey and then reconcile, so every save — including the editor's
+ * 10-second draft autosave — used to pay for a `findMany` (and a transaction on a real delta) on the
+ * request path, for work whose result the response does not contain. It is best-effort and swallows
+ * its own errors, so nothing downstream depends on it having finished.
+ *
+ * Deferred with `after()` rather than simply dropped: an un-awaited promise in a serverless runtime
+ * can be killed when the response is sent, which would turn "slower saves" into "mappings that
+ * silently stop reconciling".
+ *
+ * **Re-reads the blocks inside the deferred task**, and does not reconcile against the snapshot the
+ * caller captured. `after()` callbacks from concurrent requests are not serialized, so a callback
+ * from an older save can run after a newer one; applying its snapshot would delete mappings the
+ * newer save created, or recreate mappings it removed. At a 10-second autosave interval that
+ * interleaving is routine rather than exotic. Re-reading makes a late callback converge instead:
+ * whichever runs last reconciles against what is actually stored, so the end state is the same
+ * either way.
+ *
+ * Outside a request — scripts, jobs, tests — `after()` throws. There the caller's blocks are the
+ * freshest thing available and there is no interleaving to lose to, so that path awaits inline with
+ * the snapshot it was given.
  */
 export const scheduleFeedbackSourceReconciliation = async (
   surveyId: string,
   blocks: TSurveyBlock[]
 ): Promise<void> => {
   try {
-    after(() => reconcileFeedbackSourcesForSurvey(surveyId, blocks));
+    after(async () => {
+      try {
+        const persisted = await readPersistedSurveyBlocks(surveyId);
+        // Deleted between the save and this callback. Diffing against nothing would read as "this
+        // survey has no questions" and delete every mapping for it.
+        if (!persisted) return;
+
+        await reconcileFeedbackSourcesForSurvey(surveyId, persisted);
+      } catch (error) {
+        // Next swallows throws from an `after()` callback, so the read is guarded here rather than
+        // left to disappear silently.
+        logger.error({ surveyId, error }, "Failed to reconcile feedback sources after the response");
+      }
+    });
   } catch {
     await reconcileFeedbackSourcesForSurvey(surveyId, blocks);
   }
