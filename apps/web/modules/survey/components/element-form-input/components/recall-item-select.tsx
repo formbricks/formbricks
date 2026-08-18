@@ -152,10 +152,12 @@ export const RecallItemSelect = ({
    * use, so reserved rows are title-cased consistently rather than by a rule local to this file.
    */
   const reservedRecallItems = useMemo(() => {
-    const entries = listMidSurveyReservedEntries(
-      RESERVED_FIELD_CATALOG,
-      embeddedFieldEntries.map(({ key }) => key)
-    );
+    const entries = listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, [
+      ...embeddedFieldEntries.map(({ key }) => key),
+      // Element ids shadow reserved entries too: an element answered under the id `country` writes
+      // `responseData.country`, which the merged value map spreads over the reserved projection.
+      ...elements.map((element) => element.id),
+    ]);
 
     return listReadableFields({
       blocks: [],
@@ -165,7 +167,7 @@ export const RecallItemSelect = ({
     })
       .reserved.filter(({ key }) => !recallItemIds.includes(key))
       .map(({ key, label }) => ({ id: key, label, type: "reserved" as const }));
-  }, [embeddedFieldEntries, recallItemIds]);
+  }, [embeddedFieldEntries, elements, recallItemIds]);
 
   const surveyElementRecallItems = useMemo(() => {
     const isWelcomeCard = elementId === "start";

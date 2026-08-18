@@ -672,7 +672,9 @@ describe("RESERVED_FIELD_CATALOG", () => {
     // extra key is an entry nobody declared in the table above.
     expect(projectCatalog(capturedResponse)).toStrictEqual({
       source: "link",
-      url: "https://example.com/pricing?utm_source=news&email=a@b.co",
+      // `privacy: "redactQuery"` applied by the projection: the stored meta still holds
+      // `?utm_source=news&email=a@b.co`, but a projected value can be recalled into a redirect URL.
+      url: "https://example.com/pricing",
       country: "DE",
       action: "Clicked Upgrade",
       browser: "Chrome",
@@ -687,6 +689,20 @@ describe("RESERVED_FIELD_CATALOG", () => {
       startedAt: "2026-08-01T09:00:00.000Z",
       finishedAt: "2026-08-01T09:02:30.000Z",
     });
+  });
+
+  test("a redactQuery entry projects without its query string, while storage keeps it", () => {
+    // The finding this pins: reserved `url` is interpolable into an ending card's redirect URL and a
+    // follow-up email, so projecting the href verbatim forwards whatever the survey link carried —
+    // for a link survey that includes the single-use `suToken`, which is a credential.
+    const tokenised = {
+      ...capturedResponse,
+      meta: { ...capturedResponse.meta, url: "https://app.test/s/abc?suToken=secret&lang=de#top" },
+    };
+
+    expect(projectCatalog(tokenised).url).toBe("https://app.test/s/abc");
+    // Read-side narrowing only — capture is the Anonymize toggle's job, and it is off here.
+    expect(tokenised.meta.url).toBe("https://app.test/s/abc?suToken=secret&lang=de#top");
   });
 
   test("resolves what a historical response captured and reports the rest as unset", () => {
@@ -775,6 +791,18 @@ describe("projectClientReservedValues", () => {
     ttc: { q1: 40_000 },
     meta: { source: "link", url: "https://example.com/pricing", action: "Clicked Upgrade" },
   };
+
+  test("redacts the query from a mid-survey url, which is the interpolable one", () => {
+    // The leak path this closes: an author can put `#recall:url#` in an ending card's redirect URL, so
+    // the mid-survey projection is what a third-party host would receive. On a single-use link the
+    // href carries `suToken`, a credential, plus whatever prefill params the link was built with.
+    const projected = projectClientReservedValues(RESERVED_FIELD_CATALOG, {
+      ...midSurvey,
+      meta: { ...midSurvey.meta, url: "https://app.test/s/abc?suToken=secret&country=DE" },
+    });
+
+    expect(projected.url).toBe("https://app.test/s/abc");
+  });
 
   test("projects only the entries a client can read mid-survey", () => {
     expect(projectClientReservedValues(RESERVED_FIELD_CATALOG, midSurvey)).toStrictEqual({
@@ -1023,6 +1051,27 @@ describe("listReadableFields", () => {
     });
 
     expect(fields.reserved).toEqual([{ key: "_", label: "_" }]);
+  });
+
+  test("camelCase reserved names get a spaced label, not a run-together one", () => {
+    // The catalog names mirror the `meta` keys they read, so they are camelCase rather than
+    // snake_case. Labelling them with the snake_case formatter alone rendered "DurationSeconds" in
+    // the pickers, and made the Playwright assertions that a server-only field is ABSENT pass for the
+    // wrong reason: they searched for "Duration Seconds", a string nothing ever rendered.
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [],
+      reservedEntries: RESERVED_FIELD_CATALOG.filter((entry) =>
+        ["durationSeconds", "ipAddress", "responseId"].includes(entry.name)
+      ),
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.reserved).toEqual([
+      { key: "ipAddress", label: "Ip Address" },
+      { key: "responseId", label: "Response Id" },
+      { key: "durationSeconds", label: "Duration Seconds" },
+    ]);
   });
 
   test("embedded data labels fall back to the storageKey when the definition name is blank", () => {

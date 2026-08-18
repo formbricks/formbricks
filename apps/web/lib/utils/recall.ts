@@ -5,7 +5,7 @@ import {
 } from "@formbricks/types/embedded-data-resolver";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
-import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
+import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -112,7 +112,7 @@ const resolveRecallItemLabel = (
   // Reserved is checked LAST, which is the grandfather rule in label form: a survey that declares its
   // own `country` has already returned above, so the token keeps showing the declared field's name.
   const reservedEntry = RESERVED_FIELD_CATALOG.find((entry) => entry.name === recallItemId);
-  if (reservedEntry) return formatSnakeCaseToTitleCase(reservedEntry.name);
+  if (reservedEntry) return formatFieldNameToTitleCase(reservedEntry.name);
 };
 
 export const getRecallItemLabel = <T extends TSurvey>(

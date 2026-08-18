@@ -454,13 +454,6 @@ export const getLogicRules = (t: TFunction) => {
      * absent (`source` on a link survey opened without one), and those two are the only operators
      * that let an author branch on that.
      */
-    /*
-     * Reserved fields (ENG-1840) are keyed by the catalog entry's `dataType`, so a new entry inherits
-     * the right operators from the type it already declares instead of needing a rule set of its own.
-     * Booleans project as the strings "true"/"false", so equality is the only comparison that means
-     * anything there - ordering or substring operators would invite a condition that reads sensibly
-     * and never matches.
-     */
     ["reserved.string"]: { options: [...textOperatorOptions, ...presenceOptions] },
     ["reserved.number"]: { options: [...numberComparisonOptions, ...presenceOptions] },
     // Booleans project as the strings "true"/"false" (see `projectReservedValues`), so equality is

@@ -11,7 +11,7 @@ import {
 } from "@formbricks/types/embedded-data-resolver";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
+import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -166,13 +166,16 @@ const getComputedFieldOptions = (localSurvey: TSurvey): TComputedFieldOption[] =
   }));
 
 /**
- * Every name a survey already declares — the shadow list the grandfather rule filters against. Both
- * declaration kinds count: an ingested field and a variable are equally capable of being named
- * `country`, and either one resolves ahead of the reserved entry at read time.
+ * Every name a survey already declares — the shadow list the grandfather rule filters against. All
+ * three declaration kinds count: an ingested field, a variable and an element id are equally capable
+ * of being named `country`, and any of them resolves ahead of the reserved entry at read time,
+ * because the merged value map spreads `responseData` (which is keyed by element id) over the
+ * reserved projection.
  */
 const getDeclaredFieldNames = (localSurvey: TSurvey): string[] => [
   ...getDeclaredIngestedStorageKeys(localSurvey),
   ...getComputedFieldOptions(localSurvey).map((variable) => variable.id),
+  ...getElementsFromBlocks(localSurvey.blocks).map((element) => element.id),
 ];
 
 /** The reserved entries this survey may offer mid-survey, already availability- and shadow-filtered. */
@@ -194,7 +197,7 @@ const INPUT_TYPE_BY_DATA_TYPE: Record<TEmbeddedDataType, HTMLInputTypeAttribute>
 
 const toReservedOption = (entry: TReservedFieldCatalogEntry): TComboboxOption => ({
   icon: GlobeIcon,
-  label: formatSnakeCaseToTitleCase(entry.name),
+  label: formatFieldNameToTitleCase(entry.name),
   value: entry.name,
   meta: {
     type: "reserved",

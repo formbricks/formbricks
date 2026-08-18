@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  formatFieldNameToTitleCase,
   formatSnakeCaseToTitleCase,
   isLegacyIdCharset,
   isLegacyVariableName,
@@ -56,6 +57,32 @@ describe("safe-identifier", () => {
 
     test("keeps already safe identifiers unchanged", () => {
       expect(toSafeIdentifier("country_code")).toBe("country_code");
+    });
+  });
+
+  describe("formatFieldNameToTitleCase", () => {
+    test("splits camelCase, which the snake_case formatter cannot", () => {
+      expect(formatFieldNameToTitleCase("durationSeconds")).toBe("Duration Seconds");
+      expect(formatFieldNameToTitleCase("ipAddress")).toBe("Ip Address");
+      expect(formatFieldNameToTitleCase("utmSource")).toBe("Utm Source");
+      expect(formatFieldNameToTitleCase("viewportWidth")).toBe("Viewport Width");
+    });
+
+    test("still handles the snake_case and single-word cases", () => {
+      expect(formatFieldNameToTitleCase("job_description")).toBe("Job Description");
+      expect(formatFieldNameToTitleCase("url")).toBe("Url");
+      expect(formatFieldNameToTitleCase("")).toBe("");
+    });
+
+    test("splits on a digit-to-uppercase boundary too", () => {
+      expect(formatFieldNameToTitleCase("utm2Source")).toBe("Utm2 Source");
+    });
+
+    test("leaves the shared snake_case formatter's camelCase behaviour alone", () => {
+      // Load-bearing: `formatSnakeCaseToTitleCase` also derives the stored display name for newly
+      // created contact attribute keys, and those arrive camelCase from the SDK and CSV import. This
+      // pins that the reserved-field fix did not leak into that path.
+      expect(formatSnakeCaseToTitleCase("firstName")).toBe("FirstName");
     });
   });
 
