@@ -3,6 +3,10 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  lookupAuthorizedOrganizationIds,
+  lookupAuthorizedWorkspaceIds,
+} from "@/lib/authorization/resource-list";
 import { TWorkspaceWithLanguages } from "@/modules/survey/list/types/surveys";
 import { TUserWorkspace } from "@/modules/survey/list/types/workspaces";
 import { doesWorkspaceExist, getUserWorkspaces, getWorkspace, getWorkspaceWithLanguages } from "./workspace";
@@ -16,10 +20,12 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
       findMany: vi.fn(),
     },
-    membership: {
-      findFirst: vi.fn(),
-    },
   },
+}));
+
+vi.mock("@/lib/authorization/resource-list", () => ({
+  lookupAuthorizedOrganizationIds: vi.fn(),
+  lookupAuthorizedWorkspaceIds: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -176,73 +182,31 @@ describe("Workspace module", () => {
   });
 
   describe("getUserWorkspaces", () => {
-    test("should return user workspaces for manager role", async () => {
-      const mockOrgMembership = {
-        userId: "user-id",
-        organizationId: "org-id",
-        role: "manager",
-      };
-
+    test("returns authoritative workspace ids scoped to the selected organization", async () => {
       const mockWorkspaces: TUserWorkspace[] = [
         { id: "workspace-1", name: "Workspace 1" },
         { id: "workspace-2", name: "Workspace 2" },
       ] as any;
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
+      vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValueOnce(["org-id"]);
+      vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValueOnce(["workspace-1", "workspace-2"]);
       vi.mocked(prisma.workspace.findMany).mockResolvedValueOnce(mockWorkspaces as any);
 
       const result = await getUserWorkspaces("user-id", "org-id");
 
       expect(result).toEqual(mockWorkspaces);
-      expect(prisma.membership.findFirst).toHaveBeenCalledWith({
-        where: {
-          userId: "user-id",
-          organizationId: "org-id",
-        },
+      expect(lookupAuthorizedOrganizationIds).toHaveBeenCalledExactlyOnceWith({
+        id: "user-id",
+        type: "user",
+      });
+      expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledExactlyOnceWith({
+        id: "user-id",
+        type: "user",
       });
       expect(prisma.workspace.findMany).toHaveBeenCalledWith({
         where: {
+          id: { in: ["workspace-1", "workspace-2"] },
           organizationId: "org-id",
-        },
-        select: {
-          id: true,
-          name: true,
-        },
-      });
-    });
-
-    test("should return user workspaces for member role with workspace team filter", async () => {
-      const mockOrgMembership = {
-        userId: "user-id",
-        organizationId: "org-id",
-        role: "member",
-      };
-
-      const mockWorkspaces: TUserWorkspace[] = [
-        { id: "workspace-1", name: "Workspace 1" },
-        { id: "workspace-2", name: "Workspace 2" },
-      ] as any;
-
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
-      vi.mocked(prisma.workspace.findMany).mockResolvedValueOnce(mockWorkspaces as any);
-
-      const result = await getUserWorkspaces("user-id", "org-id");
-
-      expect(result).toEqual(mockWorkspaces);
-      expect(prisma.workspace.findMany).toHaveBeenCalledWith({
-        where: {
-          organizationId: "org-id",
-          workspaceTeams: {
-            some: {
-              team: {
-                teamUsers: {
-                  some: {
-                    userId: "user-id",
-                  },
-                },
-              },
-            },
-          },
         },
         select: {
           id: true,
@@ -252,42 +216,42 @@ describe("Workspace module", () => {
     });
 
     test("should throw ValidationError when user is not a member of the organization", async () => {
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(null);
+      vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValueOnce([]);
+      vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValueOnce([]);
 
       await expect(getUserWorkspaces("user-id", "org-id")).rejects.toThrow(ValidationError);
+      expect(prisma.workspace.findMany).not.toHaveBeenCalled();
     });
 
     test("should handle DatabaseError when Prisma throws known request error", async () => {
-      const mockOrgMembership = {
-        userId: "user-id",
-        organizationId: "org-id",
-        role: "admin",
-      };
-
       const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
         clientVersion: "1.0.0",
         code: "P2002",
       });
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
+      vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValueOnce(["org-id"]);
+      vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValueOnce(["workspace-1"]);
       vi.mocked(prisma.workspace.findMany).mockRejectedValueOnce(prismaError);
 
       await expect(getUserWorkspaces("user-id", "org-id")).rejects.toThrow(DatabaseError);
     });
 
     test("should rethrow unknown errors", async () => {
-      const mockOrgMembership = {
-        userId: "user-id",
-        organizationId: "org-id",
-        role: "admin",
-      };
-
       const error = new Error("Unknown error");
 
-      vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(mockOrgMembership as any);
+      vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValueOnce(["org-id"]);
+      vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValueOnce(["workspace-1"]);
       vi.mocked(prisma.workspace.findMany).mockRejectedValueOnce(error);
 
       await expect(getUserWorkspaces("user-id", "org-id")).rejects.toThrow("Unknown error");
+    });
+
+    test("propagates AuthZed lookup failures", async () => {
+      const unavailable = new Error("AuthZed unavailable");
+      vi.mocked(lookupAuthorizedOrganizationIds).mockRejectedValueOnce(unavailable);
+
+      await expect(getUserWorkspaces("user-id", "org-id")).rejects.toBe(unavailable);
+      expect(prisma.workspace.findMany).not.toHaveBeenCalled();
     });
   });
 });

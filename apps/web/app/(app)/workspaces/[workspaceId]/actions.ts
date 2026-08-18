@@ -2,13 +2,8 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import {
-  AuthorizationError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
-import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
@@ -148,13 +143,7 @@ export const getWorkspacesForSwitcherAction = authenticatedActionClient
       ],
     });
 
-    // Need membership for getWorkspacesByUserId (1 DB query)
-    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
-    if (!membership) {
-      throw new AuthorizationError("Membership not found");
-    }
-
-    return await getWorkspacesByUserId(ctx.user.id, membership);
+    return await getWorkspacesByUserId(ctx.user.id, parsedInput.organizationId);
   });
 
 const ZGetWritableWorkspacesAction = z.object({
@@ -179,10 +168,5 @@ export const getWritableWorkspacesAction = authenticatedActionClient
       ],
     });
 
-    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
-    if (!membership) {
-      throw new AuthorizationError("Membership not found");
-    }
-
-    return await getWritableWorkspacesByUserId(ctx.user.id, membership);
+    return await getWritableWorkspacesByUserId(ctx.user.id, parsedInput.organizationId);
   });
