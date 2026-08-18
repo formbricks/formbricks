@@ -143,13 +143,13 @@ ESLint runs on the flat config format. Every package and app has its own `eslint
 
 Every tier builds on `@formbricks/config-eslint/base`, which holds the shared turbo, prettier, vitest and unused-vars conventions. It exports named building blocks rather than a ready-made config, so packages import one of the tiers above instead of `base` directly.
 
-Each tier is an array of flat config objects, so a package either re-exports it directly or spreads it and appends its own overrides:
+The `library` and `react` tiers are factories — call them with the package's `tsconfigRootDir` so the type-aware rules resolve against that package's own tsconfig. The `react-hooks` and `next` tiers are plain arrays a config re-exports or spreads with its own overrides:
 
 ```javascript
 // packages/<pkg>/eslint.config.mjs
 import library from "@formbricks/config-eslint/library";
 
-export default library;
+export default library({ tsconfigRootDir: import.meta.dirname });
 ```
 
 ```javascript

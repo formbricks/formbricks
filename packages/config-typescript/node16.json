@@ -3,8 +3,6 @@
   "compilerOptions": {
     "lib": ["ES2021"],
     "module": "commonjs",
-    // CommonJS output can't use the "bundler" resolution from base.json, and these
-    // packages (database, types) rely on classic Node lookup, so pin it explicitly.
     "moduleResolution": "node10",
     "target": "ES2021"
   },
