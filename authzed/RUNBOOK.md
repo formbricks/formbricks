@@ -1,16 +1,20 @@
 # AuthZed relationship sync runbook
 
-PostgreSQL is the source of truth for authorization. SpiceDB holds a _projection_ of it, written after
-each source transaction commits, best-effort. That trade-off is deliberate — an AuthZed outage must
-never turn a successful PostgreSQL mutation into an application error — and it has one consequence
-worth internalizing:
+PostgreSQL is the source of truth for authorization facts. SpiceDB holds their relationship projection and
+becomes the sole decision engine in the direct-authority artifact.
 
-> **Sync failures are silent by design.** Nothing in the product breaks when a projection is dropped.
-> Drift accumulates until something reads SpiceDB and disagrees with PostgreSQL.
+The currently checked-in bridge still performs post-commit best-effort projection. ENG-2408 replaces that
+temporary behavior with a transactional PostgreSQL outbox before any direct-authority deployment is allowed.
+Until that lands, treat every failed projection as potentially lost and prohibit cutover.
+
+> **Direct authority requires durable delivery.** A committed authorization mutation must enqueue its
+> relationship reconciliation atomically, and a revocation that cannot be delivered within 60 seconds must make
+> protected authorization fail closed.
 
 Everything below exists to make that visible and recoverable.
 
-See also: [README](./README.md) for the projection development contract and
+See also: [direct cutover contract](./CUTOVER.md) for the approved release and rollback contract,
+[README](./README.md) for the projection development contract, and
 [AuthZed Operations](../docs/self-hosting/advanced/authzed-operations.mdx) for the public self-hosted operator
 contract.
 
@@ -18,14 +22,14 @@ contract.
 
 | What you see                                                       | What it usually means                          |
 | ------------------------------------------------------------------ | ---------------------------------------------- |
-| Shadow evaluation reports mismatches (ENG-1738)                    | Drift. Run the backfill.                       |
+| Historical comparison telemetry reports mismatches                 | Drift. Run the backfill.                       |
 | A new member, team, or API key lacks access _in SpiceDB only_      | A dropped projection for that record.          |
 | A removed member still resolves in SpiceDB                         | A stale relationship. Only pruning removes it. |
 | `formbricks_authzed_projection_total{status="failed"}` is non-zero | Projections are failing now.                   |
-| Nothing at all, but AuthZed was recently unavailable               | Assume drift. An outage never retries.         |
+| Nothing at all, but AuthZed was recently unavailable               | On the pre-outbox bridge, assume drift.        |
 
-Product authorization is unaffected in every one of these cases while enforcement is still on the
-legacy evaluator. That is what makes them easy to miss.
+On the bridge artifact, legacy authorization is unaffected while durable delivery retries or repair converges
+the graph. On the direct-authority artifact, operational AuthZed failures fail protected operations closed.
 
 ## 2. Diagnosis
 
@@ -117,7 +121,7 @@ Exit `0` clean, `2` drift remains, `1` failed. Read `counters`, `orphans`, and `
 `0` covers **every** unrepaired category, not only the ones the tool fixes: `invalid` (source rows whose
 principal and resource sit in different organizations) and `unmanaged` (relationships outside the
 vocabulary) count toward drift alongside `orphaned`, `missing` and `mismatchedParents`. That matters
-because this exit code is the gate for shadow evaluation and enforcement below — a run cannot report
+because this exit code is the gate for direct authority below — a run cannot report
 clean while authorization state nothing accounts for is still present.
 
 **A non-zero `invalid` needs a human.** These are cross-organization source rows in PostgreSQL: the join
@@ -261,23 +265,45 @@ shared with another installation?
 
 ## 5. When AuthZed is unavailable
 
-**Nothing to do urgently.** Projection is best-effort, PostgreSQL stays authoritative, and product
-authorization is unaffected. Expect `authzed_unavailable` in logs and a rising failure counter.
+### Projection bridge before the durable outbox
+
+PostgreSQL stays authoritative and product authorization is unaffected, but every projection attempted during
+the outage may be lost. Expect `authzed_unavailable` in logs and a rising failure counter. This bridge is not
+eligible for direct authority.
 
 What matters is afterwards:
 
-1. Every projection attempted during the outage was dropped and will not be retried.
+1. Assume every projection attempted during the outage was dropped and will not be retried.
 2. Once SpiceDB is healthy, `pnpm authzed:health` returns `healthy`.
 3. Run the backfill (§3). Until it reports a clean run, assume the graph is incomplete.
-4. **Keep shadow evaluation and enforcement off until then.** A clean run reports
-   `completedAtSnapshot` — hand that revision to shadow evaluation (ENG-1738) as its freshness floor
-   rather than guessing whether the graph is warm.
+4. Keep every direct-authority deployment blocked until the run is clean.
 
-To stop projecting entirely, set `AUTHZED_ENABLED=0`. Projections become no-ops and no client is
-constructed; product authorization is untouched because it still runs on the legacy evaluator. Drift
+To stop projecting entirely on this temporary bridge, set `AUTHZED_ENABLED=0`. Projections become no-ops and no
+client is constructed; product authorization is untouched because it still runs on the legacy evaluator. Drift
 accumulates for the whole period, so a full backfill is required before re-enabling.
 
-## 6. Shadow and enforcement rollout
+### Durable bridge and direct authority
+
+After ENG-2408, source mutations commit a PostgreSQL outbox item atomically. SpiceDB outage does not roll back a
+successful business mutation; delivery retries from PostgreSQL and BullMQ is only the recurring trigger. When
+the service recovers:
+
+1. Run `formbricks-authzed health` and verify datastore migrations.
+2. Drain the outbox and replay any dead letters.
+3. Run the complete dry-run audit, apply attributable repair, and require two consecutive clean audits.
+4. Keep direct-authority cutover blocked while a revocation is pending, dead-lettered, or older than its SLA.
+
+In the direct-authority artifact, a SpiceDB, datastore, resolver, configuration, freshness, or unsupported-result
+failure is not an ordinary denial and never falls back. The protected operation receives a sanitized operational
+failure and fails closed. Formbricks `/health`, startup, readiness, and liveness remain independent so unrelated
+workloads are not restarted.
+
+## 6. Historical comparison controls (not a release strategy)
+
+> **Superseded:** The configuration below documents the migration bridge that was used for parity research. Do
+> not configure it for sandbox, staging, production, or self-hosted cutover. The approved release path is the
+> direct-authority procedure in §7 and [`CUTOVER.md`](./CUTOVER.md). ENG-2450 removes these controls from the
+> candidate image.
 
 Authorization rollout is an internal deployment control. It is intentionally not part of one-click or
 public self-hosting configuration. Long-running processes read the cohort once; change the cohort label
@@ -392,22 +418,89 @@ histogram_quantile(
 )
 ```
 
-The cutover gate applies independently to each target/cohort:
+The following was the historical comparison acceptance criterion. It is retained only to explain old telemetry
+and must not be used to authorize a deployment:
 
 1. Run schema validation and a clean apply/repair immediately before the observation window.
 2. Observe continuously for seven days and at least 1,000 completed comparisons.
 3. Require zero mismatches in either direction, with every earlier mismatch root-caused and resolved.
 4. Require an operational-error rate at or below 0.1%.
 5. Do not enforce an API-key target while any API-key mismatch remains.
-6. Move only the approved target/cohort from shadow to enforcement and restart the deployment.
+6. Historical only: move the approved target/cohort from shadow to enforcement and restart the deployment.
 
-Rollback is configuration-only: disable `AUTHZED_AUTHORIZATION_ENABLED` or remove the enforcement
-target and restart. Legacy authorization becomes authoritative again. If an outage or projection failure
-occurred, run a full backfill before starting another shadow window.
+That configuration-only rollback is also superseded. The direct-authority image contains no evaluator switch;
+rollback is redeployment of the pinned bridge image followed by outbox drain and a clean audit.
 
-## 7. Alerting
+## 7. Direct-authority cutover
 
-Suggested rules. Thresholds are starting points — tune to deployment size.
+The full approval contract is [`CUTOVER.md`](./CUTOVER.md). This section is the operator's execution checklist.
+
+### Freeze the bridge artifact
+
+After the transactional outbox passes its crash, lease, duplicate, ordering, dead-letter, replay, outage, and
+scheduled-repair tests:
+
+1. Build the bridge and record its source commit, immutable application digest, schema digest, Prisma migration
+   head, SpiceDB digest, and operator/chart versions.
+2. Verify it reads the final outbox migration and canonical schema.
+3. Keep legacy authorization authoritative, set `AUTHZED_CONSISTENCY=fully_consistent`, and remove shadow,
+   enforcement-target, cohort, and minimum-snapshot configuration.
+4. Preserve this exact digest as the rollback artifact through production.
+
+### Establish the graph
+
+Deploy the bridge first. Drain the outbox, run a full dry-run audit, apply repair, and require two consecutive
+clean audits plus one clean scheduled six-hour audit. Exercise mutation delivery while SpiceDB is unavailable,
+restore it, and prove replay returns to a clean graph without a dead letter.
+
+### Cut an environment to direct authority
+
+1. Freeze authorization mutations for no more than 15 minutes.
+2. Drain the outbox and run the final full audit.
+3. Abort if both are not complete and clean within 10 minutes.
+4. Deploy the exact approved direct-authority digest and verify every running image ID.
+5. Verify `fully_consistent` configuration and confirm no legacy evaluator or migration rollout selector is
+   present.
+6. Resume mutations and execute critical allow, deny, revocation, cross-tenant, list, API/MCP/UI, and failure
+   checks.
+
+The mandatory order is sandbox, staging, EU, and then KSA. Sandbox must pass rollback/forward recovery and 24
+continuous healthy hours. Staging must pass complete functional, restore, resilience, and capacity suites plus a
+seven-day authoritative soak. EU must remain healthy for 24 hours before KSA begins.
+
+### Roll back
+
+1. Freeze authorization mutations again.
+2. Capture bounded failure evidence.
+3. Redeploy the exact pinned bridge digest and verify image IDs.
+4. Verify legacy authority and durable outbox delivery.
+5. Drain pending work and require a clean full audit.
+6. Resume mutations.
+
+Do not downgrade the SpiceDB schema or outbox migration during a normal application rollback. Restore the
+datastore only through the backup/restore runbook, then apply the guarded release schema and rebuild/repair the
+graph before another cutover.
+
+Abort before or after cutover for a non-clean audit, pending/dead-letter/stale revocation, digest mismatch,
+incomplete backups or restore evidence, unavailable rollback artifact, cross-tenant decision, unexpected allow or
+deny, exceeded operational-error/latency budget, stopped outbox delivery, freshness-guard activation, or open
+high/critical security finding.
+
+## 8. Alerting
+
+The checked-in metrics below cover the current migration bridge. ENG-2408 and ENG-2451 must add authoritative
+decision latency/error, outbox backlog and oldest-item, revocation age, dead-letter, scheduled-audit, drift, and
+repair metrics before direct authority. Their required thresholds are:
+
+- pending revocation warning at 15 seconds;
+- pending revocation critical at 45 seconds;
+- protected authorization fail-closed guard at 60 seconds;
+- any dead-letter revocation is critical and blocks cutover;
+- any scheduled residual drift is warning, and stale higher permission or cross-tenant drift is critical; and
+- direct-authority operational-error rate above 0.1%, p95 above 250 ms, or p99 above one second blocks the staging
+  soak.
+
+Existing bridge rules follow. Thresholds are starting points — tune non-gate alerts to deployment size.
 
 ```promql
 # Warning: projections are failing. Drift is accumulating and a backfill will be needed.
@@ -432,12 +525,14 @@ histogram_quantile(0.95, sum(rate(formbricks_authzed_projection_duration_seconds
 # for: 15m
 ```
 
-Every one of these resolves to the same first action: **run the backfill and confirm a clean run.**
+Every one of these resolves to the same first action: inspect and drain the durable outbox, then run the full
+audit and confirm a clean result. On a pre-outbox bridge, run the backfill immediately because failed writes were
+not retained.
 
 A Helm `PrometheusRule` template shipping these by default is deliberately not part of this change —
 that belongs with the AuthZed deployment contract rather than the application.
 
-## 8. Escalation
+## 9. Escalation
 
 | Situation                                                | Action                                                                                                                                                                                                  |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -445,4 +540,4 @@ that belongs with the AuthZed deployment contract rather than the application.
 | Orphan count exceeds the cap and the endpoint is correct | Do not raise the cap. Establish why first — a wrong database or an in-progress restore both look like this.                                                                                             |
 | `unmanaged` relationships reported                       | Something other than Formbricks is writing to this SpiceDB, or the schema moved ahead of its projector. Never pruned; investigate before enforcing.                                                     |
 | Schema check reports `drifted`                           | `pnpm authzed:schema apply --expected-current-digest <remoteDigest>`. Relationship repair against a drifted schema is not meaningful.                                                                   |
-| Sync cannot be restored and enforcement is pending       | `AUTHZED_ENABLED=0` and note that a full backfill is required before re-enabling.                                                                                                                       |
+| Durable delivery or a clean graph cannot be restored     | Block cutover. If already authoritative, roll back to the pinned bridge digest, drain/replay, and require a clean audit before another attempt.                                                         |

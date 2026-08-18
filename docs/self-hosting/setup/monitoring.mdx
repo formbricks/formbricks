@@ -202,10 +202,19 @@ Use these endpoints for monitoring system health in container orchestration and 
 
 ## AuthZed and SpiceDB
 
-Formbricks exposes bounded projection and authorization-comparison metrics when AuthZed is enabled. Monitor
-projection failures and disabled outcomes, shadow mismatches, authorization operational errors, and authorization
-latency. Also monitor SpiceDB pod availability, datastore migrations, PostgreSQL pool saturation, dispatch
-latency, and cache behavior.
+Current v5 bridge releases expose bounded projection and authorization-comparison metrics when AuthZed is
+enabled. Monitor projection failures, disabled outcomes, migration mismatches, authorization operational errors,
+and authorization latency.
+
+The v6 direct-authority release removes comparison telemetry and requires authoritative allow/deny/operational-
+error and latency metrics plus outbox backlog, oldest pending revocation, dead-letter, reconciliation drift, and
+repair signals. A revocation warns at 15 seconds, becomes critical at 45 seconds, and makes protected
+authorization fail closed at 60 seconds. Follow the release-matched
+[AuthZed Operations guide](/self-hosting/advanced/authzed-operations) during upgrade rather than treating v5
+comparison metrics as a v6 rollout gate.
+
+For every release, also monitor SpiceDB pod availability, datastore migrations, PostgreSQL pool saturation,
+dispatch latency, and cache behavior.
 
 The general Formbricks `/health` endpoint intentionally stays independent from SpiceDB. Use the release-matched
 `formbricks-authzed health` command for authenticated authorization health checks. The

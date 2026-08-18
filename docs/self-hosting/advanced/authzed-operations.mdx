@@ -8,6 +8,13 @@ Formbricks uses [AuthZed SpiceDB](https://authzed.com/docs/spicedb) to store a r
 authorization. PostgreSQL remains the source of truth. Formbricks projects membership, team, workspace, and
 API-key changes into SpiceDB after their PostgreSQL transaction commits.
 
+<Note>
+  Current v5 releases use AuthZed as a rebuildable projection while the legacy evaluator remains available. The
+  planned v6 authorization upgrade makes SpiceDB the sole decision engine, uses durable outbox delivery, and has
+  no runtime legacy fallback. Existing installations must complete the release-matched migration preflight before
+  upgrading; do not infer v6 readiness from a healthy v5 connection alone.
+</Note>
+
 <Warning>
   Treat SpiceDB as a private infrastructure dependency. Do not publish its gRPC port through an Ingress,
   reverse proxy, load balancer, or public Docker port.
@@ -23,9 +30,14 @@ API-key changes into SpiceDB after their PostgreSQL transaction commits.
 | Formbricks projection layer  | Copies committed PostgreSQL authorization changes into SpiceDB                  |
 | AuthZed operator commands    | Check health and schema state, then audit or repair relationship drift          |
 
-Projection is synchronous but best-effort: Formbricks waits for an attempted projection, but a projection
-failure never changes the result of an already committed PostgreSQL mutation. A SpiceDB outage can therefore
-leave the graph behind PostgreSQL. Run a relationship audit after recovery.
+In current v5 bridge releases, projection is synchronous but best-effort: Formbricks waits for an attempted
+projection, but a projection failure never changes the result of an already committed PostgreSQL mutation. A
+SpiceDB outage can therefore leave the graph behind PostgreSQL. Run a relationship audit after recovery.
+
+The v6 direct-authority release adds a PostgreSQL transactional outbox, bounded revocation freshness, automatic
+scheduled audit, and fail-closed authorization. Its migration preflight requires a drained outbox and clean graph
+before the application can rely on SpiceDB decisions. The detailed v6 commands remain release-specific until the
+upgrade implementation ships.
 
 The general Formbricks `/health` endpoint, application startup, and Kubernetes readiness and liveness probes
 do not depend on SpiceDB. This prevents a SpiceDB outage from restarting unrelated Formbricks workloads. It
@@ -296,7 +308,7 @@ There are two supported recovery approaches:
    schema, and rebuild the relationship graph with a full applying backfill.
 
 After either restore, complete datastore migrations, check health, check the schema, and run a full
-relationship audit. Do not enable SpiceDB-backed enforcement until the audit is clean. An older SpiceDB backup
+relationship audit. Do not rely on SpiceDB-backed authorization until the audit is clean. An older SpiceDB backup
 can be repaired from PostgreSQL; a SpiceDB database restored without its matching Formbricks source must never
 be assumed current.
 
@@ -459,7 +471,7 @@ contain tokens, database credentials, schema text, raw SDK errors, relationship 
 
 ## Monitor AuthZed
 
-Enable the existing Formbricks Prometheus or OTLP metrics exporter. The primary signals are:
+Enable the existing Formbricks Prometheus or OTLP metrics exporter. Current v5 bridge signals are:
 
 | Metric                                               | What it measures                                                            |
 | ---------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -490,6 +502,12 @@ sum(rate(formbricks_authzed_authorization_comparisons_total{
   outcome=~"legacy_allow_authzed_deny|legacy_deny_authzed_allow"
 }[5m]))
 ```
+
+The v6 direct-authority release replaces comparison outcomes with bounded authoritative decision and latency
+metrics and adds outbox backlog/age, revocation latency, dead-letter, scheduled-audit, drift, and repair metrics.
+Use the exact metric names shipped by the v6 release. Required gates are no dead-letter revocations, no
+normal-operation 60-second freshness guard, clean scheduled audits, operational errors at or below 0.1%, p95
+below 250 ms, and p99 below one second.
 
 On the SpiceDB side, monitor pod restarts, failed datastore migrations, PostgreSQL connection saturation such
 as `pgxpool_empty_acquire`, dispatch load, cache behavior, and datastore latency. Divide the datastore

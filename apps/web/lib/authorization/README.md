@@ -95,23 +95,31 @@ evaluator must continue honoring `USER_MANAGEMENT_MINIMUM_ROLE`:
 This deployment setting is evaluator input. It is not encoded into the static
 actor/action/resource types.
 
-## Migration inventory
+## Migration inventory and authority contract
 
-The central interface uses the legacy evaluator unless an internal ENG-1738
-rollout rule selects the current request surface and organization. Migration
-means callers use semantic actor/action/resource decisions; deployments with
-authorization rollout disabled have no AuthZed read dependency.
+The bridge implementation still uses the legacy evaluator while the durable
+relationship graph is established. That is temporary migration behavior, not
+the approved release strategy. The direct-authority artifact sends every
+central decision to SpiceDB, including calls outside a request surface, and
+contains no runtime selector or legacy fallback.
 
-### Added by ENG-1738
+The immutable bridge and candidate artifacts, fail-closed semantics,
+sandbox-first validation, environment gates, and deployment-only rollback are
+defined in [`authzed/CUTOVER.md`](../../../../authzed/CUTOVER.md).
+
+### Historical bridge capabilities added by ENG-1738
 
 - A private SpiceDB evaluator behind the unchanged `can()` and `assertCan()`
   interface.
 - PostgreSQL actor/resource existence and tenant-boundary resolution before a
   SpiceDB check.
-- Post-response shadow comparison for selected authenticated request surfaces.
-- Per-surface and per-organization enforcement cohorts with fail-closed
-  operational behavior.
+- Post-response comparison for selected authenticated request surfaces.
+- Per-surface and per-organization migration cohorts.
 - Bounded, identifier-free comparison metrics and mismatch/error logs.
+
+These capabilities supported parity research. They are removed before direct
+authority and are not a sandbox, staging, production, or self-hosted rollout
+mechanism.
 
 Surveys, dashboards, and responses are intentionally resolved to their owning
 workspace before the SpiceDB check. Their parent relationships are not yet
@@ -209,13 +217,11 @@ These read a role but do not decide access, so they stay as they are:
 - **Invite fan-out.** The signup and invite paths derive from the _invited_
   role whether to create `TeamUser` rows, since owners and managers get
   workspace access from the role itself. That is a statement about the invite.
-- **List scoping.** Workspace list queries remain PostgreSQL-authoritative and narrow by role instead
-  of asking a question per row. MCP `list_workspaces` is the one narrow Phase 1 exception: it queues a
-  single shadow-only `LookupResources(workspace, read)` comparison after the response and counts that
-  list observation as one central authorization operation. It never changes the returned list and does
-  not expose generic lookup or enforcement semantics; those remain ENG-1713. Comparison telemetry is
-  directional: an identical set emits one `match` sample, while drift in both directions emits one
-  `legacy_allow_authzed_deny` and one `legacy_deny_authzed_allow` sample for the same observation.
+- **List scoping during the bridge.** Workspace list queries remain PostgreSQL-authoritative and narrow by
+  role while the bridge is deployed. MCP `list_workspaces` has one bounded `LookupResources(workspace, read)`
+  migration observation rather than one check per row. ENG-2449 replaces every current-model organization
+  and workspace authorization list with an authoritative bounded lookup before the direct-authority artifact
+  can ship.
 
 New authorization-sensitive code must use `can` or `assertCan`; it must not add
 callers to the deprecated action-client adapter or reintroduce a role-name gate.
@@ -234,5 +240,5 @@ dataset/workspace authorization decision plus application-level tenant and integ
 
 The current contract has no system/service principal, survey-level sharing,
 per-dashboard ACL, audit-log permission, contextual data-policy capability, or
-generic enforcement-authoritative list-resource lookup. Those require later product decisions and must
-not be added as part of the current-model migration.
+generic Phase 2 list-resource abstraction. Current-model organization/workspace discovery is part of the
+direct cutover and must not be confused with future per-resource sharing.

@@ -9,6 +9,9 @@ assertion-based validation suite.
   blocks that pin down the schema's semantics.
 - `validate.sh` — offline validation runner (local `zed` binary or the pinned
   `authzed/zed` container image; no SpiceDB server needed).
+- [`CUTOVER.md`](./CUTOVER.md) — the approved direct-authority, fail-closed,
+  immutable-artifact, rollback, and environment-gate contract. It supersedes
+  the earlier shadow/cohort release proposal.
 - [`RUNBOOK.md`](./RUNBOOK.md) — diagnosing and recovering from relationship-sync
   failures: the metrics, the log field contract, suggested alert rules, and the
   recovery path through `pnpm authzed:backfill`.
@@ -136,7 +139,9 @@ changes a successful PostgreSQL mutation into an application error; it produces
 only a sanitized operational result and warning. Existing records and any drift
 an outage leaves behind are reconciled by `pnpm authzed:backfill` (see
 [Backfill and repair](#backfill-and-repair)), which must report a clean run
-before AuthZed shadow evaluation or enforcement is enabled.
+before direct authority. ENG-2408 replaces this temporary bridge behavior with
+the transactional outbox required by the [direct cutover
+contract](./CUTOVER.md); the best-effort projector is not eligible for cutover.
 
 The organization-membership projection boundary covers:
 
@@ -245,8 +250,9 @@ and workspace projection.
 
 Existing API keys are not backfilled by mutation hooks; `pnpm authzed:backfill`
 covers them, including a scope revoked outside a hook, which the projector alone
-cannot see. Routing API-key principals through the central interface remains
-ENG-1731, and SpiceDB comparison/cutover remains ENG-1738.
+cannot see. API-key principals are routed through the central interface; the
+direct-authority release contract is now owned by ENG-2448 and
+[`CUTOVER.md`](./CUTOVER.md).
 
 ## Feedback Dataset projection
 
@@ -293,10 +299,10 @@ its effective rules:
 - archive, entitlement, OAuth-scope, Hub tenant, source ownership, and record-integrity checks remain in
   the application layer and execute in their existing order.
 
-Authenticated feedback-gateway requests use the bounded rollout targets `feedback_gateway:user` and
-`feedback_gateway:apiKey`. Public and unauthenticated gateway traffic is never scoped for shadow or
-enforcement. The ENG-2398 rollout is shadow-only; moving either target into an enforcement allowlist
-requires a separate rollout decision.
+Authenticated feedback-gateway requests currently carry the bounded migration targets
+`feedback_gateway:user` and `feedback_gateway:apiKey`. Public and unauthenticated gateway traffic is never
+authorized as an authenticated actor. These targets are migration-only telemetry and are removed with the
+shadow/cohort selector before direct authority; the final evaluator does not depend on a request surface.
 
 ## Resource parent resolution during the current-model migration
 
@@ -309,7 +315,7 @@ the existing server-only PostgreSQL resolvers to map:
 
 It then checks the equivalent workspace permission in SpiceDB. This preserves
 the current authorization boundary and avoids adding a high-cardinality
-`response#survey` projection to every response mutation before shadow mode.
+`response#survey` projection to every response mutation before direct authority.
 Resolver database failures remain operational errors and missing resources
 remain denials, matching the legacy evaluator.
 
@@ -320,19 +326,20 @@ the backfill classifies them as ignored today and never prunes them.
 Phase 2 direct resource grants must add that projection and repair scope before
 enforcement.
 
-## Authorization evaluation and shadow rollout
+## Authorization evaluation and direct cutover
 
-The private SpiceDB evaluator sits behind the existing server-only `can()` and
-`assertCan()` contract. Legacy authorization remains authoritative unless an
-internal rollout cohort explicitly selects SpiceDB enforcement. Shadow checks
-run after the response and cannot change the legacy result; enforcement checks
-run inline and fail closed on operational errors.
+The private SpiceDB evaluator currently sits behind the existing server-only
+`can()` and `assertCan()` contract while the migration bridge is being built.
+The approved release does not use shadow/cohort rollout: the bridge keeps legacy
+decisions authoritative only while the durable outbox establishes a complete
+graph, and the direct-authority image makes SpiceDB the sole evaluator with no
+runtime legacy fallback.
 
-Rollout configuration, supported request surfaces, comparison metrics, parity
-gates, and rollback steps are documented in the [relationship sync
-runbook](./RUNBOOK.md#6-shadow-and-enforcement-rollout). A clean applying
-backfill must provide the `completedAtSnapshot` used as the shadow freshness
-floor before any cohort is enabled.
+The immutable bridge/candidate artifacts, fail-closed behavior, sandbox-first
+sequence, staging and regional production gates, abort triggers, rollback, and
+self-hosted v6 contract are defined in the [direct cutover
+contract](./CUTOVER.md). Operational execution is documented in the
+[relationship sync runbook](./RUNBOOK.md#7-direct-authority-cutover).
 
 ## Mapping from the current system
 
@@ -439,11 +446,12 @@ Exit codes match `authzed:schema`: `0` reconciled, `2` drift remains, `1` failed
 or misused. **`0` means every category is clear, including the ones this tool
 deliberately will not repair** — `invalid` and `unmanaged` count toward drift
 exactly like `orphaned` and `missing`, because unrepaired authorization state is
-still authorization state and this exit code is what gates shadow evaluation and
-enforcement. The result is one line of JSON carrying counters, the offending
-record identifiers, a revision captured _after_ the run's own writes (so shadow
-evaluation can use it as an `at_least_as_fresh` floor — `null` for a dry run,
-which wrote nothing to be fresh relative to), and a `truncated` flag.
+still authorization state and this exit code is what gates direct authority. The
+result is one line of JSON carrying counters, the offending record identifiers,
+a revision captured _after_ the run's own writes (`null` for a dry run), and a
+`truncated` flag. The revision remains useful operational evidence, but the
+approved direct-authority release uses `fully_consistent` reads and does not use
+it as a shadow freshness floor.
 
 That JSON is the whole diagnostic: like the other AuthZed commands, this one runs
 at `LOG_LEVEL=fatal` so stdout stays a single parseable line. Each entry in

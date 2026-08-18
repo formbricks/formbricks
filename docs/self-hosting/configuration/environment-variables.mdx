@@ -208,9 +208,10 @@ This check is intentionally a CLI rather than a browser page or HTTP endpoint. A
 general `/health` response, Kubernetes readiness, or application startup, so a transient SpiceDB outage does
 not restart or mark the rest of Formbricks unhealthy.
 
-When authorization enforcement is enabled, failed or unavailable permission checks must deny the protected
-operation. Do not make the general application readiness probe depend on AuthZed availability; this avoids a
-transient authorization outage restarting unrelated Formbricks workloads.
+In the v6 direct-authority release, failed or unavailable permission checks fail the protected operation closed;
+there is no runtime fallback to legacy authorization. Existing installations must complete the release-matched
+AuthZed migration preflight before upgrading. Do not make the general application readiness probe depend on
+AuthZed availability; this avoids a transient authorization outage restarting unrelated Formbricks workloads.
 
 #### Cube Analytics
 

@@ -6,6 +6,11 @@ tenant. This is a snapshot from one machine on one day, not a standing benchmark
 [Environment and caveats](#environment-and-caveats) before treating any number here as a
 production SLO.
 
+> **Historical benchmark context:** This report predates the approved direct-cutover contract. The release path
+> no longer uses per-surface enforcement cohorts or shadow comparison. The direct-authority artifact uses
+> `fully_consistent`; ENG-2453 must revalidate latency, concurrency, and 2x headroom in production-like staging
+> before cutover. See [`CUTOVER.md`](./CUTOVER.md).
+
 ## Summary
 
 - **The N+1 claim is proven, not argued, on three list/export paths.** A workspace's
@@ -40,8 +45,8 @@ pnpm authzed:perf run --iterations=5000 --concurrency=16
 ```
 
 `authzed-perf.ts run` drives the real `can()` — real coordinator, real evaluator, real
-SpiceDB when enforcement is configured — inside a `withAuthorizationSurface` wrapper (so
-the rollout coordinator has a target to match), and reports p50/p95/p99 per action from
+SpiceDB when the historical enforcement harness is configured — inside a `withAuthorizationSurface` wrapper
+(so the migration coordinator has a target to match), and reports p50/p95/p99 per action from
 5,000 samples weighted toward positive checks and a subset of the seeded users, per
 AuthZed's guidance that negative checks are structurally more expensive and an unweighted
 sample produces an unrealistic cache profile.
@@ -246,8 +251,8 @@ pnpm authzed:perf clean
 - Quantify the `reactCache` gap: reproduce a fake request boundary per iteration in the
   perf harness (or run the counter test at BI scale for a fuller path) to see whether
   request-scoped caching meaningfully changes the coordinator's contribution.
-- Revisit whether `at_least_as_fresh` + ZedTokens is viable for the enforcement path, now
-  that the correction above shows the consistency-mode cost is smaller than first assumed.
+- Re-run the authoritative `fully_consistent` path in production-like staging. Changing consistency is outside
+  this cutover contract and would require a separately reviewed revocation/read-after-write design.
 - Run the `large` scale profile (500k responses) at least once to confirm nothing changes
   qualitatively — response volume shouldn't move the authorization graph, but that's an
   assumption this report states, not one it tested.
