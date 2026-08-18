@@ -529,24 +529,12 @@ describe("applyReconciliationToFeedbackSource", () => {
       toUpdate: [],
     });
 
+    // The `status: "error"` in the where is load-bearing beyond the happy path: it is what stops a
+    // survey edit silently resuming a source an operator had deliberately paused.
     expect(tx.feedbackSource.updateMany).toHaveBeenCalledWith({
       where: { id: SOURCE_ID, workspaceId: WORKSPACE_ID, status: "error" },
       data: { status: "active" },
     });
-  });
-
-  // Scoped to `error` so a deliberately paused source is not silently resumed by a survey edit.
-  test("does not touch a paused source when it creates mappings", async () => {
-    const tx = mockTx();
-
-    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
-      toCreate: [{ elementId: "el-recreated", hubFieldType: "rating" }],
-      toDelete: [],
-      toUpdate: [],
-    });
-
-    const [[args]] = tx.feedbackSource.updateMany.mock.calls as any;
-    expect(args.where.status).toBe("error");
   });
 
   test("does not clear the error flag when nothing is being created", async () => {

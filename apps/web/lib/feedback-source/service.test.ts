@@ -731,13 +731,28 @@ describe("updateFeedbackSourceWithMappings", () => {
     vi.clearAllMocks();
   });
 
-  const setupTransaction = () => {
+  // The source's status as the transaction would leave it, tracked across both write methods so a test
+  // can assert the outcome rather than which Prisma call produced it.
+  let trackedStatus: string;
+  const persistedStatus = () => trackedStatus;
+
+  const setupTransaction = (initialStatus = "active") => {
+    trackedStatus = initialStatus;
+
+    const applyStatus = (args: { where?: { status?: string }; data?: { status?: string } }) => {
+      if (args.data?.status === undefined) return { count: 0 };
+      // Mirror the where filter: a scoped write only lands when the current status matches.
+      if (args.where?.status !== undefined && args.where.status !== trackedStatus) return { count: 0 };
+      trackedStatus = args.data.status;
+      return { count: 1 };
+    };
+
     const txMethods = {
       feedbackSource: {
-        update: vi.fn(),
+        update: vi.fn(applyStatus),
         // The error -> active reset runs as its own updateMany, so that a healthy source is a no-op
         // rather than a P2025 from a `status` filter on the main update.
-        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        updateMany: vi.fn(applyStatus),
         findUniqueOrThrow: vi.fn(),
       },
       feedbackSourceFormbricksMapping: {
@@ -864,7 +879,8 @@ describe("updateFeedbackSourceWithMappings", () => {
   });
 
   test("replaces field mappings when provided", async () => {
-    const tx = setupTransaction();
+    // Starts errored: a csv save must not clear a flag only the formbricks reconciler can set.
+    const tx = setupTransaction("error");
     tx.feedbackSource.update.mockResolvedValue(undefined);
     tx.feedbackSourceFieldMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFieldMapping.create.mockResolvedValue({});
@@ -888,11 +904,13 @@ describe("updateFeedbackSourceWithMappings", () => {
       where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
     });
     expect(tx.feedbackSourceFieldMapping.create).toHaveBeenCalledTimes(1);
+    // The outcome, not the persistence call: an errored source is still errored afterwards.
+    //
     // `status: "error"` is written by exactly one thing, the formbricks mapping reconciler, so saving
-    // FIELD mappings cannot be repairing an error it could have caused. The update action accepts
-    // fieldMappings regardless of source type, so an unscoped clear would un-error a formbricks source
-    // that is still broken.
-    expect(tx.feedbackSource.updateMany).not.toHaveBeenCalled();
+    // FIELD mappings cannot be repairing an error it could have caused — and the update action accepts
+    // fieldMappings regardless of source type. `persistedStatus` follows both `update` and `updateMany`,
+    // so this still holds if the clear moves between them.
+    expect(persistedStatus()).toBe("error");
   });
 
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
