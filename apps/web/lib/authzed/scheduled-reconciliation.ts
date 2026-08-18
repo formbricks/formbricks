@@ -5,7 +5,7 @@ import { createAuthzedBackfillApply, createAuthzedBackfillNoopApply } from "./ba
 import { getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN } from "./constants";
-import { recordAuthzedReconciliationAudit } from "./metrics";
+import { recordAuthzedReconciliationAudit, recordAuthzedReconciliationRepair } from "./metrics";
 import { pruneAuthzedOutboxHistory } from "./outbox-repository";
 
 /** Six-hour full audit. It repairs attributable missing/mismatched edges and never prunes unknown data. */
@@ -24,7 +24,14 @@ export const processAuthzedScheduledReconciliationJob = async (): Promise<void> 
   let result = observed;
 
   if (observed.status === "drifted") {
-    await runAuthzedBackfill({ ...request, mode: "apply" }, { apply: createAuthzedBackfillApply(), client });
+    const applied = await runAuthzedBackfill(
+      { ...request, mode: "apply" },
+      { apply: createAuthzedBackfillApply(), client }
+    );
+    recordAuthzedReconciliationRepair({
+      failed: applied.counters.failed,
+      repaired: applied.counters.reconciled,
+    });
     result = await runAuthzedBackfill(
       { ...request, mode: "dry_run" },
       { apply: createAuthzedBackfillNoopApply(), client }

@@ -15,17 +15,74 @@ export type TAuthorizationErrorSource = "authzed" | "legacy" | "scheduler" | "so
 
 const meter = metrics.getMeter("formbricks.authzed.authorization");
 
+const decisionsTotal = meter.createCounter("formbricks_authzed_authorization_decisions_total", {
+  description: "Authoritative SpiceDB authorization decisions by bounded outcome",
+});
+
+const authorizationDuration = meter.createHistogram("formbricks_authzed_authorization_duration_seconds", {
+  advice: {
+    explicitBucketBoundaries: [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5],
+  },
+  description: "Duration of authoritative SpiceDB authorization operations",
+  unit: "s",
+});
+
+export type TAuthorizationDecisionOutcome = "allow" | "deny" | "operational_error";
+
+type TAuthorizationDecisionMetricContext = Readonly<{
+  action: TAuthorizationAction;
+  actorType: TAuthorizationActor["type"];
+  durationMs: number;
+  resourceType: TAuthorizationResourceType;
+  surface: TAuthzedAuthorizationRolloutSurface | "unscoped";
+}>;
+
+export type TAuthorizationDecisionMetric = TAuthorizationDecisionMetricContext &
+  (
+    | Readonly<{ errorCode?: never; outcome: Exclude<TAuthorizationDecisionOutcome, "operational_error"> }>
+    | Readonly<{ errorCode: TAuthzedErrorCode; outcome: "operational_error" }>
+  );
+
+export const recordAuthorizationDecision = (metric: TAuthorizationDecisionMetric): void => {
+  try {
+    const attributes = {
+      action: metric.action,
+      actor_type: metric.actorType,
+      error_code: metric.errorCode ?? "none",
+      outcome: metric.outcome,
+      resource_type: metric.resourceType,
+      surface: metric.surface,
+    };
+
+    decisionsTotal.add(1, attributes);
+    authorizationDuration.record(Math.max(0, metric.durationMs) / 1_000, {
+      action: metric.action,
+      actor_type: metric.actorType,
+      outcome: metric.outcome,
+      resource_type: metric.resourceType,
+      surface: metric.surface,
+    });
+  } catch {
+    // Telemetry must never alter an authoritative decision or turn an instrumentation outage into a
+    // protected-operation outage.
+  }
+};
+
+/** @deprecated Historical bridge telemetry. Remove with the rollout selector in ENG-2450. */
 const comparisonsTotal = meter.createCounter("formbricks_authzed_authorization_comparisons_total", {
   description: "Legacy and AuthZed authorization comparison outcomes",
 });
 
-const comparisonDuration = meter.createHistogram("formbricks_authzed_authorization_duration_seconds", {
-  advice: {
-    explicitBucketBoundaries: [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5],
-  },
-  description: "Duration of the non-authoritative authorization comparison",
-  unit: "s",
-});
+const comparisonDuration = meter.createHistogram(
+  "formbricks_authzed_authorization_comparison_duration_seconds",
+  {
+    advice: {
+      explicitBucketBoundaries: [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5],
+    },
+    description: "Duration of the non-authoritative authorization comparison",
+    unit: "s",
+  }
+);
 
 /**
  * ENG-1739: how many central authorization operations one request made.
@@ -57,18 +114,16 @@ export const recordAuthorizationChecksPerRequest = (
 };
 
 const unscopedChecksTotal = meter.createCounter("formbricks_authzed_authorization_unscoped_checks_total", {
-  description: "Central authorization checks that resolved no rollout surface and fell back to legacy",
+  description: "Central authorization checks executed without a bounded request surface",
 });
 
 /**
- * ENG-2388: a `can()` that resolves no surface silently answers from the legacy evaluator, whatever
- * the rollout says (`coordinator.ts`). That is correct for scripts and for anything outside a request,
- * and it is invisible — which is the problem. A surface whose boundary does not span every check it
- * should (`page`, whose RSC boundary closes when its helper returns) would look identical to a clean
- * cutover: no mismatches, because no comparison ran at all.
+ * ENG-2388 introduced this signal to expose decisions made outside a request surface. Direct authority
+ * still evaluates those decisions through SpiceDB; the counter now identifies missing surface attribution
+ * rather than an evaluator fallback.
  *
- * `rollout_enabled` separates the two. Unscoped checks with the rollout off are ordinary background;
- * unscoped checks with it on are coverage the cutover does not have and would otherwise never see.
+ * `rollout_enabled` remains temporarily for bridge-series compatibility and is removed with the rollout
+ * configuration in ENG-2450.
  */
 export const recordUnscopedAuthorizationCheck = (rolloutEnabled: boolean): void => {
   try {
@@ -109,10 +164,14 @@ export const recordAuthorizationComparison = (metric: TAuthorizationComparisonMe
     surface: metric.surface,
   };
 
-  comparisonsTotal.add(1, attributes);
-  comparisonDuration.record(metric.durationMs / 1_000, {
-    mode: metric.mode,
-    outcome: metric.outcome,
-    surface: metric.surface,
-  });
+  try {
+    comparisonsTotal.add(1, attributes);
+    comparisonDuration.record(metric.durationMs / 1_000, {
+      mode: metric.mode,
+      outcome: metric.outcome,
+      surface: metric.surface,
+    });
+  } catch {
+    // Historical telemetry is fail-safe while the bridge code remains in the stacked branch.
+  }
 };

@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { reconcileApiKeyRelationships } from "./api-key";
 import { isAuthzedEnabled } from "./config";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
+import { recordAuthzedRevocationDelivery } from "./metrics";
 import {
   deleteOrganizationRelationships,
   deleteUserOrganizationRelationships,
@@ -31,6 +32,7 @@ vi.mock("./feedback-directory", () => ({ reconcileFeedbackDirectoryRelationships
 vi.mock("./metrics", () => ({
   recordAuthzedOutboxDelivery: vi.fn(),
   recordAuthzedOutboxStatus: vi.fn(),
+  recordAuthzedRevocationDelivery: vi.fn(),
 }));
 vi.mock("./organization-membership", () => ({
   deleteOrganizationRelationships: vi.fn(),
@@ -150,6 +152,16 @@ describe("AuthZed projection outbox processor", () => {
 
     await expect(processAuthzedOutboxBatch("lease")).resolves.toMatchObject({ failed: 1 });
     expect(markAuthzedOutboxEventsFailed).toHaveBeenCalledWith("lease", events, "authzed_unavailable");
+  });
+
+  test("records revocation propagation after successful delivery without identifier labels", async () => {
+    const revocation = { ...event("workspace_team", "workspace", "team"), isRevocation: true };
+    vi.mocked(claimAuthzedOutboxEvents).mockResolvedValue([revocation]);
+
+    await processAuthzedOutboxBatch("lease");
+
+    expect(recordAuthzedRevocationDelivery).toHaveBeenCalledOnce();
+    expect(recordAuthzedRevocationDelivery).toHaveBeenCalledWith(expect.any(Number));
   });
 
   test("does not touch PostgreSQL when AuthZed is disabled", async () => {

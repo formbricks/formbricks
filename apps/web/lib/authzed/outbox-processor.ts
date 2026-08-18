@@ -4,7 +4,11 @@ import { logger } from "@formbricks/logger";
 import { reconcileApiKeyRelationships } from "./api-key";
 import { isAuthzedEnabled } from "./config";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
-import { recordAuthzedOutboxDelivery, recordAuthzedOutboxStatus } from "./metrics";
+import {
+  recordAuthzedOutboxDelivery,
+  recordAuthzedOutboxStatus,
+  recordAuthzedRevocationDelivery,
+} from "./metrics";
 import {
   deleteOrganizationRelationships,
   deleteUserOrganizationRelationships,
@@ -172,6 +176,12 @@ export const processAuthzedOutboxBatch = async (
       leaseOwner,
       events.map(({ id }) => id)
     );
+    const deliveredAt = Date.now();
+    for (const event of events) {
+      if (event.isRevocation) {
+        recordAuthzedRevocationDelivery(deliveredAt - event.createdAt.getTime());
+      }
+    }
     recordAuthzedOutboxDelivery({
       count: events.length,
       durationMs: performance.now() - startedAt,

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { runAuthzedBackfill } from "./backfill";
 import { isAuthzedEnabled } from "./config";
-import { recordAuthzedReconciliationAudit } from "./metrics";
+import { recordAuthzedReconciliationAudit, recordAuthzedReconciliationRepair } from "./metrics";
 import { pruneAuthzedOutboxHistory } from "./outbox-repository";
 import { processAuthzedScheduledReconciliationJob } from "./scheduled-reconciliation";
 
@@ -13,12 +13,20 @@ vi.mock("./backfill-apply", () => ({
 }));
 vi.mock("./client", () => ({ getAuthzedClient: vi.fn(() => ({ client: true })) }));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
-vi.mock("./metrics", () => ({ recordAuthzedReconciliationAudit: vi.fn() }));
+vi.mock("./metrics", () => ({
+  recordAuthzedReconciliationAudit: vi.fn(),
+  recordAuthzedReconciliationRepair: vi.fn(),
+}));
 vi.mock("./outbox-repository", () => ({ pruneAuthzedOutboxHistory: vi.fn() }));
 
-const result = (status: "drifted" | "failed" | "reconciled", missing = 0, mismatchedPermissions = 0) =>
+const result = (
+  status: "drifted" | "failed" | "reconciled",
+  missing = 0,
+  mismatchedPermissions = 0,
+  reconciled = 0
+) =>
   ({
-    counters: { failed: status === "failed" ? 1 : 0, mismatchedPermissions, missing },
+    counters: { failed: status === "failed" ? 1 : 0, mismatchedPermissions, missing, reconciled },
     status,
   }) as Awaited<ReturnType<typeof runAuthzedBackfill>>;
 
@@ -57,7 +65,7 @@ describe("scheduled AuthZed reconciliation", () => {
   test("repairs attributable drift and verifies it with a second dry run", async () => {
     vi.mocked(runAuthzedBackfill)
       .mockResolvedValueOnce(result("drifted", 2, 1))
-      .mockResolvedValueOnce(result("drifted"))
+      .mockResolvedValueOnce(result("drifted", 0, 0, 3))
       .mockResolvedValueOnce(result("reconciled"));
 
     await processAuthzedScheduledReconciliationJob();
@@ -72,5 +80,6 @@ describe("scheduled AuthZed reconciliation", () => {
       failures: 0,
       status: "reconciled",
     });
+    expect(recordAuthzedReconciliationRepair).toHaveBeenCalledWith({ failed: 0, repaired: 3 });
   });
 });

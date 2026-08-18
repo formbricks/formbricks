@@ -497,9 +497,9 @@ high/critical security finding.
 
 ## 8. Alerting
 
-The checked-in metrics below cover the current migration bridge. ENG-2408 and ENG-2451 must add authoritative
-decision latency/error, outbox backlog and oldest-item, revocation age, dead-letter, scheduled-audit, drift, and
-repair metrics before direct authority. Their required thresholds are:
+The checked-in metrics cover authoritative decisions, request amplification, SDK retries and terminal failures,
+projection delivery, revocation propagation, queue state, scheduled drift, and repair results. Their required
+thresholds are:
 
 - pending revocation warning at 15 seconds;
 - pending revocation critical at 45 seconds;
@@ -509,9 +509,33 @@ repair metrics before direct authority. Their required thresholds are:
 - direct-authority operational-error rate above 0.1%, p95 above 250 ms, or p99 above one second blocks the staging
   soak.
 
-Existing bridge rules follow. Thresholds are starting points — tune non-gate alerts to deployment size.
+The remaining delivery and SDK rules apply to both the bridge and the direct-authority artifact. Thresholds are
+starting points — tune non-gate alerts to deployment size.
 
 ```promql
+# Critical: authoritative operations are failing, not denying.
+sum(rate(formbricks_authzed_authorization_decisions_total{outcome="operational_error"}[5m]))
+/
+sum(rate(formbricks_authzed_authorization_decisions_total[5m])) > 0.001
+# for: 5m
+
+# Warning/Critical: direct-authority latency exceeds the rollout SLO.
+histogram_quantile(0.95, sum(rate(formbricks_authzed_authorization_duration_seconds_bucket[5m])) by (le)) > 0.25
+# for: 15m
+histogram_quantile(0.99, sum(rate(formbricks_authzed_authorization_duration_seconds_bucket[5m])) by (le)) > 1
+# for: 5m
+
+# Warning at 15s; critical at 45s. At 60s the request-path freshness guard fails closed.
+formbricks_authzed_projection_outbox_status{state="revocation_warning"} > 0
+formbricks_authzed_projection_outbox_status{state="revocation_critical"} > 0
+
+# Critical: a dead letter or failed repair blocks cutover.
+formbricks_authzed_projection_outbox_status{state="dead_lettered"} > 0
+sum(rate(formbricks_authzed_reconciliation_repair_total{status="failed"}[5m])) > 0
+
+# Warning: scheduled audits still see attributable drift after repair.
+sum(rate(formbricks_authzed_reconciliation_audit_total{status!="reconciled"}[30m])) > 0
+
 # Warning: projections are failing. Drift is accumulating and a backfill will be needed.
 sum(rate(formbricks_authzed_projection_total{status="failed"}[5m])) > 0
 # for: 15m
@@ -537,6 +561,10 @@ histogram_quantile(0.95, sum(rate(formbricks_authzed_projection_duration_seconds
 Every one of these resolves to the same first action: inspect and drain the durable outbox, then run the full
 audit and confirm a clean result. On a pre-outbox bridge, run the backfill immediately because failed writes were
 not retained.
+
+The application on-call owns decision, outbox, and reconciliation alerts. The infrastructure on-call owns
+SpiceDB replicas, datastore, migrations, connection pools, dispatch, and cache health. Page both when an
+authorization operational error cannot be cleared by restoring either delivery or SpiceDB health.
 
 A Helm `PrometheusRule` template shipping these by default is deliberately not part of this change —
 that belongs with the AuthZed deployment contract rather than the application.

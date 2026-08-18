@@ -123,6 +123,19 @@ These capabilities supported parity research. They are removed before direct
 authority and are not a sandbox, staging, production, or self-hosted rollout
 mechanism.
 
+### Direct-authority telemetry
+
+Every scalar decision and authoritative organization/workspace lookup records a
+bounded outcome (`allow`, `deny`, or `operational_error`) plus latency. The
+dimensions are limited to surface, actor type, action, resource type, and a
+stable error code. Empty authoritative lists are aggregate denies. No actor,
+resource, organization, relationship, token, or raw error is emitted.
+
+The request context still records the number of central operations per request,
+including unscoped calls, so the sole-evaluator cutover does not trade away N+1
+visibility. Instrumentation failures are fail-safe and cannot change an
+authorization result.
+
 Surveys, dashboards, and responses are intentionally resolved to their owning
 workspace before the SpiceDB check. Their parent relationships are not yet
 projected, so checking those resource definitions directly would turn every
