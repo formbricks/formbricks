@@ -117,7 +117,11 @@ const resolveDeletions = (
   }
 
   if (removed.length > 0) {
-    logger.warn(
+    // debug, not warn: this state is permanent for as long as the source is left alone, and it is
+    // re-evaluated on every survey write — including saves that change nothing about the questions. At
+    // warn it reported the same standing condition forever and drowned out the one-off errors below.
+    // Nothing is lost: when the whole delta is empty the caller does no DB work either.
+    logger.debug(
       { surveyId, mappingCount: surveyMappingCount, unmappableCount: unmappable.length },
       "Keeping inert feedback-source mappings: deleting them would leave this survey with none"
     );
@@ -259,6 +263,20 @@ export const applyReconciliationToFeedbackSource = async (
       //
       // Counted after the creates, and across every survey the source maps rather than just this one —
       // a source still serving a sibling survey is working, and erroring it would stop that too.
+      // The flag below is set by a previous run, not necessarily this one, so the repair has to clear
+      // it from here too. Retype the survey's only question to File Upload and the source is flagged;
+      // retype it back and an `all`-scoped reconcile re-creates the row, so the source is correct again
+      // while still wearing an `error` badge and still filtered out of the publish path. Saving the
+      // source in the edit modal clears it, but nothing about this repair requires opening that modal.
+      //
+      // Scoped to `error` for the same reason as the flag: a deliberately `paused` source stays paused.
+      if (toCreate.length > 0) {
+        await tx.feedbackSource.updateMany({
+          where: { id: feedbackSourceId, workspaceId, status: "error" },
+          data: { status: "active" },
+        });
+      }
+
       if (toDelete.length > 0) {
         const remainingMappings = await tx.feedbackSourceFormbricksMapping.count({
           where: { feedbackSourceId, workspaceId },

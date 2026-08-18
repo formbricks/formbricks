@@ -888,6 +888,11 @@ describe("updateFeedbackSourceWithMappings", () => {
       where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
     });
     expect(tx.feedbackSourceFieldMapping.create).toHaveBeenCalledTimes(1);
+    // `status: "error"` is written by exactly one thing, the formbricks mapping reconciler, so saving
+    // FIELD mappings cannot be repairing an error it could have caused. The update action accepts
+    // fieldMappings regardless of source type, so an unscoped clear would un-error a formbricks source
+    // that is still broken.
+    expect(tx.feedbackSource.updateMany).not.toHaveBeenCalled();
   });
 
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {

@@ -431,7 +431,15 @@ export const updateFeedbackSourceWithMappings = async (
       // again), only when the caller did not set `status` itself, and only from `error` — a `paused`
       // source stays paused, because pausing is an operator decision and re-mapping is not a request
       // to resume.
-      const clearsErrorStatus = Boolean(mappingsInput?.mappings.length) && data.status === undefined;
+      // Only formbricks mappings: `status: "error"` is written by exactly one thing, the formbricks
+      // mapping reconciler, so a csv source saving *field* mappings cannot be clearing an error it
+      // could have caused. `updateFeedbackSourceWithMappingsAction` accepts fieldMappings regardless
+      // of source type, so without the type check a csv save would silently un-error a formbricks
+      // source that is still broken.
+      const clearsErrorStatus =
+        mappingsInput?.type === "formbricks_survey" &&
+        mappingsInput.mappings.length > 0 &&
+        data.status === undefined;
 
       await tx.feedbackSource.update({
         where: { id: feedbackSourceId, workspaceId },

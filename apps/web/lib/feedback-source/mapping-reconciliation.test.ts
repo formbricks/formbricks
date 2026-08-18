@@ -25,7 +25,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
 const scheduled: Array<() => Promise<void>> = [];
@@ -279,7 +279,8 @@ describe("reconcileMappingsAgainstSurvey", () => {
     );
 
     expect(result).toEqual({ toCreate: [], toDelete: [], toUpdate: [] });
-    expect(logger.warn).toHaveBeenCalledWith(
+    // debug, not warn: the condition is permanent and re-evaluated on every survey write.
+    expect(logger.debug).toHaveBeenCalledWith(
       expect.objectContaining({ surveyId: SURVEY_ID }),
       "Keeping inert feedback-source mappings: deleting them would leave this survey with none"
     );
@@ -514,6 +515,51 @@ describe("applyReconciliationToFeedbackSource", () => {
     const createOrder = tx.feedbackSourceFormbricksMapping.createMany.mock.invocationCallOrder[0];
     expect(countOrder).toBeGreaterThan(createOrder);
     expect(tx.feedbackSource.update).not.toHaveBeenCalled();
+  });
+
+  // A previous run flags `error` when it strips the last mapping. Reconciliation is also what repairs
+  // that — retype the question back and an `all`-scoped run re-creates the row — so it has to clear the
+  // flag too, or the source stays badged and filtered out of the publish path despite being correct.
+  test("clears an error flag once it has given the source something to publish again", async () => {
+    const tx = mockTx();
+
+    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [{ elementId: "el-recreated", hubFieldType: "rating" }],
+      toDelete: [],
+      toUpdate: [],
+    });
+
+    expect(tx.feedbackSource.updateMany).toHaveBeenCalledWith({
+      where: { id: SOURCE_ID, workspaceId: WORKSPACE_ID, status: "error" },
+      data: { status: "active" },
+    });
+  });
+
+  // Scoped to `error` so a deliberately paused source is not silently resumed by a survey edit.
+  test("does not touch a paused source when it creates mappings", async () => {
+    const tx = mockTx();
+
+    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [{ elementId: "el-recreated", hubFieldType: "rating" }],
+      toDelete: [],
+      toUpdate: [],
+    });
+
+    const [[args]] = tx.feedbackSource.updateMany.mock.calls as any;
+    expect(args.where.status).toBe("error");
+  });
+
+  test("does not clear the error flag when nothing is being created", async () => {
+    const tx = mockTx();
+    tx.feedbackSourceFormbricksMapping.count.mockResolvedValue(2);
+
+    await applyReconciliationToFeedbackSource(SOURCE_ID, WORKSPACE_ID, SURVEY_ID, {
+      toCreate: [],
+      toDelete: [],
+      toUpdate: [{ elementId: "el-retyped", hubFieldType: "nps" }],
+    });
+
+    expect(tx.feedbackSource.updateMany).not.toHaveBeenCalled();
   });
 
   test("logs and swallows a database failure so the survey write is never blocked", async () => {

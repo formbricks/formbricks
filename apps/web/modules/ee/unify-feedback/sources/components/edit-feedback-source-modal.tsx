@@ -105,6 +105,13 @@ export const EditFeedbackSourceModal = ({
     [surveys, selectedSurveyId]
   );
 
+  // The survey is normally locked: re-pointing a source at a different survey would orphan every
+  // FeedbackRecord it has already published. A source with no mapping rows has nothing to orphan, and
+  // is exactly the state reconciliation leaves behind when every mapped question was retyped to a type
+  // with no Hub field — it deletes the rows and flags the source `error`. Without this the survey
+  // picker would be empty AND disabled, so `error` would be terminal and the source unrepairable.
+  const canChooseSurvey = feedbackSource?.formbricksMappings.length === 0;
+
   useEffect(() => {
     if (feedbackSource) {
       if (feedbackSource.type === "formbricks_survey") {
@@ -306,16 +313,25 @@ export const EditFeedbackSourceModal = ({
                     <FormItem>
                       <FormLabel>{t("workspace.unify.select_survey")}</FormLabel>
                       <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange} disabled>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={isReadOnly || !canChooseSurvey}>
                           <SelectTrigger>
                             <SelectValue placeholder={t("workspace.unify.select_survey")} />
                           </SelectTrigger>
                           <SelectContent>
-                            {selectedSurvey && (
-                              <SelectItem key={selectedSurvey.id} value={selectedSurvey.id}>
-                                {selectedSurvey.name}
-                              </SelectItem>
-                            )}
+                            {canChooseSurvey
+                              ? surveys.map((survey) => (
+                                  <SelectItem key={survey.id} value={survey.id}>
+                                    {survey.name}
+                                  </SelectItem>
+                                ))
+                              : selectedSurvey && (
+                                  <SelectItem key={selectedSurvey.id} value={selectedSurvey.id}>
+                                    {selectedSurvey.name}
+                                  </SelectItem>
+                                )}
                             {!selectedSurvey && field.value && (
                               <SelectItem value={field.value}>{field.value}</SelectItem>
                             )}
