@@ -216,6 +216,12 @@ assertions:
     - organization:acme#manage@user:mia
     - organization:acme#manage_access@user:mia
     - organization:acme#manage_api_keys@user:mia
+    # ENG-2409: the enterprise settings page maps `isMember -> notFound` onto `manage_billing`, and
+    # that mapping is only correct because a plain member does not hold it. `manage_billing` had no
+    # assertFalse anywhere — both mentions were assertTrue — so adding `+ member` to it in the schema
+    # would have kept this suite green while opening the billing surface to every member. Same shape
+    # as the read_access gap closed above.
+    - organization:acme#manage_billing@user:mia
     - workspace:main#read@user:mia
     - survey:onboarding#read@user:mia
     - dashboard:insights#read@user:mia
@@ -346,6 +352,24 @@ validation:
     - "[user:tom] is <organization:acme#member>"
     - "[user:uma] is <organization:acme#member>"
   organization:acme#manage_api_keys:
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:olivia] is <organization:acme#owner>"
+  # ENG-2409: `read` backs the getOrganizationAuth tenancy gate and `manage_billing` backs the
+  # enterprise settings page, so both are page-gate permissions now and both are enumerated for the
+  # same reason as the two above — an assertion proves a role holds it, only this block makes a
+  # *widening* show up as a diff.
+  organization:acme#read:
+    - "[api_key:org_reader_key] is <organization:acme#api_key_reader>"
+    - "[api_key:org_writer_key] is <organization:acme#api_key_writer>"
+    - "[user:bella] is <organization:acme#billing>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:mia] is <organization:acme#member>"
+    - "[user:olivia] is <organization:acme#owner>"
+    - "[user:tina] is <organization:acme#member>"
+    - "[user:tom] is <organization:acme#member>"
+    - "[user:uma] is <organization:acme#member>"
+  organization:acme#manage_billing:
+    - "[user:bella] is <organization:acme#billing>"
     - "[user:mark] is <organization:acme#manager>"
     - "[user:olivia] is <organization:acme#owner>"
   response:r1#export:
