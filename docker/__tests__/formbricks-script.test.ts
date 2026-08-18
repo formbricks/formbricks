@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,6 +45,35 @@ const writeDockerComposeTemplate = (): string => {
   return composePath;
 };
 
+const writeGeneratedEnvFile = (envPath: string, postgresPassword = ""): void => {
+  execFileSync(
+    "bash",
+    [
+      "-lc",
+      'source "$1"; write_generated_env_file "$2" "$3"',
+      "bash",
+      formbricksScriptPath,
+      envPath,
+      postgresPassword,
+    ],
+    { encoding: "utf8" }
+  );
+};
+
+const readExistingPostgresPassword = (envPath: string, composePath: string): string =>
+  execFileSync(
+    "bash",
+    [
+      "-lc",
+      'source "$1"; read_existing_postgres_password "$2" "$3"',
+      "bash",
+      formbricksScriptPath,
+      envPath,
+      composePath,
+    ],
+    { encoding: "utf8" }
+  ).trimEnd();
+
 const getServiceBlock = (composeContents: string, serviceName: string): string => {
   const lines = composeContents.split("\n");
   const startIndex = lines.findIndex((line) => line === `  ${serviceName}:`);
@@ -68,6 +97,72 @@ describe("docker/docker-compose.yml Cube configuration", () => {
     const cubeBlock = getServiceBlock(composeContents, "cube");
 
     expect(cubeBlock).toContain("      CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}");
+  });
+});
+
+describe("Docker self-hosting credentials", () => {
+  test("requires one PostgreSQL password for every bundled database client", () => {
+    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
+    const postgresBlock = getServiceBlock(composeContents, "postgres");
+    const hubMigrateBlock = getServiceBlock(composeContents, "hub-migrate");
+    const hubBlock = getServiceBlock(composeContents, "hub");
+    const cubeBlock = getServiceBlock(composeContents, "cube");
+
+    expect(composeContents).not.toMatch(/postgresql:\/\/postgres:(?!\$\{)/);
+    expect(composeContents).not.toMatch(/POSTGRES_PASSWORD[=:]\s*postgres\b/);
+    expect(composeContents).toContain(
+      'DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/formbricks?schema=public"'
+    );
+    expect(postgresBlock).toContain("POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}");
+    expect(hubMigrateBlock).toContain("${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}");
+    expect(hubBlock).toContain("${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}");
+    expect(cubeBlock).toContain(
+      "CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}"
+    );
+  });
+
+  test("writes generated credentials to a private local environment file", () => {
+    const tempDir = createTempDir();
+    const envPath = join(tempDir, ".env");
+    const secondEnvPath = join(tempDir, ".env.second");
+
+    writeGeneratedEnvFile(envPath);
+    writeGeneratedEnvFile(secondEnvPath);
+
+    const envContents = readFileSync(envPath, "utf8");
+    const secondEnvContents = readFileSync(secondEnvPath, "utf8");
+
+    expect(envContents).toMatch(/^POSTGRES_PASSWORD=[a-f0-9]{64}$/m);
+    expect(envContents).toMatch(/^HUB_API_KEY=[a-f0-9]{64}$/m);
+    expect(envContents).toMatch(/^CUBEJS_API_SECRET=[a-f0-9]{64}$/m);
+    expect(envContents).toContain(`
+CUBEJS_JWT_ISSUER=formbricks-web
+CUBEJS_JWT_AUDIENCE=formbricks-cube
+`);
+    expect(secondEnvContents).not.toBe(envContents);
+    expect(statSync(envPath).mode & 0o777).toBe(0o600);
+    expect(statSync(secondEnvPath).mode & 0o777).toBe(0o600);
+  });
+
+  test("preserves the password from an existing one-click installation", () => {
+    const tempDir = createTempDir();
+    const envPath = join(tempDir, ".env");
+    const composePath = join(tempDir, "docker-compose.yml");
+
+    writeFileSync(
+      composePath,
+      `services:
+  postgres:
+    environment:
+      - POSTGRES_PASSWORD=legacy-password
+`
+    );
+
+    const existingPassword = readExistingPostgresPassword(envPath, composePath);
+    writeGeneratedEnvFile(envPath, existingPassword);
+
+    expect(existingPassword).toBe("legacy-password");
+    expect(readFileSync(envPath, "utf8")).toContain("POSTGRES_PASSWORD=legacy-password");
   });
 });
 

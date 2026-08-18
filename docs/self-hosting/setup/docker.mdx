@@ -74,6 +74,7 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    cat <<EOF > .env
    WEBAPP_URL=http://localhost:3000
    NEXTAUTH_URL=http://localhost:3000
+   POSTGRES_PASSWORD=$(openssl rand -hex 32)
    NEXTAUTH_SECRET=$(openssl rand -hex 32)
    ENCRYPTION_KEY=$(openssl rand -hex 32)
    CRON_SECRET=$(openssl rand -hex 32)
@@ -84,6 +85,10 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    EOF
    chmod 600 .env
    ```
+
+   Keep `POSTGRES_PASSWORD` unchanged after PostgreSQL initializes the `postgres` volume. If you replace an
+   existing `docker-compose.yml`, copy the password from that deployment instead of generating a new one; the
+   PostgreSQL image only applies this value when it creates a new database volume.
 
 1. **Validate the Docker Compose Configuration**
 

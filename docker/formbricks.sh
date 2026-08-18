@@ -163,6 +163,65 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
+read_existing_postgres_password() {
+  local env_file="${1:-.env}"
+  local compose_file="${2:-docker-compose.yml}"
+  local existing_password
+
+  if [ -f "$env_file" ]; then
+    existing_password=$(awk '
+      /^POSTGRES_PASSWORD=/ {
+        sub(/^POSTGRES_PASSWORD=/, "")
+        print
+        exit
+      }
+    ' "$env_file")
+    if [ -n "$existing_password" ]; then
+      printf '%s' "$existing_password"
+      return
+    fi
+  fi
+
+  if [ -f "$compose_file" ]; then
+    awk '
+      {
+        password = $0
+        sub(/^[[:space:]]*-[[:space:]]*POSTGRES_PASSWORD=/, "", password)
+        if (password != $0) {
+          sub(/[[:space:]]+$/, "", password)
+          if (password !~ /^\$\{/) {
+            print password
+            exit
+          }
+        }
+      }
+    ' "$compose_file"
+  fi
+}
+
+write_generated_env_file() (
+  local env_file="${1:-.env}"
+  local postgres_password="${2:-}"
+  local hub_api_key
+  local cubejs_api_secret
+
+  umask 077
+  : > "$env_file"
+  chmod 600 "$env_file"
+  if [ -z "$postgres_password" ]; then
+    postgres_password=$(openssl rand -hex 32)
+  fi
+  hub_api_key=$(openssl rand -hex 32)
+  cubejs_api_secret=$(openssl rand -hex 32)
+  cat <<EOF > "$env_file"
+POSTGRES_PASSWORD=$postgres_password
+HUB_API_KEY=$hub_api_key
+CUBEJS_API_SECRET=$cubejs_api_secret
+CUBEJS_JWT_ISSUER=formbricks-web
+CUBEJS_JWT_AUDIENCE=formbricks-cube
+EOF
+)
+
 add_formbricks_traefik_labels() {
   local compose_file="${1:-docker-compose.yml}"
   local formbricks_domain_name="$2"
@@ -314,6 +373,8 @@ install_formbricks() {
 
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks Quickstart directory at ./formbricks."
+
+  existing_postgres_password=$(read_existing_postgres_password ".env" "docker-compose.yml")
 
   # Ask the user for their domain name (recommend surveys subdomain)
   echo "🔗 Please enter your app domain (e.g., surveys.example.com). 🚨 Do NOT enter the protocol (http/https):"
@@ -585,15 +646,12 @@ EOT
   cron_secret=$(openssl rand -hex 32) && sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $cron_secret/" docker-compose.yml	
   echo "🚗 CRON_SECRET updated successfully!"
 
-  hub_api_key=$(openssl rand -hex 32)
-  cubejs_api_secret=$(openssl rand -hex 32)
-cat <<EOF > .env
-HUB_API_KEY=$hub_api_key
-CUBEJS_API_SECRET=$cubejs_api_secret
-CUBEJS_JWT_ISSUER=formbricks-web
-CUBEJS_JWT_AUDIENCE=formbricks-cube
-EOF
-  echo "🚗 Generated Hub and Cube secrets in .env successfully!"
+  write_generated_env_file ".env" "$existing_postgres_password"
+  if [ -n "$existing_postgres_password" ]; then
+    echo "🚗 Preserved the existing PostgreSQL password and generated new Hub and Cube secrets in .env."
+  else
+    echo "🚗 Generated PostgreSQL, Hub, and Cube secrets in .env successfully!"
+  fi
   
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml
