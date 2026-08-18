@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { observeWorkspaceListAuthorization } from "@/lib/authorization/workspace-list-observer";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
+import { getUserWorkspaces, getWorkspacesByIds } from "@/lib/workspace/service";
 import { listV3Workspaces } from "./operations";
 
 const loggerMocks = vi.hoisted(() => ({ error: vi.fn() }));
 
 vi.mock("@/lib/organization/service", () => ({ getOrganizationsByUserId: vi.fn() }));
-vi.mock("@/lib/workspace/service", () => ({ getUserWorkspaces: vi.fn(), getWorkspace: vi.fn() }));
+vi.mock("@/lib/workspace/service", () => ({ getUserWorkspaces: vi.fn(), getWorkspacesByIds: vi.fn() }));
 vi.mock("@/lib/authorization/workspace-list-observer", () => ({
   observeWorkspaceListAuthorization: vi.fn(),
 }));
@@ -101,7 +101,7 @@ describe("listV3Workspaces", () => {
     expect(res.status).toBe(200);
     expect(body.data).toEqual([]);
     expect(getUserWorkspaces).not.toHaveBeenCalled();
-    expect(observeWorkspaceListAuthorization).toHaveBeenCalledWith({
+    expect(observeWorkspaceListAuthorization).toHaveBeenCalledExactlyOnceWith({
       actor: { id: "user_1", type: "user" },
       organizationIds: [],
       workspaces: [],
@@ -117,17 +117,16 @@ describe("listV3Workspaces", () => {
         { workspaceId: "w9", permission: "write" },
       ],
     } as unknown as TV3Authentication;
-    vi.mocked(getWorkspace).mockImplementation(async (id: string) =>
-      id === "w1" ? ws("w1", "Alpha", "org_1") : id === "w9" ? ws("w9", "Zeta", "org_2") : null
-    );
+    vi.mocked(getWorkspacesByIds).mockResolvedValue([ws("w1", "Alpha", "org_1")]);
 
     const res = await listV3Workspaces(params(keyAuth));
     const body = await res.json();
 
     expect(body.data).toEqual([{ id: "w1", name: "Alpha", organizationId: "org_1" }]);
+    expect(getWorkspacesByIds).toHaveBeenCalledExactlyOnceWith("org_1", ["w1", "w9"]);
     // API-key path must never fall back to the user/org aggregation.
     expect(getOrganizationsByUserId).not.toHaveBeenCalled();
-    expect(observeWorkspaceListAuthorization).toHaveBeenCalledWith({
+    expect(observeWorkspaceListAuthorization).toHaveBeenCalledExactlyOnceWith({
       actor: { id: "key_1", type: "apiKey" },
       organizationIds: ["org_1"],
       workspaces: [{ id: "w1", organizationId: "org_1" }],

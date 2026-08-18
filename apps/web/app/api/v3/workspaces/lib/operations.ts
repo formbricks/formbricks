@@ -6,7 +6,7 @@ import { problemInternalError, problemUnauthorized, successListResponse } from "
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { observeWorkspaceListAuthorization } from "@/lib/authorization/workspace-list-observer";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
+import { getUserWorkspaces, getWorkspacesByIds } from "@/lib/workspace/service";
 
 type TListV3WorkspacesParams = {
   authentication: TV3Authentication;
@@ -56,10 +56,9 @@ async function fetchSessionWorkspaces(userId: string): Promise<TResolvedWorkspac
 /** API key's accessible workspaces: exactly the ones named in its `workspacePermissions`, nothing else. */
 async function fetchApiKeyWorkspaces(keyAuth: TAuthenticationApiKey): Promise<TResolvedWorkspaceList> {
   const workspaceIds = Array.from(new Set(keyAuth.workspacePermissions.map((p) => p.workspaceId)));
-  const workspaces = await Promise.all(workspaceIds.map((id) => getWorkspace(id)));
+  const workspaces = await getWorkspacesByIds(keyAuth.organizationId, workspaceIds);
   const sameOrganizationWorkspaces = workspaces.filter(
-    (workspace): workspace is NonNullable<typeof workspace> =>
-      workspace !== null && workspace.organizationId === keyAuth.organizationId
+    (workspace) => workspace.organizationId === keyAuth.organizationId
   );
   return {
     items: sameOrganizationWorkspaces.map(serializeV3WorkspaceListItem),
