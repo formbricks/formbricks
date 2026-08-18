@@ -527,6 +527,22 @@ export function Survey({
         setPendingSyncCount(pendingCount);
       }
 
+      /*
+       * Reinstate the browser context this response was first displayed with. Past this point the
+       * entry is being resumed, so the writes that follow go to the response `surveyStateSnapshot`
+       * already identifies — and the meta they carry has to keep describing the original display.
+       * Lazy `useRef` init has already measured the *current* page by now (a reload can land on a
+       * different URL, referrer or viewport), so the persisted snapshot replaces it rather than
+       * merging with it: a partial merge would report a context that never existed.
+       *
+       * Entries written before this field existed carry no meta and keep the freshly measured
+       * snapshot, which is exactly the behaviour they had.
+       */
+      if (progress.webSurveyMeta) {
+        const restoredMeta = progress.webSurveyMeta;
+        webSurveyMetaRef.current = () => restoredMeta;
+      }
+
       // Validate that the saved blockId still exists in the current survey
       const blockExists =
         progress.blockId === "start" ||
@@ -1076,6 +1092,7 @@ export function Survey({
         currentVariables: calculatedVariables,
         history: newHistory,
         selectedLanguage,
+        webSurveyMeta: getWebSurveyMeta(),
         surveyStateSnapshot: {
           responseId: surveyState?.responseId ?? null,
           displayId: surveyState?.displayId ?? null,
