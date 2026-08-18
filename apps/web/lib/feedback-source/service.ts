@@ -421,6 +421,18 @@ export const updateFeedbackSourceWithMappings = async (
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      // ENG-2064: a source reconciliation flagged `error` has to be able to come back. Nothing else
+      // clears the column — the edit modal sends only `{name, importMode}` and `status` is optional on
+      // the input, so Prisma treats it as "leave alone" — while `getFeedbackSourcesBySurveyId` filters
+      // `status: "active"`. Re-mapping a broken source repaired its rows and left it dark forever,
+      // reachable only through the unrelated pause/resume toggle.
+      //
+      // Scoped deliberately: only when this save supplies mappings (so there is something to publish
+      // again), only when the caller did not set `status` itself, and only from `error` — a `paused`
+      // source stays paused, because pausing is an operator decision and re-mapping is not a request
+      // to resume.
+      const clearsErrorStatus = Boolean(mappingsInput?.mappings.length) && data.status === undefined;
+
       await tx.feedbackSource.update({
         where: { id: feedbackSourceId, workspaceId },
         data: {
@@ -474,6 +486,16 @@ export const updateFeedbackSourceWithMappings = async (
             })
           )
         );
+      }
+
+      if (clearsErrorStatus) {
+        // updateMany, not update: putting `status: "error"` in a `where` would fail to match every
+        // healthy source and throw P2025 on the normal save path. This must be a no-op unless the
+        // source really was errored.
+        await tx.feedbackSource.updateMany({
+          where: { id: feedbackSourceId, workspaceId, status: "error" },
+          data: { status: "active" },
+        });
       }
 
       return tx.feedbackSource.findUniqueOrThrow({

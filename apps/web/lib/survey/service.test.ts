@@ -15,7 +15,7 @@ import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/mapping-reconciliation";
+import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -61,7 +61,7 @@ vi.mock("@/lib/actionClass/service", () => ({
 // The reconciliation itself is covered in lib/feedback-source/mapping-reconciliation.test.ts; here we only pin
 // what updateSurveyInternal hands it and when.
 vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
-  reconcileFeedbackSourcesForSurvey: vi.fn(),
+  scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
 beforeEach(() => {
@@ -554,7 +554,10 @@ describe("Tests for updateSurvey", () => {
 
         await updateSurveyInternal({ ...updateSurveyInput, status: "draft", blocks: [] } as any, true);
 
-        expect(reconcileFeedbackSourcesForSurvey).toHaveBeenCalledWith(updateSurveyInput.id, persistedBlocks);
+        expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
+          updateSurveyInput.id,
+          persistedBlocks
+        );
       });
 
       // Reconciliation runs after the survey row is committed, so it must not be able to turn a
@@ -567,7 +570,7 @@ describe("Tests for updateSurvey", () => {
         await updateSurvey(updateSurveyInput);
 
         const updateOrder = vi.mocked(prisma.survey.update).mock.invocationCallOrder[0];
-        const reconcileOrder = vi.mocked(reconcileFeedbackSourcesForSurvey).mock.invocationCallOrder[0];
+        const reconcileOrder = vi.mocked(scheduleFeedbackSourceReconciliation).mock.invocationCallOrder[0];
         expect(reconcileOrder).toBeGreaterThan(updateOrder);
       });
     });

@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/mapping-reconciliation";
+import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
@@ -55,7 +55,7 @@ vi.mock("@/lib/actionClass/service", () => ({
 // The reconciliation itself is covered in lib/feedback-source/mapping-reconciliation.test.ts; here we only pin
 // that this route runs it, since it writes blocks without going through updateSurveyInternal.
 vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
-  reconcileFeedbackSourcesForSurvey: vi.fn(),
+  scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
 vi.mock("./targeting", () => ({
@@ -293,7 +293,12 @@ describe("patchV3Survey", () => {
   test("reconciles feedback-source mappings against the persisted blocks", async () => {
     await patchV3Survey(currentSurvey, { name: "renamed via v3" }, "req_qa", "org_1");
 
-    expect(reconcileFeedbackSourcesForSurvey).toHaveBeenCalledWith(currentSurvey.id, expect.any(Array));
+    // Pinned to the stored blocks rather than `expect.any(Array)`: this patch carries no `blocks` at
+    // all, so reconciling against the request payload would pass `undefined` — which `expect.any(Array)`
+    // would have caught, but so would any other array, including an empty one. The value is what
+    // matters here, because reconciling an empty block list deletes every mapping the survey has.
+    expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(currentSurvey.id, currentSurvey.blocks);
+    expect(currentSurvey.blocks.length).toBeGreaterThan(0);
   });
 
   test("patches metadata and hidden fields through v3 persistence", async () => {

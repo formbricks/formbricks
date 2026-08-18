@@ -13,7 +13,7 @@ import {
 import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
-import { reconcileFeedbackSourcesForSurvey } from "@/lib/feedback-source/mapping-reconciliation";
+import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -627,7 +627,7 @@ export const updateSurveyInternal = async (
     // blocks that were actually persisted, not the caller's payload — a partial update that omits
     // blocks leaves the stored questions untouched, and diffing its empty payload would delete every
     // mapping. Best-effort: a failure logs inside the helper and never blocks the save.
-    await reconcileFeedbackSourcesForSurvey(surveyId, persistedSurvey.blocks);
+    await scheduleFeedbackSourceReconciliation(surveyId, persistedSurvey.blocks);
 
     return await reconcilePersistedSurveySchedulingIfDue({
       logSource: "survey-update",

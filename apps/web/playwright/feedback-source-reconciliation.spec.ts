@@ -1,5 +1,6 @@
 import { type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
+import { UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES } from "@formbricks/types/feedback-source";
 import { test } from "./lib/fixtures";
 import { createSurveyFromScratch } from "./utils/helper";
 
@@ -25,7 +26,9 @@ const readSurveyElements = async (surveyId: string): Promise<TSeededElement[]> =
   );
 };
 
-const UNMAPPABLE_ELEMENT_TYPES = new Set(["contactInfo", "address", "cal", "cta", "fileUpload", "consent"]);
+// Imported, not re-declared: this is the same list the reconciler gates on, so a type added to
+// the product constant has to show up here too rather than leaving the spec asserting an old six.
+const UNMAPPABLE_ELEMENT_TYPES = new Set<string>(UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES);
 
 const seedDirectory = async (organizationId: string, workspaceId: string): Promise<string> => {
   const directory = await prisma.feedbackDirectory.create({
@@ -126,15 +129,32 @@ test.describe("Feedback source reconciliation @slow", () => {
       ],
     });
 
-    // Curated subset: must never gain a mapping on its own. Its only row for this survey is stale, so
-    // the "never leave a survey with zero mappings" guard should also keep that row rather than orphan
-    // the source.
-    const curatedSourceId = await seedSource({
-      name: `E2E specific ${surveyId}`,
+    // Curated subset, held back: its only row for this survey is stale, so the "never leave a survey
+    // with zero mappings" guard should keep that row rather than orphan the source.
+    const curatedHeldBackSourceId = await seedSource({
+      name: `E2E specific held-back ${surveyId}`,
       workspaceId,
       feedbackDirectoryId,
       elementScope: "specific",
       mappings: [{ surveyId, elementId: STALE, hubFieldType: "text" }],
+    });
+
+    // Curated subset, reconciled. Two rows, so the hold-back does not apply: the stale one must be
+    // deleted and the real one retyped. This is the discriminating signal — a specific-scope source
+    // that reconciliation genuinely visited, changed, and still did not let adopt the other questions.
+    //
+    // It has to be a separate source from the held-back one: adding any second row there would make
+    // `removed.length + unmappable.length === surveyMappingCount` false and delete the stale row,
+    // silently retargeting the assertion above at a scenario it no longer covers.
+    const curatedRetypedSourceId = await seedSource({
+      name: `E2E specific retyped ${surveyId}`,
+      workspaceId,
+      feedbackDirectoryId,
+      elementScope: "specific",
+      mappings: [
+        { surveyId, elementId: STALE, hubFieldType: "text" },
+        { surveyId, elementId: supported[0].id, hubFieldType: "nps" },
+      ],
     });
 
     // The trigger: one ordinary editor save of the survey, no question edits needed. The seeded rows
@@ -148,8 +168,27 @@ test.describe("Feedback source reconciliation @slow", () => {
     // Sibling survey's row survives — editing one survey must not touch another's mappings.
     expect(await mappedElementIds(trackAllSourceId, siblingSurvey.id)).toEqual([SIBLING_ELEMENT]);
 
-    // Curated source: no questions adopted, and it was not left with zero rows.
-    expect(await mappedElementIds(curatedSourceId, surveyId)).toEqual([STALE]);
+    // The discriminating wait: this row set only becomes [supported[0]] once reconciliation has
+    // reached a *specific*-scope source and both deleted the stale row and kept the curated one.
+    // Seeded [STALE, supported[0]], asserted [supported[0]] — it cannot pass if reconciliation never
+    // ran, never matched the source, or threw.
+    await expect
+      .poll(() => mappedElementIds(curatedRetypedSourceId, surveyId), { timeout: 15000 })
+      .toEqual([supported[0].id]);
+
+    // ...and it was retyped rather than left stale.
+    const retyped = await prisma.feedbackSourceFormbricksMapping.findFirstOrThrow({
+      where: { feedbackSourceId: curatedRetypedSourceId, surveyId, elementId: supported[0].id },
+      select: { hubFieldType: true },
+    });
+    expect(retyped.hubFieldType).not.toBe("nps");
+
+    // Neither curated source adopted the questions it was never mapped to.
+    expect(await mappedElementIds(curatedRetypedSourceId, surveyId)).not.toContain(supported[1]?.id);
+
+    // The held-back source kept its single stale row instead of being orphaned. Credible now: the
+    // poll above proves this save already reconciled a specific-scope source.
+    expect(await mappedElementIds(curatedHeldBackSourceId, surveyId)).toEqual([STALE]);
   });
 
   test("a retyped question has its hubFieldType corrected rather than left stale", async ({

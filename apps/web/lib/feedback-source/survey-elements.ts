@@ -21,9 +21,10 @@ export type TSurveyElementIndex = {
  * which is a very different situation from an id that is missing entirely, because the element still
  * resolves on the publish path and would keep exporting answers.
  *
- * `getHubFieldTypeFromElementType` is declared as returning THubFieldType but is really a bare index
- * access into a Record<string, THubFieldType>, so it yields undefined for the unsupported types; this
- * is the one place that cast lives.
+ * `getHubFieldTypeFromElementType` returns `THubFieldType | undefined` — it is a bare index access
+ * into a Record<string, THubFieldType>, so the unsupported types yield undefined. It used to be
+ * declared as returning `THubFieldType` and this call site cast the truth back in; the declaration
+ * now says what it does, so the cast is gone.
  */
 export const indexSurveyElements = (blocks: TSurveyBlock[]): TSurveyElementIndex => {
   const elementIds = new Set<string>();
@@ -32,7 +33,7 @@ export const indexSurveyElements = (blocks: TSurveyBlock[]): TSurveyElementIndex
   for (const element of getElementsFromBlocks(blocks)) {
     elementIds.add(element.id);
 
-    const hubFieldType = getHubFieldTypeFromElementType(element.type) as THubFieldType | undefined;
+    const hubFieldType = getHubFieldTypeFromElementType(element.type);
     if (hubFieldType) {
       supportedHubFieldTypes.set(element.id, hubFieldType);
     }

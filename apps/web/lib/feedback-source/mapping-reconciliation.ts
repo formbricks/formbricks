@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
@@ -264,10 +265,19 @@ export const applyReconciliationToFeedbackSource = async (
         });
 
         if (remainingMappings === 0) {
-          await tx.feedbackSource.update({
-            where: { id: feedbackSourceId, workspaceId },
+          // updateMany scoped to `active`: this write was unconditional, so it also overwrote
+          // `paused`. The resume toggle would then flip that source to `active` and silently resume
+          // something an operator had deliberately disabled. A paused source with no mappings is
+          // still paused — it is not publishing either way, and `error` is a claim about the source
+          // being broken rather than about it being off.
+          const flagged = await tx.feedbackSource.updateMany({
+            where: { id: feedbackSourceId, workspaceId, status: "active" },
             data: { status: "error" },
           });
+
+          if (flagged.count === 0) {
+            return;
+          }
           logger.error(
             { feedbackSourceId, workspaceId, surveyId },
             "Flagged feedback source as errored: reconciliation removed its last mapping, so it has nothing left to publish"
@@ -298,17 +308,54 @@ export const reconcileFeedbackSourcesForSurvey = async (
 ): Promise<void> => {
   try {
     const feedbackSources = await getFeedbackSourcesToReconcile(surveyId);
-    for (const source of feedbackSources) {
-      const reconciliation = reconcileMappingsAgainstSurvey(
-        source.formbricksMappings,
-        blocks,
-        surveyId,
-        source.elementScope
-      );
-      if (isEmptyReconciliation(reconciliation)) continue;
-      await applyReconciliationToFeedbackSource(source.id, source.workspaceId, surveyId, reconciliation);
-    }
+
+    // Concurrent, not sequential: each source reconciles a distinct `feedbackSourceId` in its own
+    // transaction with no data dependency on the others, and both callers await this before
+    // responding — so a survey mapped by several sources paid N round trips in series on every save
+    // instead of being bounded by the slowest one. `applyReconciliationToFeedbackSource` swallows its
+    // own errors, so `allSettled` is belt-and-braces rather than load-bearing.
+    const pending = feedbackSources
+      .map((source) => ({
+        source,
+        reconciliation: reconcileMappingsAgainstSurvey(
+          source.formbricksMappings,
+          blocks,
+          surveyId,
+          source.elementScope
+        ),
+      }))
+      .filter(({ reconciliation }) => !isEmptyReconciliation(reconciliation));
+
+    await Promise.allSettled(
+      pending.map(({ source, reconciliation }) =>
+        applyReconciliationToFeedbackSource(source.id, source.workspaceId, surveyId, reconciliation)
+      )
+    );
   } catch (error) {
     logger.error({ surveyId, error }, "Failed to reconcile feedback sources after survey update");
+  }
+};
+
+/**
+ * Reconcile after the response has been sent, when the runtime allows it.
+ *
+ * Both callers persist the survey and then reconcile before responding, so every save — including the
+ * editor's 10-second draft autosave — paid for a `findMany` (and a transaction on a real delta) on the
+ * request path, for work whose result the response does not contain. It is already best-effort and
+ * swallows its own errors, so nothing downstream depends on it having finished.
+ *
+ * Deferred with `after()` rather than simply dropped: an un-awaited promise in a serverless runtime can
+ * be killed when the response is sent, which would turn "slower saves" into "mappings that silently
+ * stop reconciling". Outside a request — scripts, jobs, tests — `after()` throws, and there the inline
+ * await is correct anyway, so that path falls back to it.
+ */
+export const scheduleFeedbackSourceReconciliation = async (
+  surveyId: string,
+  blocks: TSurveyBlock[]
+): Promise<void> => {
+  try {
+    after(() => reconcileFeedbackSourcesForSurvey(surveyId, blocks));
+  } catch {
+    await reconcileFeedbackSourcesForSurvey(surveyId, blocks);
   }
 };
