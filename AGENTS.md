@@ -16,6 +16,14 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 - `pnpm test:e2e` — launch the Playwright browser regression suite.
 - `pnpm db:migrate:dev` — apply Prisma migrations against the dev database.
 
+Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
+Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
+`test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
+`config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
+to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
+`apps/storybook` has no unit tests by policy (UI is covered by Playwright). Keep new packages on this
+matrix or document the exception here.
+
 ### Survey Packages Build & Cache
 
 The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:
@@ -106,7 +114,7 @@ reached through an explicit `@config` bridge from the package's own stylesheet. 
 
 ## Coding Style & Naming Conventions
 
-TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
+TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/config-eslint`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
 Import order is set by `@trivago/prettier-plugin-sort-imports` and verified in CI by `pnpm format:check`, so it is not a matter of taste: `__mocks__` imports come first (they carry `vi.mock` calls), then `server-only`, then third-party packages, then `@formbricks/*`, `~/*`, `@/*`, and relative imports. Do not ask for or apply a different order in review — it will fail the check.
 We are using SonarQube to identify code smells and security hotspots.
 Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonly<MyProps>)`).
