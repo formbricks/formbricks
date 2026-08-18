@@ -158,7 +158,7 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
       source: "better-auth",
       // Self-hosters have no Sentry, so the label has to reach the application log too — otherwise
       // their copy of this fault stays as untriageable as FORMBRICKS-183 was.
-      ...(request && { authPath: request.path, authMethod: request.method }),
+      ...(request && { authPath: request.path, httpMethod: request.method }),
     });
     const safeMessage = redactEmailsInLogMessage(message);
     if (level === "error") {
@@ -176,7 +176,7 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
           Sentry.captureException(cause, {
             tags: {
               component: "better-auth",
-              ...(request && { "auth.path": request.path, "auth.method": request.method }),
+              ...(request && { "auth.path": request.path, "http.method": request.method }),
             },
             // No `extra`. Forwarding `message` was considered and dropped: `redactEmailsInLogMessage`
             // strips emails and nothing else, so a plugin logging `error("… <token> …", err)` would

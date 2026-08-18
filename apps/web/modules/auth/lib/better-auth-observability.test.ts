@@ -398,7 +398,7 @@ describe("betterAuthLogger (request-path tagging, ENG-2259)", () => {
     });
 
     expect(Sentry.captureException).toHaveBeenCalledWith(cause, {
-      tags: { component: "better-auth", "auth.path": "/oauth2/userinfo", "auth.method": "GET" },
+      tags: { component: "better-auth", "auth.path": "/oauth2/userinfo", "http.method": "GET" },
     });
   });
 
@@ -407,10 +407,13 @@ describe("betterAuthLogger (request-path tagging, ENG-2259)", () => {
       log("error", "TypeError", fault());
     });
 
+    // `httpMethod`, not `authMethod`: the latter already means the authentication method
+    // (password / sso) in this very file's sign-in audit, and overloading it would mix HTTP verbs
+    // into a field self-hosters query for auth methods.
     expect(logger.withContext).toHaveBeenCalledWith({
       source: "better-auth",
       authPath: "/sign-in/email",
-      authMethod: "POST",
+      httpMethod: "POST",
     });
   });
 
