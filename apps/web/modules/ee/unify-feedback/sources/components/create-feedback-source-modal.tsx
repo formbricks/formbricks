@@ -67,6 +67,9 @@ import { FeedbackSourceTypeSelector } from "./feedback-source-type-selector";
 import { FormbricksQuestionList } from "./formbricks-question-list";
 import { ImportModeField } from "./import-mode-field";
 
+const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/feedback-sources";
+const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/platform/mcp/overview";
+
 interface CreateFeedbackSourceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -116,6 +119,8 @@ const getDialogDescription = (
 const getNextStepButtonLabel = (type: TFeedbackSourceOptionId | null, t: (key: string) => string): string => {
   if (type === "formbricks_survey") return t("workspace.unify.select_questions");
   if (type === "csv") return t("workspace.unify.configure_import");
+  if (type === "api_ingestion") return t("common.learn_more");
+  if (type === "feedback_record_mcp") return t("common.learn_more");
   return t("workspace.unify.create_mapping");
 };
 
@@ -285,6 +290,16 @@ export const CreateFeedbackSourceModal = ({
 
   const handleNextStep = () => {
     if (currentStep !== "selectType" || !selectedType) return;
+
+    if (selectedType === "api_ingestion") {
+      window.open(API_INGESTION_DOCS_URL, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    if (selectedType === "feedback_record_mcp") {
+      window.open(FEEDBACK_RECORD_MCP_DOCS_URL, "_blank", "noopener,noreferrer");
+      return;
+    }
 
     if (selectedType === "formbricks_survey") {
       formbricksForm.reset({

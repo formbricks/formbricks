@@ -5,9 +5,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { TFeedbackSourceOptionId, getFeedbackSourceOptions } from "../utils";
 
-const MCP_DOCS_URL = "https://formbricks.com/docs/platform/mcp/overview";
-const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/feedback-sources";
-
 interface FeedbackSourceTypeSelectorProps {
   selectedType: TFeedbackSourceOptionId | null;
   onSelectType: (type: TFeedbackSourceOptionId) => void;
@@ -72,29 +69,6 @@ export function FeedbackSourceTypeSelector({
           );
         })}
       </div>
-      <p className="text-xs text-slate-500">
-        <Trans
-          i18nKey="workspace.unify.other_feedback_ingestion_methods"
-          components={{
-            apiLink: (
-              <Link
-                href={API_INGESTION_DOCS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium underline"
-              />
-            ),
-            mcpLink: (
-              <Link
-                href={MCP_DOCS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium underline"
-              />
-            ),
-          }}
-        />
-      </p>
       <Alert variant="outbound" size="small" role="status">
         <AlertTitle>{t("workspace.unify.missing_feedback_source_title")}</AlertTitle>
         <AlertButton asChild>

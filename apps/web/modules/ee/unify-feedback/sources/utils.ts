@@ -38,7 +38,7 @@ export const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
     )
     .map((element) => element.id);
 
-export type TFeedbackSourceOptionId = TFeedbackSourceType;
+export type TFeedbackSourceOptionId = TFeedbackSourceType | "api_ingestion" | "feedback_record_mcp";
 
 export interface TFeedbackSourceOption {
   id: TFeedbackSourceOptionId;
@@ -56,6 +56,16 @@ export const getFeedbackSourceOptions = (t: TFunction): TFeedbackSourceOption[] 
     id: "csv",
     name: t("workspace.unify.csv_import"),
     description: t("workspace.unify.source_connect_csv_description"),
+  },
+  {
+    id: "api_ingestion",
+    name: t("workspace.unify.api_ingestion"),
+    description: t("workspace.unify.api_ingestion_settings_description"),
+  },
+  {
+    id: "feedback_record_mcp",
+    name: t("workspace.unify.feedback_record_mcp"),
+    description: t("workspace.unify.source_connect_feedback_record_mcp_description"),
   },
 ];
 

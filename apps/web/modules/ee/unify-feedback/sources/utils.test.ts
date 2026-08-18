@@ -70,11 +70,13 @@ describe("getSuggestedSurveys", () => {
 });
 
 describe("getFeedbackSourceOptions", () => {
-  test("returns formbricks and csv options", () => {
+  test("returns formbricks, csv, api ingestion, and mcp options", () => {
     const options = getFeedbackSourceOptions(mockT as never);
-    expect(options).toHaveLength(2);
+    expect(options).toHaveLength(4);
     expect(options[0].id).toBe("formbricks_survey");
     expect(options[1].id).toBe("csv");
+    expect(options[2].id).toBe("api_ingestion");
+    expect(options[3].id).toBe("feedback_record_mcp");
   });
 
   test("uses translation keys for name and description", () => {
@@ -83,6 +85,10 @@ describe("getFeedbackSourceOptions", () => {
     expect(options[0].description).toBe("workspace.unify.source_connect_formbricks_description");
     expect(options[1].name).toBe("workspace.unify.csv_import");
     expect(options[1].description).toBe("workspace.unify.source_connect_csv_description");
+    expect(options[2].name).toBe("workspace.unify.api_ingestion");
+    expect(options[2].description).toBe("workspace.unify.api_ingestion_settings_description");
+    expect(options[3].name).toBe("workspace.unify.feedback_record_mcp");
+    expect(options[3].description).toBe("workspace.unify.source_connect_feedback_record_mcp_description");
   });
 });
 
