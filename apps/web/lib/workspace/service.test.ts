@@ -12,6 +12,7 @@ import {
   getWorkspaceMemberEmails,
   getWorkspaceMembers,
   getWorkspaces,
+  getWorkspacesByIds,
 } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -469,6 +470,27 @@ describe("Workspace Service", () => {
     vi.mocked(prisma.workspace.findMany).mockRejectedValue(prismaError);
 
     await expect(getWorkspaces(organizationId)).rejects.toThrow(DatabaseError);
+  });
+
+  test("getWorkspacesByIds scopes the workspace read to the organization", async () => {
+    const organizationId = createId();
+    const workspaceIds = [createId(), createId()];
+    const mockWorkspaces = workspaceIds.map((id) => ({ id, organizationId }));
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as unknown as Workspace[]);
+
+    await expect(getWorkspacesByIds(organizationId, workspaceIds)).resolves.toEqual(mockWorkspaces);
+    expect(prisma.workspace.findMany).toHaveBeenCalledExactlyOnceWith({
+      where: {
+        id: { in: workspaceIds },
+        organizationId,
+      },
+      select: expect.any(Object),
+    });
+  });
+
+  test("getWorkspacesByIds skips the database for an empty workspace list", async () => {
+    await expect(getWorkspacesByIds(createId(), [])).resolves.toEqual([]);
+    expect(prisma.workspace.findMany).not.toHaveBeenCalled();
   });
 
   describe("getWorkspaceLegacyStoragePrefixes", () => {

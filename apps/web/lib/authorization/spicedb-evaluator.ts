@@ -9,14 +9,8 @@ import {
   type TAuthorizationResourceType,
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
+import { getSpicedbObjectType } from "./object-type";
 import { type TResolvedAuthorizationScope, resolveAuthorizationScope } from "./source-scope";
-
-const getSpicedbObjectType = (type: TAuthorizationActor["type"] | TAuthorizationResourceType) =>
-  ({
-    apiKey: "api_key",
-    feedbackDirectory: "feedback_directory",
-    feedbackDirectoryAssignment: "feedback_directory_assignment",
-  })[type as "apiKey" | "feedbackDirectory" | "feedbackDirectoryAssignment"] ?? type;
 
 const parseAction = (
   action: TAuthorizationAction

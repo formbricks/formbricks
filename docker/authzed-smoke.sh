@@ -116,6 +116,22 @@ assert_health_result() {
   return 1
 }
 
+assert_lookup_result() {
+  local output="$1"
+  local expected_count="$2"
+
+  if jq --exit-status \
+    --argjson expected_count "${expected_count}" \
+    '.status == "looked_up" and .resourceCount == $expected_count' \
+    <<<"${output}" >/dev/null; then
+    return
+  fi
+
+  printf '%s\n' "Application workspace lookup returned an unexpected result:" >&2
+  printf '%s\n' "${output}" | sanitize_logs >&2
+  return 1
+}
+
 sanitize_logs() {
   sed \
     -e "s/${AUTHZED_TOKEN}/[REDACTED_AUTHZED_TOKEN]/g" \
@@ -136,6 +152,13 @@ cleanup() {
   exit "${exit_code}"
 }
 
+on_error() {
+  local line_number="$1"
+
+  printf '%s\n' "AuthZed smoke assertion failed at line ${line_number}." >&2
+}
+
+trap 'on_error "${LINENO}"' ERR
 trap cleanup EXIT
 
 export AUTHZED_DATABASE_PASSWORD
@@ -272,6 +295,11 @@ jq --exit-status '.status == "projected"' <<<"${idempotent_deleted_projection}" 
 
 api_key_seed="$(authzed_relationships "${AUTHZED_TOKEN}" seed-api-key)"
 jq --exit-status '.status == "projected"' <<<"${api_key_seed}" >/dev/null
+api_key_workspace_lookup="$(
+  AUTHZED_SMOKE_CONSISTENCY=fully_consistent \
+    authzed_relationships "${AUTHZED_TOKEN}" lookup-api-key-workspaces
+)"
+assert_lookup_result "${api_key_workspace_lookup}" 2
 api_key_allow_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-api-key-allow) )"
 api_key_deny_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-api-key-deny) )"
 jq --exit-status '.status == "checked" and .allowed == true' <<<"${api_key_allow_check}" >/dev/null
@@ -367,6 +395,16 @@ jq --exit-status '.status == "projected"' <<<"${idempotent_deleted_api_key}" >/d
 
 team_workspace_seed="$(authzed_relationships "${AUTHZED_TOKEN}" seed-team-workspace)"
 jq --exit-status '.status == "projected"' <<<"${team_workspace_seed}" >/dev/null
+user_workspace_lookup="$(
+  AUTHZED_SMOKE_CONSISTENCY=fully_consistent \
+    authzed_relationships "${AUTHZED_TOKEN}" lookup-user-workspaces
+)"
+empty_workspace_lookup="$(
+  AUTHZED_SMOKE_CONSISTENCY=fully_consistent \
+    authzed_relationships "${AUTHZED_TOKEN}" lookup-empty-workspaces
+)"
+assert_lookup_result "${user_workspace_lookup}" 2
+assert_lookup_result "${empty_workspace_lookup}" 0
 user_allow_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-user-allow) )"
 user_deny_check="$( (AUTHZED_SMOKE_CONSISTENCY=fully_consistent authzed_relationships "${AUTHZED_TOKEN}" check-user-deny) )"
 jq --exit-status '.status == "checked" and .allowed == true' <<<"${user_allow_check}" >/dev/null
@@ -683,7 +721,7 @@ backfill_repeated="$(authzed_backfill "${AUTHZED_TOKEN}" report)"
 [[ "${backfill_repeated}" == "${backfill_after_cleanup}" ]]
 
 service_logs="$(compose logs --no-color postgres authzed-db-bootstrap spicedb-migrate spicedb)"
-application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${api_key_seed}${api_key_allow_check}${api_key_deny_check}${wrong_token_check}${downgraded_api_key}${removed_api_key_scope}${deleted_api_key}${idempotent_deleted_api_key}${team_workspace_seed}${user_allow_check}${user_deny_check}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${feedback_seed}${feedback_initial}${feedback_downgrade}${feedback_after_downgrade}${feedback_remove_membership}${feedback_after_membership_removal}${feedback_reseed_for_assignment_delete}${feedback_delete_assignment}${feedback_after_assignment_delete}${feedback_delete_directory}${feedback_delete_directory_idempotent}${feedback_after_directory_delete}${persisted_team_workspace_seed}${persisted_api_key_seed}${persisted_feedback_seed}${unavailable_health}${unavailable_projection}${unavailable_permission_check}${restored_health}${restored_projection}${restored_feedback}${persisted_schema_check}${refused_backfill_driver}${backfill_seed}${backfill_observation}${backfill_report}${backfill_capped}${backfill_page_capped}${backfill_prune}${snapshot_floor_check}${backfill_cleanup}${backfill_after_cleanup}${backfill_repeated}"
+application_outputs="${empty_schema_health}${wrong_token_health}${empty_schema_check}${initial_apply}${matched_schema_check}${unchanged_apply}${drift_schema_write}${drifted_schema_check}${restored_apply}${refused_relationship_driver}${owner_projection}${billing_projection}${idempotent_billing_projection}${deleted_projection}${idempotent_deleted_projection}${api_key_seed}${api_key_workspace_lookup}${api_key_allow_check}${api_key_deny_check}${wrong_token_check}${downgraded_api_key}${removed_api_key_scope}${deleted_api_key}${idempotent_deleted_api_key}${team_workspace_seed}${user_workspace_lookup}${empty_workspace_lookup}${user_allow_check}${user_deny_check}${downgraded_manager_grant}${removed_reader_grant}${removed_alice_memberships}${team_workspace_reseed}${deleted_manager_team}${idempotent_deleted_manager_team}${team_workspace_reseed_for_delete}${deleted_graph_workspace}${idempotent_deleted_graph_workspace}${feedback_seed}${feedback_initial}${feedback_downgrade}${feedback_after_downgrade}${feedback_remove_membership}${feedback_after_membership_removal}${feedback_reseed_for_assignment_delete}${feedback_delete_assignment}${feedback_after_assignment_delete}${feedback_delete_directory}${feedback_delete_directory_idempotent}${feedback_after_directory_delete}${persisted_team_workspace_seed}${persisted_api_key_seed}${persisted_feedback_seed}${unavailable_health}${unavailable_projection}${unavailable_permission_check}${restored_health}${restored_projection}${restored_feedback}${persisted_schema_check}${refused_backfill_driver}${backfill_seed}${backfill_observation}${backfill_report}${backfill_capped}${backfill_page_capped}${backfill_prune}${snapshot_floor_check}${backfill_cleanup}${backfill_after_cleanup}${backfill_repeated}"
 if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${WRONG_AUTHZED_TOKEN}"* || \
   "${service_logs}${application_outputs}" == *"${AUTHZED_DATABASE_PASSWORD}"* || \
@@ -696,4 +734,4 @@ if [[ "${service_logs}${application_outputs}" == *"${AUTHZED_TOKEN}"* || \
   exit 1
 fi
 
-printf '%s\n' "AuthZed smoke test passed: schema lifecycle, organization/team/workspace/API-key/feedback-dataset projection, exact assignment scoping, application user/API-key permission checks, fully-consistent and snapshot-floor reads, permission ladders, grant and membership revocation, idempotent cascade cleanup, paginated relationship reads, backfill orphan detection and prune guards, health, authentication failure, bounded outage handling, migrations, and persistence were verified."
+printf '%s\n' "AuthZed smoke test passed: schema lifecycle, organization/team/workspace/API-key/feedback-dataset projection, exact assignment scoping, application user/API-key permission checks and workspace lookups, fully-consistent and snapshot-floor reads, permission ladders, grant and membership revocation, idempotent cascade cleanup, paginated relationship reads, backfill orphan detection and prune guards, health, authentication failure, bounded outage handling, migrations, and persistence were verified."

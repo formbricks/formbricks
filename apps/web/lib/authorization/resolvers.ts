@@ -43,6 +43,13 @@ export type TFeedbackDirectoryAssignmentAuthorizationScope = Readonly<{
   workspaceId: string;
 }>;
 
+export type TWorkspaceOrganizationReference = Readonly<{
+  id: string;
+  organizationId: string;
+}>;
+
+const WORKSPACE_ORGANIZATION_RESOLUTION_BATCH_SIZE = 500;
+
 /** Whether a user principal still exists and is active. */
 export const isAuthorizationUserActive = reactCache(async (userId: string): Promise<boolean> => {
   try {
@@ -83,6 +90,43 @@ export const getWorkspaceOrganizationId = reactCache(async (workspaceId: string)
     return rethrowAsDatabaseError(error);
   }
 });
+
+/**
+ * Resolve workspace IDs to organizations in bounded `IN` queries.
+ *
+ * LookupResources returns a stream-sized set. Resolving that set one row at a time would turn one
+ * authorization observation into an N+1 database path, so this helper keeps the number of queries
+ * proportional to bounded chunks instead of result cardinality.
+ */
+export const getWorkspaceOrganizationReferences = async (
+  workspaceIds: ReadonlyArray<string>
+): Promise<ReadonlyArray<TWorkspaceOrganizationReference>> => {
+  const uniqueWorkspaceIds = [...new Set(workspaceIds)];
+  if (uniqueWorkspaceIds.length === 0) return [];
+
+  try {
+    const batches: string[][] = [];
+    for (
+      let offset = 0;
+      offset < uniqueWorkspaceIds.length;
+      offset += WORKSPACE_ORGANIZATION_RESOLUTION_BATCH_SIZE
+    ) {
+      batches.push(uniqueWorkspaceIds.slice(offset, offset + WORKSPACE_ORGANIZATION_RESOLUTION_BATCH_SIZE));
+    }
+
+    const references = await Promise.all(
+      batches.map((batch) =>
+        prisma.workspace.findMany({
+          where: { id: { in: batch } },
+          select: { id: true, organizationId: true },
+        })
+      )
+    );
+    return references.flat();
+  } catch (error) {
+    return rethrowAsDatabaseError(error);
+  }
+};
 
 /** The workspace and organization a survey belongs to. */
 export const getSurveyAuthorizationWorkspaceScope = reactCache(

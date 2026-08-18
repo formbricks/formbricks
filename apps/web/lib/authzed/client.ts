@@ -6,7 +6,9 @@ import {
   AUTHZED_BULK_REQUEST_TIMEOUT_MS,
   AUTHZED_MAX_RELATIONSHIP_READS,
   AUTHZED_MAX_RELATIONSHIP_UPDATES,
+  AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS,
   AUTHZED_REQUEST_TIMEOUT_MS,
+  AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
 } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError, mapAuthzedError } from "./errors";
 import { executeAuthzedOperation } from "./retry";
@@ -33,6 +35,16 @@ export type TAuthzedPermissionCheck = Readonly<{
 
 export type TAuthzedPermissionDecision = Readonly<{
   allowed: boolean;
+}>;
+
+export type TAuthzedResourceLookup = Readonly<{
+  permission: string;
+  resourceType: string;
+  subject: TAuthzedObjectReference;
+}>;
+
+export type TAuthzedResourceLookupResult = Readonly<{
+  resourceIds: ReadonlyArray<string>;
 }>;
 
 export type TAuthzedSubjectReference = TAuthzedObjectReference &
@@ -156,9 +168,15 @@ export type TAuthzedClient = Readonly<{
   writeSchema: (schemaText: string) => Promise<void>;
 }>;
 
+/** Direct-path authorization infrastructure only; intentionally absent from the public barrel. */
+export type TAuthzedResourceLookupClient = TAuthzedClient &
+  Readonly<{
+    lookupResources: (lookup: TAuthzedResourceLookup) => Promise<TAuthzedResourceLookupResult>;
+  }>;
+
 type TAuthzedClientSingleton = Readonly<{
   close: () => void;
-  facade: TAuthzedClient;
+  facade: TAuthzedResourceLookupClient;
 }>;
 
 type TAuthzedConfig =
@@ -256,6 +274,22 @@ const validatePermissionCheck = (check: TAuthzedPermissionCheck): void => {
       attempts: 0,
       code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
       operation: "check_permission",
+      retryable: false,
+    });
+  }
+};
+
+const validateResourceLookup = (lookup: TAuthzedResourceLookup): void => {
+  if (
+    !isNonEmpty(lookup.permission) ||
+    !isNonEmpty(lookup.resourceType) ||
+    !isNonEmpty(lookup.subject.objectId) ||
+    !isNonEmpty(lookup.subject.objectType)
+  ) {
+    throw new AuthzedError({
+      attempts: 0,
+      code: AUTHZED_ERROR_CODES.INVALID_REQUEST,
+      operation: "lookup_resources",
       retryable: false,
     });
   }
@@ -445,7 +479,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
     interceptors: [deadlineInterceptor(requestTimeoutMs)],
   });
 
-  const facade = Object.freeze<TAuthzedClient>({
+  const facade = Object.freeze<TAuthzedResourceLookupClient>({
     checkPermission: async (check) => {
       validatePermissionCheck(check);
 
@@ -546,6 +580,83 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
           differenceKinds: Object.freeze(differenceKinds),
         };
       }),
+    lookupResources: async (lookup) => {
+      validateResourceLookup(lookup);
+
+      const consistency = getPermissionCheckConsistency(config);
+      const resourceIds = new Set<string>();
+      let cursor: string | undefined;
+      let resultCount = 0;
+
+      do {
+        const responses = await executeAuthzedOperation("lookup_resources", () =>
+          sdkClient.promises.lookupResources({
+            consistency,
+            context: undefined,
+            optionalCursor: cursor ? { token: cursor } : undefined,
+            optionalLimit: AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
+            permission: lookup.permission,
+            resourceObjectType: lookup.resourceType,
+            subject: {
+              object: {
+                objectId: lookup.subject.objectId,
+                objectType: lookup.subject.objectType,
+              },
+              optionalRelation: "",
+            },
+          })
+        );
+
+        if (
+          responses.some(
+            (response) =>
+              response.permissionship !== v1.LookupPermissionship.HAS_PERMISSION ||
+              !isNonEmpty(response.resourceObjectId)
+          )
+        ) {
+          throw new AuthzedError({
+            attempts: 1,
+            code: AUTHZED_ERROR_CODES.UNSUPPORTED,
+            operation: "lookup_resources",
+            retryable: false,
+          });
+        }
+
+        resultCount += responses.length;
+        if (resultCount > AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS) {
+          throw new AuthzedError({
+            attempts: 0,
+            code: AUTHZED_ERROR_CODES.LIMIT_EXCEEDED,
+            operation: "lookup_resources",
+            retryable: false,
+          });
+        }
+
+        for (const { resourceObjectId } of responses) {
+          resourceIds.add(resourceObjectId);
+        }
+
+        if (responses.length < AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE) {
+          cursor = undefined;
+          continue;
+        }
+
+        const nextCursor = responses.at(-1)?.afterResultCursor?.token;
+        if (!nextCursor || nextCursor === cursor) {
+          throw new AuthzedError({
+            attempts: 0,
+            code: AUTHZED_ERROR_CODES.INTERNAL,
+            operation: "lookup_resources",
+            retryable: false,
+          });
+        }
+        cursor = nextCursor;
+      } while (cursor);
+
+      return {
+        resourceIds: Object.freeze([...resourceIds].sort((left, right) => left.localeCompare(right))),
+      };
+    },
     readRelationships: async (query) => {
       validateRelationshipQuery(query);
 
@@ -701,7 +812,7 @@ export const configureAuthzedClientForBulkWork = (): void => {
 };
 
 /** The shared client. Deadline sized for a single cheap call unless the process asked for bulk work. */
-export const getAuthzedClient = (): TAuthzedClient => {
+export const getAuthzedClient = (): TAuthzedResourceLookupClient => {
   globalForAuthzed.formbricksAuthzedClient ??= createAuthzedClient(
     globalForAuthzed.formbricksAuthzedRequestTimeoutMs ?? AUTHZED_REQUEST_TIMEOUT_MS
   );

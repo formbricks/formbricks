@@ -1,11 +1,12 @@
 import "server-only";
 import { performance } from "node:perf_hooks";
 import { logger } from "@formbricks/logger";
-import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
+import { AuthzedError } from "@/lib/authzed/errors";
 import {
   type TAuthzedAuthorizationRolloutTarget,
   getAuthzedAuthorizationRolloutSurface,
 } from "@/lib/authzed/rollout-contract";
+import { normalizeAuthorizationOperationalError, toAuthorizationDecisionLabel } from "./comparison-helpers";
 import { enqueueAuthorizationComparison, getAuthorizationRolloutTarget } from "./context";
 import type {
   TAuthorizationAction,
@@ -17,7 +18,6 @@ import type { AuthorizationEvaluator } from "./evaluator";
 import { legacyEvaluator } from "./legacy-evaluator";
 import {
   type TAuthorizationComparisonOutcome,
-  type TAuthorizationDecisionLabel,
   type TAuthorizationErrorSource,
   recordAuthorizationComparison,
 } from "./metrics";
@@ -30,32 +30,9 @@ import {
 import { type TResolvedAuthorizationScope, resolveAuthorizationScope } from "./source-scope";
 import { checkSpicedbPermissionAtScope } from "./spicedb-evaluator";
 
-const decisionLabel = (decision: boolean | undefined): TAuthorizationDecisionLabel => {
-  if (decision === undefined) return "unknown";
-  return decision ? "allow" : "deny";
-};
-
 const getOutcome = (legacyDecision: boolean, authzedDecision: boolean): TAuthorizationComparisonOutcome => {
   if (legacyDecision === authzedDecision) return "match";
   return legacyDecision ? "legacy_allow_authzed_deny" : "legacy_deny_authzed_allow";
-};
-
-const normalizeOperationalError = (error: unknown, operation: string): AuthzedError => {
-  if (error instanceof AuthzedError) {
-    return new AuthzedError({
-      attempts: error.attempts,
-      code: error.code,
-      grpcStatus: error.grpcStatus,
-      operation,
-      retryable: error.retryable,
-    });
-  }
-  return new AuthzedError({
-    attempts: 1,
-    code: AUTHZED_ERROR_CODES.INTERNAL,
-    operation,
-    retryable: false,
-  });
 };
 
 type TComparisonContext<TAction extends TAuthorizationAction> = Readonly<{
@@ -84,12 +61,12 @@ const recordComparison = <TAction extends TAuthorizationAction>(
   recordAuthorizationComparison({
     action: context.action,
     actorType: context.actor.type,
-    authzedDecision: decisionLabel(values.authzedDecision),
+    authzedDecision: toAuthorizationDecisionLabel(values.authzedDecision),
     cohort: context.cohort,
     durationMs: values.durationMs,
     errorCode: values.error?.code,
     errorSource: values.errorSource,
-    legacyDecision: decisionLabel(values.legacyDecision),
+    legacyDecision: toAuthorizationDecisionLabel(values.legacyDecision),
     mode: context.mode,
     outcome,
     resourceType: context.resource.type,
@@ -102,14 +79,14 @@ const recordComparison = <TAction extends TAuthorizationAction>(
     {
       action: context.action,
       actorType: context.actor.type,
-      authzedDecision: decisionLabel(values.authzedDecision),
+      authzedDecision: toAuthorizationDecisionLabel(values.authzedDecision),
       cohort: context.cohort,
       component: "authzed",
       durationMs: values.durationMs,
       errorCode: values.error?.code,
       errorSource: values.errorSource,
       grpcStatus: values.error?.grpcStatus,
-      legacyDecision: decisionLabel(values.legacyDecision),
+      legacyDecision: toAuthorizationDecisionLabel(values.legacyDecision),
       mode: context.mode,
       operation: "authorization_comparison",
       outcome,
@@ -165,7 +142,7 @@ const runShadowComparison = async <TAction extends TAuthorizationAction>(
     const source = error instanceof AuthzedError ? "authzed" : "source";
     recordComparison(context, {
       durationMs: Math.max(0, performance.now() - startedAt),
-      error: normalizeOperationalError(error, "authorization_shadow"),
+      error: normalizeAuthorizationOperationalError(error, "authorization_shadow"),
       errorSource: source,
       legacyDecision,
     });
@@ -185,7 +162,7 @@ const queueShadowComparison = <TAction extends TAuthorizationAction>(
   if (!queued) {
     recordComparison(context, {
       durationMs: 0,
-      error: normalizeOperationalError(undefined, "authorization_scheduler"),
+      error: normalizeAuthorizationOperationalError(undefined, "authorization_scheduler"),
       errorSource: "scheduler",
       legacyDecision,
     });
@@ -209,7 +186,7 @@ const queueLegacyComparison = <TAction extends TAuthorizationAction>(
       recordComparison(context, {
         authzedDecision,
         durationMs: Math.max(0, performance.now() - startedAt),
-        error: normalizeOperationalError(error, "authorization_legacy_comparison"),
+        error: normalizeAuthorizationOperationalError(error, "authorization_legacy_comparison"),
         errorSource: "legacy",
       });
     }
@@ -219,7 +196,7 @@ const queueLegacyComparison = <TAction extends TAuthorizationAction>(
     recordComparison(context, {
       authzedDecision,
       durationMs: 0,
-      error: normalizeOperationalError(undefined, "authorization_scheduler"),
+      error: normalizeAuthorizationOperationalError(undefined, "authorization_scheduler"),
       errorSource: "scheduler",
     });
   }
@@ -242,7 +219,10 @@ export const authorizationCoordinator: AuthorizationEvaluator = {
       try {
         resolvedScope = await resolveAuthorizationScope(actor, resource);
       } catch (error) {
-        const operationalError = normalizeOperationalError(error, "authorization_enforcement_scope");
+        const operationalError = normalizeAuthorizationOperationalError(
+          error,
+          "authorization_enforcement_scope"
+        );
         recordComparison(
           { action, actor, cohort: config.cohort, mode: "enforcement", resource, target },
           { durationMs: 0, error: operationalError, errorSource: "source" }
@@ -271,7 +251,7 @@ export const authorizationCoordinator: AuthorizationEvaluator = {
             ? await checkSpicedbPermissionAtScope(actor, action, resource, resolvedScope)
             : false;
         } catch (error) {
-          const operationalError = normalizeOperationalError(error, "authorization_enforcement");
+          const operationalError = normalizeAuthorizationOperationalError(error, "authorization_enforcement");
           recordComparison(context, {
             durationMs: Math.max(0, performance.now() - startedAt),
             error: operationalError,

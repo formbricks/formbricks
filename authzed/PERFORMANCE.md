@@ -160,7 +160,9 @@ This is backed by a request-scoped counter
 (`apps/web/lib/authorization/context.ts:recordAuthorizationCheckIssued`), incremented once
 inside `can()` itself — the one point every `can()`/`assertCan()` call passes through
 regardless of caller — and reported in production as
-`formbricks_authzed_authorization_checks_per_request`, a histogram tagged by surface. That metric
+`formbricks_authzed_authorization_checks_per_request`, a histogram tagged by surface. It counts central
+authorization operations: scalar `can()`/`assertCan()` decisions and narrow list observations each
+contribute one, independent of row count. That metric
 is the thing to watch on a real dashboard for the general "no page regresses into an N+1"
 question; this report exercised the three paths the ticket named explicitly by name.
 

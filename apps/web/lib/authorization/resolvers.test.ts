@@ -16,6 +16,7 @@ import {
   getSurveyWorkspaceId,
   getTeamOrganizationId,
   getWorkspaceOrganizationId,
+  getWorkspaceOrganizationReferences,
   isAuthorizationUserActive,
 } from "./resolvers";
 
@@ -30,7 +31,7 @@ vi.mock("@formbricks/database", () => ({
     apiKey: { findUnique: vi.fn() },
     organization: { findUnique: vi.fn() },
     user: { findUnique: vi.fn() },
-    workspace: { findUnique: vi.fn() },
+    workspace: { findMany: vi.fn(), findUnique: vi.fn() },
   },
 }));
 
@@ -157,6 +158,66 @@ describe("authorization workspace scope resolvers", () => {
 
     vi.mocked(model).mockRejectedValueOnce(prismaKnownError);
     await expect(resolver(`error-${model.name}`)).rejects.toBeInstanceOf(DatabaseError);
+  });
+});
+
+describe("getWorkspaceOrganizationReferences", () => {
+  test("deduplicates a small input into one batch query", async () => {
+    vi.mocked(prisma.workspace.findMany).mockResolvedValueOnce([
+      { id: "workspace-1", organizationId: "org-1" },
+      { id: "workspace-2", organizationId: "org-2" },
+    ] as never);
+
+    await expect(
+      getWorkspaceOrganizationReferences(["workspace-1", "workspace-2", "workspace-1"])
+    ).resolves.toEqual([
+      { id: "workspace-1", organizationId: "org-1" },
+      { id: "workspace-2", organizationId: "org-2" },
+    ]);
+    expect(prisma.workspace.findMany).toHaveBeenCalledExactlyOnceWith({
+      where: { id: { in: ["workspace-1", "workspace-2"] } },
+      select: { id: true, organizationId: true },
+    });
+  });
+
+  test("uses bounded batches and maps Prisma failures to DatabaseError", async () => {
+    const workspaceIds = Array.from({ length: 501 }, (_unused, index) => `workspace-${index}`);
+    vi.mocked(prisma.workspace.findMany)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockRejectedValueOnce(prismaKnownError);
+
+    await expect(getWorkspaceOrganizationReferences(workspaceIds)).resolves.toEqual([]);
+    expect(prisma.workspace.findMany).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(prisma.workspace.findMany).mock.calls[0][0].where.id.in).toHaveLength(500);
+    expect(vi.mocked(prisma.workspace.findMany).mock.calls[1][0].where.id.in).toHaveLength(1);
+
+    await expect(getWorkspaceOrganizationReferences(["workspace-error"])).rejects.toBeInstanceOf(
+      DatabaseError
+    );
+  });
+
+  test("starts independent workspace-resolution batches concurrently", async () => {
+    let resolveFirstBatch!: (rows: []) => void;
+    const firstBatch = new Promise<[]>((resolve) => {
+      resolveFirstBatch = resolve;
+    });
+    vi.mocked(prisma.workspace.findMany)
+      .mockImplementationOnce(() => firstBatch as never)
+      .mockResolvedValueOnce([]);
+
+    const pending = getWorkspaceOrganizationReferences(
+      Array.from({ length: 501 }, (_unused, index) => `workspace-${index}`)
+    );
+
+    expect(prisma.workspace.findMany).toHaveBeenCalledTimes(2);
+    resolveFirstBatch([]);
+    await expect(pending).resolves.toEqual([]);
+  });
+
+  test("does not query PostgreSQL for an empty set", async () => {
+    await expect(getWorkspaceOrganizationReferences([])).resolves.toEqual([]);
+    expect(prisma.workspace.findMany).not.toHaveBeenCalled();
   });
 });
 

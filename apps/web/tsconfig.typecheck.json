@@ -11,7 +11,7 @@
     "**/__tests__/**"
   ],
   "extends": "./tsconfig.json",
-  "files": ["lib/authorization/contract.typecheck.test.ts"],
+  "files": ["lib/authorization/contract.typecheck.test.ts", "lib/authzed/index.typecheck.test.ts"],
   "include": [
     "next-env.d.ts",
     "**/*.d.ts",

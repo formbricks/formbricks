@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import {
   authenticateApiKeyFromHeaders,
   getApiKeyFromHeaders,
@@ -7,6 +8,9 @@ import {
 
 const mocks = vi.hoisted(() => ({ getApiKeyWithPermissions: vi.fn() }));
 
+vi.mock("@formbricks/logger", () => ({
+  logger: { warn: vi.fn() },
+}));
 vi.mock("@/modules/organization/settings/api-keys/lib/api-key", () => ({
   getApiKeyWithPermissions: mocks.getApiKeyWithPermissions,
 }));
@@ -115,6 +119,14 @@ describe("authenticateApiKeyFromHeaders", () => {
     expect(auth?.workspacePermissions).toEqual([
       { permission: "manage", workspaceId: "ws-own", workspaceName: "ws-own" },
     ]);
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      { component: "authorization", crossOrganizationGrantCount: 1 },
+      "Cross-organization API-key workspace grants were filtered"
+    );
+    const logged = JSON.stringify(vi.mocked(logger.warn).mock.calls);
+    expect(logged).not.toContain("key-1");
+    expect(logged).not.toContain("ws-victim");
+    expect(logged).not.toContain("org-other");
   });
 
   test("returns null when only cross-org permissions remain", async () => {

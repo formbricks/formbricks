@@ -1,7 +1,10 @@
 import "server-only";
+import { getAuthzedClient as getInternalAuthzedClient } from "./client";
+
+/** Public facade: list lookup stays a direct-path authorization-infrastructure operation. */
+export const getAuthzedClient = (): import("./client").TAuthzedClient => getInternalAuthzedClient();
 
 export {
-  getAuthzedClient,
   type TAuthzedClient,
   type TAuthzedObjectReference,
   type TAuthzedPermissionCheck,

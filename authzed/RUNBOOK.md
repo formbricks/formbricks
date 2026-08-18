@@ -44,13 +44,13 @@ records `disabled` as its own outcome rather than skipping.
 
 All five carry only bounded attributes — never an organization, user, or relationship identifier.
 
-| Metric                                                | Attributes                          | Read it as                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ----------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formbricks_authzed_projection_total`                 | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`.                                                                                                                                                                                                                                                                                                                                                        |
-| `formbricks_authzed_projection_duration_seconds`      | same                                | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement.                                                                                                                                                                                                                                     |
-| `formbricks_authzed_request_failures_total`           | `operation`, `code`, `retryable`    | Requests that exhausted their retry budget — _any_ facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`.                                                                                  |
-| `formbricks_authzed_request_retries_total`            | `operation`, `code`                 | Retries scheduled. Elevated but not failing = degraded, not down.                                                                                                                                                                                                                                                                                                                                                            |
-| `formbricks_authzed_authorization_checks_per_request` | `surface`                           | How many `can()` decisions one request made. Watch the upper percentiles for a page regressing into one check per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
+| Metric                                                | Attributes                          | Read it as                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formbricks_authzed_projection_total`                 | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `formbricks_authzed_projection_duration_seconds`      | same                                | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement.                                                                                                                                                                                                                                                                                                                                         |
+| `formbricks_authzed_request_failures_total`           | `operation`, `code`, `retryable`    | Requests that exhausted their retry budget — _any_ facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`.                                                                                                                                                                                      |
+| `formbricks_authzed_request_retries_total`            | `operation`, `code`                 | Retries scheduled. Elevated but not failing = degraded, not down.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `formbricks_authzed_authorization_checks_per_request` | `surface`                           | How many central authorization operations one request made. Scalar `can()`/`assertCan()` calls and narrow list observations each count once. Watch the upper percentiles for a page regressing into one operation per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
 
 Exported through the readers already configured in `instrumentation-node.ts`: Prometheus when
 `PROMETHEUS_ENABLED=1` (scraped by the chart's ServiceMonitor), OTLP when
@@ -342,10 +342,26 @@ Comparison telemetry contains only bounded dimensions: cohort, surface, actor ty
 actor/resource type, action, decisions, outcome, stable error source, and stable AuthZed code. IDs,
 relationship strings, snapshots, tokens, raw SDK errors, requests, and responses are never emitted.
 
+The comparison counter records directional outcomes, not requests. A scalar comparison and a matching
+workspace-list observation each emit one sample. A workspace-list observation with drift in both
+directions emits two samples: one for each mismatch direction. Therefore, use the checks-per-request
+histogram for request amplification and inspect list mismatch directions independently; do not treat the
+comparison-counter sample total as a workspace-list request count.
+
 ```promql
 # Completed comparisons by mode, surface, actor type, cohort, and outcome.
 sum by (mode, surface, actor_type, cohort, outcome) (
   rate(formbricks_authzed_authorization_comparisons_total[5m])
+)
+
+# MCP workspace-list outcomes for one rollout cohort. Both mismatch series must remain at zero.
+sum by (outcome) (
+  increase(formbricks_authzed_authorization_comparisons_total{
+    surface="mcp",
+    action="workspace.read",
+    resource_type="workspace",
+    cohort="$cohort"
+  }[$window])
 )
 
 # Mismatch rate. Operational errors are measured separately.

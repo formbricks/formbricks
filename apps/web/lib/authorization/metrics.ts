@@ -28,7 +28,7 @@ const comparisonDuration = meter.createHistogram("formbricks_authzed_authorizati
 });
 
 /**
- * ENG-1739: how many `can()`/`assertCan()` decisions one request made.
+ * ENG-1739: how many central authorization operations one request made.
  *
  * The perf harness times a single decision; it cannot see whether a page issues one decision or one
  * per row. A workspace-scoped list path that authorizes once still reports "fast" under that harness
@@ -48,7 +48,7 @@ const checksPerRequest = meter.createHistogram("formbricks_authzed_authorization
   unit: "{check}",
 });
 
-/** Record one request's total authorization-decision count, tagged by the surface that served it. */
+/** Record one request's total central-operation count, tagged by the surface that served it. */
 export const recordAuthorizationChecksPerRequest = (
   checksIssued: number,
   surface: TAuthzedAuthorizationRolloutSurface
