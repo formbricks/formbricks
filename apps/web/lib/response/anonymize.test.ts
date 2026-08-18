@@ -170,6 +170,65 @@ describe("applyAnonymizePolicy", () => {
 });
 
 /**
+ * The drift guard for `COMPOSITE_META_KEYS`, which names the `meta.userAgent` sub-keys by hand because
+ * `device` (the sub-key) and `deviceType` (the field) genuinely differ in spelling. A catalog entry
+ * added later that also reads `meta.userAgent` would not be listed there, and would then survive
+ * anonymization silently — the one failure mode this file cannot detect by reading itself.
+ *
+ * The userAgent-backed entries are therefore DISCOVERED rather than restated: restating the list here
+ * would drift in exactly the same way it drifts over there.
+ */
+describe("every userAgent-backed drop field is actually dropped", () => {
+  const buildProbeResponse = (meta: TResponseMeta) => ({
+    id: "response-id",
+    surveyId: "survey-id",
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:01:00.000Z"),
+    finished: true,
+    language: "en",
+    data: {},
+    variables: {},
+    ttc: { _total: 60_000 },
+    meta,
+  });
+
+  /** An entry is userAgent-backed if it resolves with `meta.userAgent` present and not without it. */
+  const userAgentBackedNames = (() => {
+    const { userAgent: _dropped, ...metaWithoutUserAgent } = buildFullMeta();
+    const withUserAgent = projectReservedValues(RESERVED_FIELD_CATALOG, buildProbeResponse(buildFullMeta()));
+    const withoutUserAgent = projectReservedValues(
+      RESERVED_FIELD_CATALOG,
+      buildProbeResponse(metaWithoutUserAgent)
+    );
+
+    return RESERVED_FIELD_CATALOG.filter(
+      (entry) => entry.name in withUserAgent && !(entry.name in withoutUserAgent)
+    ).map((entry) => entry.name);
+  })();
+
+  test("the probe finds the entries the fixture's userAgent actually backs", () => {
+    // Guards the guard: if the probe silently found nothing, every assertion below would pass vacuously.
+    expect(userAgentBackedNames).toEqual(["browser", "os", "deviceType"]);
+  });
+
+  test("anonymizing suppresses each of them", () => {
+    const anonymized = applyAnonymizePolicy(buildFullMeta(), true);
+    const projected = projectReservedValues(RESERVED_FIELD_CATALOG, buildProbeResponse(anonymized));
+
+    const droppable = RESERVED_FIELD_CATALOG.filter(
+      (entry) => userAgentBackedNames.includes(entry.name) && entry.privacy === "drop"
+    ).map((entry) => entry.name);
+
+    // Filtered to `drop` on purpose: a userAgent-backed entry classified `keep` SHOULD survive, and
+    // this must not turn into a rule that every device field is private.
+    expect(droppable.length).toBeGreaterThan(0);
+    for (const name of droppable) {
+      expect(projected).not.toHaveProperty(name);
+    }
+  });
+});
+
+/**
  * AC: a suppressed reserved field must resolve as **unset** — never an empty string and never a stale
  * value — so a recall token falls through to its `fallback:` text.
  */

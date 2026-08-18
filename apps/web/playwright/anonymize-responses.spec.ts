@@ -17,7 +17,7 @@ import { createSurveyFromScratch } from "./utils/helper";
 const QUESTION_HEADLINE = "What would you like to know?";
 const ANSWER = "Anonymized answer";
 
-test.describe("Anonymize responses", () => {
+test.describe("Anonymize responses @slow", () => {
   // Publishing plus a real link-survey submission is slow.
   test.setTimeout(1000 * 60 * 5);
 
