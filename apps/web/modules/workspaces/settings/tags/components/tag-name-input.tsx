@@ -5,9 +5,10 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Input } from "@/modules/ui/components/input";
 import { useRenameTag } from "@/modules/workspaces/settings/tags/hooks/use-rename-tag";
-import { TagError } from "@/modules/workspaces/settings/types/tag";
+import { isDuplicateTagNameError } from "@/modules/workspaces/settings/tags/lib/errors";
 
 interface TagNameInputProps {
   tagId: string;
@@ -40,15 +41,14 @@ export const TagNameInput = ({ tagId, tagName, workspaceId, isReadOnly }: Readon
       toast.success(t("workspace.tags.tag_updated"));
     } catch (error) {
       setUpdateTagError(true);
-      const code = (error as { details?: { code?: string } }).details?.code;
-      if (code === TagError.TAG_NAME_ALREADY_EXISTS) {
+      if (isDuplicateTagNameError(error)) {
         toast.error(t("workspace.tags.tag_already_exists"), {
           duration: 2000,
           icon: <AlertCircleIcon className="size-5 text-orange-500" />,
         });
         return;
       }
-      toast.error((error as Error).message ?? t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

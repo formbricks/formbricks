@@ -70,10 +70,15 @@ test.describe("Workspace tags settings @slow", () => {
     expect(await prisma.tag.findUnique({ where: { id: keep.id } })).toMatchObject({ name: renamed });
     expect(renames).toHaveLength(1);
 
-    // Renaming onto a name already in use is rejected, and must leave the stored name alone.
+    // Renaming onto a name already in use is rejected, and must leave the stored name alone. Asserting the
+    // *specific* copy matters: the route reports the duplicate as an `invalid_params` reason, and reading
+    // the wrong property there still produces an error toast — just the generic one. Matching only
+    // `.formbricks__toast__error` passed while that branch was broken.
     await nameFieldFor(doomed.id).fill(renamed);
     await nameFieldFor(doomed.id).blur();
-    await expect(page.locator(".formbricks__toast__error")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator(".formbricks__toast__error")).toContainText("Tag already exists", {
+      timeout: 15000,
+    });
     expect(await prisma.tag.findUnique({ where: { id: doomed.id } })).toMatchObject({
       name: doomed.name,
     });

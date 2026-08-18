@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
@@ -37,7 +38,7 @@ export const TagRowActions = ({
       await deleteTag.mutateAsync({ tagId });
       toast.success(t("workspace.tags.tag_deleted"));
     } catch (error) {
-      toast.error((error as Error).message ?? t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -46,7 +47,7 @@ export const TagRowActions = ({
       await mergeTags.mutateAsync({ tagId, newTagId });
       toast.success(t("workspace.tags.tags_merged"));
     } catch (error) {
-      toast.error((error as Error).message ?? t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

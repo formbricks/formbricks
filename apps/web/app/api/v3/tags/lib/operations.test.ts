@@ -166,6 +166,30 @@ describe("deleteV3Tag", () => {
     expect(response.status).toBe(403);
     expect(deleteTag).not.toHaveBeenCalled();
   });
+
+  test("records the removed tag for the audit log", async () => {
+    vi.mocked(getTag).mockResolvedValue(tag);
+    grantAccess();
+    vi.mocked(deleteTag).mockResolvedValue({ ok: true, data: tag } as Awaited<ReturnType<typeof deleteTag>>);
+    const auditLog = {} as Parameters<typeof deleteV3Tag>[0]["auditLog"];
+
+    await deleteV3Tag({ ...base, tagId, auditLog });
+
+    // A delete has no "after", so the removed row is the whole record of what happened.
+    expect(auditLog).toMatchObject({ organizationId, targetId: tagId, oldObject: tag });
+  });
+
+  test("reports a failed delete as a server fault, not a success", async () => {
+    vi.mocked(getTag).mockResolvedValue(tag);
+    grantAccess();
+    vi.mocked(deleteTag).mockResolvedValue({ ok: false, error: { code: "unexpected" } } as unknown as Awaited<
+      ReturnType<typeof deleteTag>
+    >);
+
+    const response = await deleteV3Tag({ ...base, tagId });
+
+    expect(response.status).toBe(500);
+  });
 });
 
 describe("mergeV3Tags", () => {
@@ -204,5 +228,51 @@ describe("mergeV3Tags", () => {
 
     expect(response.status).toBe(403);
     expect(mergeTags).not.toHaveBeenCalled();
+  });
+
+  test("does not merge when authorization fails, and never loads the target", async () => {
+    vi.mocked(getTag).mockResolvedValue(tag);
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(new Response(null, { status: 403 }));
+
+    const response = await mergeV3Tags({ ...base, tagId, newTagId: otherTagId });
+
+    expect(response.status).toBe(403);
+    // Bailing before the second lookup is what stops a rejected caller probing the target's existence.
+    expect(getTag).toHaveBeenCalledTimes(1);
+    expect(mergeTags).not.toHaveBeenCalled();
+  });
+
+  test("records both tag ids and the source row for the audit log", async () => {
+    const target = { ...tag, id: otherTagId, name: "Churn" };
+    vi.mocked(getTag).mockImplementation(async (id: string) => (id === tagId ? tag : target));
+    grantAccess();
+    vi.mocked(mergeTags).mockResolvedValue({ ok: true, data: target } as Awaited<
+      ReturnType<typeof mergeTags>
+    >);
+    const auditLog = {} as Parameters<typeof mergeV3Tags>[0]["auditLog"];
+
+    await mergeV3Tags({ ...base, tagId, newTagId: otherTagId, auditLog });
+
+    // A merge touches two rows, so the target id belongs in the audit trail alongside the source.
+    expect(auditLog).toMatchObject({
+      organizationId,
+      targetId: `${tagId}-${otherTagId}`,
+      oldObject: tag,
+      newObject: target,
+    });
+  });
+
+  test("reports a failed merge as a server fault, not a success", async () => {
+    vi.mocked(getTag).mockImplementation(async (id: string) =>
+      id === tagId ? tag : { ...tag, id: otherTagId }
+    );
+    grantAccess();
+    vi.mocked(mergeTags).mockResolvedValue({ ok: false, error: { code: "unexpected" } } as unknown as Awaited<
+      ReturnType<typeof mergeTags>
+    >);
+
+    const response = await mergeV3Tags({ ...base, tagId, newTagId: otherTagId });
+
+    expect(response.status).toBe(500);
   });
 });
