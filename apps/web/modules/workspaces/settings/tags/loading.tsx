@@ -23,20 +23,12 @@ export const TagsLoading = () => {
           `isReadOnly: false` is a genuine limitation rather than a choice: a route `loading.tsx` receives
           no props and has no auth context, so it cannot know whether the actions column will be there. It
           renders the editor's three columns, which is the common case. The widths do not rely on summing
-          to exactly 100% — `table-auto` rescales the rest when a column is absent — so a read-only viewer
-          sees one placeholder column disappear rather than a re-layout.
+          to exactly 100% — `table-auto` rescales the rest when a column is absent.
 
-          `environmentTags` and `tagCountByTagId` are never read: the skeleton renders headers and
-          placeholder bars, and never calls `cell`.
+          `workspaceId` and `tags` are never read: the skeleton renders headers and placeholder bars, and
+          never calls `cell`.
         */}
-        <SettingsTableSkeleton
-          columns={getTagColumns({
-            t,
-            environmentTags: [],
-            tagCountByTagId: new Map(),
-            isReadOnly: false,
-          })}
-        />
+        <SettingsTableSkeleton columns={getTagColumns({ t, workspaceId: "", tags: [], isReadOnly: false })} />
       </SettingsCard>
     </PageContentWrapper>
   );

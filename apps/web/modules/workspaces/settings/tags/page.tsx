@@ -1,6 +1,4 @@
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { getTagsByWorkspaceId } from "@/lib/tag/service";
-import { getTagsOnResponsesCount } from "@/lib/tagOnResponse/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -11,12 +9,9 @@ export const TagsPage = async (props: { params: Promise<{ workspaceId: string }>
   const params = await props.params;
   const t = await getTranslate();
 
+  // The tags themselves are fetched client-side through `/api/v3/tags`, so this page only resolves the
+  // permission that decides whether the actions column renders.
   const { isReadOnly } = await getWorkspaceAuth(params.workspaceId);
-
-  const [tags, environmentTagsCount] = await Promise.all([
-    getTagsByWorkspaceId(params.workspaceId),
-    getTagsOnResponsesCount(params.workspaceId),
-  ]);
 
   return (
     <PageContentWrapper>
@@ -25,11 +20,7 @@ export const TagsPage = async (props: { params: Promise<{ workspaceId: string }>
         title={t("workspace.tags.manage_tags")}
         description={t("workspace.tags.manage_tags_description")}
         bodyVariant="flush">
-        <EditTagsWrapper
-          environmentTags={tags}
-          environmentTagsCount={environmentTagsCount}
-          isReadOnly={isReadOnly}
-        />
+        <EditTagsWrapper workspaceId={params.workspaceId} isReadOnly={isReadOnly} />
       </SettingsCard>
     </PageContentWrapper>
   );

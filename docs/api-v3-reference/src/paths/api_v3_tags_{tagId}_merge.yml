@@ -1,0 +1,62 @@
+post:
+  operationId: mergeTagsV3
+  summary: Merge a tag into another
+  description: |
+    Moves every response tagged `{tagId}` onto `newTagId`, then deletes `{tagId}`.
+
+    Both tags must belong to the same workspace — a cross-workspace merge answers `403`, since it would
+    move responses across a tenant boundary. Same authorization as rename.
+  tags:
+    - V3 Tags
+  parameters:
+    - in: path
+      name: tagId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: The tag being merged away.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - newTagId
+          properties:
+            newTagId:
+              type: string
+              format: cuid2
+              description: The surviving tag.
+  responses:
+    "200":
+      description: Tags merged successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: cuid2
+                    description: The surviving tag's id.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
