@@ -1632,6 +1632,8 @@ checksums:
     workspace/analysis/charts/delete_chart_confirmation: f7fd7b0a08e81c9b392b08c9c1ad2147
     workspace/analysis/charts/dimensions: f09d837ac25f58986a769bd48ea15022
     workspace/analysis/charts/dimensions_toggle_description: 31eb28f3c83c04bbe37799758ca9f595
+    workspace/analysis/charts/distribution_segment_label: e75329715441ae0d1388a0aaa452b656
+    workspace/analysis/charts/distribution_value_share: 954274ec06ca0aeafb52b68ef8a406f6
     workspace/analysis/charts/edit_chart_description: 822890e4b6068096e2fe8b7b78b4474f
     workspace/analysis/charts/edit_chart_title: fd3e7f8c53280bfad8f4034c055f4c71
     workspace/analysis/charts/edit_chart_title_named: 216b4226fb611b3694bc222026722845

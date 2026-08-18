@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Är du säker på att du vill ta bort det här diagrammet?",
         "dimensions": "Dimensioner",
         "dimensions_toggle_description": "Gruppera data efter sentiment, frågetyp och andra dimensioner.",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Visa och redigera din diagramkonfiguration.",
         "edit_chart_title": "Redigera diagram",
         "edit_chart_title_named": "Redigera \"{name}\"",

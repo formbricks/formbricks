@@ -75,7 +75,22 @@ export function SentimentBarChart({
     );
   }
 
-  const { segments } = result;
+  // Formatted once per section and shared by the bar and the legend. The `value (share)` and
+  // `label: value (share)` templates are translated, so a locale controls its own punctuation and
+  // the order of the two numbers.
+  const formattedSegments = result.segments.map((segment) => {
+    const value = formatCellValue(segment.value);
+    const percent = formatPercent(segment.percent);
+    return {
+      ...segment,
+      valueShare: t("workspace.analysis.charts.distribution_value_share", { value, percent }),
+      ariaLabel: t("workspace.analysis.charts.distribution_segment_label", {
+        label: segment.label,
+        value,
+        percent,
+      }),
+    };
+  });
 
   return (
     <div className="flex h-full min-h-64 w-full min-w-0 flex-col justify-center px-2 py-4">
@@ -85,40 +100,34 @@ export function SentimentBarChart({
             The legend below names every section instead, at a size that does not depend on how
             the shares happen to fall. */}
         <div className="flex w-full gap-0.5">
-          {segments.map((segment) => {
-            const percentText = formatPercent(segment.percent);
-            const valueText = formatCellValue(segment.value);
-            return (
-              <Tooltip key={segment.key}>
-                {/* The section is the tooltip's trigger, so it is a real button rather than a
-                    focusable div: keyboard users reach it natively and its label is announced as
-                    the control it is. Shrink (never grow) so the gaps come out of the sections
-                    proportionally and the widths stay a faithful read of each share. */}
-                <TooltipTrigger
-                  className="h-8 min-w-[3px] shrink grow-0 cursor-default rounded-sm focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:ring-offset-1 focus-visible:outline-hidden"
-                  style={{ flexBasis: `${segment.percent * 100}%`, backgroundColor: segment.color }}
-                  aria-label={`${segment.label}: ${valueText} (${percentText})`}
-                />
-                <TooltipContent>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: segment.color }}
-                    />
-                    <span className="text-foreground text-sm font-medium">{segment.label}</span>
-                    <span className="text-muted-foreground text-sm tabular-nums">
-                      {valueText} ({percentText})
-                    </span>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+          {formattedSegments.map((segment) => (
+            <Tooltip key={segment.key}>
+              {/* The section is the tooltip's trigger, so it is a real button rather than a
+                  focusable div: keyboard users reach it natively and its label is announced as
+                  the control it is. Shrink (never grow) so the gaps come out of the sections
+                  proportionally and the widths stay a faithful read of each share. */}
+              <TooltipTrigger
+                className="h-8 min-w-[3px] shrink grow-0 cursor-default rounded-sm focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:ring-offset-1 focus-visible:outline-hidden"
+                style={{ flexBasis: `${segment.percent * 100}%`, backgroundColor: segment.color }}
+                aria-label={segment.ariaLabel}
+              />
+              <TooltipContent>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: segment.color }}
+                  />
+                  <span className="text-foreground text-sm font-medium">{segment.label}</span>
+                  <span className="text-muted-foreground text-sm tabular-nums">{segment.valueShare}</span>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          ))}
         </div>
       </TooltipProvider>
       {/* Every section named, in bar order. */}
       <ul className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-        {segments.map((segment) => (
+        {formattedSegments.map((segment) => (
           <li key={segment.key} className="flex items-center gap-1.5 text-xs">
             <span
               className="size-2.5 shrink-0 rounded-full"
@@ -126,9 +135,7 @@ export function SentimentBarChart({
               aria-hidden="true"
             />
             <span className="text-foreground">{segment.label}</span>
-            <span className="text-muted-foreground tabular-nums">
-              {formatPercent(segment.percent)} ({formatCellValue(segment.value)})
-            </span>
+            <span className="text-muted-foreground tabular-nums">{segment.valueShare}</span>
           </li>
         ))}
       </ul>

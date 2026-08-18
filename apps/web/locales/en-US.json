@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Are you sure you want to delete this chart?",
         "dimensions": "Dimensions",
         "dimensions_toggle_description": "Group data by sentiment, question type, and other dimensions.",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "View and edit your chart configuration.",
         "edit_chart_title": "Edit Chart",
         "edit_chart_title_named": "Edit \"{name}\"",

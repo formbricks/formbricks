@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "このチャートを削除してもよろしいですか？",
         "dimensions": "ディメンション",
         "dimensions_toggle_description": "センチメント、質問タイプ、その他のディメンションでデータをグループ化します。",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "チャート設定を表示および編集します。",
         "edit_chart_title": "チャートを編集",
         "edit_chart_title_named": "「{name}」を編集",

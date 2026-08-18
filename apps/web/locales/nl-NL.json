@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Weet je zeker dat je deze grafiek wilt verwijderen?",
         "dimensions": "Dimensies",
         "dimensions_toggle_description": "Groepeer data op sentiment, vraagtype en andere dimensies.",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Bekijk en bewerk je diagramconfiguratie.",
         "edit_chart_title": "Diagram bewerken",
         "edit_chart_title_named": "Bewerk \"{name}\"",

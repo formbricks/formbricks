@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Bist du sicher, dass du dieses Diagramm löschen möchtest?",
         "dimensions": "Dimensionen",
         "dimensions_toggle_description": "Gruppiere Daten nach Stimmung, Fragetyp und anderen Dimensionen.",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Sieh dir deine Diagrammkonfiguration an und bearbeite sie.",
         "edit_chart_title": "Diagramm bearbeiten",
         "edit_chart_title_named": "„{name}“ bearbeiten",

@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Bu grafiği silmek istediğinden emin misin?",
         "dimensions": "Boyutlar",
         "dimensions_toggle_description": "Verileri duygu durumu, soru türü ve diğer boyutlara göre grupla.",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Grafik yapılandırmanı görüntüle ve düzenle.",
         "edit_chart_title": "Grafiği Düzenle",
         "edit_chart_title_named": "\"{name}\" Düzenle",

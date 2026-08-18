@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "你確定要刪除此圖表嗎？",
         "dimensions": "維度",
         "dimensions_toggle_description": "依情感、問題類型及其他維度分組資料。",
+        "distribution_segment_label": "{label}：{value}（{percent}）",
+        "distribution_value_share": "{value}（{percent}）",
         "edit_chart_description": "檢視並編輯你的圖表設定。",
         "edit_chart_title": "編輯圖表",
         "edit_chart_title_named": "編輯「{name}」",

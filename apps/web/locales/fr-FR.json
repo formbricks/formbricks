@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Êtes-vous sûr de vouloir supprimer ce graphique ?",
         "dimensions": "Dimensions",
         "dimensions_toggle_description": "Groupe les données par sentiment, type de question et autres dimensions.",
+        "distribution_segment_label": "{label} : {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Consultez et modifiez la configuration de votre graphique.",
         "edit_chart_title": "Modifier le graphique",
         "edit_chart_title_named": "Modifier \"{name}\"",

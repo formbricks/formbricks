@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Biztosan törölni szeretné ezt a diagramot?",
         "dimensions": "Dimenziók",
         "dimensions_toggle_description": "Adatok csoportosítása hangulat, kérdéstípus és egyéb dimenziók szerint.",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Diagram beállításainak megtekintése és szerkesztése.",
         "edit_chart_title": "Diagram szerkesztése",
         "edit_chart_title_named": "„{name}“ szerkesztése",

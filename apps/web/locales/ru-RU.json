@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Ты уверен, что хочешь удалить этот график?",
         "dimensions": "Измерения",
         "dimensions_toggle_description": "Группируйте данные по настроению, типу вопроса и другим измерениям.",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Просмотри и измени настройки своего графика.",
         "edit_chart_title": "Редактировать график",
         "edit_chart_title_named": "Редактировать «{name}»",

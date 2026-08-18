@@ -1695,6 +1695,8 @@
         "delete_chart_confirmation": "Ești sigur că vrei să ștergi acest grafic?",
         "dimensions": "Dimensiuni",
         "dimensions_toggle_description": "Grupează datele după sentiment, tipul întrebării și alte dimensiuni.",
+        "distribution_segment_label": "{label}: {value} ({percent})",
+        "distribution_value_share": "{value} ({percent})",
         "edit_chart_description": "Vezi și editează configurația graficului tău.",
         "edit_chart_title": "Editează graficul",
         "edit_chart_title_named": "Editează \"{name}\"",
