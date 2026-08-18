@@ -335,7 +335,9 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
 
     // The error names the field, and the field is NOT added to the card.
     await expect(
-      page.getByText('Hidden field ID "country" is not allowed. It is a reserved keyword.')
+      page.getByText('Hidden field ID "country" is not allowed. It is a reserved keyword.', {
+        exact: true,
+      })
     ).toBeVisible();
     await expect(
       editorPanel(page).getByText("country", { exact: true }),
@@ -347,7 +349,9 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await input.fill("Country");
     await addButton.click();
     await expect(
-      page.getByText('Hidden field ID "Country" is not allowed. It is a reserved keyword.')
+      page.getByText('Hidden field ID "Country" is not allowed. It is a reserved keyword.', {
+        exact: true,
+      })
     ).toBeVisible();
 
     // An ordinary name still works, so the guard rejects the reserved name rather than the card.
