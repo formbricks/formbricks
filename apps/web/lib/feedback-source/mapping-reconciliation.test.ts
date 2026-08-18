@@ -680,8 +680,8 @@ describe("scheduleFeedbackSourceReconciliation", () => {
     ] as never);
 
     // Two saves. The second added `el-new`, and it is what is actually stored.
-    await scheduleFeedbackSourceReconciliation(SURVEY_ID, OLD_BLOCKS);
-    await scheduleFeedbackSourceReconciliation(SURVEY_ID, NEW_BLOCKS);
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, WORKSPACE_ID, OLD_BLOCKS);
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, WORKSPACE_ID, NEW_BLOCKS);
     expect(scheduled).toHaveLength(2);
 
     vi.mocked(prisma.survey.findUnique).mockResolvedValue({ blocks: NEW_BLOCKS } as never);
@@ -699,8 +699,23 @@ describe("scheduleFeedbackSourceReconciliation", () => {
     expect(deleted).toEqual([]);
   });
 
+  // The deferred read happens outside the request that authorized the save, so the tenant constraint
+  // has to be in the query rather than inherited from the caller. Scoped via the composite
+  // @@unique([id, workspaceId]) on Survey.
+  test("scopes the deferred survey re-read to the workspace, not the id alone", async () => {
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, WORKSPACE_ID, OLD_BLOCKS);
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ blocks: OLD_BLOCKS } as never);
+
+    await scheduled[0]();
+
+    expect(prisma.survey.findUnique).toHaveBeenCalledWith({
+      where: { id: SURVEY_ID, workspaceId: WORKSPACE_ID },
+      select: { blocks: true },
+    });
+  });
+
   test("skips a survey deleted between the save and the callback", async () => {
-    await scheduleFeedbackSourceReconciliation(SURVEY_ID, OLD_BLOCKS);
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, WORKSPACE_ID, OLD_BLOCKS);
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(null as never);
 
     await scheduled[0]();
@@ -710,7 +725,7 @@ describe("scheduleFeedbackSourceReconciliation", () => {
   });
 
   test("a failing read is logged rather than lost, since Next swallows after() throws", async () => {
-    await scheduleFeedbackSourceReconciliation(SURVEY_ID, OLD_BLOCKS);
+    await scheduleFeedbackSourceReconciliation(SURVEY_ID, WORKSPACE_ID, OLD_BLOCKS);
     vi.mocked(prisma.survey.findUnique).mockRejectedValue(new Error("connection reset"));
 
     await expect(scheduled[0]()).resolves.toBeUndefined();

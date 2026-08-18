@@ -360,9 +360,16 @@ export const reconcileFeedbackSourcesForSurvey = async (
  * Deliberately a fresh read rather than anything cached: its whole purpose is to observe writes that
  * landed after the caller captured its own snapshot.
  */
-const readPersistedSurveyBlocks = async (surveyId: string): Promise<TSurveyBlock[] | null> => {
+const readPersistedSurveyBlocks = async (
+  surveyId: string,
+  workspaceId: string
+): Promise<TSurveyBlock[] | null> => {
   const survey = await prisma.survey.findUnique({
-    where: { id: surveyId },
+    // Scoped by the composite @@unique([id, workspaceId]) rather than the id alone. The id here is the
+    // survey the caller just persisted and was authorized on, so this is defense in depth rather than
+    // a hole being closed — but it keeps the tenant constraint next to the read instead of resting on
+    // FKs in another file, and it is what the repo asks of every query.
+    where: { id: surveyId, workspaceId },
     select: { blocks: true },
   });
 
@@ -395,12 +402,13 @@ const readPersistedSurveyBlocks = async (surveyId: string): Promise<TSurveyBlock
  */
 export const scheduleFeedbackSourceReconciliation = async (
   surveyId: string,
+  workspaceId: string,
   blocks: TSurveyBlock[]
 ): Promise<void> => {
   try {
     after(async () => {
       try {
-        const persisted = await readPersistedSurveyBlocks(surveyId);
+        const persisted = await readPersistedSurveyBlocks(surveyId, workspaceId);
         // Deleted between the save and this callback. Diffing against nothing would read as "this
         // survey has no questions" and delete every mapping for it.
         if (!persisted) return;

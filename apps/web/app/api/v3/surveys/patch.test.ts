@@ -297,7 +297,12 @@ describe("patchV3Survey", () => {
     // all, so reconciling against the request payload would pass `undefined` — which `expect.any(Array)`
     // would have caught, but so would any other array, including an empty one. The value is what
     // matters here, because reconciling an empty block list deletes every mapping the survey has.
-    expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(currentSurvey.id, currentSurvey.blocks);
+    // The workspaceId is what scopes the deferred re-read of the survey to its tenant.
+    expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
+      currentSurvey.id,
+      currentSurvey.workspaceId,
+      currentSurvey.blocks
+    );
     expect(currentSurvey.blocks.length).toBeGreaterThan(0);
   });
 

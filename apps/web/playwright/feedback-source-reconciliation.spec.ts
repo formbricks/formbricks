@@ -177,7 +177,8 @@ test.describe("Feedback source reconciliation @slow", () => {
     // The discriminating wait: this row set only becomes [supported[0]] once reconciliation has
     // reached a *specific*-scope source and both deleted the stale row and kept the curated one.
     // Seeded [STALE, supported[0]], asserted [supported[0]] — it cannot pass if reconciliation never
-    // ran, never matched the source, or threw.
+    // ran, never matched the source, or threw. Being an exact-set equality, it also covers the other
+    // half: a curated source adopts none of the questions it was never mapped to.
     await expect
       .poll(() => mappedElementIds(curatedRetypedSourceId, surveyId), { timeout: 15000 })
       .toEqual([retypeTarget!.id]);
@@ -190,11 +191,6 @@ test.describe("Feedback source reconciliation @slow", () => {
     // The exact type openText maps to, not merely "something other than nps" — that weaker form
     // passes for any wrong value reconciliation might write.
     expect(retyped.hubFieldType).toBe(RETYPE_EXPECTED_HUB_FIELD_TYPE);
-
-    // Neither curated source adopted the questions it was never mapped to.
-    expect(await mappedElementIds(curatedRetypedSourceId, surveyId)).not.toContain(
-      supported.find((element) => element.id !== retypeTarget!.id)?.id
-    );
 
     // The held-back source kept its single stale row instead of being orphaned. Credible now: the
     // poll above proves this save already reconciled a specific-scope source.

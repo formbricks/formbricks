@@ -627,7 +627,7 @@ export const updateSurveyInternal = async (
     // blocks that were actually persisted, not the caller's payload — a partial update that omits
     // blocks leaves the stored questions untouched, and diffing its empty payload would delete every
     // mapping. Best-effort: a failure logs inside the helper and never blocks the save.
-    await scheduleFeedbackSourceReconciliation(surveyId, persistedSurvey.blocks);
+    await scheduleFeedbackSourceReconciliation(surveyId, currentSurvey.workspaceId, persistedSurvey.blocks);
 
     return await reconcilePersistedSurveySchedulingIfDue({
       logSource: "survey-update",

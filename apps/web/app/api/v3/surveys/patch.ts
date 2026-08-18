@@ -236,7 +236,11 @@ export async function executeV3SurveyPatch(params: {
     // ENG-2064: this route writes blocks directly rather than going through updateSurveyInternal, so
     // it needs the same feedback-source reconciliation — it is the surface an automation would use to
     // change a survey's questions. Best-effort; failures log without failing the patch.
-    await scheduleFeedbackSourceReconciliation(currentSurvey.id, persistedSurvey.blocks);
+    await scheduleFeedbackSourceReconciliation(
+      currentSurvey.id,
+      currentSurvey.workspaceId,
+      persistedSurvey.blocks
+    );
 
     return await reconcilePersistedV3SurveyPatch({
       survey: transformPrismaSurvey<TSurvey>(persistedSurvey),

@@ -556,6 +556,7 @@ describe("Tests for updateSurvey", () => {
 
         expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
           updateSurveyInput.id,
+          mockSurveyOutput.workspaceId,
           persistedBlocks
         );
       });
