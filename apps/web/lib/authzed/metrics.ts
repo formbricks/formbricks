@@ -103,6 +103,21 @@ const reconciliationDriftTotal = meter.createCounter("formbricks_authzed_reconci
   description: "Attributable relationship differences observed by scheduled audits",
 });
 
+const reconciliationRepairTotal = meter.createCounter("formbricks_authzed_reconciliation_repair_total", {
+  description: "Attributable relationship repair results from scheduled reconciliation",
+});
+
+const revocationDeliveryDuration = meter.createHistogram(
+  "formbricks_authzed_projection_revocation_delivery_duration_seconds",
+  {
+    advice: {
+      explicitBucketBoundaries: [0.1, 0.5, 1, 2.5, 5, 10, 15, 30, 45, 60, 120, 300],
+    },
+    description: "Time from a committed authorization revocation to successful SpiceDB delivery",
+    unit: "s",
+  }
+);
+
 const outboxStatus = meter.createGauge("formbricks_authzed_projection_outbox_status", {
   description: "Point-in-time authorization projection outbox counts by bounded state",
   unit: "{event}",
@@ -174,6 +189,14 @@ export const recordAuthzedOutboxDelivery = ({
   outboxDeliveryDuration.record(durationMs / 1000, { status });
 };
 
+export const recordAuthzedRevocationDelivery = (durationMs: number): void => {
+  try {
+    revocationDeliveryDuration.record(Math.max(0, durationMs) / 1_000);
+  } catch {
+    // Observability cannot turn an already-delivered revocation into an outbox failure.
+  }
+};
+
 export const recordAuthzedOutboxStatus = ({
   deadLettered,
   oldestPendingAgeSeconds,
@@ -206,4 +229,16 @@ export const recordAuthzedReconciliationAudit = ({
   reconciliationAuditTotal.add(1, { status });
   if (drift > 0) reconciliationDriftTotal.add(drift, { kind: "attributable" });
   if (failures > 0) reconciliationDriftTotal.add(failures, { kind: "failure" });
+};
+
+export const recordAuthzedReconciliationRepair = ({
+  failed,
+  repaired,
+}: Readonly<{ failed: number; repaired: number }>): void => {
+  try {
+    if (repaired > 0) reconciliationRepairTotal.add(repaired, { status: "repaired" });
+    if (failed > 0) reconciliationRepairTotal.add(failed, { status: "failed" });
+  } catch {
+    // The second verification audit must still run when a metrics exporter is unavailable.
+  }
 };

@@ -30,8 +30,10 @@ vi.mock("@opentelemetry/api", () => ({
 const {
   recordAuthzedOutboxStatus,
   recordAuthzedProjection,
+  recordAuthzedReconciliationRepair,
   recordAuthzedRequestFailure,
   recordAuthzedRequestRetry,
+  recordAuthzedRevocationDelivery,
 } = await import("./metrics");
 
 const counter = (name: string) => counters.get(name)!;
@@ -152,6 +154,39 @@ describe("recordAuthzedOutboxStatus", () => {
   });
 });
 
+describe("direct-authority recovery metrics", () => {
+  test("records exact revocation propagation in seconds without attributes", () => {
+    recordAuthzedRevocationDelivery(12_500);
+
+    expect(
+      histogram("formbricks_authzed_projection_revocation_delivery_duration_seconds").record
+    ).toHaveBeenCalledWith(12.5);
+  });
+
+  test("records repaired and failed relationship counts separately", () => {
+    recordAuthzedReconciliationRepair({ failed: 2, repaired: 7 });
+
+    expect(counter("formbricks_authzed_reconciliation_repair_total").add.mock.calls).toEqual([
+      [7, { status: "repaired" }],
+      [2, { status: "failed" }],
+    ]);
+  });
+
+  test("does not let exporter failures alter revocation delivery or repair", () => {
+    histogram(
+      "formbricks_authzed_projection_revocation_delivery_duration_seconds"
+    ).record.mockImplementationOnce(() => {
+      throw new Error("exporter unavailable");
+    });
+    counter("formbricks_authzed_reconciliation_repair_total").add.mockImplementationOnce(() => {
+      throw new Error("exporter unavailable");
+    });
+
+    expect(() => recordAuthzedRevocationDelivery(1)).not.toThrow();
+    expect(() => recordAuthzedReconciliationRepair({ failed: 0, repaired: 1 })).not.toThrow();
+  });
+});
+
 describe("attribute cardinality", () => {
   test("never carries an identifier", () => {
     // These attributes leave the deployment when an OTLP endpoint is configured. An organization or
@@ -175,10 +210,13 @@ describe("attribute cardinality", () => {
       revocationsPastCritical: 0,
       revocationsPastWarning: 0,
     });
+    recordAuthzedReconciliationRepair({ failed: 1, repaired: 2 });
+    recordAuthzedRevocationDelivery(1);
 
     const recordedAttributes = [
       ...counter("formbricks_authzed_projection_total").add.mock.calls,
       ...counter("formbricks_authzed_request_failures_total").add.mock.calls,
+      ...counter("formbricks_authzed_reconciliation_repair_total").add.mock.calls,
       ...gauges.get("formbricks_authzed_projection_outbox_status")!.record.mock.calls,
     ].flatMap(([, attributes]) => Object.keys(attributes as object));
 

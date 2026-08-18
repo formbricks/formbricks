@@ -503,7 +503,8 @@ contain tokens, database credentials, schema text, raw SDK errors, relationship 
 
 ## Monitor AuthZed
 
-Enable the existing Formbricks Prometheus or OTLP metrics exporter. Current v5 bridge signals are:
+Enable the existing Formbricks Prometheus or OTLP metrics exporter. The release-matched direct-authority
+signals are:
 
 | Metric                                               | What it measures                                                            |
 | ---------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -511,14 +512,17 @@ Enable the existing Formbricks Prometheus or OTLP metrics exporter. Current v5 b
 | `formbricks_authzed_projection_duration_seconds`     | Request-path projection latency                                             |
 | `formbricks_authzed_request_failures_total`          | AuthZed requests that exhausted their retry budget                          |
 | `formbricks_authzed_request_retries_total`           | Retry attempts caused by transient failures                                 |
-| `formbricks_authzed_authorization_comparisons_total` | Match, mismatch, and operational-error outcomes where comparison is enabled |
-| `formbricks_authzed_authorization_duration_seconds`  | Authorization comparison latency where comparison is enabled                |
+| `formbricks_authzed_authorization_decisions_total`   | Authoritative allow, deny, and operational-error outcomes                    |
+| `formbricks_authzed_authorization_decision_duration_seconds` | End-to-end authoritative authorization latency                      |
+| `formbricks_authzed_authorization_checks_per_request` | Central authorization operations per authenticated request                  |
 | `formbricks_authzed_projection_outbox_delivery_total` | Durable outbox events delivered or failed                                   |
 | `formbricks_authzed_projection_outbox_delivery_duration_seconds` | Durable delivery batch latency                                    |
+| `formbricks_authzed_projection_revocation_delivery_duration_seconds` | Commit-to-SpiceDB revocation propagation time                     |
 | `formbricks_authzed_projection_outbox_status`        | Point-in-time pending, dead-letter, warning, and critical counts             |
 | `formbricks_authzed_projection_outbox_oldest_pending_age_seconds` | Age of the oldest pending event                                  |
 | `formbricks_authzed_reconciliation_audit_total`      | Scheduled audit outcomes                                                     |
 | `formbricks_authzed_reconciliation_drift_total`      | Attributable drift and failures observed by scheduled audits                 |
+| `formbricks_authzed_reconciliation_repair_total`     | Repaired and failed attributable relationship repair results                 |
 
 Starting PromQL checks:
 
@@ -535,16 +539,31 @@ histogram_quantile(
   sum by (le) (rate(formbricks_authzed_projection_duration_seconds_bucket[5m]))
 )
 
-# Authorization mismatches, where comparison is enabled.
-sum(rate(formbricks_authzed_authorization_comparisons_total{
-  outcome=~"legacy_allow_authzed_deny|legacy_deny_authzed_allow"
-}[5m]))
+# Direct-authority operational-error rate. Product denials remain a separate outcome.
+sum(rate(formbricks_authzed_authorization_decisions_total{outcome="operational_error"}[5m]))
+/
+sum(rate(formbricks_authzed_authorization_decisions_total[5m]))
+
+# Direct-authority latency p95 by surface.
+histogram_quantile(
+  0.95,
+  sum by (le, surface) (rate(formbricks_authzed_authorization_decision_duration_seconds_bucket[5m]))
+)
+
+# Revocations that missed the warning or critical delivery thresholds.
+formbricks_authzed_projection_outbox_status{state=~"revocation_warning|revocation_critical"}
+
+# Dead letters and failed scheduled repairs both block cutover.
+formbricks_authzed_projection_outbox_status{state="dead_lettered"}
+or
+sum(rate(formbricks_authzed_reconciliation_repair_total{status="failed"}[5m]))
 ```
 
-The v6 direct-authority release replaces comparison outcomes with bounded authoritative decision and latency
-metrics. Required gates are no dead-letter revocations, no
-normal-operation 60-second freshness guard, clean scheduled audits, operational errors at or below 0.1%, p95
-below 250 ms, and p99 below one second.
+Starting gates are: operational-error rate at or below 0.1%, p95 below 250 ms, p99 below one second, no
+dead-letter revocations, no normal-operation 60-second freshness guard, and clean scheduled audits. Alert on
+revocation delivery at 15 seconds (warning) and 45 seconds (critical). The application on-call owns decision,
+delivery, and repair alerts; the infrastructure on-call owns SpiceDB/datastore availability and capacity, with
+joint escalation whenever either side cannot restore a clean graph.
 
 On the SpiceDB side, monitor pod restarts, failed datastore migrations, PostgreSQL connection saturation such
 as `pgxpool_empty_acquire`, dispatch load, cache behavior, and datastore latency. Divide the datastore

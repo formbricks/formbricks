@@ -24,18 +24,12 @@ import { recordAuthorizationChecksPerRequest } from "./metrics";
  *
  * **The surface does not span the whole page.** `AsyncLocalStorage` scopes to the awaited callback,
  * so it closes when the choke-point helper returns — a page that calls `getWorkspaceAuth()` and then
- * issues further central checks (`feedbackDirectoryAssignment.read` via
- * `getAuthorizedWorkspaceFeedbackDirectories`, `organization.manage` on the taxonomy page) makes
- * those checks outside any surface. `can()` then answers from the legacy evaluator whatever the
- * rollout selects, so they produce no shadow evidence *and* would bypass enforcement. Those checks
- * are counted by `formbricks_authzed_authorization_unscoped_checks_total`, because otherwise the
- * gap is indistinguishable from a clean cutover: nothing compares, so nothing ever mismatches.
+ * issues further central checks makes those checks without a page label. They still use authoritative
+ * SpiceDB, but are tagged `unscoped` in decision telemetry.
  *
  * Closing it needs a boundary that survives past the helper — a request-scoped store (React `cache`)
- * rather than an async-scoped one. That is deliberately out of scope here, because it replaces this
- * module's context mechanism and cannot be covered by a unit test: `cache` does not dedupe outside a
- * render, so proving it needs a render harness or an E2E. Until that lands, `page:user` belongs in
- * shadow only and must not be added to an enforcement list.
+ * rather than an async-scoped one. That telemetry attribution improvement is separate from evaluator
+ * authority and requires a render harness or E2E proof.
  */
 export type TAuthorizationSurface =
   | "server_action"
@@ -127,6 +121,10 @@ export const recordAuthorizationCheckIssued = (): void => {
 /** The number of central authorization operations in the current surface, or `null` outside one. */
 export const getIssuedAuthorizationCheckCount = (): number | null =>
   authorizationContext.getStore()?.checksIssued ?? null;
+
+/** The current bounded request surface, or `unscoped` for scripts and non-request authorization calls. */
+export const getAuthorizationSurface = (): TAuthorizationSurface | "unscoped" =>
+  authorizationContext.getStore()?.surface ?? "unscoped";
 
 export const enqueueAuthorizationComparison = (job: TComparisonJob): boolean => {
   const context = authorizationContext.getStore();

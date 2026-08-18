@@ -6,7 +6,11 @@ import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import { AUTHZED_ERROR_CODES } from "./errors";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
-import { recordAuthzedOutboxDelivery, recordAuthzedOutboxStatus } from "./metrics";
+import {
+  recordAuthzedOutboxDelivery,
+  recordAuthzedOutboxStatus,
+  recordAuthzedRevocationDelivery,
+} from "./metrics";
 import {
   deleteOrganizationRelationships,
   deleteUserOrganizationRelationships,
@@ -422,6 +426,14 @@ export const processAuthzedOutboxBatch = async (
   const durationMs = performance.now() - startedAt;
 
   await markAuthzedOutboxEventsDelivered(leaseOwner, outcome.delivered);
+
+  const deliveredAt = Date.now();
+  const deliveredIds = new Set(outcome.delivered);
+  for (const event of events) {
+    if (event.isRevocation && deliveredIds.has(event.id)) {
+      recordAuthzedRevocationDelivery(deliveredAt - event.createdAt.getTime());
+    }
+  }
 
   let deadLettered = 0;
   let failed = 0;

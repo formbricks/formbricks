@@ -15,6 +15,63 @@ export type TAuthorizationErrorSource = "authzed" | "legacy" | "scheduler" | "so
 
 const meter = metrics.getMeter("formbricks.authzed.authorization");
 
+const decisionsTotal = meter.createCounter("formbricks_authzed_authorization_decisions_total", {
+  description: "Authoritative SpiceDB authorization decisions by bounded outcome",
+});
+
+const authorizationDuration = meter.createHistogram(
+  "formbricks_authzed_authorization_decision_duration_seconds",
+  {
+    advice: {
+      explicitBucketBoundaries: [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5],
+    },
+    description: "Duration of authoritative SpiceDB authorization operations",
+    unit: "s",
+  }
+);
+
+export type TAuthorizationDecisionOutcome = "allow" | "deny" | "operational_error";
+
+type TAuthorizationDecisionMetricContext = Readonly<{
+  action: TAuthorizationAction;
+  actorType: TAuthorizationActor["type"];
+  durationMs: number;
+  resourceType: TAuthorizationResourceType;
+  surface: TAuthzedAuthorizationRolloutSurface | "unscoped";
+}>;
+
+export type TAuthorizationDecisionMetric = TAuthorizationDecisionMetricContext &
+  (
+    | Readonly<{ errorCode?: never; outcome: Exclude<TAuthorizationDecisionOutcome, "operational_error"> }>
+    | Readonly<{ errorCode: TAuthzedErrorCode; outcome: "operational_error" }>
+  );
+
+export const recordAuthorizationDecision = (metric: TAuthorizationDecisionMetric): void => {
+  try {
+    const attributes = {
+      action: metric.action,
+      actor_type: metric.actorType,
+      error_code: metric.errorCode ?? "none",
+      outcome: metric.outcome,
+      resource_type: metric.resourceType,
+      surface: metric.surface,
+    };
+
+    decisionsTotal.add(1, attributes);
+    authorizationDuration.record(Math.max(0, metric.durationMs) / 1_000, {
+      action: metric.action,
+      actor_type: metric.actorType,
+      outcome: metric.outcome,
+      resource_type: metric.resourceType,
+      surface: metric.surface,
+    });
+  } catch {
+    // Telemetry must never alter an authoritative decision or turn an instrumentation outage into a
+    // protected-operation outage.
+  }
+};
+
+/** @deprecated Historical bridge telemetry. Remove with the rollout selector in ENG-2450. */
 const comparisonsTotal = meter.createCounter("formbricks_authzed_authorization_comparisons_total", {
   description: "Legacy and AuthZed authorization comparison outcomes",
 });
@@ -86,10 +143,14 @@ export const recordAuthorizationComparison = (metric: TAuthorizationComparisonMe
     surface: metric.surface,
   };
 
-  comparisonsTotal.add(1, attributes);
-  comparisonDuration.record(metric.durationMs / 1_000, {
-    mode: metric.mode,
-    outcome: metric.outcome,
-    surface: metric.surface,
-  });
+  try {
+    comparisonsTotal.add(1, attributes);
+    comparisonDuration.record(metric.durationMs / 1_000, {
+      mode: metric.mode,
+      outcome: metric.outcome,
+      surface: metric.surface,
+    });
+  } catch {
+    // Historical telemetry is fail-safe while the bridge code remains in the stacked branch.
+  }
 };
