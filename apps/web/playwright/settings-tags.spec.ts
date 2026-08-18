@@ -7,6 +7,12 @@ import { test } from "./lib/fixtures";
  * now arrives from the API rather than server props, and rename/merge/delete invalidate the query instead
  * of calling `router.refresh()`. Each assertion below is a thing that silently breaks if the query key,
  * the invalidation, or the route's authorization scope is wrong.
+ *
+ * The first test walks one table through one journey — list, rename, merge, delete — because every phase
+ * needs the same three seeded tags and the same signed-in user, and each phase's *starting* state is the
+ * previous phase's result. Splitting it would repeat a full `users.create` (organization, workspace,
+ * attribute keys, seed survey) plus a login four more times for no extra coverage. The phases are
+ * `test.step`s so a failure names the phase it happened in rather than just a line number.
  */
 
 // Unique per run *and* per worker: two workers starting in the same millisecond would otherwise collide on
@@ -44,11 +50,16 @@ test.describe("Workspace tags settings @slow", () => {
     // updates that, so such a locator passes before a rename and fails after one for the wrong reason.
     const rowFor = (tagId: string) => page.getByTestId(`tag-row-${tagId}`);
     const nameFieldFor = (tagId: string) => rowFor(tagId).getByRole("textbox", { name: "Tag" });
+    const renamed = `Renamed ${run}`;
 
-    // Seeing all three proves GET /api/v3/tags resolved and its response populated the table.
-    for (const tag of [keep, mergeAway, doomed]) {
-      await expect(nameFieldFor(tag.id)).toHaveValue(tag.name, { timeout: 15000 });
-    }
+    await test.step("the table renders the workspace's tags from the API", async () => {
+      // Seeing all three proves GET /api/v3/tags resolved and its response populated the table. It also
+      // proves the route has a QueryClientProvider: without one `useTags` throws and the page renders the
+      // error boundary instead, with no rows at all.
+      for (const tag of [keep, mergeAway, doomed]) {
+        await expect(nameFieldFor(tag.id)).toHaveValue(tag.name, { timeout: 15000 });
+      }
+    });
 
     const renames: string[] = [];
     page.on("request", (request) => {
@@ -57,44 +68,48 @@ test.describe("Workspace tags settings @slow", () => {
       }
     });
 
-    // Blurring without editing must not write. This is counted rather than timed: the no-op blur is
-    // followed immediately by one real rename of the same row, so a stray request makes the count 2.
-    await nameFieldFor(keep.id).click();
-    await nameFieldFor(keep.id).blur();
+    await test.step("a blur with no edit writes nothing, and a real rename writes once", async () => {
+      // Counted rather than timed: the no-op blur is followed immediately by one real rename of the same
+      // row, so a stray request makes the count 2.
+      await nameFieldFor(keep.id).click();
+      await nameFieldFor(keep.id).blur();
 
-    const renamed = `Renamed ${run}`;
-    await nameFieldFor(keep.id).fill(renamed);
-    await nameFieldFor(keep.id).blur();
-    await expect(page.locator(".formbricks__toast__success")).toBeVisible({ timeout: 15000 });
-    await expect(nameFieldFor(keep.id)).toHaveValue(renamed);
-    expect(await prisma.tag.findUnique({ where: { id: keep.id } })).toMatchObject({ name: renamed });
-    expect(renames).toHaveLength(1);
-
-    // Renaming onto a name already in use is rejected, and must leave the stored name alone. Asserting the
-    // *specific* copy matters: the route reports the duplicate as an `invalid_params` reason, and reading
-    // the wrong property there still produces an error toast — just the generic one. Matching only
-    // `.formbricks__toast__error` passed while that branch was broken.
-    await nameFieldFor(doomed.id).fill(renamed);
-    await nameFieldFor(doomed.id).blur();
-    await expect(page.locator(".formbricks__toast__error")).toContainText("Tag already exists", {
-      timeout: 15000,
-    });
-    expect(await prisma.tag.findUnique({ where: { id: doomed.id } })).toMatchObject({
-      name: doomed.name,
+      await nameFieldFor(keep.id).fill(renamed);
+      await nameFieldFor(keep.id).blur();
+      await expect(page.locator(".formbricks__toast__success")).toBeVisible({ timeout: 15000 });
+      await expect(nameFieldFor(keep.id)).toHaveValue(renamed);
+      expect(await prisma.tag.findUnique({ where: { id: keep.id } })).toMatchObject({ name: renamed });
+      expect(renames).toHaveLength(1);
     });
 
-    // Merge: the source row leaves the table with no reload, which is what proves the invalidation ran.
-    await rowFor(mergeAway.id).getByRole("button", { name: "Merge" }).click();
-    await page.getByRole("option", { name: renamed }).click();
-    await expect(rowFor(mergeAway.id)).toHaveCount(0, { timeout: 15000 });
-    expect(await prisma.tag.findUnique({ where: { id: mergeAway.id } })).toBeNull();
+    await test.step("renaming onto a name already in use is rejected by its own message", async () => {
+      // Asserting the *specific* copy matters: the route reports the duplicate as an `invalid_params`
+      // reason, and reading the wrong property there still produces an error toast — just the generic one.
+      // Matching only `.formbricks__toast__error` passed while that branch was broken.
+      await nameFieldFor(doomed.id).fill(renamed);
+      await nameFieldFor(doomed.id).blur();
+      await expect(page.locator(".formbricks__toast__error")).toContainText("Tag already exists", {
+        timeout: 15000,
+      });
+      expect(await prisma.tag.findUnique({ where: { id: doomed.id } })).toMatchObject({
+        name: doomed.name,
+      });
+    });
 
-    // Delete: same again, through the confirmation dialog. Scoped to the dialog because the row's own
-    // trigger carries the same accessible name.
-    await rowFor(doomed.id).getByRole("button", { name: "Delete" }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
-    await expect(rowFor(doomed.id)).toHaveCount(0, { timeout: 15000 });
-    expect(await prisma.tag.findUnique({ where: { id: doomed.id } })).toBeNull();
+    await test.step("merging removes the source row with no reload", async () => {
+      await rowFor(mergeAway.id).getByRole("button", { name: "Merge" }).click();
+      await page.getByRole("option", { name: renamed }).click();
+      await expect(rowFor(mergeAway.id)).toHaveCount(0, { timeout: 15000 });
+      expect(await prisma.tag.findUnique({ where: { id: mergeAway.id } })).toBeNull();
+    });
+
+    await test.step("deleting removes the row with no reload", async () => {
+      // Scoped to the dialog because the row's own trigger carries the same accessible name.
+      await rowFor(doomed.id).getByRole("button", { name: "Delete" }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
+      await expect(rowFor(doomed.id)).toHaveCount(0, { timeout: 15000 });
+      expect(await prisma.tag.findUnique({ where: { id: doomed.id } })).toBeNull();
+    });
 
     // The surviving tag is untouched by either removal.
     await expect(nameFieldFor(keep.id)).toHaveValue(renamed);

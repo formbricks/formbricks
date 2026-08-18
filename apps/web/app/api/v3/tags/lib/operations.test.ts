@@ -44,6 +44,9 @@ const grantAccess = () =>
 
 beforeEach(() => {
   vi.resetAllMocks();
+  // Rename reads the workspace's counts to fill `TagResource.count`, so every rename test needs this
+  // resolved. Tests where the count itself is the subject override it.
+  vi.mocked(getTagsOnResponsesCount).mockResolvedValue([]);
 });
 
 describe("listV3Tags", () => {
@@ -127,6 +130,35 @@ describe("renameV3Tag", () => {
     const response = await renameV3Tag({ ...base, tagId, name: "Bug report" });
 
     expect(response.status).toBe(422);
+  });
+
+  test("reports the tag's real response count, not a hardcoded zero", async () => {
+    vi.mocked(getTag).mockResolvedValue(tag);
+    grantAccess();
+    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: { ...tag, name: "Renamed" } } as Awaited<
+      ReturnType<typeof updateTagName>
+    >);
+    vi.mocked(getTagsOnResponsesCount).mockResolvedValue([{ tagId, count: 4 }]);
+
+    const response = await renameV3Tag({ ...base, tagId, name: "Renamed" });
+    const body = await response.json();
+
+    // `count` is part of the documented TagResource; answering 0 for a tag in use is false data.
+    expect(body.data).toMatchObject({ id: tagId, name: "Renamed", count: 4 });
+    expect(getTagsOnResponsesCount).toHaveBeenCalledWith(workspaceId);
+  });
+
+  test("falls back to zero when the renamed tag is on no responses", async () => {
+    vi.mocked(getTag).mockResolvedValue(tag);
+    grantAccess();
+    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: tag } as Awaited<
+      ReturnType<typeof updateTagName>
+    >);
+    vi.mocked(getTagsOnResponsesCount).mockResolvedValue([{ tagId: otherTagId, count: 9 }]);
+
+    const body = await (await renameV3Tag({ ...base, tagId, name: "Renamed" })).json();
+
+    expect(body.data.count).toBe(0);
   });
 
   test("records the before and after objects for the audit log", async () => {
@@ -227,6 +259,18 @@ describe("mergeV3Tags", () => {
     const response = await mergeV3Tags({ ...base, tagId, newTagId: otherTagId });
 
     expect(response.status).toBe(403);
+    expect(mergeTags).not.toHaveBeenCalled();
+  });
+
+  test("rejects a self-merge as a client error rather than a server fault", async () => {
+    vi.mocked(getTag).mockResolvedValue(tag);
+    grantAccess();
+
+    const response = await mergeV3Tags({ ...base, tagId, newTagId: tagId });
+
+    // `mergeTags` would reject this itself, but that path maps to 500 — the caller's bad input must not
+    // be reported as our failure.
+    expect(response.status).toBe(400);
     expect(mergeTags).not.toHaveBeenCalled();
   });
 

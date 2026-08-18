@@ -9,7 +9,7 @@ import { tagKeys } from "../lib/query";
 import { useTags } from "./use-tags";
 
 const wrapper = (queryClient: QueryClient) => {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseTagsTestWrapper";
   return Wrapper;

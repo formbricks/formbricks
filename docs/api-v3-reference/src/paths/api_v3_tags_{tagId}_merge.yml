@@ -6,6 +6,8 @@ post:
 
     Both tags must belong to the same workspace — a cross-workspace merge answers `403`, since it would
     move responses across a tenant boundary. Same authorization as rename.
+
+    Merging a tag into itself answers `400`.
   tags:
     - V3 Tags
   parameters:
@@ -22,6 +24,7 @@ post:
       application/json:
         schema:
           type: object
+          additionalProperties: false
           required:
             - newTagId
           properties:

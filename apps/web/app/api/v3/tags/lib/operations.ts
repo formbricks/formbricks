@@ -1,6 +1,7 @@
 import "server-only";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
+  problemBadRequest,
   problemForbidden,
   problemInternalError,
   problemUnprocessableContent,
@@ -94,7 +95,14 @@ export async function renameV3Tag(
 
   if (auditLog) auditLog.newObject = result.data;
 
-  return successResponse(serializeV3Tag(result.data, 0), { requestId });
+  // `count` is part of the documented `TagResource`, so a rename cannot answer 0 for a tag that is in
+  // use — that would be false data, not merely an omission. A rename does not change the count, so this
+  // reads the current one. `getTagsOnResponsesCount` is workspace-wide and `reactCache`d, the same call
+  // the list route makes.
+  const counts = await getTagsOnResponsesCount(authorized.tag.workspaceId);
+  const count = counts.find((entry) => entry.tagId === tagId)?.count ?? 0;
+
+  return successResponse(serializeV3Tag(result.data, count), { requestId });
 }
 
 export async function deleteV3Tag(
@@ -127,6 +135,16 @@ export async function mergeV3Tags(
 
   const authorized = await authorizeTagMutation(tagId, params);
   if (authorized instanceof Response) return authorized;
+
+  // Merging a tag into itself is a malformed request, not a server fault. `mergeTags` does reject it
+  // with `MERGE_SAME_TAG`, but every service failure below maps to 500, so without this check the
+  // caller would get a 500 for their own bad input. 400 is what the OpenAPI document already promises.
+  if (tagId === newTagId) {
+    return problemBadRequest(requestId, "A tag cannot be merged into itself", {
+      instance,
+      invalid_params: [{ name: "newTagId", reason: "must differ from the tag being merged away" }],
+    });
+  }
 
   // Both tags must live in the same workspace, or merging would move responses across a tenant
   // boundary. The server action checked this too; it is the one rule that needs the second tag loaded.

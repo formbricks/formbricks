@@ -3,6 +3,8 @@
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import type { TV3Tag } from "@/app/api/v3/tags/serializers";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { Button } from "@/modules/ui/components/button";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { TagNameInput } from "@/modules/workspaces/settings/tags/components/tag-name-input";
 import { TagRowActions } from "@/modules/workspaces/settings/tags/components/tag-row-actions";
@@ -81,7 +83,21 @@ export const EditTagsWrapper = ({ workspaceId, isReadOnly }: Readonly<EditTagsWr
   const { t } = useTranslation();
   // The tag list lives in the query cache, so a rename, merge or delete invalidates it instead of
   // calling `router.refresh()` to revalidate the whole route.
-  const { data: tags = [], isPending } = useTags(workspaceId);
+  const { data: tags = [], isPending, isError, error, refetch } = useTags(workspaceId);
+
+  // A failed fetch must not fall through to the table: `data` defaults to `[]`, so the empty state would
+  // claim the workspace has no tags when the request merely failed. Same shape as `survey-list.tsx` and
+  // `workflow-runs-table.tsx`.
+  if (isError && tags.length === 0) {
+    return (
+      <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
+        <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
+        <Button variant="secondary" size="sm" onClick={() => refetch()}>
+          {t("common.try_again")}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <SettingsTable

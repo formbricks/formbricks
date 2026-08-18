@@ -9,7 +9,7 @@ import { tagKeys } from "../lib/query";
 import { useMergeTags } from "./use-merge-tags";
 
 const wrapper = (queryClient: QueryClient) => {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "useMergeTagsTestWrapper";
   return Wrapper;
