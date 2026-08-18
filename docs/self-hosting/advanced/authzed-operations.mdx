@@ -127,6 +127,56 @@ Production deployments should use a dedicated PostgreSQL database and role. Prov
 `datastore_uri` and `preshared_key`, then reference it through `authzed.datastore.existingSecret` and
 `authzed.auth.existingSecret`. Require `sslmode=require`, `verify-ca`, or `verify-full` for managed PostgreSQL.
 
+### Bootstrap the SpiceDB role and database
+
+A short-lived Job creates the dedicated `spicedb` role and database before SpiceDB starts. It creates each only
+when it is absent, so re-running it against an already initialised database is safe — but not inert: the role's
+password is reconciled to the chart's Secret on every run. Rotate that password outside Helm and the next
+upgrade will set it back, so update the Secret alongside it.
+
+By default it connects as the `postgres` superuser the bundled PostgreSQL subchart creates. **An existing
+PostgreSQL installed with `postgresql.auth.enablePostgresUser=false` has no such role**, and the upgrade fails
+until the Job is told which role to use instead:
+
+```yaml
+authzed:
+  bundledPostgresqlBootstrap:
+    adminUsername: fbadmin
+    adminDatabase: formbricks # maintenance database to attach to
+    adminPasswordSecretName: existing-pg-admin
+    adminPasswordKey: password
+```
+
+The role needs `CREATEROLE` and `CREATEDB`; it does not need to be a superuser. `adminPasswordSecretName` is
+required whenever `adminUsername` is overridden, and `adminPasswordKey` whenever that Secret is configured
+explicitly. **Both are checked while the chart renders**, so omitting one fails the render with the missing
+value named — no Job is created. Without those guards the first would silently fall back to the bundled admin
+password and the second would look up the subchart's key name inside your own Secret, and neither shows up
+until the Pod fails to start in the cluster.
+
+<Note>
+  `CREATEROLE` and `CREATEDB` are sufficient on their own only when the administrator also creates the
+  `spicedb` role — which is the normal case, including on re-runs. `CREATE DATABASE ... OWNER spicedb`
+  additionally requires the administrator to be able to `SET ROLE` to that owner, so the Job grants itself the
+  `spicedb` role before creating the database. From PostgreSQL 16 that grant is only possible for a role the
+  administrator holds `ADMIN OPTION` on, which it gets automatically by creating it.
+
+  The one case this cannot repair is a `spicedb` role that already exists and was created by *someone else*,
+  on PostgreSQL 16 or newer: the administrator then holds no `ADMIN OPTION` on it and the Job fails rather than
+  silently skipping work. Grant it explicitly — `GRANT spicedb TO fbadmin WITH ADMIN OPTION` as a superuser or
+  as the role's owner — or run the bootstrap as a superuser once. PostgreSQL 15 and older are unaffected:
+  `CREATEROLE` there carries authority over every non-superuser role.
+</Note>
+
+Rendering fails fast with the three available remedies named — configure an administrative role, enable
+`postgresql.auth.enablePostgresUser`, or set `authzed.bundledPostgresqlBootstrap.enabled=false` — rather than
+letting the Job fail inside the cluster. Disabling bootstrap remains the correct choice when the role and
+database are provisioned by hand or by a platform team; the SpiceDB `datastore_uri` must then already point at
+them.
+
+For an externally managed PostgreSQL server, use `authzed.externalPostgresqlBootstrap` instead, which takes a
+full administrator URL from a Secret and enforces TLS on it.
+
 For an external AuthZed endpoint:
 
 ```yaml

@@ -8,11 +8,43 @@
 {{- if and $externalBootstrap (not .Values.authzed.externalPostgresqlBootstrap.adminSecretName) -}}
 {{- fail "authzed.externalPostgresqlBootstrap.adminSecretName is required when external bootstrap is enabled" -}}
 {{- end -}}
-{{- if and $bundledBootstrap (not .Values.postgresql.auth.enablePostgresUser) -}}
-{{- fail "postgresql.auth.enablePostgresUser must be true when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- $bundledAdminUsername := .Values.authzed.bundledPostgresqlBootstrap.adminUsername | default "postgres" -}}
+{{- $bundledAdminDatabase := .Values.authzed.bundledPostgresqlBootstrap.adminDatabase | default "postgres" -}}
+{{- $bundledAdminSecret := .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName | default $postgresSecretName -}}
+{{- $bundledAdminKey := .Values.authzed.bundledPostgresqlBootstrap.adminPasswordKey | default .Values.postgresql.auth.secretKeys.adminPasswordKey -}}
+{{- $isBundledSuperuserName := eq $bundledAdminUsername "postgres" -}}
+{{- $reliesOnBundledAdminSecret := and $isBundledSuperuserName (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
+{{- /*
+  enablePostgresUser only matters when this Job is relying on the subchart to *create* the superuser
+  and hand over its password — that is, the default name AND the default Secret. Keying off the name
+  alone would refuse an existing server whose privileged role happens to be called `postgres` and
+  whose credentials the operator supplied explicitly, which is the same over-strict refusal that
+  forced installations to disable bootstrap entirely (ENG-2390).
+*/ -}}
+{{- if and $bundledBootstrap $reliesOnBundledAdminSecret (not .Values.postgresql.auth.enablePostgresUser) -}}
+{{- fail "Set authzed.bundledPostgresqlBootstrap.adminUsername (with adminPasswordSecretName and adminPasswordKey) to an existing role with CREATEROLE and CREATEDB, or enable postgresql.auth.enablePostgresUser, or disable authzed.bundledPostgresqlBootstrap.enabled" -}}
 {{- end -}}
-{{- if and $bundledBootstrap (not .Values.postgresql.auth.secretKeys.adminPasswordKey) -}}
-{{- fail "postgresql.auth.secretKeys.adminPasswordKey is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- if and $bundledBootstrap (not $bundledAdminKey) -}}
+{{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordKey (or postgresql.auth.secretKeys.adminPasswordKey) is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- end -}}
+{{- if and $bundledBootstrap (not $isBundledSuperuserName) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
+{{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordSecretName is required when adminUsername is not the bundled postgres superuser" -}}
+{{- end -}}
+{{- /*
+  The key needs its own explicit requirement, not just the non-empty check above. `$bundledAdminKey`
+  falls back to `postgresql.auth.secretKeys.adminPasswordKey`, which the subchart defaults to
+  `POSTGRES_ADMIN_PASSWORD` — never empty — so that check cannot fire for a custom role. Without this,
+  setting adminUsername and adminPasswordSecretName but forgetting the key renders happily and looks
+  up the *subchart's* key name inside the *operator's own* Secret, which fails in-cluster as
+  CreateContainerConfigError rather than at render. Fail-fast is the whole point of these guards.
+
+  Keyed off the *credential source*, not the username: an existing administrator that happens to be
+  called `postgres` still supplies its own Secret, and that Secret is no more likely to carry the
+  subchart's key name than any other. Keying off the name left exactly that configuration rendering
+  a dangling secretKeyRef.
+*/ -}}
+{{- if and $bundledBootstrap (not $reliesOnBundledAdminSecret) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordKey) -}}
+{{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordKey is required when the administrator password comes from an explicitly configured Secret" -}}
 {{- end -}}
 {{- $bootstrap := ternary .Values.authzed.bundledPostgresqlBootstrap .Values.authzed.externalPostgresqlBootstrap $bundledBootstrap -}}
 apiVersion: batch/v1
@@ -58,12 +90,14 @@ spec:
             - name: PGHOST
               value: formbricks-postgresql
             - name: PGUSER
-              value: postgres
+              value: {{ $bundledAdminUsername | quote }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ $postgresSecretName }}
-                  key: {{ .Values.postgresql.auth.secretKeys.adminPasswordKey }}
+                  name: {{ $bundledAdminSecret }}
+                  key: {{ $bundledAdminKey }}
+            - name: ADMIN_DATABASE_NAME
+              value: {{ $bundledAdminDatabase | quote }}
             - name: SPICEDB_DATABASE_NAME
               value: spicedb
             - name: SPICEDB_DATABASE_USERNAME
@@ -130,7 +164,12 @@ spec:
                 esac
                 admin_database_url="$ADMIN_DATABASE_URL"
               else
-                admin_database_url=postgres
+                # Bundled mode connects through PGHOST/PGUSER/PGPASSWORD; this is the maintenance
+                # database to attach to, which is not necessarily named `postgres` on an existing
+                # server (ENG-2390). No shell-level default: this branch only runs for bundled
+                # bootstrap, where the template always sets ADMIN_DATABASE_NAME, so a second
+                # fallback here would just be a competing source of truth for the same default.
+                admin_database_url="$ADMIN_DATABASE_NAME"
               fi
               readiness_attempt=1
               until pg_isready --dbname "$admin_database_url"; do
@@ -147,6 +186,14 @@ spec:
                 --set database_password="$SPICEDB_DATABASE_PASSWORD" <<'SQL'
               SELECT format('CREATE ROLE %I LOGIN', :'database_username')
                 WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'database_username') \gexec
+              -- CREATE DATABASE ... OWNER requires the administrator to be able to SET ROLE to the
+              -- owner, and merely holding CREATEROLE does not give that. PostgreSQL 16+ grants a
+              -- role's creator ADMIN but SET FALSE; PostgreSQL 15 and older grant nothing at all. So
+              -- a non-superuser administrator has to take the membership explicitly or the next
+              -- statement fails with "must be able to SET ROLE" (16+) / "must be member of role"
+              -- (15). Superusers already qualify and are skipped, so the bundled path is unchanged.
+              SELECT format('GRANT %I TO CURRENT_USER', :'database_username')
+                WHERE NOT (SELECT rolsuper FROM pg_roles WHERE rolname = CURRENT_USER) \gexec
               SELECT format('ALTER ROLE %I WITH LOGIN PASSWORD %L', :'database_username', :'database_password') \gexec
               SELECT format('CREATE DATABASE %I OWNER %I', :'database_name', :'database_username')
                 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'database_name') \gexec

@@ -126,4 +126,124 @@ helm template authzed-external "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --set authzed.insecure=false \
   --set authzed.auth.existingSecret=formbricks-authzed >/dev/null
 
+# ENG-2390: the bundled database bootstrap must not hard-require a role named `postgres`.
+# An existing PostgreSQL installed without one previously had no option but to disable bootstrap
+# entirely, which left the SpiceDB role and database uncreated.
+
+render_bootstrap() {
+  helm template "$1" "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+    --set authzed.enabled=true \
+    --set authzed.mode=selfHosted \
+    "${@:2}" \
+    --show-only templates/authzed-postgresql-bootstrap.yaml
+}
+
+# The default is unchanged: the bundled `postgres` superuser on the `postgres` database.
+default_bootstrap="$(render_bootstrap authzed-bootstrap-default)"
+grep --quiet 'value: "postgres"' <<<"${default_bootstrap}"
+
+# The regression itself. Without an override this still refuses, but it must name the way out
+# rather than simply asserting that enablePostgresUser is required.
+if bootstrap_refusal="$(render_bootstrap authzed-bootstrap-no-superuser \
+  --set postgresql.auth.enablePostgresUser=false 2>&1)"; then
+  printf '%s\n' "Bootstrap must refuse a missing postgres superuser when no admin role is configured." >&2
+  exit 1
+fi
+grep --quiet 'adminUsername' <<<"${bootstrap_refusal}"
+
+# ...and configuring an existing administrative role is what unblocks it.
+existing_admin_bootstrap="$(render_bootstrap authzed-bootstrap-existing-admin \
+  --set postgresql.auth.enablePostgresUser=false \
+  --set authzed.bundledPostgresqlBootstrap.adminUsername=fbadmin \
+  --set authzed.bundledPostgresqlBootstrap.adminDatabase=formbricks \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordSecretName=existing-pg-admin \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordKey=password)"
+grep --quiet 'value: "fbadmin"' <<<"${existing_admin_bootstrap}"
+grep --quiet 'value: "formbricks"' <<<"${existing_admin_bootstrap}"
+grep --quiet 'name: existing-pg-admin' <<<"${existing_admin_bootstrap}"
+
+# Matti's finding on #8875: the key needs its own guard. `$bundledAdminKey` falls back to the
+# subchart's non-empty default, so "is it set at all" can never fail for a custom role, and forgetting
+# the key silently looks up the subchart's key name inside the operator's own Secret.
+if render_bootstrap authzed-bootstrap-admin-without-key \
+  --set authzed.bundledPostgresqlBootstrap.adminUsername=fbadmin \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordSecretName=existing-pg-admin >/dev/null 2>&1; then
+  printf '%s\n' "Bootstrap must require adminPasswordKey when adminUsername is overridden." >&2
+  exit 1
+fi
+
+# An existing server whose privileged role is called `postgres` is a configured administrator, not the
+# bundled superuser — supplying its Secret explicitly must be accepted even with enablePostgresUser=false.
+explicit_postgres_bootstrap="$(render_bootstrap authzed-bootstrap-explicit-postgres \
+  --set postgresql.auth.enablePostgresUser=false \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordSecretName=existing-pg-admin \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordKey=password)"
+grep --quiet 'value: "postgres"' <<<"${explicit_postgres_bootstrap}"
+grep --quiet 'name: existing-pg-admin' <<<"${explicit_postgres_bootstrap}"
+
+# ...but that administrator still supplies its own Secret, which is no likelier to carry the
+# subchart's key name than any other. Keying the key guard off the username left this configuration
+# rendering a dangling secretKeyRef (Bhagya's finding on #8875, and CodeRabbit's before it), so the
+# guard keys off the credential source and this render must be refused.
+if render_bootstrap authzed-bootstrap-explicit-postgres-without-key \
+  --set authzed.bundledPostgresqlBootstrap.adminPasswordSecretName=existing-pg-admin >/dev/null 2>&1; then
+  printf '%s\n' "Bootstrap must require adminPasswordKey when the administrator Secret is configured explicitly." >&2
+  exit 1
+fi
+
+# A custom admin role with no Secret would silently fall back to the bundled superuser's password.
+if render_bootstrap authzed-bootstrap-admin-without-secret \
+  --set authzed.bundledPostgresqlBootstrap.adminUsername=fbadmin >/dev/null 2>&1; then
+  printf '%s\n' "Bootstrap must require adminPasswordSecretName when adminUsername is overridden." >&2
+  exit 1
+fi
+
+# Credentials reach the Job only by reference, in every mode.
+#
+# Asserted structurally, per Bhagya's finding on #8875. The previous check grepped for `PGPASSWORD: `,
+# a shape the renderer never emits — env entries are `- name: PGPASSWORD` followed by `value:` or
+# `valueFrom:`. A literal leak therefore matched nothing and the test passed through the exact
+# regression it existed to catch. A whole-manifest regex cannot do better: it cannot tell a `value:`
+# under PGPASSWORD from the legitimate one under PGHOST. So walk the env list instead and check how
+# each sensitive entry is supplied.
+assert_env_supplied_by_reference() {
+  local manifest="$1" variable="$2"
+
+  awk -v target="${variable}" '
+    /^[[:space:]]*-[[:space:]]+name:[[:space:]]/ {
+      if (current == target) { seen = 1; if (source != "reference") literal = 1 }
+      current = $3
+      source = ""
+      next
+    }
+    current == target && /^[[:space:]]*value:/ { source = "literal" }
+    current == target && /^[[:space:]]*valueFrom:/ { source = "reference" }
+    END {
+      if (current == target) { seen = 1; if (source != "reference") literal = 1 }
+      if (!seen) { print "absent"; exit 2 }
+      if (literal) { print "literal"; exit 1 }
+      print "reference"
+    }
+  ' <<<"${manifest}"
+}
+
+for credential_variable in PGPASSWORD SPICEDB_DATABASE_PASSWORD; do
+  if ! supplied_by="$(assert_env_supplied_by_reference "${existing_admin_bootstrap}" "${credential_variable}")"; then
+    printf '%s\n' "Bootstrap must supply ${credential_variable} by secret reference, found: ${supplied_by}." >&2
+    exit 1
+  fi
+done
+
+external_bootstrap="$(render_bootstrap authzed-bootstrap-external \
+  --set authzed.bundledPostgresqlBootstrap.enabled=false \
+  --set authzed.externalPostgresqlBootstrap.enabled=true \
+  --set authzed.externalPostgresqlBootstrap.adminSecretName=external-pg-admin \
+  --set authzed.datastore.existingSecret=external-datastore)"
+for credential_variable in ADMIN_DATABASE_URL SPICEDB_DATABASE_PASSWORD; do
+  if ! supplied_by="$(assert_env_supplied_by_reference "${external_bootstrap}" "${credential_variable}")"; then
+    printf '%s\n' "External bootstrap must supply ${credential_variable} by secret reference, found: ${supplied_by}." >&2
+    exit 1
+  fi
+done
+
 printf '%s\n' "AuthZed Helm operations contracts are valid."
