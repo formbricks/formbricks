@@ -51,7 +51,7 @@ test.describe("Reserved fields in recall and logic", () => {
 
     await createSurveyFromScratch(page);
 
-    await editorPanel(page).getByText("What would you like to know?").click();
+    await editorPanel(page).getByText("What would you like to know?").first().click();
     await openRecallPicker(page, "Question*");
 
     const dropdown = recallDropdown(page);
@@ -85,7 +85,7 @@ test.describe("Reserved fields in recall and logic", () => {
     await createSurveyFromScratch(page);
 
     await test.step("recall the url into the headline", async () => {
-      await editorPanel(page).getByText("What would you like to know?").click();
+      await editorPanel(page).getByText("What would you like to know?").first().click();
       await fillRichTextEditor(page, "Question*", "You came from ");
       await openRecallPicker(page, "Question*");
       await recallDropdown(page).getByText("Url", { exact: true }).click();
