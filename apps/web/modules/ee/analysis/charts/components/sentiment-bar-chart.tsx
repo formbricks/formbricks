@@ -15,12 +15,6 @@ import {
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
-/**
- * Below this share a section is too narrow to hold its inline label without the text being clipped
- * to noise, so the label is dropped and the section is identified on hover/focus instead.
- */
-const SEGMENT_LABEL_MIN_PERCENT = 0.12;
-
 const formatPercent = (percent: number): string => `${Math.round(percent * 100)}%`;
 
 interface SentimentBarChartProps {
@@ -86,52 +80,43 @@ export function SentimentBarChart({
   return (
     <div className="flex h-full min-h-64 w-full min-w-0 flex-col justify-center px-2 py-4">
       <TooltipProvider delayDuration={0}>
-        <div className="flex w-full items-end gap-0.5">
+        {/* The sections carry no text of their own: a label wide enough for the widest section is
+            still clipped on the narrow ones, at which point it reads as noise rather than data.
+            The legend below names every section instead, at a size that does not depend on how
+            the shares happen to fall. */}
+        <div className="flex w-full gap-0.5">
           {segments.map((segment) => {
             const percentText = formatPercent(segment.percent);
             const valueText = formatCellValue(segment.value);
             return (
-              <div
-                key={segment.key}
-                // Shrink (never grow) so the gaps come out of the sections proportionally and the
-                // widths stay a faithful read of each share.
-                className="min-w-[3px] shrink grow-0"
-                style={{ flexBasis: `${segment.percent * 100}%` }}>
-                <div className="text-muted-foreground mb-1.5 h-4 truncate text-center text-xs">
-                  {segment.percent >= SEGMENT_LABEL_MIN_PERCENT
-                    ? `${segment.label} ${percentText} (${valueText})`
-                    : ""}
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+              <Tooltip key={segment.key}>
+                {/* The section is the tooltip's trigger, so it is a real button rather than a
+                    focusable div: keyboard users reach it natively and its label is announced as
+                    the control it is. Shrink (never grow) so the gaps come out of the sections
+                    proportionally and the widths stay a faithful read of each share. */}
+                <TooltipTrigger
+                  className="h-8 min-w-[3px] shrink grow-0 cursor-default rounded-sm focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:ring-offset-1 focus-visible:outline-hidden"
+                  style={{ flexBasis: `${segment.percent * 100}%`, backgroundColor: segment.color }}
+                  aria-label={`${segment.label}: ${valueText} (${percentText})`}
+                />
+                <TooltipContent>
+                  <div className="flex items-center gap-2">
                     <div
-                      className="h-8 w-full rounded-sm focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:ring-offset-1 focus-visible:outline-hidden"
+                      className="size-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: segment.color }}
-                      tabIndex={0}
-                      role="img"
-                      aria-label={`${segment.label}: ${valueText} (${percentText})`}
                     />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: segment.color }}
-                      />
-                      <span className="text-foreground text-sm font-medium">{segment.label}</span>
-                      <span className="text-muted-foreground text-sm tabular-nums">
-                        {valueText} ({percentText})
-                      </span>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+                    <span className="text-foreground text-sm font-medium">{segment.label}</span>
+                    <span className="text-muted-foreground text-sm tabular-nums">
+                      {valueText} ({percentText})
+                    </span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             );
           })}
         </div>
       </TooltipProvider>
-      {/* Every section named, in bar order — the sections too narrow for an inline label are
-          otherwise only identifiable by hovering them. */}
+      {/* Every section named, in bar order. */}
       <ul className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
         {segments.map((segment) => (
           <li key={segment.key} className="flex items-center gap-1.5 text-xs">
