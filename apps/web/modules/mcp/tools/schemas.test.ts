@@ -15,29 +15,41 @@ import * as workflowSchemas from "./workflow-schemas";
  *
  * Three states are distinguished, because only one of them is a bug:
  *   - `additionalProperties: false` — strict. What every structured object should be.
- *   - `additionalProperties` present as `true`/a schema — a deliberate `z.record` free-form field
- *     (`metadata`, `blocks`, `welcomeCard`, the `data` payloads). Validated downstream by the v3 document
- *     contract, so unknown keys there are the point rather than a mistake.
+ *   - `additionalProperties` present as `true`/a schema — a `z.record` free-form field. Legitimate, but only
+ *     for the fields listed in `EXPECTED_FREE_FORM_PATHS`: turning a structured object free-form is just as
+ *     much a hole as leaving it open, so the set is pinned rather than waved through by shape alone.
  *   - `additionalProperties` absent — an open structured object. The bug.
+ */
+
+/**
+ * Recurses into every value rather than an allowlist of JSON Schema keywords.
+ *
+ * Deliberate: a keyword-driven walker is only as complete as the keyword list, and the first version of
+ * this file proved the point by missing `$defs` — which is where a `$ref`'d sub-schema lives, and so where
+ * the workflow if/else condition group was hiding. Anything the generator emits now or later (`if`/`then`/
+ * `else`, `prefixItems`, `unevaluatedProperties`) is walked without this needing to know about it. Keys that
+ * carry no schema (`required`, `type`, `description`) hold strings, so recursing into them finds nothing.
  */
 function collectObjectNodes(node: unknown, path: string, open: string[], freeForm: string[]): void {
   if (!node || typeof node !== "object") return;
-  const record = node as Record<string, unknown>;
 
-  if (record.type === "object" || record.properties) {
-    if (record.additionalProperties === false) {
-      // strict — nothing to record
-    } else if (record.additionalProperties === undefined) {
+  if (Array.isArray(node)) {
+    node.forEach((member, index) => collectObjectNodes(member, `${path}|${index}`, open, freeForm));
+    return;
+  }
+
+  const schema = node as Record<string, unknown>;
+
+  if (schema.type === "object" || schema.properties) {
+    if (schema.additionalProperties === undefined) {
       open.push(path);
-    } else {
+    } else if (schema.additionalProperties !== false) {
       freeForm.push(path);
     }
   }
 
-  for (const [key, value] of Object.entries(record)) {
-    // `$defs` holds schemas reached by `$ref`, so they have to be walked as roots of their own or the
-    // nodes only reachable through a `$ref` are never checked (which is how the if/else condition group
-    // went unnoticed).
+  for (const [key, value] of Object.entries(schema)) {
+    // `properties` and `$defs` are maps of name -> schema, so the child's name belongs in the path.
     if (key === "properties" || key === "$defs") {
       for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
         collectObjectNodes(childValue, `${path}.${childKey}`, open, freeForm);
@@ -46,20 +58,18 @@ function collectObjectNodes(node: unknown, path: string, open: string[], freeFor
       collectObjectNodes(value, `${path}[]`, open, freeForm);
     } else if (key === "additionalProperties") {
       collectObjectNodes(value, `${path}{}`, open, freeForm);
-    } else if (key === "anyOf" || key === "allOf" || key === "oneOf") {
-      (value as unknown[]).forEach((member, index) =>
-        collectObjectNodes(member, `${path}|${index}`, open, freeForm)
-      );
+    } else {
+      collectObjectNodes(value, `${path}.${key}`, open, freeForm);
     }
   }
 }
 
-function openObjectPaths(name: string, schema: z.ZodType): string[] {
+function classifyObjectNodes(name: string, schema: z.ZodType): { open: string[]; freeForm: string[] } {
   const open: string[] = [];
   const freeForm: string[] = [];
   // `io: "input"` matches how the tool schemas are advertised — the same conversion the SDK performs.
   collectObjectNodes(z.toJSONSchema(schema, { io: "input", unrepresentable: "any" }), name, open, freeForm);
-  return open;
+  return { open, freeForm };
 }
 
 const allSchemas = Object.entries({ ...surveyAndFeedbackSchemas, ...workflowSchemas }).filter(
@@ -77,18 +87,45 @@ const allSchemas = Object.entries({ ...surveyAndFeedbackSchemas, ...workflowSche
  */
 const SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION = ["ZMcpCreateWorkflowInput", "ZMcpPatchWorkflowInput"];
 
+/**
+ * Every field that may legitimately accept an arbitrary nested shape: the survey/workflow document payloads
+ * and record metadata, all validated downstream by the v3 document contract. Pinned so that making a
+ * structured object free-form is a deliberate edit here rather than a silent widening.
+ */
+const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
+  ZMcpCreateSurveyInput: [
+    "ZMcpCreateSurveyInput.metadata",
+    // `languages[]` is deliberately absent: it is `ZMcpSurveyLanguageInput`, a strict object, not a payload.
+    "ZMcpCreateSurveyInput.welcomeCard",
+    "ZMcpCreateSurveyInput.blocks[]",
+    "ZMcpCreateSurveyInput.endings[]",
+    "ZMcpCreateSurveyInput.hiddenFields",
+    "ZMcpCreateSurveyInput.variables[]",
+  ],
+  ZMcpPatchSurveyInput: ["ZMcpPatchSurveyInput.data"],
+  ZMcpValidateSurveyInput: ["ZMcpValidateSurveyInput.data"],
+  ZMcpCreateFeedbackRecordInput: ["ZMcpCreateFeedbackRecordInput.metadata"],
+  ZMcpCreateFeedbackRecordsInput: ["ZMcpCreateFeedbackRecordsInput.records[].metadata"],
+  ZMcpUpdateFeedbackRecordInput: ["ZMcpUpdateFeedbackRecordInput.metadata"],
+};
+
 describe("MCP tool input schemas reject undeclared arguments (ENG-2256)", () => {
-  test.each(allSchemas.filter(([name]) => !SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION.includes(name)))(
-    "%s has no open structured object at any depth",
-    (_name, schema) => {
-      expect(openObjectPaths(_name, schema)).toEqual([]);
-    }
-  );
+  const generalCase = allSchemas.filter(([name]) => !SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION.includes(name));
+
+  test.each(generalCase)("%s has no open structured object at any depth", (name, schema) => {
+    expect(classifyObjectNodes(name, schema).open).toEqual([]);
+  });
+
+  test.each(generalCase)("%s widens only where a free-form payload is expected", (name, schema) => {
+    expect(classifyObjectNodes(name, schema).freeForm.sort()).toEqual(
+      (EXPECTED_FREE_FORM_PATHS[name] ?? []).slice().sort()
+    );
+  });
 
   test.each(allSchemas.filter(([name]) => SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION.includes(name)))(
     "%s is open only inside the shared workflow definition",
-    (_name, schema) => {
-      const open = openObjectPaths(_name, schema);
+    (name, schema) => {
+      const { open } = classifyObjectNodes(name, schema);
 
       // The known gap is bounded: it must stay confined to the `definition` subtree (or a `$defs` entry,
       // which exists only because a definition sub-schema is referenced twice). A new open object on a

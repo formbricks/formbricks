@@ -569,6 +569,42 @@ describe("MCP scope enforcement (ENG-1967)", () => {
   });
 });
 
+/**
+ * A create_workflow payload that passes the v3 contract in full — cuid2 ids, a trigger, and a graph whose
+ * single edge connects the trigger to a real action node. Needed so a strictness assertion can isolate the
+ * unknown key as the only reason for rejection.
+ */
+const VALID_CREATE_WORKFLOW_INPUT = {
+  workspaceId: "cm9zr4mps000008l8btfy1vtz",
+  name: "Notify team",
+  definition: {
+    schemaVersion: 1,
+    trigger: {
+      id: "trigger",
+      type: "trigger",
+      triggerType: "response.completed",
+      config: { surveyId: "cm9zr4q7i000108l84gozfggr", endingCardIds: [] },
+    },
+    nodes: [
+      {
+        id: "send-email",
+        type: "action",
+        actionType: "send_email",
+        config: {
+          from: "noreply@example.com",
+          to: "support@example.com",
+          replyTo: ["support@example.com"],
+          subject: "Thanks",
+          body: "Thanks for your response.",
+          attachResponseData: true,
+        },
+      },
+    ],
+    edges: [{ id: "e1", source: "trigger", target: "send-email" }],
+    entryNodeId: "trigger",
+  },
+};
+
 describe("create_workflow advertised input schema", () => {
   /**
    * `ZMcpCreateWorkflowInput` is the one MCP schema that deliberately does NOT append `.strict()`: its
@@ -582,6 +618,11 @@ describe("create_workflow advertised input schema", () => {
     const schema = tools.get("create_workflow")!.config.inputSchema as ZodObjectLike;
 
     expect(schema.description).toBe("Creates a draft workflow.");
-    expect(schema.safeParse({ workspaceId: "abc", name: "x", definition: {}, bogus: 1 }).success).toBe(false);
+
+    // A fully valid payload first, so the rejection below can only be caused by the unknown key. An
+    // earlier version passed `{ workspaceId: "abc", name: "x", definition: {} }` — three separate
+    // validation failures — and so would have passed with strictness removed entirely.
+    expect(schema.safeParse(VALID_CREATE_WORKFLOW_INPUT).success).toBe(true);
+    expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, bogus: 1 }).success).toBe(false);
   });
 });

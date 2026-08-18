@@ -31,15 +31,15 @@ vi.mock("@formbricks/logger", () => ({
 
 describe("mcpHandler options", () => {
   /**
-   * Asserts the declared option only — not that it reaches the SDK (the handler is built from this same
-   * object on the next line), and not the SDK's behaviour. Behaviour was verified separately against the
-   * real SDK: a listen request with 0 returns `-32603 Subscription limit reached` on plain JSON with the
-   * connection closed, where the default (1024 per process) accepts it and holds it open.
+   * Pins the declared value only. The behaviour it produces — a `subscriptions/listen` request refused with
+   * `-32603 Subscription limit reached` instead of being accepted and held open — is covered end to end
+   * through the real route in `app/api/mcp/route.test.ts`, which is what proves the option reaches the SDK.
    *
-   * Worth pinning even so, because dropping the option is invisible: nothing fails, no test goes red,
-   * the stream simply starts being accepted again.
+   * Kept alongside it because the two fail differently and both are useful: this one names the intended
+   * value at the place it is declared, and fails fast and legibly if it changes; the route test fails on a
+   * timeout, since removing the cap means the stream is accepted rather than rejected.
    */
-  test("refuses subscription streams", () => {
+  test("declares subscription streams as refused", () => {
     expect(MCP_HANDLER_OPTIONS.maxSubscriptions).toBe(0);
   });
 });
