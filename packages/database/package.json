@@ -83,8 +83,8 @@
     "zod-openapi": "5.4.6"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@types/pg": "8.16.0",
     "@vitest/coverage-v8": "4.1.6",
     "dotenv": "17.3.1",

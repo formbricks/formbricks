@@ -114,7 +114,7 @@ reached through an explicit `@config` bridge from the package's own stylesheet. 
 
 ## Coding Style & Naming Conventions
 
-TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
+TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/config-eslint`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
 Import order is set by `@trivago/prettier-plugin-sort-imports` and verified in CI by `pnpm format:check`, so it is not a matter of taste: `__mocks__` imports come first (they carry `vi.mock` calls), then `server-only`, then third-party packages, then `@formbricks/*`, `~/*`, `@/*`, and relative imports. Do not ask for or apply a different order in review — it will fail the check.
 We are using SonarQube to identify code smells and security hotspots.
 Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonly<MyProps>)`).
