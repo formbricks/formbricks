@@ -54,8 +54,6 @@ export type TChartQuery = z.infer<typeof ZChartQuery>;
 // ── Chart visualization config (stored as JSON in Chart.config) ─────────────
 
 export const ZChartConfig = z.object({
-  /** Renders the saved chart as the visualization ("chart", default) or as its data table. */
-  displayType: z.enum(["chart", "table"]).optional(),
   /** Bar charts only: bars run up from the category axis ("vertical", default) or across it. */
   barOrientation: z.enum(["vertical", "horizontal"]).optional(),
   colors: z.array(z.string()).optional(),

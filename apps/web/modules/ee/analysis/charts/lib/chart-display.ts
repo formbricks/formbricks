@@ -1,11 +1,9 @@
 import type { TChartConfig } from "@formbricks/types/analysis";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
-export type TChartDisplayType = NonNullable<TChartConfig["displayType"]>;
 export type TBarOrientation = NonNullable<TChartConfig["barOrientation"]>;
 
-/** Charts render as the visualization with vertical bars unless the saved config says otherwise. */
-export const DEFAULT_DISPLAY_TYPE: TChartDisplayType = "chart";
+/** Charts render with vertical bars unless the saved config says otherwise. */
 export const DEFAULT_BAR_ORIENTATION: TBarOrientation = "vertical";
 
 /** Bar orientation is the only setting so far that applies to a single chart type. */
@@ -17,8 +15,7 @@ export const supportsBarOrientation = (chartType: TChartType | undefined): boole
  */
 export const resolveChartDisplay = (
   config: TChartConfig | null | undefined
-): { displayType: TChartDisplayType; barOrientation: TBarOrientation } => ({
-  displayType: config?.displayType ?? DEFAULT_DISPLAY_TYPE,
+): { barOrientation: TBarOrientation } => ({
   barOrientation: config?.barOrientation ?? DEFAULT_BAR_ORIENTATION,
 });
 

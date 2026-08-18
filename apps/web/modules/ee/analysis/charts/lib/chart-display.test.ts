@@ -2,27 +2,15 @@ import { describe, expect, test } from "vitest";
 import { resolveChartDisplay, sanitizeChartDisplay, supportsBarOrientation } from "./chart-display";
 
 describe("resolveChartDisplay", () => {
-  test("falls back to chart + vertical bars for charts saved before these settings existed", () => {
-    expect(resolveChartDisplay({})).toEqual({ displayType: "chart", barOrientation: "vertical" });
-    expect(resolveChartDisplay(undefined)).toEqual({ displayType: "chart", barOrientation: "vertical" });
-    expect(resolveChartDisplay(null)).toEqual({ displayType: "chart", barOrientation: "vertical" });
+  test("falls back to vertical bars for charts saved before these settings existed", () => {
+    expect(resolveChartDisplay({})).toEqual({ barOrientation: "vertical" });
+    expect(resolveChartDisplay(undefined)).toEqual({ barOrientation: "vertical" });
+    expect(resolveChartDisplay(null)).toEqual({ barOrientation: "vertical" });
   });
 
-  test("returns the saved settings", () => {
-    expect(resolveChartDisplay({ displayType: "table", barOrientation: "horizontal" })).toEqual({
-      displayType: "table",
-      barOrientation: "horizontal",
-    });
-  });
-
-  test("fills in only the missing setting", () => {
+  test("returns the saved setting", () => {
     expect(resolveChartDisplay({ barOrientation: "horizontal" })).toEqual({
-      displayType: "chart",
       barOrientation: "horizontal",
-    });
-    expect(resolveChartDisplay({ displayType: "table" })).toEqual({
-      displayType: "table",
-      barOrientation: "vertical",
     });
   });
 });
@@ -40,20 +28,13 @@ describe("supportsBarOrientation", () => {
 
 describe("sanitizeChartDisplay", () => {
   test("keeps the orientation on a bar chart", () => {
-    expect(sanitizeChartDisplay({ displayType: "chart", barOrientation: "horizontal" }, "bar")).toEqual({
-      displayType: "chart",
+    expect(sanitizeChartDisplay({ barOrientation: "horizontal" }, "bar")).toEqual({
       barOrientation: "horizontal",
     });
   });
 
   test("drops the orientation for chart types that cannot use it", () => {
-    expect(sanitizeChartDisplay({ displayType: "table", barOrientation: "horizontal" }, "pie")).toEqual({
-      displayType: "table",
-    });
-  });
-
-  test("keeps settings that apply to every chart type", () => {
-    expect(sanitizeChartDisplay({ displayType: "table" }, "line")).toEqual({ displayType: "table" });
+    expect(sanitizeChartDisplay({ barOrientation: "horizontal" }, "pie")).toEqual({});
   });
 
   test("preserves unrelated config fields", () => {

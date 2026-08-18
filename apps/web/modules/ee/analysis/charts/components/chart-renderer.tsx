@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
-import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
@@ -337,7 +336,7 @@ interface ChartRendererProps {
   /** value_id → default-language label map, present when the query groups by valueId. */
   optionLabels?: Record<string, string>;
   /** Saved display settings. Charts saved before these existed have an empty config and keep
-   * the previous behavior (visualization, vertical bars). */
+   * the previous behavior (vertical bars). */
   config?: TChartConfig;
 }
 
@@ -349,7 +348,7 @@ export function ChartRenderer({
   config,
 }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
-  const { displayType, barOrientation } = resolveChartDisplay(config);
+  const { barOrientation } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
 
@@ -359,12 +358,6 @@ export function ChartRenderer({
         {t("workspace.analysis.charts.no_data_available")}
       </div>
     );
-  }
-
-  // The data table shows the query result as-is, so it needs none of the axis/series
-  // resolution below and applies to every chart type.
-  if (displayType === "table") {
-    return <DataViewer data={data} optionLabels={optionLabels} />;
   }
 
   const rowKeys = Object.keys(data[0] ?? {});

@@ -1,5 +1,6 @@
 "use client";
 
+import { DatabaseIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
@@ -36,12 +37,14 @@ export function DataViewer({ data, optionLabels }: Readonly<DataViewerProps>) {
   };
 
   return (
-    // Fills its host (preview panel or dashboard widget), which already supplies the card and
-    // title, so the table adds no chrome of its own beyond its scroll container.
-    <div className="h-full min-h-0 w-full">
-      <div className="h-full max-h-full overflow-auto rounded-sm border border-gray-200 bg-white">
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <DatabaseIcon className="size-4 text-gray-600" />
+        <h4 className="text-sm font-semibold text-gray-900">{t("workspace.analysis.charts.chart_data")}</h4>
+      </div>
+      <div className="max-h-64 overflow-auto rounded-sm bg-white">
         <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-gray-100">
+          <thead className="bg-gray-100">
             <tr>
               {columns.map((key) => (
                 <th
