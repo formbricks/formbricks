@@ -4,9 +4,9 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -44,20 +44,9 @@ export const createContactAttributeKeyAction = authenticatedActionClient
       const workspaceId = parsedInput.workspaceId;
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -106,20 +95,9 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
       const workspaceId = existingKey.workspaceId;
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -153,20 +131,9 @@ export const deleteContactAttributeKeyAction = authenticatedActionClient
       const workspaceId = existingKey.workspaceId;
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;

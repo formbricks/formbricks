@@ -3,9 +3,9 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
   getOrganizationIdFromContactId,
   getWorkspaceIdFromContactId,
@@ -26,20 +26,9 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
     const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
     const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
     });
 
     // Cross-tenant guard: the survey must belong to the same workspace as the

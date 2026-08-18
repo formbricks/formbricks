@@ -5,8 +5,9 @@ import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
@@ -95,7 +96,11 @@ export const POST = withV1ApiWrapper({
       }
       if (
         !resolved.alreadyAuthorized &&
-        !(await hasApiKeyWorkspaceAccess(authentication, inputValidation.data.workspaceId, "POST"))
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: inputValidation.data.workspaceId }
+        ))
       ) {
         return { response: responses.unauthorizedResponse() };
       }

@@ -4,7 +4,8 @@ import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import {
   deleteContactAttributeKey,
   getContactAttributeKey,
@@ -22,7 +23,13 @@ async function fetchAndAuthorizeContactAttributeKey(
     return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
   }
 
-  if (!(await hasApiKeyWorkspaceAccess(authentication, attributeKey.workspaceId, requiredPermission))) {
+  if (
+    !(await can(
+      { type: "apiKey", id: authentication.apiKeyId },
+      getWorkspaceAuthorizationActionForMethod(requiredPermission),
+      { type: "workspace", id: attributeKey.workspaceId }
+    ))
+  ) {
     return { error: responses.unauthorizedResponse() };
   }
 

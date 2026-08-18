@@ -1,10 +1,10 @@
 import "server-only";
 import { performance } from "node:perf_hooks";
-import { normalizeAuthorizationOperationalError } from "./comparison-helpers";
 import { getAuthorizationSurface } from "./context";
 import type { TAuthorizationAction, TAuthorizationActor, TAuthorizationResourceForAction } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
 import { recordAuthorizationDecision } from "./metrics";
+import { normalizeAuthorizationOperationalError } from "./operational-error";
 import { spicedbEvaluator } from "./spicedb-evaluator";
 
 /**

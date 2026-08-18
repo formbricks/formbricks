@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => {
     action,
     inputSchema: vi.fn(() => ({ action })),
     applyRateLimit: vi.fn(),
-    checkAuthorizationUpdated: vi.fn(),
+    assertCan: vi.fn(),
     assertFeedbackSourceDirectoryAccess: vi.fn(),
     getOrganizationIdFromFeedbackSourceId: vi.fn(),
     getOrganizationIdFromWorkspaceId: vi.fn(),
@@ -38,8 +38,8 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: { inputSchema: mocks.inputSchema },
 }));
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mocks.checkAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  assertCan: mocks.assertCan,
 }));
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromFeedbackSourceId: mocks.getOrganizationIdFromFeedbackSourceId,

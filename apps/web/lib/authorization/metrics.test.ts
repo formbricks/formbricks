@@ -20,7 +20,7 @@ vi.mock("@opentelemetry/api", () => ({
   },
 }));
 
-const { recordAuthorizationComparison, recordAuthorizationDecision } = await import("./metrics");
+const { recordAuthorizationDecision } = await import("./metrics");
 
 beforeEach(() => {
   for (const instrument of counters.values()) instrument.add.mockClear();
@@ -94,33 +94,5 @@ describe("authoritative authorization metrics", () => {
         surface: "page",
       })
     ).not.toThrow();
-  });
-});
-
-describe("historical authorization comparison metrics", () => {
-  test("uses a separate legacy histogram while bridge code remains", () => {
-    recordAuthorizationComparison({
-      action: "survey.read",
-      actorType: "user",
-      authzedDecision: "deny",
-      cohort: "sandbox_users",
-      durationMs: 125,
-      errorCode: "authzed_unavailable",
-      errorSource: "authzed",
-      legacyDecision: "allow",
-      mode: "shadow",
-      outcome: "legacy_allow_authzed_deny",
-      resourceType: "survey",
-      surface: "server_action",
-    });
-
-    expect(counters.get("formbricks_authzed_authorization_comparisons_total")?.add).toHaveBeenCalledOnce();
-    expect(
-      histograms.get("formbricks_authzed_authorization_comparison_duration_seconds")?.record
-    ).toHaveBeenCalledWith(0.125, {
-      mode: "shadow",
-      outcome: "legacy_allow_authzed_deny",
-      surface: "server_action",
-    });
   });
 });

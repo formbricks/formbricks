@@ -53,8 +53,8 @@ const readSnapshot = async (
     where: {
       OR: targets.map(({ organizationId, userId }) => ({ organizationId, userId })),
     },
-    // The legacy evaluator does not gate organization membership on `accepted`. Project every row so
-    // the initial SpiceDB shadow model preserves the current authorization behavior exactly.
+    // The current contract does not gate organization membership on `accepted`. Project every row so
+    // the SpiceDB graph preserves that behavior exactly.
     select: { organizationId: true, role: true, userId: true },
     orderBy: [{ organizationId: "asc" }, { userId: "asc" }],
   });

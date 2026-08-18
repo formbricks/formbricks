@@ -83,7 +83,7 @@ assertions:
     # ------------------------------------------------------------------
     # Scenario 1 — Owner and manager broad access.
     # Org owners and managers have full product access to every workspace
-    # (org-role branch of checkAuthorizationUpdated), and both manage
+    # (organization.manage), and both manage
     # members, billing, and API keys. Only the owner may update/delete the
     # organization itself (verifyUserRoleAccess).
     # ------------------------------------------------------------------
@@ -130,7 +130,7 @@ assertions:
     # ------------------------------------------------------------------
     # Scenario 2 — Billing role blocked from product data.
     # The billing role reaches billing surfaces only; every product gate
-    # (hasUserWorkspaceAccessForAction) excludes it.
+    # (`workspace.read`) excludes it.
     # ------------------------------------------------------------------
     - organization:acme#read@user:bella
     - organization:acme#manage_billing@user:bella

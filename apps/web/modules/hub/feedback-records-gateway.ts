@@ -5,8 +5,8 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/api/request-body";
 import { can } from "@/lib/authorization";
-import { getFeedbackDirectoryActionForPermission } from "@/lib/authorization/compatibility";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { getFeedbackDirectoryAuthorizationAction } from "@/lib/authorization/permission-action";
 import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
 import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
@@ -267,7 +267,7 @@ const authorizeFeedbackRecordsGatewayRequest = async (
 
     const allowed = await can(
       { type: "apiKey", id: principal.authentication.apiKeyId },
-      getFeedbackDirectoryActionForPermission(requiredPermission),
+      getFeedbackDirectoryAuthorizationAction(requiredPermission),
       { type: "feedbackDirectory", id: feedbackDirectoryId }
     );
     return { allowed };
@@ -280,7 +280,7 @@ const authorizeFeedbackRecordsGatewayRequest = async (
       })
     : await can(
         { type: "user", id: principal.userId },
-        getFeedbackDirectoryActionForPermission(requiredPermission),
+        getFeedbackDirectoryAuthorizationAction(requiredPermission),
         { type: "feedbackDirectory", id: feedbackDirectoryId }
       );
 

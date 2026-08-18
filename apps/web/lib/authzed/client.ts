@@ -190,7 +190,6 @@ type TAuthzedConfig =
       enabled: true;
       endpoint: string;
       insecure: boolean;
-      minimumSnapshot?: string;
       systemKey: string;
       token: string;
     }>;
@@ -238,12 +237,7 @@ const getAuthzedConfig = (): TAuthzedConfig => {
     return { consistency, enabled: false, insecure };
   }
 
-  const {
-    AUTHZED_ENDPOINT: endpoint,
-    AUTHZED_MINIMUM_SNAPSHOT: minimumSnapshot,
-    AUTHZED_SYSTEM_KEY: systemKey,
-    AUTHZED_TOKEN: token,
-  } = env;
+  const { AUTHZED_ENDPOINT: endpoint, AUTHZED_SYSTEM_KEY: systemKey, AUTHZED_TOKEN: token } = env;
 
   if (!endpoint || !systemKey || !token) {
     throw new Error("Enabled AuthZed configuration was not validated");
@@ -254,7 +248,6 @@ const getAuthzedConfig = (): TAuthzedConfig => {
     enabled: true,
     endpoint,
     insecure,
-    minimumSnapshot,
     systemKey,
     token,
   };

@@ -4,11 +4,11 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
@@ -30,17 +30,9 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
 
     const organizationId = parsedInput.organizationId;
 
-    await checkAuthorizationUpdated({
-      userId: user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          data: parsedInput.data,
-          schema: ZWorkspaceUpdateInput,
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    await assertCan({ type: "user", id: user.id }, "organization.manage", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     const organization = await getOrganization(organizationId);
@@ -107,15 +99,9 @@ const ZGetOrganizationsForSwitcherAction = z.object({
 export const getOrganizationsForSwitcherAction = authenticatedActionClient
   .inputSchema(ZGetOrganizationsForSwitcherAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "member", "billing"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     return await getOrganizationsByUserId(ctx.user.id);
@@ -132,15 +118,9 @@ const ZGetWorkspacesForSwitcherAction = z.object({
 export const getWorkspacesForSwitcherAction = authenticatedActionClient
   .inputSchema(ZGetWorkspacesForSwitcherAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "member", "billing"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     return await getWorkspacesByUserId(ctx.user.id, parsedInput.organizationId);
@@ -157,15 +137,9 @@ const ZGetWritableWorkspacesAction = z.object({
 export const getWritableWorkspacesAction = authenticatedActionClient
   .inputSchema(ZGetWritableWorkspacesAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.read_access", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     return await getWritableWorkspacesByUserId(ctx.user.id, parsedInput.organizationId);

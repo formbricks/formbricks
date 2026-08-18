@@ -8,7 +8,6 @@ import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspace } from "@/lib/workspace/service";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -25,22 +24,9 @@ export const updateWorkspaceAction = authenticatedActionClient.inputSchema(ZUpda
   withAuditLogging("updated", "workspace", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          schema: ZWorkspaceUpdateInput,
-          data: parsedInput.data,
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "manage",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.manage", {
+      type: "workspace",
+      id: parsedInput.workspaceId,
     });
 
     if (

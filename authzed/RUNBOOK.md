@@ -309,136 +309,14 @@ workloads are not restarted.
 
 ## 6. Historical comparison controls (not a release strategy)
 
-> **Superseded:** The configuration below documents the migration bridge that was used for parity research. Do
-> not configure it for sandbox, staging, production, or self-hosted cutover. The approved release path is the
-> direct-authority procedure in §7 and [`CUTOVER.md`](./CUTOVER.md). ENG-2450 removes these controls from the
-> candidate image.
+The earlier shadow/cohort controls, freshness floor, comparison queue, and comparison metrics have been
+removed from the direct-authority image. Their environment variables are rejected as unsupported deployment
+configuration and must not be copied from an older sandbox manifest. Request surfaces remain only as bounded
+telemetry attributes; they cannot select an evaluator.
 
-Authorization rollout is an internal deployment control. It is intentionally not part of one-click or
-public self-hosting configuration. Long-running processes read the cohort once; change the cohort label
-and restart the deployment whenever membership changes so a new observation window cannot be confused
-with the old one.
-
-The global switch is `AUTHZED_AUTHORIZATION_ENABLED`. With it unset or false, `can()` uses only the
-legacy evaluator and does not resolve rollout scope or construct an AuthZed client. A rollout rule is
-the Cartesian product of its target list and organization allowlist:
-
-```dotenv
-AUTHZED_AUTHORIZATION_ENABLED=true
-AUTHZED_AUTHORIZATION_COHORT=sandbox_users_v1
-
-# Shadow one authenticated surface for two organizations.
-AUTHZED_SHADOW_TARGETS=server_action:user
-AUTHZED_SHADOW_ORGANIZATION_IDS=org_a,org_b
-
-# Freshness floor returned by the latest clean applying backfill.
-AUTHZED_CONSISTENCY=minimize_latency
-AUTHZED_MINIMUM_SNAPSHOT=<completedAtSnapshot>
-```
-
-Valid targets are:
-
-```text
-server_action:user
-page:user
-api_v1:user
-api_v1:apiKey
-api_v2:apiKey
-api_v3:user
-api_v3:apiKey
-mcp:user
-mcp:apiKey
-feedback_gateway:user
-feedback_gateway:apiKey
-```
-
-`page:user` is the server-rendered route surface. It is the one target whose boundary is not a single
-request wrapper — see `apps/web/lib/authorization/context.ts` for what it does and does not cover.
-
-This block is asserted against `AUTHZED_AUTHORIZATION_ROLLOUT_TARGETS` by
-`apps/web/lib/authzed/rollout-runbook.test.ts`, so a new target cannot ship without appearing here.
-
-Use `*` as the sole organization entry only when every organization in the deployment is intentionally
-selected. Empty CSV entries, unknown targets, unsupported surface/actor pairs, or mixing `*` with
-explicit IDs are rejected at startup. Target and organization lists must always be supplied together.
-
-In shadow mode the legacy decision is returned immediately and the AuthZed comparison runs after the
-response. `minimize_latency` becomes an `at_least_as_fresh` check at `AUTHZED_MINIMUM_SNAPSHOT`; never
-invent or reuse a snapshot from an earlier repair window. Mismatches and operational errors are
-observable, but neither can alter the response.
-
-Enforcement requires fully-consistent reads:
-
-```dotenv
-AUTHZED_AUTHORIZATION_ENABLED=true
-AUTHZED_AUTHORIZATION_COHORT=sandbox_users_enforced_v1
-AUTHZED_CONSISTENCY=fully_consistent
-AUTHZED_ENFORCEMENT_TARGETS=server_action:user
-AUTHZED_ENFORCEMENT_ORGANIZATION_IDS=org_a
-```
-
-When a request matches both modes, enforcement wins. SpiceDB is authoritative inline and the legacy
-decision is compared after the response. A SpiceDB deny remains a normal deny; an AuthZed or
-source-resolver outage throws a sanitized operational error and fails closed. Legacy comparison failures
-after cutover are recorded but cannot change the SpiceDB-authoritative response.
-
-Comparison telemetry contains only bounded dimensions: cohort, surface, actor type, mode,
-actor/resource type, action, decisions, outcome, stable error source, and stable AuthZed code. IDs,
-relationship strings, snapshots, tokens, raw SDK errors, requests, and responses are never emitted.
-
-The comparison counter records directional outcomes, not requests. A scalar comparison and a matching
-workspace-list observation each emit one sample. A workspace-list observation with drift in both
-directions emits two samples: one for each mismatch direction. Therefore, use the checks-per-request
-histogram for request amplification and inspect list mismatch directions independently; do not treat the
-comparison-counter sample total as a workspace-list request count.
-
-```promql
-# Completed comparisons by mode, surface, actor type, cohort, and outcome.
-sum by (mode, surface, actor_type, cohort, outcome) (
-  rate(formbricks_authzed_authorization_comparisons_total[5m])
-)
-
-# MCP workspace-list outcomes for one rollout cohort. Both mismatch series must remain at zero.
-sum by (outcome) (
-  increase(formbricks_authzed_authorization_comparisons_total{
-    surface="mcp",
-    action="workspace.read",
-    resource_type="workspace",
-    cohort="$cohort"
-  }[$window])
-)
-
-# Mismatch rate. Operational errors are measured separately.
-sum(rate(formbricks_authzed_authorization_comparisons_total{outcome=~"legacy_allow_authzed_deny|legacy_deny_authzed_allow"}[5m]))
-/
-sum(rate(formbricks_authzed_authorization_comparisons_total{outcome!="operational_error"}[5m]))
-
-# Operational-error rate.
-sum(rate(formbricks_authzed_authorization_comparisons_total{outcome="operational_error"}[5m]))
-/
-sum(rate(formbricks_authzed_authorization_comparisons_total[5m]))
-
-# Comparison latency p95 by mode, surface, and outcome.
-histogram_quantile(
-  0.95,
-  sum by (le, mode, surface, outcome) (
-    rate(formbricks_authzed_authorization_duration_seconds_bucket[5m])
-  )
-)
-```
-
-The following was the historical comparison acceptance criterion. It is retained only to explain old telemetry
-and must not be used to authorize a deployment:
-
-1. Run schema validation and a clean apply/repair immediately before the observation window.
-2. Observe continuously for seven days and at least 1,000 completed comparisons.
-3. Require zero mismatches in either direction, with every earlier mismatch root-caused and resolved.
-4. Require an operational-error rate at or below 0.1%.
-5. Do not enforce an API-key target while any API-key mismatch remains.
-6. Historical only: move the approved target/cohort from shadow to enforcement and restart the deployment.
-
-That configuration-only rollback is also superseded. The direct-authority image contains no evaluator switch;
-rollback is redeployment of the pinned bridge image followed by outbox drain and a clean audit.
+The direct-authority image contains no configuration switch back to PostgreSQL authorization. Rollback is a
+deployment operation: redeploy the pinned bridge image, drain its durable outbox, and require a clean audit.
+Historical comparison evidence is preserved in the project records, not as an executable runbook.
 
 ## 7. Direct-authority cutover
 

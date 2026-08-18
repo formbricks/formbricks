@@ -4,12 +4,12 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponseDownloadFile, getResponseFilteringValues } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
@@ -26,20 +26,9 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
@@ -80,20 +69,9 @@ export const getSurveyFilterDataAction = authenticatedActionClient
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     const organizationBilling = await getOrganizationBilling(organizationId);

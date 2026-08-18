@@ -1,11 +1,6 @@
 import "server-only";
 import { after } from "next/server";
 import { AsyncLocalStorage } from "node:async_hooks";
-import {
-  type TAuthzedAuthorizationRolloutTarget,
-  isAuthzedAuthorizationRolloutTarget,
-} from "@/lib/authzed/rollout-contract";
-import type { TAuthorizationActor } from "./contract";
 import { recordAuthorizationChecksPerRequest } from "./metrics";
 
 /**
@@ -25,8 +20,7 @@ import { recordAuthorizationChecksPerRequest } from "./metrics";
  * **The surface does not span the whole page.** `AsyncLocalStorage` scopes to the awaited callback,
  * so it closes when the choke-point helper returns — a page that calls `getWorkspaceAuth()` and then
  * issues further central checks makes those checks without a page label. They still use authoritative
- * SpiceDB, but are tagged `unscoped` in decision telemetry and counted by
- * `formbricks_authzed_authorization_unscoped_checks_total`.
+ * SpiceDB, but are tagged `unscoped` in decision telemetry.
  *
  * Closing it needs a boundary that survives past the helper — a request-scoped store (React `cache`)
  * rather than an async-scoped one. That telemetry attribution improvement is separate from evaluator
@@ -41,12 +35,8 @@ export type TAuthorizationSurface =
   | "mcp"
   | "feedback_gateway";
 
-type TComparisonJob = () => Promise<void>;
-
 type TAuthorizationContext = {
   checksIssued: number;
-  jobs: TComparisonJob[];
-  scheduled: boolean;
   surface: TAuthorizationSurface;
 };
 
@@ -59,15 +49,6 @@ const authorizationContext =
 
 globalForAuthorization.formbricksAuthorizationContext = authorizationContext;
 
-const COMPARISON_CONCURRENCY = 4;
-const MAX_COMPARISON_JOBS = 100;
-
-const drainComparisons = async (jobs: ReadonlyArray<TComparisonJob>): Promise<void> => {
-  for (let index = 0; index < jobs.length; index += COMPARISON_CONCURRENCY) {
-    await Promise.allSettled(jobs.slice(index, index + COMPARISON_CONCURRENCY).map((job) => job()));
-  }
-};
-
 export const withAuthorizationSurface = async <T>(
   surface: TAuthorizationSurface,
   callback: () => T | Promise<T>
@@ -76,32 +57,21 @@ export const withAuthorizationSurface = async <T>(
     return callback();
   }
 
-  const context: TAuthorizationContext = { checksIssued: 0, jobs: [], scheduled: false, surface };
+  const context: TAuthorizationContext = { checksIssued: 0, surface };
 
   return authorizationContext.run(context, async () => {
     try {
-      // Recorded here rather than after the callback: `after()` can run once the response has been
-      // sent, so this is the last point guaranteed to execute for every request, success or thrown.
       after(() => {
         try {
           recordAuthorizationChecksPerRequest(context.checksIssued, surface);
         } catch {
-          // Instrumentation must never gate the comparison drain. Next swallows errors thrown from
-          // an `after()` callback, so an exception here would silently stop shadow comparisons for
-          // this request — a new metric taking out functionality that already worked. Every other
-          // failure path in this module is deliberately fail-safe; this one has to be too.
+          // Telemetry must never alter an authoritative response.
         }
-
-        return drainComparisons(context.jobs);
       });
-      context.scheduled = true;
     } catch {
       // A wrapper can be invoked outside a Next.js request in scripts/tests — `after()` is
-      // unavailable there. This path is expected in dev tooling (authzed:perf, authzed:backfill,
-      // integration tests); it is never reached inside a real Next.js request. When it fires,
-      // neither the histogram nor the comparison drain will execute for this surface — the
-      // per-request count is still functional via `recordAuthorizationCheckIssued`.
-      context.scheduled = false;
+      // unavailable there. The authorization decision remains authoritative; only the request
+      // histogram observation is omitted.
     }
 
     return callback();
@@ -126,20 +96,3 @@ export const getIssuedAuthorizationCheckCount = (): number | null =>
 /** The current bounded request surface, or `unscoped` for scripts and non-request authorization calls. */
 export const getAuthorizationSurface = (): TAuthorizationSurface | "unscoped" =>
   authorizationContext.getStore()?.surface ?? "unscoped";
-
-export const enqueueAuthorizationComparison = (job: TComparisonJob): boolean => {
-  const context = authorizationContext.getStore();
-  if (!context?.scheduled || context.jobs.length >= MAX_COMPARISON_JOBS) return false;
-  context.jobs.push(job);
-  return true;
-};
-
-export const getAuthorizationRolloutTarget = (
-  actorType: TAuthorizationActor["type"]
-): TAuthzedAuthorizationRolloutTarget | null => {
-  const context = authorizationContext.getStore();
-  if (!context) return null;
-
-  const target = `${context.surface}:${actorType}`;
-  return isAuthzedAuthorizationRolloutTarget(target) ? target : null;
-};

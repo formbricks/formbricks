@@ -209,8 +209,8 @@ export interface TWorkspaceMember {
  * recipient picker offers options from, so the authoring UI cannot offer an address that the
  * enable-time gate and the runner backstop would then reject (ENG-2186).
  *
- * "Can access" mirrors the authorization the real request path enforces (`checkAuthorizationUpdated`
- * via `requireSessionWorkspaceAccess`): an organization owner/manager reaches every workspace in the
+ * "Can access" mirrors the central `workspace.read` authorization enforced by
+ * `requireSessionWorkspaceAccess`: an organization owner/manager reaches every workspace in the
  * organization, and every other role reaches a workspace only through a team linked to it — at any
  * `WorkspaceTeam` permission, since `read` already grants access.
  *

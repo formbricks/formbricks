@@ -3,10 +3,10 @@
 import { z } from "zod";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZSurveySlug } from "@formbricks/types/surveys/types";
+import { assertCan } from "@/lib/authorization";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
+import { getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { updateSurveySlug } from "@/modules/survey/lib/slug";
 
 const ZUpdateSurveySlugAction = z.object({
@@ -21,18 +21,9 @@ export const updateSurveySlugAction = authenticatedActionClient
       throw new OperationNotAllowedError("Pretty URLs are only available on self-hosted instances");
     }
 
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        { type: "organization", roles: ["owner", "manager"] },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     return await updateSurveySlug(parsedInput.surveyId, parsedInput.slug);
@@ -49,18 +40,9 @@ export const removeSurveySlugAction = authenticatedActionClient
       throw new OperationNotAllowedError("Pretty URLs are only available on self-hosted instances");
     }
 
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        { type: "organization", roles: ["owner", "manager"] },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     return await updateSurveySlug(parsedInput.surveyId, null);

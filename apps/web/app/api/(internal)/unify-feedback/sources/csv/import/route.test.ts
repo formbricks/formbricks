@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { assertFeedbackSourceDirectoryAccess } from "@/lib/feedback-source/access";
 import { importCsvFile } from "@/lib/feedback-source/csv-file-import";
 import { getFeedbackSourceWithMappingsById } from "@/lib/feedback-source/service";
 import { getUser } from "@/lib/user/service";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromFeedbackSourceId } from "@/lib/utils/helper";
 import { getSession } from "@/modules/auth/lib/session";
 import { POST } from "./route";
 
@@ -24,16 +23,10 @@ vi.mock("@/lib/feedback-source/service", () => ({
   getFeedbackSourceWithMappingsById: vi.fn(),
 }));
 vi.mock("@/lib/user/service", () => ({ getUser: vi.fn() }));
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
-}));
-vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromFeedbackSourceId: vi.fn(),
-}));
+vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
 
 const userId = "user_1";
-const organizationId = "organization_1";
 const workspaceId = "workspace_1";
 const feedbackSourceId = "source_1";
 const feedbackDirectoryId = "directory_1";
@@ -51,8 +44,7 @@ describe("CSV feedback source import authorization", () => {
     vi.clearAllMocks();
     vi.mocked(getSession).mockResolvedValue({ user: { id: userId } } as never);
     vi.mocked(getUser).mockResolvedValue({ id: userId } as never);
-    vi.mocked(getOrganizationIdFromFeedbackSourceId).mockResolvedValue(organizationId);
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
+    vi.mocked(assertCan).mockResolvedValue(undefined);
     vi.mocked(getFeedbackSourceWithMappingsById).mockResolvedValue({ feedbackDirectoryId } as never);
     vi.mocked(assertFeedbackSourceDirectoryAccess).mockResolvedValue(undefined);
     vi.mocked(importCsvFile).mockResolvedValue({ imported: 1 } as never);
@@ -62,6 +54,10 @@ describe("CSV feedback source import authorization", () => {
     const response = await POST(makeRequest());
 
     expect(response.status).toBe(200);
+    expect(assertCan).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
     expect(assertFeedbackSourceDirectoryAccess).toHaveBeenCalledWith(
       userId,
       feedbackDirectoryId,

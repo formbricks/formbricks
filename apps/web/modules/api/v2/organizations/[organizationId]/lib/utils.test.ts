@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
-import { hasApiKeyOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/utils";
+import { can } from "@/lib/authorization";
 import { hasOrganizationIdAndAccess } from "./utils";
 
-// Delegation target; the ladder is covered by lib/authorization/legacy-api-key-access.test.ts.
-vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
-  hasApiKeyOrganizationAccess: vi.fn(),
-}));
+// The central API-key ladder is covered by the SpiceDB evaluator and schema assertions.
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 
 describe("hasOrganizationIdAndAccess", () => {
   beforeEach(() => {
@@ -42,7 +40,7 @@ describe("hasOrganizationIdAndAccess", () => {
   });
 
   test("should return false if access type is missing in organizationAccess", async () => {
-    vi.mocked(hasApiKeyOrganizationAccess).mockResolvedValue(false);
+    vi.mocked(can).mockResolvedValue(false);
     const authentication = {
       organizationId: "org1",
       organizationAccess: { accessControl: {} },
@@ -53,7 +51,7 @@ describe("hasOrganizationIdAndAccess", () => {
   });
 
   test("should return true if organizationId and access type are valid", async () => {
-    vi.mocked(hasApiKeyOrganizationAccess).mockResolvedValue(true);
+    vi.mocked(can).mockResolvedValue(true);
     const authentication = {
       organizationId: "org1",
       organizationAccess: { accessControl: { read: true } },

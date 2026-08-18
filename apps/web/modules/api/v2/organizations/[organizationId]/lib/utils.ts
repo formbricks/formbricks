@@ -1,7 +1,8 @@
 import { logger } from "@formbricks/logger";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { hasApiKeyOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/utils";
+import { can } from "@/lib/authorization";
+import { getOrganizationAuthorizationActionForAccessType } from "@/lib/authorization/permission-action";
 
 export const hasOrganizationIdAndAccess = async (
   paramOrganizationId: string,
@@ -14,5 +15,9 @@ export const hasOrganizationIdAndAccess = async (
     return false;
   }
 
-  return hasApiKeyOrganizationAccess(authentication, accessType);
+  return can(
+    { type: "apiKey", id: authentication.apiKeyId },
+    getOrganizationAuthorizationActionForAccessType(accessType),
+    { type: "organization", id: authentication.organizationId }
+  );
 };

@@ -107,7 +107,7 @@ definition organization {
      *
      * This exists to be intersected into `team#member`, so that team-derived workspace access
      * carries the same two preconditions the application enforces before it consults the team
-     * ladder at all (`hasUserWorkspaceAccessForActionLegacy`): the principal must hold a membership
+     * ladder at all: the principal must hold a membership
      * in this organization, and that membership must not be `billing`.
      */
     permission product_member: user = owner + manager + member
@@ -131,8 +131,8 @@ definition team {
      * All members of the team; carries workspace access granted to the team.
      *
      * Intersected with the organization's non-billing membership because a `TeamUser` row is not
-     * sufficient on its own in the application. `hasUserWorkspaceAccessForActionLegacy` opens with
-     * two gates before it ever looks at `WorkspaceTeam`:
+     * sufficient on its own in the application. The current authorization contract requires two
+     * gates before it considers `WorkspaceTeam`:
      *
      *     if (!orgMembership) return false;
      *     if (orgMembership.role === "billing") return false;
@@ -192,7 +192,7 @@ definition workspace {
     /**
      * Full workspace control: DELETE-level operations, workspace settings, and
      * team-access management. Held by manage-level API keys and teams, and by
-     * organization owners/managers (`checkAuthorizationUpdated` org-role branch).
+     * organization owners/managers (`organization.manage`).
      */
     permission manage: user | api_key = manager + manager_team + organization->manage
 
