@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RESERVED_FIELD_NAMES } from "./reserved-field-names";
 import { isLegacyIdCharset, isSafeIdentifier } from "./safe-identifier";
 import { RESERVED_DECLARED_FIELD_NAMES } from "./surveys/validation";
 
@@ -86,7 +87,17 @@ export const ZEmbeddedData = z
       // A library key is always newly authored (local fields carry `key: null`), so it goes through
       // the strict create-time rule. Without this a shared ingested field could be keyed `verify` or
       // `lang`, and ingestion would then refuse to fill it — a field that can never hold a value.
-      .refine((key) => !RESERVED_DECLARED_FIELD_NAMES.has(key.toLowerCase()), "Key is reserved")
+      //
+      // Two sets, not one, and they must stay separate. `RESERVED_DECLARED_FIELD_NAMES` is also the
+      // capture-refusal list used by `getHiddenFieldsFromSearchParams`, so a name added there stops
+      // being ingestible for surveys that already declare it; `RESERVED_FIELD_NAMES` is
+      // authoring-only, and merging the two would silently break live URL capture on existing
+      // surveys (see reserved-field-names.ts). A reserved-catalog name is refused for the same
+      // reason as the rest: the reserved read of that name would permanently shadow the field.
+      .refine((key) => {
+        const normalizedKey = key.toLowerCase();
+        return !RESERVED_DECLARED_FIELD_NAMES.has(normalizedKey) && !RESERVED_FIELD_NAMES.has(normalizedKey);
+      }, "Key is reserved")
       .nullable(),
     name: ZEmbeddedDataName,
     description: z.string().nullable(),
