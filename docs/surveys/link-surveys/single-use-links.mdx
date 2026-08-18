@@ -12,6 +12,22 @@ finish the survey, it stops working — everyone else's links are unaffected.
 Use them when you invite a known list of people (customers, panelists, employees) and want one
 response per invitation, without asking anyone to log in.
 
+<Note>
+  **Looking for responses tied to a specific person? Use
+  [Personal Links](/surveys/link-surveys/personal-links) instead.**
+
+  Single-use links are anonymous. Formbricks limits each link to one response but does not know who
+  is behind it, so it is on you to track which link you sent to whom (a custom single-use ID makes
+  that easier).
+
+  Personal links are generated for contacts in a segment. Each response is automatically attributed
+  to that contact, links can be given an expiry date, and the CSV export maps every link to a name
+  and email. Formbricks also blocks a second response from the same contact on its own, so you get
+  the one-response-per-person guarantee whether or not single-use links are switched on. Personal
+  links require an [Enterprise Edition](/self-hosting/advanced/license) license with Contact
+  Management.
+</Note>
+
 ## How a single-use link works
 
 Every single-use link is your normal survey link plus a **single-use ID** (`suId`), and — depending
@@ -62,8 +78,7 @@ Both are equally tamper-proof. The difference is who chooses the ID and whether 
 <Warning>
   Both modes are signed or encrypted with your instance's `ENCRYPTION_KEY`, so respondents cannot
   forge a valid link by guessing an ID. They *can* forward their own link to someone else, so
-  treat a single-use link as a credential. For attributing responses to a known contact, use
-  [Personal Links](/surveys/link-surveys/personal-links) instead.
+  treat a single-use link as a credential.
 </Warning>
 
 ## Create single-use links in the app
@@ -163,9 +178,6 @@ Formbricks re-validates the URL and rejects the response if the two do not match
 
 - **Self-hosting**: single-use links require `ENCRYPTION_KEY` to be set. Rotating that key
   invalidates every single-use link that was already handed out.
-- **Personal links** are single-use links tied to a specific contact. If you need to know *who*
-  responded rather than just *once per invitation*, see
-  [Personal Links](/surveys/link-surveys/personal-links).
 - **Since Formbricks 5.0**, unencrypted single-use links must carry a valid `suToken`. Links
   generated before 5.0 without a token are rejected — regenerate them.
 - The *"already answered"* screen can be customized via the `singleUse.heading` and
