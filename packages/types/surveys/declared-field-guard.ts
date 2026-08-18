@@ -1,4 +1,5 @@
-import type { TSurveyHiddenFields, TSurveyVariables } from "./types";
+import type { z } from "zod";
+import { type TSurveyHiddenFields, ZSurveyVariables } from "./types";
 import { type TValidateIdError, TValidateIdErrorCode, validateId } from "./validation";
 
 /**
@@ -7,7 +8,15 @@ import { type TValidateIdError, TValidateIdErrorCode, validateId } from "./valid
  */
 export interface TDeclaredFieldSource {
   hiddenFields?: Pick<TSurveyHiddenFields, "fieldIds"> | null;
-  variables?: TSurveyVariables | null;
+  /**
+   * Only `name` is required, deliberately: this reads nothing else, and the write seams hand it both
+   * sides of the survey schema. `ZSurveyVariable` gives `value` a `prefault`, so a *create* payload
+   * (`ZSurveyCreateInput`) types `value` as optional while a parsed survey types it as required -
+   * demanding the *parsed* `TSurveyVariables` here made `createSurvey` fail to type check against
+   * its own input, so this is the schema's input side: `value` optional, which a parsed survey
+   * (value required) also satisfies.
+   */
+  variables?: z.input<typeof ZSurveyVariables> | null;
 }
 
 /**
