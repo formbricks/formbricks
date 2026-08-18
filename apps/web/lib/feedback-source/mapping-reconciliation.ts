@@ -409,7 +409,8 @@ export const scheduleFeedbackSourceReconciliation = async (
     after(async () => {
       try {
         const persisted = await readPersistedSurveyBlocks(surveyId, workspaceId);
-        // Deleted between the save and this callback. Diffing against nothing would read as "this
+        // Null means the survey is gone — deleted between the save and this callback — or that the id
+        // and workspace no longer agree. Either way, skip: diffing against nothing would read as "this
         // survey has no questions" and delete every mapping for it.
         if (!persisted) return;
 

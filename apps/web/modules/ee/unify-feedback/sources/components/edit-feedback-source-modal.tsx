@@ -110,7 +110,8 @@ export const EditFeedbackSourceModal = ({
   // is exactly the state reconciliation leaves behind when every mapped question was retyped to a type
   // with no Hub field — it deletes the rows and flags the source `error`. Without this the survey
   // picker would be empty AND disabled, so `error` would be terminal and the source unrepairable.
-  const canChooseSurvey = feedbackSource?.formbricksMappings.length === 0;
+  const canChooseSurvey =
+    feedbackSource?.type === "formbricks_survey" && feedbackSource.formbricksMappings.length === 0;
 
   useEffect(() => {
     if (feedbackSource) {
