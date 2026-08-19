@@ -2,14 +2,27 @@ import { type ComponentChildren } from "preact";
 import { useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
-import { ensureLiveRegion } from "@/lib/live-region";
 import { SURVEY_INSTRUCTIONS_ID } from "@/lib/survey-page";
 import { useFocusTrap } from "@/lib/use-focus-trap";
+import { useNoOverlayModal } from "@/lib/use-no-overlay-modal";
 import { cn } from "@/lib/utils";
 
-// Give a fallback-created live region (older SDK, see live-region.ts) a beat to be registered by
-// assistive tech before the message lands. Harmless when the region already exists.
-const ANNOUNCE_DELAY_MS = 100;
+const getPlacementStyle = (placement: TPlacement): string => {
+  switch (placement) {
+    case "bottomRight":
+      return "sm:bottom-3 sm:right-3";
+    case "topRight":
+      return "sm:top-3 sm:right-3 sm:bottom-3";
+    case "topLeft":
+      return "sm:top-3 sm:left-3 sm:bottom-3";
+    case "bottomLeft":
+      return "sm:bottom-3 sm:left-3";
+    case "center":
+      return "sm:top-1/2 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2";
+    default:
+      return "sm:bottom-3 sm:right-3";
+  }
+};
 
 interface SurveyContainerProps {
   mode: "modal" | "inline";
@@ -76,64 +89,14 @@ export function SurveyContainer({
     };
   }, [clickOutside, hasOverlay, modalRef, onClose, isModal, isOpen]);
 
-  // Without an overlay the focus trap is off, so nothing handles Escape. Listen on the container node
-  // instead of on `document`: Escape closes the survey only while focus is inside it, and never cancels
-  // the host page's own Escape handling. Keep the listener imperative — a keydown JSX prop on a
-  // non-interactive role="dialog" element fails a11y linting.
-  useEffect(() => {
-    if (!isModal || !isOpen || hasOverlay) return;
-
-    const container = modalRef.current;
-    if (!container) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.altKey || event.ctrlKey || event.metaKey) return;
-
-      event.preventDefault();
-      onClose?.();
-    };
-
-    container.addEventListener("keydown", handleKeyDown);
-    return () => {
-      container.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isModal, isOpen, hasOverlay, onClose, modalRef]);
-
-  // A no-overlay survey never takes focus (see the trap gate above), so its opening is announced
-  // through the persistent status region — otherwise screen-reader users get no signal it appeared.
-  // With an overlay the trap moves focus into the dialog, which is its own announcement. Cleared on
-  // close because setting identical text twice is not a change, so a later open would stay silent.
-  useEffect(() => {
-    if (!isModal || !isOpen || hasOverlay) return;
-
-    const liveRegion = ensureLiveRegion();
-    liveRegion.textContent = "";
-    const announceTimeout = setTimeout(() => {
-      liveRegion.textContent = t("common.survey_opened_announcement");
-    }, ANNOUNCE_DELAY_MS);
-
-    return () => {
-      clearTimeout(announceTimeout);
-      liveRegion.textContent = "";
-    };
-  }, [isModal, isOpen, hasOverlay, t]);
-
-  const getPlacementStyle = (placement: TPlacement): string => {
-    switch (placement) {
-      case "bottomRight":
-        return "sm:bottom-3 sm:right-3";
-      case "topRight":
-        return "sm:top-3 sm:right-3 sm:bottom-3";
-      case "topLeft":
-        return "sm:top-3 sm:left-3 sm:bottom-3";
-      case "bottomLeft":
-        return "sm:bottom-3 sm:left-3";
-      case "center":
-        return "sm:top-1/2 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2";
-      default:
-        return "sm:bottom-3 sm:right-3";
-    }
-  };
+  // Escape handling and the open announcement, both of which only a modal survey WITHOUT an overlay
+  // has to do for itself — see the hook for why.
+  useNoOverlayModal({
+    enabled: isModal && isOpen && !hasOverlay,
+    containerRef: modalRef,
+    onClose,
+    announcement: t("common.survey_opened_announcement"),
+  });
 
   if (!isOpen) return null;
 
