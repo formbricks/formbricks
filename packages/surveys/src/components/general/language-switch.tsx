@@ -1,6 +1,5 @@
 import { useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { LanguageIcon } from "@/components/icons/language-icon";
@@ -8,6 +7,7 @@ import { mixColor } from "@/lib/color";
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import i18n from "@/lib/i18n.config";
 import { getLanguageDisplayName, getShortLanguageDisplayName } from "@/lib/language-display-name";
+import { getVisibleSurveyLanguages, isSameLanguageCode } from "@/lib/language-options";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
 import { cn, getSurveyLanguageTag, isRTLLanguage, resolveSelectedLanguageCode } from "@/lib/utils";
 
@@ -49,31 +49,13 @@ export function LanguageSwitch({
     return surveyLanguage.default;
   })?.language.code;
 
-  // Dedupe enabled languages by canonical code so the back-compat legacy aliases (e.g. "hi" sent
-  // alongside "hi-IN") don't show as duplicate options. Prefer the canonical entry over a legacy alias
-  // regardless of order (an entry is canonical when its code equals its normalized form), so the
-  // dropdown always keeps the canonical code in state and label.
-  const languagesByCanonical = new Map<string, TSurveyLanguage>();
-  for (const surveyLanguage of surveyLanguages) {
-    if (!surveyLanguage.enabled) continue;
-    const code = surveyLanguage.language.code;
-    const canonical = normalizeLanguageCode(code) ?? code;
-    const existing = languagesByCanonical.get(canonical);
-    if (!existing || code === canonical) {
-      languagesByCanonical.set(canonical, surveyLanguage);
-    }
-  }
-  const visibleLanguages = [...languagesByCanonical.values()];
+  const visibleLanguages = getVisibleSurveyLanguages(surveyLanguages);
 
   // The active language as a real code: `selectedLanguageCode` may be the "default" sentinel, and
   // may also be a legacy alias ("hi") that was deduped away in favour of its canonical form
-  // ("hi-IN"), so it is normalized the same way the option list is before being matched.
+  // ("hi-IN"), so it is matched the same way the option list is deduped.
   const activeLanguageCode = getSurveyLanguageTag(survey, selectedLanguageCode);
-  const activeCanonicalCode = activeLanguageCode
-    ? (normalizeLanguageCode(activeLanguageCode) ?? activeLanguageCode)
-    : null;
-  const isActive = (code: string): boolean =>
-    activeCanonicalCode !== null && (normalizeLanguageCode(code) ?? code) === activeCanonicalCode;
+  const isActive = (code: string): boolean => isSameLanguageCode(code, activeLanguageCode);
   const activeLanguage = visibleLanguages.find((surveyLanguage) => isActive(surveyLanguage.language.code));
   // Endonym ("Deutsch", not "German") — both the a11y convention and better UX for a respondent
   // hunting for their own language. The visible label drops the region, because the full name is

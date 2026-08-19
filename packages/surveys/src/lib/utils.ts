@@ -1,5 +1,4 @@
 import { twMerge } from "tailwind-merge";
-import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
@@ -11,6 +10,7 @@ import {
 } from "@formbricks/types/surveys/blocks";
 import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/types/surveys/elements";
 import { type TShuffleOption } from "@formbricks/types/surveys/types";
+import { isSameLanguageCode } from "@/lib/language-options";
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
 type ClassValue = string | boolean | null | undefined | ClassValue[];
@@ -244,12 +244,10 @@ export const getSurveyLanguageTag = (
   languageCode: string
 ): string | null => {
   if (languageCode && languageCode !== "default") {
-    const requested = normalizeLanguageCode(languageCode) ?? languageCode;
-    const configured = survey.languages.find((surveyLanguage) => {
-      if (!surveyLanguage.enabled) return false;
-      const code = surveyLanguage.language.code;
-      return (normalizeLanguageCode(code) ?? code) === requested;
-    });
+    const configured = survey.languages.find(
+      (surveyLanguage) =>
+        surveyLanguage.enabled && isSameLanguageCode(surveyLanguage.language.code, languageCode)
+    );
     if (configured) return configured.language.code;
   }
   return getDefaultLanguageCode(survey) ?? null;
@@ -269,8 +267,7 @@ export const getSurveyLanguageTag = (
  */
 export const resolveSelectedLanguageCode = (languageCode: string, defaultLanguageCode?: string): string => {
   if (!defaultLanguageCode) return languageCode;
-  const canonical = (code: string): string => normalizeLanguageCode(code) ?? code;
-  return canonical(languageCode) === canonical(defaultLanguageCode) ? "default" : languageCode;
+  return isSameLanguageCode(languageCode, defaultLanguageCode) ? "default" : languageCode;
 };
 
 // Inlined from @formbricks/types/storage.ts to avoid Zod dependency
