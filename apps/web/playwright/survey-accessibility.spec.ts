@@ -3,8 +3,12 @@ import { type Locator, type Page, expect } from "@playwright/test";
 import { logger } from "@formbricks/logger";
 import { test } from "./lib/fixtures";
 import {
+  A11Y_SURVEY_NAME,
   ENDING_CARD_HEADLINE,
+  OPEN_TEXT_HEADLINE,
+  SINGLE_SELECT_HEADLINE,
   type SeededAccessibilitySurveys,
+  WELCOME_CARD_HEADLINE,
   seedAccessibilitySurveys,
 } from "./utils/accessibility";
 import { mockStorageUploads } from "./utils/helper";
@@ -241,13 +245,13 @@ const getActiveCardId = async (page: Page): Promise<string | null> => {
 
 const advanceButton = (card: Locator): Locator => card.locator(ADVANCE_BUTTON_SELECTOR);
 
-// The ending card renders its (fixture-controlled) headline as the page's <h1>; that
-// is a stable positive signal that the survey completed (unlike "no nav button",
-// which is also briefly true during the 600ms card transition animation). The welcome
-// card also renders an <h1>, so the ending is matched by its exact headline text —
-// endings are not language-patched, so this holds in the RTL variant too.
+// The ending card renders its (fixture-controlled) headline as an <h2>; that is a stable
+// positive signal that the survey completed (unlike "no nav button", which is also briefly
+// true during the 600ms card transition animation). Every card headline is an h2 — the survey
+// name is the page's only h1 (ENG-2336) — so the ending is matched by its exact headline text.
+// Endings are not language-patched, so this holds in the RTL variant too.
 const endingCardLocator = (page: Page): Locator =>
-  page.getByRole("heading", { level: 1, name: ENDING_CARD_HEADLINE });
+  page.getByRole("heading", { level: 2, name: ENDING_CARD_HEADLINE });
 
 const isOnEndingCard = (page: Page): Promise<boolean> =>
   endingCardLocator(page)
@@ -281,6 +285,32 @@ const waitForSettled = async (page: Page, selector: string): Promise<void> => {
 
 const waitForCardSettled = (page: Page, cardId: string): Promise<void> =>
   waitForSettled(page, `[id="${cardId}"]`);
+
+/**
+ * Locator-based twin of `waitForSettled`, for elements that cannot be named by a stable CSS
+ * selector. The ending card is matched by role + heading text because peeking cards carry
+ * identical markup, so `document.querySelector` would settle on the wrong one.
+ */
+const waitForLocatorSettled = async (locator: Locator): Promise<void> => {
+  await expect
+    .poll(
+      () =>
+        locator
+          .evaluate((node: HTMLElement) => {
+            let el: HTMLElement | null = node;
+            while (el) {
+              if (getComputedStyle(el).opacity !== "1") return false;
+              el = el.parentElement;
+            }
+            return true;
+          })
+          .catch(() => false),
+      { timeout: 5000, intervals: [100] }
+    )
+    .toBe(true)
+    // Mirrors waitForSettled: a timeout is not an error here, the caller's assertions decide.
+    .catch(() => undefined);
+};
 
 /**
  * After clicking advance, wait for a STABLE next state: either a different active card
@@ -425,7 +455,7 @@ const walkAndScan = async (
     endingCardLocator(page).first(),
     `ending card should be visible for variant "${variant}"`
   ).toBeVisible({ timeout: CARD_TIMEOUT });
-  await waitForSettled(page, "#fbjs h1");
+  await waitForLocatorSettled(endingCardLocator(page).first());
   await scan(page, variant, "ending-card", failSink);
 };
 
@@ -575,6 +605,63 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
       await walkAndScan(page, "dark", seeded.surveyUrl, violations);
       reportAndAssert("dark", violations);
     });
+  });
+
+  /**
+   * Heading structure (ENG-2336, WCAG 2.4.6). axe cannot gate this: `page-has-heading-one` and
+   * `heading-order` are best-practice rules, so they only WARN in this suite. The three things
+   * that can silently regress are asserted directly — the single h1, the absence of a skipped
+   * level, and the two associations the heading wrapper had to preserve (`htmlFor` on the nested
+   * label, and `headlineId` still naming the radiogroup through aria-labelledby).
+   */
+  test("heading structure: one h1 names the survey, card headlines are h2", async ({ page }) => {
+    test.setTimeout(120_000);
+    const widget = page.locator("#fbjs");
+
+    await page.goto(seeded.surveyUrl, { waitUntil: "domcontentloaded" });
+    await expect(activeCard(page).first(), "welcome card should render").toBeVisible({
+      timeout: CARD_TIMEOUT,
+    });
+
+    // One h1 for the whole survey, carrying the survey name. Without it every card headline is an
+    // orphaned h2 and heading navigation gives the respondent no idea what they are answering.
+    await expect(widget.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(widget.getByRole("heading", { level: 1 })).toHaveText(A11Y_SURVEY_NAME);
+
+    // Nothing deeper than h2 anywhere, so h1 -> h2 cannot become a skipped level.
+    await expect(widget.locator("h3, h4, h5, h6")).toHaveCount(0);
+
+    await expect(
+      page.getByRole("heading", { level: 2, name: WELCOME_CARD_HEADLINE }),
+      "welcome card headline should be an h2, not a styled div"
+    ).toBeVisible();
+
+    const firstCardId = await openFirstQuestionCard(page, seeded.surveyUrl);
+    const firstCard = page.locator(`[id="${firstCardId}"]`);
+
+    // Still exactly one h1 on a question card: the heading lives on the container, so the stacked
+    // layout's peeking cards must not each contribute their own.
+    await expect(widget.getByRole("heading", { level: 1 })).toHaveCount(1);
+
+    // The open-text prompt is an h2 that WRAPS the <label> bound to the input. If a future refactor
+    // turns the label itself into the heading, the input loses its accessible name — hence both
+    // halves are asserted: the heading contains a real label[for], and the input resolves by label.
+    const promptHeading = firstCard.getByRole("heading", { level: 2, name: OPEN_TEXT_HEADLINE });
+    await expect(promptHeading).toBeVisible();
+    await expect(promptHeading.locator("label[for]")).toHaveCount(1);
+    await expect(firstCard.getByLabel(OPEN_TEXT_HEADLINE)).toBeVisible();
+
+    // Advance to the single-select card: its radiogroup is named through aria-labelledby pointing at
+    // the headline id, which now sits on an element nested inside the h2.
+    await answerCurrentCard(page, firstCard);
+    await advanceButton(firstCard).first().click({ timeout: ACTION_TIMEOUT });
+    await waitForCardTransition(page, firstCardId);
+
+    await expect(
+      page.getByRole("radiogroup", { name: SINGLE_SELECT_HEADLINE }),
+      "the radiogroup must still be named by its headline via aria-labelledby"
+    ).toBeVisible({ timeout: CARD_TIMEOUT });
+    await expect(page.getByRole("heading", { level: 2, name: SINGLE_SELECT_HEADLINE })).toBeVisible();
   });
 
   test("rtl multi-language (Arabic): full walk has no WCAG AA violations", async ({ page }) => {

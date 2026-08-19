@@ -21,6 +21,12 @@ interface ElementHeaderProps extends React.ComponentProps<"div"> {
    * (media, etc.) inside a <legend> (invalid HTML).
    */
   headlineId?: string;
+  /**
+   * Heading level the element prompt is exposed at (WCAG 2.4.6). Defaults to 2: the survey name
+   * is the page's only h1, so every card prompt sits one level under it. A block that renders
+   * several elements gets sibling headings at the same level, never a nested run.
+   */
+  headingLevel?: 2 | 3;
 }
 
 function ElementHeader({
@@ -35,9 +41,16 @@ function ElementHeader({
   videoUrl,
   imageAltText,
   headlineId,
+  headingLevel = 2,
   ...props
 }: Readonly<ElementHeaderProps>): React.JSX.Element {
   const isMediaAvailable = Boolean(imageUrl) || Boolean(videoUrl);
+  // The heading WRAPS the Label rather than replacing it: the six call sites that pass `htmlFor`
+  // need the prompt to stay a real <label> bound to their input, the grouped questions need
+  // `headlineId` to stay on the element whose text names the fieldset via aria-labelledby, and
+  // user theming targets the `label-headline` class (styles.ts `addCustomThemeToDom`), not the tag.
+  // A <label> nested inside a heading is valid HTML and changes neither association.
+  const HeadingTag = `h${headingLevel.toString()}` as "h2" | "h3";
 
   return (
     <div className={cn("space-y-2", className)} {...props}>
@@ -49,11 +62,11 @@ function ElementHeader({
       {/* Headline */}
       <div>
         <div>{required ? <span className="label-card mb-[3px]">{requiredLabel}</span> : null}</div>
-        <div className="flex">
+        <HeadingTag className="flex" data-slot="element-headline">
           <Label htmlFor={htmlFor} id={headlineId} variant="headline">
             {headline}
           </Label>
-        </div>
+        </HeadingTag>
       </div>
 
       {/* Description/Subheader */}

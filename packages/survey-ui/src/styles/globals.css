@@ -180,6 +180,25 @@
   font-size: var(--fb-button-font-size);
 }
 
+/*
+ * Element prompts are wrapped in a real heading for WCAG 2.4.6 (see element-header.tsx). The
+ * heading is a semantic wrapper only — the visible text is still the <Label> inside it — so the
+ * UA's own heading typography and margins have to be neutralised or the prompt gains size and
+ * spacing it never had. `packages/surveys/preflight.css` already does this for the bundled
+ * survey, but that preflight ships with the surveys package and this stylesheet is consumed on
+ * its own too (Storybook, and any standalone React consumer), so survey-ui declares it itself.
+ */
+#fbjs h1,
+#fbjs h2,
+#fbjs h3,
+#fbjs h4,
+#fbjs h5,
+#fbjs h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  margin: 0;
+}
+
 #fbjs .label-headline,
 #fbjs .label-headline * {
   font-family: var(--fb-element-headline-font-family);

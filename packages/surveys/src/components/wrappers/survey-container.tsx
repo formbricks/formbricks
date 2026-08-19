@@ -19,6 +19,8 @@ interface SurveyContainerProps {
   clickOutside?: boolean;
   isOpen?: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  /** Survey name, exposed as the survey's single top-level heading (WCAG 2.4.6). */
+  surveyName?: string;
 }
 
 export function SurveyContainer({
@@ -30,6 +32,7 @@ export function SurveyContainer({
   clickOutside,
   isOpen = true,
   dir = "auto",
+  surveyName,
 }: Readonly<SurveyContainerProps>) {
   const isModal = mode === "modal";
   const { t } = useTranslation();
@@ -127,9 +130,22 @@ export function SurveyContainer({
 
   if (!isOpen) return null;
 
+  // The survey's one top-level heading. Card headlines (welcome, element prompts, ending) are all
+  // h2, so without this they would be orphaned: a screen reader user pressing H would land inside
+  // the survey with nothing naming what they are answering. It lives here rather than in
+  // survey.tsx's getCardContent, which runs once per card and would emit one h1 per peeking card
+  // in the stacked layout. Visually hidden because the card designs have no room for a title — the
+  // survey name is already the document title on link surveys.
+  //
+  // It is rendered as a sibling of `children` in BOTH branches so that it always ends up inside the
+  // dialog on the modal path: `aria-modal="true"` makes assistive tech ignore everything outside
+  // the dialog element, so a heading placed on the #fbjs root would be unreachable there.
+  const surveyHeading = surveyName ? <h1 className="sr-only">{surveyName}</h1> : null;
+
   if (!isModal) {
     return (
       <div id="fbjs" className="formbricks-form" style={{ height: "100%", width: "100%" }} dir={dir}>
+        {surveyHeading}
         {children}
       </div>
     );
@@ -165,7 +181,10 @@ export function SurveyContainer({
               isOpen ? "opacity-100" : "opacity-0",
               "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
             )}>
-            <div>{children}</div>
+            <div>
+              {surveyHeading}
+              {children}
+            </div>
           </div>
         </div>
       </div>
