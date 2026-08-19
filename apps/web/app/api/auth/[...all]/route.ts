@@ -13,7 +13,12 @@ export const fetchCache = "force-no-store";
  * a parameterized route can never be emitted with its parameter filled in. See
  * better-auth-path-label.ts; `/reset-password/:token` is why this is not the raw pathname.
  */
-const labelAuthPath = createAuthPathLabeller(Object.values(auth.api).map((endpoint) => endpoint.path));
+// `endpoint?.path`, not `endpoint.path`: this runs at MODULE LOAD in the `/api/auth/*` catch-all, so a
+// single null or undefined entry in `auth.api` would throw here and take down every auth request — the
+// whole route, not just the label. That is the one thing this file must not do for the sake of a Sentry
+// tag (see the same principle in better-auth-request-context.ts). The labeller already ignores any
+// non-string, so a nullish entry degrades that one endpoint to `unknown` instead of breaking sign-in.
+const labelAuthPath = createAuthPathLabeller(Object.values(auth.api).map((endpoint) => endpoint?.path));
 
 /**
  * Better Auth HTTP handler (ENG-1054 cutover) — replaces the NextAuth `[...nextauth]` catch-all (the

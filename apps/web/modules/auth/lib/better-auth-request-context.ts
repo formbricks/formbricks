@@ -20,7 +20,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
  * `better-auth-path-label.ts` for why that matters (`/reset-password/:token`).
  */
 export interface BetterAuthRequestContext {
-  /** Safe endpoint label from `createAuthPathLabeller`, e.g. `/sign-in/email` or `reset-password`. */
+  /** Safe endpoint label from `createAuthPathLabeller`, e.g. `/sign-in/email` or `/reset-password/*`. */
   path: string;
   /** HTTP method, e.g. `POST`. */
   method: string;

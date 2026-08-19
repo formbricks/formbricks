@@ -426,8 +426,11 @@ describe("betterAuthLogger (request-path tagging, ENG-2259)", () => {
       tags: { component: "better-auth" },
     });
     // An untagged capture is itself diagnostic: it means the throw did not come through auth.handler.
+    // Array form, not `"tags.auth.path"`: vitest reads a dotted string as a property PATH, so it would
+    // look for `tags` → `auth` → `path`, a nesting that never exists, and pass whether or not the tag
+    // is set. The key is flat — `tags["auth.path"]` — and only the array form escapes the dot.
     const [, captureContext] = vi.mocked(Sentry.captureException).mock.calls[0];
-    expect(captureContext).not.toHaveProperty("tags.auth.path");
+    expect(captureContext).not.toHaveProperty(["tags", "auth.path"]);
     expect(logger.withContext).toHaveBeenCalledWith({ source: "better-auth" });
   });
 

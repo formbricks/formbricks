@@ -7,14 +7,15 @@ import "server-only";
  * Why a labeller and not the raw path: Better Auth declares
  * `createAuthEndpoint("/reset-password/:token")`, so on that endpoint the password-reset token is a
  * PATH SEGMENT — and better-call resolves both `request.url` and `ctx.path` to the CONCRETE path, not
- * the route pattern (`better-call/dist/router.mjs:38` → `dist/context.mjs:20`). Emitting either would
- * write a live account-takeover credential into Sentry and the logs.
+ * the route pattern (better-call `router.mjs`, `path = pathname.slice(basePath.length)` → `context.mjs`).
+ * Emitting either would write a live account-takeover credential into Sentry and the logs.
  *
  * The vocabulary is therefore derived from Better Auth's own endpoint registry rather than
  * hand-maintained: better-call stamps each endpoint function with its DECLARED path
- * (`better-call/dist/endpoint.mjs:56`), so every parameterized route arrives here containing `:` and
- * can never be matched verbatim by a concrete request. `/reset-password/<token>` degrades to
- * `reset-password`, and a token-bearing endpoint added by a future Better Auth upgrade is covered the
+ * (better-call `endpoint.mjs`, `internalHandler.path = path`), so every parameterized route arrives
+ * here containing `:` and can never be matched verbatim by a concrete request.
+ * `/reset-password/<token>` degrades to
+ * `/reset-password/*`, and a token-bearing endpoint added by a future Better Auth upgrade is covered the
  * same way with no code change here — which is the point, since the version is not pinned forever.
  *
  * Full paths are kept where they carry diagnostic value: `/oauth2/userinfo`, `/oauth2/token` and
@@ -42,7 +43,7 @@ const getFirstSegment = (path: string): string | undefined => path.split("/")[1]
 
 export const createAuthPathLabeller = (declaredPaths: Iterable<string>): ((url: string) => string) => {
   // Only parameter-free declared paths may be emitted verbatim. Patterns still contribute their first
-  // segment, so `/reset-password/<token>` degrades to a recognized `reset-password` rather than to
+  // segment, so `/reset-password/<token>` degrades to a recognized `/reset-password/*` rather than to
   // `unknown` — the endpoint is still named, just not the secret in it.
   const literalPaths = new Set<string>();
   const knownFirstSegments = new Set<string>();

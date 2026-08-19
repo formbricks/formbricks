@@ -24,6 +24,10 @@ vi.mock("@/modules/auth/lib/auth", () => ({
       signInEmail: { path: "/sign-in/email" },
       resetPassword: { path: "/reset-password" },
       resetPasswordCallback: { path: "/reset-password/:token" },
+      // A nullish entry, deliberately. The label vocabulary is built at MODULE LOAD from this object,
+      // so `endpoint.path` on a null would throw there and take down every `/api/auth/*` request — the
+      // route, not just the tag. Importing this file at all is what asserts it does not.
+      nullishEndpoint: null,
     },
   },
 }));
