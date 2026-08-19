@@ -1,0 +1,105 @@
+patch:
+  operationId: renameTagV3
+  summary: Rename a tag
+  description: |
+    Renames a tag. The workspace is resolved from the tag itself, so the caller cannot choose which scope
+    it is authorized against. Requires organization owner/manager, or a workspace team membership with
+    read-write permission.
+
+    An unknown `tagId` answers `403`, not `404`, so tag ids cannot be probed for existence. A name that
+    collides with another tag in the same workspace answers `422`.
+  tags:
+    - V3 Tags
+  parameters:
+    - in: path
+      name: tagId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 255
+              description: New label. Trimmed; must not be empty.
+  responses:
+    "200":
+      description: Tag renamed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/TagResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+delete:
+  operationId: deleteTagV3
+  summary: Delete a tag
+  description: |
+    Deletes a tag and removes it from every response carrying it. Same authorization as rename.
+  tags:
+    - V3 Tags
+  parameters:
+    - in: path
+      name: tagId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+  responses:
+    "200":
+      description: Tag deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: cuid2
+                    description: The deleted tag's id.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []

@@ -320,14 +320,17 @@ reviews:
       mode: warning
     issue_assessment:
       mode: warning
-    # `pr-label-sync.yml` reads what the Breaking changes section says; these check whether
-    # what it says is true of the diff, and whether the PR's own QA covers every behaviour it
-    # changes. Both are advisory — nothing here blocks a merge.
+    # `pr-label-sync.yml` reads the checkbox in the Breaking changes section; these check whether
+    # what the author ticked is true of the diff, and whether the PR's own QA covers every behaviour
+    # it changes. Both are advisory — nothing here blocks a merge.
     custom_checks:
       - name: Breaking changes match the diff
         mode: warning
         instructions: |
-          Compare the PR description's "## Breaking changes" section against the actual diff.
+          Compare the checkbox in the PR description's "## Breaking changes" section against the
+          actual diff. A ticked box (`- [x] This PR contains breaking changes`) is the author's
+          declaration that the PR has one; an unticked box declares that it has none. The prose or
+          table under the checkbox is the explanation and does not change the declaration.
 
           Treat a change as breaking if the diff does any of the following:
           - Renames, removes, or retypes a field in an API request or response shape, or changes
@@ -341,15 +344,15 @@ reviews:
           - Changes an exported signature of the public SDK surface in `packages/js-core` or
             `packages/surveys`.
 
-          FAIL if the diff contains at least one of the above and the "Breaking changes" section
-          says "None", is empty, or still holds the unedited template comment. Name the specific
-          file and line that is breaking.
+          FAIL if the diff contains at least one of the above and the checkbox is unticked, or the
+          section is empty or still holds the unedited template comment. Name the specific file and
+          line that is breaking, and ask the author to tick the box.
 
-          FAIL if the section claims a breaking change that has no corresponding change in the diff.
+          FAIL if the checkbox is ticked but no change in the diff matches the list above.
 
-          PASS if the section describes, in a table or in prose, each breaking change present in
-          the diff — `.github/pull_request_template.md` accepts either shape — or if the diff
-          contains none of the above and the section says "None".
+          PASS if the checkbox is ticked and the section documents each breaking change present in
+          the diff, in a table or in prose, or if the checkbox is unticked and the diff contains
+          none of the above — however the author words the explanation underneath.
 
           Return inconclusive rather than failing when the diff alone does not let you determine
           an API response shape — for example when the shape comes from a serializer or type that

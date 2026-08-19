@@ -20,7 +20,10 @@ interface SurveyContainerProps {
   clickOutside?: boolean;
   isOpen?: boolean;
   dir?: "ltr" | "rtl" | "auto";
-  /** Survey name, used as the form's accessible name (WCAG 2.4.2). */
+  /**
+   * Survey name. Carries two a11y jobs that happen to want the same string: it is the survey's
+   * single top-level heading (WCAG 2.4.6) and the form's accessible name (WCAG 2.4.2).
+   */
   surveyName?: string;
   /** Whether the survey renders a persistent instructions region worth describing the form with. */
   hasInstructions?: boolean;
@@ -134,6 +137,18 @@ export function SurveyContainer({
 
   if (!isOpen) return null;
 
+  // The survey's one top-level heading. Card headlines (welcome, element prompts, ending) are all
+  // h2, so without this they would be orphaned: a screen reader user pressing H would land inside
+  // the survey with nothing naming what they are answering. It lives here rather than in
+  // survey.tsx's getCardContent, which runs once per card and would emit one h1 per peeking card
+  // in the stacked layout. Visually hidden because the card designs have no room for a title — the
+  // survey name is already the document title on link surveys.
+  //
+  // It is rendered as a sibling of `children` in BOTH branches so that it always ends up inside the
+  // dialog on the modal path: `aria-modal="true"` makes assistive tech ignore everything outside
+  // the dialog element, so a heading placed on the #fbjs root would be unreachable there.
+  const surveyHeading = surveyName ? <h1 className="sr-only">{surveyName}</h1> : null;
+
   // The VPAT finding is that "forms themselves have no titles": every input had a label, but the
   // form they belong to had no accessible name at all. role="form" + the survey name fixes that for
   // BOTH surfaces — an embedded survey cannot own the host document's <title>, so this is the only
@@ -153,6 +168,7 @@ export function SurveyContainer({
         role={surveyName ? "form" : undefined}
         aria-label={surveyName}
         aria-describedby={instructionsId}>
+        {surveyHeading}
         {children}
       </div>
     );
@@ -191,7 +207,10 @@ export function SurveyContainer({
               isOpen ? "opacity-100" : "opacity-0",
               "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
             )}>
-            <div>{children}</div>
+            <div>
+              {surveyHeading}
+              {children}
+            </div>
           </div>
         </div>
       </div>

@@ -48,7 +48,7 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
   {
     id: createId(),
     type: "openText",
-    headline: i18nValue("What feedback do you have for us?"),
+    headline: i18nValue(OPEN_TEXT_HEADLINE),
     subheader: i18nValue("Share anything that comes to mind."),
     placeholder: i18nValue("Type your answer here..."),
     required: true,
@@ -58,7 +58,7 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
   {
     id: createId(),
     type: "multipleChoiceSingle",
-    headline: i18nValue("Which plan are you on?"),
+    headline: i18nValue(SINGLE_SELECT_HEADLINE),
     required: true,
     choices: [
       { id: createId(), label: i18nValue("Free") },
@@ -151,17 +151,32 @@ const buildKitchenSinkQuestions = (baseURL: string) => [
   },
 ];
 
+/**
+ * Survey name of the single-language kitchen-sink fixture. The public survey exposes it as its
+ * one top-level `<h1>` (ENG-2336), so the heading-structure spec asserts against it.
+ */
+export const A11Y_SURVEY_NAME = "A11y Kitchen Sink";
+
+/** Welcome-card headline, exposed as an `<h2>` like every other card headline. */
+export const WELCOME_CARD_HEADLINE = "Welcome to our feedback survey";
+
+/** Headline of the first (open text) question — an `<h2>` wrapping a real `<label>`. */
+export const OPEN_TEXT_HEADLINE = "What feedback do you have for us?";
+
+/** Headline of the single-select question, which names its radiogroup via aria-labelledby. */
+export const SINGLE_SELECT_HEADLINE = "Which plan are you on?";
+
 const buildWelcomeCard = () => ({
   enabled: true,
-  headline: i18nValue("Welcome to our feedback survey"),
+  headline: i18nValue(WELCOME_CARD_HEADLINE),
   subheader: i18nValue("It only takes a minute."),
   timeToFinish: true,
   showResponseCount: false,
 });
 
 /**
- * Ending-card headline, exported so the spec can positively detect survey completion
- * via the rendered `<h1>` (the ending card no longer carries a dedicated DOM hook).
+ * Ending-card headline, exported so the spec can positively detect survey completion via the
+ * rendered `<h2>` (the ending card carries no dedicated DOM hook of its own).
  */
 export const ENDING_CARD_HEADLINE = "Thank you!";
 
@@ -313,8 +328,8 @@ export const seedAccessibilitySurveys = async (
   }
 
   const [mainSurveyId, rtlSurveyId] = await Promise.all([
-    createKitchenSinkSurvey(workspaceId, user.id, "A11y Kitchen Sink", baseURL),
-    createKitchenSinkSurvey(workspaceId, user.id, "A11y Kitchen Sink (RTL)", baseURL),
+    createKitchenSinkSurvey(workspaceId, user.id, A11Y_SURVEY_NAME, baseURL),
+    createKitchenSinkSurvey(workspaceId, user.id, `${A11Y_SURVEY_NAME} (RTL)`, baseURL),
   ]);
   await attachArabicLanguage(rtlSurveyId, workspaceId);
 

@@ -23,15 +23,24 @@ to grasp without opening files. -->
 
 ## Breaking changes
 
-<!-- REQUIRED. Leave "None" if nothing changes for API/SDK consumers or self-hosters. It is breaking
-if it changes an API/SDK shape or emitted value, removes or renames an endpoint, route, env var or
-config key, changes a default or webhook payload, or needs manual migration action. If YES, fill the
-table below — it feeds the release notes and the self-hoster migration guide, and applies the
-`breaking-change` label automatically. -->
+<!-- REQUIRED. Tick the box below if — and only if — this PR breaks something for API/SDK consumers or
+self-hosters. It is breaking if it changes an API/SDK shape or emitted value (e.g. `EN` → `en-US`),
+removes or renames an endpoint, route, env var or config key, changes a default or webhook payload, or
+needs manual migration action.
+
+The checkbox alone drives the label: ticking it applies `breaking-change`, which feeds the release notes
+and the self-hoster migration guide. Leave its wording alone — `pr-label-sync.yml` finds it by that text,
+ignores every other checkbox in this section, and never reads the prose. What you write underneath is
+still read: by reviewers, and by the CodeRabbit "Breaking changes match the diff" check, which compares
+the tick against the diff and expects a ticked box to be explained. Ticked → replace "None" with the
+table below, one row per change, written for an external integrator; not ticked → keep "None" and say in
+a line why. -->
+
+- [ ] This PR contains breaking changes
 
 None
 
-<!-- Delete "None" above and use this table when there IS a breaking change:
+<!-- Delete "None" above and use this table when the box IS ticked:
 | Change | Before | After | Who's affected | Action required |
 | --- | --- | --- | --- | --- |
 | `language` field on responses | `EN`, `DE` | `en-US`, `de-DE` | API v1 consumers | Map the new BCP-47 locale codes in your integration |

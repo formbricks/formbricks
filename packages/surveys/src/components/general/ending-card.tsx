@@ -167,7 +167,6 @@ export function EndingCard({
                       variablesData,
                       languageCode
                     )}
-                    elementId="EndingCard"
                   />
                   <Subheader
                     subheader={replaceRecallInfo(
@@ -200,11 +199,7 @@ export function EndingCard({
               <>
                 {isPreviewMode ? (
                   <div>
-                    <Headline
-                      alignTextCenter
-                      headline={t("common.respondents_will_not_see_this_card")}
-                      elementId="EndingCard"
-                    />
+                    <Headline alignTextCenter headline={t("common.respondents_will_not_see_this_card")} />
                     <Subheader subheader={t("common.they_will_be_redirected_immediately")} />
                   </div>
                 ) : (
@@ -220,7 +215,9 @@ export function EndingCard({
             <div className="my-3">
               <LoadingSpinner />
             </div>
-            <h1 className="text-brand">{t("common.sending_responses")}</h1>
+            {/* A transient status message, not a section heading — it used to be an <h1>, which
+                put a second top-level heading on the page and skipped the survey's structure. */}
+            <p className="text-brand">{t("common.sending_responses")}</p>
           </>
         )}
         {isOfflineWithPending && isResponseSendingFinished && (
