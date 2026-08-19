@@ -11,6 +11,7 @@ import {
   getMimeType,
   getShuffledChoicesIds,
   getShuffledRowIndices,
+  getSurveyLanguageTag,
   isRTL,
   isRTLLanguage,
 } from "./utils";
@@ -101,6 +102,58 @@ describe("getDefaultLanguageCode", () => {
       languages: [],
     } as TJsWorkspaceStateSurvey;
     expect(getDefaultLanguageCode(survey)).toBeUndefined();
+  });
+});
+
+describe("getSurveyLanguageTag", () => {
+  const languageWithCode = (code: string, isDefault: boolean): TSurveyLanguage => ({
+    default: isDefault,
+    enabled: true,
+    language: {
+      id: `lang-${code}`,
+      code,
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      workspaceId: "proj1",
+    },
+  });
+
+  const surveyWithLanguages = (languages: TSurveyLanguage[]): TJsWorkspaceStateSurvey =>
+    ({ ...baseMockSurvey, languages }) as TJsWorkspaceStateSurvey;
+
+  const multiLanguageSurvey = surveyWithLanguages([
+    languageWithCode("en-US", true),
+    languageWithCode("de-DE", false),
+  ]);
+
+  test("returns a concrete language code unchanged", () => {
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "de-DE")).toBe("de-DE");
+  });
+
+  test('resolves the "default" sentinel to the default language code', () => {
+    // "default" is the renderer's internal marker, not a language tag: putting it in a lang
+    // attribute would declare a language that does not exist.
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "default")).toBe("en-US");
+  });
+
+  test("resolves an empty language code to the default language code", () => {
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "")).toBe("en-US");
+  });
+
+  test("returns null when the survey has no languages configured", () => {
+    // A single-language survey declares nothing, so the host document's language stands.
+    expect(getSurveyLanguageTag(surveyWithLanguages([]), "default")).toBeNull();
+  });
+
+  test("returns null when no language is marked default", () => {
+    expect(
+      getSurveyLanguageTag(surveyWithLanguages([languageWithCode("de-DE", false)]), "default")
+    ).toBeNull();
+  });
+
+  test("prefers the requested code over the default even when they differ in region", () => {
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "en-GB")).toBe("en-GB");
   });
 });
 

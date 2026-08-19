@@ -7,6 +7,7 @@
     "company_logo": "Logo Công ty",
     "finish": "Hoàn tất",
     "language_switch": "Chuyển đổi ngôn ngữ",
+    "language_switch_current": "Ngôn ngữ: {language}",
     "next": "Tiếp theo",
     "no_results_found": "Không tìm thấy kết quả",
     "open_in_new_tab": "Mở trong tab mới",

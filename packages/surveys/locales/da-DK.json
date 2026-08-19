@@ -7,6 +7,7 @@
     "company_logo": "Firmalogo",
     "finish": "Afslut",
     "language_switch": "Sprogskift",
+    "language_switch_current": "Sprog: {language}",
     "next": "Næste",
     "no_results_found": "Ingen resultater fundet",
     "open_in_new_tab": "Åbn i ny fane",

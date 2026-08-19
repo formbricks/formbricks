@@ -7,6 +7,7 @@
     "company_logo": "Şirket Logosu",
     "finish": "Bitir",
     "language_switch": "Dil değiştirme",
+    "language_switch_current": "Dil: {language}",
     "next": "Sonraki",
     "no_results_found": "Sonuç bulunamadı",
     "open_in_new_tab": "Yeni sekmede aç",

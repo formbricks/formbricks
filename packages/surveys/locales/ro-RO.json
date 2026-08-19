@@ -7,6 +7,7 @@
     "company_logo": "Sigla companiei",
     "finish": "Finalizează",
     "language_switch": "Schimbare limbă",
+    "language_switch_current": "Limba: {language}",
     "next": "Următorul",
     "no_results_found": "Nu s-au găsit rezultate",
     "open_in_new_tab": "Deschide într-o filă nouă",

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
-import { isRTLLanguage } from "@/lib/utils";
+import { getSurveyLanguageTag, isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 
@@ -8,15 +8,34 @@ export function RenderSurvey(props: SurveyContainerProps) {
   const [isOpen, setIsOpen] = useState(true);
   const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { onClose } = props;
+  const { onClose, onLanguageChange } = props;
   const isRTL = isRTLLanguage(props.survey, props.languageCode);
   const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "ltr");
+  const [languageTag, setLanguageTag] = useState<string | null>(() =>
+    getSurveyLanguageTag(props.survey, props.languageCode)
+  );
 
   useEffect(() => {
     const isRTL = isRTLLanguage(props.survey, props.languageCode);
     setDir(isRTL ? "rtl" : "ltr");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only recalculate direction when languageCode changes, not on survey auto-save
   }, [props.languageCode]);
+
+  // Survey declares its own language on the #fbjs root (WCAG 3.1.1). This is the only place that
+  // covers embedded and app surveys: a link survey's host also sets <html lang>, but the JS widget
+  // is dropped into someone else's document and must never touch it, so without this it inherits
+  // the host page's language no matter what language the survey is in.
+  //
+  // The active language lives in Survey's own state, and it already reports every change through
+  // onLanguageChange. Wrapping that callback keeps a single source of truth rather than adding a
+  // second channel out of Survey. Re-firing with an unchanged code is a no-op in both setters.
+  const handleLanguageChange = useCallback(
+    (languageCode: string) => {
+      setLanguageTag(getSurveyLanguageTag(props.survey, languageCode));
+      onLanguageChange?.(languageCode);
+    },
+    [props.survey, onLanguageChange]
+  );
 
   const close = useCallback(() => {
     if (onFinishedTimeoutRef.current) {
@@ -68,9 +87,11 @@ export function RenderSurvey(props: SurveyContainerProps) {
       clickOutside={props.clickOutside}
       onClose={close}
       isOpen={isOpen}
-      dir={dir}>
+      dir={dir}
+      lang={languageTag}>
       <Survey
         {...props}
+        onLanguageChange={handleLanguageChange}
         autoFocus={autoFocus}
         clickOutside={hasOverlay ? props.clickOutside : true}
         onClose={close}

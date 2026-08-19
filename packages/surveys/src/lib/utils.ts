@@ -218,6 +218,23 @@ export const getDefaultLanguageCode = (survey: TJsWorkspaceStateSurvey): string 
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
+/**
+ * Resolves the survey's active language to a real language tag, usable as a `lang` attribute.
+ *
+ * The renderer tracks the active language as either a stored language code or the sentinel
+ * `"default"`. `"default"` is not a language tag and must never reach the DOM, so it is resolved
+ * to the code of the survey's default language. Returns `null` when the survey has no languages
+ * configured at all: such a survey has no language to declare and should inherit the host
+ * document's, rather than assert a guess.
+ */
+export const getSurveyLanguageTag = (
+  survey: TJsWorkspaceStateSurvey,
+  languageCode: string
+): string | null => {
+  if (languageCode && languageCode !== "default") return languageCode;
+  return getDefaultLanguageCode(survey) ?? null;
+};
+
 // Inlined from @formbricks/types/storage.ts to avoid Zod dependency
 const mimeTypes: Record<string, string> = {
   heic: "image/heic",
@@ -288,10 +305,7 @@ export function isRTLLanguage(survey: TJsWorkspaceStateSurvey, languageCode: str
     }
     return false;
   } else {
-    const code =
-      languageCode === "default"
-        ? survey.languages.find((language) => language.default)?.language.code
-        : languageCode;
+    const code = getSurveyLanguageTag(survey, languageCode);
     const baseCode = code?.split("-")[0].toLowerCase() ?? "en";
     return RTL_LANGUAGES.some((rtl) => rtl.toLowerCase().startsWith(baseCode));
   }
