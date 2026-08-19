@@ -132,29 +132,29 @@ Using Husky and lint-staged for automated checks:
 The hook formats staged files only — ESLint is not part of it. Lint violations are caught by `pnpm lint` and the "Run Linters" CI job.
 
 ### ESLint Configuration
-ESLint runs on the flat config format. Every package and app has its own `eslint.config.mjs` that imports one of the composable tiers exported by `@formbricks/eslint-config`:
+ESLint runs on the flat config format. Every package and app has its own `eslint.config.mjs` that imports one of the composable tiers exported by `@formbricks/config-eslint`:
 
 | Import | Use for |
 | --- | --- |
-| `@formbricks/eslint-config/library` | Node/TypeScript packages |
-| `@formbricks/eslint-config/react` | React packages (react, react-hooks, jsx-a11y) |
-| `@formbricks/eslint-config/react-hooks` | React packages that only need the hooks rules |
-| `@formbricks/eslint-config/next` | Next.js applications |
+| `@formbricks/config-eslint/library` | Node/TypeScript packages |
+| `@formbricks/config-eslint/react` | React packages (react, react-hooks, jsx-a11y) |
+| `@formbricks/config-eslint/react-hooks` | React packages that only need the hooks rules |
+| `@formbricks/config-eslint/next` | Next.js applications |
 
-Every tier builds on `@formbricks/eslint-config/base`, which holds the shared turbo, prettier, vitest and unused-vars conventions. It exports named building blocks rather than a ready-made config, so packages import one of the tiers above instead of `base` directly.
+Every tier builds on `@formbricks/config-eslint/base`, which holds the shared turbo, prettier, vitest and unused-vars conventions. It exports named building blocks rather than a ready-made config, so packages import one of the tiers above instead of `base` directly.
 
-Each tier is an array of flat config objects, so a package either re-exports it directly or spreads it and appends its own overrides:
+The `library` and `react` tiers are factories — call them with the package's `tsconfigRootDir` so the type-aware rules resolve against that package's own tsconfig. The `react-hooks` and `next` tiers are plain arrays a config re-exports or spreads with its own overrides:
 
 ```javascript
 // packages/<pkg>/eslint.config.mjs
-import library from "@formbricks/eslint-config/library";
+import library from "@formbricks/config-eslint/library";
 
-export default library;
+export default library({ tsconfigRootDir: import.meta.dirname });
 ```
 
 ```javascript
 // apps/web/eslint.config.mjs
-import next from "@formbricks/eslint-config/next";
+import next from "@formbricks/config-eslint/next";
 
 export default [
   { ignores: [".next/**", "public/**"] },

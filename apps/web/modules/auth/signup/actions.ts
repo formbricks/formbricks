@@ -12,13 +12,7 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import {
-  IS_FORMBRICKS_CLOUD,
-  IS_TURNSTILE_CONFIGURED,
-  SIGNUP_ENABLED,
-  TURNSTILE_SECRET_KEY,
-} from "@/lib/constants";
-import { getIsFreshInstance } from "@/lib/instance/service";
+import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
@@ -36,6 +30,7 @@ import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/
 import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import { isUninvitedSignupAllowed } from "@/modules/auth/lib/signup-policy";
 import {
   markSignupDomainAllowed,
   runWithSignupRequestContext,
@@ -359,14 +354,16 @@ async function assertSignupPolicyAllows(
     throw new InvalidInputError(INVITE_TOKEN_INVALID_ERROR_CODE);
   }
 
-  const isPublicSignupOpen = SIGNUP_ENABLED && (await getIsMultiOrgEnabled());
-  if (isPublicSignupOpen || inviteMatch === "valid") {
+  // A valid invite is an independent grant — it admits the holder whatever the instance policy says.
+  if (inviteMatch === "valid") {
     return;
   }
 
-  // Closed instance and no invite: the only remaining legitimate case is the initial administrator
-  // during fresh-instance setup, who has no invite to present.
-  if (!(await getIsFreshInstance())) {
+  // No invite, so it comes down to instance policy: public sign-up genuinely open, or the initial
+  // administrator during fresh-instance setup, who has no invite to present. That predicate is shared
+  // with the Better Auth hooks (signup-policy.ts) — writing it out twice is what left Better Auth's
+  // native /sign-up/email open after this action was fixed (ENG-2073 → ENG-2293).
+  if (!(await isUninvitedSignupAllowed())) {
     throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
   }
 }

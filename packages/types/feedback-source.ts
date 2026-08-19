@@ -19,6 +19,17 @@ export type TFeedbackSourceStatus = z.infer<typeof ZFeedbackSourceStatus>;
 export const ZFeedbackSourceImportMode = z.enum(["completedOnly", "all"]);
 export type TFeedbackSourceImportMode = z.infer<typeof ZFeedbackSourceImportMode>;
 
+/**
+ * Whether a formbricks_survey source tracks every supported element of the surveys it maps, or an
+ * explicit subset. Always derived server-side from the submitted selection — never accepted from a
+ * client — so the scope can never disagree with the mapping rows it describes.
+ *
+ * Orthogonal to `importMode`: that one decides WHICH responses are imported, this one decides WHICH
+ * QUESTIONS a response is imported for.
+ */
+export const ZFeedbackSourceElementScope = z.enum(["all", "specific"]);
+export type TFeedbackSourceElementScope = z.infer<typeof ZFeedbackSourceElementScope>;
+
 // Hub field types (from Hub OpenAPI spec)
 export const ZHubFieldType = z.enum([
   "text",
@@ -88,6 +99,7 @@ export const ZFeedbackSource = z.object({
   type: ZFeedbackSourceType,
   status: ZFeedbackSourceStatus,
   importMode: ZFeedbackSourceImportMode,
+  elementScope: ZFeedbackSourceElementScope,
   workspaceId: z.cuid2(),
   feedbackDirectoryId: z.cuid2(),
   lastSyncAt: z.date().nullable(),
@@ -191,6 +203,6 @@ export const ELEMENT_TYPE_TO_HUB_FIELD_TYPE: Record<string, THubFieldType> = {
 };
 
 // Helper function to get Hub field type from element type
-export const getHubFieldTypeFromElementType = (elementType: string): THubFieldType => {
+export const getHubFieldTypeFromElementType = (elementType: string): THubFieldType | undefined => {
   return ELEMENT_TYPE_TO_HUB_FIELD_TYPE[elementType];
 };

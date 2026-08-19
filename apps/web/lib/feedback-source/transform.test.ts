@@ -408,28 +408,62 @@ describe("transformResponseToFeedbackRecords", () => {
     });
 
     test("joins array values to comma-separated text for non-choice elements", () => {
-      // An element absent from the survey definition has no type, so the generic path stores the
-      // raw array joined. The per-option split only applies to multipleChoiceMulti elements.
+      // `el-text` is a real openText element: the generic path stores the raw array joined, because
+      // the per-option split only applies to multipleChoiceMulti. This used to use an element absent
+      // from the survey to reach the same path, which stopped working once the transform started
+      // skipping mappings whose element is gone (ENG-2064) — and that fixture was asserting the
+      // orphan-publishing behaviour that guard exists to remove.
       const response = {
         ...mockResponse,
-        data: { "el-array": ["LabelA", "LabelB", "LabelC"] },
+        data: { "el-text": ["LabelA", "LabelB", "LabelC"] },
       } as unknown as TResponse;
-      const mappings = [createMapping({ elementId: "el-array", hubFieldType: "categorical" })];
+      const mappings = [createMapping({ elementId: "el-text", hubFieldType: "categorical" })];
       const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result).toHaveLength(1);
-      expect(result[0].field_id).toBe("el-array");
+      expect(result[0].field_id).toBe("el-text");
       expect(result[0].value_text).toBe("LabelA, LabelB, LabelC");
     });
 
     test("joins an empty array to an empty string for non-choice elements", () => {
       const response = {
         ...mockResponse,
-        data: { "el-array": [] },
+        data: { "el-text": [] },
       } as unknown as TResponse;
-      const mappings = [createMapping({ elementId: "el-array", hubFieldType: "categorical" })];
+      const mappings = [createMapping({ elementId: "el-text", hubFieldType: "categorical" })];
       const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result).toHaveLength(1);
       expect(result[0].value_text).toBe("");
+    });
+
+    // ENG-2064: the guard the reconciler's hold-back depends on. `resolveDeletions` keeps orphaned
+    // mappings when deleting them would leave a survey with none, on the stated grounds that they are
+    // inert — and they were not, because every branch here tolerated a missing element and published
+    // a record labelled "Untitled". `importHistoricalResponses` replays through the same loop, so a
+    // deleted question kept exporting on every historical import too.
+    test("publishes nothing for a mapping whose element is gone from the survey", () => {
+      const response = {
+        ...mockResponse,
+        data: { "el-deleted": "an answer submitted before the question was removed" },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-deleted", hubFieldType: "text" })];
+
+      expect(transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId)).toEqual([]);
+    });
+
+    test("still publishes the surviving mappings alongside an orphaned one", () => {
+      // The guard must skip the orphan, not abandon the response.
+      const response = {
+        ...mockResponse,
+        data: { "el-deleted": "orphaned", "el-text": "kept" },
+      } as unknown as TResponse;
+      const mappings = [
+        createMapping({ elementId: "el-deleted", hubFieldType: "text" }),
+        createMapping({ elementId: "el-text", hubFieldType: "text" }),
+      ];
+
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
+      expect(result).toHaveLength(1);
+      expect(result[0].field_id).toBe("el-text");
     });
 
     test("JSON-stringifies object value for unknown hubFieldType (default branch)", () => {

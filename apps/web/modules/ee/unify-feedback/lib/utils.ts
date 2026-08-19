@@ -134,6 +134,38 @@ export const formatFieldType = (fieldType: string): string => {
   return fieldType.charAt(0).toUpperCase() + fieldType.slice(1);
 };
 
+/**
+ * Translated field-type name, for places where the type is read rather than shown as an icon.
+ *
+ * Unlike `formatFieldType`, which just re-cases the stored machine value, this is the user-facing
+ * spelling — so it is what belongs in an `aria-label`, where the icon has no other text to stand in
+ * for it. Falls back to the re-cased raw value for a type the map does not know yet.
+ */
+export const formatFieldTypeLabel = (fieldType: string, t: TFunction): string => {
+  switch (fieldType) {
+    case "text":
+      return t("workspace.unify.field_type_label_text");
+    case "categorical":
+      return t("workspace.unify.field_type_label_categorical");
+    case "nps":
+      return t("workspace.unify.field_type_label_nps");
+    case "csat":
+      return t("workspace.unify.field_type_label_csat");
+    case "ces":
+      return t("workspace.unify.field_type_label_ces");
+    case "rating":
+      return t("workspace.unify.field_type_label_rating");
+    case "number":
+      return t("workspace.unify.field_type_label_number");
+    case "boolean":
+      return t("workspace.unify.field_type_label_boolean");
+    case "date":
+      return t("workspace.unify.field_type_label_date");
+    default:
+      return formatFieldType(fieldType);
+  }
+};
+
 export const formatSourceType = (sourceType: string, t: TFunction): string => {
   switch (sourceType) {
     case "formbricks":

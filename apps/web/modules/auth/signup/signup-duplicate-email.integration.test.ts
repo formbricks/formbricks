@@ -14,6 +14,24 @@ import { sendVerificationLinkEmail } from "@/modules/email";
  * previously mocked `signUpEmail` into rejecting, which asserted a branch that cannot execute.
  */
 
+/**
+ * Open, Cloud-shaped instance — required since ENG-2293 gated Better Auth's native `/sign-up/email` on
+ * the closed-instance policy. These calls are deliberately NOT action-scoped, so on a closed instance
+ * the second sign-up below would be rejected outright and the duplicate branch would never run. The
+ * contract still matters exactly as asserted: `signUpUserSafely` reaches it through `createUserAction`,
+ * which is exempt from that gate, on open and closed instances alike. Closed-instance behaviour of the
+ * raw route is covered by signup-closed-instance.integration.test.ts.
+ */
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  SIGNUP_ENABLED: true,
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsMultiOrgEnabled: vi.fn(async () => true),
+}));
+
 beforeEach(async () => {
   await resetDb();
   vi.clearAllMocks();

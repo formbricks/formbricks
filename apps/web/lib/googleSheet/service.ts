@@ -183,6 +183,14 @@ const authorize = async (googleSheetIntegrationData: TIntegrationGoogleSheets) =
     return oAuth2Client;
   }
 
+  // Without a refresh token there is nothing to refresh, and googleapis surfaces that as a bare
+  // "No refresh token is set." which reaches the user as a raw toast. Treat it as the reconnect case
+  // instead, which is the only way out of it. `ZGoogleCredential` types both tokens as `z.string()`,
+  // so an empty string is schema-valid and has to be checked for here.
+  if (!key.refresh_token) {
+    throw new AuthenticationError(GOOGLE_SHEET_INTEGRATION_INVALID_GRANT);
+  }
+
   oAuth2Client.setCredentials({ refresh_token: key.refresh_token });
 
   try {
