@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
+import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
@@ -71,7 +72,7 @@ const queueCubeQueryAuditEvent = ({
  */
 const NULL_FILL_SENTINEL = "__formbricks_null__";
 
-const restoreNullMeasures = (rows: Record<string, unknown>[]): Record<string, unknown>[] =>
+const restoreNullMeasures = (rows: TChartDataRow[]): TChartDataRow[] =>
   rows.map((row) => {
     let hasSentinel = false;
     for (const value of Object.values(row)) {
