@@ -1,8 +1,19 @@
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import type { McpServer, ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
-import type { ZodRawShape } from "zod";
-import { createMcpInsufficientScopeResponse, getMcpRequestId, hasAnyMcpScope, hasMcpScopes } from "../auth";
+import type {
+  AuthInfo,
+  CallToolResult,
+  McpServer,
+  StandardSchemaWithJSON,
+  ToolAnnotations,
+  ToolCallback,
+} from "@modelcontextprotocol/server";
+import {
+  type TMcpToolContext,
+  createMcpInsufficientScopeResponse,
+  getMcpRequestId,
+  getMcpToolAuthInfo,
+  hasAnyMcpScope,
+  hasMcpScopes,
+} from "../auth";
 import { responseToMcpToolResult } from "../errors";
 
 /**
@@ -49,10 +60,10 @@ export async function guardMcpAnyScope(
   );
 }
 
-type ScopedToolConfig<InputArgs extends ZodRawShape> = {
+type ScopedToolConfig<InputSchema extends StandardSchemaWithJSON> = {
   title?: string;
   description?: string;
-  inputSchema?: InputArgs;
+  inputSchema?: InputSchema;
   annotations?: ToolAnnotations;
 };
 
@@ -70,30 +81,31 @@ type ScopedToolConfig<InputArgs extends ZodRawShape> = {
  * legitimately reaches (workspace discovery). That keeps such tools on this registration path rather
  * than dropping them to a raw `server.registerTool` with a hand-rolled gate.
  */
-export function registerScopedTool<InputArgs extends ZodRawShape>(
+export function registerScopedTool<InputSchema extends StandardSchemaWithJSON>(
   server: McpServer,
   name: string,
-  config: ScopedToolConfig<InputArgs>,
+  config: ScopedToolConfig<InputSchema>,
   // Non-empty tuple: a tool cannot be registered with `[]`, which would gate on nothing.
   requiredScopes: [string, ...string[]] | { anyOf: [string, ...string[]] },
-  handler: ToolCallback<InputArgs>
+  handler: ToolCallback<InputSchema>
 ): void {
-  const guardedHandler = (async (input: unknown, extra: { authInfo?: AuthInfo }) => {
-    const requestId = getMcpRequestId(extra.authInfo);
+  const guardedHandler = (async (input: unknown, ctx: TMcpToolContext) => {
+    const authInfo = getMcpToolAuthInfo(ctx);
+    const requestId = getMcpRequestId(authInfo);
     const scopeError =
       "anyOf" in requiredScopes
-        ? await guardMcpAnyScope(extra.authInfo, requiredScopes.anyOf, requestId)
-        : await guardMcpScopes(extra.authInfo, requiredScopes, requestId);
+        ? await guardMcpAnyScope(authInfo, requiredScopes.anyOf, requestId)
+        : await guardMcpScopes(authInfo, requiredScopes, requestId);
     if (scopeError) {
       return scopeError;
     }
-    // Cast needed only because ToolCallback<InputArgs> is an overloaded/conditional signature that
-    // TS can't call with the erased `unknown` params here. It's safe: the SDK validates `input`
-    // against this tool's inputSchema (InputArgs) BEFORE invoking guardedHandler, and we forward the
-    // exact same `input`/`extra` through unchanged — so the runtime value already conforms to the
-    // handler's declared type; nothing is reshaped.
-    return (handler as (input: unknown, extra: unknown) => Promise<CallToolResult>)(input, extra);
-  }) as ToolCallback<InputArgs>;
+    // Cast needed only because ToolCallback<InputSchema> is a conditional signature that TS can't call
+    // with the erased `unknown` params here. It's safe: the SDK validates `input` against this tool's
+    // inputSchema BEFORE invoking guardedHandler, and we forward the exact same `input`/`ctx` through
+    // unchanged — so the runtime value already conforms to the handler's declared type; nothing is
+    // reshaped.
+    return (handler as (input: unknown, ctx: unknown) => Promise<CallToolResult>)(input, ctx);
+  }) as ToolCallback<InputSchema>;
 
   server.registerTool(name, config, guardedHandler);
 }

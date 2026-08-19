@@ -161,6 +161,56 @@ describe("POST /api/mcp", () => {
     );
   });
 
+  /**
+   * `subscriptions/listen` exists only in 2026-07-28 and became reachable with the SDK v2 migration: under
+   * v1's `disableSse: true` there was no long-lived path at all. We register no resources and emit no
+   * list-changed notifications, so an accepted stream can never deliver anything — it would just hold a
+   * connection and a keepalive timer per caller, 1024 of them per process on the SDK's default.
+   *
+   * Driven through the real route rather than asserted on the handler options, so it also covers the option
+   * actually reaching the SDK.
+   *
+   * The request is a fully valid one — 2026 `_meta` envelope, `Mcp-Method` header, and a real
+   * `notifications` filter — so the refusal can only come from the subscription cap. That completeness is
+   * load-bearing, not tidiness: the cap is checked *before* param validation, so with a half-built payload
+   * this test passes even with the cap removed. Verified by removing `maxSubscriptions` — with a valid
+   * payload the stream is then accepted and held open, and this test fails on a timeout rather than an
+   * assertion (slower, but red either way).
+   */
+  test("refuses a subscriptions/listen stream instead of holding it open", async () => {
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "subscriptions/listen",
+          // 2026-07-28 is sessionless, so what `initialize` used to carry once per session now rides on
+          // every request's `_meta`. The SDK rejects the call with -32602 if any part is missing.
+          params: {
+            notifications: { toolsListChanged: true },
+            _meta: {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientCapabilities": {},
+              "io.modelcontextprotocol/clientInfo": { name: "route-test", version: "1.0.0" },
+            },
+          },
+        },
+        {
+          "mcp-protocol-version": "2026-07-28",
+          // 2026-07-28 requires the method in a header as well, and rejects the call if the two disagree.
+          "mcp-method": "subscriptions/listen",
+          "x-request-id": "req_listen",
+        }
+      )
+    );
+    const body = await readMcpResponse(response);
+
+    expect(body.error).toMatchObject({
+      code: -32603,
+      message: expect.stringContaining("Subscription limit"),
+    });
+  });
+
   test("returns 401 before MCP handling when authentication fails", async () => {
     vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(null);
 
