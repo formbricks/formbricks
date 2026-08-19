@@ -1,4 +1,4 @@
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/server";
 import type { ProblemBody } from "@/app/api/v3/lib/response";
 
 type TMcpSuccessPayload = Record<string, unknown> & {

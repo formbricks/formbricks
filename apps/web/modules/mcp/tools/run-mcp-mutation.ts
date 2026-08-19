@@ -1,12 +1,9 @@
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/server";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
-import { getMcpAuthentication, getMcpRequestId } from "../auth";
+import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-
-type McpMutationExtra = { authInfo?: AuthInfo };
 
 /**
  * Shared audit lifecycle for every MCP mutation tool, matching what the v3 route wrapper provides:
@@ -18,7 +15,7 @@ type McpMutationExtra = { authInfo?: AuthInfo };
  * authentication/requestId/auditLog — so the try/catch/status/queue logic lives in exactly one place.
  */
 export async function runMcpMutation(
-  extra: McpMutationExtra,
+  ctx: TMcpToolContext,
   {
     action,
     resource,
@@ -34,8 +31,9 @@ export async function runMcpMutation(
     auditLog: ReturnType<typeof buildV3AuditLog>;
   }) => Promise<Response>
 ): Promise<CallToolResult> {
-  const requestId = getMcpRequestId(extra.authInfo);
-  const authentication = getMcpAuthentication(extra.authInfo);
+  const authInfo = getMcpToolAuthInfo(ctx);
+  const requestId = getMcpRequestId(authInfo);
+  const authentication = getMcpAuthentication(authInfo);
   const log = logger.withContext({ requestId, ...logContext });
   // getMcpResourceUrl(), NOT MCP_API_ROUTE: the audit schema validates apiUrl with z.url(), and
   // logAuditEvent catches the failure and downgrades it to a logger.error — so a bare path silently
