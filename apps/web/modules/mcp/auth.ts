@@ -412,6 +412,16 @@ async function authenticateMcpOAuthBearer(
         // RFC 9068 §4: an access token must be typed `at+jwt`, and a resource server should refuse
         // one that is not. Enforceable only from 1.7 — 1.6 issued no `typ` header at all, so
         // requiring it before the upgrade would have rejected every token in circulation.
+        //
+        // Kept strict through the rolling deploy, deliberately. A 1.6-minted token (no `typ`) hitting a
+        // 1.7 pod is rejected here — but this check is on the RESOURCE SERVER only, not on the refresh
+        // path, and `20260812110001_eng_2343_backfill_oauth_resource_links` backfills
+        // `oauthRefreshToken.resources` precisely so existing refresh tokens keep working. So a client
+        // takes one 401, refreshes against the 1.7 authorization server, and retries with a typed token:
+        // self-healing in a single round trip, which is the 401 handling every MCP client already
+        // implements. Relaxing this to "absent is fine" would weaken a cross-JWT-confusion defence
+        // permanently to smooth a window that closes on its own — the wrong trade in the PR whose whole
+        // purpose is binding token audiences.
         typ: JWT_ACCESS_TOKEN_TYPE,
       },
       jwksUrl: `${getAuthIssuerUrl()}/jwks`,

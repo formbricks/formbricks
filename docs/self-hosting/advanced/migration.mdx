@@ -77,7 +77,7 @@ This change adds no migrations and touches no schema, so rolling the application
 to v5.3 undoes it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
 `manage` was always accepted wherever `write` was — so that step does not need reverting either.
 
-### Better Auth 1.7 Upgrade (no action required)
+### Better Auth 1.7 upgrade (no action required)
 
 v5.4 upgrades the Better Auth authentication core from the 1.6 line to 1.7, which fixes
 [GHSA-p2fr-6hmx-4528](https://github.com/advisories/GHSA-p2fr-6hmx-4528): MCP OAuth access-token audiences
@@ -92,7 +92,7 @@ instance's JWT signing keys. Keys created before the upgrade keep working untouc
 null `alg` as the default algorithm — so there is nothing to backfill, but the columns must exist before
 the new version mints its next key.
 
-#### SSO Callback URLs Are Unchanged
+#### SSO callback URLs are unchanged
 
 Your SSO callback URLs stay exactly as they are:
 
@@ -118,7 +118,7 @@ API — a future authentication-core upgrade will not move them either.
   providers accept several redirect URIs, and Formbricks simply will not use it.
 </Note>
 
-#### MCP Access Tokens Now End With Their Session
+#### MCP access tokens now end with their session
 
 An MCP access token used to stay valid until its own expiry, independently of the session that authorized
 it. In 1.7 it is bound to that session: once the session ends — the user signs out, or the session is
