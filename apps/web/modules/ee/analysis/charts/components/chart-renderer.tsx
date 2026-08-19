@@ -307,7 +307,13 @@ const PieChartView = ({
             })}
             <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
           </Pie>
-          <ChartTooltip content={<PolishedChartTooltip labelFormatter={formatDimensionValue} />} />
+          {/* Measure slices carry the measure label on the row itself, so the header (the same
+              slice name) would only repeat it — suppress it like the pivoted bar chart does. */}
+          <ChartTooltip
+            content={
+              <PolishedChartTooltip labelFormatter={formatDimensionValue} hideLabel={useMeasureSlices} />
+            }
+          />
           <Legend
             verticalAlign="bottom"
             height={36}

@@ -125,6 +125,10 @@ export const PIE_MEASURE_VALUE_KEY = "__measureValue";
  * Pivot several measures (one/few rows, N measure columns) into one row per measure, so a pie
  * chart with multiple measures and no dimension renders a slice per measure instead of only the
  * first one. Each measure is summed across the given rows.
+ *
+ * The measure label is stored a second time as `tooltipLabel` because the tooltip keys its row
+ * label off the dataKey, which here is the internal PIE_MEASURE_VALUE_KEY rather than a Cube
+ * column — without it the tooltip prettifies that key and shows "__measure Value" (ENG-2346).
  */
 export const prepareMeasureSliceData = (
   rows: TChartDataRow[],
@@ -137,6 +141,7 @@ export const prepareMeasureSliceData = (
       (sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0),
       0
     ),
+    tooltipLabel: labelFor(key),
   }));
 
 /** Category key for rows produced by {@link pivotMeasuresToCategories}. */
