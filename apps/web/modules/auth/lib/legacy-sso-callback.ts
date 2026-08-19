@@ -64,6 +64,12 @@ export const mapLegacySsoCallbackUrl = (requestUrl: string): string | null => {
     return null;
   }
 
+  // Only http(s). On a cannot-be-a-base URL (`data:`, `mailto:`) the `pathname` setter is a silent no-op,
+  // so the rewrite below would return the input unchanged — a non-rewrite escaping as a rewrite. Next
+  // only ever hands us http(s), but this is an exported pure function whose docblock states an
+  // unconditional invariant, so it should hold unconditionally.
+  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+
   const { pathname } = url;
   const providerId = PINNED_SSO_PROVIDER_IDS.find((id) =>
     pathname.endsWith(`${LEGACY_CALLBACK_SEGMENT}${id}`)
@@ -71,7 +77,7 @@ export const mapLegacySsoCallbackUrl = (requestUrl: string): string | null => {
   if (providerId === undefined) return null;
 
   const prefix = pathname.slice(0, pathname.length - (LEGACY_CALLBACK_SEGMENT.length + providerId.length));
-  if (prefix.includes(AUTH_BASE_PATH)) return null;
+  if (prefix.includes(`${AUTH_BASE_PATH}/`)) return null;
 
   url.pathname = `${prefix}${CURRENT_CALLBACK_SEGMENT}${providerId}`;
   return url.toString();
@@ -99,6 +105,13 @@ export const mapLegacySsoCallbackRequest = (request: Request): Request => {
   return new Request(mappedUrl, {
     method: request.method,
     headers: request.headers,
-    ...(forwardsBody ? { body: request.body, duplex: "half" } : {}),
-  } as RequestInit);
+    // Rebuilding a Request keeps nothing that is not copied. Without this a client disconnect stops
+    // aborting `auth.handler` and its outbound IdP calls on the pinned path only — the pass-through path
+    // returns the original object and does keep it, so omitting it gives the two paths different abort
+    // behaviour.
+    signal: request.signal,
+    // `duplex` is absent from TypeScript's RequestInit; cast only that property so `method`, `headers`
+    // and `body` above keep their checking.
+    ...(forwardsBody ? { body: request.body, ...({ duplex: "half" } as RequestInit) } : {}),
+  });
 };

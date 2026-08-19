@@ -26,7 +26,8 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 
   The two are distinct URIs, because the provider id itself also changed (`azure-ad` → `azuread`). Add
   the current one under **Redirect URIs** in your app registration, or Azure AD sign-in fails with a
-  redirect-URI mismatch. Upgrading from v5.2 or later needs no change — see the
+  redirect-URI mismatch. Upgrading from v5.2 or later needs no change — the callback URL is pinned and
+  does not move with Formbricks' authentication library. See the
   [migration guide](/self-hosting/advanced/migration).
 </Warning>
 

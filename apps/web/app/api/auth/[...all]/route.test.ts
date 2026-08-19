@@ -175,6 +175,11 @@ describe("[...all] Better Auth route — pinned SSO callback (ENG-2343)", () => 
     await GET(new Request("http://localhost/api/auth/oauth2/callback/saml?code=abc"));
 
     expect(calls).toEqual(["wrapper:start", "handler", "wrapper:end"]);
+    // Without this the test is a duplicate of the ordering test above: it would stay green with the
+    // mapper call deleted, since ordering does not depend on it.
+    expect((handlerMock.mock.calls[0][0] as unknown as Request).url).toBe(
+      "http://localhost/api/auth/callback/saml?code=abc"
+    );
   });
 
   // The sibling routes of our own MCP OAuth authorization server must pass through untouched — the same

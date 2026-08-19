@@ -36,6 +36,14 @@ describe("mapLegacySsoCallbackUrl (ENG-2343)", () => {
     );
   });
 
+  // The crafted-prefix guard must not also reject a legitimate basePath that merely STARTS with the auth
+  // path — matching on `/api/auth` without the trailing slash would 404 SSO on such a deployment.
+  test("resolves under a basePath that starts with the auth path", () => {
+    expect(mapLegacySsoCallbackUrl(`${BASE}/api/authority/api/auth/oauth2/callback/openid`)).toBe(
+      `${BASE}/api/authority/api/auth/callback/openid`
+    );
+  });
+
   /**
    * The scoping that makes this safe to run in the `/api/auth/*` catch-all. The oauth-provider plugin
    * owns roughly fifteen sibling `/oauth2/*` routes for our own MCP OAuth server; an unscoped prefix
@@ -62,6 +70,9 @@ describe("mapLegacySsoCallbackUrl (ENG-2343)", () => {
     ["percent-encoded separators", `${BASE}/api/auth/oauth2%2fcallback%2fopenid`],
     ["an upper-cased path", `${BASE}/api/auth/OAUTH2/CALLBACK/OPENID`],
     ["an unparseable url", "not-a-url"],
+    // A cannot-be-a-base URL: the `pathname` setter is a no-op there, so without the protocol guard
+    // this would come back unchanged yet non-null — a non-rewrite reported as a rewrite.
+    ["an opaque, cannot-be-a-base url", "data:text/plain,/api/auth/oauth2/callback/openid"],
   ])("leaves %s alone", (_label, url) => {
     expect(mapLegacySsoCallbackUrl(url)).toBeNull();
   });
@@ -106,6 +117,21 @@ describe("mapLegacySsoCallbackRequest (ENG-2343)", () => {
     expect(mapped.url).toBe(`${BASE}/api/auth/callback/azuread`);
     expect(mapped.method).toBe("POST");
     await expect(mapped.text()).resolves.toBe("code=abc&state=xyz");
+  });
+
+  // Rebuilding a Request drops everything not copied. Behavioural rather than identity-based: the spec
+  // lets an implementation wrap the passed signal rather than reuse the object.
+  test("carries the abort signal so a client disconnect still cancels the handler", () => {
+    const controller = new AbortController();
+    const request = new Request(`${BASE}/api/auth/oauth2/callback/openid?code=abc`, {
+      signal: controller.signal,
+    });
+
+    const mapped = mapLegacySsoCallbackRequest(request);
+
+    expect(mapped.signal.aborted).toBe(false);
+    controller.abort();
+    expect(mapped.signal.aborted).toBe(true);
   });
 
   test("returns the original request untouched when the path is not a pinned callback", () => {
