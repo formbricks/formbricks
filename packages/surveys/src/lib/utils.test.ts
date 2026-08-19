@@ -14,6 +14,7 @@ import {
   getSurveyLanguageTag,
   isRTL,
   isRTLLanguage,
+  resolveSelectedLanguageCode,
 } from "./utils";
 
 // Mock crypto.getRandomValues for deterministic shuffle tests
@@ -102,6 +103,37 @@ describe("getDefaultLanguageCode", () => {
       languages: [],
     } as TJsWorkspaceStateSurvey;
     expect(getDefaultLanguageCode(survey)).toBeUndefined();
+  });
+});
+
+describe("resolveSelectedLanguageCode", () => {
+  test("returns the sentinel when the pick is the default language", () => {
+    // Selecting the default must record the same thing as never touching the switcher, because
+    // survey.tsx resolves "default" to the default language's stored code for response.language.
+    expect(resolveSelectedLanguageCode("en-US", "en-US")).toBe("default");
+  });
+
+  test("returns the picked code for a non-default language", () => {
+    expect(resolveSelectedLanguageCode("de-DE", "en-US")).toBe("de-DE");
+  });
+
+  test("returns the sentinel when a canonical pick matches a legacy default code", () => {
+    // The dedupe keeps the canonical row, so the visible default option reads "hi-IN" on a survey
+    // whose default row stores "hi". Comparing raw strings would store "hi-IN" instead of the
+    // sentinel, and response.language would then differ from the untouched-switcher path.
+    expect(resolveSelectedLanguageCode("hi-IN", "hi")).toBe("default");
+  });
+
+  test("returns the sentinel when a legacy pick matches a canonical default code", () => {
+    expect(resolveSelectedLanguageCode("hi", "hi-IN")).toBe("default");
+  });
+
+  test("does not collapse two different languages that share nothing canonical", () => {
+    expect(resolveSelectedLanguageCode("hi-IN", "en-US")).toBe("hi-IN");
+  });
+
+  test("passes the code through untouched when the survey has no default language", () => {
+    expect(resolveSelectedLanguageCode("de-DE", undefined)).toBe("de-DE");
   });
 });
 

@@ -255,6 +255,24 @@ export const getSurveyLanguageTag = (
   return getDefaultLanguageCode(survey) ?? null;
 };
 
+/**
+ * The code the renderer should store for a language the respondent picked.
+ *
+ * Returns the `"default"` sentinel when the pick IS the survey's default language, so selecting the
+ * default records the same thing as never touching the switcher — `survey.tsx` resolves that sentinel
+ * to the default language's stored code when it writes `response.language`.
+ *
+ * Both sides are compared canonically. The option list is deduped by canonical code and keeps the
+ * canonical row, so a survey whose default row holds a legacy alias (`hi`) shows `hi-IN`; comparing
+ * the raw strings would miss that match and store a concrete code where the sentinel belongs, making
+ * the two paths disagree about the same choice.
+ */
+export const resolveSelectedLanguageCode = (languageCode: string, defaultLanguageCode?: string): string => {
+  if (!defaultLanguageCode) return languageCode;
+  const canonical = (code: string): string => normalizeLanguageCode(code) ?? code;
+  return canonical(languageCode) === canonical(defaultLanguageCode) ? "default" : languageCode;
+};
+
 // Inlined from @formbricks/types/storage.ts to avoid Zod dependency
 const mimeTypes: Record<string, string> = {
   heic: "image/heic",

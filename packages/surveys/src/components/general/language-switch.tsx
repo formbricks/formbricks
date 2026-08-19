@@ -9,7 +9,7 @@ import { getI18nLanguage } from "@/lib/i18n-utils";
 import i18n from "@/lib/i18n.config";
 import { getLanguageDisplayName, getShortLanguageDisplayName } from "@/lib/language-display-name";
 import { useClickOutside } from "@/lib/use-click-outside-hook";
-import { cn, getSurveyLanguageTag, isRTLLanguage } from "@/lib/utils";
+import { cn, getSurveyLanguageTag, isRTLLanguage, resolveSelectedLanguageCode } from "@/lib/utils";
 
 interface LanguageSwitchProps {
   survey: TJsWorkspaceStateSurvey;
@@ -48,13 +48,6 @@ export function LanguageSwitch({
   const defaultLanguageCode = surveyLanguages.find((surveyLanguage) => {
     return surveyLanguage.default;
   })?.language.code;
-  // Canonical form of the default language's code. The option list is deduped by canonical code and
-  // keeps the canonical row, so a survey whose DEFAULT row uses a legacy alias ("hi") shows the
-  // canonical code ("hi-IN") — comparing the two raw strings would then miss the match and store the
-  // code instead of the "default" sentinel.
-  const canonicalDefaultLanguageCode = defaultLanguageCode
-    ? (normalizeLanguageCode(defaultLanguageCode) ?? defaultLanguageCode)
-    : undefined;
 
   // Dedupe enabled languages by canonical code so the back-compat legacy aliases (e.g. "hi" sent
   // alongside "hi-IN") don't show as duplicate options. Prefer the canonical entry over a legacy alias
@@ -106,10 +99,7 @@ export function LanguageSwitch({
   };
 
   const changeLanguage = (languageCode: string) => {
-    const calculatedLanguageCode =
-      (normalizeLanguageCode(languageCode) ?? languageCode) === canonicalDefaultLanguageCode
-        ? "default"
-        : languageCode;
+    const calculatedLanguageCode = resolveSelectedLanguageCode(languageCode, defaultLanguageCode);
     setSelectedLanguageCode(calculatedLanguageCode);
 
     handleI18nLanguage(calculatedLanguageCode);
