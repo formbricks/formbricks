@@ -11,9 +11,7 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   const { onClose, onLanguageChange } = props;
   const isRTL = isRTLLanguage(props.survey, props.languageCode);
   const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "ltr");
-  const [languageTag, setLanguageTag] = useState<string | null>(() =>
-    getSurveyLanguageTag(props.survey, props.languageCode)
-  );
+  const [activeLanguageCode, setActiveLanguageCode] = useState(props.languageCode);
 
   useEffect(() => {
     const isRTL = isRTLLanguage(props.survey, props.languageCode);
@@ -30,23 +28,21 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   // onLanguageChange. Wrapping that callback keeps a single source of truth rather than adding a
   // second channel out of Survey.
   //
-  // The survey is read through a ref, deliberately kept OUT of the dependency list. `onLanguageChange`
-  // is a public prop, and Survey's reporting effect is keyed on its identity — so if this callback were
-  // rebuilt whenever the survey object changed, that effect would re-fire on renders where no language
-  // changed. The editor preview passes a freshly built survey object on every render, which would make
-  // a host's handler run on every keystroke.
-  const surveyRef = useRef(props.survey);
-  useEffect(() => {
-    surveyRef.current = props.survey;
-  }, [props.survey]);
-
+  // Only the CODE is held in state; the tag is resolved during render. That keeps this callback's
+  // identity stable — `onLanguageChange` is a public prop and Survey's reporting effect is keyed on it,
+  // so a callback rebuilt on every survey-object change would re-fire that effect on renders where no
+  // language changed (the editor preview builds a fresh survey object on every keystroke). It also
+  // means a survey edited mid-session — a language disabled or removed — re-resolves the tag on the
+  // next render rather than leaving a stale one on the DOM.
   const handleLanguageChange = useCallback(
     (languageCode: string) => {
-      setLanguageTag(getSurveyLanguageTag(surveyRef.current, languageCode));
+      setActiveLanguageCode(languageCode);
       onLanguageChange?.(languageCode);
     },
     [onLanguageChange]
   );
+
+  const languageTag = getSurveyLanguageTag(props.survey, activeLanguageCode);
 
   const close = useCallback(() => {
     if (onFinishedTimeoutRef.current) {
