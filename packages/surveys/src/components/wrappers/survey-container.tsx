@@ -156,11 +156,19 @@ export function SurveyContainer({
   // landmark is noise in a screen reader's landmark list rather than an improvement.
   // Survey instructions used to appear on the welcome card and never again. Pointing the form at the
   // persistent region means they are announced on entry to every page.
+  //
+  // role="form" on a div rather than a native <form>, which is what Sonar's S6819 asks for, because
+  // neither of the two things a real form element brings is safe here. An inline survey is rendered
+  // into a container the host page supplies by id (see packages/surveys/src/index.ts), which can sit
+  // anywhere in their document — including inside their own <form>. Nested forms are invalid HTML and
+  // the browser drops the inner one, which would silently take this accessible name with it. And a
+  // real form makes Enter in any text input submit and navigate away from a half-finished survey.
+  // The role gives assistive tech the same landmark without either behaviour.
   const instructionsId = surveyName && hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined;
 
   if (!isModal) {
     return (
-      <div
+      <div // NOSONAR(typescript:S6819) - a native <form> would nest inside the host page's own form
         id="fbjs"
         className="formbricks-form"
         style={{ height: "100%", width: "100%" }}
