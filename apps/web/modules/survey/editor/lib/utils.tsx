@@ -1,12 +1,17 @@
 import { TFunction } from "i18next";
-import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
+import { EyeOffIcon, FileDigitIcon, FileType2Icon, GlobeIcon } from "lucide-react";
 import { HTMLInputTypeAttribute, JSX } from "react";
+import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
+  RESERVED_FIELD_CATALOG,
+  type TReservedFieldCatalogEntry,
   getDeclaredComputedFields,
   getDeclaredIngestedStorageKeys,
+  listMidSurveyReservedEntries,
 } from "@formbricks/types/embedded-data-resolver";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { formatFieldNameToTitleCase } from "@formbricks/types/safe-identifier";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
@@ -160,13 +165,61 @@ const getComputedFieldOptions = (localSurvey: TSurvey): TComputedFieldOption[] =
     type: field.dataType === "number" ? "number" : "text",
   }));
 
+/**
+ * Every name a survey already declares — the shadow list the grandfather rule filters against. All
+ * three declaration kinds count: an ingested field, a variable and an element id are equally capable
+ * of being named `country`, and any of them resolves ahead of the reserved entry at read time,
+ * because the merged value map spreads `responseData` (which is keyed by element id) over the
+ * reserved projection.
+ */
+const getDeclaredFieldNames = (localSurvey: TSurvey): string[] => [
+  ...getDeclaredIngestedStorageKeys(localSurvey),
+  ...getComputedFieldOptions(localSurvey).map((variable) => variable.id),
+  ...getElementsFromBlocks(localSurvey.blocks).map((element) => element.id),
+];
+
+/** The reserved entries this survey may offer mid-survey, already availability- and shadow-filtered. */
+const getPickerReservedEntries = (localSurvey: TSurvey): TReservedFieldCatalogEntry[] =>
+  listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, getDeclaredFieldNames(localSurvey));
+
+/**
+ * Which HTML input the literal comparison value gets, per reserved dataType. A map rather than a
+ * chain of ternaries so it stays exhaustive: adding a dataType is a compile error here instead of
+ * silently falling through to a text box. `boolean` is deliberately text — the value is compared as
+ * the string "true"/"false" (see `projectReservedValues`).
+ */
+const INPUT_TYPE_BY_DATA_TYPE: Record<TEmbeddedDataType, HTMLInputTypeAttribute> = {
+  string: "text",
+  number: "number",
+  boolean: "text",
+  date: "date",
+};
+
+const toReservedOption = (entry: TReservedFieldCatalogEntry): TComboboxOption => ({
+  icon: GlobeIcon,
+  label: formatFieldNameToTitleCase(entry.name),
+  value: entry.name,
+  meta: {
+    type: "reserved",
+  },
+});
+
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   t: TFunction,
-  blockIdx?: number // Optional - if provided, includes elements from this block and all previous blocks
+  blockIdx?: number, // Optional - if provided, includes elements from this block and all previous blocks
+  /**
+   * Off by default because this picker is shared with the quota condition builder, whose evaluation
+   * (`evaluateQuotas`) projects no reserved values — offering them there would let an author write a
+   * condition that silently never matches. Survey block logic opts in; see ENG-1840's PR notes.
+   */
+  includeReservedFields = false
 ): TComboboxGroupedOption[] => {
   const hiddenFields = getDeclaredIngestedStorageKeys(localSurvey);
   const variables = getComputedFieldOptions(localSurvey);
+  const reservedOptions = includeReservedFields
+    ? getPickerReservedEntries(localSurvey).map(toReservedOption)
+    : [];
 
   // If blockIdx is provided, get elements from current block and all previous blocks
   // Otherwise, get all elements from all blocks
@@ -276,6 +329,14 @@ export const getConditionValueOptions = (
     });
   }
 
+  if (reservedOptions.length > 0) {
+    groupedOptions.push({
+      label: t("common.survey_data"),
+      value: "reservedFields",
+      options: reservedOptions,
+    });
+  }
+
   return groupedOptions;
 };
 
@@ -358,6 +419,14 @@ export const getConditionOperatorOptions = (
     return getLogicRules(t)[`variable.${variableType}`].options;
   } else if (condition.leftOperand.type === "hiddenField") {
     return getLogicRules(t).hiddenField.options;
+  } else if (condition.leftOperand.type === "reserved") {
+    // Read off the whole catalog, not the picker's filtered list: a condition can outlive the entry
+    // being offered (the survey later declares a field of the same name), and an operand with no
+    // operators at all would strand the author in a broken row. Unknown names fall back to string,
+    // which is the widest safe set.
+    const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
+    const dataType = entry?.dataType ?? "string";
+    return getLogicRules(t)[`reserved.${dataType}`].options;
   } else if (condition.leftOperand.type === "element") {
     // Derive elements from blocks
     const elements = getElementsFromBlocks(localSurvey.blocks);
@@ -998,6 +1067,119 @@ export const getMatchValueProps = (
       show: true,
       showInput: true,
       inputType: "text",
+      options: groupedOptions,
+    };
+  } else if (condition.leftOperand.type === "reserved") {
+    // Without this branch a reserved condition falls through to `{ show: false }` and renders with no
+    // right-hand side at all — an operator the author can never complete.
+    const entry = RESERVED_FIELD_CATALOG.find((candidate) => candidate.name === condition.leftOperand.value);
+    const dataType = entry?.dataType ?? "string";
+    const inputType = INPUT_TYPE_BY_DATA_TYPE[dataType];
+
+    /*
+     * Only operands that can actually hold this field's dataType. Without the filter a
+     * `reserved.number` condition could be pointed at a text variable, and a `reserved.date` one at a
+     * numeric answer — selectable, and silently never true. The per-type rules mirror the element and
+     * variable branches above. Hidden fields stay in every list because they are untyped strings,
+     * exactly as they do for a number variable.
+     */
+    const comparableElements = elements.filter((element) => {
+      if (dataType === "number") {
+        return (
+          [
+            TSurveyElementTypeEnum.Rating,
+            TSurveyElementTypeEnum.NPS,
+            TSurveyElementTypeEnum.CSAT,
+            TSurveyElementTypeEnum.CES,
+          ].includes(element.type) ||
+          (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
+        );
+      }
+      if (dataType === "date") return element.type === TSurveyElementTypeEnum.Date;
+      // No element type answers with a boolean, so a boolean reserved field has no comparable answer.
+      if (dataType === "boolean") return false;
+
+      const allowedTextTypes = [TSurveyElementTypeEnum.OpenText, TSurveyElementTypeEnum.MultipleChoiceSingle];
+      if (["equals", "doesNotEqual"].includes(condition.operator)) {
+        allowedTextTypes.push(TSurveyElementTypeEnum.MultipleChoiceMulti, TSurveyElementTypeEnum.Date);
+      }
+      return allowedTextTypes.includes(element.type);
+    });
+
+    // Variables are only ever text or number, so date and boolean reserved fields have none to offer.
+    const comparableVariables = variables.filter((variable) => {
+      if (dataType === "number") return variable.type === "number";
+      if (dataType === "string") return variable.type === "text";
+      return false;
+    });
+
+    const elementOptions = comparableElements.map((element) => ({
+      icon: getElementIconMapping(t)[element.type],
+      label: getElementHeadline(localSurvey, element, "default", t),
+      value: element.id,
+      meta: { type: "element" },
+    }));
+
+    const variableOptions = comparableVariables.map((variable) => ({
+      icon: variable.type === "number" ? FileDigitIcon : FileType2Icon,
+      label: variable.name,
+      value: variable.id,
+      meta: { type: "variable" },
+    }));
+
+    const hiddenFieldsOptions = hiddenFields.map((field) => ({
+      icon: EyeOffIcon,
+      label: field,
+      value: field,
+      meta: { type: "hiddenField" },
+    }));
+
+    // Other reserved entries of the SAME dataType are comparable (`source` equals `action`, say),
+    // minus the one already on the left — comparing a field to itself is never a useful condition.
+    const reservedOptions = getPickerReservedEntries(localSurvey)
+      .filter(
+        (candidate) => candidate.name !== condition.leftOperand.value && candidate.dataType === dataType
+      )
+      .map(toReservedOption);
+
+    const groupedOptions: TComboboxGroupedOption[] = [];
+
+    if (elementOptions.length > 0) {
+      groupedOptions.push({
+        label: t("common.questions"),
+        value: "elements",
+        options: elementOptions,
+      });
+    }
+
+    if (variableOptions.length > 0) {
+      groupedOptions.push({
+        label: t("common.variables"),
+        value: "variables",
+        options: variableOptions,
+      });
+    }
+
+    if (hiddenFieldsOptions.length > 0) {
+      groupedOptions.push({
+        label: t("common.hidden_fields"),
+        value: "hiddenFields",
+        options: hiddenFieldsOptions,
+      });
+    }
+
+    if (reservedOptions.length > 0) {
+      groupedOptions.push({
+        label: t("common.survey_data"),
+        value: "reservedFields",
+        options: reservedOptions,
+      });
+    }
+
+    return {
+      show: true,
+      showInput: true,
+      inputType,
       options: groupedOptions,
     };
   }

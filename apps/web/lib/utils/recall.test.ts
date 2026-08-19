@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { mergeReservedValues } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
@@ -483,6 +484,97 @@ describe("recall utility functions", () => {
       const result = getRecallItems("Text with #recall:shared/fallback:x#", survey, "en");
 
       expect(result).toEqual([{ id: "shared", label: "Question headline", type: "element" }]);
+    });
+  });
+
+  describe("reserved fields in recall (ENG-1840)", () => {
+    test("a reserved token is labelled and typed, not left as a raw tag", () => {
+      // `getRecallItems` drops any id it cannot label, and the editor then renders the untouched
+      // `#recall:country/fallback:x#` as literal text. This is the test that catches that.
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("You are in #recall:country/fallback:your-country#", survey, "en");
+
+      expect(result).toEqual([{ id: "country", label: "Country", type: "reserved" }]);
+      expect(result[0].label).not.toContain("#recall:");
+    });
+
+    test("a declared field of the same name shadows the reserved entry", () => {
+      // The grandfather rule, label side: a survey that already declares `country` keeps showing its
+      // own field, so the author never sees two identically-named rows.
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: ["country"] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      const result = getRecallItems("You are in #recall:country/fallback:x#", survey, "en");
+
+      expect(result).toEqual([{ id: "country", label: "country", type: "hiddenField" }]);
+    });
+
+    test("an unknown reserved-looking name stays unresolved", () => {
+      const survey = {
+        blocks: [],
+        hiddenFields: { fieldIds: [] },
+        variables: [],
+      } as unknown as TSurvey;
+
+      expect(getRecallItems("#recall:notACatalogEntry/fallback:x#", survey, "en")).toEqual([]);
+    });
+  });
+
+  describe("the grandfather rule at value-resolution time (ENG-1840)", () => {
+    // These exercise `mergeReservedValues` — the one expression the guarantee rests on. Flip the two
+    // spreads there and the second test goes red:
+    //   pnpm --filter=@formbricks/web test lib/utils/recall.test.ts
+    const reserved = { country: "DE", url: "https://app.test/s/abc" };
+
+    test("a reserved token resolves from the projected value", () => {
+      const result = parseRecallInfo(
+        "You are in #recall:country/fallback:your-country#",
+        mergeReservedValues(reserved, {})
+      );
+
+      expect(result).toBe("You are in DE");
+    });
+
+    test("a survey declaring its own `country` resolves from response.data instead", () => {
+      const responseData: TResponseData = { country: "Declared answer" };
+
+      const result = parseRecallInfo(
+        "You are in #recall:country/fallback:your-country#",
+        mergeReservedValues(reserved, responseData)
+      );
+
+      expect(result).toBe("You are in Declared answer");
+      expect(result).not.toContain("DE");
+    });
+
+    test("shadowing is per-key: other reserved values still resolve", () => {
+      const result = parseRecallInfo(
+        "#recall:country/fallback:a# at #recall:url/fallback:b#",
+        mergeReservedValues(reserved, { country: "Declared answer" })
+      );
+
+      expect(result).toBe("Declared answer at https://app.test/s/abc");
+    });
+
+    test("a declared field that is present but empty still wins", () => {
+      // The respondent left the declared hidden field blank. That is an answer, and it must not fall
+      // back to reserved metadata just because the string is empty.
+      const result = parseRecallInfo(
+        "You are in #recall:country/fallback:your-country#",
+        mergeReservedValues(reserved, { country: "" })
+      );
+
+      // Asserted exactly, not as "does not contain DE": that weaker form also passes on an empty
+      // string or an unrendered raw token, neither of which would prove the declared field won.
+      expect(result).toBe("You are in your-country");
     });
   });
 

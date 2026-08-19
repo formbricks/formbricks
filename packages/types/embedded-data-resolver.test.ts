@@ -20,7 +20,9 @@ import {
   getIngestedStorageKeys,
   getLogicVariableValue,
   getSurveyEmbeddedFields,
+  listMidSurveyReservedEntries,
   listReadableFields,
+  mergeReservedValues,
   projectClientReservedValues,
   projectReservedValues,
   resolveEmbeddedValue,
@@ -699,7 +701,9 @@ describe("RESERVED_FIELD_CATALOG", () => {
     // extra key is an entry nobody declared in the table above.
     expect(projectCatalog(capturedResponse)).toStrictEqual({
       source: "link",
-      url: "https://example.com/pricing?utm_source=news&email=a@b.co",
+      // `privacy: "redactQuery"` applied by the projection: the stored meta still holds
+      // `?utm_source=news&email=a@b.co`, but a projected value can be recalled into a redirect URL.
+      url: "https://example.com/pricing",
       country: "DE",
       action: "Clicked Upgrade",
       browser: "Chrome",
@@ -714,7 +718,10 @@ describe("RESERVED_FIELD_CATALOG", () => {
       startedAt: "2026-08-01T09:00:00.000Z",
       finishedAt: "2026-08-01T09:02:30.000Z",
       pagePath: "/pricing",
-      pageReferrer: "https://news.example.org/weekly?issue=42",
+      // `redactQuery` too, for the same reason as `url`: a projected value can be recalled into a
+      // redirect URL or an email. The fixture above keeps `?issue=42`, so this asserts the read-side
+      // narrowing rather than a capture change.
+      pageReferrer: "https://news.example.org/weekly",
       utmSource: "news",
       utmMedium: "email",
       utmCampaign: "august-launch",
@@ -727,6 +734,20 @@ describe("RESERVED_FIELD_CATALOG", () => {
       viewportHeight: 800,
       timezone: "Europe/Berlin",
     });
+  });
+
+  test("a redactQuery entry projects without its query string, while storage keeps it", () => {
+    // The finding this pins: reserved `url` is interpolable into an ending card's redirect URL and a
+    // follow-up email, so projecting the href verbatim forwards whatever the survey link carried —
+    // for a link survey that includes the single-use `suToken`, which is a credential.
+    const tokenised = {
+      ...capturedResponse,
+      meta: { ...capturedResponse.meta, url: "https://app.test/s/abc?suToken=secret&lang=de#top" },
+    };
+
+    expect(projectCatalog(tokenised).url).toBe("https://app.test/s/abc");
+    // Read-side narrowing only — capture is the Anonymize toggle's job, and it is off here.
+    expect(tokenised.meta.url).toBe("https://app.test/s/abc?suToken=secret&lang=de#top");
   });
 
   test("a historical response resolves none of the browser-runtime fields, and does not throw", () => {
@@ -839,6 +860,18 @@ describe("projectClientReservedValues", () => {
     ttc: { q1: 40_000 },
     meta: { source: "link", url: "https://example.com/pricing", action: "Clicked Upgrade" },
   };
+
+  test("redacts the query from a mid-survey url, which is the interpolable one", () => {
+    // The leak path this closes: an author can put `#recall:url#` in an ending card's redirect URL, so
+    // the mid-survey projection is what a third-party host would receive. On a single-use link the
+    // href carries `suToken`, a credential, plus whatever prefill params the link was built with.
+    const projected = projectClientReservedValues(RESERVED_FIELD_CATALOG, {
+      ...midSurvey,
+      meta: { ...midSurvey.meta, url: "https://app.test/s/abc?suToken=secret&country=DE" },
+    });
+
+    expect(projected.url).toBe("https://app.test/s/abc");
+  });
 
   test("projects only the entries a client can read mid-survey", () => {
     expect(projectClientReservedValues(RESERVED_FIELD_CATALOG, midSurvey)).toStrictEqual({
@@ -1087,6 +1120,27 @@ describe("listReadableFields", () => {
     });
 
     expect(fields.reserved).toEqual([{ key: "_", label: "_" }]);
+  });
+
+  test("camelCase reserved names get a spaced label, not a run-together one", () => {
+    // The catalog names mirror the `meta` keys they read, so they are camelCase rather than
+    // snake_case. Labelling them with the snake_case formatter alone rendered "DurationSeconds" in
+    // the pickers, and made the Playwright assertions that a server-only field is ABSENT pass for the
+    // wrong reason: they searched for "Duration Seconds", a string nothing ever rendered.
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [],
+      reservedEntries: RESERVED_FIELD_CATALOG.filter((entry) =>
+        ["durationSeconds", "ipAddress", "responseId"].includes(entry.name)
+      ),
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.reserved).toEqual([
+      { key: "ipAddress", label: "Ip Address" },
+      { key: "responseId", label: "Response Id" },
+      { key: "durationSeconds", label: "Duration Seconds" },
+    ]);
   });
 
   test("embedded data labels fall back to the storageKey when the definition name is blank", () => {
@@ -1476,5 +1530,102 @@ describe("getComputedFieldDataType", () => {
     // swallowed by `evaluateSingleCondition`'s try/catch into a silent `false`.
     expect(getComputedFieldDataType(fields, "deleted_variable")).toBeUndefined();
     expect(findComputedEmbeddedField(fields, "deleted_variable")).toBeUndefined();
+  });
+});
+
+describe("mergeReservedValues", () => {
+  test("reserved values fill keys the response does not have", () => {
+    expect(mergeReservedValues({ country: "DE", url: "https://x.test" }, { q1: "answer" })).toStrictEqual({
+      country: "DE",
+      url: "https://x.test",
+      q1: "answer",
+    });
+  });
+
+  test("THE GRANDFATHER RULE: response data wins on a colliding key", () => {
+    // Flip the two spreads in `mergeReservedValues` and this goes red. A survey stored today may
+    // legitimately declare a hidden field named `country`; its value lives in `response.data` and
+    // must keep resolving from there forever.
+    expect(mergeReservedValues({ country: "DE" }, { country: "Declared answer" })).toStrictEqual({
+      country: "Declared answer",
+    });
+  });
+
+  test("a declared key wins even when its value is empty or zero", () => {
+    // Falsy is still an answer — a `??`-style merge would wrongly fall through to the reserved value.
+    expect(mergeReservedValues({ country: "DE" }, { country: "" })).toStrictEqual({ country: "" });
+    expect(mergeReservedValues({ durationSeconds: 42 }, { durationSeconds: 0 })).toStrictEqual({
+      durationSeconds: 0,
+    });
+  });
+
+  test("neither input is mutated", () => {
+    const reserved = { country: "DE" };
+    const responseData = { q1: "answer" };
+
+    mergeReservedValues(reserved, responseData);
+
+    expect(reserved).toStrictEqual({ country: "DE" });
+    expect(responseData).toStrictEqual({ q1: "answer" });
+  });
+});
+
+describe("listMidSurveyReservedEntries", () => {
+  const names = (declared: string[]): string[] =>
+    listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, declared).map((entry) => entry.name);
+
+  test("offers only what a browser can resolve mid-survey", () => {
+    // Derived from the catalog's own `availability` rather than a literal list, because the catalog
+    // grows: ENG-1841 added twelve client entries at once, and a pinned list turns every such
+    // addition into a failing test that says nothing about this function. Re-deriving from the data
+    // still checks the contract — that `availability` is the only thing consulted, and that no
+    // server-derived entry leaks through. Which specific names must never appear is pinned below.
+    const clientResolvable = RESERVED_FIELD_CATALOG.filter((entry) => entry.availability !== "server").map(
+      (entry) => entry.name
+    );
+
+    expect(names([]).sort()).toStrictEqual([...clientResolvable].sort());
+  });
+
+  test("every server-derived field named by the ticket is absent", () => {
+    // The ticket's own description lists browser/os/deviceType as available during the survey. They
+    // are not on this branch: UAParser derives all three from the `user-agent` header in the ingest
+    // routes, so the renderer cannot know them. The catalog's `availability` is the authority.
+    const offered = names([]);
+
+    for (const serverOnly of [
+      "country",
+      "ipAddress",
+      "browser",
+      "os",
+      "deviceType",
+      "durationSeconds",
+      "finished",
+      "responseId",
+      "startedAt",
+      "finishedAt",
+    ]) {
+      expect(offered).not.toContain(serverOnly);
+    }
+  });
+
+  test("a declared field of the same name removes the reserved entry from the picker", () => {
+    // Otherwise the author sees two identically-named rows with no way to tell them apart, and the
+    // reserved one would be a lie: `mergeReservedValues` already resolves that name to the declared
+    // field's value.
+    expect(names(["url"])).not.toContain("url");
+    expect(names(["url"])).toContain("source");
+  });
+
+  test("shadowing a server-only name changes nothing, since it was never offered", () => {
+    // Stated as "same as declaring nothing", which is the claim, and which no catalog addition breaks.
+    expect(names(["country"])).toStrictEqual(names([]));
+  });
+
+  test("entries are returned as catalog entries, carrying their dataType", () => {
+    const entry = listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, []).find((e) => e.name === "url");
+
+    expect(entry?.dataType).toBe("string");
+    expect(entry?.availability).not.toBe("server");
   });
 });

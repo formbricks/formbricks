@@ -1847,3 +1847,149 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
     });
   });
 });
+
+describe("reserved field operands (ENG-1840)", () => {
+  const buildSurvey = (): TJsWorkspaceStateSurvey =>
+    ({
+      id: "survey1",
+      name: "Survey 1",
+      questions: [],
+      blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+      variables: [],
+      embeddedFields: [],
+      hiddenFields: { enabled: true, fieldIds: [] },
+      autoClose: null,
+      type: "link",
+      delay: 0,
+      displayLimit: 0,
+      displayOption: "displayMultiple",
+      displayPercentage: 0,
+      recaptcha: { enabled: false, threshold: 0.5 },
+      isBackButtonHidden: false,
+      isAutoProgressingEnabled: false,
+      segment: null,
+      welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
+      triggers: [],
+      styling: null,
+      status: "inProgress",
+      showLanguageSwitch: false,
+      languages: [],
+      endings: [],
+      workspaceOverwrites: null,
+      recontactDays: null,
+    }) as TJsWorkspaceStateSurvey;
+
+  const reservedCondition = (
+    name: string,
+    operator: TSingleCondition["operator"],
+    rightOperand?: TSingleCondition["rightOperand"]
+  ): TConditionGroup => ({
+    id: "group1",
+    connector: "and",
+    conditions: [
+      { id: "condition1", operator, leftOperand: { type: "reserved", value: name }, rightOperand },
+    ],
+  });
+
+  const evaluate = (conditions: TConditionGroup, embeddedValues: TResponseData): boolean =>
+    evaluateLogic(buildSurvey(), {}, {}, conditions, "default", embeddedValues);
+
+  test("a reserved left operand evaluates against the projected value", () => {
+    const values = { country: "DE" };
+
+    expect(evaluate(reservedCondition("country", "equals", { type: "static", value: "DE" }), values)).toBe(
+      true
+    );
+    expect(evaluate(reservedCondition("country", "equals", { type: "static", value: "FR" }), values)).toBe(
+      false
+    );
+    expect(evaluate(reservedCondition("country", "isSet"), values)).toBe(true);
+  });
+
+  test("a server-only field is unset mid-survey — not 0, not empty string", () => {
+    // `projectClientReservedValues` filters these out entirely, so the map has no key at all. The
+    // distinction matters: `durationSeconds` reading as 0 would make "< 60" silently true for every
+    // respondent, and `country` reading as "" would make "does not equal DE" true.
+    const midSurveyValues: TResponseData = {};
+
+    expect(evaluate(reservedCondition("durationSeconds", "isSet"), midSurveyValues)).toBe(false);
+    expect(evaluate(reservedCondition("durationSeconds", "isNotSet"), midSurveyValues)).toBe(true);
+    expect(
+      evaluate(
+        reservedCondition("durationSeconds", "isLessThan", { type: "static", value: 60 }),
+        midSurveyValues
+      )
+    ).toBe(false);
+    expect(
+      evaluate(reservedCondition("country", "equals", { type: "static", value: "" }), midSurveyValues)
+    ).toBe(false);
+  });
+
+  test("an unset reserved field behaves exactly like an unset hidden field", () => {
+    // Pinning the parity rather than inventing a rule for reserved fields: `doesNotEqual` falls
+    // through to `leftValue !== rightValue`, so BOTH report true when the value is absent. The arm
+    // this ticket adds resolves the value; it deliberately does not change operator semantics.
+    const survey = buildSurvey();
+    const rightOperand = { type: "static" as const, value: "DE" };
+
+    const reservedResult = evaluateLogic(
+      survey,
+      {},
+      {},
+      reservedCondition("country", "doesNotEqual", rightOperand),
+      "default",
+      {}
+    );
+    const hiddenFieldResult = evaluateLogic(
+      survey,
+      {},
+      {},
+      {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "doesNotEqual",
+            leftOperand: { type: "hiddenField", value: "country" },
+            rightOperand,
+          },
+        ],
+      },
+      "default",
+      {}
+    );
+
+    expect(reservedResult).toBe(hiddenFieldResult);
+  });
+
+  test("an unknown reserved name resolves to undefined rather than throwing", () => {
+    expect(evaluate(reservedCondition("notACatalogEntry", "isSet"), { url: "https://x.test" })).toBe(false);
+    expect(evaluate(reservedCondition("notACatalogEntry", "equals", { type: "static", value: "" }), {})).toBe(
+      false
+    );
+  });
+
+  test("a reserved right operand reads the same map", () => {
+    const values = { source: "link", action: "link" };
+    const sameSource: TConditionGroup = {
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator: "equals",
+          leftOperand: { type: "reserved", value: "source" },
+          rightOperand: { type: "reserved", value: "action" },
+        },
+      ],
+    };
+
+    expect(evaluate(sameSource, values)).toBe(true);
+    expect(evaluate(sameSource, { source: "link", action: "app" })).toBe(false);
+  });
+
+  test("omitting the map keeps every reserved operand unset (already-deployed callers)", () => {
+    expect(evaluateLogic(buildSurvey(), {}, {}, reservedCondition("url", "isSet"), "default")).toBe(false);
+  });
+});

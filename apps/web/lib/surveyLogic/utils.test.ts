@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import {
+  type TEmbeddedValueResponse,
+  deriveLegacyEmbeddedData,
+} from "@formbricks/types/embedded-data-resolver";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -8,6 +11,7 @@ import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/log
 import { TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
+  buildServerEmbeddedValues,
   createGroupFromResource,
   deleteEmptyGroups,
   duplicateCondition,
@@ -1629,5 +1633,128 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
         {}
       )
     ).toEqual({});
+  });
+});
+
+describe("reserved field operands, server engine (ENG-1840)", () => {
+  const survey = {
+    id: "survey1",
+    name: "Survey 1",
+    questions: [],
+    blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+    variables: [],
+    embeddedFields: [],
+    hiddenFields: { enabled: true, fieldIds: [] },
+    type: "link",
+    status: "inProgress",
+    languages: [],
+    endings: [],
+    welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const reservedGroup = (
+    name: string,
+    operator: TSingleCondition["operator"],
+    rightOperand?: TSingleCondition["rightOperand"]
+  ): TConditionGroup => ({
+    id: "group1",
+    connector: "and",
+    conditions: [
+      { id: "condition1", operator, leftOperand: { type: "reserved", value: name }, rightOperand },
+    ],
+  });
+
+  const response = {
+    id: "response1",
+    surveyId: "survey1",
+    createdAt: new Date("2026-01-01T10:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T10:02:30.000Z"),
+    finished: true,
+    language: "de",
+    data: {},
+    variables: {},
+    ttc: { _total: 150000 },
+    meta: { country: "DE", url: "https://app.test/s/abc", source: "link" },
+  } as unknown as TEmbeddedValueResponse;
+
+  test("the full catalog resolves server-side, including server-only fields", () => {
+    const values = buildServerEmbeddedValues(response);
+
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("country", "equals", { type: "static", value: "DE" }),
+        "en",
+        values
+      )
+    ).toBe(true);
+    // durationSeconds converts ttc milliseconds to seconds — 150000ms is 150s, so "> 60" holds.
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("durationSeconds", "isGreaterThan", { type: "static", value: 60 }),
+        "en",
+        values
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("durationSeconds", "isLessThan", { type: "static", value: 60 }),
+        "en",
+        values
+      )
+    ).toBe(false);
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("finished", "equals", { type: "static", value: "true" }),
+        "en",
+        values
+      )
+    ).toBe(true);
+  });
+
+  test("a declared field of the same name still wins server-side", () => {
+    const values = buildServerEmbeddedValues({ ...response, data: { country: "Declared answer" } });
+
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("country", "equals", { type: "static", value: "Declared answer" }),
+        "en",
+        values
+      )
+    ).toBe(true);
+    expect(
+      evaluateLogic(
+        survey,
+        {},
+        {},
+        reservedGroup("country", "equals", { type: "static", value: "DE" }),
+        "en",
+        values
+      )
+    ).toBe(false);
+  });
+
+  test("an unknown reserved name and a missing map both read as unset", () => {
+    const values = buildServerEmbeddedValues(response);
+
+    expect(evaluateLogic(survey, {}, {}, reservedGroup("notACatalogEntry", "isSet"), "en", values)).toBe(
+      false
+    );
+    // Callers with no response in hand (quota screening) pass nothing and get unset, not a throw.
+    expect(evaluateLogic(survey, {}, {}, reservedGroup("country", "isSet"), "en")).toBe(false);
   });
 });

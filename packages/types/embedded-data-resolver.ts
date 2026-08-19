@@ -3,8 +3,8 @@ import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
 import { type TLegacyEmbeddedFields, toDesiredEmbeddedFields } from "./embedded-data-mapping";
 import type { TI18nString } from "./i18n";
-import type { TResponse, TResponseVariables } from "./responses";
-import { formatSnakeCaseToTitleCase } from "./safe-identifier";
+import type { TResponse, TResponseData, TResponseVariables } from "./responses";
+import { formatFieldNameToTitleCase } from "./safe-identifier";
 import type { TSurveyBlocks } from "./surveys/blocks";
 import { getTextContent } from "./surveys/validation";
 
@@ -87,9 +87,16 @@ export type TReservedFieldAvailability = "client" | "server" | "both";
  *   the part analytics needs.
  *
  * Declared here rather than at the ingest routes so the classification lives next to the field it
- * describes and a new entry cannot be added without deciding it. **Nothing consumes this yet** —
- * the toggle does not exist on this branch; this is the catalog stating its own policy ahead of the
- * surface that will apply it, so that surface has no per-field list of its own to drift from.
+ * describes and a new entry cannot be added without deciding it, and so no surface applying the
+ * policy needs a per-field list of its own to drift from.
+ *
+ * Two surfaces apply it, and they apply it at different times for different reasons:
+ *
+ * - the "Anonymize responses" toggle, at ingest, gated on the survey's setting — it decides what is
+ *   *captured*, and `drop` only means anything there;
+ * - {@link projectReservedValues} / {@link projectClientReservedValues}, at read, unconditionally —
+ *   `redactQuery` narrows what recall and logic may forward, because a recall token can end up in a
+ *   redirect URL or an email. Storage is untouched by that one.
  */
 export type TReservedFieldPrivacy = "keep" | "drop" | "redactQuery";
 
@@ -558,13 +565,48 @@ const resolveCatalogEntry = <TSlice>(
 };
 
 /**
+ * Strips the query string (and fragment) from a URL, keeping origin and path — the redaction
+ * `privacy: "redactQuery"` names.
+ *
+ * Falls back to a textual cut for anything `URL` cannot parse or parses to an opaque origin (a
+ * relative path, a `data:`/`about:` URL, plain junk), so it never throws and never widens what it
+ * returns beyond the input.
+ */
+export const redactUrlQuery = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.origin !== "null") {
+      return `${parsed.origin}${parsed.pathname}`;
+    }
+  } catch {
+    // Not an absolute URL. Fall through to the cut, which needs no parser and cannot throw.
+  }
+
+  const separatorIndex = url.search(/[?#]/);
+  return separatorIndex === -1 ? url : url.slice(0, separatorIndex);
+};
+
+/**
  * The shared body of the two projections: entry name → resolved value, absent values omitted,
  * booleans stringified because the recall/logic map types have no boolean slot.
+ *
+ * `privacy: "redactQuery"` is honoured HERE, on every projection, not only when the "Anonymize
+ * responses" toggle is on. The projection is a *forwarding* surface in a way storage is not: a
+ * reserved value reaches a recall token, and a recall token can be interpolated into an ending card's
+ * redirect URL (`ending-card.tsx`) or a follow-up email body. Projecting `url` verbatim therefore
+ * hands a third party whatever the survey URL carried — including a link survey's single-use
+ * `suToken`, which is a credential. Stripping the query costs an author nothing that was ever a
+ * documented capability (query params surface as their own `utm*` entries), so the safe form is the
+ * only form recall and logic ever see.
+ *
+ * Storage is deliberately untouched: `response.meta.url` still holds the full href unless the
+ * Anonymize toggle redacted it at ingest. This is a read-side narrowing, not a capture change.
  */
 const projectEntries = <TSlice>(
   entries: readonly {
     name: string;
     dataType: TEmbeddedDataType;
+    privacy: TReservedFieldPrivacy;
     read: (response: TSlice) => TReservedFieldRawValue;
   }[],
   response: TSlice
@@ -573,7 +615,11 @@ const projectEntries = <TSlice>(
   for (const entry of entries) {
     const value = resolveCatalogEntry(entry, response);
     if (value === undefined) continue;
-    values[entry.name] = typeof value === "boolean" ? String(value) : value;
+    const projected = typeof value === "boolean" ? String(value) : value;
+    values[entry.name] =
+      entry.privacy === "redactQuery" && typeof projected === "string"
+        ? redactUrlQuery(projected)
+        : projected;
   }
   return values;
 };
@@ -743,6 +789,50 @@ export const projectClientReservedValues = (
     response
   );
 
+/**
+ * **The grandfather rule, as one expression.** Reserved values go in FIRST so `responseData` spreads
+ * over them and wins on every colliding key.
+ *
+ * `FORBIDDEN_IDS` never guarded the reserved names, so surveys stored today legitimately declare a
+ * hidden field called `country` or `url`. Its value lives at `response.data["country"]`, and
+ * `#recall:country#` in such a survey must keep resolving from there — unchanged, forever.
+ * `RESERVED_FIELD_NAMES` (reserved-field-names.ts) stops only *new* declarations, so the collision
+ * set is frozen but non-empty, and this ordering is what keeps those surveys working.
+ *
+ * Flipping the two spreads is the whole regression: reserved metadata would start overwriting
+ * answers respondents actually gave. It lives here, called from every consumer, rather than being
+ * open-coded per surface, so there is exactly one line to audit and one line to test.
+ */
+export const mergeReservedValues = (
+  reservedValues: Record<string, string | number>,
+  responseData: TResponseData
+): TResponseData => ({ ...reservedValues, ...responseData });
+
+/**
+ * Which reserved entries a **mid-survey** picker may offer for one survey (ENG-1840). Both filters
+ * exist for a reason a reviewer should be able to check separately:
+ *
+ * 1. `availability !== "server"` — recall and logic evaluate in the browser while the respondent is
+ *    answering, so offering `country` or `durationSeconds` would let an author build a condition
+ *    that can never be true. Filtering on the catalog's own field (rather than a list here) means
+ *    entries added later light up automatically, and none can be offered without declaring when it
+ *    is knowable.
+ * 2. Not shadowed by a declared field — the picker counterpart of {@link mergeReservedValues}. If a
+ *    survey declares its own `country`, that name already resolves to the declared value, so listing
+ *    the reserved entry too would show two identically-named rows with no way to tell them apart and
+ *    the reserved one would be a lie. The declared field is already offered by its own group.
+ *
+ * Pass the survey's declared storage keys (hidden/ingested fields and variables) as
+ * `declaredStorageKeys`.
+ */
+export const listMidSurveyReservedEntries = (
+  entries: readonly TReservedFieldCatalogEntry[],
+  declaredStorageKeys: readonly string[]
+): TReservedFieldCatalogEntry[] => {
+  const declared = new Set(declaredStorageKeys);
+  return entries.filter((entry) => entry.availability !== "server" && !declared.has(entry.name));
+};
+
 /** One referenceable field, carrying the key a consumer must use to address it. */
 export interface TReadableField {
   /** The reference key: element id, link `storageKey`, catalog entry name, or contact attribute key. */
@@ -839,7 +929,7 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
 
   const reserved = input.reservedEntries.map((entry) => ({
     key: entry.name,
-    label: labelOrKey(formatSnakeCaseToTitleCase(entry.name), entry.name),
+    label: labelOrKey(formatFieldNameToTitleCase(entry.name), entry.name),
   }));
 
   const contactAttribute = input.contactAttributeKeys.map((attributeKey) => ({

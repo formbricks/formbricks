@@ -1,9 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
+  RESERVED_FIELD_CATALOG,
+  type TEmbeddedValueResponse,
   findComputedEmbeddedField,
   getComputedEmbeddedFields,
   getComputedFieldDataType,
   getLogicVariableValue,
+  mergeReservedValues,
+  projectReservedValues,
 } from "@formbricks/types/embedded-data-resolver";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
@@ -14,6 +18,7 @@ import {
 } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
+import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
 import { TActionCalculate, TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -232,34 +237,45 @@ export const getUpdatedActionBody = (
   }
 };
 
+/**
+ * The reserved-field lookup map for a **persisted** response: the full catalog projected, then
+ * shadowed by the response's own data so a declared field of the same name still wins
+ * (`mergeReservedValues` is the single expression carrying that guarantee).
+ *
+ * Server-side every reserved field is knowable, so this reads `RESERVED_FIELD_CATALOG` whole rather
+ * than the mid-survey subset — the renderer's `projectClientReservedValues` exists precisely because
+ * that is *not* true in the browser.
+ */
+export const buildServerEmbeddedValues = (response: TEmbeddedValueResponse): TResponseData =>
+  mergeReservedValues(projectReservedValues(RESERVED_FIELD_CATALOG, response), response.data);
+
+/**
+ * @param embeddedValues Reserved-field values merged UNDER `data` by `mergeReservedValues` — what a
+ *   `reserved` operand reads. Server-side callers holding a real `TResponse` should build this with
+ *   {@link buildServerEmbeddedValues} so the **full** catalog resolves (country, durationSeconds,
+ *   finished, …), not just the mid-survey subset the renderer can see. Defaults to `{}` for callers
+ *   with no response in hand — quota screening evaluates before the row exists — where every
+ *   reserved operand then reads as unset rather than throwing.
+ */
 export const evaluateLogic = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   conditions: TConditionGroup,
-  selectedLanguage: string
-): boolean => {
-  const evaluateConditionGroup = (group: TConditionGroup): boolean => {
-    const results = group.conditions.map((condition) => {
-      if (isConditionGroup(condition)) {
-        return evaluateConditionGroup(condition);
-      } else {
-        return evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage);
-      }
-    });
-
-    return group.connector === "or" ? results.some((r) => r) : results.every((r) => r);
-  };
-
-  return evaluateConditionGroup(conditions);
-};
+  selectedLanguage: string,
+  embeddedValues: TResponseData = {}
+): boolean =>
+  evaluateConditionGroup(conditions, (condition) =>
+    evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
+  );
 
 const evaluateSingleCondition = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   condition: TSingleCondition,
-  selectedLanguage: string
+  selectedLanguage: string,
+  embeddedValues: TResponseData
 ): boolean => {
   try {
     let leftValue = getLeftOperandValue(
@@ -267,11 +283,12 @@ const evaluateSingleCondition = (
       data,
       variablesData,
       condition.leftOperand,
-      selectedLanguage
+      selectedLanguage,
+      embeddedValues
     );
 
     let rightValue = condition.rightOperand
-      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand)
+      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand, embeddedValues)
       : undefined;
 
     const elements = getElementsFromBlocks(localSurvey.blocks);
@@ -502,7 +519,8 @@ const getLeftOperandValue = (
   data: TResponseData,
   variablesData: TResponseVariables,
   leftOperand: TSingleCondition["leftOperand"],
-  selectedLanguage: string
+  selectedLanguage: string,
+  embeddedValues: TResponseData
 ) => {
   switch (leftOperand.type) {
     case "element":
@@ -588,6 +606,10 @@ const getLeftOperandValue = (
       return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), leftOperand.value, variablesData);
     case "hiddenField":
       return data[leftOperand.value];
+    // Server-side the caller projects the FULL catalog, so country/durationSeconds/finished all
+    // resolve here — unlike the renderer, which only ever sees the client-available subset.
+    case "reserved":
+      return embeddedValues[leftOperand.value];
     default:
       return undefined;
   }
@@ -597,7 +619,8 @@ const getRightOperandValue = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
-  rightOperand: TSingleCondition["rightOperand"]
+  rightOperand: TSingleCondition["rightOperand"],
+  embeddedValues: TResponseData
 ) => {
   if (!rightOperand) return undefined;
 
@@ -608,6 +631,8 @@ const getRightOperandValue = (
       return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), rightOperand.value, variablesData);
     case "hiddenField":
       return data[rightOperand.value];
+    case "reserved":
+      return embeddedValues[rightOperand.value];
     case "static":
       return rightOperand.value;
     default:

@@ -45,6 +45,8 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
       variables: responseInput.variables,
       language: canonicalLanguage,
       responseFinished: response.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response,
       tx,
     });
 

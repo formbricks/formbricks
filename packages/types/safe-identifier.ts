@@ -82,6 +82,22 @@ export const formatSnakeCaseToTitleCase = (key: string): string => {
 };
 
 /**
+ * Label formatter for names that may be camelCase, which `formatSnakeCaseToTitleCase` cannot split.
+ * Example: "durationSeconds" -> "Duration Seconds", "ip_address" -> "Ip Address".
+ *
+ * Reserved field catalog names are camelCase by convention, because they mirror the `meta` keys they
+ * read (`utmSource`, `viewportWidth`, `ipAddress`). Run through the snake_case formatter alone they
+ * render as "DurationSeconds", which is not a label anyone would write by hand.
+ *
+ * Deliberately NOT folded into `formatSnakeCaseToTitleCase`: that helper also derives the stored
+ * display name for newly created contact attribute keys, and those genuinely arrive camelCase from
+ * the SDK and CSV import — `contacts.ts` dedupes `firstName` against `firstname` precisely because
+ * both show up. Splitting there would rename attribute keys as a side effect of a survey-editor fix.
+ */
+export const formatFieldNameToTitleCase = (key: string): string =>
+  formatSnakeCaseToTitleCase(key.replace(/([a-z0-9])([A-Z])/g, "$1_$2"));
+
+/**
  * Legacy shim for the load path: the character rule every declared id was stored under before
  * `isSafeIdentifier` existed. Via `validateId` this governs element and question ids as well as
  * hidden field ids, hence the charset-level name. Survey schemas validate already-persisted names
