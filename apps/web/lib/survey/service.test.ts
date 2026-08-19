@@ -533,6 +533,97 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
   });
+
+  /**
+   * ENG-1839. This is the create-time layer `ZSurveyHiddenFields` deliberately cannot be: the same
+   * schema parses surveys loaded from the database, so it has to stay lenient. Without a guard here,
+   * `PUT /api/v1/management/surveys/<id>` creates a hidden field that can never receive a value.
+   *
+   * The grandfather cases are the load-bearing ones: surveys in production already declare
+   * `country`, `url`, `source`, `browser`, and this ticket must not rename or break any of them.
+   */
+  describe("reserved names for newly declared fields", () => {
+    test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        hiddenFields: { enabled: true, fieldIds: [] },
+      } as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["country"] } },
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("GRANDFATHER: a save on a survey that ALREADY has `country` succeeds and keeps the field", async () => {
+      // Draft row: `skipValidation` is restricted to drafts by the ENG-1939 gate, which runs after
+      // this guard. The grandfathering under test is unaffected by the status.
+      const grandfathered = {
+        ...mockSurveyOutput,
+        status: "draft",
+        hiddenFields: { enabled: true, fieldIds: ["country"] },
+      };
+      prisma.survey.findUnique.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["country"] } },
+          true
+        )
+      ).resolves.toBeDefined();
+
+      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
+      // Nothing is renamed or dropped: the field is written back exactly as it was.
+      expect(updateArg?.data).toMatchObject({ hiddenFields: { enabled: true, fieldIds: ["country"] } });
+    });
+
+    test("GRANDFATHER: a grandfathered survey may still not ADD a second reserved name", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        hiddenFields: { enabled: true, fieldIds: ["country"] },
+      } as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["country", "browser"] } },
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("GRANDFATHER: a survey that already declares `country` as a VARIABLE keeps it", async () => {
+      const variable = { id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "country", type: "text" as const, value: "" };
+      const grandfathered = { ...mockSurveyOutput, status: "draft", variables: [variable] };
+      prisma.survey.findUnique.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
+
+      await expect(
+        updateSurveyInternal({ ...updateSurveyInput, variables: [variable] }, true)
+      ).resolves.toBeDefined();
+    });
+
+    test("accepts adding an ordinary new hidden field name", async () => {
+      const draft = { ...mockSurveyOutput, status: "draft" };
+      prisma.survey.findUnique.mockResolvedValueOnce(draft as any);
+      prisma.survey.update.mockResolvedValueOnce(draft as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["team_size"] } },
+          true
+        )
+      ).resolves.toBeDefined();
+
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+  });
 });
 
 describe("Tests for getSurveyCount service", () => {
@@ -1227,6 +1318,43 @@ describe("Tests for createSurvey", () => {
       prisma.survey.create.mockRejectedValueOnce(mockError);
 
       await expect(createSurvey(mockWorkspaceId, mockCreateSurveyInput)).rejects.toThrow(DatabaseError);
+    });
+
+    // ENG-1839. A create authors every name fresh, so there is nothing to grandfather.
+    test("rejects a hidden field named after a reserved field, before writing anything", async () => {
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          hiddenFields: { enabled: true, fieldIds: ["country"] },
+        })
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
+    test("rejects a variable named after a reserved field", async () => {
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          variables: [{ id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "browser", type: "text", value: "" }],
+        })
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
+    test("accepts an ordinary new hidden field name", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          hiddenFields: { enabled: true, fieldIds: ["team_size"] },
+        })
+      ).resolves.toBeDefined();
+
+      expect(prisma.survey.create).toHaveBeenCalled();
     });
   });
 });

@@ -559,6 +559,122 @@ describe("patchV3Survey", () => {
     expect(prisma.survey.update).not.toHaveBeenCalled();
   });
 
+  /**
+   * ENG-1839. `PATCH /api/v3/surveys/*` and the MCP write path reach the survey through here, so the
+   * guard has to sit at this boundary too — before the transaction, so a refusal is a validation
+   * response rather than a rollback.
+   */
+  describe("reserved names for newly declared fields", () => {
+    const documentFor = (overrides: Record<string, unknown>) =>
+      ({
+        name: currentSurvey.name,
+        status: currentSurvey.status,
+        metadata: currentSurvey.metadata,
+        defaultLanguage: "en-US",
+        languages: [{ code: "en-US", enabled: true }],
+        welcomeCard: currentSurvey.welcomeCard,
+        blocks: currentSurvey.blocks,
+        endings: currentSurvey.endings,
+        hiddenFields: currentSurvey.hiddenFields,
+        variables: currentSurvey.variables,
+        ...overrides,
+      }) as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"];
+
+    test("rejects a patch that ADDS a hidden field named after a reserved field, and does not write", async () => {
+      await expect(
+        executeV3SurveyPatch({
+          currentSurvey: currentSurvey as TSurvey,
+          document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country"] } }),
+          languageRequests: [{ code: "en-US", default: true, enabled: true }],
+          requestId: "req_1",
+        })
+      ).rejects.toBeInstanceOf(V3SurveyReferenceValidationError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+      // Runs before `ensureV3WorkspaceLanguages`: a rejected patch must not create a workspace language.
+      expect(prisma.language.upsert).not.toHaveBeenCalled();
+    });
+
+    test("reports the refused name as a forbidden_identifier invalid param", async () => {
+      const error = await executeV3SurveyPatch({
+        currentSurvey: currentSurvey as TSurvey,
+        document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country"] } }),
+        languageRequests: [{ code: "en-US", default: true, enabled: true }],
+        requestId: "req_1",
+      }).catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(V3SurveyReferenceValidationError);
+      expect((error as V3SurveyReferenceValidationError).invalidParams).toEqual([
+        expect.objectContaining({ name: "country", code: "forbidden_identifier", identifier: "country" }),
+      ]);
+    });
+
+    test("rejects a variable named after a reserved field", async () => {
+      await expect(
+        executeV3SurveyPatch({
+          currentSurvey: currentSurvey as TSurvey,
+          document: documentFor({
+            variables: [{ id: "clvar123456789012345678901", name: "browser", type: "text", value: "" }],
+          }),
+          languageRequests: [{ code: "en-US", default: true, enabled: true }],
+          requestId: "req_1",
+        })
+      ).rejects.toBeInstanceOf(V3SurveyReferenceValidationError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("GRANDFATHER: a patch on a survey that ALREADY declares `country` succeeds and keeps the field", async () => {
+      const grandfathered = {
+        ...currentSurvey,
+        hiddenFields: { enabled: true, fieldIds: ["country"] },
+      } as TSurvey;
+
+      await executeV3SurveyPatch({
+        currentSurvey: grandfathered,
+        document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country"] } }),
+        languageRequests: [{ code: "en-US", default: true, enabled: true }],
+        requestId: "req_1",
+      });
+
+      // Nothing is renamed or dropped: the field is written back exactly as it was.
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            hiddenFields: { enabled: true, fieldIds: ["country"] },
+          }),
+        })
+      );
+    });
+
+    test("GRANDFATHER: a grandfathered survey may still not ADD a second reserved name", async () => {
+      await expect(
+        executeV3SurveyPatch({
+          currentSurvey: {
+            ...currentSurvey,
+            hiddenFields: { enabled: true, fieldIds: ["country"] },
+          } as TSurvey,
+          document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country", "url"] } }),
+          languageRequests: [{ code: "en-US", default: true, enabled: true }],
+          requestId: "req_1",
+        })
+      ).rejects.toBeInstanceOf(V3SurveyReferenceValidationError);
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("accepts adding an ordinary new hidden field name", async () => {
+      await executeV3SurveyPatch({
+        currentSurvey: currentSurvey as TSurvey,
+        document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["team_size"] } }),
+        languageRequests: [{ code: "en-US", default: true, enabled: true }],
+        requestId: "req_1",
+      });
+
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+  });
+
   test("reconciles due survey schedules without refetching when no schedule transition persisted", async () => {
     vi.mocked(isSurveySchedulingDue).mockReturnValue(true);
     vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({

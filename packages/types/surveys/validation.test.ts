@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
 import {
   LINK_SURVEY_SYSTEM_PARAMS,
   RESERVED_DECLARED_FIELD_NAMES,
@@ -91,12 +92,37 @@ describe("validateId", () => {
 
     test("still accepts names that merely contain a reserved word", () => {
       expect(validateId("user_id_ref", ...noExistingIds, strict)).toBeNull();
-      expect(validateId("language", ...noExistingIds, strict)).toBeNull();
       expect(validateId("verified", ...noExistingIds, strict)).toBeNull();
       expect(validateId("started_at", ...noExistingIds, strict)).toBeNull();
+      expect(validateId("country_code", ...noExistingIds, strict)).toBeNull();
+    });
+
+    /**
+     * ENG-1839. The Tier-1 Embedded Data catalog is a second blocklist on the strict path only:
+     * a field named `country` would be permanently shadowed by the reserved read of the same name.
+     * `language` moved from the accepted list above to here for exactly that reason.
+     */
+    test("rejects the Tier-1 reserved field names in any casing", () => {
+      for (const reserved of RESERVED_FIELD_NAMES) {
+        for (const candidate of [reserved, reserved.toUpperCase()]) {
+          expect(validateId(candidate, ...noExistingIds, strict)).toEqual({
+            code: TValidateIdErrorCode.Reserved,
+            field: candidate,
+          });
+        }
+      }
+      // The camelCase spelling of a catalog entry is refused too — the set stores them lowercased.
+      expect(validateId("deviceType", ...noExistingIds, strict)?.code).toBe(TValidateIdErrorCode.Reserved);
     });
 
     test("leaves the lenient path alone so element and question ids keep parsing", () => {
+      // ENG-1839: the Tier-1 catalog must NOT reach the lenient path. `ZSurveyHiddenFields` parses
+      // surveys loaded from the database through it, so a survey that already declares `country`
+      // has to keep loading.
+      expect(validateId("country", ...noExistingIds)).toBeNull();
+      expect(validateId("browser", ...noExistingIds)).toBeNull();
+      expect(validateId("language", ...noExistingIds)).toBeNull();
+
       // Element/question id renames must not start failing: only the exact-case FORBIDDEN_IDS entry
       // is reserved there, exactly as before this change.
       expect(validateId("userid", ...noExistingIds)).toBeNull();
