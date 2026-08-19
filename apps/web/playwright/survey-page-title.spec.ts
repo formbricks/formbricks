@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { expect } from "@playwright/test";
+import { type Locator, type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
@@ -72,9 +72,15 @@ const seedSurvey = async (workspaceId: string, createdBy: string): Promise<strin
   return survey.id;
 };
 
-/** Only the current card's nav button is focusable; peeking cards render theirs with tabindex -1. */
-const advanceButton = (page: import("@playwright/test").Page) =>
-  page.locator('button.border-submit-button-border:not([tabindex="-1"])').first();
+/**
+ * The current card's Next/Finish control, located by role and accessible name.
+ *
+ * The `tabindex="0"` half is not a styling detail but the renderer's own contract: the stacked layout
+ * keeps several cards mounted and gives every peeking card a nav button of its own, focusable only on
+ * the active one. Same locator shape as `survey-progress-a11y.spec.ts`.
+ */
+const advanceButton = (page: Page): Locator =>
+  page.getByRole("button", { name: /^(Next|Finish)$/ }).and(page.locator('[tabindex="0"]'));
 
 test.describe("Public survey page titles", () => {
   let surveyUrl: string;
