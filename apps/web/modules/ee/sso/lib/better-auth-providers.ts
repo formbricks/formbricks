@@ -22,6 +22,7 @@ import {
   SAML_TENANT,
   WEBAPP_URL,
 } from "@/lib/constants";
+import { getAuthIssuerUrl } from "@/modules/auth/lib/oauth-urls";
 import { captureSsoIdentity } from "./sso-request-context";
 
 // Better Auth's per-provider profile types, extracted so the social mappers below aren't implicitly
@@ -47,11 +48,11 @@ type GoogleProfile = Parameters<NonNullable<SocialConfig<"google">["mapProfileTo
  * SEPARATELY (not here); `account.accountLinking.enabled` is false so nothing auto-links. That hooks
  * work is the security-sensitive part of Phase 5 and is pending review.
  *
- * ⚠ Callback path (ENG-2343): Better Auth 1.7 rebuilds `genericOAuth` on the built-in social-provider
- * route, so the callback is `/api/auth/callback/{providerId}` — the same shape Google/GitHub use, and
- * the same path these three providers used before v5.2's NextAuth→Better Auth cutover. Between v5.2
- * and this upgrade it was `/api/auth/oauth2/callback/{providerId}`; see the "Better Auth 1.7 Upgrade"
- * section in docs/self-hosting/advanced/migration.mdx for what self-hosters need to re-register.
+ * ⚠ Callback path (ENG-2343): PINNED, and deliberately not the version default. Better Auth has moved
+ * this path twice with no choice of ours — 1.6's `genericOAuth` plugin mounted its own
+ * `/oauth2/callback/:providerId` route, and 1.7 rebuilt that plugin onto the built-in `/callback/:id`
+ * one. Tracking the default makes every self-hoster re-register a redirect URI on each such upstream
+ * change, so `redirectURI` below holds the v5.2 URL their IdPs already have. See ssoLegacyRedirectUri.
  */
 export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
   ? {
@@ -111,6 +112,33 @@ const toAccountSubject = (subject: string | number | null | undefined): string |
 
 const ssoAccountIssuer = (providerId: string): string => `local:oauth:${encodeURIComponent(providerId)}`;
 
+/**
+ * The SSO callback URL every customer IdP has had registered since v5.2, pinned so it stops tracking
+ * Better Auth's routing (ENG-2343).
+ *
+ * `redirectURI` wins over the route-derived value in both places that must agree — the authorization
+ * request (`@better-auth/core/.../create-authorization-url.mjs`) and the token exchange
+ * (`.../validate-authorization-code.mjs`), each `options.redirectURI || redirectURI` — so the IdP never
+ * sees a `redirect_uri` mismatch between the two legs. The option is not new: 1.6 honoured it with the
+ * same precedence, so pinning is not a 1.7 affordance we might lose on the next minor.
+ *
+ * Pinning the URL is only half the job, because `redirectURI` does NOT move the route Better Auth mounts
+ * its handler on. `apps/web/app/api/auth/[...all]/route.ts` serves this legacy path by mapping it onto
+ * the path the installed version actually handles — that half is ours and cannot be removed upstream.
+ * This half rests on an upstream option, so better-auth-redirect-uri-pin.test.ts asserts the
+ * `redirect_uri` Better Auth really emits and fails the build if it is ever ignored.
+ *
+ * Built off `getAuthIssuerUrl()` rather than `WEBAPP_URL`, deliberately: this URL is where the identity
+ * provider delivers the authorization code, so it must name the same origin Better Auth itself considers
+ * its base — `env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL` (auth.ts), with WEBAPP_URL only as the last
+ * fallback, which is exactly the precedence `getAuthIssuerUrl` encodes. Deriving it from WEBAPP_URL alone
+ * would let the two diverge: the code would arrive at a host whose signed state cookie was never set, so
+ * sign-in fails closed with a state mismatch. `appendPath` also handles the documented subpath shape where
+ * the configured auth URL already ends in `/api/auth` (see ENG-606).
+ */
+const ssoLegacyRedirectUri = (providerId: string): string =>
+  `${getAuthIssuerUrl()}/oauth2/callback/${providerId}`;
+
 /** OIDC display name: `name`, else given+family, else `preferred_username`. */
 const toDisplayName = (profile: GenericOAuthUserInfo): string | undefined => {
   const parts = [profile.given_name, profile.family_name].filter(Boolean).join(" ");
@@ -145,6 +173,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               // (`if (iss && provider.issuer && iss !== provider.issuer)`), so Entra short-circuits
               // and the mix-up defence still applies to providers that do implement RFC 9207.
               accountIssuer: ssoAccountIssuer("azuread"),
+              redirectURI: ssoLegacyRedirectUri("azuread"),
               mapProfileToUser: (profile) => {
                 // Capture for verify-before-link recovery; name parity with the OIDC mapping.
                 captureSsoIdentity({
@@ -173,6 +202,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               // in 1.7 — the comparison is now automatic whenever the provider returns `iss`, so the
               // defence is kept without the flag.
               accountIssuer: ssoAccountIssuer("openid"),
+              redirectURI: ssoLegacyRedirectUri("openid"),
               mapProfileToUser: (profile) => {
                 captureSsoIdentity({
                   email: profile.email,
@@ -203,6 +233,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               // Already a plain string map, which is all 1.7 accepts here.
               authorizationUrlParams: { provider: "saml", tenant: SAML_TENANT, product: SAML_PRODUCT },
               accountIssuer: ssoAccountIssuer("saml"),
+              redirectURI: ssoLegacyRedirectUri("saml"),
               mapProfileToUser: (profile) => {
                 // ⚠ BoxyHQ's userinfo id — validate it matches Better Auth's account.accountId at cutover.
                 captureSsoIdentity({ email: profile.email, providerAccountId: toAccountSubject(profile.id) });

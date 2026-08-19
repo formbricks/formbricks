@@ -131,9 +131,6 @@ spec:
           name: {{ $appServiceName }}
           port: 3000
 {{- if .Values.envoy.formbricks.routes.authCallback }}
-# As of Better Auth 1.7 (v5.4), this PathPrefix also matches the Azure AD, OIDC and SAML SSO callbacks,
-# which previously bypassed this route under /api/auth/oauth2/callback/*. See the "Better Auth 1.7
-# Upgrade" section in docs/self-hosting/advanced/migration.mdx.
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

@@ -30,9 +30,10 @@ export const AzureButton = ({
     }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
-    // Better Auth 1.7 rebuilt genericOAuth onto the built-in social path (ENG-2343):
-    // signIn.oauth2({ providerId }) became signIn.social({ provider }), and the callback moved
-    // from /api/auth/oauth2/callback/azuread to /api/auth/callback/azuread.
+    // Better Auth 1.7 rebuilt genericOAuth onto the built-in social path (ENG-2343), so
+    // signIn.oauth2({ providerId }) became signIn.social({ provider }). The callback URL is
+    // NOT affected: better-auth-providers.ts pins `redirectURI` to /api/auth/oauth2/callback/azuread,
+    // the URL already registered at every customer IdP, and legacy-sso-callback.ts serves it.
     await authClient.signIn.social({
       provider: "azuread",
       callbackURL: returnToUrlWithSource,

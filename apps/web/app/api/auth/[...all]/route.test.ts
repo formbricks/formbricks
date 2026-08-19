@@ -114,4 +114,68 @@ describe("[...all] Better Auth route — observability context (ENG-2259)", () =
     expect(seen).toEqual({ path: "/reset-password/*", method: "POST" });
     expect(JSON.stringify(seen)).not.toContain(token);
   });
+
+  // The label is derived from the MAPPED request, so a pinned SSO callback reports the endpoint that
+  // actually ran. Labelling the raw URL would file it under `/oauth2/*` — the MCP OAuth
+  // authorization-server facet — which is the one bucket it must never be confused with (ENG-2343).
+  test("labels a pinned SSO callback as the endpoint that ran, not as MCP OAuth", async () => {
+    const seen = await captureContextDuringHandler(
+      new Request("http://localhost/api/auth/oauth2/callback/openid?code=abc&state=xyz", {
+        method: "POST",
+      })
+    );
+
+    expect(seen).toEqual({ path: "/callback/*", method: "POST" });
+  });
+});
+
+/**
+ * The pinned SSO callback URL (ENG-2343). `redirectURI` makes Better Auth advertise
+ * `/api/auth/oauth2/callback/{providerId}` — the URL customer IdPs have had registered since v5.2 — but no
+ * 1.7 route is mounted there, so this route is what serves it. The mapper itself is covered exhaustively in
+ * legacy-sso-callback.test.ts; what needs proving *here* is that the route actually applies it, because the
+ * two delegation tests above pass either way: the mapper returns the identical request object on every
+ * non-pinned path, so they would still be green with the call deleted.
+ */
+describe("[...all] Better Auth route — pinned SSO callback (ENG-2343)", () => {
+  beforeEach(() => {
+    handlerMock.mockClear();
+    runWithCtxMock.mockClear();
+  });
+
+  test("hands Better Auth the current callback path, preserving code and state", async () => {
+    await GET(new Request("http://localhost/api/auth/oauth2/callback/openid?code=abc&state=xyz"));
+
+    expect(handlerMock).toHaveBeenCalledTimes(1);
+    const handled = handlerMock.mock.calls[0][0] as unknown as Request;
+    expect(handled.url).toBe("http://localhost/api/auth/callback/openid?code=abc&state=xyz");
+  });
+
+  test("still maps inside the SSO request context", async () => {
+    const calls: string[] = [];
+    runWithCtxMock.mockImplementationOnce(async (fn: () => unknown) => {
+      calls.push("wrapper:start");
+      const response = await fn();
+      calls.push("wrapper:end");
+      return response;
+    });
+    handlerMock.mockImplementationOnce(async () => {
+      calls.push("handler");
+      return new Response("ok", { status: 200 });
+    });
+
+    await GET(new Request("http://localhost/api/auth/oauth2/callback/saml?code=abc"));
+
+    expect(calls).toEqual(["wrapper:start", "handler", "wrapper:end"]);
+  });
+
+  // The sibling routes of our own MCP OAuth authorization server must pass through untouched — the same
+  // object, not a rebuilt equivalent.
+  test("leaves a sibling MCP OAuth route untouched", async () => {
+    const request = new Request("http://localhost/api/auth/oauth2/userinfo");
+
+    await GET(request);
+
+    expect(handlerMock).toHaveBeenCalledWith(request);
+  });
 });

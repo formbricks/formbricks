@@ -1,0 +1,99 @@
+import { describe, expect, test } from "vitest";
+import {
+  PINNED_SSO_PROVIDER_IDS,
+  mapLegacySsoCallbackRequest,
+  mapLegacySsoCallbackUrl,
+} from "./legacy-sso-callback";
+
+const BASE = "https://app.formbricks.test";
+
+describe("mapLegacySsoCallbackUrl (ENG-2343)", () => {
+  test.each(PINNED_SSO_PROVIDER_IDS)("maps the pinned legacy callback for %s", (providerId) => {
+    expect(mapLegacySsoCallbackUrl(`${BASE}/api/auth/oauth2/callback/${providerId}`)).toBe(
+      `${BASE}/api/auth/callback/${providerId}`
+    );
+  });
+
+  // The query is the whole point of a callback — dropping it would strip `code`/`state` and turn every
+  // SSO sign-in into a silent failure that looks like an IdP problem.
+  test("carries the authorization code and state across untouched", () => {
+    const mapped = mapLegacySsoCallbackUrl(
+      `${BASE}/api/auth/oauth2/callback/openid?code=abc%2F123&state=xyz&iss=${encodeURIComponent(BASE)}`
+    );
+
+    const url = new URL(mapped ?? "");
+    expect(url.pathname).toBe("/api/auth/callback/openid");
+    expect(url.searchParams.get("code")).toBe("abc/123");
+    expect(url.searchParams.get("state")).toBe("xyz");
+    expect(url.searchParams.get("iss")).toBe(BASE);
+  });
+
+  // A Next.js basePath deployment serves the app from a subpath, so the auth segment is not at the root
+  // of the pathname. Same reasoning as better-auth-path-label.ts (see ENG-606).
+  test("resolves under a basePath deployment", () => {
+    expect(mapLegacySsoCallbackUrl(`${BASE}/custom-path/api/auth/oauth2/callback/saml`)).toBe(
+      `${BASE}/custom-path/api/auth/callback/saml`
+    );
+  });
+
+  /**
+   * The scoping that makes this safe to run in the `/api/auth/*` catch-all. The oauth-provider plugin
+   * owns roughly fifteen sibling `/oauth2/*` routes for our own MCP OAuth server; an unscoped prefix
+   * rewrite would shadow whichever one upstream adds next. Everything not an exact pinned provider id
+   * must pass through untouched.
+   */
+  test.each([
+    ["a sibling MCP OAuth route", `${BASE}/api/auth/oauth2/userinfo`],
+    ["the MCP consent route", `${BASE}/api/auth/oauth2/consent`],
+    ["the current-version callback", `${BASE}/api/auth/callback/openid`],
+    ["an unpinned provider id", `${BASE}/api/auth/oauth2/callback/google`],
+    ["a deeper path under a pinned id", `${BASE}/api/auth/oauth2/callback/openid/extra`],
+    ["a trailing slash", `${BASE}/api/auth/oauth2/callback/openid/`],
+    // Keeps the basePath tolerance from accepting a crafted double auth segment, so the only path this
+    // function can emit is `<basePath>/api/auth/callback/<pinned-id>`.
+    ["a second auth segment in the prefix", `${BASE}/api/auth/x/api/auth/oauth2/callback/openid`],
+    ["no provider id at all", `${BASE}/api/auth/oauth2/callback/`],
+    ["an unrelated endpoint", `${BASE}/api/auth/sign-in/email`],
+    ["a non-auth route", `${BASE}/api/v3/surveys`],
+    ["an unparseable url", "not-a-url"],
+  ])("leaves %s alone", (_label, url) => {
+    expect(mapLegacySsoCallbackUrl(url)).toBeNull();
+  });
+});
+
+describe("mapLegacySsoCallbackRequest (ENG-2343)", () => {
+  test("rewrites a GET callback and preserves method and headers", () => {
+    const request = new Request(`${BASE}/api/auth/oauth2/callback/azuread?code=abc`, {
+      headers: { cookie: "better-auth.state=s" },
+    });
+
+    const mapped = mapLegacySsoCallbackRequest(request);
+
+    expect(mapped.url).toBe(`${BASE}/api/auth/callback/azuread?code=abc`);
+    expect(mapped.method).toBe("GET");
+    // Carrying the cookie is load-bearing: Better Auth reads the state/PKCE cookie on the callback, so
+    // dropping it would fail the sign-in as a state mismatch.
+    expect(mapped.headers.get("cookie")).toBe("better-auth.state=s");
+  });
+
+  // An IdP configured for `response_mode=form_post` returns the code as a POST body.
+  test("forwards a POST body for a form_post response mode", async () => {
+    const request = new Request(`${BASE}/api/auth/oauth2/callback/azuread`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "code=abc&state=xyz",
+    });
+
+    const mapped = mapLegacySsoCallbackRequest(request);
+
+    expect(mapped.url).toBe(`${BASE}/api/auth/callback/azuread`);
+    expect(mapped.method).toBe("POST");
+    await expect(mapped.text()).resolves.toBe("code=abc&state=xyz");
+  });
+
+  test("returns the original request untouched when the path is not a pinned callback", () => {
+    const request = new Request(`${BASE}/api/auth/sign-in/email`, { method: "POST" });
+
+    expect(mapLegacySsoCallbackRequest(request)).toBe(request);
+  });
+});

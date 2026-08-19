@@ -1,9 +1,19 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { PINNED_SSO_PROVIDER_IDS } from "@/modules/auth/lib/legacy-sso-callback";
 
 // captureSsoIdentity is request-scoped (server-only AsyncLocalStorage); stub it so the mappers run in
 // isolation and we can assert the identity each provider captures.
 const { captureSsoIdentity } = vi.hoisted(() => ({ captureSsoIdentity: vi.fn() }));
 vi.mock("./sso-request-context", () => ({ captureSsoIdentity }));
+
+// The pinned SSO callback URL is built from `getAuthIssuerUrl()`, which reads `@/lib/env` directly rather
+// than the constants mocked below — it has to, because that helper encodes Better Auth's own base-URL
+// precedence (`BETTER_AUTH_URL ?? NEXTAUTH_URL ?? WEBAPP_URL`). Spread the real env so `@/lib/constants`
+// still validates, and pin only the auth URL so the expected callback URL is deterministic.
+vi.mock("@/lib/env", async () => {
+  const actual = await vi.importActual<{ env: Record<string, unknown> }>("@/lib/env");
+  return { env: { ...actual.env, BETTER_AUTH_URL: "https://app.formbricks.test" } };
+});
 
 // The module computes ssoSocialProviders / ssoGenericOAuthConfig at IMPORT time from `@/lib/constants`,
 // so each scenario re-mocks the constants and re-imports. We spread the REAL module so the two hardcoded
@@ -198,6 +208,52 @@ describe("better-auth SSO providers", () => {
         ["openid", "local:oauth:openid"],
         ["saml", "local:oauth:saml"],
       ]);
+    });
+
+    /**
+     * The callback URL is a registered value at every customer IdP, and OAuth requires it to match
+     * EXACTLY (RFC 6749 §3.1.2.2, no wildcards) — so letting it track Better Auth's routing means every
+     * self-hoster edits every IdP whenever upstream moves the route. It has already moved twice: the 1.6
+     * genericOAuth plugin mounted `/oauth2/callback/:providerId`, and 1.7 rebuilt the plugin onto the
+     * built-in `/callback/:id`. This pins the v5.2 URL that is already registered everywhere.
+     *
+     * The URL alone is not enough — see legacy-sso-callback.ts for the half that serves it, and
+     * better-auth-redirect-uri-pin.test.ts for the guard that Better Auth still honours the option.
+     */
+    test("pins the v5.2 callback URL on every generic provider", async () => {
+      const m = await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        OIDC_OAUTH_ENABLED: true,
+        SAML_OAUTH_ENABLED: true,
+      });
+
+      expect(m.ssoGenericOAuthConfig.map((c) => [c.providerId, c.redirectURI])).toEqual([
+        ["azuread", "https://app.formbricks.test/api/auth/oauth2/callback/azuread"],
+        ["openid", "https://app.formbricks.test/api/auth/oauth2/callback/openid"],
+        ["saml", "https://app.formbricks.test/api/auth/oauth2/callback/saml"],
+      ]);
+    });
+
+    /**
+     * Drift guard for the two halves of the pin. `legacy-sso-callback.ts` keeps its own id literal
+     * because it must work on an unlicensed instance, where this config list is empty — so nothing but
+     * this assertion stops the two from diverging. A provider pinned here but missing there advertises a
+     * URL no route serves: a 404 on every sign-in with that provider.
+     */
+    test("every pinned provider is one the legacy callback route serves", async () => {
+      const m = await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        OIDC_OAUTH_ENABLED: true,
+        SAML_OAUTH_ENABLED: true,
+      });
+
+      const pinned = m.ssoGenericOAuthConfig
+        .filter((c) => c.redirectURI?.includes("/api/auth/oauth2/callback/"))
+        .map((c) => c.providerId);
+
+      expect(pinned).toEqual([...PINNED_SSO_PROVIDER_IDS]);
     });
 
     test("Azure discovery URL falls back to the 'common' tenant when none is configured", async () => {

@@ -37,6 +37,9 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
   if (!path) return null;
   // /callback/:id covers both built-in social and, since Better Auth 1.7 (ENG-2343), genericOAuth/SAML
   // too — they share the social-provider route now instead of the old /oauth2/callback/:providerId.
+  // This is the INTERNAL endpoint path, which is why it is not the pinned public callback URL: the URL
+  // customers register stays /api/auth/oauth2/callback/{providerId}, and legacy-sso-callback.ts maps it
+  // onto this route before Better Auth sees it. Do not "restore" /oauth2/ here.
   if (path.includes("/callback/")) return "sso";
   if (path === "/sign-in/email") return "password";
   // Auto-login after email verification (autoSignInAfterVerification, ENG-1746) creates a session for

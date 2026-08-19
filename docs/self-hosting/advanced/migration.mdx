@@ -6,12 +6,14 @@ icon: "arrow-right"
 
 ## v5.4
 
-v5.4 carries two breaking changes. The first is narrow: it affects **API keys** used against the Feedback
+v5.4 carries one breaking change, and it is narrow: it affects **API keys** used against the Feedback
 Records API or the MCP server, and nothing else. It needs no environment variables and no database
 migrations. If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do
-for it. The second is the underlying **Better Auth 1.7 upgrade** — every migration is additive and applies
-automatically, but self-hosters using Azure AD SSO must register a new redirect URI before upgrading (OIDC/
-Keycloak and SAML need no action in the common case).
+for it.
+
+v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no action at all:
+every migration is additive and applies automatically, and **your SSO callback URLs do not change** — see
+below.
 
 ### Feedback Record Mutations by API Key (action required for some integrations)
 
@@ -75,7 +77,7 @@ This change adds no migrations and touches no schema, so rolling the application
 to v5.3 undoes it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
 `manage` was always accepted wherever `write` was — so that step does not need reverting either.
 
-### Better Auth 1.7 Upgrade (action required for Azure AD SSO)
+### Better Auth 1.7 Upgrade (no action required)
 
 v5.4 upgrades the Better Auth authentication core from the 1.6 line to 1.7, which fixes
 [GHSA-p2fr-6hmx-4528](https://github.com/advisories/GHSA-p2fr-6hmx-4528): MCP OAuth access-token audiences
@@ -90,43 +92,38 @@ instance's JWT signing keys. Keys created before the upgrade keep working untouc
 null `alg` as the default algorithm — so there is nothing to backfill, but the columns must exist before
 the new version mints its next key.
 
-#### SSO Callback Path Reverts
+#### SSO Callback URLs Are Unchanged
 
-v5.2 moved every SSO callback to `/api/auth/oauth2/callback/{providerId}`. Better Auth 1.7 rebuilds generic
-OAuth on top of its social-provider path, which reverts that to `/api/auth/callback/{providerId}` for the
-three generic providers. Whether you need to act depends on the provider — the three did not all move the
-same way at v5.2, so they do not all move back the same way now:
+Your SSO callback URLs stay exactly as they are:
 
-| Provider | Callback URL from v5.4 on | Action required? |
+| Provider | Callback URL | Action required? |
 | --- | --- | --- |
-| Azure AD / Entra ID | `https://your-domain.com/api/auth/callback/azuread` | **Yes.** The provider id changed `azure-ad` → `azuread` at v5.2, so this is a third, distinct URI — not the same as either the pre-v5.2 or the v5.2–v5.3 one. Add it under **Redirect URIs** in your app registration before upgrading. |
-| Generic OIDC / Keycloak | `https://your-domain.com/api/auth/callback/openid` | **No, if you followed the v5.2 guide and left the pre-v5.2 URI registered.** This is that same URI — v5.4 just starts using it again. Add it back only if you removed it after upgrading to v5.2. |
-| SAML (BoxyHQ / Jackson) | `https://your-domain.com/api/auth/callback/saml` | **No**, for connections preloaded through Formbricks (its default `redirect_uri` is the wildcard `${WEBAPP_URL}/*`). Only re-register if you configured an explicit, non-wildcard `redirect_uri`. |
-| Google / GitHub | unchanged | No — these already use Better Auth's built-in social-provider path, which this upgrade does not change. |
+| Azure AD / Entra ID | `https://your-domain.com/api/auth/oauth2/callback/azuread` | No |
+| Generic OIDC / Keycloak | `https://your-domain.com/api/auth/oauth2/callback/openid` | No |
+| SAML (BoxyHQ / Jackson) | `https://your-domain.com/api/auth/oauth2/callback/saml` | No |
+| Google / GitHub | `https://your-domain.com/api/auth/callback/{provider}` | No |
 
-<Warning>
-  If you use Azure AD, add the new callback URL **before** restarting on v5.4, or Azure AD sign-in fails
-  with a redirect-URI mismatch until you do. OIDC/Keycloak and SAML are unaffected in the common case
-  above.
-</Warning>
+Better Auth 1.7 rebuilds its generic-OAuth support on top of the built-in social-provider route, which
+would otherwise have moved these three callbacks to `/api/auth/callback/{providerId}` and required you to
+register a new redirect URI at your identity provider. OAuth requires redirect URIs to match exactly, so a
+path change means editing every provider configuration by hand.
 
-#### Envoy Gateway Routing (Helm chart, informational only)
+Formbricks pins the callback URL instead, so it no longer follows the authentication library's internal
+routing. The URLs above are the ones introduced in v5.2 and they are now a stable part of the Formbricks
+API — a future authentication-core upgrade will not move them either.
 
-If you deploy with the Helm chart's Envoy Gateway and `envoy.formbricks.routes.authCallback` enabled, its
-route matches the path prefix `/api/auth/callback`. Today that only catches the credentials (password)
-callback and Google/GitHub sign-in — Azure AD, OIDC and SAML callbacks bypass this proxy entirely under
-`/api/auth/oauth2/callback/*`. After this upgrade those three start matching the same prefix and are
-proxied through it too. No action is required — the route's rate-limit rules are `Exact` matches on
-`/api/auth/callback/credentials` and `/api/auth/callback/token`, so SSO traffic is not newly throttled —
-but expect SSO callbacks to start appearing in this proxy's logs and metrics where they did not before.
+<Note>
+  Nothing to do, and nothing to undo. If you added a `/api/auth/callback/{providerId}` redirect URI in
+  advance based on an earlier draft of these notes, leaving it registered is harmless — most identity
+  providers accept several redirect URIs, and Formbricks simply will not use it.
+</Note>
 
 #### Rollback (Better Auth 1.7)
 
 The `Account.issuer` column and the new `oauthResource`, `oauthClientResource` and `oauthClientAssertion`
 tables are additive and nullable, and are not read by v5.3, so rolling the application images / Helm values
-back to v5.3 is safe without touching the database. If you registered a new Azure AD redirect URI for
-v5.4, leave it in place — it is harmless on v5.3, which still uses the `/api/auth/oauth2/callback/azuread`
-URI.
+back to v5.3 is safe without touching the database. SSO needs no attention in either direction: v5.3 and
+v5.4 use the same callback URLs.
 
 ## v5.3
 
