@@ -46,4 +46,17 @@ export const RESERVED_FIELD_NAMES: ReadonlySet<string> = new Set([
   "durationseconds",
   "startedat",
   "finishedat",
+  // Browser-runtime context, auto-captured by the renderer and frozen at display (ENG-1841).
+  "pagepath",
+  "pagereferrer",
+  "utmsource",
+  "utmmedium",
+  "utmcampaign",
+  "utmterm",
+  "utmcontent",
+  "screenwidth",
+  "screenheight",
+  "viewportwidth",
+  "viewportheight",
+  "timezone",
 ]);
