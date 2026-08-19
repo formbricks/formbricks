@@ -3,6 +3,7 @@ import { useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { ensureLiveRegion } from "@/lib/live-region";
+import { SURVEY_INSTRUCTIONS_ID } from "@/lib/survey-page";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,10 @@ interface SurveyContainerProps {
   clickOutside?: boolean;
   isOpen?: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  /** Survey name, used as the form's accessible name (WCAG 2.4.2). */
+  surveyName?: string;
+  /** Whether the survey renders a persistent instructions region worth describing the form with. */
+  hasInstructions?: boolean;
 }
 
 export function SurveyContainer({
@@ -30,6 +35,8 @@ export function SurveyContainer({
   clickOutside,
   isOpen = true,
   dir = "auto",
+  surveyName,
+  hasInstructions = false,
 }: Readonly<SurveyContainerProps>) {
   const isModal = mode === "modal";
   const { t } = useTranslation();
@@ -127,9 +134,25 @@ export function SurveyContainer({
 
   if (!isOpen) return null;
 
+  // The VPAT finding is that "forms themselves have no titles": every input had a label, but the
+  // form they belong to had no accessible name at all. role="form" + the survey name fixes that for
+  // BOTH surfaces — an embedded survey cannot own the host document's <title>, so this is the only
+  // name it can carry. The role is only declared once there is a name to give it: an unnamed form
+  // landmark is noise in a screen reader's landmark list rather than an improvement.
+  // Survey instructions used to appear on the welcome card and never again. Pointing the form at the
+  // persistent region means they are announced on entry to every page.
+  const instructionsId = surveyName && hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined;
+
   if (!isModal) {
     return (
-      <div id="fbjs" className="formbricks-form" style={{ height: "100%", width: "100%" }} dir={dir}>
+      <div
+        id="fbjs"
+        className="formbricks-form"
+        style={{ height: "100%", width: "100%" }}
+        dir={dir}
+        role={surveyName ? "form" : undefined}
+        aria-label={surveyName}
+        aria-describedby={instructionsId}>
         {children}
       </div>
     );
@@ -158,7 +181,10 @@ export function SurveyContainer({
             // assistive tech ignore everything outside it, so setting it on a corner survey hides the
             // host page from screen-reader users while they can still see and use it.
             aria-modal={hasOverlay ? "true" : undefined}
-            aria-label={t("common.survey_dialog")}
+            // The survey name is strictly more informative than the generic "Survey Dialog", which
+            // stays as the fallback for a survey rendered without one (previews).
+            aria-label={surveyName ?? t("common.survey_dialog")}
+            aria-describedby={hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined}
             tabIndex={-1}
             className={cn(
               getPlacementStyle(placement),

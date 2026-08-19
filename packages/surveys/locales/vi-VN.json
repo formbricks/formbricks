@@ -11,6 +11,7 @@
     "no_results_found": "Không tìm thấy kết quả",
     "open_in_new_tab": "Mở trong tab mới",
     "option_number": "Tùy chọn {number}",
+    "page_x_of_y": "Trang {current} / {total}",
     "people_responded": "{count, plural, other {{count} người đã phản hồi}}",
     "please_retry_now_or_try_again_later": "Vui lòng thử lại ngay hoặc thử lại sau.",
     "powered_by": "Được hỗ trợ bởi",

@@ -11,6 +11,7 @@
     "no_results_found": "کوئی نتائج نہیں ملے",
     "open_in_new_tab": "نئے ٹیب میں کھولیں",
     "option_number": "آپشن {number}",
+    "page_x_of_y": "صفحہ {current} از {total}",
     "people_responded": "{count, plural, one {1 شخص نے جواب دیا} other {{count} لوگوں نے جواب دیا}}",
     "please_retry_now_or_try_again_later": "براہ کرم ابھی دوبارہ کوشش کریں یا بعد میں دوبارہ آزمائیں۔",
     "powered_by": "فراہم کردہ",

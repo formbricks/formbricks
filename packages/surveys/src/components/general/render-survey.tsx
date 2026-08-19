@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { hasSurveyInstructions } from "@/lib/survey-page";
 import { isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
@@ -68,7 +69,9 @@ export function RenderSurvey(props: SurveyContainerProps) {
       clickOutside={props.clickOutside}
       onClose={close}
       isOpen={isOpen}
-      dir={dir}>
+      dir={dir}
+      surveyName={props.survey.name}
+      hasInstructions={hasSurveyInstructions(props.survey)}>
       <Survey
         {...props}
         autoFocus={autoFocus}
