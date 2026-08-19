@@ -68,7 +68,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
       clickOutside={props.clickOutside}
       onClose={close}
       isOpen={isOpen}
-      dir={dir}>
+      dir={dir}
+      surveyName={props.survey.name}>
       <Survey
         {...props}
         autoFocus={autoFocus}
