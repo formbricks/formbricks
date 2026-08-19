@@ -7,6 +7,7 @@
     "company_logo": "कंपनी लोगो",
     "finish": "समाप्त करें",
     "language_switch": "भाषा बदलें",
+    "language_switch_current": "भाषा: {language}",
     "next": "अगला",
     "no_results_found": "कोई परिणाम नहीं मिला",
     "open_in_new_tab": "नए टैब में खोलें",

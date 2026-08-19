@@ -7,6 +7,7 @@
     "company_logo": "Ettevõtte logo",
     "finish": "Lõpeta",
     "language_switch": "Keele vahetamine",
+    "language_switch_current": "Keel: {language}",
     "next": "Edasi",
     "no_results_found": "Tulemusi ei leitud",
     "open_in_new_tab": "Ava uuel vahelehel",

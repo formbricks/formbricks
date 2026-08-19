@@ -138,6 +138,8 @@ interface SurveyContainerProps {
   surveyName?: string;
   /** Whether the survey renders a persistent instructions region worth describing the form with. */
   hasInstructions?: boolean;
+  /** Language tag of the survey's active language, or null when the survey declares no language. */
+  lang?: string | null;
 }
 
 export function SurveyContainer({
@@ -151,6 +153,7 @@ export function SurveyContainer({
   dir = "auto",
   surveyName,
   hasInstructions = false,
+  lang,
 }: Readonly<SurveyContainerProps>) {
   const isModal = mode === "modal";
   const { t } = useTranslation();
@@ -234,6 +237,7 @@ export function SurveyContainer({
         className="formbricks-form"
         style={{ height: "100%", width: "100%" }}
         dir={dir}
+        lang={lang ?? undefined}
         role={surveyName ? "form" : undefined}
         aria-label={surveyName}
         aria-describedby={instructionsId}>
@@ -244,7 +248,7 @@ export function SurveyContainer({
   }
 
   return (
-    <div id="fbjs" className="formbricks-form" dir={dir}>
+    <div id="fbjs" className="formbricks-form" dir={dir} lang={lang ?? undefined}>
       <div
         // In-dialog updates (question changes after a submit) should wait for the reader to finish
         // speaking instead of interrupting it. A survey is never urgent enough for assertive speech.

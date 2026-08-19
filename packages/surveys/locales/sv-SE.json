@@ -7,6 +7,7 @@
     "company_logo": "Företagslogotyp",
     "finish": "Slutför",
     "language_switch": "Språkväxlare",
+    "language_switch_current": "Språk: {language}",
     "next": "Nästa",
     "no_results_found": "Inga resultat hittades",
     "open_in_new_tab": "Öppna i ny flik",
