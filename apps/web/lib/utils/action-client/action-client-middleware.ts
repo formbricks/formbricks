@@ -63,32 +63,53 @@ const checkOrganizationAccess = <T extends z.ZodRawShape>(
   return accessItem.roles.includes(role);
 };
 
-const checkWorkspaceTeamAccess = async (accessItem: any, userId: string) => {
-  if (accessItem.type !== "workspaceTeam") return false;
-  const workspacePermission = await getWorkspacePermissionByUserId(userId, accessItem.workspaceId);
-  if (!workspacePermission) return false;
-  if (
-    accessItem.minPermission !== undefined &&
-    teamPermissionWeight[workspacePermission as keyof typeof teamPermissionWeight] <
-      teamPermissionWeight[accessItem.minPermission as keyof typeof teamPermissionWeight]
-  ) {
-    return false;
-  }
-  return true;
+/**
+ * Compares a granted role/permission against the minimum required one.
+ *
+ * Both sides are looked up explicitly and an unrecognized value on either side is refused. Comparing
+ * the weights directly would fail open: an unknown value resolves to `undefined`, `number < undefined`
+ * is `false`, so the insufficient-permission guard would not fire and every member would be admitted.
+ *
+ * `granted` is validated before the no-minimum case, so an unrecognized grant is refused even when the
+ * caller asks for no minimum. Both current callers read `granted` from a native Postgres enum, so this
+ * is unreachable today; it is here so the helper stays fail-closed for a future caller whose grant is
+ * not enum-backed.
+ */
+const meetsMinimumWeight = (
+  weights: Record<string, number>,
+  granted: string,
+  minimum: string | undefined
+): boolean => {
+  const grantedWeight = weights[granted];
+  if (grantedWeight === undefined) return false;
+
+  if (minimum === undefined) return true;
+
+  const minimumWeight = weights[minimum];
+  if (minimumWeight === undefined) return false;
+
+  return grantedWeight >= minimumWeight;
 };
 
-const checkTeamAccess = async (accessItem: any, userId: string) => {
-  if (accessItem.type !== "team") return false;
+/**
+ * The `workspaceTeam` and `team` variants of `TAccess` carry no schema, so neither depends on `T` —
+ * hence the concrete `z.ZodRawShape` here rather than threading the generic through these two helpers.
+ * `checkAuthorizationUpdated` narrows on `type` before calling either, so each receives exactly its
+ * own variant and `workspaceId` / `teamId` / `minPermission` are checked at compile time.
+ */
+type TWorkspaceTeamAccess = Extract<TAccess<z.ZodRawShape>, { type: "workspaceTeam" }>;
+type TTeamAccess = Extract<TAccess<z.ZodRawShape>, { type: "team" }>;
+
+const checkWorkspaceTeamAccess = async (accessItem: TWorkspaceTeamAccess, userId: string) => {
+  const workspacePermission = await getWorkspacePermissionByUserId(userId, accessItem.workspaceId);
+  if (!workspacePermission) return false;
+  return meetsMinimumWeight(teamPermissionWeight, workspacePermission, accessItem.minPermission);
+};
+
+const checkTeamAccess = async (accessItem: TTeamAccess, userId: string) => {
   const teamRole = await getTeamRoleByTeamIdUserId(accessItem.teamId, userId);
   if (!teamRole) return false;
-  if (
-    accessItem.minPermission !== undefined &&
-    teamRoleWeight[teamRole as keyof typeof teamRoleWeight] <
-      teamRoleWeight[accessItem.minPermission as keyof typeof teamRoleWeight]
-  ) {
-    return false;
-  }
-  return true;
+  return meetsMinimumWeight(teamRoleWeight, teamRole, accessItem.minPermission);
 };
 
 export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
