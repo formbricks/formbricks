@@ -24,6 +24,10 @@ vi.mock("@/modules/auth/lib/auth", () => ({
       signInEmail: { path: "/sign-in/email" },
       resetPassword: { path: "/reset-password" },
       resetPasswordCallback: { path: "/reset-password/:token" },
+      // The OAuth callback Better Auth really declares (`api/routes/callback.mjs`). Present here so the
+      // label vocabulary matches production: without it `callback` is not a known first segment and a
+      // pinned SSO callback would label `unknown` in this suite while labelling correctly in the app.
+      callbackOAuth: { path: "/callback/:id" },
       // A nullish entry, deliberately. The label vocabulary is built at MODULE LOAD from this object,
       // so `endpoint.path` on a null would throw there and take down every `/api/auth/*` request — the
       // route, not just the tag. Importing this file at all is what asserts it does not.

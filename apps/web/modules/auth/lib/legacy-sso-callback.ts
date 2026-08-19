@@ -44,7 +44,8 @@ export const PINNED_SSO_PROVIDER_IDS = ["azuread", "openid", "saml"] as const;
  * Together those two conditions make this function's output a local invariant rather than something the
  * router has to clean up after: the only path it can ever produce is
  * `<basePath>/api/auth/callback/<pinned-id>`. A suffix rather than an anchored prefix because a Next.js
- * `basePath` deployment serves the app from a subpath, so the auth segment is not at position 0 (see
+ * `basePath` deployment serves the app from a subpath, so the auth segment is not at position 0 — the
+ * same reason `better-auth-path-label.ts` locates it with `indexOf` rather than `startsWith` (see
  * ENG-606); the single-auth-segment rule is what keeps that tolerance from also accepting a crafted
  * `/api/auth/x/api/auth/oauth2/callback/openid`. That one would be harmless anyway — the rewrite only ever
  * deletes an `/oauth2` segment, so it cannot reach an endpoint the caller could not already reach, and the
