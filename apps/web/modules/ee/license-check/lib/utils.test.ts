@@ -579,13 +579,41 @@ describe("License Utils", () => {
       expect(result).toBe(5);
     });
 
-    test("returns 3 for self-hosted without active workspace entitlement", async () => {
+    test("returns Infinity for self-hosted when an active license grants unlimited workspaces", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         source: "self_hosted_license",
         licenseStatus: "active",
         licenseFeatures: { ...defaultFeatures, workspaces: null },
+      });
+
+      const result = await getOrganizationWorkspacesLimit("org_1");
+
+      expect(result).toBe(Infinity);
+    });
+
+    test("returns 3 for self-hosted when the license is not active", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
+        ...defaultEntitlementsContext,
+        source: "self_hosted_license",
+        licenseStatus: "expired",
+        licenseFeatures: { ...defaultFeatures, workspaces: null },
+      });
+
+      const result = await getOrganizationWorkspacesLimit("org_1");
+
+      expect(result).toBe(3);
+    });
+
+    test("returns 3 for self-hosted when there are no license features", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
+        ...defaultEntitlementsContext,
+        source: "self_hosted_license",
+        licenseStatus: "active",
+        licenseFeatures: null,
       });
 
       const result = await getOrganizationWorkspacesLimit("org_1");

@@ -67,8 +67,8 @@ import { FeedbackSourceTypeSelector } from "./feedback-source-type-selector";
 import { FormbricksQuestionList } from "./formbricks-question-list";
 import { ImportModeField } from "./import-mode-field";
 
-const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/rest-api";
-const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/mcp";
+const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/feedback-sources";
+const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/platform/mcp/overview";
 
 interface CreateFeedbackSourceModalProps {
   open: boolean;

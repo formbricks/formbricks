@@ -105,6 +105,7 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
       onClose={close}
       isOpen={isOpen}
       dir={dir}
+      surveyName={props.survey.name}
       lang={languageTag}>
       <Survey
         {...props}
