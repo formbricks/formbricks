@@ -9,15 +9,20 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { onClose, onLanguageChange } = props;
+  const [activeLanguageCode, setActiveLanguageCode] = useState(props.languageCode);
   const isRTL = isRTLLanguage(props.survey, props.languageCode);
   const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "ltr");
-  const [activeLanguageCode, setActiveLanguageCode] = useState(props.languageCode);
 
+  // Direction is recalculated from the ACTIVE language, the same input the lang attribute below
+  // resolves from, so the two cannot disagree. Keying this on props.languageCode instead would miss
+  // every change that does not come from the host: a language switch, or a fallback when the active
+  // language is no longer configured. That combination is what produced conflicting attributes —
+  // lang="en-US" next to dir="rtl" — on a survey whose selected language had been removed.
   useEffect(() => {
-    const isRTL = isRTLLanguage(props.survey, props.languageCode);
+    const isRTL = isRTLLanguage(props.survey, activeLanguageCode);
     setDir(isRTL ? "rtl" : "ltr");
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only recalculate direction when languageCode changes, not on survey auto-save
-  }, [props.languageCode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only recalculate direction when the active language changes, not on survey auto-save
+  }, [activeLanguageCode]);
 
   // Survey declares its own language on the #fbjs root (WCAG 3.1.1). This is the only place that
   // covers embedded and app surveys: a link survey's host also sets <html lang>, but the JS widget
