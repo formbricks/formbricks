@@ -319,9 +319,9 @@ procedure.
 ## Inspect and drain durable delivery
 
 The v6 bridge writes projection intent in the same PostgreSQL transaction as an authorization source change.
-BullMQ wakes the delivery worker, but PostgreSQL remains the durable queue. Updates and deletes are treated as
-revocations; direct authority fails closed when a revocation remains unresolved for 60 seconds or enters dead
-letter.
+BullMQ wakes the delivery worker, but PostgreSQL remains the durable queue. Deletes, and updates that are not
+provably grants, are treated as revocations; direct authority fails closed when a revocation remains unresolved
+for 60 seconds or enters dead letter.
 
 ```bash
 formbricks-authzed outbox status
@@ -332,8 +332,11 @@ formbricks-authzed outbox replay
 
 `status` prints aggregate queue counts and ages only. It exits `0` when healthy, `2` at the 15-second warning or
 45-second critical thresholds (and for any dead letter), and `1` for an operational failure. `drain` processes
-revocations first. `replay` resets unresolved dead letters so the normal idempotent reconcilers can retry them;
-investigate the cause before replaying.
+revocations first and stops at the first batch that delivers nothing; a partially delivered batch is normal,
+because a failure is charged only to the events it is attributable to. `replay` resets unresolved dead letters
+so the normal idempotent reconcilers can retry them; investigate the cause before replaying. A SpiceDB outage
+never produces a dead letter, so one always means PostgreSQL and SpiceDB genuinely disagree. The six-hour audit
+replays dead letters on its own after a clean run, which bounds a fail-closed denial at six hours.
 
 These results contain no source IDs, relationship strings, credentials, or raw errors. This is different from
 the detailed backfill report below, which intentionally contains operational identifiers.

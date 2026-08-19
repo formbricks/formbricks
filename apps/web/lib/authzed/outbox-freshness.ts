@@ -1,9 +1,46 @@
 import "server-only";
-import { cache } from "react";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 import { hasStaleAuthzedRevocation } from "./outbox-repository";
 
-const getRequestCachedStaleness = cache(hasStaleAuthzedRevocation);
+/**
+ * How long one staleness answer is reused across authorization checks.
+ *
+ * React's `cache()` was here and did almost nothing: the Route Handler runtime carries no cache
+ * dispatcher, so `cache` falls through to a plain call there — and nine of the eleven rollout targets
+ * are Route-Handler-only. Every authorization check therefore paid its own PostgreSQL round trip, and
+ * a request makes many checks: three for workspace navigation, one per access item in the action
+ * client, one per directory in the feedback-directory fan-out.
+ *
+ * A short process-wide memo dedupes across all of them, including the surfaces that open no
+ * authorization context at all and the shadow comparisons that run after the response. The cost is
+ * bounded and explicit: the guard can arm up to this much later than the sixty-second window it
+ * enforces.
+ */
+export const AUTHZED_FRESHNESS_MEMO_TTL_MS = 1_000;
+
+let memoizedAt = Number.NEGATIVE_INFINITY;
+let memoizedValue = false;
+let inFlight: Promise<boolean> | null = null;
+
+const readStaleness = (): Promise<boolean> => {
+  if (Date.now() - memoizedAt < AUTHZED_FRESHNESS_MEMO_TTL_MS) return Promise.resolve(memoizedValue);
+
+  // Concurrent checks share one read. A value-only memo would not collapse a fan-out, because every
+  // check in it starts before any of them has finished.
+  inFlight ??= hasStaleAuthzedRevocation()
+    .then((stale) => {
+      memoizedValue = stale;
+      memoizedAt = Date.now();
+      return stale;
+    })
+    // Deliberately not memoized on rejection: a failed read must keep denying, not be cached as an
+    // answer. Clearing the slot here also lets the next check retry rather than reuse the rejection.
+    .finally(() => {
+      inFlight = null;
+    });
+
+  return inFlight;
+};
 
 /**
  * Refuse to authorize from a graph that may still contain access revoked in PostgreSQL.
@@ -13,7 +50,7 @@ const getRequestCachedStaleness = cache(hasStaleAuthzedRevocation);
  * closed once a revocation is older than the bounded delivery window or has entered dead letter.
  */
 export const assertAuthzedProjectionFreshness = async (): Promise<void> => {
-  if (!(await getRequestCachedStaleness())) return;
+  if (!(await readStaleness())) return;
 
   throw new AuthzedError({
     attempts: 0,

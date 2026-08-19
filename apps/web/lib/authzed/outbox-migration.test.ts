@@ -42,17 +42,36 @@ describe("AuthZed projection outbox migration contract", () => {
     expect(migration).toMatch(/previous_source[\s\S]*?true,[\s\S]*?NOW\(\)/);
   });
 
-  test("marks all updates and deletes as revocations and ignores non-authorization updates", () => {
-    expect(migration).toContain("TG_OP <> 'INSERT'");
+  test("watches only the columns that can change a projected relationship", () => {
     expect(migration).toContain('UPDATE OF "role", "accepted", "organizationId", "userId"');
     expect(migration).toContain('UPDATE OF "permission", "workspaceId", "teamId"');
     expect(migration).toContain('UPDATE OF "permission", "apiKeyId", "workspaceId"');
     expect(migration).not.toContain('UPDATE OF "lastUsedAt"');
   });
 
+  // Whether the classifier is *correct* is only observable against a real PostgreSQL, so the
+  // transition table lives in outbox-trigger.integration.test.ts. What a text assertion can see, and
+  // a runtime one cannot, is that no future target type is added without a deliberate decision:
+  // the CASE has no catch-all beyond `ELSE false`, so an unmapped type is a revocation.
+  test("classifies updates through a deny-by-default grant predicate", () => {
+    expect(migration).toContain("CREATE OR REPLACE FUNCTION authzed_projection_is_grant(");
+    expect(migration).toContain("ELSE NOT authzed_projection_is_grant(target_type, previous_source, source)");
+    expect(migration).toContain("ELSE false");
+    expect(migration).not.toContain("TG_OP <> 'INSERT'");
+  });
+
+  test("keeps every hot-path index off the seven days of retained history", () => {
+    const createIndexStatements = migration.match(/CREATE INDEX IF NOT EXISTS[\s\S]*?;/g) ?? [];
+    expect(createIndexStatements).not.toHaveLength(0);
+    for (const statement of createIndexStatements) {
+      expect(statement).toMatch(/WHERE "processedAt" IS (NULL|NOT NULL)/);
+    }
+  });
+
   test("is safe to rerun after a development schema push", () => {
     expect(migration).toContain('CREATE TABLE IF NOT EXISTS "AuthzedProjectionOutbox"');
     expect(migration.match(/DROP TRIGGER IF EXISTS/g)).toHaveLength(11);
     expect(migration).toContain("CREATE OR REPLACE FUNCTION enqueue_authzed_projection()");
+    expect(migration).toContain('ADD COLUMN IF NOT EXISTS "permanentFailures"');
   });
 });

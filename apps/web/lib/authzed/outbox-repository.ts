@@ -7,7 +7,26 @@ import {
   type TAuthzedOutboxStatus,
 } from "./outbox-types";
 
-export const AUTHZED_OUTBOX_MAX_ATTEMPTS = 20;
+/**
+ * Attempts after which the retry backoff stops growing.
+ *
+ * This is a bound on the exponent, not a dead-letter budget: `attempts` keeps climbing while SpiceDB
+ * is unreachable, and `2 ^ attempts` would overflow long before anyone noticed.
+ */
+export const AUTHZED_OUTBOX_MAX_BACKOFF_ATTEMPTS = 20;
+export const AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS = 5 * 60_000;
+
+/**
+ * Non-retryable failures, attributable to one event alone, before it dead-letters.
+ *
+ * Deliberately separate from `attempts`. A dead-lettered revocation arms the fail-closed freshness
+ * guard for the whole deployment, so reaching it must mean "PostgreSQL removed access and we cannot
+ * make SpiceDB agree" — never "SpiceDB was down for an hour". Retryable failures and group failures
+ * therefore leave this untouched; only an event that failed on its own has earned a permanent mark.
+ * With the backoff below that is roughly 17 minutes of solitary failure, well past the 45-second
+ * critical alarm.
+ */
+export const AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES = 10;
 export const AUTHZED_OUTBOX_LEASE_MS = 60_000;
 export const AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS = 60_000;
 export const AUTHZED_OUTBOX_BATCH_SIZE = 200;
@@ -89,30 +108,58 @@ export const markAuthzedOutboxEventsDelivered = async (
   });
 };
 
-const getRetryDelayMs = (attempts: number): number => Math.min(5 * 60_000, 1_000 * 2 ** (attempts - 1));
-
+/**
+ * Release a failed lease, and dead-letter only what the failure actually attributes.
+ *
+ * `isolated` says the attempt covered this event and nothing else. A group failure reports that the
+ * group did not deliver, not which member broke it, so it must never spend a permanent failure —
+ * otherwise one poison event walks its whole batch to dead letter, and a dead-lettered revocation is
+ * a deployment-wide authorization outage.
+ *
+ * One statement rather than one per event: this path runs when delivery is already failing, which is
+ * exactly when the database is least likely to have headroom for 200 sequential round trips. The
+ * backoff is computed from each row's own `attempts` so nothing has to be grouped by attempt count.
+ */
 export const markAuthzedOutboxEventsFailed = async (
   leaseOwner: string,
-  events: ReadonlyArray<TAuthzedOutboxEvent>,
-  errorCode: string
+  eventIds: ReadonlyArray<string>,
+  errorCode: string,
+  { isolated, retryable }: Readonly<{ isolated: boolean; retryable: boolean }>
 ): Promise<number> => {
-  let deadLettered = 0;
-  for (const event of events) {
-    const shouldDeadLetter = event.attempts >= AUTHZED_OUTBOX_MAX_ATTEMPTS;
-    deadLettered += shouldDeadLetter ? 1 : 0;
-    await prisma.authzedProjectionOutbox.updateMany({
-      where: { id: event.id, leaseOwner, processedAt: null },
-      data: {
-        availableAt: new Date(Date.now() + getRetryDelayMs(event.attempts)),
-        deadLetteredAt: shouldDeadLetter ? new Date() : null,
-        lastErrorCode: errorCode,
-        leaseExpiresAt: null,
-        leasedAt: null,
-        leaseOwner: null,
-      },
-    });
-  }
-  return deadLettered;
+  if (eventIds.length === 0) return 0;
+  const permanent = !retryable && isolated;
+
+  const [row] = await prisma.$queryRaw<ReadonlyArray<{ dead_lettered: bigint }>>`
+    WITH released AS (
+      UPDATE "AuthzedProjectionOutbox"
+      SET "availableAt" = NOW() + (
+            LEAST(
+              ${AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS}::double precision,
+              1000 * 2 ^ (LEAST("attempts", ${AUTHZED_OUTBOX_MAX_BACKOFF_ATTEMPTS}) - 1)
+            ) * INTERVAL '1 millisecond'
+          ),
+          "permanentFailures" = "permanentFailures" + ${permanent ? 1 : 0},
+          "deadLetteredAt" = CASE
+            WHEN ${permanent}::boolean
+             AND "permanentFailures" + 1 >= ${AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES}
+            THEN NOW()
+            ELSE NULL
+          END,
+          "lastErrorCode" = ${errorCode},
+          "leaseExpiresAt" = NULL,
+          "leasedAt" = NULL,
+          "leaseOwner" = NULL,
+          -- Raw SQL bypasses Prisma's @updatedAt, which the previous per-event updateMany got free.
+          "updatedAt" = NOW()
+      WHERE "id" = ANY(${[...eventIds]}::text[])
+        AND "leaseOwner" = ${leaseOwner}
+        AND "processedAt" IS NULL
+      RETURNING "deadLetteredAt"
+    )
+    SELECT COUNT(*) FILTER (WHERE "deadLetteredAt" IS NOT NULL) AS dead_lettered FROM released
+  `;
+
+  return Number(row?.dead_lettered ?? 0);
 };
 
 type TStatusRow = Readonly<{
@@ -126,42 +173,69 @@ type TStatusRow = Readonly<{
 
 type TStaleRevocationRow = Readonly<{ stale: boolean }>;
 
-/** Indexed fail-closed check for the authorization hot path; avoid aggregating retained history. */
+/**
+ * Indexed fail-closed check for the authorization hot path; avoid aggregating retained history.
+ *
+ * Two `EXISTS` rather than one with an `OR`, because the two halves live in different partial
+ * indexes: `_claim_idx` covers `deadLetteredAt IS NULL` and `_dead_letter_idx` covers the complement,
+ * and no single index can serve both sides of that disjunction. Split, each branch is an index probe
+ * and the second is skipped whenever the first already answered.
+ */
 export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
   const [row] = await prisma.$queryRaw<TStaleRevocationRow[]>`
-    SELECT EXISTS (
-      SELECT 1
-      FROM "AuthzedProjectionOutbox"
-      WHERE "isRevocation" = true
-        AND "processedAt" IS NULL
-        AND ("deadLetteredAt" IS NOT NULL OR "createdAt" <= NOW() - INTERVAL '60 seconds')
+    SELECT (
+      EXISTS (
+        SELECT 1
+        FROM "AuthzedProjectionOutbox"
+        WHERE "isRevocation" = true
+          AND "processedAt" IS NULL
+          AND "deadLetteredAt" IS NULL
+          AND "createdAt" <= NOW() - INTERVAL '60 seconds'
+      )
+      OR EXISTS (
+        SELECT 1
+        FROM "AuthzedProjectionOutbox"
+        WHERE "isRevocation" = true
+          AND "processedAt" IS NULL
+          AND "deadLetteredAt" IS NOT NULL
+      )
     ) AS stale
   `;
 
   return row?.stale ?? false;
 };
 
+/**
+ * Aggregate outbox health.
+ *
+ * Scoped to undelivered rows by the outer `WHERE`, which is what keeps this off the seven days of
+ * retained history: the delivery job calls it every five seconds, so an unscoped aggregate is a
+ * full-table scan twelve times a minute. `dead_lettered` is unaffected by the scoping — a
+ * dead-lettered row always has a NULL `processedAt`, because the claim skips dead letters and
+ * `replayAuthzedOutboxDeadLetters` clears `deadLetteredAt` before delivery is possible again.
+ */
 export const getAuthzedOutboxStatus = async (): Promise<TAuthzedOutboxStatus> => {
   const [row] = await prisma.$queryRaw<TStatusRow[]>`
     SELECT
-      COUNT(*) FILTER (WHERE "processedAt" IS NULL AND "deadLetteredAt" IS NULL) AS pending,
+      COUNT(*) FILTER (WHERE "deadLetteredAt" IS NULL) AS pending,
       COUNT(*) FILTER (WHERE "deadLetteredAt" IS NOT NULL) AS dead_lettered,
       COUNT(*) FILTER (
-        WHERE "processedAt" IS NULL AND "isRevocation" = true
+        WHERE "isRevocation" = true
           AND ("deadLetteredAt" IS NOT NULL OR "createdAt" <= NOW() - INTERVAL '60 seconds')
       ) AS overdue_revocations,
       COUNT(*) FILTER (
-        WHERE "processedAt" IS NULL AND "isRevocation" = true
+        WHERE "isRevocation" = true
           AND ("deadLetteredAt" IS NOT NULL OR "createdAt" <= NOW() - INTERVAL '45 seconds')
       ) AS revocations_past_critical,
       COUNT(*) FILTER (
-        WHERE "processedAt" IS NULL AND "isRevocation" = true
+        WHERE "isRevocation" = true
           AND ("deadLetteredAt" IS NOT NULL OR "createdAt" <= NOW() - INTERVAL '15 seconds')
       ) AS revocations_past_warning,
       EXTRACT(EPOCH FROM NOW() - MIN("createdAt") FILTER (
-        WHERE "processedAt" IS NULL AND "deadLetteredAt" IS NULL
+        WHERE "deadLetteredAt" IS NULL
       ))::double precision AS oldest_pending_age_seconds
     FROM "AuthzedProjectionOutbox"
+    WHERE "processedAt" IS NULL
   `;
 
   return {
@@ -188,6 +262,9 @@ export const replayAuthzedOutboxDeadLetters = async (): Promise<number> => {
       leaseExpiresAt: null,
       leasedAt: null,
       leaseOwner: null,
+      // Reset alongside `attempts`: a replay is a decision that the cause was addressed, so the event
+      // gets the full permanent-failure budget again rather than dead-lettering on its next failure.
+      permanentFailures: 0,
     },
   });
   return result.count;

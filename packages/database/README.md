@@ -181,6 +181,24 @@ By default, the seed script uses `upsert` to ensure it can be run multiple times
    - Copies the file to Prisma's internal directory
    - Applies the migration to the database
 
+### Indexes Prisma cannot express
+
+Prisma's `@@index` has no `where`, so a **partial index** can only live in hand-written migration SQL. When a
+model needs one, declare **no** `@@index` for it at all and leave a comment on the model pointing at the
+migration — do not also declare an approximate non-partial copy.
+
+Both ways of keeping one are worse than keeping none. Under the same index name, `prisma db push` sees a name
+match with a different definition, drops the index and recreates it without the predicate, and the migration's
+`CREATE INDEX IF NOT EXISTS` then skips it — leaving a silently wrong shape. Under a different name, dev
+databases accumulate both sets.
+
+Deployments are unaffected either way: `prisma migrate deploy` never reads the schema file. The cost is that a
+developer who runs `db push` loses the partial indexes until they rerun the migration, which is the same
+contract any hand-written trigger or function in a migration already lives under — so write those statements to
+be rerunnable (`CREATE INDEX IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION`, `DROP ... IF EXISTS`).
+
+`AuthzedProjectionOutbox` is the worked example.
+
 ### Adding a Data Migration
 
 1. Navigate to the `packages/database` directory

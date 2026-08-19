@@ -6,7 +6,7 @@ import { getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN } from "./constants";
 import { recordAuthzedReconciliationAudit } from "./metrics";
-import { pruneAuthzedOutboxHistory } from "./outbox-repository";
+import { pruneAuthzedOutboxHistory, replayAuthzedOutboxDeadLetters } from "./outbox-repository";
 
 /** Six-hour full audit. It repairs attributable missing/mismatched edges and never prunes unknown data. */
 export const processAuthzedScheduledReconciliationJob = async (): Promise<void> => {
@@ -50,5 +50,16 @@ export const processAuthzedScheduledReconciliationJob = async (): Promise<void> 
     );
   }
 
+  // Runs whatever the audit concluded: it only deletes rows delivered more than a week ago, so it is
+  // never the thing standing between an operator and evidence.
   await pruneAuthzedOutboxHistory();
+
+  // A clean full audit means PostgreSQL and SpiceDB already agree everywhere, so whatever a dead
+  // letter was trying to say has since been said by other means. Hand it back to the delivery loop
+  // rather than leaving the freshness guard denying every authorization check until someone runs
+  // `outbox replay` by hand — a dead-lettered revocation has no age bound in that guard on purpose.
+  // A still-poisoned event simply re-dead-letters, so this is a six-hourly retry, not a loop. The
+  // audit sweeps organizations, so an event for a deleted user or a cross-tenant pair may not be
+  // covered by `reconciled`; replaying it anyway is idempotent and strictly better than denying.
+  if (result.status === "reconciled") await replayAuthzedOutboxDeadLetters();
 };

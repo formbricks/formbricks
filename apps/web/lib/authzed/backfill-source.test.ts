@@ -9,7 +9,7 @@ import {
   readOrganizationSource,
   readWorkspaceSource,
 } from "./backfill-source";
-import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE } from "./constants";
+import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_TARGET_CHUNK_SIZE } from "./constants";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
 
 vi.mock("node:crypto", async (importOriginal) => importOriginal());
@@ -565,7 +565,7 @@ describe("findMissingSourceRefs", () => {
   test("chunks a large request so the query cannot approach the bind-parameter ceiling", async () => {
     // The composite-key kinds contribute two bind parameters per record, so an unchunked list would build
     // exactly the unbounded OR that the chunk size exists to prevent.
-    const refs = Array.from({ length: AUTHZED_BACKFILL_TARGET_CHUNK_SIZE + 1 }, (_unused, index) => ({
+    const refs = Array.from({ length: AUTHZED_TARGET_CHUNK_SIZE + 1 }, (_unused, index) => ({
       kind: "teamMembership" as const,
       teamId: "team-1",
       userId: `user-${index}`,

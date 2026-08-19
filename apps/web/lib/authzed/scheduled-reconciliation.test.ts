@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { runAuthzedBackfill } from "./backfill";
 import { isAuthzedEnabled } from "./config";
 import { recordAuthzedReconciliationAudit } from "./metrics";
-import { pruneAuthzedOutboxHistory } from "./outbox-repository";
+import { pruneAuthzedOutboxHistory, replayAuthzedOutboxDeadLetters } from "./outbox-repository";
 import { processAuthzedScheduledReconciliationJob } from "./scheduled-reconciliation";
 
 vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
@@ -14,7 +14,10 @@ vi.mock("./backfill-apply", () => ({
 vi.mock("./client", () => ({ getAuthzedClient: vi.fn(() => ({ client: true })) }));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
 vi.mock("./metrics", () => ({ recordAuthzedReconciliationAudit: vi.fn() }));
-vi.mock("./outbox-repository", () => ({ pruneAuthzedOutboxHistory: vi.fn() }));
+vi.mock("./outbox-repository", () => ({
+  pruneAuthzedOutboxHistory: vi.fn(),
+  replayAuthzedOutboxDeadLetters: vi.fn(),
+}));
 
 const result = (status: "drifted" | "failed" | "reconciled", missing = 0, mismatchedPermissions = 0) =>
   ({
@@ -52,6 +55,29 @@ describe("scheduled AuthZed reconciliation", () => {
       status: "reconciled",
     });
     expect(pruneAuthzedOutboxHistory).toHaveBeenCalledOnce();
+  });
+
+  // A dead-lettered revocation denies every enforced authorization check with no age bound, so the
+  // audit is the only thing standing between one poison event and an indefinite outage.
+  test("returns dead letters to the delivery loop once an audit comes back clean", async () => {
+    vi.mocked(runAuthzedBackfill).mockResolvedValue(result("reconciled"));
+
+    await processAuthzedScheduledReconciliationJob();
+
+    expect(replayAuthzedOutboxDeadLetters).toHaveBeenCalledOnce();
+  });
+
+  test("leaves dead letters alone while PostgreSQL and SpiceDB still disagree", async () => {
+    for (const status of ["drifted", "failed"] as const) {
+      vi.clearAllMocks();
+      vi.mocked(isAuthzedEnabled).mockReturnValue(true);
+      vi.mocked(runAuthzedBackfill).mockResolvedValue(result(status));
+
+      await processAuthzedScheduledReconciliationJob();
+
+      expect(replayAuthzedOutboxDeadLetters).not.toHaveBeenCalled();
+      expect(pruneAuthzedOutboxHistory).toHaveBeenCalledOnce();
+    }
   });
 
   test("repairs attributable drift and verifies it with a second dry run", async () => {

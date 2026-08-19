@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { TAuthzedParentEdge, TAuthzedSourceRef } from "./backfill-diff";
 import type { TAuthzedRelationship } from "./client";
-import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE } from "./constants";
+import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_TARGET_CHUNK_SIZE } from "./constants";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
 import {
   ORGANIZATION_ACCESS_RELATIONS,
@@ -560,8 +560,8 @@ const inChunks = async <TItem>(
   read: (chunk: ReadonlyArray<TItem>) => Promise<ReadonlyArray<TItem>>
 ): Promise<ReadonlyArray<TItem>> => {
   const collected: TItem[] = [];
-  for (let start = 0; start < items.length; start += AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
-    collected.push(...(await read(items.slice(start, start + AUTHZED_BACKFILL_TARGET_CHUNK_SIZE))));
+  for (let start = 0; start < items.length; start += AUTHZED_TARGET_CHUNK_SIZE) {
+    collected.push(...(await read(items.slice(start, start + AUTHZED_TARGET_CHUNK_SIZE))));
   }
 
   return collected;
@@ -581,7 +581,7 @@ const inChunks = async <TItem>(
 export const findMismatchedParentEdges = async (
   edges: ReadonlyArray<TAuthzedParentEdge>
 ): Promise<ReadonlyArray<TAuthzedParentEdge>> => {
-  if (edges.length > AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
+  if (edges.length > AUTHZED_TARGET_CHUNK_SIZE) {
     return inChunks(edges, findMismatchedParentEdges);
   }
 
@@ -661,7 +661,7 @@ export const findMissingSourceRefs = async (
   // parameters per record, so an unchunked list would approach PostgreSQL's parameter ceiling and give
   // the planner an `OR` list it cannot use an index for. One query per kind *per chunk* still keeps the
   // cost proportional to the number of kinds rather than the number of records.
-  if (refs.length > AUTHZED_BACKFILL_TARGET_CHUNK_SIZE) {
+  if (refs.length > AUTHZED_TARGET_CHUNK_SIZE) {
     return inChunks(refs, findMissingSourceRefs);
   }
 

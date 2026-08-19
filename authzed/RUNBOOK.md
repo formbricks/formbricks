@@ -20,13 +20,13 @@ contract.
 
 ## 1. Symptoms
 
-| What you see                           | What it usually means                           |
-| -------------------------------------- | ----------------------------------------------- |
-| Outbox warning count is non-zero       | A revocation has been pending for 15 seconds.   |
-| Outbox critical count is non-zero      | A revocation has been pending for 45 seconds.   |
-| `authzed_projection_stale`             | Revocation is 60 seconds old or dead-lettered.  |
-| Scheduled reconciliation reports drift | Attributable graph drift was found or repaired. |
-| A dead letter is present               | Delivery exhausted 20 attempts; investigate.    |
+| What you see                           | What it usually means                             |
+| -------------------------------------- | ------------------------------------------------- |
+| Outbox warning count is non-zero       | A revocation has been pending for 15 seconds.     |
+| Outbox critical count is non-zero      | A revocation has been pending for 45 seconds.     |
+| `authzed_projection_stale`             | Revocation is 60 seconds old or dead-lettered.    |
+| Scheduled reconciliation reports drift | Attributable graph drift was found or repaired.   |
+| A dead letter is present               | Ten solitary non-retryable failures; investigate. |
 
 On the bridge artifact, legacy authorization is unaffected while durable delivery retries or repair converges
 the graph. On the direct-authority artifact, operational AuthZed failures fail protected operations closed.
@@ -298,7 +298,11 @@ the service recovers:
 1. Run `formbricks-authzed health` and verify datastore migrations.
 2. Inspect `formbricks-authzed outbox status` and correct the operational cause.
 3. Run `formbricks-authzed outbox replay` when dead letters are understood, then
-   `formbricks-authzed outbox drain`.
+   `formbricks-authzed outbox drain`. A dead letter can only be reached by an event that failed on its own,
+   non-retryably, ten times — a SpiceDB outage never produces one, however long it lasts, so treat any dead
+   letter as a real disagreement between PostgreSQL and SpiceDB rather than as fallout from the outage.
+   The six-hour audit also replays dead letters by itself whenever it comes back `reconciled`, so a global
+   `authzed_projection_stale` denial clears within six hours even if nobody intervenes.
 4. Run the complete dry-run audit, apply attributable repair, and require two consecutive clean audits.
 5. Keep direct-authority cutover blocked while a revocation is pending, dead-lettered, or older than its SLA.
 

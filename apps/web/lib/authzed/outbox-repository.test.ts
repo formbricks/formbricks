@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
-  AUTHZED_OUTBOX_MAX_ATTEMPTS,
   claimAuthzedOutboxEvents,
   getAuthzedOutboxStatus,
   hasStaleAuthzedRevocation,
@@ -28,6 +27,15 @@ const row = (targetType: string) => ({
   secondaryId: "private-secondary",
   targetType,
 });
+
+/**
+ * The release statement binds exactly one boolean: "this failure is attributable to one event".
+ * Located by type rather than by position so reordering the SQL cannot silently invert the check.
+ */
+const boundPermanentFlag = (): unknown =>
+  (vi.mocked(prisma.$queryRaw).mock.calls.at(-1) ?? [])
+    .slice(1)
+    .find((value: unknown) => typeof value === "boolean");
 
 describe("AuthZed projection outbox repository", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -74,42 +82,66 @@ describe("AuthZed projection outbox repository", () => {
     });
   });
 
-  test("releases retryable work with bounded exponential backoff before attempt twenty", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-08-18T00:00:00.000Z"));
-    const event = { ...row("membership"), attempts: 3 };
-    vi.mocked(prisma.authzedProjectionOutbox.updateMany).mockResolvedValue({ count: 1 });
+  // The backoff schedule and the dead-letter threshold are computed in SQL from each row's own
+  // `attempts`, so they are only observable against a real PostgreSQL — see
+  // outbox-trigger.integration.test.ts. What matters here is the attribution rule that decides
+  // whether a failure is allowed to count towards dead-lettering at all.
+  test("charges a permanent failure only when one event failed on its own", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ dead_lettered: 1n }]);
 
-    await expect(markAuthzedOutboxEventsFailed("lease-owner", [event], "authzed_unavailable")).resolves.toBe(
-      0
-    );
+    await expect(
+      markAuthzedOutboxEventsFailed("lease-owner", ["event-1"], "authzed_invalid_request", {
+        isolated: true,
+        retryable: false,
+      })
+    ).resolves.toBe(1);
 
-    expect(prisma.authzedProjectionOutbox.updateMany).toHaveBeenCalledWith({
-      where: { id: event.id, leaseOwner: "lease-owner", processedAt: null },
-      data: {
-        availableAt: new Date("2026-08-18T00:00:04.000Z"),
-        deadLetteredAt: null,
-        lastErrorCode: "authzed_unavailable",
-        leaseExpiresAt: null,
-        leasedAt: null,
-        leaseOwner: null,
-      },
-    });
+    expect(boundPermanentFlag()).toBe(true);
   });
 
-  test("dead-letters the twentieth failed delivery", async () => {
-    const event = { ...row("membership"), attempts: AUTHZED_OUTBOX_MAX_ATTEMPTS };
-    vi.mocked(prisma.authzedProjectionOutbox.updateMany).mockResolvedValue({ count: 1 });
+  test("never charges a permanent failure for a retryable fault or an unattributed group", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ dead_lettered: 0n }]);
 
-    await expect(markAuthzedOutboxEventsFailed("lease-owner", [event], "authzed_unavailable")).resolves.toBe(
-      1
+    for (const attribution of [
+      { isolated: true, retryable: true },
+      { isolated: false, retryable: false },
+      { isolated: false, retryable: true },
+    ]) {
+      await expect(
+        markAuthzedOutboxEventsFailed(
+          "lease-owner",
+          ["event-1", "event-2"],
+          "authzed_unavailable",
+          attribution
+        )
+      ).resolves.toBe(0);
+
+      expect(boundPermanentFlag()).toBe(false);
+    }
+  });
+
+  test("releases a whole failed batch in one statement", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ dead_lettered: 0n }]);
+
+    await markAuthzedOutboxEventsFailed(
+      "lease-owner",
+      Array.from({ length: 200 }, (_unused, index) => `event-${String(index)}`),
+      "authzed_unavailable",
+      { isolated: false, retryable: true }
     );
 
-    expect(prisma.authzedProjectionOutbox.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ deadLetteredAt: expect.any(Date) }),
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not reach the database when nothing failed", async () => {
+    await expect(
+      markAuthzedOutboxEventsFailed("lease-owner", [], "authzed_unavailable", {
+        isolated: false,
+        retryable: true,
       })
-    );
+    ).resolves.toBe(0);
+
+    expect(prisma.$queryRaw).not.toHaveBeenCalled();
   });
 
   test("normalizes aggregate status values without exposing source rows", async () => {
@@ -161,6 +193,7 @@ describe("AuthZed projection outbox repository", () => {
         leaseExpiresAt: null,
         leasedAt: null,
         leaseOwner: null,
+        permanentFailures: 0,
       },
     });
   });

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS "AuthzedProjectionOutbox" (
     "secondaryId" TEXT,
     "isRevocation" BOOLEAN NOT NULL DEFAULT false,
     "attempts" INTEGER NOT NULL DEFAULT 0,
+    "permanentFailures" INTEGER NOT NULL DEFAULT 0,
     "availableAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "leasedAt" TIMESTAMP(3),
     "leaseExpiresAt" TIMESTAMP(3),
@@ -21,20 +22,96 @@ CREATE TABLE IF NOT EXISTS "AuthzedProjectionOutbox" (
     CONSTRAINT "AuthzedProjectionOutbox_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_pending_idx"
-  ON "AuthzedProjectionOutbox"("processedAt", "deadLetteredAt", "availableAt", "createdAt");
-CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_revocation_idx"
-  ON "AuthzedProjectionOutbox"("isRevocation", "processedAt", "deadLetteredAt", "createdAt");
-CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_leaseExpiresAt_idx"
-  ON "AuthzedProjectionOutbox"("leaseExpiresAt");
-CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_target_idx"
-  ON "AuthzedProjectionOutbox"("targetType", "primaryId", "secondaryId");
+-- `attempts` drives the retry backoff and tells an operator how many times delivery was tried.
+-- `permanentFailures` is the separate, much smaller budget that gates dead-lettering, so that a
+-- SpiceDB outage of any duration can never dead-letter healthy events. See outbox-repository.ts.
+ALTER TABLE "AuthzedProjectionOutbox"
+  ADD COLUMN IF NOT EXISTS "permanentFailures" INTEGER NOT NULL DEFAULT 0;
+
+-- One index per access pattern, each partial to the rows that pattern can ever match. Processed rows
+-- are retained for seven days, so only the prune index below is allowed to carry that history —
+-- otherwise every hot-path lookup pays for a week of delivered events.
+--
+-- These predicates cannot be expressed in Prisma (`@@index` has no `where`), so the model in
+-- packages/database/schema/main.prisma deliberately declares no indexes and points here instead.
+-- `prisma db push` on a dev database therefore drops them; rerunning this migration restores them,
+-- which is the same contract the triggers below already live under.
+DROP INDEX IF EXISTS "AuthzedProjectionOutbox_pending_idx";
+DROP INDEX IF EXISTS "AuthzedProjectionOutbox_revocation_idx";
+DROP INDEX IF EXISTS "AuthzedProjectionOutbox_leaseExpiresAt_idx";
+DROP INDEX IF EXISTS "AuthzedProjectionOutbox_target_idx";
+
+-- The claim. Its key columns ARE the claim's ORDER BY, so the LIMIT is served by an ordered index
+-- scan with no sort. Also serves the freshness guard's overdue-revocation EXISTS (equality on the
+-- leading key, range on the second) and every pending counter in the status query.
+CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_claim_idx"
+  ON "AuthzedProjectionOutbox"("isRevocation" DESC, "createdAt" ASC)
+  WHERE "processedAt" IS NULL AND "deadLetteredAt" IS NULL;
+
+-- Dead letters: the freshness guard's second EXISTS, the dead-letter gauge, and `outbox replay`.
+-- A dead-lettered row always has a NULL `processedAt` — the claim skips dead letters, and replay
+-- clears `deadLetteredAt` before delivery is possible — so this predicate loses no rows.
+CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_dead_letter_idx"
+  ON "AuthzedProjectionOutbox"("isRevocation", "deadLetteredAt")
+  WHERE "processedAt" IS NULL AND "deadLetteredAt" IS NOT NULL;
+
+-- History prune. The only index that carries delivered rows.
+CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_processed_idx"
+  ON "AuthzedProjectionOutbox"("processedAt")
+  WHERE "processedAt" IS NOT NULL;
+
+/**
+ * Does this UPDATE provably leave the projected relationship set a superset of what it was?
+ *
+ * `isRevocation` has exactly one reader: the fail-closed freshness guard. So the question it must
+ * answer is "could an undelivered copy of this event leave SpiceDB granting access that PostgreSQL
+ * has taken away?" — a property of how the projectors *write*, not of the permission closure in
+ * authzed/schema.zed. Deriving it from that closure would put a second, untestable copy of the
+ * schema here; deriving it from the write shape keeps it checkable against the reconcilers.
+ *
+ * Deny by default. An unmapped target type, an unmapped column, or any enum move is a revocation.
+ * In particular the role ladder is deliberately NOT encoded: OrganizationRole is rankable, but a
+ * rank table here has no compile-time backstop the way relationship-map.ts does, so adding a role
+ * to schema.zed would silently make this wrong in the fail-OPEN direction. Role changes are
+ * one-at-a-time admin actions rather than the bulk operations this classifier exists to keep off
+ * the guard, so denying them costs nothing. Revisit only if a bulk re-roling path appears.
+ */
+CREATE OR REPLACE FUNCTION authzed_projection_is_grant(
+  target_type text,
+  previous_source jsonb,
+  source jsonb
+) RETURNS boolean AS $$
+  SELECT CASE target_type
+    -- reconcileUser deletes every relationship while `isActive` is false, so false -> true can only
+    -- add them back. `isActive` is the only column the User trigger watches.
+    WHEN 'user' THEN
+      (previous_source ->> 'isActive') IS DISTINCT FROM 'true'
+      AND (source ->> 'isActive') = 'true'
+
+    -- feedback-directory.ts writes assignment edges as `delete` while the directory is archived and
+    -- `touch` once it is not. Its parent edge is only ever touched, never re-pointed, so an
+    -- organizationId move leaves the old organization's administrators in place: still a revocation.
+    WHEN 'feedback_directory' THEN
+      (previous_source ->> 'isArchived') = 'true'
+      AND (source ->> 'isArchived') IS DISTINCT FROM 'true'
+      AND previous_source ->> 'organizationId' IS NOT DISTINCT FROM source ->> 'organizationId'
+
+    -- organization-membership.ts projects every membership row regardless of `accepted` (see the
+    -- comment on its readSnapshot), so accepting an invite writes byte-identical relationships.
+    -- A `role` move always deletes the relation for the old role, so it stays a revocation.
+    WHEN 'membership' THEN
+      previous_source ->> 'role' IS NOT DISTINCT FROM source ->> 'role'
+
+    ELSE false
+  END;
+$$ LANGUAGE sql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION enqueue_authzed_projection()
 RETURNS trigger AS $$
 DECLARE
   source jsonb;
   previous_source jsonb;
+  is_revocation boolean;
   target_type text := TG_ARGV[0];
   primary_field text := TG_ARGV[1];
   secondary_field text := NULLIF(TG_ARGV[2], '');
@@ -70,6 +147,12 @@ BEGIN
     END IF;
   END IF;
 
+  is_revocation := CASE
+    WHEN TG_OP = 'INSERT' THEN false
+    WHEN TG_OP = 'DELETE' THEN true
+    ELSE NOT authzed_projection_is_grant(target_type, previous_source, source)
+  END;
+
   INSERT INTO "AuthzedProjectionOutbox" (
     "id",
     "targetType",
@@ -82,7 +165,7 @@ BEGIN
     target_type,
     source ->> primary_field,
     CASE WHEN secondary_field IS NULL THEN NULL ELSE source ->> secondary_field END,
-    TG_OP <> 'INSERT',
+    is_revocation,
     NOW()
   );
 
