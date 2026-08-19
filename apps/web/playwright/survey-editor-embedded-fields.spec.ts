@@ -415,10 +415,14 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     );
 
     await saveDraft(page);
+    // Asserted on the definition, not on the link's `storageKey`: a variable is addressed by its cuid
+    // everywhere, so `toDesiredEmbeddedFields` stores that id as the storage key while the name — the
+    // only thing this gate reads — lives on the definition. A hidden field's two happen to be equal,
+    // which is why the sibling test above can compare storage keys directly.
     const stored = await prisma.surveyEmbeddedData.findMany({
       where: { surveyId },
-      select: { storageKey: true },
+      select: { embeddedData: { select: { name: true, source: true } } },
     });
-    expect(stored.map((field) => field.storageKey)).toEqual([allowedName]);
+    expect(stored.map((link) => link.embeddedData)).toEqual([{ name: allowedName, source: "computed" }]);
   });
 });
