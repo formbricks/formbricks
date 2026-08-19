@@ -1,3 +1,4 @@
+import { load } from "js-yaml";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -75,21 +76,20 @@ describe("docker/docker-compose.yml Redis/Valkey exposure (ENG-2184)", () => {
   // The bundled Valkey is Better Auth's session/token store (secondaryStorage). Publishing it to
   // the host binds 0.0.0.0:6379 with no password, exposing every live session token — and Docker's
   // port rule bypasses host firewalls like ufw. The app reaches it over the internal compose
-  // network (REDIS_URL=redis://redis:6379), so no host publish is needed. It must stay internal,
-  // exactly like the postgres service.
-  test("does not publish the session store to the host", () => {
-    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
-    const redisBlock = getServiceBlock(composeContents, "redis");
+  // network (REDIS_URL=redis://redis:6379), so no host publish is needed. Assert on the *resolved*
+  // compose model — js-yaml expands anchors and merge keys — so a port smuggled in via an alias or
+  // a `<<` merge cannot slip past a raw-text check.
+  test("the redis service publishes no host port", () => {
+    const doc = load(readFileSync(dockerComposeTemplatePath, "utf8")) as {
+      services?: Record<string, { ports?: unknown }>;
+    };
+    const redis = doc.services?.redis;
 
-    expect(redisBlock).not.toMatch(/^\s*ports:/m);
-    expect(redisBlock).not.toContain("6379:6379");
-  });
-
-  test("keeps postgres internal too, as the reference pattern", () => {
-    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
-    const postgresBlock = getServiceBlock(composeContents, "postgres");
-
-    expect(postgresBlock).not.toMatch(/^\s*ports:/m);
+    expect(redis, "the redis service is missing from docker-compose.yml").toBeTypeOf("object");
+    expect(
+      redis?.ports ?? [],
+      "the redis (Valkey) service must not publish any host port — it is reachable only on the internal compose network (ENG-2184)"
+    ).toEqual([]);
   });
 });
 

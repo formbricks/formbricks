@@ -588,10 +588,26 @@ Common checks:
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub
   service.
 - **Port conflicts**: Confirm port `3000` and any optional service ports you enabled are not already in use on
-  the host. The bundled Valkey is not published to the host — it is reachable only on the internal compose
-  network — so it does not need port `6379` free on the host.
+  the host. The current template does not publish the bundled Valkey (`redis` service) to the host — it is
+  reachable only on the internal compose network — so a fresh install does not need port `6379` free on the
+  host.
 - **Optional Qwen/vLLM issues**: Check GPU availability, NVIDIA Container Toolkit installation, and
   `docker compose --profile qwen logs --tail=200 vllm`.
+
+<Warning>
+  **Existing installs: remove the bundled Valkey host port.** Older templates published the `redis`
+  (Valkey) service on `0.0.0.0:6379` with no password. That instance stores Better Auth sessions and
+  verification tokens, so an exposed port lets anyone who can reach it read live sessions and take over
+  accounts. Updating Formbricks (`docker compose pull` / `up -d`) does **not** rewrite your existing
+  `docker-compose.yml`, so the mapping stays until you remove it. Open your `docker-compose.yml`, delete the
+  ```yaml
+  ports:
+    - "6379:6379"
+  ```
+  lines from the `redis:` service, then run `docker compose up -d`. The app reaches Valkey over the internal
+  compose network, so nothing else needs to change. Only keep a publish if an external tool genuinely needs
+  it, and then bind it to loopback (`127.0.0.1:6379:6379`) rather than all interfaces.
+</Warning>
 
 <Note>
   To edit any of the available environment variables, check out our
