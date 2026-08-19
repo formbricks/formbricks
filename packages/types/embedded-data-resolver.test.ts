@@ -606,6 +606,19 @@ describe("RESERVED_FIELD_CATALOG", () => {
       country: "DE",
       action: "Clicked Upgrade",
       ipAddress: "203.0.113.7",
+      // Browser-runtime context, snapshotted by the renderer at display time (ENG-1841).
+      pagePath: "/pricing",
+      pageReferrer: "https://news.example.org/weekly?issue=42",
+      utmSource: "news",
+      utmMedium: "email",
+      utmCampaign: "august-launch",
+      utmTerm: "pricing",
+      utmContent: "hero-cta",
+      screenWidth: 2560,
+      screenHeight: 1440,
+      viewportWidth: 1280,
+      viewportHeight: 800,
+      timezone: "Europe/Berlin",
     },
   };
 
@@ -664,6 +677,22 @@ describe("RESERVED_FIELD_CATALOG", () => {
       { name: "durationSeconds", dataType: "number", availability: "server", privacy: "keep" },
       { name: "startedAt", dataType: "date", availability: "server", privacy: "keep" },
       { name: "finishedAt", dataType: "date", availability: "server", privacy: "keep" },
+      // Browser-runtime context (ENG-1841). All `client`: the renderer captures them itself, so a
+      // mid-survey picker may offer them. `pageReferrer` is `redactQuery` because a URL's query
+      // string is where an identifier hides; the rest carry nothing identifying on their own. There
+      // is no `pageUrl` - it read the same `location.href` as `url`, so the two were identical.
+      { name: "pagePath", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "pageReferrer", dataType: "string", availability: "client", privacy: "redactQuery" },
+      { name: "utmSource", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "utmMedium", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "utmCampaign", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "utmTerm", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "utmContent", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "screenWidth", dataType: "number", availability: "client", privacy: "keep" },
+      { name: "screenHeight", dataType: "number", availability: "client", privacy: "keep" },
+      { name: "viewportWidth", dataType: "number", availability: "client", privacy: "keep" },
+      { name: "viewportHeight", dataType: "number", availability: "client", privacy: "keep" },
+      { name: "timezone", dataType: "string", availability: "client", privacy: "keep" },
     ]);
   });
 
@@ -688,6 +717,22 @@ describe("RESERVED_FIELD_CATALOG", () => {
       durationSeconds: 90,
       startedAt: "2026-08-01T09:00:00.000Z",
       finishedAt: "2026-08-01T09:02:30.000Z",
+      pagePath: "/pricing",
+      // `redactQuery` too, for the same reason as `url`: a projected value can be recalled into a
+      // redirect URL or an email. The fixture above keeps `?issue=42`, so this asserts the read-side
+      // narrowing rather than a capture change.
+      pageReferrer: "https://news.example.org/weekly",
+      utmSource: "news",
+      utmMedium: "email",
+      utmCampaign: "august-launch",
+      utmTerm: "pricing",
+      utmContent: "hero-cta",
+      // Numbers stay numbers through the projection — a logic condition compares them arithmetically.
+      screenWidth: 2560,
+      screenHeight: 1440,
+      viewportWidth: 1280,
+      viewportHeight: 800,
+      timezone: "Europe/Berlin",
     });
   });
 
@@ -703,6 +748,30 @@ describe("RESERVED_FIELD_CATALOG", () => {
     expect(projectCatalog(tokenised).url).toBe("https://app.test/s/abc");
     // Read-side narrowing only — capture is the Anonymize toggle's job, and it is off here.
     expect(tokenised.meta.url).toBe("https://app.test/s/abc?suToken=secret&lang=de#top");
+  });
+
+  test("a historical response resolves none of the browser-runtime fields, and does not throw", () => {
+    // The migration story for ENG-1841 in one assertion: nothing was backfilled, because the values
+    // only ever existed in a browser that has long since closed. Every new entry must therefore
+    // report unset on a response collected before the renderer captured them — not "", not 0.
+    const projected = projectCatalog(historicalResponse);
+
+    for (const name of [
+      "pagePath",
+      "pageReferrer",
+      "utmSource",
+      "utmMedium",
+      "utmCampaign",
+      "utmTerm",
+      "utmContent",
+      "screenWidth",
+      "screenHeight",
+      "viewportWidth",
+      "viewportHeight",
+      "timezone",
+    ]) {
+      expect(projected).not.toHaveProperty(name);
+    }
   });
 
   test("resolves what a historical response captured and reports the rest as unset", () => {
@@ -1506,7 +1575,16 @@ describe("listMidSurveyReservedEntries", () => {
     listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, declared).map((entry) => entry.name);
 
   test("offers only what a browser can resolve mid-survey", () => {
-    expect(names([]).sort()).toStrictEqual(["action", "language", "source", "url"]);
+    // Derived from the catalog's own `availability` rather than a literal list, because the catalog
+    // grows: ENG-1841 added twelve client entries at once, and a pinned list turns every such
+    // addition into a failing test that says nothing about this function. Re-deriving from the data
+    // still checks the contract — that `availability` is the only thing consulted, and that no
+    // server-derived entry leaks through. Which specific names must never appear is pinned below.
+    const clientResolvable = RESERVED_FIELD_CATALOG.filter((entry) => entry.availability !== "server").map(
+      (entry) => entry.name
+    );
+
+    expect(names([]).sort()).toStrictEqual([...clientResolvable].sort());
   });
 
   test("every server-derived field named by the ticket is absent", () => {
@@ -1540,7 +1618,8 @@ describe("listMidSurveyReservedEntries", () => {
   });
 
   test("shadowing a server-only name changes nothing, since it was never offered", () => {
-    expect(names(["country"]).sort()).toStrictEqual(["action", "language", "source", "url"]);
+    // Stated as "same as declaring nothing", which is the claim, and which no catalog addition breaks.
+    expect(names(["country"])).toStrictEqual(names([]));
   });
 
   test("entries are returned as catalog entries, carrying their dataType", () => {

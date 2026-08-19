@@ -2,6 +2,11 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  collectDeclaredFieldNames,
+  describeDeclaredFieldNameError,
+  validateNewDeclaredFieldNames,
+} from "@formbricks/types/surveys/declared-field-guard";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
@@ -188,6 +193,25 @@ export async function executeV3SurveyPatch(params: {
     throw new V3SurveyReferenceValidationError([
       { name: "triggers", reason: APP_SURVEY_TRIGGER_REQUIRED_MESSAGE },
     ]);
+  }
+
+  // ENG-1839: a newly declared field may not take a reserved name. Before the transaction, so a
+  // refusal is a validation response rather than a rollback, and before `ensureV3WorkspaceLanguages`
+  // — which writes workspace languages — so a rejected patch creates nothing. Names `currentSurvey`
+  // already declares are grandfathered and pass untouched.
+  const declaredFieldNameErrors = validateNewDeclaredFieldNames({
+    existing: collectDeclaredFieldNames(currentSurvey),
+    incoming: collectDeclaredFieldNames(document),
+  });
+  if (declaredFieldNameErrors.length > 0) {
+    throw new V3SurveyReferenceValidationError(
+      declaredFieldNameErrors.map((error) => ({
+        name: error.field,
+        reason: describeDeclaredFieldNameError(error),
+        code: "forbidden_identifier" as const,
+        identifier: error.field,
+      }))
+    );
   }
 
   const languages = await ensureV3WorkspaceLanguages(currentSurvey.workspaceId, languageRequests, requestId);

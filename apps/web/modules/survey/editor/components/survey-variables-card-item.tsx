@@ -7,9 +7,10 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
+import { validateId } from "@formbricks/types/surveys/validation";
 import { findVariableUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
+import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
@@ -161,14 +162,32 @@ export const SurveyVariablesCardItem = ({
               name="name"
               rules={{
                 validate: (value) => {
-                  // Single shared naming rule for new variable names: the charset check and the
-                  // leading-letter check together are exactly `isSafeIdentifier`. Kept first so the
-                  // name-rule message still wins over the duplicate messages, as `pattern` did.
-                  // Shares the strict gate's message because it states both halves of the rule.
-                  if (!isSafeIdentifier(value)) {
-                    return t("workspace.surveys.edit.validate_id_not_safe_identifier", {
-                      type: t("common.variable"),
+                  /*
+                   * The same strict gate the server applies (ENG-1839), so an author learns here rather
+                   * than from an untranslated save error. `isSafeIdentifier` alone was not enough:
+                   * `country` satisfies it, so a variable named after an auto-captured system field was
+                   * accepted by the editor and only refused by `validateNewDeclaredFieldNames` at save
+                   * time. Same call shape as `hidden-fields-card.tsx`, so the two cards cannot drift.
+                   *
+                   * Empty id lists on purpose: `validateId`'s duplicate check would pre-empt this
+                   * card's own duplicate messages, which are more specific ("already taken",
+                   * "conflicts with a hidden field") and are applied just below.
+                   *
+                   * Skipped when an edit leaves the name untouched — that is the grandfather rule in
+                   * the editor. A survey that already declares a variable called `country` must stay
+                   * editable, or the author could no longer change its type or value.
+                   */
+                  const isUnchangedName =
+                    mode === "edit" && variable?.name.toLowerCase() === value.toLowerCase();
+
+                  if (!isUnchangedName) {
+                    const validateIdError = validateId(value, [], [], [], [], {
+                      requireSafeIdentifier: true,
                     });
+
+                    if (validateIdError) {
+                      return getValidateIdErrorMessage(validateIdError, "variable", t);
+                    }
                   }
                   if (mode === "create" && localSurvey.variables.find((v) => v.name === value)) {
                     return t("workspace.surveys.edit.variable_name_is_already_taken_please_choose_another");
