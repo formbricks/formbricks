@@ -110,6 +110,27 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
 const toAccountSubject = (subject: string | number | null | undefined): string | undefined =>
   subject === null || subject === undefined ? undefined : String(subject);
 
+/**
+ * The synthetic `Account.issuer` for our three generic providers. Hand-rolled ON PURPOSE — do not
+ * "simplify" this to `createOAuthAccountIssuer` from `@better-auth/core/db`, even though that helper is
+ * public, currently byte-identical, and does exactly this.
+ *
+ * The value this must agree with is not upstream's, it is OUR MIGRATION's. Because `accountIssuer` is set
+ * explicitly on each provider below, Better Auth stores and looks up whatever we hand it, so upstream's
+ * own format never enters the picture. What does is the backfill in
+ * `migration/20260812110000_eng_2343_better_auth_17_resource_model` — a SQL literal
+ * (`'local:oauth:' || "provider"`) that cannot call a TypeScript helper. Tracking upstream would mean a
+ * future release quietly changing this string out from under rows already written, and the failure mode
+ * is the worst kind: every pre-upgrade SSO user stops matching their own account and is pushed into
+ * verify-before-link recovery. Pinned to the SQL, an upstream format change is a no-op for us.
+ *
+ * `encodeURIComponent` is kept for parity with what upstream writes today, and is a no-op for `azuread`,
+ * `openid` and `saml`. A provider id that actually needed encoding would diverge from the raw SQL
+ * concatenation — so adding one means updating the backfill too, not just this line.
+ *
+ * better-auth-providers.test.ts pins all three strings; that test is the guard, and it fails if either
+ * side of this pairing moves.
+ */
 const ssoAccountIssuer = (providerId: string): string => `local:oauth:${encodeURIComponent(providerId)}`;
 
 /**
