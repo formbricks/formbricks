@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -36,7 +35,6 @@ export const PurgeFeedbackDirectoryData = ({
   const { t } = useTranslation();
   const [isPurgeDialogOpen, setIsPurgeDialogOpen] = useState(false);
   const [confirmationName, setConfirmationName] = useState("");
-  const router = useRouter();
   const { mutateAsync: purgeDataset, isPending } = usePurgeFeedbackDataset();
 
   const hasValidConfirmation = hasMatchingDatasetPurgeConfirmation(confirmationName, directoryName);
@@ -63,8 +61,11 @@ export const PurgeFeedbackDirectoryData = ({
       // a moment after this resolves. Promising completion here would make the next screen look broken.
       toast.success(t("workspace.settings.feedback_directories.purge_started"));
       handleDialogOpenChange(false);
+      // No router.refresh(): nothing on this screen changes. The dataset table renders name,
+      // workspaces and archived status — a purge touches none of them — and the purge is async, so
+      // the records are still there when this resolves. Archiving does refresh, because it flips the
+      // status column this one leaves alone.
       onPurge?.();
-      router.refresh();
     } catch (error) {
       // A timeout arrives as a DOMException, which getV3ApiErrorMessage would surface verbatim
       // ("The operation was aborted due to timeout") — untranslated and meaningless here.
@@ -110,6 +111,12 @@ export const PurgeFeedbackDirectoryData = ({
           <form
             onSubmit={async (e) => {
               e.preventDefault();
+              // This form is rendered (via DeleteDialog) inside the settings modal's own <form onSubmit=
+              // {handleSubmit(handleSubmitForm)}>. Radix portals the dialog's DOM out to document.body,
+              // but React's synthetic onSubmit still bubbles along the JSX tree, not the DOM tree — so
+              // without stopPropagation, Enter here also reaches the outer form and saves the dataset
+              // (toast "updated successfully", both dialogs close), regardless of what was typed.
+              e.stopPropagation();
               // Enter bypasses the footer button, which is the only thing carrying `isDeleting`, so
               // without this a held Enter fires a second purge while the first is still in flight.
               if (isPending) return;
