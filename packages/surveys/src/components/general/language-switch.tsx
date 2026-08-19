@@ -34,7 +34,7 @@ export function LanguageSwitch({
   borderRadius,
   dir = "auto",
   setDir,
-}: LanguageSwitchProps) {
+}: Readonly<LanguageSwitchProps>) {
   const { t } = useTranslation();
   const hoverColorWithOpacity = hoverColor ?? mixColor("#000000", "#ffffff", 0.8);
 
@@ -48,6 +48,13 @@ export function LanguageSwitch({
   const defaultLanguageCode = surveyLanguages.find((surveyLanguage) => {
     return surveyLanguage.default;
   })?.language.code;
+  // Canonical form of the default language's code. The option list is deduped by canonical code and
+  // keeps the canonical row, so a survey whose DEFAULT row uses a legacy alias ("hi") shows the
+  // canonical code ("hi-IN") — comparing the two raw strings would then miss the match and store the
+  // code instead of the "default" sentinel.
+  const canonicalDefaultLanguageCode = defaultLanguageCode
+    ? (normalizeLanguageCode(defaultLanguageCode) ?? defaultLanguageCode)
+    : undefined;
 
   // Dedupe enabled languages by canonical code so the back-compat legacy aliases (e.g. "hi" sent
   // alongside "hi-IN") don't show as duplicate options. Prefer the canonical entry over a legacy alias
@@ -99,7 +106,10 @@ export function LanguageSwitch({
   };
 
   const changeLanguage = (languageCode: string) => {
-    const calculatedLanguageCode = languageCode === defaultLanguageCode ? "default" : languageCode;
+    const calculatedLanguageCode =
+      (normalizeLanguageCode(languageCode) ?? languageCode) === canonicalDefaultLanguageCode
+        ? "default"
+        : languageCode;
     setSelectedLanguageCode(calculatedLanguageCode);
 
     handleI18nLanguage(calculatedLanguageCode);
@@ -123,7 +133,11 @@ export function LanguageSwitch({
   return (
     <div className="z-1001 flex w-fit items-center">
       <button
-        title={triggerLabel}
+        // The language NAME, not the full label: aria-label already supplies the accessible name, and
+        // an identical title becomes the accessible description — screen readers then read the same
+        // sentence twice on every focus. The tooltip's only remaining job is showing the untruncated
+        // endonym, so that is all it carries.
+        title={activeLanguage ? getLanguageDisplayName(activeLanguage.language.code) : triggerLabel}
         type="button"
         className={cn(
           "text-heading relative flex h-8 items-center justify-center gap-1.5 rounded-md focus:ring-2 focus:ring-offset-2 focus:outline-hidden",

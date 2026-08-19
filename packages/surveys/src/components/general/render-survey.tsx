@@ -4,7 +4,7 @@ import { getSurveyLanguageTag, isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 
-export function RenderSurvey(props: SurveyContainerProps) {
+export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   const [isOpen, setIsOpen] = useState(true);
   const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -28,13 +28,24 @@ export function RenderSurvey(props: SurveyContainerProps) {
   //
   // The active language lives in Survey's own state, and it already reports every change through
   // onLanguageChange. Wrapping that callback keeps a single source of truth rather than adding a
-  // second channel out of Survey. Re-firing with an unchanged code is a no-op in both setters.
+  // second channel out of Survey.
+  //
+  // The survey is read through a ref, deliberately kept OUT of the dependency list. `onLanguageChange`
+  // is a public prop, and Survey's reporting effect is keyed on its identity — so if this callback were
+  // rebuilt whenever the survey object changed, that effect would re-fire on renders where no language
+  // changed. The editor preview passes a freshly built survey object on every render, which would make
+  // a host's handler run on every keystroke.
+  const surveyRef = useRef(props.survey);
+  useEffect(() => {
+    surveyRef.current = props.survey;
+  }, [props.survey]);
+
   const handleLanguageChange = useCallback(
     (languageCode: string) => {
-      setLanguageTag(getSurveyLanguageTag(props.survey, languageCode));
+      setLanguageTag(getSurveyLanguageTag(surveyRef.current, languageCode));
       onLanguageChange?.(languageCode);
     },
-    [props.survey, onLanguageChange]
+    [onLanguageChange]
   );
 
   const close = useCallback(() => {

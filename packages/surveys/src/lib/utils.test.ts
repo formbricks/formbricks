@@ -127,7 +127,7 @@ describe("getSurveyLanguageTag", () => {
     languageWithCode("de-DE", false),
   ]);
 
-  test("returns a concrete language code unchanged", () => {
+  test("returns a configured language code unchanged", () => {
     expect(getSurveyLanguageTag(multiLanguageSurvey, "de-DE")).toBe("de-DE");
   });
 
@@ -152,8 +152,32 @@ describe("getSurveyLanguageTag", () => {
     ).toBeNull();
   });
 
-  test("prefers the requested code over the default even when they differ in region", () => {
-    expect(getSurveyLanguageTag(multiLanguageSurvey, "en-GB")).toBe("en-GB");
+  test("falls back to the default for a code the survey does not have", () => {
+    // The tag lands in a DOM lang attribute, so an unconfigured code would declare a language whose
+    // content is not being rendered — getLocalizedValue falls back to the default text, and a screen
+    // reader would read that text with the wrong pronunciation rules. The offline restore path can
+    // replay a persisted language that has since been removed from the survey.
+    expect(getSurveyLanguageTag(multiLanguageSurvey, "fr-FR")).toBe("en-US");
+  });
+
+  test("falls back to the default for a configured but disabled language", () => {
+    // Same rule the server applies to ?lang=: a language that is not offered is not declared.
+    const survey = surveyWithLanguages([
+      languageWithCode("en-US", true),
+      { ...languageWithCode("de-DE", false), enabled: false },
+    ]);
+    expect(getSurveyLanguageTag(survey, "de-DE")).toBe("en-US");
+  });
+
+  test("resolves a legacy alias to the stored canonical code", () => {
+    // The stored code is what content is keyed under, so that is what the tag has to be.
+    const survey = surveyWithLanguages([languageWithCode("en-US", true), languageWithCode("hi-IN", false)]);
+    expect(getSurveyLanguageTag(survey, "hi")).toBe("hi-IN");
+  });
+
+  test("returns null when nothing matches and there is no default either", () => {
+    const survey = surveyWithLanguages([languageWithCode("de-DE", false)]);
+    expect(getSurveyLanguageTag(survey, "fr-FR")).toBeNull();
   });
 });
 

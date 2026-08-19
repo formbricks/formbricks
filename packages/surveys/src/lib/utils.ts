@@ -1,4 +1,5 @@
 import { twMerge } from "tailwind-merge";
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/src/canonical";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
@@ -222,16 +223,35 @@ export const getDefaultLanguageCode = (survey: TJsWorkspaceStateSurvey): string 
  * Resolves the survey's active language to a real language tag, usable as a `lang` attribute.
  *
  * The renderer tracks the active language as either a stored language code or the sentinel
- * `"default"`. `"default"` is not a language tag and must never reach the DOM, so it is resolved
- * to the code of the survey's default language. Returns `null` when the survey has no languages
+ * `"default"`. `"default"` is not a language tag and must never reach the DOM, so it is resolved to
+ * the code of the survey's default language. Returns `null` when the survey has no languages
  * configured at all: such a survey has no language to declare and should inherit the host
- * document's, rather than assert a guess.
+ * document's rather than assert a guess.
+ *
+ * The code is resolved AGAINST the survey's enabled languages rather than trusted, and falls back to
+ * the default language when it does not match one — the same rule the server's `getLanguageCode`
+ * applies to `?lang=`. Without that check a stale code declares a language whose content is not
+ * being rendered: `getLocalizedValue` falls back to the `default` text, so a screen reader would
+ * read English with (say) French pronunciation rules, which is worse than declaring nothing. The
+ * offline restore path is the concrete way to get there — it replays a persisted `selectedLanguage`
+ * without revalidating it against a survey whose languages may since have changed.
+ *
+ * Matching is canonical-aware, so a legacy alias (`hi`) resolves to its stored canonical row
+ * (`hi-IN`), and the STORED code is returned so the tag always matches the content lookup key.
  */
 export const getSurveyLanguageTag = (
   survey: TJsWorkspaceStateSurvey,
   languageCode: string
 ): string | null => {
-  if (languageCode && languageCode !== "default") return languageCode;
+  if (languageCode && languageCode !== "default") {
+    const requested = normalizeLanguageCode(languageCode) ?? languageCode;
+    const configured = survey.languages.find((surveyLanguage) => {
+      if (!surveyLanguage.enabled) return false;
+      const code = surveyLanguage.language.code;
+      return (normalizeLanguageCode(code) ?? code) === requested;
+    });
+    if (configured) return configured.language.code;
+  }
   return getDefaultLanguageCode(survey) ?? null;
 };
 
