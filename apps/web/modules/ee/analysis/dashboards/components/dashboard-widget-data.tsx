@@ -4,6 +4,8 @@ import { use } from "react";
 import { useTranslation } from "react-i18next";
 import { TChartQuery } from "@formbricks/types/analysis";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
+import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
+import { DEFAULT_WIDGET_VIEW, type TWidgetView } from "@/modules/ee/analysis/dashboards/lib/widget-view";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { TDashboardWidgetError } from "../lib/widget-errors";
 
@@ -13,9 +15,14 @@ interface DashboardWidgetDataProps {
     | { error: TDashboardWidgetError }
   >;
   chartType: TChartType;
+  view?: TWidgetView;
 }
 
-export function DashboardWidgetData({ dataPromise, chartType }: Readonly<DashboardWidgetDataProps>) {
+export function DashboardWidgetData({
+  dataPromise,
+  chartType,
+  view = DEFAULT_WIDGET_VIEW,
+}: Readonly<DashboardWidgetDataProps>) {
   const { t } = useTranslation();
   const result = use(dataPromise);
 
@@ -23,6 +30,16 @@ export function DashboardWidgetData({ dataPromise, chartType }: Readonly<Dashboa
     return (
       <div className="flex h-full items-center justify-center text-center text-sm text-red-500">
         {t("workspace.analysis.dashboards.failed_to_load_chart_data")}
+      </div>
+    );
+  }
+
+  // The data view reuses the chart builder's table, so the numbers behind a widget read the same
+  // way in both places. It scrolls inside the widget rather than resizing it.
+  if (view === "data") {
+    return (
+      <div className="h-full overflow-auto">
+        <DataViewer data={result.data} optionLabels={result.optionLabels} />
       </div>
     );
   }

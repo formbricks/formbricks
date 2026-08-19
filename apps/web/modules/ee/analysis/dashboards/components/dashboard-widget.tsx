@@ -1,20 +1,33 @@
 "use client";
 
-import { CopyIcon, Maximize2Icon, MoreVerticalIcon, SquarePenIcon, TrashIcon } from "lucide-react";
+import {
+  ChartColumnIcon,
+  CopyIcon,
+  Maximize2Icon,
+  MoreVerticalIcon,
+  SquarePenIcon,
+  TableIcon,
+  TrashIcon,
+} from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { type TWidgetView, WIDGET_VIEWS } from "@/modules/ee/analysis/dashboards/lib/widget-view";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface DashboardWidgetProps {
   title: string;
   children: ReactNode;
   isEditing?: boolean;
+  /** Omitted for widgets with no data behind them (skeletons, load errors): no view to switch. */
+  view?: TWidgetView;
+  onViewChange?: (view: TWidgetView) => void;
   onEdit?: () => void;
   onDuplicate?: () => void;
   onResize?: () => void;
@@ -25,6 +38,8 @@ export function DashboardWidget({
   title,
   children,
   isEditing,
+  view,
+  onViewChange,
   onEdit,
   onDuplicate,
   onResize,
@@ -46,6 +61,38 @@ export function DashboardWidget({
           isEditing && "rgl-drag-handle cursor-grab active:cursor-grabbing"
         )}>
         <h3 className="flex-1 truncate text-sm font-semibold text-gray-800">{title}</h3>
+        {view && onViewChange && (
+          <div
+            className="ml-2 flex shrink-0 items-center rounded-md border border-gray-200 p-0.5"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}>
+            {WIDGET_VIEWS.map((widgetView) => {
+              const isActive = view === widgetView;
+              const Icon = widgetView === "chart" ? ChartColumnIcon : TableIcon;
+              const label =
+                widgetView === "chart"
+                  ? t("workspace.analysis.charts.chart")
+                  : t("workspace.analysis.charts.chart_data_tab");
+              return (
+                <TooltipRenderer key={widgetView} tooltipContent={label}>
+                  <button
+                    type="button"
+                    aria-label={label}
+                    aria-pressed={isActive}
+                    className={cn(
+                      "flex items-center rounded-sm p-1 transition-colors",
+                      isActive
+                        ? "bg-gray-100 text-gray-700"
+                        : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                    )}
+                    onClick={() => onViewChange(widgetView)}>
+                    <Icon className="size-3.5" />
+                  </button>
+                </TooltipRenderer>
+              );
+            })}
+          </div>
+        )}
         {hasMenuActions && (
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger asChild>
