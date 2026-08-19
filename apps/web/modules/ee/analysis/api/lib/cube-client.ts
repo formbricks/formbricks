@@ -60,6 +60,33 @@ const queueCubeQueryAuditEvent = ({
   });
 };
 
+/**
+ * Cube's client pivot replaces a NULL measure with a fill value, defaulting to 0 — so a survey that
+ * never asked a question renders identically to one that genuinely scored zero (npsScore and
+ * csatScore in the Cube schema return NULL deliberately when there is nothing to compute).
+ *
+ * `fillWithValue: null` does not help: the client resolves the cell as
+ * `row[measure] ?? fillWithValue ?? 0`, and a null fill falls straight through that chain back to 0.
+ * So fill with a sentinel no real value can collide with, then turn it back into null here.
+ */
+const NULL_FILL_SENTINEL = "__formbricks_null__";
+
+const restoreNullMeasures = (rows: Record<string, unknown>[]): Record<string, unknown>[] =>
+  rows.map((row) => {
+    let hasSentinel = false;
+    for (const value of Object.values(row)) {
+      if (value === NULL_FILL_SENTINEL) {
+        hasSentinel = true;
+        break;
+      }
+    }
+    if (!hasSentinel) return row;
+
+    return Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [key, value === NULL_FILL_SENTINEL ? null : value])
+    );
+  });
+
 export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   try {
     validateCubeQueryMembers(input.query);
@@ -91,7 +118,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   try {
     const client = cubejs(token, { apiUrl });
     const resultSet = await client.load(expandPresetDateRanges(input.query) as Query);
-    const result = resultSet.tablePivot();
+    const result = restoreNullMeasures(resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL }));
     queueCubeQueryAuditEvent({ input, requestId, status: "success" });
     return result;
   } catch (error) {

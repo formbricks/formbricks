@@ -101,6 +101,41 @@ describe("executeTenantScopedQuery", () => {
     expect(typeof payload.jti).toBe("string");
   });
 
+  test("pivots with a sentinel fill value, because a null fill would still resolve to 0", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await executeTenantScopedQuery(scopedInput);
+
+    // The client resolves a cell as `row[measure] ?? fillWithValue ?? 0`, so passing null falls
+    // through to 0. Only a non-nullish sentinel survives to be mapped back to null.
+    expect(mockTablePivot).toHaveBeenCalledWith({ fillWithValue: "__formbricks_null__" });
+  });
+
+  test("maps the sentinel back to null so an unasked measure is not reported as zero", async () => {
+    mockTablePivot.mockReturnValue([
+      { "FeedbackRecords.sourceName": "Pre-match", "FeedbackRecords.npsScore": "__formbricks_null__" },
+      { "FeedbackRecords.sourceName": "After-match", "FeedbackRecords.npsScore": "72.92" },
+      { "FeedbackRecords.sourceName": "Accessibility", "FeedbackRecords.npsScore": "0.00" },
+    ]);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery(scopedInput);
+
+    expect(result).toEqual([
+      { "FeedbackRecords.sourceName": "Pre-match", "FeedbackRecords.npsScore": null },
+      { "FeedbackRecords.sourceName": "After-match", "FeedbackRecords.npsScore": "72.92" },
+      // A genuine zero must survive as a zero, not be swept up with the nulls.
+      { "FeedbackRecords.sourceName": "Accessibility", "FeedbackRecords.npsScore": "0.00" },
+    ]);
+  });
+
+  test("leaves rows without a sentinel exactly as the pivot returned them", async () => {
+    const rows = [{ "FeedbackRecords.count": 42 }];
+    mockTablePivot.mockReturnValue(rows);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery(scopedInput);
+
+    expect(result).toEqual(rows);
+  });
+
   test("does not cache tenant-bearing Cube clients or tokens", async () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
 
