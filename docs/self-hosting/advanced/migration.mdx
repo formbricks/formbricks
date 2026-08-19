@@ -118,6 +118,22 @@ API — a future authentication-core upgrade will not move them either.
   providers accept several redirect URIs, and Formbricks simply will not use it.
 </Note>
 
+#### MCP Access Tokens Now End With Their Session
+
+An MCP access token used to stay valid until its own expiry, independently of the session that authorized
+it. In 1.7 it is bound to that session: once the session ends — the user signs out, or the session is
+revoked — the token is inactive. `/introspect` reports `active: false` for it and
+`/api/auth/oauth2/userinfo` rejects it, rather than honouring it until its TTL runs out.
+
+This is upstream hardening, and it is the stricter of the two behaviours: a token that outlives the sign-out
+which created it is exactly what a revocation is supposed to stop.
+
+**No action is required.** MCP clients re-authorize on their own — Claude Code and MCP Inspector both do —
+so a user who signs out and back in sees nothing. It is listed here for one case only: a custom integration
+that caches a Formbricks MCP access token and reuses it across sessions will start receiving rejections
+where it previously succeeded, and should obtain a fresh token instead of treating the cached one as valid
+until its expiry.
+
 #### Rollback (Better Auth 1.7)
 
 The `Account.issuer` column and the new `oauthResource`, `oauthClientResource` and `oauthClientAssertion`
