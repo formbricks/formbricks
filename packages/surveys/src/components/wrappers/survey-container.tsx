@@ -85,6 +85,26 @@ const useNoOverlayModal = ({
   }, [enabled, announcement]);
 };
 
+// Class computations for the modal chrome, at module scope alongside getPlacementStyle. They read
+// nothing but their arguments, and keeping them out of the component body is what actually moves
+// SonarQube's cognitive-complexity number (S3776): it scores each function separately, so a
+// conditional inside a nested arrow — a useEffect callback, say — never counted against
+// SurveyContainer, while every ternary and && inline in its JSX did.
+const getModalLayerClass = (isModal: boolean, hasOverlay: boolean): string =>
+  cn(
+    hasOverlay ? "pointer-events-auto" : "pointer-events-none",
+    isModal && "fixed inset-0 z-999999 flex items-end"
+  );
+
+// Only a modal survey paints a backdrop, and the two overlay settings are mutually exclusive, so at
+// most one class can ever apply.
+const getOverlayBackdropClass = (isModal: boolean, overlay: TOverlay): string => {
+  if (!isModal) return "";
+  if (overlay === "dark") return "bg-slate-700/80";
+  if (overlay === "light") return "bg-slate-400/50";
+  return "";
+};
+
 const getPlacementStyle = (placement: TPlacement): string => {
   switch (placement) {
     case "bottomRight":
@@ -229,15 +249,11 @@ export function SurveyContainer({
         // In-dialog updates (question changes after a submit) should wait for the reader to finish
         // speaking instead of interrupting it. A survey is never urgent enough for assertive speech.
         aria-live="polite"
-        className={cn(
-          hasOverlay ? "pointer-events-auto" : "pointer-events-none",
-          isModal && "fixed inset-0 z-999999 flex items-end"
-        )}>
+        className={getModalLayerClass(isModal, hasOverlay)}>
         <div
           className={cn(
             "relative h-full w-full transition-all duration-500 ease-in-out",
-            isModal && overlay === "dark" ? "bg-slate-700/80" : "",
-            isModal && overlay === "light" ? "bg-slate-400/50" : ""
+            getOverlayBackdropClass(isModal, overlay)
           )}>
           <div
             ref={modalRef}
