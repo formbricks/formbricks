@@ -1,0 +1,201 @@
+use expiration
+use typechecking
+
+/**
+ * CANDIDATE B — the Linear shape. No container: `team` IS the container, and it nests.
+ *
+ * Linear models divisions and departments with sub-teams five levels deep rather than a
+ * sibling container entity; issues belong to exactly one team; team membership IS access.
+ * This candidate translates that faithfully so it can win on its merits.
+ *
+ * The honest difficulty is written into the schema below rather than argued around:
+ * Linear is open-by-default ("all members can view and join teams as long as the team is
+ * not private"), so it never needs "group A reads group B's work at read tier". Formbricks
+ * is closed-by-default, so this candidate MUST carry team->team grants — and the same
+ * object then means both "I am a member of this group" and "my group was granted read on
+ * that group's work". That is issue I-12 (teams are overloaded), structurally.
+ */
+
+definition user {}
+
+definition api_key {
+    relation organization: organization
+
+    permission read: user = organization->manage_api_keys
+    permission manage: user = organization->manage_api_keys
+}
+
+definition organization {
+    relation owner: user
+    relation manager: user
+    relation member: user
+    relation billing: user
+
+    relation api_key_reader: api_key
+    relation api_key_writer: api_key
+
+    permission read: user | api_key = owner + manager + member + billing + api_key_reader + api_key_writer
+    permission write: user = owner
+    permission manage: user = owner + manager
+    permission manage_billing: user = owner + manager + billing
+    permission read_access: user | api_key = owner + manager + member + api_key_reader + api_key_writer
+    permission manage_access: user | api_key = owner + manager + api_key_writer
+    permission manage_api_keys: user = owner + manager
+    permission product_member: user = owner + manager + member
+}
+
+/**
+ * WHO **and** WHAT in one recursive object.
+ *
+ * `member` is people. `read`/`write`/`manage` are content access, which membership implies
+ * and which other teams and individuals can also be granted. Note that the two meanings now
+ * live on the same definition: `team:cx#reader_team@team:analysts#member` is a grant, while
+ * `team:cx#contributor@user:tina` is a membership, and only convention keeps them apart.
+ */
+definition team {
+    relation organization: organization
+    relation parent: team
+
+    relation admin: user
+    relation contributor: user
+
+    relation manager_team: team#member
+    relation writer_team: team#member
+    relation reader_team: team#member
+    relation summarizer_team: team#member
+
+    relation manager: user | api_key | user with expiration | api_key with expiration
+    relation writer: user | api_key | user with expiration | api_key with expiration
+    relation reader: user | api_key | user with expiration | api_key with expiration
+    relation summarizer: user | api_key | user with expiration | api_key with expiration
+
+    permission member: user = (admin + contributor) & organization->product_member
+    permission admin_member: user = admin & organization->product_member
+
+    permission administer: user = organization->manage + parent->administer
+    permission own: user = admin_member + organization->manage + parent->own
+    permission manage: user | api_key = manager + manager_team + member + own + parent->manage
+    permission write: user | api_key = writer + writer_team + manage + parent->write
+    permission read: user | api_key = reader + reader_team + write + parent->read
+    permission summary_read: user | api_key = summarizer + summarizer_team + read + parent->summary_read
+    permission share: user | api_key = manage
+
+    permission manage_membership: user | api_key = admin + organization->manage_access
+    permission delete: user | api_key = organization->manage_access
+}
+
+definition pool_assignment {
+    relation team: team
+
+    permission read: user | api_key = team->read
+    permission write: user | api_key = team->write
+    permission manage: user | api_key = team->manage
+}
+
+definition feedback_dataset {
+    relation organization: organization
+    relation assignment: pool_assignment
+    relation reader_team: team#member
+
+    permission administer: user = organization->manage
+    permission read_records: user | api_key = administer + reader_team + assignment->read
+    permission read: user | api_key = administer + reader_team + assignment->read
+    permission write: user | api_key = administer + assignment->write
+    permission manage: user | api_key = administer
+}
+
+definition contact_directory {
+    relation organization: organization
+    relation assignment: pool_assignment
+    relation pii_team: team#member
+    relation pii_user: user | user with expiration
+
+    permission administer: user = organization->manage
+    permission use_for_targeting: user | api_key = administer + assignment->read
+    permission view_contacts: user | api_key = administer + pii_team + pii_user
+    permission manage: user | api_key = administer
+}
+
+definition brand_kit {
+    relation organization: organization
+    relation assignment: pool_assignment
+
+    permission administer: user = organization->manage
+    permission use: user | api_key = administer + assignment->read
+    permission manage: user | api_key = administer
+}
+
+definition distribution {
+    relation organization: organization
+    relation assignment: pool_assignment
+
+    permission administer: user = organization->manage
+    permission use: user | api_key = administer + assignment->read
+    permission manage: user | api_key = administer
+}
+
+/**
+ * A survey belongs to at most one team (Linear's issue rule) OR to a user (a personal draft).
+ *
+ * Because there is no container to carry it, EVERY survey must also carry its own
+ * `organization` tuple for tenancy and for the administer/transfer path. That is one extra
+ * relationship per survey rather than one per container — the cost this candidate pays at
+ * BI scale, quantified in comparison.md.
+ *
+ * `org_reach` reproduces the private/break-glass distinction: absent on a personal draft,
+ * present on team-owned surveys, written by an explicit legal-hold action.
+ */
+definition survey {
+    relation organization: organization
+    relation org_reach: organization
+    relation team: team
+    relation owner: user
+
+    relation manager: user | api_key | team#member | user with expiration | api_key with expiration | team#member with expiration
+    relation editor: user | api_key | team#member | user with expiration | api_key with expiration | team#member with expiration
+    relation viewer: user | api_key | team#member | user with expiration | api_key with expiration | team#member with expiration
+    relation summarizer: user | api_key | team#member | user with expiration | api_key with expiration | team#member with expiration
+
+    permission administer: user = organization->manage
+    permission own: user = owner + org_reach->manage + team->own
+    permission manage: user | api_key = manager + own + team->manage
+    permission write: user | api_key = editor + manage + team->write
+    permission read: user | api_key = viewer + write + team->read
+    permission summary_read: user | api_key = summarizer + read + team->summary_read
+
+    permission share: user | api_key = manage
+    permission publish: user | api_key = write
+    permission delete: user | api_key = manage
+    permission transfer: user = own + administer
+
+    permission response_read: user | api_key = read
+    permission response_export: user | api_key = manage
+}
+
+definition dashboard {
+    relation organization: organization
+    relation team: team
+
+    permission read: user | api_key = team->read
+    permission summary_read: user | api_key = team->summary_read
+    permission write: user | api_key = team->write
+    permission manage: user | api_key = team->manage
+}
+
+definition workflow {
+    relation organization: organization
+    relation team: team
+
+    permission read: user | api_key = team->read
+    permission write: user | api_key = team->write
+    permission manage: user | api_key = team->manage
+}
+
+definition response {
+    relation survey: survey
+
+    permission read: user | api_key = survey->response_read
+    permission write: user | api_key = survey->write
+    permission manage: user | api_key = survey->manage
+    permission export: user | api_key = survey->response_export
+}

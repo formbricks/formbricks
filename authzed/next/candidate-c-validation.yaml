@@ -1,0 +1,178 @@
+# Validation suite for CANDIDATE C (no container).
+#
+# Same scenario IDs. Scenarios with no analogue in this model are listed at the bottom of
+# this file under INEXPRESSIBLE rather than silently dropped — that list IS the result.
+#
+# Fixture mapping from A: there is nothing to map the containers onto, so every grant that
+# candidate A wrote once on a container is written here on each individual survey,
+# dashboard and workflow.
+
+schemaFile: candidate-c-flat.zed
+
+relationships: |-
+  organization:acme#owner@user:olivia
+  organization:acme#manager@user:mark
+  organization:acme#member@user:mia
+  organization:acme#billing@user:bella
+  organization:acme#member@user:tom
+  organization:acme#member@user:tina
+  organization:acme#member@user:uma
+  organization:acme#member@user:bo
+  organization:acme#member@user:dana
+  organization:acme#member@user:hana
+  organization:acme#api_key_reader@api_key:org_reader_key
+  organization:acme#api_key_writer@api_key:org_writer_key
+  api_key:org_reader_key#organization@organization:acme
+  api_key:org_writer_key#organization@organization:acme
+  api_key:ci_reader#organization@organization:acme
+  api_key:ci_writer#organization@organization:acme
+  api_key:ci_manager#organization@organization:acme
+
+  team:research#organization@organization:acme
+  team:research#admin@user:tom
+  team:research#contributor@user:tina
+  team:research#contributor@user:bella
+  team:analysts#organization@organization:acme
+  team:analysts#contributor@user:uma
+  team:analysts#contributor@user:ghost
+  team:hr#organization@organization:acme
+  team:hr#contributor@user:hana
+
+  survey:onboarding#organization@organization:acme
+  survey:onboarding#org_reach@organization:acme
+  survey:onboarding#owner@user:tom
+  survey:onboarding#editor@team:research#member
+  survey:onboarding#summarizer@team:analysts#member
+  survey:onboarding#viewer@api_key:ci_reader
+  survey:onboarding#editor@api_key:ci_writer
+  survey:onboarding#manager@api_key:ci_manager
+  survey:onboarding#viewer@user:agnes[expiration:2030-01-01T00:00:00Z]
+  survey:onboarding#viewer@user:gone[expiration:2020-01-01T00:00:00Z]
+
+  survey:pulse#organization@organization:acme
+  survey:pulse#org_reach@organization:acme
+  survey:pulse#editor@team:research#member
+  survey:pulse#viewer@team:analysts#member
+
+  survey:draft#organization@organization:acme
+  survey:draft#owner@user:bo
+
+  survey:hold#organization@organization:acme
+  survey:hold#org_reach@organization:acme
+  survey:hold#owner@user:dana
+
+  dashboard:exec#organization@organization:acme
+  dashboard:exec#org_reach@organization:acme
+  dashboard:exec#editor@team:research#member
+  workflow:alerts#organization@organization:acme
+  workflow:alerts#org_reach@organization:acme
+  workflow:alerts#editor@team:research#member
+  response:r1#survey@survey:onboarding
+
+  feedback_dataset:cx_data#organization@organization:acme
+  feedback_dataset:cx_data#reader_team@team:research#member
+  feedback_dataset:cx_data#reader_team@team:analysts#member
+
+  contact_directory:employees#organization@organization:acme
+  contact_directory:employees#targeting_team@team:research#member
+  contact_directory:employees#pii_team@team:hr#member
+
+  brand_kit:corporate#organization@organization:acme
+  brand_kit:corporate#user_team@team:research#member
+
+  distribution:web_app#organization@organization:acme
+  distribution:web_app#user_team@team:research#member
+
+assertions:
+  assertTrue:
+    - survey:onboarding#read@user:olivia # P1.3
+    - response:r1#read@user:mark # P1.4
+    - organization:acme#manage_billing@user:bella # P1.5
+
+    - survey:onboarding#write@user:tina # P2.1 (per-survey, not per-container)
+    - survey:onboarding#write@user:tom # P2.3
+    - team:research#manage@user:tom # P2.4
+
+    - survey:draft#write@user:bo # N1.2
+    - survey:draft#transfer@user:olivia # N1.5
+    - survey:hold#read@user:olivia # N2.2
+
+    - survey:onboarding#read@user:agnes # N3.1
+    - response:r1#read@user:agnes # N3.2
+
+    - survey:onboarding#summary_read@user:uma # N4.1
+
+    - survey:pulse#read@user:uma # N5.2 — only via an explicit per-survey tuple
+
+    - feedback_dataset:cx_data#read_records@user:tina # N6.1
+    - feedback_dataset:cx_data#read_records@user:uma # N6.2 — see INEXPRESSIBLE note
+    - contact_directory:employees#use_for_targeting@user:tina # N6.3
+    - contact_directory:employees#view_contacts@user:hana # N6.4
+    - brand_kit:corporate#use@user:tina
+    - distribution:web_app#use@user:tina
+
+    - survey:onboarding#read@api_key:ci_reader # N7
+    - survey:onboarding#write@api_key:ci_writer
+    - survey:onboarding#manage@api_key:ci_manager
+    - organization:acme#manage_access@api_key:org_writer_key
+
+  assertFalse:
+    - team:research#member@user:bella # P3.1
+    - survey:onboarding#read@user:bella # P3.3
+    - response:r1#read@user:bella # P3.4
+
+    - survey:onboarding#read@user:mia # P4.2
+
+    - team:analysts#member@user:ghost # P5.1
+    - survey:onboarding#summary_read@user:ghost # P5.2
+
+    - survey:draft#read@user:olivia # N1.8
+    - survey:draft#read@user:tina # N1.9
+
+    - survey:pulse#write@user:agnes # N3.4 (agnes has no grant on pulse at all)
+    - survey:onboarding#write@user:agnes # N3.5
+    - survey:onboarding#share@user:agnes # N3.6
+    - survey:onboarding#response_export@user:agnes # N3.7
+    - contact_directory:employees#view_contacts@user:agnes # N3.8
+    - feedback_dataset:cx_data#read_records@user:agnes # N3.9
+
+    - survey:onboarding#read@user:gone # N8.1
+
+    - survey:onboarding#share@user:tina # N9.1
+
+    - survey:onboarding#read@user:uma # N4.3
+
+    - contact_directory:employees#view_contacts@user:tina # N6.5
+    - contact_directory:employees#use_for_targeting@user:hana # N6.6
+
+    - survey:onboarding#response_export@user:uma # N10
+    - response:r1#export@user:agnes
+
+    - survey:onboarding#read@user:mallory # N11
+
+validation:
+  survey:draft#read:
+    - "[user:bo] is <survey:draft#owner>"
+
+  contact_directory:employees#view_contacts:
+    - "[team:hr#member] is <contact_directory:employees#pii_team>"
+    - "[user:hana] is <organization:acme#member>/<team:hr#contributor>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:olivia] is <organization:acme#owner>"
+
+# INEXPRESSIBLE in candidate C
+# ---------------------------
+# S-P2.1c  "grant a team access to a body of work" — there is no body of work. The grant is
+#          one relationship per survey, per dashboard, per workflow, re-applied on every
+#          create. At BI scale (5-6k surveys) a single team grant is thousands of writes.
+# S-N5.1   "a division-level grant reaches everything beneath it" — no parent edge exists.
+#          Divisions can only be emulated by enumerating every descendant resource.
+# S-N5.3   "a grant on a sub-unit does not leak upward" — vacuous; there is no hierarchy to
+#          leak through, so the property cannot be asserted at all.
+# S-N6.2   "a dataset assigned to two bodies of work is visible to the union of their
+#          viewers" — the union has to be hand-maintained on the dataset. The assertion
+#          above passes only because `team:analysts#member` was added to the dataset by hand;
+#          nothing keeps it in step when the team's access to one of those bodies changes,
+#          so the model cannot express the requirement, only imitate its current answer.
+# S-N4.1c  Container-level tiering ("this group summarises everything here") has no target;
+#          `summarizer` must be written per resource.

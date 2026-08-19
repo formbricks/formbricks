@@ -1,0 +1,200 @@
+# Validation suite for CANDIDATE B (Linear shape — team IS the container, and it nests).
+#
+# Same scenario IDs as candidate A. Where a scenario is expressed differently the fixture
+# changes, not the verdict — that is what makes the comparison honest.
+#
+# Fixture mapping from A:
+#   container:cx           -> team:cx            (a team with no human members)
+#   container:division_eu  -> team:division_eu
+#   container:germany      -> team:germany       (parent = team:division_eu)
+#   container:personal_bo  -> no team; survey:draft owned by user:bo, no org_reach
+#   container:legalhold_dana -> survey:hold with org_reach written (break-glass)
+#
+# Note what the mapping costs: every survey, dashboard and workflow now needs its own
+# `organization` tuple, because there is no container left to carry tenancy.
+
+schemaFile: candidate-b-team-owned.zed
+
+relationships: |-
+  organization:acme#owner@user:olivia
+  organization:acme#manager@user:mark
+  organization:acme#member@user:mia
+  organization:acme#billing@user:bella
+  organization:acme#member@user:tom
+  organization:acme#member@user:tina
+  organization:acme#member@user:uma
+  organization:acme#member@user:bo
+  organization:acme#member@user:dana
+  organization:acme#member@user:hana
+  organization:acme#api_key_reader@api_key:org_reader_key
+  organization:acme#api_key_writer@api_key:org_writer_key
+  api_key:org_reader_key#organization@organization:acme
+  api_key:org_writer_key#organization@organization:acme
+  api_key:ci_reader#organization@organization:acme
+  api_key:ci_writer#organization@organization:acme
+  api_key:ci_manager#organization@organization:acme
+
+  team:research#organization@organization:acme
+  team:research#admin@user:tom
+  team:research#contributor@user:tina
+  team:research#contributor@user:bella
+  team:analysts#organization@organization:acme
+  team:analysts#contributor@user:uma
+  team:analysts#contributor@user:ghost
+  team:hr#organization@organization:acme
+  team:hr#contributor@user:hana
+
+  team:division_eu#organization@organization:acme
+  team:division_eu#reader_team@team:analysts#member
+
+  team:germany#organization@organization:acme
+  team:germany#parent@team:division_eu
+  team:germany#writer_team@team:research#member
+
+  team:cx#organization@organization:acme
+  team:cx#writer_team@team:research#member
+  team:cx#summarizer_team@team:analysts#member
+  team:cx#reader@api_key:ci_reader
+  team:cx#writer@api_key:ci_writer
+  team:cx#manager@api_key:ci_manager
+
+  survey:onboarding#organization@organization:acme
+  survey:onboarding#org_reach@organization:acme
+  survey:onboarding#team@team:cx
+  survey:onboarding#owner@user:tom
+  survey:onboarding#viewer@user:agnes[expiration:2030-01-01T00:00:00Z]
+  survey:onboarding#viewer@user:gone[expiration:2020-01-01T00:00:00Z]
+
+  survey:pulse#organization@organization:acme
+  survey:pulse#org_reach@organization:acme
+  survey:pulse#team@team:germany
+
+  survey:draft#organization@organization:acme
+  survey:draft#owner@user:bo
+
+  survey:hold#organization@organization:acme
+  survey:hold#org_reach@organization:acme
+  survey:hold#owner@user:dana
+
+  dashboard:exec#organization@organization:acme
+  dashboard:exec#team@team:cx
+  workflow:alerts#organization@organization:acme
+  workflow:alerts#team@team:cx
+  response:r1#survey@survey:onboarding
+
+  feedback_dataset:cx_data#organization@organization:acme
+  feedback_dataset:cx_data#assignment@pool_assignment:fda_cx
+  feedback_dataset:cx_data#assignment@pool_assignment:fda_germany
+  pool_assignment:fda_cx#team@team:cx
+  pool_assignment:fda_germany#team@team:germany
+
+  contact_directory:employees#organization@organization:acme
+  contact_directory:employees#assignment@pool_assignment:cde_germany
+  contact_directory:employees#pii_team@team:hr#member
+  pool_assignment:cde_germany#team@team:germany
+
+  brand_kit:corporate#organization@organization:acme
+  brand_kit:corporate#assignment@pool_assignment:bkc_cx
+  pool_assignment:bkc_cx#team@team:cx
+
+  distribution:web_app#organization@organization:acme
+  distribution:web_app#assignment@pool_assignment:dwa_cx
+  pool_assignment:dwa_cx#team@team:cx
+
+assertions:
+  assertTrue:
+    - team:cx#read@user:olivia # P1.1
+    - team:cx#manage@user:mark # P1.2
+    - survey:onboarding#read@user:olivia # P1.3
+    - response:r1#read@user:mark # P1.4
+    - organization:acme#manage_billing@user:bella # P1.5
+
+    - team:cx#write@user:tina # P2.1
+    - survey:onboarding#write@user:tom # P2.3
+    - team:research#manage_membership@user:tom # P2.4
+
+    - survey:draft#write@user:bo # N1.2
+    - survey:draft#transfer@user:olivia # N1.5 transfer without read
+    - survey:hold#read@user:olivia # N2.2 break-glass
+
+    - survey:onboarding#read@user:agnes # N3.1
+    - response:r1#read@user:agnes # N3.2
+
+    - team:cx#summary_read@user:uma # N4.1
+    - survey:onboarding#summary_read@user:uma
+
+    - team:germany#read@user:uma # N5.1 nesting flows down
+    - survey:pulse#read@user:uma # N5.2
+
+    - feedback_dataset:cx_data#read_records@user:tina # N6.1
+    - feedback_dataset:cx_data#read_records@user:uma # N6.2 union of two assignments
+    - contact_directory:employees#use_for_targeting@user:tina # N6.3
+    - contact_directory:employees#view_contacts@user:hana # N6.4
+    - brand_kit:corporate#use@user:tina
+    - distribution:web_app#use@user:tina
+
+    - team:cx#read@api_key:ci_reader # N7
+    - team:cx#write@api_key:ci_writer
+    - team:cx#manage@api_key:ci_manager
+    - survey:onboarding#read@api_key:ci_reader
+    - organization:acme#manage_access@api_key:org_writer_key
+
+  assertFalse:
+    - team:research#member@user:bella # P3.1
+    - team:cx#read@user:bella # P3.2
+    - survey:onboarding#read@user:bella # P3.3
+    - response:r1#read@user:bella # P3.4
+
+    - team:cx#read@user:mia # P4.1
+    - survey:onboarding#read@user:mia # P4.2
+
+    - team:analysts#member@user:ghost # P5.1
+    - team:cx#summary_read@user:ghost # P5.2
+
+    - survey:draft#read@user:olivia # N1.8 private stays private
+    - survey:draft#read@user:tina # N1.9
+
+    - survey:pulse#read@user:agnes # N3.4
+    - survey:onboarding#write@user:agnes # N3.5
+    - survey:onboarding#share@user:agnes # N3.6
+    - survey:onboarding#response_export@user:agnes # N3.7
+    - contact_directory:employees#view_contacts@user:agnes # N3.8
+    - feedback_dataset:cx_data#read_records@user:agnes # N3.9
+
+    - survey:onboarding#read@user:gone # N8.1 expiry revokes
+
+    - survey:onboarding#share@user:tina # N9.1 editor cannot re-share
+
+    - team:cx#read@user:uma # N4.3 summary is below read
+    - survey:onboarding#read@user:uma
+
+    - team:division_eu#write@user:tina # N5.3 no upward leak
+
+    - contact_directory:employees#view_contacts@user:tina # N6.5 PII is its own grant
+    - contact_directory:employees#use_for_targeting@user:hana # N6.6
+
+    - survey:onboarding#response_export@user:uma # N10 export is not read
+    - response:r1#export@user:agnes
+
+    - team:cx#read@user:mallory # N11 tenant isolation
+    - survey:onboarding#read@user:mallory
+
+    # --- B-SPECIFIC: the overload, made visible -----------------------------------------
+    # Tina can read, write and manage team:cx's work, and is NOT a member of team:cx.
+    # `read` and `member` are now two different questions about the same object, and only
+    # naming convention keeps a grant relation apart from a membership relation. This is
+    # exactly issue I-12, and it is structural in this candidate rather than accidental.
+    - team:cx#member@user:tina
+    - team:cx#member@api_key:ci_manager
+
+validation:
+  # The private-survey promise. Note it is stated on the SURVEY here, not on a container —
+  # so this snapshot has to be maintained per survey rather than once per body of work.
+  survey:draft#read:
+    - "[user:bo] is <survey:draft#owner>"
+
+  contact_directory:employees#view_contacts:
+    - "[team:hr#member] is <contact_directory:employees#pii_team>"
+    - "[user:hana] is <organization:acme#member>/<team:hr#contributor>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:olivia] is <organization:acme#owner>"

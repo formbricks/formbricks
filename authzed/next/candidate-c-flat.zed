@@ -1,0 +1,176 @@
+use expiration
+use typechecking
+
+/**
+ * CANDIDATE C — no container at all.
+ *
+ * Every content object hangs directly off `organization` and carries its own grant list.
+ * Teams survive only as grant SUBJECTS (a named bag of users), never as owners of work.
+ * This is the "replace the workspace with a view over everything you can read/edit"
+ * position, modelled properly so it can be judged rather than dismissed.
+ *
+ * It is included expecting to lose, and the places it loses are marked INEXPRESSIBLE.
+ */
+
+definition user {}
+
+definition api_key {
+    relation organization: organization
+
+    permission read: user = organization->manage_api_keys
+    permission manage: user = organization->manage_api_keys
+}
+
+definition organization {
+    relation owner: user
+    relation manager: user
+    relation member: user
+    relation billing: user
+
+    relation api_key_reader: api_key
+    relation api_key_writer: api_key
+
+    permission read: user | api_key = owner + manager + member + billing + api_key_reader + api_key_writer
+    permission write: user = owner
+    permission manage: user = owner + manager
+    permission manage_billing: user = owner + manager + billing
+    permission read_access: user | api_key = owner + manager + member + api_key_reader + api_key_writer
+    permission manage_access: user | api_key = owner + manager + api_key_writer
+    permission manage_api_keys: user = owner + manager
+    permission product_member: user = owner + manager + member
+}
+
+/** A bag of users. Owns nothing; only ever appears as the subject of a grant. */
+definition team {
+    relation organization: organization
+    relation admin: user
+    relation contributor: user
+
+    permission member: user = (admin + contributor) & organization->product_member
+    permission admin_member: user = admin & organization->product_member
+    permission read: user | api_key = member + organization->read_access
+    permission manage: user | api_key = admin + organization->manage_access
+    permission delete: user | api_key = organization->manage_access
+}
+
+/**
+ * Pools have no container to be assigned to, so every reachable group must be enumerated
+ * on the pool itself.
+ *
+ * INEXPRESSIBLE (S-N6.2): "a dataset assigned to two bodies of work is visible to the union
+ * of both bodies' viewers" cannot be stated once. It has to be maintained as a hand-kept
+ * list of every team that happens to hold access somewhere, and it silently goes stale the
+ * moment a team's access to one of those bodies of work changes.
+ */
+definition feedback_dataset {
+    relation organization: organization
+    relation reader_team: team#member
+    relation reader: user | api_key | user with expiration | api_key with expiration
+
+    permission administer: user = organization->manage
+    permission read_records: user | api_key = administer + reader_team + reader
+    permission read: user | api_key = administer + reader_team + reader
+    permission write: user | api_key = administer
+    permission manage: user | api_key = administer
+}
+
+definition contact_directory {
+    relation organization: organization
+    relation targeting_team: team#member
+    relation pii_team: team#member
+    relation pii_user: user | user with expiration
+
+    permission administer: user = organization->manage
+    permission use_for_targeting: user | api_key = administer + targeting_team
+    permission view_contacts: user | api_key = administer + pii_team + pii_user
+    permission manage: user | api_key = administer
+}
+
+definition brand_kit {
+    relation organization: organization
+    relation user_team: team#member
+
+    permission administer: user = organization->manage
+    permission use: user | api_key = administer + user_team
+    permission manage: user | api_key = administer
+}
+
+definition distribution {
+    relation organization: organization
+    relation user_team: team#member
+
+    permission administer: user = organization->manage
+    permission use: user | api_key = administer + user_team
+    permission manage: user | api_key = administer
+}
+
+/**
+ * Every survey carries its own full grant list, its own tenancy edge, and its own
+ * `org_reach` marker for the private/break-glass distinction.
+ *
+ * The cost is structural, not stylistic: "give team Research edit on this body of work" is
+ * one relationship in candidate A and one relationship PER SURVEY here — and it must be
+ * re-applied on every create. See comparison.md.
+ */
+definition survey {
+    relation organization: organization
+    relation org_reach: organization
+    relation owner: user
+
+    relation manager: user | api_key | team#member | user with expiration | api_key with expiration | team#member with expiration
+    relation editor: user | api_key | team#member | user with expiration | api_key with expiration | team#member with expiration
+    relation viewer: user | api_key | team#member | user with expiration | api_key with expiration | team#member with expiration
+    relation summarizer: user | api_key | team#member | user with expiration | api_key with expiration | team#member with expiration
+
+    permission administer: user = organization->manage
+    permission own: user = owner + org_reach->manage
+    permission manage: user | api_key = manager + own
+    permission write: user | api_key = editor + manage
+    permission read: user | api_key = viewer + write
+    permission summary_read: user | api_key = summarizer + read
+
+    permission share: user | api_key = manage
+    permission publish: user | api_key = write
+    permission delete: user | api_key = manage
+    permission transfer: user = own + administer
+
+    permission response_read: user | api_key = read
+    permission response_export: user | api_key = manage
+}
+
+definition dashboard {
+    relation organization: organization
+    relation org_reach: organization
+    relation owner: user
+    relation manager: user | api_key | team#member
+    relation editor: user | api_key | team#member
+    relation viewer: user | api_key | team#member
+    relation summarizer: user | api_key | team#member
+
+    permission own: user = owner + org_reach->manage
+    permission manage: user | api_key = manager + own
+    permission write: user | api_key = editor + manage
+    permission read: user | api_key = viewer + write
+    permission summary_read: user | api_key = summarizer + read
+}
+
+definition workflow {
+    relation organization: organization
+    relation org_reach: organization
+    relation manager: user | api_key | team#member
+    relation editor: user | api_key | team#member
+    relation viewer: user | api_key | team#member
+
+    permission manage: user | api_key = manager + org_reach->manage
+    permission write: user | api_key = editor + manage
+    permission read: user | api_key = viewer + write
+}
+
+definition response {
+    relation survey: survey
+
+    permission read: user | api_key = survey->response_read
+    permission write: user | api_key = survey->write
+    permission manage: user | api_key = survey->manage
+    permission export: user | api_key = survey->response_export
+}

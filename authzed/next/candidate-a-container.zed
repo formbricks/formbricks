@@ -1,0 +1,379 @@
+use expiration
+use typechecking
+
+/**
+ * CANDIDATE A — stripped container.
+ *
+ * `team` answers WHO (a group of people). `container` answers WHAT (a body of work).
+ * They stay separate objects joined many-to-many with a tier, because Formbricks is
+ * closed-by-default: "group A reads group B's work at read tier" is routine here, and
+ * collapsing the two would make that a team->team grant on the same object that also
+ * means "I am a member" — the overload already logged as I-12.
+ *
+ * The container is deliberately EMPTY of product attributes. Styling, app/SDK config,
+ * contacts and datasets all become organization-level pools reached by an explicit
+ * assignment. That is what removes the "grant a container => silently grant the org's
+ * most sensitive dataset" leak (I-3).
+ *
+ * NOT a parity schema. Deliberate departures from today are marked CHANGE.
+ */
+
+/** A human principal (Prisma `User.id`). */
+definition user {}
+
+/** A machine principal (Prisma `ApiKey.id`). */
+definition api_key {
+    relation organization: organization
+
+    permission read: user = organization->manage_api_keys
+    permission manage: user = organization->manage_api_keys
+}
+
+/** The tenant, billing and membership boundary. Unchanged from today. */
+definition organization {
+    relation owner: user
+    relation manager: user
+    relation member: user
+    relation billing: user
+
+    relation api_key_reader: api_key
+    relation api_key_writer: api_key
+
+    permission read: user | api_key = owner + manager + member + billing + api_key_reader + api_key_writer
+    permission write: user = owner
+    permission manage: user = owner + manager
+    permission manage_billing: user = owner + manager + billing
+    permission read_access: user | api_key = owner + manager + member + api_key_reader + api_key_writer
+    permission manage_access: user | api_key = owner + manager + api_key_writer
+    permission manage_api_keys: user = owner + manager
+
+    /** Membership roles eligible for product data — every role except `billing`. */
+    permission product_member: user = owner + manager + member
+}
+
+/**
+ * WHO: a group of people who work together. Carries no content of its own.
+ *
+ * `member` is intersected with `product_member` so a TeamUser row alone is never enough:
+ * the principal must also hold a non-billing membership. Removing this intersection
+ * hands billing-role users every container their teams can reach.
+ */
+definition team {
+    relation organization: organization
+    relation admin: user
+    relation contributor: user
+
+    permission member: user = (admin + contributor) & organization->product_member
+    permission admin_member: user = admin & organization->product_member
+
+    permission read: user | api_key = member + organization->read_access
+    permission manage: user | api_key = admin + organization->manage_access
+    permission delete: user | api_key = organization->manage_access
+}
+
+/**
+ * A named, organization-defined role: a bundle of PEOPLE, not of capabilities.
+ *
+ * BSI IT-Grundschutz ORP.4.A16 asks for "Standard-Rechteprofile, die den Funktionen und
+ * Aufgaben der Mitarbeiter entsprechen", and ORP.4.A17 requires that the system can
+ * represent the *institution's* role model rather than imposing ours. Both are satisfied
+ * without schema generation: a custom role is a group whose members are users and teams,
+ * and it is bound at one of the standard tiers exactly like a team is.
+ *
+ * Roles that would define genuinely NEW capabilities remain out of scope — that needs
+ * generated schema, and no sourced requirement asks for it.
+ */
+definition role {
+    relation organization: organization
+    relation member: user | team#member
+
+    permission holder: user = member & organization->product_member
+}
+
+/**
+ * WHAT: a body of work, with its own access list. Three flavours, distinguished by
+ * which owner relation is written — never by a type column:
+ *
+ *   shared    -> `org_reach` set, no `owner_team`, no `owner_user`
+ *   team      -> `org_reach` + `owner_team`
+ *   personal  -> `owner_user` only; `org_reach` deliberately ABSENT
+ *
+ * `organization` is tenancy and is ALWAYS set. `org_reach` is what grants organization
+ * owners/managers product access, and its absence on a personal container is what makes
+ * the word "private" honest: admins can `administer` (transfer, delete) without being
+ * able to `read`. An organization that needs admin read of personal containers — banks,
+ * legal hold — enables it by writing ONE `org_reach` tuple, which is auditable and
+ * revocable, rather than by a code path.
+ *
+ * `parent` gives divisions/departments. Access flows DOWN only; verified in ENGINE-FACTS.md.
+ */
+definition container {
+    /** Tenancy. Always set. Never on its own a grant of product access. */
+    relation organization: organization
+
+    /** Organization owners/managers reach the content here. Absent on personal containers. */
+    relation org_reach: organization
+
+    relation owner_team: team
+    relation owner_user: user
+
+    /** Division / department nesting. Depth is capped by the application. */
+    relation parent: container
+
+    relation manager_group: team#member | role#holder
+    relation writer_group: team#member | role#holder
+    relation reader_group: team#member | role#holder
+    relation summarizer_group: team#member | role#holder
+
+    /**
+     * Segregation of duties (ISO 27001 A.5.3/A.5.18, DORA RTS 2024/1774 Art. 21(e)(i),
+     * ORP.4.A4): the right to GRANT access is separable from the right to administer
+     * content. A group can hold `manage` and still be unable to hand access to anyone else.
+     */
+    relation access_manager: team#member | role#holder | user | user with expiration
+
+    /**
+     * Break-glass. DORA RTS Art. 21(a) and 21(e)(ii) require emergency access to be a
+     * first-class, need-to-use, time-bounded path — explicitly NOT "temporarily make them
+     * an administrator". Keeping it as its own relation is what lets it be alerted on,
+     * reviewed and expired independently of every other grant.
+     */
+    relation emergency_access: user | user with expiration
+
+    relation manager: user | api_key | user with expiration | api_key with expiration
+    relation writer: user | api_key | user with expiration | api_key with expiration
+    relation reader: user | api_key | user with expiration | api_key with expiration
+    relation summarizer: user | api_key | user with expiration | api_key with expiration
+
+    /**
+     * CHANGE: administrative reach that deliberately does NOT confer read.
+     * Transfer ownership, reparent, delete — the offboarding path for personal containers.
+     */
+    permission administer: user = organization->manage + parent->administer
+
+    /** Time-boxed emergency read. Auditable and reviewable on its own. */
+    permission emergency: user = emergency_access + parent->emergency
+
+    permission own: user = owner_user + owner_team->admin_member + org_reach->manage + parent->own
+    permission manage: user | api_key = manager + manager_group + owner_team->member + own + parent->manage
+    permission write: user | api_key = writer + writer_group + manage + parent->write
+    permission read: user | api_key = reader + reader_group + write + emergency + parent->read
+
+    /** Aggregates only — strictly below read. */
+    permission summary_read: user | api_key = summarizer + summarizer_group + read + parent->summary_read
+
+    /**
+     * Grant and revoke access. Deliberately NOT implied by `manage`: that separation is the
+     * segregation-of-duties requirement, and it is the only thing that makes delegated
+     * administration expressible without handing over content control.
+     */
+    permission manage_access: user | api_key = access_manager + own + parent->manage_access
+
+    /** Product-facing name for the same capability. Only manage_access holders may re-share. */
+    permission share: user | api_key = manage_access
+}
+
+/**
+ * The pool <-> container edge (blue "Assignment" on the board). Generalises the existing
+ * `feedback_directory_assignment` object. Object ID is a deterministic digest of the pair.
+ *
+ * Note it arrows only towards `container`, never back at a polymorphic pool: an arrow over
+ * a heterogeneous relation silently drops subject types that lack the permission
+ * (see ENGINE-FACTS.md #1), so the pool holds the assignment, not the other way round.
+ */
+definition pool_assignment {
+    relation container: container
+
+    permission read: user | api_key = container->read
+    permission write: user | api_key = container->write
+    permission manage: user | api_key = container->manage
+}
+
+/** Feedback dataset (Prisma `FeedbackDirectory`). Organization-level, assigned into containers. */
+definition feedback_dataset {
+    relation organization: organization
+    relation assignment: pool_assignment
+    relation reader_team: team#member
+
+    permission administer: user = organization->manage
+
+    /** CHANGE: reading records is separate from seeing that the dataset exists (I-3). */
+    permission read_records: user | api_key = administer + reader_team + assignment->read
+    permission read: user | api_key = administer + reader_team + assignment->read
+    permission write: user | api_key = administer + assignment->write
+    permission manage: user | api_key = administer
+}
+
+/**
+ * Contact directory — organization-level contact pool (replaces `Workspace.contacts`).
+ *
+ * CHANGE, and the sharpest one: `view_contacts` never flows from a container or from a
+ * survey share. PII is its own grant (board rule 4), which closes I-7. Targeting is the
+ * weaker capability and does flow from an assignment.
+ */
+definition contact_directory {
+    relation organization: organization
+    relation assignment: pool_assignment
+    relation pii_team: team#member
+    relation pii_user: user | user with expiration
+
+    permission administer: user = organization->manage
+    permission use_for_targeting: user | api_key = administer + assignment->read
+    permission view_contacts: user | api_key = administer + pii_team + pii_user
+    permission manage: user | api_key = administer
+}
+
+/** Brand kit — organization-level styling (replaces `Workspace.styling`/`logo`). */
+definition brand_kit {
+    relation organization: organization
+    relation assignment: pool_assignment
+
+    permission administer: user = organization->manage
+    permission use: user | api_key = administer + assignment->read
+    permission manage: user | api_key = administer
+}
+
+/**
+ * Distribution / channel — organization-level app & SDK config (replaces `Workspace.config`,
+ * `placement`, `overlay`, `recontactDays`, branding flags, `customHeadScripts`).
+ */
+definition distribution {
+    relation organization: organization
+    relation assignment: pool_assignment
+
+    permission administer: user = organization->manage
+    permission use: user | api_key = administer + assignment->read
+    permission manage: user | api_key = administer
+}
+
+/**
+ * A survey. First and only leaf with direct grants in v1 (board: "Shareable in v1 = survey only").
+ *
+ * Direct grants are ADDITIVE with container access and never subtract from it. There is
+ * deliberately NO arrow from survey to any pool: sharing a survey hands over the survey
+ * and nothing it depends on (board rules 4 and 5). The application makes a second `can()`
+ * call for targeting, PII, dataset records, brand kit and distribution.
+ */
+definition survey {
+    relation container: container
+
+    /** CHANGE: transferable ownership. `createdBy` stays immutable attribution. */
+    relation owner: user
+
+    relation manager: user | api_key | team#member | role#holder | user with expiration | api_key with expiration | team#member with expiration
+    relation editor: user | api_key | team#member | role#holder | user with expiration | api_key with expiration | team#member with expiration
+    relation viewer: user | api_key | team#member | role#holder | user with expiration | api_key with expiration | team#member with expiration
+    relation summarizer: user | api_key | team#member | role#holder | user with expiration | api_key with expiration | team#member with expiration
+    relation access_manager: user | team#member | role#holder | user with expiration
+
+    permission own: user = owner + container->own
+    permission manage: user | api_key = manager + own + container->manage
+    permission write: user | api_key = editor + manage + container->write
+    permission read: user | api_key = viewer + write + container->read
+    permission summary_read: user | api_key = summarizer + read + container->summary_read
+
+    permission manage_access: user | api_key = access_manager + own + container->manage_access
+    permission share: user | api_key = manage_access
+    permission publish: user | api_key = write
+    permission delete: user | api_key = manage
+
+    /** Transfer without read — the offboarding path. */
+    permission transfer: user = own + container->administer
+
+    permission response_read: user | api_key = read
+
+    /**
+     * CHANGE: export is no longer the same gate as viewing (RFC goal, BI requirement).
+     * Break-glass reaches it too — a legal hold that cannot export is not a legal hold.
+     */
+    permission response_export: user | api_key = manage + container->emergency
+}
+
+/** An analysis dashboard. Container-derived in v1; direct grants are backlog (R14). */
+definition dashboard {
+    relation container: container
+
+    permission read: user | api_key = container->read
+    permission summary_read: user | api_key = container->summary_read
+    permission write: user | api_key = container->write
+    permission manage: user | api_key = container->manage
+}
+
+/** A workflow. Added purely to run the board's north-star test: a new entity needs no new rules. */
+definition workflow {
+    relation container: container
+
+    permission read: user | api_key = container->read
+    permission write: user | api_key = container->write
+    permission manage: user | api_key = container->manage
+}
+
+/**
+ * ORG UNIT — the respondent-side hierarchy, and the most important thing this file says.
+ *
+ * German co-determination (BetrVG § 87(1)(6)) makes an employee-survey tool co-determined,
+ * and the resulting Betriebsvereinbarung always contains the same clause: a manager sees the
+ * results of their OWN organisational unit and below, never a peer's, and never below the
+ * agreed minimum group size.
+ *
+ * That hierarchy is NOT the content container, and it must not be squashed into it. A survey
+ * lives where the people who BUILD it collaborate; a response is visible to whoever manages
+ * the unit the RESPONDENT belongs to. Those two trees have different shapes, different
+ * lifecycles and different owners (HRIS vs. product). Qualtrics ended up with Brand +
+ * Division + Group + User Type + Org Hierarchy precisely by trying to make one container
+ * serve several of these jobs; Medallia keeps unit groups strictly separate from users.
+ *
+ * Cardinality makes this safe: org units are thousands, responses are millions. The unit tree
+ * is projected; responses never are. The application resolves "which units may this viewer
+ * see" with one LookupResources over `org_unit`, then filters responses in SQL and applies
+ * the minimum-response threshold there. Thresholds, complementary suppression and
+ * cross-tabulation limits are POLICY — a relationship graph cannot express "only if the
+ * result set has at least five rows", and it should not try.
+ */
+definition org_unit {
+    relation organization: organization
+    relation parent: org_unit
+
+    /** Manager of record. Disciplinary and functional lines are separate on purpose: in a
+     *  matrix organisation they differ, and the works agreement has to name which one governs. */
+    relation manager: user
+    relation functional_manager: user
+
+    /**
+     * Works council, scoped. BetrVG models three bodies at three scopes — Betriebsrat (site),
+     * Gesamtbetriebsrat (company), Konzernbetriebsrat (group) — so a global read-all works
+     * council role is both wrong and itself a data-protection problem. Binding the role to a
+     * unit gives each body exactly its own scope, and nesting gives GBR/KBR their wider one.
+     */
+    relation works_council: user | team#member
+
+    /** HR analysts with a legitimate cross-unit view, granted explicitly rather than by role. */
+    relation analyst: user | team#member | user with expiration
+
+    permission read_scores: user = manager + functional_manager + analyst + works_council + organization->manage + parent->read_scores
+
+    /**
+     * Verbatim comments are consistently held to a stricter bar than scores in German works
+     * agreements, and every comparable product ships a separate, higher threshold for them
+     * (Viva Glint: 10 for comments vs 5 for scores). A role that can see scores must NOT
+     * automatically see free text — writing style is itself a re-identification vector.
+     */
+    permission read_comments: user = analyst + works_council + organization->manage + parent->read_comments
+
+    /** Raw export is the highest-risk surface; never bundled into an admin role. */
+    permission export_raw: user = organization->manage
+}
+
+/**
+ * A response. Kept as a definition for vocabulary only — responses are the board's BLACK
+ * "Excluded" edge: 3-4M rows are never projected as relationships. The application resolves
+ * response -> survey in Postgres exactly as `resolvers.ts` does today.
+ */
+definition response {
+    relation survey: survey
+
+    permission read: user | api_key = survey->response_read
+    permission write: user | api_key = survey->write
+    permission manage: user | api_key = survey->manage
+    permission export: user | api_key = survey->response_export
+}

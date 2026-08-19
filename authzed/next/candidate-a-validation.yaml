@@ -1,0 +1,337 @@
+# Validation suite for CANDIDATE A (stripped container).
+#
+# Run with `bash authzed/next/validate.sh` (offline; `zed validate` shares its parser and
+# evaluator with SpiceDB, so no server is required).
+#
+# This is NOT a parity suite. It encodes the target model from `scenarios.md`; scenario IDs
+# appear in comments so every assertion traces back to a sourced requirement.
+#
+# Fixture graph
+# -------------
+#   organization:acme
+#     owner   user:olivia      manager user:mark
+#     member  user:mia         (no team at all -> must reach no product data)
+#     billing user:bella       (billing surfaces only; ALSO on team:research on purpose)
+#     member  user:tom user:tina user:uma user:bo user:dana user:hana
+#     api_key_reader api_key:org_reader_key    api_key_writer api_key:org_writer_key
+#
+#   team:research  admin tom, contributor tina, contributor bella
+#   team:analysts  contributor uma, contributor ghost   (ghost holds a team row and NO membership)
+#   team:hr        contributor hana                     (the only holder of contact PII)
+#
+#   container:division_eu   shared, org_reach                       -> reader_team analysts
+#   container:germany       shared, org_reach, parent=division_eu   -> writer_team research
+#   container:cx            shared, org_reach                       -> writer_team research,
+#                                                                      summarizer_team analysts
+#   container:personal_bo   owner_user bo, NO org_reach             (private)
+#   container:legalhold_dana owner_user dana, org_reach              (break-glass ENABLED)
+#
+#   survey:onboarding (cx)   survey:pulse (germany)   survey:draft (personal_bo)
+#   survey:hold (legalhold_dana)
+#   agency guest user:agnes  -> direct viewer on survey:onboarding, expiring 2030
+#   user:gone                -> direct viewer on survey:onboarding, EXPIRED 2020
+#
+#   feedback_dataset:cx_data     assigned to cx AND germany
+#   contact_directory:employees  assigned to germany; PII held only by team:hr
+#   brand_kit:corporate          assigned to cx
+#   distribution:web_app         assigned to cx
+
+schemaFile: candidate-a-container.zed
+
+relationships: |-
+  organization:acme#owner@user:olivia
+  organization:acme#manager@user:mark
+  organization:acme#member@user:mia
+  organization:acme#billing@user:bella
+  organization:acme#member@user:tom
+  organization:acme#member@user:tina
+  organization:acme#member@user:uma
+  organization:acme#member@user:bo
+  organization:acme#member@user:dana
+  organization:acme#member@user:hana
+  organization:acme#api_key_reader@api_key:org_reader_key
+  organization:acme#api_key_writer@api_key:org_writer_key
+  api_key:org_reader_key#organization@organization:acme
+  api_key:org_writer_key#organization@organization:acme
+  api_key:ci_reader#organization@organization:acme
+  api_key:ci_writer#organization@organization:acme
+  api_key:ci_manager#organization@organization:acme
+
+  team:research#organization@organization:acme
+  team:research#admin@user:tom
+  team:research#contributor@user:tina
+  team:research#contributor@user:bella
+  team:analysts#organization@organization:acme
+  team:analysts#contributor@user:uma
+  team:analysts#contributor@user:ghost
+  team:hr#organization@organization:acme
+  team:hr#contributor@user:hana
+
+  container:division_eu#organization@organization:acme
+  container:division_eu#org_reach@organization:acme
+  container:division_eu#reader_group@team:analysts#member
+
+  container:germany#organization@organization:acme
+  container:germany#org_reach@organization:acme
+  container:germany#parent@container:division_eu
+  container:germany#writer_group@team:research#member
+
+  container:cx#organization@organization:acme
+  container:cx#org_reach@organization:acme
+  container:cx#writer_group@team:research#member
+  container:cx#summarizer_group@team:analysts#member
+  container:cx#reader@api_key:ci_reader
+  container:cx#writer@api_key:ci_writer
+  container:cx#manager@api_key:ci_manager
+
+  container:personal_bo#organization@organization:acme
+  container:personal_bo#owner_user@user:bo
+
+  container:legalhold_dana#organization@organization:acme
+  container:legalhold_dana#owner_user@user:dana
+  container:legalhold_dana#org_reach@organization:acme
+
+  survey:onboarding#container@container:cx
+  survey:onboarding#owner@user:tom
+  survey:onboarding#viewer@user:agnes[expiration:2030-01-01T00:00:00Z]
+  survey:onboarding#viewer@user:gone[expiration:2020-01-01T00:00:00Z]
+  survey:pulse#container@container:germany
+  survey:draft#container@container:personal_bo
+  survey:hold#container@container:legalhold_dana
+
+  dashboard:exec#container@container:cx
+  workflow:alerts#container@container:cx
+  response:r1#survey@survey:onboarding
+
+  feedback_dataset:cx_data#organization@organization:acme
+  feedback_dataset:cx_data#assignment@pool_assignment:fda_cx
+  feedback_dataset:cx_data#assignment@pool_assignment:fda_germany
+  pool_assignment:fda_cx#container@container:cx
+  pool_assignment:fda_germany#container@container:germany
+
+  contact_directory:employees#organization@organization:acme
+  contact_directory:employees#assignment@pool_assignment:cde_germany
+  contact_directory:employees#pii_team@team:hr#member
+  pool_assignment:cde_germany#container@container:germany
+
+  brand_kit:corporate#organization@organization:acme
+  brand_kit:corporate#assignment@pool_assignment:bkc_cx
+  pool_assignment:bkc_cx#container@container:cx
+
+  distribution:web_app#organization@organization:acme
+  distribution:web_app#assignment@pool_assignment:dwa_cx
+  pool_assignment:dwa_cx#container@container:cx
+
+  organization:acme#member@user:ada
+  organization:acme#member@user:cara
+  organization:acme#member@user:rio
+  organization:acme#member@user:lena
+  organization:acme#member@user:wc_de
+  organization:acme#member@user:auditor
+  organization:acme#member@user:mo
+
+  team:ops#organization@organization:acme
+  team:ops#contributor@user:mo
+  container:cx#manager_group@team:ops#member
+  container:cx#access_manager@user:ada
+
+  role:ex_analyst#organization@organization:acme
+  role:ex_analyst#member@user:rio
+  container:cx#summarizer_group@role:ex_analyst#holder
+
+  container:personal_cara#organization@organization:acme
+  container:personal_cara#owner_user@user:cara
+  container:personal_cara#emergency_access@user:auditor[expiration:2030-01-01T00:00:00Z]
+  container:personal_cara#emergency_access@user:lapsed[expiration:2020-01-01T00:00:00Z]
+  survey:cara_draft#container@container:personal_cara
+
+  org_unit:de#organization@organization:acme
+  org_unit:de#works_council@user:wc_de
+  org_unit:de_muc#organization@organization:acme
+  org_unit:de_muc#parent@org_unit:de
+  org_unit:de_muc#manager@user:lena
+
+assertions:
+  assertTrue:
+    # --- P1 parity floor: organization roles ------------------------------------------
+    - container:cx#read@user:olivia # P1.1 owner reaches every shared container
+    - container:cx#manage@user:mark # P1.2 manager reaches every shared container
+    - survey:onboarding#read@user:olivia # P1.3 and everything inside it
+    - response:r1#read@user:mark # P1.4 including responses
+    - organization:acme#manage_billing@user:bella # P1.5 billing sees billing
+
+    # --- P2 team-derived access -------------------------------------------------------
+    - container:cx#write@user:tina # P2.1 contributor on a writer_team
+    - survey:onboarding#write@user:tom # P2.3 flows to the leaf
+    - team:research#manage@user:tom # P2.4 team admin manages the team
+
+    # --- N1 private containers: owner reaches, org admin does NOT read ----------------
+    - container:personal_bo#own@user:bo # N1.1 Bo owns his personal container
+    - survey:draft#write@user:bo # N1.2 and can edit inside it
+    - container:personal_bo#administer@user:olivia # N1.3 owner CAN transfer/delete it
+    - container:personal_bo#administer@user:mark # N1.4 manager too
+    - survey:draft#transfer@user:olivia # N1.5 offboarding path exists without read
+
+    # --- N2 break-glass: one org_reach tuple turns admin read on ----------------------
+    - container:legalhold_dana#read@user:olivia # N2.1 legal hold enabled for Dana
+    - survey:hold#read@user:olivia # N2.2 reaches content
+
+    # --- N3 external agency guest: one survey, nothing else ---------------------------
+    - survey:onboarding#read@user:agnes # N3.1 direct expiring grant works
+    - response:r1#read@user:agnes # N3.2 responses of that survey follow read
+
+    # --- N4 summary tier sits strictly below read -------------------------------------
+    - container:cx#summary_read@user:uma # N4.1 analysts get aggregates
+    - survey:onboarding#summary_read@user:uma
+
+    # --- N5 nesting: division grant flows down ----------------------------------------
+    - container:germany#read@user:uma # N5.1 analysts read division_eu -> germany
+    - survey:pulse#read@user:uma # N5.2 three hops to the leaf
+
+    # --- N6 pools -------------------------------------------------------------------
+    - feedback_dataset:cx_data#read_records@user:tina # N6.1 via cx assignment
+    - feedback_dataset:cx_data#read_records@user:uma # N6.2 via germany assignment (union)
+    - contact_directory:employees#use_for_targeting@user:tina # N6.3 targeting flows
+    - contact_directory:employees#view_contacts@user:hana # N6.4 PII only via its own grant
+    - brand_kit:corporate#use@user:tina
+    - distribution:web_app#use@user:tina
+
+    # --- N7 API keys ------------------------------------------------------------------
+    - container:cx#read@api_key:ci_reader
+    - container:cx#write@api_key:ci_writer
+    - container:cx#manage@api_key:ci_manager
+    - survey:onboarding#read@api_key:ci_reader
+    - organization:acme#manage_access@api_key:org_writer_key
+
+    # --- N12 segregation of duties: granting access is not administering content ---------
+    - container:cx#manage@user:mo # N12.1 team:ops manages the container
+    - container:cx#manage_access@user:ada # N12.2 ada may grant, and only grant
+    - container:cx#share@user:ada
+
+    # --- N13 custom roles are just groups, bound at a standard tier ----------------------
+    - container:cx#summary_read@user:rio # N13.1 role bound at summarizer tier
+
+    # --- N14 break-glass is its own time-boxed, auditable path --------------------------
+    - container:personal_cara#read@user:auditor # N14.1 legal hold reaches a private container
+    - survey:cara_draft#read@user:auditor
+    - survey:cara_draft#response_export@user:auditor # N14.2 a hold that cannot export is not a hold
+
+    # --- N15 works council and manager-scoped EX (BetrVG) -------------------------------
+    - org_unit:de_muc#read_scores@user:lena # N15.1 manager sees their own unit
+    - org_unit:de_muc#read_scores@user:wc_de # N15.2 site works council sees below it
+    - org_unit:de_muc#read_comments@user:wc_de # N15.3 and may read verbatims
+    - org_unit:de#read_scores@user:wc_de
+
+  assertFalse:
+    # --- P3 billing is excluded from product data even through a team -----------------
+    - team:research#member@user:bella # P3.1 the load-bearing one
+    - container:cx#read@user:bella # P3.2
+    - survey:onboarding#read@user:bella # P3.3
+    - response:r1#read@user:bella # P3.4
+
+    # --- P4 a teamless member reaches nothing -----------------------------------------
+    - container:cx#read@user:mia # P4.1
+    - survey:onboarding#read@user:mia # P4.2
+
+    # --- P5 a team row without a membership is not membership -------------------------
+    - team:analysts#member@user:ghost # P5.1 defence in depth
+    - container:cx#summary_read@user:ghost # P5.2
+
+    # --- N1 private stays private -----------------------------------------------------
+    - container:personal_bo#read@user:olivia # N1.6 owner cannot READ a personal container
+    - container:personal_bo#read@user:mark # N1.7 nor manager
+    - survey:draft#read@user:olivia # N1.8 nor its contents
+    - survey:draft#read@user:tina # N1.9 nor anyone else
+    - container:personal_bo#own@user:olivia # N1.10 administer is not ownership
+
+    # --- N3 the agency guest is fenced in ---------------------------------------------
+    - container:cx#read@user:agnes # N3.3 no container access
+    - survey:pulse#read@user:agnes # N3.4 no other survey
+    - survey:onboarding#write@user:agnes # N3.5 view-only always
+    - survey:onboarding#share@user:agnes # N3.6 cannot re-share
+    - survey:onboarding#response_export@user:agnes # N3.7 cannot export
+    - contact_directory:employees#view_contacts@user:agnes # N3.8 sharing does not leak PII
+    - contact_directory:employees#use_for_targeting@user:agnes
+    - feedback_dataset:cx_data#read_records@user:agnes # N3.9 nor dataset records
+
+    # --- N8 expiry actually revokes ---------------------------------------------------
+    - survey:onboarding#read@user:gone # N8.1 expired grant is denied
+
+    # --- N9 only manage/own may re-share ----------------------------------------------
+    - survey:onboarding#share@user:tina # N9.1 an editor cannot re-share
+
+    # --- N4 summary does not imply read -----------------------------------------------
+    - container:cx#read@user:uma # N4.3 analysts have aggregates only on cx
+    - survey:onboarding#read@user:uma
+
+    # --- N5 nesting does not leak upward ----------------------------------------------
+    - container:division_eu#write@user:tina # N5.3 a germany/cx writer is not a division writer
+    - container:germany#read@user:agnes
+
+    # --- N6 PII is its own grant (closes I-7) -----------------------------------------
+    - contact_directory:employees#view_contacts@user:tina # N6.5 container access is NOT PII access
+    - contact_directory:employees#view_contacts@user:uma
+    - contact_directory:employees#use_for_targeting@user:hana # N6.6 and PII is not targeting
+
+    # --- N10 export is not read (closes the RFC gap) ----------------------------------
+    - survey:onboarding#response_export@user:uma
+    - response:r1#export@user:agnes
+
+    # --- N11 tenant isolation ---------------------------------------------------------
+    - container:cx#read@user:mallory
+    - survey:onboarding#read@user:mallory
+
+    # --- N12 segregation of duties, the negative half ------------------------------------
+    - container:cx#manage_access@user:mo # N12.3 manage does NOT imply the right to grant
+    - container:cx#share@user:mo
+    - container:cx#read@user:ada # N12.4 granting does NOT imply reading
+
+    # --- N13 a custom role does not leak past the tier it was bound at -------------------
+    - container:cx#read@user:rio
+
+    # --- N14 break-glass expires like any other grant ------------------------------------
+    - container:personal_cara#read@user:lapsed
+    - container:personal_cara#read@user:olivia # N14.3 still private to the org admin
+    - container:personal_cara#own@user:auditor # N14.4 emergency read is not ownership
+
+    # --- N15 works-council and manager scoping do not over-reach -------------------------
+    - org_unit:de#read_scores@user:lena # N15.4 a manager does not see the parent unit
+    - org_unit:de_muc#read_comments@user:lena # N15.5 scores do not imply verbatims
+    - org_unit:de_muc#export_raw@user:lena # N15.6 raw export is never bundled in
+    - org_unit:de_muc#export_raw@user:wc_de
+    - org_unit:de_muc#read_scores@user:tina # N15.7 content access is not respondent access
+
+# Expected-relations snapshots. Assertions prove a subject HAS a permission; only this block
+# turns an accidental WIDENING into a visible diff. Kept exact on the permissions that carry
+# the model's promises.
+validation:
+  # The private-container promise, stated exhaustively: only Bo. Any future schema change that
+  # lets an admin, a team or a container grant reach in shows up here as an added line.
+  survey:draft#read:
+    - "[user:bo] is <container:personal_bo#owner_user>"
+
+  # The offboarding path: exactly the org roles, and no one else.
+  container:personal_bo#administer:
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:olivia] is <organization:acme#owner>"
+
+  # PII, stated exhaustively — the whole point of I-7.
+  contact_directory:employees#view_contacts:
+    - "[team:hr#member] is <contact_directory:employees#pii_team>"
+    - "[user:hana] is <organization:acme#member>/<team:hr#contributor>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:olivia] is <organization:acme#owner>"
+
+  # The agency guest's total reach on the shared survey.
+  survey:onboarding#read:
+    - "[api_key:ci_manager] is <container:cx#manager>"
+    - "[api_key:ci_reader] is <container:cx#reader>"
+    - "[api_key:ci_writer] is <container:cx#writer>"
+    - "[team:ops#member] is <container:cx#manager_group>"
+    - "[team:research#member] is <container:cx#writer_group>"
+    - "[user:agnes] is <survey:onboarding#viewer>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:mo] is <organization:acme#member>/<team:ops#contributor>"
+    - "[user:olivia] is <organization:acme#owner>"
+    - "[user:tina] is <organization:acme#member>/<team:research#contributor>"
+    - "[user:tom] is <organization:acme#member>/<survey:onboarding#owner>/<team:research#admin>"
