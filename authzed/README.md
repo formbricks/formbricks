@@ -143,13 +143,22 @@ idempotent reconcilers deliver each claimed batch as six independent groups.
 Failure is attributed rather than shared. A group that fails takes only its own
 events; the rest of the batch is still delivered. A retryable failure releases
 every remaining group untried, because spending another three-attempt budget per
-group against an unreachable instance buys nothing. Only a failure that is both
-non-retryable and attributable to a single event counts towards dead-lettering,
-so no SpiceDB outage — of any duration — can dead-letter an event that was never
-the problem. When a failure code could plausibly belong to one event
-(`authzed_projection_invalid_source`, `authzed_invalid_request`), the group is
-halved until the culprit is alone; codes that describe the instance are not
-split. Ten such solitary failures dead-letter the event.
+group against an unreachable instance buys nothing.
+
+Dead-lettering requires the failure to _name_ an event, which takes three things
+together: the code is non-retryable, the attempt covered exactly one event, and
+the code is one an event can actually cause
+(`authzed_projection_invalid_source`, `authzed_invalid_request`). The third
+condition is not redundant. On a five-second cadence most groups hold a single
+event, so size alone would charge whichever revocations happened to be
+travelling alone when SpiceDB rejected a credential — dead-lettering bystanders
+mid-outage, which is the opposite of the intent. Those same event-attributable
+codes are the ones that trigger halving the group until the culprit is alone;
+codes describing the instance are neither split nor charged. Ten solitary,
+attributable failures dead-letter the event.
+
+The consequence is the property worth remembering: **no SpiceDB outage, of any
+duration or kind, can dead-letter an event that was never the problem.**
 
 AuthZed being disabled performs no delivery work. An AuthZed outage never
 changes a successful PostgreSQL mutation into an application error; committed

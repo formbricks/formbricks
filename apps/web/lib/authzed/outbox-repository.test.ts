@@ -91,7 +91,7 @@ describe("AuthZed projection outbox repository", () => {
 
     await expect(
       markAuthzedOutboxEventsFailed("lease-owner", ["event-1"], "authzed_invalid_request", {
-        isolated: true,
+        attributable: true,
         retryable: false,
       })
     ).resolves.toBe(1);
@@ -103,9 +103,9 @@ describe("AuthZed projection outbox repository", () => {
     vi.mocked(prisma.$queryRaw).mockResolvedValue([{ dead_lettered: 0n }]);
 
     for (const attribution of [
-      { isolated: true, retryable: true },
-      { isolated: false, retryable: false },
-      { isolated: false, retryable: true },
+      { attributable: true, retryable: true },
+      { attributable: false, retryable: false },
+      { attributable: false, retryable: true },
     ]) {
       await expect(
         markAuthzedOutboxEventsFailed(
@@ -127,7 +127,7 @@ describe("AuthZed projection outbox repository", () => {
       "lease-owner",
       Array.from({ length: 200 }, (_unused, index) => `event-${String(index)}`),
       "authzed_unavailable",
-      { isolated: false, retryable: true }
+      { attributable: false, retryable: true }
     );
 
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
@@ -136,7 +136,7 @@ describe("AuthZed projection outbox repository", () => {
   test("does not reach the database when nothing failed", async () => {
     await expect(
       markAuthzedOutboxEventsFailed("lease-owner", [], "authzed_unavailable", {
-        isolated: false,
+        attributable: false,
         retryable: true,
       })
     ).resolves.toBe(0);

@@ -17,12 +17,13 @@ export const AUTHZED_OUTBOX_MAX_BACKOFF_ATTEMPTS = 20;
 export const AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS = 5 * 60_000;
 
 /**
- * Non-retryable failures, attributable to one event alone, before it dead-letters.
+ * Failures attributable to one event alone before it dead-letters.
  *
  * Deliberately separate from `attempts`. A dead-lettered revocation arms the fail-closed freshness
  * guard for the whole deployment, so reaching it must mean "PostgreSQL removed access and we cannot
- * make SpiceDB agree" — never "SpiceDB was down for an hour". Retryable failures and group failures
- * therefore leave this untouched; only an event that failed on its own has earned a permanent mark.
+ * make SpiceDB agree" — never "SpiceDB was unreachable, or rejected our credential, for a while".
+ * Only a failure that named a single event AND carried a code an event can cause increments this;
+ * retryable failures, group failures and instance-scoped failures all leave it untouched.
  * With the backoff below that is roughly 17 minutes of solitary failure, well past the 45-second
  * critical alarm.
  */
@@ -111,10 +112,13 @@ export const markAuthzedOutboxEventsDelivered = async (
 /**
  * Release a failed lease, and dead-letter only what the failure actually attributes.
  *
- * `isolated` says the attempt covered this event and nothing else. A group failure reports that the
- * group did not deliver, not which member broke it, so it must never spend a permanent failure —
- * otherwise one poison event walks its whole batch to dead letter, and a dead-lettered revocation is
- * a deployment-wide authorization outage.
+ * `attributable` says the failure names these events: the attempt covered one event, AND the code is
+ * one an event can actually cause. Anything else must never spend a permanent failure. A group
+ * failure reports that the group did not deliver, not which member broke it. An instance-scoped code
+ * (a rejected credential, an unmapped internal error) reports that SpiceDB is unhappy — the event
+ * that happened to be travelling alone when it happened did not cause it, and charging it would
+ * dead-letter a bystander mid-outage. Either mistake ends the same way: a dead-lettered revocation
+ * is a deployment-wide authorization outage until something replays it.
  *
  * One statement rather than one per event: this path runs when delivery is already failing, which is
  * exactly when the database is least likely to have headroom for 200 sequential round trips. The
@@ -124,10 +128,10 @@ export const markAuthzedOutboxEventsFailed = async (
   leaseOwner: string,
   eventIds: ReadonlyArray<string>,
   errorCode: string,
-  { isolated, retryable }: Readonly<{ isolated: boolean; retryable: boolean }>
+  { attributable, retryable }: Readonly<{ attributable: boolean; retryable: boolean }>
 ): Promise<number> => {
   if (eventIds.length === 0) return 0;
-  const permanent = !retryable && isolated;
+  const permanent = !retryable && attributable;
 
   const [row] = await prisma.$queryRaw<ReadonlyArray<{ dead_lettered: bigint }>>`
     WITH released AS (
@@ -177,7 +181,7 @@ type TStaleRevocationRow = Readonly<{ stale: boolean }>;
  * Indexed fail-closed check for the authorization hot path; avoid aggregating retained history.
  *
  * Two `EXISTS` rather than one with an `OR`, because the two halves live in different partial
- * indexes: `_claim_idx` covers `deadLetteredAt IS NULL` and `_dead_letter_idx` covers the complement,
+ * indexes: `_claim_idx` covers `deadLetteredAt IS NULL` and `_undelivered_idx` covers the complement,
  * and no single index can serve both sides of that disjunction. Split, each branch is an index probe
  * and the second is skipped whenever the first already answered.
  */

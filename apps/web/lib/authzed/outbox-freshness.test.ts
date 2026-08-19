@@ -53,7 +53,9 @@ describe("AuthZed projection freshness guard", () => {
   });
 
   test("re-reads once the memo window has elapsed", async () => {
-    vi.useFakeTimers();
+    // `performance` is not in vitest's default `toFake` set, and the memo reads it rather than
+    // `Date.now()` so a backwards clock step cannot freeze the guard.
+    vi.useFakeTimers({ toFake: ["performance"] });
     vi.mocked(hasStaleAuthzedRevocation).mockResolvedValue(false);
     const { AUTHZED_FRESHNESS_MEMO_TTL_MS, assertAuthzedProjectionFreshness } = await loadGuard();
 

@@ -288,10 +288,18 @@ const runGroup = async (
 };
 
 type TFailure = Readonly<{
+  /**
+   * The failure names THIS event: the attempt covered it alone, AND the code is one an event can
+   * actually cause.
+   *
+   * Both halves are load-bearing. A single-event group is the normal case on a five-second cadence,
+   * so size alone would charge a permanent failure to whichever events happened to be travelling
+   * alone when SpiceDB rejected the credential — the same codes this module already refuses to split
+   * on precisely because they describe the instance rather than an event.
+   */
+  attributable: boolean;
   code: string;
   eventIds: ReadonlyArray<string>;
-  /** The attempt covered this event and nothing else, so its failure is attributable to it. */
-  isolated: boolean;
   retryable: boolean;
 }>;
 
@@ -309,9 +317,9 @@ const failureOutcome = (
   delivered: [],
   failures: [
     {
+      attributable: events.length === 1 && PER_EVENT_ERROR_CODES.has(outcome.code),
       code: outcome.code,
       eventIds: events.map(({ id }) => id),
-      isolated: events.length === 1,
       retryable: outcome.retryable,
     },
   ],
@@ -351,7 +359,7 @@ const deliverGroup = async (
       failures: [
         ...left.failures,
         ...(untried.length > 0
-          ? [{ code: left.haltCode, eventIds: untried, isolated: false, retryable: true }]
+          ? [{ attributable: false, code: left.haltCode, eventIds: untried, retryable: true }]
           : []),
       ],
       haltCode: left.haltCode,
@@ -381,7 +389,7 @@ const deliverEventGroups = async (grouped: TGroupedEvents): Promise<TDeliveryOut
       // instance already known to be unreachable. Release the rest untried and unblamed.
       const untried = groups.slice(index + 1).flatMap(({ events }) => events.map(({ id }) => id));
       if (untried.length > 0) {
-        failures.push({ code: outcome.haltCode, eventIds: untried, isolated: false, retryable: true });
+        failures.push({ attributable: false, code: outcome.haltCode, eventIds: untried, retryable: true });
       }
       return { delivered, failures, haltCode: outcome.haltCode };
     }
@@ -394,7 +402,7 @@ const deliverEventGroups = async (grouped: TGroupedEvents): Promise<TDeliveryOut
 const mergeFailures = (failures: ReadonlyArray<TFailure>): ReadonlyArray<TFailure> => {
   const merged = new Map<string, TFailure & { eventIds: string[] }>();
   for (const failure of failures) {
-    const key = `${failure.code}:${String(failure.isolated)}:${String(failure.retryable)}`;
+    const key = `${failure.code}:${String(failure.attributable)}:${String(failure.retryable)}`;
     const existing = merged.get(key);
     if (existing) existing.eventIds.push(...failure.eventIds);
     else merged.set(key, { ...failure, eventIds: [...failure.eventIds] });
@@ -420,7 +428,7 @@ export const processAuthzedOutboxBatch = async (
   for (const failure of mergeFailures(outcome.failures)) {
     failed += failure.eventIds.length;
     deadLettered += await markAuthzedOutboxEventsFailed(leaseOwner, failure.eventIds, failure.code, {
-      isolated: failure.isolated,
+      attributable: failure.attributable,
       retryable: failure.retryable,
     });
   }

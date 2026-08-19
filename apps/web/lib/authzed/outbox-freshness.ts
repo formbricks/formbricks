@@ -18,19 +18,23 @@ import { hasStaleAuthzedRevocation } from "./outbox-repository";
  */
 export const AUTHZED_FRESHNESS_MEMO_TTL_MS = 1_000;
 
+// Monotonic on purpose. `Date.now()` steps backwards on an NTP correction, a VM resume, or a host
+// booting from a bad RTC, and a negative elapsed time is always under the TTL — which would freeze
+// this answer, in whichever direction it happened to hold, for the entire duration of the step. That
+// is the one way the bound below could be exceeded without limit, on every process sharing the clock.
 let memoizedAt = Number.NEGATIVE_INFINITY;
 let memoizedValue = false;
 let inFlight: Promise<boolean> | null = null;
 
 const readStaleness = (): Promise<boolean> => {
-  if (Date.now() - memoizedAt < AUTHZED_FRESHNESS_MEMO_TTL_MS) return Promise.resolve(memoizedValue);
+  if (performance.now() - memoizedAt < AUTHZED_FRESHNESS_MEMO_TTL_MS) return Promise.resolve(memoizedValue);
 
   // Concurrent checks share one read. A value-only memo would not collapse a fan-out, because every
   // check in it starts before any of them has finished.
   inFlight ??= hasStaleAuthzedRevocation()
     .then((stale) => {
       memoizedValue = stale;
-      memoizedAt = Date.now();
+      memoizedAt = performance.now();
       return stale;
     })
     // Deliberately not memoized on rejection: a failed read must keep denying, not be cached as an

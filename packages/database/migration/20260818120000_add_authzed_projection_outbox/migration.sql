@@ -40,6 +40,7 @@ DROP INDEX IF EXISTS "AuthzedProjectionOutbox_pending_idx";
 DROP INDEX IF EXISTS "AuthzedProjectionOutbox_revocation_idx";
 DROP INDEX IF EXISTS "AuthzedProjectionOutbox_leaseExpiresAt_idx";
 DROP INDEX IF EXISTS "AuthzedProjectionOutbox_target_idx";
+DROP INDEX IF EXISTS "AuthzedProjectionOutbox_dead_letter_idx";
 
 -- The claim. Its key columns ARE the claim's ORDER BY, so the LIMIT is served by an ordered index
 -- scan with no sort. Also serves the freshness guard's overdue-revocation EXISTS (equality on the
@@ -48,12 +49,20 @@ CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_claim_idx"
   ON "AuthzedProjectionOutbox"("isRevocation" DESC, "createdAt" ASC)
   WHERE "processedAt" IS NULL AND "deadLetteredAt" IS NULL;
 
--- Dead letters: the freshness guard's second EXISTS, the dead-letter gauge, and `outbox replay`.
+-- Everything still undelivered: the freshness guard's dead-letter EXISTS, `outbox replay`, and the
+-- status aggregate the delivery job runs every five seconds.
+--
+-- The predicate is deliberately the whole undelivered set rather than the dead letters alone. The
+-- status aggregate's own WHERE is a bare `processedAt IS NULL`, which does not imply a narrower
+-- predicate, so PostgreSQL cannot use a dead-letters-only index for it and would fall back to
+-- scanning all seven days of retained history twelve times a minute. Widened to this, the aggregate
+-- is an index-only scan and the dead-letter probe still has `isRevocation` as its leading key.
+--
 -- A dead-lettered row always has a NULL `processedAt` — the claim skips dead letters, and replay
--- clears `deadLetteredAt` before delivery is possible — so this predicate loses no rows.
-CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_dead_letter_idx"
-  ON "AuthzedProjectionOutbox"("isRevocation", "deadLetteredAt")
-  WHERE "processedAt" IS NULL AND "deadLetteredAt" IS NOT NULL;
+-- clears `deadLetteredAt` before delivery is possible — so no dead letter is lost here.
+CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_undelivered_idx"
+  ON "AuthzedProjectionOutbox"("isRevocation", "deadLetteredAt", "createdAt")
+  WHERE "processedAt" IS NULL;
 
 -- History prune. The only index that carries delivered rows.
 CREATE INDEX IF NOT EXISTS "AuthzedProjectionOutbox_processed_idx"

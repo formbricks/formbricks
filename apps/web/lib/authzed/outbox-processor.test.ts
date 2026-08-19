@@ -170,7 +170,7 @@ describe("AuthZed projection outbox processor", () => {
       sorted(events.filter(({ id }) => !apiKeyIds.includes(id)).map(({ id }) => id))
     );
     expect(markAuthzedOutboxEventsFailed).toHaveBeenCalledWith("lease", apiKeyIds, "authzed_internal", {
-      isolated: false,
+      attributable: false,
       retryable: false,
     });
   });
@@ -217,8 +217,28 @@ describe("AuthZed projection outbox processor", () => {
       ["membership-org-user"],
       "authzed_projection_unstable",
       // Retryable is what matters: it is what keeps the event out of the dead-letter budget.
-      { isolated: true, retryable: true }
+      { attributable: false, retryable: true }
     );
+  });
+
+  test("does not blame a lone event for a failure that describes the instance", async () => {
+    // A five-second cadence means most groups hold exactly one event, so "the attempt covered one
+    // event" is nearly always true and says nothing about fault. If size alone drove attribution, a
+    // rotated SpiceDB credential would dead-letter whichever revocations happened to be travelling
+    // alone — and a dead-lettered revocation denies the whole deployment until something replays it.
+    for (const code of ["authzed_unauthenticated", "authzed_internal", "authzed_permission_denied"]) {
+      vi.clearAllMocks();
+      vi.mocked(markAuthzedOutboxEventsFailed).mockResolvedValue(0);
+      vi.mocked(claimAuthzedOutboxEvents).mockResolvedValue([event("membership", "org", "user")]);
+      vi.mocked(reconcileOrganizationMemberships).mockResolvedValue(failed(code, false));
+
+      await processAuthzedOutboxBatch("lease");
+
+      expect(markAuthzedOutboxEventsFailed).toHaveBeenCalledWith("lease", ["membership-org-user"], code, {
+        attributable: false,
+        retryable: false,
+      });
+    }
   });
 
   test("isolates the one event a per-event failure is attributable to", async () => {
@@ -242,7 +262,7 @@ describe("AuthZed projection outbox processor", () => {
       "lease",
       [poison.id],
       "authzed_projection_invalid_source",
-      { isolated: true, retryable: false }
+      { attributable: true, retryable: false }
     );
   });
 
@@ -261,7 +281,7 @@ describe("AuthZed projection outbox processor", () => {
       "lease",
       events.map(({ id }) => id),
       "authzed_internal",
-      { isolated: false, retryable: false }
+      { attributable: false, retryable: false }
     );
   });
 

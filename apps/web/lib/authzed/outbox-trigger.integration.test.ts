@@ -151,11 +151,12 @@ describe("AuthZed projection outbox triggers", () => {
       { isRevocation: false, primaryId: directory.id, secondaryId: null, targetType: "feedback_directory" },
     ]);
 
+    await prisma.feedbackDirectory.update({ where: { id: directory.id }, data: { isArchived: true } });
+    // Cleared AFTER the re-archive, not before: that setup step enqueues a revocation of its own, and
+    // `outboxRows` sorts revocations first, so asserting on `.at(0)` would have read the setup row and
+    // passed even with the organizationId clause deleted from the classifier.
     await clearOutbox();
-    await prisma.feedbackDirectory.update({
-      where: { id: directory.id },
-      data: { isArchived: true },
-    });
+
     await prisma.feedbackDirectory.update({
       where: { id: directory.id },
       data: { isArchived: false, organizationId: other.id },
@@ -163,7 +164,9 @@ describe("AuthZed projection outbox triggers", () => {
 
     // The parent edge is only ever touched, never re-pointed, so the old organization's administrators
     // keep access until reconciliation. A widening that moves tenants is still a revocation.
-    expect((await outboxRows()).at(0)?.isRevocation).toBe(true);
+    expect(await outboxRows()).toEqual([
+      { isRevocation: true, primaryId: directory.id, secondaryId: null, targetType: "feedback_directory" },
+    ]);
   });
 
   test("classifies an unmapped enum move as a revocation", async () => {
@@ -209,14 +212,21 @@ type TReleaseState = Readonly<{ availableAt: Date; deadLetteredAt: Date | null; 
 
 const insertClaimedEvent = async (
   id: string,
-  overrides: Readonly<{ attempts?: number; isRevocation?: boolean; permanentFailures?: number }> = {}
+  overrides: Readonly<{
+    attempts?: number;
+    isRevocation?: boolean;
+    permanentFailures?: number;
+    processedAt?: Date;
+  }> = {}
 ): Promise<void> => {
   await prisma.$executeRaw`
     INSERT INTO "AuthzedProjectionOutbox"
-      ("id", "targetType", "primaryId", "isRevocation", "attempts", "permanentFailures", "leaseOwner", "updatedAt")
+      ("id", "targetType", "primaryId", "isRevocation", "attempts", "permanentFailures", "processedAt",
+       "leaseOwner", "updatedAt")
     VALUES (
       ${id}, 'membership', 'organization-id', ${overrides.isRevocation ?? false},
-      ${overrides.attempts ?? 1}, ${overrides.permanentFailures ?? 0}, 'lease', NOW()
+      ${overrides.attempts ?? 1}, ${overrides.permanentFailures ?? 0}, ${overrides.processedAt ?? null},
+      'lease', NOW()
     )
   `;
 };
@@ -239,7 +249,7 @@ describe("AuthZed projection outbox failure release", () => {
 
     await expect(
       markAuthzedOutboxEventsFailed("lease", ["solo"], "authzed_invalid_request", {
-        isolated: true,
+        attributable: true,
         retryable: false,
       })
     ).resolves.toBe(0);
@@ -248,7 +258,7 @@ describe("AuthZed projection outbox failure release", () => {
     await reclaim("solo");
     await expect(
       markAuthzedOutboxEventsFailed("lease", ["solo"], "authzed_invalid_request", {
-        isolated: true,
+        attributable: true,
         retryable: false,
       })
     ).resolves.toBe(1);
@@ -264,7 +274,7 @@ describe("AuthZed projection outbox failure release", () => {
       await reclaim("outage");
       await expect(
         markAuthzedOutboxEventsFailed("lease", ["outage"], "authzed_unavailable", {
-          isolated: true,
+          attributable: true,
           retryable: true,
         })
       ).resolves.toBe(0);
@@ -278,7 +288,7 @@ describe("AuthZed projection outbox failure release", () => {
 
     await expect(
       markAuthzedOutboxEventsFailed("lease", ["bystander", "other"], "authzed_projection_invalid_source", {
-        isolated: false,
+        attributable: false,
         retryable: false,
       })
     ).resolves.toBe(0);
@@ -296,7 +306,7 @@ describe("AuthZed projection outbox failure release", () => {
     ]);
 
     await markAuthzedOutboxEventsFailed("lease", ["early", "late"], "authzed_unavailable", {
-      isolated: false,
+      attributable: false,
       retryable: true,
     });
 
@@ -312,7 +322,7 @@ describe("AuthZed projection outbox failure release", () => {
 
     await expect(
       markAuthzedOutboxEventsFailed("lease", ["stolen"], "authzed_internal", {
-        isolated: true,
+        attributable: true,
         retryable: false,
       })
     ).resolves.toBe(0);
@@ -326,6 +336,17 @@ describe("AuthZed projection freshness guard", () => {
     // The whole point of the classifier: a bulk invite acceptance must not deny the deployment.
     await insertClaimedEvent("aged-grant", { isRevocation: false });
     await prisma.$executeRaw`UPDATE "AuthzedProjectionOutbox" SET "createdAt" = NOW() - INTERVAL '1 hour' WHERE "id" = 'aged-grant'`;
+
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(false);
+  });
+
+  test("stays disarmed for a revocation that was actually delivered", async () => {
+    // Delivered rows are retained for seven days, so a healthy deployment permanently holds thousands
+    // of processed revocations far older than the window. Dropping `processedAt IS NULL` from either
+    // EXISTS would therefore deny the whole deployment forever, and nothing else in the suite writes a
+    // delivered row to notice.
+    await insertClaimedEvent("delivered-revocation", { isRevocation: true, processedAt: new Date() });
+    await prisma.$executeRaw`UPDATE "AuthzedProjectionOutbox" SET "createdAt" = NOW() - INTERVAL '1 hour' WHERE "id" = 'delivered-revocation'`;
 
     await expect(hasStaleAuthzedRevocation()).resolves.toBe(false);
   });
@@ -353,8 +374,8 @@ describe("AuthZed projection outbox indexes", () => {
 
     expect(indexes.map(({ indexname }) => indexname)).toEqual([
       "AuthzedProjectionOutbox_claim_idx",
-      "AuthzedProjectionOutbox_dead_letter_idx",
       "AuthzedProjectionOutbox_processed_idx",
+      "AuthzedProjectionOutbox_undelivered_idx",
     ]);
     for (const { indexdef } of indexes) {
       expect(indexdef).toMatch(/WHERE /);
