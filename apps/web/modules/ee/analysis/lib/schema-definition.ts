@@ -120,18 +120,18 @@ export const FEEDBACK_FIELDS = {
       description: "Type of feedback field (e.g., nps, text, rating)",
     },
     {
-      id: "FeedbackRecords.valueText",
-      label: "Value (Text)",
-      type: "string",
-      description:
-        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
-    },
-    {
       id: "FeedbackRecords.valueId",
       label: "Value (Option)",
       type: "string",
       description:
-        "Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.",
+        "Recommended for single/multi-select answers: the stable option id keeps one option in one bucket across languages, after a label edit, and for free-text 'other' answers. Charts show the option's label, not the id.",
+    },
+    {
+      id: "FeedbackRecords.valueText",
+      label: "Value (Text)",
+      type: "string",
+      description:
+        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Buckets by the exact text, so a translated label, an edited label or a free-text 'other' answer each becomes its own bucket — for choice questions prefer Value (Option). Pair with a fieldType filter to keep types consistent.",
     },
     {
       id: "FeedbackRecords.valueNumber",
@@ -405,6 +405,8 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
 export const LANGUAGE_DIMENSION_ID = "FeedbackRecords.language";
+export const VALUE_TEXT_DIMENSION_ID = "FeedbackRecords.valueText";
+export const VALUE_ID_DIMENSION_ID = "FeedbackRecords.valueId";
 
 export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);

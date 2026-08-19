@@ -1813,6 +1813,7 @@
         "please_enter_chart_name": "Please enter a chart name",
         "please_select_dashboard": "Please select a dashboard",
         "predefined_measures": "Predefined Measures",
+        "prefer_option_grouping": "For single- and multi-select questions, group by Value (Option) instead: Value (Text) splits the same option into separate buckets when a label is translated or edited, or when someone types their own \"other\" answer.",
         "reset_to_ai_suggestion": "Reset to AI suggestion",
         "save_and_add_to_dashboard": "Save & add to dashboard",
         "save_chart": "Save Chart",

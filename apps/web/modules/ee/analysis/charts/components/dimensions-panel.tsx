@@ -2,7 +2,12 @@
 
 import { SparklesIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { FEEDBACK_FIELDS, getTranslatedFieldLabel } from "@/modules/ee/analysis/lib/schema-definition";
+import {
+  FEEDBACK_FIELDS,
+  VALUE_ID_DIMENSION_ID,
+  VALUE_TEXT_DIMENSION_ID,
+  getTranslatedFieldLabel,
+} from "@/modules/ee/analysis/lib/schema-definition";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
@@ -19,6 +24,14 @@ export function DimensionsPanel({
   hideTitle = false,
 }: Readonly<DimensionsPanelProps>) {
   const { t } = useTranslation();
+
+  // Grouping a choice question by its answer text is the trap this hint exists for: it looks like
+  // the natural pick, then splits one option into several buckets as soon as a translated label, an
+  // edited label or a free-text "other" answer shows up. Nudge rather than rewrite the query, so a
+  // chart never silently regroups itself under someone.
+  const suggestsOptionGrouping =
+    selectedDimensions.includes(VALUE_TEXT_DIMENSION_ID) &&
+    !selectedDimensions.includes(VALUE_ID_DIMENSION_ID);
 
   const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
     value: d.id,
@@ -43,6 +56,11 @@ export function DimensionsPanel({
         <Alert variant="info" size="small" role="status">
           <AlertTitle>{t("workspace.analysis.charts.group_by_description")}</AlertTitle>
         </Alert>
+        {suggestsOptionGrouping && (
+          <Alert variant="warning" size="small" role="status">
+            <AlertTitle>{t("workspace.analysis.charts.prefer_option_grouping")}</AlertTitle>
+          </Alert>
+        )}
       </div>
     </div>
   );
