@@ -357,9 +357,11 @@ RUSTFS_CORS_ALLOWED_ORIGINS=https://app.yourdomain.com
   that excludes your Formbricks origin — set it to (or add) your origin. Use an explicit origin list in
   production; `*` allows all origins and should be avoided outside local testing.
 
-  RustFS versions up to `1.0.0-beta.1` instead reflected any request origin back when this variable was unset
-  ([GHSA-x5xv-223c-8vm7](https://github.com/rustfs/rustfs/security/advisories/GHSA-x5xv-223c-8vm7)). If you are
-  upgrading from one of those and relied on that permissive default, set this variable explicitly.
+  This changed in `1.0.0-beta.2`. Older images baked `RUSTFS_CORS_ALLOWED_ORIGINS=*` in, so leaving it unset
+  was permissive by default — and on versions up to `1.0.0-beta.1` the server reflected the caller's origin back
+  with `Access-Control-Allow-Credentials: true`
+  ([GHSA-x5xv-223c-8vm7](https://github.com/rustfs/rustfs/security/advisories/GHSA-x5xv-223c-8vm7)). The image no
+  longer bakes that value. If you relied on the old default, set this variable explicitly when you upgrade.
 </Note>
 
 <Warning>
