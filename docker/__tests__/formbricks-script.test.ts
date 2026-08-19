@@ -71,6 +71,28 @@ describe("docker/docker-compose.yml Cube configuration", () => {
   });
 });
 
+describe("docker/docker-compose.yml Redis/Valkey exposure (ENG-2184)", () => {
+  // The bundled Valkey is Better Auth's session/token store (secondaryStorage). Publishing it to
+  // the host binds 0.0.0.0:6379 with no password, exposing every live session token — and Docker's
+  // port rule bypasses host firewalls like ufw. The app reaches it over the internal compose
+  // network (REDIS_URL=redis://redis:6379), so no host publish is needed. It must stay internal,
+  // exactly like the postgres service.
+  test("does not publish the session store to the host", () => {
+    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
+    const redisBlock = getServiceBlock(composeContents, "redis");
+
+    expect(redisBlock).not.toMatch(/^\s*ports:/m);
+    expect(redisBlock).not.toContain("6379:6379");
+  });
+
+  test("keeps postgres internal too, as the reference pattern", () => {
+    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
+    const postgresBlock = getServiceBlock(composeContents, "postgres");
+
+    expect(postgresBlock).not.toMatch(/^\s*ports:/m);
+  });
+});
+
 describe("docker/formbricks.sh Traefik label injection", () => {
   test("adds HTTPS Traefik labels to the formbricks service only", () => {
     const composePath = writeDockerComposeTemplate();

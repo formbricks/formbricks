@@ -587,8 +587,9 @@ Common checks:
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub
   service.
-- **Port conflicts**: Confirm ports `3000`, `6379`, and any optional service ports you enabled are not already
-  in use on the host.
+- **Port conflicts**: Confirm port `3000` and any optional service ports you enabled are not already in use on
+  the host. The bundled Valkey is not published to the host — it is reachable only on the internal compose
+  network — so it does not need port `6379` free on the host.
 - **Optional Qwen/vLLM issues**: Check GPU availability, NVIDIA Container Toolkit installation, and
   `docker compose --profile qwen logs --tail=200 vllm`.
 
