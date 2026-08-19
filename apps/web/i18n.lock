@@ -1720,6 +1720,7 @@ checksums:
     workspace/analysis/charts/group_data: 55c0035773d8c6b7f4d96363a61cda82
     workspace/analysis/charts/is_not_set: 906801489132487ef457652af4835142
     workspace/analysis/charts/is_set: 9850468156356f95884bbaf56b6687aa
+    workspace/analysis/charts/language_value_default: 06d01d2598419e36ba97d2d8719f849b
     workspace/analysis/charts/less_than: fb41255dd44bb6de78617b078610c91b
     workspace/analysis/charts/less_than_or_equal: da4a2816aadf788d33efcdcc3c61802e
     workspace/analysis/charts/measure_group_average: 8ebb872222898ed8785e5a9d77c5a2c3
@@ -1749,6 +1750,7 @@ checksums:
     workspace/analysis/charts/please_enter_chart_name: 9258b71b2cb09d22ffe33de1755e7309
     workspace/analysis/charts/please_select_dashboard: 8f062db96f815ed8268584dd8d292fa6
     workspace/analysis/charts/predefined_measures: 7651141f62c991954edcff70899b2a8b
+    workspace/analysis/charts/prefer_option_grouping: e01ab0e16aead071fedfdb285739df71
     workspace/analysis/charts/reset_to_ai_suggestion: 51ced8dd7c0eea8b7fc4e08b35cfbf30
     workspace/analysis/charts/save_and_add_to_dashboard: a76ed91c62dae10c5f8a9d48cbacd566
     workspace/analysis/charts/save_chart: 2e4505f7bf3d1c35b0b37b1e9d3dc566
