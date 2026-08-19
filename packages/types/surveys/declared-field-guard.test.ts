@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   collectDeclaredFieldNames,
+  describeDeclaredFieldNameError,
   describeDeclaredFieldNameErrors,
   validateNewDeclaredFieldNames,
 } from "./declared-field-guard";
@@ -35,6 +36,23 @@ describe("validateNewDeclaredFieldNames", () => {
     test("grandfathering is per name, not a blanket exemption for the payload", () => {
       expect(refusedNames({ existing: ["country"], incoming: ["country", "team_size", "url"] })).toEqual([
         "url",
+      ]);
+    });
+
+    test("the reprieve is spent by deleting the field: re-adding it afterwards is refused", () => {
+      // `existing` is the survey's CURRENT names, so grandfathering lasts as long as the field does.
+      // Pinned because it is a decision, not an accident: remembering every name a survey ever had
+      // would need storage this layer has no access to, and a survey that gives up its declared
+      // `country` gains the auto-captured one in exchange.
+      const survey = { existing: ["country", "team_size"] };
+
+      // Still there, still fine — the save that keeps it, and the save that drops it, both pass.
+      expect(refusedNames({ ...survey, incoming: ["country", "team_size"] })).toEqual([]);
+      expect(refusedNames({ ...survey, incoming: ["team_size"] })).toEqual([]);
+
+      // After that save the survey no longer declares it, so the name is new again.
+      expect(refusedNames({ existing: ["team_size"], incoming: ["team_size", "country"] })).toEqual([
+        "country",
       ]);
     });
   });
@@ -133,6 +151,43 @@ describe("collectDeclaredFieldNames", () => {
         incoming: collectDeclaredFieldNames({ variables: [], hiddenFields: undefined }),
       })
     ).toEqual([]);
+  });
+});
+
+describe("describeDeclaredFieldNameError", () => {
+  const reasonFor = (name: string): string =>
+    describeDeclaredFieldNameError(validateNewDeclaredFieldNames({ existing: [], incoming: [name] })[0]);
+
+  test("a Tier-1 catalog name is not described as unfillable", () => {
+    // `RESERVED_FIELD_NAMES` is deliberately absent from the capture-refusal list, so `?country=DE`
+    // DOES fill a survey's declared `country`. Telling an integrator otherwise could send them off to
+    // remove URL params that work.
+    const reason = reasonFor("country");
+
+    expect(reason).toContain("auto-captured system field");
+    expect(reason).not.toContain("never filled from the URL");
+  });
+
+  test("a link-survey system param is described as unfillable, because it is", () => {
+    // `getHiddenFieldsFromSearchParams` skips these, so a field declared under one stays empty.
+    const reason = reasonFor("lang");
+
+    expect(reason).toContain("never filled from the URL");
+  });
+
+  test("a name in both lists takes the capture-refusal reason", () => {
+    // `source` is the one Tier-1 field that is also a link-survey system param. Both statements are
+    // true of it; the stronger one wins.
+    const reason = reasonFor("source");
+
+    expect(reason).toContain("never filled from the URL");
+  });
+
+  test("a name that is merely not a safe identifier keeps the naming-rule reason", () => {
+    const reason = reasonFor("Team Size");
+
+    expect(reason).toContain("lowercase letter");
+    expect(reason).not.toContain("reserved");
   });
 });
 

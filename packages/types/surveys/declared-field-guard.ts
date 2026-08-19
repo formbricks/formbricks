@@ -1,6 +1,12 @@
 import type { z } from "zod";
+import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
 import { type TSurveyHiddenFields, ZSurveyVariables } from "./types";
-import { type TValidateIdError, TValidateIdErrorCode, validateId } from "./validation";
+import {
+  RESERVED_DECLARED_FIELD_NAMES,
+  type TValidateIdError,
+  TValidateIdErrorCode,
+  validateId,
+} from "./validation";
 
 /**
  * The legacy declared-field carriers of a survey write payload, as every write seam spells them:
@@ -61,6 +67,25 @@ export const collectDeclaredFieldNames = (source: TDeclaredFieldSource): string[
  *
  * Duplicate incoming names yield one error each at most — the caller sees one error per bad name.
  *
+ * ## Grandfathering is per-save, not permanent — and that is deliberate
+ *
+ * `existing` is the survey's *current* names, so the reprieve lasts exactly as long as the field does.
+ * Delete a grandfathered `country` field, save, and it can no longer be added back: the next write
+ * sees an `existing` set without it and refuses the name like any other new declaration. Editing the
+ * field, renaming other fields around it, or saving the survey untouched all keep it — only removing
+ * it spends the reprieve.
+ *
+ * That is the intended reading of "already declared". The alternative — remembering every name a
+ * survey ever had — would need storage this layer does not have, and would keep a name reserved for a
+ * survey that no longer uses it. A survey that gives up its declared `country` gains the auto-captured
+ * one in exchange, which is the field the name is supposed to mean from here on.
+ *
+ * The client-facing message says "fields a survey already has keep working", which is true of the
+ * survey as it stands and is what an integrator hitting this on a *different* survey needs to hear.
+ * Someone who deleted the field yesterday and is re-adding it today is the one case where that
+ * sentence reads as contradicting them; pinned by a test so the behaviour is a decision rather than an
+ * accident.
+ *
  * @param existing - Every declared field name the survey already has (variables + hidden fields).
  *   Pass `[]` on a create, which authors every name fresh.
  * @param incoming - The declared field names the payload carries, from
@@ -101,10 +126,32 @@ export const validateNewDeclaredFieldNames = ({
  * of this layer; the editor refuses these names client-side with a translated toast long before a
  * request is made.
  */
+const describeReservedReason = (field: string): string => {
+  // Order matters: a name in BOTH lists (`source` is the one Tier-1 field that is also a link-survey
+  // system param) gets the capture-refusal reason, which is the stronger and still-true statement.
+  //
+  // The two halves fail for genuinely different reasons, and saying "could never receive a value" for
+  // the catalog half would be actively misleading: `RESERVED_FIELD_NAMES` is deliberately kept OUT of
+  // the capture-refusal list read by `getHiddenFieldsFromSearchParams`, precisely so `?country=DE`
+  // keeps filling the field of a survey that already declares `country`. An integrator told the wrong
+  // reason here could go and remove URL params that work.
+  if (RESERVED_DECLARED_FIELD_NAMES.has(field.toLowerCase())) {
+    return "it is reserved by the link-survey URL contract, so a field declared under it is never filled from the URL and would stay empty";
+  }
+
+  if (RESERVED_FIELD_NAMES.has(field.toLowerCase())) {
+    return "it names an auto-captured system field that every survey can already read by name, so a second field under that name would be ambiguous in recall and logic";
+  }
+
+  // `validateId` classified this Reserved, so one of the two sets matched at the time. Reaching here
+  // means the sets and this description have drifted; say something true rather than guess which.
+  return "it is a reserved name";
+};
+
 export const describeDeclaredFieldNameError = (error: TValidateIdError): string => {
   const reason =
     error.code === TValidateIdErrorCode.Reserved
-      ? "it is a reserved name, read from every response, and a field declared under it could never receive a value"
+      ? describeReservedReason(error.field)
       : "it must start with a lowercase letter and contain only lowercase letters, numbers and underscores";
 
   return `Field name "${error.field}" cannot be used: ${reason}.`;

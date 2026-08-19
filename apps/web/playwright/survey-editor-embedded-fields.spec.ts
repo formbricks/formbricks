@@ -367,4 +367,58 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     });
     expect(stored.map((field) => field.storageKey)).toEqual([allowedName]);
   });
+
+  /**
+   * The variables half of the same guard. `isSafeIdentifier("country")` passes — it is lowercase with
+   * no separators — so this card accepted the name and the author only found out at save time, from
+   * the server guard's untranslated message. The card now applies the same `validateId` strict gate
+   * the hidden-fields card does, so the refusal is translated and immediate.
+   */
+  test("refuses a variable named after a reserved field", async ({ page, users }) => {
+    const allowedName = uniqueName("score");
+
+    const user = await users.create();
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const surveyId = await createSurveyFromScratch(page);
+
+    await openCard(page, "Variables");
+    const createForm = variableForms(page).last();
+    const nameInput = createForm.getByPlaceholder(VARIABLE_NAME_PLACEHOLDER);
+
+    await nameInput.fill("country");
+    await selectVariableType(page, createForm, "Text");
+    await createForm.getByRole("button", { name: "Add variable", exact: true }).click();
+
+    // Inline under the field rather than a toast — that is how this card reports name errors.
+    await expect(
+      createForm.getByText('Variable ID "country" is not allowed. It is a reserved keyword.', {
+        exact: true,
+      })
+    ).toBeVisible();
+
+    // Case-insensitive, matching the server guard and the hidden-fields card.
+    await nameInput.fill("Country");
+    await createForm.getByRole("button", { name: "Add variable", exact: true }).click();
+    await expect(
+      createForm.getByText('Variable ID "Country" is not allowed. It is a reserved keyword.', {
+        exact: true,
+      })
+    ).toBeVisible();
+
+    // An ordinary name still works, so the gate refuses the name rather than the card.
+    await nameInput.fill(allowedName);
+    await selectVariableType(page, createForm, "Text");
+    await createForm.getByRole("button", { name: "Add variable", exact: true }).click();
+    await expect(variableForms(page).first().getByPlaceholder(VARIABLE_NAME_PLACEHOLDER)).toHaveValue(
+      allowedName
+    );
+
+    await saveDraft(page);
+    const stored = await prisma.surveyEmbeddedData.findMany({
+      where: { surveyId },
+      select: { storageKey: true },
+    });
+    expect(stored.map((field) => field.storageKey)).toEqual([allowedName]);
+  });
 });

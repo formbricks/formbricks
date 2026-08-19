@@ -317,11 +317,14 @@ export const isSurveyValid = (
 
 export const getValidateIdErrorMessage = (
   error: TValidateIdError,
-  type: "hiddenField" | "question",
+  type: "hiddenField" | "question" | "variable",
   t: TFunction
 ): string => {
-  const localizedType =
-    type === "hiddenField" ? t("common.hidden_field") : t("workspace.surveys.edit.question");
+  const localizedType = {
+    hiddenField: () => t("common.hidden_field"),
+    question: () => t("workspace.surveys.edit.question"),
+    variable: () => t("common.variable"),
+  }[type]();
 
   switch (error.code) {
     case TValidateIdErrorCode.Empty:
