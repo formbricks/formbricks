@@ -1783,6 +1783,7 @@
         "group_data": "Group data",
         "is_not_set": "is not set",
         "is_set": "is set",
+        "language_value_default": "Default language",
         "less_than": "less than",
         "less_than_or_equal": "less than or equal",
         "measure_group_average": "Average",

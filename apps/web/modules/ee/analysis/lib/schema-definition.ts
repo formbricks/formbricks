@@ -404,6 +404,7 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
 
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
+export const LANGUAGE_DIMENSION_ID = "FeedbackRecords.language";
 
 export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
@@ -429,6 +430,13 @@ const isEmptyDimensionValue = (value: unknown): boolean =>
  * because the record hasn't been AI-enriched yet. Drives both the label and the gray coloring. */
 export const isNotEnrichedDimensionValue = (dimensionId: string, value: unknown): boolean =>
   isEnrichmentDimensionId(dimensionId) && isEmptyDimensionValue(value);
+
+/** A response given in its survey's default language stores no language code (transform.ts only
+ * writes `language` when it is not "default"), so grouping by language yields an unlabelled bucket
+ * beside the explicit codes. It is a real group — the default-language responses — not missing data,
+ * so it gets a name rather than a blank axis tick. */
+export const isDefaultLanguageDimensionValue = (dimensionId: string, value: unknown): boolean =>
+  dimensionId === LANGUAGE_DIMENSION_ID && isEmptyDimensionValue(value);
 
 // The label maps are typed against the enum tuples, so extending
 // SENTIMENT_VALUE_ORDER / EMOTION_VALUES without adding the matching label is a
@@ -471,6 +479,9 @@ export function getTranslatedDimensionValueLabel(
 ): string | undefined {
   if (isNotEnrichedDimensionValue(dimensionId, value)) {
     return t("workspace.analysis.charts.not_enriched");
+  }
+  if (isDefaultLanguageDimensionValue(dimensionId, value)) {
+    return t("workspace.analysis.charts.language_value_default");
   }
   if (typeof value !== "string" || value.length === 0) return undefined;
   if (dimensionId === SENTIMENT_DIMENSION_ID) {
