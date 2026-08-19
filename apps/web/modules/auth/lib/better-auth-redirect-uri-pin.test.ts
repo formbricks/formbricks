@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { genericOAuth } from "better-auth/plugins";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 /**
  * The upgrade guard for the pinned SSO callback URL (ENG-2343).
@@ -82,5 +82,81 @@ describe("Better Auth honours the pinned SSO redirect URI", () => {
 
     expect(redirectUri).toContain("/api/auth/oauth2/callback/");
     expect(redirectUri).not.toBe(`${BASE_URL}/api/auth/callback/pinned-provider`);
+  });
+});
+
+/**
+ * The other half of the pin, and the one that fails in production if it regresses.
+ *
+ * `options.redirectURI || redirectURI` is resolved TWICE by upstream — once building the authorization
+ * URL (`create-authorization-url.mjs`) and once building the token request
+ * (`validate-authorization-code.mjs`). The tests above only drive the first. If a release kept the option
+ * on the authorization leg and dropped it on the token leg, they would all stay green while every SSO
+ * sign-in died at the identity provider's token endpoint with a `redirect_uri` mismatch — the two legs
+ * MUST send the same value, and that is what this asserts.
+ *
+ * Driven as a real two-leg flow against one instance so the `state` verification row and its signed
+ * cookie are the genuine ones: sign-in through `auth.handler` to get the state + cookie, then the
+ * callback with both, with `fetch` stubbed at the IdP boundary to capture what was posted.
+ */
+describe("Better Auth sends the pinned redirect URI on the token leg too", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("the token request carries the same redirect_uri as the authorization request", async () => {
+    const auth = createAuthInstance();
+
+    const signIn = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/sign-in/social`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: BASE_URL },
+        body: JSON.stringify({ provider: "pinned-provider", callbackURL: "/" }),
+      })
+    );
+    expect(signIn.status).toBe(200);
+
+    const { url: authorizationUrl } = (await signIn.json()) as { url: string };
+    const authorizationRedirectUri = new URL(authorizationUrl).searchParams.get("redirect_uri");
+    const state = new URL(authorizationUrl).searchParams.get("state") ?? "";
+    expect(state).not.toBe("");
+
+    // The signed state cookie Better Auth just issued; the callback rejects the state without it.
+    const cookie = (signIn.headers.getSetCookie?.() ?? []).map((value) => value.split(";")[0]).join("; ");
+    expect(cookie).not.toBe("");
+
+    let tokenRedirectUri: string | null = null;
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      const requested = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (requested.startsWith(`${IDP}/token`)) {
+        // `redirect_uri` is form-encoded in the token request body — the value under test.
+        tokenRedirectUri = new URLSearchParams(String(init?.body ?? "")).get("redirect_uri");
+        return Response.json({
+          access_token: "pinned-access-token",
+          token_type: "Bearer",
+          expires_in: 3600,
+          scope: "openid email profile",
+        });
+      }
+      if (requested.startsWith(`${IDP}/userinfo`)) {
+        return Response.json({
+          sub: "pinned-subject",
+          email: "pinned@formbricks.test",
+          email_verified: true,
+          name: "Pinned Person",
+        });
+      }
+      throw new Error(`unexpected outbound fetch: ${requested}`);
+    });
+
+    await auth.handler(
+      new Request(`${BASE_URL}/api/auth/callback/pinned-provider?code=pinned-code&state=${state}`, {
+        headers: { cookie },
+      })
+    );
+
+    expect(tokenRedirectUri).toBe(PINNED_REDIRECT_URI);
+    // Both legs agree, which is the property the pin depends on.
+    expect(tokenRedirectUri).toBe(authorizationRedirectUri);
   });
 });

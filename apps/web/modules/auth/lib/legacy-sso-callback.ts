@@ -80,8 +80,12 @@ export const mapLegacySsoCallbackUrl = (requestUrl: string): string | null => {
  * The request Better Auth should handle: rewritten when it names a pinned legacy SSO callback, and the
  * original object otherwise (identity, so the common path allocates nothing).
  *
- * A rewrite rather than a redirect: a 307 would re-emit the single-use authorization `code` in a
- * `Location` header, putting it through the proxy access log a second time for no benefit.
+ * A rewrite rather than a redirect, so the single-use authorization `code` is not re-emitted in a
+ * `Location` header on the GET callback that every one of our providers actually uses. Note this does not
+ * hold for `response_mode=form_post`: Better Auth 1.7 itself 302s a POST callback to
+ * `${baseURL}/callback/{id}?code=…&state=…` before validating state (`api/routes/callback.mjs`), so on
+ * that path the code travels through a `Location` regardless of what we do here — which is also why the
+ * body still has to be forwarded below rather than dropped.
  */
 export const mapLegacySsoCallbackRequest = (request: Request): Request => {
   const mappedUrl = mapLegacySsoCallbackUrl(request.url);

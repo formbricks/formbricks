@@ -35,6 +35,10 @@ vi.mock("@/modules/ee/sso/lib/sso-request-context", () => ({
   runWithSsoRequestContext: runWithCtxMock,
 }));
 
+// NOTE on assertions below: a Request must never be asserted with `toHaveBeenCalledWith`. Request state
+// lives in internal slots, so it has no own properties and ANY two Request objects compare deep-equal
+// under vitest — such an assertion passes even when the handler was called with a completely different
+// URL. Assert identity (`toBe`) for pass-through, and read `.url` off the recorded call for a rewrite.
 describe("[...all] Better Auth route (ENG-1054 cutover)", () => {
   beforeEach(() => {
     handlerMock.mockClear();
@@ -59,7 +63,7 @@ describe("[...all] Better Auth route (ENG-1054 cutover)", () => {
     const response = await GET(request);
     expect(response.status).toBe(200);
     expect(runWithCtxMock).toHaveBeenCalledTimes(1);
-    expect(handlerMock).toHaveBeenCalledWith(request);
+    expect(handlerMock.mock.calls[0][0]).toBe(request);
     expect(calls).toEqual(["wrapper:start", "handler", "wrapper:end"]);
   });
 
@@ -68,7 +72,7 @@ describe("[...all] Better Auth route (ENG-1054 cutover)", () => {
     const response = await POST(request);
     expect(response.status).toBe(200);
     expect(runWithCtxMock).toHaveBeenCalledTimes(1);
-    expect(handlerMock).toHaveBeenCalledWith(request);
+    expect(handlerMock.mock.calls[0][0]).toBe(request);
   });
 
   test("GET and POST share the single wrapped handler", () => {
@@ -176,6 +180,6 @@ describe("[...all] Better Auth route — pinned SSO callback (ENG-2343)", () => 
 
     await GET(request);
 
-    expect(handlerMock).toHaveBeenCalledWith(request);
+    expect(handlerMock.mock.calls[0][0]).toBe(request);
   });
 });

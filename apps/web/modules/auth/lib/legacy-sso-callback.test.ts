@@ -48,6 +48,9 @@ describe("mapLegacySsoCallbackUrl (ENG-2343)", () => {
     ["the current-version callback", `${BASE}/api/auth/callback/openid`],
     ["an unpinned provider id", `${BASE}/api/auth/oauth2/callback/google`],
     ["a deeper path under a pinned id", `${BASE}/api/auth/oauth2/callback/openid/extra`],
+    // Rejected here as defence in depth only: Next.js 308-normalises a trailing slash (and doubled
+    // slashes) to the canonical path before the route handler runs, so in production this shape reaches
+    // the mapper already canonicalised and IS mapped. Verified against a running dev server.
     ["a trailing slash", `${BASE}/api/auth/oauth2/callback/openid/`],
     // Keeps the basePath tolerance from accepting a crafted double auth segment, so the only path this
     // function can emit is `<basePath>/api/auth/callback/<pinned-id>`.
@@ -55,9 +58,23 @@ describe("mapLegacySsoCallbackUrl (ENG-2343)", () => {
     ["no provider id at all", `${BASE}/api/auth/oauth2/callback/`],
     ["an unrelated endpoint", `${BASE}/api/auth/sign-in/email`],
     ["a non-auth route", `${BASE}/api/v3/surveys`],
+    ["a percent-encoded provider id", `${BASE}/api/auth/oauth2/callback/openi%64`],
+    ["percent-encoded separators", `${BASE}/api/auth/oauth2%2fcallback%2fopenid`],
+    ["an upper-cased path", `${BASE}/api/auth/OAUTH2/CALLBACK/OPENID`],
     ["an unparseable url", "not-a-url"],
   ])("leaves %s alone", (_label, url) => {
     expect(mapLegacySsoCallbackUrl(url)).toBeNull();
+  });
+});
+
+describe("mapLegacySsoCallbackUrl — normalisation order (ENG-2343)", () => {
+  // `new URL()` resolves dot segments at construction, so matching runs on the normalised path. That is
+  // the safe order: a traversal cannot be smuggled past the match, it just canonicalises into it.
+  test.each([
+    `${BASE}/api/auth/oauth2/callback/../callback/openid`,
+    `${BASE}/api/auth/oauth2/callback/x/../openid`,
+  ])("normalises dot segments before matching: %s", (url) => {
+    expect(mapLegacySsoCallbackUrl(url)).toBe(`${BASE}/api/auth/callback/openid`);
   });
 });
 
