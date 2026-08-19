@@ -57,13 +57,18 @@ export function DashboardWidget({
       )}>
       <div
         className={cn(
-          "flex h-10 items-center justify-between border-b border-gray-100 px-4",
+          "flex min-h-10 items-center justify-between gap-2 border-b border-gray-100 px-4 py-1.5",
           isEditing && "rgl-drag-handle cursor-grab active:cursor-grabbing"
         )}>
-        <h3 className="flex-1 truncate text-sm font-semibold text-gray-800">{title}</h3>
+        {/* A score card's title is the whole survey question, which does not fit one line in a
+            quarter-width widget. Wrap to two lines and keep the full text in the native tooltip
+            rather than clipping it mid-word. */}
+        <h3 className="line-clamp-2 flex-1 text-sm leading-tight font-semibold text-gray-800" title={title}>
+          {title}
+        </h3>
         {view && onViewChange && (
           <div
-            className="ml-2 flex shrink-0 items-center rounded-md border border-gray-200 p-0.5"
+            className="flex shrink-0 items-center rounded-md border border-gray-200 p-0.5"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}>
             {WIDGET_VIEWS.map((widgetView) => {
@@ -99,7 +104,7 @@ export function DashboardWidget({
               <button
                 type="button"
                 aria-label={t("common.more_options")}
-                className="ml-2 shrink-0 rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="shrink-0 rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}>
                 <MoreVerticalIcon className="size-4" />
