@@ -1,4 +1,5 @@
 import "server-only";
+import { BetterAuthError } from "@better-auth/core/error";
 import * as Sentry from "@sentry/nextjs";
 import type { BetterAuthOptions } from "better-auth";
 import { isAPIError } from "better-auth/api";
@@ -130,6 +131,71 @@ export const redactEmailsInLogMessage = (message: unknown): unknown =>
   typeof message === "string" ? message.replace(EMAIL_IN_MESSAGE, "[redacted]@$1") : message;
 
 /**
+ * `StateError` codes whose events are client- or timing-caused, and so are not actionable in Sentry
+ * (ENG-2471). `StateError extends BetterAuthError` and carries a stable `code`, which is what we match
+ * on — never the message, which is not a contract.
+ *
+ * Read from the throw sites in `better-auth/dist/state.mjs`, **for the strategy we actually run**. That
+ * matters more than it sounds: the file has two branches that throw different codes for the same
+ * underlying cause, and reading the wrong one inverts the conclusions. `auth.ts` sets `secondaryStorage`,
+ * which makes Better Auth resolve `storeStateStrategy` to `"database"`, and `account:` sets no override —
+ * so the cookie branch never executes here.
+ *
+ * | code | thrown when (database strategy) | actionable? |
+ * | --- | --- | --- |
+ * | `state_mismatch` | no verification record for this `state` — purged after its 10-minute TTL, already consumed, or never issued — or the parsed state is past `expiresAt` | no — **suppressed** |
+ * | `state_not_found` | the callback carried no `state` parameter at all (bots, truncated links) | no — **suppressed** |
+ * | `state_security_mismatch` | the state does not match the stored one, or the signed `state` cookie fails verification ("State not persisted correctly") | **yes**, kept |
+ * | `state_generation_error` | the adapter could not write the verification row | **yes**, kept — a real fault |
+ * | `state_invalid` | undecryptable state — **cookie branch only, unreachable on this config**; kept for the cost of one Set entry | kept |
+ *
+ * `state_security_mismatch` carries the load this gate deliberately does not take on, and it is mixed:
+ *
+ * - The state cookie's `maxAge` is 300s while the verification record lives 10 minutes, so a user who
+ *   spends 5–10 minutes at the identity provider loses the cookie first and lands here. Benign, and
+ *   probably common — **so this change likely leaves residual noise behind**; it closes the reported
+ *   `verification not found` shape (FORMBRICKS-16G), not the whole class.
+ * - It is also where a `BETTER_AUTH_SECRET` divergence across replicas surfaces, because the signed
+ *   cookie cannot be verified with a different secret. That is a genuine outage and must keep paging.
+ * - And it is the shape a forged or mixed-up callback takes.
+ *
+ * Code cannot separate those three, which is exactly why ENG-2471 defers the decision to the `auth.path`
+ * tag from ENG-2259 rather than guessing. Suppressing a signal before measuring it is how ENG-2037 left
+ * this shape behind in the first place.
+ *
+ * What suppression costs, stated narrowly: a Redis eviction, flush, or failover to an empty replica
+ * drops in-flight verification records and yields `state_mismatch` for real login failures. A *hard*
+ * Redis outage does not — `secondary-storage.ts` rethrows on connect failure, which is not a
+ * `StateError` and still pages. The suppressed events remain at `error` in the application log carrying
+ * `stateErrorCode` and the request's `authPath`, so they are greppable; note there is no log-based alert
+ * rule for them today, so a burst is discoverable rather than announced.
+ */
+const UNACTIONABLE_STATE_ERROR_CODES: ReadonlySet<string> = new Set(["state_mismatch", "state_not_found"]);
+
+/**
+ * The `StateError` code carried by a logged cause, or undefined when it is not one.
+ *
+ * Extracted once and used for BOTH the log context and the Sentry gate, so a suppressed event stays
+ * queryable by the same value that suppressed it — the log is the only place these survive, and an
+ * upstream message string is not something to build an alert on.
+ *
+ * Deliberately reads only `code`, never the error's `details`, which holds the raw `state` value: that
+ * is a single-use credential for the in-flight OAuth flow and has no business in a log line.
+ */
+const getStateErrorCode = (cause: Error | undefined): string | undefined => {
+  if (!(cause instanceof BetterAuthError)) return undefined;
+  const { code } = cause as { code?: unknown };
+  return typeof code === "string" ? code : undefined;
+};
+
+/**
+ * Fails CLOSED on purpose: anything not positively identified as one of the two unactionable codes is
+ * still captured. A wrong answer here should add noise, never silence a genuine fault.
+ */
+const isUnactionableStateError = (code: string | undefined): boolean =>
+  code !== undefined && UNACTIONABLE_STATE_ERROR_CODES.has(code);
+
+/**
  * Route Better Auth's logger to @formbricks/logger and capture GENUINE internal faults to Sentry in
  * production — replaces auth.ts's placeholder logger (and the route's Sentry.captureException on auth
  * failures).
@@ -158,21 +224,26 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
     // construction, a server-side `auth.api.*` call). Already reduced to a safe label — never a raw
     // path, which on `/reset-password/:token` would be a live credential (better-auth-path-label.ts).
     const request = getBetterAuthRequestContext();
+    // BA usually passes the Error as a trailing arg, but a couple of sites pass it as `message`.
+    const cause = [...args, message].find((arg): arg is Error => arg instanceof Error);
+    const stateErrorCode = getStateErrorCode(cause);
     const contextLogger = logger.withContext({
       source: "better-auth",
       // Self-hosters have no Sentry, so the label has to reach the application log too — otherwise
       // their copy of this fault stays as untriageable as FORMBRICKS-183 was.
       ...(request && { authPath: request.path, httpMethod: request.method }),
+      // The suppressed state rejections survive only in the log, so the code has to be queryable there
+      // (ENG-2471). Recorded for every state error, not only the suppressed ones.
+      ...(stateErrorCode && { stateErrorCode }),
     });
     const safeMessage = redactEmailsInLogMessage(message);
     if (level === "error") {
       contextLogger.error(safeMessage);
       if (SENTRY_DSN && IS_PRODUCTION) {
-        // BA usually passes the Error as a trailing arg, but a couple of sites pass it as `message`.
-        const cause = [...args, message].find((arg): arg is Error => arg instanceof Error);
-        // Skip handled rejections: a bare string code (no Error) or a client-facing APIError. Capture
-        // only genuine internal faults so Sentry stays actionable (see the reason-split above).
-        if (cause && !isAPIError(cause)) {
+        // Skip handled rejections: a bare string code (no Error), a client-facing APIError, or a
+        // client/timing-caused OAuth `StateError` (ENG-2471). Capture only genuine internal faults so
+        // Sentry stays actionable (see the reason-split above and UNACTIONABLE_STATE_ERROR_CODES).
+        if (cause && !isAPIError(cause) && !isUnactionableStateError(stateErrorCode)) {
           // ENG-2259: Better Auth's router logs a non-APIError as `(e.name, e)` and discards the
           // endpoint (`better-auth/dist/api/index.mjs:210`), so a bare capture arrives with no
           // transaction, URL or route — which is why FORMBRICKS-183 sat at ~242 events untriageable.
