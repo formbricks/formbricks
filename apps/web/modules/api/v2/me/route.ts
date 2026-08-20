@@ -36,7 +36,11 @@ export const GET = async (request: NextRequest) =>
       });
 
       const legacyEnvIdByWorkspaceId = new Map(workspaces.map((w) => [w.id, w.legacyEnvironmentId]));
-      const workspacePermissions = authorizedWorkspacePermissions.map((permission) => ({
+      const resolvedWorkspaceIds = new Set(workspaces.map(({ id }) => id));
+      const resolvedWorkspacePermissions = authorizedWorkspacePermissions.filter(({ workspaceId }) =>
+        resolvedWorkspaceIds.has(workspaceId)
+      );
+      const workspacePermissions = resolvedWorkspacePermissions.map((permission) => ({
         permissions: permission.permission,
         workspaceId: permission.workspaceId,
         workspaceName: permission.workspaceName,
@@ -44,7 +48,7 @@ export const GET = async (request: NextRequest) =>
 
       // Backwards compat: expose environment-shaped permissions for consumers
       // from before the Environment model was removed.
-      const environmentPermissions = authorizedWorkspacePermissions.flatMap((permission) => {
+      const environmentPermissions = resolvedWorkspacePermissions.flatMap((permission) => {
         const legacyEnvironmentId = legacyEnvIdByWorkspaceId.get(permission.workspaceId);
         if (!legacyEnvironmentId) return [];
         return [

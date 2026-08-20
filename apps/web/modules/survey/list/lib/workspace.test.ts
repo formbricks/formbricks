@@ -183,14 +183,14 @@ describe("Workspace module", () => {
 
   describe("getUserWorkspaces", () => {
     test("returns authoritative workspace ids scoped to the selected organization", async () => {
-      const mockWorkspaces: TUserWorkspace[] = [
+      const mockWorkspaces = [
         { id: "workspace-1", name: "Workspace 1" },
         { id: "workspace-2", name: "Workspace 2" },
-      ] as any;
+      ] satisfies TUserWorkspace[];
 
       vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValueOnce(["org-id"]);
       vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValueOnce(["workspace-1", "workspace-2"]);
-      vi.mocked(prisma.workspace.findMany).mockResolvedValueOnce(mockWorkspaces as any);
+      vi.mocked(prisma.workspace.findMany).mockResolvedValueOnce(mockWorkspaces as never);
 
       const result = await getUserWorkspaces("user-id", "org-id");
 

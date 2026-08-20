@@ -52,7 +52,11 @@ describe("GET /api/v2/me", () => {
   });
 
   test("returns only workspace grants authorized by SpiceDB and scoped to the API-key organization", async () => {
-    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["workspace-2", "workspace-1"]);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue([
+      "workspace-2",
+      "workspace-1",
+      "foreign-workspace",
+    ]);
     vi.mocked(prisma.workspace.findMany).mockResolvedValue([
       { id: "workspace-1", legacyEnvironmentId: "environment-1" },
       { id: "workspace-2", legacyEnvironmentId: null },
@@ -68,7 +72,7 @@ describe("GET /api/v2/me", () => {
     });
     expect(prisma.workspace.findMany).toHaveBeenCalledExactlyOnceWith({
       where: {
-        id: { in: ["workspace-1", "workspace-2"] },
+        id: { in: ["workspace-1", "workspace-2", "foreign-workspace"] },
         organizationId: "organization-1",
       },
       select: { id: true, legacyEnvironmentId: true },
@@ -86,6 +90,12 @@ describe("GET /api/v2/me", () => {
         projectName: "One",
       },
     ]);
+    expect(body.data.workspacePermissions).not.toContainEqual(
+      expect.objectContaining({ workspaceId: "foreign-workspace" })
+    );
+    expect(body.data.environmentPermissions).not.toContainEqual(
+      expect.objectContaining({ projectId: "foreign-workspace" })
+    );
   });
 
   test("fails closed when the authoritative workspace lookup fails", async () => {
