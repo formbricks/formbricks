@@ -188,7 +188,6 @@ checksums:
     common/code: 343bc5386149b97cece2b093c39034b2
     common/collapse_rows: 24988527f9180f37aa55d2aa183ccb21
     common/column_n: b98315f0e504fad7e784d77f153a7d9d
-    common/coming_soon: ee2b0671e00972773210c5be5a9ccb89
     common/completed: 0e4bbce9985f25eb673d9a054c8d5334
     common/confirm: 90930b51154032f119fa75c1bd422d8b
     common/connect: 8778ee245078a8be4a2ce855c8c56edc
@@ -1584,12 +1583,14 @@ checksums:
     workspace/analysis/charts/already_on_dashboard: c2cee946860c71a71cf03392b2d1fc3a
     workspace/analysis/charts/and_filter_logic: 53e8eb67a396fcb5e419bb4cbf0008df
     workspace/analysis/charts/apply_changes: ed3da8072dbd27dc0c959777cdcbebf3
+    workspace/analysis/charts/bar_direction: d78ce3e340da83ec3904a31a4e01b5cb
     workspace/analysis/charts/chart: 6f4d9c56e45ceb8fc22d2f74454cd813
     workspace/analysis/charts/chart_added_to_dashboard: 7bc429ab605cb89a9232c26be008cc00
     workspace/analysis/charts/chart_data: 6739a9576b357a58d73ff0c9bf8db0e4
     workspace/analysis/charts/chart_data_tab: b7b46ab6ce9606032c8f81f6f6afbb9b
     workspace/analysis/charts/chart_deleted_successfully: 79148f471cd9acc2c8d0d033fb85437e
     workspace/analysis/charts/chart_deletion_error: 267eb65c168e726075d7cea678dd32e0
+    workspace/analysis/charts/chart_display_settings: 00e38d777382e98fab9049f5f85f91de
     workspace/analysis/charts/chart_duplicated_successfully: 755c4ce5bf533764d549a53c33e32165
     workspace/analysis/charts/chart_duplication_error: 90d7166c85188b52f821c9d9f53ff8c4
     workspace/analysis/charts/chart_name: cdb36e2f121a7b9c28298e15ab8218dc
@@ -1721,6 +1722,7 @@ checksums:
     workspace/analysis/charts/group_by: 3f1cedea7783018ce83f2fab0051a738
     workspace/analysis/charts/group_by_description: bebcfe28bb315834aa3a307834acfbe0
     workspace/analysis/charts/group_data: 55c0035773d8c6b7f4d96363a61cda82
+    workspace/analysis/charts/horizontal_bars: 9f7e34591bab8b54fb713078677cf9d5
     workspace/analysis/charts/is_not_set: 906801489132487ef457652af4835142
     workspace/analysis/charts/is_set: 9850468156356f95884bbaf56b6687aa
     workspace/analysis/charts/less_than: fb41255dd44bb6de78617b078610c91b
@@ -1776,6 +1778,7 @@ checksums:
     workspace/analysis/charts/time_dimension: 5c967f2a6a875b00825068df5cb2ef84
     workspace/analysis/charts/time_dimension_title: 9353ce9a075a0cc8c3ba7dfa9ef19a8d
     workspace/analysis/charts/time_dimension_toggle_description: 77251d8b3b564390bad8b76f56905190
+    workspace/analysis/charts/vertical_bars: 408174fe449ea6f5457988dd218183be
     workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
     workspace/analysis/dashboards/chart_duplicate_failed: 90d7166c85188b52f821c9d9f53ff8c4
     workspace/analysis/dashboards/chart_duplicated: 52765f173bd6fd5382731f8e06e436e0
@@ -3784,7 +3787,6 @@ checksums:
     workspace/unify/allowed_values: 430e0721aa2c52745ef8f8b6918bb7d2
     workspace/unify/api_ingestion: a14642d27bbb6843f9f4903b6555dfbb
     workspace/unify/api_ingestion_settings_description: b4d3f00729154c01d0dd46b551c1f402
-    workspace/unify/api_ingestion_setup_description: d18a267d0e50198682950f5341307fa3
     workspace/unify/auto_generated: 6e83e8febd63275692c444cb8074531d
     workspace/unify/change_file: c5163ac18bf443370228a8ecbb0b07da
     workspace/unify/clear_mapping: 9bd7c716667838b9f203f5af0ac2d651
@@ -3871,6 +3873,15 @@ checksums:
     workspace/unify/field_id: 7791b5d581b7a525dcadf11ec73c6ab7
     workspace/unify/field_label: 6384505ca0e40010c666b712511132a6
     workspace/unify/field_type: 2581066dc304c853a4a817c20996fa08
+    workspace/unify/field_type_label_boolean: 34aa25a03cc03e58613d578b19c3547b
+    workspace/unify/field_type_label_categorical: 307101bb385166b538e9370428963461
+    workspace/unify/field_type_label_ces: e2ea309b2f7f13257967b966c2fda1e9
+    workspace/unify/field_type_label_csat: fdfc1dc6214cce661dcdc32a71d80337
+    workspace/unify/field_type_label_date: 56f41c5d30a76295bb087b20b7bee4c3
+    workspace/unify/field_type_label_nps: bbbbfdbb6101b47ce32f34ba627dd14a
+    workspace/unify/field_type_label_number: 2789f8391f63e7200a5521078aab017d
+    workspace/unify/field_type_label_rating: c9fa231054678af1362b7f9c6ab35e23
+    workspace/unify/field_type_label_text: 4ddccc1974775ed7357f9beaf9361cec
     workspace/unify/formbricks_surveys: de765c51751a795336498cd0a6c3f86b
     workspace/unify/go_to_feedback_directories: 0262585f8a811222eee931648e86b84a
     workspace/unify/historical_import_complete: f46f98bf4db63bf2993bfb234dc95f62

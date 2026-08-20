@@ -1,11 +1,11 @@
 name: PR Label Sync
 
-# Keeps PR labels in sync with declared sections in the PR body (see .github/pull_request_template.md).
+# Keeps PR labels in sync with checkboxes in the PR body (see .github/pull_request_template.md).
 # Generic engine: to drive a new label from a new "## <heading>" section, add one entry to RULES
 # below — no other changes needed.
 #
 # Currently configured:
-#   - "Breaking changes" section (a filled table / any content other than "None") -> `breaking-change`
+#   - the checkbox in the "Breaking changes" section -> `breaking-change`
 #     Release notes and the self-hoster migration guide are compiled from the PRs carrying it.
 #
 # Uses pull_request_target because adding a label needs a write-scoped token (incl. fork PRs). This is
@@ -40,48 +40,54 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // A section is "declared" when it holds real content — a filled table or prose.
+            // A section drives its label from a GitHub task-list checkbox:
             //
-            // The template asks for a bare "None" when there is nothing to declare, but authors
-            // routinely add a clause: "None — docs only", "N/A", "No breaking changes". Accepting only
-            // the exact word labelled those PRs as breaking, and this label feeds the GitHub release
-            // notes and the self-hoster migration guide, so a false positive is expensive.
+            //     - [x] This PR contains breaking changes
             //
-            // A negative opener alone is not enough to clear the section, because "No breaking changes,
-            // but the response shape changed" declares a real one. So an aside after the opener counts
-            // as "nothing here" only when *every* word in it is a scope word — docs, tests, internal,
-            // only… One unrecognised word (endpoint, renamed, shape) makes the section declared.
+            // Ticked -> the label belongs on the PR. Unticked -> it does not. The prose around the
+            // checkbox is never read, and that is the whole point. The previous version inferred intent
+            // from the section text, so any explanation after "None" ("None — same public API, only
+            // out-of-workspace deletions are refused") read as a declaration and mislabelled the PR.
+            // Deciding is now the author's (or agent's) job, stated in one unambiguous bit; the text can
+            // say whatever it needs to.
             //
-            // That asymmetry is deliberate. A missed breaking change silently omits a migration-guide
-            // entry that self-hosters need; a spurious label is caught by whoever reads the release
-            // notes. So anything the vocabulary does not recognise errs towards labelling, and an
-            // unusual way of writing "nothing here" costs one label removal by hand.
-            const NEGATIVE_OPENER = /^(?:none|n\/?a|not applicable|no breaking changes?)\b/i;
-            const SCOPE_WORD =
-              /^(?:a|and|is|the|this|pr|no|not|nothing|none|n\/?a|applicable|only|just|pure|purely|docs?|documentation|readme|comments?|tests?|ci|chore|refactor(?:ing)?|typos?|styling?|formatting|internal|product|code|changes?)$/i;
+            // The trade-off: a forgotten tick silently omits a migration-guide entry that self-hosters
+            // need, where the old heuristic erred towards a spurious label instead. So the template asks
+            // for a deliberate answer, and PR review is the backstop.
+            //
+            // No checkbox in the section at all -> leave the label alone rather than assume "not
+            // breaking", so a restructured section or a hand-applied label survives.
+            //
+            // Each rule matches its own checkbox by the label text the template ships, rather than
+            // taking the first checkbox in the section: an unrelated item above it ("- [x] I read the
+            // list above") would otherwise flip the label. That couples this workflow to the template's
+            // wording, so a section that holds checkboxes but not *this* one warns rather than passing
+            // silently — the drift is then visible in the run instead of freezing the label.
+            const CHECKBOX_LINE = /^[ \t]*[-*+][ \t]+\[([ xX])\][ \t]*(.*)$/gm;
 
-            const isDeclared = (content) => {
-              const normalized = content
-                .replace(/^\s*[-*+]\s+/, "") // a leading list marker ("- none")
-                .replace(/[*_`]/g, "") // markdown emphasis / code ticks ("**None**")
-                .trim();
-              if (normalized === "") return false;
-              const opener = NEGATIVE_OPENER.exec(normalized);
-              if (!opener) return true;
-              // Split on whitespace and the punctuation that introduces an aside, but not on "/", so
-              // an "N/A" inside the aside survives as one token.
-              const aside = normalized
-                .slice(opener[0].length)
-                .split(/[\s—–:,.;()\[\]-]+/)
-                .filter(Boolean);
-              if (aside.length === 0) return false; // "None", "None.", "N/A"
-              return !(aside.length <= 6 && aside.every((word) => SCOPE_WORD.test(word)));
+            const checkboxFor = (declaration) => (content) => {
+              const boxes = [...content.matchAll(CHECKBOX_LINE)];
+              const box = boxes.find(([, , text]) => declaration.test(text.replace(/[*_`]/g, "").trim()));
+              if (box) return box[1].toLowerCase() === "x";
+              if (boxes.length > 0) {
+                core.warning(
+                  `Found ${boxes.length} checkbox(es) but none matching ${declaration} — the PR ` +
+                    "template and pr-label-sync.yml have drifted. Label left unchanged."
+                );
+              }
+              return null; // no signal in this section
             };
 
             // Label rules. Add an entry to sync a new label from a new "## <heading>" PR-body section.
-            // `isActive(content)` decides whether the label should be present for the given section text.
+            // `isActive(content)` returns true/false to set the label, or null to leave it unchanged.
             const RULES = [
-              { heading: "Breaking changes", label: "breaking-change", isActive: isDeclared },
+              {
+                heading: "Breaking changes",
+                label: "breaking-change",
+                // Prefix, not exact: an author who appends a clause ("… (see the table)") still gets a
+                // working label, while "I read the list above" still does not match.
+                isActive: checkboxFor(/^this pr contains breaking changes/i),
+              },
             ];
 
             const pr = context.payload.pull_request;
@@ -107,6 +113,10 @@ jobs:
                 continue;
               }
               const active = rule.isActive(content);
+              if (active === null) {
+                core.info(`[${rule.label}] no checkbox under "## ${rule.heading}"; leaving unchanged.`);
+                continue;
+              }
               const has = current.has(rule.label);
               if (active && !has) {
                 await github.rest.issues.addLabels({

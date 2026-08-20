@@ -3,10 +3,11 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
-import { SentimentBarChart } from "@/modules/ee/analysis/charts/components/sentiment-bar-chart";
+import { BreakdownBars } from "@/modules/ee/analysis/charts/components/breakdown-bars";
+import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
@@ -133,6 +134,7 @@ interface BarChartViewProps {
   xAxisKey: string;
   chartConfig: ChartConfig;
   formatDimensionValue: (value: unknown) => string;
+  isHorizontal?: boolean;
 }
 
 const BarChartView = ({
@@ -143,8 +145,12 @@ const BarChartView = ({
   xAxisKey,
   chartConfig,
   formatDimensionValue,
+  isHorizontal = false,
 }: Readonly<BarChartViewProps>) => {
   const { t } = useTranslation();
+  // Value labels sit past the end of the bar, which is the top of a vertical bar and the
+  // right-hand end of a horizontal one.
+  const valueLabelPosition = isHorizontal ? "right" : "top";
 
   // Measure-only queries (no dimension or time grouping) return a single row with one
   // column per measure. Rendered as N bar series that row forms a single category band
@@ -180,11 +186,12 @@ const BarChartView = ({
         tooltipCursor={false}
         zeroBaseline
         tooltipHideLabel
+        horizontal={isHorizontal}
         xAxisTickFormatter={formatMeasureLabel}>
         <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
           <LabelList
             dataKey={PIVOTED_VALUE_KEY}
-            position="top"
+            position={valueLabelPosition}
             className="fill-foreground"
             fontSize={11}
             formatter={(value: unknown) => formatCellValue(value)}
@@ -216,6 +223,7 @@ const BarChartView = ({
       tooltipCursor={false}
       zeroBaseline
       hasCategoryAxis={hasCategoryAxis}
+      horizontal={isHorizontal}
       xAxisTickFormatter={formatDimensionValue}
       chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
       {dataKeys.map((key) => (
@@ -223,7 +231,7 @@ const BarChartView = ({
           {!isMultiMeasure && (
             <LabelList
               dataKey={key}
-              position="top"
+              position={valueLabelPosition}
               className="fill-foreground"
               fontSize={11}
               formatter={(value: unknown) => formatCellValue(value)}
@@ -308,7 +316,13 @@ const PieChartView = ({
             })}
             <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
           </Pie>
-          <ChartTooltip content={<PolishedChartTooltip labelFormatter={formatDimensionValue} />} />
+          {/* Measure slices carry the measure label on the row itself, so the header (the same
+              slice name) would only repeat it — suppress it like the pivoted bar chart does. */}
+          <ChartTooltip
+            content={
+              <PolishedChartTooltip labelFormatter={formatDimensionValue} hideLabel={useMeasureSlices} />
+            }
+          />
           <Legend
             verticalAlign="bottom"
             height={36}
@@ -328,10 +342,20 @@ interface ChartRendererProps {
   query: TChartQuery;
   /** value_id → default-language label map, present when the query groups by valueId. */
   optionLabels?: Record<string, string>;
+  /** Saved display settings. Charts saved before these existed have an empty config and keep
+   * the previous behavior (vertical bars). */
+  config?: TChartConfig;
 }
 
-export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly<ChartRendererProps>) {
+export function ChartRenderer({
+  chartType,
+  data,
+  query,
+  optionLabels,
+  config,
+}: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
+  const { barOrientation } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
 
@@ -410,6 +434,7 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           xAxisKey={xAxisKey}
           chartConfig={chartConfig}
           formatDimensionValue={formatDimensionValue}
+          isHorizontal={barOrientation === "horizontal"}
         />
       );
     case "line":

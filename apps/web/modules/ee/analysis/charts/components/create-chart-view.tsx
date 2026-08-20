@@ -12,6 +12,7 @@ import {
 import { AIQuerySection } from "@/modules/ee/analysis/charts/components/ai-query-section";
 import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
 import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
+import { ChartDisplaySettings } from "@/modules/ee/analysis/charts/components/chart-display-settings";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
 import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
@@ -62,6 +63,8 @@ export function CreateChartView({
 
   const {
     chartData,
+    chartConfig,
+    setChartConfig,
     initialQuery,
     isLoadingChart,
     chartLoadError,
@@ -196,10 +199,19 @@ export function CreateChartView({
                   <div className="flex flex-col gap-4 lg:sticky lg:top-0">
                     <ChartPreview
                       chartData={chartData}
+                      config={chartConfig}
                       isLoading={isLoadingChart || queryState.isLoading}
                       error={chartLoadError ?? queryState.error}
                       emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
                     />
+
+                    {chartData && (
+                      <ChartDisplaySettings
+                        chartType={chartData.chartType}
+                        config={chartConfig}
+                        onChange={setChartConfig}
+                      />
+                    )}
 
                     <form
                       id={CREATE_CHART_FORM_ID}

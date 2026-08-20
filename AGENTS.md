@@ -16,6 +16,14 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 - `pnpm test:e2e` — launch the Playwright browser regression suite.
 - `pnpm db:migrate:dev` — apply Prisma migrations against the dev database.
 
+Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
+Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
+`test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
+`config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
+to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
+`apps/storybook` has no unit tests by policy (UI is covered by Playwright). Keep new packages on this
+matrix or document the exception here.
+
 ### Survey Packages Build & Cache
 
 The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:
@@ -106,7 +114,7 @@ reached through an explicit `@config` bridge from the package's own stylesheet. 
 
 ## Coding Style & Naming Conventions
 
-TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
+TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/config-eslint`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
 Import order is set by `@trivago/prettier-plugin-sort-imports` and verified in CI by `pnpm format:check`, so it is not a matter of taste: `__mocks__` imports come first (they carry `vi.mock` calls), then `server-only`, then third-party packages, then `@formbricks/*`, `~/*`, `@/*`, and relative imports. Do not ask for or apply a different order in review — it will fail the check.
 We are using SonarQube to identify code smells and security hotspots.
 Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonly<MyProps>)`).
@@ -218,6 +226,8 @@ Heuristic:
 Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat:`) and usually append the PR number, e.g. `fix: update OpenAPI schema (#6617)`. Keep commits scoped and lint-clean. Pull requests should outline the problem, summarize the solution, and link to issues or product specs. Attach screenshots or gifs for UI-facing work, and record any migrations or env changes under `Migrations & env`, breaking or not. Don't restate what CI already reports (lint, typecheck, unit tests, build, Sonar) — the description carries what those checks cannot show.
 
 Every PR must use `.github/pull_request_template.md` and follow its inline guidance — the template is the source of truth for PR structure. The ticket line at the top is the only place a magic word (`Fixes`, `Ref`, `Closes`) may sit next to a ticket id: Linear and GitHub scan the whole body, so the same pair written in prose — inside backticks too — links and closes that ticket as well. When you need to name the convention in prose, write it without a resolvable id. All QA for a change happens on its own PR before review: the creator shows that every behaviour the diff changes is covered, and lists what is not under `Open gaps`; the reviewer challenges that list and asks for the missing coverage. There is no separate release QA pass per PR — release review only looks for problems arising from the interplay of several changes. Fill every section from the actual diff on PR open, and re-update it in the same turn on every change (new commits, scope or review fixes) so it never drifts — treat a stale section as a bug.
+
+The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. `pr-label-sync.yml` reads nothing but the tick, so the prose below the checkbox cannot change the label — but it is not free-form either: the CodeRabbit `Breaking changes match the diff` check compares the tick against the diff and expects a ticked box to document each breaking change, so explain your answer there in whatever shape fits (table or prose).
 
 ## Next.js Documentation
 

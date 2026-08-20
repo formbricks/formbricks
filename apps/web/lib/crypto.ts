@@ -1,5 +1,12 @@
 import { compare, hash } from "bcryptjs";
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "node:crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  createHmac,
+  randomBytes,
+  timingSafeEqual,
+} from "node:crypto";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 
@@ -119,6 +126,27 @@ export const verifySecret = async (secret: string, hashedSecret: string): Promis
  */
 export const hashSha256 = (input: string): string => {
   return createHash("sha256").update(input).digest("hex");
+};
+
+/**
+ * Compare two secrets — MACs, signatures, token fingerprints — without leaking how far the match got.
+ * `timingSafeEqual` throws on length mismatch, so the lengths are checked first; that check is not
+ * itself constant-time, which is fine because the length of a fixed-width digest is not the secret.
+ *
+ * Use this for anything an attacker supplies and can vary between attempts. Plain `===` on a secret is
+ * the bug this exists to prevent.
+ */
+export const constantTimeEqual = (a: string, b: string, encoding: BufferEncoding = "utf8"): boolean => {
+  const aBytes = Buffer.from(a, encoding);
+  const bBytes = Buffer.from(b, encoding);
+
+  // `Buffer.from` silently drops input that is invalid for the encoding — `Buffer.from("zz", "hex")` is
+  // an empty buffer — so without this guard two malformed values would compare equal at length 0.
+  if (aBytes.length === 0 || bBytes.length === 0) {
+    return false;
+  }
+
+  return aBytes.length === bBytes.length && timingSafeEqual(aBytes, bBytes);
 };
 
 /**

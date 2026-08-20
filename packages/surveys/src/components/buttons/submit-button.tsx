@@ -73,11 +73,21 @@ export function SubmitButton({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  // The button sits *below* the headline and subheader of a welcome or ending card, inside
+  // `ScrollableContainer`. Letting focus scroll it into view opens an overflowing card at its end, so
+  // the respondent lands on the button with the text they have yet to read scrolled out of view
+  // (ENG-2289) — hence `preventScroll`. For the same reason the button carries no `autoFocus`
+  // attribute: the browser's autofocus step has no `preventScroll` knob, and this delayed focus
+  // (deferred so the card transition has settled) is the intended focus path anyway.
   useEffect(() => {
     if (buttonRef.current && focus) {
-      setTimeout(() => {
-        buttonRef.current?.focus();
+      const timeoutId = setTimeout(() => {
+        buttonRef.current?.focus({ preventScroll: true });
       }, 200);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
   }, [focus]);
 
@@ -89,7 +99,6 @@ export function SubmitButton({
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}
-      autoFocus={focus}
       onClick={onClick}
       disabled={disabled}>
       {buttonLabel || (isLastQuestion ? t("common.finish") : t("common.next"))}
