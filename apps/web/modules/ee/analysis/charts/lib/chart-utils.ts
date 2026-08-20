@@ -43,8 +43,7 @@ export const CHART_NOT_ENRICHED_COLOR = "#a3a3a3"; // neutral-400
  * yellow; positive is the brand teal and very positive the next-darker brand step
  * (--color-brandnew in globals.css). Validated with the dataviz palette script on white: lightness
  * band and adjacent-pair CVD separation pass (worst adjacent ΔE 16.2, deutan); the dark brand teal
- * sits just under the categorical chroma floor, acceptable for a brand hue. Groundwork for the
- * sentiment-only chart (ENG-1558).
+ * sits just under the categorical chroma floor, acceptable for a brand hue.
  */
 export const CHART_SENTIMENT_COLORS: Record<TSentimentValue, string> = {
   very_negative: "#e34948", // red (palette red — sadness)
@@ -144,7 +143,7 @@ export const prepareMeasureSliceData = (
     tooltipLabel: labelFor(key),
   }));
 
-/** One section of the single-bar distribution chart (the "sentiment" chart type). */
+/** One section of the single-bar distribution chart (a pie chart's "Breakdown bars" display). */
 export interface TDistributionSegment {
   /** Stable react key: the dimension value or the measure id the segment came from. */
   key: string;
@@ -170,9 +169,10 @@ export interface TDistributionEntry {
  * semantic bucket never consumes a categorical hue, as in preparePieData).
  *
  * Zero and negative entries are dropped: they would render as a zero-width, unhoverable section.
- * Entry order is preserved — callers sort first (e.g. into the sentiment scale order) so the bar
- * reads in the same direction as a sentiment-grouped bar chart. Returns null when nothing is left
- * to show, i.e. the total is not positive.
+ * Sections are ordered largest share first, the order and therefore the palette handout
+ * preparePieData uses, so switching a pie between its two displays doesn't move or recolour a
+ * group. Sorting is stable, so equal shares keep the caller's order. Returns null when nothing is
+ * left to show, i.e. the total is not positive.
  */
 export function buildDistributionSegments(
   entries: readonly TDistributionEntry[]
@@ -185,7 +185,8 @@ export function buildDistributionSegments(
       value: isNumericValue(entry.value) ? Number(entry.value) : 0,
       color: entry.color,
     }))
-    .filter((entry) => entry.value > 0);
+    .filter((entry) => entry.value > 0)
+    .sort((a, b) => b.value - a.value);
 
   const total = scaled.reduce((sum, entry) => sum + entry.value, 0);
   if (total <= 0) return null;

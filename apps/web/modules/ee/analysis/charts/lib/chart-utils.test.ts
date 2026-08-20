@@ -90,12 +90,21 @@ describe("chart-utils", () => {
       expect(result!.segments.map((s) => s.percent)).toEqual([0.75, 0.25]);
     });
 
-    test("preserves entry order instead of sorting by size", () => {
+    test("orders sections largest first, the order preparePieData uses", () => {
       const result = buildDistributionSegments([
         { key: "small", label: "Small", value: 1 },
         { key: "big", label: "Big", value: 99 },
       ]);
-      expect(result!.segments.map((s) => s.key)).toEqual(["small", "big"]);
+      expect(result!.segments.map((s) => s.key)).toEqual(["big", "small"]);
+    });
+
+    test("keeps the caller's order for equal shares, so the palette handout is stable", () => {
+      const result = buildDistributionSegments([
+        { key: "a", label: "A", value: 5 },
+        { key: "b", label: "B", value: 5 },
+        { key: "c", label: "C", value: 5 },
+      ]);
+      expect(result!.segments.map((s) => s.key)).toEqual(["a", "b", "c"]);
     });
 
     test("drops non-positive and non-numeric entries from the total", () => {

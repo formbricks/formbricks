@@ -20,12 +20,8 @@ import {
 
 const MAX_NAME_ATTEMPTS = 5;
 
-const DEFAULT_WIDGET_LAYOUTS: Partial<Record<TChartType, TWidgetLayout>> = {
-  big_number: { x: 0, y: 0, w: 3, h: 2 },
-};
-
 const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout =>
-  DEFAULT_WIDGET_LAYOUTS[chartType] ?? { x: 0, y: 0, w: 4, h: 4 };
+  chartType === "big_number" ? { x: 0, y: 0, w: 3, h: 2 } : { x: 0, y: 0, w: 4, h: 4 };
 
 const selectDashboard = {
   id: true,

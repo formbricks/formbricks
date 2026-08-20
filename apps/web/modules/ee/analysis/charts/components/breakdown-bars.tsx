@@ -15,10 +15,13 @@ import {
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
-const formatPercent = (percent: number): string => `${Math.round(percent * 100)}%`;
+// One decimal, the precision renderPieLabel prints, so the two displays of one pie chart never
+// disagree on a share: whole percents turn a real 0.4% section into "0%" and make three equal
+// groups add up to 99%.
+const formatPercent = (percent: number): string => `${(percent * 100).toFixed(1)}%`;
 
 interface BreakdownBarsProps {
-  /** Rows already sorted into the dimension's display order (sentiment scale for sentiment). */
+  /** Rows in the dimension's display order; sections are re-sorted by share, as the pie's are. */
   sortedData: TChartDataRow[];
   dataKeys: string[];
   dataKey: string;
@@ -35,7 +38,9 @@ interface BreakdownBarsProps {
  * The same data a pie shows, in a fraction of the height — which is what makes it worth having for
  * a single distribution like sentiment, where a pie spends a lot of vertical space on six slices.
  * Sections take the sentiment scale colours when the query reads sentiment, and a measure-only
- * query turns each measure into a section.
+ * query turns each measure into a section. Ordering and palette come from
+ * `buildDistributionSegments`, which sorts by share exactly as `preparePieData` does, so toggling
+ * the display leaves every group where it was, in the colour it had.
  */
 export function BreakdownBars({
   sortedData,
@@ -57,8 +62,8 @@ export function BreakdownBars({
       color: getSemanticDimensionColor(xAxisKey, row[xAxisKey]),
     }));
   } else {
-    // Measure-only query: each measure is its own section. Sentiment counts take the sentiment
-    // scale order so the bar reads in the same direction as a sentiment-grouped one.
+    // Measure-only query: each measure is its own section. Sorted into the sentiment scale order
+    // first so that measures with an equal count still come out in a meaningful order.
     entries = sortMeasureIdsForCategoryAxis(dataKeys).map((key) => ({
       key,
       label: getMeasureAxisLabel(key, t),
@@ -126,7 +131,7 @@ export function BreakdownBars({
           ))}
         </div>
       </TooltipProvider>
-      {/* Every section named, in bar order. */}
+      {/* Every section named, in bar order (largest share first). */}
       <ul className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
         {formattedSegments.map((segment) => (
           <li key={segment.key} className="flex items-center gap-1.5 text-xs">
