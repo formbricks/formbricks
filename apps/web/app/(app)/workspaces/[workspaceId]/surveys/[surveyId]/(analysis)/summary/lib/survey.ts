@@ -23,6 +23,33 @@ const RESPONSE_FILE_SCAN_PAGE_SIZE = 500;
  */
 const STORAGE_DELETE_CHUNK_SIZE = 100;
 
+/** One response row as the scan below selects it. */
+type ScannedResponseRow = { id: string; data: Prisma.JsonValue };
+
+/**
+ * Pulls the storage URLs out of one page of scanned responses.
+ *
+ * Only file-upload answers hold storage URLs, and they are always stored as an array of strings.
+ * Anything else under the same key is skipped rather than cast, so malformed data cannot produce a
+ * bogus delete target.
+ */
+const collectFileUrlsFromPage = (
+  responses: ScannedResponseRow[],
+  fileUploadElementIds: Set<string>
+): string[] => {
+  const fileUrls: string[] = [];
+
+  for (const response of responses) {
+    for (const [elementId, answer] of Object.entries(response.data ?? {})) {
+      if (fileUploadElementIds.has(elementId) && Array.isArray(answer)) {
+        fileUrls.push(...answer.filter((url): url is string => typeof url === "string"));
+      }
+    }
+  }
+
+  return fileUrls;
+};
+
 /**
  * Collects the storage URLs a survey's file-upload answers point at, so they can be deleted once the
  * responses themselves are gone.
@@ -75,24 +102,16 @@ const collectSurveyResponseFileUrls = async (
       break;
     }
 
-    for (const response of responses) {
-      for (const [elementId, answer] of Object.entries(response.data ?? {})) {
-        // Only file-upload answers hold storage URLs, and they are always stored as an array. Anything
-        // else under the same key is skipped rather than cast, so malformed data cannot produce a
-        // bogus delete target.
-        if (!fileUploadElementIds.has(elementId) || !Array.isArray(answer)) {
-          continue;
-        }
+    fileUrls.push(...collectFileUrlsFromPage(responses, fileUploadElementIds));
 
-        fileUrls.push(...answer.filter((url): url is string => typeof url === "string"));
-      }
-    }
-
-    if (responses.length < RESPONSE_FILE_SCAN_PAGE_SIZE) {
+    // A short page means the last one. The `lastId` check only guards the cursor from going undefined
+    // and re-reading the same page forever; a full page always has a last row.
+    const lastId = responses.at(-1)?.id;
+    if (responses.length < RESPONSE_FILE_SCAN_PAGE_SIZE || !lastId) {
       break;
     }
 
-    cursor = responses[responses.length - 1].id;
+    cursor = lastId;
   }
 
   return { fileUrls, workspaceId: survey.workspaceId };
