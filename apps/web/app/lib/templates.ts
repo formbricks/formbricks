@@ -571,7 +571,8 @@ const churnSurvey = (t: TFunction): TTemplate => {
               subheader: t("templates.churn_survey_question_3_html"),
               headline: t("templates.churn_survey_question_3_headline"),
               required: false,
-              buttonUrl: "https://formbricks.com",
+              buttonUrl:
+                "https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=template_cta_churn_survey",
               buttonExternal: true,
               ctaButtonLabel: t("templates.churn_survey_question_3_button_label"),
             }),
@@ -1000,7 +1001,8 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
               subheader: t("templates.improve_trial_conversion_question_4_html"),
               headline: t("templates.improve_trial_conversion_question_4_headline"),
               required: false,
-              buttonUrl: "https://formbricks.com/github",
+              buttonUrl:
+                "https://formbricks.com/github?utm_source=formbricks-app&utm_medium=survey&utm_campaign=template_cta_trial_conversion",
               buttonExternal: true,
               ctaButtonLabel: t("templates.improve_trial_conversion_question_4_button_label"),
             }),
@@ -1119,7 +1121,8 @@ const reviewPrompt = (t: TFunction): TTemplate => {
               subheader: t("templates.review_prompt_question_2_html"),
               headline: t("templates.review_prompt_question_2_headline"),
               required: false,
-              buttonUrl: "https://formbricks.com/github",
+              buttonUrl:
+                "https://formbricks.com/github?utm_source=formbricks-app&utm_medium=survey&utm_campaign=template_cta_review_prompt",
               buttonExternal: true,
               ctaButtonLabel: t("templates.review_prompt_question_2_button_label"),
             }),
@@ -3952,7 +3955,8 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
               subheader: t("templates.improve_newsletter_content_question_3_html"),
               headline: t("templates.improve_newsletter_content_question_3_headline"),
               required: false,
-              buttonUrl: "https://formbricks.com",
+              buttonUrl:
+                "https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=template_cta_newsletter",
               buttonExternal: true,
               ctaButtonLabel: t("templates.improve_newsletter_content_question_3_button_label"),
             }),

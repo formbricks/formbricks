@@ -119,7 +119,8 @@ export const EndScreenForm = ({
               } else {
                 updateSurvey({
                   buttonLabel: { default: t("workspace.surveys.edit.create_your_own_survey") },
-                  buttonLink: "https://formbricks.com",
+                  buttonLink:
+                    "https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=default_ending_cta",
                 });
               }
               setshowEndingCardCTA(!showEndingCardCTA);
