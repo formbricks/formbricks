@@ -62,5 +62,18 @@ export const unusedDirectivesConvention = {
   },
 };
 
+// TODO(ENG-2366): enable incrementally — pre-existing violations from the React Compiler-era
+// react-hooks rules that v7's `flat.recommended` turns on. Only the rules with existing
+// violations in the tiers' consumers are listed; the rest of the v7 rule set stays enforced.
+// `apps/web/eslint.config.mjs` carries the same opt-out for the `next` tier.
+export const reactCompilerRulesOptOut = {
+  rules: {
+    "react-hooks/purity": "off",
+    "react-hooks/immutability": "off",
+    "react-hooks/set-state-in-effect": "off",
+    "react-hooks/refs": "off",
+  },
+};
+
 // Turbo checks + test conventions + prettier-compat. Keep prettier last.
 export const base = [...turbo, vitestConventions, unusedDirectivesConvention, prettier];

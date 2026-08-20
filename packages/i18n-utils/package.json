@@ -45,18 +45,18 @@
     "scan-translations": "tsx src/scan-translations.ts"
   },
   "dependencies": {
-    "glob": "13.0.6",
+    "glob": "catalog:",
     "object-hash": "3.0.0"
   },
   "devDependencies": {
     "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@types/node": "25.4.0",
+    "@types/node": "catalog:",
     "@types/object-hash": "3.0.6",
-    "rimraf": "6.1.3",
-    "tsx": "4.21.0",
-    "typescript": "5.9.3",
-    "vite": "7.3.5",
-    "vitest": "4.1.6"
+    "rimraf": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }
