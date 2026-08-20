@@ -4,6 +4,7 @@ import {
   SurveyFileUploadFields,
   fileUploadElement,
   responseWithFiles,
+  scanTimestamp,
   storageUrl,
   surveyId,
   surveyWithFileUpload,
@@ -78,6 +79,7 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
       mockResponsePages([
         {
           id: "response-1",
+          createdAt: scanTimestamp(0),
           data: {
             [fileUploadElement.id]: [storageUrl("file1.png"), storageUrl("file2.pdf")],
             "other-element": "not a file",
@@ -124,9 +126,9 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
       // A full first page (500) forces a second cursor-based query; the file on the later page must
       // still reach storage cleanup.
       const firstPage = Array.from({ length: 500 }, (_, index) =>
-        responseWithFiles(`response-${index}`, [`page1-${index}.png`])
+        responseWithFiles(`response-${index}`, [`page1-${index}.png`], index)
       );
-      const secondPage = [responseWithFiles("response-500", ["page2.png"])];
+      const secondPage = [responseWithFiles("response-500", ["page2.png"], 500)];
 
       mockSurvey(surveyWithFileUpload);
       mockResponsePages(firstPage, secondPage);
@@ -138,11 +140,22 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
       // so exactly two queries are expected here.
       expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
 
-      // The second query pages past the last id of the first page.
-      expect(vi.mocked(prisma.response.findMany).mock.calls[1][0]).toMatchObject({
-        skip: 1,
-        cursor: { id: "response-499" },
+      // The second query pages past the last row of the first page with a (createdAt, id) keyset, and
+      // orders by createdAt so it can use the existing (surveyId, createdAt) index.
+      const secondQuery = vi.mocked(prisma.response.findMany).mock.calls[1][0];
+      expect(secondQuery).toMatchObject({
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        where: {
+          surveyId,
+          OR: [
+            { createdAt: { gt: scanTimestamp(499) } },
+            { createdAt: scanTimestamp(499), id: { gt: "response-499" } },
+          ],
+        },
       });
+      // Keyset paging replaces cursor/skip entirely — a leftover offset would double-read rows.
+      expect(secondQuery).not.toHaveProperty("skip");
+      expect(secondQuery).not.toHaveProperty("cursor");
 
       const deletedUrls = deleteResponseFileUrls.mock.calls.flatMap(([urls]) => urls);
       expect(deletedUrls).toHaveLength(501);
@@ -187,9 +200,13 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
     test("Ignores non-array answers stored under a file-upload element id", async () => {
       mockSurvey(surveyWithFileUpload);
       mockResponsePages([
-        { id: "response-1", data: { [fileUploadElement.id]: "not-an-array" } },
+        { id: "response-1", createdAt: scanTimestamp(0), data: { [fileUploadElement.id]: "not-an-array" } },
         // Numbers and nulls inside the array are dropped rather than cast to a delete target.
-        { id: "response-2", data: { [fileUploadElement.id]: [42, null] as unknown as string[] } },
+        {
+          id: "response-2",
+          createdAt: scanTimestamp(1),
+          data: { [fileUploadElement.id]: [42, null] as unknown as string[] },
+        },
       ]);
       vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 2 }, { count: 0 }]);
 

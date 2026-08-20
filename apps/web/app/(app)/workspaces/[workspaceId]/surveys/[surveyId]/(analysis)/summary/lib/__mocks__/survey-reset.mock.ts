@@ -42,10 +42,14 @@ export const surveyWithoutFileUpload: SurveyFileUploadFields = {
 export const storageUrl = (fileName: string) =>
   `https://example.com/storage/${workspaceId}/private/${fileName}`;
 
-/** One response row as `collectSurveyResponseFileUrls` selects it (`id` + `data` only). */
-export type ScannedResponse = { id: string; data: TResponseData };
+/** One response row as `collectSurveyResponseFileUrls` selects it (`id`, `createdAt`, `data`). */
+export type ScannedResponse = { id: string; createdAt: Date; data: TResponseData };
 
-export const responseWithFiles = (id: string, fileNames: string[]): ScannedResponse => ({
+/** Fixed epoch offsets keep the fixtures deterministic and the keyset order predictable. */
+export const scanTimestamp = (index: number) => new Date(Date.UTC(2026, 0, 1) + index * 1000);
+
+export const responseWithFiles = (id: string, fileNames: string[], index = 0): ScannedResponse => ({
   id,
+  createdAt: scanTimestamp(index),
   data: { [fileUploadElement.id]: fileNames.map(storageUrl) },
 });

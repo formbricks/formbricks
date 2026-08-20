@@ -24,7 +24,23 @@ const RESPONSE_FILE_SCAN_PAGE_SIZE = 500;
 const STORAGE_DELETE_CHUNK_SIZE = 100;
 
 /** One response row as the scan below selects it. */
-type ScannedResponseRow = { id: string; data: Prisma.JsonValue };
+type ScannedResponseRow = { id: string; createdAt: Date; data: Prisma.JsonValue };
+
+/** Keyset position in the scan: the last row read, ordered by (createdAt, id). */
+type ResponseScanCursor = { createdAt: Date; id: string };
+
+/**
+ * Keyset predicate for "strictly after this row" in (createdAt, id) order.
+ *
+ * The scan orders by createdAt rather than id alone so it can ride the existing
+ * `@@index([surveyId, createdAt])` on Response. Ordering by `id` would have no supporting index —
+ * `(surveyId, id)` does not exist — leaving the planner to either sort the survey's whole response set
+ * on every page or scan by primary key across the entire table. `id` is only the tiebreaker that makes
+ * the order total, so responses sharing a createdAt are neither skipped nor read twice.
+ */
+const afterCursor = (cursor: ResponseScanCursor) => ({
+  OR: [{ createdAt: { gt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { gt: cursor.id } }],
+});
 
 /**
  * Pulls the storage URLs out of one page of scanned responses.
@@ -81,21 +97,25 @@ const collectSurveyResponseFileUrls = async (
     )
   );
 
-  // A survey with no file-upload element can have no uploads to clean up, so skip the response scan.
+  // No file-upload element in the survey's *current* definition, so there is no key this scan would
+  // match — skip it. Note this is about today's blocks/questions, not the response history: answers
+  // left by an upload element that was since deleted sit under an id no longer in the set, and are not
+  // cleaned up here or by the single-response path. Widening the match to "any answer shaped like a
+  // storage URL" is deliberately not the fix — see the PR's Open gaps for why that would let one
+  // survey's reset delete another's live files.
   if (fileUploadElementIds.size === 0) {
     return { fileUrls: [], workspaceId: survey.workspaceId };
   }
 
   const fileUrls: string[] = [];
-  let cursor: string | undefined;
+  let cursor: ResponseScanCursor | undefined;
 
   for (;;) {
     const responses = await prisma.response.findMany({
-      where: { surveyId },
-      select: { id: true, data: true },
-      orderBy: { id: "asc" },
+      where: { surveyId, ...(cursor ? afterCursor(cursor) : {}) },
+      select: { id: true, createdAt: true, data: true },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       take: RESPONSE_FILE_SCAN_PAGE_SIZE,
-      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
     });
 
     if (responses.length === 0) {
@@ -104,14 +124,14 @@ const collectSurveyResponseFileUrls = async (
 
     fileUrls.push(...collectFileUrlsFromPage(responses, fileUploadElementIds));
 
-    // A short page means the last one. The `lastId` check only guards the cursor from going undefined
+    // A short page means the last one. The `lastRow` check only guards the cursor from going undefined
     // and re-reading the same page forever; a full page always has a last row.
-    const lastId = responses.at(-1)?.id;
-    if (responses.length < RESPONSE_FILE_SCAN_PAGE_SIZE || !lastId) {
+    const lastRow = responses.at(-1);
+    if (responses.length < RESPONSE_FILE_SCAN_PAGE_SIZE || !lastRow) {
       break;
     }
 
-    cursor = lastId;
+    cursor = { createdAt: lastRow.createdAt, id: lastRow.id };
   }
 
   return { fileUrls, workspaceId: survey.workspaceId };
