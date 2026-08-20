@@ -86,15 +86,20 @@ reviews:
   path_instructions:
     - path: "**/*.test.tsx"
       instructions: |
-        AGENTS.md forbids React component unit tests in this repo — components are covered by
-        Playwright specs in `apps/web/playwright/`. If this file is newly added, say so and ask for
-        the coverage to move to a Playwright `.spec.ts` instead. Do not raise this on edits to the
-        handful of `.test.tsx` files that already exist.
+        AGENTS.md forbids React component unit tests in this repo. If this file is newly added, say
+        so and ask for the logic under test to move into a `.ts` module with a unit test. Do not ask
+        for a Playwright spec instead: deleting a `.test.tsx` creates no E2E obligation, and a
+        component is not an E2E subject. Do not raise this on edits to the handful of `.test.tsx`
+        files that already exist.
 
     - path: "**/*.tsx"
       instructions: |
-        - Never suggest adding unit tests for `.tsx` files. AGENTS.md forbids them; UI behaviour is
-          covered by Playwright specs in `apps/web/playwright/`. Suggesting an E2E spec is fine.
+        - Never suggest adding unit tests for `.tsx` files — AGENTS.md forbids them, and their
+          absence is not a coverage gap to fill somewhere else. Ask for a Playwright spec only when
+          the diff changes a feature's happy path or a journey across several surfaces, and then ask
+          for it in that feature's existing spec. Never ask for one to cover component detail (a
+          label, a breadcrumb, an ARIA attribute, a keystroke inside one widget, a field's
+          validation message) — that belongs in a `.ts` unit test or in manual QA.
         - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
           Action. Server data lives in the query cache only — flag it being mirrored into
           `useState` or Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
@@ -122,9 +127,24 @@ reviews:
 
     - path: "apps/web/playwright/**/*.spec.ts"
       instructions: |
-        - Flag timing hacks (`waitForTimeout`, arbitrary sleeps) and dependencies on data another
-          spec created — these are the repo's main source of flake.
-        - Specs must stay small and single-purpose; flag mega-specs. Slow suites need a `@slow` tag.
+        This suite is the critical path of every PR and every test is paid on every PR forever, so
+        cost is a review dimension here rather than a nit (AGENTS.md "Testing Guidelines"):
+        - A new spec file is a finding unless it opens a feature area the suite does not cover yet —
+          the default is assertions or a `test.step` added to that feature's existing spec. A spec
+          that asserts component-level detail (a label, a breadcrumb, a sidebar's link list, an ARIA
+          attribute, a keystroke inside one widget, a field's validation message) is a finding
+          whatever file it lands in: ask for a `.ts` unit test or manual QA instead.
+        - Flag variant matrices. A second viewport, theme, locale, role or layout needs its own
+          stated reason; "the adjacent spec does it" is not one. New a11y coverage extends
+          `survey-accessibility.spec.ts` rather than adding a per-ticket a11y spec.
+        - Flag state clicked into existence through the UI where Prisma or `/api/v3` could seed it
+          (`playwright/utils/accessibility.ts` is the pattern), and a per-test `users.create()` plus
+          login where a worker-scoped fixture would do.
+        - Flag timing hacks (`waitForTimeout`, arbitrary sleeps, `slowMo`) and dependencies on data
+          another spec created — these are the repo's main source of flake.
+        - Specs stay single-purpose per feature area: flag a spec that walks several unrelated
+          features, and a spec that exists for one detail of a covered one. `@slow` is metadata that
+          nothing reads, so a tag is not an answer to a cost finding.
 
     - path: "**/actions.ts"
       instructions: |

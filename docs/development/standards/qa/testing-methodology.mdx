@@ -34,9 +34,13 @@ We use Vitest as our primary testing framework. All unit tests follow these conv
    });
    ```
 
-3. **Coverage Requirements**
-   - Minimum 85% code coverage requirement 
-   - Coverage is tracked using V8 provider
+3. **Coverage**
+   - Coverage is measured, not targeted: confidence over coverage, and no test exists to move the
+     number (see `AGENTS.md`, "Testing Guidelines")
+   - The repo enforces exactly one Vitest threshold: `modules/auth/lib/**` at 80%
+     (`apps/web/vite.config.mts`). Everything else is reported — `pnpm test:coverage` emits lcov and
+     the SonarQube workflow uploads it, with the quality gate configured in SonarQube, not here
+   - Coverage is tracked using the V8 provider
    - Coverage reports include:
      - Text summaries
      - HTML reports
@@ -44,7 +48,22 @@ We use Vitest as our primary testing framework. All unit tests follow these conv
 
 ### End-to-End Testing with Playwright
 
-E2E tests are located in `apps/web/playwright/` and focus on critical user workflows.
+E2E tests are located in `apps/web/playwright/` and focus on critical user workflows. `AGENTS.md` is the
+source of truth for when one is warranted; the short version:
+
+1. **Level.** Prove a behavior at the cheapest level that can fail on it. A feature's happy path or a
+   journey across several surfaces is E2E. Business logic, invariants and anything pure is a unit test on
+   the `.ts`. A route's authorization, response shape or query scoping is a unit or integration test on
+   that route.
+2. **Unit of coverage.** One spec per feature area, not per ticket and not per component. Every feature
+   area ships a happy-path spec; a fix inside an area that already has one adds an assertion to that
+   spec rather than a new file.
+3. **Neither is an option.** A granular UI detail inside a covered feature — a label, a breadcrumb, an
+   ARIA attribute, a keystroke inside one widget, a field's validation message — is verified manually and
+   recorded in the PR. It does not get a spec.
+4. **Cost.** Every spec is paid on every PR by everyone, forever. The Playwright job is the critical path
+   of the PR gate and its wall clock can never drop below its slowest single test, so a new spec has to
+   buy risk coverage that nothing cheaper can.
 
 ## Testing Setup
 
@@ -124,6 +143,7 @@ Common test utilities are available in `vitestSetup.ts`:
    - Test results reporting
 
 2. **New Features**
-   - Must include corresponding unit tests
-   - Must maintain or improve coverage metrics
-   - Must include relevant E2E tests for user-facing features
+   - Must include unit tests for the logic they add
+   - A new user-facing feature area must include one happy-path E2E spec; a change inside an area that
+     already has one extends that spec, or is covered by a unit test or manual QA instead
+   - Must not add tests whose only purpose is to move a coverage metric
