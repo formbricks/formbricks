@@ -68,8 +68,7 @@ beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
   // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
   // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
-  vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
-    callback(prisma)) as typeof prisma.$transaction);
+  vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
 });
 
 describe("evaluateLogic with mockSurveyWithLogic", () => {

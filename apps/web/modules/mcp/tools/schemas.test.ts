@@ -105,7 +105,7 @@ function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
 }
 
 const allSchemas = Object.entries({ ...surveyAndFeedbackSchemas, ...workflowSchemas }).filter(
-  (entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType
+  (entry) => entry[1] instanceof z.ZodType
 );
 
 /**

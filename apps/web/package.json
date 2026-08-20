@@ -11,7 +11,7 @@
     "build:env-validator": "vite build --config vite.env-validation.config.mts",
     "build:dev": "pnpm run build",
     "start": "next start",
-    "typecheck": "pnpm typegen && tsc --noEmit --project tsconfig.typecheck.json",
+    "typecheck": "pnpm typegen && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit --project tsconfig.typecheck.json",
     "typegen": "dotenv -e ../../.env -- tsx scripts/typegen.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

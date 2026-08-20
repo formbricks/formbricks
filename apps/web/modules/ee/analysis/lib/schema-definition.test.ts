@@ -133,12 +133,15 @@ describe("schema-definition", () => {
     });
 
     test("labels buckets with the 'Domain: Detail' scheme", () => {
+      // `group` only exists on measures, so look the ids up in the measures list directly.
+      const getMeasureById = (id: string) => FEEDBACK_FIELDS.measures.find((m) => m.id === id);
+
       expect(getFieldById("FeedbackRecords.joyCount")?.label).toBe("Emotion: Joy");
       expect(getFieldById("FeedbackRecords.veryPositiveCount")?.label).toBe("Sentiment: Very positive");
       expect(getFieldById("FeedbackRecords.promoterCount")?.label).toBe("NPS: Promoters");
-      expect(getFieldById("FeedbackRecords.promoterCount")?.group).toBe("count");
-      expect(getFieldById("FeedbackRecords.npsAverage")?.group).toBe("average");
-      expect(getFieldById("FeedbackRecords.npsScore")?.group).toBe("score");
+      expect(getMeasureById("FeedbackRecords.promoterCount")?.group).toBe("count");
+      expect(getMeasureById("FeedbackRecords.npsAverage")?.group).toBe("average");
+      expect(getMeasureById("FeedbackRecords.npsScore")?.group).toBe("score");
     });
 
     test("only exposes members present in the deployed Cube schema", () => {

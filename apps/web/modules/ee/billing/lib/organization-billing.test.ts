@@ -1392,9 +1392,7 @@ describe("organization-billing", () => {
       })
     );
     // Exactly one items/trial update on the subscription (no separate trial_end-only update).
-    const trialEndUpdateCalls = mocks.subscriptionsUpdate.mock.calls.filter(
-      ([id]: [string]) => id === "sub_trial"
-    );
+    const trialEndUpdateCalls = mocks.subscriptionsUpdate.mock.calls.filter(([id]) => id === "sub_trial");
     expect(trialEndUpdateCalls).toHaveLength(1);
     expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", {
       cancel_at_period_end: true,
@@ -1466,9 +1464,7 @@ describe("organization-billing", () => {
         payment_behavior: "error_if_incomplete",
       })
     );
-    const trialUpdateCalls = mocks.subscriptionsUpdate.mock.calls.filter(
-      ([id]: [string]) => id === "sub_trial"
-    );
+    const trialUpdateCalls = mocks.subscriptionsUpdate.mock.calls.filter(([id]) => id === "sub_trial");
     expect(trialUpdateCalls).toHaveLength(1);
   });
 
@@ -1624,9 +1620,10 @@ describe("organization-billing", () => {
         payment_behavior: "error_if_incomplete",
       })
     );
-    const [, updateArgs] = mocks.subscriptionsUpdate.mock.calls.find(
-      ([id, args]: [string, { trial_end?: string }]) => id === "sub_trial" && args.trial_end === "now"
+    const conversionCall = mocks.subscriptionsUpdate.mock.calls.find(
+      ([id, args]) => id === "sub_trial" && args.trial_end === "now"
     );
+    const [, updateArgs] = conversionCall!;
     expect(updateArgs.discounts).toBeUndefined();
   });
 
@@ -1646,7 +1643,7 @@ describe("organization-billing", () => {
     // error_if_incomplete rolls the whole update back server-side; exactly one conversion attempt,
     // no follow-up mutations to clean anything up.
     const conversionUpdates = mocks.subscriptionsUpdate.mock.calls.filter(
-      ([id, args]: [string, { trial_end?: string }]) => id === "sub_trial" && args.trial_end === "now"
+      ([id, args]) => id === "sub_trial" && args.trial_end === "now"
     );
     expect(conversionUpdates).toHaveLength(1);
   });
