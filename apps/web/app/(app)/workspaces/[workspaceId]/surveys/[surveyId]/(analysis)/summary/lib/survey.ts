@@ -1,18 +1,27 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { convertFloatTo2Decimal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { getSurvey } from "@/lib/survey/service";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { getSurveyFileUploadConfigs } from "@/modules/storage/utils";
 
 /**
- * Responses are scanned in pages so resetting a survey with a large response count never loads every
- * response's data into memory at once.
+ * Responses are scanned in pages so resetting a survey with a large response count never holds every
+ * `response.data` blob at once. Note this bounds only the blobs: the collected URLs still accumulate
+ * across pages, which is what STORAGE_DELETE_CHUNK_SIZE bounds on the way out.
  */
 const RESPONSE_FILE_SCAN_PAGE_SIZE = 500;
+
+/**
+ * Storage deletes are issued in bounded chunks. `deleteResponseFileUrls` fans out with `Promise.all`
+ * over every URL it is handed, so passing a whole survey's worth at once would open one storage
+ * request per uploaded file. Chunking caps the in-flight requests no matter how many files the scan
+ * collected.
+ */
+const STORAGE_DELETE_CHUNK_SIZE = 100;
 
 /**
  * Collects the storage URLs a survey's file-upload answers point at, so they can be deleted once the
@@ -29,20 +38,20 @@ const RESPONSE_FILE_SCAN_PAGE_SIZE = 500;
 const collectSurveyResponseFileUrls = async (
   surveyId: string
 ): Promise<{ fileUrls: string[]; workspaceId: string | undefined }> => {
-  const survey = await prisma.survey.findUnique({
-    where: { id: surveyId },
-    select: { blocks: true, questions: true, workspaceId: true },
-  });
+  // getSurvey is reactCache'd and the reset action fetches the same survey immediately before calling
+  // this, so it resolves from the request cache rather than issuing a second round-trip — and it hands
+  // back typed blocks/questions instead of raw JSON columns needing a cast. This is also the source the
+  // single-response cleanup path reads the survey from.
+  const survey = await getSurvey(surveyId);
 
   if (!survey) {
     return { fileUrls: [], workspaceId: undefined };
   }
 
   const fileUploadElementIds = new Set(
-    getSurveyFileUploadConfigs({
-      blocks: survey.blocks as TSurveyBlock[],
-      questions: survey.questions as TSurveyQuestion[],
-    }).map((config) => config.id)
+    getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).map(
+      (config) => config.id
+    )
   );
 
   // A survey with no file-upload element can have no uploads to clean up, so skip the response scan.
@@ -112,10 +121,22 @@ export const deleteResponsesAndDisplaysForSurvey = async (
     ]);
 
     // Runs after the rows are gone so a storage failure can never delete files whose responses
-    // survived. deleteResponseFileUrls logs and swallows per-file errors, so a storage outage does not
-    // fail the reset — it leaves objects behind, which is the pre-existing behaviour, not a new one.
-    if (fileUrls.length > 0) {
-      await deleteResponseFileUrls(fileUrls, workspaceId);
+    // survived, and chunked so the number of concurrent storage requests stays bounded.
+    //
+    // The responses are already committed as deleted at this point, so cleanup must not turn a
+    // successful reset into a failed one: deleteResponseFileUrls already logs and swallows per-file
+    // errors, and this guard covers an unexpected throw. The cost of failing here is objects left in
+    // storage — the pre-existing behaviour — not a reset the caller has to retry.
+    for (let i = 0; i < fileUrls.length; i += STORAGE_DELETE_CHUNK_SIZE) {
+      const chunk = fileUrls.slice(i, i + STORAGE_DELETE_CHUNK_SIZE);
+      try {
+        await deleteResponseFileUrls(chunk, workspaceId);
+      } catch (error) {
+        logger.error(
+          { error, surveyId, workspaceId, fileCount: chunk.length },
+          "Failed to delete response files after resetting a survey"
+        );
+      }
     }
 
     return {
