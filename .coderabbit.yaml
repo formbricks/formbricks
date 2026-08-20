@@ -344,6 +344,13 @@ reviews:
           - Changes an exported signature of the public SDK surface in `packages/js-core` or
             `packages/surveys`.
 
+          Nothing else is breaking. In particular, a purely additive change — a new optional request
+          or response field, a new endpoint or route, an env var whose default keeps existing installs
+          working — is not, and neither is any change to code no external consumer reaches: internal
+          functions, modules, types, and workspace-package exports other than the SDK surface above,
+          however they change. "Internal API" means internal to this repo, and it is outside this
+          check.
+
           FAIL if the diff contains at least one of the above and the checkbox is unticked, or the
           section is empty or still holds the unedited template comment. Name the specific file and
           line that is breaking, and ask the author to tick the box.
