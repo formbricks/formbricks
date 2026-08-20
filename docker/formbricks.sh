@@ -182,6 +182,19 @@ decode_dotenv_value() {
   printf '%s' "$value"
 }
 
+dotenv_value_is_variable_reference() {
+  local value="$1"
+
+  if [[ "$value" == \'*\' ]]; then
+    return 1
+  fi
+  if [[ "$value" == \"*\" ]]; then
+    value=${value:1:${#value}-2}
+  fi
+
+  [[ "$value" =~ ^\$\{ ]] || [[ "$value" =~ ^\$[[:alpha:]_][[:alnum:]_]* ]]
+}
+
 read_existing_postgres_password() {
   local env_file="${1:-.env}"
   local compose_file="${2:-docker-compose.yml}"
@@ -206,20 +219,23 @@ read_existing_postgres_password() {
     fi
 
     existing_password=$(awk '
-      /^POSTGRES_PASSWORD=/ {
-        sub(/^POSTGRES_PASSWORD=/, "")
-        print
-        exit
+      {
+        value = $0
+        sub(/^[[:space:]]*(export[[:space:]]+)?POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*/, "", value)
+        if (value != $0) {
+          print value
+          exit
+        }
       }
     ' "$env_file")
-    if [ -n "$existing_password" ]; then
+    if [ -n "$existing_password" ] && ! dotenv_value_is_variable_reference "$existing_password"; then
       decode_dotenv_value "$existing_password"
       return
     fi
   fi
 
   if [ -f "$compose_file" ]; then
-    awk '
+    existing_password=$(awk '
       {
         password = $0
         sub(/^[[:space:]]*-[[:space:]]*POSTGRES_PASSWORD=/, "", password)
@@ -231,7 +247,10 @@ read_existing_postgres_password() {
           }
         }
       }
-    ' "$compose_file"
+    ' "$compose_file")
+    if [ -n "$existing_password" ]; then
+      decode_dotenv_value "$existing_password"
+    fi
   fi
 }
 
@@ -286,7 +305,7 @@ write_generated_env_file() (
 
   if [ -f "$env_file" ]; then
     awk '
-      !/^(POSTGRES_PASSWORD|POSTGRES_PASSWORD_URL_ENCODED|HUB_API_KEY|CUBEJS_API_SECRET|CUBEJS_JWT_ISSUER|CUBEJS_JWT_AUDIENCE)=/
+      !/^[[:space:]]*(export[[:space:]]+)?(POSTGRES_PASSWORD|POSTGRES_PASSWORD_URL_ENCODED|HUB_API_KEY|CUBEJS_API_SECRET|CUBEJS_JWT_ISSUER|CUBEJS_JWT_AUDIENCE)[[:space:]]*=/
     ' "$env_file" > "$tmp_file"
   fi
 

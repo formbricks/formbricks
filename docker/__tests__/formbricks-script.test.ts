@@ -312,10 +312,11 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("legacy$$PASSWORD_SENTINEL");
   });
 
-  test("does not preserve Compose variable references as literal legacy passwords", () => {
+  test("does not preserve unresolved variable references as literal legacy passwords", () => {
     const tempDir = createTempDir();
     const envPath = join(tempDir, ".env");
     const composePath = join(tempDir, "docker-compose.yml");
+    const missingComposePath = join(tempDir, "missing-compose.yml");
     const writeLegacyComposePassword = (password: string): void => {
       writeFileSync(
         composePath,
@@ -327,6 +328,16 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
       );
     };
 
+    writeFileSync(envPath, "POSTGRES_PASSWORD=$EXTERNAL_PASSWORD\n");
+    expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("");
+
+    writeFileSync(envPath, "POSTGRES_PASSWORD=${EXTERNAL_PASSWORD}\n");
+    expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("");
+
+    writeFileSync(envPath, "POSTGRES_PASSWORD='$EXTERNAL_PASSWORD'\n");
+    expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("$EXTERNAL_PASSWORD");
+
+    writeFileSync(envPath, "");
     writeLegacyComposePassword("$EXTERNAL_PASSWORD");
     expect(readExistingPostgresPassword(envPath, composePath)).toBe("");
 
@@ -335,6 +346,9 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
 
     writeLegacyComposePassword("legacy-password");
     expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy-password");
+
+    writeLegacyComposePassword("legacy$$PASSWORD_SENTINEL");
+    expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy$PASSWORD_SENTINEL");
   });
 
   test("preserves unrelated environment entries and literal dollar signs across reruns", () => {
@@ -348,7 +362,7 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
 PUBLIC_URL=https://surveys.example.com
 CUSTOM_SECRET=keep-me
 POSTGRES_PASSWORD='legacy$PASSWORD_SENTINEL'
-HUB_API_KEY=replace-me
+export HUB_API_KEY=replace-me
 `
     );
 
