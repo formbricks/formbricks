@@ -3,12 +3,17 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
-import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  OperationNotAllowedError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
-import { createWorkspace, deleteWorkspace, updateWorkspace } from "./workspace";
+import { createWorkspace, deleteWorkspace, deleteWorkspaceIfNotLast, updateWorkspace } from "./workspace";
 
 vi.mock("server-only", () => ({}));
 
@@ -34,6 +39,7 @@ const baseWorkspace: TWorkspace = {
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),
+    $queryRaw: vi.fn(),
     workspace: {
       update: vi.fn(),
       create: vi.fn(),
@@ -361,6 +367,21 @@ describe("workspace lib", () => {
     test("throws unknown error", async () => {
       vi.mocked(prisma.workspace.delete).mockRejectedValueOnce(new Error("fail"));
       await expect(deleteWorkspace("p1")).rejects.toThrow("fail");
+    });
+
+    test("deletes a workspace while another workspace remains", async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ id: "p1" }, { id: "p2" }]);
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
+      vi.mocked(deleteFilesByWorkspaceId).mockResolvedValue({ ok: true, data: undefined });
+
+      await expect(deleteWorkspaceIfNotLast("p1", "org1")).resolves.toEqual(baseWorkspace);
+    });
+
+    test("does not delete the last workspace", async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ id: "p1" }]);
+
+      await expect(deleteWorkspaceIfNotLast("p1", "org1")).rejects.toThrow(OperationNotAllowedError);
+      expect(prisma.workspace.delete).not.toHaveBeenCalled();
     });
   });
 });

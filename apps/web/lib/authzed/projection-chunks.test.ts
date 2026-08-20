@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { AUTHZED_TARGET_CHUNK_SIZE } from "./constants";
 import { runChunked } from "./projection-chunks";
 
 describe("runChunked", () => {
@@ -9,7 +10,9 @@ describe("runChunked", () => {
       .mockResolvedValueOnce({ passes: 3, status: "projected" });
 
     await expect(
-      runChunked(reconcile, { memberships: Array.from({ length: 201 }, (_unused, index) => index) })
+      runChunked(reconcile, {
+        memberships: Array.from({ length: AUTHZED_TARGET_CHUNK_SIZE + 1 }, (_unused, index) => index),
+      })
     ).resolves.toEqual({ passes: 5, status: "projected" });
     expect(reconcile).toHaveBeenCalledTimes(2);
   });
@@ -27,7 +30,9 @@ describe("runChunked", () => {
       .mockResolvedValue(failure);
 
     await expect(
-      runChunked(reconcile, { memberships: Array.from({ length: 401 }, (_unused, index) => index) })
+      runChunked(reconcile, {
+        memberships: Array.from({ length: AUTHZED_TARGET_CHUNK_SIZE * 2 + 1 }, (_unused, index) => index),
+      })
     ).resolves.toEqual(failure);
     expect(reconcile).toHaveBeenCalledTimes(2);
   });
