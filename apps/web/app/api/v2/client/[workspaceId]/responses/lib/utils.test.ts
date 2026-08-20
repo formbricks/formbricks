@@ -98,6 +98,7 @@ const mockSurvey: TSurvey = {
   showLanguageSwitch: false,
   blocks: [],
   isCaptureIpEnabled: false,
+  isAnonymizeResponsesEnabled: false,
   isAutoProgressingEnabled: true,
   publishOn: null,
   closeOn: null,

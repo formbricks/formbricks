@@ -14,6 +14,7 @@ import { extractRecallInfo } from "@/lib/utils/recall";
 import { findHiddenFieldUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
 import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -237,6 +238,17 @@ export const HiddenFieldsCard = ({
                 {t("workspace.surveys.edit.add_hidden_field_id")}
               </Button>
             </div>
+            {/*
+              Hidden fields are the one place in this milestone where a survey author authors a
+              URL-sourced field, so the warning belongs here rather than next to the Anonymize toggle:
+              this is where the decision to put a value in a link is actually made.
+            */}
+            <Alert variant="warning" className="mt-4" role="status">
+              <AlertTitle>{t("workspace.surveys.edit.hidden_fields_url_privacy_warning_title")}</AlertTitle>
+              <AlertDescription>
+                {t("workspace.surveys.edit.hidden_fields_url_privacy_warning_description")}
+              </AlertDescription>
+            </Alert>
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

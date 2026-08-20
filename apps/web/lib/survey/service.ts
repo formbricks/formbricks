@@ -90,6 +90,7 @@ export const selectSurvey = {
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
   isCaptureIpEnabled: true,
+  isAnonymizeResponsesEnabled: true,
   redirectUrl: true,
   workspaceOverwrites: true,
   styling: true,

@@ -565,17 +565,36 @@ const resolveCatalogEntry = <TSlice>(
 };
 
 /**
- * Strips the query string (and fragment) from a URL, keeping origin and path — the redaction
+ * What `URL` reports as the origin of a scheme that has no host — `data:`, `blob:`, `mailto:`. It is
+ * the literal string `"null"`, so concatenating origin and pathname for those would produce garbage
+ * like `"nulltext/plain,hi"`.
+ */
+const OPAQUE_URL_ORIGIN = "null";
+
+/**
+ * Strips the identifying tail off a URL, keeping origin + path — the redaction
  * `privacy: "redactQuery"` names.
  *
- * Falls back to a textual cut for anything `URL` cannot parse or parses to an opaque origin (a
- * relative path, a `data:`/`about:` URL, plain junk), so it never throws and never widens what it
- * returns beyond the input.
+ * Query strings are where an identifier rides along in practice (`?email=`, `?uid=`, `?token=`) while
+ * the path is the part analytics actually wants — that is the whole reason the catalog classifies
+ * these fields `redactQuery` rather than `drop`.
+ *
+ * **The fragment goes too.** `#` is not merely SPA routing: the OAuth implicit flow puts
+ * `access_token` in the fragment, and any hand-rolled link can do the same.
+ *
+ * Total by construction — it never throws. A string that does not parse as a URL, or parses to an
+ * opaque origin, is still cut at the first `?` or `#` rather than returned intact, because failing
+ * *open* on an unparseable string would be a privacy hole rather than a graceful degradation. A string
+ * with neither separator comes back unchanged.
+ *
+ * Used by both surfaces that apply the policy: this module's projections at read time, and the
+ * "Anonymize responses" toggle at ingest (`apps/web/lib/response/anonymize.ts`). One definition on
+ * purpose — two would let a privacy rule drift between capture and read.
  */
 export const redactUrlQuery = (url: string): string => {
   try {
     const parsed = new URL(url);
-    if (parsed.origin !== "null") {
+    if (parsed.origin !== OPAQUE_URL_ORIGIN) {
       return `${parsed.origin}${parsed.pathname}`;
     }
   } catch {

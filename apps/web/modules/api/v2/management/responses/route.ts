@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { Response } from "@formbricks/database/prisma";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -165,7 +166,16 @@ export const POST = async (request: Request) =>
         );
       }
 
-      const createResponseResult = await createResponseWithQuotaEvaluation(workspaceId, body);
+      // "Anonymize responses" is a property of the SURVEY, not of the door a response arrived
+      // through: `ZResponseInput` picks `meta`, so without this a caller could write ipAddress,
+      // country, userAgent and an unredacted url onto a survey that has the toggle on. The realistic
+      // case is a customer proxying submissions from their own backend, which uses this route rather
+      // than the client one. Applied at the route, matching the client routes, because the survey read
+      // already happened here and `createResponse` does not load it.
+      const createResponseResult = await createResponseWithQuotaEvaluation(workspaceId, {
+        ...body,
+        meta: applyAnonymizePolicy(body.meta, surveyQuestions.data.isAnonymizeResponsesEnabled),
+      });
       if (!createResponseResult.ok) {
         return handleApiError(request, createResponseResult.error, auditLog);
       }

@@ -7,6 +7,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getSurvey } from "@/lib/survey/service";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
@@ -177,6 +178,17 @@ export const POST = withV1ApiWrapper({
       if (responseInput.createdAt && !responseInput.updatedAt) {
         responseInput.updatedAt = responseInput.createdAt;
       }
+
+      // "Anonymize responses" is a property of the SURVEY, not of the door a response arrived
+      // through: `ZResponseInput` accepts `meta`, so without this a caller could write ipAddress,
+      // country, userAgent and an unredacted url onto a survey that has the toggle on. The realistic
+      // case is a customer proxying submissions from their own backend, which uses this route rather
+      // than the client one. Applied at the route, matching the client routes, because the survey is
+      // already resolved here and `createResponse` does not load it.
+      responseInput.meta = applyAnonymizePolicy(
+        responseInput.meta,
+        surveyResult.survey.isAnonymizeResponsesEnabled
+      );
 
       const response = await createResponseWithQuotaEvaluation(responseInput);
       if (auditLog) {

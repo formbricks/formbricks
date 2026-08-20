@@ -2926,6 +2926,8 @@ checksums:
     workspace/surveys/edit/allow_users_to_select_more_than_one_image: d683e0b538d1366400292a771f3fbd08
     workspace/surveys/edit/animated_background_option: 9447e0da3330c80e91ebccfb0851176c
     workspace/surveys/edit/animation: 66a18eacfb92fc9fc9db188d2dde4f81
+    workspace/surveys/edit/anonymize_responses: e047238cc9be131648acabeff9524d8f
+    workspace/surveys/edit/anonymize_responses_description: 4d61d3fa0ae630af9e76cc961a791b35
     workspace/surveys/edit/any_is_true: 32c9f3998984fd32a2b5bc53f2d97429
     workspace/surveys/edit/app_survey_description: bdfacfce478e97f70b700a1382dfa687
     workspace/surveys/edit/assign: e80715ab64bf7cf463abb3a9fd1ad516
@@ -2961,6 +2963,7 @@ checksums:
     workspace/surveys/edit/capture_a_new_action_to_trigger_a_survey_on: 73410e9665a37bc4a9747db5d683d36c
     workspace/surveys/edit/capture_ip_address: e950f924f1c0b52f8c5b06ca118e049f
     workspace/surveys/edit/capture_ip_address_description: f6bf6046db16667237511265e9fba5f0
+    workspace/surveys/edit/capture_ip_address_disabled_by_anonymize: 8591d663a8a68a4a5d1c617042612348
     workspace/surveys/edit/capture_new_action: 0aa2a3c399b62b1a52307deedf4922e8
     workspace/surveys/edit/card_arrangement_for_survey_type_derived: c06b9aaebcc11bc16e57a445b62361fc
     workspace/surveys/edit/card_background_color: acd5d023e1d1a4471b053dce504c7a83
@@ -3130,6 +3133,8 @@ checksums:
     workspace/surveys/edit/hidden_field_used_in_recall: 15d959528c3e817dce95640173d5d6a8
     workspace/surveys/edit/hidden_field_used_in_recall_ending_card: ea0d0b12ca1c9400690658cb1b537025
     workspace/surveys/edit/hidden_field_used_in_recall_welcome: bb498b6ee69c6311a3977d454866b610
+    workspace/surveys/edit/hidden_fields_url_privacy_warning_description: a92069f21599365f4d11f2be4ce3e82e
+    workspace/surveys/edit/hidden_fields_url_privacy_warning_title: eeef821a1ee002b2f31e68cca75708fd
     workspace/surveys/edit/hide_back_button: 91355864b3032c3f57689074e2173544
     workspace/surveys/edit/hide_back_button_description: caaa30cf43c5611577933a1c9f44b9ee
     workspace/surveys/edit/hide_block_settings: c24c3d3892c251792e297cdc036d2fde
