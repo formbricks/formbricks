@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getTeamsByOrganizationIdAction, updateWorkspaceAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
@@ -15,10 +14,6 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/authorization", () => ({
   assertCan: vi.fn(),
-}));
-
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -74,35 +69,22 @@ describe("workspace settings authorization", () => {
     mocks.getTeamsByOrganizationId.mockResolvedValue([]);
   });
 
-  test("preserves the organization-or-workspace-team authorization signature for workspace updates", async () => {
+  test("requires workspace.manage for workspace updates", async () => {
     await updateWorkspaceAction({
       ctx,
       parsedInput: { workspaceId, data: { name: "New name" } },
     } as never);
 
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId: "user-1",
-      organizationId,
-      access: [
-        {
-          schema: expect.any(Object),
-          data: { name: "New name" },
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId,
-          minPermission: "manage",
-        },
-      ],
+    expect(assertCan).toHaveBeenCalledWith({ type: "user", id: "user-1" }, "workspace.manage", {
+      type: "workspace",
+      id: workspaceId,
     });
     expect(mocks.updateWorkspace).toHaveBeenCalledWith(workspaceId, { name: "New name" });
   });
 
   test("does not update the workspace when authorization fails", async () => {
     const authorizationError = new AuthorizationError("Not authorized");
-    vi.mocked(checkAuthorizationUpdated).mockRejectedValueOnce(authorizationError);
+    vi.mocked(assertCan).mockRejectedValueOnce(authorizationError);
 
     await expect(
       updateWorkspaceAction({

@@ -1,7 +1,6 @@
 import "server-only";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -21,22 +20,8 @@ export const ensureUnifyEnabled = async (workspaceId: string): Promise<string> =
  * point of sharing it.
  */
 export const ensureReadAccess = async (userId: string, workspaceId: string): Promise<void> => {
-  const organizationId = await ensureUnifyEnabled(workspaceId);
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-      {
-        type: "workspaceTeam",
-        minPermission: "read",
-        workspaceId,
-      },
-    ],
-  });
+  await ensureUnifyEnabled(workspaceId);
+  await assertCan({ type: "user", id: userId }, "workspace.read", { type: "workspace", id: workspaceId });
 };
 
 /**

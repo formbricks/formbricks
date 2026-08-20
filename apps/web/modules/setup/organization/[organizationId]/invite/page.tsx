@@ -36,8 +36,8 @@ export const InvitePage = async (props: InvitePageProps) => {
   // The surface is back (ENG-2409). It was dropped when main replaced `verifyUserRoleAccess` with a
   // `hasSetupInviteAccess` that read a membership row directly — wrapping that would have declared a
   // surface over no `can()` call at all and emitted a zero-check observation. Now that the helper
-  // routes through the central interface, the wrapper does what it did before: gives the decision a
-  // rollout target so it is comparable instead of silently legacy-only.
+  // routes through the central interface, the wrapper attributes the authoritative decision to the
+  // page surface.
   const mayInvite = await withAuthorizationSurface("page", () =>
     hasSetupInviteAccess(session.user.id, params.organizationId)
   );

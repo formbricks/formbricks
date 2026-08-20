@@ -40,18 +40,15 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
   }
 
   // ENG-2409: the tenancy gate. This was `if (!currentUserMembership) throw`, a decision made by
-  // reading a row rather than by asking the central interface — so it was correct and invisible:
-  // with no `can()` call there is nothing for shadow comparison to compare, and this one gate sits
-  // behind all 13 organization-scoped pages.
+  // reading a row rather than by asking the central interface. Keeping it as an explicit
+  // `organization.read` decision makes SpiceDB authoritative for this gate.
   //
   // `organization.read` is the same set. The schema grants it to owner + manager + member + billing
   // (schema.zed:69) — every membership role and nobody else — so "holds this permission" and "has a
   // membership row" describe the same principals.
   //
-  // Run alongside the membership read rather than after it: under the legacy evaluator `can()`
-  // resolves organization actions through `getMembershipByUserIdOrganizationId`, the same
-  // reactCache-memoized function called here, so the pair costs one query rather than two. Under
-  // enforcement `can()` takes the scope-resolver path and issues no membership query at all.
+  // Run alongside the membership read rather than after it. SpiceDB decides the capability while
+  // PostgreSQL still supplies the role flags rendered by the page.
   const [hasOrganizationRead, currentUserMembership] = await Promise.all([
     withAuthorizationSurface("page", () =>
       can({ type: "user", id: session.user.id }, "organization.read", {
@@ -62,7 +59,7 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
     getMembershipByUserIdOrganizationId(session.user.id, organization.id),
   ]);
 
-  // The membership is still required, and not only for the flags below: under enforcement SpiceDB
+  // The membership is still required, and not only for the flags below: SpiceDB
   // could allow while the row is absent (projection drift), and `TOrganizationAuth` promises a
   // non-null membership to every caller. Keeping both conditions on one throw preserves the exact
   // error this has always raised while making the authorization half of it comparable.

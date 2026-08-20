@@ -9,14 +9,13 @@ import {
   ZFeedbackSourceFieldMappingCreateInput,
   ZFeedbackSourceUpdateInput,
 } from "@formbricks/types/feedback-source";
+import { assertCan } from "@/lib/authorization";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getOrganizationIdFromFeedbackSourceId,
-  getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
@@ -58,20 +57,9 @@ export const deleteFeedbackSourceAction = authenticatedActionClient
 
       const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
       ctx.auditLoggingCtx.organizationId = organizationId;
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       const feedbackSource = await getFeedbackSourceWithMappingsById(
@@ -151,20 +139,9 @@ export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
 
       const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
       ctx.auditLoggingCtx.organizationId = organizationId;
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       // Verify the directory belongs to the same org and is actually assigned to this workspace.
@@ -239,20 +216,9 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
 
       const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
       ctx.auditLoggingCtx.organizationId = organizationId;
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       // The check above proves the caller may act in `workspaceId`; it does not prove this feedback
@@ -318,27 +284,14 @@ export const getResponseCountAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetResponseCountAction>;
     }): Promise<number> => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-
       // Authorize against the survey's own workspace, not the caller-supplied one: the workspaceTeam
       // check only proves team access to whatever workspace the caller names, so passing a workspace
       // they do have access to would otherwise return the response count for any survey in the org.
       const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: surveyWorkspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: surveyWorkspaceId,
       });
 
       return getResponseCountBySurveyId(parsedInput.surveyId);
@@ -361,20 +314,9 @@ export const importHistoricalResponsesAction = authenticatedActionClient
 
       const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
       ctx.auditLoggingCtx.organizationId = organizationId;
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       const feedbackSource = await getFeedbackSourceWithMappingsById(
@@ -435,21 +377,9 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZListFeedbackRecordsAction>;
     }): Promise<FeedbackRecordListResponse> => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "read",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       // Verify FRD belongs to workspace's accessible FRDs
@@ -502,21 +432,9 @@ export const getFeedbackRecordContactsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetFeedbackRecordContactsAction>;
     }): Promise<Record<string, string>> => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "read",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
+        type: "workspace",
+        id: parsedInput.workspaceId,
       });
 
       return getContactIdsByUserIds(parsedInput.workspaceId, parsedInput.userIds);

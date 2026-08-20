@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -6,7 +8,6 @@ import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-reso
 import { createContact } from "@/modules/ee/contacts/api/v2/management/contacts/lib/contact";
 import { ZContactCreateRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const POST = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -37,7 +38,14 @@ export const POST = async (request: NextRequest) =>
       const { workspaceId } = body;
 
       const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
-      if (!perm || !(await hasApiKeyWorkspaceAccess(authentication, perm.workspaceId, "POST"))) {
+      if (
+        !perm ||
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: perm.workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {

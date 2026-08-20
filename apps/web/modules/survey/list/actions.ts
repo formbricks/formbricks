@@ -2,13 +2,9 @@
 
 import { z } from "zod";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import {
-  getOrganizationIdFromSurveyId,
-  getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromSurveyId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import {
   generateSurveySingleUseLinkParams,
   generateSurveySingleUseLinkParamsList,
@@ -35,37 +31,15 @@ export const copySurveyToOtherWorkspaceAction = authenticatedActionClient
       }
 
       // authorization check for source workspace
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: sourceOrganizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: sourceWorkspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: sourceWorkspaceId,
       });
 
       // authorization check for target workspace
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId: targetOrganizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.targetWorkspaceId,
-          },
-        ],
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: parsedInput.targetWorkspaceId,
       });
 
       ctx.auditLoggingCtx.organizationId = sourceOrganizationId;
@@ -95,20 +69,9 @@ const ZGenerateSingleUseIdAction = z
 export const generateSingleUseIdsAction = authenticatedActionClient
   .inputSchema(ZGenerateSingleUseIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
     });
 
     if (parsedInput.singleUseId) {

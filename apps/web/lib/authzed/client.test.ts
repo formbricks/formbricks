@@ -25,7 +25,6 @@ describe("AuthZed client facade", () => {
     envMock.AUTHZED_CONSISTENCY = undefined;
     envMock.AUTHZED_ENDPOINT = "spicedb:50051";
     envMock.AUTHZED_INSECURE = "true";
-    envMock.AUTHZED_MINIMUM_SNAPSHOT = undefined;
     envMock.AUTHZED_SYSTEM_KEY = "formbricks";
     envMock.AUTHZED_TOKEN = "private-token";
     sdkMocks.newClient.mockReturnValue({
@@ -96,8 +95,6 @@ describe("AuthZed client facade", () => {
 
   test("does not let migration consistency weaken authoritative checks", () => {
     envMock.AUTHZED_CONSISTENCY = "minimize_latency";
-    envMock.AUTHZED_MINIMUM_SNAPSHOT = "historical-shadow-floor";
-
     expect(getAuthzedClient().consistency).toBe("fully_consistent");
   });
 
@@ -377,8 +374,7 @@ describe("AuthZed client facade", () => {
     expect(sdkMocks.lookupResources).not.toHaveBeenCalled();
   });
 
-  test("does not let a historical shadow snapshot weaken an authoritative permission check", async () => {
-    envMock.AUTHZED_MINIMUM_SNAPSHOT = "backfill-snapshot";
+  test("does not let migration consistency weaken an authoritative permission check", async () => {
     sdkMocks.checkPermission.mockResolvedValue({
       permissionship: v1.CheckPermissionResponse_Permissionship.NO_PERMISSION,
     });
@@ -426,7 +422,6 @@ describe("AuthZed client facade", () => {
     "uses fully-consistent resource lookup when configured as %s",
     async (consistency) => {
       envMock.AUTHZED_CONSISTENCY = consistency;
-      envMock.AUTHZED_MINIMUM_SNAPSHOT = "historical-shadow-floor";
       sdkMocks.lookupResources.mockResolvedValue([]);
 
       await getAuthzedClient().lookupResources({

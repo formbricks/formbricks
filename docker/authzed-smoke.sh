@@ -76,7 +76,6 @@ authzed_cli() {
     AUTHZED_ENABLED=true \
     AUTHZED_ENDPOINT="localhost:${spicedb_port}" \
     AUTHZED_INSECURE=true \
-    AUTHZED_MINIMUM_SNAPSHOT="${AUTHZED_SMOKE_MINIMUM_SNAPSHOT:-}" \
     AUTHZED_SYSTEM_KEY=formbricks \
     AUTHZED_TOKEN="${token}" \
     CUBEJS_API_SECRET=authzed-smoke-cube-secret \

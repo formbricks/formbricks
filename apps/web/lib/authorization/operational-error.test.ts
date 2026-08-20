@@ -1,16 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
-import { normalizeAuthorizationOperationalError, toAuthorizationDecisionLabel } from "./comparison-helpers";
+import { normalizeAuthorizationOperationalError } from "./operational-error";
 
-describe("authorization comparison helpers", () => {
-  test.each([
-    [true, "allow"],
-    [false, "deny"],
-    [undefined, "unknown"],
-  ] as const)("maps decision %s to %s", (decision, expected) => {
-    expect(toAuthorizationDecisionLabel(decision)).toBe(expected);
-  });
-
+describe("authorization operational error normalization", () => {
   test("preserves stable AuthZed fields while replacing the operation", () => {
     const source = new AuthzedError({
       attempts: 3,
@@ -20,11 +12,11 @@ describe("authorization comparison helpers", () => {
       retryable: true,
     });
 
-    expect(normalizeAuthorizationOperationalError(source, "authorization_shadow")).toMatchObject({
+    expect(normalizeAuthorizationOperationalError(source, "authorization")).toMatchObject({
       attempts: 3,
       code: AUTHZED_ERROR_CODES.UNAVAILABLE,
       grpcStatus: 14,
-      operation: "authorization_shadow",
+      operation: "authorization",
       retryable: true,
     });
   });
@@ -32,13 +24,13 @@ describe("authorization comparison helpers", () => {
   test("sanitizes unexpected failures as non-retryable internal errors", () => {
     const normalized = normalizeAuthorizationOperationalError(
       new Error("private raw message"),
-      "authorization_shadow"
+      "authorization"
     );
 
     expect(normalized).toMatchObject({
       attempts: 1,
       code: AUTHZED_ERROR_CODES.INTERNAL,
-      operation: "authorization_shadow",
+      operation: "authorization",
       retryable: false,
     });
     expect(JSON.stringify(normalized)).not.toContain("private raw message");

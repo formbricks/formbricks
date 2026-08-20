@@ -2,9 +2,9 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 
 const ZGetOrganizationBillingInfoAction = z.object({
   organizationId: ZId,
@@ -13,15 +13,9 @@ const ZGetOrganizationBillingInfoAction = z.object({
 export const getOrganizationBillingInfoAction = authenticatedActionClient
   .inputSchema(ZGetOrganizationBillingInfoAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "billing"],
-        },
-      ],
+    await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
+      type: "organization",
+      id: parsedInput.organizationId,
     });
 
     const organization = await getOrganization(parsedInput.organizationId);

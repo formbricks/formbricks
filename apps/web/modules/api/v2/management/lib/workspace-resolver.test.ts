@@ -1,18 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
+import { can } from "@/lib/authorization";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { resolveBodyIdsV2 } from "./workspace-resolver";
 
-const mocks = vi.hoisted(() => ({ hasApiKeyWorkspaceAccess: vi.fn() }));
-
 vi.mock("server-only", () => ({}));
+
+vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 
 vi.mock("@/lib/utils/resolve-client-id", () => ({
   findWorkspaceByIdOrLegacyEnvId: vi.fn(),
-}));
-
-vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
-  hasApiKeyWorkspaceAccess: mocks.hasApiKeyWorkspaceAccess,
 }));
 
 const auth = (organizationId: string, workspaceId: string, permission: ApiKeyPermission) => ({
@@ -26,7 +23,7 @@ const auth = (organizationId: string, workspaceId: string, permission: ApiKeyPer
 describe("resolveBodyIdsV2", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.hasApiKeyWorkspaceAccess.mockResolvedValue(false);
+    vi.mocked(can).mockResolvedValue(false);
   });
 
   test("returns bad_request when no workspaceId/environmentId is provided", async () => {
@@ -86,7 +83,7 @@ describe("resolveBodyIdsV2", () => {
   });
 
   test("resolves the workspaceId for a same-org workspace the key can access", async () => {
-    mocks.hasApiKeyWorkspaceAccess.mockResolvedValueOnce(true);
+    vi.mocked(can).mockResolvedValueOnce(true);
     vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValueOnce({
       id: "ws1",
       organizationId: "org1",

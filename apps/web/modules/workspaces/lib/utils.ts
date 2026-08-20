@@ -38,11 +38,8 @@ import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types
  * member without a WorkspaceTeam grant (and who is not an owner/manager) is rejected
  * with an AuthorizationError instead of being silently admitted as a writer.
  *
- * Opened as the `page` authorization surface (ENG-2388). Every product page funnels through here,
- * and the `can()` calls below were already central — but without a surface on the stack the
- * coordinator has no rollout target to match, short-circuits to the legacy evaluator, and schedules
- * no shadow comparison. So these decisions were correct and simultaneously invisible to parity
- * evidence. Wrapping here is what makes them comparable; it changes no decision.
+ * Opened as the `page` authorization surface (ENG-2388). Every product page funnels through here, so
+ * this wrapper attributes authoritative decisions and checks-per-request telemetry to page traffic.
  */
 export const getWorkspaceAuth = reactCache(
   async (workspaceId: string): Promise<TWorkspaceAuth> =>
@@ -78,7 +75,7 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
   // Billing-role members are scoped to billing/enterprise screens only. They must never reach
   // workspace product data (contacts PII, survey summaries/responses, dashboards). This is the
   // single choke point every product page flows through, so gating here closes all of them at
-  // once and keeps this helper aligned with hasUserWorkspaceAccessForAction, which already denies
+  // once and keeps this helper aligned with the central `workspace.read` contract, which also denies
   // billing. Individual pages that also guard billing inline remain correct (defense in depth).
   if (isBilling) {
     redirect(getBillingFallbackPath(organization.id, IS_FORMBRICKS_CLOUD));
@@ -310,8 +307,8 @@ export const getWorkspaceWithRelations = reactCache(async (workspaceId: string, 
  * Opened as the `page` surface for the same reason as its two siblings above (ENG-2388). This one
  * backs the top-level `/workspaces/[workspaceId]` layout, so it is the highest-traffic authorization
  * gate of the three — its `canUserNavigateWorkspace` call reaches `can()` on essentially every
- * product navigation, and without a surface on the stack every one of those decisions resolved no
- * rollout target and scheduled no shadow comparison.
+ * product navigation. The surface keeps authoritative decision and request-amplification telemetry
+ * attributable without participating in engine selection.
  */
 export const getWorkspaceLayoutData = reactCache(
   async (workspaceId: string, userId: string): Promise<TWorkspaceLayoutData> =>
