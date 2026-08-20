@@ -163,12 +163,44 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
+decode_dotenv_value() {
+  local value="$1"
+
+  if [[ "$value" == \'*\' ]]; then
+    value=${value:1:${#value}-2}
+    value=${value//\\\'/\'}
+  elif [[ "$value" == \"*\" ]]; then
+    value=${value:1:${#value}-2}
+    value=${value//\\\"/\"}
+  fi
+  value=${value//\$\$/\$}
+
+  printf '%s' "$value"
+}
+
 read_existing_postgres_password() {
   local env_file="${1:-.env}"
   local compose_file="${2:-docker-compose.yml}"
   local existing_password
 
   if [ -f "$env_file" ]; then
+    if [ -f "$compose_file" ] && command -v docker >/dev/null 2>&1; then
+      existing_password=$(
+        unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
+        docker compose --env-file "$env_file" -f "$compose_file" config --environment 2>/dev/null | awk '
+          /^POSTGRES_PASSWORD=/ {
+            sub(/^POSTGRES_PASSWORD=/, "")
+            print
+            exit
+          }
+        '
+      )
+      if [ -n "$existing_password" ]; then
+        printf '%s' "$existing_password"
+        return
+      fi
+    fi
+
     existing_password=$(awk '
       /^POSTGRES_PASSWORD=/ {
         sub(/^POSTGRES_PASSWORD=/, "")
@@ -177,8 +209,7 @@ read_existing_postgres_password() {
       }
     ' "$env_file")
     if [ -n "$existing_password" ]; then
-      existing_password=${existing_password//\$\$/\$}
-      printf '%s' "$existing_password"
+      decode_dotenv_value "$existing_password"
       return
     fi
   fi

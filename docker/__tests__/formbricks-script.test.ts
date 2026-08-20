@@ -90,21 +90,27 @@ const writeDockerComposeFixture = (envContents: string): { composePath: string; 
   return { composePath, envPath };
 };
 
-const renderDockerCompose = (envContents: string): RenderedDockerComposeConfig => {
+const renderDockerCompose = (
+  envContents: string,
+  processEnvironment: NodeJS.ProcessEnv = {}
+): RenderedDockerComposeConfig => {
   const { composePath, envPath } = writeDockerComposeFixture(envContents);
 
   return JSON.parse(
-    runDockerCompose([
-      "--env-file",
-      envPath,
-      "-f",
-      composePath,
-      "--project-directory",
-      dirname(composePath),
-      "config",
-      "--format",
-      "json",
-    ])
+    runDockerCompose(
+      [
+        "--env-file",
+        envPath,
+        "-f",
+        composePath,
+        "--project-directory",
+        dirname(composePath),
+        "config",
+        "--format",
+        "json",
+      ],
+      processEnvironment
+    )
   ) as RenderedDockerComposeConfig;
 };
 
@@ -152,7 +158,11 @@ const writeGeneratedEnvFile = (envPath: string, postgresPassword = ""): void => 
   );
 };
 
-const readExistingPostgresPassword = (envPath: string, composePath: string): string =>
+const readExistingPostgresPassword = (
+  envPath: string,
+  composePath: string,
+  processEnvironment: NodeJS.ProcessEnv = {}
+): string =>
   execFileSync(
     "bash",
     [
@@ -163,7 +173,7 @@ const readExistingPostgresPassword = (envPath: string, composePath: string): str
       envPath,
       composePath,
     ],
-    { encoding: "utf8" }
+    { encoding: "utf8", env: { ...process.env, ...processEnvironment } }
   ).trimEnd();
 
 const getDotenvValue = (envContents: string, key: string): string => {
@@ -302,26 +312,53 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
       `# Operator-managed settings
 PUBLIC_URL=https://surveys.example.com
 CUSTOM_SECRET=keep-me
+POSTGRES_PASSWORD='legacy$PASSWORD_SENTINEL'
 HUB_API_KEY=replace-me
 `
     );
 
-    writeGeneratedEnvFile(envPath, password);
+    const quotedExistingPassword = readExistingPostgresPassword(envPath, composePath, {
+      PASSWORD_SENTINEL: "rewritten",
+    });
+    writeGeneratedEnvFile(envPath, quotedExistingPassword);
 
     const firstEnvContents = readFileSync(envPath, "utf8");
     const renderedEnvironment = getRenderedDockerComposeEnvironment(composePath, envPath, {
       PASSWORD_SENTINEL: "rewritten",
     });
+    const renderedConfig = renderDockerCompose(firstEnvContents, {
+      PASSWORD_SENTINEL: "rewritten",
+    });
+    const renderedPostgresPassword = getRenderedServiceEnvironment(
+      renderedConfig,
+      "postgres"
+    ).POSTGRES_PASSWORD.replaceAll("$$", "$");
+    const renderedCubePassword = getRenderedServiceEnvironment(
+      renderedConfig,
+      "cube"
+    ).CUBEJS_DB_PASS.replaceAll("$$", "$");
+    const encodedPassword = "legacy%24PASSWORD_SENTINEL";
 
+    expect(quotedExistingPassword).toBe(password);
     expect(firstEnvContents).toContain("# Operator-managed settings");
     expect(firstEnvContents).toContain("PUBLIC_URL=https://surveys.example.com");
     expect(firstEnvContents).toContain("CUSTOM_SECRET=keep-me");
     expect(firstEnvContents).not.toContain("HUB_API_KEY=replace-me");
     expect(firstEnvContents).toContain("POSTGRES_PASSWORD=legacy$$PASSWORD_SENTINEL");
-    expect(firstEnvContents).toContain("POSTGRES_PASSWORD_URL_ENCODED=legacy%24PASSWORD_SENTINEL");
+    expect(firstEnvContents).toContain(`POSTGRES_PASSWORD_URL_ENCODED=${encodedPassword}`);
     expect(getDotenvValue(renderedEnvironment, "POSTGRES_PASSWORD")).toBe(password);
+    expect(renderedPostgresPassword).toBe(password);
+    expect(renderedCubePassword).toBe(password);
+    expect(getRenderedServiceEnvironment(renderedConfig, "formbricks").DATABASE_URL).toBe(
+      `postgresql://postgres:${encodedPassword}@postgres:5432/formbricks?schema=public`
+    );
+    expect(getRenderedServiceEnvironment(renderedConfig, "hub").DATABASE_URL).toBe(
+      `postgresql://postgres:${encodedPassword}@postgres:5432/formbricks?sslmode=disable`
+    );
 
-    const existingPassword = readExistingPostgresPassword(envPath, composePath);
+    const existingPassword = readExistingPostgresPassword(envPath, composePath, {
+      PASSWORD_SENTINEL: "rewritten",
+    });
     writeGeneratedEnvFile(envPath, existingPassword);
 
     const rerunEnvContents = readFileSync(envPath, "utf8");
