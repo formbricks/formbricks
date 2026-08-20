@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +14,7 @@ const dockerComposeOverrideKeys = [
   "POSTGRES_PASSWORD_URL_ENCODED",
   "HUB_DATABASE_URL",
   "CUBEJS_DB_PASS",
+  "FORMBRICKS_UNSET_PASSWORD_SENTINEL",
 ];
 const dockerComposeTestTimeout = 30_000;
 
@@ -358,36 +359,7 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     }
   });
 
-  dockerComposeTest("requires Docker Compose v2.27.2 for existing dotenv credentials", () => {
-    const composePath = writeDockerComposeTemplate();
-    const tempDir = dirname(composePath);
-    const envPath = join(tempDir, ".env");
-    const dockerPath = join(tempDir, "docker");
-
-    writeFileSync(envPath, "POSTGRES_PASSWORD=legacy-password\n");
-    writeFileSync(
-      dockerPath,
-      `#!/bin/sh
-if [ "$1" = "compose" ] && [ "$2" = "version" ] && [ "$3" = "--short" ]; then
-  echo "2.26.1"
-  exit 0
-fi
-case "$*" in
-  *"config --quiet"*) exit 0 ;;
-esac
-exit 1
-`
-    );
-    chmodSync(dockerPath, 0o755);
-
-    expect(() =>
-      readExistingPostgresPassword(envPath, composePath, {
-        PATH: `${tempDir}:${process.env.PATH ?? ""}`,
-      })
-    ).toThrow(/Docker Compose v2\.27\.2 or newer/);
-  });
-
-  dockerComposeTest("reads only safely resolvable legacy Compose password literals", () => {
+  dockerComposeTest("reads legacy Compose passwords through the rendered configuration", () => {
     const tempDir = createTempDir();
     const envPath = join(tempDir, ".env");
     const composePath = join(tempDir, "docker-compose.yml");
@@ -410,19 +382,23 @@ exit 1
     );
     rmSync(envPath);
 
-    writeLegacyComposePassword("- POSTGRES_PASSWORD=legacy-password");
-    expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy-password");
+    writeLegacyComposePassword("- POSTGRES_PASSWORD=legacy:p@ss/word?#!&'()*;[]");
+    expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy:p@ss/word?#!&'()*;[]");
 
-    writeLegacyComposePassword('POSTGRES_PASSWORD: "legacy:p@ss/word?#"');
-    expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy:p@ss/word?#");
+    const quotedPassword = `legacy:p@ss/word?#!&'()*;[]\\path"quoted" `;
+    writeLegacyComposePassword(`POSTGRES_PASSWORD: ${JSON.stringify(quotedPassword)}`);
+    expect(readExistingPostgresPassword(envPath, composePath)).toBe(quotedPassword);
 
     writeLegacyComposePassword("- POSTGRES_PASSWORD=legacy$$PASSWORD_SENTINEL");
     expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy$PASSWORD_SENTINEL");
 
-    writeLegacyComposePassword("- POSTGRES_PASSWORD=$EXTERNAL_PASSWORD");
+    writeLegacyComposePassword("- POSTGRES_PASSWORD=$FORMBRICKS_UNSET_PASSWORD_SENTINEL");
     expect(() => readExistingPostgresPassword(envPath, composePath)).toThrow(/Could not safely resolve/);
 
     writeLegacyComposePassword("- POSTGRES_PASSWORD=legacy-password # operator note");
+    expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy-password");
+
+    writeLegacyComposePassword(`POSTGRES_PASSWORD: ${JSON.stringify("legacy\npassword")}`);
     expect(() => readExistingPostgresPassword(envPath, composePath)).toThrow(/Could not safely resolve/);
   });
 

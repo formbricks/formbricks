@@ -163,77 +163,40 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
-read_safe_legacy_compose_password() {
+read_rendered_compose_password() {
   local compose_file="$1"
-  local password
+  local env_file="${2:-}"
+  local encoded_password
+  local rendered_password
   local without_escaped_dollars
+  local compose_args=(-f "$compose_file")
 
-  password=$(awk '
-    /^  postgres:[[:space:]]*$/ {
-      in_postgres = 1
-      next
-    }
-    in_postgres && /^  [A-Za-z0-9_.-]+:[[:space:]]*$/ {
-      exit
-    }
-    !in_postgres {
-      next
-    }
-    {
-      list_value = $0
-      sub(/^[[:space:]]*-[[:space:]]*POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*/, "", list_value)
-      if (list_value != $0) {
-        sub(/[[:space:]]+$/, "", list_value)
-        print list_value
-        exit
-      }
-
-      mapping_value = $0
-      sub(/^[[:space:]]*POSTGRES_PASSWORD[[:space:]]*:[[:space:]]*/, "", mapping_value)
-      if (mapping_value != $0) {
-        sub(/[[:space:]]+$/, "", mapping_value)
-        print mapping_value
-        exit
-      }
-    }
-  ' "$compose_file")
-
-  if [[ "$password" == \'*\' ]] || [[ "$password" == \"*\" ]]; then
-    if [[ "${password:0:1}" != "${password: -1}" ]]; then
-      return 1
-    fi
-    password=${password:1:${#password}-2}
+  if [ -n "$env_file" ]; then
+    compose_args=(--env-file "$env_file" "${compose_args[@]}")
   fi
 
-  without_escaped_dollars=${password//\$\$/}
-  if [ -z "$password" ] || [[ "$without_escaped_dollars" == *\$* ]]; then
-    return 1
-  fi
-  password=${password//\$\$/\$}
-
-  case "$password" in
-    *[!a-zA-Z0-9._~:@/?#%+,$=-]*) return 1 ;;
-  esac
-
-  printf '%s' "$password"
-}
-
-docker_compose_supports_environment_output() {
-  local version
-  local major
-  local minor
-  local patch
-
-  version=$(docker compose version --short 2>/dev/null) || return 1
-  if [[ ! "$version" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+  if ! command -v docker >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
     return 1
   fi
 
-  major=${BASH_REMATCH[1]}
-  minor=${BASH_REMATCH[2]}
-  patch=${BASH_REMATCH[3]}
+  encoded_password=$(
+    unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
+    docker compose "${compose_args[@]}" config --format json 2>/dev/null | jq -er '
+      .services.postgres.environment.POSTGRES_PASSWORD
+      | select(type == "string" and length > 0)
+      | select((contains("\n") or contains("\r")) | not)
+      | @base64
+    '
+  ) || return 1
 
-  (( major > 2 || (major == 2 && (minor > 27 || (minor == 27 && patch >= 2))) ))
+  rendered_password=$(printf '%s' "$encoded_password" | base64 --decode) || return 1
+  # Compose doubles literal dollar signs in its rendered model so that the model can be parsed again.
+  without_escaped_dollars=${rendered_password//\$\$/}
+  if [[ "$without_escaped_dollars" == *\$* ]]; then
+    return 1
+  fi
+
+  printf '%s' "${rendered_password//\$\$/\$}"
 }
 
 read_existing_postgres_password() {
@@ -242,35 +205,12 @@ read_existing_postgres_password() {
   local existing_password
 
   if [ -f "$env_file" ]; then
-    if [ ! -f "$compose_file" ] || ! command -v docker >/dev/null 2>&1; then
+    if [ ! -f "$compose_file" ]; then
       echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite $env_file." >&2
       return 1
     fi
 
-    if (
-      unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
-      docker compose --env-file "$env_file" -f "$compose_file" config --quiet >/dev/null 2>&1
-    ) && existing_password=$(read_safe_legacy_compose_password "$compose_file"); then
-      printf '%s' "$existing_password"
-      return
-    fi
-
-    if ! docker_compose_supports_environment_output; then
-      echo "❌ Docker Compose v2.27.2 or newer is required to safely preserve the existing PostgreSQL password." >&2
-      return 1
-    fi
-
-    existing_password=$(
-      unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
-      docker compose --env-file "$env_file" -f "$compose_file" config --environment 2>/dev/null | awk '
-        /^POSTGRES_PASSWORD=/ {
-          sub(/^POSTGRES_PASSWORD=/, "")
-          print
-          exit
-        }
-      '
-    )
-    if [ -n "$existing_password" ]; then
+    if existing_password=$(read_rendered_compose_password "$compose_file" "$env_file"); then
       printf '%s' "$existing_password"
       return
     fi
@@ -280,15 +220,7 @@ read_existing_postgres_password() {
   fi
 
   if [ -f "$compose_file" ]; then
-    if ! command -v docker >/dev/null 2>&1 || ! (
-      unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
-      docker compose -f "$compose_file" config --quiet >/dev/null 2>&1
-    ); then
-      echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite .env." >&2
-      return 1
-    fi
-
-    if existing_password=$(read_safe_legacy_compose_password "$compose_file"); then
+    if existing_password=$(read_rendered_compose_password "$compose_file"); then
       printf '%s' "$existing_password"
       return
     fi
@@ -448,6 +380,7 @@ install_formbricks() {
   sudo apt-get install -y \
     ca-certificates \
     curl \
+    jq \
     lsb-release >/dev/null 2>&1
 
   # Reuse an existing Docker installation instead of replacing it implicitly.
