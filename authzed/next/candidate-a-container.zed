@@ -91,19 +91,21 @@ definition role {
 }
 
 /**
- * WHAT: a body of work, with its own access list. Three flavours, distinguished by
- * which owner relation is written — never by a type column:
+ * WHAT: a body of work, with its own access list. Two flavours, distinguished by which
+ * owner relation is written — never by a type column:
  *
- *   shared    -> `org_reach` set, no `owner_team`, no `owner_user`
- *   team      -> `org_reach` + `owner_team`
- *   personal  -> `owner_user` only; `org_reach` deliberately ABSENT
+ *   shared -> `org_reach` set, no `owner_team`
+ *   team   -> `org_reach` + `owner_team`
  *
  * `organization` is tenancy and is ALWAYS set. `org_reach` is what grants organization
- * owners/managers product access, and its absence on a personal container is what makes
- * the word "private" honest: admins can `administer` (transfer, delete) without being
- * able to `read`. An organization that needs admin read of personal containers — banks,
- * legal hold — enables it by writing ONE `org_reach` tuple, which is auditable and
- * revocable, rather than by a code path.
+ * owners/managers product access.
+ *
+ * There is deliberately NO personal container. Private content is a property of the
+ * SURVEY (see below), because "private surveys" is the actual product requirement and
+ * "a personal workspace" was only ever one way to implement it. Modelling it on the
+ * survey means a draft can be private while sitting in a shared body of work, which a
+ * personal container cannot express — and it makes "my drafts" a saved view rather than
+ * a container everyone has to understand.
  *
  * `parent` gives divisions/departments. Access flows DOWN only; verified in ENGINE-FACTS.md.
  */
@@ -115,7 +117,6 @@ definition container {
     relation org_reach: organization
 
     relation owner_team: team
-    relation owner_user: user
 
     /** Division / department nesting. Depth is capped by the application. */
     relation parent: container
@@ -154,7 +155,7 @@ definition container {
     /** Time-boxed emergency read. Auditable and reviewable on its own. */
     permission emergency: user = emergency_access + parent->emergency
 
-    permission own: user = owner_user + owner_team->admin_member + org_reach->manage + parent->own
+    permission own: user = owner_team->admin_member + org_reach->manage + parent->own
     permission manage: user | api_key = manager + manager_group + owner_team->member + own + parent->manage
     permission write: user | api_key = writer + writer_group + manage + parent->write
     permission read: user | api_key = reader + reader_group + write + emergency + parent->read
@@ -255,7 +256,33 @@ definition distribution {
  * call for targeting, PII, dataset records, brand kit and distribution.
  */
 definition survey {
+    /**
+     * Tenancy. ALWAYS written, including for a survey that sits in no container — that is
+     * what keeps a private draft inside the organization boundary and gives administrators
+     * a transfer path to it.
+     */
+    relation organization: organization
+
+    /**
+     * The body of work this survey belongs to. OPTIONAL, and that is the whole private-survey
+     * mechanism: a survey with no container edge is reachable only by its owner and whoever
+     * they share it with. "Publish into a workspace" is one relationship write; "make private
+     * again" is one delete.
+     *
+     * The alternative — keep the container edge and subtract the inherited access with an
+     * exclusion — was built and tested (ENGINE-FACTS.md #4). Check answers correctly under
+     * both, but the exclusion variant still lists the container's team as a subject in the
+     * expected-relations enumeration that Check denies. Everything we need to build on top of
+     * this — the "who has access" modal, and the access-review export that SOC 2 and BAIT
+     * require — reads that enumeration, so it would report access that does not exist.
+     */
     relation container: container
+
+    /** Organization owners/managers reach a container-less survey. Absent by default. */
+    relation org_reach: organization
+
+    /** Time-boxed break-glass on a private survey. Its own relation so it can be alerted on. */
+    relation emergency_access: user | user with expiration
 
     /** CHANGE: transferable ownership. `createdBy` stays immutable attribution. */
     relation owner: user
@@ -266,10 +293,14 @@ definition survey {
     relation summarizer: user | api_key | team#member | role#holder | user with expiration | api_key with expiration | team#member with expiration
     relation access_manager: user | team#member | role#holder | user with expiration
 
-    permission own: user = owner + container->own
+    /** Transfer or delete without being able to read — the offboarding path for a private draft. */
+    permission administer: user = organization->manage + container->administer
+    permission emergency: user = emergency_access + container->emergency
+
+    permission own: user = owner + org_reach->manage + container->own
     permission manage: user | api_key = manager + own + container->manage
     permission write: user | api_key = editor + manage + container->write
-    permission read: user | api_key = viewer + write + container->read
+    permission read: user | api_key = viewer + write + emergency + container->read
     permission summary_read: user | api_key = summarizer + read + container->summary_read
 
     permission manage_access: user | api_key = access_manager + own + container->manage_access
@@ -277,8 +308,7 @@ definition survey {
     permission publish: user | api_key = write
     permission delete: user | api_key = manage
 
-    /** Transfer without read — the offboarding path. */
-    permission transfer: user = own + container->administer
+    permission transfer: user = own + administer
 
     permission response_read: user | api_key = read
 
@@ -286,7 +316,7 @@ definition survey {
      * CHANGE: export is no longer the same gate as viewing (RFC goal, BI requirement).
      * Break-glass reaches it too — a legal hold that cannot export is not a legal hold.
      */
-    permission response_export: user | api_key = manage + container->emergency
+    permission response_export: user | api_key = manage + emergency
 }
 
 /** An analysis dashboard. Container-derived in v1; direct grants are backlog (R14). */

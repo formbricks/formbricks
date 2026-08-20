@@ -23,8 +23,10 @@
 #   container:germany       shared, org_reach, parent=division_eu   -> writer_team research
 #   container:cx            shared, org_reach                       -> writer_team research,
 #                                                                      summarizer_team analysts
-#   container:personal_bo   owner_user bo, NO org_reach             (private)
-#   container:legalhold_dana owner_user dana, org_reach              (break-glass ENABLED)
+#
+#   survey:draft      owner bo,   NO container, NO org_reach  (private draft)
+#   survey:cara_draft owner cara, NO container, break-glass grant to user:auditor
+#   survey:hold       owner dana, NO container, org_reach      (admin-readable by policy)
 #
 #   survey:onboarding (cx)   survey:pulse (germany)   survey:draft (personal_bo)
 #   survey:hold (legalhold_dana)
@@ -84,20 +86,17 @@ relationships: |-
   container:cx#writer@api_key:ci_writer
   container:cx#manager@api_key:ci_manager
 
-  container:personal_bo#organization@organization:acme
-  container:personal_bo#owner_user@user:bo
-
-  container:legalhold_dana#organization@organization:acme
-  container:legalhold_dana#owner_user@user:dana
-  container:legalhold_dana#org_reach@organization:acme
 
   survey:onboarding#container@container:cx
   survey:onboarding#owner@user:tom
   survey:onboarding#viewer@user:agnes[expiration:2030-01-01T00:00:00Z]
   survey:onboarding#viewer@user:gone[expiration:2020-01-01T00:00:00Z]
   survey:pulse#container@container:germany
-  survey:draft#container@container:personal_bo
-  survey:hold#container@container:legalhold_dana
+  survey:draft#organization@organization:acme
+  survey:draft#owner@user:bo
+  survey:hold#organization@organization:acme
+  survey:hold#owner@user:dana
+  survey:hold#org_reach@organization:acme
 
   dashboard:exec#container@container:cx
   workflow:alerts#container@container:cx
@@ -139,11 +138,17 @@ relationships: |-
   role:ex_analyst#member@user:rio
   container:cx#summarizer_group@role:ex_analyst#holder
 
-  container:personal_cara#organization@organization:acme
-  container:personal_cara#owner_user@user:cara
-  container:personal_cara#emergency_access@user:auditor[expiration:2030-01-01T00:00:00Z]
-  container:personal_cara#emergency_access@user:lapsed[expiration:2020-01-01T00:00:00Z]
-  survey:cara_draft#container@container:personal_cara
+  survey:bo_published#organization@organization:acme
+  survey:bo_published#container@container:cx
+  survey:bo_published#owner@user:bo
+
+  survey:cara_draft#organization@organization:acme
+  survey:cara_draft#owner@user:cara
+  survey:cara_draft#emergency_access@user:auditor[expiration:2030-01-01T00:00:00Z]
+  survey:cara_draft#emergency_access@user:lapsed[expiration:2020-01-01T00:00:00Z]
+
+  survey:onboarding#organization@organization:acme
+  survey:pulse#organization@organization:acme
 
   org_unit:de#organization@organization:acme
   org_unit:de#works_council@user:wc_de
@@ -165,16 +170,16 @@ assertions:
     - survey:onboarding#write@user:tom # P2.3 flows to the leaf
     - team:research#manage@user:tom # P2.4 team admin manages the team
 
-    # --- N1 private containers: owner reaches, org admin does NOT read ----------------
-    - container:personal_bo#own@user:bo # N1.1 Bo owns his personal container
-    - survey:draft#write@user:bo # N1.2 and can edit inside it
-    - container:personal_bo#administer@user:olivia # N1.3 owner CAN transfer/delete it
-    - container:personal_bo#administer@user:mark # N1.4 manager too
+    # --- N1 a private survey: owner reaches, org admin does NOT read ------------------
+    - survey:draft#own@user:bo # N1.1 Bo owns his private draft
+    - survey:draft#write@user:bo # N1.2 and can edit it
+    - survey:draft#administer@user:olivia # N1.3 the owner CAN transfer/delete it
+    - survey:draft#administer@user:mark # N1.4 manager too
     - survey:draft#transfer@user:olivia # N1.5 offboarding path exists without read
 
-    # --- N2 break-glass: one org_reach tuple turns admin read on ----------------------
-    - container:legalhold_dana#read@user:olivia # N2.1 legal hold enabled for Dana
-    - survey:hold#read@user:olivia # N2.2 reaches content
+    # --- N2 one org_reach tuple opens a private survey to administrators ---------------
+    - survey:hold#read@user:olivia # N2.1 explicit, auditable, revocable
+    - survey:hold#own@user:olivia # N2.2 at ownership level
 
     # --- N3 external agency guest: one survey, nothing else ---------------------------
     - survey:onboarding#read@user:agnes # N3.1 direct expiring grant works
@@ -212,9 +217,14 @@ assertions:
     - container:cx#summary_read@user:rio # N13.1 role bound at summarizer tier
 
     # --- N14 break-glass is its own time-boxed, auditable path --------------------------
-    - container:personal_cara#read@user:auditor # N14.1 legal hold reaches a private container
-    - survey:cara_draft#read@user:auditor
+    - survey:cara_draft#read@user:auditor # N14.1 break-glass reaches a private draft
     - survey:cara_draft#response_export@user:auditor # N14.2 a hold that cannot export is not a hold
+
+    # --- N16 privacy is the presence or absence of ONE relationship ---------------------
+    # survey:draft and survey:bo_published are identical except for the container edge.
+    # "Publish into a workspace" is one write; "make private again" is one delete.
+    - survey:bo_published#read@user:tina # N16.1 attached -> the workspace's team reads it
+    - survey:bo_published#read@user:olivia # N16.2 and administrators reach it normally
 
     # --- N15 works council and manager-scoped EX (BetrVG) -------------------------------
     - org_unit:de_muc#read_scores@user:lena # N15.1 manager sees their own unit
@@ -238,11 +248,11 @@ assertions:
     - container:cx#summary_read@user:ghost # P5.2
 
     # --- N1 private stays private -----------------------------------------------------
-    - container:personal_bo#read@user:olivia # N1.6 owner cannot READ a personal container
-    - container:personal_bo#read@user:mark # N1.7 nor manager
-    - survey:draft#read@user:olivia # N1.8 nor its contents
-    - survey:draft#read@user:tina # N1.9 nor anyone else
-    - container:personal_bo#own@user:olivia # N1.10 administer is not ownership
+    - survey:draft#read@user:olivia # N1.6 the org owner cannot READ a private draft
+    - survey:draft#read@user:mark # N1.7 nor the manager
+    - survey:draft#read@user:tina # N1.8 nor anyone else
+    - survey:draft#own@user:olivia # N1.9 administer is not ownership
+    - survey:draft#response_export@user:olivia # N1.10 and export is not a way round it
 
     # --- N3 the agency guest is fenced in ---------------------------------------------
     - container:cx#read@user:agnes # N3.3 no container access
@@ -290,9 +300,9 @@ assertions:
     - container:cx#read@user:rio
 
     # --- N14 break-glass expires like any other grant ------------------------------------
-    - container:personal_cara#read@user:lapsed
-    - container:personal_cara#read@user:olivia # N14.3 still private to the org admin
-    - container:personal_cara#own@user:auditor # N14.4 emergency read is not ownership
+    - survey:cara_draft#read@user:lapsed
+    - survey:cara_draft#read@user:olivia # N14.3 still private to the org admin
+    - survey:cara_draft#own@user:auditor # N14.4 emergency read is not ownership
 
     # --- N15 works-council and manager scoping do not over-reach -------------------------
     - org_unit:de#read_scores@user:lena # N15.4 a manager does not see the parent unit
@@ -300,6 +310,7 @@ assertions:
     - org_unit:de_muc#export_raw@user:lena # N15.6 raw export is never bundled in
     - org_unit:de_muc#export_raw@user:wc_de
     - org_unit:de_muc#read_scores@user:tina # N15.7 content access is not respondent access
+    - survey:draft#read@user:tina # N16.3 detached -> the same team cannot
 
 # Expected-relations snapshots. Assertions prove a subject HAS a permission; only this block
 # turns an accidental WIDENING into a visible diff. Kept exact on the permissions that carry
@@ -308,10 +319,10 @@ validation:
   # The private-container promise, stated exhaustively: only Bo. Any future schema change that
   # lets an admin, a team or a container grant reach in shows up here as an added line.
   survey:draft#read:
-    - "[user:bo] is <container:personal_bo#owner_user>"
+    - "[user:bo] is <survey:draft#owner>"
 
   # The offboarding path: exactly the org roles, and no one else.
-  container:personal_bo#administer:
+  survey:draft#administer:
     - "[user:mark] is <organization:acme#manager>"
     - "[user:olivia] is <organization:acme#owner>"
 

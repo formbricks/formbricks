@@ -4,7 +4,7 @@ All three schemas were run against the same scenarios with the same tool
 (`bash authzed/next/validate.sh`, `zed validate`, pinned `authzed/zed:v1.1.1`, offline).
 
 ```
-=== candidate-a-validation.yaml ===  Success! - 94 relationships, 89 assertions, 4 expected relations
+=== candidate-a-validation.yaml ===  Success! - 96 relationships, 91 assertions, 4 expected relations
 === candidate-b-validation.yaml ===  complete - 71 relationships, 57 assertions, 2 expected relations
 === candidate-c-validation.yaml ===  Success! - 62 relationships, 45 assertions, 2 expected relations
 ```

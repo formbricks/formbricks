@@ -93,3 +93,34 @@ _indirect_ cycles.
 
 The practical consequence: carrying an unused `parent` relation costs one nullable column and three
 `+ parent->…` terms. Adding it later means re-deriving every permission and re-backfilling the graph.
+
+## 4. Private-inside-shared: "no container edge" beats an exclusion
+
+The product requirement is **private surveys**, not private workspaces. Two ways to express it, both
+built and run:
+
+**Variant A — detached.** The survey always carries an `organization` edge (tenancy) and _optionally_
+a `container` edge. Private means the container edge is simply absent.
+
+**Variant B — exclusion.** The survey stays in the container and the inherited access is subtracted:
+`permission read = viewer + own + (container->read - private_flag)`.
+
+Both answer `CheckPermission` correctly — a container reader is denied on the private survey under
+either. The difference shows up in the **expected-relations enumeration**:
+
+```
+survey_detached:private_draft#read     ->  [user:bo] is <survey_detached:private_draft#owner>
+
+survey_excluded:private_draft#read     ->  [team:research#member] is <container:cx#reader_group>
+                                           [user:bo] is <survey_excluded:private_draft#owner>
+```
+
+Under the exclusion variant the enumeration lists a subject that `Check` denies. That is not
+cosmetic: the "who has access" modal on the FigJam board and the access-review export that SOC 2
+(CC6.3) and BAIT (_"vollständig und nachvollziehbar ableitbar"_) require are both built on subject
+enumeration, and they would report access that does not exist. It also matches AuthZed's own advice
+to phrase permissions additively and use exclusions sparingly.
+
+**Take the detached variant.** Privacy becomes the _absence_ of a relationship rather than the
+subtraction of one, "publish into a workspace" is a single write, "make private again" is a single
+delete, and nothing downstream has to special-case a negation.

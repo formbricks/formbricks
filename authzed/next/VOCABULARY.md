@@ -14,6 +14,12 @@ the test that settles any "where does this go?" question.
 | **Workspace**                                                  | **WHAT.** A body of work with its own access list — the surveys, dashboards and workflows for one programme, product or department. | A body of work needs a different access list from your other work.  |
 | **Pool** (Brand Kit, Contact Directory, Dataset, Distribution) | A shared asset owned by the organization and lent to workspaces.                                                                    | An asset must be usable in several workspaces without being copied. |
 
+**A private survey is not a fourth concept.** It is a survey with an owner and no workspace. That
+keeps "private" out of the container vocabulary entirely, and it is why there is no personal
+workspace in this model: _private surveys_ is the product requirement; a _personal workspace_ was
+only ever one way to implement it — and the weaker one, because it cannot express a draft that
+starts private and later joins a shared body of work without moving between containers.
+
 ## The test that settles arguments
 
 > **If the list of people in the team and the list of people who should see this work are always
@@ -34,17 +40,17 @@ parent type `team` in its name"_ — four times.
 
 ## Where does this go?
 
-| Thing                                     | Home                                | Why                                                                                |
-| ----------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------- |
-| A survey, dashboard, chart, workflow      | A workspace                         | It is work, and work has an audience.                                              |
-| A person                                  | A team                              | People are grouped by who they are, not by what they are touching this quarter.    |
-| Styling, logo                             | **Brand Kit** (pool)                | Every workspace wants the corporate one; nobody wants five copies.                 |
-| App/SDK config, placement, recontact days | **Distribution** (pool)             | It describes a channel, not a body of work.                                        |
-| Contacts, attribute keys, segments        | **Contact Directory** (pool)        | Org-wide PII with its own, stricter grant.                                         |
-| Feedback records                          | **Dataset** (pool)                  | Already org-level; the precedent the others follow.                                |
-| A private draft                           | The author's **personal workspace** | A personal space is a workspace with one owner — not a special case in the schema. |
-| A division or department                  | A **parent workspace**              | Nesting, not a new noun.                                                           |
-| "Which manager may see whose responses"   | **Org unit** — a separate tree      | See below. This is the important one.                                              |
+| Thing                                     | Home                                                  | Why                                                                                                                  |
+| ----------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| A survey, dashboard, chart, workflow      | A workspace                                           | It is work, and work has an audience.                                                                                |
+| A person                                  | A team                                                | People are grouped by who they are, not by what they are touching this quarter.                                      |
+| Styling, logo                             | **Brand Kit** (pool)                                  | Every workspace wants the corporate one; nobody wants five copies.                                                   |
+| App/SDK config, placement, recontact days | **Distribution** (pool)                               | It describes a channel, not a body of work.                                                                          |
+| Contacts, attribute keys, segments        | **Contact Directory** (pool)                          | Org-wide PII with its own, stricter grant.                                                                           |
+| Feedback records                          | **Dataset** (pool)                                    | Already org-level; the precedent the others follow.                                                                  |
+| A private draft                           | **Nowhere** — a survey with an owner and no workspace | Privacy is the absence of a container edge, not a special kind of container. "My drafts" is a view, not a workspace. |
+| A division or department                  | A **parent workspace**                                | Nesting, not a new noun.                                                                                             |
+| "Which manager may see whose responses"   | **Org unit** — a separate tree                        | See below. This is the important one.                                                                                |
 
 ## The trap: the org-unit hierarchy is not a workspace
 

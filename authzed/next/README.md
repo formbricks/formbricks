@@ -96,15 +96,24 @@ cycles, per AuthZed's warning.
 
 **Private surveys — Figma's model, plus a switch for regulated customers.**
 
-- Personal content lives in a **personal container owned by a user**, not a nullable parent on the
-  survey. No special case, no unlistable content — Miro's users complain about exactly that.
+- A private survey is a survey with an **owner and no workspace** — privacy is the _absence_ of a
+  container edge. Publishing into a workspace is one relationship write; making it private again is
+  one delete. The alternative, keeping the container edge and subtracting the inherited access with
+  an exclusion, was built and tested: `Check` is correct under both, but the exclusion variant still
+  lists the container's team in the expected-relations enumeration that `Check` denies — and the
+  "who has access" modal and the access-review export both read that enumeration
+  (`ENGINE-FACTS.md` #4).
+- **There is no personal workspace in this model.** "My drafts" is a view over surveys you own that
+  sit in no workspace — which is, in effect, Tiago's proposal applied to exactly the case where it
+  is the better answer.
 - Org owners/managers can **see it exists and transfer or delete it, but not read it**. `administer`
   is a permission distinct from `read`, which is what makes the word "private" honest. Verified: an
-  org owner is denied `read` on a personal container while holding `administer`.
+  org owner is denied `read` — and denied `response_export`, the obvious way round it — while
+  holding `administer`.
 - A **time-boxed, auditable break-glass grant** turns admin read on for one person for one purpose —
   never "temporarily make them an admin", which is what DORA RTS 21(e)(ii) exists to forbid.
-- **Offboarding: quarantine, never silent inheritance and never silent deletion.** The container is
-  frozen and an admin reparents it or deletes it. This also implements the Notion doc's "active
+- **Offboarding: quarantine, never silent inheritance and never silent deletion.** The owner's private
+  surveys are frozen and an admin transfers or deletes them. This also implements the Notion doc's "active
   owner" idea — grants a leaver issued die with their standing rather than outliving them.
 - `createdBy` stays immutable attribution; control is the transferable `owner` relation. That is the
   board's rule 7, and it is what Qualtrics and SurveyMonkey got wrong — both had to build transfer

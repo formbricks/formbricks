@@ -37,6 +37,7 @@ These are **not** parity. Each closes a logged issue and each is asserted:
 - `response_export` is no longer the same gate as `read` (I-3, C3).
 - `view_contacts` never flows from container access or a survey share (I-7, C12).
 - Content carries a transferable `owner`; `createdBy` stays immutable attribution (I-27, FigJam rule 7).
+- A survey can exist outside any workspace — that is how private surveys work.
 - `manage_access` is separable from `manage` (C4).
 - Grants can expire (I-5, C8).
 - Containers nest (R20).
