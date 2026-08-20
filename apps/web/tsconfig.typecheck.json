@@ -4,6 +4,8 @@
   "include": [
     "next-env.d.ts",
     "**/*.d.ts",
+    "*.ts",
+    "lingodotdev/**/*.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
     "lib/**/*.ts",
