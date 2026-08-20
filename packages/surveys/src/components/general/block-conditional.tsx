@@ -22,6 +22,17 @@ import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/e
 
 const AUTO_PROGRESS_SUBMIT_DELAY_MS = 350;
 
+/**
+ * Anchors are deliberately absent: they are focusable, but a link is never what a card asks of the
+ * respondent. A headline or subheader may carry one in its prose (a consent element pointing at a
+ * privacy policy), and that link sits *before* the element's own control in the DOM — so mount
+ * focus landed on a word in the question text, ringed, reading as a highlighted suggestion
+ * (ENG-2415), and gave a screen-reader user "Privacy Policy, link" as their orientation instead of
+ * the question's control. Excluding `a` from `[tabindex="0"]` too keeps that uniform for an anchor
+ * made focusable by hand. Nothing is left unfocused by the exclusion: every block renders its
+ * Submit and/or Back button inside `root`, and the only shape without one (an auto-progress
+ * element on the first block) is a radio group.
+ */
 const FOCUSABLE_CONTROL_SELECTOR = [
   'input:not([type="hidden"]):not([tabindex="-1"]):not(:disabled)',
   "textarea:not(:disabled)",
@@ -31,19 +42,9 @@ const FOCUSABLE_CONTROL_SELECTOR = [
 ].join(", ");
 
 /**
- * Links are focusable but are not what a card asks of the respondent: a headline or subheader may
- * carry one in its prose (a consent element pointing at a privacy policy), and that link sits
- * *before* the element's own control in the DOM. Focusing it on mount opened the card with a ring
- * around a word in the question text, reading as a highlighted suggestion (ENG-2415), and gave a
- * screen-reader user "Privacy Policy, link" as their orientation instead of the question's control.
- * Kept as a fallback so a card that really has nothing else still receives focus.
- */
-const FOCUSABLE_LINK_SELECTOR = "a[href]";
-
-/**
  * Focuses the first interactive control inside `root`. With `preferInvalid`,
- * controls flagged aria-invalid win; a prose link is only a fallback (see
- * FOCUSABLE_LINK_SELECTOR).
+ * controls flagged aria-invalid win. Prose links are not candidates at all (see
+ * FOCUSABLE_CONTROL_SELECTOR).
  *
  * Scrolling is always left to the caller. The first control can sit *below* the card's content — a
  * CTA block has no input of its own, so its first control is the Next button rendered after the
@@ -56,10 +57,7 @@ const focusFirstControl = (root: HTMLElement, preferInvalid = false): void => {
         ':is(input, textarea, select)[aria-invalid="true"]:not([tabindex="-1"]):not(:disabled)'
       )
     : null;
-  const target =
-    invalidTarget ??
-    root.querySelector<HTMLElement>(FOCUSABLE_CONTROL_SELECTOR) ??
-    root.querySelector<HTMLElement>(FOCUSABLE_LINK_SELECTOR);
+  const target = invalidTarget ?? root.querySelector<HTMLElement>(FOCUSABLE_CONTROL_SELECTOR);
   target?.focus({ preventScroll: true });
 };
 
