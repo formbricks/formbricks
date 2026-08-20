@@ -68,6 +68,11 @@ export const recurringJobDescriptors = {
     name: JOB_NAMES.surveyScheduling,
     scheduleId: "daily-survey-scheduling",
   }),
+  usageTelemetry: defineRecurringJob({
+    label: "usage telemetry",
+    name: JOB_NAMES.usageTelemetry,
+    scheduleId: "daily-usage-telemetry",
+  }),
   workflowRunReconcile: defineRecurringJob({
     label: "workflow run reconcile",
     name: JOB_NAMES.workflowRunReconcile,
