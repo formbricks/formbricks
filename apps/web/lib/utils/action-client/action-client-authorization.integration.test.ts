@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { AuthorizationError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
+import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { type TAccess, checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 
@@ -156,6 +157,7 @@ beforeAll(async () => {
 
   scenario.organizationId = organization.id;
   scenario.workspaceId = workspace.id;
+  await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
 describe("checkAuthorizationUpdated against a real database", () => {

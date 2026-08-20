@@ -132,6 +132,7 @@ jobs:
         run: |
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
+          sed -i "s|AUTHZED_CONSISTENCY=.*|AUTHZED_CONSISTENCY=fully_consistent|" .env
           echo "" >> .env
           echo "E2E_TESTING=1" >> .env
           echo "S3_REGION=us-east-1" >> .env
@@ -347,6 +348,20 @@ jobs:
             sleep 10
           done
 
+      # Playwright fixtures seed authorization source rows directly through Prisma. That intentionally
+      # bypasses product services, so run the real durable delivery processor at a test-only cadence
+      # rather than duplicating relationship writes in fixture code or waiting for the 5-second schedule.
+      - name: Start AuthZed CI outbox worker
+        run: |
+          (
+            cd apps/web
+            NODE_OPTIONS=--conditions=react-server \
+              pnpm exec dotenv -e ../../.env -- tsx scripts/authzed-ci-outbox-worker.ts \
+              > ../../authzed-outbox.log 2>&1
+          ) &
+          echo "AUTHZED_CI_OUTBOX_PID=$!" >> "$GITHUB_ENV"
+        shell: bash
+
       - name: Run E2E Tests (Playwright Service)
         if: env.PW_MODE == 'service'
         timeout-minutes: 15
@@ -354,7 +369,9 @@ jobs:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
           PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
           CI: true
-        run: pnpm test-e2e:azure
+        run: |
+          pnpm test-e2e:azure
+          kill -0 "${AUTHZED_CI_OUTBOX_PID}"
 
       - name: Run E2E Tests (Local)
         if: env.PW_MODE == 'local'
@@ -363,6 +380,7 @@ jobs:
           CI: true
         run: |
           pnpm test:e2e
+          kill -0 "${AUTHZED_CI_OUTBOX_PID}"
 
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: always()
@@ -389,5 +407,9 @@ jobs:
 
       - name: Output AuthZed logs
         if: failure()
-        run: docker logs formbricks-authzed-ci 2>&1 || true
+        run: |
+          docker logs formbricks-authzed-ci 2>&1 || true
+          if [ -f authzed-outbox.log ]; then
+            cat authzed-outbox.log
+          fi
         shell: bash
