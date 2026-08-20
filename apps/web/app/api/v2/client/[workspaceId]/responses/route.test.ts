@@ -172,7 +172,7 @@ describe("POST /api/v2/client/[workspaceId]/responses — Embedded Data ingest c
     const response = await postRawBody({ note: "a".repeat(MAX_INGESTED_VALUE_BYTES + 500) });
 
     expect(response.status).toBe(200);
-    expect((persisted().data.note as string).length).toBe(MAX_INGESTED_VALUE_BYTES);
+    expect(persisted().data.note as string).toHaveLength(MAX_INGESTED_VALUE_BYTES);
     expect(persisted().ingestFlags).toEqual([{ key: "note", reason: "truncated" }]);
   });
 

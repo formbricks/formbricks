@@ -153,7 +153,7 @@ describe("applyIngestContractToResponseData", () => {
       { note: "a".repeat(MAX_INGESTED_VALUE_BYTES + 1) }
     );
 
-    expect((result.data.note as string).length).toBe(MAX_INGESTED_VALUE_BYTES);
+    expect(result.data.note as string).toHaveLength(MAX_INGESTED_VALUE_BYTES);
     expect(result.flags).toEqual([{ key: "note", reason: "truncated" }]);
   });
 

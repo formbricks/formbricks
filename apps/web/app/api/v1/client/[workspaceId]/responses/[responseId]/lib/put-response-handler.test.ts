@@ -667,7 +667,7 @@ describe("putResponseHandler", () => {
       const result = await putResponseHandler(createHandlerParams());
 
       expect(result.response.status).toBe(200);
-      expect((persisted().data.note as string).length).toBe(MAX_INGESTED_VALUE_BYTES);
+      expect(persisted().data.note as string).toHaveLength(MAX_INGESTED_VALUE_BYTES);
       expect(persisted().ingestFlags).toEqual([{ key: "note", reason: "truncated" }]);
     });
 
