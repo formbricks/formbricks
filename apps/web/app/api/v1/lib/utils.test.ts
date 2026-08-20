@@ -43,8 +43,8 @@ describe("buildPrismaResponseData — Embedded Data ingest flags", () => {
     expect(buildPrismaResponseData(input(), null, {})).not.toHaveProperty("ingestFlags");
   });
 
-  test("writes null when the contract ran and found nothing", () => {
-    expect(buildPrismaResponseData(input(), null, {}, []).ingestFlags).toBeNull();
+  test("writes an empty list when the contract ran and found nothing", () => {
+    expect(buildPrismaResponseData(input(), null, {}, []).ingestFlags).toEqual([]);
   });
 
   test("writes the flags the contract computed", () => {

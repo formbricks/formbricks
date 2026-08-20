@@ -44,9 +44,10 @@ export const applyIngestContractToResponseData = (
   survey: TIngestContractSurvey,
   data: TResponseData | undefined
 ): TIngestResult => {
+  const ingestedFields = getIngestedEmbeddedFields(survey);
   const result = applyIngestContract({
     incoming: data ?? {},
-    ingestedFields: getIngestedEmbeddedFields(survey),
+    ingestedFields,
     elementIds: getElementsFromBlocks(survey.blocks).map((element) => element.id),
   });
 
@@ -70,7 +71,7 @@ export const applyIngestContractToResponseData = (
   // switch, because the link-survey URL path has always ignored it. Logged so that if a customer
   // ever reports it, this is greppable.
   if (survey.hiddenFields?.enabled === false && Object.keys(result.data).length > 0) {
-    const ingestedKeys = getIngestedEmbeddedFields(survey)
+    const ingestedKeys = ingestedFields
       .map(({ link }) => link.storageKey)
       .filter((storageKey) => storageKey in result.data);
 

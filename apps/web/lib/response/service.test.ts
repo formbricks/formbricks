@@ -140,7 +140,8 @@ describe("updateResponse", () => {
 
       await updateResponse(mockResponseId, createMockResponseInput({ data: { seats: 12 } }), undefined, []);
 
-      expect(updateArgs().data).toMatchObject({ ingestFlags: null });
+      // `[]`, not `null`: null stays reserved for "no ingest boundary has written this".
+      expect(updateArgs().data).toMatchObject({ ingestFlags: [] });
     });
 
     test("keeps a stored flag for a key this payload did not write", async () => {

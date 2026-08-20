@@ -59,8 +59,9 @@ export interface TIngestFlag {
  * - `unknown_key` — no ingested field declares it (rules 1 and 2: `computed` fields are written by
  *   survey logic and `reserved` ones are read-only, so neither is addressable from outside).
  * - `locked_field` — the field ignores external writes and resolves to its `defaultValue` (rule 3).
- * - `unsupported_value` — nothing storable arrived under a declared key: `null`, `undefined`, or a
- *   non-scalar, which no `dataType` can honestly represent.
+ * - `unsupported_value` — nothing storable arrived under the key: `null`, `undefined`, a non-scalar
+ *   under a declared field, or — under a question's element id — a shape `response.data` cannot
+ *   hold, such as a nested object.
  * - `element_id_collision` — a question answer owns that address, and an answer is never rewritten.
  */
 export type TIngestDropReason = "unknown_key" | "locked_field" | "unsupported_value" | "element_id_collision";
@@ -157,7 +158,11 @@ const isResponseDataValue = (raw: unknown): raw is NonNullable<TResponseDataValu
   // Non-finite numbers are not JSON: `JSON.stringify(Infinity)` is `null`, so storing one loses it.
   if (typeof raw === "number") return Number.isFinite(raw);
   if (Array.isArray(raw)) return raw.every((entry) => typeof entry === "string");
-  if (typeof raw === "object" && raw !== null) {
+  // Plain objects only. `Object.values(new Date())` is `[]` and `[].every(...)` is `true`, so a
+  // prototype check is what stops a `Date`, `Map`, `Set` or any class instance without own
+  // enumerable string properties from passing the arm below — which is the exact shape this guard
+  // exists to keep out of a `Json` column.
+  if (typeof raw === "object" && raw !== null && Object.getPrototypeOf(raw) === Object.prototype) {
     return Object.values(raw).every((entry) => typeof entry === "string");
   }
   return false;
@@ -174,6 +179,20 @@ const toIngestableScalar = (raw: unknown): TIngestableScalar | undefined => {
 /** The one storable spelling of a value that failed to coerce: what arrived, as text. */
 const stringifyScalar = (scalar: TIngestableScalar): string =>
   scalar instanceof Date ? scalar.toISOString() : String(scalar);
+
+/**
+ * Canonicalizes the zone designator into the one spelling `Date` is specified to parse.
+ *
+ * `±HHMM` reaches here because query strings carry it, and V8 happens to accept it — but it is not
+ * in ECMAScript's Date Time String Format, so parsing it is implementation-defined. Left alone, the
+ * same param would resolve to an instant on the server and flag as uncoercible in an engine that
+ * refuses it, which is exactly the cross-runtime disagreement {@link normalizeDate} exists to
+ * prevent. An absent designator means UTC, for the reason given there.
+ */
+const normalizeZoneDesignator = (zone: string | undefined): string => {
+  if (zone === undefined || zone.toLowerCase() === "z") return "Z";
+  return zone.includes(":") ? zone : `${zone.slice(0, 3)}:${zone.slice(3)}`;
+};
 
 const normalizeNumber = (scalar: TIngestableScalar): number | undefined => {
   if (typeof scalar === "number") return Number.isFinite(scalar) ? scalar : undefined;
@@ -248,8 +267,7 @@ const normalizeDate = (scalar: TIngestableScalar): string | undefined => {
   if (!parts) return undefined;
 
   const [, datePart, timePart, zonePart] = parts;
-  const zone = zonePart === undefined || zonePart.toLowerCase() === "z" ? "Z" : zonePart;
-  const instant = new Date(`${datePart}T${timePart}${zone}`);
+  const instant = new Date(`${datePart}T${timePart}${normalizeZoneDesignator(zonePart)}`);
   return Number.isNaN(instant.getTime()) ? undefined : instant.toISOString();
 };
 
@@ -339,7 +357,10 @@ export const applyIngestContract = ({
   for (const key of incomingKeys) {
     if (!elementIdSet.has(key)) continue;
     const answer = incoming[key];
+    // Reported rather than silently omitted: an answer this shape cannot be stored either, and a
+    // caller that sent one deserves to hear about it on the same channel as everything else.
     if (isResponseDataValue(answer)) data[key] = answer;
+    else dropped.push({ key, reason: "unsupported_value" });
   }
 
   const consumedKeys = new Set<string>();

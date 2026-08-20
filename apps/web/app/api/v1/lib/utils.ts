@@ -53,7 +53,11 @@ export const buildPrismaResponseData = (
     ...(meta && ({ meta } as Prisma.JsonObject)),
     singleUseId,
     ...(variables && { variables }),
-    ...(ingestFlags !== undefined && { ingestFlags: ingestFlags.length > 0 ? [...ingestFlags] : null }),
+    // Any defined list is persisted, empty included: `null` has to keep meaning "no ingest boundary
+    // ran" for the column's documented contract to hold, and on a create an omitted nullable field
+    // is already `NULL` — so collapsing `[]` to `null` would make a checked-and-clean response
+    // indistinguishable from a legacy one.
+    ...(ingestFlags !== undefined && { ingestFlags: [...ingestFlags] }),
     ttc: ttc,
     createdAt,
     updatedAt,

@@ -55,6 +55,7 @@ const CANDIDATE_INPUTS: unknown[] = [
   "2026-08-06T10:30:00Z",
   "2026-08-06T10:30:00.123Z",
   "2026-08-06T10:30:00+02:00",
+  "2026-08-06T10:30:00+0200",
   "2026-08-06T10:30:00",
   "2026-08-06 10:30",
   "2026-02-30",
@@ -157,6 +158,11 @@ describe("normalizeIngestedValue", () => {
         value: "2026-08-06T10:30:00Z",
       });
       expect(normalizeIngestedValue("2026-08-06T10:30:00+02:00", "date")).toEqual({
+        value: "2026-08-06T08:30:00.000Z",
+      });
+      // `±HHMM` is not in the spec's Date Time String Format, so it is canonicalized before parsing
+      // rather than handed to an engine that may or may not accept it.
+      expect(normalizeIngestedValue("2026-08-06T10:30:00+0200", "date")).toEqual({
         value: "2026-08-06T08:30:00.000Z",
       });
     });
@@ -364,6 +370,20 @@ describe("applyIngestContract", () => {
 
       expect(result.data).toEqual({ q1: "42", q2: ["a", "b"], q3: { row: "column" } });
       expect(result.dropped).toEqual([]);
+    });
+
+    test("reports a question answer whose shape cannot be stored, rather than swallowing it", () => {
+      const result = applyIngestContract({
+        incoming: { q1: "answer", q2: { nested: { deep: 1 } }, q3: new Date() },
+        ingestedFields: [],
+        elementIds: ["q1", "q2", "q3"],
+      });
+
+      expect(result.data).toEqual({ q1: "answer" });
+      expect(result.dropped).toEqual([
+        { key: "q2", reason: "unsupported_value" },
+        { key: "q3", reason: "unsupported_value" },
+      ]);
     });
 
     test("never rewrites the answer address, even when a field declares it", () => {

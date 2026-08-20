@@ -356,13 +356,29 @@ export function Survey({
    * re-runs the same contract on ingest and recomputes the flags, because it cannot trust this.
    */
   const [ingestedFieldsRecord] = useState<TResponseData>(() => {
+    const elementIds = getElementsFromSurveyBlocks(survey.blocks).map((element) => element.id);
     const result = applyIngestContract({
       incoming: hiddenFieldsRecord ?? {},
       ingestedFields: getIngestedEmbeddedFields(survey),
-      elementIds: getElementsFromSurveyBlocks(survey.blocks).map((element) => element.id),
+      elementIds,
     });
     logIngestResult(result);
-    return result.data;
+
+    // The contract passes question answers through because at a server boundary `incoming` IS
+    // `response.data`. Here it is only the host's bag, so a key naming a question is not an answer —
+    // and keeping it would be worse than useless: `ResponseQueue` merges this record OVER `data` on
+    // every submit, so a hidden field named after a question id would re-apply its display-time
+    // value on top of whatever the respondent actually answered. Prefilling has its own prop.
+    const elementIdSet = new Set(elementIds);
+    return Object.fromEntries(
+      Object.entries(result.data).filter(([key]) => {
+        if (!elementIdSet.has(key)) return true;
+        console.warn(
+          `Formbricks: "${key}" ${INGEST_DROP_MESSAGES.element_id_collision}, so the value was ignored.`
+        );
+        return false;
+      })
+    );
   });
   const [responseData, setResponseData] = useState<TResponseData>(ingestedFieldsRecord);
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);

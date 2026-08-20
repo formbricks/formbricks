@@ -615,9 +615,9 @@ export const updateResponse = async (
         ttc,
         language,
         variables,
-        ...(mergedIngestFlags !== undefined && {
-          ingestFlags: mergedIngestFlags.length > 0 ? mergedIngestFlags : null,
-        }),
+        // Written whenever the contract ran, empty included — see `buildPrismaResponseData` for why
+        // `null` has to stay reserved for "no ingest boundary has written this".
+        ...(mergedIngestFlags !== undefined && { ingestFlags: mergedIngestFlags }),
       },
       select: responseSelection,
     });
