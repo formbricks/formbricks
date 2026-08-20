@@ -1,0 +1,158 @@
+assertTrue:
+  # --- P1 parity floor: organization roles ------------------------------------------
+  - container:cx#read@user:olivia # P1.1 owner reaches every shared container
+  - container:cx#manage@user:mark # P1.2 manager reaches every shared container
+  - survey:onboarding#read@user:olivia # P1.3 and everything inside it
+  - response:r1#read@user:mark # P1.4 including responses
+  - organization:acme#manage_billing@user:bella # P1.5 billing sees billing
+
+  # --- P2 team-derived access -------------------------------------------------------
+  - container:cx#write@user:tina # P2.1 contributor on a writer_team
+  - survey:onboarding#write@user:tom # P2.3 flows to the leaf
+  - team:research#manage@user:tom # P2.4 team admin manages the team
+
+  # --- N1 a private survey: owner reaches, org admin does NOT read ------------------
+  - survey:draft#own@user:bo # N1.1 Bo owns his private draft
+  - survey:draft#write@user:bo # N1.2 and can edit it
+  - survey:draft#administer@user:olivia # N1.3 the owner CAN transfer/delete it
+  - survey:draft#administer@user:mark # N1.4 manager too
+  - survey:draft#transfer@user:olivia # N1.5 offboarding path exists without read
+
+  # --- N2 one org_reach tuple opens a private survey to administrators ---------------
+  - survey:hold#read@user:olivia # N2.1 explicit, auditable, revocable
+  - survey:hold#own@user:olivia # N2.2 at ownership level
+
+  # --- N3 external agency guest: one survey, nothing else ---------------------------
+  - survey:onboarding#read@user:agnes # N3.1 direct expiring grant works
+  - response:r1#read@user:agnes # N3.2 responses of that survey follow read
+
+  # --- N4 summary tier sits strictly below read -------------------------------------
+  - container:cx#summary_read@user:uma # N4.1 analysts get aggregates
+  - survey:onboarding#summary_read@user:uma
+
+  # --- N5 nesting: division grant flows down ----------------------------------------
+  - container:germany#read@user:uma # N5.1 analysts read division_eu -> germany
+  - survey:pulse#read@user:uma # N5.2 three hops to the leaf
+
+  # --- N6 pools -------------------------------------------------------------------
+  - feedback_dataset:cx_data#read_records@user:tina # N6.1 via cx assignment
+  - feedback_dataset:cx_data#read_records@user:uma # N6.2 via germany assignment (union)
+  - contact_directory:employees#use_for_targeting@user:tina # N6.3 targeting flows
+  - contact_directory:employees#view_contacts@user:hana # N6.4 PII only via its own grant
+  - brand_kit:corporate#use@user:tina
+  - distribution:web_app#use@user:tina
+
+  # --- N7 API keys ------------------------------------------------------------------
+  - container:cx#read@api_key:ci_reader
+  - container:cx#write@api_key:ci_writer
+  - container:cx#manage@api_key:ci_manager
+  - survey:onboarding#read@api_key:ci_reader
+  - organization:acme#manage_access@api_key:org_writer_key
+
+  # --- N12 segregation of duties: granting access is not administering content ---------
+  - container:cx#manage@user:mo # N12.1 team:ops manages the container
+  - container:cx#manage_access@user:ada # N12.2 ada may grant, and only grant
+  - container:cx#share@user:ada
+
+  # --- N13 custom roles are just groups, bound at a standard tier ----------------------
+  - container:cx#summary_read@user:rio # N13.1 role bound at summarizer tier
+
+  # --- N14 break-glass is its own time-boxed, auditable path --------------------------
+  - survey:cara_draft#read@user:auditor # N14.1 break-glass reaches a private draft
+  - survey:cara_draft#response_export@user:auditor # N14.2 a hold that cannot export is not a hold
+
+  # --- N16 privacy is the presence or absence of ONE relationship ---------------------
+  # survey:draft and survey:bo_published are identical except for the container edge.
+  # "Publish into a workspace" is one write; "make private again" is one delete.
+  - survey:bo_published#read@user:tina # N16.1 attached -> the workspace's team reads it
+  - survey:bo_published#read@user:olivia # N16.2 and administrators reach it normally
+
+  # --- N15 works council and manager-scoped EX (BetrVG) -------------------------------
+  - org_unit:de_muc#read_scores@user:lena # N15.1 manager sees their own unit
+  - org_unit:de_muc#read_scores@user:wc_de # N15.2 site works council sees below it
+  - org_unit:de_muc#read_comments@user:wc_de # N15.3 and may read verbatims
+  - org_unit:de#read_scores@user:wc_de
+
+assertFalse:
+  # --- P3 billing is excluded from product data even through a team -----------------
+  - team:research#member@user:bella # P3.1 the load-bearing one
+  - container:cx#read@user:bella # P3.2
+  - survey:onboarding#read@user:bella # P3.3
+  - response:r1#read@user:bella # P3.4
+
+  # --- P4 a teamless member reaches nothing -----------------------------------------
+  - container:cx#read@user:mia # P4.1
+  - survey:onboarding#read@user:mia # P4.2
+
+  # --- P5 a team row without a membership is not membership -------------------------
+  - team:analysts#member@user:ghost # P5.1 defence in depth
+  - container:cx#summary_read@user:ghost # P5.2
+
+  # --- N1 private stays private -----------------------------------------------------
+  - survey:draft#read@user:olivia # N1.6 the org owner cannot READ a private draft
+  - survey:draft#read@user:mark # N1.7 nor the manager
+  - survey:draft#read@user:tina # N1.8 nor anyone else
+  - survey:draft#own@user:olivia # N1.9 administer is not ownership
+  - survey:draft#response_export@user:olivia # N1.10 and export is not a way round it
+
+  # --- N3 the agency guest is fenced in ---------------------------------------------
+  - container:cx#read@user:agnes # N3.3 no container access
+  - survey:pulse#read@user:agnes # N3.4 no other survey
+  - survey:onboarding#write@user:agnes # N3.5 view-only always
+  - survey:onboarding#share@user:agnes # N3.6 cannot re-share
+  - survey:onboarding#response_export@user:agnes # N3.7 cannot export
+  - contact_directory:employees#view_contacts@user:agnes # N3.8 sharing does not leak PII
+  - contact_directory:employees#use_for_targeting@user:agnes
+  - feedback_dataset:cx_data#read_records@user:agnes # N3.9 nor dataset records
+
+  # --- N8 expiry actually revokes ---------------------------------------------------
+  - survey:onboarding#read@user:gone # N8.1 expired grant is denied
+
+  # --- N9 only manage/own may re-share ----------------------------------------------
+  - survey:onboarding#share@user:tina # N9.1 an editor cannot re-share
+
+  # --- N4 summary does not imply read -----------------------------------------------
+  - container:cx#read@user:uma # N4.3 analysts have aggregates only on cx
+  - survey:onboarding#read@user:uma
+
+  # --- N5 nesting does not leak upward ----------------------------------------------
+  - container:division_eu#write@user:tina # N5.3 a germany/cx writer is not a division writer
+  - container:germany#read@user:agnes
+
+  # --- N6 PII is its own grant (closes I-7) -----------------------------------------
+  - contact_directory:employees#view_contacts@user:tina # N6.5 container access is NOT PII access
+  - contact_directory:employees#view_contacts@user:uma
+  - contact_directory:employees#use_for_targeting@user:hana # N6.6 and PII is not targeting
+
+  # --- N10 export is not read (closes the RFC gap) ----------------------------------
+  - survey:onboarding#response_export@user:uma
+  - response:r1#export@user:agnes
+
+  # --- N11 tenant isolation ---------------------------------------------------------
+  - container:cx#read@user:mallory
+  - survey:onboarding#read@user:mallory
+
+  # --- N12 segregation of duties, the negative half ------------------------------------
+  - container:cx#manage_access@user:mo # N12.3 manage does NOT imply the right to grant
+  - container:cx#share@user:mo
+  - container:cx#read@user:ada # N12.4 granting does NOT imply reading
+
+  # --- N13 a custom role does not leak past the tier it was bound at -------------------
+  - container:cx#read@user:rio
+
+  # --- N14 break-glass expires like any other grant ------------------------------------
+  - survey:cara_draft#read@user:lapsed
+  - survey:cara_draft#read@user:olivia # N14.3 still private to the org admin
+  - survey:cara_draft#own@user:auditor # N14.4 emergency read is not ownership
+
+  # --- N15 works-council and manager scoping do not over-reach -------------------------
+  - org_unit:de#read_scores@user:lena # N15.4 a manager does not see the parent unit
+  - org_unit:de_muc#read_comments@user:lena # N15.5 scores do not imply verbatims
+  - org_unit:de_muc#export_raw@user:lena # N15.6 raw export is never bundled in
+  - org_unit:de_muc#export_raw@user:wc_de
+  - org_unit:de_muc#read_scores@user:tina # N15.7 content access is not respondent access
+  - survey:draft#read@user:tina # N16.3 detached -> the same team cannot
+
+# Expected-relations snapshots. Assertions prove a subject HAS a permission; only this block
+# turns an accidental WIDENING into a visible diff. Kept exact on the permissions that carry
+# the model's promises.

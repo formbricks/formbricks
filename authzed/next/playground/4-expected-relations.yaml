@@ -1,0 +1,30 @@
+# The private-survey promise, stated exhaustively: only Bo. Any future schema change that
+# lets an admin, a team or a container grant reach in shows up here as an added line.
+survey:draft#read:
+  - "[user:bo] is <survey:draft#owner>"
+
+# The offboarding path: exactly the org roles, and no one else.
+survey:draft#administer:
+  - "[user:mark] is <organization:acme#manager>"
+  - "[user:olivia] is <organization:acme#owner>"
+
+# PII, stated exhaustively — the whole point of I-7.
+contact_directory:employees#view_contacts:
+  - "[team:hr#member] is <contact_directory:employees#pii_team>"
+  - "[user:hana] is <organization:acme#member>/<team:hr#contributor>"
+  - "[user:mark] is <organization:acme#manager>"
+  - "[user:olivia] is <organization:acme#owner>"
+
+# The agency guest's total reach on the shared survey.
+survey:onboarding#read:
+  - "[api_key:ci_manager] is <container:cx#manager>"
+  - "[api_key:ci_reader] is <container:cx#reader>"
+  - "[api_key:ci_writer] is <container:cx#writer>"
+  - "[team:ops#member] is <container:cx#manager_group>"
+  - "[team:research#member] is <container:cx#writer_group>"
+  - "[user:agnes] is <survey:onboarding#viewer>"
+  - "[user:mark] is <organization:acme#manager>"
+  - "[user:mo] is <organization:acme#member>/<team:ops#contributor>"
+  - "[user:olivia] is <organization:acme#owner>"
+  - "[user:tina] is <organization:acme#member>/<team:research#contributor>"
+  - "[user:tom] is <organization:acme#member>/<survey:onboarding#owner>/<team:research#admin>"

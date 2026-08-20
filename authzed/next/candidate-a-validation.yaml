@@ -315,7 +315,7 @@ assertions:
 # turns an accidental WIDENING into a visible diff. Kept exact on the permissions that carry
 # the model's promises.
 validation:
-  # The private-container promise, stated exhaustively: only Bo. Any future schema change that
+  # The private-survey promise, stated exhaustively: only Bo. Any future schema change that
   # lets an admin, a team or a container grant reach in shows up here as an added line.
   survey:draft#read:
     - "[user:bo] is <survey:draft#owner>"

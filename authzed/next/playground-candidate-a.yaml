@@ -1,8 +1,7 @@
-# GENERATED — do not edit. Run authzed/next/build-playground.sh after changing
-# candidate-a-container.zed or candidate-a-validation.yaml.
-#
-# Paste this whole file into https://play.authzed.com (it replaces schema, test
-# relationships and assertions in one go), or open it with:  zed validate <file>
+# GENERATED — do not edit. Run authzed/next/build-playground.sh.
+# This is the ZED VALIDATE shape (one document). For play.authzed.com use the
+# four per-tab files in authzed/next/playground/ instead — the Playground's
+# Schema tab takes raw schema text and rejects a 'schema:' key.
 
 schema: |-
   use expiration
@@ -691,7 +690,7 @@ assertions:
 # turns an accidental WIDENING into a visible diff. Kept exact on the permissions that carry
 # the model's promises.
 validation:
-  # The private-container promise, stated exhaustively: only Bo. Any future schema change that
+  # The private-survey promise, stated exhaustively: only Bo. Any future schema change that
   # lets an admin, a team or a container grant reach in shows up here as an added line.
   survey:draft#read:
     - "[user:bo] is <survey:draft#owner>"
