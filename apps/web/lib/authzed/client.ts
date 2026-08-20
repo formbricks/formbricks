@@ -181,16 +181,13 @@ type TAuthzedClientSingleton = Readonly<{
 
 type TAuthzedConfig =
   | Readonly<{
-      consistency: TAuthzedConsistency;
       enabled: false;
       insecure: boolean;
     }>
   | Readonly<{
-      consistency: TAuthzedConsistency;
       enabled: true;
       endpoint: string;
       insecure: boolean;
-      minimumSnapshot?: string;
       systemKey: string;
       token: string;
     }>;
@@ -231,30 +228,22 @@ const toStableDiffKind = (kind: string | undefined): string => {
 };
 
 const getAuthzedConfig = (): TAuthzedConfig => {
-  const consistency = env.AUTHZED_CONSISTENCY ?? "minimize_latency";
   const insecure = env.AUTHZED_INSECURE === "true" || env.AUTHZED_INSECURE === "1";
 
   if (!isAuthzedEnabled()) {
-    return { consistency, enabled: false, insecure };
+    return { enabled: false, insecure };
   }
 
-  const {
-    AUTHZED_ENDPOINT: endpoint,
-    AUTHZED_MINIMUM_SNAPSHOT: minimumSnapshot,
-    AUTHZED_SYSTEM_KEY: systemKey,
-    AUTHZED_TOKEN: token,
-  } = env;
+  const { AUTHZED_ENDPOINT: endpoint, AUTHZED_SYSTEM_KEY: systemKey, AUTHZED_TOKEN: token } = env;
 
   if (!endpoint || !systemKey || !token) {
     throw new Error("Enabled AuthZed configuration was not validated");
   }
 
   return {
-    consistency,
     enabled: true,
     endpoint,
     insecure,
-    minimumSnapshot,
     systemKey,
     token,
   };

@@ -352,14 +352,34 @@ jobs:
       # bypasses product services, so run the real durable delivery processor at a test-only cadence
       # rather than duplicating relationship writes in fixture code or waiting for the 5-second schedule.
       - name: Start AuthZed CI outbox worker
+        id: authzed-worker-start
         run: |
+          heartbeat_path="${RUNNER_TEMP}/formbricks-authzed-outbox-worker.heartbeat"
+          rm -f "${heartbeat_path}"
           (
             cd apps/web
-            NODE_OPTIONS=--conditions=react-server \
+            AUTHZED_CI_OUTBOX_HEARTBEAT_PATH="${heartbeat_path}" \
+              NODE_OPTIONS=--conditions=react-server \
               pnpm exec dotenv -e ../../.env -- tsx scripts/authzed-ci-outbox-worker.ts \
               > ../../authzed-outbox.log 2>&1
           ) &
-          echo "AUTHZED_CI_OUTBOX_PID=$!" >> "$GITHUB_ENV"
+          worker_pid="$!"
+          echo "AUTHZED_CI_OUTBOX_HEARTBEAT_PATH=${heartbeat_path}" >> "$GITHUB_ENV"
+          echo "AUTHZED_CI_OUTBOX_PID=${worker_pid}" >> "$GITHUB_ENV"
+
+          for attempt in {1..50}; do
+            if ! kill -0 "${worker_pid}" 2>/dev/null; then
+              echo "AuthZed CI outbox worker exited before becoming ready"
+              exit 1
+            fi
+            if [ -f "${heartbeat_path}" ]; then
+              exit 0
+            fi
+            sleep 0.1
+          done
+
+          echo "AuthZed CI outbox worker did not publish its readiness heartbeat"
+          exit 1
         shell: bash
 
       - name: Run E2E Tests (Playwright Service)
@@ -371,7 +391,6 @@ jobs:
           CI: true
         run: |
           pnpm test-e2e:azure
-          kill -0 "${AUTHZED_CI_OUTBOX_PID}"
 
       - name: Run E2E Tests (Local)
         if: env.PW_MODE == 'local'
@@ -380,7 +399,42 @@ jobs:
           CI: true
         run: |
           pnpm test:e2e
-          kill -0 "${AUTHZED_CI_OUTBOX_PID}"
+
+      - name: Verify AuthZed CI outbox worker
+        if: always() && steps.authzed-worker-start.outcome == 'success'
+        run: |
+          status=0
+          worker_pid="${AUTHZED_CI_OUTBOX_PID:-}"
+          heartbeat_path="${AUTHZED_CI_OUTBOX_HEARTBEAT_PATH:-}"
+
+          if [ -z "${worker_pid}" ] || ! kill -0 "${worker_pid}" 2>/dev/null; then
+            echo "AuthZed CI outbox worker is not running"
+            status=1
+          else
+            worker_command="$(ps -p "${worker_pid}" -o command= || true)"
+            if [[ "${worker_command}" != *"authzed-ci-outbox-worker.ts"* ]]; then
+              echo "AuthZed CI outbox worker PID no longer identifies the expected process"
+              status=1
+            fi
+          fi
+
+          if [ -z "${heartbeat_path}" ] || [ ! -f "${heartbeat_path}" ]; then
+            echo "AuthZed CI outbox worker heartbeat is missing"
+            status=1
+          else
+            heartbeat_age="$(( $(date +%s) - $(stat -c %Y "${heartbeat_path}") ))"
+            if [ "${heartbeat_age}" -gt 10 ]; then
+              echo "AuthZed CI outbox worker heartbeat is stale"
+              status=1
+            fi
+          fi
+
+          if [ -n "${worker_pid}" ]; then
+            kill "${worker_pid}" 2>/dev/null || true
+          fi
+
+          exit "${status}"
+        shell: bash
 
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: always()

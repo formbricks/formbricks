@@ -68,6 +68,14 @@ Revocations include deletion, deactivation, membership removal, role or permissi
 grant set, removal of an API-key scope, and parent/resource deletion cascades. Classification is conservative:
 when a mutation could reduce access, the outbox treats it as a revocation.
 
+The direct-authority artifact preserves the converged authorization decision, but it deliberately changes when
+a mutable PostgreSQL denial becomes visible. The legacy evaluator read flags such as `isActive`, `accepted`, and
+`isArchived` from PostgreSQL immediately after commit. SpiceDB applies the equivalent denial when the committed
+outbox event is delivered. If that delivery remains unresolved for 60 seconds or enters dead letter, the global
+freshness guard fails every protected authorization check closed until delivery recovers; it does not deny only
+the changed resource. This bounded delivery window and global failure shape are part of the cutover contract,
+not decision-parity exceptions.
+
 ## Artifact freeze and compatibility
 
 After the durable bridge passes its implementation gates:
