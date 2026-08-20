@@ -27,13 +27,23 @@ const FOCUSABLE_CONTROL_SELECTOR = [
   "textarea:not(:disabled)",
   "select:not(:disabled)",
   "button:not(:disabled)",
-  "a[href]",
-  '[tabindex="0"]',
+  '[tabindex="0"]:not(a)',
 ].join(", ");
 
 /**
+ * Links are focusable but are not what a card asks of the respondent: a headline or subheader may
+ * carry one in its prose (a consent element pointing at a privacy policy), and that link sits
+ * *before* the element's own control in the DOM. Focusing it on mount opened the card with a ring
+ * around a word in the question text, reading as a highlighted suggestion (ENG-2415), and gave a
+ * screen-reader user "Privacy Policy, link" as their orientation instead of the question's control.
+ * Kept as a fallback so a card that really has nothing else still receives focus.
+ */
+const FOCUSABLE_LINK_SELECTOR = "a[href]";
+
+/**
  * Focuses the first interactive control inside `root`. With `preferInvalid`,
- * controls flagged aria-invalid win.
+ * controls flagged aria-invalid win; a prose link is only a fallback (see
+ * FOCUSABLE_LINK_SELECTOR).
  *
  * Scrolling is always left to the caller. The first control can sit *below* the card's content — a
  * CTA block has no input of its own, so its first control is the Next button rendered after the
@@ -46,7 +56,10 @@ const focusFirstControl = (root: HTMLElement, preferInvalid = false): void => {
         ':is(input, textarea, select)[aria-invalid="true"]:not([tabindex="-1"]):not(:disabled)'
       )
     : null;
-  const target = invalidTarget ?? root.querySelector<HTMLElement>(FOCUSABLE_CONTROL_SELECTOR);
+  const target =
+    invalidTarget ??
+    root.querySelector<HTMLElement>(FOCUSABLE_CONTROL_SELECTOR) ??
+    root.querySelector<HTMLElement>(FOCUSABLE_LINK_SELECTOR);
   target?.focus({ preventScroll: true });
 };
 

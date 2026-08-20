@@ -174,6 +174,11 @@ function Rating({
 }: Readonly<RatingProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
 
+  // Pointer-only hover preview. The player autofocuses a card's first control on mount
+  // (focusFirstControl in block-conditional.tsx), so driving this from onFocus too painted
+  // option 1 as hovered — grey fill on the number scale, a filled star/smiley — before the
+  // respondent had touched anything (ENG-2288). Keyboard focus is indicated on its own by the
+  // uniform focus ring in survey-ui's globals.css.
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
   // Ensure value is within valid range
@@ -247,14 +252,6 @@ function Rating({
         }}
         onMouseLeave={() => {
           setHoveredValue(null);
-        }}
-        onFocus={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onBlur={() => {
-          setHoveredValue(null);
         }}>
         {colorCoding ? (
           <div
@@ -301,14 +298,6 @@ function Rating({
             }
           }}
           onMouseLeave={() => {
-            setHoveredValue(null);
-          }}
-          onFocus={() => {
-            if (!disabled) {
-              setHoveredValue(number);
-            }
-          }}
-          onBlur={() => {
             setHoveredValue(null);
           }}>
           <input
@@ -358,14 +347,6 @@ function Rating({
             }
           }}
           onMouseLeave={() => {
-            setHoveredValue(null);
-          }}
-          onFocus={() => {
-            if (!disabled) {
-              setHoveredValue(number);
-            }
-          }}
-          onBlur={() => {
             setHoveredValue(null);
           }}>
           <input

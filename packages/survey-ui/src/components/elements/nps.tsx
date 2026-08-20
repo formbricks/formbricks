@@ -60,6 +60,10 @@ function NPS({
 }: Readonly<NPSProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
 
+  // Pointer-only hover preview: driving this from onFocus too made the card's mount autofocus
+  // (focusFirstControl in block-conditional.tsx) paint 0 with the grey hover fill before the
+  // respondent had touched anything (ENG-2288). Keyboard focus is indicated on its own by the
+  // uniform focus ring in survey-ui's globals.css.
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
   // Ensure value is within valid range (0-10)
@@ -123,14 +127,6 @@ function NPS({
           }
         }}
         onMouseLeave={() => {
-          setHoveredValue(null);
-        }}
-        onFocus={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onBlur={() => {
           setHoveredValue(null);
         }}>
         {colorCoding ? (
