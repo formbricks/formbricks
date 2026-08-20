@@ -54,8 +54,22 @@ test.describe("Anonymize responses @slow", () => {
       }).toPass({ timeout: 30000 });
 
       await expect(anonymizeToggle).not.toBeChecked(); // off by default
+
+      // Capture IP is live and describes itself normally until anonymize takes it over.
+      const captureIpToggle = page.locator("#captureIp");
+      await expect(captureIpToggle).toBeEnabled();
+
       await anonymizeToggle.click();
       await expect(anonymizeToggle).toBeChecked();
+
+      /*
+       * Anonymize overrides Capture IP at ingest, so the switch goes inert — and says why. Asserted
+       * because greying it out silently is the failure this text exists to prevent: two adjacent
+       * toggles both deciding whether the IP is stored, one of them dead, and nothing explaining which
+       * one wins.
+       */
+      await expect(captureIpToggle).toBeDisabled();
+      await expect(page.getByText("Turned off by “Anonymize responses”", { exact: false })).toBeVisible();
 
       await page.getByRole("button", { name: "Save as draft", exact: true }).click();
       await expect(page.getByText("Changes saved.")).toBeVisible();

@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Leg een nieuwe actie vast om een ​​enquête over te activeren.",
         "capture_ip_address": "IP-adres vastleggen",
         "capture_ip_address_description": "Bewaar het IP-adres van de respondent in de metadata van het antwoord voor duplicaatdetectie en beveiligingsdoeleinden",
+        "capture_ip_address_disabled_by_anonymize": "Uitgeschakeld door \"Reacties anonimiseren\" — het IP-adres wordt nooit opgeslagen zolang dat aan staat.",
         "capture_new_action": "Leg nieuwe actie vast",
         "card_arrangement_for_survey_type_derived": "Kaartarrangement voor {surveyTypeDerived} enquêtes",
         "card_background_color": "Achtergrondkleur van de kaart",

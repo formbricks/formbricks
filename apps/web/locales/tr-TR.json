@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Anket tetiklemek için yeni bir eylem yakala.",
         "capture_ip_address": "IP adresini yakala",
         "capture_ip_address_description": "Tekrar algılama ve güvenlik amacıyla yanıtlayanın IP adresini yanıt meta verilerinde sakla",
+        "capture_ip_address_disabled_by_anonymize": "\"Yanıtları anonimleştir\" tarafından kapatıldı — bu açıkken IP adresi asla saklanmaz.",
         "capture_new_action": "Yeni eylem yakala",
         "card_arrangement_for_survey_type_derived": "{surveyTypeDerived} Anketleri için Kart Düzeni",
         "card_background_color": "Kart arka plan rengi",

@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Új művelet rögzítése egy kérdőíven történő aktiváláshoz.",
         "capture_ip_address": "IP-cím rögzítése",
         "capture_ip_address_description": "A válaszadó IP-címének tárolása a válasz metaadataiban a kettőzés-felismeréshez és biztonsági célokból",
+        "capture_ip_address_disabled_by_anonymize": "Kikapcsolva a „Válaszok anonimizálása“ funkció miatt — az IP-cím nem kerül tárolásra, amíg ez be van kapcsolva.",
         "capture_new_action": "Új művelet rögzítése",
         "card_arrangement_for_survey_type_derived": "Kártyaelrendezés a(z) {surveyTypeDerived} kérdőíveknél",
         "card_background_color": "Kártya hátterének színe",

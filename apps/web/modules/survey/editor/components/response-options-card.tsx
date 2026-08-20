@@ -597,6 +597,10 @@ export const ResponseOptionsCard = ({
            * switch live would let an author turn IP capture "on" and see nothing captured. The stored
            * value is left untouched rather than forced off, so turning anonymize back off restores
            * whatever the author had chosen.
+           *
+           * The description says so while it is disabled. Greying the switch out alone left the author
+           * with no reason for it — two adjacent toggles that both decide whether the IP is stored, one
+           * of them inert, and nothing on screen saying which wins.
            */}
           <AdvancedOptionToggle
             htmlId="captureIp"
@@ -604,7 +608,11 @@ export const ResponseOptionsCard = ({
             onToggle={handleCaptureIpToggle}
             disabled={anonymizeResponsesToggle}
             title={t("workspace.surveys.edit.capture_ip_address")}
-            description={t("workspace.surveys.edit.capture_ip_address_description")}
+            description={
+              anonymizeResponsesToggle
+                ? t("workspace.surveys.edit.capture_ip_address_disabled_by_anonymize")
+                : t("workspace.surveys.edit.capture_ip_address_description")
+            }
           />
           <AdvancedOptionToggle
             htmlId="anonymizeResponses"

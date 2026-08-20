@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Captura uma nova ação pra disparar uma pesquisa.",
         "capture_ip_address": "Capturar endereço IP",
         "capture_ip_address_description": "Armazena o endereço IP do respondente nos metadados da resposta para fins de detecção de duplicatas e segurança",
+        "capture_ip_address_disabled_by_anonymize": "Desativado por \"Anonimizar respostas\" — o endereço IP nunca é armazenado enquanto essa opção estiver ativada.",
         "capture_new_action": "Capturar nova ação",
         "card_arrangement_for_survey_type_derived": "Arranjo de Cartões para Pesquisas {surveyTypeDerived}",
         "card_background_color": "Cor de fundo do cartão",

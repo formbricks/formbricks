@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Capturează o acțiune nouă pentru a declanșa un sondaj.",
         "capture_ip_address": "Capturare adresă IP",
         "capture_ip_address_description": "Stochează adresa IP a respondentului în metadatele răspunsului pentru detectarea duplicatelor și în scopuri de securitate",
+        "capture_ip_address_disabled_by_anonymize": "Dezactivat prin „Anonimizează răspunsurile“ — adresa IP nu este niciodată stocată cât timp aceasta este activată.",
         "capture_new_action": "Capturați acțiune nouă",
         "card_arrangement_for_survey_type_derived": "Aranjament de carduri pentru sondaje de tip {surveyTypeDerived}",
         "card_background_color": "Culoarea de fundal a cardului",

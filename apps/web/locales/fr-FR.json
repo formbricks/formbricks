@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Capturez une nouvelle action pour déclencher une enquête.",
         "capture_ip_address": "Capturer l'adresse IP",
         "capture_ip_address_description": "Enregistrer l'adresse IP du répondant dans les métadonnées de réponse à des fins de détection des doublons et de sécurité",
+        "capture_ip_address_disabled_by_anonymize": "Désactivé par \"Anonymiser les réponses\" — l'adresse IP n'est jamais stockée lorsque cette option est activée.",
         "capture_new_action": "Capturer une nouvelle action",
         "card_arrangement_for_survey_type_derived": "Disposition des cartes pour les enquêtes {surveyTypeDerived}",
         "card_background_color": "Couleur de fond de la carte",

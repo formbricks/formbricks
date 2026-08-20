@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "フォームをトリガーする新しいアクションをキャプチャします。",
         "capture_ip_address": "IPアドレスを記録",
         "capture_ip_address_description": "重複検出とセキュリティ目的で、回答者のIPアドレスを回答メタデータに保存します",
+        "capture_ip_address_disabled_by_anonymize": "「回答を匿名化」によりオフになっています — この機能が有効な間、IPアドレスは保存されません。",
         "capture_new_action": "新しいアクションをキャプチャ",
         "card_arrangement_for_survey_type_derived": "{surveyTypeDerived} フォームのカード配置",
         "card_background_color": "カードの背景色",

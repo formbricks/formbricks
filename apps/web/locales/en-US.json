@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Capture a new action to trigger a survey on.",
         "capture_ip_address": "Capture IP address",
         "capture_ip_address_description": "Store the respondent’s IP address in response metadata for duplicate detection and security purposes",
+        "capture_ip_address_disabled_by_anonymize": "Turned off by “Anonymize responses” — the IP address is never stored while that is on.",
         "capture_new_action": "Capture new action",
         "card_arrangement_for_survey_type_derived": "Card Arrangement for {surveyTypeDerived} Surveys",
         "card_background_color": "Card background color",

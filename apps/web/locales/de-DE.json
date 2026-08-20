@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Erfasse eine neue Aktion, um eine Umfrage auszulösen.",
         "capture_ip_address": "IP-Adresse erfassen",
         "capture_ip_address_description": "Speichere die IP-Adresse des Teilnehmers in den Antwort-Metadaten zur Duplikatserkennung und zu Sicherheitszwecken",
+        "capture_ip_address_disabled_by_anonymize": "Deaktiviert durch „Antworten anonymisieren“ — die IP-Adresse wird nicht gespeichert, solange diese Option aktiviert ist.",
         "capture_new_action": "Neue Aktion erfassen",
         "card_arrangement_for_survey_type_derived": "Karten-Anordnung für {surveyTypeDerived}-Umfragen",
         "card_background_color": "Karten-Hintergrundfarbe",

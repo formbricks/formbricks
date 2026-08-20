@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Захватить новое действие для запуска опроса.",
         "capture_ip_address": "Сохранять IP-адрес",
         "capture_ip_address_description": "Сохранять IP-адрес респондента в метаданных ответа для обнаружения дубликатов и обеспечения безопасности",
+        "capture_ip_address_disabled_by_anonymize": "Отключено параметром «Анонимизировать ответы» — IP-адрес не сохраняется, пока эта функция включена.",
         "capture_new_action": "Захватить новое действие",
         "card_arrangement_for_survey_type_derived": "Расположение карточек для опросов типа {surveyTypeDerived}",
         "card_background_color": "Цвет фона карточки",

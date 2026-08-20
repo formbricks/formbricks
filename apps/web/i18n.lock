@@ -2963,6 +2963,7 @@ checksums:
     workspace/surveys/edit/capture_a_new_action_to_trigger_a_survey_on: 73410e9665a37bc4a9747db5d683d36c
     workspace/surveys/edit/capture_ip_address: e950f924f1c0b52f8c5b06ca118e049f
     workspace/surveys/edit/capture_ip_address_description: f6bf6046db16667237511265e9fba5f0
+    workspace/surveys/edit/capture_ip_address_disabled_by_anonymize: 8591d663a8a68a4a5d1c617042612348
     workspace/surveys/edit/capture_new_action: 0aa2a3c399b62b1a52307deedf4922e8
     workspace/surveys/edit/card_arrangement_for_survey_type_derived: c06b9aaebcc11bc16e57a445b62361fc
     workspace/surveys/edit/card_background_color: acd5d023e1d1a4471b053dce504c7a83

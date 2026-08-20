@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "Fånga en ny åtgärd att utlösa en enkät på.",
         "capture_ip_address": "Registrera IP-adress",
         "capture_ip_address_description": "Spara respondentens IP-adress i svarsmetadata för att upptäcka dubbletter och av säkerhetsskäl",
+        "capture_ip_address_disabled_by_anonymize": "Inaktiverat av \"Anonymisera svar\" — IP-adressen lagras aldrig medan den är påslagen.",
         "capture_new_action": "Fånga ny åtgärd",
         "card_arrangement_for_survey_type_derived": "Kortarrangemang för {surveyTypeDerived}-enkäter",
         "card_background_color": "Kortets bakgrundsfärg",

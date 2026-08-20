@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "捕获一个新动作以触发调查。",
         "capture_ip_address": "记录IP地址",
         "capture_ip_address_description": "将答题者的IP地址存储在响应元数据中，用于重复检测和安全目的",
+        "capture_ip_address_disabled_by_anonymize": "已被\"匿名化回复\"关闭 — 启用该功能时，IP 地址不会被存储。",
         "capture_new_action": "捕获 新动作",
         "card_arrangement_for_survey_type_derived": "{surveyTypeDerived} 调查 的 卡片 布局",
         "card_background_color": "卡片 的 背景 颜色",

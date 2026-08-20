@@ -3080,6 +3080,7 @@
         "capture_a_new_action_to_trigger_a_survey_on": "擷取新的操作以觸發問卷。",
         "capture_ip_address": "擷取 IP 位址",
         "capture_ip_address_description": "將受訪者的 IP 位址儲存在回應中繼資料中，以利重複檢測與安全用途",
+        "capture_ip_address_disabled_by_anonymize": "已由「匿名回應」關閉 — 啟用該功能時，IP 位址將不會被儲存。",
         "capture_new_action": "擷取新操作",
         "card_arrangement_for_survey_type_derived": "{surveyTypeDerived} 問卷的卡片排列",
         "card_background_color": "卡片背景顏色",
