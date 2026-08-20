@@ -70,7 +70,7 @@ export function BreakdownBars({
   const result = buildDistributionSegments(entries);
   if (!result) {
     return (
-      <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
+      <div className="text-muted-foreground flex h-full items-center justify-center p-4">
         {t("workspace.analysis.charts.no_valid_data_to_display")}
       </div>
     );
@@ -94,7 +94,7 @@ export function BreakdownBars({
   });
 
   return (
-    <div className="flex h-full min-h-64 w-full min-w-0 flex-col justify-center px-2 py-4">
+    <div className="flex h-full w-full min-w-0 flex-col justify-center px-2 py-2">
       <TooltipProvider delayDuration={0}>
         {/* The sections carry no text of their own: a label wide enough for the widest section is
             still clipped on the narrow ones, at which point it reads as noise rather than data.
