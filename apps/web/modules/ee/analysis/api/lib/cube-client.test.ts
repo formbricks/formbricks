@@ -166,27 +166,45 @@ describe("executeTenantScopedQuery", () => {
     expect(result).toEqual(rows);
   });
 
-  test("does not fill with the sentinel when the query buckets by a time granularity", async () => {
+  test("keeps a synthesized empty date bucket at 0 but preserves a real null in the same result", async () => {
+    const DAY = "FeedbackRecords.collectedAt.day";
+    // The pivot invents 2026-01-03 to fill the gap; 2026-01-02 is a day Cube returned, where the
+    // measure is genuinely NULL (responses that day, none of them answering this question).
+    mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {
+      const real = [
+        { [DAY]: "2026-01-01", "FeedbackRecords.npsScore": "72.92" },
+        { [DAY]: "2026-01-02", "FeedbackRecords.npsScore": "__formbricks_null__" },
+      ];
+      if (pivotConfig?.fillMissingDates === false) return real;
+      return [...real, { [DAY]: "2026-01-03", "FeedbackRecords.npsScore": "__formbricks_null__" }];
+    });
+
     const { executeTenantScopedQuery } = await import("./cube-client");
-    await executeTenantScopedQuery({
+    const result = await executeTenantScopedQuery({
       ...scopedInput,
       query: {
-        measures: ["FeedbackRecords.count"],
+        measures: ["FeedbackRecords.npsScore"],
         timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "day" }],
       },
     });
 
-    // fillMissingDates is on by default, so the pivot invents a row per empty day and fills it the
-    // same way a NULL measure is filled. A day with no responses is a measured zero, so these
-    // queries keep the client's default fill instead of being turned into "no data".
-    expect(mockTablePivot).toHaveBeenCalledWith();
+    expect(result).toEqual([
+      { [DAY]: "2026-01-01", "FeedbackRecords.npsScore": "72.92" },
+      // real bucket, nothing to compute → no data
+      { [DAY]: "2026-01-02", "FeedbackRecords.npsScore": null },
+      // bucket the pivot invented → a measured zero
+      { [DAY]: "2026-01-03", "FeedbackRecords.npsScore": 0 },
+    ]);
   });
 
-  test("keeps a zero-activity day as 0 rather than no data", async () => {
-    mockTablePivot.mockReturnValue([
-      { "FeedbackRecords.collectedAt.day": "2026-01-01", "FeedbackRecords.count": 12 },
-      { "FeedbackRecords.collectedAt.day": "2026-01-02", "FeedbackRecords.count": 0 },
-    ]);
+  test("keeps a zero-activity day as 0 when every empty bucket was synthesized", async () => {
+    const DAY = "FeedbackRecords.collectedAt.day";
+    mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {
+      const real = [{ [DAY]: "2026-01-01", "FeedbackRecords.count": 12 }];
+      if (pivotConfig?.fillMissingDates === false) return real;
+      return [...real, { [DAY]: "2026-01-02", "FeedbackRecords.count": "__formbricks_null__" }];
+    });
+
     const { executeTenantScopedQuery } = await import("./cube-client");
     const result = await executeTenantScopedQuery({
       ...scopedInput,
@@ -197,8 +215,8 @@ describe("executeTenantScopedQuery", () => {
     });
 
     expect(result).toEqual([
-      { "FeedbackRecords.collectedAt.day": "2026-01-01", "FeedbackRecords.count": 12 },
-      { "FeedbackRecords.collectedAt.day": "2026-01-02", "FeedbackRecords.count": 0 },
+      { [DAY]: "2026-01-01", "FeedbackRecords.count": 12 },
+      { [DAY]: "2026-01-02", "FeedbackRecords.count": 0 },
     ]);
   });
 
