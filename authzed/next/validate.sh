@@ -33,6 +33,9 @@ run_zed() {
   fi
 }
 
+# Regenerate the paste-ready Playground file so it can never drift from its sources.
+bash "${SCRIPT_DIR}/build-playground.sh" >/dev/null
+
 status=0
 for suite in "${SUITES[@]}"; do
   printf '\n=== %s ===\n' "${suite}"

@@ -28,8 +28,7 @@
 #   survey:cara_draft owner cara, NO container, break-glass grant to user:auditor
 #   survey:hold       owner dana, NO container, org_reach      (admin-readable by policy)
 #
-#   survey:onboarding (cx)   survey:pulse (germany)   survey:draft (personal_bo)
-#   survey:hold (legalhold_dana)
+#   survey:onboarding (cx)   survey:pulse (germany)   survey:bo_published (cx)
 #   agency guest user:agnes  -> direct viewer on survey:onboarding, expiring 2030
 #   user:gone                -> direct viewer on survey:onboarding, EXPIRED 2020
 #

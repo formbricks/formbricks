@@ -113,7 +113,7 @@ definition container {
     /** Tenancy. Always set. Never on its own a grant of product access. */
     relation organization: organization
 
-    /** Organization owners/managers reach the content here. Absent on personal containers. */
+    /** Organization owners/managers reach the content here. Written on every container. */
     relation org_reach: organization
 
     relation owner_team: team
@@ -148,7 +148,7 @@ definition container {
 
     /**
      * CHANGE: administrative reach that deliberately does NOT confer read.
-     * Transfer ownership, reparent, delete — the offboarding path for personal containers.
+     * Transfer ownership, reparent, delete — without conferring read.
      */
     permission administer: user = organization->manage + parent->administer
 

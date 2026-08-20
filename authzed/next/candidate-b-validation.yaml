@@ -7,8 +7,7 @@
 #   container:cx           -> team:cx            (a team with no human members)
 #   container:division_eu  -> team:division_eu
 #   container:germany      -> team:germany       (parent = team:division_eu)
-#   container:personal_bo  -> no team; survey:draft owned by user:bo, no org_reach
-#   container:legalhold_dana -> survey:hold with org_reach written (break-glass)
+#   private drafts         -> survey:draft / survey:hold owned by a user with no team edge
 #
 # Note what the mapping costs: every survey, dashboard and workflow now needs its own
 # `organization` tuple, because there is no container left to carry tenancy.
