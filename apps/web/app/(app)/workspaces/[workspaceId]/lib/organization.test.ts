@@ -1,7 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { lookupAuthorizedOrganizationIds } from "@/lib/authorization/resource-list";
 import { getOrganizationsByUserId } from "./organization";
 
 vi.mock("@formbricks/database", () => ({
@@ -11,6 +12,12 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
+vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedOrganizationIds: vi.fn() }));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue(["org1", "org2"]);
+});
 
 describe("Organization", () => {
   describe("getOrganizationsByUserId", () => {
@@ -26,11 +33,7 @@ describe("Organization", () => {
 
       expect(prisma.organization.findMany).toHaveBeenCalledWith({
         where: {
-          memberships: {
-            some: {
-              userId: "user1",
-            },
-          },
+          id: { in: ["org1", "org2"] },
         },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {

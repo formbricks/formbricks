@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
+import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -18,14 +19,28 @@ export const GET = async (request: NextRequest) =>
         });
       }
 
-      const workspaceIds = authentication.workspacePermissions.map((p) => p.workspaceId);
+      const workspaceIds = await lookupAuthorizedWorkspaceIds({
+        id: authentication.apiKeyId,
+        type: "apiKey",
+      });
+      const authorizedWorkspaceIds = new Set(workspaceIds);
+      const authorizedWorkspacePermissions = authentication.workspacePermissions.filter((permission) =>
+        authorizedWorkspaceIds.has(permission.workspaceId)
+      );
       const workspaces = await prisma.workspace.findMany({
-        where: { id: { in: workspaceIds } },
+        where: {
+          id: { in: authorizedWorkspacePermissions.map(({ workspaceId }) => workspaceId) },
+          organizationId: authentication.organizationId,
+        },
         select: { id: true, legacyEnvironmentId: true },
       });
 
       const legacyEnvIdByWorkspaceId = new Map(workspaces.map((w) => [w.id, w.legacyEnvironmentId]));
-      const workspacePermissions = authentication.workspacePermissions.map((permission) => ({
+      const resolvedWorkspaceIds = new Set(workspaces.map(({ id }) => id));
+      const resolvedWorkspacePermissions = authorizedWorkspacePermissions.filter(({ workspaceId }) =>
+        resolvedWorkspaceIds.has(workspaceId)
+      );
+      const workspacePermissions = resolvedWorkspacePermissions.map((permission) => ({
         permissions: permission.permission,
         workspaceId: permission.workspaceId,
         workspaceName: permission.workspaceName,
@@ -33,7 +48,7 @@ export const GET = async (request: NextRequest) =>
 
       // Backwards compat: expose environment-shaped permissions for consumers
       // from before the Environment model was removed.
-      const environmentPermissions = authentication.workspacePermissions.flatMap((permission) => {
+      const environmentPermissions = resolvedWorkspacePermissions.flatMap((permission) => {
         const legacyEnvironmentId = legacyEnvIdByWorkspaceId.get(permission.workspaceId);
         if (!legacyEnvironmentId) return [];
         return [

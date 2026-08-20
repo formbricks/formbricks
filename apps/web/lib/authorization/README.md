@@ -219,11 +219,17 @@ These read a role but do not decide access, so they stay as they are:
 - **Invite fan-out.** The signup and invite paths derive from the _invited_
   role whether to create `TeamUser` rows, since owners and managers get
   workspace access from the role itself. That is a statement about the invite.
-- **List scoping during the bridge.** Workspace list queries remain PostgreSQL-authoritative and narrow by
-  role while the bridge is deployed. MCP `list_workspaces` has one bounded `LookupResources(workspace, read)`
-  migration observation rather than one check per row. ENG-2449 replaces every current-model organization
-  and workspace authorization list with an authoritative bounded lookup before the direct-authority artifact
-  can ship.
+- **Authoritative list scoping.** Current-model organization and workspace discovery uses one
+  `LookupResources` operation per resource type, followed by a tenant-scoped PostgreSQL data query. This
+  covers the application organization/workspace switchers, survey-list workspace navigation, API v2 `/me`,
+  and V3/MCP workspace discovery. PostgreSQL supplies current resource data and API-key permission labels;
+  it does not widen the SpiceDB allowlist. Unknown, deleted, or foreign-tenant lookup results are discarded,
+  and lookup or projection-freshness failures fail the list closed. Billing-role users receive no workspace
+  results even if a stale team membership exists, matching their lack of product-data access instead of the
+  former switcher-only exception. React request caching deduplicates identical lookup tuples inside an RSC
+  request; API handlers do not rely on that cache and invoke each required lookup helper once. V3/MCP
+  workspace discovery therefore performs one `LookupResources(workspace, read)` operation per list call,
+  regardless of list size. Generic Phase 2 list authorization remains ENG-1713.
 
 New authorization-sensitive code must use `can` or `assertCan`; it must not add
 callers to the deprecated action-client adapter or reintroduce a role-name gate.
