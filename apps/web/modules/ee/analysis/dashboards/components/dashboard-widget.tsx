@@ -67,8 +67,10 @@ export function DashboardWidget({
           {title}
         </h3>
         {view && onViewChange && (
-          <div
-            role="group"
+          // A fieldset rather than a div with role="group": it carries the grouping semantics
+          // natively, so the two icon buttons read as one control. Tailwind's preflight already
+          // strips the browser's default fieldset margin, padding and border.
+          <fieldset
             aria-label={t("workspace.analysis.dashboards.widget_view")}
             className="flex shrink-0 items-center rounded-md border border-gray-200 p-0.5">
             {WIDGET_VIEWS.map((widgetView) => {
@@ -100,7 +102,7 @@ export function DashboardWidget({
                 </TooltipRenderer>
               );
             })}
-          </div>
+          </fieldset>
         )}
         {hasMenuActions && (
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
