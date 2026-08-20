@@ -470,10 +470,27 @@ if (process.env.WEBAPP_URL) {
   };
 }
 
+// Build-time release identifier, derived exactly the way the runtime `SENTRY_RELEASE` is
+// derived in lib/constants.ts. CI bumps apps/web/package.json to the release version before
+// the image build (.github/actions/build-and-push-docker/action.yml), so the release the
+// artifacts are uploaded under and the release the events are tagged with always agree.
+// A local or PR build still carries the unbumped 0.0.0 and deliberately yields no release,
+// rather than uploading under one literally named "undefined".
+const sentryRelease = (() => {
+  try {
+    const { version } = require("./package.json");
+    return version && version !== "0.0.0" ? `${version}` : undefined;
+  } catch {
+    return undefined;
+  }
+})();
+
 const sentryOptions = {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
-  project: "formbricks-cloud",
+  // Production ingests into formbricks/formbricks (EU). "formbricks-cloud" lives in a
+  // different org (formbricks-us), so uploads were rejected with "projects are invalid".
+  project: "formbricks",
   org: "formbricks",
 
   // Enable logging to debug sourcemap generation issues
@@ -484,6 +501,16 @@ const sentryOptions = {
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: false,
+
+  release: { name: sentryRelease },
+
+  // The plugin's default is to log an upload failure and leave the build green, which is why
+  // a wrong project slug went unnoticed for two years. Fail the build instead: an image whose
+  // source maps never uploaded produces unreadable production stack traces, and that is not
+  // something to discover later from Sentry.
+  errorHandler: (err) => {
+    throw err;
+  },
 };
 
 // Always enable Sentry plugin to inject Debug IDs

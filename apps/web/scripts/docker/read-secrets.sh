@@ -86,22 +86,17 @@ else
 fi
 
 if [ -f "/run/secrets/sentry_auth_token" ]; then
-  # Only upload sourcemaps on amd64 platform to avoid duplicate uploads
-  # Sourcemaps are platform-agnostic, so we only need to upload once
-  # TARGETARCH is automatically set by Docker during multi-platform builds
-  if [ "${TARGETARCH:-}" = "amd64" ]; then
-    IFS= read -r SENTRY_AUTH_TOKEN < /run/secrets/sentry_auth_token || true
-    SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN%$'\n'}
-    export SENTRY_AUTH_TOKEN
-    echo "✅ Sentry auth token found. Sourcemaps will be uploaded during build (${TARGETARCH} platform)."
-    echo "🔧 SENTRY_AUTH_TOKEN environment variable exported for build process."
-  else
-    echo "✅ Sentry auth token found but skipping upload on ${TARGETARCH:-unknown} platform."
-    echo "ℹ️  Sourcemaps will only be uploaded on amd64 platform to avoid duplicates."
-    echo "🔧 Debug IDs will still be injected for proper error correlation."
-  fi
+  # The token must be exported on every platform, not just amd64. next.config.mjs only wraps
+  # the app in withSentryConfig when SENTRY_AUTH_TOKEN is set, so gating the export by arch
+  # meant an arm64 image got no Debug IDs at all and its stack traces could never be
+  # symbolicated. Uploading the same Debug IDs twice is idempotent and costs a little build
+  # time; shipping an unsymbolicatable image is not a trade worth making.
+  IFS= read -r SENTRY_AUTH_TOKEN < /run/secrets/sentry_auth_token || true
+  SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN%$'\n'}
+  export SENTRY_AUTH_TOKEN
+  echo "✅ Sentry auth token found. Debug IDs will be injected and sourcemaps uploaded (${TARGETARCH:-unknown} platform)."
 else
-  echo "⚠️  SENTRY_AUTH_TOKEN secret not found. Sourcemaps will not be uploaded but Debug IDs will still be injected."
+  echo "⚠️  SENTRY_AUTH_TOKEN secret not found. Sourcemaps will not be uploaded and Debug IDs will NOT be injected."
 fi
 
 # Verify environment variables are set before starting build
