@@ -2,9 +2,11 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma, Response } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { getSurvey } from "@/lib/survey/service";
+import { buildServerEmbeddedValues } from "@/lib/surveyLogic/utils";
 import { getQuotas } from "./quotas";
 import { evaluateQuotas, handleQuotas } from "./utils";
 
@@ -16,6 +18,15 @@ export interface QuotaEvaluationInput {
   variables?: Response["variables"];
   language?: string;
   tx?: Prisma.TransactionClient;
+  /**
+   * The persisted response, used only to resolve `reserved` quota operands (ENG-1840) — a quota
+   * condition on `country`, `browser` or `finished` reads its value from here via the reserved field
+   * catalog. Optional so a caller without the row in hand still evaluates: those operands then read
+   * as unset, exactly like an absent hidden field. Passed rather than re-fetched on purpose; every
+   * call site already holds the row it just wrote, and quota evaluation runs inside the ingest
+   * transaction where an extra query would be paid on every response.
+   */
+  response?: TEmbeddedValueResponse;
 }
 
 export interface QuotaEvaluationResult {
@@ -38,6 +49,7 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
     language = "default",
     responseFinished = false,
     tx,
+    response,
   } = input;
   const prismaClient = tx ?? prisma;
 
@@ -58,7 +70,8 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
       data,
       variables,
       quotas,
-      isDefaultLanguage ? "default" : language
+      isDefaultLanguage ? "default" : language,
+      response ? buildServerEmbeddedValues(response) : {}
     );
 
     const quotaFull = await handleQuotas(surveyId, responseId, result, responseFinished, prismaClient);

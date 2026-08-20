@@ -38,6 +38,13 @@ export interface SharedConditionsFactoryParams {
   blockIdx?: number;
   getDefaultOperator: () => TSurveyLogicConditionsOperator;
   includeCreateGroup?: boolean;
+  /**
+   * Whether the left-operand picker offers reserved fields (ENG-1840). Survey block logic sets it:
+   * the renderer projects reserved values before evaluating. Quota conditions must NOT — they are
+   * evaluated by `evaluateQuotas`, which passes no reserved map, so a reserved operand there would
+   * read as unset and the condition would never match while looking perfectly valid in the editor.
+   */
+  includeReservedFields?: boolean;
 }
 
 // Callback parameters for different update patterns
@@ -53,7 +60,14 @@ export function createSharedConditionsFactory(
   config: TConditionsEditorConfig<TSingleCondition>;
   callbacks: TConditionsEditorCallbacks<TSingleCondition>;
 } {
-  const { survey, t, blockIdx, getDefaultOperator, includeCreateGroup = false } = params;
+  const {
+    survey,
+    t,
+    blockIdx,
+    getDefaultOperator,
+    includeCreateGroup = false,
+    includeReservedFields = false,
+  } = params;
   const { onConditionsChange } = updateCallbacks;
 
   // Derive elements from blocks
@@ -91,7 +105,7 @@ export function createSharedConditionsFactory(
   };
 
   const config: TConditionsEditorConfig<TSingleCondition> = {
-    getLeftOperandOptions: () => getConditionValueOptions(survey, t, blockIdx),
+    getLeftOperandOptions: () => getConditionValueOptions(survey, t, blockIdx, includeReservedFields),
     getOperatorOptions: (condition) => getConditionOperatorOptions(condition, survey, t),
     getValueProps: (condition) => getMatchValueProps(condition, survey, t, blockIdx),
     getDefaultOperator,

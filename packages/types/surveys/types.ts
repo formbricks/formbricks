@@ -4472,7 +4472,8 @@ export type TSortOption = z.infer<typeof ZSortOption>;
 export const ZSurveyRecallItem = z.object({
   id: z.string(),
   label: z.string(),
-  type: z.enum(["element", "hiddenField", "attributeClass", "variable"]),
+  // "reserved" (ENG-1840) addresses a RESERVED_FIELD_CATALOG entry by name rather than a stored id.
+  type: z.enum(["element", "hiddenField", "attributeClass", "variable", "reserved"]),
 });
 
 export type TSurveyRecallItem = z.infer<typeof ZSurveyRecallItem>;

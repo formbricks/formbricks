@@ -370,6 +370,8 @@ describe("createResponseWithQuotaEvaluation V2", () => {
       variables: mockResponseInput.variables,
       language: "en-US", // canonicalized from "en"
       responseFinished: expectedResponse.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response: expect.objectContaining({ id: expectedResponse.id }),
       tx: mockTx,
     });
   });
@@ -393,6 +395,8 @@ describe("createResponseWithQuotaEvaluation V2", () => {
       variables: mockResponseInput.variables,
       language: "en-US", // canonicalized from "en"
       responseFinished: expectedResponse.finished,
+      // The row just written, so `reserved` quota operands resolve (ENG-1840).
+      response: expect.objectContaining({ id: expectedResponse.id }),
       tx: mockTx,
     });
   });

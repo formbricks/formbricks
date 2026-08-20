@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TResponseInput, ZResponseInput, pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
@@ -208,6 +208,11 @@ export const POST = withV1ApiWrapper({
     let response: TResponseWithQuotaFull;
     try {
       const meta: TResponseInput["meta"] = {
+        // The browser-runtime context the renderer snapshotted at display time (ENG-1841). This
+        // literal is a whitelist — anything not re-listed here never reaches the database — so the
+        // auto-captured keys have to be pulled in explicitly. Spread from the schema rather than
+        // retyped key by key, so the two cannot drift.
+        ...pickAutoCapturedResponseMeta(responseInputData?.meta),
         source: responseInputData?.meta?.source,
         url: responseInputData?.meta?.url,
         userAgent: {

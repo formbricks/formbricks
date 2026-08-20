@@ -1,8 +1,11 @@
 import { type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import {
+  RESERVED_FIELD_CATALOG,
   coerceToEmbeddedDataType,
   getComputedEmbeddedFields,
+  mergeReservedValues,
+  projectClientReservedValues,
 } from "@formbricks/types/embedded-data-resolver";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { TJsFileUploadParams, type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
@@ -30,6 +33,7 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
+import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
 import { evaluateLogic, performActions } from "@/lib/logic";
 import {
   type SerializedSurveyState,
@@ -526,6 +530,22 @@ export function Survey({
         setPendingSyncCount(pendingCount);
       }
 
+      /*
+       * Reinstate the browser context this response was first displayed with. Past this point the
+       * entry is being resumed, so the writes that follow go to the response `surveyStateSnapshot`
+       * already identifies — and the meta they carry has to keep describing the original display.
+       * Lazy `useRef` init has already measured the *current* page by now (a reload can land on a
+       * different URL, referrer or viewport), so the persisted snapshot replaces it rather than
+       * merging with it: a partial merge would report a context that never existed.
+       *
+       * Entries written before this field existed carry no meta and keep the freshly measured
+       * snapshot, which is exactly the behaviour they had.
+       */
+      if (progress.webSurveyMeta) {
+        const restoredMeta = progress.webSurveyMeta;
+        webSurveyMetaRef.current = () => restoredMeta;
+      }
+
       // Validate that the saved blockId still exists in the current survey
       const blockExists =
         progress.blockId === "start" ||
@@ -750,7 +770,13 @@ export function Survey({
   };
 
   const evaluateLogicAndGetNextBlockId = (
-    data: TResponseData
+    data: TResponseData,
+    /**
+     * Reserved-field values, passed in rather than closed over: this is declared above the memo that
+     * produces them, and taking them as a parameter keeps the sole call site explicit about the fact
+     * that logic reads the same map recall does.
+     */
+    reservedFieldValues: Record<string, string | number>
   ): { nextBlockId: string | undefined; calculatedVariables: TResponseVariables } => {
     const firstEndingId = survey.endings.length > 0 ? survey.endings[0].id : undefined;
 
@@ -784,7 +810,10 @@ export function Survey({
         localResponseData,
         calculationResults,
         logic.conditions,
-        selectedLanguage
+        selectedLanguage,
+        // Merged against the in-flight response data (answers from this block included), so a
+        // declared field shadows a same-named reserved entry here exactly as it does in recall.
+        mergeReservedValues(reservedFieldValues, localResponseData)
       );
 
       if (!isLogicMet) {
@@ -859,17 +888,21 @@ export function Survey({
     };
   };
 
-  const getWebSurveyMeta = useCallback(() => {
-    if (!isWebEnvironment) return {};
+  /**
+   * The browser-runtime context, snapshotted **once on this survey's first render** and frozen for
+   * the rest of its life. `onResponseCreateOrUpdate` runs on every submit, so reading the runtime
+   * there — as this did before — meant a respondent who rotated their phone or resized the window
+   * mid-survey silently rewrote the viewport the finished response reports.
+   *
+   * Lazy `useRef` initialisation is what makes "first render" the capture point. A survey with a
+   * `delay` is not mounted until the widget actually renders it, so render time is the only moment
+   * this component can reach — and it is the right one anyway: it is when the respondent first sees
+   * the survey, not when some earlier action queued it.
+   */
+  const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
+  webSurveyMetaRef.current ??= createWebSurveyMetaSnapshot(isWebEnvironment);
 
-    const url = new URL(window.location.href);
-    const source = url.searchParams.get("source");
-
-    return {
-      url: url.href,
-      ...(source ? { source } : {}),
-    };
-  }, [isWebEnvironment]);
+  const getWebSurveyMeta = useCallback((): TWebSurveyMeta => webSurveyMetaRef.current?.() ?? {}, []);
 
   // Fire onResponseCreated exactly once per survey lifecycle. The queue creates the response on the
   // first add and updates it on later submits, so a multi-question survey must not re-trigger it.
@@ -951,6 +984,39 @@ export function Survey({
     ]
   );
 
+  /**
+   * Reserved-field values this renderer can resolve *right now* (ENG-1840).
+   *
+   * `projectClientReservedValues` drops every `server` catalog entry, so the map holds only what a
+   * browser mid-survey actually knows (url, source, action, language today; the SDK-captured entries
+   * light up automatically once they land in the catalog). A recall token or logic operand naming a
+   * server-derived field — country, durationSeconds, browser — finds no key and reads as unset,
+   * which is the correct answer rather than a fabricated empty string.
+   *
+   * The meta slice is the same expression the response queue persists, so what recall shows and what
+   * ingest stores cannot drift apart. `language` is resolved the same way too: `"default"` is a
+   * renderer-internal sentinel, and `#recall:language#` must render the real language code.
+   */
+  const reservedValues = useMemo(
+    () =>
+      projectClientReservedValues(RESERVED_FIELD_CATALOG, {
+        surveyId: localSurvey.id,
+        language:
+          selectedLanguage === "default" ? (getDefaultLanguageCode(survey) ?? null) : selectedLanguage,
+        data: responseData,
+        variables: currentVariables,
+        ttc,
+        meta: { ...getWebSurveyMeta(), action },
+      }),
+    [localSurvey.id, selectedLanguage, survey, responseData, currentVariables, ttc, getWebSurveyMeta, action]
+  );
+
+  /** Recall's lookup map: reserved values first, so a declared field of the same name still wins. */
+  const recallValues = useMemo(
+    () => mergeReservedValues(reservedValues, responseData),
+    [reservedValues, responseData]
+  );
+
   useEffect(() => {
     if (isPreviewMode || !survey.recaptcha?.enabled) return;
 
@@ -1012,8 +1078,10 @@ export function Survey({
 
     pushVariableState(firstRespondedElementId);
 
-    const { nextBlockId: rawNextBlockId, calculatedVariables } =
-      evaluateLogicAndGetNextBlockId(surveyResponseData);
+    const { nextBlockId: rawNextBlockId, calculatedVariables } = evaluateLogicAndGetNextBlockId(
+      surveyResponseData,
+      reservedValues
+    );
     // A jump target may reference a deleted block or ending; treat such stale ids as "no target"
     // so the shown ending and the persisted endingId stay in sync
     const targetIsBlock = localSurvey.blocks.some((block) => block.id === rawNextBlockId);
@@ -1071,6 +1139,7 @@ export function Survey({
         currentVariables: calculatedVariables,
         history: newHistory,
         selectedLanguage,
+        webSurveyMeta: getWebSurveyMeta(),
         surveyStateSnapshot: {
           responseId: surveyState?.responseId ?? null,
           displayId: surveyState?.displayId ?? null,
@@ -1193,7 +1262,7 @@ export function Survey({
             responseCount={responseCount}
             autoFocusEnabled={autoFocusEnabled || hasUserNavigatedRef.current}
             isCurrent={offset === 0}
-            responseData={responseData}
+            responseData={recallValues}
             variablesData={currentVariables}
             isPreviewMode={isPreviewMode}
             fullSizeCards={fullSizeCards}
@@ -1214,7 +1283,7 @@ export function Survey({
               isCurrent={offset === 0}
               languageCode={selectedLanguage}
               isResponseSendingFinished={isResponseSendingFinished}
-              responseData={responseData}
+              responseData={recallValues}
               variablesData={currentVariables}
               onOpenExternalURL={onOpenExternalURL}
               isPreviewMode={isPreviewMode}
@@ -1235,7 +1304,7 @@ export function Survey({
               block={{
                 ...block,
                 elements: block.elements.map((element) =>
-                  parseRecallInformation(element, selectedLanguage, responseData, currentVariables)
+                  parseRecallInformation(element, selectedLanguage, recallValues, currentVariables)
                 ),
               }}
               value={responseData}

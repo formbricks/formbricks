@@ -1,6 +1,7 @@
 import { UAParser } from "ua-parser-js";
 import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
+import { pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
 import { checkSurveyValidity } from "@/app/api/v2/client/[workspaceId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
@@ -151,6 +152,11 @@ const createResponseForRequest = async ({
 
   try {
     const meta: TResponseInputV2["meta"] = {
+      // The browser-runtime context the renderer snapshotted at display time (ENG-1841). This
+      // literal is a whitelist — anything not re-listed here never reaches the database — so the
+      // auto-captured keys have to be pulled in explicitly. Spread from the schema rather than
+      // retyped key by key, so the two cannot drift.
+      ...pickAutoCapturedResponseMeta(responseInputData?.meta),
       source: responseInputData?.meta?.source,
       url: responseInputData?.meta?.url,
       userAgent: {

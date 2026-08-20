@@ -1,6 +1,7 @@
 import { parse } from "node-html-parser";
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
+import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
 import { isLegacyIdCharset, isSafeIdentifier } from "../safe-identifier";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
@@ -395,8 +396,14 @@ export const validateId = (
   // behaving exactly as before. New declared field names are matched case-insensitively and against
   // the link-survey system params too, because `getHiddenFieldsFromSearchParams` refuses to capture
   // any of those under any casing - a name that could never receive a value must not be creatable.
+  //
+  // `RESERVED_FIELD_NAMES` (the Tier-1 Embedded Data catalog: country, url, browser, ...) joins them
+  // on the strict path ONLY. It must never move into `RESERVED_DECLARED_FIELD_NAMES`, which is also
+  // the capture-refusal list read by `getHiddenFieldsFromSearchParams` — putting `country` there
+  // would stop `?country=DE` from filling the hidden field of a survey that legitimately declares
+  // `country` today. Refused at authoring time; whatever a survey already declares keeps working.
   const isReserved = requireSafeIdentifier
-    ? RESERVED_DECLARED_FIELD_NAMES.has(field.toLowerCase())
+    ? RESERVED_DECLARED_FIELD_NAMES.has(field.toLowerCase()) || RESERVED_FIELD_NAMES.has(field.toLowerCase())
     : FORBIDDEN_IDS.includes(field);
 
   if (isReserved) {
