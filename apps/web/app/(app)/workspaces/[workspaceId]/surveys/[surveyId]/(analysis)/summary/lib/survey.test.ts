@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
+import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { deleteResponsesAndDisplaysForSurvey, getQuotasSummary } from "./survey";
 
 // Mock prisma
@@ -10,9 +11,13 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     response: {
       deleteMany: vi.fn(),
+      findMany: vi.fn(),
     },
     display: {
       deleteMany: vi.fn(),
+    },
+    survey: {
+      findUnique: vi.fn(),
     },
     $transaction: vi.fn(),
     surveyQuota: {
@@ -21,11 +26,34 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@/modules/storage/lib/delete-response-files", () => ({
+  deleteResponseFileUrls: vi.fn(),
+}));
+
 const surveyId = "clq5n7p1q0000m7z0h5p6g3r2";
+const workspaceId = "u8qa6u0tlxb6160pi2jb8s4p";
+const fileUploadElementId = "y3ydd3td2iq09wa599cxo1me";
+
+const fileUploadSurvey = {
+  workspaceId,
+  questions: [],
+  blocks: [
+    {
+      id: "block-1",
+      elements: [{ id: fileUploadElementId, type: "fileUpload" }],
+    },
+  ],
+};
 
 beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();
+  // Default: a survey with no file-upload element, so the response scan is skipped.
+  vi.mocked(prisma.survey.findUnique).mockResolvedValue({
+    workspaceId,
+    questions: [],
+    blocks: [],
+  } as any);
 });
 
 describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
@@ -57,6 +85,88 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
         deletedResponsesCount: 0,
         deletedDisplaysCount: 0,
       });
+    });
+
+    test("Deletes the uploaded files held by the deleted responses", async () => {
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(fileUploadSurvey as any);
+      vi.mocked(prisma.response.findMany).mockResolvedValue([
+        {
+          id: "response-1",
+          data: {
+            [fileUploadElementId]: [
+              `https://example.com/storage/${workspaceId}/private/file1.png`,
+              `https://example.com/storage/${workspaceId}/private/file2.pdf`,
+            ],
+            "other-element": "not a file",
+          },
+        },
+        {
+          id: "response-2",
+          data: { [fileUploadElementId]: [`https://example.com/storage/${workspaceId}/private/file3.png`] },
+        },
+      ] as any);
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 2 }, { count: 0 }]);
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      expect(deleteResponseFileUrls).toHaveBeenCalledWith(
+        [
+          `https://example.com/storage/${workspaceId}/private/file1.png`,
+          `https://example.com/storage/${workspaceId}/private/file2.pdf`,
+          `https://example.com/storage/${workspaceId}/private/file3.png`,
+        ],
+        workspaceId
+      );
+    });
+
+    test("Reads the file-upload answers before the responses are deleted", async () => {
+      const callOrder: string[] = [];
+
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(fileUploadSurvey as any);
+      vi.mocked(prisma.response.findMany).mockImplementation((async () => {
+        callOrder.push("scan");
+        return [
+          {
+            id: "response-1",
+            data: { [fileUploadElementId]: [`https://example.com/storage/${workspaceId}/private/f.png`] },
+          },
+        ];
+      }) as any);
+      vi.mocked(prisma.$transaction).mockImplementation((async () => {
+        callOrder.push("delete");
+        return [{ count: 1 }, { count: 0 }];
+      }) as any);
+      vi.mocked(deleteResponseFileUrls).mockImplementation((async () => {
+        callOrder.push("storage");
+      }) as any);
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      // The scan must precede the row delete (the URLs live in response.data), and storage cleanup must
+      // follow it so files are never removed while their responses survive.
+      expect(callOrder).toEqual(["scan", "delete", "storage"]);
+    });
+
+    test("Skips the response scan when the survey has no file-upload element", async () => {
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 3 }, { count: 1 }]);
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      expect(prisma.response.findMany).not.toHaveBeenCalled();
+      expect(deleteResponseFileUrls).not.toHaveBeenCalled();
+    });
+
+    test("Ignores non-array answers stored under a file-upload element id", async () => {
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(fileUploadSurvey as any);
+      vi.mocked(prisma.response.findMany).mockResolvedValue([
+        { id: "response-1", data: { [fileUploadElementId]: "not-an-array" } },
+        { id: "response-2", data: { [fileUploadElementId]: [42, null] } },
+      ] as any);
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ count: 2 }, { count: 0 }]);
+
+      await deleteResponsesAndDisplaysForSurvey(surveyId);
+
+      expect(deleteResponseFileUrls).not.toHaveBeenCalled();
     });
   });
 
