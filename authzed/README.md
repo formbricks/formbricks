@@ -133,15 +133,66 @@ The current legacy evaluator authorizes every `Membership` row without checking
 behavior: accepted and pending membership rows project identically. An
 `Invite` alone is not projected.
 
-Projection runs after the source transaction commits and is best-effort.
-AuthZed being disabled performs no projection work. An AuthZed outage never
-changes a successful PostgreSQL mutation into an application error; it produces
-only a sanitized operational result and warning. Existing records and any drift
-an outage leaves behind are reconciled by `pnpm authzed:backfill` (see
-[Backfill and repair](#backfill-and-repair)), which must report a clean run
-before direct authority. ENG-2408 replaces this temporary bridge behavior with
-the transactional outbox required by the [direct cutover
-contract](./CUTOVER.md); the best-effort projector is not eligible for cutover.
+Every authorization-bearing source table has a PostgreSQL trigger that inserts a
+projection event in the same transaction as the source mutation. The existing
+post-commit projector remains as a low-latency fast path, but the PostgreSQL
+outbox is the durable delivery contract: BullMQ wakes a worker every five
+seconds, the worker claims rows with leases and `FOR UPDATE SKIP LOCKED`, and the
+idempotent reconcilers deliver each claimed batch as six independent groups.
+
+Failure is attributed rather than shared. A group that fails takes only its own
+events; the rest of the batch is still delivered. A retryable failure releases
+every remaining group untried, because spending another three-attempt budget per
+group against an unreachable instance buys nothing.
+
+Dead-lettering requires the failure to _name_ an event, which takes three things
+together: the code is non-retryable, the attempt covered exactly one event, and
+the code is one an event can actually cause
+(`authzed_projection_invalid_source`, `authzed_invalid_request`). The third
+condition is not redundant. On a five-second cadence most groups hold a single
+event, so size alone would charge whichever revocations happened to be
+travelling alone when SpiceDB rejected a credential — dead-lettering bystanders
+mid-outage, which is the opposite of the intent. Those same event-attributable
+codes are the ones that trigger halving the group until the culprit is alone;
+codes describing the instance are neither split nor charged. Ten solitary,
+attributable failures dead-letter the event.
+
+The consequence is the property worth remembering: **no SpiceDB outage, of any
+duration or kind, can dead-letter an event that was never the problem.**
+
+AuthZed being disabled performs no delivery work. An AuthZed outage never
+changes a successful PostgreSQL mutation into an application error; committed
+outbox rows remain recoverable and are replayed when SpiceDB returns. Existing
+records and independent drift are reconciled by the six-hour applying audit and
+by `pnpm authzed:backfill` (see [Backfill and repair](#backfill-and-repair)). A
+clean graph and drained outbox are mandatory before direct authority.
+
+Deletes, and updates that are not provably grants, are classified as revocations.
+The classifier is deny-by-default: an unmapped target type, an unmapped column,
+or any enum move is a revocation. Only three transitions are treated as grants,
+each because the projectors' own write shape proves the relationship set can only
+grow — reactivating a user, unarchiving a feedback directory that stays in its
+organization, and any membership update that leaves `role` unchanged (the
+projected snapshot ignores `accepted`, so accepting an invite writes identical
+relationships).
+
+The permission ladder is deliberately not encoded in the trigger. It is rankable,
+but a rank table in SQL has no compile-time backstop the way
+`relationship-map.ts` does, so a change to `authzed/schema.zed` would silently
+make it wrong in the fail-open direction — the one direction this guard must
+never be wrong in. Role changes are one-at-a-time admin actions rather than the
+bulk operations the classifier exists to keep off the guard. Revisit only if a
+bulk re-roling path appears.
+
+This matters because the guard is global and unscoped. Direct authority refuses
+protected operations with `authzed_projection_stale` when an unresolved
+revocation reaches 60 seconds or enters dead letter, so an undelivered event
+classified as a revocation denies every enforced check in the deployment. A mass
+invite acceptance or reactivation sweep must therefore not arm it.
+
+If a source pair moves, the trigger enqueues both the previous pair as a
+revocation and the current pair, preventing a stale old edge from becoming
+undiscoverable.
 
 The organization-membership projection boundary covers:
 
@@ -543,6 +594,40 @@ it rewrites is not necessarily the one a local dev server talks to. Always pass
 Released Formbricks images include the equivalent `formbricks-authzed backfill`
 command for self-hosted operators. Repository development retains
 `pnpm authzed:backfill`.
+
+## Durable projection outbox
+
+Release images expose bounded, identifier-free outbox operations:
+
+```bash
+formbricks-authzed outbox status
+formbricks-authzed outbox drain
+formbricks-authzed outbox drain --max-batches=500
+formbricks-authzed outbox replay
+```
+
+`status` reports aggregate pending, dead-letter, oldest-age, and revocation-age
+counts. `drain` claims revocations first and stops after the requested number of
+batches or the first batch that delivers nothing at all — a partially delivered
+batch is the normal outcome once failures are attributed per group, so draining
+stops on no progress rather than on any failure. `replay` resets all unresolved
+dead letters to attempt zero and returns their full permanent-failure budget; it
+does not bypass normal reconciliation, retry, or freshness checks. These commands
+never print target IDs, relationships, credentials, or raw errors.
+
+Dead letters also clear themselves. A dead-lettered revocation has no age bound
+in the freshness guard on purpose — an old one is more dangerous than a fresh one
+— so the six-hour audit replays every unresolved dead letter whenever it comes
+back `reconciled`, bounding a global denial at six hours rather than at whenever
+an operator notices. A still-poisoned event simply dead-letters again.
+
+The recurring six-hour audit runs the normal full-deployment applying backfill
+without prune. It can repair attributable missing and mismatched-permission
+edges, but it never automatically deletes orphaned or unmanaged relationships or
+changes a mismatched parent. Those categories still require the guarded operator
+workflow above. Successfully delivered outbox rows are retained for seven days;
+the scheduled audit removes at most 10,000 expired rows per run. Pending and
+dead-letter rows are never removed by retention cleanup.
 
 ## Deliberately not modeled (stays in application code)
 

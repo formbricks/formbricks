@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AUTHZED_ERROR_CODES } from "./errors";
 
 const counters = new Map<string, { add: ReturnType<typeof vi.fn> }>();
+const gauges = new Map<string, { record: ReturnType<typeof vi.fn> }>();
 const histograms = new Map<string, { record: ReturnType<typeof vi.fn> }>();
 
 vi.mock("@opentelemetry/api", () => ({
@@ -10,6 +11,11 @@ vi.mock("@opentelemetry/api", () => ({
       createCounter: vi.fn((name: string) => {
         const instrument = { add: vi.fn() };
         counters.set(name, instrument);
+        return instrument;
+      }),
+      createGauge: vi.fn((name: string) => {
+        const instrument = { record: vi.fn() };
+        gauges.set(name, instrument);
         return instrument;
       }),
       createHistogram: vi.fn((name: string) => {
@@ -21,8 +27,12 @@ vi.mock("@opentelemetry/api", () => ({
   },
 }));
 
-const { recordAuthzedProjection, recordAuthzedRequestFailure, recordAuthzedRequestRetry } =
-  await import("./metrics");
+const {
+  recordAuthzedOutboxStatus,
+  recordAuthzedProjection,
+  recordAuthzedRequestFailure,
+  recordAuthzedRequestRetry,
+} = await import("./metrics");
 
 const counter = (name: string) => counters.get(name)!;
 const histogram = (name: string) => histograms.get(name)!;
@@ -32,6 +42,9 @@ beforeEach(() => {
     instrument.add.mockClear();
   }
   for (const instrument of histograms.values()) {
+    instrument.record.mockClear();
+  }
+  for (const instrument of gauges.values()) {
     instrument.record.mockClear();
   }
 });
@@ -116,6 +129,29 @@ describe("recordAuthzedRequestRetry", () => {
   });
 });
 
+describe("recordAuthzedOutboxStatus", () => {
+  test("records point-in-time queue state without identifier attributes", () => {
+    recordAuthzedOutboxStatus({
+      deadLettered: 2,
+      oldestPendingAgeSeconds: 47,
+      pending: 11,
+      revocationsPastCritical: 1,
+      revocationsPastWarning: 3,
+    });
+
+    const status = gauges.get("formbricks_authzed_projection_outbox_status")!;
+    expect(status.record.mock.calls).toEqual([
+      [11, { state: "pending" }],
+      [2, { state: "dead_lettered" }],
+      [3, { state: "revocation_warning" }],
+      [1, { state: "revocation_critical" }],
+    ]);
+    expect(
+      gauges.get("formbricks_authzed_projection_outbox_oldest_pending_age_seconds")!.record
+    ).toHaveBeenCalledWith(47);
+  });
+});
+
 describe("attribute cardinality", () => {
   test("never carries an identifier", () => {
     // These attributes leave the deployment when an OTLP endpoint is configured. An organization or
@@ -132,10 +168,18 @@ describe("attribute cardinality", () => {
       operation: "write_relationships",
       retryable: false,
     });
+    recordAuthzedOutboxStatus({
+      deadLettered: 0,
+      oldestPendingAgeSeconds: null,
+      pending: 1,
+      revocationsPastCritical: 0,
+      revocationsPastWarning: 0,
+    });
 
     const recordedAttributes = [
       ...counter("formbricks_authzed_projection_total").add.mock.calls,
       ...counter("formbricks_authzed_request_failures_total").add.mock.calls,
+      ...gauges.get("formbricks_authzed_projection_outbox_status")!.record.mock.calls,
     ].flatMap(([, attributes]) => Object.keys(attributes as object));
 
     expect([...new Set(recordedAttributes)].sort()).toEqual([
@@ -143,6 +187,7 @@ describe("attribute cardinality", () => {
       "operation",
       "projection",
       "retryable",
+      "state",
       "status",
     ]);
   });

@@ -66,7 +66,7 @@ export const AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE = 100;
  * PostgreSQL's bound-parameter ceiling. 200 targets also keeps the widest fan-out (4 updates per
  * membership) under `AUTHZED_MAX_RELATIONSHIP_UPDATES`.
  */
-export const AUTHZED_BACKFILL_TARGET_CHUNK_SIZE = 200;
+export const AUTHZED_TARGET_CHUNK_SIZE = 200;
 
 /**
  * Orphaned resources a single run may prune.

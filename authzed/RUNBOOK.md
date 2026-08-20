@@ -3,9 +3,9 @@
 PostgreSQL is the source of truth for authorization facts. SpiceDB holds their relationship projection and
 becomes the sole decision engine in the direct-authority artifact.
 
-The currently checked-in bridge still performs post-commit best-effort projection. ENG-2408 replaces that
-temporary behavior with a transactional PostgreSQL outbox before any direct-authority deployment is allowed.
-Until that lands, treat every failed projection as potentially lost and prohibit cutover.
+The durable bridge inserts a PostgreSQL outbox row in the same transaction as every authorization-bearing
+source mutation. Existing post-commit projection remains a low-latency fast path, while the outbox is the
+recoverable delivery contract. BullMQ only wakes the worker; queue state and leases remain in PostgreSQL.
 
 > **Direct authority requires durable delivery.** A committed authorization mutation must enqueue its
 > relationship reconciliation atomically, and a revocation that cannot be delivered within 60 seconds must make
@@ -20,13 +20,13 @@ contract.
 
 ## 1. Symptoms
 
-| What you see                                                       | What it usually means                          |
-| ------------------------------------------------------------------ | ---------------------------------------------- |
-| Historical comparison telemetry reports mismatches                 | Drift. Run the backfill.                       |
-| A new member, team, or API key lacks access _in SpiceDB only_      | A dropped projection for that record.          |
-| A removed member still resolves in SpiceDB                         | A stale relationship. Only pruning removes it. |
-| `formbricks_authzed_projection_total{status="failed"}` is non-zero | Projections are failing now.                   |
-| Nothing at all, but AuthZed was recently unavailable               | On the pre-outbox bridge, assume drift.        |
+| What you see                           | What it usually means                                   |
+| -------------------------------------- | ------------------------------------------------------- |
+| Outbox warning count is non-zero       | A revocation has been pending for 15 seconds.           |
+| Outbox critical count is non-zero      | A revocation has been pending for 45 seconds.           |
+| `authzed_projection_stale`             | Revocation is 60 seconds old or dead-lettered.          |
+| Scheduled reconciliation reports drift | Attributable graph drift was found or repaired.         |
+| A dead letter is present               | Ten solitary, event-attributable failures; investigate. |
 
 On the bridge artifact, legacy authorization is unaffected while durable delivery retries or repair converges
 the graph. On the direct-authority artifact, operational AuthZed failures fail protected operations closed.
@@ -38,6 +38,7 @@ the graph. On the direct-authority artifact, operational AuthZed failures fail p
 ```bash
 pnpm authzed:health     # 0 healthy, 1 otherwise
 pnpm authzed:schema check   # 0 matched, 2 drifted, 1 failed
+formbricks-authzed outbox status  # 0 healthy, 2 warning/critical, 1 failed
 ```
 
 Note `status: "disabled"` from the health command exits **1**. A deployment that believes AuthZed is on
@@ -46,15 +47,21 @@ records `disabled` as its own outcome rather than skipping.
 
 ### Metrics
 
-All five carry only bounded attributes — never an organization, user, or relationship identifier.
+All metrics carry only bounded attributes — never an organization, user, or relationship identifier.
 
-| Metric                                                | Attributes                          | Read it as                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ----------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formbricks_authzed_projection_total`                 | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `formbricks_authzed_projection_duration_seconds`      | same                                | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement.                                                                                                                                                                                                                                                                                                                                         |
-| `formbricks_authzed_request_failures_total`           | `operation`, `code`, `retryable`    | Requests that exhausted their retry budget — _any_ facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`.                                                                                                                                                                                      |
-| `formbricks_authzed_request_retries_total`            | `operation`, `code`                 | Retries scheduled. Elevated but not failing = degraded, not down.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `formbricks_authzed_authorization_checks_per_request` | `surface`                           | How many central authorization operations one request made. Scalar `can()`/`assertCan()` calls and narrow list observations each count once. Watch the upper percentiles for a page regressing into one operation per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
+| Metric                                                            | Attributes                          | Read it as                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formbricks_authzed_projection_total`                             | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `formbricks_authzed_projection_duration_seconds`                  | same                                | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement.                                                                                                                                                                                                                                                                                                                                         |
+| `formbricks_authzed_request_failures_total`                       | `operation`, `code`, `retryable`    | Requests that exhausted their retry budget — _any_ facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`.                                                                                                                                                                                      |
+| `formbricks_authzed_request_retries_total`                        | `operation`, `code`                 | Retries scheduled. Elevated but not failing = degraded, not down.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `formbricks_authzed_authorization_checks_per_request`             | `surface`                           | How many central authorization operations one request made. Scalar `can()`/`assertCan()` calls and narrow list observations each count once. Watch the upper percentiles for a page regressing into one operation per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
+| `formbricks_authzed_projection_outbox_delivery_total`             | `status`                            | Durable outbox events delivered or failed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `formbricks_authzed_projection_outbox_delivery_duration_seconds`  | `status`                            | Duration of one claimed delivery batch.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `formbricks_authzed_projection_outbox_status`                     | `state`                             | Current pending, dead-letter, 15-second warning, and 45-second critical counts.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `formbricks_authzed_projection_outbox_oldest_pending_age_seconds` | none                                | Current age of the oldest pending event.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `formbricks_authzed_reconciliation_audit_total`                   | `status`                            | Six-hour applying audit outcomes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `formbricks_authzed_reconciliation_drift_total`                   | `kind`                              | Attributable drift and operational failures observed by scheduled audits.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 Exported through the readers already configured in `instrumentation-node.ts`: Prometheus when
 `PROMETHEUS_ENABLED=1` (scraped by the chart's ServiceMonitor), OTLP when
@@ -284,14 +291,22 @@ accumulates for the whole period, so a full backfill is required before re-enabl
 
 ### Durable bridge and direct authority
 
-After ENG-2408, source mutations commit a PostgreSQL outbox item atomically. SpiceDB outage does not roll back a
+Source mutations commit a PostgreSQL outbox item atomically. SpiceDB outage does not roll back a
 successful business mutation; delivery retries from PostgreSQL and BullMQ is only the recurring trigger. When
 the service recovers:
 
 1. Run `formbricks-authzed health` and verify datastore migrations.
-2. Drain the outbox and replay any dead letters.
-3. Run the complete dry-run audit, apply attributable repair, and require two consecutive clean audits.
-4. Keep direct-authority cutover blocked while a revocation is pending, dead-lettered, or older than its SLA.
+2. Inspect `formbricks-authzed outbox status` and correct the operational cause.
+3. Run `formbricks-authzed outbox replay` when dead letters are understood, then
+   `formbricks-authzed outbox drain`. A dead letter can only be reached by an event that failed ten times on
+   its own, non-retryably, with a code an event can actually cause (`authzed_projection_invalid_source`,
+   `authzed_invalid_request`). An unreachable SpiceDB, a rejected credential and an unmapped internal error
+   all fail to qualify, so no outage produces a dead letter however long it lasts — treat any dead letter as
+   a real disagreement between PostgreSQL and SpiceDB rather than as fallout from the outage.
+   The six-hour audit also replays dead letters by itself whenever it comes back `reconciled`, so a global
+   `authzed_projection_stale` denial clears within six hours even if nobody intervenes.
+4. Run the complete dry-run audit, apply attributable repair, and require two consecutive clean audits.
+5. Keep direct-authority cutover blocked while a revocation is pending, dead-lettered, or older than its SLA.
 
 In the direct-authority artifact, a SpiceDB, datastore, resolver, configuration, freshness, or unsupported-result
 failure is not an ordinary denial and never falls back. The protected operation receives a sanitized operational
