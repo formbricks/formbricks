@@ -433,11 +433,12 @@ const isEmptyDimensionValue = (value: unknown): boolean =>
 export const isNotEnrichedDimensionValue = (dimensionId: string, value: unknown): boolean =>
   isEnrichmentDimensionId(dimensionId) && isEmptyDimensionValue(value);
 
-/** A response given in its survey's default language stores no language code (transform.ts only
- * writes `language` when it is not "default"), so grouping by language yields an unlabelled bucket
- * beside the explicit codes. It is a real group — the default-language responses — not missing data,
- * so it gets a name rather than a blank axis tick. */
-export const isDefaultLanguageDimensionValue = (dimensionId: string, value: unknown): boolean =>
+/** Grouping by language yields an unlabelled bucket beside the explicit codes, and it has more than
+ * one cause: a survey response in its own default language stores no code (transform.ts only writes
+ * `language` when it is not "default"), and a review, support or manually entered record may never
+ * have captured one at all. It is a real group rather than missing data, so it gets a name — but a
+ * neutral one, since "default language" would assert a language those other records never had. */
+export const isUnspecifiedLanguageDimensionValue = (dimensionId: string, value: unknown): boolean =>
   dimensionId === LANGUAGE_DIMENSION_ID && isEmptyDimensionValue(value);
 
 // The label maps are typed against the enum tuples, so extending
@@ -482,8 +483,8 @@ export function getTranslatedDimensionValueLabel(
   if (isNotEnrichedDimensionValue(dimensionId, value)) {
     return t("workspace.analysis.charts.not_enriched");
   }
-  if (isDefaultLanguageDimensionValue(dimensionId, value)) {
-    return t("workspace.analysis.charts.language_value_default");
+  if (isUnspecifiedLanguageDimensionValue(dimensionId, value)) {
+    return t("workspace.analysis.charts.language_value_unspecified");
   }
   if (typeof value !== "string" || value.length === 0) return undefined;
   if (dimensionId === SENTIMENT_DIMENSION_ID) {

@@ -25,7 +25,8 @@ interface DashboardWidgetProps {
   title: string;
   children: ReactNode;
   isEditing?: boolean;
-  /** Omitted for widgets with no data behind them (skeletons, load errors): no view to switch. */
+  /** Omitted for widgets with no chart or no query behind them. A widget whose query failed still
+   * gets the toggle: the parent cannot know that without awaiting the promise. */
   view?: TWidgetView;
   onViewChange?: (view: TWidgetView) => void;
   onEdit?: () => void;

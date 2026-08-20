@@ -69,6 +69,10 @@ const queueCubeQueryAuditEvent = ({
  * `fillWithValue: null` does not help: the client resolves the cell as
  * `row[measure] ?? fillWithValue ?? 0`, and a null fill falls straight through that chain back to 0.
  * So fill with a sentinel no real value can collide with, then turn it back into null here.
+ *
+ * Only for queries without a granular time dimension. With one, `fillMissingDates` (on by default)
+ * makes the pivot invent rows for empty buckets and fill them the same way — and a day with no
+ * responses is a measured zero, not a question nobody asked. Those queries keep the default fill.
  */
 const NULL_FILL_SENTINEL = "__formbricks_null__";
 
@@ -120,10 +124,15 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   try {
     const client = cubejs(token, { apiUrl });
     const resultSet = await client.load(expandPresetDateRanges(input.query) as Query);
-    const result = restoreNullMeasures(
-      resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL }),
-      input.query.measures ?? []
-    );
+    // See NULL_FILL_SENTINEL: a granular time dimension means the pivot also fabricates rows for
+    // empty date buckets, and those must stay 0 rather than becoming "no data".
+    const fillsEmptyDateBuckets = (input.query.timeDimensions ?? []).some((td) => Boolean(td.granularity));
+    const result = fillsEmptyDateBuckets
+      ? resultSet.tablePivot()
+      : restoreNullMeasures(
+          resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL }),
+          input.query.measures ?? []
+        );
     queueCubeQueryAuditEvent({ input, requestId, status: "success" });
     return result;
   } catch (error) {

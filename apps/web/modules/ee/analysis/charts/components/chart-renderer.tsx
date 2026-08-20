@@ -499,9 +499,9 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
         />
       );
     case "big_number": {
-      // A measure with nothing to compute comes back as NULL (see fillWithValue: null in
-      // cube-client). Summing it as 0 would print a confident "0" for "never asked", so count the
-      // numeric rows and fall back to an explicit no-data glyph when there are none.
+      // A measure with nothing to compute comes back as NULL (see restoreNullMeasures in
+      // cube-client, which maps the pivot's sentinel back to null). Summing it as 0 would print a
+      // confident "0" for "never asked", so count the numeric rows and fall back to a no-data glyph.
       const numericValues = data
         .map((row) => row[dataKey])
         .filter((value) => value !== null && value !== undefined && value !== "")

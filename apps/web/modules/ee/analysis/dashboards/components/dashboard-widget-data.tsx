@@ -35,13 +35,10 @@ export function DashboardWidgetData({
   }
 
   // The data view reuses the chart builder's table, so the numbers behind a widget read the same
-  // way in both places. It scrolls inside the widget rather than resizing it.
+  // way in both places — bare, because the widget's own title bar and body already provide the
+  // heading and the scroll container.
   if (view === "data") {
-    return (
-      <div className="h-full overflow-auto">
-        <DataViewer data={result.data} optionLabels={result.optionLabels} />
-      </div>
-    );
+    return <DataViewer data={result.data} optionLabels={result.optionLabels} bare />;
   }
 
   // Use the resolved query + option labels from the promise (not the raw saved query): the label

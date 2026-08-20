@@ -166,6 +166,57 @@ describe("executeTenantScopedQuery", () => {
     expect(result).toEqual(rows);
   });
 
+  test("does not fill with the sentinel when the query buckets by a time granularity", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "day" }],
+      },
+    });
+
+    // fillMissingDates is on by default, so the pivot invents a row per empty day and fills it the
+    // same way a NULL measure is filled. A day with no responses is a measured zero, so these
+    // queries keep the client's default fill instead of being turned into "no data".
+    expect(mockTablePivot).toHaveBeenCalledWith();
+  });
+
+  test("keeps a zero-activity day as 0 rather than no data", async () => {
+    mockTablePivot.mockReturnValue([
+      { "FeedbackRecords.collectedAt.day": "2026-01-01", "FeedbackRecords.count": 12 },
+      { "FeedbackRecords.collectedAt.day": "2026-01-02", "FeedbackRecords.count": 0 },
+    ]);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "day" }],
+      },
+    });
+
+    expect(result).toEqual([
+      { "FeedbackRecords.collectedAt.day": "2026-01-01", "FeedbackRecords.count": 12 },
+      { "FeedbackRecords.collectedAt.day": "2026-01-02", "FeedbackRecords.count": 0 },
+    ]);
+  });
+
+  test("still restores nulls for a time dimension used only as a filter, with no granularity", async () => {
+    mockTablePivot.mockReturnValue([{ "FeedbackRecords.npsScore": "__formbricks_null__" }]);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.npsScore"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "last 30 days" }],
+      },
+    });
+
+    expect(mockTablePivot).toHaveBeenCalledWith({ fillWithValue: "__formbricks_null__" });
+    expect(result).toEqual([{ "FeedbackRecords.npsScore": null }]);
+  });
+
   test("leaves rows without a sentinel exactly as the pivot returned them", async () => {
     const rows = [{ "FeedbackRecords.count": 42 }];
     mockTablePivot.mockReturnValue(rows);
