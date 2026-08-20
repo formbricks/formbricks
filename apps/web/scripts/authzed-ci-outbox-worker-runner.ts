@@ -9,6 +9,8 @@ type TAuthzedCiOutboxWorkerRunnerOptions = Readonly<{
   wait: () => Promise<void>;
 }>;
 
+const AUTHZED_CI_OUTBOX_TERMINAL_ERROR = "AuthZed CI outbox delivery exceeded its consecutive-failure limit";
+
 /**
  * Keep the CI-only outbox processor alive through isolated infrastructure blips, but stop after a
  * bounded run of unexpected failures so the workflow reports a broken delivery fixture instead of
@@ -34,7 +36,7 @@ export const runAuthzedCiOutboxWorker = async ({
       onUnexpectedFailure(consecutiveFailures);
 
       if (consecutiveFailures >= maxConsecutiveFailures) {
-        throw new Error("AuthZed CI outbox delivery exceeded its consecutive-failure limit");
+        throw new Error(AUTHZED_CI_OUTBOX_TERMINAL_ERROR);
       }
     }
 

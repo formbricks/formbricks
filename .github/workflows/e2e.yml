@@ -356,14 +356,13 @@ jobs:
         run: |
           heartbeat_path="${RUNNER_TEMP}/formbricks-authzed-outbox-worker.heartbeat"
           rm -f "${heartbeat_path}"
-          (
-            cd apps/web
-            AUTHZED_CI_OUTBOX_HEARTBEAT_PATH="${heartbeat_path}" \
-              NODE_OPTIONS=--conditions=react-server \
-              pnpm exec dotenv -e ../../.env -- tsx scripts/authzed-ci-outbox-worker.ts \
-              > ../../authzed-outbox.log 2>&1
-          ) &
+          cd apps/web
+          AUTHZED_CI_OUTBOX_HEARTBEAT_PATH="${heartbeat_path}" \
+            node --env-file=../../.env --conditions=react-server --import tsx \
+            scripts/authzed-ci-outbox-worker.ts \
+            > ../../authzed-outbox.log 2>&1 &
           worker_pid="$!"
+          cd ../..
           echo "AUTHZED_CI_OUTBOX_HEARTBEAT_PATH=${heartbeat_path}" >> "$GITHUB_ENV"
           echo "AUTHZED_CI_OUTBOX_PID=${worker_pid}" >> "$GITHUB_ENV"
 
@@ -378,7 +377,7 @@ jobs:
             sleep 0.1
           done
 
-          echo "AuthZed CI outbox worker did not publish its readiness heartbeat"
+          echo "AuthZed CI outbox worker did not publish its readiness heartbeat after ${attempt} attempts"
           exit 1
         shell: bash
 

@@ -55,9 +55,10 @@ describe("AuthZed CI outbox worker runner", () => {
 
   test("stops after the bounded consecutive-failure limit without exposing the cause", async () => {
     const onUnexpectedFailure = vi.fn();
+    let terminalError: unknown;
 
-    await expect(
-      runAuthzedCiOutboxWorker({
+    try {
+      await runAuthzedCiOutboxWorker({
         deliver: async () => {
           throw new Error("sensitive transport detail");
         },
@@ -66,9 +67,15 @@ describe("AuthZed CI outbox worker runner", () => {
         onUnexpectedFailure,
         shouldStop: () => false,
         wait: async () => undefined,
-      })
-    ).rejects.toThrow("AuthZed CI outbox delivery exceeded its consecutive-failure limit");
+      });
+    } catch (error) {
+      terminalError = error;
+    }
 
+    expect(terminalError).toBeInstanceOf(Error);
+    expect((terminalError as Error).message).toBe(
+      "AuthZed CI outbox delivery exceeded its consecutive-failure limit"
+    );
     expect(onUnexpectedFailure.mock.calls).toEqual([[1], [2], [3]]);
   });
 });
