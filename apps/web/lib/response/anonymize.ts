@@ -1,44 +1,9 @@
-import { RESERVED_FIELD_CATALOG, type TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
+import {
+  RESERVED_FIELD_CATALOG,
+  type TReservedFieldPrivacy,
+  redactUrlQuery,
+} from "@formbricks/types/embedded-data-resolver";
 import { type TResponseMeta } from "@formbricks/types/responses";
-
-/**
- * What `URL` reports as the origin of a scheme that has no host — `data:`, `blob:`, `mailto:`. It is
- * the literal string `"null"`, so concatenating origin and pathname for those would produce garbage
- * like `"nulltext/plain,hi"`.
- */
-const OPAQUE_URL_ORIGIN = "null";
-
-/**
- * Strips the identifying tail off a URL, keeping origin + path.
- *
- * Query strings are where an identifier rides along in practice (`?email=`, `?uid=`, `?token=`) while
- * the path is the part analytics actually wants — that is the whole reason the catalog classifies
- * these fields `redactQuery` rather than `drop`.
- *
- * **The fragment goes too.** `#` is not merely SPA routing: the OAuth implicit flow puts
- * `access_token` in the fragment, and any hand-rolled link can do the same. Under a feature called
- * "Anonymize responses", keeping a fragment would be the exact failure this exists to prevent, and
- * "origin + path" is the shape the field is specified to end up in either way.
- *
- * Total by construction — it never throws. A string that does not parse as a URL is still cut at the
- * first `?` or `#` rather than returned intact, because failing *open* on an unparseable string would
- * be a privacy hole rather than a graceful degradation. A string with neither separator comes back
- * unchanged.
- */
-export const redactUrlQueryParams = (url: string): string => {
-  try {
-    const parsed = new URL(url);
-    if (parsed.origin !== OPAQUE_URL_ORIGIN) {
-      return `${parsed.origin}${parsed.pathname}`;
-    }
-  } catch {
-    // Not an absolute URL (a relative path, or plain junk). Fall through to the textual cut, which
-    // needs no parser and cannot throw.
-  }
-
-  const separatorIndex = url.search(/[?#]/);
-  return separatorIndex === -1 ? url : url.slice(0, separatorIndex);
-};
 
 /**
  * `privacy` by reserved field name, so the policy below is a lookup rather than a list it has to keep
@@ -81,7 +46,7 @@ const applyPrivacy = (fieldName: string | undefined, value: unknown): TPrivacyOu
   }
 
   if (privacy === "redactQuery" && typeof value === "string") {
-    return { dropped: false, value: redactUrlQueryParams(value) };
+    return { dropped: false, value: redactUrlQuery(value) };
   }
 
   return { dropped: false, value };

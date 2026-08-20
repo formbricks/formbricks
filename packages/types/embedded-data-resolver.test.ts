@@ -25,6 +25,7 @@ import {
   mergeReservedValues,
   projectClientReservedValues,
   projectReservedValues,
+  redactUrlQuery,
   resolveEmbeddedValue,
 } from "./embedded-data-resolver";
 import type { TI18nString } from "./i18n";
@@ -484,6 +485,50 @@ describe("coerceToEmbeddedDataType", () => {
         expect({ candidate, readAccepts }).toStrictEqual({ candidate, readAccepts: rowAccepts });
       }
     });
+  });
+});
+
+/*
+ * The shared redaction, tested directly. Both surfaces that apply `privacy: "redactQuery"` call this
+ * one function — the projections below, and the "Anonymize responses" toggle at ingest
+ * (`apps/web/lib/response/anonymize.ts`) — so the rule is pinned here rather than once per caller.
+ */
+describe("redactUrlQuery", () => {
+  test("strips the query string and keeps origin + path", () => {
+    expect(redactUrlQuery("https://example.com/pricing?token=secret&email=a@b.c")).toBe(
+      "https://example.com/pricing"
+    );
+  });
+
+  test("keeps a URL that has no query string byte-for-byte", () => {
+    expect(redactUrlQuery("https://example.com/pricing")).toBe("https://example.com/pricing");
+  });
+
+  test("keeps the port and a non-default scheme, which are part of the origin", () => {
+    expect(redactUrlQuery("http://localhost:3000/s/abc?x=1")).toBe("http://localhost:3000/s/abc");
+  });
+
+  // Pinned deliberately: the fragment is dropped as well. The OAuth implicit flow puts `access_token`
+  // in the fragment, so keeping it under "Anonymize responses" would be the exact leak the toggle is
+  // for. Changing this to preserve `#…` is a product decision, not a refactor.
+  test("drops the fragment as well as the query", () => {
+    expect(redactUrlQuery("https://example.com/app#access_token=secret")).toBe("https://example.com/app");
+    expect(redactUrlQuery("https://example.com/app?a=1#/route")).toBe("https://example.com/app");
+  });
+
+  test("returns a malformed URL rather than throwing, and still cuts its query", () => {
+    expect(() => redactUrlQuery("not a url at all")).not.toThrow();
+    expect(redactUrlQuery("not a url at all")).toBe("not a url at all");
+    // A relative path never parses as an absolute URL, but must not smuggle a token through.
+    expect(redactUrlQuery("/checkout?session=secret")).toBe("/checkout");
+  });
+
+  test("does not concatenate the literal 'null' origin of a schemeless-host URL", () => {
+    expect(redactUrlQuery("mailto:someone@example.com?subject=hi")).toBe("mailto:someone@example.com");
+  });
+
+  test("leaves an empty string alone", () => {
+    expect(redactUrlQuery("")).toBe("");
   });
 });
 
