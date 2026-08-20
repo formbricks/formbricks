@@ -1813,7 +1813,7 @@
         "please_enter_chart_name": "請輸入圖表名稱",
         "please_select_dashboard": "請選擇一個儀表板",
         "predefined_measures": "預設指標",
-        "prefer_option_grouping": "對於單選和多選問題,按選項值(Value)分組而非選項文字(Text):選項文字(Text)會在標籤被翻譯或編輯時,或當有人輸入自己的「其他」答案時,將相同選項拆分成不同的群組。",
+        "prefer_option_grouping": "對於單選和多選題，請改用「值（選項）」分組：當標籤被翻譯或編輯，或有人輸入自己的「其他」答案時，「值（文字）」會將相同選項拆分為不同群組。",
         "reset_to_ai_suggestion": "重設為 AI 建議",
         "save_and_add_to_dashboard": "儲存並新增到儀表板",
         "save_chart": "儲存圖表",

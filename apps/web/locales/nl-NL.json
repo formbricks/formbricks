@@ -1813,7 +1813,7 @@
         "please_enter_chart_name": "Voer een diagramnaam in",
         "please_select_dashboard": "Selecteer een dashboard",
         "predefined_measures": "Vooraf gedefinieerde metingen",
-        "prefer_option_grouping": "Voor vragen met enkele en meervoudige keuze, groepeer op Waarde (Optie) in plaats daarvan: Waarde (Tekst) splitst dezelfde optie in afzonderlijke groepen wanneer een label wordt vertaald of bewerkt, of wanneer iemand zijn of haar eigen \"ander\" antwoord intypt.",
+        "prefer_option_grouping": "Voor vragen met één of meerdere keuzes kun je ook groeperen op Waarde (Optie): Waarde (Tekst) splitst dezelfde optie in aparte groepen wanneer een label wordt vertaald of bewerkt, of wanneer iemand een eigen \"ander\" antwoord intypt.",
         "reset_to_ai_suggestion": "Herstel naar AI-suggestie",
         "save_and_add_to_dashboard": "Opslaan en toevoegen aan dashboard",
         "save_chart": "Diagram opslaan",

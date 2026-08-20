@@ -1813,7 +1813,7 @@
         "please_enter_chart_name": "Te rugăm să introduci un nume pentru grafic",
         "please_select_dashboard": "Te rugăm să selectezi un tablou de bord",
         "predefined_measures": "Măsurători predefinite",
-        "prefer_option_grouping": "Pentru întrebările cu selecție unică sau multiplă, grupează după Valoare (Opțiune): Valoare (Text) împarte aceeași opțiune în segmente separate atunci când o etichetă este tradusă sau editată, sau când cineva introduce propriul răspuns „altele“.",
+        "prefer_option_grouping": "Pentru întrebările cu selecție unică și selecție multiplă, grupează după Valoare (Opțiune) în schimb: Valoare (Text) împarte aceeași opțiune în categorii separate când o etichetă este tradusă sau editată, sau când cineva introduce propriul răspuns \"altul\".",
         "reset_to_ai_suggestion": "Resetează la sugestia AI",
         "save_and_add_to_dashboard": "Salvați și adăugați în tabloul de bord",
         "save_chart": "Salvează graficul",

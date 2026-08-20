@@ -1813,7 +1813,7 @@
         "please_enter_chart_name": "Adjon meg egy diagramnevet",
         "please_select_dashboard": "Válasszon egy vezérlőpultot",
         "predefined_measures": "Előre meghatározott mérések",
-        "prefer_option_grouping": "Egyválasztós és többválasztós kérdések esetén az Érték (Opció) szerinti csoportosítást használja az Érték (Szöveg) helyett: az Érték (Szöveg) ugyanazt az opciót külön kategóriákra bontja, amikor egy címke lefordításra vagy szerkesztésre kerül, vagy amikor valaki saját „egyéb“ választ ír be.",
+        "prefer_option_grouping": "Egyválasztós és többválasztós kérdések esetén csoportosítson Érték (Opció) alapján: az Érték (Szöveg) különálló kategóriákra bontja ugyanazt az opciót, amikor egy címke le van fordítva vagy szerkesztve van, vagy amikor valaki saját \"egyéb\" választ ír be.",
         "reset_to_ai_suggestion": "Visszaállítás az MI-javaslatra",
         "save_and_add_to_dashboard": "Mentés és hozzáadás a vezérlőpulthoz",
         "save_chart": "Diagram mentése",

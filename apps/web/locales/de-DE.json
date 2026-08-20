@@ -1813,7 +1813,7 @@
         "please_enter_chart_name": "Bitte gib einen Diagrammnamen ein",
         "please_select_dashboard": "Bitte wähle ein Dashboard aus",
         "predefined_measures": "Vordefinierte Kennzahlen",
-        "prefer_option_grouping": "Bei Einfach- und Mehrfachauswahlfragen nach Wert (Option) gruppieren: Wert (Text) teilt dieselbe Option in separate Kategorien auf, wenn eine Bezeichnung übersetzt oder bearbeitet wird oder wenn jemand eine eigene \"andere\" Antwort eingibt.",
+        "prefer_option_grouping": "Für Fragen mit Einfach- und Mehrfachauswahl gruppiere stattdessen nach Wert (Option): Wert (Text) teilt dieselbe Option in separate Gruppen auf, wenn ein Label übersetzt oder bearbeitet wird oder wenn jemand eine eigene „Sonstige“-Antwort eingibt.",
         "reset_to_ai_suggestion": "Auf KI-Vorschlag zurücksetzen",
         "save_and_add_to_dashboard": "Speichern und zum Dashboard hinzufügen",
         "save_chart": "Diagramm speichern",

@@ -1813,7 +1813,7 @@
         "please_enter_chart_name": "Ange ett diagramnamn",
         "please_select_dashboard": "Välj en instrumentpanel",
         "predefined_measures": "Fördefinierade mått",
-        "prefer_option_grouping": "För frågor med ett eller flera val, gruppera efter Värde (Alternativ) istället: Värde (Text) delar upp samma alternativ i separata grupper när en etikett översätts eller redigeras, eller när någon skriver sitt eget \"annat\" svar.",
+        "prefer_option_grouping": "För frågor med enkel- och flerval, gruppera efter Värde (Alternativ) istället: Värde (Text) delar upp samma alternativ i separata grupper när en etikett översätts eller redigeras, eller när någon skriver sitt eget \"annat\" svar.",
         "reset_to_ai_suggestion": "Återställ till AI-förslag",
         "save_and_add_to_dashboard": "Spara och lägg till i instrumentpanelen",
         "save_chart": "Spara diagram",

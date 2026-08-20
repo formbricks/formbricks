@@ -1813,7 +1813,7 @@
         "please_enter_chart_name": "Veuillez saisir un nom de graphique",
         "please_select_dashboard": "Veuillez sélectionner un tableau de bord",
         "predefined_measures": "Mesures prédéfinies",
-        "prefer_option_grouping": "Pour les questions à choix unique ou multiple, regrouper par Valeur (Option) à la place : Valeur (Texte) divise la même option en catégories distinctes lorsqu'un libellé est traduit ou modifié, ou lorsque quelqu'un saisit sa propre réponse « autre ».",
+        "prefer_option_grouping": "Pour les questions à choix unique et à choix multiples, regrouper plutôt par Valeur (Option) : Valeur (Texte) divise la même option en plusieurs groupes lorsqu'un libellé est traduit ou modifié, ou lorsque quelqu'un saisit sa propre réponse « autre ».",
         "reset_to_ai_suggestion": "Réinitialiser à la suggestion IA",
         "save_and_add_to_dashboard": "Enregistrer et ajouter au tableau de bord",
         "save_chart": "Enregistrer le graphique",

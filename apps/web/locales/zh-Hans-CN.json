@@ -1813,7 +1813,7 @@
         "please_enter_chart_name": "请输入图表名称",
         "please_select_dashboard": "请选择一个 Dashboard",
         "predefined_measures": "预设度量",
-        "prefer_option_grouping": "对于单选和多选问题，按选项值分组：按选项文本分组会在标签翻译或编辑时，或者有人输入自定义\"其他\"答案时，将相同选项拆分到不同的分组中。",
+        "prefer_option_grouping": "对于单选和多选问题,建议按值(选项)分组:按值(文本)分组会在标签被翻译或编辑时,或者有人输入自己的\"其他\"答案时,将同一选项拆分到不同的类别中。",
         "reset_to_ai_suggestion": "重置为 AI 建议",
         "save_and_add_to_dashboard": "保存并添加到仪表板",
         "save_chart": "保存图表",
