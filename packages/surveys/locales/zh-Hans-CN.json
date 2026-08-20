@@ -7,6 +7,7 @@
     "company_logo": "公司标志",
     "finish": "完成",
     "language_switch": "语言切换",
+    "language_switch_current": "语言：{language}",
     "next": "下一步",
     "no_results_found": "未找到结果",
     "open_in_new_tab": "在新标签页中打开",

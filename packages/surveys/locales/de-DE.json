@@ -7,6 +7,7 @@
     "company_logo": "Firmenlogo",
     "finish": "Fertig",
     "language_switch": "Sprachwechsel",
+    "language_switch_current": "Sprache: {language}",
     "next": "Weiter",
     "no_results_found": "Keine Ergebnisse gefunden",
     "open_in_new_tab": "In neuem Tab öffnen",

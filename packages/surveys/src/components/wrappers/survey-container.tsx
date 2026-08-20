@@ -21,6 +21,8 @@ interface SurveyContainerProps {
   dir?: "ltr" | "rtl" | "auto";
   /** Survey name, exposed as the survey's single top-level heading (WCAG 2.4.6). */
   surveyName?: string;
+  /** Language tag of the survey's active language, or null when the survey declares no language. */
+  lang?: string | null;
 }
 
 export function SurveyContainer({
@@ -33,6 +35,7 @@ export function SurveyContainer({
   isOpen = true,
   dir = "auto",
   surveyName,
+  lang,
 }: Readonly<SurveyContainerProps>) {
   const isModal = mode === "modal";
   const { t } = useTranslation();
@@ -144,7 +147,12 @@ export function SurveyContainer({
 
   if (!isModal) {
     return (
-      <div id="fbjs" className="formbricks-form" style={{ height: "100%", width: "100%" }} dir={dir}>
+      <div
+        id="fbjs"
+        className="formbricks-form"
+        style={{ height: "100%", width: "100%" }}
+        dir={dir}
+        lang={lang ?? undefined}>
         {surveyHeading}
         {children}
       </div>
@@ -152,7 +160,7 @@ export function SurveyContainer({
   }
 
   return (
-    <div id="fbjs" className="formbricks-form" dir={dir}>
+    <div id="fbjs" className="formbricks-form" dir={dir} lang={lang ?? undefined}>
       <div
         // In-dialog updates (question changes after a submit) should wait for the reader to finish
         // speaking instead of interrupting it. A survey is never urgent enough for assertive speech.

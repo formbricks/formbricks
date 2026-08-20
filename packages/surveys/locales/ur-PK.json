@@ -7,6 +7,7 @@
     "company_logo": "کمپنی کا لوگو",
     "finish": "ختم کریں",
     "language_switch": "زبان تبدیل کریں",
+    "language_switch_current": "زبان: {language}",
     "next": "اگلا",
     "no_results_found": "کوئی نتائج نہیں ملے",
     "open_in_new_tab": "نئے ٹیب میں کھولیں",

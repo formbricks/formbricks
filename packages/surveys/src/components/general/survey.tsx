@@ -1282,6 +1282,7 @@ export function Survey({
                         <LanguageSwitch
                           survey={localSurvey}
                           surveyLanguages={localSurvey.languages}
+                          selectedLanguageCode={selectedLanguage}
                           setSelectedLanguageCode={setSelectedLanguage}
                           hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
                           borderRadius={styling.roundness ?? 8}
