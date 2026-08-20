@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import type { Account } from "@formbricks/types/auth";
-import { OAUTH_ACCOUNT_NOT_LINKED_ERROR } from "@/modules/ee/sso/lib/constants";
+import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, ssoAccountIssuer } from "@/modules/ee/sso/lib/constants";
 
 export const LINKED_SSO_LOOKUP_SELECT = {
   id: true,
@@ -97,7 +97,9 @@ const syncSsoIdentityForUserWithTx = async ({
         where: {
           id: existingCanonicalAccount.id,
         },
-        data: getAccountTokenUpdate(account),
+        // `issuer` too: the canonical row may predate the ENG-2343 backfill window, and leaving it NULL
+        // here would keep the recovered link invisible to 1.7's account lookup.
+        data: { issuer: ssoAccountIssuer(provider), ...getAccountTokenUpdate(account) },
       });
     } else {
       await tx.account.update({
@@ -109,6 +111,9 @@ const syncSsoIdentityForUserWithTx = async ({
           type: account.type,
           provider,
           providerAccountId: account.providerAccountId,
+          // Same reason as the create branch below: normalising a legacy row without setting `issuer`
+          // leaves it unmatched by 1.7's account lookup (ENG-2343).
+          issuer: ssoAccountIssuer(provider),
           ...getAccountTokenUpdate(account),
         },
       });
@@ -127,6 +132,13 @@ const syncSsoIdentityForUserWithTx = async ({
         type: account.type,
         provider,
         providerAccountId: account.providerAccountId,
+        // 1.7 keys the account on `(issuer, accountId)` and `findAccountByKey` filters on `issuer`, so a
+        // row written without one is invisible to every later sign-in: the user completes
+        // verify-before-link, gets a session, and is then pushed back through recovery on the NEXT
+        // sign-in because `NULL !== 'local:oauth:<provider>'`. The migration cannot save them either —
+        // it runs once, before this row exists. Same value as the provider config and the backfill
+        // (ENG-2343); imported rather than re-spelled so the three cannot drift.
+        issuer: ssoAccountIssuer(provider),
         ...getAccountTokenUpdate(account),
       },
     });

@@ -401,10 +401,13 @@ async function authenticateMcpOAuthBearer(
   let payload: JWTPayload;
 
   try {
-    // Renamed from `verifyAccessToken` in Better Auth 1.7 (ENG-2343). 1.7 also stops passing
-    // `verifyOptions.audience` into its own jwtVerify, validating instead that each `aud` value
-    // resolves to a registered resource — which is not the same question as "is this token for ME".
-    // That makes hasAcceptedMcpAudience below the only check that answers it. Keep both.
+    // Renamed from `verifyAccessToken` in Better Auth 1.7 (ENG-2343). `hasAcceptedMcpAudience` below is
+    // kept regardless of what upstream does with `verifyOptions.audience`: an earlier version of this
+    // comment asserted that 1.7 stops passing it into its own `jwtVerify`, which could not be
+    // substantiated — `verifyBearerToken` is re-exported through `better-auth/oauth2` and its body is not
+    // readable in the published dist. So the reason to keep our own check is not a claim about upstream:
+    // it is that "every `aud` resolves to a registered resource" and "this token is for ME" are different
+    // questions, and only the second is the one a resource server must answer. Ours answers it.
     payload = await oauthResourceClient.getActions().verifyBearerToken(token, {
       verifyOptions: {
         audience: getMcpResourceUrl(),

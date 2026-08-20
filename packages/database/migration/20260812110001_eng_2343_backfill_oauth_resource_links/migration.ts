@@ -22,7 +22,12 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  * The `oauthResource` row itself is normally seeded by the plugin at boot from its `resources`
  * option. We insert it here as well because `oauthClientResource.resourceId` is a foreign key to
  * `oauthResource.identifier`, so the link rows cannot exist until it does, and migrations run before
- * the app boots. Seeding is `insertOnly` upstream, so the plugin will not fight this row.
+ * the app boots. Seeding is `insertOnly` upstream, so the plugin will not fight this row — which cuts
+ * BOTH ways and is why `allowedScopes` below is not optional: the plugin will not repair this row
+ * either. `allowedScopes` defaults to an empty array in the DDL, and `resolveResourcePolicy` skips only
+ * NULL/undefined (`introspect-*.mjs`) — an empty allow-list intersects every request down to zero
+ * scopes and throws `invalid_scope`. Omitting it would take MCP OAuth down permanently for exactly the
+ * instances this migration exists to protect.
  *
  * No-op on an empty database, as the harness requires: with no `oauthClient` rows there is nothing to
  * link, and the resource row is only inserted when there is at least one client that needs it — a
@@ -48,6 +53,29 @@ const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, "");
  * purpose: `packages/database` must not import from `apps/web`, and a migration has to keep producing
  * the value that was correct when it ran even if the app-side helper later changes.
  */
+/**
+ * The scopes the seeded resource must allow — a local copy of `MCP_OAUTH_SCOPES` from
+ * `apps/web/modules/auth/lib/oauth-urls.ts`, for the same reason `resolveMcpResourceIdentifier` below is
+ * one: `packages/database` cannot import from `apps/web`.
+ *
+ * A copy is only safe if something fails when the two diverge, so
+ * `apps/web/modules/auth/lib/mcp-oauth-resource-seed.test.ts` asserts this list equals `MCP_OAUTH_SCOPES`
+ * exactly. Divergence is not cosmetic: a scope the app advertises but this row omits is intersected away
+ * at `/authorize`, so a client requesting it fails `invalid_scope`.
+ */
+export const MCP_RESOURCE_ALLOWED_SCOPES = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access",
+  "surveys:read",
+  "surveys:write",
+  "workflows:read",
+  "workflows:write",
+  "feedbackRecords:read",
+  "feedbackRecords:write",
+] as const;
+
 export const resolveMcpResourceIdentifier = (webAppUrl: string | undefined): string | null => {
   const configured = webAppUrl?.trim();
   if (!configured) return null;
@@ -94,8 +122,10 @@ export const eng2343BackfillOauthResourceLinks: MigrationScript = {
     // Matches what the plugin would seed from its `resources` option, so `insertOnly` seeding at boot
     // is a no-op afterwards. `name` is descriptive only.
     await migrationTx.$executeRaw`
-      INSERT INTO "oauthResource" ("id", "identifier", "name", "createdAt", "updatedAt")
-      VALUES (${createId()}, ${resourceIdentifier}, 'Formbricks MCP', NOW(), NOW())
+      INSERT INTO "oauthResource" ("id", "identifier", "name", "allowedScopes", "createdAt", "updatedAt")
+      VALUES (${createId()}, ${resourceIdentifier}, 'Formbricks MCP', ${[
+        ...MCP_RESOURCE_ALLOWED_SCOPES,
+      ]}::TEXT[], NOW(), NOW())
       ON CONFLICT ("identifier") DO NOTHING
     `;
 
@@ -137,7 +167,8 @@ export const eng2343BackfillOauthResourceLinks: MigrationScript = {
       consents: Number(consents),
     };
 
-    // eslint-disable-next-line no-console -- migration progress, matches the sibling data migrations
+    // Migration progress, matching the sibling data migrations. `no-console` is not enabled for this
+    // package (see its eslint.config.mjs), so no disable directive is needed.
     console.log(`ENG-2343 oauth resource backfill: ${JSON.stringify(stats)}`);
   },
 };

@@ -777,6 +777,13 @@ async function main(): Promise<void> {
         provider: "credential",
         providerAccountId: id,
         password: passwordHash,
+        // Better Auth 1.7 keys the account on `(issuer, accountId)` and `findCredentialAccount` filters
+        // on `issuer`, so a seeded row without one cannot sign in: the correct password returns
+        // INVALID_EMAIL_OR_PASSWORD, and `updatePassword` matches zero rows so the reset escape hatch
+        // silently does nothing (ENG-2343). Literal rather than `createLocalAccountIssuer` from
+        // `@better-auth/core/db`: `packages/database` does not depend on Better Auth, and this must match
+        // what the 20260812110000 backfill writes for `provider = 'credential'` — which is this string.
+        issuer: "local:credential",
       },
     });
   }

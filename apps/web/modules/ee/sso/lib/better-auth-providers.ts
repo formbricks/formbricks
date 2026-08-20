@@ -23,6 +23,7 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { getAuthIssuerUrl } from "@/modules/auth/lib/oauth-urls";
+import { ssoAccountIssuer } from "./constants";
 import { captureSsoIdentity } from "./sso-request-context";
 
 // Better Auth's per-provider profile types, extracted so the social mappers below aren't implicitly
@@ -86,19 +87,6 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
   : {};
 
 /**
- * The account-identity namespace for a generic-OAuth provider (ENG-2343).
- *
- * Better Auth 1.7 keys accounts on (issuer, accountId). Left to itself a provider with a
- * `discoveryUrl` adopts the DISCOVERED issuer, which is tenant-specific — different for every
- * self-hoster, and therefore impossible to reproduce in a portable backfill. Pinning the synthetic
- * form Better Auth itself uses for providers without their own issuer (`local:oauth:<id>`) keeps
- * identity scoped to the provider id, exactly as 1.6 keyed it, so existing accounts keep matching
- * after the upgrade and the migration backfill is one portable UPDATE.
- *
- * This value is load-bearing: it must stay byte-identical to what
- * migration/20260812110000_eng_2343_better_auth_17_resource_model writes into Account.issuer.
- */
-/**
  * Coerce a provider subject to a string WITHOUT inventing one.
  *
  * Better Auth 1.7 types `sub`/`id` as `string | number`, so a bare `String(...)` is tempting — but it
@@ -109,29 +97,6 @@ export const ssoSocialProviders = ENTERPRISE_LICENSE_KEY
  */
 const toAccountSubject = (subject: string | number | null | undefined): string | undefined =>
   subject === null || subject === undefined ? undefined : String(subject);
-
-/**
- * The synthetic `Account.issuer` for our three generic providers. Hand-rolled ON PURPOSE — do not
- * "simplify" this to `createOAuthAccountIssuer` from `@better-auth/core/db`, even though that helper is
- * public, currently byte-identical, and does exactly this.
- *
- * The value this must agree with is not upstream's, it is OUR MIGRATION's. Because `accountIssuer` is set
- * explicitly on each provider below, Better Auth stores and looks up whatever we hand it, so upstream's
- * own format never enters the picture. What does is the backfill in
- * `migration/20260812110000_eng_2343_better_auth_17_resource_model` — a SQL literal
- * (`'local:oauth:' || "provider"`) that cannot call a TypeScript helper. Tracking upstream would mean a
- * future release quietly changing this string out from under rows already written, and the failure mode
- * is the worst kind: every pre-upgrade SSO user stops matching their own account and is pushed into
- * verify-before-link recovery. Pinned to the SQL, an upstream format change is a no-op for us.
- *
- * `encodeURIComponent` is kept for parity with what upstream writes today, and is a no-op for `azuread`,
- * `openid` and `saml`. A provider id that actually needed encoding would diverge from the raw SQL
- * concatenation — so adding one means updating the backfill too, not just this line.
- *
- * better-auth-providers.test.ts pins all three strings; that test is the guard, and it fails if either
- * side of this pairing moves.
- */
-const ssoAccountIssuer = (providerId: string): string => `local:oauth:${encodeURIComponent(providerId)}`;
 
 /**
  * The SSO callback URL every customer IdP has had registered since v5.2, pinned so it stops tracking
@@ -174,6 +139,45 @@ const toSamlDisplayName = (profile: GenericOAuthUserInfo): string | undefined =>
   return typeof name === "string" && name.length > 0 ? name : undefined;
 };
 
+/**
+ * Azure endpoint configuration, split on whether a concrete tenant is configured (ENG-2343).
+ *
+ * Better Auth 1.7 verifies the id_token whenever discovery yields both `jwks_uri` and `issuer`, and it
+ * compares `iss` for **literal** equality. Microsoft's multi-tenant (`common`) discovery document
+ * advertises `issuer: "https://login.microsoftonline.com/{tenantid}/v2.0"` — a documented TEMPLATE, not
+ * a value. Microsoft's own guidance is to substitute the token's `tid` and validate that against the
+ * tenants you accept; a literal comparison is guaranteed to fail, because every real id_token carries
+ * the tenant GUID. So with `AZUREAD_TENANT_ID` unset (our documented default) 1.7 would reject every
+ * Azure sign-in. 1.6 never had this problem: its genericOAuth read identity from UserInfo and never
+ * parsed the id_token at all.
+ *
+ * Rather than make `AZUREAD_TENANT_ID` mandatory — which would demand action from every self-hoster who
+ * has not set it, and drop support for genuinely multi-tenant app registrations, which have no single
+ * issuer by construction — the tenant decides the mechanism:
+ *
+ * - **Concrete tenant**: keep `discoveryUrl`. The discovered issuer is a real value, so the id_token is
+ *   fully verified. Strictly stronger than 1.6.
+ * - **`common`**: configure the endpoints explicitly and skip discovery, so no `idTokenConfig` is built
+ *   (`generic-oauth/index.mjs` only constructs it inside the discovery branch) and identity comes from
+ *   UserInfo — the 1.6 behaviour, over a client-authenticated back-channel call to Microsoft. Note this
+ *   is not where the code flow's security lives: that is `state` + PKCE and the authenticated code
+ *   exchange, and RFC 9207 mix-up defence still applies via `iss` on the authorization response when a
+ *   provider sends one.
+ *
+ * Deliberately NOT setting `requireIdTokenVerification`: on the `common` path it would throw at init and
+ * take Azure sign-in down, which is the outcome this split exists to avoid.
+ */
+const azureTenant = AZUREAD_TENANT_ID || "common";
+const azureEndpoints = AZUREAD_TENANT_ID
+  ? {
+      discoveryUrl: `https://login.microsoftonline.com/${azureTenant}/v2.0/.well-known/openid-configuration`,
+    }
+  : {
+      authorizationUrl: `https://login.microsoftonline.com/${azureTenant}/oauth2/v2.0/authorize`,
+      tokenUrl: `https://login.microsoftonline.com/${azureTenant}/oauth2/v2.0/token`,
+      userInfoUrl: "https://graph.microsoft.com/oidc/userinfo",
+    };
+
 export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KEY
   ? [
       ...(AZURE_OAUTH_ENABLED
@@ -182,7 +186,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               providerId: "azuread",
               clientId: AZUREAD_CLIENT_ID ?? "",
               clientSecret: AZUREAD_CLIENT_SECRET ?? "",
-              discoveryUrl: `https://login.microsoftonline.com/${AZUREAD_TENANT_ID || "common"}/v2.0/.well-known/openid-configuration`,
+              ...azureEndpoints,
               scopes: ["openid", "email", "profile"],
               // Redundant since 1.7 defaults it to true, kept explicit: this is a security control,
               // and an explicit value survives a future default flip.

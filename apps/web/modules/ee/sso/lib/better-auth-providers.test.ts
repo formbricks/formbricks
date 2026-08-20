@@ -256,13 +256,43 @@ describe("better-auth SSO providers", () => {
       expect(pinned).toEqual([...PINNED_SSO_PROVIDER_IDS]);
     });
 
-    test("Azure discovery URL falls back to the 'common' tenant when none is configured", async () => {
+    /**
+     * The multi-tenant case must NOT use discovery (ENG-2343). Microsoft's `common` discovery document
+     * advertises `issuer: "https://login.microsoftonline.com/{tenantid}/v2.0"` — a documented template,
+     * verified against the live endpoint — and Better Auth 1.7 compares `iss` for literal equality
+     * whenever discovery yields both `issuer` and `jwks_uri`. Every real id_token carries the tenant
+     * GUID, so discovery here would reject every Azure sign-in. Explicit endpoints build no
+     * `idTokenConfig` at all, which restores the 1.6 UserInfo path.
+     */
+    test("Azure uses explicit endpoints, not discovery, when no tenant is configured", async () => {
       const m = await loadProviders({ ENTERPRISE_LICENSE_KEY: "lic", AZURE_OAUTH_ENABLED: true });
       const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
-      expect(azure?.discoveryUrl).toBe(
-        "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration"
-      );
+
+      expect(azure?.discoveryUrl).toBeUndefined();
+      expect(azure?.authorizationUrl).toBe("https://login.microsoftonline.com/common/oauth2/v2.0/authorize");
+      expect(azure?.tokenUrl).toBe("https://login.microsoftonline.com/common/oauth2/v2.0/token");
+      expect(azure?.userInfoUrl).toBe("https://graph.microsoft.com/oidc/userinfo");
       expect(azure?.accountIssuer).toBe("local:oauth:azuread");
+    });
+
+    /**
+     * The single-tenant case keeps discovery, so the id_token IS verified against a concrete issuer —
+     * strictly stronger than 1.6. This pairing is the whole point of the split: no self-hoster has to
+     * change anything, and those who can have the stronger check get it.
+     */
+    test("Azure uses discovery when a concrete tenant is configured", async () => {
+      const m = await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        AZUREAD_TENANT_ID: "00000000-1111-2222-3333-444444444444",
+      });
+      const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+
+      expect(azure?.discoveryUrl).toBe(
+        "https://login.microsoftonline.com/00000000-1111-2222-3333-444444444444/v2.0/.well-known/openid-configuration"
+      );
+      expect(azure?.authorizationUrl).toBeUndefined();
+      expect(azure?.tokenUrl).toBeUndefined();
     });
 
     test("Azure mapProfileToUser resolves the display name through its fallback chain", async () => {
