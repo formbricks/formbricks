@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleAlert } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -77,7 +78,12 @@ export const PurgeFeedbackDirectoryData = ({
       // (It also arrives as a DOMException, which getV3ApiErrorMessage would surface verbatim as
       // "The operation was aborted due to timeout" — untranslated and meaningless to a user.)
       if (error instanceof DOMException) {
-        toast(t("workspace.settings.feedback_directories.purge_outcome_unknown"));
+        // Neither success nor error, so neither styled variant fits. ToasterClient only styles
+        // `success` and `error`, so a bare toast() would render icon-less and unlike every other
+        // toast in the app — pass the same icon the confirmation dialog uses.
+        toast(t("workspace.settings.feedback_directories.purge_outcome_unknown"), {
+          icon: <CircleAlert className="size-4" />,
+        });
         handleDialogOpenChange(false);
 
         return;
