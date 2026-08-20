@@ -342,6 +342,7 @@ describe("@formbricks/jobs queue helpers", () => {
   test.each([
     ["surveyArchivePurge", "survey-archive-purge.process:global:daily-survey-archive-purge"],
     ["surveyScheduling", "survey-scheduling.reconcile:global:daily-survey-scheduling"],
+    ["usageTelemetry", "usage-telemetry.process:global:daily-usage-telemetry"],
     ["workflowRunReconcile", "workflow-run.reconcile:global:workflow-run-reconcile"],
   ] as const)("keeps the %s scheduler id stable", async (key, expectedSchedulerId) => {
     mockQueueUpsertJobScheduler.mockResolvedValue({
