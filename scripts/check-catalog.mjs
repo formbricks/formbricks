@@ -29,16 +29,23 @@ import { fileURLToPath } from "node:url";
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEP_BLOCKS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];
 
-// Specifiers that name no single version to align on.
-const isRange = (spec) => /^[\^~><*]/.test(spec) || spec.includes("||");
+// A single pinned version — the only kind of specifier the catalog can replace. Tested
+// positively rather than by listing range syntaxes: a range has too many spellings to
+// enumerate (`^1`, `>=1 <2`, `1.x`, `1.2`, `1.2.3 - 2.0.0`, `*`, a dist-tag, empty), and
+// missing one would report a legitimate peer range as a violation.
+const isExactVersion = (spec) => /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(spec);
+
+// Specifiers that resolve through something other than the registry, so there is no version
+// to align. `catalog:` is deliberately absent — it is validated, not skipped (see below).
 const isNotAVersion = (spec) =>
-  spec === "catalog:" ||
-  spec.startsWith("catalog:") ||
   spec.startsWith("workspace:") ||
   spec.startsWith("file:") ||
   spec.startsWith("link:") ||
   spec.startsWith("npm:") ||
   spec.startsWith("git");
+
+// `catalog:` uses the default catalog; `catalog:<name>` a named one.
+const CATALOG_REF = /^catalog:(.*)$/;
 
 // Deliberate exceptions to rule 2: a dependency shared by 2+ workspaces that must NOT be
 // catalogued. Add an entry only with a comment saying why the two consumers are meant to
@@ -68,12 +75,14 @@ function resolveWorkspaceDirs(globs) {
 
 const workspaceFile = yaml.load(readFileSync(join(REPO_ROOT, "pnpm-workspace.yaml"), "utf8"));
 const catalog = workspaceFile.catalog ?? {};
+const namedCatalogs = workspaceFile.catalogs ?? {};
 if (Object.keys(catalog).length === 0) {
   console.error("pnpm-workspace.yaml has no `catalog:` block — nothing to enforce.");
   process.exit(1);
 }
 
 const literalViolations = [];
+const brokenRefs = [];
 const declaredBy = new Map(); // dep name -> Map<workspace, spec>
 
 for (const dir of resolveWorkspaceDirs(workspaceFile.packages ?? [])) {
@@ -84,8 +93,25 @@ for (const dir of resolveWorkspaceDirs(workspaceFile.packages ?? [])) {
   for (const block of DEP_BLOCKS) {
     for (const [name, spec] of Object.entries(manifest[block] ?? {})) {
       if (isNotAVersion(spec)) continue;
-      const exemptRange = block === "peerDependencies" && isRange(spec);
-      if (exemptRange) continue;
+
+      // A `catalog:` reference that names nothing is a typo pnpm only catches at install
+      // time; report it here, where the rest of the contract is checked.
+      const catalogRef = CATALOG_REF.exec(spec);
+      if (catalogRef) {
+        const group = catalogRef[1];
+        if (!group && !(name in catalog)) {
+          brokenRefs.push(`  ${label}: ${block}.${name} is "catalog:" but the catalog has no ${name} entry`);
+        } else if (group && !(namedCatalogs[group] ?? {})[name]) {
+          brokenRefs.push(
+            `  ${label}: ${block}.${name} is "${spec}" but catalogs.${group} has no ${name} entry`
+          );
+        }
+        continue;
+      }
+
+      // A peer range is a compatibility declaration for consumers, not an install pin, so it
+      // may legitimately be looser than the catalog. Only an exactly-pinned peer is enforced.
+      if (block === "peerDependencies" && !isExactVersion(spec)) continue;
 
       if (name in catalog) {
         literalViolations.push(
@@ -106,7 +132,7 @@ const uncataloged = [...declaredBy.entries()]
     return `  "${name}" is declared by ${uses.size} workspaces but is not in the catalog: ${where}`;
   });
 
-if (literalViolations.length === 0 && uncataloged.length === 0) {
+if (literalViolations.length === 0 && uncataloged.length === 0 && brokenRefs.length === 0) {
   console.log(`✓ catalog check passed (${Object.keys(catalog).length} catalogued dependencies)`);
   process.exit(0);
 }
@@ -124,6 +150,13 @@ if (uncataloged.length > 0) {
   console.error(`\n  Add it to the \`catalog:\` block in pnpm-workspace.yaml and point each`);
   console.error(`  consumer at "catalog:". If the versions are meant to differ, add the name to`);
   console.error(`  ALLOW_UNCATALOGED in this script with a comment explaining why.`);
+}
+
+if (brokenRefs.length > 0) {
+  console.error(`\n✗ \`catalog:\` reference with no matching catalog entry (${brokenRefs.length}):\n`);
+  console.error(brokenRefs.join("\n"));
+  console.error(`\n  Add the dependency to the \`catalog:\` block in pnpm-workspace.yaml, or replace the`);
+  console.error(`  reference with a version. pnpm would fail the install on this too.`);
 }
 
 console.error("");
