@@ -163,36 +163,59 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
-decode_dotenv_value() {
-  local value="$1"
-  local single_quoted=false
+read_safe_legacy_compose_password() {
+  local compose_file="$1"
+  local password
+  local without_escaped_dollars
 
-  if [[ "$value" == \'*\' ]]; then
-    single_quoted=true
-    value=${value:1:${#value}-2}
-    value=${value//\\\'/\'}
-  elif [[ "$value" == \"*\" ]]; then
-    value=${value:1:${#value}-2}
-    value=${value//\\\"/\"}
+  password=$(awk '
+    /^  postgres:[[:space:]]*$/ {
+      in_postgres = 1
+      next
+    }
+    in_postgres && /^  [A-Za-z0-9_.-]+:[[:space:]]*$/ {
+      exit
+    }
+    !in_postgres {
+      next
+    }
+    {
+      list_value = $0
+      sub(/^[[:space:]]*-[[:space:]]*POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*/, "", list_value)
+      if (list_value != $0) {
+        sub(/[[:space:]]+$/, "", list_value)
+        print list_value
+        exit
+      }
+
+      mapping_value = $0
+      sub(/^[[:space:]]*POSTGRES_PASSWORD[[:space:]]*:[[:space:]]*/, "", mapping_value)
+      if (mapping_value != $0) {
+        sub(/[[:space:]]+$/, "", mapping_value)
+        print mapping_value
+        exit
+      }
+    }
+  ' "$compose_file")
+
+  if [[ "$password" == \'*\' ]] || [[ "$password" == \"*\" ]]; then
+    if [[ "${password:0:1}" != "${password: -1}" ]]; then
+      return 1
+    fi
+    password=${password:1:${#password}-2}
   fi
-  if [ "$single_quoted" = false ]; then
-    value=${value//\$\$/\$}
-  fi
 
-  printf '%s' "$value"
-}
-
-dotenv_value_is_variable_reference() {
-  local value="$1"
-
-  if [[ "$value" == \'*\' ]]; then
+  without_escaped_dollars=${password//\$\$/}
+  if [ -z "$password" ] || [[ "$without_escaped_dollars" == *\$* ]]; then
     return 1
   fi
-  if [[ "$value" == \"*\" ]]; then
-    value=${value:1:${#value}-2}
-  fi
+  password=${password//\$\$/\$}
 
-  [[ "$value" =~ ^\$\{ ]] || [[ "$value" =~ ^\$[[:alpha:]_][[:alnum:]_]* ]]
+  case "$password" in
+    *[!a-zA-Z0-9._~:@/?#%+,$=-]*) return 1 ;;
+  esac
+
+  printf '%s' "$password"
 }
 
 read_existing_postgres_password() {
@@ -201,56 +224,54 @@ read_existing_postgres_password() {
   local existing_password
 
   if [ -f "$env_file" ]; then
-    if [ -f "$compose_file" ] && command -v docker >/dev/null 2>&1; then
-      existing_password=$(
-        unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
-        docker compose --env-file "$env_file" -f "$compose_file" config --environment 2>/dev/null | awk '
-          /^POSTGRES_PASSWORD=/ {
-            sub(/^POSTGRES_PASSWORD=/, "")
-            print
-            exit
-          }
-        '
-      )
-      if [ -n "$existing_password" ]; then
-        printf '%s' "$existing_password"
-        return
-      fi
+    if [ ! -f "$compose_file" ] || ! command -v docker >/dev/null 2>&1; then
+      echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite $env_file." >&2
+      return 1
     fi
 
-    existing_password=$(awk '
-      {
-        value = $0
-        sub(/^[[:space:]]*(export[[:space:]]+)?POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*/, "", value)
-        if (value != $0) {
-          print value
+    existing_password=$(
+      unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
+      docker compose --env-file "$env_file" -f "$compose_file" config --environment 2>/dev/null | awk '
+        /^POSTGRES_PASSWORD=/ {
+          sub(/^POSTGRES_PASSWORD=/, "")
+          print
           exit
         }
-      }
-    ' "$env_file")
-    if [ -n "$existing_password" ] && ! dotenv_value_is_variable_reference "$existing_password"; then
-      decode_dotenv_value "$existing_password"
+      '
+    )
+    if [ -n "$existing_password" ]; then
+      printf '%s' "$existing_password"
       return
     fi
+
+    if (
+      unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
+      docker compose --env-file "$env_file" -f "$compose_file" config --quiet >/dev/null 2>&1
+    ) && existing_password=$(read_safe_legacy_compose_password "$compose_file"); then
+      printf '%s' "$existing_password"
+      return
+    fi
+
+    echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite $env_file." >&2
+    return 1
   fi
 
   if [ -f "$compose_file" ]; then
-    existing_password=$(awk '
-      {
-        password = $0
-        sub(/^[[:space:]]*-[[:space:]]*POSTGRES_PASSWORD=/, "", password)
-        if (password != $0) {
-          sub(/[[:space:]]+$/, "", password)
-          if (password !~ /^\$\{/ && password !~ /^\$[[:alpha:]_][[:alnum:]_]*/) {
-            print password
-            exit
-          }
-        }
-      }
-    ' "$compose_file")
-    if [ -n "$existing_password" ]; then
-      decode_dotenv_value "$existing_password"
+    if ! command -v docker >/dev/null 2>&1 || ! (
+      unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
+      docker compose -f "$compose_file" config --quiet >/dev/null 2>&1
+    ); then
+      echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite .env." >&2
+      return 1
     fi
+
+    if existing_password=$(read_safe_legacy_compose_password "$compose_file"); then
+      printf '%s' "$existing_password"
+      return
+    fi
+
+    echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite .env." >&2
+    return 1
   fi
 }
 

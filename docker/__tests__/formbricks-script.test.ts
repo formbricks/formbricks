@@ -15,6 +15,11 @@ const dockerComposeOverrideKeys = [
   "HUB_DATABASE_URL",
   "CUBEJS_DB_PASS",
 ];
+const dockerComposeTestTimeout = 30_000;
+
+const dockerComposeTest = (name: string, testFunction: () => void): void => {
+  test(name, testFunction, dockerComposeTestTimeout);
+};
 
 type RenderedDockerComposeConfig = {
   services: Record<string, { environment?: Record<string, string> }>;
@@ -69,6 +74,7 @@ const runDockerCompose = (args: string[], environment: NodeJS.ProcessEnv = {}): 
   const result = spawnSync("docker", ["compose", ...args], {
     encoding: "utf8",
     env: getDockerComposeProcessEnv(environment),
+    timeout: 20_000,
   });
 
   if (result.error) {
@@ -162,8 +168,8 @@ const readExistingPostgresPassword = (
   envPath: string,
   composePath: string,
   processEnvironment: NodeJS.ProcessEnv = {}
-): string =>
-  execFileSync(
+): string => {
+  const result = spawnSync(
     "bash",
     [
       "-lc",
@@ -173,8 +179,22 @@ const readExistingPostgresPassword = (
       envPath,
       composePath,
     ],
-    { encoding: "utf8", env: { ...process.env, ...processEnvironment } }
-  ).trimEnd();
+    {
+      encoding: "utf8",
+      env: { ...process.env, ...processEnvironment },
+      timeout: 20_000,
+    }
+  );
+
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || `Password discovery exited with status ${result.status}`);
+  }
+
+  return result.stdout.trimEnd();
+};
 
 const getDotenvValue = (envContents: string, key: string): string => {
   const value = envContents
@@ -213,11 +233,11 @@ describe("docker/docker-compose.yml Cube configuration", () => {
 });
 
 describe("Docker self-hosting credentials", () => {
-  test("rejects a missing PostgreSQL password", () => {
+  dockerComposeTest("rejects a missing PostgreSQL password", () => {
     expect(() => renderDockerCompose("")).toThrow(/POSTGRES_PASSWORD.*missing a value/);
   });
 
-  test("renders a URL-safe PostgreSQL password into every bundled database client", () => {
+  dockerComposeTest("renders a URL-safe PostgreSQL password into every bundled database client", () => {
     const password = "url-safe-password";
     const config = renderDockerCompose(`POSTGRES_PASSWORD=${password}\n`);
     const formbricksDatabaseUrl = `postgresql://postgres:${password}@postgres:5432/formbricks?schema=public`;
@@ -233,7 +253,7 @@ describe("Docker self-hosting credentials", () => {
     expect(getRenderedServiceEnvironment(config, "cube").CUBEJS_DB_PASS).toBe(password);
   });
 
-  test("renders encoded connection URLs while retaining the raw PostgreSQL password", () => {
+  dockerComposeTest("renders encoded connection URLs while retaining the raw PostgreSQL password", () => {
     const rawPassword = "legacy:p@ss/word?#";
     const encodedPassword = "legacy%3Ap%40ss%2Fword%3F%23";
     const config = renderDockerCompose(
@@ -278,7 +298,7 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     expect(statSync(secondEnvPath).mode & 0o777).toBe(0o600);
   });
 
-  test("preserves and URL-encodes the password from an existing one-click installation", () => {
+  dockerComposeTest("preserves and URL-encodes the password from an existing one-click installation", () => {
     const tempDir = createTempDir();
     const envPath = join(tempDir, ".env");
     const composePath = join(tempDir, "docker-compose.yml");
@@ -287,10 +307,12 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
       composePath,
       `services:
   postgres:
+    image: pgvector/pgvector:pg18
     environment:
       - POSTGRES_PASSWORD=legacy:p@ss/word?#
 `
     );
+    writeFileSync(envPath, "HUB_API_KEY=legacy-hub-key\nCUSTOM_SETTING=preserved\n");
 
     const existingPassword = readExistingPostgresPassword(envPath, composePath);
     writeGeneratedEnvFile(envPath, existingPassword);
@@ -300,58 +322,79 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     expect(existingPassword).toBe("legacy:p@ss/word?#");
     expect(envContents).toContain("POSTGRES_PASSWORD=legacy:p@ss/word?#");
     expect(envContents).toContain("POSTGRES_PASSWORD_URL_ENCODED=legacy%3Ap%40ss%2Fword%3F%23");
+    expect(envContents).toContain("CUSTOM_SETTING=preserved");
   });
 
-  test("preserves double dollar signs in a single-quoted password without Compose parsing", () => {
-    const tempDir = createTempDir();
-    const envPath = join(tempDir, ".env");
-    const missingComposePath = join(tempDir, "missing-compose.yml");
+  dockerComposeTest("uses Docker Compose semantics to resolve existing dotenv passwords", () => {
+    const cases = [
+      {
+        envContents: "POSTGRES_PASSWORD: 'legacy$$value'\n",
+        expectedPassword: "legacy$$value",
+      },
+      {
+        envContents: 'POSTGRES_PASSWORD="legacy\\\\path"\n',
+        expectedPassword: "legacy\\path",
+      },
+      {
+        envContents: "POSTGRES_PASSWORD=legacy-password # operator note\n",
+        expectedPassword: "legacy-password",
+      },
+      {
+        envContents: "PASSWORD_SUFFIX=word\nPOSTGRES_PASSWORD=prefix-${PASSWORD_SUFFIX}\n",
+        expectedPassword: "prefix-word",
+      },
+    ];
 
-    writeFileSync(envPath, "POSTGRES_PASSWORD='legacy$$PASSWORD_SENTINEL'\n");
+    for (const { envContents, expectedPassword } of cases) {
+      const composePath = writeDockerComposeTemplate();
+      const envPath = join(dirname(composePath), ".env");
 
-    expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("legacy$$PASSWORD_SENTINEL");
+      writeFileSync(envPath, envContents);
+
+      expect(readExistingPostgresPassword(envPath, composePath)).toBe(expectedPassword);
+    }
   });
 
-  test("does not preserve unresolved variable references as literal legacy passwords", () => {
+  dockerComposeTest("reads only safely resolvable legacy Compose password literals", () => {
     const tempDir = createTempDir();
     const envPath = join(tempDir, ".env");
     const composePath = join(tempDir, "docker-compose.yml");
     const missingComposePath = join(tempDir, "missing-compose.yml");
-    const writeLegacyComposePassword = (password: string): void => {
+    const writeLegacyComposePassword = (passwordLine: string): void => {
       writeFileSync(
         composePath,
         `services:
   postgres:
+    image: pgvector/pgvector:pg18
     environment:
-      - POSTGRES_PASSWORD=${password}
+      ${passwordLine}
 `
       );
     };
 
-    writeFileSync(envPath, "POSTGRES_PASSWORD=$EXTERNAL_PASSWORD\n");
-    expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("");
+    writeFileSync(envPath, "POSTGRES_PASSWORD='legacy-password'\n");
+    expect(() => readExistingPostgresPassword(envPath, missingComposePath)).toThrow(
+      /Could not safely resolve/
+    );
+    rmSync(envPath);
 
-    writeFileSync(envPath, "POSTGRES_PASSWORD=${EXTERNAL_PASSWORD}\n");
-    expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("");
-
-    writeFileSync(envPath, "POSTGRES_PASSWORD='$EXTERNAL_PASSWORD'\n");
-    expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("$EXTERNAL_PASSWORD");
-
-    writeFileSync(envPath, "");
-    writeLegacyComposePassword("$EXTERNAL_PASSWORD");
-    expect(readExistingPostgresPassword(envPath, composePath)).toBe("");
-
-    writeLegacyComposePassword("${EXTERNAL_PASSWORD}");
-    expect(readExistingPostgresPassword(envPath, composePath)).toBe("");
-
-    writeLegacyComposePassword("legacy-password");
+    writeLegacyComposePassword("- POSTGRES_PASSWORD=legacy-password");
     expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy-password");
 
-    writeLegacyComposePassword("legacy$$PASSWORD_SENTINEL");
+    writeLegacyComposePassword('POSTGRES_PASSWORD: "legacy:p@ss/word?#"');
+    expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy:p@ss/word?#");
+
+    writeLegacyComposePassword("- POSTGRES_PASSWORD=legacy$$PASSWORD_SENTINEL");
     expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy$PASSWORD_SENTINEL");
+
+    writeLegacyComposePassword("- POSTGRES_PASSWORD=$EXTERNAL_PASSWORD");
+    expect(() => readExistingPostgresPassword(envPath, composePath)).toThrow(/Could not safely resolve/);
+
+    writeLegacyComposePassword("- POSTGRES_PASSWORD=legacy-password # operator note");
+    expect(() => readExistingPostgresPassword(envPath, composePath)).toThrow(/Could not safely resolve/);
   });
 
-  test("preserves unrelated environment entries and literal dollar signs across reruns", () => {
+  dockerComposeTest("preserves unrelated environment entries and literal dollar signs across reruns", () => {
     const composePath = writeDockerComposeTemplate();
     const envPath = join(dirname(composePath), ".env");
     const password = "legacy$PASSWORD_SENTINEL";
