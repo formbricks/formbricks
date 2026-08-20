@@ -151,6 +151,17 @@ overrides:
   # backslash authority introducer; patched in 3.1.5. Previously self-resolved, reopened by the new
   # advisory. load-bearing: @redocly/ajv and ajv pull 3.1.4 (dev-only, API-docs tooling).
   fast-uri@3: 3.1.5
+  # ENG-2433 / ENG-2430 / GHSA-ggr8-5vv4-36mx (CVE-2026-40345): deepmerge-ts <8.0.0 has no cycle
+  # detection in its recursive record-merge routine, so two recursive object graphs sharing a
+  # property path exhaust the call stack (DoS); patched in 8.0.0. Pinned to 8.0.1 (lowest patched
+  # release, past the `minimumReleaseAge` cooldown as of 2026-08-19). This is a cross-major coercion
+  # of the only consumer, which declares a 7.x dependency — verified safe: @prisma/config only uses
+  # deepmerge-ts to merge developer-authored prisma.config.ts contents at CLI time, so the input is
+  # never attacker-controlled, and `prisma generate` / `prisma migrate` continue to resolve config
+  # correctly under 8.0.1.
+  # load-bearing: apps/web > @better-auth/oauth-provider > better-auth > @better-auth/prisma-adapter >
+  # @prisma/client > prisma > @prisma/config resolves 7.1.5.
+  deepmerge-ts: 8.0.1
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
   # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
