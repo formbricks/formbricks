@@ -219,3 +219,47 @@ export function formatCellValue(value: unknown): string {
   if (typeof value === "boolean" || typeof value === "bigint") return String(value);
   return "";
 }
+
+// ── Flipped (horizontal) bar chart axis sizing ────────────────────────────────
+// Both of these size a gutter to the text that will actually sit in it, rather than claiming a flat
+// maximum: a flat gutter reads as a broken layout when the labels are short (three numeric
+// categories left ~150px of empty space before the bars started).
+
+/** Approximate advance width (px) of one character at `text-xs`. Errs wide on purpose:
+ * over-estimating leaves a little slack, under-estimating clips or wraps text that had room. */
+const AXIS_CHAR_WIDTH = 6.5;
+/** Gap (px) between a tick's text and the axis line. */
+const AXIS_TICK_GAP = 8;
+
+/** Ceiling (px) for the category gutter: wide enough for a short question label, capped so the bars
+ * keep most of the plot. Longer labels wrap inside it. */
+export const CATEGORY_AXIS_MAX_WIDTH = 160;
+/** Floor (px), so a one-character label still has a readable gutter. */
+export const CATEGORY_AXIS_MIN_WIDTH = 28;
+
+/** Width (px) for the left-hand category gutter of a flipped bar chart, from the labels present. */
+export const getCategoryAxisWidth = (labels: string[]): number => {
+  const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
+  const needed = Math.ceil(longest * AXIS_CHAR_WIDTH) + AXIS_TICK_GAP * 2;
+  return Math.min(CATEGORY_AXIS_MAX_WIDTH, Math.max(CATEGORY_AXIS_MIN_WIDTH, needed));
+};
+
+/** Ceiling (px) for the value-label gutter — enough for a grouped number like "1,234,567". */
+export const VALUE_LABEL_MAX_PADDING = 72;
+/** Floor (px): a single digit still needs the label to clear the bar's end. */
+export const VALUE_LABEL_MIN_PADDING = 14;
+
+/**
+ * Room (px) to reserve past the end of the value axis on a flipped bar chart, so the label of the
+ * longest bar stays inside the SVG.
+ *
+ * A vertical chart gets this from the y-axis `padding.top`; flipped, the label moves to the right of
+ * the bar's end with nothing holding space for it. Whenever the data max lands exactly on the axis
+ * bound — which the "nice" scale produces routinely, since 10/20/50/100 are all multiples of their
+ * step — the label of the biggest bar, the one read first, was clipped away entirely.
+ */
+export const getValueLabelPadding = (labels: string[]): number => {
+  const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
+  const needed = Math.ceil(longest * AXIS_CHAR_WIDTH) + AXIS_TICK_GAP;
+  return Math.min(VALUE_LABEL_MAX_PADDING, Math.max(VALUE_LABEL_MIN_PADDING, needed));
+};

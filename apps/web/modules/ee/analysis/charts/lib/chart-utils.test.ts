@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { SENTIMENT_VALUE_ORDER } from "@/modules/ee/analysis/lib/schema-definition";
 import {
+  CATEGORY_AXIS_MAX_WIDTH,
+  CATEGORY_AXIS_MIN_WIDTH,
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
@@ -9,10 +11,14 @@ import {
   PIE_MEASURE_VALUE_KEY,
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
+  VALUE_LABEL_MAX_PADDING,
+  VALUE_LABEL_MIN_PADDING,
   formatCellValue,
   formatXAxisTick,
+  getCategoryAxisWidth,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
+  getValueLabelPadding,
   pivotMeasuresToCategories,
   prepareMeasureSliceData,
   preparePieData,
@@ -330,5 +336,36 @@ describe("chart-utils", () => {
       // the semantic scale must not collide with the "not enriched" gray
       expect(colors).not.toContain(CHART_NOT_ENRICHED_COLOR);
     });
+  });
+});
+
+describe("flipped bar axis sizing", () => {
+  test("sizes the category gutter to the labels present", () => {
+    // Three numeric categories used to leave ~150px of empty gutter before the bars started.
+    expect(getCategoryAxisWidth(["3", "10", "25"])).toBeLessThan(CATEGORY_AXIS_MAX_WIDTH / 2);
+  });
+
+  test("never drops below the floor or above the ceiling", () => {
+    expect(getCategoryAxisWidth(["1"])).toBe(CATEGORY_AXIS_MIN_WIDTH);
+    expect(getCategoryAxisWidth([])).toBe(CATEGORY_AXIS_MIN_WIDTH);
+    expect(getCategoryAxisWidth(["How satisfied are you with the checkout experience overall?"])).toBe(
+      CATEGORY_AXIS_MAX_WIDTH
+    );
+  });
+
+  test("takes the longest label, not the first or last", () => {
+    const width = getCategoryAxisWidth(["ok", "a considerably longer label", "no"]);
+    expect(width).toBe(getCategoryAxisWidth(["a considerably longer label"]));
+  });
+
+  test("reserves room for the widest value label so the longest bar keeps its number", () => {
+    // The bug this guards: with no padding the label of a bar reaching the axis bound is anchored
+    // at the plot edge and clipped by the SVG viewport.
+    expect(getValueLabelPadding(["50", "20", "5"])).toBeGreaterThanOrEqual(VALUE_LABEL_MIN_PADDING);
+    expect(getValueLabelPadding(["1,234,567"])).toBeGreaterThan(getValueLabelPadding(["5"]));
+  });
+
+  test("caps the value gutter so a huge number cannot eat the plot", () => {
+    expect(getValueLabelPadding(["123,456,789,012,345"])).toBe(VALUE_LABEL_MAX_PADDING);
   });
 });
