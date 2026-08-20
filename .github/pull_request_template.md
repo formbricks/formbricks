@@ -5,7 +5,7 @@ opens on demand (background, file audits, setup steps). Never fold the Coverage 
 Breaking changes — long media inside Coverage may still be folded. -->
 
 <!-- AI agents: no promotional footers, don't advertise yourself or any tool/service (e.g. "Generated
-by …"). The model note at the bottom is the one exception. -->
+by …"). The agent note at the bottom is the one exception. -->
 
 <!-- Complete the line below: `Fixes ENG-<id>`. A bare URL does NOT link the PR — the magic word has
 to come first. Use `Ref ENG-<id>` instead if this PR only partly addresses the ticket, so merging
@@ -90,7 +90,20 @@ to challenge this list, so an empty one is a claim rather than a formality. -->
 
 ---
 
-<!-- Fill in if an AI agent wrote code or this description; delete the note if none did. -->
+<!-- Fill in if an AI agent wrote code or this description; delete the note if none did.
+
+`<model>` is the exact model id the vendor serves — `claude-opus-5`, `gpt-5.1-codex` — not the
+product it runs in: Claude Code, Codex CLI and Cursor are harnesses, not models. Name the harness
+and its version in parentheses when it adds something: `claude-opus-5 (Claude Code 2.1.237)`.
+
+`<level>` is whatever reasoning knob that vendor exposes, in that vendor's own units: an effort
+level (`max`, `high`), a thinking budget (`32k tokens`), or `n/a` where there is no such setting.
+
+Read both values out of the tool rather than from memory. Claude Code reports them in `/status`,
+or as the session's `model` and `effort_level`; Codex CLI in `/model` or the line it prints at
+startup; other tools, whatever they report about themselves. A value you cannot look up is
+`unknown` — never a plausible-looking guess, and never the harness name standing in for the
+model. -->
 
 > [!NOTE]
 > **AI model used** — `<model>`, reasoning effort `<level>`.
