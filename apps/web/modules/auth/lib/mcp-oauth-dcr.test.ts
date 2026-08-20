@@ -5,6 +5,7 @@ import { jwt } from "better-auth/plugins";
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
 import { GET as getProtectedResourceMetadata } from "@/app/.well-known/oauth-protected-resource/[[...resource]]/route";
+import { withInferredApplicationType } from "./mcp-dcr-application-type";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl, getOAuthUserInfoUrl } from "./oauth-urls";
 
@@ -148,37 +149,52 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
   });
 
   /**
-   * Regression guard for the 1.7 redirect-URI rules (ENG-2343). An MCP client registers a loopback
-   * callback such as http://127.0.0.1:PORT/callback. Under 1.7 that is only legal for a *native*
-   * client: DCR defaults `application_type` to "web", and `validateClientRedirectUri` refuses every
-   * loopback URI for web clients — so a client that omits the field is rejected at registration,
-   * before the user ever sees a consent screen.
+   * The 1.7 redirect-URI rules (ENG-2343), and the fix for them.
    *
-   * This is pinned rather than fixed because the correct behaviour depends on the client: MCP
-   * clients that declare themselves native work, and any that do not will need upstream to relax
-   * this or us to default the type at registration. Worth re-checking against 1.7.0 stable.
+   * An MCP client registers a loopback callback such as http://127.0.0.1:PORT/callback. Under 1.7 that
+   * is legal only for a *native* client: DCR hardcodes the `application_type` default to "web", and
+   * `validateClientRedirectUri` refuses every loopback URI for web clients — so a client that omits the
+   * field is rejected before the user ever sees a consent screen. 1.6 had no such validation, so this
+   * regressed working clients, and neither the default (a literal at the call site, not an option) nor
+   * the clients are ours to change.
+   *
+   * These two tests are a pair: the first pins what upstream does, which is why the normalizer exists;
+   * the second proves the normalizer actually resolves it against that same real validator. Note the
+   * body is IDENTICAL in both — only `withInferredApplicationType` is applied.
    */
-  test("rejects a loopback redirect URI for a client that does not declare itself native", async () => {
-    const auth = createAuthInstance();
+  const LOOPBACK_REGISTRATION = JSON.stringify({
+    client_name: "MCP DCR client that omits application_type",
+    redirect_uris: [REDIRECT_URI],
+    grant_types: ["authorization_code", "refresh_token"],
+    response_types: ["code"],
+    token_endpoint_auth_method: "none",
+    scope: "surveys:read",
+  });
 
-    const response = await auth.handler(
+  const register = (auth: ReturnType<typeof createAuthInstance>, body: string) =>
+    auth.handler(
       new Request(`${BASE_URL}/api/auth/oauth2/register`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          client_name: "MCP DCR web-type client",
-          redirect_uris: [REDIRECT_URI],
-          grant_types: ["authorization_code", "refresh_token"],
-          response_types: ["code"],
-          token_endpoint_auth_method: "none",
-          scope: "surveys:read",
-        }),
+        body,
       })
     );
+
+  test("upstream refuses a loopback redirect URI when the client does not declare itself native", async () => {
+    const response = await register(createAuthInstance(), LOOPBACK_REGISTRATION);
     const body = (await response.json()) as { error?: string };
 
     expect(response.status).toBe(400);
     expect(body.error).toBe("invalid_redirect_uri");
+  });
+
+  test("the inferred application_type makes that same registration succeed", async () => {
+    const response = await register(createAuthInstance(), withInferredApplicationType(LOOPBACK_REGISTRATION));
+    const body = (await response.json()) as { client_id?: string; application_type?: string; error?: string };
+
+    expect(body.error).toBeUndefined();
+    expect(response.status).toBeLessThan(300);
+    expect(body.client_id).toBeTruthy();
   });
 
   test("PRM-advertised scopes register verbatim, including offline_access", async () => {

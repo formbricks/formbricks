@@ -264,6 +264,34 @@ describe("better-auth SSO providers", () => {
      * GUID, so discovery here would reject every Azure sign-in. Explicit endpoints build no
      * `idTokenConfig` at all, which restores the 1.6 UserInfo path.
      */
+    /**
+     * Identity derivation must not depend on whether discovery ran (ENG-2343). Better Auth's default is
+     * `isOidc ? profile.sub : profile.id`, and `isOidc` is set only inside the discovery branch — so the
+     * Azure `common` path and the SAML bridge, which both configure endpoints explicitly, would fall to
+     * `profile.id`. Microsoft Graph `/oidc/userinfo` returns only `sub`, which yielded an empty subject
+     * and failed the callback with `unable_to_get_user_info`. BoxyHQ genuinely returns `id`, so the two
+     * differ and both have to be pinned rather than inferred.
+     */
+    test.each([
+      ["azuread", { sub: "az-sub", id: "wrong" }, "az-sub"],
+      ["openid", { sub: "oidc-sub", id: "wrong" }, "oidc-sub"],
+      ["saml", { id: "saml-id", sub: "wrong" }, "saml-id"],
+    ])(
+      "%s derives its account subject from the field that provider actually sends",
+      async (providerId, profile, expected) => {
+        const m = await loadProviders({
+          ENTERPRISE_LICENSE_KEY: "lic",
+          AZURE_OAUTH_ENABLED: true,
+          OIDC_OAUTH_ENABLED: true,
+          SAML_OAUTH_ENABLED: true,
+        });
+        const provider = m.ssoGenericOAuthConfig.find((c) => c.providerId === providerId);
+
+        expect(provider?.accountSubject).toBeDefined();
+        expect(provider?.accountSubject?.({ profile } as never)).toBe(expected);
+      }
+    );
+
     test("Azure uses explicit endpoints, not discovery, when no tenant is configured", async () => {
       const m = await loadProviders({ ENTERPRISE_LICENSE_KEY: "lic", AZURE_OAUTH_ENABLED: true });
       const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");

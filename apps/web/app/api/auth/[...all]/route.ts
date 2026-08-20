@@ -2,6 +2,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { createAuthPathLabeller } from "@/modules/auth/lib/better-auth-path-label";
 import { runWithBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
 import { mapLegacySsoCallbackRequest } from "@/modules/auth/lib/legacy-sso-callback";
+import { normalizeDcrRequest } from "@/modules/auth/lib/mcp-dcr-application-type";
 import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 
 // Force-no-store so Better Auth's outbound SSO fetches (token exchange, userinfo, JWKS) are never
@@ -52,11 +53,14 @@ const labelAuthPath = createAuthPathLabeller(Object.values(auth.api).map((endpoi
  * calls it and `return`s (`better-auth/dist/api/index.mjs:194-197`), skipping the logger path
  * entirely — wiring it would silence the very capture that surfaces genuine internal faults.
  */
-const handler = (request: Request): Promise<Response> => {
+const handler = async (request: Request): Promise<Response> => {
   // Before anything else reads the path: this catch-all serves the pinned v5.2 SSO callback URL, which no
   // Better Auth version mounts a handler on any more. Everything downstream — the endpoint label, the SSO
   // hooks, the audits — reads the MAPPED request, so each sees the endpoint that actually ran.
-  const mappedRequest = mapLegacySsoCallbackRequest(request);
+  // Two normalisations, both because 1.7 changed a contract that clients and IdPs already depend on and
+  // neither is ours to change: the pinned SSO callback path, and `application_type` on dynamic client
+  // registration (see each module). Both no-op for every other request.
+  const mappedRequest = await normalizeDcrRequest(mapLegacySsoCallbackRequest(request));
   return runWithBetterAuthRequestContext(
     { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
     () => runWithSsoRequestContext(() => auth.handler(mappedRequest))

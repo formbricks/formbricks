@@ -140,6 +140,25 @@ const toSamlDisplayName = (profile: GenericOAuthUserInfo): string | undefined =>
 };
 
 /**
+ * Provider account subject, pinned per provider rather than left to Better Auth's default (ENG-2343).
+ *
+ * The default is `isOidc ? profile.sub ?? "" : profile.id ?? ""` (`generic-oauth/index.mjs:138`), and
+ * `isOidc` is only ever set inside the discovery branch (`:103`). So it silently depends on whether
+ * discovery ran: our Azure `common` path and the SAML bridge both configure endpoints explicitly, which
+ * leaves `isOidc` false and resolves `profile.id` — correct for BoxyHQ, which returns `id`, and WRONG for
+ * Microsoft Graph `/oidc/userinfo`, which returns only `sub`. That yields an empty subject and the
+ * callback fails `OAUTH_ACCOUNT_SUBJECT_INVALID` → `error=unable_to_get_user_info`.
+ *
+ * Pinning it on all three makes identity derivation ours and independent of a discovery field, which
+ * also stops the openid provider silently changing subject source across upgrades. An absent subject
+ * still fails closed: Better Auth rejects an empty accountId rather than inventing one.
+ */
+const ssoAccountSubject =
+  (field: "sub" | "id") =>
+  ({ profile }: { profile: GenericOAuthUserInfo }): string | number =>
+    profile[field] ?? "";
+
+/**
  * Azure endpoint configuration, split on whether a concrete tenant is configured (ENG-2343).
  *
  * Better Auth 1.7 verifies the id_token whenever discovery yields both `jwks_uri` and `issuer`, and it
@@ -198,6 +217,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               // (`if (iss && provider.issuer && iss !== provider.issuer)`), so Entra short-circuits
               // and the mix-up defence still applies to providers that do implement RFC 9207.
               accountIssuer: ssoAccountIssuer("azuread"),
+              accountSubject: ssoAccountSubject("sub"),
               redirectURI: ssoLegacyRedirectUri("azuread"),
               mapProfileToUser: (profile) => {
                 // Capture for verify-before-link recovery; name parity with the OIDC mapping.
@@ -227,6 +247,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               // in 1.7 — the comparison is now automatic whenever the provider returns `iss`, so the
               // defence is kept without the flag.
               accountIssuer: ssoAccountIssuer("openid"),
+              accountSubject: ssoAccountSubject("sub"),
               redirectURI: ssoLegacyRedirectUri("openid"),
               mapProfileToUser: (profile) => {
                 captureSsoIdentity({
@@ -258,6 +279,7 @@ export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KE
               // Already a plain string map, which is all 1.7 accepts here.
               authorizationUrlParams: { provider: "saml", tenant: SAML_TENANT, product: SAML_PRODUCT },
               accountIssuer: ssoAccountIssuer("saml"),
+              accountSubject: ssoAccountSubject("id"),
               redirectURI: ssoLegacyRedirectUri("saml"),
               mapProfileToUser: (profile) => {
                 // ⚠ BoxyHQ's userinfo id — validate it matches Better Auth's account.accountId at cutover.
