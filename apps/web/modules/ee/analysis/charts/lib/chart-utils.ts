@@ -43,8 +43,7 @@ export const CHART_NOT_ENRICHED_COLOR = "#a3a3a3"; // neutral-400
  * yellow; positive is the brand teal and very positive the next-darker brand step
  * (--color-brandnew in globals.css). Validated with the dataviz palette script on white: lightness
  * band and adjacent-pair CVD separation pass (worst adjacent ΔE 16.2, deutan); the dark brand teal
- * sits just under the categorical chroma floor, acceptable for a brand hue. Groundwork for the
- * sentiment-only chart (ENG-1558).
+ * sits just under the categorical chroma floor, acceptable for a brand hue.
  */
 export const CHART_SENTIMENT_COLORS: Record<TSentimentValue, string> = {
   very_negative: "#e34948", // red (palette red — sadness)
@@ -81,7 +80,7 @@ export const resolveChartType = (raw: string): TChartType => {
   return parsed.success ? parsed.data : "bar";
 };
 
-const isNumericValue = (val: TChartDataRow[string]): boolean => {
+const isNumericValue = (val: unknown): boolean => {
   if (val === null || val === undefined || val === "") return false;
   const num = Number(val);
   return !Number.isNaN(num) && Number.isFinite(num);
@@ -143,6 +142,66 @@ export const prepareMeasureSliceData = (
     ),
     tooltipLabel: labelFor(key),
   }));
+
+/** One section of the single-bar distribution chart (a pie chart's "Breakdown bars" display). */
+export interface TDistributionSegment {
+  /** Stable react key: the dimension value or the measure id the segment came from. */
+  key: string;
+  label: string;
+  value: number;
+  /** Share of the total, 0-1. */
+  percent: number;
+  color: string;
+}
+
+/** Input to {@link buildDistributionSegments}: one candidate section, color optional. */
+export interface TDistributionEntry {
+  key: string;
+  label: string;
+  value: unknown;
+  /** Meaning-bound color (sentiment scale, "not enriched" gray); palette color when absent. */
+  color?: string;
+}
+
+/**
+ * Turn labelled values into the sections of a single 100% bar: coerce to numbers, compute each
+ * section's share, and hand out palette colors to the entries that carry no semantic color (so a
+ * semantic bucket never consumes a categorical hue, as in preparePieData).
+ *
+ * Zero and negative entries are dropped: they would render as a zero-width, unhoverable section.
+ * Sections are ordered largest share first, the order and therefore the palette handout
+ * preparePieData uses, so switching a pie between its two displays doesn't move or recolour a
+ * group. Sorting is stable, so equal shares keep the caller's order. Returns null when nothing is
+ * left to show, i.e. the total is not positive.
+ */
+export function buildDistributionSegments(
+  entries: readonly TDistributionEntry[]
+): { segments: TDistributionSegment[]; total: number } | null {
+  let paletteIndex = 0;
+  const scaled = entries
+    .map((entry) => ({
+      key: entry.key,
+      label: entry.label,
+      value: isNumericValue(entry.value) ? Number(entry.value) : 0,
+      color: entry.color,
+    }))
+    .filter((entry) => entry.value > 0)
+    .sort((a, b) => b.value - a.value);
+
+  const total = scaled.reduce((sum, entry) => sum + entry.value, 0);
+  if (total <= 0) return null;
+
+  const segments = scaled.map(({ key, label, value, color }) => {
+    let resolvedColor = color;
+    if (!resolvedColor) {
+      resolvedColor = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
+      paletteIndex++;
+    }
+    return { key, label, value, percent: value / total, color: resolvedColor };
+  });
+
+  return { segments, total };
+}
 
 /** Category key for rows produced by {@link pivotMeasuresToCategories}. */
 export const PIVOTED_MEASURE_KEY = "measure";

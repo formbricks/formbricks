@@ -4,6 +4,7 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
+import { BreakdownBars } from "@/modules/ee/analysis/charts/components/breakdown-bars";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
@@ -354,7 +355,7 @@ export function ChartRenderer({
   config,
 }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
-  const { barOrientation } = resolveChartDisplay(config);
+  const { barOrientation, pieDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
 
@@ -506,6 +507,20 @@ export function ChartRenderer({
         </CartesianChart>
       );
     case "pie":
+      // A pie and a breakdown bar answer the same question — the share each group takes of the
+      // whole — so they are two renderings of one chart type rather than two chart types.
+      if (pieDisplay === "breakdown") {
+        return (
+          <BreakdownBars
+            sortedData={sortedData}
+            dataKeys={dataKeys}
+            dataKey={dataKey}
+            hasCategoryAxis={hasCategoryAxis}
+            xAxisKey={xAxisKey}
+            formatDimensionValue={formatDimensionValue}
+          />
+        );
+      }
       return (
         <PieChartView
           sortedData={sortedData}

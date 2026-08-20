@@ -13,6 +13,7 @@ import {
   PIVOTED_VALUE_KEY,
   VALUE_LABEL_MAX_PADDING,
   VALUE_LABEL_MIN_PADDING,
+  buildDistributionSegments,
   formatCellValue,
   formatXAxisTick,
   getCategoryAxisWidth,
@@ -81,6 +82,66 @@ describe("chart-utils", () => {
     test("defaults to bar for invalid type", () => {
       expect(resolveChartType("invalid")).toBe("bar");
       expect(resolveChartType("")).toBe("bar");
+    });
+  });
+
+  describe("buildDistributionSegments", () => {
+    test("sizes each section by its share of the total", () => {
+      const result = buildDistributionSegments([
+        { key: "a", label: "A", value: 30 },
+        { key: "b", label: "B", value: 10 },
+      ]);
+      expect(result).not.toBeNull();
+      expect(result!.total).toBe(40);
+      expect(result!.segments.map((s) => s.percent)).toEqual([0.75, 0.25]);
+    });
+
+    test("orders sections largest first, the order preparePieData uses", () => {
+      const result = buildDistributionSegments([
+        { key: "small", label: "Small", value: 1 },
+        { key: "big", label: "Big", value: 99 },
+      ]);
+      expect(result!.segments.map((s) => s.key)).toEqual(["big", "small"]);
+    });
+
+    test("keeps the caller's order for equal shares, so the palette handout is stable", () => {
+      const result = buildDistributionSegments([
+        { key: "a", label: "A", value: 5 },
+        { key: "b", label: "B", value: 5 },
+        { key: "c", label: "C", value: 5 },
+      ]);
+      expect(result!.segments.map((s) => s.key)).toEqual(["a", "b", "c"]);
+    });
+
+    test("drops non-positive and non-numeric entries from the total", () => {
+      const result = buildDistributionSegments([
+        { key: "a", label: "A", value: 10 },
+        { key: "zero", label: "Zero", value: 0 },
+        { key: "negative", label: "Negative", value: -5 },
+        { key: "text", label: "Text", value: "n/a" },
+        { key: "empty", label: "Empty", value: null },
+      ]);
+      expect(result!.total).toBe(10);
+      expect(result!.segments.map((s) => s.key)).toEqual(["a"]);
+    });
+
+    test("returns null when nothing positive is left to show", () => {
+      expect(buildDistributionSegments([])).toBeNull();
+      expect(buildDistributionSegments([{ key: "a", label: "A", value: 0 }])).toBeNull();
+      expect(buildDistributionSegments([{ key: "a", label: "A", value: "text" }])).toBeNull();
+    });
+
+    test("keeps semantic colors and hands the palette only to the rest", () => {
+      const result = buildDistributionSegments([
+        { key: "positive", label: "Positive", value: 5, color: CHART_SENTIMENT_COLORS.positive },
+        { key: "other", label: "Other", value: 5 },
+        { key: "another", label: "Another", value: 5 },
+      ]);
+      expect(result!.segments.map((s) => s.color)).toEqual([
+        CHART_SENTIMENT_COLORS.positive,
+        CHART_MEASURE_COLORS[0],
+        CHART_MEASURE_COLORS[1],
+      ]);
     });
   });
 
