@@ -107,7 +107,7 @@ signal to select the bridge evaluator.
 
 The immutable bridge and candidate artifacts, fail-closed semantics,
 sandbox-first validation, environment gates, and deployment-only rollback are
-defined in [`authzed/CUTOVER.md`](../../../../authzed/CUTOVER.md).
+defined in the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad).
 
 ### Historical bridge capabilities added by ENG-1738
 

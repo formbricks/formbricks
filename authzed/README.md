@@ -9,9 +9,10 @@ assertion-based validation suite.
   blocks that pin down the schema's semantics.
 - `validate.sh` — offline validation runner (local `zed` binary or the pinned
   `authzed/zed` container image; no SpiceDB server needed).
-- [`CUTOVER.md`](./CUTOVER.md) — the approved direct-authority, fail-closed,
+- [Direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad) — the approved direct-authority, fail-closed,
   immutable-artifact, rollback, and environment-gate contract. It supersedes
-  the earlier shadow/cohort release proposal.
+  the earlier shadow/cohort release proposal and remains in Linear rather than
+  being duplicated in this repository.
 - [`RUNBOOK.md`](./RUNBOOK.md) — diagnosing and recovering from relationship-sync
   failures: the metrics, the log field contract, suggested alert rules, and the
   recovery path through `pnpm authzed:backfill`.
@@ -303,7 +304,7 @@ Existing API keys are not backfilled by mutation hooks; `pnpm authzed:backfill`
 covers them, including a scope revoked outside a hook, which the projector alone
 cannot see. API-key principals are routed through the central interface; the
 direct-authority release contract is now owned by ENG-2448 and
-[`CUTOVER.md`](./CUTOVER.md).
+the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad).
 
 ## Feedback Dataset projection
 
@@ -386,8 +387,8 @@ relationship graph current.
 
 The immutable bridge/candidate artifacts, fail-closed behavior, sandbox-first
 sequence, staging and regional production gates, abort triggers, rollback, and
-self-hosted v6 contract are defined in the [direct cutover
-contract](./CUTOVER.md). Operational execution is documented in the
+self-hosted v6 contract are defined in the [direct AuthZed cutover and rollback
+contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad). Operational execution is documented in the
 [relationship sync runbook](./RUNBOOK.md#7-direct-authority-cutover).
 
 ## Mapping from the current system

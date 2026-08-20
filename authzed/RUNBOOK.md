@@ -13,7 +13,7 @@ recoverable delivery contract. BullMQ only wakes the worker; queue state and lea
 
 Everything below exists to make that visible and recoverable.
 
-See also: [direct cutover contract](./CUTOVER.md) for the approved release and rollback contract,
+See also: [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad) for the approved release and rollback contract,
 [README](./README.md) for the projection development contract, and
 [AuthZed Operations](../docs/self-hosting/advanced/authzed-operations.mdx) for the public self-hosted operator
 contract.
@@ -335,7 +335,7 @@ Historical comparison evidence is preserved in the project records, not as an ex
 
 ## 7. Direct-authority cutover
 
-The full approval contract is [`CUTOVER.md`](./CUTOVER.md). This section is the operator's execution checklist.
+The full approval contract is the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad). This section is the operator's execution checklist.
 
 ### Freeze the bridge artifact
 

@@ -9,7 +9,7 @@ production SLO.
 > **Historical benchmark context:** This report predates the approved direct-cutover contract. The release path
 > no longer uses per-surface enforcement cohorts or shadow comparison. The direct-authority artifact uses
 > `fully_consistent`; ENG-2453 must revalidate latency, concurrency, and 2x headroom in production-like staging
-> before cutover. See [`CUTOVER.md`](./CUTOVER.md).
+> before cutover. See the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad).
 
 ## Summary
 
