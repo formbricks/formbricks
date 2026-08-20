@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   enqueueAuthorizationComparison,
   getAuthorizationRolloutTarget,
+  getAuthorizationSurface,
   getIssuedAuthorizationCheckCount,
   recordAuthorizationCheckIssued,
   withAuthorizationSurface,
@@ -47,6 +48,7 @@ describe("authorization request context", () => {
     await withAuthorizationSurface("api_v1", () =>
       withAuthorizationSurface("api_v3", async () => {
         expect(getAuthorizationRolloutTarget("user")).toBe("api_v1:user");
+        expect(getAuthorizationSurface()).toBe("api_v1");
       })
     );
 
@@ -97,6 +99,7 @@ describe("authorization request context", () => {
   });
 
   test("does not accept comparison work outside a request context", () => {
+    expect(getAuthorizationSurface()).toBe("unscoped");
     expect(getAuthorizationRolloutTarget("user")).toBeNull();
     expect(enqueueAuthorizationComparison(vi.fn())).toBe(false);
   });
