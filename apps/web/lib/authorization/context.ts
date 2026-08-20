@@ -49,8 +49,11 @@ type TAuthorizationContext = {
   surface: TAuthorizationSurface;
 };
 
+type TPageSurfaceSlot = { context: TAuthorizationContext | null };
+
 const globalForAuthorization = globalThis as unknown as {
   formbricksAuthorizationContext: AsyncLocalStorage<TAuthorizationContext> | undefined;
+  formbricksAuthorizationPageSurfaceSlot: (() => TPageSurfaceSlot) | undefined;
 };
 
 const authorizationContext =
@@ -58,17 +61,20 @@ const authorizationContext =
 
 globalForAuthorization.formbricksAuthorizationContext = authorizationContext;
 
-type TPageSurfaceSlot = { context: TAuthorizationContext | null };
-
 /**
  * One slot per React request scope. In an RSC render that is the whole render pass, so a layout and
  * its page resolve the same slot — which is what lets the `page` surface outlive the choke-point
  * helper that opened it.
  *
  * `reactCache` is already this codebase's memoization idiom (resolvers.ts, and both choke-point
- * modules); here it is used for its scope rather than to cache a value.
+ * modules); here it is used for its scope rather than to cache a value. The wrapper itself is pinned
+ * to `globalThis` so duplicated Next.js server bundles still use the same React cache key.
  */
-const getPageSurfaceSlot = reactCache((): TPageSurfaceSlot => ({ context: null }));
+const getPageSurfaceSlot =
+  globalForAuthorization.formbricksAuthorizationPageSurfaceSlot ??
+  reactCache((): TPageSurfaceSlot => ({ context: null }));
+
+globalForAuthorization.formbricksAuthorizationPageSurfaceSlot = getPageSurfaceSlot;
 
 /**
  * Whether React is holding a request scope we can hang the `page` surface on.
@@ -118,14 +124,21 @@ export const withAuthorizationSurface = async <T>(
     return callback();
   }
 
+  const pageSlot = getPageSurfaceSlot();
+  if (hasReactRequestScope(pageSlot) && pageSlot.context) {
+    // A request has one outer surface. Before `page` moved from ALS to React cache, a nested wrapper
+    // inherited the page context through the early return above. Preserve that behavior so one render
+    // cannot split its check count across multiple telemetry observations.
+    return callback();
+  }
+
   if (surface === "page") {
-    const slot = getPageSurfaceSlot();
-    if (hasReactRequestScope(slot)) {
+    if (hasReactRequestScope(pageSlot)) {
       // Opened once per render, then left open: every later check in the same render — including the
       // ones a page issues long after this helper returned — resolves through this slot.
-      if (!slot.context) {
-        slot.context = createSurfaceContext(surface);
-        scheduleChecksPerRequestObservation(slot.context);
+      if (!pageSlot.context) {
+        pageSlot.context = createSurfaceContext(surface);
+        scheduleChecksPerRequestObservation(pageSlot.context);
       }
       return callback();
     }

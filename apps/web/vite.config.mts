@@ -49,7 +49,6 @@ export default defineConfig({
         // Deliberately NOT `extends: true`: that merges the root `setupFiles`, which import
         // react-dom/client (forbidden under the react-server condition) and mock `cache` away.
         plugins: [tsconfigPaths()],
-        resolve: { conditions: ["react-server", "node", "import", "default"] },
         ssr: { resolve: { conditions: ["react-server", "node", "import", "default"] } },
         test: {
           name: "rsc",

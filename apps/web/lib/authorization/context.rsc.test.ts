@@ -121,6 +121,22 @@ describe("page surface — request-scoped boundary (ENG-2444)", () => {
     });
   });
 
+  test("an established page surface keeps precedence over a nested non-page wrapper", async () => {
+    enterRequestScope();
+
+    await withAuthorizationSurface("page", async () => {
+      await withAuthorizationSurface("server_action", async () => {
+        recordAuthorizationCheckIssued();
+        expect(getAuthorizationSurface()).toBe("page");
+      });
+    });
+
+    expect(afterCallbacks).toHaveLength(1);
+    await afterCallbacks[0]();
+    expect(recordAuthorizationChecksPerRequest).toHaveBeenCalledOnce();
+    expect(recordAuthorizationChecksPerRequest).toHaveBeenCalledWith(1, "page");
+  });
+
   test("outside a request scope it falls back to the async-scoped boundary", async () => {
     // Scripts and non-RSC callers have no scope to hang the slot on. The surface must still work
     // within the callback — that is the pre-ENG-2444 behaviour — and must not leak past it.
