@@ -12,7 +12,9 @@ import { GET, POST } from "./route";
 // assert the test's own arrangement instead. `api` mirrors the shape route.ts reads the label
 // vocabulary from — each endpoint function carries its declared path.
 const { handlerMock, runWithCtxMock } = vi.hoisted(() => ({
-  handlerMock: vi.fn(async () => new Response("ok", { status: 200 })),
+  // Parameter declared even though the body ignores it: `mock.calls` is typed from the signature, so
+  // without it `calls[0]` is a zero-length tuple and every `calls[0][0]` read below is a type error.
+  handlerMock: vi.fn(async (_request: Request) => new Response("ok", { status: 200 })),
   runWithCtxMock: vi.fn((fn: () => unknown) => fn()),
 }));
 
@@ -155,7 +157,7 @@ describe("[...all] Better Auth route — pinned SSO callback (ENG-2343)", () => 
     await GET(new Request("http://localhost/api/auth/oauth2/callback/openid?code=abc&state=xyz"));
 
     expect(handlerMock).toHaveBeenCalledTimes(1);
-    const handled = handlerMock.mock.calls[0][0] as unknown as Request;
+    const handled = handlerMock.mock.calls[0][0];
     expect(handled.url).toBe("http://localhost/api/auth/callback/openid?code=abc&state=xyz");
   });
 
@@ -177,9 +179,7 @@ describe("[...all] Better Auth route — pinned SSO callback (ENG-2343)", () => 
     expect(calls).toEqual(["wrapper:start", "handler", "wrapper:end"]);
     // Without this the test is a duplicate of the ordering test above: it would stay green with the
     // mapper call deleted, since ordering does not depend on it.
-    expect((handlerMock.mock.calls[0][0] as unknown as Request).url).toBe(
-      "http://localhost/api/auth/callback/saml?code=abc"
-    );
+    expect(handlerMock.mock.calls[0][0].url).toBe("http://localhost/api/auth/callback/saml?code=abc");
   });
 
   // The sibling routes of our own MCP OAuth authorization server must pass through untouched — the same
