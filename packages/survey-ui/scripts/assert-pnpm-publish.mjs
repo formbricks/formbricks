@@ -13,8 +13,13 @@
  * (all of 1.0.0–1.0.4 went out in one 66-minute session, with no release workflow), which
  * is exactly the situation where the wrong client gets used.
  *
- * Runs from the `prepublishOnly` script, so it gates `publish` only — `pnpm pack`,
- * `pnpm build` and installs are untouched.
+ * Wired to both `prepublishOnly` and `prepack`, because they cover different escapes:
+ * `prepublishOnly` catches `npm publish .`, and `prepack` catches `npm pack` — whose tarball
+ * would otherwise carry the raw specifiers and be publishable later via
+ * `npm publish <tarball>`, which runs no scripts of its own. Neither hook fires under
+ * `--ignore-scripts`; nothing in package.json can close that, so it stays a known hole.
+ * `pnpm pack`, `pnpm publish`, `pnpm build` and installs are unaffected — pnpm is allowed,
+ * and neither hook runs on install.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";

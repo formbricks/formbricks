@@ -33,7 +33,9 @@ const DEP_BLOCKS = ["dependencies", "devDependencies", "peerDependencies", "opti
 // positively rather than by listing range syntaxes: a range has too many spellings to
 // enumerate (`^1`, `>=1 <2`, `1.x`, `1.2`, `1.2.3 - 2.0.0`, `*`, a dist-tag, empty), and
 // missing one would report a legitimate peer range as a violation.
-const isExactVersion = (spec) => /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(spec);
+// The `=` comparator is optional in semver and means the same thing, so `=1.2.3` is a pin
+// like `1.2.3` and must be enforced the same way; pnpm even preserves the form on update.
+const isExactVersion = (spec) => /^=?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(spec);
 
 // Specifiers that resolve through something other than the registry, so there is no version
 // to align. `catalog:` is deliberately absent — it is validated, not skipped (see below).
@@ -53,21 +55,47 @@ const CATALOG_REF = /^catalog:(.*)$/;
 // an exemption. Empty today, and that is the healthy state.
 const ALLOW_UNCATALOGED = new Set([]);
 
-/** Expand pnpm-workspace.yaml's `packages` globs to directories that hold a package.json. */
+/**
+ * Expand pnpm-workspace.yaml's `packages` globs to directories that hold a package.json.
+ *
+ * Only the two shapes this repo uses are supported: `dir/*` and a literal directory. Anything
+ * else — `dir/**`, a `!` exclusion, a brace or a `?` — throws instead of being skipped. Skipping
+ * silently would be the worst possible failure for a guard: coverage collapses to nothing while
+ * the check still reports success, so a later edit to the globs would quietly switch it off.
+ * If a broader glob is ever genuinely needed, resolve the workspaces with pnpm itself
+ * (`pnpm -r exec` / `@pnpm/workspace.find-packages`) rather than widening this parser.
+ */
 function resolveWorkspaceDirs(globs) {
   const dirs = new Set();
   for (const pattern of globs) {
-    if (pattern.endsWith("/*")) {
-      const parent = join(REPO_ROOT, pattern.slice(0, -2));
-      if (!existsSync(parent)) continue;
+    if (pattern.endsWith("/*") && !/[!*?{}[\]]/.test(pattern.slice(0, -2))) {
+      const prefix = pattern.slice(0, -2);
+      const parent = join(REPO_ROOT, prefix);
+      if (!existsSync(parent)) {
+        throw new Error(
+          `pnpm-workspace.yaml lists the workspace glob "${pattern}", but ${prefix}/ does not exist.`
+        );
+      }
       for (const entry of readdirSync(parent, { withFileTypes: true })) {
         if (entry.isDirectory() && existsSync(join(parent, entry.name, "package.json"))) {
-          dirs.add(join(pattern.slice(0, -2), entry.name));
+          dirs.add(join(prefix, entry.name));
         }
       }
-    } else if (existsSync(join(REPO_ROOT, pattern, "package.json"))) {
+    } else if (!/[!*?{}[\]]/.test(pattern) && existsSync(join(REPO_ROOT, pattern, "package.json"))) {
       dirs.add(pattern);
+    } else {
+      throw new Error(
+        `pnpm-workspace.yaml lists the workspace glob "${pattern}", which this check cannot expand.\n` +
+          `Only "dir/*" and literal directories are supported. Teach resolveWorkspaceDirs in\n` +
+          `scripts/check-catalog.mjs about the new shape — do not leave it unhandled, or the check\n` +
+          `silently stops covering those packages while still reporting success.`
+      );
     }
+  }
+  if (dirs.size === 0) {
+    throw new Error(
+      `pnpm-workspace.yaml's \`packages\` globs matched no workspace at all — refusing to report success.`
+    );
   }
   // The root manifest is not matched by the globs but declares dependencies like any member.
   return ["", ...[...dirs].sort()];
@@ -155,7 +183,7 @@ if (uncataloged.length > 0) {
 if (brokenRefs.length > 0) {
   console.error(`\n✗ \`catalog:\` reference with no matching catalog entry (${brokenRefs.length}):\n`);
   console.error(brokenRefs.join("\n"));
-  console.error(`\n  Add the dependency to the \`catalog:\` block in pnpm-workspace.yaml, or replace the`);
+  console.error(`\n  Add the dependency to the referenced catalog in pnpm-workspace.yaml, or replace the`);
   console.error(`  reference with a version. pnpm would fail the install on this too.`);
 }
 
