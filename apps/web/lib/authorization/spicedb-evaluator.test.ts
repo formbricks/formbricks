@@ -35,58 +35,60 @@ beforeEach(() => {
 });
 
 describe("spicedbEvaluator", () => {
-  test("maps every current action to its resource and SpiceDB permission", async () => {
-    for (const [resourceType, permissions] of Object.entries(AUTHORIZATION_PERMISSION_MAP)) {
-      for (const permission of permissions) {
-        checkPermission.mockClear();
-        const action = `${resourceType}.${permission}` as TAuthorizationAction;
+  test("maps every current action for both actor types to its resource and SpiceDB permission", async () => {
+    for (const actorType of ["user", "apiKey"] as const) {
+      for (const [resourceType, permissions] of Object.entries(AUTHORIZATION_PERMISSION_MAP)) {
+        for (const permission of permissions) {
+          checkPermission.mockClear();
+          const action = `${resourceType}.${permission}` as TAuthorizationAction;
 
-        const resource =
-          resourceType === "feedbackDirectoryAssignment"
-            ? {
-                type: resourceType,
-                feedbackDirectoryId: "directory-1",
-                workspaceId: "workspace-1",
-              }
-            : { type: resourceType, id: "resource-1" };
+          const resource =
+            resourceType === "feedbackDirectoryAssignment"
+              ? {
+                  type: resourceType,
+                  feedbackDirectoryId: "directory-1",
+                  workspaceId: "workspace-1",
+                }
+              : { type: resourceType, id: "resource-1" };
 
-        await expect(
-          spicedbEvaluator.can({ type: "user", id: "user-1" }, action, resource as never)
-        ).resolves.toBe(true);
+          await expect(
+            spicedbEvaluator.can({ type: actorType, id: "actor-1" }, action, resource as never)
+          ).resolves.toBe(true);
 
-        const derivedPermission = {
-          "dashboard.read": "read",
-          "dashboard.write": "write",
-          "response.export": "read",
-          "response.manage": "manage",
-          "response.read": "read",
-          "response.write": "write",
-          "survey.delete": "write",
-          "survey.manage": "manage",
-          "survey.publish": "write",
-          "survey.read": "read",
-          "survey.response_export": "read",
-          "survey.response_read": "read",
-          "survey.write": "write",
-        } as const;
-        const isDerived = action in derivedPermission;
-        expect(checkPermission).toHaveBeenCalledWith({
-          permission: isDerived ? derivedPermission[action as keyof typeof derivedPermission] : permission,
-          resource: isDerived
-            ? { objectId: "workspace-1", objectType: "workspace" }
-            : {
-                objectId: resourceType === "feedbackDirectoryAssignment" ? "assignment-1" : "resource-1",
-                objectType:
-                  resourceType === "apiKey"
-                    ? "api_key"
-                    : resourceType === "feedbackDirectory"
-                      ? "feedback_directory"
-                      : resourceType === "feedbackDirectoryAssignment"
-                        ? "feedback_directory_assignment"
-                        : resourceType,
-              },
-          subject: { objectId: "user-1", objectType: "user" },
-        });
+          const derivedPermission = {
+            "dashboard.read": "read",
+            "dashboard.write": "write",
+            "response.export": "read",
+            "response.manage": "manage",
+            "response.read": "read",
+            "response.write": "write",
+            "survey.delete": "write",
+            "survey.manage": "manage",
+            "survey.publish": "write",
+            "survey.read": "read",
+            "survey.response_export": "read",
+            "survey.response_read": "read",
+            "survey.write": "write",
+          } as const;
+          const isDerived = action in derivedPermission;
+          expect(checkPermission).toHaveBeenCalledWith({
+            permission: isDerived ? derivedPermission[action as keyof typeof derivedPermission] : permission,
+            resource: isDerived
+              ? { objectId: "workspace-1", objectType: "workspace" }
+              : {
+                  objectId: resourceType === "feedbackDirectoryAssignment" ? "assignment-1" : "resource-1",
+                  objectType:
+                    resourceType === "apiKey"
+                      ? "api_key"
+                      : resourceType === "feedbackDirectory"
+                        ? "feedback_directory"
+                        : resourceType === "feedbackDirectoryAssignment"
+                          ? "feedback_directory_assignment"
+                          : resourceType,
+                },
+            subject: { objectId: "actor-1", objectType: actorType === "apiKey" ? "api_key" : "user" },
+          });
+        }
       }
     }
   });

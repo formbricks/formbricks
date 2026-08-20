@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { can } from "@/lib/authorization";
 import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "@/lib/authorization/context";
@@ -48,6 +49,7 @@ beforeAll(async () => {
   scenario.organizationId = organization.id;
   scenario.userId = user.id;
   scenario.workspaceId = workspace.id;
+  await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
 describe("survey list authorization amplification, against a real database", () => {
@@ -148,6 +150,7 @@ describe("survey list authorization amplification (member, not owner), against a
     scenario.organizationId = organization.id;
     scenario.userId = user.id;
     scenario.workspaceId = workspace.id;
+    await synchronizeAuthzedIntegrationFixture();
   }, 120_000);
 
   test("a member with team-based workspace access issues exactly one check for the survey list", async () => {

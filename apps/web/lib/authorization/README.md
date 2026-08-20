@@ -2,7 +2,7 @@
 
 This server-only module defines the engine-independent actor, action, and
 resource vocabulary enforced by Formbricks today. Product authorization code
-depends on this contract; AuthZed/SpiceDB is one possible evaluator of it.
+depends on this contract; AuthZed/SpiceDB is the sole runtime evaluator of it.
 
 The contract deliberately contains no AuthZed SDK types, configuration,
 relationship writes, or network behavior. Resource IDs are opaque strings.
@@ -85,8 +85,9 @@ must not depend on that downstream naming convention.
 
 ## Configuration-sensitive policy
 
-`organization.manage_access` is a stable application capability, but the legacy
-evaluator must continue honoring `USER_MANAGEMENT_MINIMUM_ROLE`:
+`organization.manage_access` is a stable application capability, and the SpiceDB
+evaluator continues honoring `USER_MANAGEMENT_MINIMUM_ROLE` when selecting the
+permission checked for user actors:
 
 - `manager`: owners and managers may manage users.
 - `owner`: only owners may manage users.
@@ -97,11 +98,12 @@ actor/action/resource types.
 
 ## Migration inventory and authority contract
 
-The bridge implementation still uses the legacy evaluator while the durable
-relationship graph is established. That is temporary migration behavior, not
-the approved release strategy. The direct-authority artifact sends every
+The pinned bridge artifact uses the legacy evaluator only while its durable
+relationship graph is established. The direct-authority candidate sends every
 central decision to SpiceDB, including calls outside a request surface, and
-contains no runtime selector or legacy fallback.
+contains no runtime selector or legacy fallback. A disabled or unhealthy
+AuthZed client is an operational failure rather than permission denial or a
+signal to select the bridge evaluator.
 
 The immutable bridge and candidate artifacts, fail-closed semantics,
 sandbox-first validation, environment gates, and deployment-only rollback are

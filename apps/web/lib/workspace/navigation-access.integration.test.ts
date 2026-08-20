@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
+import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { canUserNavigateWorkspace } from "@/lib/workspace/auth";
 
@@ -9,9 +10,9 @@ import { canUserNavigateWorkspace } from "@/lib/workspace/auth";
  *
  * The claim the migration rests on is an equivalence over the whole role/grant space, and a mocked
  * `can()` cannot test it — mocking the decision is assuming the answer. So this drives the real
- * `canUserNavigateWorkspace` (real `can()`, real legacy evaluator, real Prisma) against a real
- * Postgres, and compares every case to the deleted helper's own logic, replayed below against the
- * same rows.
+ * `canUserNavigateWorkspace` (real `can()`, real SpiceDB evaluator, real Prisma) against a projected
+ * PostgreSQL fixture, and compares every case to the deleted helper's own logic, replayed below
+ * against the same rows.
  *
  * `expectedByOldHelper` is not a restatement of what the new code does; it is a transcription of the
  * query the old one ran (`git show origin/epic/authzed:apps/web/lib/workspace/auth.ts`):
@@ -116,6 +117,7 @@ beforeAll(async () => {
     { expected: false, name: "owner of a different organization", userId: otherOrgOwner },
     { expected: false, name: "removed member whose team row survived", userId: removedMember },
   ];
+  await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
 describe("canUserNavigateWorkspace against a real database", () => {

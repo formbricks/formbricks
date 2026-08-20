@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
+import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { can } from "@/lib/authorization";
 import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "@/lib/authorization/context";
@@ -15,8 +16,8 @@ import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "@/li
  *   - `authzed/schema-validation.yaml` proves the SpiceDB side (and now proves the billing exclusion
  *     of `read_access`, which had no assertFalse at all before this ticket).
  *   - the unit tests prove each call site asks the right question.
- *   - this file proves the legacy evaluator — the side that is authoritative today, and the side
- *     shadow mode compares against — answers the same way for real membership rows.
+ *   - this file proves the sole SpiceDB evaluator answers the same way for real membership rows
+ *     projected from PostgreSQL.
  *
  * The mapping under test, all for a session user:
  *   organization.read           = owner + manager + member + billing   (the getOrganizationAuth gate)
@@ -49,6 +50,7 @@ beforeAll(async () => {
 
   scenario.organizationId = organization.id;
   scenario.outsiderId = outsider.id;
+  await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
 const check = async (userId: string, action: Parameters<typeof can>[1]) =>

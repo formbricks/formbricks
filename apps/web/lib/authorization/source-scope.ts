@@ -79,6 +79,9 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
     }
     case "feedbackDirectory": {
       const scope = await getFeedbackDirectoryAuthorizationScope(resource.id);
+      // Archive state is an authoritative PostgreSQL policy input, not a projected relationship.
+      // Deny it before consulting SpiceDB so organization administrators cannot retain access through
+      // feedback_directory#organization while the directory is archived.
       return scope && !scope.isArchived
         ? {
             organizationId: scope.organizationId,

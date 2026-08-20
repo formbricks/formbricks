@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "@/lib/authorization/context";
 import { getResponseDownloadFile } from "@/lib/response/service";
@@ -53,6 +54,7 @@ beforeAll(async () => {
   scenario.userId = user.id;
   scenario.workspaceId = workspace.id;
   scenario.surveyId = survey.id;
+  await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
 const exportFor = async (

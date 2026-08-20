@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { AuthenticationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
+import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { assertCanRecheckLicense } from "@/modules/ee/license-check/lib/recheck-authorization";
 
@@ -39,6 +40,7 @@ beforeAll(async () => {
   await makeUser("outsider", null);
 
   scenario.organizationId = organization.id;
+  await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
 describe("assertCanRecheckLicense against a real database", () => {
