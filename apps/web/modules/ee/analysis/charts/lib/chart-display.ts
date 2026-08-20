@@ -2,12 +2,16 @@ import type { TChartConfig } from "@formbricks/types/analysis";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
 export type TBarOrientation = NonNullable<TChartConfig["barOrientation"]>;
+export type TPieDisplay = NonNullable<TChartConfig["pieDisplay"]>;
 
 /** Charts render with vertical bars unless the saved config says otherwise. */
 export const DEFAULT_BAR_ORIENTATION: TBarOrientation = "vertical";
+/** A pie chart renders as a pie unless the saved config says otherwise. */
+export const DEFAULT_PIE_DISPLAY: TPieDisplay = "pie";
 
-/** Bar orientation is the only setting so far that applies to a single chart type. */
+/** Each setting so far belongs to exactly one chart type. */
 export const supportsBarOrientation = (chartType: TChartType | undefined): boolean => chartType === "bar";
+export const supportsPieDisplay = (chartType: TChartType | undefined): boolean => chartType === "pie";
 
 /**
  * Resolves the display settings a chart renders with. Charts saved before these settings
@@ -15,8 +19,9 @@ export const supportsBarOrientation = (chartType: TChartType | undefined): boole
  */
 export const resolveChartDisplay = (
   config: TChartConfig | null | undefined
-): { barOrientation: TBarOrientation } => ({
+): { barOrientation: TBarOrientation; pieDisplay: TPieDisplay } => ({
   barOrientation: config?.barOrientation ?? DEFAULT_BAR_ORIENTATION,
+  pieDisplay: config?.pieDisplay ?? DEFAULT_PIE_DISPLAY,
 });
 
 /**
@@ -28,7 +33,11 @@ export const sanitizeChartDisplay = (
   config: TChartConfig | null | undefined,
   chartType: TChartType | undefined
 ): TChartConfig => {
-  const { barOrientation, ...rest } = config ?? {};
+  const { barOrientation, pieDisplay, ...rest } = config ?? {};
 
-  return supportsBarOrientation(chartType) && barOrientation ? { ...rest, barOrientation } : rest;
+  return {
+    ...rest,
+    ...(supportsBarOrientation(chartType) && barOrientation ? { barOrientation } : {}),
+    ...(supportsPieDisplay(chartType) && pieDisplay ? { pieDisplay } : {}),
+  };
 };

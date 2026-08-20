@@ -71,7 +71,6 @@ describe("chart-utils", () => {
       expect(resolveChartType("line")).toBe("line");
       expect(resolveChartType("pie")).toBe("pie");
       expect(resolveChartType("big_number")).toBe("big_number");
-      expect(resolveChartType("sentiment")).toBe("sentiment");
     });
 
     test("defaults to bar for invalid type", () => {

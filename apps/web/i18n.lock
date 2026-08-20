@@ -1604,7 +1604,6 @@ checksums:
     workspace/analysis/charts/chart_type_line: f42dd53238ed4d44def306a61d47d5c4
     workspace/analysis/charts/chart_type_not_supported: c25334de42fd6192ff8355158865a3e8
     workspace/analysis/charts/chart_type_pie: 068a797404233ccf68d07ad63af7b50c
-    workspace/analysis/charts/chart_type_sentiment: 9ba5719c80c0136c2d0644217619aff6
     workspace/analysis/charts/chart_updated_successfully: a2c210523902c726aa1328bbeda0b357
     workspace/analysis/charts/configure_description: 2939321f78e4ffbc57b4259ddaddb09d
     workspace/analysis/charts/configure_title: ab767b11da1d386b98b3f634f79d3abe
@@ -1751,6 +1750,9 @@ checksums:
     workspace/analysis/charts/open_options: 2c6a35fec9b9d008e41728594bcd07d7
     workspace/analysis/charts/or_filter_logic: 0208d355f231c386b19390f0bea41b95
     workspace/analysis/charts/original: 7e55782bdf7cb49f5616b326c003c278
+    workspace/analysis/charts/pie_display: eb53ad78765ddc4050d898a70f2fac68
+    workspace/analysis/charts/pie_display_breakdown: 5a072a1240ff9b5d8246af085ef92192
+    workspace/analysis/charts/pie_display_pie: 077915149770d6fb8bc73d743db4e901
     workspace/analysis/charts/please_enter_chart_name: 9258b71b2cb09d22ffe33de1755e7309
     workspace/analysis/charts/please_select_dashboard: 8f062db96f815ed8268584dd8d292fa6
     workspace/analysis/charts/predefined_measures: 7651141f62c991954edcff70899b2a8b

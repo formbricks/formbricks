@@ -1221,7 +1221,6 @@ enum ChartType {
   line
   pie
   big_number
-  sentiment
 }
 
 /// Represents a chart/visualization that can be used in multiple dashboards.

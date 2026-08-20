@@ -63,8 +63,7 @@ ${operatorsText}
 - Use dimension IDs exactly as shown (e.g. \`FeedbackRecords.sourceType\`, \`FeedbackRecords.collectedAt\`).
 - For time-based filtering (date range only, no time grouping): add a timeDimension with dimension \`${CUBE_NAME}.collectedAt\` and dateRange. Do NOT include granularity (default is None / filter only).
 - For time-series or trend questions (e.g. "over time", "by day", "weekly", "monthly"): add a timeDimension with dimension, granularity (hour/day/week/month/quarter/year), and dateRange.
-- Choose the most appropriate chart type: bar, line, area, pie, big_number (for single-number queries), or sentiment.
-- \`sentiment\` renders one bar split into a section per group. Pick it only for a sentiment breakdown: a single count measure grouped by \`${CUBE_NAME}.sentiment\`, or the per-sentiment count measures with no grouping.
+- Choose the most appropriate chart type: bar, line, area, pie, or big_number (for single-number queries).
 - Filters must use the exact operator strings from the schema.
 - For human-readable text dimensions (\`${CUBE_NAME}.sourceName\`, \`${CUBE_NAME}.sourceType\`, \`${CUBE_NAME}.fieldLabel\`, \`${CUBE_NAME}.fieldGroupLabel\`, \`${CUBE_NAME}.valueText\`), prefer the \`contains\` operator over \`equals\` unless the user clearly wants an exact full-string match — \`equals\` is an exact match and the stored value may differ in casing or spacing from the user's phrasing.
 - \`${CUBE_NAME}.sentiment\` stores exact machine tokens: very_negative, negative, neutral, positive, very_positive, mixed. Filter it with \`equals\`/\`notEquals\` using those exact lowercase tokens (e.g. "negative feedback" → sentiment equals ["negative", "very_negative"]).

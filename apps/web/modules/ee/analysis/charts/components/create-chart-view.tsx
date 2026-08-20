@@ -72,7 +72,6 @@ export function CreateChartView({
     setChartName,
     savedChartName,
     selectedChartType,
-    prefillQuery,
     handleChartTypeChange,
     handleChartGenerated,
     handleSaveChart,
@@ -184,10 +183,7 @@ export function CreateChartView({
                     <AdvancedChartBuilder
                       workspaceId={workspaceId}
                       chartType={chartType}
-                      // A prefill outranks the current query: it is the config the freshly picked
-                      // chart type needs, and it has not been run yet.
-                      initialQuery={prefillQuery ?? chartData?.query ?? initialQuery}
-                      runInitialQuery={!!prefillQuery}
+                      initialQuery={chartData?.query ?? initialQuery}
                       onChartGenerated={handleChartGenerated}
                       onQueryStateChange={setQueryState}
                       feedbackDirectoryId={selectedDirectoryId}

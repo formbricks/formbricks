@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 
 const formatPercent = (percent: number): string => `${Math.round(percent * 100)}%`;
 
-interface SentimentBarChartProps {
+interface BreakdownBarsProps {
   /** Rows already sorted into the dimension's display order (sentiment scale for sentiment). */
   sortedData: TChartDataRow[];
   dataKeys: string[];
@@ -28,22 +28,23 @@ interface SentimentBarChartProps {
 }
 
 /**
- * The "Sentiment" chart type: one horizontal bar split into a section per group, sized by each
- * group's share of the total, with the count and share on hover.
+ * A pie chart's other rendering: one horizontal bar split into a section per group, sized by each
+ * group's share of the total, with the count and share on hover. Chosen through the pie chart's
+ * "Breakdown bars" display setting.
  *
- * Built for sentiment (picking the type pre-populates response count grouped by sentiment, so the
- * sections arrive colored on the sentiment scale) but not limited to it — any single-measure
- * grouped query renders as a distribution, and a measure-only query turns each measure into a
- * section, which is what the six sentiment count measures need.
+ * The same data a pie shows, in a fraction of the height — which is what makes it worth having for
+ * a single distribution like sentiment, where a pie spends a lot of vertical space on six slices.
+ * Sections take the sentiment scale colours when the query reads sentiment, and a measure-only
+ * query turns each measure into a section.
  */
-export function SentimentBarChart({
+export function BreakdownBars({
   sortedData,
   dataKeys,
   dataKey,
   hasCategoryAxis,
   xAxisKey,
   formatDimensionValue,
-}: Readonly<SentimentBarChartProps>) {
+}: Readonly<BreakdownBarsProps>) {
   const { t } = useTranslation();
 
   let entries: TDistributionEntry[];

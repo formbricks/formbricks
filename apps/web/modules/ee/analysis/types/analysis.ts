@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TWidgetLayout, ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 
-export const CHART_TYPE_IDS = ["area", "bar", "line", "pie", "big_number", "sentiment"] as const;
+export const CHART_TYPE_IDS = ["area", "bar", "line", "pie", "big_number"] as const;
 export const ZChartType = z.enum(CHART_TYPE_IDS);
 export type TChartType = z.infer<typeof ZChartType>;
 
