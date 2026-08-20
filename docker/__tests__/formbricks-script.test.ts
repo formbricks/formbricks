@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -172,7 +172,7 @@ const readExistingPostgresPassword = (
   const result = spawnSync(
     "bash",
     [
-      "-lc",
+      "-c",
       'source "$1"; read_existing_postgres_password "$2" "$3"',
       "bash",
       formbricksScriptPath,
@@ -181,7 +181,7 @@ const readExistingPostgresPassword = (
     ],
     {
       encoding: "utf8",
-      env: { ...process.env, ...processEnvironment },
+      env: getDockerComposeProcessEnv(processEnvironment),
       timeout: 20_000,
     }
   );
@@ -193,7 +193,7 @@ const readExistingPostgresPassword = (
     throw new Error(result.stderr.trim() || `Password discovery exited with status ${result.status}`);
   }
 
-  return result.stdout.trimEnd();
+  return result.stdout;
 };
 
 const getDotenvValue = (envContents: string, key: string): string => {
@@ -282,10 +282,13 @@ describe("Docker self-hosting credentials", () => {
 
     const envContents = readFileSync(envPath, "utf8");
     const secondEnvContents = readFileSync(secondEnvPath, "utf8");
-    const postgresPassword = getDotenvValue(envContents, "POSTGRES_PASSWORD");
-    const secondPostgresPassword = getDotenvValue(secondEnvContents, "POSTGRES_PASSWORD");
+    const serializedPostgresPassword = getDotenvValue(envContents, "POSTGRES_PASSWORD");
+    const serializedSecondPostgresPassword = getDotenvValue(secondEnvContents, "POSTGRES_PASSWORD");
+    const postgresPassword = serializedPostgresPassword.slice(1, -1);
+    const secondPostgresPassword = serializedSecondPostgresPassword.slice(1, -1);
 
-    expect(envContents).toMatch(/^POSTGRES_PASSWORD=[a-f0-9]{64}$/m);
+    expect(serializedPostgresPassword).toMatch(/^"[a-f0-9]{64}"$/);
+    expect(serializedSecondPostgresPassword).toMatch(/^"[a-f0-9]{64}"$/);
     expect(envContents).toContain(`POSTGRES_PASSWORD_URL_ENCODED=${postgresPassword}`);
     expect(envContents).toMatch(/^HUB_API_KEY=[a-f0-9]{64}$/m);
     expect(envContents).toMatch(/^CUBEJS_API_SECRET=[a-f0-9]{64}$/m);
@@ -320,7 +323,7 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     const envContents = readFileSync(envPath, "utf8");
 
     expect(existingPassword).toBe("legacy:p@ss/word?#");
-    expect(envContents).toContain("POSTGRES_PASSWORD=legacy:p@ss/word?#");
+    expect(envContents).toContain('POSTGRES_PASSWORD="legacy:p@ss/word?#"');
     expect(envContents).toContain("POSTGRES_PASSWORD_URL_ENCODED=legacy%3Ap%40ss%2Fword%3F%23");
     expect(envContents).toContain("CUSTOM_SETTING=preserved");
   });
@@ -353,6 +356,35 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
 
       expect(readExistingPostgresPassword(envPath, composePath)).toBe(expectedPassword);
     }
+  });
+
+  dockerComposeTest("requires Docker Compose v2.27.2 for existing dotenv credentials", () => {
+    const composePath = writeDockerComposeTemplate();
+    const tempDir = dirname(composePath);
+    const envPath = join(tempDir, ".env");
+    const dockerPath = join(tempDir, "docker");
+
+    writeFileSync(envPath, "POSTGRES_PASSWORD=legacy-password\n");
+    writeFileSync(
+      dockerPath,
+      `#!/bin/sh
+if [ "$1" = "compose" ] && [ "$2" = "version" ] && [ "$3" = "--short" ]; then
+  echo "2.26.1"
+  exit 0
+fi
+case "$*" in
+  *"config --quiet"*) exit 0 ;;
+esac
+exit 1
+`
+    );
+    chmodSync(dockerPath, 0o755);
+
+    expect(() =>
+      readExistingPostgresPassword(envPath, composePath, {
+        PATH: `${tempDir}:${process.env.PATH ?? ""}`,
+      })
+    ).toThrow(/Docker Compose v2\.27\.2 or newer/);
   });
 
   dockerComposeTest("reads only safely resolvable legacy Compose password literals", () => {
@@ -436,7 +468,7 @@ export HUB_API_KEY=replace-me
     expect(firstEnvContents).toContain("PUBLIC_URL=https://surveys.example.com");
     expect(firstEnvContents).toContain("CUSTOM_SECRET=keep-me");
     expect(firstEnvContents).not.toContain("HUB_API_KEY=replace-me");
-    expect(firstEnvContents).toContain("POSTGRES_PASSWORD=legacy$$PASSWORD_SENTINEL");
+    expect(firstEnvContents).toContain('POSTGRES_PASSWORD="legacy$$PASSWORD_SENTINEL"');
     expect(firstEnvContents).toContain(`POSTGRES_PASSWORD_URL_ENCODED=${encodedPassword}`);
     expect(getDotenvValue(renderedEnvironment, "POSTGRES_PASSWORD")).toBe(password);
     expect(renderedPostgresPassword).toBe(password);
@@ -462,6 +494,32 @@ export HUB_API_KEY=replace-me
     expect(rerunEnvContents.match(/^POSTGRES_PASSWORD=/gm)).toHaveLength(1);
     expect(rerunEnvContents.match(/^HUB_API_KEY=/gm)).toHaveLength(1);
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
+  });
+
+  dockerComposeTest("serializes preserved passwords without dotenv reinterpretation", () => {
+    const composePath = writeDockerComposeTemplate();
+    const envPath = join(dirname(composePath), ".env");
+    const password = 'my secret #1 a\\\'b "quoted" $PASSWORD_SENTINEL ';
+    const encodedPassword = "my%20secret%20%231%20a%5C%27b%20%22quoted%22%20%24PASSWORD_SENTINEL%20";
+
+    writeGeneratedEnvFile(envPath, password);
+
+    const firstEnvContents = readFileSync(envPath, "utf8");
+    const firstReadPassword = readExistingPostgresPassword(envPath, composePath, {
+      PASSWORD_SENTINEL: "rewritten",
+    });
+
+    expect(firstReadPassword).toBe(password);
+    expect(getDotenvValue(firstEnvContents, "POSTGRES_PASSWORD")).toMatch(/^".*"$/);
+    expect(getDotenvValue(firstEnvContents, "POSTGRES_PASSWORD_URL_ENCODED")).toBe(encodedPassword);
+
+    writeGeneratedEnvFile(envPath, firstReadPassword);
+
+    expect(
+      readExistingPostgresPassword(envPath, composePath, {
+        PASSWORD_SENTINEL: "rewritten",
+      })
+    ).toBe(password);
   });
 });
 

@@ -218,6 +218,24 @@ read_safe_legacy_compose_password() {
   printf '%s' "$password"
 }
 
+docker_compose_supports_environment_output() {
+  local version
+  local major
+  local minor
+  local patch
+
+  version=$(docker compose version --short 2>/dev/null) || return 1
+  if [[ ! "$version" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+    return 1
+  fi
+
+  major=${BASH_REMATCH[1]}
+  minor=${BASH_REMATCH[2]}
+  patch=${BASH_REMATCH[3]}
+
+  (( major > 2 || (major == 2 && (minor > 27 || (minor == 27 && patch >= 2))) ))
+}
+
 read_existing_postgres_password() {
   local env_file="${1:-.env}"
   local compose_file="${2:-docker-compose.yml}"
@@ -226,6 +244,19 @@ read_existing_postgres_password() {
   if [ -f "$env_file" ]; then
     if [ ! -f "$compose_file" ] || ! command -v docker >/dev/null 2>&1; then
       echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite $env_file." >&2
+      return 1
+    fi
+
+    if (
+      unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
+      docker compose --env-file "$env_file" -f "$compose_file" config --quiet >/dev/null 2>&1
+    ) && existing_password=$(read_safe_legacy_compose_password "$compose_file"); then
+      printf '%s' "$existing_password"
+      return
+    fi
+
+    if ! docker_compose_supports_environment_output; then
+      echo "❌ Docker Compose v2.27.2 or newer is required to safely preserve the existing PostgreSQL password." >&2
       return 1
     fi
 
@@ -240,14 +271,6 @@ read_existing_postgres_password() {
       '
     )
     if [ -n "$existing_password" ]; then
-      printf '%s' "$existing_password"
-      return
-    fi
-
-    if (
-      unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
-      docker compose --env-file "$env_file" -f "$compose_file" config --quiet >/dev/null 2>&1
-    ) && existing_password=$(read_safe_legacy_compose_password "$compose_file"); then
       printf '%s' "$existing_password"
       return
     fi
@@ -297,16 +320,20 @@ url_encode() {
   printf '%s' "$encoded"
 }
 
-escape_dotenv_interpolation() {
+serialize_dotenv_value() {
   local value="$1"
 
-  printf '%s' "${value//\$/\$\$}"
+  value=${value//\\/\\\\}
+  value=${value//\"/\\\"}
+  value=${value//\$/\$\$}
+
+  printf '"%s"' "$value"
 }
 
 write_generated_env_file() (
   local env_file="${1:-.env}"
   local postgres_password="${2:-}"
-  local escaped_postgres_password
+  local serialized_postgres_password
   local postgres_password_url_encoded
   local hub_api_key
   local cubejs_api_secret
@@ -316,7 +343,7 @@ write_generated_env_file() (
   if [ -z "$postgres_password" ]; then
     postgres_password=$(openssl rand -hex 32)
   fi
-  escaped_postgres_password=$(escape_dotenv_interpolation "$postgres_password")
+  serialized_postgres_password=$(serialize_dotenv_value "$postgres_password")
   postgres_password_url_encoded=$(url_encode "$postgres_password")
   hub_api_key=$(openssl rand -hex 32)
   cubejs_api_secret=$(openssl rand -hex 32)
@@ -331,7 +358,7 @@ write_generated_env_file() (
   fi
 
   cat <<EOF >> "$tmp_file"
-POSTGRES_PASSWORD=$escaped_postgres_password
+POSTGRES_PASSWORD=$serialized_postgres_password
 POSTGRES_PASSWORD_URL_ENCODED=$postgres_password_url_encoded
 HUB_API_KEY=$hub_api_key
 CUBEJS_API_SECRET=$cubejs_api_secret
