@@ -39,6 +39,7 @@ the graph. On the direct-authority artifact, operational AuthZed failures fail p
 pnpm authzed:health     # 0 healthy, 1 otherwise
 pnpm authzed:schema check   # 0 matched, 2 drifted, 1 failed
 formbricks-authzed outbox status  # 0 healthy, 2 warning/critical, 1 failed
+formbricks-authzed upgrade check  # 0 direct-authority ready, 2 blocked, 1 failed
 ```
 
 Note `status: "disabled"` from the health command exits **1**. A deployment that believes AuthZed is on
@@ -311,6 +312,10 @@ the service recovers:
    `authzed_projection_stale` denial clears within six hours even if nobody intervenes.
 4. Run the complete dry-run audit, apply attributable repair, and require two consecutive clean audits.
 5. Keep direct-authority cutover blocked while a revocation is pending, dead-lettered, or older than its SLA.
+
+For a self-hosted major upgrade, `formbricks-authzed upgrade prepare` composes steps 1 through 4 and then runs a
+final audit. Always follow it with the read-only `upgrade check`; do not treat a completed write phase as proof
+that concurrent source changes left the graph clean.
 
 In the direct-authority artifact, a SpiceDB, datastore, resolver, configuration, freshness, or unsupported-result
 failure is not an ordinary denial and never falls back. The protected operation receives a sanitized operational

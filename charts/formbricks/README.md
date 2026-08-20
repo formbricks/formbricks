@@ -58,16 +58,16 @@ single-replica deployment.
 
 ## AuthZed / SpiceDB
 
-AuthZed is disabled by default. To deploy SpiceDB with Formbricks and the bundled PostgreSQL chart:
+Formbricks v6 enables AuthZed, `fully_consistent` authorization, and the bundled SpiceDB operator by default.
+For a cluster where a compatible operator already watches the Formbricks namespace:
 
 ```yaml
 authzed:
-  enabled: true
   operator:
-    install: true
+    install: false
 ```
 
-This installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, and creates a dedicated
+The default installs the pinned SpiceDB operator, creates a two-replica `SpiceDBCluster`, and creates a dedicated
 `spicedb` database and role in the bundled PostgreSQL server. During normal Helm installs and upgrades, the
 chart reuses generated credentials from the existing cluster Secret. Renderers without live Secret access,
 including offline `helm template` and Argo CD manifest generation, must provide persistent credentials through
@@ -89,10 +89,9 @@ postgresql:
         memory: 1Gi
 ```
 
-Helm cannot condition values passed to the PostgreSQL dependency on the sibling `authzed.enabled` value, so the
-safe database baseline remains in effect when AuthZed is disabled. Override `authzed.cluster.resources` and
-`postgresql.primary.resources` to match the expected authorization traffic and the other workloads using the
-bundled database. Installations that keep AuthZed disabled may explicitly choose smaller PostgreSQL resources.
+Helm cannot condition values passed to the PostgreSQL dependency on a sibling value, so the safe database
+baseline remains in effect. Override `authzed.cluster.resources` and `postgresql.primary.resources` to match the
+expected authorization traffic and the other workloads using the bundled database.
 
 Install only one operator per Kubernetes cluster. When a platform-managed operator already watches the Formbricks
 namespace, keep `authzed.operator.install=false`; the Formbricks release still owns its `SpiceDBCluster`.
@@ -185,6 +184,8 @@ scheme, and reference a Secret containing `preshared_key`:
 authzed:
   enabled: true
   mode: external
+  operator:
+    install: false
   endpoint: grpc.authzed.com:443
   insecure: false
   auth:
@@ -197,12 +198,14 @@ endpoint; plaintext transport sends the preshared token without TLS protection. 
 the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
 Formbricks readiness remains independent from transient SpiceDB availability.
 
-The chart deliberately does not install or update the Formbricks authorization schema. After SpiceDB is ready,
-run the release-matched command inside the Formbricks application deployment:
+Fresh installs run a release-matched initialization Job that applies the canonical schema and verifies the empty
+or reconciled graph. Existing releases never run that Job as an upgrade hook. Before the first v6 upgrade, run:
 
 ```bash
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade prepare
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
 
 # Empty instances only
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema apply
@@ -213,8 +216,9 @@ kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed sche
 ```
 
 The initial apply to an empty instance needs no digest. A non-empty instance must first be checked and then
-applied with `--expected-current-digest sha256:<digest-from-check>`. This separation keeps schema changes out of
-Helm hooks, app startup, migrations, liveness, and readiness. Back up the current schema and affected
+prepared with `--expected-current-digest sha256:<digest-from-check>`. Once `upgrade check` exits `0`, set
+`authzed.migrationAcknowledged=true` in the v6 upgrade values. The chart refuses an unacknowledged upgrade,
+`authzed.enabled=false`, or consistency other than `fully_consistent`. Back up the current schema and affected
 relationships before replacement; see the repository `authzed/README.md` for exit codes and rollback rules.
 The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
 restoration, schema lifecycle, relationship repair, and monitoring.

@@ -187,6 +187,13 @@ AuthZed / SpiceDB Operations:
    kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed schema check
    ```
 
+   Before upgrading an existing installation to v6, complete the release-matched preparation and
+   read-only gate, then set `authzed.migrationAcknowledged=true`:
+   ```sh
+   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed upgrade prepare
+   kubectl exec -n {{ .Release.Namespace }} deployment/{{ include "formbricks.name" . }} -- formbricks-authzed upgrade check
+   ```
+
    Schema application and relationship repair are explicit operator actions and never run as Helm
    hooks. Read the safeguards and backup requirements before changing authorization state:
    https://formbricks.com/docs/self-hosting/advanced/authzed-operations

@@ -625,6 +625,21 @@ workflow above. Successfully delivered outbox rows are retained for seven days;
 the scheduled audit removes at most 10,000 expired rows per run. Pending and
 dead-letter rows are never removed by retention cleanup.
 
+## Self-hosted v6 upgrade gate
+
+Release images expose two aggregate-only orchestration commands:
+
+```bash
+formbricks-authzed upgrade prepare
+formbricks-authzed upgrade check
+```
+
+`prepare` requires `AUTHZED_ENABLED=true` and `AUTHZED_CONSISTENCY=fully_consistent`, checks authenticated
+datastore health, applies an empty or guarded canonical schema, drains the outbox, runs attributable repair, and
+audits the final graph. `check` repeats the health, schema, outbox, and full dry-run audit without writing. It
+exits 0 only for a direct-authority-ready deployment, 2 when readiness is blocked by drift, and 1 for a failed
+configuration or operation. Unlike the detailed backfill report, both commands emit aggregate counters only.
+
 ## Deliberately not modeled (stays in application code)
 
 - Managers may only assign the `member` role when inviting/updating members.
