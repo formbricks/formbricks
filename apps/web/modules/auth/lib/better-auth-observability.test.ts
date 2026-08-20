@@ -413,6 +413,8 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
   // expired, or no `state` arrived at all. Nothing to act on, so these must not page.
   test.each([
     ["state_mismatch", "State mismatch: verification not found"],
+    // Cookie-branch message, kept as a label only: the code is what the gate reads, and this variant
+    // is unreachable on our database strategy.
     ["state_mismatch", "State mismatch: auth state cookie not found"],
     ["state_mismatch", "Invalid state: request expired"],
     ["state_not_found", "State not found in OAuth callback"],
@@ -430,10 +432,12 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
   /**
    * The other three codes stay captured, and each for its own reason:
    * - `state_generation_error` — the adapter could not write the verification row: a real fault.
-   * - `state_invalid` — undecryptable state, which is what replicas running different
-   *   `BETTER_AUTH_SECRET` values look like. Suppressing it would bury an outage.
-   * - `state_security_mismatch` — the state does not match the stored one: the forged/mixed-up callback
-   *   shape. ENG-2471 defers judging it until the ENG-2259 `auth.path` tag has sized it.
+   * - `state_security_mismatch` — the state does not match the stored one, OR the signed state cookie
+   *   fails verification. That second half is where a cross-replica `BETTER_AUTH_SECRET` divergence
+   *   surfaces (a real outage) and also where the benign 5–10 minute cookie-expiry case lands, so it is
+   *   mixed and ENG-2471 defers judging it until the ENG-2259 `auth.path` tag has sized the split.
+   * - `state_invalid` — cookie-branch only, so unreachable on this configuration. Kept because
+   *   suppressing a code that never fires buys nothing.
    */
   test.each([
     ["state_generation_error", "Unable to create verification"],
@@ -447,6 +451,38 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
     expect(Sentry.captureException).toHaveBeenCalledWith(stateError, {
       tags: { component: "better-auth" },
     });
+  });
+
+  /**
+   * The log field is the whole justification for suppressing anything: a suppressed event survives only
+   * in the application log, so it has to be queryable by the same value that suppressed it. Without this
+   * test the field can be deleted and the suite stays green — verified, it did.
+   *
+   * Recorded for captured codes too, so one query covers the class rather than only its quiet half.
+   */
+  test.each([
+    ["state_mismatch", "suppressed"],
+    ["state_security_mismatch", "captured"],
+  ])("records %s on the log context (%s)", (code) => {
+    log("error", "State mismatch", new StateErrorLike("State mismatch", code));
+
+    expect(logger.withContext).toHaveBeenCalledWith({
+      source: "better-auth",
+      stateErrorCode: code,
+    });
+  });
+
+  // The raw `state` is a single-use credential for the in-flight flow and lives on the error's
+  // `details`. Only the code is ever read, so it cannot reach the log through this path.
+  test("never puts the raw state value on the log context", () => {
+    const stateError = new StateErrorLike("State mismatch: verification not found", "state_mismatch");
+    Object.assign(stateError, { details: { state: "super-secret-state-value" } });
+
+    log("error", "State mismatch: verification not found", stateError);
+
+    expect(JSON.stringify(vi.mocked(logger.withContext).mock.calls)).not.toContain(
+      "super-secret-state-value"
+    );
   });
 
   // The gate fails CLOSED: anything it cannot positively identify as one of the two suppressed codes is

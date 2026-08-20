@@ -137,9 +137,10 @@ export const redactEmailsInLogMessage = (message: unknown): unknown =>
  *
  * Read from the throw sites in `better-auth/dist/state.mjs`, **for the strategy we actually run**. That
  * matters more than it sounds: the file has two branches that throw different codes for the same
- * underlying cause, and reading the wrong one inverts the conclusions. `auth.ts` sets `secondaryStorage`,
- * which makes Better Auth resolve `storeStateStrategy` to `"database"`, and `account:` sets no override —
- * so the cookie branch never executes here.
+ * underlying cause, and reading the wrong one inverts the conclusions. Better Auth picks the strategy
+ * from `!!options.database || !!options.secondaryStorage`, and `auth.ts` sets BOTH — so it resolves to
+ * `"database"` and the cookie branch never executes here. Noted as both deliberately: dropping Redis
+ * alone would not flip it back.
  *
  * | code | thrown when (database strategy) | actionable? |
  * | --- | --- | --- |
@@ -147,7 +148,7 @@ export const redactEmailsInLogMessage = (message: unknown): unknown =>
  * | `state_not_found` | the callback carried no `state` parameter at all (bots, truncated links) | no — **suppressed** |
  * | `state_security_mismatch` | the state does not match the stored one, or the signed `state` cookie fails verification ("State not persisted correctly") | **yes**, kept |
  * | `state_generation_error` | the adapter could not write the verification row | **yes**, kept — a real fault |
- * | `state_invalid` | undecryptable state — **cookie branch only, unreachable on this config**; kept for the cost of one Set entry | kept |
+ * | `state_invalid` | undecryptable state — **cookie branch only, unreachable on this config** | kept; suppressing a code that never fires buys nothing |
  *
  * `state_security_mismatch` carries the load this gate deliberately does not take on, and it is mixed:
  *
