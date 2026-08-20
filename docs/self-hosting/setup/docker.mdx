@@ -618,11 +618,17 @@ Common checks:
 
   **If the port was reachable from an untrusted network, also invalidate existing sessions.** Valkey persists
   to its `redis` volume, so removing the port does not clear session or token state an attacker may already
-  have written — a forged session can remain valid afterwards. After closing the port, rotate `NEXTAUTH_SECRET`
-  (and `BETTER_AUTH_SECRET`, if you set it) and restart the stack: this invalidates every session cookie, so
-  all users must sign in again, while stored data, the job queue, and the cache stay intact. Leave
-  `ENCRYPTION_KEY` unchanged, and do **not** run a blanket `FLUSHDB` — the same Valkey also holds BullMQ job
-  queues and the application cache.
+  have written — a forged session can remain valid afterward. After closing the port, set a new
+  `NEXTAUTH_SECRET` in your `.env`, then recreate the app container so it picks up the change:
+  ```bash
+  docker compose up -d --force-recreate formbricks
+  ```
+  A plain `docker compose restart` keeps the container's original environment, so the rotated secret would not
+  take effect. Recreating invalidates every session cookie, so all users must sign in again, while stored
+  data, the job queue, and the cache stay intact. (If you added `BETTER_AUTH_SECRET` to the `formbricks`
+  service environment yourself, rotate that instead — Better Auth prefers it over `NEXTAUTH_SECRET`; the
+  bundled compose ships only `NEXTAUTH_SECRET`.) Leave `ENCRYPTION_KEY` unchanged, and do **not** run a blanket
+  `FLUSHDB` — the same Valkey also holds BullMQ job queues and the application cache.
 </Warning>
 
 <Note>
