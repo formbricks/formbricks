@@ -58,7 +58,7 @@ export function DimensionsPanel({
           <AlertTitle>{t("workspace.analysis.charts.group_by_description")}</AlertTitle>
         </Alert>
         {suggestsOptionGrouping && (
-          <Alert variant="warning" role="status">
+          <Alert variant="warning" size="small" role="status">
             <AlertTitle>{t("workspace.analysis.charts.prefer_option_grouping")}</AlertTitle>
           </Alert>
         )}
