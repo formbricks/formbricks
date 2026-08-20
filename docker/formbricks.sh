@@ -165,15 +165,19 @@ write_rustfs_env_file() {
 
 decode_dotenv_value() {
   local value="$1"
+  local single_quoted=false
 
   if [[ "$value" == \'*\' ]]; then
+    single_quoted=true
     value=${value:1:${#value}-2}
     value=${value//\\\'/\'}
   elif [[ "$value" == \"*\" ]]; then
     value=${value:1:${#value}-2}
     value=${value//\\\"/\"}
   fi
-  value=${value//\$\$/\$}
+  if [ "$single_quoted" = false ]; then
+    value=${value//\$\$/\$}
+  fi
 
   printf '%s' "$value"
 }
@@ -221,7 +225,7 @@ read_existing_postgres_password() {
         sub(/^[[:space:]]*-[[:space:]]*POSTGRES_PASSWORD=/, "", password)
         if (password != $0) {
           sub(/[[:space:]]+$/, "", password)
-          if (password !~ /^\$\{/) {
+          if (password !~ /^\$\{/ && password !~ /^\$[[:alpha:]_][[:alnum:]_]*/) {
             print password
             exit
           }

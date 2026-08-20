@@ -302,6 +302,41 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     expect(envContents).toContain("POSTGRES_PASSWORD_URL_ENCODED=legacy%3Ap%40ss%2Fword%3F%23");
   });
 
+  test("preserves double dollar signs in a single-quoted password without Compose parsing", () => {
+    const tempDir = createTempDir();
+    const envPath = join(tempDir, ".env");
+    const missingComposePath = join(tempDir, "missing-compose.yml");
+
+    writeFileSync(envPath, "POSTGRES_PASSWORD='legacy$$PASSWORD_SENTINEL'\n");
+
+    expect(readExistingPostgresPassword(envPath, missingComposePath)).toBe("legacy$$PASSWORD_SENTINEL");
+  });
+
+  test("does not preserve Compose variable references as literal legacy passwords", () => {
+    const tempDir = createTempDir();
+    const envPath = join(tempDir, ".env");
+    const composePath = join(tempDir, "docker-compose.yml");
+    const writeLegacyComposePassword = (password: string): void => {
+      writeFileSync(
+        composePath,
+        `services:
+  postgres:
+    environment:
+      - POSTGRES_PASSWORD=${password}
+`
+      );
+    };
+
+    writeLegacyComposePassword("$EXTERNAL_PASSWORD");
+    expect(readExistingPostgresPassword(envPath, composePath)).toBe("");
+
+    writeLegacyComposePassword("${EXTERNAL_PASSWORD}");
+    expect(readExistingPostgresPassword(envPath, composePath)).toBe("");
+
+    writeLegacyComposePassword("legacy-password");
+    expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy-password");
+  });
+
   test("preserves unrelated environment entries and literal dollar signs across reruns", () => {
     const composePath = writeDockerComposeTemplate();
     const envPath = join(dirname(composePath), ".env");
