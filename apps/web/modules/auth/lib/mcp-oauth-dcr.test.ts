@@ -197,6 +197,33 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
     expect(body.client_id).toBeTruthy();
   });
 
+  /**
+   * The security boundary the inference leans on. It fires whenever ANY redirect URI is http loopback,
+   * which is deliberately wider than "all of them" — a native client may legitimately pair a loopback
+   * URI with an https one. That widening is only safe because `native` does not relax the rule for a
+   * non-loopback http URI, so being labelled native can never be a route to registering one. Asserted
+   * against the real validator rather than reasoned about, because the whole class of bug here is
+   * upstream changing a rule we assumed.
+   */
+  test("being labelled native does not let a non-loopback http redirect register", async () => {
+    const payload = JSON.stringify({
+      client_name: "Mixed Client",
+      redirect_uris: ["http://127.0.0.1:9999/callback", "http://evil.example.com/callback"],
+      token_endpoint_auth_method: "none",
+    });
+    const inferred = withInferredApplicationType(payload);
+
+    // The inference does fire on this shape …
+    expect(JSON.parse(inferred).application_type).toBe("native");
+
+    // … and upstream still refuses the registration.
+    const response = await register(createAuthInstance(), inferred);
+    const body = (await response.json()) as { error?: string };
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("invalid_redirect_uri");
+  });
+
   test("PRM-advertised scopes register verbatim, including offline_access", async () => {
     const auth = createAuthInstance();
     const advertisedScopes = await fetchAdvertisedScopes();

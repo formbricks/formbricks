@@ -16,7 +16,7 @@ const REGISTER = `${BASE}/api/auth/oauth2/register`;
  * the field is inferred here when the URIs make it unambiguous.
  */
 describe("withInferredApplicationType (ENG-2343)", () => {
-  test("fills in native when every redirect URI is an http loopback", () => {
+  test("fills in native when a redirect URI is an http loopback", () => {
     const body = JSON.stringify({ redirect_uris: ["http://127.0.0.1:33418/callback"] });
 
     expect(JSON.parse(withInferredApplicationType(body))).toEqual({
@@ -46,10 +46,6 @@ describe("withInferredApplicationType (ENG-2343)", () => {
       { application_type: "web", redirect_uris: ["http://127.0.0.1:1/cb"] },
     ],
     ["a non-loopback https URI", { redirect_uris: ["https://app.example.com/cb"] }],
-    [
-      "a mix of loopback and remote",
-      { redirect_uris: ["http://127.0.0.1:1/cb", "https://app.example.com/cb"] },
-    ],
     ["https on loopback (upstream refuses this for native)", { redirect_uris: ["https://127.0.0.1:1/cb"] }],
     ["a non-loopback http host", { redirect_uris: ["http://10.0.0.5:1/cb"] }],
     ["no redirect_uris at all", { client_name: "x" }],
@@ -59,6 +55,34 @@ describe("withInferredApplicationType (ENG-2343)", () => {
     const body = JSON.stringify(payload);
 
     expect(withInferredApplicationType(body)).toBe(body);
+  });
+
+  /**
+   * A native client may register a loopback URI *and* an https one (an app-claimed universal link).
+   * Upstream accepts that pair under `native`, and 1.6 accepted it unconditionally, so failing to infer
+   * here would newly break it — the regression this file exists to prevent. Widening to "at least one"
+   * cannot widen what upstream accepts: it refuses a non-loopback http redirect under `native` too, as
+   * the case below asserts.
+   */
+  test.each([
+    ["loopback alongside an https URI", ["http://127.0.0.1:1/cb", "https://app.example.com/cb"]],
+    ["an https URI listed first", ["https://app.example.com/cb", "http://localhost:7777/cb"]],
+  ])("infers native for %s", (_label, redirect_uris) => {
+    const result = JSON.parse(withInferredApplicationType(JSON.stringify({ redirect_uris })));
+
+    expect(result.application_type).toBe("native");
+    expect(result.redirect_uris).toEqual(redirect_uris);
+  });
+
+  // The security boundary the widening leans on: labelling a client `native` must not be a way to get a
+  // non-loopback http redirect registered. We still infer here, and upstream still refuses the URI —
+  // asserted end-to-end against the real validator in mcp-oauth-dcr.test.ts.
+  test("inferring native does not make a non-loopback http redirect acceptable", () => {
+    const redirect_uris = ["http://127.0.0.1:1/cb", "http://evil.example.com/cb"];
+    const result = JSON.parse(withInferredApplicationType(JSON.stringify({ redirect_uris })));
+
+    expect(result.application_type).toBe("native");
+    expect(result.redirect_uris).toEqual(redirect_uris);
   });
 
   // A malformed body must reach upstream unchanged and produce upstream's own error, not ours.

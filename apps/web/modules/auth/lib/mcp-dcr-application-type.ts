@@ -17,11 +17,19 @@ import "server-only";
  * because the clients are not theirs to change — so it is normalized here.
  *
  * The inference is narrow and spec-aligned. RFC 8252 §7.3 defines loopback redirection as the native-app
- * pattern, so a registration whose redirect URIs are *all* http loopback is a native client by
- * definition; a browser app would not use one. We only fill the field in when it is absent, and only
- * when every URI is http on one of the three hosts upstream itself accepts for native
- * (`localhost`, `127.0.0.1`, `[::1]`) — so the value we supply is guaranteed to pass the validation that
- * follows. Anything else is passed through untouched and upstream decides, exactly as before.
+ * pattern, so a registration that asks for one is a native client; a browser app would not. We fill the
+ * field in only when it is absent and at least one redirect URI is http on one of the three hosts
+ * upstream itself accepts for native (`localhost`, `127.0.0.1`, `[::1]`). Anything else is passed
+ * through untouched and upstream decides, exactly as before.
+ *
+ * Deliberately "at least one" rather than "all": a native client may legitimately register a loopback
+ * URI *and* an https one (an app-claimed universal link), a shape upstream accepts under `native` and
+ * 1.6 accepted unconditionally — requiring every URI to be loopback would have made that combination
+ * newly fail, which is the regression this whole file exists to prevent. Verified against the live
+ * endpoint that widening this does not widen what gets accepted: upstream refuses a non-loopback http
+ * redirect under `native` too (`native` + `http://evil.example.com` → `invalid_redirect_uri`), so the
+ * only URIs this can green-light are loopback and https ones. It never turns a rejected URI into an
+ * accepted one; it only stops a native client being misfiled as a web one.
  */
 
 const DCR_PATH_SEGMENT = "/api/auth/oauth2/register";
@@ -48,7 +56,7 @@ export const isDcrRegistration = (request: Request): boolean => {
 };
 
 /**
- * The registration body with `application_type: "native"` filled in when it was absent and every
+ * The registration body with `application_type: "native"` filled in when it was absent and at least one
  * redirect URI is an http loopback. Returns the input unchanged in every other case, including a body
  * that is not JSON or not an object — this must never be the reason a registration fails.
  */
@@ -66,7 +74,7 @@ export const withInferredApplicationType = (body: string): string => {
 
   const redirectUris = client.redirect_uris;
   if (!Array.isArray(redirectUris) || redirectUris.length === 0) return body;
-  if (!redirectUris.every(isNativeHttpLoopback)) return body;
+  if (!redirectUris.some(isNativeHttpLoopback)) return body;
 
   return JSON.stringify({ ...client, application_type: "native" });
 };
