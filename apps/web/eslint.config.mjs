@@ -1,4 +1,4 @@
-import next from "@formbricks/eslint-config/next";
+import next from "@formbricks/config-eslint/next";
 
 /*
  * Environment access goes through the validated env module (ENG-1685).

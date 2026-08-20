@@ -193,11 +193,9 @@ export const getOrganizationWorkspacesLimit = async (organizationId: string): Pr
     return entitlementsContext.limits.workspaces ?? Infinity;
   }
 
-  if (
-    entitlementsContext.licenseStatus === "active" &&
-    entitlementsContext.licenseFeatures?.workspaces != null
-  ) {
-    return entitlementsContext.licenseFeatures.workspaces;
+  // `workspaces: null` on an active license means unlimited, mirroring the cloud branch above.
+  if (entitlementsContext.licenseStatus === "active" && entitlementsContext.licenseFeatures) {
+    return entitlementsContext.licenseFeatures.workspaces ?? Infinity;
   }
 
   return 3;

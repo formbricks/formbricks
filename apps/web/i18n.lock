@@ -188,7 +188,6 @@ checksums:
     common/code: 343bc5386149b97cece2b093c39034b2
     common/collapse_rows: 24988527f9180f37aa55d2aa183ccb21
     common/column_n: b98315f0e504fad7e784d77f153a7d9d
-    common/coming_soon: ee2b0671e00972773210c5be5a9ccb89
     common/completed: 0e4bbce9985f25eb673d9a054c8d5334
     common/confirm: 90930b51154032f119fa75c1bd422d8b
     common/connect: 8778ee245078a8be4a2ce855c8c56edc
@@ -3781,7 +3780,6 @@ checksums:
     workspace/unify/allowed_values: 430e0721aa2c52745ef8f8b6918bb7d2
     workspace/unify/api_ingestion: a14642d27bbb6843f9f4903b6555dfbb
     workspace/unify/api_ingestion_settings_description: b4d3f00729154c01d0dd46b551c1f402
-    workspace/unify/api_ingestion_setup_description: d18a267d0e50198682950f5341307fa3
     workspace/unify/auto_generated: 6e83e8febd63275692c444cb8074531d
     workspace/unify/change_file: c5163ac18bf443370228a8ecbb0b07da
     workspace/unify/clear_mapping: 9bd7c716667838b9f203f5af0ac2d651
@@ -3868,6 +3866,15 @@ checksums:
     workspace/unify/field_id: 7791b5d581b7a525dcadf11ec73c6ab7
     workspace/unify/field_label: 6384505ca0e40010c666b712511132a6
     workspace/unify/field_type: 2581066dc304c853a4a817c20996fa08
+    workspace/unify/field_type_label_boolean: 34aa25a03cc03e58613d578b19c3547b
+    workspace/unify/field_type_label_categorical: 307101bb385166b538e9370428963461
+    workspace/unify/field_type_label_ces: e2ea309b2f7f13257967b966c2fda1e9
+    workspace/unify/field_type_label_csat: fdfc1dc6214cce661dcdc32a71d80337
+    workspace/unify/field_type_label_date: 56f41c5d30a76295bb087b20b7bee4c3
+    workspace/unify/field_type_label_nps: bbbbfdbb6101b47ce32f34ba627dd14a
+    workspace/unify/field_type_label_number: 2789f8391f63e7200a5521078aab017d
+    workspace/unify/field_type_label_rating: c9fa231054678af1362b7f9c6ab35e23
+    workspace/unify/field_type_label_text: 4ddccc1974775ed7357f9beaf9361cec
     workspace/unify/formbricks_surveys: de765c51751a795336498cd0a6c3f86b
     workspace/unify/go_to_feedback_directories: 0262585f8a811222eee931648e86b84a
     workspace/unify/historical_import_complete: f46f98bf4db63bf2993bfb234dc95f62

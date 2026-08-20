@@ -16,6 +16,14 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 - `pnpm test:e2e` — launch the Playwright browser regression suite.
 - `pnpm db:migrate:dev` — apply Prisma migrations against the dev database.
 
+Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
+Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
+`test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
+`config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
+to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
+`apps/storybook` has no unit tests by policy (UI is covered by Playwright). Keep new packages on this
+matrix or document the exception here.
+
 ### Survey Packages Build & Cache
 
 The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:
@@ -28,6 +36,53 @@ The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the b
   ```
 - The browser also caches the UMD bundle (`surveys.umd.cjs`) served from `public/js/`. After rebuilding, do a **hard refresh** (Cmd+Shift+R / Ctrl+Shift+R) or disable the browser cache via DevTools to pick up the new bundle.
 - If changes still don't appear, restart the Next.js dev server (`pnpm dev`).
+
+### Stale package builds after a branch switch
+
+The same trap applies to **every** workspace package consumed through its built output rather than its
+source — `@formbricks/ai` and `@formbricks/database` resolve via `dist/` in their `exports` map, so
+`apps/web` imports the build, not `src/`. `git switch`, a rebase, or a pull changes `src/` but leaves
+`dist/` exactly as it was, and nothing warns you.
+
+**This only bites when you bypass Turborepo.** Running `vitest` or `tsc` directly inside `apps/web`,
+`pnpm --filter @formbricks/web test`, or an IDE test runner all skip the task graph — which is how you
+usually meet it, iterating on one test file. The root `pnpm test` and `pnpm typecheck` are safe:
+`@formbricks/web#test` and `@formbricks/web#typecheck` in `turbo.json` each declare `dependsOn` on
+`@formbricks/ai#build`, `@formbricks/database#build` and five more, so turbo rebuilds them before the
+suite runs. That is also why the unit-test workflow (`test.yml`) stays green with no build step of its
+own — do **not** read "green on CI, red locally" as evidence of a stale `dist/`; both run the same
+graph.
+
+The failure looks nothing like a stale build. A symbol added on the branch you just checked out is
+absent from `dist/`, so depending on what is missing the import either resolves to `undefined` or fails
+outright at module resolution — and both read like real regressions:
+
+- `TypeError: Right-hand side of 'instanceof' is not an object` (the class is in `src/`, not `dist/`)
+- a missing named export, or `Failed to resolve entry for package "@formbricks/…"` when `dist/` is
+  absent altogether
+- `tsc` or Vitest failures in files you never touched
+
+This has cost real time: four failing tests read as a broken `main` from an unrelated PR, when the only
+problem was a `dist/` built days earlier. To confirm the diagnosis, check whether a symbol you expect
+the package to *export* is in the built output — present in `src/`, absent from `dist/`, is the
+signature. (Pick one the entry really re-exports; an internal helper is legitimately absent from
+`dist/index.js` and would read as a false positive.)
+
+```shell
+grep -rc "MyNewExport" packages/<pkg>/src packages/<pkg>/dist/index.js
+```
+
+Recursive on purpose: `packages/ai/src` has nested directories (`providers/`), and a non-recursive
+`src/*.ts` glob reports a symbol defined in one of them as missing from *both* sides.
+
+The fix is to rebuild the dependency graph:
+
+```shell
+pnpm build --filter=@formbricks/web^...
+```
+
+(Dependencies only — `^...` excludes the Next app itself. This is the same command
+`.github/workflows/integration-tests.yml` runs before its suites, for exactly this reason.)
 
 ### Tailwind & Workspace Package CSS
 
@@ -59,7 +114,7 @@ reached through an explicit `@config` bridge from the package's own stylesheet. 
 
 ## Coding Style & Naming Conventions
 
-TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/eslint-config`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
+TypeScript, React, and Prisma are the primary languages. Use the shared ESLint presets (`@formbricks/config-eslint`) and Prettier preset (110-char width, semicolons, double quotes, sorted import groups). Two-space indentation is standard; prefer `PascalCase` for React components and folders under `modules/`, `camelCase` for functions/variables, and `SCREAMING_SNAKE_CASE` only for constants. When adding mocks, place them inside `__mocks__` so import ordering stays stable.
 Import order is set by `@trivago/prettier-plugin-sort-imports` and verified in CI by `pnpm format:check`, so it is not a matter of taste: `__mocks__` imports come first (they carry `vi.mock` calls), then `server-only`, then third-party packages, then `@formbricks/*`, `~/*`, `@/*`, and relative imports. Do not ask for or apply a different order in review — it will fail the check.
 We are using SonarQube to identify code smells and security hotspots.
 Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonly<MyProps>)`).
@@ -168,9 +223,11 @@ Heuristic:
 
 ## Commit & Pull Request Guidelines
 
-Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat:`) and usually append the PR number, e.g. `fix: update OpenAPI schema (#6617)`. Keep commits scoped and lint-clean. Pull requests should outline the problem, summarize the solution, and link to issues or product specs. Attach screenshots or gifs for UI-facing work, list any migrations or env changes, and paste the output of relevant commands (`pnpm test`, `pnpm lint`, `pnpm db:migrate:dev`) so reviewers can verify readiness.
+Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat:`) and usually append the PR number, e.g. `fix: update OpenAPI schema (#6617)`. Keep commits scoped and lint-clean. Pull requests should outline the problem, summarize the solution, and link to issues or product specs. Attach screenshots or gifs for UI-facing work, and record any migrations or env changes under `Migrations & env`, breaking or not. Don't restate what CI already reports (lint, typecheck, unit tests, build, Sonar) — the description carries what those checks cannot show.
 
-Every PR must use `.github/pull_request_template.md` and follow its inline guidance — the template is the source of truth for PR structure, including the `## QA / Test Plan` section used to generate release QA. Fill every section from the actual diff on PR open, and re-update it in the same turn on every change (new commits, scope or review fixes) so it never drifts — treat a stale section as a bug.
+Every PR must use `.github/pull_request_template.md` and follow its inline guidance — the template is the source of truth for PR structure. The ticket line at the top is the only place a magic word (`Fixes`, `Ref`, `Closes`) may sit next to a ticket id: Linear and GitHub scan the whole body, so the same pair written in prose — inside backticks too — links and closes that ticket as well. When you need to name the convention in prose, write it without a resolvable id. All QA for a change happens on its own PR before review: the creator shows that every behaviour the diff changes is covered, and lists what is not under `Open gaps`; the reviewer challenges that list and asks for the missing coverage. There is no separate release QA pass per PR — release review only looks for problems arising from the interplay of several changes. Fill every section from the actual diff on PR open, and re-update it in the same turn on every change (new commits, scope or review fixes) so it never drifts — treat a stale section as a bug.
+
+The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. `pr-label-sync.yml` reads nothing but the tick, so the prose below the checkbox cannot change the label — but it is not free-form either: the CodeRabbit `Breaking changes match the diff` check compares the tick against the diff and expects a ticked box to document each breaking change, so explain your answer there in whatever shape fits (table or prose).
 
 ## Next.js Documentation
 

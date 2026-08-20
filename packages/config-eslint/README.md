@@ -1,4 +1,4 @@
-# `@formbricks/eslint-config`
+# `@formbricks/config-eslint`
 
 Shared [ESLint 9 flat config](https://eslint.org/docs/latest/use/configure/configuration-files) tiers for the Formbricks monorepo. Each package/app has a small `eslint.config.mjs` that imports exactly one tier:
 
@@ -15,7 +15,7 @@ against the consuming package's own tsconfig via `projectService`):
 
 ```js
 // eslint.config.mjs
-import library from "@formbricks/eslint-config/library";
+import library from "@formbricks/config-eslint/library";
 
 export default library({ tsconfigRootDir: import.meta.dirname });
 ```

@@ -27,10 +27,19 @@ describe("chart-utils", () => {
       const rows = [{ "m.joy": 1163, "m.anger": 1050, "m.fear": 3 }];
       const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger", "m.fear"], label);
       expect(result).toEqual([
-        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 1163 },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 1050 },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.fear", [PIE_MEASURE_VALUE_KEY]: 3 },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 1163, tooltipLabel: "L:m.joy" },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 1050, tooltipLabel: "L:m.anger" },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.fear", [PIE_MEASURE_VALUE_KEY]: 3, tooltipLabel: "L:m.fear" },
       ]);
+    });
+
+    // The tooltip labels each row from its dataKey, which for these slices is the internal
+    // PIE_MEASURE_VALUE_KEY — without tooltipLabel it renders that raw key (ENG-2346).
+    test("labels every slice for the tooltip, never leaving the internal value key exposed", () => {
+      const rows = [{ "m.joy": 10, "m.anger": 2 }];
+      const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger"], label);
+      expect(result.map((row) => row.tooltipLabel)).toEqual(["L:m.joy", "L:m.anger"]);
+      expect(result.every((row) => !String(row.tooltipLabel).includes(PIE_MEASURE_VALUE_KEY))).toBe(true);
     });
 
     test("sums a measure across multiple rows and treats non-numeric as 0", () => {
@@ -40,8 +49,8 @@ describe("chart-utils", () => {
       ];
       const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger"], label);
       expect(result).toEqual([
-        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 15 },
-        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 2 },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.joy", [PIE_MEASURE_VALUE_KEY]: 15, tooltipLabel: "L:m.joy" },
+        { [PIE_MEASURE_NAME_KEY]: "L:m.anger", [PIE_MEASURE_VALUE_KEY]: 2, tooltipLabel: "L:m.anger" },
       ]);
     });
   });

@@ -9,6 +9,9 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 export const verifyEmailChangeAction = actionClient.inputSchema(z.object({ token: z.string() })).action(
   withAuditLogging("updated", "user", async ({ ctx, parsedInput }) => {
+    // Unauthenticated on purpose — the link is clicked from the new mailbox, often in another browser.
+    // What makes that safe is the token's binding to the credential state it was issued under
+    // (verifyEmailChangeToken), so a password reset or a prior email change kills it (ENG-2106).
     const { id, email } = await verifyEmailChangeToken(parsedInput.token);
 
     if (!email) {

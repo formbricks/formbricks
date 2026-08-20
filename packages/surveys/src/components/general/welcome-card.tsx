@@ -162,7 +162,6 @@ export function WelcomeCard({
             variablesData,
             languageCode
           )}
-          elementId="welcomeCard"
         />
         <Subheader
           subheader={replaceRecallInfo(

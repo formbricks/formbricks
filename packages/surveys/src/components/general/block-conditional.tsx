@@ -33,7 +33,12 @@ const FOCUSABLE_CONTROL_SELECTOR = [
 
 /**
  * Focuses the first interactive control inside `root`. With `preferInvalid`,
- * controls flagged aria-invalid win, and scrolling is left to the caller.
+ * controls flagged aria-invalid win.
+ *
+ * Scrolling is always left to the caller. The first control can sit *below* the card's content — a
+ * CTA block has no input of its own, so its first control is the Next button rendered after the
+ * element — and letting focus scroll that into view opens an overflowing card at its end instead of
+ * its start (ENG-2289). The `preferInvalid` callers scroll the field they focus into view themselves.
  */
 const focusFirstControl = (root: HTMLElement, preferInvalid = false): void => {
   const invalidTarget = preferInvalid
@@ -42,7 +47,7 @@ const focusFirstControl = (root: HTMLElement, preferInvalid = false): void => {
       )
     : null;
   const target = invalidTarget ?? root.querySelector<HTMLElement>(FOCUSABLE_CONTROL_SELECTOR);
-  target?.focus({ preventScroll: preferInvalid });
+  target?.focus({ preventScroll: true });
 };
 
 interface BlockConditionalProps {

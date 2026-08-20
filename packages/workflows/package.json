@@ -28,8 +28,8 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@types/js-yaml": "4.0.9",
     "@vitest/coverage-v8": "4.1.6",
     "js-yaml": "4.3.1",
