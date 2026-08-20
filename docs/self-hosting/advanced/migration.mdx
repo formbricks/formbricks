@@ -128,6 +128,10 @@ revoked — the token is inactive. `/introspect` reports `active: false` for it 
 This is upstream hardening, and it is the stricter of the two behaviours: a token that outlives the sign-out
 which created it is exactly what a revocation is supposed to stop.
 
+It applies to **access** tokens. A refresh token granted `offline_access` deliberately survives the session
+ending, per OIDC Back-Channel Logout 1.0 §2.7, so that long-lived API access can outlive a browser session —
+which is what MCP clients rely on. Signing out is therefore not a way to cut a client off permanently.
+
 **No action is required.** MCP clients re-authorize on their own — Claude Code and MCP Inspector both do —
 so a user who signs out and back in sees nothing. It is listed here for one case only: a custom integration
 that caches a Formbricks MCP access token and reuses it across sessions will start receiving rejections
