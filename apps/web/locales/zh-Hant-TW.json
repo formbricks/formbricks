@@ -1877,7 +1877,8 @@
         "no_data_message": "無資料。目前沒有可顯示的資訊。請新增圖表來建立你的儀表板。",
         "please_enter_name": "請輸入儀表板名稱",
         "upgrade_prompt_description": "從您的回饋資料建立洞察儀表板。",
-        "upgrade_prompt_title": "升級以解鎖儀表板功能"
+        "upgrade_prompt_title": "升級以解鎖儀表板功能",
+        "widget_view": "小工具檢視"
       },
       "manage_feedback_sources": "管理意見來源",
       "no_feedback_records_message": "你目前還沒有可報告的回饋記錄。請設定回饋來源以將資料傳送到系統中。",

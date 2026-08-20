@@ -1877,7 +1877,8 @@
         "no_data_message": "Keine Daten. Es gibt derzeit keine Informationen zum Anzeigen. Füge Diagramme hinzu, um dein Dashboard zu erstellen.",
         "please_enter_name": "Bitte gib einen Dashboard-Namen ein",
         "upgrade_prompt_description": "Erstelle Insights-Dashboards aus deinen Feedback-Daten.",
-        "upgrade_prompt_title": "Upgrade durchführen, um Dashboards freizuschalten"
+        "upgrade_prompt_title": "Upgrade durchführen, um Dashboards freizuschalten",
+        "widget_view": "Widget-Ansicht"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Du hast noch keine Feedback-Einträge zum Auswerten. Richte Feedback-Quellen ein, um Daten ins System zu senden.",

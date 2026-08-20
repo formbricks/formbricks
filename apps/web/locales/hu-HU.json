@@ -1877,7 +1877,8 @@
         "no_data_message": "Nincsenek adatok. Jelenleg nincsenek megjelenítendő információk. Adjon hozzá diagramokat a vezérlőpultja összeállításához.",
         "please_enter_name": "Adjon meg egy vezérlőpultnevet",
         "upgrade_prompt_description": "Tapasztalati vezérlőpultok összeállítása a visszajelzések adataiból.",
-        "upgrade_prompt_title": "Váltson magasabb csomagra a vezérlőpultok feloldásához"
+        "upgrade_prompt_title": "Váltson magasabb csomagra a vezérlőpultok feloldásához",
+        "widget_view": "Widget nézet"
       },
       "manage_feedback_sources": "Visszajelzési források kezelése",
       "no_feedback_records_message": "Még nincsenek visszajelzési rekordjai, amelyekről jelentést készíthetne. Állítson be visszajelzési forrásokat, hogy adatokat küldhessen a rendszerbe.",

@@ -1877,7 +1877,8 @@
         "no_data_message": "No Data. There is currently no information to display. Add charts to build your dashboard.",
         "please_enter_name": "Please enter a dashboard name",
         "upgrade_prompt_description": "Build insights dashboards from your feedback data.",
-        "upgrade_prompt_title": "Upgrade to unlock Dashboards"
+        "upgrade_prompt_title": "Upgrade to unlock Dashboards",
+        "widget_view": "Widget view"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "You don't have feedback records to report on yet. Set up feedback sources to send data into the system.",

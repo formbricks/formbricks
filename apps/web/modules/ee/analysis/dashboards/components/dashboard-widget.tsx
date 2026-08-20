@@ -68,9 +68,9 @@ export function DashboardWidget({
         </h3>
         {view && onViewChange && (
           <div
-            className="flex shrink-0 items-center rounded-md border border-gray-200 p-0.5"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}>
+            role="group"
+            aria-label={t("workspace.analysis.dashboards.widget_view")}
+            className="flex shrink-0 items-center rounded-md border border-gray-200 p-0.5">
             {WIDGET_VIEWS.map((widgetView) => {
               const isActive = view === widgetView;
               const Icon = widgetView === "chart" ? ChartColumnIcon : TableIcon;
@@ -90,7 +90,11 @@ export function DashboardWidget({
                         ? "bg-gray-100 text-gray-700"
                         : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
                     )}
-                    onClick={() => onViewChange(widgetView)}>
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewChange(widgetView);
+                    }}>
                     <Icon className="size-3.5" />
                   </button>
                 </TooltipRenderer>

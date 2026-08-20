@@ -1877,7 +1877,8 @@
         "no_data_message": "Sin datos. Actualmente no hay información que mostrar. Añade gráficos para crear tu panel.",
         "please_enter_name": "Por favor, introduce un nombre para el panel de control",
         "upgrade_prompt_description": "Crea paneles de información a partir de tus datos de opiniones.",
-        "upgrade_prompt_title": "Mejora tu plan para desbloquear los Paneles"
+        "upgrade_prompt_title": "Mejora tu plan para desbloquear los Paneles",
+        "widget_view": "Vista de widget"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Todavía no tienes registros de comentarios para analizar. Configura fuentes de comentarios para enviar datos al sistema.",

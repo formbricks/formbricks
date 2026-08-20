@@ -1877,7 +1877,8 @@
         "no_data_message": "Fără date. În prezent nu există informații de afișat. Adaugă grafice pentru a-ți construi tabloul de bord.",
         "please_enter_name": "Te rugăm să introduci un nume pentru tablou de bord",
         "upgrade_prompt_description": "Creează tablouri de bord cu informații utile din datele tale de feedback.",
-        "upgrade_prompt_title": "Actualizează pentru a debloca Dashboardurile"
+        "upgrade_prompt_title": "Actualizează pentru a debloca Dashboardurile",
+        "widget_view": "Vizualizare widget"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Nu ai încă înregistrări de feedback pentru raportare. Configurează surse de feedback pentru a trimite date în sistem.",

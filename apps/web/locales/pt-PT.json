@@ -1877,7 +1877,8 @@
         "no_data_message": "Sem Dados. Atualmente não há informação para apresentar. Adiciona gráficos para construir o teu painel.",
         "please_enter_name": "Por favor, introduza um nome para o painel",
         "upgrade_prompt_description": "Cria dashboards de insights a partir dos teus dados de feedback.",
-        "upgrade_prompt_title": "Faz upgrade para desbloquear Dashboards"
+        "upgrade_prompt_title": "Faz upgrade para desbloquear Dashboards",
+        "widget_view": "Vista de widget"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Ainda não tens registos de feedback para reportar. Configura fontes de feedback para enviar dados para o sistema.",

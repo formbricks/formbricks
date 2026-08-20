@@ -1877,7 +1877,8 @@
         "no_data_message": "データがありません。現在表示する情報がありません。ダッシュボードを構築するにはチャートを追加してください。",
         "please_enter_name": "ダッシュボード名を入力してください",
         "upgrade_prompt_description": "フィードバックデータからインサイトダッシュボードを構築します。",
-        "upgrade_prompt_title": "アップグレードしてダッシュボードを利用"
+        "upgrade_prompt_title": "アップグレードしてダッシュボードを利用",
+        "widget_view": "ウィジェット表示"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "レポートを作成するためのフィードバックレコードがまだありません。フィードバックソースを設定してシステムにデータを送信してください。",

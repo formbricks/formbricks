@@ -1877,7 +1877,8 @@
         "no_data_message": "Ingen data. Det finns för närvarande ingen information att visa. Lägg till diagram för att bygga din instrumentpanel.",
         "please_enter_name": "Ange ett namn på instrumentpanelen",
         "upgrade_prompt_description": "Bygg insikter med dashboards från din feedbackdata.",
-        "upgrade_prompt_title": "Uppgradera för att låsa upp Dashboards"
+        "upgrade_prompt_title": "Uppgradera för att låsa upp Dashboards",
+        "widget_view": "Widgetvy"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Du har inga feedbackposter att rapportera om ännu. Sätt upp feedbackkällor för att skicka data till systemet.",

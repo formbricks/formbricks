@@ -1877,7 +1877,8 @@
         "no_data_message": "暂无数据。当前没有可显示的信息。请添加图表来构建你的仪表板。",
         "please_enter_name": "请输入 Dashboard 名称",
         "upgrade_prompt_description": "从您的反馈数据构建洞察仪表板。",
-        "upgrade_prompt_title": "升级以解锁仪表板"
+        "upgrade_prompt_title": "升级以解锁仪表板",
+        "widget_view": "小部件视图"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "你还没有可用于报告的反馈记录。请设置反馈来源，将数据导入系统。",
