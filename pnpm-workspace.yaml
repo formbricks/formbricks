@@ -155,13 +155,19 @@ overrides:
   # detection in its recursive record-merge routine, so two recursive object graphs sharing a
   # property path exhaust the call stack (DoS); patched in 8.0.0. Pinned to 8.0.1 (lowest patched
   # release, past the `minimumReleaseAge` cooldown as of 2026-08-19). This is a cross-major coercion
-  # of the only consumer, which declares a 7.x dependency — verified safe: @prisma/config only uses
-  # deepmerge-ts to merge developer-authored prisma.config.ts contents at CLI time, so the input is
-  # never attacker-controlled, and `prisma generate` / `prisma migrate` continue to resolve config
+  # of two consumers, both of which declare a 7.x dependency — verified safe: @prisma/config only
+  # merges developer-authored prisma.config.ts contents at CLI time, and next-safe-action merges
+  # middleware context (plain objects, 2-3 levels, no Map/Set) via `deepmerge`, so none of 8.0.0's
+  # breaking changes apply: the deepmergeInto mutation fix and the renamed mergeInfo/
+  # DeepMergeIntoUtils types are out of scope, the mergeMaps collision change needs a Map, and the
+  # new maxDepth defaults to 1000. `prisma generate` / `prisma migrate` still resolve config
   # correctly under 8.0.1.
-  # load-bearing: apps/web > @better-auth/oauth-provider > better-auth > @better-auth/prisma-adapter >
-  # @prisma/client > prisma > @prisma/config resolves 7.1.5.
-  deepmerge-ts: 8.0.1
+  # load-bearing (runtime): apps/web > next-safe-action (direct, ^7.1.5) merges server-action
+  # middleware ctx (ActionClientCtx — ipAddress/oldObject/newObject can carry request-derived data)
+  # on every invocation.
+  # load-bearing (dev-only, Prisma CLI): apps/web > @better-auth/oauth-provider > better-auth >
+  # @better-auth/prisma-adapter > @prisma/client > prisma > @prisma/config resolves 7.1.5.
+  deepmerge-ts@7: 8.0.1
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
   # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
