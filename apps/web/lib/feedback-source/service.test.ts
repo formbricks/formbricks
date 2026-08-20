@@ -774,7 +774,7 @@ describe("updateFeedbackSourceWithMappings", () => {
 
   test("updates feedbackSource name without changing mappings", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
+    tx.feedbackSource.update.mockResolvedValue({ count: 0 });
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
     const result = await updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "Updated" });
@@ -792,7 +792,7 @@ describe("updateFeedbackSourceWithMappings", () => {
 
   test("replaces formbricks mappings when provided", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
+    tx.feedbackSource.update.mockResolvedValue({ count: 0 });
     tx.feedbackSourceFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
@@ -825,7 +825,7 @@ describe("updateFeedbackSourceWithMappings", () => {
   // dark forever, reachable only through the unrelated pause/resume toggle.
   const seedUpdateTransaction = () => {
     const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
+    tx.feedbackSource.update.mockResolvedValue({ count: 0 });
     tx.feedbackSourceFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
@@ -881,7 +881,7 @@ describe("updateFeedbackSourceWithMappings", () => {
   test("replaces field mappings when provided", async () => {
     // Starts errored: a csv save must not clear a flag only the formbricks reconciler can set.
     const tx = setupTransaction("error");
-    tx.feedbackSource.update.mockResolvedValue(undefined);
+    tx.feedbackSource.update.mockResolvedValue({ count: 0 });
     tx.feedbackSourceFieldMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFieldMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue({
