@@ -59,6 +59,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "preview": "vite preview",
+    "prepublishOnly": "node scripts/assert-pnpm-publish.mjs",
     "clean": "rimraf .turbo node_modules dist coverage",
     "ui:add": "npx shadcn@latest add",
     "test": "vitest run",
