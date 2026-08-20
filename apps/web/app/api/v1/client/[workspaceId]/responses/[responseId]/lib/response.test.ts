@@ -81,7 +81,9 @@ describe("updateResponseWithQuotaEvaluation", () => {
 
     const result = await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput);
 
-    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx);
+    // No ingest flags: this caller did not run the Embedded Data contract, so the stored column is
+    // left alone rather than cleared (ENG-1845).
+    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx, undefined);
     expect(mockEvaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponse.surveyId,
       responseId: mockResponse.id,
@@ -108,7 +110,9 @@ describe("updateResponseWithQuotaEvaluation", () => {
 
     const result = await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput);
 
-    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx);
+    // No ingest flags: this caller did not run the Embedded Data contract, so the stored column is
+    // left alone rather than cleared (ENG-1845).
+    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx, undefined);
     expect(mockEvaluateResponseQuotas).toHaveBeenCalledWith({
       surveyId: mockResponse.surveyId,
       responseId: mockResponse.id,
@@ -147,5 +151,14 @@ describe("updateResponseWithQuotaEvaluation", () => {
     });
 
     expect(result).toEqual(responseWithNullLanguage);
+  });
+  test("forwards the ingest flags the caller computed", async () => {
+    mockUpdateResponse.mockResolvedValue(mockResponse);
+    mockEvaluateResponseQuotas.mockResolvedValue({ shouldEndSurvey: false });
+    const ingestFlags = [{ key: "seats", reason: "coercion_failed" as const }];
+
+    await updateResponseWithQuotaEvaluation(mockResponseId, mockResponseInput, ingestFlags);
+
+    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx, ingestFlags);
   });
 });

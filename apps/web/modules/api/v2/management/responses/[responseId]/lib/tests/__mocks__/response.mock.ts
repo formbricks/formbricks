@@ -12,6 +12,7 @@ export const responseInput: Omit<Response, "id"> = {
   finished: true,
   contactAttributes: {},
   contactId: "olwablfltg9eszoh0nz83w02",
+  ingestFlags: null,
   endingId: "i4k59a2m6fk70vwpn2d9b7a7",
   variables: [],
   ttc: {},

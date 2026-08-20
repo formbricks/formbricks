@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { MAX_INGESTED_VALUE_BYTES } from "@formbricks/types/embedded-data-ingest";
 import {
   DatabaseError,
   InvalidInputError,
@@ -102,12 +103,14 @@ const getBaseExistingResponse = () =>
     language: "en",
   }) as const;
 
+// `q0` and `q1` are real elements: the Embedded Data ingest contract runs unmocked on this handler,
+// and it only lets a key through as a question answer if the survey actually declares that element.
 const getBaseSurvey = () =>
   ({
     id: surveyId,
     workspaceId,
     status: "inProgress",
-    blocks: [],
+    blocks: [{ id: "block_1", elements: [{ id: "q0" }, { id: "q1" }] }],
     questions: [],
   }) as const;
 
@@ -567,6 +570,127 @@ describe("putResponseHandler", () => {
         },
         finished: true,
       },
+    });
+  });
+  /**
+   * The AC's "server-side re-validation covered by a test that bypasses the client filter", on the
+   * boundary that is easiest to forget. `validateResponseData` only validates keys matching element
+   * ids, so without the contract a crafted PUT writes anything it likes into `response.data` —
+   * which exports, filters and the summary read directly.
+   */
+  describe("Embedded Data ingest contract", () => {
+    const ingestedField = ({
+      storageKey,
+      dataType = "string",
+      locked = false,
+    }: {
+      storageKey: string;
+      dataType?: string;
+      locked?: boolean;
+    }) => ({
+      field: { name: storageKey, source: "ingested", dataType, defaultValue: null, locked },
+      link: { storageKey },
+    });
+
+    const putData = (data: Record<string, unknown>) => {
+      mocks.getValidatedResponseUpdateInput.mockResolvedValue({
+        responseUpdateInput: { ...getBaseResponseUpdateInput(), data },
+      });
+    };
+
+    const surveyWithFields = (embeddedFields: unknown[], hiddenFields?: unknown) => ({
+      ...getBaseSurvey(),
+      embeddedFields,
+      ...(hiddenFields === undefined ? {} : { hiddenFields }),
+    });
+
+    /** What the handler actually persisted, and the flags it computed for it. */
+    const persisted = () => {
+      const [, updateInput, ingestFlags] = mocks.updateResponseWithQuotaEvaluation.mock.calls[0];
+      return { data: updateInput.data, ingestFlags };
+    };
+
+    test("drops a key no ingested field declares", async () => {
+      mocks.getSurvey.mockResolvedValue(surveyWithFields([ingestedField({ storageKey: "plan" })]));
+      putData({ q1: "answer", plan: "gold", rogue: "injected" });
+
+      const result = await putResponseHandler(createHandlerParams());
+
+      expect(result.response.status).toBe(200);
+      expect(persisted().data).toEqual({ q1: "answer", plan: "gold" });
+    });
+
+    test("drops a locked field's key", async () => {
+      mocks.getSurvey.mockResolvedValue(
+        surveyWithFields([ingestedField({ storageKey: "plan", locked: true })])
+      );
+      putData({ plan: "gold" });
+
+      const result = await putResponseHandler(createHandlerParams());
+
+      expect(result.response.status).toBe(200);
+      expect(persisted().data).toEqual({});
+    });
+
+    test("coerces a declared value to its dataType", async () => {
+      mocks.getSurvey.mockResolvedValue(
+        surveyWithFields([
+          ingestedField({ storageKey: "seats", dataType: "number" }),
+          ingestedField({ storageKey: "trial", dataType: "boolean" }),
+        ])
+      );
+      putData({ seats: "12", trial: "yes" });
+
+      await putResponseHandler(createHandlerParams());
+
+      expect(persisted().data).toEqual({ seats: 12, trial: "true" });
+      expect(persisted().ingestFlags).toEqual([]);
+    });
+
+    test("stores a wrong-typed value raw, flags it, and still saves the response", async () => {
+      mocks.getSurvey.mockResolvedValue(
+        surveyWithFields([ingestedField({ storageKey: "seats", dataType: "number" })])
+      );
+      putData({ seats: "many" });
+
+      const result = await putResponseHandler(createHandlerParams());
+
+      expect(result.response.status).toBe(200);
+      expect(persisted().data).toEqual({ seats: "many" });
+      expect(persisted().ingestFlags).toEqual([{ key: "seats", reason: "coercion_failed" }]);
+    });
+
+    test("truncates an oversize value and flags it", async () => {
+      mocks.getSurvey.mockResolvedValue(surveyWithFields([ingestedField({ storageKey: "note" })]));
+      putData({ note: "a".repeat(MAX_INGESTED_VALUE_BYTES + 500) });
+
+      const result = await putResponseHandler(createHandlerParams());
+
+      expect(result.response.status).toBe(200);
+      expect((persisted().data.note as string).length).toBe(MAX_INGESTED_VALUE_BYTES);
+      expect(persisted().ingestFlags).toEqual([{ key: "note", reason: "truncated" }]);
+    });
+
+    test("ingests nothing when the survey select carried no rows, so the allow-list fails closed", async () => {
+      mocks.getSurvey.mockResolvedValue(getBaseSurvey());
+      putData({ q1: "answer", plan: "gold" });
+
+      await putResponseHandler(createHandlerParams());
+
+      expect(persisted().data).toEqual({ q1: "answer" });
+    });
+
+    // Pins ENG-1845 decision 5: the rows are the allow-list and they carry no `enabled` concept, so
+    // the legacy flag is not an ingest gate — `locked` is the per-field control for refusing writes.
+    test("ingests into a survey whose legacy hiddenFields.enabled flag is false", async () => {
+      mocks.getSurvey.mockResolvedValue(
+        surveyWithFields([ingestedField({ storageKey: "plan" })], { enabled: false, fieldIds: ["plan"] })
+      );
+      putData({ plan: "gold" });
+
+      await putResponseHandler(createHandlerParams());
+
+      expect(persisted().data).toEqual({ plan: "gold" });
     });
   });
 });

@@ -44,7 +44,6 @@ vi.mock("@/lib/common/utils", async (importOriginal) => {
     getStyling: vi.fn(),
     shouldDisplayBasedOnPercentage: vi.fn(),
     wrapThrowsAsync: vi.fn(),
-    handleHiddenFields: vi.fn(),
   };
 });
 

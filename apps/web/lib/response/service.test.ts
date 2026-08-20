@@ -94,6 +94,75 @@ describe("updateResponse", () => {
     });
   });
 
+  /**
+   * ENG-1845. The flags are the server's verdict on the incoming data, so they are a separate
+   * parameter rather than a key on the client-supplied input — a client could otherwise claim there
+   * was nothing to report. On a partial write they union by key: this payload's keys take their new
+   * verdict, everything else keeps what it had.
+   */
+  describe("Embedded Data ingest flags", () => {
+    const updateArgs = () => vi.mocked(prisma.response.update).mock.calls[0][0] as { data: unknown };
+
+    test("leaves the stored flags untouched when the caller did not run the contract", async () => {
+      const currentResponse = createMockCurrentResponse({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { seats: 12 } }));
+
+      // The authenticated management routes update a response without running the contract, and must
+      // not wipe what a client ingest recorded.
+      expect(updateArgs().data).not.toHaveProperty("ingestFlags");
+    });
+
+    test("persists the flags the contract computed", async () => {
+      const currentResponse = createMockCurrentResponse();
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { seats: "many" } }), undefined, [
+        { key: "seats", reason: "coercion_failed" },
+      ]);
+
+      expect(updateArgs().data).toMatchObject({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+    });
+
+    test("clears a stored flag once the same key arrives with a value that coerces", async () => {
+      const currentResponse = createMockCurrentResponse({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { seats: 12 } }), undefined, []);
+
+      expect(updateArgs().data).toMatchObject({ ingestFlags: null });
+    });
+
+    test("keeps a stored flag for a key this payload did not write", async () => {
+      const currentResponse = createMockCurrentResponse({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse as any);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse as any);
+
+      await updateResponse(
+        mockResponseId,
+        createMockResponseInput({ data: { plan: "gold" } }),
+        undefined,
+        []
+      );
+
+      expect(updateArgs().data).toMatchObject({
+        ingestFlags: [{ key: "seats", reason: "coercion_failed" }],
+      });
+    });
+  });
+
   describe("TTC merging behavior", () => {
     test("should merge new TTC with existing TTC from previous blocks", async () => {
       const currentResponse = createMockCurrentResponse({

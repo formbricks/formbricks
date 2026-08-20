@@ -1,12 +1,21 @@
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { TResponseInput } from "@formbricks/types/responses";
 import { normalizeResponseLanguage } from "@/lib/response/utils";
 
+/**
+ * `ingestFlags` is a separate parameter rather than a key on `responseInput` on purpose: it is
+ * computed by the server from the incoming data (ENG-1845), and a client-sent flag list could claim
+ * "no flags" — the same trust problem as the client's filtering. Keeping it out of `ZResponseInput`
+ * makes that unrepresentable instead of a comment. Omitted means "no ingest boundary ran", which
+ * leaves the column null; an empty array means "ran, nothing to report".
+ */
 export const buildPrismaResponseData = (
   responseInput: TResponseInput,
   contact: { id: string; attributes: TContactAttributes } | null,
-  ttc: Record<string, number>
+  ttc: Record<string, number>,
+  ingestFlags?: readonly TIngestFlag[]
 ): Prisma.ResponseCreateInput => {
   const {
     surveyId,
@@ -44,6 +53,7 @@ export const buildPrismaResponseData = (
     ...(meta && ({ meta } as Prisma.JsonObject)),
     singleUseId,
     ...(variables && { variables }),
+    ...(ingestFlags !== undefined && { ingestFlags: ingestFlags.length > 0 ? [...ingestFlags] : null }),
     ttc: ttc,
     createdAt,
     updatedAt,

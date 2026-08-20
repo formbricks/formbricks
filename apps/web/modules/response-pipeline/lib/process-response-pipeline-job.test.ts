@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TResponsePipelineJobData } from "@formbricks/jobs";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { processResponsePipelineJob } from "./process-response-pipeline-job";
 
@@ -265,6 +266,20 @@ describe("processResponsePipelineJob", () => {
         // thread the resolved organization through.
         organizationId: "org_123",
       })
+    );
+  });
+
+  /**
+   * ENG-1845: the pipeline's readers — the notification email, follow-ups and integrations — resolve
+   * Embedded Data definitions through the joined rows, and `getSurveyEmbeddedFields` fails closed. A
+   * select that loses the join reports every field as unset rather than erroring, so the join belongs
+   * in a test rather than only in a comment.
+   */
+  test("selects the Embedded Data join its readers resolve definitions through", async () => {
+    await processResponsePipelineJob(baseData, baseContext);
+
+    expect(mockPrismaSurveyFindUnique.mock.calls[0][0].select).toEqual(
+      expect.objectContaining({ embeddedDataLinks: selectSurveyEmbeddedDataLinks })
     );
   });
 

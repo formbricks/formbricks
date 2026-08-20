@@ -11,7 +11,6 @@ import {
   getLanguageCode,
   getSecureRandom,
   getStyling,
-  handleHiddenFields,
   handleUrlFilters,
   isNowExpired,
   shouldDisplayBasedOnPercentage,
@@ -1185,81 +1184,6 @@ describe("utils.ts", () => {
         writable: true,
       });
       expect(getIsDebug()).toBe(false);
-    });
-  });
-
-  // ---------------------------------------------------------------------------------
-  // handleHiddenFields
-  // ---------------------------------------------------------------------------------
-  describe("handleHiddenFields()", () => {
-    test("returns empty object when hidden fields are not enabled", () => {
-      const hiddenFieldsConfig = {
-        enabled: false,
-        fieldIds: ["field1", "field2"],
-      };
-      const hiddenFields = {
-        field1: "value1",
-        field2: "value2",
-      };
-
-      const result = handleHiddenFields(hiddenFieldsConfig, hiddenFields);
-      expect(result).toEqual({});
-    });
-
-    test("returns empty object when no hidden fields are provided", () => {
-      const hiddenFieldsConfig = {
-        enabled: true,
-        fieldIds: ["field1", "field2"],
-      };
-
-      const result = handleHiddenFields(hiddenFieldsConfig);
-      expect(result).toEqual({});
-    });
-
-    test("filters and returns only valid hidden fields", () => {
-      const hiddenFieldsConfig = {
-        enabled: true,
-        fieldIds: ["field1", "field2"],
-      };
-      const hiddenFields = {
-        field1: "value1",
-        field2: "value2",
-        field3: "value3", // This should be filtered out
-      };
-
-      const result = handleHiddenFields(hiddenFieldsConfig, hiddenFields);
-      expect(result).toEqual({
-        field1: "value1",
-        field2: "value2",
-      });
-    });
-
-    test("handles empty fieldIds array", () => {
-      const hiddenFieldsConfig = {
-        enabled: true,
-        fieldIds: [],
-      };
-      const hiddenFields = {
-        field1: "value1",
-        field2: "value2",
-      };
-
-      const result = handleHiddenFields(hiddenFieldsConfig, hiddenFields);
-      expect(result).toEqual({});
-    });
-
-    test("handles null fieldIds", () => {
-      const hiddenFieldsConfig = {
-        enabled: true,
-        fieldIds: undefined,
-      };
-      const hiddenFields = {
-        field1: "value1",
-        field2: "value2",
-      };
-
-      const result = handleHiddenFields(hiddenFieldsConfig, hiddenFields);
-      expect(result).toEqual({});
     });
   });
 
