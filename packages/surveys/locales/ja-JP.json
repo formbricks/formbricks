@@ -12,6 +12,7 @@
     "no_results_found": "結果が見つかりません",
     "open_in_new_tab": "新しいタブで開く",
     "option_number": "オプション {number}",
+    "page_x_of_y": "{total}ページ中{current}ページ目",
     "people_responded": "{count, plural, other {{count}人が回答しました}}",
     "please_retry_now_or_try_again_later": "今すぐ再試行するか、後でもう一度お試しください。",
     "powered_by": "提供：",

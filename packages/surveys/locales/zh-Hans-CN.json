@@ -12,6 +12,7 @@
     "no_results_found": "未找到结果",
     "open_in_new_tab": "在新标签页中打开",
     "option_number": "选项 {number}",
+    "page_x_of_y": "第 {current} 页，共 {total} 页",
     "people_responded": "{count, plural, one {1 人已回应} other {{count} 人已回应}}",
     "please_retry_now_or_try_again_later": "请立即重试或稍后再试。",
     "powered_by": "技术支持",
