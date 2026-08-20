@@ -1,5 +1,14 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -300,6 +309,78 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     expect(secondPostgresPassword).not.toBe(postgresPassword);
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
     expect(statSync(secondEnvPath).mode & 0o777).toBe(0o600);
+  });
+
+  test("leaves the existing password empty when no deployment artifacts exist", () => {
+    const tempDir = createTempDir();
+
+    expect(readExistingPostgresPassword(join(tempDir, ".env"), join(tempDir, "docker-compose.yml"))).toBe("");
+  });
+
+  test("reuses sudo Docker Compose access selected by installer preflight", () => {
+    const tempDir = createTempDir();
+    const binPath = join(tempDir, "bin");
+    const dockerPath = join(binPath, "docker");
+    const sudoPath = join(binPath, "sudo");
+    const callLogPath = join(tempDir, "docker-calls.log");
+    const envPath = join(tempDir, ".env");
+    const composePath = join(tempDir, "docker-compose.yml");
+
+    mkdirSync(binPath);
+    writeFileSync(envPath, "POSTGRES_PASSWORD=legacy-password\n");
+    writeFileSync(composePath, "services:\n  postgres:\n    image: pgvector/pgvector:pg18\n");
+    writeFileSync(
+      dockerPath,
+      `#!/bin/sh
+printf 'docker %s\\n' "$*" >> "$FORMBRICKS_DOCKER_CALL_LOG"
+exit 1
+`
+    );
+    writeFileSync(
+      sudoPath,
+      `#!/bin/sh
+printf 'sudo %s\\n' "$*" >> "$FORMBRICKS_DOCKER_CALL_LOG"
+if [ "$1 $2" = "docker info" ]; then
+  exit 0
+fi
+if [ "$1 $2 $3" = "docker compose version" ]; then
+  exit 0
+fi
+if [ "$1 $2" = "docker compose" ]; then
+  printf '%s' '{"services":{"postgres":{"environment":{"POSTGRES_PASSWORD":"legacy-password"}}}}'
+  exit 0
+fi
+exit 1
+`
+    );
+    chmodSync(dockerPath, 0o755);
+    chmodSync(sudoPath, 0o755);
+
+    const recoveredPassword = execFileSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; configure_formbricks_docker_command; run_formbricks_docker_compose version >/dev/null; read_existing_postgres_password "$2" "$3"',
+        "bash",
+        formbricksScriptPath,
+        envPath,
+        composePath,
+      ],
+      {
+        encoding: "utf8",
+        env: getDockerComposeProcessEnv({
+          FORMBRICKS_DOCKER_CALL_LOG: callLogPath,
+          PATH: `${binPath}:${process.env.PATH ?? ""}`,
+        }),
+      }
+    );
+    const callLog = readFileSync(callLogPath, "utf8");
+
+    expect(recoveredPassword).toBe("legacy-password");
+    expect(callLog).toContain("docker info");
+    expect(callLog).toContain("sudo docker info");
+    expect(callLog).toContain("sudo docker compose version");
+    expect(callLog).toContain("sudo docker compose --env-file");
   });
 
   dockerComposeTest("preserves and URL-encodes the password from an existing one-click installation", () => {

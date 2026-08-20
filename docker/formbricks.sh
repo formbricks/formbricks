@@ -163,6 +163,26 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
 
+formbricks_docker_command=(docker)
+
+configure_formbricks_docker_command() {
+  if docker info >/dev/null 2>&1; then
+    formbricks_docker_command=(docker)
+    return
+  fi
+
+  if command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1; then
+    formbricks_docker_command=(sudo docker)
+    return
+  fi
+
+  return 1
+}
+
+run_formbricks_docker_compose() {
+  "${formbricks_docker_command[@]}" compose "$@"
+}
+
 read_rendered_compose_password() {
   local compose_file="$1"
   local env_file="${2:-}"
@@ -182,7 +202,7 @@ read_rendered_compose_password() {
 
   rendered_config=$(
     unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
-    docker compose "${compose_args[@]}" config --format json 2>/dev/null
+    run_formbricks_docker_compose "${compose_args[@]}" config --format json 2>/dev/null
   ) || return 1
   encoded_password=$(printf '%s' "$rendered_config" | jq -er '
       .services.postgres.environment.POSTGRES_PASSWORD
@@ -230,6 +250,8 @@ read_existing_postgres_password() {
     echo "❌ Could not safely resolve the existing PostgreSQL password. Refusing to rewrite .env." >&2
     return 1
   fi
+
+  return 0
 }
 
 url_encode() {
@@ -388,23 +410,6 @@ install_formbricks() {
   # Reuse an existing Docker installation instead of replacing it implicitly.
   if command -v docker >/dev/null 2>&1; then
     echo "✅ Docker is already installed."
-
-    if docker info >/dev/null 2>&1 || sudo docker info >/dev/null 2>&1; then
-      echo "✅ Docker daemon is reachable. Reusing the existing Docker installation."
-
-      if docker compose version >/dev/null 2>&1 || sudo docker compose version >/dev/null 2>&1; then
-        echo "✅ Docker Compose is available."
-      else
-        echo "❌ Docker Compose is not available on this system."
-        echo "Please install Docker Compose or upgrade Docker so 'docker compose' works, then rerun this script."
-        exit 1
-      fi
-    else
-      echo "❌ Docker is installed, but the daemon is not reachable."
-      echo "Please start or fix Docker and rerun this script."
-      echo "To avoid modifying an existing Docker setup without your consent, this script will not remove or reinstall Docker automatically."
-      exit 1
-    fi
   else
     # Remove old Docker packages only when Docker is not installed at all.
     echo "⚠️ Legacy Docker-related packages may conflict with Docker CE."
@@ -448,6 +453,21 @@ install_formbricks() {
     fi
   fi
 
+  if ! configure_formbricks_docker_command; then
+    echo "❌ Docker is installed, but the daemon is not reachable."
+    echo "Please start or fix Docker and rerun this script."
+    echo "To avoid modifying an existing Docker setup without your consent, this script will not remove or reinstall Docker automatically."
+    exit 1
+  fi
+  echo "✅ Docker daemon is reachable. Reusing the existing Docker installation."
+
+  if ! run_formbricks_docker_compose version >/dev/null 2>&1; then
+    echo "❌ Docker Compose is not available on this system."
+    echo "Please install Docker Compose or upgrade Docker so 'docker compose' works, then rerun this script."
+    exit 1
+  fi
+  echo "✅ Docker Compose is available."
+
   # Adding your user to the Docker group
   echo "🐳 Adding your user to the Docker group to avoid using sudo with docker commands."
   sudo groupadd docker >/dev/null 2>&1 || true
@@ -458,9 +478,12 @@ install_formbricks() {
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks Quickstart directory at ./formbricks."
 
-  if ! existing_postgres_password=$(read_existing_postgres_password ".env" "docker-compose.yml"); then
-    echo "Set POSTGRES_PASSWORD in .env manually, then rerun this script."
-    exit 1
+  existing_postgres_password=""
+  if [ -f ".env" ] || [ -f "docker-compose.yml" ]; then
+    if ! existing_postgres_password=$(read_existing_postgres_password ".env" "docker-compose.yml"); then
+      echo "Set POSTGRES_PASSWORD in .env manually, then rerun this script."
+      exit 1
+    fi
   fi
 
   # Ask the user for their domain name (recommend surveys subdomain)
