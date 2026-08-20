@@ -38,6 +38,45 @@ where "I am a member of this" and "my team was granted read on this" become the 
 on the same object. `zed` itself flags this in candidate B — _"Relation `writer_team` references
 parent type `team` in its name"_ — four times.
 
+## When do I need a new one — the in-product answer
+
+The create-trigger, in one line: **make a new workspace when a different set of people should see
+the work.** Not to organise, not per quarter, not per campaign.
+
+Empty state copy for "New workspace":
+
+> **Workspaces separate work by who can see it.**
+> Everything in a workspace is visible to the teams you give access to. Create a new one when a
+> different group of people should see the work — a different department, a client, or a programme
+> with its own confidentiality.
+>
+> _Not sure? You probably don't need one. Use tags to organise surveys inside a workspace._
+
+That last line is load-bearing. If the workspace becomes purely an access boundary and it is the
+only way to group things, people will create workspaces to tidy up — "Q3", "archive", "NPS" — and the
+container thickens again within a quarter. The 2026-08-19 design meeting settled the mechanism:
+**tags, not folders** — _"we would add yet another container, it would make things more
+complicated"_, and _"if you filter by tag, it kind of functions like a folder"_. Whatever it is
+called, ship a grouping with **no access semantics** alongside, or the clean definition erodes.
+
+## Should users see it, and what should it be called?
+
+**Yes, unavoidably** — it is where work is created and what access is granted on. But it should stay
+invisible until it earns its place: one workspace auto-created, switcher hidden until there is a
+second, and a private survey lives in no workspace at all, so a solo user can go a long time without
+meeting the word.
+
+**Keep the name "Workspace."** The word was never the problem — the missing definition was, and
+`project → environment → workspace` has already cost enough naming credibility (`legacyEnvironmentId`
+is still a third name for the same thing in the schema). Two things instead of a rename:
+
+1. **Never let "workspace" mean the tenant.** In Linear, Slack and Notion — which these buyers use
+   daily — _workspace_ is the whole company. Here that is the **Organization**. The switcher should
+   always read `Organization ▸ Workspace`.
+2. **Give the nesting level its own word.** "A workspace inside a workspace" is unsayable. Call the
+   parent level a **Division** — Qualtrics and SurveyMonkey both use it, so enterprise buyers already
+   know it. One recursive object underneath, two words on the surface.
+
 ## Where does this go?
 
 | Thing                                     | Home                                                  | Why                                                                                                                  |
@@ -51,6 +90,37 @@ parent type `team` in its name"_ — four times.
 | A private draft                           | **Nowhere** — a survey with an owner and no workspace | Privacy is the absence of a container edge, not a special kind of container. "My drafts" is a view, not a workspace. |
 | A division or department                  | A **parent workspace**                                | Nesting, not a new noun.                                                                                             |
 | "Which manager may see whose responses"   | **Org unit** — a separate tree                        | See below. This is the important one.                                                                                |
+
+## A worked example — why two objects, in one grid
+
+Boehringer Ingelheim. Teams are the org chart; workspaces are the bodies of work. They do not line up.
+
+|                                 | Insights DE | Insights US | HR People Analytics | Kantar (agency)           | Animal Health CX |
+| ------------------------------- | ----------- | ----------- | ------------------- | ------------------------- | ---------------- |
+| **Employee Engagement 2027**    | –           | –           | **manage**          | –                         | –                |
+| **Patient Support — Jardiance** | **manage**  | read        | –                   | **edit** (expires 31 Mar) | –                |
+| **Brand Tracking DACH**         | **manage**  | –           | –                   | **edit**                  | –                |
+| **Animal Health — Vet NPS**     | read        | –           | –                   | –                         | **manage**       |
+| **Works Council Pilot**         | –           | –           | read                | –                         | –                |
+
+Three facts in that grid are the whole argument:
+
+- **Insights DE appears three times at two levels** — manage on two programmes, read-only on a third.
+- **Jardiance has three groups at three levels** — manage, read, and an expiring agency edit.
+- **HR People Analytics manages the engagement survey and must never see Jardiance** — patient data
+  and employee data have different legal bases.
+
+**Without a container**, Kantar's edit access is one grant per survey across ~40 surveys and three
+years, re-applied on every create, and revoked 40 times when the contract ends. **With the container
+merged into the team**, you invent a "Jardiance team" nobody is a member of, and then have to answer
+whether Kantar is _in_ it — they can edit its surveys but must not appear in the roster. One object,
+two meanings.
+
+**The deciding requirement, stated so it can be checked:** the container earns its place if and only
+if the triple `(group, body of work, level)` has a life of its own — one group across several bodies
+of work at different levels, or several groups on one body at different levels, or a body of work
+that outlives its staffing. Count non-blank cells per row and per column in that grid, and count
+distinct levels. All ones, all the same level → merge workspace into team and nest it, Linear-style.
 
 ## The trap: the org-unit hierarchy is not a workspace
 

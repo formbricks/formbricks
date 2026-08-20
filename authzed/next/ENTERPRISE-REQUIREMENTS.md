@@ -141,6 +141,15 @@ out entirely and produces wrong company-level numbers.
 
 ---
 
+## A note on where these came from
+
+Everything above is sourced from standards, case law, vendor documentation and comparable products.
+**None of it is a Formbricks customer stating a requirement in their own words.** That evidence is
+still outstanding — Jodie and Kris are writing user stories from the Boehringer Ingelheim and CMS
+calls. Treat this document as the floor a serious enterprise buyer will hold us to, not as a
+substitute for asking. Where a schema element rests on inference rather than a source, it is marked
+INFERRED in `candidate-a-container.zed` and listed in `README.md`.
+
 ## Confidence
 
 Verifiable primary sources: GDPR, BetrVG, BSI ORP.4, DORA RTS, AICPA TSC, and all vendor

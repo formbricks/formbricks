@@ -7,6 +7,53 @@ runtime code, and `authzed/schema.zed` — the frozen cutover artifact — is un
 `bash authzed/next/validate.sh` to check the three candidates; `pnpm authzed:validate` still runs
 the shipping parity suite independently.
 
+## Scope: this is the long-term workstream, and it blocks nothing
+
+The 2026-08-19 design meeting split the effort in two, deliberately non-blocking:
+
+1. **Short term (~6–8 weeks)** — personal space and more versatile sharing, **keeping workspaces
+   exactly as they are**. Owned by Johannes with Christian, Jodie, Bhagya and Tiago.
+2. **Long term — what the schema looks like in two years.** Owned by Matti. **That is this
+   directory.**
+
+Nothing here asks the short-term stream to change course, and the question of whether to keep
+workspaces _now_ is settled: they stay. What is open is where the model should be in two years, and
+whether decisions taken now quietly foreclose that.
+
+One known convergence point rather than a disagreement: the short-term stream may implement
+"personal space" as a real container per user. The long-term model treats it as a **view** over
+surveys you own that sit in no workspace. The UI is identical either way; only the graph differs, and
+the two can be reconciled later without a customer-visible migration.
+
+## What is requirement-backed, and what is not
+
+The evidence base behind this model is standards, case law, competitor documentation and the FigJam
+board. **None of it is a Formbricks customer stating a requirement in their own words** — the
+enterprises self-host, so their usage is invisible on Cloud. Jodie and Kris are writing user stories
+from the Boehringer Ingelheim and CMS calls; those are the missing input.
+
+Until they land, every non-obvious element is marked in `candidate-a-container.zed` as **SOURCED** or
+**INFERRED**. Anything still INFERRED when the stories arrive is a candidate for deletion, not a
+default to defend.
+
+| Element                                            | Provenance                                                                                                                                         |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `role` / custom roles                              | **SOURCED** — BSI ORP.4.A16/A17; 5 of 6 comparable products ship them                                                                              |
+| `emergency_access` (break-glass)                   | **SOURCED** — DORA RTS 2024/1774 Art. 21(a), 21(e)(ii)                                                                                             |
+| `manage_access` split from `manage`                | **SOURCED** — ISO A.5.3 / A.5.18, DORA 21(e)(i), ORP.4.A4                                                                                          |
+| `org_unit`, works-council scoping, `read_comments` | **SOURCED** — BetrVG §87(1)(6), §80                                                                                                                |
+| Org-level pools + `pool_assignment`                | **SOURCED** — FigJam board; Qualtrics/SurveyMonkey libraries                                                                                       |
+| `summary_read`                                     | **SOURCED** — FigJam locked decision                                                                                                               |
+| Private survey = no container edge                 | **SOURCED** — locked requirement; decided 2026-08-19                                                                                               |
+| `org_reach` on `container`                         | **SOURCED (parity)** — org owners/managers reach every workspace today                                                                             |
+| `container.parent` (nesting)                       | **PARTIALLY INFERRED** — Qualtrics and SurveyMonkey ship divisions and R20 is on the backlog, but "Boehringer needs them" has never been confirmed |
+| `survey.org_reach`                                 | **PARTIALLY INFERRED** — banks and e-discovery make it plausible; nobody has asked for admin read of a private draft                               |
+| **`container.owner_team`**                         | **INFERRED** — a team-owned workspace came from reading Linear across, not from a customer. Nothing depends on it; first thing to cut              |
+
+One thing deliberately _not_ modelled: sharing a survey **with a workspace**. It was raised in the
+design meeting as a reading of what workspaces are for, but it is not a customer requirement, and a
+survey is shared with people — a user, a team, or a role.
+
 | File                                           | What                                                                                                                                            |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VOCABULARY.md`                                | What a Team is, what a Workspace is, and the test that settles "where does this go?"                                                            |

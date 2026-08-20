@@ -15,6 +15,11 @@ use typechecking
  * assignment. That is what removes the "grant a container => silently grant the org's
  * most sensitive dataset" leak (I-3).
  *
+ * PROVENANCE. Every non-obvious element below is marked SOURCED (traceable to a stated
+ * requirement, with the source named) or INFERRED (a design judgement with no customer
+ * evidence behind it yet). Anything still INFERRED when the user stories land is a candidate
+ * for deletion, not a default to defend. The summary table is in README.md.
+ *
  * NOT a parity schema. Deliberate departures from today are marked CHANGE.
  */
 
@@ -72,6 +77,8 @@ definition team {
 }
 
 /**
+ * SOURCED — BSI IT-Grundschutz ORP.4.A16/A17; 5 of 6 comparable products ship customer-defined roles.
+ *
  * A named, organization-defined role: a bundle of PEOPLE, not of capabilities.
  *
  * BSI IT-Grundschutz ORP.4.A16 asks for "Standard-Rechteprofile, die den Funktionen und
@@ -113,12 +120,23 @@ definition container {
     /** Tenancy. Always set. Never on its own a grant of product access. */
     relation organization: organization
 
-    /** Organization owners/managers reach the content here. Written on every container. */
+    /** SOURCED (parity) — today org owners/managers reach every workspace. Written on every container. */
     relation org_reach: organization
 
+    /**
+      * INFERRED — a workspace owned by a team came from reading Linear across, not from any
+      * customer asking for it. Nothing else in the model depends on it: delete it and shared
+      * containers still work. First thing to cut if the user stories do not need it.
+      */
     relation owner_team: team
 
-    /** Division / department nesting. Depth is capped by the application. */
+    /**
+     * PARTIALLY INFERRED — Qualtrics and SurveyMonkey both ship divisions, and R20 is on the
+     * backlog, but "Boehringer needs nested containers" is an assumption we have never had
+     * confirmed. Cheap to carry, ruinous to retrofit, so it stays — but it is not evidence-backed.
+     *
+     * Division / department nesting. Depth is capped by the application.
+     */
     relation parent: container
 
     relation manager_group: team#member | role#holder
@@ -127,14 +145,14 @@ definition container {
     relation summarizer_group: team#member | role#holder
 
     /**
-     * Segregation of duties (ISO 27001 A.5.3/A.5.18, DORA RTS 2024/1774 Art. 21(e)(i),
+     * SOURCED — segregation of duties (ISO 27001 A.5.3/A.5.18, DORA RTS 2024/1774 Art. 21(e)(i),
      * ORP.4.A4): the right to GRANT access is separable from the right to administer
      * content. A group can hold `manage` and still be unable to hand access to anyone else.
      */
     relation access_manager: team#member | role#holder | user | user with expiration
 
     /**
-     * Break-glass. DORA RTS Art. 21(a) and 21(e)(ii) require emergency access to be a
+     * SOURCED — break-glass. DORA RTS Art. 21(a) and 21(e)(ii) require emergency access to be a
      * first-class, need-to-use, time-bounded path — explicitly NOT "temporarily make them
      * an administrator". Keeping it as its own relation is what lets it be alerted on,
      * reviewed and expired independently of every other grant.
@@ -160,7 +178,7 @@ definition container {
     permission write: user | api_key = writer + writer_group + manage + parent->write
     permission read: user | api_key = reader + reader_group + write + emergency + parent->read
 
-    /** Aggregates only — strictly below read. */
+    /** SOURCED (FigJam locked decision) — aggregates only, strictly below read. */
     permission summary_read: user | api_key = summarizer + summarizer_group + read + parent->summary_read
 
     /**
@@ -175,6 +193,9 @@ definition container {
 }
 
 /**
+ * SOURCED — FigJam board (blue "Assignment"); Qualtrics and SurveyMonkey both permission their
+ * asset libraries separately from projects.
+ *
  * The pool <-> container edge (blue "Assignment" on the board). Generalises the existing
  * `feedback_directory_assignment` object. Object ID is a deterministic digest of the pair.
  *
@@ -278,7 +299,11 @@ definition survey {
      */
     relation container: container
 
-    /** Organization owners/managers reach a container-less survey. Absent by default. */
+    /**
+     * PARTIALLY INFERRED — banks and e-discovery make admin-readable private content plausible,
+     * and DORA wants emergency access modelled, but no customer has asked for admin read of a
+     * private draft. Absent by default, which is the safe half of the guess.
+     */
     relation org_reach: organization
 
     /** Time-boxed break-glass on a private survey. Its own relation so it can be alerted on. */
@@ -339,6 +364,8 @@ definition workflow {
 }
 
 /**
+ * SOURCED — BetrVG §87(1)(6) and §80; every German works agreement for an employee survey.
+ *
  * ORG UNIT — the respondent-side hierarchy, and the most important thing this file says.
  *
  * German co-determination (BetrVG § 87(1)(6)) makes an employee-survey tool co-determined,

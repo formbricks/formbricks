@@ -52,3 +52,17 @@ These are **not** parity. Each closes a logged issue and each is asserted:
 - **Four-eyes approval, recertification campaigns, audit-log storage.** POLICY and SURFACE (C13–C16).
 - **Share links as principals.** Backlog R5; capability tokens until then.
 - **Field-level ACLs.** Better modelled as a permission on a sub-resource than as true field ACLs.
+- **Sharing a survey _with a workspace_.** Raised in the 2026-08-19 design meeting as a reading of
+  what workspaces are for, but not backed by a customer requirement. A survey is shared with people
+  — a user, a team, or a role. Recorded here so it is not re-raised as an obvious gap.
+
+## Reserved — incoming user stories (U1…)
+
+Jodie and Kris are writing 3–5 user stories from the Boehringer Ingelheim and CMS calls, and
+Johannes is contributing a written requirement statement. **IDs `U1`–`U9` are reserved for them.**
+
+They land here first, then become assertions. Until they do, this corpus is built from the parity
+suite, the board, the Notion pages and the compliance research — good sources, but none of them a
+customer saying what they need in their own words. When the stories arrive, the job is not only to
+add scenarios: it is to re-check every element marked **INFERRED** in
+`candidate-a-container.zed` and delete the ones nothing asks for.
