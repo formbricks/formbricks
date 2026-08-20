@@ -24,7 +24,6 @@ export const register = async () => {
     }
 
     // Skip runtime-only BullMQ bootstrapping during production builds.
-    // eslint-disable-next-line turbo/no-undeclared-env-vars -- NEXT_PHASE is a next.js env variable
     if (process.env.NEXT_PHASE !== "phase-production-build") {
       try {
         const { registerJobsWorker, registerRecurringJobs } = await import("./instrumentation-jobs");

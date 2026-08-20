@@ -125,7 +125,7 @@ export const sendVerificationNewEmail = async (
 ): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
-    const token = createEmailChangeToken(id, email);
+    const token = await createEmailChangeToken(id, email);
     const verifyLink = `${WEBAPP_URL}/verify-email-change?token=${encodeURIComponent(token)}`;
 
     const html = await renderNewEmailVerification({ verifyLink, t, ...legalProps });

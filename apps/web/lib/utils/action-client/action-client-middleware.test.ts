@@ -366,6 +366,62 @@ describe("action-client-middleware", () => {
       expect(result).toBe(true);
     });
 
+    test("refuses workspaceTeam access when minPermission is an unrecognized value", async () => {
+      vi.mocked(getMembershipRole).mockResolvedValue("member");
+
+      // "write" is the feedback-records gateway spelling, not a TTeamPermission ("readWrite").
+      // An unrecognized minimum must not admit a read-only member.
+      const access = [
+        {
+          type: "workspaceTeam" as const,
+          workspaceId,
+          minPermission: "write" as any,
+        },
+      ];
+
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("read");
+
+      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
+        AuthorizationError
+      );
+    });
+
+    test("refuses workspaceTeam access when the granted permission is an unrecognized value", async () => {
+      vi.mocked(getMembershipRole).mockResolvedValue("member");
+
+      const access = [
+        {
+          type: "workspaceTeam" as const,
+          workspaceId,
+          minPermission: "readWrite" as const,
+        },
+      ];
+
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("write" as any);
+
+      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
+        AuthorizationError
+      );
+    });
+
+    test("refuses team access when minPermission is an unrecognized value", async () => {
+      vi.mocked(getMembershipRole).mockResolvedValue("member");
+
+      const access = [
+        {
+          type: "team" as const,
+          teamId,
+          minPermission: "manage" as any,
+        },
+      ];
+
+      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("contributor");
+
+      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
+        AuthorizationError
+      );
+    });
+
     test("handles team access without minPermission specified", async () => {
       vi.mocked(getMembershipRole).mockResolvedValue("member");
 
@@ -381,6 +437,43 @@ describe("action-client-middleware", () => {
       const result = await checkAuthorizationUpdated({ userId, organizationId, access });
 
       expect(result).toBe(true);
+    });
+
+    // Omitting minPermission asks for "any grant on this workspace/team", not "no check at all" — an
+    // unrecognized grant is still refused. Not reachable through the current callers, whose grants come
+    // from Postgres enums, but the helper must not fail open for one that isn't enum-backed.
+    test("refuses workspaceTeam access when the granted permission is unrecognized and no minPermission is set", async () => {
+      vi.mocked(getMembershipRole).mockResolvedValue("member");
+
+      const access = [
+        {
+          type: "workspaceTeam" as const,
+          workspaceId,
+        },
+      ];
+
+      vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue("write" as any);
+
+      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
+        AuthorizationError
+      );
+    });
+
+    test("refuses team access when the granted role is unrecognized and no minPermission is set", async () => {
+      vi.mocked(getMembershipRole).mockResolvedValue("member");
+
+      const access = [
+        {
+          type: "team" as const,
+          teamId,
+        },
+      ];
+
+      vi.mocked(getTeamRoleByTeamIdUserId).mockResolvedValue("owner" as any);
+
+      await expect(checkAuthorizationUpdated({ userId, organizationId, access })).rejects.toThrow(
+        AuthorizationError
+      );
     });
   });
 });

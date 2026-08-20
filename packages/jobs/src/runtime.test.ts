@@ -121,7 +121,7 @@ describe("@formbricks/jobs runtime", () => {
     expect(mockProcessJob).toHaveBeenCalledWith(job, undefined);
 
     const registeredWorkerEvents = new Map<string, (...args: unknown[]) => void>(
-      worker.on.mock.calls.map(([event, handler]) => [event, handler as (...args: unknown[]) => void])
+      worker.on.mock.calls.map(([event, handler]) => [event, handler])
     );
     const workerError = new Error("worker error");
     const failedError = new Error("job failed");

@@ -33,6 +33,15 @@ describe("chart-utils", () => {
       ]);
     });
 
+    // The tooltip labels each row from its dataKey, which for these slices is the internal
+    // PIE_MEASURE_VALUE_KEY — without tooltipLabel it renders that raw key (ENG-2346).
+    test("labels every slice for the tooltip, never leaving the internal value key exposed", () => {
+      const rows = [{ "m.joy": 10, "m.anger": 2 }];
+      const result = prepareMeasureSliceData(rows, ["m.joy", "m.anger"], label);
+      expect(result.map((row) => row.tooltipLabel)).toEqual(["L:m.joy", "L:m.anger"]);
+      expect(result.every((row) => !String(row.tooltipLabel).includes(PIE_MEASURE_VALUE_KEY))).toBe(true);
+    });
+
     test("sums a measure across multiple rows and treats non-numeric as 0", () => {
       const rows = [
         { "m.joy": 10, "m.anger": "x" },

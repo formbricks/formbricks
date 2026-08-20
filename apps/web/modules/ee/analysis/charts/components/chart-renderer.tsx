@@ -315,15 +315,11 @@ const PieChartView = ({
             })}
             <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
           </Pie>
+          {/* Measure slices carry the measure label on the row itself, so the header (the same
+              slice name) would only repeat it — suppress it like the pivoted bar chart does. */}
           <ChartTooltip
             content={
-              <PolishedChartTooltip
-                labelFormatter={formatDimensionValue}
-                // A measure-slice pie has no dimension, so the header recharts gives us is the
-                // slice's own name — the same string the row already carries as `tooltipLabel`.
-                // Hiding it leaves one line ("Emotion: Joy  236") instead of the name twice.
-                hideLabel={useMeasureSlices}
-              />
+              <PolishedChartTooltip labelFormatter={formatDimensionValue} hideLabel={useMeasureSlices} />
             }
           />
           <Legend

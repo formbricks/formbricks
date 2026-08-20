@@ -362,7 +362,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TWorkspaceStateSurvey);
+    });
 
     expect(mockUpdateQueue.hasPendingWork).toHaveBeenCalled();
     expect(mockUpdateQueue.waitForPendingWork).toHaveBeenCalled();
@@ -419,7 +419,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TWorkspaceStateSurvey);
+    });
 
     expect(mockUpdateQueue.hasPendingWork).toHaveBeenCalled();
     expect(mockUpdateQueue.waitForPendingWork).not.toHaveBeenCalled();
@@ -476,7 +476,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TWorkspaceStateSurvey);
+    });
 
     vi.advanceTimersByTime(0);
 
@@ -568,7 +568,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
 
       const scriptEl = getAppendedScript();
 
@@ -595,7 +595,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
 
       const scriptEl = getAppendedScript();
 
@@ -628,7 +628,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
 
       const scriptEl = getAppendedScript();
 
@@ -677,7 +677,7 @@ describe("widget-file", () => {
       await widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TWorkspaceStateSurvey);
+      });
 
       vi.advanceTimersByTime(0);
 
@@ -756,7 +756,7 @@ describe("widget-file", () => {
       ...mockSurvey,
       delay: 0,
       segment: undefined,
-    } as unknown as TWorkspaceStateSurvey);
+    });
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       "User identification failed but survey has no segment filters. Proceeding."
@@ -809,7 +809,7 @@ describe("widget-file", () => {
         ...mockSurvey,
         delay: 0,
         ...(interactionRefresh ? { interactionRefresh } : {}),
-      } as unknown as TWorkspaceStateSurvey);
+      });
       vi.advanceTimersByTime(0);
       vi.useRealTimers();
 
