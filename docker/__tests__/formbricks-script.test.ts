@@ -1,7 +1,7 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, test } from "vitest";
 
@@ -9,6 +9,16 @@ const formbricksScriptPath = fileURLToPath(new URL("../formbricks.sh", import.me
 const dockerComposeTemplatePath = fileURLToPath(new URL("../docker-compose.yml", import.meta.url));
 
 const tempDirs: string[] = [];
+const dockerComposeOverrideKeys = [
+  "POSTGRES_PASSWORD",
+  "POSTGRES_PASSWORD_URL_ENCODED",
+  "HUB_DATABASE_URL",
+  "CUBEJS_DB_PASS",
+];
+
+type RenderedDockerComposeConfig = {
+  services: Record<string, { environment?: Record<string, string> }>;
+};
 
 const createTempDir = (): string => {
   const tempDir = mkdtempSync(join(tmpdir(), "formbricks-script-"));
@@ -44,6 +54,88 @@ const writeDockerComposeTemplate = (): string => {
 
   return composePath;
 };
+
+const getDockerComposeProcessEnv = (overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv => {
+  const environment = { ...process.env };
+
+  for (const key of dockerComposeOverrideKeys) {
+    delete environment[key];
+  }
+
+  return { ...environment, ...overrides };
+};
+
+const runDockerCompose = (args: string[], environment: NodeJS.ProcessEnv = {}): string => {
+  const result = spawnSync("docker", ["compose", ...args], {
+    encoding: "utf8",
+    env: getDockerComposeProcessEnv(environment),
+  });
+
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || `Docker Compose exited with status ${result.status}`);
+  }
+
+  return result.stdout;
+};
+
+const writeDockerComposeFixture = (envContents: string): { composePath: string; envPath: string } => {
+  const composePath = writeDockerComposeTemplate();
+  const envPath = join(dirname(composePath), ".env");
+
+  writeFileSync(envPath, envContents);
+
+  return { composePath, envPath };
+};
+
+const renderDockerCompose = (envContents: string): RenderedDockerComposeConfig => {
+  const { composePath, envPath } = writeDockerComposeFixture(envContents);
+
+  return JSON.parse(
+    runDockerCompose([
+      "--env-file",
+      envPath,
+      "-f",
+      composePath,
+      "--project-directory",
+      dirname(composePath),
+      "config",
+      "--format",
+      "json",
+    ])
+  ) as RenderedDockerComposeConfig;
+};
+
+const getRenderedServiceEnvironment = (
+  config: RenderedDockerComposeConfig,
+  serviceName: string
+): Record<string, string> => {
+  const environment = config.services[serviceName]?.environment;
+
+  expect(environment).toBeDefined();
+  return environment ?? {};
+};
+
+const getRenderedDockerComposeEnvironment = (
+  composePath: string,
+  envPath: string,
+  processEnvironment: NodeJS.ProcessEnv = {}
+): string =>
+  runDockerCompose(
+    [
+      "--env-file",
+      envPath,
+      "-f",
+      composePath,
+      "--project-directory",
+      dirname(composePath),
+      "config",
+      "--environment",
+    ],
+    processEnvironment
+  );
 
 const writeGeneratedEnvFile = (envPath: string, postgresPassword = ""): void => {
   execFileSync(
@@ -111,28 +203,43 @@ describe("docker/docker-compose.yml Cube configuration", () => {
 });
 
 describe("Docker self-hosting credentials", () => {
-  test("requires one PostgreSQL password for every bundled database client", () => {
-    const composeContents = readFileSync(dockerComposeTemplatePath, "utf8");
-    const postgresBlock = getServiceBlock(composeContents, "postgres");
-    const hubMigrateBlock = getServiceBlock(composeContents, "hub-migrate");
-    const hubBlock = getServiceBlock(composeContents, "hub");
-    const cubeBlock = getServiceBlock(composeContents, "cube");
+  test("rejects a missing PostgreSQL password", () => {
+    expect(() => renderDockerCompose("")).toThrow(/POSTGRES_PASSWORD.*missing a value/);
+  });
 
-    expect(composeContents).not.toMatch(/postgresql:\/\/postgres:(?!\$\{)/);
-    expect(composeContents).not.toMatch(/POSTGRES_PASSWORD[=:]\s*postgres\b/);
-    expect(composeContents).toContain(
-      'DATABASE_URL: "postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/formbricks?schema=public"'
+  test("renders a URL-safe PostgreSQL password into every bundled database client", () => {
+    const password = "url-safe-password";
+    const config = renderDockerCompose(`POSTGRES_PASSWORD=${password}\n`);
+    const formbricksDatabaseUrl = `postgresql://postgres:${password}@postgres:5432/formbricks?schema=public`;
+    const hubDatabaseUrl = `postgresql://postgres:${password}@postgres:5432/formbricks?sslmode=disable`;
+
+    expect(getRenderedServiceEnvironment(config, "postgres").POSTGRES_PASSWORD).toBe(password);
+    expect(getRenderedServiceEnvironment(config, "formbricks-migrate").DATABASE_URL).toBe(
+      formbricksDatabaseUrl
     );
-    expect(postgresBlock).toContain("POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}");
-    expect(hubMigrateBlock).toContain(
-      "${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}"
+    expect(getRenderedServiceEnvironment(config, "formbricks").DATABASE_URL).toBe(formbricksDatabaseUrl);
+    expect(getRenderedServiceEnvironment(config, "hub-migrate").DATABASE_URL).toBe(hubDatabaseUrl);
+    expect(getRenderedServiceEnvironment(config, "hub").DATABASE_URL).toBe(hubDatabaseUrl);
+    expect(getRenderedServiceEnvironment(config, "cube").CUBEJS_DB_PASS).toBe(password);
+  });
+
+  test("renders encoded connection URLs while retaining the raw PostgreSQL password", () => {
+    const rawPassword = "legacy:p@ss/word?#";
+    const encodedPassword = "legacy%3Ap%40ss%2Fword%3F%23";
+    const config = renderDockerCompose(
+      `POSTGRES_PASSWORD=${rawPassword}\nPOSTGRES_PASSWORD_URL_ENCODED=${encodedPassword}\n`
     );
-    expect(hubBlock).toContain(
-      "${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}"
+    const formbricksDatabaseUrl = `postgresql://postgres:${encodedPassword}@postgres:5432/formbricks?schema=public`;
+    const hubDatabaseUrl = `postgresql://postgres:${encodedPassword}@postgres:5432/formbricks?sslmode=disable`;
+
+    expect(getRenderedServiceEnvironment(config, "postgres").POSTGRES_PASSWORD).toBe(rawPassword);
+    expect(getRenderedServiceEnvironment(config, "formbricks-migrate").DATABASE_URL).toBe(
+      formbricksDatabaseUrl
     );
-    expect(cubeBlock).toContain(
-      "CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}"
-    );
+    expect(getRenderedServiceEnvironment(config, "formbricks").DATABASE_URL).toBe(formbricksDatabaseUrl);
+    expect(getRenderedServiceEnvironment(config, "hub-migrate").DATABASE_URL).toBe(hubDatabaseUrl);
+    expect(getRenderedServiceEnvironment(config, "hub").DATABASE_URL).toBe(hubDatabaseUrl);
+    expect(getRenderedServiceEnvironment(config, "cube").CUBEJS_DB_PASS).toBe(rawPassword);
   });
 
   test("writes generated credentials to a private local environment file", () => {
@@ -183,6 +290,49 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     expect(existingPassword).toBe("legacy:p@ss/word?#");
     expect(envContents).toContain("POSTGRES_PASSWORD=legacy:p@ss/word?#");
     expect(envContents).toContain("POSTGRES_PASSWORD_URL_ENCODED=legacy%3Ap%40ss%2Fword%3F%23");
+  });
+
+  test("preserves unrelated environment entries and literal dollar signs across reruns", () => {
+    const composePath = writeDockerComposeTemplate();
+    const envPath = join(dirname(composePath), ".env");
+    const password = "legacy$PASSWORD_SENTINEL";
+
+    writeFileSync(
+      envPath,
+      `# Operator-managed settings
+PUBLIC_URL=https://surveys.example.com
+CUSTOM_SECRET=keep-me
+HUB_API_KEY=replace-me
+`
+    );
+
+    writeGeneratedEnvFile(envPath, password);
+
+    const firstEnvContents = readFileSync(envPath, "utf8");
+    const renderedEnvironment = getRenderedDockerComposeEnvironment(composePath, envPath, {
+      PASSWORD_SENTINEL: "rewritten",
+    });
+
+    expect(firstEnvContents).toContain("# Operator-managed settings");
+    expect(firstEnvContents).toContain("PUBLIC_URL=https://surveys.example.com");
+    expect(firstEnvContents).toContain("CUSTOM_SECRET=keep-me");
+    expect(firstEnvContents).not.toContain("HUB_API_KEY=replace-me");
+    expect(firstEnvContents).toContain("POSTGRES_PASSWORD=legacy$$PASSWORD_SENTINEL");
+    expect(firstEnvContents).toContain("POSTGRES_PASSWORD_URL_ENCODED=legacy%24PASSWORD_SENTINEL");
+    expect(getDotenvValue(renderedEnvironment, "POSTGRES_PASSWORD")).toBe(password);
+
+    const existingPassword = readExistingPostgresPassword(envPath, composePath);
+    writeGeneratedEnvFile(envPath, existingPassword);
+
+    const rerunEnvContents = readFileSync(envPath, "utf8");
+
+    expect(existingPassword).toBe(password);
+    expect(rerunEnvContents).toContain("# Operator-managed settings");
+    expect(rerunEnvContents).toContain("PUBLIC_URL=https://surveys.example.com");
+    expect(rerunEnvContents).toContain("CUSTOM_SECRET=keep-me");
+    expect(rerunEnvContents.match(/^POSTGRES_PASSWORD=/gm)).toHaveLength(1);
+    expect(rerunEnvContents.match(/^HUB_API_KEY=/gm)).toHaveLength(1);
+    expect(statSync(envPath).mode & 0o777).toBe(0o600);
   });
 });
 

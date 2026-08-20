@@ -177,6 +177,7 @@ read_existing_postgres_password() {
       }
     ' "$env_file")
     if [ -n "$existing_password" ]; then
+      existing_password=${existing_password//\$\$/\$}
       printf '%s' "$existing_password"
       return
     fi
@@ -221,30 +222,51 @@ url_encode() {
   printf '%s' "$encoded"
 }
 
+escape_dotenv_interpolation() {
+  local value="$1"
+
+  printf '%s' "${value//\$/\$\$}"
+}
+
 write_generated_env_file() (
   local env_file="${1:-.env}"
   local postgres_password="${2:-}"
+  local escaped_postgres_password
   local postgres_password_url_encoded
   local hub_api_key
   local cubejs_api_secret
+  local tmp_file
 
   umask 077
-  : > "$env_file"
-  chmod 600 "$env_file"
   if [ -z "$postgres_password" ]; then
     postgres_password=$(openssl rand -hex 32)
   fi
+  escaped_postgres_password=$(escape_dotenv_interpolation "$postgres_password")
   postgres_password_url_encoded=$(url_encode "$postgres_password")
   hub_api_key=$(openssl rand -hex 32)
   cubejs_api_secret=$(openssl rand -hex 32)
-  cat <<EOF > "$env_file"
-POSTGRES_PASSWORD=$postgres_password
+
+  tmp_file=$(mktemp "${env_file}.tmp.XXXXXX")
+  trap 'rm -f "$tmp_file"' EXIT
+
+  if [ -f "$env_file" ]; then
+    awk '
+      !/^(POSTGRES_PASSWORD|POSTGRES_PASSWORD_URL_ENCODED|HUB_API_KEY|CUBEJS_API_SECRET|CUBEJS_JWT_ISSUER|CUBEJS_JWT_AUDIENCE)=/
+    ' "$env_file" > "$tmp_file"
+  fi
+
+  cat <<EOF >> "$tmp_file"
+POSTGRES_PASSWORD=$escaped_postgres_password
 POSTGRES_PASSWORD_URL_ENCODED=$postgres_password_url_encoded
 HUB_API_KEY=$hub_api_key
 CUBEJS_API_SECRET=$cubejs_api_secret
 CUBEJS_JWT_ISSUER=formbricks-web
 CUBEJS_JWT_AUDIENCE=formbricks-cube
 EOF
+
+  chmod 600 "$tmp_file"
+  mv "$tmp_file" "$env_file"
+  trap - EXIT
 )
 
 add_formbricks_traefik_labels() {
