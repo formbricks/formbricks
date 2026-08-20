@@ -10,6 +10,8 @@ import {
   type TWorkflowRunJobData,
   recurringJobs,
 } from "@formbricks/jobs";
+import { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } from "@/lib/telemetry/constants";
+import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetry-job";
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
@@ -72,6 +74,26 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
       cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
       kind: "cron",
       timeZone: SURVEY_SCHEDULING_TIME_ZONE,
+    },
+  },
+  usageTelemetry: {
+    handler: processUsageTelemetryJob,
+    job: recurringJobs.usageTelemetry,
+    schedule: {
+      cronPattern: USAGE_TELEMETRY_DAILY_CRON_PATTERN,
+      // The daily pattern keeps a long-running instance reporting; `immediately` is what covers an
+      // instance that is *not* up at 02:15 UTC, which is the case the GTM need calls out — an instance
+      // may be identified and then barely run (ENG-2107).
+      //
+      // It applies per upsert, not once per scheduler: BullMQ's repeat strategy returns "now" whenever
+      // `immediately` is set, and `immediately` is stripped from the persisted repeat options, so every
+      // boot queues one run and the iterations after it follow the cron pattern. That is deliberate —
+      // a boot is the one moment an otherwise-idle instance is guaranteed to be able to report. It is
+      // also cheap: `sendTelemetryEvents` is gated on a shared 24h timestamp in Redis, so the extra run
+      // is a single Redis read whenever an update already went out.
+      immediately: true,
+      kind: "cron",
+      timeZone: USAGE_TELEMETRY_TIME_ZONE,
     },
   },
   workflowRunReconcile: {
