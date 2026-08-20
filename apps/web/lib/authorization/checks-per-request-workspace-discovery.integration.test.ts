@@ -61,7 +61,7 @@ const listAndCount = async (): Promise<Readonly<{ checksIssued: number; workspac
     };
   });
 
-describe("MCP workspace discovery authorization amplification, against a real database", () => {
+describe("MCP workspace discovery amplification with a mocked lookup and real PostgreSQL resolution", () => {
   test("one and one hundred workspaces each produce exactly one central operation", async () => {
     await prisma.workspace.create({
       data: { name: "Discovery Workspace 1", organizationId: scenario.organizationId },
