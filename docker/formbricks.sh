@@ -167,6 +167,7 @@ read_rendered_compose_password() {
   local compose_file="$1"
   local env_file="${2:-}"
   local encoded_password
+  local rendered_config
   local rendered_password
   local without_escaped_dollars
   local compose_args=(-f "$compose_file")
@@ -179,15 +180,16 @@ read_rendered_compose_password() {
     return 1
   fi
 
-  encoded_password=$(
+  rendered_config=$(
     unset POSTGRES_PASSWORD POSTGRES_PASSWORD_URL_ENCODED
-    docker compose "${compose_args[@]}" config --format json 2>/dev/null | jq -er '
+    docker compose "${compose_args[@]}" config --format json 2>/dev/null
+  ) || return 1
+  encoded_password=$(printf '%s' "$rendered_config" | jq -er '
       .services.postgres.environment.POSTGRES_PASSWORD
       | select(type == "string" and length > 0)
       | select((contains("\n") or contains("\r")) | not)
       | @base64
-    '
-  ) || return 1
+    ') || return 1
 
   rendered_password=$(printf '%s' "$encoded_password" | base64 --decode) || return 1
   # Compose doubles literal dollar signs in its rendered model so that the model can be parsed again.
@@ -456,7 +458,10 @@ install_formbricks() {
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks Quickstart directory at ./formbricks."
 
-  existing_postgres_password=$(read_existing_postgres_password ".env" "docker-compose.yml")
+  if ! existing_postgres_password=$(read_existing_postgres_password ".env" "docker-compose.yml"); then
+    echo "Set POSTGRES_PASSWORD in .env manually, then rerun this script."
+    exit 1
+  fi
 
   # Ask the user for their domain name (recommend surveys subdomain)
   echo "🔗 Please enter your app domain (e.g., surveys.example.com). 🚨 Do NOT enter the protocol (http/https):"

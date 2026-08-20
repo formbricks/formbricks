@@ -393,6 +393,19 @@ CUBEJS_JWT_AUDIENCE=formbricks-cube
     expect(readExistingPostgresPassword(envPath, composePath)).toBe("legacy$PASSWORD_SENTINEL");
 
     writeLegacyComposePassword("- POSTGRES_PASSWORD=$FORMBRICKS_UNSET_PASSWORD_SENTINEL");
+    const unresolvedConfig = JSON.parse(
+      runDockerCompose([
+        "-f",
+        composePath,
+        "--project-directory",
+        dirname(composePath),
+        "config",
+        "--format",
+        "json",
+      ])
+    ) as RenderedDockerComposeConfig;
+
+    expect(getRenderedServiceEnvironment(unresolvedConfig, "postgres").POSTGRES_PASSWORD).toBe("");
     expect(() => readExistingPostgresPassword(envPath, composePath)).toThrow(/Could not safely resolve/);
 
     writeLegacyComposePassword("- POSTGRES_PASSWORD=legacy-password # operator note");
