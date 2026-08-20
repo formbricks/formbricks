@@ -474,8 +474,8 @@ if (process.env.WEBAPP_URL) {
 // derived in lib/constants.ts. CI bumps apps/web/package.json to the release version before
 // the image build (.github/actions/build-and-push-docker/action.yml), so the release the
 // artifacts are uploaded under and the release the events are tagged with always agree.
-// A local or PR build still carries the unbumped 0.0.0 and deliberately yields no release,
-// rather than uploading under one literally named "undefined".
+// It doubles as the "is this an official release build?" signal below: only CI bumps this
+// file, so an unbumped 0.0.0 means a local or self-hosted build.
 const sentryRelease = (() => {
   try {
     const { version } = require("./package.json");
@@ -502,15 +502,33 @@ const sentryOptions = {
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: false,
 
+  sourcemaps: {
+    // The SDK documents this as defaulting to true, but it only applies that default on the
+    // same path that turns `productionBrowserSourceMaps` on for you — and line 57 already
+    // sets that explicitly, so the SDK bails out first. Without this the generated .map
+    // files stay in the image and are served publicly.
+    deleteSourcemapsAfterUpload: true,
+
+    // Only an official release build uploads. A local or self-hosted build carries 0.0.0, and
+    // its token either has no access to this org (so the upload fails) or does (so a laptop
+    // would create a git-SHA release in our production project). "disable-upload" skips the
+    // upload while still injecting Debug IDs — `true` would skip those too, which would leave
+    // the image unsymbolicatable and defeat the point of the read-secrets.sh change. The
+    // string is honoured by the underlying bundler plugin; @sentry/nextjs types the field as
+    // boolean, so re-verify this if the SDK is upgraded.
+    disable: sentryRelease ? false : "disable-upload",
+  },
+
   release: { name: sentryRelease },
 
   // The plugin's default is to log an upload failure and leave the build green, which is why
-  // a wrong project slug went unnoticed for two years. Fail the build instead: an image whose
-  // source maps never uploaded produces unreadable production stack traces, and that is not
-  // something to discover later from Sentry.
-  errorHandler: (err) => {
-    throw err;
-  },
+  // a wrong project slug went unnoticed for two years. On a release build, fail instead: an
+  // image whose source maps never uploaded produces unreadable production stack traces.
+  errorHandler: sentryRelease
+    ? (err) => {
+        throw err;
+      }
+    : undefined,
 };
 
 // Always enable Sentry plugin to inject Debug IDs

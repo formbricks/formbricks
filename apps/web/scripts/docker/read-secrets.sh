@@ -92,9 +92,8 @@ if [ -f "/run/secrets/sentry_auth_token" ]; then
   # symbolicated. Uploading the same Debug IDs twice is idempotent and costs a little build
   # time; shipping an unsymbolicatable image is not a trade worth making.
   IFS= read -r SENTRY_AUTH_TOKEN < /run/secrets/sentry_auth_token || true
-  SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN%$'\n'}
   export SENTRY_AUTH_TOKEN
-  echo "✅ Sentry auth token found. Debug IDs will be injected and sourcemaps uploaded (${TARGETARCH:-unknown} platform)."
+  echo "✅ Sentry auth token found. Debug IDs will be injected (${TARGETARCH:-unknown} platform). Sourcemaps are uploaded only on a release build."
 else
   echo "⚠️  SENTRY_AUTH_TOKEN secret not found. Sourcemaps will not be uploaded and Debug IDs will NOT be injected."
 fi
