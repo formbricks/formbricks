@@ -113,6 +113,13 @@ routing. The URLs above are the ones introduced in v5.2 and they are now a stabl
 API — a future authentication-core upgrade will not move them either.
 
 <Note>
+  The table writes `your-domain.com` as your `WEBAPP_URL`, which is correct for a default install. If you
+  set `BETTER_AUTH_URL` or `NEXTAUTH_URL` to a different origin, the callback lives on **that** origin
+  instead — it is derived from the same auth base URL Better Auth itself uses, not from `WEBAPP_URL`.
+  Either way it is unchanged by this upgrade.
+</Note>
+
+<Note>
   Nothing to do, and nothing to undo. If you added a `/api/auth/callback/{providerId}` redirect URI in
   advance based on an earlier draft of these notes, leaving it registered is harmless — most identity
   providers accept several redirect URIs, and Formbricks simply will not use it.

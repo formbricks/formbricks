@@ -208,8 +208,10 @@ overrides:
   #
   # One thing that did NOT go away: the resource server in apps/web/modules/mcp/auth.ts still asserts
   # the verified `aud` against its own allow-list (ENG-2339). That is not leftover scaffolding from this
-  # acceptance — 1.7 drops `verifyOptions.audience` from its own jwtVerify, so it is now the only
-  # audience check on that path. Do not remove it as cleanup.
+  # acceptance — `hasAcceptedMcpAudience` answers "is this token for ME", which is a different
+  # question from "does each `aud` resolve to a registered resource"; only the first is the one a
+  # resource server must answer. (An earlier note here claimed 1.7 drops `verifyOptions.audience`
+  # from its own jwtVerify. That could not be substantiated and is retracted — see mcp/auth.ts.)
 
 autoInstallPeers: true
 linkWorkspacePackages: true
