@@ -24,7 +24,7 @@ export const OptionsSwitch = ({
   currentOption,
   handleOptionChange,
   "aria-labelledby": ariaLabelledBy,
-}: OptionsSwitchProps) => {
+}: Readonly<OptionsSwitchProps>) => {
   const [highlightStyle, setHighlightStyle] = useState({});
   const containerRef = useRef<HTMLFieldSetElement>(null);
   useEffect(() => {

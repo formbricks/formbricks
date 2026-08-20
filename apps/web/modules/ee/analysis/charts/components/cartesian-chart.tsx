@@ -2,7 +2,12 @@
 
 import { type ElementType, type ReactNode, useMemo } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
-import { formatXAxisTick } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import {
+  formatCellValue,
+  formatXAxisTick,
+  getCategoryAxisWidth,
+  getValueLabelPadding,
+} from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
@@ -40,22 +45,10 @@ export interface CartesianChartProps {
    * Leave false for band-scale charts (bars), whose edge categories are already inset. */
   pointScale?: boolean;
   /** Flips the chart onto its side: categories run down the y-axis and values across the x-axis.
-   * Bar charts only — the category labels then get a fixed-width column instead of the wrapping
-   * tick used under a horizontal axis. */
+   * Bar charts only — the category labels move into a gutter on the left, sized to the labels
+   * present and wrapped inside it (see `getCategoryAxisWidth`). */
   horizontal?: boolean;
 }
-
-/** Ceiling (px) on the gutter reserved for the category labels of a horizontal (flipped) chart:
- * wide enough for a short question label, capped so the bars keep most of the plot. The gutter is
- * sized to the labels actually present (see `getCategoryAxisWidth`) rather than always claiming the
- * ceiling — numeric categories like "3" or "10" would otherwise leave most of it empty. */
-const Y_AXIS_CATEGORY_MAX_WIDTH = 160;
-/** Floor (px), so a one-character label still has a readable gutter and a little breathing room. */
-const Y_AXIS_CATEGORY_MIN_WIDTH = 28;
-/** Approximate advance width (px) of one character at `text-xs`. Only used to pick the gutter
- * width, and it errs wide: over-estimating leaves a little slack, under-estimating would wrap a
- * label that had room to fit on one line. */
-const Y_AXIS_CHAR_WIDTH = 6.5;
 
 /** Upper bound (px) on a single x-axis label before wrapping. The per-category band clamp below
  * already stops neighbours colliding, so this is only a ceiling for charts with lots of room (few
@@ -233,18 +226,19 @@ export function CartesianChart({
 }: Readonly<CartesianChartProps>) {
   const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
   const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
-  // Reserve only as much of the plot as the longest category label needs. A flat maximum reads as a
-  // broken layout on short labels: three numeric categories left ~150px of empty gutter before the
-  // bars started. Long labels still cap at the ceiling and wrap, as before.
   const categoryAxisWidth = useMemo(() => {
     if (!horizontal || !hasCategoryAxis) return 0;
-    const longestLabel = data.reduce((longest, row) => {
-      const label = tickFormatter(row[xAxisKey]);
-      return Math.max(longest, label.length);
-    }, 0);
-    const needed = Math.ceil(longestLabel * Y_AXIS_CHAR_WIDTH) + X_AXIS_TICK_GAP * 2;
-    return Math.min(Y_AXIS_CATEGORY_MAX_WIDTH, Math.max(Y_AXIS_CATEGORY_MIN_WIDTH, needed));
+    return getCategoryAxisWidth(data.map((row) => tickFormatter(row[xAxisKey])));
   }, [horizontal, hasCategoryAxis, data, xAxisKey, tickFormatter]);
+
+  // Flipped, a bar's value label sits past its end with nothing reserving room for it, so the
+  // longest bar loses its label whenever the data max lands on the axis bound. The vertical axis
+  // solves the same problem with `padding.top`; this is that padding, sized to the widest label.
+  const valueLabelPadding = useMemo(() => {
+    if (!horizontal) return 0;
+    const labels = data.flatMap((row) => dataKeys.map((key) => formatCellValue(row[key])));
+    return getValueLabelPadding(labels);
+  }, [horizontal, data, dataKeys]);
 
   return (
     <div className="h-full min-h-64 w-full">
@@ -263,6 +257,7 @@ export function CartesianChart({
               tickLine={false}
               tickMargin={10}
               axisLine={false}
+              padding={{ left: 4, right: valueLabelPadding }}
               domain={yScale?.domain}
               ticks={yScale?.ticks}
               interval={0}
