@@ -76,13 +76,18 @@ function NPS({
   // decoupled from arrow-key focus moves because selecting can trigger
   // auto-progress (see useRovingRadioGroup).
   const npsValues = Array.from({ length: 11 }, (_, i) => String(i));
-  const { getRadioProps } = useRovingRadioGroup({
+  const { getRadioProps, keyboardValue } = useRovingRadioGroup({
     values: npsValues,
     selectedValue: currentValue === undefined ? undefined : String(currentValue),
     onSelect: (v) => {
       handleSelect(Number(v));
     },
   });
+
+  // Pointer hover, or the cell the respondent arrowed to — but never the card's mount autofocus,
+  // which painted 0 with the grey hover fill before the respondent had touched anything (ENG-2288).
+  // See `keyboardValue` in useRovingRadioGroup, and the same comment in rating.tsx.
+  const previewValue = hoveredValue ?? (keyboardValue === null ? null : Number(keyboardValue));
 
   // Get NPS option color for color coding
   const getNPSOptionColor = (idx: number): string => {
@@ -94,7 +99,7 @@ function NPS({
   // Render NPS option (0-10)
   const renderNPSOption = (number: number): React.JSX.Element => {
     const isSelected = currentValue === number;
-    const isHovered = hoveredValue === number;
+    const isHovered = previewValue === number;
     const isLast = number === 10; // Last option is 10
     const isFirst = number === 0; // First option is 0
 
@@ -123,14 +128,6 @@ function NPS({
           }
         }}
         onMouseLeave={() => {
-          setHoveredValue(null);
-        }}
-        onFocus={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onBlur={() => {
           setHoveredValue(null);
         }}>
         {colorCoding ? (

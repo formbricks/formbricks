@@ -190,13 +190,22 @@ function Rating({
   // the focusable control), but selection is decoupled from arrow-key focus
   // moves because selecting can trigger auto-progress (see useRovingRadioGroup).
   const ratingValues = Array.from({ length: range }, (_, i) => String(i + 1));
-  const { getRadioProps } = useRovingRadioGroup({
+  const { getRadioProps, keyboardValue } = useRovingRadioGroup({
     values: ratingValues,
     selectedValue: currentValue === undefined ? undefined : String(currentValue),
     onSelect: (v) => {
       handleSelect(Number(v));
     },
   });
+
+  // The value the scale previews before anything is selected: the pointer first, otherwise the
+  // option the respondent arrowed to. Deliberately NOT every focus: cards autofocus their first
+  // control on mount (focusFirstControl in block-conditional.tsx), and previewing that painted
+  // option 1 as hovered — grey on the number scale, a filled star or smiley — on a card nobody had
+  // touched yet (ENG-2288). `keyboardValue` is only set by an explicit arrow/Home/End move, so the
+  // preview a pointer user gets on hover is the one a keyboard user gets on arrow, and mount focus
+  // gets none (it is marked by the focus ring in survey-ui's globals.css, like every other card).
+  const previewValue = hoveredValue ?? (keyboardValue === null ? null : Number(keyboardValue));
 
   // Get number option color for color coding
   const getRatingNumberOptionColor = (ratingRange: number, idx: number): string => {
@@ -217,7 +226,7 @@ function Rating({
   // Render number scale option
   const renderNumberOption = (number: number, totalLength: number): React.JSX.Element => {
     const isSelected = currentValue === number;
-    const isHovered = hoveredValue === number;
+    const isHovered = previewValue === number;
     const isLast = totalLength === number;
     const isFirst = number === 1;
 
@@ -247,14 +256,6 @@ function Rating({
         }}
         onMouseLeave={() => {
           setHoveredValue(null);
-        }}
-        onFocus={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onBlur={() => {
-          setHoveredValue(null);
         }}>
         {colorCoding ? (
           <div
@@ -282,8 +283,8 @@ function Rating({
   // Render star scale option
   const renderStarOption = (number: number): React.JSX.Element => {
     const isSelected = currentValue === number;
-    // Fill all stars up to the hovered value (if hovering) or selected value
-    const activeValue = hoveredValue ?? currentValue ?? 0;
+    // Fill all stars up to the previewed value (pointer or arrow key) or the selected value
+    const activeValue = previewValue ?? currentValue ?? 0;
     const isActive = number <= activeValue;
 
     return (
@@ -301,14 +302,6 @@ function Rating({
             }
           }}
           onMouseLeave={() => {
-            setHoveredValue(null);
-          }}
-          onFocus={() => {
-            if (!disabled) {
-              setHoveredValue(number);
-            }
-          }}
-          onBlur={() => {
             setHoveredValue(null);
           }}>
           <input
@@ -339,8 +332,7 @@ function Rating({
   // Render smiley scale option
   const renderSmileyOption = (number: number, index: number): React.JSX.Element => {
     const isSelected = currentValue === number;
-    const isHovered = hoveredValue === number;
-    const isActive = isSelected || isHovered;
+    const isActive = isSelected || previewValue === number;
 
     return (
       // The flex-1 wrapper keeps the even column layout; the label is sized to the icon so the
@@ -358,14 +350,6 @@ function Rating({
             }
           }}
           onMouseLeave={() => {
-            setHoveredValue(null);
-          }}
-          onFocus={() => {
-            if (!disabled) {
-              setHoveredValue(number);
-            }
-          }}
-          onBlur={() => {
             setHoveredValue(null);
           }}>
           <input
