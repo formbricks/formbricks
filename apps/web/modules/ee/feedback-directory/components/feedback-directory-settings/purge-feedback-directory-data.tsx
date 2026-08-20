@@ -42,7 +42,8 @@ export const PurgeFeedbackDirectoryData = ({
   // treatment the workspace-delete confirmation gives it. It is deliberately not used for the
   // confirmation label or placeholder: those tell the user what to type, and the typed value is
   // matched against the full name, so showing a truncated string there asks for something that can
-  // never match (delete-workspace-render.tsx does the same, full name at :136 and :142).
+  // never match (delete-workspace-render.tsx does the same: it truncates only the warning text, and
+  // passes the untruncated name to both the confirmation label and the Input's placeholder).
   const displayName = truncate(directoryName, 30);
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -67,13 +68,22 @@ export const PurgeFeedbackDirectoryData = ({
       // status column this one leaves alone.
       onPurge?.();
     } catch (error) {
-      // A timeout arrives as a DOMException, which getV3ApiErrorMessage would surface verbatim
-      // ("The operation was aborted due to timeout") — untranslated and meaningless here.
-      const message =
-        error instanceof DOMException
-          ? t("common.something_went_wrong_please_try_again")
-          : getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
-      toast.error(message);
+      // A client-side abort is NOT a failure. AbortSignal.timeout only stops us waiting — the request
+      // still reached the route, which may well have enqueued the purge. Reporting "something went
+      // wrong" would tell someone their irreversible dataset-wide delete did not happen when it very
+      // likely did, which is the worst direction to be wrong in here. Say the outcome is unknown
+      // instead; re-running is safe either way, since the purge is idempotent and the Hub collapses a
+      // repeat request into the one already in flight.
+      // (It also arrives as a DOMException, which getV3ApiErrorMessage would surface verbatim as
+      // "The operation was aborted due to timeout" — untranslated and meaningless to a user.)
+      if (error instanceof DOMException) {
+        toast(t("workspace.settings.feedback_directories.purge_outcome_unknown"));
+        handleDialogOpenChange(false);
+
+        return;
+      }
+
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -98,6 +108,8 @@ export const PurgeFeedbackDirectoryData = ({
       <DeleteDialog
         open={isPurgeDialogOpen}
         setOpen={handleDialogOpenChange}
+        // deleteWhat only feeds DeleteDialog's fallback title, which `title` below overrides, so it
+        // never renders here. It is required by the prop type, hence the value.
         deleteWhat={displayName}
         title={t("workspace.settings.feedback_directories.purge_all_data")}
         buttonLabel={t("workspace.settings.feedback_directories.purge_all_data")}

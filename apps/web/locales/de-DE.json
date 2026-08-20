@@ -2747,6 +2747,7 @@
         "purge_all_data_warning": "Dadurch werden alle Feedback-Einträge in „{directoryName}“ dauerhaft gelöscht – einschließlich ihrer KI-Anreicherung und der daraus erzeugten Themen – für jeden Workspace, mit dem dieser Datensatz geteilt wird. Der Datensatz und seine Quellen bleiben erhalten, und die Themen können neu erzeugt werden, sobald neues Feedback eintrifft. Diagramme, die auf diesem Datensatz basieren, bleiben bis dahin leer.",
         "purge_confirmation_name": "Gib „{directoryName}“ ein, um zu bestätigen",
         "purge_not_allowed": "Du darfst die Einträge dieses Datensatzes nicht löschen.",
+        "purge_outcome_unknown": "Wir konnten nicht bestätigen, dass der Löschvorgang gestartet wurde. Er läuft möglicherweise noch – warte einige Minuten, bevor du es erneut versuchst.",
         "purge_started": "Einträge werden gelöscht. Bei einem großen Datensatz kann das einige Minuten dauern.",
         "select_workspaces_placeholder": "Workspaces auswählen...",
         "show_archived": "Archivierte anzeigen",

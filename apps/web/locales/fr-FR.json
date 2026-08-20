@@ -2747,6 +2747,7 @@
         "purge_all_data_warning": "Cette action supprime définitivement tous les enregistrements de feedback de « {directoryName} », y compris leur enrichissement par IA et les thèmes qui en ont été générés, pour tous les espaces de travail avec lesquels cet ensemble de données est partagé. L'ensemble de données et ses sources sont conservés, et les thèmes pourront être générés à nouveau dès l'arrivée de nouveaux feedbacks. D'ici là, les graphiques basés sur cet ensemble de données resteront vides.",
         "purge_confirmation_name": "Saisis « {directoryName} » pour confirmer",
         "purge_not_allowed": "Tu n'es pas autorisé à supprimer les enregistrements de cet ensemble de données.",
+        "purge_outcome_unknown": "Nous n'avons pas pu confirmer que la suppression a démarré. Elle est peut-être toujours en cours : patiente quelques minutes avant de réessayer.",
         "purge_started": "Suppression des enregistrements en cours. Cela peut prendre quelques minutes pour un ensemble de données volumineux.",
         "select_workspaces_placeholder": "Sélectionner des espaces de travail...",
         "show_archived": "Afficher les éléments archivés",

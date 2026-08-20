@@ -2747,6 +2747,7 @@
         "purge_all_data_warning": "\"{directoryName}\" içindeki tüm geri bildirim kayıtları, yapay zekâ zenginleştirmeleri ve bunlardan oluşturulan konular dahil, bu veri kümesinin paylaşıldığı tüm çalışma alanlarından kalıcı olarak silinir. Veri kümesi ve kaynakları korunur; yeni geri bildirim geldiğinde konular yeniden oluşturulabilir. O zamana kadar bu veri kümesine dayalı grafikler boş olacaktır.",
         "purge_confirmation_name": "Onaylamak için \"{directoryName}\" yazın",
         "purge_not_allowed": "Bu veri kümesindeki kayıtları silme izniniz yok.",
+        "purge_outcome_unknown": "Silme işleminin başladığını doğrulayamadık. Hâlâ devam ediyor olabilir; tekrar denemeden önce birkaç dakika bekleyin.",
         "purge_started": "Kayıtlar siliniyor. Büyük bir veri kümesinde bu birkaç dakika sürebilir.",
         "select_workspaces_placeholder": "Çalışma alanlarını seç...",
         "show_archived": "Arşivlenmişleri göster",

@@ -2747,6 +2747,7 @@
         "purge_all_data_warning": "Detta tar permanent bort alla feedbackposter i ”{directoryName}”, inklusive deras AI-berikning och de ämnen som genererats utifrån dem, för varje arbetsyta som datasetet delas med. Datasetet och dess källor behålls, och ämnena kan genereras på nytt så snart ny feedback kommer in. Fram till dess blir diagram som bygger på det här datasetet tomma.",
         "purge_confirmation_name": "Skriv ”{directoryName}” för att bekräfta",
         "purge_not_allowed": "Du har inte behörighet att ta bort posterna i det här datasetet.",
+        "purge_outcome_unknown": "Vi kunde inte bekräfta att borttagningen startade. Den kan fortfarande pågå – vänta några minuter innan du försöker igen.",
         "purge_started": "Tar bort poster. För ett stort dataset kan det ta några minuter.",
         "select_workspaces_placeholder": "Välj arbetsytor...",
         "show_archived": "Visa arkiverade",
