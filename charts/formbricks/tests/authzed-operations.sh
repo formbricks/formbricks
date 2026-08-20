@@ -86,17 +86,25 @@ grep --fixed-strings 'helm.sh/hook-weight: "10"' <<<"${default_install}" >/dev/n
 grep --fixed-strings 'helm.sh/hook-weight: "-10"' <<<"${default_install}" >/dev/null
 grep --fixed-strings 'value: fully_consistent' <<<"${default_install}" >/dev/null
 
-if helm template authzed-disabled "${CHART_DIR}" "${COMMON_ARGS[@]}" \
-  --set authzed.enabled=false >/dev/null 2>&1; then
+helm template authzed-null-annotations "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set-json 'deployment.annotations=null' >/dev/null
+
+if authzed_disabled_error="$(helm template authzed-disabled "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --set authzed.enabled=false 2>&1)"; then
   printf '%s\n' "Formbricks v6 must refuse a chart deployment with AuthZed disabled." >&2
   exit 1
 fi
+grep --fixed-strings 'Formbricks v6 requires AuthZed' <<<"${authzed_disabled_error}" >/dev/null
 
-if helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
-  --is-upgrade >/dev/null 2>&1; then
+if authzed_upgrade_error="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
+  --is-upgrade \
+  --set global.postgresql.auth.password=test-password \
+  --set global.postgresql.auth.postgresPassword=test-password 2>&1)"; then
   printf '%s\n' "An existing Helm release must acknowledge the AuthZed v6 migration." >&2
   exit 1
 fi
+grep --fixed-strings 'AuthZed v6 upgrade preparation is not acknowledged' \
+  <<<"${authzed_upgrade_error}" >/dev/null
 
 acknowledged_upgrade="$(helm template authzed-upgrade "${CHART_DIR}" "${COMMON_ARGS[@]}" \
   --is-upgrade \

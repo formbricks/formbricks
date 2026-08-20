@@ -1,11 +1,23 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import {
   AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES,
+  AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS,
   hasStaleAuthzedRevocation,
   markAuthzedOutboxEventsFailed,
 } from "@/lib/authzed/outbox-repository";
+
+const migration = readFileSync(
+  join(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../../../packages/database/migration/20260818120000_add_authzed_projection_outbox/migration.sql"
+  ),
+  "utf8"
+);
 
 /**
  * The durable outbox against a real PostgreSQL (ENG-2408).
@@ -49,6 +61,23 @@ beforeEach(async () => {
 });
 
 describe("AuthZed projection outbox triggers", () => {
+  test("the migration converges when applied repeatedly", async () => {
+    await prisma.$executeRawUnsafe(migration);
+    await prisma.$executeRawUnsafe(migration);
+
+    const [catalog] = await prisma.$queryRaw<Array<{ indexes: bigint; triggers: bigint }>>`
+      SELECT
+        (SELECT COUNT(*) FROM pg_indexes
+         WHERE tablename = 'AuthzedProjectionOutbox'
+           AND indexname <> 'AuthzedProjectionOutbox_pkey') AS indexes,
+        (SELECT COUNT(*) FROM pg_trigger
+         WHERE tgname LIKE 'authzed_projection_%'
+           AND NOT tgisinternal) AS triggers
+    `;
+    expect(Number(catalog?.indexes)).toBe(3);
+    expect(Number(catalog?.triggers)).toBe(11);
+  });
+
   test("does not classify an accepted invite as a revocation", async () => {
     const [user, organization] = await Promise.all([
       seedUser("accept@integration.test"),
@@ -299,6 +328,25 @@ describe("AuthZed projection outbox failure release", () => {
     });
   });
 
+  test("never clears an existing dead letter even if a lease invariant is violated", async () => {
+    await insertClaimedEvent("dead-letter", {
+      permanentFailures: AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES - 1,
+    });
+    await markAuthzedOutboxEventsFailed("lease", ["dead-letter"], "authzed_invalid_request", {
+      attributable: true,
+      retryable: false,
+    });
+
+    await reclaim("dead-letter");
+    await expect(
+      markAuthzedOutboxEventsFailed("lease", ["dead-letter"], "authzed_unavailable", {
+        attributable: false,
+        retryable: true,
+      })
+    ).resolves.toBe(0);
+    expect((await releaseState("dead-letter")).deadLetteredAt).toBeInstanceOf(Date);
+  });
+
   test("backs off further for a later attempt and stops growing at the ceiling", async () => {
     await Promise.all([
       insertClaimedEvent("early", { attempts: 3 }),
@@ -313,7 +361,9 @@ describe("AuthZed projection outbox failure release", () => {
     const [early, late] = await Promise.all([releaseState("early"), releaseState("late")]);
     expect(early.availableAt.getTime()).toBeLessThan(late.availableAt.getTime());
     // Capped rather than overflowed: 2 ^ 40 milliseconds is thirty-five thousand years.
-    expect(late.availableAt.getTime() - Date.now()).toBeLessThanOrEqual(5 * 60_000 + 5_000);
+    const cappedDelayMs = late.availableAt.getTime() - Date.now();
+    expect(cappedDelayMs).toBeGreaterThanOrEqual(AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS - 5_000);
+    expect(cappedDelayMs).toBeLessThanOrEqual(AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS + 5_000);
   });
 
   test("leaves an event released by a lease it no longer owns untouched", async () => {

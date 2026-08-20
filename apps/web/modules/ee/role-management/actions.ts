@@ -15,6 +15,8 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
@@ -54,6 +56,7 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
       type: "organization",
       id: organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
 
     if (!IS_FORMBRICKS_CLOUD && parsedInput.data.role === "billing") {
       throw new ValidationError("Billing role is not allowed");
@@ -110,6 +113,7 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
       type: "organization",
       id: parsedInput.organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     if (!IS_FORMBRICKS_CLOUD && parsedInput.data.role === "billing") {
       throw new ValidationError("Billing role is not allowed");

@@ -4,6 +4,8 @@ import { z } from "zod";
 import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { assertCan } from "@/lib/authorization";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { checkWhiteLabelPermission } from "@/modules/ee/whitelabel/email-customization/actions";
 import { updateOrganizationFaviconUrl } from "@/modules/ee/whitelabel/favicon-customization/lib/organization";
@@ -23,6 +25,7 @@ export const updateOrganizationFaviconUrlAction = authenticatedActionClient
         type: "organization",
         id: organizationId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
 
       await checkWhiteLabelPermission(organizationId);
 
@@ -47,6 +50,7 @@ export const removeOrganizationFaviconUrlAction = authenticatedActionClient
         type: "organization",
         id: organizationId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
 
       await checkWhiteLabelPermission(organizationId);
 

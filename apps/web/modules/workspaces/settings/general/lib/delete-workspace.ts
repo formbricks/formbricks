@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
+import { getWorkspace } from "@/lib/workspace/service";
 import { deleteWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import {
   WORKSPACE_DELETE_CONFIRMATION_ERROR,
@@ -74,9 +75,9 @@ export const deleteWorkspaceWithConfirmation = async ({
     id: organizationId,
   });
 
-  const availableWorkspaces = await getUserWorkspaces(userId, organizationId);
+  const workspaceCount = await prisma.workspace.count({ where: { organizationId } });
 
-  if (availableWorkspaces.length <= 1) {
+  if (workspaceCount <= 1) {
     throw new OperationNotAllowedError("You can't delete the last workspace.");
   }
 

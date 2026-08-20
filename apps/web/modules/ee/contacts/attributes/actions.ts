@@ -3,12 +3,14 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
@@ -20,6 +22,13 @@ import {
   getContactAttributeKeyById,
   updateContactAttributeKey,
 } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+
+const assertContactsEnabled = async (organizationId: string) => {
+  if (!(await getIsContactsEnabled(organizationId))) {
+    throw new OperationNotAllowedError("Contacts are not enabled for this organization");
+  }
+};
 
 const ZCreateContactAttributeKeyAction = z.object({
   workspaceId: ZId,
@@ -48,6 +57,8 @@ export const createContactAttributeKeyAction = authenticatedActionClient
         type: "workspace",
         id: workspaceId,
       });
+      await assertContactsEnabled(organizationId);
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
 
@@ -99,6 +110,8 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
         type: "workspace",
         id: workspaceId,
       });
+      await assertContactsEnabled(organizationId);
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.oldObject = existingKey;
@@ -135,6 +148,8 @@ export const deleteContactAttributeKeyAction = authenticatedActionClient
         type: "workspace",
         id: workspaceId,
       });
+      await assertContactsEnabled(organizationId);
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.oldObject = existingKey;

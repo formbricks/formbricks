@@ -47,13 +47,11 @@ export const PUT = async (request: Request) =>
 
       const { contacts } = parsedInput.body ?? { contacts: [] };
 
-      const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
       if (
-        !perm ||
         !(await can(
           { type: "apiKey", id: authentication.apiKeyId },
           getWorkspaceAuthorizationActionForMethod("PUT"),
-          { type: "workspace", id: perm.workspaceId }
+          { type: "workspace", id: workspaceId }
         ))
       ) {
         return handleApiError(

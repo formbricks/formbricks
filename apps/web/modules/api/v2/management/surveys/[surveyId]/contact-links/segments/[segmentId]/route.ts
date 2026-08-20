@@ -37,17 +37,6 @@ export const GET = async (
         });
       }
 
-      const organizationId = await getOrganizationIdFromSurveyId(params.surveyId);
-      const isContactsEnabled = await getIsContactsEnabled(organizationId);
-      if (!isContactsEnabled) {
-        return handleApiError(request, {
-          type: "forbidden",
-          details: [
-            { field: "contacts", issue: "Contacts are only enabled for Enterprise Edition, please upgrade." },
-          ],
-        });
-      }
-
       const workspaceIdResult = await getWorkspaceId(params.surveyId, false);
 
       if (!workspaceIdResult.ok) {
@@ -65,6 +54,17 @@ export const GET = async (
       ) {
         return handleApiError(request, {
           type: "unauthorized",
+        });
+      }
+
+      const organizationId = await getOrganizationIdFromSurveyId(params.surveyId);
+      const isContactsEnabled = await getIsContactsEnabled(organizationId);
+      if (!isContactsEnabled) {
+        return handleApiError(request, {
+          type: "forbidden",
+          details: [
+            { field: "contacts", issue: "Contacts are only enabled for Enterprise Edition, please upgrade." },
+          ],
         });
       }
 

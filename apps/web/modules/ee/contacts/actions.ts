@@ -13,6 +13,8 @@ import {
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromContactId,
 } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createContactsFromCSV, deleteContact, getContact, getContacts } from "./lib/contacts";
@@ -61,6 +63,7 @@ export const deleteContactAction = authenticatedActionClient.inputSchema(ZContac
       type: "workspace",
       id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.contactId = parsedInput.contactId;
@@ -89,6 +92,7 @@ export const createContactsFromCSVAction = authenticatedActionClient
         type: "workspace",
         id: workspaceId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       const existingContactCount = await prisma.contact.count({
@@ -141,6 +145,7 @@ export const updateContactAttributesAction = authenticatedActionClient
         type: "workspace",
         id: workspaceId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.contactId = parsedInput.contactId;

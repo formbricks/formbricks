@@ -693,6 +693,8 @@ authzed:
   # Install one operator per cluster. Disable this when a shared operator
   # already watches the Formbricks namespace (the Formbricks Cloud topology).
   operator:
+    # Breaking in v6: the default changed from false to true. Existing clusters with a compatible
+    # shared operator must keep this false to prevent two operators reconciling the same cluster.
     # Set false when a compatible cluster-wide operator already watches this namespace.
     install: true
 

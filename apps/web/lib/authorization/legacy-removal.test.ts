@@ -5,11 +5,21 @@ import { describe, expect, test } from "vitest";
 
 const WEB_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const REPOSITORY_ROOT = join(WEB_ROOT, "../..");
+const IGNORED_DIRECTORIES = new Set([
+  ".next",
+  ".turbo",
+  "coverage",
+  "dist",
+  "node_modules",
+  "playwright-report",
+]);
 
 const walkRuntimeSources = (directory: string): ReadonlyArray<string> =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const absolutePath = join(directory, entry.name);
-    if (entry.isDirectory()) return walkRuntimeSources(absolutePath);
+    if (entry.isDirectory()) {
+      return IGNORED_DIRECTORIES.has(entry.name) ? [] : walkRuntimeSources(absolutePath);
+    }
     if (!/\.(ts|tsx|mjs)$/.test(entry.name) || /\.(test|spec)\.(ts|tsx)$/.test(entry.name)) return [];
     return [absolutePath];
   });

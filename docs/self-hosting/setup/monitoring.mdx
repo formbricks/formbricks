@@ -208,8 +208,9 @@ and authorization latency.
 
 The v6 direct-authority release exposes authoritative allow/deny/operational-error and latency metrics plus
 outbox backlog, revocation delivery latency, oldest pending item, dead-letter, reconciliation drift, and repair
-signals. A revocation warns at 15 seconds, becomes critical at 45 seconds, and makes protected
-authorization fail closed at 60 seconds. Follow the release-matched
+signals. The fixed revocation thresholds warn at 15 seconds, become critical at 45 seconds, and make protected
+authorization fail closed at 60 seconds; the 60-second bound is not configurable. A dead-lettered revocation
+triggers warning, critical, and fail-closed states immediately, regardless of its age. Follow the release-matched
 [AuthZed Operations guide](/self-hosting/advanced/authzed-operations) during upgrade rather than treating v5
 comparison metrics as a v6 rollout gate.
 

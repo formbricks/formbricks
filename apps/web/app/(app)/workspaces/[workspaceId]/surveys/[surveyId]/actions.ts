@@ -25,13 +25,13 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
   .inputSchema(ZGetResponsesDownloadUrlAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
       type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+      id: workspaceId,
     });
 
-    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
     const result = await getResponseDownloadFile(
       parsedInput.surveyId,
       parsedInput.format,
@@ -71,7 +71,7 @@ export const getSurveyFilterDataAction = authenticatedActionClient
 
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
       type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+      id: survey.workspaceId,
     });
 
     const organizationBilling = await getOrganizationBilling(organizationId);
@@ -81,10 +81,8 @@ export const getSurveyFilterDataAction = authenticatedActionClient
 
     const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
-    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-
     const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas = []] = await Promise.all([
-      getTagsByWorkspaceId(workspaceId),
+      getTagsByWorkspaceId(survey.workspaceId),
       getResponseFilteringValues(parsedInput.surveyId),
       isQuotasAllowed ? getQuotas(parsedInput.surveyId) : [],
     ]);

@@ -148,17 +148,21 @@ jobs:
             test -r /home/nextjs/authzed-cli/schema.zed
           '
 
+          AUTHZED_CLI_ENV=(
+            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks"
+            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY"
+            -e REDIS_URL="redis://192.0.2.1:6379"
+            -e HUB_API_URL="http://192.0.2.1:4000"
+            -e HUB_API_KEY="build-time-placeholder"
+            -e CUBEJS_API_URL="http://192.0.2.1:4000"
+            -e CUBEJS_API_SECRET="build-time-placeholder"
+            -e AUTHZED_ENABLED="false"
+          )
+
           set +e
           output="$(docker run --rm \
             --entrypoint formbricks-authzed \
-            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks" \
-            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
-            -e REDIS_URL="redis://192.0.2.1:6379" \
-            -e HUB_API_URL="http://192.0.2.1:4000" \
-            -e HUB_API_KEY="build-time-placeholder" \
-            -e CUBEJS_API_URL="http://192.0.2.1:4000" \
-            -e CUBEJS_API_SECRET="build-time-placeholder" \
-            -e AUTHZED_ENABLED="false" \
+            "${AUTHZED_CLI_ENV[@]}" \
             "$IMAGE" health 2>&1)"
           status=$?
           set -e
@@ -169,14 +173,7 @@ jobs:
           set +e
           upgrade_output="$(docker run --rm \
             --entrypoint formbricks-authzed \
-            -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks" \
-            -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
-            -e REDIS_URL="redis://192.0.2.1:6379" \
-            -e HUB_API_URL="http://192.0.2.1:4000" \
-            -e HUB_API_KEY="build-time-placeholder" \
-            -e CUBEJS_API_URL="http://192.0.2.1:4000" \
-            -e CUBEJS_API_SECRET="build-time-placeholder" \
-            -e AUTHZED_ENABLED="false" \
+            "${AUTHZED_CLI_ENV[@]}" \
             "$IMAGE" upgrade check 2>&1)"
           upgrade_status=$?
           set -e

@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AuthorizationError,
@@ -16,12 +17,10 @@ const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
   deleteWorkspace: vi.fn(),
   getWorkspace: vi.fn(),
-  getUserWorkspaces: vi.fn(),
 }));
 
 vi.mock("@/lib/workspace/service", () => ({
   getWorkspace: mocks.getWorkspace,
-  getUserWorkspaces: mocks.getUserWorkspaces,
 }));
 
 vi.mock("@/lib/authorization", () => ({
@@ -56,7 +55,7 @@ describe("deleteWorkspaceWithConfirmation", () => {
     vi.clearAllMocks();
     mocks.assertCan.mockResolvedValue(undefined);
     mocks.getWorkspace.mockResolvedValue(baseWorkspace);
-    mocks.getUserWorkspaces.mockResolvedValue([baseWorkspace, { ...baseWorkspace, id: "cmworkspace2" }]);
+    prisma.workspace.count.mockResolvedValue(2);
     mocks.deleteWorkspace.mockResolvedValue(baseWorkspace);
   });
 
@@ -76,7 +75,9 @@ describe("deleteWorkspaceWithConfirmation", () => {
       type: "organization",
       id: baseWorkspace.organizationId,
     });
-    expect(mocks.getUserWorkspaces).toHaveBeenCalledWith(userId, baseWorkspace.organizationId);
+    expect(prisma.workspace.count).toHaveBeenCalledWith({
+      where: { organizationId: baseWorkspace.organizationId },
+    });
     expect(mocks.deleteWorkspace).toHaveBeenCalledWith(baseWorkspace.id);
     expect(auditLoggingCtx).toMatchObject({
       organizationId: baseWorkspace.organizationId,
@@ -113,7 +114,7 @@ describe("deleteWorkspaceWithConfirmation", () => {
     await expect(deleteAttempt).rejects.toThrow(WORKSPACE_DELETE_CONFIRMATION_ERROR);
 
     expect(mocks.assertCan).not.toHaveBeenCalled();
-    expect(mocks.getUserWorkspaces).not.toHaveBeenCalled();
+    expect(prisma.workspace.count).not.toHaveBeenCalled();
     expect(mocks.deleteWorkspace).not.toHaveBeenCalled();
   });
 
@@ -131,12 +132,12 @@ describe("deleteWorkspaceWithConfirmation", () => {
 
     await expect(callDeleteWorkspaceWithConfirmation()).rejects.toThrow(AuthorizationError);
 
-    expect(mocks.getUserWorkspaces).not.toHaveBeenCalled();
+    expect(prisma.workspace.count).not.toHaveBeenCalled();
     expect(mocks.deleteWorkspace).not.toHaveBeenCalled();
   });
 
   test("does not delete the last available workspace", async () => {
-    mocks.getUserWorkspaces.mockResolvedValueOnce([baseWorkspace]);
+    prisma.workspace.count.mockResolvedValueOnce(1);
 
     await expect(callDeleteWorkspaceWithConfirmation()).rejects.toThrow(OperationNotAllowedError);
 

@@ -7,7 +7,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import type { TAuthorizationActor } from "@/lib/authorization";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import { AuthzedError } from "@/lib/authzed/errors";
-import { getWorkspacesByIds, getWorkspacesByIdsForUser } from "@/lib/workspace/service";
+import { getOrganizationScopedWorkspacesByIdsForUser, getWorkspacesByIds } from "@/lib/workspace/service";
 
 type TListV3WorkspacesParams = {
   authentication: TV3Authentication;
@@ -42,7 +42,7 @@ async function fetchSessionWorkspaces(
   actor: Extract<TAuthorizationActor, { type: "user" }>
 ): Promise<TResolvedWorkspaceList> {
   const workspaceIds = await lookupAuthorizedWorkspaceIds(actor);
-  const workspaces = await getWorkspacesByIdsForUser(userId, [...workspaceIds]);
+  const workspaces = await getOrganizationScopedWorkspacesByIdsForUser(userId, [...workspaceIds]);
   return {
     items: workspaces.map(serializeV3WorkspaceListItem),
   };

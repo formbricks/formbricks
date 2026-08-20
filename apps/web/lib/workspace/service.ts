@@ -128,7 +128,7 @@ export const getWorkspacesByIds = reactCache(
  * memberships. The ID allowlist comes from SpiceDB; this query only verifies existence and tenant
  * membership before returning application data, and never re-evaluates roles or team grants.
  */
-export const getWorkspacesByIdsForUser = reactCache(
+export const getOrganizationScopedWorkspacesByIdsForUser = reactCache(
   async (userId: string, workspaceIds: string[]): Promise<TWorkspace[]> => {
     validateInputs([userId, ZId], [workspaceIds, ZId.array()]);
     if (workspaceIds.length === 0) return [];

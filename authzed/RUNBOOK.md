@@ -313,9 +313,11 @@ the service recovers:
 4. Run the complete dry-run audit, apply attributable repair, and require two consecutive clean audits.
 5. Keep direct-authority cutover blocked while a revocation is pending, dead-lettered, or older than its SLA.
 
-For a self-hosted major upgrade, `formbricks-authzed upgrade prepare` composes steps 1 through 4 and then runs a
-final audit. Always follow it with the read-only `upgrade check`; do not treat a completed write phase as proof
-that concurrent source changes left the graph clean.
+For a self-hosted major upgrade, investigate and replay any dead letters separately before starting the gate.
+`formbricks-authzed upgrade prepare` drains the outbox, reconciles the graph, and runs a final audit, but it
+deliberately blocks rather than replaying dead letters whose cause has not been understood. Always follow it with
+the read-only `upgrade check`; do not treat a completed write phase as proof that concurrent source changes left
+the graph clean.
 
 In the direct-authority artifact, a SpiceDB, datastore, resolver, configuration, freshness, or unsupported-result
 failure is not an ordinary denial and never falls back. The protected operation receives a sanitized operational
@@ -451,9 +453,10 @@ histogram_quantile(0.95, sum(rate(formbricks_authzed_projection_duration_seconds
 # for: 15m
 ```
 
-Every one of these resolves to the same first action: inspect and drain the durable outbox, then run the full
-audit and confirm a clean result. On a pre-outbox bridge, run the backfill immediately because failed writes were
-not retained.
+For projection-delivery alerts, first inspect and drain the durable outbox, then run the full audit and confirm a
+clean result. On a pre-outbox bridge, run the backfill immediately because failed writes were not retained.
+Decision operational errors instead require diagnosis by their source: application resolvers and configuration,
+SpiceDB/datastore health, or transport credentials. Draining the outbox does not correct those failures.
 
 The application on-call owns decision, outbox, and reconciliation alerts. The infrastructure on-call owns
 SpiceDB replicas, datastore, migrations, connection pools, dispatch, and cache health. Page both when an

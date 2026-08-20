@@ -68,10 +68,10 @@ describe("AuthZed projection outbox migration contract", () => {
     }
   });
 
-  test("is safe to rerun after a development schema push", () => {
-    expect(migration).toContain('CREATE TABLE IF NOT EXISTS "AuthzedProjectionOutbox"');
+  // Repeated execution and catalog convergence are verified against PostgreSQL in
+  // outbox-trigger.integration.test.ts. This source-level count remains intentionally exhaustive so
+  // a new relationship source cannot omit its matching trigger replacement.
+  test("declares every relationship-source trigger replacement", () => {
     expect(migration.match(/DROP TRIGGER IF EXISTS/g)).toHaveLength(11);
-    expect(migration).toContain("CREATE OR REPLACE FUNCTION enqueue_authzed_projection()");
-    expect(migration).toContain('ADD COLUMN IF NOT EXISTS "permanentFailures"');
   });
 });

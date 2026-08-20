@@ -28,8 +28,10 @@ vi.mock("@opentelemetry/api", () => ({
 }));
 
 const {
+  recordAuthzedOutboxDelivery,
   recordAuthzedOutboxStatus,
   recordAuthzedProjection,
+  recordAuthzedReconciliationAudit,
   recordAuthzedReconciliationRepair,
   recordAuthzedRequestFailure,
   recordAuthzedRequestRetry,
@@ -184,6 +186,32 @@ describe("direct-authority recovery metrics", () => {
 
     expect(() => recordAuthzedRevocationDelivery(1)).not.toThrow();
     expect(() => recordAuthzedReconciliationRepair({ failed: 0, repaired: 1 })).not.toThrow();
+  });
+
+  test("does not let exporter failures alter delivery, drain, or audit results", () => {
+    counter("formbricks_authzed_projection_outbox_delivery_total").add.mockImplementationOnce(() => {
+      throw new Error("exporter unavailable");
+    });
+    gauges.get("formbricks_authzed_projection_outbox_status")!.record.mockImplementationOnce(() => {
+      throw new Error("exporter unavailable");
+    });
+    counter("formbricks_authzed_reconciliation_audit_total").add.mockImplementationOnce(() => {
+      throw new Error("exporter unavailable");
+    });
+
+    expect(() => recordAuthzedOutboxDelivery({ count: 1, durationMs: 2, status: "delivered" })).not.toThrow();
+    expect(() =>
+      recordAuthzedOutboxStatus({
+        deadLettered: 0,
+        oldestPendingAgeSeconds: 1,
+        pending: 1,
+        revocationsPastCritical: 0,
+        revocationsPastWarning: 0,
+      })
+    ).not.toThrow();
+    expect(() =>
+      recordAuthzedReconciliationAudit({ drift: 0, failures: 0, status: "reconciled" })
+    ).not.toThrow();
   });
 });
 

@@ -34,6 +34,7 @@ export const runChunked = async <TTargets extends Readonly<Record<string, Readon
     ...entries.map(([, items]) => Math.ceil(items.length / AUTHZED_TARGET_CHUNK_SIZE))
   );
 
+  let passes = 0;
   for (let index = 0; index < chunkCount; index++) {
     const start = index * AUTHZED_TARGET_CHUNK_SIZE;
     // Built by narrowing a full target object rather than assembling a partial one and asserting the
@@ -51,7 +52,8 @@ export const runChunked = async <TTargets extends Readonly<Record<string, Readon
     if (result.status !== "projected") {
       return result;
     }
+    passes += result.passes;
   }
 
-  return { passes: 1, status: "projected" };
+  return { passes, status: "projected" };
 };

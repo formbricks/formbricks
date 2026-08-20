@@ -33,6 +33,7 @@ describe("authorization operational error normalization", () => {
       operation: "authorization",
       retryable: false,
     });
-    expect(JSON.stringify(normalized)).not.toContain("private raw message");
+    expect(normalized.message).not.toContain("private raw message");
+    expect(normalized.stack ?? "").not.toContain("private raw message");
   });
 });

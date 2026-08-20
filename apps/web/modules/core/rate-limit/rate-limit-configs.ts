@@ -92,6 +92,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 100,
       namespace: "action:feedback-record-deletion",
     }, // 100 per minute per user — supports deliberate bulk deletion while bounding abuse
+    stateMutation: {
+      interval: 60,
+      allowedPerInterval: 120,
+      namespace: "action:state-mutation",
+    }, // 120 per minute per organization/workspace — shared guard for authenticated settings writes
   },
 
   storage: {

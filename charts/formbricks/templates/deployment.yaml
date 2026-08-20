@@ -16,7 +16,7 @@ metadata:
   {{- if .Values.deployment.reloadOnChange }}
     reloader.stakater.com/auto: "true"
   {{- end }}
-  {{- if and .Values.authzed.enabled (not (hasKey .Values.deployment.annotations "argocd.argoproj.io/sync-wave")) }}
+  {{- if and .Values.authzed.enabled (not (hasKey (default dict .Values.deployment.annotations) "argocd.argoproj.io/sync-wave")) }}
     # The release-matched AuthZed preparation runs at wave 1. This orders GitOps reconciliation without
     # coupling the application process, startup, or probes to SpiceDB availability.
     argocd.argoproj.io/sync-wave: "2"

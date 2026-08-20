@@ -195,10 +195,12 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     const survey = parsedInput as TSurvey;
 
     const organizationId = await getOrganizationIdFromSurveyId(survey.id);
+    const workspaceId = await getWorkspaceIdFromSurveyId(survey.id);
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
       type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(survey.id),
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     if (survey.recaptcha?.enabled) {
       await checkSpamProtectionPermission(organizationId);
@@ -241,10 +243,12 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
 export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey).action(
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.id);
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
       type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(parsedInput.id),
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     if (parsedInput.recaptcha?.enabled) {
       await checkSpamProtectionPermission(organizationId);
@@ -461,6 +465,7 @@ export const createActionClassAction = authenticatedActionClient.inputSchema(ZCr
       type: "workspace",
       id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     const result = await createActionClass(workspaceId, parsedInput.action);

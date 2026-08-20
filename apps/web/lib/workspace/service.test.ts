@@ -9,6 +9,7 @@ import {
 } from "@/lib/authorization/resource-list";
 import { ITEMS_PER_PAGE } from "../constants";
 import {
+  getOrganizationScopedWorkspacesByIdsForUser,
   getUserWorkspaces,
   getUserWorkspacesByOrganizationIds,
   getWorkspace,
@@ -17,7 +18,6 @@ import {
   getWorkspaceMembers,
   getWorkspaces,
   getWorkspacesByIds,
-  getWorkspacesByIdsForUser,
 } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -468,13 +468,15 @@ describe("Workspace Service", () => {
     expect(prisma.workspace.findMany).not.toHaveBeenCalled();
   });
 
-  test("getWorkspacesByIdsForUser verifies lookup results against current tenant membership", async () => {
+  test("getOrganizationScopedWorkspacesByIdsForUser verifies lookup results against current tenant membership", async () => {
     const userId = createId();
     const workspaceIds = [createId(), createId()];
     const mockWorkspaces = workspaceIds.map((id) => ({ id, organizationId: createId() }));
     vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as unknown as Workspace[]);
 
-    await expect(getWorkspacesByIdsForUser(userId, workspaceIds)).resolves.toEqual(mockWorkspaces);
+    await expect(getOrganizationScopedWorkspacesByIdsForUser(userId, workspaceIds)).resolves.toEqual(
+      mockWorkspaces
+    );
     expect(prisma.workspace.findMany).toHaveBeenCalledExactlyOnceWith({
       where: {
         id: { in: workspaceIds },
@@ -484,8 +486,8 @@ describe("Workspace Service", () => {
     });
   });
 
-  test("getWorkspacesByIdsForUser skips PostgreSQL for an empty authoritative list", async () => {
-    await expect(getWorkspacesByIdsForUser(createId(), [])).resolves.toEqual([]);
+  test("getOrganizationScopedWorkspacesByIdsForUser skips PostgreSQL for an empty authoritative list", async () => {
+    await expect(getOrganizationScopedWorkspacesByIdsForUser(createId(), [])).resolves.toEqual([]);
     expect(prisma.workspace.findMany).not.toHaveBeenCalled();
   });
 

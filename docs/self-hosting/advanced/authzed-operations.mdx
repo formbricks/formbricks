@@ -82,7 +82,8 @@ bundled PostgreSQL container. Startup is ordered as follows:
 
 ```text
 postgres → authzed-db-bootstrap → spicedb-migrate → spicedb
-        ↘ formbricks-migrate ───────────────↗ authzed-initialize
+postgres → formbricks-migrate
+spicedb + formbricks-migrate → authzed-initialize
 ```
 
 Database bootstrap and datastore migration are idempotent. Migration and serving always use the same
@@ -191,7 +192,6 @@ For an external AuthZed endpoint:
 
 ```yaml
 authzed:
-  enabled: true
   mode: external
   operator:
     install: false

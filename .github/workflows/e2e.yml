@@ -366,7 +366,7 @@ jobs:
           echo "AUTHZED_CI_OUTBOX_HEARTBEAT_PATH=${heartbeat_path}" >> "$GITHUB_ENV"
           echo "AUTHZED_CI_OUTBOX_PID=${worker_pid}" >> "$GITHUB_ENV"
 
-          for attempt in {1..50}; do
+          for attempt in {1..600}; do
             if ! kill -0 "${worker_pid}" 2>/dev/null; then
               echo "AuthZed CI outbox worker exited before becoming ready"
               exit 1
@@ -422,6 +422,8 @@ jobs:
             status=1
           else
             heartbeat_age="$(( $(date +%s) - $(stat -c %Y "${heartbeat_path}") ))"
+            # The worker emits a heartbeat every 100 ms. Allow 100 missed heartbeats so a loaded
+            # runner is not mistaken for a dead worker while still catching a stalled loop.
             if [ "${heartbeat_age}" -gt 10 ]; then
               echo "AuthZed CI outbox worker heartbeat is stale"
               status=1

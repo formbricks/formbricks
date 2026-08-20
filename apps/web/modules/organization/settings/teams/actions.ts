@@ -15,7 +15,11 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
-import { assertRateLimitAvailable, recordRateLimitUsage } from "@/modules/core/rate-limit/helpers";
+import {
+  applyRateLimit,
+  assertRateLimitAvailable,
+  recordRateLimitUsage,
+} from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -49,6 +53,7 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
       type: "organization",
       id: organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
@@ -68,6 +73,7 @@ export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCr
       type: "organization",
       id: organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
 
     // Get old expiresAt for audit logging before update
     const oldInvite = await prisma.invite.findUnique({
@@ -107,6 +113,7 @@ export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDel
       type: "organization",
       id: parsedInput.organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     if (parsedInput.userId === ctx.user.id) {
       throw new OperationNotAllowedError("You cannot delete yourself from the organization");
@@ -172,6 +179,7 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       type: "organization",
       id: parsedInput.organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const invite = await getInvite(parsedInput.inviteId);
 
@@ -502,6 +510,7 @@ export const leaveOrganizationAction = authenticatedActionClient.inputSchema(ZLe
       type: "organization",
       id: parsedInput.organizationId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
 

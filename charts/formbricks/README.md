@@ -59,6 +59,13 @@ single-replica deployment.
 ## AuthZed / SpiceDB
 
 Formbricks v6 enables AuthZed, `fully_consistent` authorization, and the bundled SpiceDB operator by default.
+
+### Breaking changes from v5
+
+| Setting                    | v5 default | v6 default | Existing shared-operator clusters                                              |
+| -------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------- |
+| `authzed.operator.install` | `false`    | `true`     | Set `authzed.operator.install=false` before upgrading to avoid duplicate reconcilers. |
+
 For a cluster where a compatible operator already watches the Formbricks namespace:
 
 ```yaml
@@ -198,8 +205,9 @@ endpoint; plaintext transport sends the preshared token without TLS protection. 
 the Formbricks app. Authorization checks must fail closed once product enforcement is enabled; general
 Formbricks readiness remains independent from transient SpiceDB availability.
 
-Fresh installs run a release-matched initialization Job that applies the canonical schema and verifies the empty
-or reconciled graph. Existing releases never run that Job as an upgrade hook. Before the first v6 upgrade, run:
+Fresh installs run a release-matched post-install initialization Job that applies the canonical schema and verifies
+the empty or reconciled graph. An acknowledged existing release runs the same release-matched gate as a pre-upgrade
+hook; unacknowledged upgrades are rejected before rendering. Before the first v6 upgrade, run:
 
 ```bash
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health

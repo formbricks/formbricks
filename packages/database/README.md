@@ -192,10 +192,12 @@ match with a different definition, drops the index and recreates it without the 
 `CREATE INDEX IF NOT EXISTS` then skips it — leaving a silently wrong shape. Under a different name, dev
 databases accumulate both sets.
 
-Deployments are unaffected either way: `prisma migrate deploy` never reads the schema file. The cost is that a
-developer who runs `db push` loses the partial indexes until they rerun the migration, which is the same
-contract any hand-written trigger or function in a migration already lives under — so write those statements to
-be rerunnable (`CREATE INDEX IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION`, `DROP ... IF EXISTS`).
+Deployments are unaffected either way: `prisma migrate deploy` never reads the schema file. A developer who runs
+`db push` must first inspect `pg_indexes.indexdef`, drop any same-name non-partial replacement, and only then rerun
+the migration (or its exact partial-index statements). `CREATE INDEX IF NOT EXISTS` cannot repair a same-name
+index with the wrong predicate because PostgreSQL treats the existing name as success. This is the same contract
+any hand-written trigger or function in a migration already lives under — make the migration rerunnable, but do
+not mistake idempotency for shape validation.
 
 `AuthzedProjectionOutbox` is the worked example.
 

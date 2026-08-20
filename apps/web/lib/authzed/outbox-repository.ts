@@ -30,9 +30,12 @@ export const AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS = 5 * 60_000;
 export const AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES = 10;
 export const AUTHZED_OUTBOX_LEASE_MS = 60_000;
 export const AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS = 60_000;
+export const AUTHZED_OUTBOX_REVOCATION_CRITICAL_MS = 45_000;
+export const AUTHZED_OUTBOX_REVOCATION_WARNING_MS = 15_000;
 export const AUTHZED_OUTBOX_BATCH_SIZE = 200;
 export const AUTHZED_OUTBOX_HISTORY_RETENTION_DAYS = 7;
 export const AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE = 10_000;
+export const AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES = 100;
 const INVALID_EVENT_ERROR_CODE = "authzed_projection_invalid_event";
 
 type TClaimedRow = Omit<TAuthzedOutboxEvent, "targetType"> & { targetType: string };
@@ -158,6 +161,7 @@ export const markAuthzedOutboxEventsFailed = async (
       WHERE "id" = ANY(${[...eventIds]}::text[])
         AND "leaseOwner" = ${leaseOwner}
         AND "processedAt" IS NULL
+        AND "deadLetteredAt" IS NULL
       RETURNING "deadLetteredAt"
     )
     SELECT COUNT(*) FILTER (WHERE "deadLetteredAt" IS NOT NULL) AS dead_lettered FROM released
@@ -194,7 +198,7 @@ export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
         WHERE "isRevocation" = true
           AND "processedAt" IS NULL
           AND "deadLetteredAt" IS NULL
-          AND "createdAt" <= NOW() - INTERVAL '60 seconds'
+          AND "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS} * INTERVAL '1 millisecond')
       )
       OR EXISTS (
         SELECT 1
@@ -225,15 +229,24 @@ export const getAuthzedOutboxStatus = async (): Promise<TAuthzedOutboxStatus> =>
       COUNT(*) FILTER (WHERE "deadLetteredAt" IS NOT NULL) AS dead_lettered,
       COUNT(*) FILTER (
         WHERE "isRevocation" = true
-          AND ("deadLetteredAt" IS NOT NULL OR "createdAt" <= NOW() - INTERVAL '60 seconds')
+          AND (
+            "deadLetteredAt" IS NOT NULL
+            OR "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS} * INTERVAL '1 millisecond')
+          )
       ) AS overdue_revocations,
       COUNT(*) FILTER (
         WHERE "isRevocation" = true
-          AND ("deadLetteredAt" IS NOT NULL OR "createdAt" <= NOW() - INTERVAL '45 seconds')
+          AND (
+            "deadLetteredAt" IS NOT NULL
+            OR "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_CRITICAL_MS} * INTERVAL '1 millisecond')
+          )
       ) AS revocations_past_critical,
       COUNT(*) FILTER (
         WHERE "isRevocation" = true
-          AND ("deadLetteredAt" IS NOT NULL OR "createdAt" <= NOW() - INTERVAL '15 seconds')
+          AND (
+            "deadLetteredAt" IS NOT NULL
+            OR "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_WARNING_MS} * INTERVAL '1 millisecond')
+          )
       ) AS revocations_past_warning,
       EXTRACT(EPOCH FROM NOW() - MIN("createdAt") FILTER (
         WHERE "deadLetteredAt" IS NULL
@@ -274,8 +287,7 @@ export const replayAuthzedOutboxDeadLetters = async (): Promise<number> => {
   return result.count;
 };
 
-/** Bound table growth without deleting pending or dead-letter evidence. */
-export const pruneAuthzedOutboxHistory = async (): Promise<number> =>
+const pruneAuthzedOutboxHistoryBatch = async (): Promise<number> =>
   prisma.$executeRaw`
     WITH expired AS (
       SELECT "id"
@@ -288,3 +300,21 @@ export const pruneAuthzedOutboxHistory = async (): Promise<number> =>
     USING expired
     WHERE outbox."id" = expired."id"
   `;
+
+/**
+ * Bound table growth without deleting pending or dead-letter evidence.
+ *
+ * Each statement is bounded to avoid holding locks across a large retained history. The bounded loop
+ * lets the six-hourly caller retire more than one batch without monopolizing a database connection.
+ */
+export const pruneAuthzedOutboxHistory = async (): Promise<number> => {
+  let deleted = 0;
+
+  for (let batch = 0; batch < AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES; batch++) {
+    const count = await pruneAuthzedOutboxHistoryBatch();
+    deleted += count;
+    if (count < AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE) break;
+  }
+
+  return deleted;
+};

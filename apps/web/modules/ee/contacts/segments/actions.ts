@@ -17,6 +17,8 @@ import {
   getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
 import {
@@ -69,6 +71,7 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
       type: "workspace",
       id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
@@ -116,6 +119,7 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
       type: "workspace",
       id: segmentWorkspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, segmentWorkspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
@@ -166,9 +170,8 @@ const ZLoadNewSegmentAction = z.object({
   segmentId: ZId,
 });
 
-export const loadNewSegmentAction = authenticatedActionClient
-  .inputSchema(ZLoadNewSegmentAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const loadNewSegmentAction = authenticatedActionClient.inputSchema(ZLoadNewSegmentAction).action(
+  withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
     const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
@@ -181,11 +184,17 @@ export const loadNewSegmentAction = authenticatedActionClient
       type: "workspace",
       id: surveyWorkspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, surveyWorkspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
-    return await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
-  });
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+    const result = await loadNewSegmentInSurvey(parsedInput.surveyId, parsedInput.segmentId);
+    ctx.auditLoggingCtx.newObject = result;
+    return result;
+  })
+);
 
 const ZCloneSegmentAction = z.object({
   segmentId: ZId,
@@ -207,6 +216,7 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
       type: "workspace",
       id: surveyWorkspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, surveyWorkspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
@@ -226,11 +236,13 @@ const ZDeleteSegmentAction = z.object({
 export const deleteSegmentAction = authenticatedActionClient.inputSchema(ZDeleteSegmentAction).action(
   withAuditLogging("deleted", "segment", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
+    const workspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
     await assertCan({ type: "user", id: ctx.user?.id ?? "" }, "workspace.write", {
       type: "workspace",
-      id: await getWorkspaceIdFromSegmentId(parsedInput.segmentId),
+      id: workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
@@ -251,11 +263,13 @@ export const resetSegmentFiltersAction = authenticatedActionClient
   .action(
     withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
       const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
-        id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+        id: workspaceId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
       await checkAdvancedTargetingPermission(organizationId);
 

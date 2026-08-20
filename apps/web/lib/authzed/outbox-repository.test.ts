@@ -1,6 +1,8 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import {
+  AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE,
+  AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES,
   claimAuthzedOutboxEvents,
   getAuthzedOutboxStatus,
   hasStaleAuthzedRevocation,
@@ -9,14 +11,6 @@ import {
   pruneAuthzedOutboxHistory,
   replayAuthzedOutboxDeadLetters,
 } from "./outbox-repository";
-
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    $queryRaw: vi.fn(),
-    $executeRaw: vi.fn(),
-    authzedProjectionOutbox: { updateMany: vi.fn() },
-  },
-}));
 
 const row = (targetType: string) => ({
   attempts: 1,
@@ -172,10 +166,23 @@ describe("AuthZed projection outbox repository", () => {
     await expect(hasStaleAuthzedRevocation()).resolves.toBe(true);
   });
 
-  test("returns the bounded delivered-history cleanup count", async () => {
-    vi.mocked(prisma.$executeRaw).mockResolvedValue(17);
+  test("returns the delivered-history cleanup count across bounded batches", async () => {
+    vi.mocked(prisma.$executeRaw)
+      .mockResolvedValueOnce(10_000)
+      .mockResolvedValueOnce(10_000)
+      .mockResolvedValueOnce(17);
 
-    await expect(pruneAuthzedOutboxHistory()).resolves.toBe(17);
+    await expect(pruneAuthzedOutboxHistory()).resolves.toBe(20_017);
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(3);
+  });
+
+  test("bounds one delivered-history cleanup run", async () => {
+    vi.mocked(prisma.$executeRaw).mockResolvedValue(AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE);
+
+    await expect(pruneAuthzedOutboxHistory()).resolves.toBe(
+      AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE * AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES
+    );
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES);
   });
 
   test("replays only undelivered dead letters from attempt zero", async () => {

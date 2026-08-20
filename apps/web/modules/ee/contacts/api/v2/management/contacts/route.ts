@@ -37,13 +37,11 @@ export const POST = async (request: NextRequest) =>
 
       const { workspaceId } = body;
 
-      const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
       if (
-        !perm ||
         !(await can(
           { type: "apiKey", id: authentication.apiKeyId },
           getWorkspaceAuthorizationActionForMethod("POST"),
-          { type: "workspace", id: perm.workspaceId }
+          { type: "workspace", id: workspaceId }
         ))
       ) {
         return handleApiError(

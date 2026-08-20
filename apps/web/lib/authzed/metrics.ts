@@ -185,8 +185,12 @@ export const recordAuthzedOutboxDelivery = ({
   durationMs: number;
   status: "delivered" | "failed";
 }>): void => {
-  outboxDeliveryTotal.add(count, { status });
-  outboxDeliveryDuration.record(durationMs / 1000, { status });
+  try {
+    outboxDeliveryTotal.add(count, { status });
+    outboxDeliveryDuration.record(durationMs / 1000, { status });
+  } catch {
+    // Observability cannot turn an already-committed delivery result into an outbox failure.
+  }
 };
 
 export const recordAuthzedRevocationDelivery = (durationMs: number): void => {
@@ -210,11 +214,15 @@ export const recordAuthzedOutboxStatus = ({
   revocationsPastCritical: number;
   revocationsPastWarning: number;
 }>): void => {
-  outboxStatus.record(pending, { state: "pending" });
-  outboxStatus.record(deadLettered, { state: "dead_lettered" });
-  outboxStatus.record(revocationsPastWarning, { state: "revocation_warning" });
-  outboxStatus.record(revocationsPastCritical, { state: "revocation_critical" });
-  outboxOldestPendingAge.record(oldestPendingAgeSeconds ?? 0);
+  try {
+    outboxStatus.record(pending, { state: "pending" });
+    outboxStatus.record(deadLettered, { state: "dead_lettered" });
+    outboxStatus.record(revocationsPastWarning, { state: "revocation_warning" });
+    outboxStatus.record(revocationsPastCritical, { state: "revocation_critical" });
+    outboxOldestPendingAge.record(oldestPendingAgeSeconds ?? 0);
+  } catch {
+    // A metrics exporter failure must not discard the caller's drain result.
+  }
 };
 
 export const recordAuthzedReconciliationAudit = ({
@@ -226,9 +234,13 @@ export const recordAuthzedReconciliationAudit = ({
   failures: number;
   status: "drifted" | "failed" | "reconciled";
 }>): void => {
-  reconciliationAuditTotal.add(1, { status });
-  if (drift > 0) reconciliationDriftTotal.add(drift, { kind: "attributable" });
-  if (failures > 0) reconciliationDriftTotal.add(failures, { kind: "failure" });
+  try {
+    reconciliationAuditTotal.add(1, { status });
+    if (drift > 0) reconciliationDriftTotal.add(drift, { kind: "attributable" });
+    if (failures > 0) reconciliationDriftTotal.add(failures, { kind: "failure" });
+  } catch {
+    // Pruning and dead-letter recovery must still run when the exporter is unavailable.
+  }
 };
 
 export const recordAuthzedReconciliationRepair = ({

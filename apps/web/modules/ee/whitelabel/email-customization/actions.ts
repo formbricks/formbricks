@@ -6,6 +6,8 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import {
@@ -41,6 +43,7 @@ export const updateOrganizationEmailLogoUrlAction = authenticatedActionClient
         type: "organization",
         id: parsedInput.organizationId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
       await checkWhiteLabelPermission(parsedInput.organizationId);
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
@@ -61,6 +64,7 @@ export const removeOrganizationEmailLogoUrlAction = authenticatedActionClient
         type: "organization",
         id: parsedInput.organizationId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
       await checkWhiteLabelPermission(parsedInput.organizationId);
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;

@@ -14,6 +14,8 @@ import {
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromLanguageId } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateLanguageAction = z.object({
@@ -29,6 +31,7 @@ export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreat
       type: "workspace",
       id: parsedInput.workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
 
     const result = await createLanguage(parsedInput.workspaceId, parsedInput.languageInput);
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -69,6 +72,7 @@ export const deleteLanguageAction = authenticatedActionClient.inputSchema(ZDelet
       type: "workspace",
       id: parsedInput.workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = parsedInput.languageId;
@@ -115,6 +119,7 @@ export const updateLanguageAction = authenticatedActionClient.inputSchema(ZUpdat
       type: "workspace",
       id: parsedInput.workspaceId,
     });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = parsedInput.languageId;

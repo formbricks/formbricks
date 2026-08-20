@@ -9,6 +9,8 @@ import {
   generateSurveySingleUseLinkParams,
   generateSurveySingleUseLinkParamsList,
 } from "@/lib/utils/single-use-surveys";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { copySurveyToOtherWorkspace } from "@/modules/survey/list/lib/survey";
 
@@ -41,6 +43,7 @@ export const copySurveyToOtherWorkspaceAction = authenticatedActionClient
         type: "workspace",
         id: parsedInput.targetWorkspaceId,
       });
+      await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.targetWorkspaceId);
 
       ctx.auditLoggingCtx.organizationId = sourceOrganizationId;
       ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;

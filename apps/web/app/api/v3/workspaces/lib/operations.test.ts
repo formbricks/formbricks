@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
-import { getWorkspacesByIds, getWorkspacesByIdsForUser } from "@/lib/workspace/service";
+import { getOrganizationScopedWorkspacesByIdsForUser, getWorkspacesByIds } from "@/lib/workspace/service";
 import { listV3Workspaces } from "./operations";
 
 const loggerMocks = vi.hoisted(() => ({ error: vi.fn() }));
 
 vi.mock("@/lib/workspace/service", () => ({
   getWorkspacesByIds: vi.fn(),
-  getWorkspacesByIdsForUser: vi.fn(),
+  getOrganizationScopedWorkspacesByIdsForUser: vi.fn(),
 }));
 vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedWorkspaceIds: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
@@ -46,7 +46,7 @@ describe("listV3Workspaces", () => {
 
   test("session user: aggregates + dedupes across orgs and returns the minimal DTO only", async () => {
     vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["w1", "w2", "w3"]);
-    vi.mocked(getWorkspacesByIdsForUser).mockResolvedValue([
+    vi.mocked(getOrganizationScopedWorkspacesByIdsForUser).mockResolvedValue([
       ws("w1", "Alpha", "org_1"),
       ws("w2", "Beta", "org_1"),
       ws("w2", "Beta", "org_1"),
@@ -66,12 +66,16 @@ describe("listV3Workspaces", () => {
     // Only the DTO fields — no config/styling/entity internals leak.
     expect(Object.keys(body.data[0])).toEqual(["id", "name", "organizationId"]);
     expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledExactlyOnceWith({ id: "user_1", type: "user" });
-    expect(getWorkspacesByIdsForUser).toHaveBeenCalledExactlyOnceWith("user_1", ["w1", "w2", "w3"]);
+    expect(getOrganizationScopedWorkspacesByIdsForUser).toHaveBeenCalledExactlyOnceWith("user_1", [
+      "w1",
+      "w2",
+      "w3",
+    ]);
   });
 
   test("returns workspaces in a deterministic order (name, then id)", async () => {
     vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["w3", "w1", "w2"]);
-    vi.mocked(getWorkspacesByIdsForUser).mockResolvedValue([
+    vi.mocked(getOrganizationScopedWorkspacesByIdsForUser).mockResolvedValue([
       ws("w3", "Zeta", "org_1"),
       ws("w1", "alpha", "org_1"),
       ws("w2", "Beta", "org_1"),
@@ -85,7 +89,7 @@ describe("listV3Workspaces", () => {
 
   test("session user with no authorized workspaces → empty list", async () => {
     vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue([]);
-    vi.mocked(getWorkspacesByIdsForUser).mockResolvedValue([]);
+    vi.mocked(getOrganizationScopedWorkspacesByIdsForUser).mockResolvedValue([]);
 
     const res = await listV3Workspaces(params(sessionAuth));
     const body = await res.json();
@@ -93,7 +97,7 @@ describe("listV3Workspaces", () => {
     expect(res.status).toBe(200);
     expect(body.data).toEqual([]);
     expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledExactlyOnceWith({ id: "user_1", type: "user" });
-    expect(getWorkspacesByIdsForUser).toHaveBeenCalledExactlyOnceWith("user_1", []);
+    expect(getOrganizationScopedWorkspacesByIdsForUser).toHaveBeenCalledExactlyOnceWith("user_1", []);
   });
 
   test("api key: returns only same-organization workspaces in workspacePermissions", async () => {
@@ -114,7 +118,7 @@ describe("listV3Workspaces", () => {
     expect(body.data).toEqual([{ id: "w1", name: "Alpha", organizationId: "org_1" }]);
     expect(getWorkspacesByIds).toHaveBeenCalledExactlyOnceWith("org_1", ["w1", "w9"]);
     // API-key path must never use the user membership resolver.
-    expect(getWorkspacesByIdsForUser).not.toHaveBeenCalled();
+    expect(getOrganizationScopedWorkspacesByIdsForUser).not.toHaveBeenCalled();
     expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledExactlyOnceWith({
       id: "key_1",
       type: "apiKey",
