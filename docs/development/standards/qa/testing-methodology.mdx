@@ -56,8 +56,9 @@ source of truth for when one is warranted; the short version:
    the `.ts`. A route's authorization, response shape or query scoping is a unit or integration test on
    that route.
 2. **Unit of coverage.** One spec per feature area, not per ticket and not per component. Every feature
-   area ships a happy-path spec; a fix inside an area that already has one adds an assertion to that
-   spec rather than a new file.
+   area ships a happy-path spec, and a new spec file is for an area that has none. Inside an area that
+   already has one, the level still follows the behavior: journey behavior extends that spec, logic goes
+   to a `.ts` unit test, UI detail goes to manual QA (see 3) — never a second spec file.
 3. **Neither is an option.** A granular UI detail inside a covered feature — a label, a breadcrumb, an
    ARIA attribute, a keystroke inside one widget, a field's validation message — is verified manually and
    recorded in the PR. It does not get a spec.
@@ -69,19 +70,18 @@ source of truth for when one is warranted; the short version:
 
 ### Configuration
 
-Our Vitest configuration (`vite.config.ts`) includes:
+The web app's Vitest configuration (`apps/web/vite.config.mts`) includes:
 
 ```typescript
 test: {
-exclude: ['playwright/', 'node_modules/'],
-setupFiles: ['../../packages/lib/vitestSetup.ts'],
-coverage: {
-provider: 'v8',
-reporter: ['text', 'html', 'lcov'],
-reportsDirectory: './coverage',
-},
+  exclude: ["playwright/**", "node_modules/**", ".next/**", "**/*.integration.test.ts"],
+  setupFiles: ["./vitestSetup.ts"],
+  coverage: {
+    provider: "v8",
+    reporter: ["text", "html", "lcov"],
+    reportsDirectory: "./coverage",
+  },
 }
-
 ```
 
 ### Test Utilities
@@ -144,6 +144,7 @@ Common test utilities are available in `vitestSetup.ts`:
 
 2. **New Features**
    - Must include unit tests for the logic they add
-   - A new user-facing feature area must include one happy-path E2E spec; a change inside an area that
-     already has one extends that spec, or is covered by a unit test or manual QA instead
+   - A new user-facing feature area must include one happy-path E2E spec. Inside an area that already
+     has one, the level follows the behavior: journey behavior extends that spec, logic goes to a unit
+     test, UI detail is verified manually
    - Must not add tests whose only purpose is to move a coverage metric

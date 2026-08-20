@@ -97,7 +97,9 @@ reviews:
         - Never suggest adding unit tests for `.tsx` files — AGENTS.md forbids them, and their
           absence is not a coverage gap to fill somewhere else. Ask for a Playwright spec only when
           the diff changes a feature's happy path or a journey across several surfaces, and then ask
-          for it in that feature's existing spec. Never ask for one to cover component detail (a
+          for it in that feature's existing spec — or, if the diff opens a feature area the suite does
+          not cover yet, for one happy-path spec named for that area. Never ask for one to cover
+          component detail (a
           label, a breadcrumb, an ARIA attribute, a keystroke inside one widget, a field's
           validation message) — that belongs in a `.ts` unit test or in manual QA.
         - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
@@ -129,14 +131,17 @@ reviews:
       instructions: |
         This suite is the critical path of every PR and every test is paid on every PR forever, so
         cost is a review dimension here rather than a nit (AGENTS.md "Testing Guidelines"):
-        - A new spec file is a finding unless it opens a feature area the suite does not cover yet —
-          the default is assertions or a `test.step` added to that feature's existing spec. A spec
+        - A new spec file is a finding unless it opens a feature area the suite does not cover yet
+          (the spec filenames in `apps/web/playwright/` are the inventory — check before claiming an
+          area is uncovered); the default is assertions or a `test.step` added to that feature's
+          existing spec. A spec
           that asserts component-level detail (a label, a breadcrumb, a sidebar's link list, an ARIA
           attribute, a keystroke inside one widget, a field's validation message) is a finding
           whatever file it lands in: ask for a `.ts` unit test or manual QA instead.
         - Flag variant matrices. A second viewport, theme, locale, role or layout needs its own
-          stated reason; "the adjacent spec does it" is not one. New a11y coverage extends
-          `survey-accessibility.spec.ts` rather than adding a per-ticket a11y spec.
+          stated reason; "the adjacent spec does it" is not one. A11y coverage for the rendered
+          survey extends `survey-accessibility.spec.ts`; elsewhere it belongs in that feature area's
+          own spec. Neither case is a per-ticket a11y spec.
         - Flag state clicked into existence through the UI where Prisma or `/api/v3` could seed it
           (`playwright/utils/accessibility.ts` is the pattern), and a per-test `users.create()` plus
           login where a worker-scoped fixture would do.

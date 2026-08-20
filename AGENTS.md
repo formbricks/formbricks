@@ -21,8 +21,8 @@ Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck`
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
 `config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
 to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
-`apps/storybook` has no unit tests by policy (UI is covered by Playwright). Keep new packages on this
-matrix or document the exception here.
+`apps/storybook` has no unit tests by policy (its components are exercised by the feature journeys in
+`apps/web/playwright`). Keep new packages on this matrix or document the exception here.
 
 ### Survey Packages Build & Cache
 
@@ -171,8 +171,9 @@ Principles:
 - Prove a behavior at the cheapest level that can fail on it. An E2E test is not a stronger unit test; it
   has a different subject — the journey, not the logic.
 - **An E2E test is paid on every PR, by everyone, forever.** The Playwright job is the critical path of the
-  PR gate (as of Aug 2026: ~13 min, ~30 browser-minutes across ~110 tests), and its wall clock can never
-  drop below its slowest single test. Weigh that before adding one — sometimes the right answer is no test
+  PR gate (as of Aug 2026: a ~13 min job, of which ~6 min is the Playwright step itself — the rest is
+  install, build and boot — over ~110 tests and ~30 browser-minutes), and its wall clock can never drop
+  below its slowest single test. Weigh that before adding one — sometimes the right answer is no test
   at this level.
 
 Which level, concretely:
@@ -187,10 +188,13 @@ Which level, concretely:
 A journey across several surfaces means something like survey list → editor → public survey → response,
 where the behavior only exists once browser, survey bundle, and server are wired together.
 
+The spec filenames in `apps/web/playwright/` are the inventory of covered areas — check there before
+concluding an area has no spec.
+
 This raises a floor as well as lowering a ceiling. Every feature area ships a happy-path E2E, and an area
 with none is a gap rather than a saving (Dashboards and Workflows are the current examples — ENG-2314). A
-bug fix inside a feature that already has one almost never needs a second spec: add an assertion to the
-existing spec, or prove it in a unit test.
+bug fix inside a feature that already has one almost never needs a second spec — the level still follows
+the table above: journey behavior extends that spec, logic goes to a unit test, UI detail to manual QA.
 
 Do:
 
@@ -223,8 +227,9 @@ Do not:
   none of these justify a browser, a login, and a seeded tenant.
 - Do not build a variant matrix. Cover the one case that carries the risk; a second viewport, theme,
   locale, role, or layout needs its own stated reason, and "the adjacent spec does it" is not one.
-  Accessibility work extends the existing axe gate (`survey-accessibility.spec.ts`) instead of adding a
-  per-ticket a11y spec.
+  Accessibility work on the rendered survey extends the existing axe gate
+  (`survey-accessibility.spec.ts`); elsewhere it becomes an assertion in that feature area's own spec.
+  Either way, not a per-ticket a11y spec.
 - Do not add coverage-driven or low-signal tests.
 - Do not write tests that lock implementation details, markup, snapshots, or create churn — an assertion on
   an exact list of nav labels is churn, not coverage.
