@@ -72,21 +72,22 @@ const queueCubeQueryAuditEvent = ({
  */
 const NULL_FILL_SENTINEL = "__formbricks_null__";
 
-const restoreNullMeasures = (rows: TChartDataRow[]): TChartDataRow[] =>
-  rows.map((row) => {
-    let hasSentinel = false;
-    for (const value of Object.values(row)) {
-      if (value === NULL_FILL_SENTINEL) {
-        hasSentinel = true;
-        break;
-      }
-    }
-    if (!hasSentinel) return row;
+const restoreNullMeasures = (rows: TChartDataRow[], measureKeys: string[]): TChartDataRow[] => {
+  // Only measure cells are ever filled, so only those may be turned back into null. A dimension
+  // can legitimately hold any string a respondent typed — including this sentinel — and rewriting
+  // that to null would silently drop their answer from the chart.
+  const measures = new Set(measureKeys);
+  if (measures.size === 0) return rows;
 
-    return Object.fromEntries(
-      Object.entries(row).map(([key, value]) => [key, value === NULL_FILL_SENTINEL ? null : value])
-    );
+  return rows.map((row) => {
+    const filled = Object.keys(row).filter((key) => row[key] === NULL_FILL_SENTINEL && measures.has(key));
+    if (filled.length === 0) return row;
+
+    const restored = { ...row };
+    for (const key of filled) restored[key] = null;
+    return restored;
   });
+};
 
 export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   try {
@@ -119,7 +120,10 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   try {
     const client = cubejs(token, { apiUrl });
     const resultSet = await client.load(expandPresetDateRanges(input.query) as Query);
-    const result = restoreNullMeasures(resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL }));
+    const result = restoreNullMeasures(
+      resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL }),
+      input.query.measures ?? []
+    );
     queueCubeQueryAuditEvent({ input, requestId, status: "success" });
     return result;
   } catch (error) {

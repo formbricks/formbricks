@@ -645,6 +645,23 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
 /**
  * Translate a field/measure ID. Each t() call uses a literal key so the i18n scanner can detect it.
  */
+/**
+ * Translated description for the dimensions whose copy guides a chart-building decision. The rest of
+ * the schema descriptions are still the inline English in FEEDBACK_FIELDS, so this falls back to that
+ * rather than showing a key.
+ */
+export function getTranslatedFieldDescription(
+  id: string,
+  fallback: string | undefined,
+  t: TFunction
+): string | undefined {
+  const descriptions: Record<string, string> = {
+    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_description_value_option"),
+    "FeedbackRecords.valueText": t("workspace.analysis.charts.field_description_value_text"),
+  };
+  return descriptions[id] ?? fallback;
+}
+
 export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
     "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
@@ -661,6 +678,7 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
     "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
     "FeedbackRecords.valueText": t("workspace.analysis.charts.field_label_value_text"),
+    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_label_value_option"),
     "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
     "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
     "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),

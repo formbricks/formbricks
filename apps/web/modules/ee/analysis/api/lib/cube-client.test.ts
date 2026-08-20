@@ -111,13 +111,17 @@ describe("executeTenantScopedQuery", () => {
   });
 
   test("maps the sentinel back to null so an unasked measure is not reported as zero", async () => {
+    const npsQuery = {
+      measures: ["FeedbackRecords.npsScore"],
+      dimensions: ["FeedbackRecords.sourceName"],
+    };
     mockTablePivot.mockReturnValue([
       { "FeedbackRecords.sourceName": "Pre-match", "FeedbackRecords.npsScore": "__formbricks_null__" },
       { "FeedbackRecords.sourceName": "After-match", "FeedbackRecords.npsScore": "72.92" },
       { "FeedbackRecords.sourceName": "Accessibility", "FeedbackRecords.npsScore": "0.00" },
     ]);
     const { executeTenantScopedQuery } = await import("./cube-client");
-    const result = await executeTenantScopedQuery(scopedInput);
+    const result = await executeTenantScopedQuery({ ...scopedInput, query: npsQuery });
 
     expect(result).toEqual([
       { "FeedbackRecords.sourceName": "Pre-match", "FeedbackRecords.npsScore": null },
@@ -125,6 +129,41 @@ describe("executeTenantScopedQuery", () => {
       // A genuine zero must survive as a zero, not be swept up with the nulls.
       { "FeedbackRecords.sourceName": "Accessibility", "FeedbackRecords.npsScore": "0.00" },
     ]);
+  });
+
+  test("leaves a dimension that genuinely holds the sentinel string alone", async () => {
+    mockTablePivot.mockReturnValue([
+      {
+        "FeedbackRecords.valueText": "__formbricks_null__",
+        "FeedbackRecords.count": "__formbricks_null__",
+      },
+    ]);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.valueText"],
+      },
+    });
+
+    // A respondent can type anything into an open text answer, including this sentinel. Only the
+    // measure cell was filled by the pivot, so only that one may become null.
+    expect(result).toEqual([
+      { "FeedbackRecords.valueText": "__formbricks_null__", "FeedbackRecords.count": null },
+    ]);
+  });
+
+  test("leaves every column alone when the query selects no measures", async () => {
+    const rows = [{ "FeedbackRecords.valueText": "__formbricks_null__" }];
+    mockTablePivot.mockReturnValue(rows);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: { dimensions: ["FeedbackRecords.valueText"] },
+    });
+
+    expect(result).toEqual(rows);
   });
 
   test("leaves rows without a sentinel exactly as the pivot returned them", async () => {

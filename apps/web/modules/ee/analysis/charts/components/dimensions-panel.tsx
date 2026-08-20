@@ -6,6 +6,7 @@ import {
   FEEDBACK_FIELDS,
   VALUE_ID_DIMENSION_ID,
   VALUE_TEXT_DIMENSION_ID,
+  getTranslatedFieldDescription,
   getTranslatedFieldLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
@@ -36,7 +37,7 @@ export function DimensionsPanel({
   const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
     value: d.id,
     label: getTranslatedFieldLabel(d.id, t),
-    description: d.description,
+    description: getTranslatedFieldDescription(d.id, d.description, t),
     icon: d.isGenerated ? <SparklesIcon className="size-4 text-slate-500" aria-hidden="true" /> : undefined,
   }));
 
