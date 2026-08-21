@@ -25,5 +25,5 @@ Notes:
 - Type-aware linting requires every linted `.ts`/`.tsx` file to belong to the package's tsconfig
   (or the `projectService` default project). Plain `.js`/`.cjs`/`.mjs` files get the type-aware
   rules switched off (`disableTypeChecked`), and `*.config.*` / declaration files are ignored.
-- `apps/storybook` keeps a self-contained flat config (it needs `eslint-plugin-react-hooks` v7's `configs.flat.*`; the tiers here pin v5, whose `recommended-latest` is the flat entry — unify when the v7 compiler-era rules are adopted, tracked under ENG-2366).
+- `apps/storybook` keeps a self-contained flat config. The reason it originally had to (it needed `eslint-plugin-react-hooks` v7 while these tiers pinned v5) is gone — ENG-1689 moved the plugin into the pnpm catalog, so every tier is on v7 and uses `configs.flat.*`. Folding the storybook config into these tiers is now unblocked, tracked under ENG-2366.
 - Stale `eslint-disable` directives are reported as warnings workspace-wide (`reportUnusedDisableDirectives` in `base.mjs`).

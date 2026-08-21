@@ -24,6 +24,27 @@ to test; `email`, `types`, and `vite-plugins` are consumed from source, so they 
 `apps/storybook` has no unit tests by policy (UI is covered by Playwright). Keep new packages on this
 matrix or document the exception here.
 
+### Shared dependency versions (pnpm catalog)
+
+Every dependency used by **two or more** workspaces is pinned once in the `catalog:` block of
+`pnpm-workspace.yaml`, and each `package.json` references it as `"catalog:"` instead of a version:
+
+```json
+"devDependencies": { "typescript": "catalog:", "vitest": "catalog:" }
+```
+
+So bumping a shared dependency means editing the catalog entry — never a `package.json`. That is the
+whole point: `nodeLinker: hoisted` hides a version split until it breaks, so `apps/web` was typing a
+redis 5 client with redis 4's `RedisClientType` and one package was building on a different Vite major
+than the other fourteen. Deps with a single consumer deliberately stay in their own `package.json`.
+
+`pnpm lint` runs `scripts/check-catalog.mjs`, which fails if a workspace declares a literal version for
+a catalogued name, or if a dependency is declared by 2+ workspaces without being catalogued. A peer
+dependency *range* is exempt — it is a compatibility declaration for consumers, not an install pin, so
+it may legitimately be looser than the catalog (`packages/survey-ui` declares react `^19.0.0` while
+pinning 19.2.6 to build against). Adding a new package needs no wiring: the check resolves the
+workspace globs from `pnpm-workspace.yaml` itself.
+
 ### Survey Packages Build & Cache
 
 The `@formbricks/surveys` package is pre-compiled (Vite → UMD + ESM) and the built bundle is copied to `apps/web/public/js/`. The Next.js app imports from `dist/`, **not** the source files. This means:

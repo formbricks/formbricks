@@ -6,10 +6,10 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@types/js-yaml": "4.0.9",
-    "@vitest/coverage-v8": "4.1.6",
-    "js-yaml": "4.3.1",
-    "vite": "7.3.5",
-    "vitest": "4.1.6"
+    "@types/js-yaml": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "js-yaml": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }
