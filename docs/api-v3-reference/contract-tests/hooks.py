@@ -87,10 +87,13 @@ def _substitute(container: Any, overrides: dict[str, str], defaults: dict[str, s
         return
 
     for name, value in container.items():
-        if name == WORKSPACE_FIELD:
-            container[name] = WORKSPACE_ID
-        elif name in overrides:
+        # Per-operation overrides come first, including for `workspaceId`: an operation that wants a
+        # foreign workspace — to assert the documented cross-tenant 403 — has to be able to say so,
+        # and `operations` is the map documented as winning over the defaults.
+        if name in overrides:
             container[name] = overrides[name]
+        elif name == WORKSPACE_FIELD:
+            container[name] = WORKSPACE_ID
         elif name in defaults:
             container[name] = defaults[name]
         else:

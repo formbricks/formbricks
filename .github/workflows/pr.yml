@@ -59,7 +59,10 @@ jobs:
   api-v3-contract-tests:
     name: Run API v3 Contract Tests
     uses: ./.github/workflows/api-v3-contract-tests.yml
-    secrets: inherit
+    # Named rather than `inherit`: this job builds and runs PR-head code, and the licence is the only
+    # secret it declares. Inheriting would hand it every other repository and organisation secret too.
+    secrets:
+      ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
 
   required:
     name: PR Check Summary
