@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import bcryptjs from "bcryptjs";
+import { createHash } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import type {
@@ -413,6 +414,44 @@ async function seedDemoWorkflowRuns(
   }
 }
 
+/**
+ * Create a management API key with `manage` on the seeded workspace, so the seeded data can be driven
+ * over HTTP (contract tests, manual API pokes) without clicking a key out of the UI.
+ *
+ * Opt-in through `SEED_API_KEY`: nothing is created when it is unset, and the secret is never written
+ * to the repo — callers pass a throwaway value (CI generates one per run). The key sent as
+ * `x-api-key` is `fbk_${SEED_API_KEY}`.
+ *
+ * Mirrors `createApiKey` in apps/web/modules/organization/settings/api-keys/lib/api-key.ts: SHA-256
+ * `lookupHash` for the indexed lookup plus a bcrypt `hashedKey` for verification. That module is
+ * `server-only` and cannot be imported here, so the two hashing lines are inlined rather than shared.
+ */
+async function seedApiKey(organizationId: string, workspaceId: string, secret: string): Promise<void> {
+  const lookupHash = createHash("sha256").update(secret).digest("hex");
+  const hashedKey = await bcryptjs.hash(secret, 12);
+
+  const apiKey = await prisma.apiKey.upsert({
+    where: { lookupHash },
+    update: { hashedKey },
+    create: {
+      id: SEED_IDS.API_KEY,
+      label: "Seed API key",
+      hashedKey,
+      lookupHash,
+      organizationId,
+      organizationAccess: { accessControl: { read: true, write: true } },
+    },
+  });
+
+  await prisma.apiKeyWorkspace.upsert({
+    where: { apiKeyId_workspaceId: { apiKeyId: apiKey.id, workspaceId } },
+    update: { permission: "manage" },
+    create: { apiKeyId: apiKey.id, workspaceId, permission: "manage" },
+  });
+
+  logger.info(`Seeded API key ${apiKey.id} with manage access to workspace ${workspaceId}.`);
+}
+
 async function deleteData(): Promise<void> {
   logger.info("Clearing existing data...");
 
@@ -791,6 +830,11 @@ async function main(): Promise<void> {
       organizationId: organization.id,
     },
   });
+
+  const seedApiKeySecret = process.env.SEED_API_KEY;
+  if (seedApiKeySecret) {
+    await seedApiKey(organization.id, workspace.id, seedApiKeySecret);
+  }
 
   // Keep seed defaults aligned with production v5 camelCase keys.
   // Safe-identifier migration is deferred to v5.1.

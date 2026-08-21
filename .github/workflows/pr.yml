@@ -53,9 +53,26 @@ jobs:
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
 
+  # No `paths:` filter, deliberately: `required` below fails on a skipped job, and a required check
+  # that never reports would keep every PR out of the merge queue. It runs concurrently with e2e-test,
+  # which is the gate's critical path, so it costs runner minutes rather than wall-clock.
+  api-v3-contract-tests:
+    name: Run API v3 Contract Tests
+    uses: ./.github/workflows/api-v3-contract-tests.yml
+    secrets: inherit
+
   required:
     name: PR Check Summary
-    needs: [lint, typecheck, test, helm-chart-validation, coderabbit-config-validation, e2e-test]
+    needs:
+      [
+        lint,
+        typecheck,
+        test,
+        helm-chart-validation,
+        coderabbit-config-validation,
+        e2e-test,
+        api-v3-contract-tests,
+      ]
     if: always()
     runs-on: ubuntu-latest
     permissions:
