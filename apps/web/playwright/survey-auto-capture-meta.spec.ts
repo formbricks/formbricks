@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
-import { test } from "./lib/fixtures";
+import { type Fixtures, test } from "./lib/fixtures";
 
 /**
  * **Auto-captured browser context, end to end (ENG-1841).**
@@ -105,11 +105,15 @@ const submitAnswer = async (page: Page, answer: string): Promise<void> => {
 test.describe("Auto-captured browser context on responses @slow", () => {
   let surveyUrl: string | undefined;
   let surveyId: string | undefined;
+  let workspaceId: string | undefined;
+  let owner: Awaited<ReturnType<Fixtures["users"]["create"]>> | undefined;
 
   test.beforeEach(async ({ users }) => {
     if (surveyUrl) return;
     const user = await users.create({ skipSurveySeed: true });
     if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
+    owner = user;
+    workspaceId = user.workspaceId;
     surveyId = await seedSurvey(user.workspaceId, user.id);
     surveyUrl = `/s/${surveyId}`;
   });
@@ -185,5 +189,65 @@ test.describe("Auto-captured browser context on responses @slow", () => {
 
     expect(meta.viewportWidth).toBe(1280);
     expect(meta.viewportWidth).not.toBe(390);
+  });
+  test("shows the captured page, campaign and timezone in the product, without exporting", async ({
+    page,
+  }) => {
+    // ENG-2540. ENG-1841 captures twelve fields on every response and, until this, none of them were
+    // visible anywhere: an author could only reach them by exporting. The tests above prove the
+    // values reach Postgres; this one proves an author can see them.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(`${surveyUrl}?${UTM_QUERY}`);
+    await submitAnswer(page, "Seen in the product");
+    await readStoredMeta(surveyId ?? "");
+
+    await owner?.login();
+    await page.goto(`/workspaces/${workspaceId}/surveys/${surveyId}/responses`);
+
+    await test.step("the classic fields render exactly as before", async () => {
+      // The seven the card has always shown, now read from the catalog. `Browser` is server-derived
+      // from the request header, so it is present for every response including historical ones.
+      const deviceInfo = page.getByLabel("Device info").first();
+      await expect(deviceInfo).toBeVisible({ timeout: 60000 });
+      await deviceInfo.hover();
+      await expect(page.getByText(/^Browser:/)).toBeVisible();
+    });
+
+    await test.step("the auto-captured fields sit behind a collapsed disclosure", async () => {
+      const disclosure = page.getByTestId("auto-captured-fields").first();
+      await expect(disclosure).toBeVisible();
+
+      // Collapsed by default — thirteen extra rows on every card is the failure mode the ticket
+      // names, so the values must NOT be on screen until asked for.
+      await expect(disclosure.getByText("Page Path", { exact: true })).toBeHidden();
+
+      await disclosure.getByRole("button", { name: /More context/ }).click();
+
+      // Labels derived by `formatFieldNameToTitleCase`, so a catalog addition needs no new key.
+      await expect(disclosure.getByText("Page Path", { exact: true })).toBeVisible();
+      await expect(disclosure.getByText("Utm Source", { exact: true })).toBeVisible();
+      await expect(disclosure.getByText("Timezone", { exact: true })).toBeVisible();
+      await expect(disclosure.getByText("Viewport Width", { exact: true })).toBeVisible();
+      // The values, not just the labels.
+      await expect(disclosure.getByText("newsletter", { exact: true })).toBeVisible();
+      await expect(disclosure.getByText("1280", { exact: true })).toBeVisible();
+    });
+
+    await test.step("the new table columns exist, listed but unchecked", async () => {
+      await page.getByRole("button", { name: "Table" }).click();
+      await page.getByRole("button", { name: "Settings" }).click();
+
+      const modal = page.getByRole("dialog");
+      await expect(modal).toBeVisible();
+
+      // Registered and toggleable — the half that used to be impossible, because the settings modal
+      // iterates the persisted column order and a newly added id was never in it.
+      const pagePathRow = modal.getByText("Page Path", { exact: true });
+      await expect(pagePathRow).toBeVisible();
+
+      // Off by default, so no author's table silently grows thirteen columns.
+      const pagePathSwitch = modal.locator("div").filter({ has: pagePathRow }).last().getByRole("switch");
+      await expect(pagePathSwitch).toHaveAttribute("data-state", "unchecked");
+    });
   });
 });

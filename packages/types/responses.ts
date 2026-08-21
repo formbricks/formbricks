@@ -497,6 +497,14 @@ export const ZResponseTableData = z.object({
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
   meta: ZResponseMeta,
+  /**
+   * Reserved-field values already resolved and rendered, keyed by column id (ENG-2540). Precomputed
+   * on the row like `variables` and `responseData`, rather than read out of `meta` by a per-column
+   * switch: resolution belongs to the catalog's own accessors, which apply the `redactQuery` policy
+   * and the dataType coercion, and `meta` alone cannot express a field that is not stored under its
+   * own name (`deviceType` lives at `meta.userAgent.device`).
+   */
+  reservedValues: z.record(z.string(), z.string()),
   quotas: z.array(z.string()).optional(),
 });
 

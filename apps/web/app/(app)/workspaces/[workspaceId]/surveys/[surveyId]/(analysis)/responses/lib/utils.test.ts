@@ -1,20 +1,16 @@
 import "@testing-library/jest-dom/vitest";
 import { TFunction } from "i18next";
-import {
-  AirplayIcon,
-  ArrowUpFromDotIcon,
-  FlagIcon,
-  GlobeIcon,
-  MousePointerClickIcon,
-  SmartphoneIcon,
-} from "lucide-react";
 import { describe, expect, test, vi } from "vitest";
+import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver";
+import { TResponse } from "@formbricks/types/responses";
 import {
-  COLUMNS_ICON_MAP,
+  RESERVED_COLUMN_ENTRIES,
   getAddressFieldLabel,
   getContactInfoFieldLabel,
-  getMetadataFieldLabel,
-  getMetadataValue,
+  getReservedColumnLabel,
+  getReservedColumnValues,
+  isReservedColumnVisibleByDefault,
+  reservedColumnId,
 } from "./utils";
 
 describe("utils", () => {
@@ -37,6 +33,7 @@ describe("utils", () => {
       "workspace.surveys.responses.browser": "Browser",
       "common.url": "URL",
       "workspace.surveys.responses.source": "Source",
+      "workspace.surveys.responses.ip_address": "IP Address",
     };
     return translations[key] || key;
   }) as unknown as TFunction;
@@ -123,83 +120,117 @@ describe("utils", () => {
     });
   });
 
-  describe("getMetadataFieldLabel", () => {
-    test("returns correct label for action", () => {
-      const result = getMetadataFieldLabel("action", mockT);
-      expect(result).toBe("Action");
+  describe("getReservedColumnLabel", () => {
+    test("uses the product's own wording where it exists", () => {
+      // The override layer. These seven have shipped labels an author recognises, and deriving them
+      // from the name would visibly regress copy: `Url` for `URL`, `Ip Address` for `IP Address`.
+      expect(getReservedColumnLabel("action", mockT)).toBe("Action");
       expect(mockT).toHaveBeenCalledWith("common.action");
+      expect(getReservedColumnLabel("url", mockT)).toBe("URL");
+      expect(mockT).toHaveBeenCalledWith("common.url");
+      expect(getReservedColumnLabel("ipAddress", mockT)).toBe("IP Address");
+      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.ip_address");
     });
 
-    test("returns correct label for country", () => {
-      const result = getMetadataFieldLabel("country", mockT);
-      expect(result).toBe("Country");
-      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.country");
-    });
-
-    test("returns correct label for os", () => {
-      const result = getMetadataFieldLabel("os", mockT);
-      expect(result).toBe("OS");
-      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.os");
-    });
-
-    test("returns correct label for device", () => {
-      const result = getMetadataFieldLabel("device", mockT);
-      expect(result).toBe("Device");
+    test("the catalog's `deviceType` keeps the column's existing `Device` header", () => {
+      // The one spelling divergence between the catalog and both display surfaces. Without the
+      // override, this column's header would change from `Device` to `Device Type` for every survey.
+      expect(getReservedColumnLabel("deviceType", mockT)).toBe("Device");
       expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.device");
     });
 
-    test("returns correct label for browser", () => {
-      const result = getMetadataFieldLabel("browser", mockT);
-      expect(result).toBe("Browser");
-      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.browser");
-    });
-
-    test("returns correct label for url", () => {
-      const result = getMetadataFieldLabel("url", mockT);
-      expect(result).toBe("URL");
-      expect(mockT).toHaveBeenCalledWith("common.url");
-    });
-
-    test("returns correct label for source", () => {
-      const result = getMetadataFieldLabel("source", mockT);
-      expect(result).toBe("Source");
-      expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.source");
-    });
-
-    test("returns capitalized label for unknown field", () => {
-      const result = getMetadataFieldLabel("customField", mockT);
-      expect(result).toBe("Customfield");
-      expect(mockT).not.toHaveBeenCalled();
-    });
-
-    test("returns capitalized label for field with underscores", () => {
-      const result = getMetadataFieldLabel("custom_field", mockT);
-      expect(result).toBe("Custom_field");
+    test("derives a readable label for everything else, with no new translation key", () => {
+      // What makes a catalog addition free: ENG-1841's twelve fields, and ENG-1858's next batch, get
+      // a label from `formatFieldNameToTitleCase` — the same helper the recall and logic pickers use.
+      expect(getReservedColumnLabel("pagePath", mockT)).toBe("Page Path");
+      expect(getReservedColumnLabel("utmSource", mockT)).toBe("Utm Source");
+      expect(getReservedColumnLabel("viewportWidth", mockT)).toBe("Viewport Width");
+      expect(getReservedColumnLabel("timezone", mockT)).toBe("Timezone");
       expect(mockT).not.toHaveBeenCalled();
     });
   });
 
-  describe("COLUMNS_ICON_MAP", () => {
-    test("contains correct icon mappings", () => {
-      expect(COLUMNS_ICON_MAP.action).toBe(MousePointerClickIcon);
-      expect(COLUMNS_ICON_MAP.country).toBe(FlagIcon);
-      expect(COLUMNS_ICON_MAP.browser).toBe(GlobeIcon);
-      expect(COLUMNS_ICON_MAP.os).toBe(AirplayIcon);
-      expect(COLUMNS_ICON_MAP.device).toBe(SmartphoneIcon);
-      expect(COLUMNS_ICON_MAP.source).toBe(ArrowUpFromDotIcon);
-      expect(COLUMNS_ICON_MAP.url).toBe(GlobeIcon);
+  describe("RESERVED_COLUMN_ENTRIES", () => {
+    test("offers a column for every catalog entry a human reads as data", () => {
+      expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toStrictEqual(
+        RESERVED_FIELD_CATALOG.filter((entry) => entry.display !== "none").map((entry) => entry.name)
+      );
+    });
+
+    test("excludes the response's own identity and timing, which fixed columns already show", () => {
+      const names = RESERVED_COLUMN_ENTRIES.map((entry) => entry.name);
+
+      for (const excluded of ["responseId", "createdAt", "startedAt", "finishedAt", "finished", "language"]) {
+        expect(names, excluded).not.toContain(excluded);
+      }
+    });
+
+    test("a catalog entry added later becomes a column with no change here", () => {
+      // The guard the ticket asks for. Driven off the catalog rather than a literal list, so this
+      // assertion is what would fail if someone reintroduced a local `METADATA_FIELDS`.
+      expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("utmCampaign");
+      expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("timezone");
+      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(20);
+    });
+
+    test("today's six columns are still visible by default, and the new ones are not", () => {
+      const visible = RESERVED_COLUMN_ENTRIES.filter((entry) =>
+        isReservedColumnVisibleByDefault(entry.display)
+      ).map((entry) => entry.name);
+
+      expect(visible).toStrictEqual(["source", "url", "country", "action", "browser", "os", "deviceType"]);
+      expect(isReservedColumnVisibleByDefault("secondary")).toBe(false);
     });
   });
 
-  describe("getMetadataValue", () => {
-    test("returns correct value for action", () => {
-      const result = getMetadataValue({ action: "action_column" }, "action");
-      expect(result).toBe("action_column");
+  describe("getReservedColumnValues", () => {
+    const response = {
+      id: "clx0000000000000000000r1",
+      surveyId: "clx0000000000000000000s1",
+      createdAt: new Date("2026-08-01T09:00:00.000Z"),
+      updatedAt: new Date("2026-08-01T09:01:00.000Z"),
+      finished: true,
+      language: "de",
+      data: {},
+      variables: {},
+      ttc: {},
+      meta: {
+        source: "link",
+        url: "https://example.com/pricing?email=a@b.co",
+        userAgent: { browser: "Chrome", os: "macOS", device: "desktop" },
+        country: "DE",
+        pagePath: "/pricing",
+        utmSource: "news",
+        viewportWidth: 1280,
+      },
+    } as unknown as TResponse;
+
+    test("keys values by column id, resolving where the field actually lives", () => {
+      const values = getReservedColumnValues(response);
+
+      // `deviceType` is stored at `meta.userAgent.device`, which is exactly what the old per-column
+      // switch existed to know. The catalog's accessor knows it instead.
+      expect(values[reservedColumnId("deviceType")]).toBe("desktop");
+      expect(values[reservedColumnId("browser")]).toBe("Chrome");
+      expect(values[reservedColumnId("pagePath")]).toBe("/pricing");
+      expect(values[reservedColumnId("utmSource")]).toBe("news");
     });
 
-    test("returns correct value for userAgent", () => {
-      const result = getMetadataValue({ userAgent: { browser: "browser_column" } }, "browser");
-      expect(result).toBe("browser_column");
+    test("numbers arrive as strings a cell can render directly", () => {
+      expect(getReservedColumnValues(response)[reservedColumnId("viewportWidth")]).toBe("1280");
+    });
+
+    test("inherits the projection's redaction rather than reading meta again", () => {
+      // `url` is `privacy: "redactQuery"`. Reading `meta.url` directly — which the old switch did —
+      // would put the respondent's `?email=` into a visible column and every clipboard copy.
+      expect(getReservedColumnValues(response)[reservedColumnId("url")]).toBe("https://example.com/pricing");
+    });
+
+    test("omits what the response does not carry, so a cell stays empty", () => {
+      const values = getReservedColumnValues(response);
+
+      expect(values).not.toHaveProperty(reservedColumnId("timezone"));
+      expect(values).not.toHaveProperty(reservedColumnId("ipAddress"));
     });
   });
 });

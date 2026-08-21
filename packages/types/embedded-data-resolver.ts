@@ -101,6 +101,27 @@ export type TReservedFieldAvailability = "client" | "server" | "both";
 export type TReservedFieldPrivacy = "keep" | "drop" | "redactQuery";
 
 /**
+ * How prominently a **human-facing** surface should list a reserved field (ENG-2540).
+ *
+ * Declared on the entry rather than decided per surface, because the alternative is what this field
+ * exists to end: the response card rendered seven names as individual JSX branches and the response
+ * table held its own `METADATA_FIELDS` array, so three lists — the catalog, the card, the table — had
+ * to agree, and ENG-1841's twelve auto-captured fields ended up visible in none of them.
+ *
+ * - `primary` — always listed on the response card, and a visible column by default. Exactly the set
+ *   both surfaces already showed, so an existing response renders as it did before.
+ * - `secondary` — auto-captured context. Behind a disclosure on the card, and a column that exists
+ *   and is toggleable but starts hidden, so no author's table grows a dozen columns unasked.
+ * - `none` — never listed as a field. The response's own identity and timing, which the card header
+ *   and the table's fixed columns already render, or a machine id no author reads as data.
+ *
+ * This is about **prominence**, not privacy — `privacy` is a separate axis and the Anonymize toggle
+ * is what acts on it. `ipAddress` is `secondary` for prominence reasons (it is PII and already gated
+ * on `isCaptureIpEnabled`), not because anything here suppresses it.
+ */
+export type TReservedFieldDisplay = "primary" | "secondary" | "none";
+
+/**
  * What every reserved field declares regardless of which side can read it.
  *
  * A reserved field is auto-captured system metadata every survey can reference without declaring
@@ -115,6 +136,8 @@ interface TReservedFieldCatalogEntryBase {
   name: string;
   dataType: TEmbeddedDataType;
   privacy: TReservedFieldPrivacy;
+  /** See {@link TReservedFieldDisplay}. Required, so a new entry cannot be added without deciding. */
+  display: TReservedFieldDisplay;
 }
 
 /**
@@ -187,7 +210,14 @@ export type TReservedFieldCatalogEntry = TServerReservedFieldCatalogEntry | TCli
  */
 export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
   /** How the response was collected — `link`, `app`, … Set by the client on the response input. */
-  { name: "source", dataType: "string", availability: "client", privacy: "keep", read: (r) => r.meta.source },
+  {
+    name: "source",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    display: "primary",
+    read: (r) => r.meta.source,
+  },
   /**
    * The page the survey ran on. `redactQuery`, not `drop`: the path is what analytics needs, while a
    * query string is where an identifier rides along (`?email=`, `?uid=`).
@@ -197,6 +227,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "redactQuery",
+    display: "primary",
     read: (r) => r.meta.url,
   },
   /**
@@ -207,10 +238,18 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "server",
     privacy: "drop",
+    display: "primary",
     read: (r) => r.meta.country,
   },
   /** The action that triggered an app survey. */
-  { name: "action", dataType: "string", availability: "client", privacy: "keep", read: (r) => r.meta.action },
+  {
+    name: "action",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    display: "primary",
+    read: (r) => r.meta.action,
+  },
   /**
    * browser/os/deviceType are `server` because that is where they come from: `UAParser` runs over
    * the `user-agent` request header in the ingest routes (see the v1/v2 client response routes), and
@@ -223,6 +262,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "server",
     privacy: "drop",
+    display: "primary",
     read: (r) => r.meta.userAgent?.browser,
   },
   {
@@ -230,6 +270,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "server",
     privacy: "drop",
+    display: "primary",
     read: (r) => r.meta.userAgent?.os,
   },
   {
@@ -237,6 +278,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "server",
     privacy: "drop",
+    display: "primary",
     read: (r) => r.meta.userAgent?.device,
   },
   /** Only captured when the survey has IP capture enabled, so unset on most responses. */
@@ -245,23 +287,52 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "server",
     privacy: "drop",
+    display: "secondary",
     read: (r) => r.meta.ipAddress,
   },
   /**
    * Complete vs. partial. `server`, because mid-survey the answer is always "not yet" — offering it
    * to a running survey would mean offering a constant `false`.
    */
-  { name: "finished", dataType: "boolean", availability: "server", privacy: "keep", read: (r) => r.finished },
+  {
+    name: "finished",
+    dataType: "boolean",
+    availability: "server",
+    privacy: "keep",
+    display: "none",
+    read: (r) => r.finished,
+  },
   /** The language the respondent is answering in; known on both sides and agreed between them. */
-  { name: "language", dataType: "string", availability: "both", privacy: "keep", read: (r) => r.language },
+  {
+    name: "language",
+    dataType: "string",
+    availability: "both",
+    privacy: "keep",
+    display: "none",
+    read: (r) => r.language,
+  },
   /**
    * responseId/surveyId are `server` by decision, not by limitation — a client does know its survey
    * id. Internal identifiers have no business being recalled into copy a respondent reads, and
    * `availability` is what the mid-survey pickers filter on. They stay in the catalog because
    * server-side readers (exports, filters, webhooks) legitimately want them as columns.
    */
-  { name: "responseId", dataType: "string", availability: "server", privacy: "keep", read: (r) => r.id },
-  { name: "surveyId", dataType: "string", availability: "server", privacy: "keep", read: (r) => r.surveyId },
+  {
+    name: "responseId",
+    dataType: "string",
+    availability: "server",
+    privacy: "keep",
+    display: "none",
+    read: (r) => r.id,
+  },
+  {
+    name: "surveyId",
+    dataType: "string",
+    availability: "server",
+    privacy: "keep",
+    display: "none",
+    read: (r) => r.surveyId,
+  },
   /**
    * Total time to complete. **Only meaningful on finished responses**: `calculateTtcTotal` is the
    * only writer of `ttc._total`, and every call site guards it behind `finished ?` (e.g.
@@ -279,6 +350,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "number",
     availability: "server",
     privacy: "keep",
+    display: "none",
     read: (r) => {
       const totalMs = r.ttc?._total;
       return typeof totalMs === "number" ? Math.round(totalMs / 1000) : undefined;
@@ -293,12 +365,20 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
    * partial one it is the last partial write. The pair is the closest honest reading of the columns
    * that exist — `Response` stores no separate completion timestamp.
    */
-  { name: "startedAt", dataType: "date", availability: "server", privacy: "keep", read: (r) => r.createdAt },
+  {
+    name: "startedAt",
+    dataType: "date",
+    availability: "server",
+    privacy: "keep",
+    display: "none",
+    read: (r) => r.createdAt,
+  },
   {
     name: "finishedAt",
     dataType: "date",
     availability: "server",
     privacy: "keep",
+    display: "none",
     read: (r) => r.updatedAt,
   },
   /**
@@ -326,6 +406,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.pagePath,
   },
   /**
@@ -337,6 +418,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "redactQuery",
+    display: "secondary",
     read: (r) => r.meta.pageReferrer,
   },
   /**
@@ -349,6 +431,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.utmSource,
   },
   {
@@ -356,6 +439,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.utmMedium,
   },
   {
@@ -363,6 +447,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.utmCampaign,
   },
   {
@@ -370,6 +455,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.utmTerm,
   },
   {
@@ -377,6 +463,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.utmContent,
   },
   /**
@@ -390,6 +477,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "number",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.screenWidth,
   },
   {
@@ -397,6 +485,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "number",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.screenHeight,
   },
   {
@@ -404,6 +493,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "number",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.viewportWidth,
   },
   {
@@ -411,6 +501,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "number",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.viewportHeight,
   },
   /**
@@ -423,6 +514,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     dataType: "string",
     availability: "client",
     privacy: "keep",
+    display: "secondary",
     read: (r) => r.meta.timezone,
   },
 ];
@@ -822,6 +914,44 @@ export const projectClientReservedValues = (
  * answers respondents actually gave. It lives here, called from every consumer, rather than being
  * open-coded per surface, so there is exactly one line to audit and one line to test.
  */
+/** One reserved field as a human-facing surface renders it: the entry, plus the value it resolved to. */
+export interface TDisplayableReservedField {
+  entry: TReservedFieldCatalogEntry;
+  /** Always a rendered string. Booleans and dates are stringified by the projection. */
+  value: string;
+}
+
+/**
+ * **The one read a human-facing surface needs (ENG-2540).** Every catalog entry of the requested
+ * prominence that this response actually carries a value for, in catalog order.
+ *
+ * Absent values are omitted rather than rendered blank, and that is what makes the surfaces behave
+ * correctly for free in two cases they used to need their own rules for:
+ *
+ * - a response collected before ENG-1841 carries none of the browser-runtime fields, so it renders
+ *   exactly as it did before — no empty rows, no placeholders;
+ * - with "Anonymize responses" on, the `drop` fields are absent from `meta` at ingest, so nothing
+ *   here invents a row for a key that is not there. Read-time filtering would be the wrong tool:
+ *   `anonymize.ts` already decided this at capture, and duplicating the policy is how the two drift.
+ *
+ * Deliberately does **not** take the survey and does **not** apply
+ * {@link dropShadowedReservedEntries}. A display surface is describing what was captured, not
+ * resolving a name: if a survey declares its own `country`, the author needs to see *both* — their
+ * field in its own section, and the auto-captured one here — where recall and logic must pick one.
+ */
+export const listDisplayableReservedFields = (
+  entries: readonly TReservedFieldCatalogEntry[],
+  response: TEmbeddedValueResponse,
+  display: TReservedFieldDisplay
+): TDisplayableReservedField[] => {
+  const wanted = entries.filter((entry) => entry.display === display);
+  const values = projectEntries(wanted, response);
+
+  return wanted
+    .filter((entry) => values[entry.name] !== undefined)
+    .map((entry) => ({ entry, value: String(values[entry.name]) }));
+};
+
 export const mergeReservedValues = (
   reservedValues: Record<string, string | number>,
   responseData: TResponseData

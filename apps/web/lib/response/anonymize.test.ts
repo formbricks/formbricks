@@ -85,6 +85,7 @@ describe("applyAnonymizePolicy", () => {
       dataType: "string",
       availability: "server",
       privacy: "drop",
+      display: "none",
       read: (response) => response.meta.source,
     };
     const newlyAddedRedactedEntry: TReservedFieldCatalogEntry = {
@@ -92,6 +93,7 @@ describe("applyAnonymizePolicy", () => {
       dataType: "string",
       availability: "client",
       privacy: "redactQuery",
+      display: "none",
       read: (response) => response.meta.url,
     };
 
