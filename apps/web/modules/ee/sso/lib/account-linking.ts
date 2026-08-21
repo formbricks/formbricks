@@ -97,8 +97,9 @@ const syncSsoIdentityForUserWithTx = async ({
         where: {
           id: existingCanonicalAccount.id,
         },
-        // `issuer` too: the canonical row may predate the ENG-2343 backfill window, and leaving it NULL
-        // here would keep the recovered link invisible to 1.7's account lookup.
+        // `issuer` too, and the CANONICAL value (ENG-2555): the row may predate the ENG-2343 backfill
+        // window (NULL) or carry the synthetic form where the provider declares its own — either way
+        // 1.7's account lookup cannot see it until this write corrects it.
         data: { issuer: canonicalAccountIssuer(provider), ...getAccountTokenUpdate(account) },
       });
     } else {
@@ -139,11 +140,13 @@ const syncSsoIdentityForUserWithTx = async ({
         provider,
         providerAccountId: account.providerAccountId,
         // 1.7 keys the account on `(issuer, accountId)` and `findAccountByKey` filters on `issuer`, so a
-        // row written without one is invisible to every later sign-in: the user completes
-        // verify-before-link, gets a session, and is then pushed back through recovery on the NEXT
-        // sign-in because `NULL !== 'local:oauth:<provider>'`. The migration cannot save them either —
-        // it runs once, before this row exists. Same value as the provider config and the backfill
-        // (ENG-2343); imported rather than re-spelled so the three cannot drift.
+        // row written with a missing OR non-canonical issuer is invisible to every later sign-in: the
+        // user completes verify-before-link, gets a session, and is pushed back through recovery on the
+        // NEXT sign-in, forever. The migration cannot save them either — it runs once, before this row
+        // exists. NOT the same helper the provider config pins (`ssoAccountIssuer`): google's canonical
+        // issuer is the one upstream declares, not the synthetic form, which is exactly the bug that
+        // shipped here (ENG-2555). `canonicalAccountIssuer` mirrors the backfill's CASE and is pinned
+        // against both the SQL and upstream in constants.test.ts, so the sites cannot drift.
         issuer: canonicalAccountIssuer(provider),
         ...getAccountTokenUpdate(account),
       },
