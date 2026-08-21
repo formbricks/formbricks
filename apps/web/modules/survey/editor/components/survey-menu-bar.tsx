@@ -477,7 +477,22 @@ export const SurveyMenuBar = ({
     const isSurveySaved =
       localSurvey.status === "draft" ? await handleSurveySaveDraft() : await handleSurveySave();
     if (isSurveySaved) {
-      router.back();
+      // Navigate explicitly rather than router.back(): the editor is often reached without an
+      // in-app history entry behind it (new tab, pasted/bookmarked URL, hard reload), and back()
+      // silently no-ops there — the survey saves but the editor never closes. The publish path
+      // already navigates to the summary this way.
+      //
+      // Both branches navigate, but not to the same place, because the two callers arrive here from
+      // different pages. The "Save & Close" button renders only for a non-draft, and its editor is
+      // reached from the summary. A draft gets here only through the unsaved-changes dialog, opened
+      // by the back arrow, and its editor is reached from the survey list — the list deliberately
+      // never links a draft to /summary (see `linkHref` in `survey/list/components/survey-card.tsx`),
+      // since a draft has no responses to summarise. So a draft closes to the list.
+      router.push(
+        localSurvey.status === "draft"
+          ? `${workspaceBasePath}/surveys`
+          : `${workspaceBasePath}/surveys/${localSurvey.id}/summary`
+      );
     }
   };
 

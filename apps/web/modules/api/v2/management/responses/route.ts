@@ -1,18 +1,20 @@
 import { NextRequest } from "next/server";
-import { Response } from "@formbricks/database/prisma";
+import type { Response } from "@formbricks/database/prisma";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { getAuthorizedApiKeyWorkspaceIds } from "@/modules/api/v2/management/lib/authorized-workspace-ids";
 import { getWorkspaceId } from "@/modules/api/v2/management/lib/helper";
 import { getResponseForPipeline } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
 
@@ -32,9 +34,7 @@ export const GET = async (request: NextRequest) =>
         });
       }
 
-      const workspaceIds = [
-        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
-      ];
+      const workspaceIds = await getAuthorizedApiKeyWorkspaceIds(authentication);
 
       const workspaceResponses: Response[] = [];
       const res = await getResponses(workspaceIds, query);
@@ -79,7 +79,13 @@ export const POST = async (request: Request) =>
 
       const { workspaceId } = workspaceIdResult.data;
 
-      if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {

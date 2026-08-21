@@ -2,11 +2,16 @@ import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
+import {
+  addLegacyEnvironmentIdBestEffort,
+  addLegacyEnvironmentIdToList,
+} from "@/app/lib/api/legacy-environment-id";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ authentication }: THandlerParams) => {
@@ -20,7 +25,7 @@ export const GET = withV1ApiWrapper({
       ];
       const webhooks = await getWebhooks(workspaceIds);
       return {
-        response: responses.successResponse(webhooks),
+        response: responses.successResponse(await addLegacyEnvironmentIdToList(webhooks)),
       };
     } catch (error) {
       return handleApiError(error);
@@ -70,7 +75,11 @@ export const POST = withV1ApiWrapper({
 
     if (
       !resolved.alreadyAuthorized &&
-      !(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))
+      !(await can(
+        { type: "apiKey", id: authentication.apiKeyId },
+        getWorkspaceAuthorizationActionForMethod("POST"),
+        { type: "workspace", id: workspaceId }
+      ))
     ) {
       return {
         response: responses.unauthorizedResponse(),
@@ -84,8 +93,13 @@ export const POST = withV1ApiWrapper({
         auditLog.newObject = webhook;
       }
 
+      // Best-effort, not strict: the insert has committed by now, and a failed workspace lookup here
+      // (e.g. a P2024 pool timeout on the helper's own connection checkout) would surface as a 500 for
+      // a webhook that exists. Zapier retries on that, and `Webhook` has no uniqueness on
+      // `(url, workspaceId)`, so the retry would silently create a second subscription and duplicate
+      // every delivery.
       return {
-        response: responses.successResponse(webhook),
+        response: responses.successResponse(await addLegacyEnvironmentIdBestEffort(webhook)),
       };
     } catch (error) {
       return handleApiError(error);

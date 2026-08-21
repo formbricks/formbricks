@@ -1,11 +1,13 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { HelpCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { EmptyState } from "@/modules/ui/components/empty-state";
+import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
@@ -17,102 +19,149 @@ interface EditAlertsProps {
   autoDisableNotificationElementId: string;
 }
 
+/** A survey to alert on, carrying the workspace it belongs to for the row's sub-line. */
+type TAlertRow = { surveyId: string; surveyName: string; workspaceName: string };
+
+/**
+ * Defined at module level rather than inside the component: an inline `cell` that returns JSX reads as a
+ * nested component definition to Sonar (typescript:S6478). One array serves every organization's table.
+ */
+const getAlertColumns = ({
+  t,
+  notificationSettings,
+  autoDisableNotificationType,
+  autoDisableNotificationElementId,
+}: Readonly<{
+  t: TFunction;
+  notificationSettings: TUserNotificationSettings;
+  autoDisableNotificationType: string;
+  autoDisableNotificationElementId: string;
+}>): TSettingsTableColumn<TAlertRow>[] => [
+  {
+    id: "survey",
+    header: t("common.surveys"),
+    headerClassName: "w-[70%]",
+    skeletonWidth: "w-48",
+    cell: (row) => (
+      <>
+        <div className="font-medium text-slate-900">{row.surveyName}</div>
+        <div className="text-xs text-slate-400">{row.workspaceName}</div>
+      </>
+    ),
+  },
+  {
+    id: "alert",
+    // `inline-flex`, not `flex`: the column is centred with `align`, which only moves inline-level
+    // content. A block-level trigger would ignore it.
+    header: (
+      <TooltipProvider delayDuration={50}>
+        <Tooltip>
+          <TooltipTrigger className="inline-flex cursor-default items-center gap-x-2">
+            <span>{t("workspace.settings.notifications.every_response")}</span>
+            <HelpCircleIcon className="size-4 shrink-0 text-slate-500" />
+          </TooltipTrigger>
+          <TooltipContent>{t("workspace.settings.notifications.every_response_tooltip")}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    ),
+    headerClassName: "w-[30%]",
+    align: "center",
+    skeletonWidth: "w-10",
+    cell: (row) => (
+      <div className="flex justify-center">
+        <NotificationSwitch
+          surveyOrWorkspaceOrOrganizationId={row.surveyId}
+          notificationSettings={notificationSettings}
+          notificationType={"alert"}
+          autoDisableNotificationType={autoDisableNotificationType}
+          autoDisableNotificationElementId={autoDisableNotificationElementId}
+        />
+      </div>
+    ),
+  },
+];
+
 export const EditAlerts = ({
   memberships,
   user,
   autoDisableNotificationType,
   autoDisableNotificationElementId,
-}: EditAlertsProps) => {
+}: Readonly<EditAlertsProps>) => {
   const { t } = useTranslation();
 
   if (memberships.length === 0) {
     return <EmptyState text={t("common.no_surveys_found")} variant="simple" />;
   }
 
+  const columns = getAlertColumns({
+    t,
+    notificationSettings: user.notificationSettings!,
+    autoDisableNotificationType,
+    autoDisableNotificationElementId,
+  });
+
   return (
     <>
-      {memberships.map((membership) => (
-        <div key={membership.organization.id}>
-          <div className="mb-5 grid grid-cols-6 items-center gap-x-3">
-            <div className="col-span-3 flex items-center gap-x-3">
-              <UsersIcon className="h-6 w-7 text-slate-600" />
+      {memberships.map((membership) => {
+        // One row list per organization: the surveys were nested one level deeper, under workspaces, and
+        // the workspace only contributes a sub-line to each row.
+        const rows: TAlertRow[] = membership.organization.workspaces.flatMap((workspace) =>
+          workspace.surveys.map((survey) => ({
+            surveyId: survey.id,
+            surveyName: survey.name,
+            workspaceName: workspace.name,
+          }))
+        );
 
-              <p className="text-sm font-medium text-slate-800">{membership.organization.name}</p>
-            </div>
-
-            <div className="col-span-3 flex items-center justify-end pr-2">
-              <p className="pr-4 text-sm text-slate-600">
-                {t("workspace.settings.notifications.auto_subscribe_to_new_surveys")}
-              </p>
-              <NotificationSwitch
-                surveyOrWorkspaceOrOrganizationId={membership.organization.id}
-                notificationSettings={user.notificationSettings!}
-                notificationType={"unsubscribedOrganizationIds"}
-                autoDisableNotificationType={autoDisableNotificationType}
-                autoDisableNotificationElementId={autoDisableNotificationElementId}
-              />
-            </div>
-          </div>
-          <div className="mb-6 rounded-lg border border-slate-200">
-            <div className="grid h-12 grid-cols-3 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-2 flex items-center">{t("common.surveys")}</div>
-              <TooltipProvider delayDuration={50}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <div className="col-span-1 flex cursor-default items-center justify-center gap-x-2">
-                      <span>{t("workspace.settings.notifications.every_response")}</span>
-                      <HelpCircleIcon className="size-4 shrink-0 text-slate-500" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t("workspace.settings.notifications.every_response_tooltip")}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-
-            {membership.organization.workspaces.some((workspace) => workspace.surveys.length > 0) ? (
-              <div className="grid-cols-8 space-y-1 p-2">
-                {membership.organization.workspaces.map((workspace) => (
-                  <div key={workspace.id}>
-                    {workspace.surveys.map((survey) => (
-                      <div
-                        className="grid h-auto w-full cursor-pointer grid-cols-3 place-content-center rounded-lg px-2 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
-                        key={survey.name}>
-                        <div className="col-span-2 text-left">
-                          <div className="font-medium text-slate-900">{survey.name}</div>
-                          <div className="text-xs text-slate-400">{workspace.name}</div>
-                        </div>
-                        <div className="col-span-1 text-center">
-                          <NotificationSwitch
-                            surveyOrWorkspaceOrOrganizationId={survey.id}
-                            notificationSettings={user.notificationSettings!}
-                            notificationType={"alert"}
-                            autoDisableNotificationType={autoDisableNotificationType}
-                            autoDisableNotificationElementId={autoDisableNotificationElementId}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
+        return (
+          <div key={membership.organization.id}>
+            <div className="mb-5 grid grid-cols-6 items-center gap-x-3">
+              <div className="col-span-3 flex items-center gap-x-3">
+                <UsersIcon className="h-6 w-7 text-slate-600" />
+                <p className="text-sm font-medium text-slate-800">{membership.organization.name}</p>
               </div>
-            ) : (
-              <div className="m-2 flex h-16 items-center justify-center rounded-sm bg-slate-50 text-sm text-slate-500">
-                <p>{t("common.no_surveys_found")}</p>
+
+              <div className="col-span-3 flex items-center justify-end pr-2">
+                <p className="pr-4 text-sm text-slate-600">
+                  {t("workspace.settings.notifications.auto_subscribe_to_new_surveys")}
+                </p>
+                <NotificationSwitch
+                  surveyOrWorkspaceOrOrganizationId={membership.organization.id}
+                  notificationSettings={user.notificationSettings!}
+                  notificationType={"unsubscribedOrganizationIds"}
+                  autoDisableNotificationType={autoDisableNotificationType}
+                  autoDisableNotificationElementId={autoDisableNotificationElementId}
+                />
               </div>
-            )}
-            <p className="pb-3 pl-4 text-xs text-slate-400">
-              {t("workspace.settings.notifications.want_to_loop_in_organization_mates")}{" "}
-              <Link
-                className="font-semibold"
-                href={organizationSettingsPath(membership.organization.id, "teams")}>
-                {t("common.invite_them")}
-              </Link>
-            </p>
+            </div>
+
+            {/*
+              `frame="card"` rather than a flush card body: this page stacks one table per organization
+              inside a single settings card, each with its own header block above it, so the tables carry
+              their own frames and the card keeps its padding.
+            */}
+            <SettingsTable
+              columns={columns}
+              rows={rows}
+              getRowId={(row) => row.surveyId}
+              emptyMessage={t("common.no_surveys_found")}
+              frame="card"
+              containerClassName="mb-6"
+              aria-label={membership.organization.name}
+              footer={
+                <p className="pb-3 pl-4 text-xs text-slate-400">
+                  {t("workspace.settings.notifications.want_to_loop_in_organization_mates")}{" "}
+                  <Link
+                    className="font-semibold"
+                    href={organizationSettingsPath(membership.organization.id, "teams")}>
+                    {t("common.invite_them")}
+                  </Link>
+                </p>
+              }
+            />
           </div>
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 };

@@ -5,7 +5,7 @@ import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { can } from "@/lib/authorization";
-import { getFeedbackDirectoryAssignmentActionForPermission } from "@/lib/authorization/compatibility";
+import { getFeedbackDirectoryAssignmentAuthorizationAction } from "@/lib/authorization/permission-action";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 /**
@@ -42,7 +42,7 @@ export async function requireUnifyDirectoryAccess(
     return problemUnauthorized(requestId, "Not authenticated", instance);
   }
 
-  const allowed = await can(actor, getFeedbackDirectoryAssignmentActionForPermission(minPermission), {
+  const allowed = await can(actor, getFeedbackDirectoryAssignmentAuthorizationAction(minPermission), {
     type: "feedbackDirectoryAssignment",
     feedbackDirectoryId: directoryId,
     workspaceId: context.workspaceId,

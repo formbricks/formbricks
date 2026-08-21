@@ -178,6 +178,9 @@ write_base_env_file() {
   upsert_dotenv_var "CUBEJS_JWT_AUDIENCE" "formbricks-cube" "$env_file"
   upsert_dotenv_var "AUTHZED_TOKEN" "$authzed_token" "$env_file"
   upsert_dotenv_var "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password" "$env_file"
+  upsert_dotenv_var "AUTHZED_ENABLED" "true" "$env_file"
+  upsert_dotenv_var "AUTHZED_CONSISTENCY" "fully_consistent" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED" "true" "$env_file"
   chmod 600 "$env_file"
 }
 
@@ -786,7 +789,7 @@ EOF
       cat >> "$services_snippet_file" << EOF
   rustfs:
     restart: always
-    image: rustfs/rustfs:1.0.0-alpha.93
+    image: rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0
     depends_on:
       rustfs-perms:
         condition: service_completed_successfully
@@ -957,6 +960,11 @@ EOF
 
   newgrp docker <<END
 
+set -e
+docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate
+docker compose wait formbricks-migrate
+docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 docker compose up -d
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"
@@ -1002,7 +1010,28 @@ stop_formbricks() {
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
+
+  if ! grep -Eq '^  authzed-ops:$' docker-compose.yml || ! grep -Eq '^  spicedb:$' docker-compose.yml; then
+    echo "❌ This installation does not yet contain the AuthZed v6 Compose services."
+    echo "Your customized Compose file was not changed. Follow the v6 AuthZed migration guide before updating:"
+    echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
+    exit 1
+  fi
+
+  if ! grep -Eq '^FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true$' .env; then
+    echo "❌ The AuthZed v6 migration has not been acknowledged for this installation."
+    echo "Back up PostgreSQL, add the documented AuthZed services and secrets, then run the upgrade preparation."
+    echo "After its final check is clean, set FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true in .env and retry."
+    echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
+    exit 1
+  fi
+
   sudo docker compose pull
+  # The outbox migration is backward compatible with the still-running v5 application. Apply it before
+  # the release-matched operator checks so the old deployment stays available if preparation blocks.
+  sudo docker compose run --rm formbricks-migrate
+  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+  sudo docker compose --profile authzed-ops run --rm authzed-ops upgrade check
   sudo docker compose down
   sudo docker compose up -d
   echo "🎉 Formbricks updated successfully!"

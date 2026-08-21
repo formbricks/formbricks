@@ -99,18 +99,24 @@ docker compose --profile authzed-ops run --rm authzed-ops schema apply \
 
 # Relationship audit (dry run)
 docker compose --profile authzed-ops run --rm authzed-ops backfill
+
+# Release-matched v6 readiness gate
+docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
 The first apply to an empty SpiceDB needs no additional argument. Replacing a non-empty schema requires
 `--expected-current-digest sha256:<digest-from-check>`. The command verifies the write by reading and comparing
-the schema again. It is never invoked by `docker compose up`, Formbricks startup, or `/health`. See
+the schema again. Fresh installs run the idempotent `authzed-initialize` service independently; Formbricks
+startup and `/health` do not depend on it. Existing upgrades require the explicit preparation and read-only gate. See
 the [public operations guide](../docs/self-hosting/advanced/authzed-operations.mdx) for the JSON contract, exit
 codes, backup requirements, repair, and rollback rules. Repository development retains the equivalent
 `pnpm authzed:*` commands.
 
 `AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. Unset means disabled and secure
 TLS, respectively. `AUTHZED_ENDPOINT` is a bare `host:port` (including bracketed IPv6) with no scheme or path;
-`AUTHZED_CONSISTENCY` accepts `minimize_latency` (the default) or `fully_consistent`.
+`AUTHZED_CONSISTENCY` accepts both client values, but released v6 Compose deployments require and default to
+`fully_consistent`.
 
 To use the optional authenticated grpcui browser in development:
 
@@ -120,9 +126,10 @@ docker compose -f docker-compose.dev.yml --profile authzed-ui up -d authzed-ui
 
 Open `http://127.0.0.1:50052`. The browser UI and gRPC port are development-only.
 
-Existing one-click installations keep their customized Compose file during `formbricks.sh update`. Add the
-three AuthZed services and two generated secrets manually from the release-matched Compose file; back up the
-shared PostgreSQL volume first and never use `docker compose down -v` during migration or rollback.
+Existing one-click installations keep their customized Compose file during `formbricks.sh update`. Merge all
+release-matched AuthZed services and the two generated secrets manually, pass `upgrade prepare` and `upgrade
+check`, and only then set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. Back up both databases first and
+never use `docker compose down -v` during migration or rollback.
 
 The bundled PostgreSQL service keeps `track_commit_timestamp` at its default `off` value. SpiceDB therefore
 logs that its Watch API is disabled; schema, relationship, and permission-check APIs are unaffected. A future

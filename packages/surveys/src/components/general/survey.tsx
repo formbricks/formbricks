@@ -1,5 +1,6 @@
 import { type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { TJsFileUploadParams, type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import type {
@@ -20,12 +21,14 @@ import { LanguageSwitch } from "@/components/general/language-switch";
 import { ProgressBar } from "@/components/general/progress-bar";
 import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
+import { Subheader } from "@/components/general/subheader";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
+import { getLocalizedValue } from "@/lib/i18n";
 import { evaluateLogic, performActions } from "@/lib/logic";
 import {
   type SerializedSurveyState,
@@ -34,8 +37,9 @@ import {
   patchSurveyProgressSnapshot,
   saveSurveyProgress,
 } from "@/lib/offline-storage";
-import { parseRecallInformation } from "@/lib/recall";
+import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
+import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
 import { useOnlineStatus } from "@/lib/use-online-status";
 import { cn, findBlockByElementId, getDefaultLanguageCode, getElementsFromSurveyBlocks } from "@/lib/utils";
@@ -115,11 +119,13 @@ export function Survey({
   dir = "auto",
   setDir,
   onLanguageChange,
+  onPageChange,
   placement,
   offlineSupport = false,
   onOfflineStatusChange,
   showCardlessPreviewLogoSlot = false,
 }: Readonly<SurveyContainerProps>) {
+  const { t } = useTranslation();
   const workspaceId = workspaceIdProp ?? environmentId;
   let apiClient: ApiClient | null = null;
 
@@ -467,6 +473,20 @@ export function Survey({
   useEffect(() => {
     onLanguageChange?.(selectedLanguage);
   }, [selectedLanguage, onLanguageChange]);
+
+  // Report the respondent's position (initial card + every navigation) so a link-survey host can
+  // title the document per step (WCAG 2.4.2). The label is localized HERE rather than by the host:
+  // the survey knows its own active language, while the host's i18n is in the viewer's UI locale,
+  // so a title assembled there would mix the two. Embedded widgets pass no callback.
+  useEffect(() => {
+    if (!onPageChange) return;
+    const { index, total } = getSurveyPagePosition(localSurvey, blockId);
+    onPageChange({
+      index,
+      total,
+      label: t("common.page_x_of_y", { current: index, total }),
+    });
+  }, [blockId, localSurvey, onPageChange, t]);
 
   // --- Offline support: restore progress from IndexedDB on mount ---
   useEffect(() => {
@@ -1282,6 +1302,7 @@ export function Survey({
                         <LanguageSwitch
                           survey={localSurvey}
                           surveyLanguages={localSurvey.languages}
+                          selectedLanguageCode={selectedLanguage}
                           setSelectedLanguageCode={setSelectedLanguage}
                           hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
                           borderRadius={styling.roundness ?? 8}
@@ -1328,6 +1349,28 @@ export function Survey({
     );
   };
 
+  // Survey instructions, available on every page. They live on the welcome card, which the
+  // respondent leaves after one click and can never get back to — so the text that explains what the
+  // survey is for was gone for the rest of it (the second half of the 2.4.2 VPAT finding).
+  //
+  // Rendered once here rather than inside getCardContent, which runs per card and would emit a
+  // duplicate id for every peeking card in the stacked layout. Visually hidden: the card designs
+  // have no room for a persistent block, and a sighted respondent has already read it on the
+  // welcome card. SurveyContainer points the form's aria-describedby at this id, so a screen reader
+  // announces it on entry to each page.
+  const instructions = hasSurveyInstructions(localSurvey) ? (
+    <div id={SURVEY_INSTRUCTIONS_ID} className="sr-only">
+      <Subheader
+        subheader={replaceRecallInfo(
+          getLocalizedValue(localSurvey.welcomeCard.subheader, selectedLanguage),
+          responseData,
+          currentVariables,
+          selectedLanguage
+        )}
+      />
+    </div>
+  ) : null;
+
   const stackedCardsContainer = (
     <StackedCardsContainer
       cardArrangement={cardArrangement}
@@ -1352,10 +1395,18 @@ export function Survey({
         isPreviewMode={isPreviewMode}
         showCardlessPreviewLogoSlot={showCardlessPreviewLogoSlot}
         linkSurveyCardMaxWidth={linkSurveyCardMaxWidth}>
-        {stackedCardsContainer}
+        <>
+          {instructions}
+          {stackedCardsContainer}
+        </>
       </CardlessSurveyLayout>
     );
   }
 
-  return stackedCardsContainer;
+  return (
+    <>
+      {instructions}
+      {stackedCardsContainer}
+    </>
+  );
 }

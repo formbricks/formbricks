@@ -77,8 +77,11 @@ describe("server - posthog clients", () => {
   describe("tracing client before_send", () => {
     const getBeforeSend = async () => {
       const { PostHog } = await import("posthog-node");
-      const call = vi.mocked(PostHog).mock.calls.find((args) => "before_send" in args[1]);
-      return call![1].before_send as (event: unknown) => unknown;
+      const options = vi
+        .mocked(PostHog)
+        .mock.calls.map((args) => args[1])
+        .find((opts) => opts !== undefined && "before_send" in opts);
+      return options!.before_send as (event: unknown) => unknown;
     };
 
     test("strips $ai_error but keeps $ai_is_error and other properties", async () => {

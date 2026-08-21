@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
-import { TAPIKeyWorkspacePermission } from "@formbricks/types/auth";
 import {
   DatabaseError,
   InvalidInputError,

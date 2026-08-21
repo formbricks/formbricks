@@ -17,8 +17,8 @@ import { assertCan, can } from "@/lib/authorization";
  * ENG-2409: this replaced a `SETUP_INVITE_ROLES = ["owner"]` list that the page tested by reading a
  * membership row and the action tested through the deprecated action-client adapter. The adapter
  * already mapped the role set `["owner"]` onto `organization.write`, so the action's decision is
- * unchanged; what changed is that the page's decision now goes through `can()` too, which is what
- * makes it visible to AuthZed shadow comparison instead of silently legacy-only.
+ * unchanged; what changed is that the page's decision now goes through the authoritative central
+ * interface too.
  */
 export const SETUP_INVITE_ACTION = "organization.write" as const;
 

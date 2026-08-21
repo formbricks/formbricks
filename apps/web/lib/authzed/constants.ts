@@ -39,9 +39,9 @@ export const AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE = 250;
 /**
  * Resource IDs accumulated by one complete permission lookup.
  *
- * Workspace discovery must compare complete sets, so it never returns a truncated result. Crossing
- * this guard fails the shadow comparison loudly instead of either reporting false parity or allowing a
- * pathological relationship graph to exhaust the process.
+ * Authoritative resource discovery must return complete sets. Crossing this guard fails the protected
+ * operation closed instead of returning a partial authorization result or allowing a pathological
+ * relationship graph to exhaust the process.
  */
 export const AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS = 20_000;
 
@@ -66,7 +66,7 @@ export const AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE = 100;
  * PostgreSQL's bound-parameter ceiling. 200 targets also keeps the widest fan-out (4 updates per
  * membership) under `AUTHZED_MAX_RELATIONSHIP_UPDATES`.
  */
-export const AUTHZED_BACKFILL_TARGET_CHUNK_SIZE = 200;
+export const AUTHZED_TARGET_CHUNK_SIZE = 200;
 
 /**
  * Orphaned resources a single run may prune.

@@ -9,6 +9,10 @@ assertion-based validation suite.
   blocks that pin down the schema's semantics.
 - `validate.sh` — offline validation runner (local `zed` binary or the pinned
   `authzed/zed` container image; no SpiceDB server needed).
+- [Direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad) — the approved direct-authority, fail-closed,
+  immutable-artifact, rollback, and environment-gate contract. It supersedes
+  the earlier shadow/cohort release proposal and remains in Linear rather than
+  being duplicated in this repository.
 - [`RUNBOOK.md`](./RUNBOOK.md) — diagnosing and recovering from relationship-sync
   failures: the metrics, the log field contract, suggested alert rules, and the
   recovery path through `pnpm authzed:backfill`.
@@ -125,18 +129,71 @@ corresponding SpiceDB `organization` relationship:
 - If the source role changes concurrently, reconciliation reads PostgreSQL
   again and converges for up to three passes.
 
-The current legacy evaluator authorizes every `Membership` row without checking
-`Membership.accepted`. The initial projection deliberately preserves that
+The current authorization contract treats every `Membership` row as active without checking
+`Membership.accepted`. The projection deliberately preserves that
 behavior: accepted and pending membership rows project identically. An
 `Invite` alone is not projected.
 
-Projection runs after the source transaction commits and is best-effort.
-AuthZed being disabled performs no projection work. An AuthZed outage never
-changes a successful PostgreSQL mutation into an application error; it produces
-only a sanitized operational result and warning. Existing records and any drift
-an outage leaves behind are reconciled by `pnpm authzed:backfill` (see
-[Backfill and repair](#backfill-and-repair)), which must report a clean run
-before AuthZed shadow evaluation or enforcement is enabled.
+Every authorization-bearing source table has a PostgreSQL trigger that inserts a
+projection event in the same transaction as the source mutation. The existing
+post-commit projector remains as a low-latency fast path, but the PostgreSQL
+outbox is the durable delivery contract: BullMQ wakes a worker every five
+seconds, the worker claims rows with leases and `FOR UPDATE SKIP LOCKED`, and the
+idempotent reconcilers deliver each claimed batch as six independent groups.
+
+Failure is attributed rather than shared. A group that fails takes only its own
+events; the rest of the batch is still delivered. A retryable failure releases
+every remaining group untried, because spending another three-attempt budget per
+group against an unreachable instance buys nothing.
+
+Dead-lettering requires the failure to _name_ an event, which takes three things
+together: the code is non-retryable, the attempt covered exactly one event, and
+the code is one an event can actually cause
+(`authzed_projection_invalid_source`, `authzed_invalid_request`). The third
+condition is not redundant. On a five-second cadence most groups hold a single
+event, so size alone would charge whichever revocations happened to be
+travelling alone when SpiceDB rejected a credential — dead-lettering bystanders
+mid-outage, which is the opposite of the intent. Those same event-attributable
+codes are the ones that trigger halving the group until the culprit is alone;
+codes describing the instance are neither split nor charged. Ten solitary,
+attributable failures dead-letter the event.
+
+The consequence is the property worth remembering: **no SpiceDB outage, of any
+duration or kind, can dead-letter an event that was never the problem.**
+
+AuthZed being disabled performs no delivery work. An AuthZed outage never
+changes a successful PostgreSQL mutation into an application error; committed
+outbox rows remain recoverable and are replayed when SpiceDB returns. Existing
+records and independent drift are reconciled by the six-hour applying audit and
+by `pnpm authzed:backfill` (see [Backfill and repair](#backfill-and-repair)). A
+clean graph and drained outbox are mandatory before direct authority.
+
+Deletes, and updates that are not provably grants, are classified as revocations.
+The classifier is deny-by-default: an unmapped target type, an unmapped column,
+or any enum move is a revocation. Only three transitions are treated as grants,
+each because the projectors' own write shape proves the relationship set can only
+grow — reactivating a user, unarchiving a feedback directory that stays in its
+organization, and any membership update that leaves `role` unchanged (the
+projected snapshot ignores `accepted`, so accepting an invite writes identical
+relationships).
+
+The permission ladder is deliberately not encoded in the trigger. It is rankable,
+but a rank table in SQL has no compile-time backstop the way
+`relationship-map.ts` does, so a change to `authzed/schema.zed` would silently
+make it wrong in the fail-open direction — the one direction this guard must
+never be wrong in. Role changes are one-at-a-time admin actions rather than the
+bulk operations the classifier exists to keep off the guard. Revisit only if a
+bulk re-roling path appears.
+
+This matters because the guard is global and unscoped. Direct authority refuses
+protected operations with `authzed_projection_stale` when an unresolved
+revocation reaches 60 seconds or enters dead letter, so an undelivered event
+classified as a revocation denies every enforced check in the deployment. A mass
+invite acceptance or reactivation sweep must therefore not arm it.
+
+If a source pair moves, the trigger enqueues both the previous pair as a
+revocation and the current pair, preventing a stale old edge from becoming
+undiscoverable.
 
 The organization-membership projection boundary covers:
 
@@ -245,8 +302,9 @@ and workspace projection.
 
 Existing API keys are not backfilled by mutation hooks; `pnpm authzed:backfill`
 covers them, including a scope revoked outside a hook, which the projector alone
-cannot see. Routing API-key principals through the central interface remains
-ENG-1731, and SpiceDB comparison/cutover remains ENG-1738.
+cannot see. API-key principals are routed through the central interface; the
+direct-authority release contract is now owned by ENG-2448 and
+the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad).
 
 ## Feedback Dataset projection
 
@@ -293,10 +351,9 @@ its effective rules:
 - archive, entitlement, OAuth-scope, Hub tenant, source ownership, and record-integrity checks remain in
   the application layer and execute in their existing order.
 
-Authenticated feedback-gateway requests use the bounded rollout targets `feedback_gateway:user` and
-`feedback_gateway:apiKey`. Public and unauthenticated gateway traffic is never scoped for shadow or
-enforcement. The ENG-2398 rollout is shadow-only; moving either target into an enforcement allowlist
-requires a separate rollout decision.
+Authenticated feedback-gateway requests carry the bounded `feedback_gateway` telemetry surface. Public and
+unauthenticated gateway traffic is never authorized as an authenticated actor. The surface only attributes
+authoritative metrics; it does not select an evaluator.
 
 ## Resource parent resolution during the current-model migration
 
@@ -309,9 +366,9 @@ the existing server-only PostgreSQL resolvers to map:
 
 It then checks the equivalent workspace permission in SpiceDB. This preserves
 the current authorization boundary and avoids adding a high-cardinality
-`response#survey` projection to every response mutation before shadow mode.
+`response#survey` projection to every response mutation before direct authority.
 Resolver database failures remain operational errors and missing resources
-remain denials, matching the legacy evaluator.
+remain denials, preserving the current authorization contract.
 
 The `survey#workspace`, `dashboard#workspace`, and `response#survey` relations
 remain in the schema for later resource-level sharing. They must not be queried
@@ -320,19 +377,19 @@ the backfill classifies them as ignored today and never prunes them.
 Phase 2 direct resource grants must add that projection and repair scope before
 enforcement.
 
-## Authorization evaluation and shadow rollout
+## Authorization evaluation and direct cutover
 
 The private SpiceDB evaluator sits behind the existing server-only `can()` and
-`assertCan()` contract. Legacy authorization remains authoritative unless an
-internal rollout cohort explicitly selects SpiceDB enforcement. Shadow checks
-run after the response and cannot change the legacy result; enforcement checks
-run inline and fail closed on operational errors.
+`assertCan()` contract. The direct-authority image makes SpiceDB the sole evaluator
+with no runtime legacy fallback or cohort selector. The separately pinned bridge
+image remains the deployment rollback artifact while the durable outbox keeps its
+relationship graph current.
 
-Rollout configuration, supported request surfaces, comparison metrics, parity
-gates, and rollback steps are documented in the [relationship sync
-runbook](./RUNBOOK.md#6-shadow-and-enforcement-rollout). A clean applying
-backfill must provide the `completedAtSnapshot` used as the shadow freshness
-floor before any cohort is enabled.
+The immutable bridge/candidate artifacts, fail-closed behavior, sandbox-first
+sequence, staging and regional production gates, abort triggers, rollback, and
+self-hosted v6 contract are defined in the [direct AuthZed cutover and rollback
+contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad). Operational execution is documented in the
+[relationship sync runbook](./RUNBOOK.md#7-direct-authority-cutover).
 
 ## Mapping from the current system
 
@@ -367,18 +424,16 @@ doc comments):
 
 - `apps/web/lib/authorization` — the engine-independent current-model
   authorization contract and role/grant mapping.
-- `apps/web/lib/utils/action-client/action-client-middleware.ts` —
-  `checkAuthorizationUpdated`: org-role OR team-permission, weighted
-  `read < readWrite < manage`.
+- `apps/web/lib/authorization/permission-action.ts` — exhaustive translation of
+  HTTP/team permission ladders into semantic actions.
 - `apps/web/lib/organization/auth.ts` — `verifyUserRoleAccess`: managers manage
   members/billing/API keys but cannot update or delete the organization.
-- `apps/web/lib/workspace/auth.ts` — `hasUserWorkspaceAccessForAction`: the
-  billing role is excluded from all product data.
+- `apps/web/lib/workspace/auth.ts` — navigation and integration-specific compositions;
+  the billing role is excluded from product data.
 - `apps/web/modules/ee/teams/lib/roles.ts` — a member without a team has no
   workspace access; the highest team permission wins.
-- `apps/web/modules/organization/settings/api-keys/lib/utils.ts` — API key
-  method map (GET→read, POST/PUT/PATCH→write, DELETE→manage) and
-  organization `accessControl` checks.
+- `apps/web/lib/authorization/spicedb-evaluator.ts` — tenant-safe scope resolution,
+  API-key ownership checks, and authoritative permission evaluation.
 
 ## Semantics guaranteed by the assertions
 
@@ -439,11 +494,12 @@ Exit codes match `authzed:schema`: `0` reconciled, `2` drift remains, `1` failed
 or misused. **`0` means every category is clear, including the ones this tool
 deliberately will not repair** — `invalid` and `unmanaged` count toward drift
 exactly like `orphaned` and `missing`, because unrepaired authorization state is
-still authorization state and this exit code is what gates shadow evaluation and
-enforcement. The result is one line of JSON carrying counters, the offending
-record identifiers, a revision captured _after_ the run's own writes (so shadow
-evaluation can use it as an `at_least_as_fresh` floor — `null` for a dry run,
-which wrote nothing to be fresh relative to), and a `truncated` flag.
+still authorization state and this exit code is what gates direct authority. The
+result is one line of JSON carrying counters, the offending record identifiers,
+a revision captured _after_ the run's own writes (`null` for a dry run), and a
+`truncated` flag. The revision remains useful operational evidence, but the
+approved direct-authority release uses `fully_consistent` reads and does not use
+it as a shadow freshness floor.
 
 That JSON is the whole diagnostic: like the other AuthZed commands, this one runs
 at `LOG_LEVEL=fatal` so stdout stays a single parseable line. Each entry in
@@ -535,6 +591,55 @@ it rewrites is not necessarily the one a local dev server talks to. Always pass
 Released Formbricks images include the equivalent `formbricks-authzed backfill`
 command for self-hosted operators. Repository development retains
 `pnpm authzed:backfill`.
+
+## Durable projection outbox
+
+Release images expose bounded, identifier-free outbox operations:
+
+```bash
+formbricks-authzed outbox status
+formbricks-authzed outbox drain
+formbricks-authzed outbox drain --max-batches=500
+formbricks-authzed outbox replay
+```
+
+`status` reports aggregate pending, dead-letter, oldest-age, and revocation-age
+counts. `drain` claims revocations first and stops after the requested number of
+batches or the first batch that delivers nothing at all — a partially delivered
+batch is the normal outcome once failures are attributed per group, so draining
+stops on no progress rather than on any failure. `replay` resets all unresolved
+dead letters to attempt zero and returns their full permanent-failure budget; it
+does not bypass normal reconciliation, retry, or freshness checks. These commands
+never print target IDs, relationships, credentials, or raw errors.
+
+Dead letters also clear themselves. A dead-lettered revocation has no age bound
+in the freshness guard on purpose — an old one is more dangerous than a fresh one
+— so the six-hour audit replays every unresolved dead letter whenever it comes
+back `reconciled`, bounding a global denial at six hours rather than at whenever
+an operator notices. A still-poisoned event simply dead-letters again.
+
+The recurring six-hour audit runs the normal full-deployment applying backfill
+without prune. It can repair attributable missing and mismatched-permission
+edges, but it never automatically deletes orphaned or unmanaged relationships or
+changes a mismatched parent. Those categories still require the guarded operator
+workflow above. Successfully delivered outbox rows are retained for seven days;
+the scheduled audit removes at most 10,000 expired rows per run. Pending and
+dead-letter rows are never removed by retention cleanup.
+
+## Self-hosted v6 upgrade gate
+
+Release images expose two aggregate-only orchestration commands:
+
+```bash
+formbricks-authzed upgrade prepare
+formbricks-authzed upgrade check
+```
+
+`prepare` requires `AUTHZED_ENABLED=true` and `AUTHZED_CONSISTENCY=fully_consistent`, checks authenticated
+datastore health, applies an empty or guarded canonical schema, drains the outbox, runs attributable repair, and
+audits the final graph. `check` repeats the health, schema, outbox, and full dry-run audit without writing. It
+exits 0 only for a direct-authority-ready deployment, 2 when readiness is blocked by drift, and 1 for a failed
+configuration or operation. Unlike the detailed backfill report, both commands emit aggregate counters only.
 
 ## Deliberately not modeled (stays in application code)
 

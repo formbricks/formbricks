@@ -592,9 +592,12 @@ externalSecret:
 # AuthZed / SpiceDB Authorization Configuration
 ##########################################################
 authzed:
-  # Enables the Formbricks AuthZed runtime contract. Product authorization
-  # enforcement is introduced separately; this section owns deployment only.
-  enabled: false
+  # Formbricks v6 uses SpiceDB as its sole authorization decision engine.
+  enabled: true
+
+  # Existing releases must complete the documented schema/backfill/audit preparation before their
+  # first v6 Helm upgrade. Fresh installs do not need to set this value.
+  migrationAcknowledged: false
 
   # selfHosted creates a SpiceDBCluster. external only configures the app client.
   mode: selfHosted
@@ -609,7 +612,7 @@ authzed:
   # selfHosted service and TLS for external endpoints. Set true explicitly only
   # when an external endpoint intentionally accepts plaintext gRPC.
   insecure: null
-  consistency: minimize_latency
+  consistency: fully_consistent
 
   auth:
     # Secret must contain tokenKey. When empty in selfHosted mode, the chart
@@ -690,7 +693,10 @@ authzed:
   # Install one operator per cluster. Disable this when a shared operator
   # already watches the Formbricks namespace (the Formbricks Cloud topology).
   operator:
-    install: false
+    # Breaking in v6: the default changed from false to true. Existing clusters with a compatible
+    # shared operator must keep this false to prevent two operators reconciling the same cluster.
+    # Set false when a compatible cluster-wide operator already watches this namespace.
+    install: true
 
 # Values passed to the bundled spicedb-operator dependency when
 # authzed.operator.install=true.
@@ -1084,10 +1090,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.4.
-    digest: "sha256:5eb1e185383bcadc0fd591b9ccb475869ca2aebb81c09b493be1073f24190f10"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.5.
+    digest: "sha256:9f4c109e6589993ef15708f834d57241ed3a73e3246e3565620777a66a231b59"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.8.4"
+    tag: "0.8.5"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.

@@ -153,17 +153,18 @@ bundled Docker Compose or Helm assets, the following variables apply:
 
 #### AuthZed / SpiceDB Authorization
 
-These variables define the supported authorization-client contract. The Helm chart injects them when
-`authzed.enabled=true`; the bundled Docker and development Compose stacks enable them by default.
+These variables define the supported authorization-client contract. Formbricks v6 enables AuthZed by default
+for fresh Docker, one-click, and Helm installations. Existing installations must pass the release-matched
+upgrade gate before enabling the v6 application image.
 
 | Variable            | Description                                                                                                      | Required when enabled | Default            |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------ |
-| AUTHZED_ENABLED     | Enables the supported AuthZed authorization client path.                                                         | required              | `false` in Helm; `true` in bundled Docker/dev |
+| AUTHZED_ENABLED     | Enables the required AuthZed authorization engine.                                                              | required              | `true` in bundled Docker, Helm, and dev |
 | AUTHZED_ENDPOINT    | AuthZed gRPC endpoint as `host:port`. The default Helm-managed service is `formbricks-spicedb:50051`.             | required              | `spicedb:50051` in Docker; `localhost:50051` in dev |
 | AUTHZED_TOKEN       | Preshared API token. Always load this from a secret.                                                             | required              |                    |
 | AUTHZED_SYSTEM_KEY  | Stable namespace for Formbricks authorization objects and relationships.                                         | required              | `formbricks`       |
 | AUTHZED_INSECURE    | Allows plaintext gRPC for an in-cluster service. Keep disabled for endpoints outside the trusted cluster network. | optional              | `true` in Helm and bundled Docker/dev |
-| AUTHZED_CONSISTENCY | Default consistency policy used by the application client.                                                       | optional              | `minimize_latency` |
+| AUTHZED_CONSISTENCY | Consistency policy used by authorization decisions.                                                            | optional              | `fully_consistent` in released Docker and Helm |
 
 Docker Compose additionally requires `AUTHZED_DATABASE_PASSWORD` for its dedicated `spicedb` PostgreSQL
 login. Generate both it and `AUTHZED_TOKEN` with `openssl rand -hex 32`. `SPICEDB_IMAGE_REF` can override the
@@ -176,7 +177,8 @@ be a bare `host:port` with an explicit port from 1 through 65535, for example `s
 `grpc.authzed.com:443`, or `[::1]:50051`. Do not include a URL scheme, path, query, credentials, or whitespace.
 `AUTHZED_SYSTEM_KEY` must be a 3–64 character lowercase SpiceDB identifier made from letters, digits, and
 underscores; it must start with a letter or underscore and end with a letter or digit. The supported
-consistency values are `minimize_latency` and `fully_consistent`; the default is `minimize_latency`.
+consistency values are `minimize_latency` and `fully_consistent`. Released v6 Docker and Helm deployments
+require `fully_consistent`; the upgrade gate rejects weaker consistency.
 
 Valid endpoint, token, and system-key values may be set before enabling AuthZed. Invalid supplied values are
 rejected even while it is disabled. Changing any AuthZed setting requires restarting the Formbricks process.
@@ -187,6 +189,7 @@ data:
 
 ```bash
 docker compose --profile authzed-ops run --rm authzed-ops health
+docker compose --profile authzed-ops run --rm authzed-ops upgrade check
 ```
 
 For Helm, run `formbricks-authzed health` inside a Formbricks application pod. Repository development can keep
@@ -208,9 +211,10 @@ This check is intentionally a CLI rather than a browser page or HTTP endpoint. A
 general `/health` response, Kubernetes readiness, or application startup, so a transient SpiceDB outage does
 not restart or mark the rest of Formbricks unhealthy.
 
-When authorization enforcement is enabled, failed or unavailable permission checks must deny the protected
-operation. Do not make the general application readiness probe depend on AuthZed availability; this avoids a
-transient authorization outage restarting unrelated Formbricks workloads.
+Failed or unavailable permission checks fail the protected operation closed; there is no runtime fallback to
+legacy authorization. Existing installations must complete `formbricks-authzed upgrade prepare` followed by
+`upgrade check` before upgrading. The general application readiness probe remains independent from AuthZed so a
+transient authorization outage does not restart unrelated Formbricks workloads.
 
 #### Cube Analytics
 

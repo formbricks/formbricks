@@ -5,7 +5,6 @@ import {
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -24,10 +23,6 @@ vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
 
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: vi.fn(),
-}));
-
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
@@ -149,7 +144,6 @@ describe("license gating", () => {
     vi.resetAllMocks();
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
     vi.mocked(assertCan).mockResolvedValue(undefined);
   });
 
@@ -160,7 +154,6 @@ describe("license gating", () => {
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(false);
 
     await expect(ensureAccess(userId, workspaceId)).rejects.toThrow(OperationNotAllowedError);
-    expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
     expect(assertCan).not.toHaveBeenCalled();
   });
 });
@@ -173,7 +166,6 @@ describe("ensureDeleteAccess", () => {
     vi.resetAllMocks();
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
     vi.mocked(assertCan).mockResolvedValue(undefined);
   });
 
@@ -218,19 +210,15 @@ describe("ensureReadAccess", () => {
     vi.resetAllMocks();
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
     vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
-    vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
+    vi.mocked(assertCan).mockResolvedValue(undefined);
   });
 
   test("also admits workspace readers, since reading the shared dataset is the point of sharing it", async () => {
     await ensureReadAccess(userId, workspaceId);
 
-    expect(checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId,
-      organizationId,
-      access: [
-        { type: "organization", roles: ["owner", "manager"] },
-        { type: "workspaceTeam", minPermission: "read", workspaceId },
-      ],
+    expect(assertCan).toHaveBeenCalledWith({ type: "user", id: userId }, "workspace.read", {
+      type: "workspace",
+      id: workspaceId,
     });
   });
 });

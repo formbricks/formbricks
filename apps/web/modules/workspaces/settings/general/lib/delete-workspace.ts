@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
-import { deleteWorkspace } from "@/modules/workspaces/settings/lib/workspace";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { assertCan } from "@/lib/authorization";
+import { getWorkspace } from "@/lib/workspace/service";
+import { deleteWorkspaceIfNotLast } from "@/modules/workspaces/settings/lib/workspace";
 import {
   WORKSPACE_DELETE_CONFIRMATION_ERROR,
   hasMatchingWorkspaceDeleteConfirmation,
@@ -69,26 +69,14 @@ export const deleteWorkspaceWithConfirmation = async ({
 
   const organizationId = workspace.organizationId;
 
-  await checkAuthorizationUpdated({
-    userId,
-    organizationId,
-    access: [
-      {
-        type: "organization",
-        roles: ["owner", "manager"],
-      },
-    ],
+  await assertCan({ type: "user", id: userId }, "organization.manage", {
+    type: "organization",
+    id: organizationId,
   });
-
-  const availableWorkspaces = await getUserWorkspaces(userId, organizationId);
-
-  if (availableWorkspaces.length <= 1) {
-    throw new OperationNotAllowedError("You can't delete the last workspace.");
-  }
 
   auditLoggingCtx.organizationId = organizationId;
   auditLoggingCtx.workspaceId = workspaceId;
   auditLoggingCtx.oldObject = workspace;
 
-  return await deleteWorkspace(workspaceId);
+  return await deleteWorkspaceIfNotLast(workspaceId, organizationId);
 };

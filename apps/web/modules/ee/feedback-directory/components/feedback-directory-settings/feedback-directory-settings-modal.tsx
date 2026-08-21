@@ -15,6 +15,8 @@ import {
   updateFeedbackDirectoryAction,
 } from "@/modules/ee/feedback-directory/actions";
 import { ArchiveFeedbackDirectory } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory";
+import { PurgeFeedbackDirectoryData } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/purge-feedback-directory-data";
+import { FeedbackDirectoryQueryClientProvider } from "@/modules/ee/feedback-directory/components/query-client-provider";
 import { getWorkspaceAccessConflictState } from "@/modules/ee/feedback-directory/lib/workspace-access-conflicts";
 import {
   TFeedbackDirectoryDetails,
@@ -380,12 +382,20 @@ export const FeedbackDirectorySettingsModal = ({
             </DialogBody>
             <DialogFooter>
               {isEdit && (
-                <div className="w-full">
+                <div className="flex w-full flex-row gap-x-2">
                   <ArchiveFeedbackDirectory
                     directoryId={directory.id}
                     onArchive={closeModal}
                     isOwnerOrManager={isOwnerOrManager}
                   />
+                  <FeedbackDirectoryQueryClientProvider>
+                    <PurgeFeedbackDirectoryData
+                      directoryId={directory.id}
+                      directoryName={directory.name}
+                      onPurge={closeModal}
+                      isOwnerOrManager={isOwnerOrManager}
+                    />
+                  </FeedbackDirectoryQueryClientProvider>
                 </div>
               )}
               <Button size="default" type="button" variant="outline" onClick={closeModal}>

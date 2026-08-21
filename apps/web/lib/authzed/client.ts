@@ -181,16 +181,13 @@ type TAuthzedClientSingleton = Readonly<{
 
 type TAuthzedConfig =
   | Readonly<{
-      consistency: TAuthzedConsistency;
       enabled: false;
       insecure: boolean;
     }>
   | Readonly<{
-      consistency: TAuthzedConsistency;
       enabled: true;
       endpoint: string;
       insecure: boolean;
-      minimumSnapshot?: string;
       systemKey: string;
       token: string;
     }>;
@@ -231,30 +228,22 @@ const toStableDiffKind = (kind: string | undefined): string => {
 };
 
 const getAuthzedConfig = (): TAuthzedConfig => {
-  const consistency = env.AUTHZED_CONSISTENCY ?? "minimize_latency";
   const insecure = env.AUTHZED_INSECURE === "true" || env.AUTHZED_INSECURE === "1";
 
   if (!isAuthzedEnabled()) {
-    return { consistency, enabled: false, insecure };
+    return { enabled: false, insecure };
   }
 
-  const {
-    AUTHZED_ENDPOINT: endpoint,
-    AUTHZED_MINIMUM_SNAPSHOT: minimumSnapshot,
-    AUTHZED_SYSTEM_KEY: systemKey,
-    AUTHZED_TOKEN: token,
-  } = env;
+  const { AUTHZED_ENDPOINT: endpoint, AUTHZED_SYSTEM_KEY: systemKey, AUTHZED_TOKEN: token } = env;
 
   if (!endpoint || !systemKey || !token) {
     throw new Error("Enabled AuthZed configuration was not validated");
   }
 
   return {
-    consistency,
     enabled: true,
     endpoint,
     insecure,
-    minimumSnapshot,
     systemKey,
     token,
   };
@@ -295,22 +284,9 @@ const validateResourceLookup = (lookup: TAuthzedResourceLookup): void => {
   }
 };
 
-const getPermissionCheckConsistency = (config: Extract<TAuthzedConfig, { enabled: true }>) => {
-  if (config.consistency === "fully_consistent") {
-    return { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" as const } };
-  }
-
-  if (config.minimumSnapshot) {
-    return {
-      requirement: {
-        atLeastAsFresh: { token: config.minimumSnapshot },
-        oneofKind: "atLeastAsFresh" as const,
-      },
-    };
-  }
-
-  return { requirement: { minimizeLatency: true, oneofKind: "minimizeLatency" as const } };
-};
+const getAuthorizationConsistency = () => ({
+  requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" as const },
+});
 
 const validateRelationshipUpdates = (updates: ReadonlyArray<TAuthzedRelationshipUpdate>): void => {
   if (updates.length === 0 || updates.length > AUTHZED_MAX_RELATIONSHIP_UPDATES) {
@@ -485,7 +461,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
 
       return executeAuthzedOperation("check_permission", async () => {
         const response = await sdkClient.promises.checkPermission({
-          consistency: getPermissionCheckConsistency(config),
+          consistency: getAuthorizationConsistency(),
           context: undefined,
           permission: check.permission,
           resource: {
@@ -518,7 +494,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
         });
       });
     },
-    consistency: config.consistency,
+    consistency: "fully_consistent",
     deleteRelationships: async (filter) => {
       validateRelationshipFilter(filter);
 
@@ -583,7 +559,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
     lookupResources: async (lookup) => {
       validateResourceLookup(lookup);
 
-      const consistency = getPermissionCheckConsistency(config);
+      const consistency = getAuthorizationConsistency();
       const resourceIds = new Set<string>();
       let cursor: string | undefined;
       let resultCount = 0;

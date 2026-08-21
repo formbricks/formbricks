@@ -4,9 +4,8 @@
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { type TAuthorizationActor, can } from "@/lib/authorization";
-import { getWorkspaceActionForPermission } from "@/lib/authorization/compatibility";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { type TAuthorizationActor, assertCan, can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationAction } from "@/lib/authorization/permission-action";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { problemForbidden, problemUnauthorized } from "./response";
 import type { TV3Authentication } from "./types";
@@ -52,13 +51,9 @@ export async function requireSessionWorkspaceAccess(
     // Resolve workspaceId → workspaceId, organizationId (single place to change when Workspace exists).
     const context = await resolveV3WorkspaceContext(workspaceId);
 
-    await checkAuthorizationUpdated({
-      userId,
-      organizationId: context.organizationId,
-      access: [
-        { type: "organization", roles: ["owner", "manager"] },
-        { type: "workspaceTeam", workspaceId: context.workspaceId, minPermission },
-      ],
+    await assertCan({ type: "user", id: userId }, getWorkspaceAuthorizationAction(minPermission), {
+      type: "workspace",
+      id: context.workspaceId,
     });
 
     return context;
@@ -96,7 +91,7 @@ export async function requireV3WorkspaceAccess(
       const context = await resolveV3WorkspaceContext(workspaceId);
       const allowed = await can(
         { type: "apiKey", id: keyAuth.apiKeyId },
-        getWorkspaceActionForPermission(minPermission),
+        getWorkspaceAuthorizationAction(minPermission),
         { type: "workspace", id: context.workspaceId }
       );
 

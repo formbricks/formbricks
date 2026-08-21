@@ -7,6 +7,7 @@ import {
   type TAuthzedRelationshipUpdate,
   getAuthzedClient,
 } from "./client";
+import { deleteOrganizationParentRelationships } from "./organization-parent";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionUnstableError,
@@ -211,6 +212,11 @@ const writeSnapshot = async (
     const grant = grantsByPair.get(pairKey(target.workspaceId, target.teamId));
     updateGroups.push([...createWorkspaceTeamUpdates(target, grant?.permission ?? null)]);
   }
+
+  await deleteOrganizationParentRelationships(client, [
+    ...snapshot.teams.map(({ id }) => ({ resourceId: id, resourceType: "team" })),
+    ...snapshot.workspaces.map(({ id }) => ({ resourceId: id, resourceType: "workspace" })),
+  ]);
 
   for (const batch of packRelationshipUpdateGroups(updateGroups)) {
     await client.writeRelationships(batch);

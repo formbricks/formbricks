@@ -13,23 +13,21 @@ import {
 import { WORKSPACE_DELETE_CONFIRMATION_ERROR } from "./delete-workspace-confirmation";
 
 const mocks = vi.hoisted(() => ({
-  checkAuthorizationUpdated: vi.fn(),
-  deleteWorkspace: vi.fn(),
+  assertCan: vi.fn(),
+  deleteWorkspaceIfNotLast: vi.fn(),
   getWorkspace: vi.fn(),
-  getUserWorkspaces: vi.fn(),
 }));
 
 vi.mock("@/lib/workspace/service", () => ({
   getWorkspace: mocks.getWorkspace,
-  getUserWorkspaces: mocks.getUserWorkspaces,
 }));
 
-vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
-  checkAuthorizationUpdated: mocks.checkAuthorizationUpdated,
+vi.mock("@/lib/authorization", () => ({
+  assertCan: mocks.assertCan,
 }));
 
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({
-  deleteWorkspace: mocks.deleteWorkspace,
+  deleteWorkspaceIfNotLast: mocks.deleteWorkspaceIfNotLast,
 }));
 
 const baseWorkspace = {
@@ -54,10 +52,9 @@ const callDeleteWorkspaceWithConfirmation = (input = {}) =>
 describe("deleteWorkspaceWithConfirmation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.checkAuthorizationUpdated.mockResolvedValue(undefined);
+    mocks.assertCan.mockResolvedValue(undefined);
     mocks.getWorkspace.mockResolvedValue(baseWorkspace);
-    mocks.getUserWorkspaces.mockResolvedValue([baseWorkspace, { ...baseWorkspace, id: "cmworkspace2" }]);
-    mocks.deleteWorkspace.mockResolvedValue(baseWorkspace);
+    mocks.deleteWorkspaceIfNotLast.mockResolvedValue(baseWorkspace);
   });
 
   test("deletes a workspace when the confirmation name matches", async () => {
@@ -72,18 +69,14 @@ describe("deleteWorkspaceWithConfirmation", () => {
       auditLoggingCtx,
     });
 
-    expect(mocks.checkAuthorizationUpdated).toHaveBeenCalledWith({
-      userId,
-      organizationId: baseWorkspace.organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: userId }, "organization.manage", {
+      type: "organization",
+      id: baseWorkspace.organizationId,
     });
-    expect(mocks.getUserWorkspaces).toHaveBeenCalledWith(userId, baseWorkspace.organizationId);
-    expect(mocks.deleteWorkspace).toHaveBeenCalledWith(baseWorkspace.id);
+    expect(mocks.deleteWorkspaceIfNotLast).toHaveBeenCalledWith(
+      baseWorkspace.id,
+      baseWorkspace.organizationId
+    );
     expect(auditLoggingCtx).toMatchObject({
       organizationId: baseWorkspace.organizationId,
       workspaceId: baseWorkspace.id,
@@ -109,7 +102,7 @@ describe("deleteWorkspaceWithConfirmation", () => {
     ).rejects.toThrow(DELETE_WORKSPACE_CONFIRMATION_REQUIRED_ERROR);
 
     expect(mocks.getWorkspace).not.toHaveBeenCalled();
-    expect(mocks.deleteWorkspace).not.toHaveBeenCalled();
+    expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
   });
 
   test("does not delete when the confirmation name does not match", async () => {
@@ -118,9 +111,8 @@ describe("deleteWorkspaceWithConfirmation", () => {
     await expect(deleteAttempt).rejects.toThrow(InvalidInputError);
     await expect(deleteAttempt).rejects.toThrow(WORKSPACE_DELETE_CONFIRMATION_ERROR);
 
-    expect(mocks.checkAuthorizationUpdated).not.toHaveBeenCalled();
-    expect(mocks.getUserWorkspaces).not.toHaveBeenCalled();
-    expect(mocks.deleteWorkspace).not.toHaveBeenCalled();
+    expect(mocks.assertCan).not.toHaveBeenCalled();
+    expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
   });
 
   test("does not delete when the workspace cannot be found", async () => {
@@ -128,30 +120,34 @@ describe("deleteWorkspaceWithConfirmation", () => {
 
     await expect(callDeleteWorkspaceWithConfirmation()).rejects.toThrow(ResourceNotFoundError);
 
-    expect(mocks.checkAuthorizationUpdated).not.toHaveBeenCalled();
-    expect(mocks.deleteWorkspace).not.toHaveBeenCalled();
+    expect(mocks.assertCan).not.toHaveBeenCalled();
+    expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
   });
 
   test("does not delete when authorization fails", async () => {
-    mocks.checkAuthorizationUpdated.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
+    mocks.assertCan.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
 
     await expect(callDeleteWorkspaceWithConfirmation()).rejects.toThrow(AuthorizationError);
 
-    expect(mocks.getUserWorkspaces).not.toHaveBeenCalled();
-    expect(mocks.deleteWorkspace).not.toHaveBeenCalled();
+    expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
   });
 
   test("does not delete the last available workspace", async () => {
-    mocks.getUserWorkspaces.mockResolvedValueOnce([baseWorkspace]);
+    mocks.deleteWorkspaceIfNotLast.mockRejectedValueOnce(
+      new OperationNotAllowedError("You can't delete the last workspace.")
+    );
 
     await expect(callDeleteWorkspaceWithConfirmation()).rejects.toThrow(OperationNotAllowedError);
 
-    expect(mocks.deleteWorkspace).not.toHaveBeenCalled();
+    expect(mocks.deleteWorkspaceIfNotLast).toHaveBeenCalledWith(
+      baseWorkspace.id,
+      baseWorkspace.organizationId
+    );
   });
 
   test("rethrows downstream delete failures", async () => {
     const error = new Error("delete failed");
-    mocks.deleteWorkspace.mockRejectedValueOnce(error);
+    mocks.deleteWorkspaceIfNotLast.mockRejectedValueOnce(error);
 
     await expect(callDeleteWorkspaceWithConfirmation()).rejects.toThrow(error);
   });

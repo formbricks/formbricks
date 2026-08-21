@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
+import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { can } from "@/lib/authorization";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
@@ -68,6 +69,7 @@ beforeAll(async () => {
   scenario.organizationId = organization.id;
   scenario.teamId = team.id;
   scenario.otherTeamId = otherTeam.id;
+  await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
 describe("organization.manage_access against a real database", () => {

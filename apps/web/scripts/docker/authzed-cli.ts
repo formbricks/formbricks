@@ -85,6 +85,40 @@ const run = async (): Promise<void> => {
         process.exitCode = await runAuthzedBackfillCli(backfillCommand);
         return;
       }
+      case "outbox": {
+        const { parseAuthzedOutboxCliCommand } = await import("../../lib/authzed/outbox-cli-command");
+        const outboxCommand = parseAuthzedOutboxCliCommand(args);
+
+        if (!outboxCommand) {
+          console.error = originalConsoleError;
+          writeResult(INVALID_REQUEST_RESULT);
+          process.exitCode = 1;
+          return;
+        }
+
+        shouldCloseDatabase = true;
+        const { runAuthzedOutboxCli } = await import("../../lib/authzed/outbox-cli");
+        console.error = originalConsoleError;
+        process.exitCode = await runAuthzedOutboxCli(outboxCommand);
+        return;
+      }
+      case "upgrade": {
+        const { parseAuthzedUpgradeCliCommand } = await import("../../lib/authzed/upgrade-cli-command");
+        const upgradeCommand = parseAuthzedUpgradeCliCommand(args);
+
+        if (!upgradeCommand) {
+          console.error = originalConsoleError;
+          writeResult(INVALID_REQUEST_RESULT);
+          process.exitCode = 1;
+          return;
+        }
+
+        shouldCloseDatabase = true;
+        const { runAuthzedUpgradeCli } = await import("../../lib/authzed/upgrade-cli");
+        console.error = originalConsoleError;
+        process.exitCode = await runAuthzedUpgradeCli(upgradeCommand);
+        return;
+      }
       default:
         console.error = originalConsoleError;
         writeResult(INVALID_REQUEST_RESULT);

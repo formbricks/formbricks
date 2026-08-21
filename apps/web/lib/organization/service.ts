@@ -14,6 +14,7 @@ import {
   ZOrganizationCreateInput,
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
+import { lookupAuthorizedOrganizationIds } from "@/lib/authorization/resource-list";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
@@ -94,13 +95,12 @@ export const getOrganizationsByUserId = reactCache(
     validateInputs([userId, ZString], [page, ZOptionalNumber]);
 
     try {
+      const organizationIds = await lookupAuthorizedOrganizationIds({ type: "user", id: userId });
+      if (organizationIds.length === 0) return [];
+
       const organizations = await prisma.organization.findMany({
         where: {
-          memberships: {
-            some: {
-              userId,
-            },
-          },
+          id: { in: [...organizationIds] },
         },
         select,
         take: page ? ITEMS_PER_PAGE : undefined,

@@ -1,31 +1,35 @@
 # AuthZed relationship sync runbook
 
-PostgreSQL is the source of truth for authorization. SpiceDB holds a _projection_ of it, written after
-each source transaction commits, best-effort. That trade-off is deliberate — an AuthZed outage must
-never turn a successful PostgreSQL mutation into an application error — and it has one consequence
-worth internalizing:
+PostgreSQL is the source of truth for authorization facts. SpiceDB holds their relationship projection and
+becomes the sole decision engine in the direct-authority artifact.
 
-> **Sync failures are silent by design.** Nothing in the product breaks when a projection is dropped.
-> Drift accumulates until something reads SpiceDB and disagrees with PostgreSQL.
+The durable bridge inserts a PostgreSQL outbox row in the same transaction as every authorization-bearing
+source mutation. Existing post-commit projection remains a low-latency fast path, while the outbox is the
+recoverable delivery contract. BullMQ only wakes the worker; queue state and leases remain in PostgreSQL.
+
+> **Direct authority requires durable delivery.** A committed authorization mutation must enqueue its
+> relationship reconciliation atomically, and a revocation that cannot be delivered within 60 seconds must make
+> protected authorization fail closed.
 
 Everything below exists to make that visible and recoverable.
 
-See also: [README](./README.md) for the projection development contract and
+See also: [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad) for the approved release and rollback contract,
+[README](./README.md) for the projection development contract, and
 [AuthZed Operations](../docs/self-hosting/advanced/authzed-operations.mdx) for the public self-hosted operator
 contract.
 
 ## 1. Symptoms
 
-| What you see                                                       | What it usually means                          |
-| ------------------------------------------------------------------ | ---------------------------------------------- |
-| Shadow evaluation reports mismatches (ENG-1738)                    | Drift. Run the backfill.                       |
-| A new member, team, or API key lacks access _in SpiceDB only_      | A dropped projection for that record.          |
-| A removed member still resolves in SpiceDB                         | A stale relationship. Only pruning removes it. |
-| `formbricks_authzed_projection_total{status="failed"}` is non-zero | Projections are failing now.                   |
-| Nothing at all, but AuthZed was recently unavailable               | Assume drift. An outage never retries.         |
+| What you see                           | What it usually means                                   |
+| -------------------------------------- | ------------------------------------------------------- |
+| Outbox warning count is non-zero       | A revocation has been pending for 15 seconds.           |
+| Outbox critical count is non-zero      | A revocation has been pending for 45 seconds.           |
+| `authzed_projection_stale`             | Revocation is 60 seconds old or dead-lettered.          |
+| Scheduled reconciliation reports drift | Attributable graph drift was found or repaired.         |
+| A dead letter is present               | Ten solitary, event-attributable failures; investigate. |
 
-Product authorization is unaffected in every one of these cases while enforcement is still on the
-legacy evaluator. That is what makes them easy to miss.
+On the bridge artifact, legacy authorization is unaffected while durable delivery retries or repair converges
+the graph. On the direct-authority artifact, operational AuthZed failures fail protected operations closed.
 
 ## 2. Diagnosis
 
@@ -34,6 +38,8 @@ legacy evaluator. That is what makes them easy to miss.
 ```bash
 pnpm authzed:health     # 0 healthy, 1 otherwise
 pnpm authzed:schema check   # 0 matched, 2 drifted, 1 failed
+formbricks-authzed outbox status  # 0 healthy, 2 warning/critical, 1 failed
+formbricks-authzed upgrade check  # 0 direct-authority ready, 2 blocked, 1 failed
 ```
 
 Note `status: "disabled"` from the health command exits **1**. A deployment that believes AuthZed is on
@@ -42,15 +48,25 @@ records `disabled` as its own outcome rather than skipping.
 
 ### Metrics
 
-All five carry only bounded attributes — never an organization, user, or relationship identifier.
+All metrics carry only bounded attributes — never an organization, user, or relationship identifier.
 
-| Metric                                                | Attributes                          | Read it as                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ----------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formbricks_authzed_projection_total`                 | `operation`, `projection`, `status` | Projection outcomes. `status` is `projected` / `failed` / `disabled`.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `formbricks_authzed_projection_duration_seconds`      | same                                | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement.                                                                                                                                                                                                                                                                                                                                         |
-| `formbricks_authzed_request_failures_total`           | `operation`, `code`, `retryable`    | Requests that exhausted their retry budget — _any_ facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`.                                                                                                                                                                                      |
-| `formbricks_authzed_request_retries_total`            | `operation`, `code`                 | Retries scheduled. Elevated but not failing = degraded, not down.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `formbricks_authzed_authorization_checks_per_request` | `surface`                           | How many central authorization operations one request made. Scalar `can()`/`assertCan()` calls and narrow list observations each count once. Watch the upper percentiles for a page regressing into one operation per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
+| Metric                                                               | Attributes                                                                  | Read it as                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formbricks_authzed_projection_total`                                | `operation`, `projection`, `status`                                         | Projection outcomes. `status` is `projected` / `failed` / `disabled`.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `formbricks_authzed_projection_duration_seconds`                     | same                                                                        | Projection latency. It sits on the request path, so a rise here is user-visible. `disabled` outcomes are deliberately excluded — their duration is a structural zero, not a measurement.                                                                                                                                                                                                                                                                                                                                         |
+| `formbricks_authzed_request_failures_total`                          | `operation`, `code`, `retryable`                                            | Requests that exhausted their retry budget — _any_ facade call, including schema operations and reads, and one failed write can carry a whole batch. So a sample is one terminal request failure, **not** one dropped relationship. For "did projection drift get introduced?", use `formbricks_authzed_projection_total{status="failed"}`.                                                                                                                                                                                      |
+| `formbricks_authzed_request_retries_total`                           | `operation`, `code`                                                         | Retries scheduled. Elevated but not failing = degraded, not down.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `formbricks_authzed_authorization_decisions_total`                   | `action`, `actor_type`, `error_code`, `outcome`, `resource_type`, `surface` | Authoritative SpiceDB allow, deny, and operational-error outcomes. `error_code` is `none` unless the outcome is `operational_error`; no actor, resource, or organization identifier is attached.                                                                                                                                                                                                                                                                                                                                 |
+| `formbricks_authzed_authorization_decision_duration_seconds`         | `action`, `actor_type`, `outcome`, `resource_type`, `surface`               | Authoritative scalar or list-decision latency. Use it for the direct-authority p95 and p99 rollout gates.                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `formbricks_authzed_authorization_checks_per_request`                | `surface`                                                                   | How many central authorization operations one request made. Scalar `can()`/`assertCan()` calls and narrow list observations each count once. Watch the upper percentiles for a page regressing into one operation per row; a rising p99 on a list surface is the N+1 signal. Buckets start at 0.5 so "made no decisions" stays distinct from "made exactly one" — most healthy requests sit in the second bucket. No threshold is suggested yet: it needs a production baseline first. See [`PERFORMANCE.md`](./PERFORMANCE.md). |
+| `formbricks_authzed_projection_outbox_delivery_total`                | `status`                                                                    | Durable outbox events delivered or failed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `formbricks_authzed_projection_outbox_delivery_duration_seconds`     | `status`                                                                    | Duration of one claimed delivery batch.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `formbricks_authzed_projection_revocation_delivery_duration_seconds` | none                                                                        | Time from a committed authorization revocation until its successful SpiceDB delivery. The 15-, 45-, and 60-second boundaries align with warning, critical, and fail-closed thresholds.                                                                                                                                                                                                                                                                                                                                           |
+| `formbricks_authzed_projection_outbox_status`                        | `state`                                                                     | Current pending, dead-letter, 15-second warning, and 45-second critical counts.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `formbricks_authzed_projection_outbox_oldest_pending_age_seconds`    | none                                                                        | Current age of the oldest pending event.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `formbricks_authzed_reconciliation_audit_total`                      | `status`                                                                    | Six-hour applying audit outcomes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `formbricks_authzed_reconciliation_drift_total`                      | `kind`                                                                      | Attributable drift and operational failures observed by scheduled audits.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `formbricks_authzed_reconciliation_repair_total`                     | `status`                                                                    | Attributable relationships repaired or left failed by scheduled reconciliation; `status` is `repaired` or `failed`.                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 Exported through the readers already configured in `instrumentation-node.ts`: Prometheus when
 `PROMETHEUS_ENABLED=1` (scraped by the chart's ServiceMonitor), OTLP when
@@ -117,7 +133,7 @@ Exit `0` clean, `2` drift remains, `1` failed. Read `counters`, `orphans`, and `
 `0` covers **every** unrepaired category, not only the ones the tool fixes: `invalid` (source rows whose
 principal and resource sit in different organizations) and `unmanaged` (relationships outside the
 vocabulary) count toward drift alongside `orphaned`, `missing` and `mismatchedParents`. That matters
-because this exit code is the gate for shadow evaluation and enforcement below — a run cannot report
+because this exit code is the gate for direct authority below — a run cannot report
 clean while authorization state nothing accounts for is still present.
 
 **A non-zero `invalid` needs a human.** These are cross-organization source rows in PostgreSQL: the join
@@ -261,155 +277,160 @@ shared with another installation?
 
 ## 5. When AuthZed is unavailable
 
-**Nothing to do urgently.** Projection is best-effort, PostgreSQL stays authoritative, and product
-authorization is unaffected. Expect `authzed_unavailable` in logs and a rising failure counter.
+### Projection bridge before the durable outbox
+
+PostgreSQL stays authoritative and product authorization is unaffected, but every projection attempted during
+the outage may be lost. Expect `authzed_unavailable` in logs and a rising failure counter. This bridge is not
+eligible for direct authority.
 
 What matters is afterwards:
 
-1. Every projection attempted during the outage was dropped and will not be retried.
+1. Assume every projection attempted during the outage was dropped and will not be retried.
 2. Once SpiceDB is healthy, `pnpm authzed:health` returns `healthy`.
 3. Run the backfill (§3). Until it reports a clean run, assume the graph is incomplete.
-4. **Keep shadow evaluation and enforcement off until then.** A clean run reports
-   `completedAtSnapshot` — hand that revision to shadow evaluation (ENG-1738) as its freshness floor
-   rather than guessing whether the graph is warm.
+4. Keep every direct-authority deployment blocked until the run is clean.
 
-To stop projecting entirely, set `AUTHZED_ENABLED=0`. Projections become no-ops and no client is
-constructed; product authorization is untouched because it still runs on the legacy evaluator. Drift
+To stop projecting entirely on this temporary bridge, set `AUTHZED_ENABLED=0`. Projections become no-ops and no
+client is constructed; product authorization is untouched because it still runs on the legacy evaluator. Drift
 accumulates for the whole period, so a full backfill is required before re-enabling.
 
-## 6. Shadow and enforcement rollout
+### Durable bridge and direct authority
 
-Authorization rollout is an internal deployment control. It is intentionally not part of one-click or
-public self-hosting configuration. Long-running processes read the cohort once; change the cohort label
-and restart the deployment whenever membership changes so a new observation window cannot be confused
-with the old one.
+Source mutations commit a PostgreSQL outbox item atomically. SpiceDB outage does not roll back a
+successful business mutation; delivery retries from PostgreSQL and BullMQ is only the recurring trigger. When
+the service recovers:
 
-The global switch is `AUTHZED_AUTHORIZATION_ENABLED`. With it unset or false, `can()` uses only the
-legacy evaluator and does not resolve rollout scope or construct an AuthZed client. A rollout rule is
-the Cartesian product of its target list and organization allowlist:
+1. Run `formbricks-authzed health` and verify datastore migrations.
+2. Inspect `formbricks-authzed outbox status` and correct the operational cause.
+3. Run `formbricks-authzed outbox replay` when dead letters are understood, then
+   `formbricks-authzed outbox drain`. A dead letter can only be reached by an event that failed ten times on
+   its own, non-retryably, with a code an event can actually cause (`authzed_projection_invalid_source`,
+   `authzed_invalid_request`). An unreachable SpiceDB, a rejected credential and an unmapped internal error
+   all fail to qualify, so no outage produces a dead letter however long it lasts — treat any dead letter as
+   a real disagreement between PostgreSQL and SpiceDB rather than as fallout from the outage.
+   The six-hour audit also replays dead letters by itself whenever it comes back `reconciled`, so a global
+   `authzed_projection_stale` denial clears within six hours even if nobody intervenes.
+4. Run the complete dry-run audit, apply attributable repair, and require two consecutive clean audits.
+5. Keep direct-authority cutover blocked while a revocation is pending, dead-lettered, or older than its SLA.
 
-```dotenv
-AUTHZED_AUTHORIZATION_ENABLED=true
-AUTHZED_AUTHORIZATION_COHORT=sandbox_users_v1
+For a self-hosted major upgrade, investigate and replay any dead letters separately before starting the gate.
+`formbricks-authzed upgrade prepare` drains the outbox, reconciles the graph, and runs a final audit, but it
+deliberately blocks rather than replaying dead letters whose cause has not been understood. Always follow it with
+the read-only `upgrade check`; do not treat a completed write phase as proof that concurrent source changes left
+the graph clean.
 
-# Shadow one authenticated surface for two organizations.
-AUTHZED_SHADOW_TARGETS=server_action:user
-AUTHZED_SHADOW_ORGANIZATION_IDS=org_a,org_b
+In the direct-authority artifact, a SpiceDB, datastore, resolver, configuration, freshness, or unsupported-result
+failure is not an ordinary denial and never falls back. The protected operation receives a sanitized operational
+failure and fails closed. Formbricks `/health`, startup, readiness, and liveness remain independent so unrelated
+workloads are not restarted.
 
-# Freshness floor returned by the latest clean applying backfill.
-AUTHZED_CONSISTENCY=minimize_latency
-AUTHZED_MINIMUM_SNAPSHOT=<completedAtSnapshot>
-```
+## 6. Historical comparison controls (not a release strategy)
 
-Valid targets are:
+The earlier shadow/cohort controls, freshness floor, comparison queue, and comparison metrics have been
+removed from the direct-authority image. Their environment variables are rejected as unsupported deployment
+configuration and must not be copied from an older sandbox manifest. Request surfaces remain only as bounded
+telemetry attributes; they cannot select an evaluator.
 
-```text
-server_action:user
-page:user
-api_v1:user
-api_v1:apiKey
-api_v2:apiKey
-api_v3:user
-api_v3:apiKey
-mcp:user
-mcp:apiKey
-feedback_gateway:user
-feedback_gateway:apiKey
-```
+The direct-authority image contains no configuration switch back to PostgreSQL authorization. Rollback is a
+deployment operation: redeploy the pinned bridge image, drain its durable outbox, and require a clean audit.
+Historical comparison evidence is preserved in the project records, not as an executable runbook.
 
-`page:user` is the server-rendered route surface. It is the one target whose boundary is not a single
-request wrapper — see `apps/web/lib/authorization/context.ts` for what it does and does not cover.
+## 7. Direct-authority cutover
 
-This block is asserted against `AUTHZED_AUTHORIZATION_ROLLOUT_TARGETS` by
-`apps/web/lib/authzed/rollout-runbook.test.ts`, so a new target cannot ship without appearing here.
+The full approval contract is the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad). This section is the operator's execution checklist.
 
-Use `*` as the sole organization entry only when every organization in the deployment is intentionally
-selected. Empty CSV entries, unknown targets, unsupported surface/actor pairs, or mixing `*` with
-explicit IDs are rejected at startup. Target and organization lists must always be supplied together.
+### Freeze the bridge artifact
 
-In shadow mode the legacy decision is returned immediately and the AuthZed comparison runs after the
-response. `minimize_latency` becomes an `at_least_as_fresh` check at `AUTHZED_MINIMUM_SNAPSHOT`; never
-invent or reuse a snapshot from an earlier repair window. Mismatches and operational errors are
-observable, but neither can alter the response.
+After the transactional outbox passes its crash, lease, duplicate, ordering, dead-letter, replay, outage, and
+scheduled-repair tests:
 
-Enforcement requires fully-consistent reads:
+1. Build the bridge and record its source commit, immutable application digest, schema digest, Prisma migration
+   head, SpiceDB digest, and operator/chart versions.
+2. Verify it reads the final outbox migration and canonical schema.
+3. Keep legacy authorization authoritative, set `AUTHZED_CONSISTENCY=fully_consistent`, and remove shadow,
+   enforcement-target, cohort, and minimum-snapshot configuration.
+4. Preserve this exact digest as the rollback artifact through production.
 
-```dotenv
-AUTHZED_AUTHORIZATION_ENABLED=true
-AUTHZED_AUTHORIZATION_COHORT=sandbox_users_enforced_v1
-AUTHZED_CONSISTENCY=fully_consistent
-AUTHZED_ENFORCEMENT_TARGETS=server_action:user
-AUTHZED_ENFORCEMENT_ORGANIZATION_IDS=org_a
-```
+### Establish the graph
 
-When a request matches both modes, enforcement wins. SpiceDB is authoritative inline and the legacy
-decision is compared after the response. A SpiceDB deny remains a normal deny; an AuthZed or
-source-resolver outage throws a sanitized operational error and fails closed. Legacy comparison failures
-after cutover are recorded but cannot change the SpiceDB-authoritative response.
+Deploy the bridge first. Drain the outbox, run a full dry-run audit, apply repair, and require two consecutive
+clean audits plus one clean scheduled six-hour audit. Exercise mutation delivery while SpiceDB is unavailable,
+restore it, and prove replay returns to a clean graph without a dead letter.
 
-Comparison telemetry contains only bounded dimensions: cohort, surface, actor type, mode,
-actor/resource type, action, decisions, outcome, stable error source, and stable AuthZed code. IDs,
-relationship strings, snapshots, tokens, raw SDK errors, requests, and responses are never emitted.
+### Cut an environment to direct authority
 
-The comparison counter records directional outcomes, not requests. A scalar comparison and a matching
-workspace-list observation each emit one sample. A workspace-list observation with drift in both
-directions emits two samples: one for each mismatch direction. Therefore, use the checks-per-request
-histogram for request amplification and inspect list mismatch directions independently; do not treat the
-comparison-counter sample total as a workspace-list request count.
+1. Freeze authorization mutations for no more than 15 minutes.
+2. Drain the outbox and run the final full audit.
+3. Abort if both are not complete and clean within 10 minutes.
+4. Deploy the exact approved direct-authority digest and verify every running image ID.
+5. Verify `fully_consistent` configuration and confirm no legacy evaluator or migration rollout selector is
+   present.
+6. Resume mutations and execute critical allow, deny, revocation, cross-tenant, list, API/MCP/UI, and failure
+   checks.
 
-```promql
-# Completed comparisons by mode, surface, actor type, cohort, and outcome.
-sum by (mode, surface, actor_type, cohort, outcome) (
-  rate(formbricks_authzed_authorization_comparisons_total[5m])
-)
+The mandatory order is sandbox, staging, EU, and then KSA. Sandbox must pass rollback/forward recovery and 24
+continuous healthy hours. Staging must pass complete functional, restore, resilience, and capacity suites plus a
+seven-day authoritative soak. EU must remain healthy for 24 hours before KSA begins.
 
-# MCP workspace-list outcomes for one rollout cohort. Both mismatch series must remain at zero.
-sum by (outcome) (
-  increase(formbricks_authzed_authorization_comparisons_total{
-    surface="mcp",
-    action="workspace.read",
-    resource_type="workspace",
-    cohort="$cohort"
-  }[$window])
-)
+### Roll back
 
-# Mismatch rate. Operational errors are measured separately.
-sum(rate(formbricks_authzed_authorization_comparisons_total{outcome=~"legacy_allow_authzed_deny|legacy_deny_authzed_allow"}[5m]))
-/
-sum(rate(formbricks_authzed_authorization_comparisons_total{outcome!="operational_error"}[5m]))
+1. Freeze authorization mutations again.
+2. Capture bounded failure evidence.
+3. Redeploy the exact pinned bridge digest and verify image IDs.
+4. Verify legacy authority and durable outbox delivery.
+5. Drain pending work and require a clean full audit.
+6. Resume mutations.
 
-# Operational-error rate.
-sum(rate(formbricks_authzed_authorization_comparisons_total{outcome="operational_error"}[5m]))
-/
-sum(rate(formbricks_authzed_authorization_comparisons_total[5m]))
+Do not downgrade the SpiceDB schema or outbox migration during a normal application rollback. Restore the
+datastore only through the backup/restore runbook, then apply the guarded release schema and rebuild/repair the
+graph before another cutover.
 
-# Comparison latency p95 by mode, surface, and outcome.
-histogram_quantile(
-  0.95,
-  sum by (le, mode, surface, outcome) (
-    rate(formbricks_authzed_authorization_duration_seconds_bucket[5m])
-  )
-)
-```
+Abort before or after cutover for a non-clean audit, pending/dead-letter/stale revocation, digest mismatch,
+incomplete backups or restore evidence, unavailable rollback artifact, cross-tenant decision, unexpected allow or
+deny, exceeded operational-error/latency budget, stopped outbox delivery, freshness-guard activation, or open
+high/critical security finding.
 
-The cutover gate applies independently to each target/cohort:
+## 8. Alerting
 
-1. Run schema validation and a clean apply/repair immediately before the observation window.
-2. Observe continuously for seven days and at least 1,000 completed comparisons.
-3. Require zero mismatches in either direction, with every earlier mismatch root-caused and resolved.
-4. Require an operational-error rate at or below 0.1%.
-5. Do not enforce an API-key target while any API-key mismatch remains.
-6. Move only the approved target/cohort from shadow to enforcement and restart the deployment.
+The checked-in metrics cover authoritative decisions, request amplification, SDK retries and terminal failures,
+projection delivery, revocation propagation, queue state, scheduled drift, and repair results. Their required
+thresholds are:
 
-Rollback is configuration-only: disable `AUTHZED_AUTHORIZATION_ENABLED` or remove the enforcement
-target and restart. Legacy authorization becomes authoritative again. If an outage or projection failure
-occurred, run a full backfill before starting another shadow window.
+- pending revocation warning at 15 seconds;
+- pending revocation critical at 45 seconds;
+- protected authorization fail-closed guard at 60 seconds;
+- any dead-letter revocation is critical and blocks cutover;
+- any scheduled residual drift is warning, and stale higher permission or cross-tenant drift is critical; and
+- direct-authority operational-error rate above 0.1%, p95 above 250 ms, or p99 above one second blocks the staging
+  soak.
 
-## 7. Alerting
-
-Suggested rules. Thresholds are starting points — tune to deployment size.
+The remaining delivery and SDK rules apply to both the bridge and the direct-authority artifact. Thresholds are
+starting points — tune non-gate alerts to deployment size.
 
 ```promql
+# Critical: authoritative operations are failing, not denying.
+sum(rate(formbricks_authzed_authorization_decisions_total{outcome="operational_error"}[5m]))
+/
+sum(rate(formbricks_authzed_authorization_decisions_total[5m])) > 0.001
+# for: 5m
+
+# Warning/Critical: direct-authority latency exceeds the rollout SLO.
+histogram_quantile(0.95, sum(rate(formbricks_authzed_authorization_decision_duration_seconds_bucket[5m])) by (le)) > 0.25
+# for: 15m
+histogram_quantile(0.99, sum(rate(formbricks_authzed_authorization_decision_duration_seconds_bucket[5m])) by (le)) > 1
+# for: 5m
+
+# Warning at 15s; critical at 45s. At 60s the request-path freshness guard fails closed.
+formbricks_authzed_projection_outbox_status{state="revocation_warning"} > 0
+formbricks_authzed_projection_outbox_status{state="revocation_critical"} > 0
+
+# Critical: a dead letter or failed repair blocks cutover.
+formbricks_authzed_projection_outbox_status{state="dead_lettered"} > 0
+sum(increase(formbricks_authzed_reconciliation_repair_total{status="failed"}[7h])) > 0
+
+# Warning: scheduled audits still see attributable drift after repair.
+sum(increase(formbricks_authzed_reconciliation_audit_total{status!="reconciled"}[7h])) > 0
+
 # Warning: projections are failing. Drift is accumulating and a backfill will be needed.
 sum(rate(formbricks_authzed_projection_total{status="failed"}[5m])) > 0
 # for: 15m
@@ -432,12 +453,19 @@ histogram_quantile(0.95, sum(rate(formbricks_authzed_projection_duration_seconds
 # for: 15m
 ```
 
-Every one of these resolves to the same first action: **run the backfill and confirm a clean run.**
+For projection-delivery alerts, first inspect and drain the durable outbox, then run the full audit and confirm a
+clean result. On a pre-outbox bridge, run the backfill immediately because failed writes were not retained.
+Decision operational errors instead require diagnosis by their source: application resolvers and configuration,
+SpiceDB/datastore health, or transport credentials. Draining the outbox does not correct those failures.
+
+The application on-call owns decision, outbox, and reconciliation alerts. The infrastructure on-call owns
+SpiceDB replicas, datastore, migrations, connection pools, dispatch, and cache health. Page both when an
+authorization operational error cannot be cleared by restoring either delivery or SpiceDB health.
 
 A Helm `PrometheusRule` template shipping these by default is deliberately not part of this change —
 that belongs with the AuthZed deployment contract rather than the application.
 
-## 8. Escalation
+## 9. Escalation
 
 | Situation                                                | Action                                                                                                                                                                                                  |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -445,4 +473,4 @@ that belongs with the AuthZed deployment contract rather than the application.
 | Orphan count exceeds the cap and the endpoint is correct | Do not raise the cap. Establish why first — a wrong database or an in-progress restore both look like this.                                                                                             |
 | `unmanaged` relationships reported                       | Something other than Formbricks is writing to this SpiceDB, or the schema moved ahead of its projector. Never pruned; investigate before enforcing.                                                     |
 | Schema check reports `drifted`                           | `pnpm authzed:schema apply --expected-current-digest <remoteDigest>`. Relationship repair against a drifted schema is not meaningful.                                                                   |
-| Sync cannot be restored and enforcement is pending       | `AUTHZED_ENABLED=0` and note that a full backfill is required before re-enabling.                                                                                                                       |
+| Durable delivery or a clean graph cannot be restored     | Block cutover. If already authoritative, roll back to the pinned bridge digest, drain/replay, and require a clean audit before another attempt.                                                         |

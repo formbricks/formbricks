@@ -6,7 +6,7 @@ import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-a
 import { problemBadRequest, problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
-import { getFeedbackDirectoryAssignmentActionForPermission } from "@/lib/authorization/compatibility";
+import { getFeedbackDirectoryAssignmentAuthorizationAction } from "@/lib/authorization/permission-action";
 import {
   getFeedbackDirectoriesByWorkspaceId,
   getFeedbackDirectoryAuthContext,
@@ -59,7 +59,7 @@ const canAccessFeedbackDirectoryAssignment = async (
   const actor = getV3AuthorizationActor(authentication);
   if (!actor) return false;
 
-  return can(actor, getFeedbackDirectoryAssignmentActionForPermission(minPermission), {
+  return can(actor, getFeedbackDirectoryAssignmentAuthorizationAction(minPermission), {
     type: "feedbackDirectoryAssignment",
     feedbackDirectoryId,
     workspaceId,

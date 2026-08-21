@@ -4,9 +4,10 @@ import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { problemInternalError, problemUnauthorized, successListResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { observeWorkspaceListAuthorization } from "@/lib/authorization/workspace-list-observer";
-import { getOrganizationsByUserId } from "@/lib/organization/service";
-import { getUserWorkspaces, getWorkspacesByIds } from "@/lib/workspace/service";
+import type { TAuthorizationActor } from "@/lib/authorization";
+import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
+import { AuthzedError } from "@/lib/authzed/errors";
+import { getOrganizationScopedWorkspacesByIdsForUser, getWorkspacesByIds } from "@/lib/workspace/service";
 
 type TListV3WorkspacesParams = {
   authentication: TV3Authentication;
@@ -23,7 +24,6 @@ type TV3WorkspaceListItem = {
 
 type TResolvedWorkspaceList = Readonly<{
   items: ReadonlyArray<TV3WorkspaceListItem>;
-  organizationIds: ReadonlyArray<string>;
 }>;
 
 const serializeV3WorkspaceListItem = (workspace: {
@@ -36,33 +36,30 @@ const serializeV3WorkspaceListItem = (workspace: {
   organizationId: workspace.organizationId,
 });
 
-/**
- * Session user's accessible workspaces: every workspace across the orgs they're a member of. Scoping is
- * enforced by the reused services — `getOrganizationsByUserId` limits to the user's own orgs, and
- * `getUserWorkspaces` returns all of an org's workspaces for owners/managers but only team-scoped ones
- * for `member`-role users.
- */
-async function fetchSessionWorkspaces(userId: string): Promise<TResolvedWorkspaceList> {
-  const organizations = await getOrganizationsByUserId(userId);
-  const workspacesPerOrg = await Promise.all(
-    organizations.map((organization) => getUserWorkspaces(userId, organization.id))
-  );
+/** Session user's accessible workspaces from one authoritative `LookupResources(workspace, read)`. */
+async function fetchSessionWorkspaces(
+  userId: string,
+  actor: Extract<TAuthorizationActor, { type: "user" }>
+): Promise<TResolvedWorkspaceList> {
+  const workspaceIds = await lookupAuthorizedWorkspaceIds(actor);
+  const workspaces = await getOrganizationScopedWorkspacesByIdsForUser(userId, [...workspaceIds]);
   return {
-    items: workspacesPerOrg.flat().map(serializeV3WorkspaceListItem),
-    organizationIds: organizations.map(({ id }) => id),
+    items: workspaces.map(serializeV3WorkspaceListItem),
   };
 }
 
-/** API key's accessible workspaces: exactly the ones named in its `workspacePermissions`, nothing else. */
-async function fetchApiKeyWorkspaces(keyAuth: TAuthenticationApiKey): Promise<TResolvedWorkspaceList> {
-  const workspaceIds = Array.from(new Set(keyAuth.workspacePermissions.map((p) => p.workspaceId)));
-  const workspaces = await getWorkspacesByIds(keyAuth.organizationId, workspaceIds);
+/** API key's accessible workspaces: the authoritative SpiceDB `workspace.read` result in its organization. */
+async function fetchApiKeyWorkspaces(
+  keyAuth: TAuthenticationApiKey,
+  actor: Extract<TAuthorizationActor, { type: "apiKey" }>
+): Promise<TResolvedWorkspaceList> {
+  const workspaceIds = await lookupAuthorizedWorkspaceIds(actor);
+  const workspaces = await getWorkspacesByIds(keyAuth.organizationId, [...workspaceIds]);
   const sameOrganizationWorkspaces = workspaces.filter(
     (workspace) => workspace.organizationId === keyAuth.organizationId
   );
   return {
     items: sameOrganizationWorkspaces.map(serializeV3WorkspaceListItem),
-    organizationIds: [keyAuth.organizationId],
   };
 }
 
@@ -94,13 +91,15 @@ export async function listV3Workspaces({
     let resolved: TResolvedWorkspaceList;
 
     if ("user" in authentication && authentication.user?.id) {
-      resolved = await fetchSessionWorkspaces(authentication.user.id);
+      if (actor.type !== "user") return problemUnauthorized(requestId, "Not authenticated", instance);
+      resolved = await fetchSessionWorkspaces(authentication.user.id, actor);
     } else if (
       "apiKeyId" in authentication &&
       authentication.apiKeyId &&
       Array.isArray(authentication.workspacePermissions)
     ) {
-      resolved = await fetchApiKeyWorkspaces(authentication);
+      if (actor.type !== "apiKey") return problemUnauthorized(requestId, "Not authenticated", instance);
+      resolved = await fetchApiKeyWorkspaces(authentication, actor);
     } else {
       return problemUnauthorized(requestId, "Not authenticated", instance);
     }
@@ -111,12 +110,6 @@ export async function listV3Workspaces({
       (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
     );
 
-    observeWorkspaceListAuthorization({
-      actor,
-      organizationIds: resolved.organizationIds,
-      workspaces: deduped.map(({ id, organizationId }) => ({ id, organizationId })),
-    });
-
     // No pagination: a principal's accessible workspaces are bounded by their memberships (small), so we
     // return them all. No arbitrary cap — a truncation here would silently hide workspaces (the tool
     // accepts no cursor) without bounding DB work, which was already done above.
@@ -126,9 +119,14 @@ export async function listV3Workspaces({
       { requestId, cache: "private, no-store" }
     );
   } catch (error) {
-    // Log every failure with request context (not just DatabaseError) so nothing significant is lost,
-    // and always return a clean 500 instead of throwing a raw error past this boundary.
-    log.error({ error, statusCode: 500 }, "Failed to list workspaces");
+    // Keep this boundary observable without serializing raw SDK/database errors or tenant identifiers.
+    log.error(
+      {
+        errorCode: error instanceof AuthzedError ? error.code : "internal",
+        statusCode: 500,
+      },
+      "Failed to list workspaces"
+    );
     return problemInternalError(requestId, "An unexpected error occurred.", instance);
   }
 }

@@ -3,7 +3,13 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
@@ -206,41 +212,89 @@ export const createWorkspace = async (
   return workspace;
 };
 
+type TWorkspaceDeletionDbClient = typeof prisma | Prisma.TransactionClient;
+
+const deleteWorkspaceRecord = async (db: TWorkspaceDeletionDbClient, workspaceId: string) => {
+  const feedbackDirectoryAssignments = await db.feedbackDirectoryWorkspace.findMany({
+    where: { workspaceId },
+    select: { feedbackDirectoryId: true, workspaceId: true },
+  });
+  const workspace = await db.workspace.delete({
+    where: {
+      id: workspaceId,
+    },
+    select: selectWorkspace,
+  });
+
+  return { feedbackDirectoryAssignments, workspace };
+};
+
+const completeWorkspaceDeletion = async (
+  workspaceId: string,
+  { feedbackDirectoryAssignments, workspace }: Awaited<ReturnType<typeof deleteWorkspaceRecord>>
+) => {
+  await runPostCommitProjection("workspace_delete", () =>
+    reconcileTeamWorkspaceRelationships({ workspaceIds: [workspaceId] })
+  );
+  await runPostCommitProjection("workspace_delete_feedback_directory_cleanup", () =>
+    reconcileFeedbackDirectoryRelationships({ assignments: feedbackDirectoryAssignments })
+  );
+
+  const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);
+
+  if (!s3Result.ok && "error" in s3Result) {
+    // fail silently because we don't want to throw an error if the files are not deleted
+    logger.error(s3Result.error, "Error deleting S3 files");
+  }
+
+  return workspace;
+};
+
+const throwWorkspaceDeletionError = (error: unknown): never => {
+  if (isPrismaKnownRequestError(error)) {
+    throw new DatabaseError(error.message);
+  }
+
+  throw error;
+};
+
 export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> => {
   try {
-    const feedbackDirectoryAssignments = await prisma.feedbackDirectoryWorkspace.findMany({
-      where: { workspaceId },
-      select: { feedbackDirectoryId: true, workspaceId: true },
-    });
-    const workspace = await prisma.workspace.delete({
-      where: {
-        id: workspaceId,
-      },
-      select: selectWorkspace,
-    });
-
-    await runPostCommitProjection("workspace_delete", () =>
-      reconcileTeamWorkspaceRelationships({ workspaceIds: [workspaceId] })
-    );
-    await runPostCommitProjection("workspace_delete_feedback_directory_cleanup", () =>
-      reconcileFeedbackDirectoryRelationships({ assignments: feedbackDirectoryAssignments })
-    );
-
-    if (workspace) {
-      const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);
-
-      if (!s3Result.ok && "error" in s3Result) {
-        // fail silently because we don't want to throw an error if the files are not deleted
-        logger.error(s3Result.error, "Error deleting S3 files");
-      }
-    }
-
-    return workspace;
+    return await completeWorkspaceDeletion(workspaceId, await deleteWorkspaceRecord(prisma, workspaceId));
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
+    return throwWorkspaceDeletionError(error);
+  }
+};
 
-    throw error;
+export const deleteWorkspaceIfNotLast = async (
+  workspaceId: string,
+  organizationId: string
+): Promise<TWorkspace> => {
+  try {
+    const deletion = await prisma.$transaction(async (tx) => {
+      // Lock every workspace in a stable order. Concurrent deletion requests for the organization
+      // then serialize, so the second request sees the first deletion before evaluating the guard.
+      const workspaces = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id"
+        FROM "Workspace"
+        WHERE "organizationId" = ${organizationId}
+        ORDER BY "id"
+        FOR UPDATE
+      `;
+
+      if (!workspaces.some((workspace) => workspace.id === workspaceId)) {
+        throw new ResourceNotFoundError("workspace", workspaceId);
+      }
+
+      if (workspaces.length <= 1) {
+        throw new OperationNotAllowedError("You can't delete the last workspace.");
+      }
+
+      return deleteWorkspaceRecord(tx, workspaceId);
+    });
+
+    return await completeWorkspaceDeletion(workspaceId, deletion);
+  } catch (error) {
+    return throwWorkspaceDeletionError(error);
   }
 };

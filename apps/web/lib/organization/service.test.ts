@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { lookupAuthorizedOrganizationIds } from "@/lib/authorization/resource-list";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
@@ -53,6 +54,7 @@ vi.mock("@/lib/user/service", () => ({
 vi.mock("@/lib/workspace/service", () => ({
   getWorkspaces: vi.fn(),
 }));
+vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedOrganizationIds: vi.fn() }));
 
 vi.mock("@/lib/authzed/organization-membership", () => ({
   deleteOrganizationRelationships: vi.fn(),
@@ -82,6 +84,7 @@ vi.mock("@/modules/hub/service", () => ({
 describe("Organization Service", () => {
   beforeEach(() => {
     vi.mocked(ensureCloudStripeSetupForOrganization).mockResolvedValue(undefined);
+    vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue(["org1"]);
   });
 
   afterEach(() => {
@@ -171,11 +174,7 @@ describe("Organization Service", () => {
       expect(result).toEqual(mockOrganizations);
       expect(prisma.organization.findMany).toHaveBeenCalledWith({
         where: {
-          memberships: {
-            some: {
-              userId: "user1",
-            },
-          },
+          id: { in: ["org1"] },
         },
         select: expect.any(Object),
       });

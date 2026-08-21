@@ -1,8 +1,17 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
 import { resetDb } from "@/integration/reset-db";
 import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "./context";
+
+const lookupResources = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/authzed/client", () => ({
+  getAuthzedClient: () => ({ lookupResources }),
+}));
+vi.mock("@/lib/authzed/outbox-freshness", () => ({
+  assertAuthzedProjectionFreshness: vi.fn(),
+}));
 
 const scenario = { organizationId: "", userId: "" };
 
@@ -23,6 +32,17 @@ beforeAll(async () => {
   scenario.userId = user.id;
 }, 120_000);
 
+beforeEach(() => {
+  lookupResources.mockImplementation(async () => ({
+    resourceIds: (
+      await prisma.workspace.findMany({
+        where: { organizationId: scenario.organizationId },
+        select: { id: true },
+      })
+    ).map(({ id }) => id),
+  }));
+});
+
 const listAndCount = async (): Promise<Readonly<{ checksIssued: number; workspaceCount: number }>> =>
   withAuthorizationSurface("mcp", async () => {
     const response = await listV3Workspaces({
@@ -41,7 +61,7 @@ const listAndCount = async (): Promise<Readonly<{ checksIssued: number; workspac
     };
   });
 
-describe("MCP workspace discovery authorization amplification, against a real database", () => {
+describe("MCP workspace discovery amplification with a mocked lookup and real PostgreSQL resolution", () => {
   test("one and one hundred workspaces each produce exactly one central operation", async () => {
     await prisma.workspace.create({
       data: { name: "Discovery Workspace 1", organizationId: scenario.organizationId },

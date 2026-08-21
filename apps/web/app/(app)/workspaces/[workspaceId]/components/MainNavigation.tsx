@@ -325,7 +325,7 @@ export const MainNavigation = ({
         text: t("workspace.settings.billing.upgrade"),
         href: isLicenseActive
           ? `/organizations/${organization.id}/settings/enterprise`
-          : "https://formbricks.com/upgrade-self-hosted-license",
+          : "https://formbricks.com/upgrade-self-hosted-license?utm_source=formbricks-app&utm_medium=webapp&utm_campaign=upgrade_prompt_nav",
       },
       {
         text: t("common.cancel"),

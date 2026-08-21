@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { getAuthzedClient } from "./client";
+import { type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
@@ -106,6 +106,24 @@ describe("feedback directory relationship projection", () => {
     );
   });
 
+  test("removes every previous directory and workspace parent before restoring current parents", async () => {
+    await reconcileFeedbackDirectoryRelationships({ feedbackDirectoryIds: [DIRECTORY_ID] });
+
+    expect(client.deleteRelationships).toHaveBeenCalledWith({
+      relation: "organization",
+      resourceId: DIRECTORY_ID,
+      resourceType: "feedback_directory",
+    });
+    expect(client.deleteRelationships).toHaveBeenCalledWith({
+      relation: "organization",
+      resourceId: WORKSPACE_ID,
+      resourceType: "workspace",
+    });
+    expect(Math.max(...client.deleteRelationships.mock.invocationCallOrder)).toBeLessThan(
+      client.writeRelationships.mock.invocationCallOrder[0]
+    );
+  });
+
   test("removes all three edges for archived and removed assignments", async () => {
     setStableSnapshot([directory([WORKSPACE_ID], { isArchived: true })]);
 
@@ -169,7 +187,9 @@ describe("feedback directory relationship projection", () => {
 
     await reconcileFeedbackDirectoryRelationships({ feedbackDirectoryIds: [DIRECTORY_ID] });
 
-    const batches = client.writeRelationships.mock.calls.map(([batch]) => batch);
+    const batches = client.writeRelationships.mock.calls.map(
+      ([batch]) => batch as ReadonlyArray<TAuthzedRelationshipUpdate>
+    );
     expect(batches.length).toBeGreaterThan(1);
     expect(batches.every((batch) => batch.length <= 1000)).toBe(true);
     for (const workspaceId of workspaceIds) {

@@ -1,5 +1,5 @@
-import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -109,7 +109,70 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(output).not.toContain(authzedDatabasePassword);
     expect(env.get("AUTHZED_TOKEN")).toBe(authzedToken);
     expect(env.get("AUTHZED_DATABASE_PASSWORD")).toBe(authzedDatabasePassword);
+    expect(env.get("AUTHZED_ENABLED")).toBe("true");
+    expect(env.get("AUTHZED_CONSISTENCY")).toBe("fully_consistent");
+    expect(env.get("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED")).toBe("true");
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
+  });
+
+  test("blocks customized updates until the AuthZed v6 contract is present and acknowledged", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const updateFunction = script.slice(
+      script.indexOf("update_formbricks()"),
+      script.indexOf("restart_formbricks()")
+    );
+
+    expect(updateFunction).toContain(
+      "This installation does not yet contain the AuthZed v6 Compose services"
+    );
+    expect(updateFunction).toContain("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true");
+    expect(updateFunction).toContain("authzed-ops upgrade prepare");
+    expect(updateFunction).toContain("authzed-ops upgrade check");
+    expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
+  });
+
+  test("runs the upgrade gates before stopping an existing installation", () => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(join(installationDir, "docker-compose.yml"), "services:\n  authzed-ops:\n  spicedb:\n");
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(join(binDir, "sudo"), '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n', {
+      mode: 0o700,
+    });
+
+    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
+    });
+
+    expect(result.status).toBe(0);
+    const commands = readFileSync(commandLog, "utf8").trim().split("\n");
+    expect(commands).toEqual([
+      "docker compose pull",
+      "docker compose run --rm formbricks-migrate",
+      "docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare",
+      "docker compose --profile authzed-ops run --rm authzed-ops upgrade check",
+      "docker compose down",
+      "docker compose up -d",
+    ]);
+  });
+
+  test("waits for the source migration before preparing a fresh AuthZed graph", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const setupStart = script.indexOf(
+      "docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate"
+    );
+    const migrationWait = script.indexOf("docker compose wait formbricks-migrate", setupStart);
+    const upgradePrepare = script.indexOf("authzed-ops upgrade prepare", setupStart);
+
+    expect(setupStart).toBeGreaterThanOrEqual(0);
+    expect(migrationWait).toBeGreaterThan(setupStart);
+    expect(upgradePrepare).toBeGreaterThan(migrationWait);
   });
 
   test("pins and verifies the downloaded bootstrap helper before making it executable", () => {
@@ -143,6 +206,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     const formbricksBlock = getServiceBlock(composeContents, "formbricks");
     const authzedBootstrapBlock = getServiceBlock(composeContents, "authzed-db-bootstrap");
     const authzedOpsBlock = getServiceBlock(composeContents, "authzed-ops");
+    const authzedInitializeBlock = getServiceBlock(composeContents, "authzed-initialize");
     const spicedbBlock = getServiceBlock(composeContents, "spicedb");
 
     expect(formbricksMigrateBlock).not.toContain("    labels:");
@@ -153,6 +217,8 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(spicedbBlock).not.toContain("traefik.enable=true");
     expect(authzedOpsBlock).toContain('profiles: ["authzed-ops"]');
     expect(authzedOpsBlock).not.toContain("traefik.enable=true");
+    expect(authzedInitializeBlock).toContain('command: ["upgrade", "prepare"]');
+    expect(authzedInitializeBlock).not.toContain("traefik.enable=true");
     expect(formbricksBlock).toContain("    labels:");
     expect(formbricksBlock.indexOf("    labels:")).toBeLessThan(formbricksBlock.indexOf("    environment:"));
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.rule=Host(`example.com`)");

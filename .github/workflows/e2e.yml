@@ -132,6 +132,7 @@ jobs:
         run: |
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
+          sed -i "s|AUTHZED_CONSISTENCY=.*|AUTHZED_CONSISTENCY=fully_consistent|" .env
           echo "" >> .env
           echo "E2E_TESTING=1" >> .env
           echo "S3_REGION=us-east-1" >> .env
@@ -140,6 +141,10 @@ jobs:
           echo "S3_ACCESS_KEY=devrustfs-service" >> .env
           echo "S3_SECRET_KEY=devrustfs-service123" >> .env
           echo "S3_FORCE_PATH_STYLE=1" >> .env
+        shell: bash
+
+      - name: Start AuthZed CI fixture
+        run: bash scripts/start-authzed-ci.sh
         shell: bash
 
       - name: Start RustFS Server
@@ -156,7 +161,7 @@ jobs:
             -e RUSTFS_ADDRESS=:9000 \
             -e RUSTFS_CONSOLE_ENABLE=true \
             -e RUSTFS_CONSOLE_ADDRESS=:9001 \
-            rustfs/rustfs:1.0.0-alpha.93 \
+            rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0 \
             /data
 
           echo "RustFS server started"
@@ -343,6 +348,39 @@ jobs:
             sleep 10
           done
 
+      # Playwright fixtures seed authorization source rows directly through Prisma. That intentionally
+      # bypasses product services, so run the real durable delivery processor at a test-only cadence
+      # rather than duplicating relationship writes in fixture code or waiting for the 5-second schedule.
+      - name: Start AuthZed CI outbox worker
+        id: authzed-worker-start
+        run: |
+          heartbeat_path="${RUNNER_TEMP}/formbricks-authzed-outbox-worker.heartbeat"
+          rm -f "${heartbeat_path}"
+          cd apps/web
+          AUTHZED_CI_OUTBOX_HEARTBEAT_PATH="${heartbeat_path}" \
+            node --env-file=../../.env --conditions=react-server --import tsx \
+            scripts/authzed-ci-outbox-worker.ts \
+            > ../../authzed-outbox.log 2>&1 &
+          worker_pid="$!"
+          cd ../..
+          echo "AUTHZED_CI_OUTBOX_HEARTBEAT_PATH=${heartbeat_path}" >> "$GITHUB_ENV"
+          echo "AUTHZED_CI_OUTBOX_PID=${worker_pid}" >> "$GITHUB_ENV"
+
+          for attempt in {1..600}; do
+            if ! kill -0 "${worker_pid}" 2>/dev/null; then
+              echo "AuthZed CI outbox worker exited before becoming ready"
+              exit 1
+            fi
+            if [ -f "${heartbeat_path}" ]; then
+              exit 0
+            fi
+            sleep 0.1
+          done
+
+          echo "AuthZed CI outbox worker did not publish its readiness heartbeat after ${attempt} attempts"
+          exit 1
+        shell: bash
+
       - name: Run E2E Tests (Playwright Service)
         if: env.PW_MODE == 'service'
         timeout-minutes: 15
@@ -350,7 +388,8 @@ jobs:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
           PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
           CI: true
-        run: pnpm test-e2e:azure
+        run: |
+          pnpm test-e2e:azure
 
       - name: Run E2E Tests (Local)
         if: env.PW_MODE == 'local'
@@ -359,6 +398,44 @@ jobs:
           CI: true
         run: |
           pnpm test:e2e
+
+      - name: Verify AuthZed CI outbox worker
+        if: always() && steps.authzed-worker-start.outcome == 'success'
+        run: |
+          status=0
+          worker_pid="${AUTHZED_CI_OUTBOX_PID:-}"
+          heartbeat_path="${AUTHZED_CI_OUTBOX_HEARTBEAT_PATH:-}"
+
+          if [ -z "${worker_pid}" ] || ! kill -0 "${worker_pid}" 2>/dev/null; then
+            echo "AuthZed CI outbox worker is not running"
+            status=1
+          else
+            worker_command="$(ps -p "${worker_pid}" -o command= || true)"
+            if [[ "${worker_command}" != *"authzed-ci-outbox-worker.ts"* ]]; then
+              echo "AuthZed CI outbox worker PID no longer identifies the expected process"
+              status=1
+            fi
+          fi
+
+          if [ -z "${heartbeat_path}" ] || [ ! -f "${heartbeat_path}" ]; then
+            echo "AuthZed CI outbox worker heartbeat is missing"
+            status=1
+          else
+            heartbeat_age="$(( $(date +%s) - $(stat -c %Y "${heartbeat_path}") ))"
+            # The worker emits a heartbeat every 100 ms. Allow 100 missed heartbeats so a loaded
+            # runner is not mistaken for a dead worker while still catching a stalled loop.
+            if [ "${heartbeat_age}" -gt 10 ]; then
+              echo "AuthZed CI outbox worker heartbeat is stale"
+              status=1
+            fi
+          fi
+
+          if [ -n "${worker_pid}" ]; then
+            kill "${worker_pid}" 2>/dev/null || true
+          fi
+
+          exit "${status}"
+        shell: bash
 
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         if: always()
@@ -382,3 +459,12 @@ jobs:
           else
             echo "app.log not found because the Run App step did not execute or failed before log creation."
           fi
+
+      - name: Output AuthZed logs
+        if: failure()
+        run: |
+          docker logs formbricks-authzed-ci 2>&1 || true
+          if [ -f authzed-outbox.log ]; then
+            cat authzed-outbox.log
+          fi
+        shell: bash

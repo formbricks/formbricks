@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { ApiKeyPermission } from "@formbricks/database/prisma";
 import { type TAuthzedRelationshipFilter, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
+import { deleteOrganizationParentRelationships } from "./organization-parent";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionUnstableError,
@@ -194,6 +195,21 @@ const writeSnapshot = async (
       ]);
     }
   }
+
+  await deleteOrganizationParentRelationships(
+    client,
+    snapshot.map(({ id }) => ({ resourceId: id, resourceType: "api_key" }))
+  );
+  await deleteRelationshipsInBoundedBatches(
+    client,
+    snapshot.flatMap(({ id }) =>
+      Object.values(ORGANIZATION_ACCESS_RELATIONS).map((relation) => ({
+        relation,
+        resourceType: "organization",
+        subject: { objectId: id, objectType: "api_key" },
+      }))
+    )
+  );
 
   for (const batch of packRelationshipUpdateGroups(updateGroups)) {
     await client.writeRelationships(batch);

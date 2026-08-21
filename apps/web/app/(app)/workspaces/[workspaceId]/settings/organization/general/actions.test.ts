@@ -3,10 +3,9 @@ import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/
 import {
   deleteOrganizationAction,
   updateOrganizationAISettingsAction,
-  updateOrganizationDisplayTimeZoneAction,
   updateOrganizationNameAction,
 } from "./actions";
-import { ZOrganizationAISettingsInput, ZOrganizationDisplayTimeZoneInput } from "./schemas";
+import { ZOrganizationAISettingsInput } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   isInstanceAIConfigured: vi.fn(),

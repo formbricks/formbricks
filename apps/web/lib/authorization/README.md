@@ -2,7 +2,7 @@
 
 This server-only module defines the engine-independent actor, action, and
 resource vocabulary enforced by Formbricks today. Product authorization code
-depends on this contract; AuthZed/SpiceDB is one possible evaluator of it.
+depends on this contract; AuthZed/SpiceDB is the sole runtime evaluator of it.
 
 The contract deliberately contains no AuthZed SDK types, configuration,
 relationship writes, or network behavior. Resource IDs are opaque strings.
@@ -85,8 +85,9 @@ must not depend on that downstream naming convention.
 
 ## Configuration-sensitive policy
 
-`organization.manage_access` is a stable application capability, but the legacy
-evaluator must continue honoring `USER_MANAGEMENT_MINIMUM_ROLE`:
+`organization.manage_access` is a stable application capability, and the SpiceDB
+evaluator continues honoring `USER_MANAGEMENT_MINIMUM_ROLE` when selecting the
+permission checked for user actors:
 
 - `manager`: owners and managers may manage users.
 - `owner`: only owners may manage users.
@@ -95,23 +96,45 @@ evaluator must continue honoring `USER_MANAGEMENT_MINIMUM_ROLE`:
 This deployment setting is evaluator input. It is not encoded into the static
 actor/action/resource types.
 
-## Migration inventory
+## Migration inventory and authority contract
 
-The central interface uses the legacy evaluator unless an internal ENG-1738
-rollout rule selects the current request surface and organization. Migration
-means callers use semantic actor/action/resource decisions; deployments with
-authorization rollout disabled have no AuthZed read dependency.
+The pinned bridge artifact uses the legacy evaluator only while its durable
+relationship graph is established. The direct-authority candidate sends every
+central decision to SpiceDB, including calls outside a request surface, and
+contains no runtime selector or legacy fallback. A disabled or unhealthy
+AuthZed client is an operational failure rather than permission denial or a
+signal to select the bridge evaluator.
 
-### Added by ENG-1738
+The immutable bridge and candidate artifacts, fail-closed semantics,
+sandbox-first validation, environment gates, and deployment-only rollback are
+defined in the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad).
+
+### Historical bridge capabilities added by ENG-1738
 
 - A private SpiceDB evaluator behind the unchanged `can()` and `assertCan()`
   interface.
 - PostgreSQL actor/resource existence and tenant-boundary resolution before a
   SpiceDB check.
-- Post-response shadow comparison for selected authenticated request surfaces.
-- Per-surface and per-organization enforcement cohorts with fail-closed
-  operational behavior.
+- Post-response comparison for selected authenticated request surfaces.
+- Per-surface and per-organization migration cohorts.
 - Bounded, identifier-free comparison metrics and mismatch/error logs.
+
+These capabilities supported parity research. They are removed before direct
+authority and are not a sandbox, staging, production, or self-hosted rollout
+mechanism.
+
+### Direct-authority telemetry
+
+Every scalar decision and authoritative organization/workspace lookup records a
+bounded outcome (`allow`, `deny`, or `operational_error`) plus latency. The
+dimensions are limited to surface, actor type, action, resource type, and a
+stable error code. Empty authoritative lists are aggregate denies. No actor,
+resource, organization, relationship, token, or raw error is emitted.
+
+The request context still records the number of central operations per request,
+including unscoped calls, so the sole-evaluator cutover does not trade away N+1
+visibility. Instrumentation failures are fail-safe and cannot change an
+authorization result.
 
 Surveys, dashboards, and responses are intentionally resolved to their owning
 workspace before the SpiceDB check. Their parent relationships are not yet
@@ -209,13 +232,17 @@ These read a role but do not decide access, so they stay as they are:
 - **Invite fan-out.** The signup and invite paths derive from the _invited_
   role whether to create `TeamUser` rows, since owners and managers get
   workspace access from the role itself. That is a statement about the invite.
-- **List scoping.** Workspace list queries remain PostgreSQL-authoritative and narrow by role instead
-  of asking a question per row. MCP `list_workspaces` is the one narrow Phase 1 exception: it queues a
-  single shadow-only `LookupResources(workspace, read)` comparison after the response and counts that
-  list observation as one central authorization operation. It never changes the returned list and does
-  not expose generic lookup or enforcement semantics; those remain ENG-1713. Comparison telemetry is
-  directional: an identical set emits one `match` sample, while drift in both directions emits one
-  `legacy_allow_authzed_deny` and one `legacy_deny_authzed_allow` sample for the same observation.
+- **Authoritative list scoping.** Current-model organization and workspace discovery uses one
+  `LookupResources` operation per resource type, followed by a tenant-scoped PostgreSQL data query. This
+  covers the application organization/workspace switchers, survey-list workspace navigation, API v2 `/me`,
+  and V3/MCP workspace discovery. PostgreSQL supplies current resource data and API-key permission labels;
+  it does not widen the SpiceDB allowlist. Unknown, deleted, or foreign-tenant lookup results are discarded,
+  and lookup or projection-freshness failures fail the list closed. Billing-role users receive no workspace
+  results even if a stale team membership exists, matching their lack of product-data access instead of the
+  former switcher-only exception. React request caching deduplicates identical lookup tuples inside an RSC
+  request; API handlers do not rely on that cache and invoke each required lookup helper once. V3/MCP
+  workspace discovery therefore performs one `LookupResources(workspace, read)` operation per list call,
+  regardless of list size. Generic Phase 2 list authorization remains ENG-1713.
 
 New authorization-sensitive code must use `can` or `assertCan`; it must not add
 callers to the deprecated action-client adapter or reintroduce a role-name gate.
@@ -234,5 +261,5 @@ dataset/workspace authorization decision plus application-level tenant and integ
 
 The current contract has no system/service principal, survey-level sharing,
 per-dashboard ACL, audit-log permission, contextual data-policy capability, or
-generic enforcement-authoritative list-resource lookup. Those require later product decisions and must
-not be added as part of the current-model migration.
+generic Phase 2 list-resource abstraction. Current-model organization/workspace discovery is part of the
+direct cutover and must not be confused with future per-resource sharing.

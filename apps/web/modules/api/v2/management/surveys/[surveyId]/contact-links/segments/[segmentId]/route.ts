@@ -1,4 +1,6 @@
 import { logger } from "@formbricks/logger";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -13,7 +15,6 @@ import {
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = async (
   request: Request,
@@ -36,17 +37,6 @@ export const GET = async (
         });
       }
 
-      const organizationId = await getOrganizationIdFromSurveyId(params.surveyId);
-      const isContactsEnabled = await getIsContactsEnabled(organizationId);
-      if (!isContactsEnabled) {
-        return handleApiError(request, {
-          type: "forbidden",
-          details: [
-            { field: "contacts", issue: "Contacts are only enabled for Enterprise Edition, please upgrade." },
-          ],
-        });
-      }
-
       const workspaceIdResult = await getWorkspaceId(params.surveyId, false);
 
       if (!workspaceIdResult.ok) {
@@ -55,9 +45,26 @@ export const GET = async (
 
       const { workspaceId } = workspaceIdResult.data;
 
-      if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "GET"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("GET"),
+          { type: "workspace", id: workspaceId }
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
+        });
+      }
+
+      const organizationId = await getOrganizationIdFromSurveyId(params.surveyId);
+      const isContactsEnabled = await getIsContactsEnabled(organizationId);
+      if (!isContactsEnabled) {
+        return handleApiError(request, {
+          type: "forbidden",
+          details: [
+            { field: "contacts", issue: "Contacts are only enabled for Enterprise Edition, please upgrade." },
+          ],
         });
       }
 

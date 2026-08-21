@@ -82,6 +82,7 @@ describe("rateLimitConfigs", () => {
         "v3",
         "mcpAuth",
         "v3SurveyGenerate",
+        "internalDatasetPurge",
         "client",
         "clientEnvironment",
       ]);
@@ -107,6 +108,7 @@ describe("rateLimitConfigs", () => {
         "chartCreation",
         "feedbackDirectoryMutation",
         "feedbackRecordDeletion",
+        "stateMutation",
       ]);
 
       // Exact values, not just presence: this quota is the only thing bounding one account from
@@ -121,6 +123,11 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 10,
         namespace: "action:historical-response-import",
+      });
+      expect(rateLimitConfigs.actions.stateMutation).toEqual({
+        interval: 60,
+        allowedPerInterval: 120,
+        namespace: "action:state-mutation",
       });
     });
 

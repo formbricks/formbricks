@@ -6,6 +6,11 @@ tenant. This is a snapshot from one machine on one day, not a standing benchmark
 [Environment and caveats](#environment-and-caveats) before treating any number here as a
 production SLO.
 
+> **Historical benchmark context:** This report predates the approved direct-cutover contract. The release path
+> no longer uses per-surface enforcement cohorts or shadow comparison. The direct-authority artifact uses
+> `fully_consistent`; ENG-2453 must revalidate latency, concurrency, and 2x headroom in production-like staging
+> before cutover. See the [direct AuthZed cutover and rollback contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-rollback-contract-b4c352aecdad).
+
 ## Summary
 
 - **The N+1 claim is proven, not argued, on three list/export paths.** A workspace's
@@ -40,8 +45,8 @@ pnpm authzed:perf run --iterations=5000 --concurrency=16
 ```
 
 `authzed-perf.ts run` drives the real `can()` — real coordinator, real evaluator, real
-SpiceDB when enforcement is configured — inside a `withAuthorizationSurface` wrapper (so
-the rollout coordinator has a target to match), and reports p50/p95/p99 per action from
+SpiceDB when the historical enforcement harness is configured — inside a `withAuthorizationSurface` wrapper
+(so the migration coordinator has a target to match), and reports p50/p95/p99 per action from
 5,000 samples weighted toward positive checks and a subset of the seeded users, per
 AuthZed's guidance that negative checks are structurally more expensive and an unweighted
 sample produces an unrealistic cache profile.
@@ -124,15 +129,13 @@ report can close on its own.
 ```text
 apps/web/lib/authorization/checks-per-request.integration.test.ts
 apps/web/lib/authorization/checks-per-request-dashboards.integration.test.ts
-apps/web/lib/authorization/checks-per-request-response-export.integration.test.ts
 ```
 
-| Path                                                     | Small      | Large      | Δ     |
-| -------------------------------------------------------- | ---------- | ---------- | ----- |
-| Survey list (50 → 3,000 surveys)                         | 1 check    | 1 check    | **0** |
-| Survey list as a _member_, access via team (100 surveys) | 1 check    | —          | **0** |
-| Dashboard list (10 → 2,000 dashboards)                   | 1 check    | 1 check    | **0** |
-| Response export (1 → 6,500 responses)                    | _n_ checks | _n_ checks | **0** |
+| Path                                                     | Small   | Large   | Δ     |
+| -------------------------------------------------------- | ------- | ------- | ----- |
+| Survey list (50 → 3,000 surveys)                         | 1 check | 1 check | **0** |
+| Survey list as a _member_, access via team (100 surveys) | 1 check | —       | **0** |
+| Dashboard list (10 → 2,000 dashboards)                   | 1 check | 1 check | **0** |
 
 The member row is the one that exercises the interesting code. Owners short-circuit
 nearly every authorization branch, so an owner-only suite never touches the scope
@@ -141,19 +144,10 @@ seeds a `member` whose workspace access arrives through a `WorkspaceTeam` grant 
 confirms the count is still one.
 
 One `workspace.read` decision gates the survey list and the dashboard list; neither
-`getSurveys` nor `getDashboards` runs authorization of its own. The response-export path
-is different in one respect worth stating rather than hiding behind the table: it drives
-`checkAuthorizationUpdated` (the exact sequence `getResponsesDownloadUrlAction` runs),
-which itself issues **two** `can()` calls for an owner — the organization-membership gate,
-then the matching access item — before `getResponseDownloadFile` runs. That is the
-adapter's own fixed cost, not the number 1, and the test asserts the real claim instead of
-a literal: whichever constant that cost is, it does not grow between 1 and 6,500 exported
-responses, past two full internal pagination batches (`getResponseDownloadFile` paginates
-in batches of 3,000 to avoid one unbounded query — that loop fetches rows, it does not
-authorize per batch).
+`getSurveys` nor `getDashboards` runs authorization of its own.
 
-None of the three grows with the row count — the property "Prove current workspace-scoped
-list paths do not perform one AuthZed check per survey, dashboard, or response" from the
+None of these grows with the row count — the property "Prove current workspace-scoped
+list paths do not perform one AuthZed check per survey or dashboard" from the
 ticket scope, stated as passing assertions rather than a grep result.
 
 This is backed by a request-scoped counter
@@ -161,7 +155,7 @@ This is backed by a request-scoped counter
 inside `can()` itself — the one point every `can()`/`assertCan()` call passes through
 regardless of caller — and reported in production as
 `formbricks_authzed_authorization_checks_per_request`, a histogram tagged by surface. It counts central
-authorization operations: scalar `can()`/`assertCan()` decisions and narrow list observations each
+authorization operations: scalar `can()`/`assertCan()` decisions and authoritative list operations each
 contribute one, independent of row count. That metric
 is the thing to watch on a real dashboard for the general "no page regresses into an N+1"
 question; this report exercised the three paths the ticket named explicitly by name.
@@ -246,8 +240,8 @@ pnpm authzed:perf clean
 - Quantify the `reactCache` gap: reproduce a fake request boundary per iteration in the
   perf harness (or run the counter test at BI scale for a fuller path) to see whether
   request-scoped caching meaningfully changes the coordinator's contribution.
-- Revisit whether `at_least_as_fresh` + ZedTokens is viable for the enforcement path, now
-  that the correction above shows the consistency-mode cost is smaller than first assumed.
+- Re-run the authoritative `fully_consistent` path in production-like staging. Changing consistency is outside
+  this cutover contract and would require a separately reviewed revocation/read-after-write design.
 - Run the `large` scale profile (500k responses) at least once to confirm nothing changes
   qualitatively — response volume shouldn't move the authorization graph, but that's an
   assumption this report states, not one it tested.

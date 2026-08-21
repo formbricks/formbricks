@@ -53,10 +53,10 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
 ```
 
 <Info>
-  The current v5 one-click stack is based on the production Docker Compose file and includes Formbricks Hub
+  The v6 one-click stack is based on the production Docker Compose file and includes Formbricks Hub
   and Cube as part of the baseline (Cube configuration lives under `formbricks/cube/`). Ensure your generated
   `formbricks/docker-compose.yml` contains a non-empty `HUB_API_KEY` and that `formbricks/.env` contains
-  `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` before treating the v5 stack as ready.
+  `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` before treating the stack as ready.
   The installer generates these values without printing them and restricts `.env` to `0600`. `HUB_API_URL`
   should normally stay at `http://hub:8080`. Bundled SpiceDB is installed for every new setup and does not
   require an Enterprise license check.
@@ -327,7 +327,8 @@ To update Formbricks for a minor or patch release, run:
 ./formbricks.sh update
 ```
 
-The script pulls the latest images, stops the running containers, and starts the stack again.
+The script pulls the latest images, runs database migrations, executes the AuthZed v6 preparation and read-only
+gate, and only then stops and restarts the running stack. A failed gate leaves the existing application running.
 
 <Warning>
   `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major
@@ -335,7 +336,16 @@ The script pulls the latest images, stops the running containers, and starts the
   first, merge the current v5 Compose changes into your existing deployment, confirm `HUB_API_KEY` is set, and
   only then run the update command. If your older one-click install also uses bundled MinIO for file uploads,
   review that storage path separately before the first v5 restart; newer self-hosting updates move the bundled
-  object-storage path to RustFS, while external S3-compatible storage keeps the same `S3_*` app contract.
+  object-storage path to RustFS, while external S3-compatible storage keeps the same `S3_*` app contract. The
+  v6 updater also refuses to continue until the Compose file contains the release-matched AuthZed services and
+  `.env` contains `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
+
+  The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
+  file already names, a bundled `rustfs` service stays on whatever version it was installed with — `docker
+  compose pull` cannot move a pinned tag. To take a newer RustFS, edit the `image:` line of the `rustfs`
+  service in `formbricks/docker-compose.yml` to match the version in the [Docker
+  guide](/self-hosting/setup/docker), then run the update command. Your `rustfs-data` volume is reused as-is;
+  roll back by restoring the previous `image:` line.
 </Warning>
 
 ### Add SpiceDB to an Existing One-Click Installation
@@ -346,14 +356,24 @@ Before upgrading to a release that uses AuthZed:
 1. Back up `formbricks/.env`, `formbricks/docker-compose.yml`, and the PostgreSQL volume.
 2. Download the release-matched `authzed-postgres-bootstrap.sh` into the `formbricks` directory.
 3. Generate and add `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` to `.env` using `openssl rand -hex 32`.
-4. Merge the three AuthZed services and Formbricks environment variables from the released Compose file while
-   preserving the installer-added Traefik, storage, and mail configuration. Also copy the profiled
-   `authzed-ops` service; it has no Traefik labels and does not start during a normal installation.
-5. Run `docker compose config`, `docker compose pull`, and `docker compose up -d` from the `formbricks` directory.
-6. Verify `authzed-db-bootstrap` and `spicedb-migrate` completed and `spicedb` is healthy.
-7. Run the health, schema, and dry-run relationship audit in the
-   [AuthZed Operations guide](/self-hosting/advanced/authzed-operations).
-8. Back up the authorization database with
+4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
+   `authzed-ops` service from the released Compose file while preserving installer-added Traefik, storage, and
+   mail configuration. Add the six application variables and use `AUTHZED_CONSISTENCY=fully_consistent`.
+5. Run `docker compose config`, `docker compose pull`, and `docker compose run --rm formbricks-migrate` from the
+   `formbricks` directory. The current application can remain running during these backward-compatible database
+   migrations.
+6. Start the datastore services, then prepare and verify the graph:
+
+   ```bash
+   docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb
+   docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
+   docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+   ```
+
+7. If `upgrade check` exits `0`, add `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` to `.env` and run
+   `./formbricks.sh update`. Do not set the acknowledgement to bypass a blocked check.
+8. Verify `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy.
+9. Back up the authorization database with
    `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` and add it to your
    regular backup procedure.
 

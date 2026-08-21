@@ -19,6 +19,9 @@ const WEB_ROOT = new URL("../../", import.meta.url).pathname;
 /** Modules that may reach the backfill: the tooling itself, and the CLI entry points. */
 const ALLOWED_IMPORTER_PREFIXES = ["lib/authzed/", "scripts/"];
 
+/** Test-only tooling that intentionally converges the disposable integration fixture. */
+const ALLOWED_IMPORTERS = ["integration/authzed.ts"];
+
 const RESTRICTED_MODULES = ["backfill", "backfill-cli", "backfill-diff", "backfill-source"];
 
 /**
@@ -89,7 +92,9 @@ describe("backfill module boundary", () => {
     const offenders = files
       .map((absolute) => ({ absolute, relativePath: relative(WEB_ROOT, absolute) }))
       .filter(
-        ({ relativePath }) => !ALLOWED_IMPORTER_PREFIXES.some((prefix) => relativePath.startsWith(prefix))
+        ({ relativePath }) =>
+          !ALLOWED_IMPORTERS.includes(relativePath) &&
+          !ALLOWED_IMPORTER_PREFIXES.some((prefix) => relativePath.startsWith(prefix))
       )
       .filter(({ absolute }) => importsRestrictedModule(readFileSync(absolute, "utf8")))
       .map(({ relativePath }) => relativePath);

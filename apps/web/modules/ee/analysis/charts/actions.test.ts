@@ -1,6 +1,22 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { createChartAction, executeQueryAction, generateAIChartAction } from "./actions";
+import {
+  createChartAction,
+  executeQueryAction as executeQueryActionExport,
+  generateAIChartAction,
+} from "./actions";
+
+// The action-client mock below turns `.inputSchema(...).action(fn)` into the identity, so the
+// export IS the raw handler at runtime — re-type it accordingly (the SafeActionResult type on the
+// export only applies to the real, unmocked client).
+const executeQueryAction = executeQueryActionExport as unknown as (args: {
+  ctx: unknown;
+  parsedInput: unknown;
+}) => Promise<{
+  rows: Record<string, unknown>[];
+  optionLabels?: Record<string, string>;
+  effectiveQuery: unknown;
+}>;
 
 const mocks = vi.hoisted(() => {
   const actionClientAction = vi.fn((fn) => fn);
@@ -466,7 +482,7 @@ describe("chart Cube actions", () => {
     ]);
     // Both surveys return an element with the same headline.
     mocks.getSurvey.mockImplementation((id: string) => Promise.resolve({ id, blocks: [] }));
-    mocks.getElementsFromBlocks.mockImplementation((blocks: unknown[]) => {
+    mocks.getElementsFromBlocks.mockImplementation((_blocks: unknown[]) => {
       // Return an element whose headline matches; the elementId will vary per survey.
       // We use a stable element id here because getElementsFromBlocks is mocked globally,
       // but the key point is that both mappings resolve to the same label.

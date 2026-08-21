@@ -60,7 +60,8 @@ export const getSelfHostedOrganizationEntitlementsContext = async (
     source: "self_hosted_license",
     features: license.active ? mapLicenseFeaturesToEntitlements(license.features) : [],
     limits: {
-      workspaces: license.active ? (license.features?.workspaces ?? 3) : 3,
+      // null = unlimited; only an inactive or feature-less license falls back to the community default.
+      workspaces: license.active && license.features ? license.features.workspaces : 3,
       // Self-hosted response limits are not license-server-managed today.
       monthlyResponses: null,
       // Self-hosted workflows are gated by the boolean license feature, not metered (ENG-1936).

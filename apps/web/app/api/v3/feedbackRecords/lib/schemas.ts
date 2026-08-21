@@ -26,9 +26,10 @@ import { ZHubEmotion, ZHubFieldType, ZHubSentiment } from "@formbricks/types/fee
  *
  * `.strict()` so a key this surface does not have is an error rather than a silent no-op. On a *filter* the
  * silent direction is the dangerous one: a dropped `user_id` widens the result set instead of narrowing it,
- * and the caller cannot tell it happened. This guards the operation contract rather than the MCP boundary —
- * the SDK validates against its own non-strict copy of the shape and strips unknown keys before an operation
- * sees them, which is why the names above do more work here than this does.
+ * and the caller cannot tell it happened. This guards the operation contract, and since ENG-2256 the MCP
+ * boundary enforces the same rule independently: the SDK now validates the strict schema instance itself
+ * instead of a rebuilt non-strict copy, so a misspelled argument is rejected before an operation is reached
+ * rather than arriving here already stripped.
  */
 const ZFeedbackRecordFilterId = z.string().trim().min(1).max(255);
 
@@ -305,8 +306,11 @@ export type TV3FeedbackRecordSearchFilters = z.infer<typeof ZV3FeedbackRecordSea
  *
  * The Hub does NOT check that the populated `value_*` matches `field_type` (it accepts `field_type:
  * "text"` carrying only `value_number`, and even a record with no value at all), so we enforce it here.
- * Without this a mistyped field name — MCP strips unknown keys before we ever see them, so `valueText`
- * simply vanishes — would store a permanently empty record and report success.
+ * Without this a mistyped field name would store a permanently empty record and report success: this
+ * object is not strict, so `valueText` is dropped and the record arrives with no value at all. That is
+ * still reachable over the v3 REST routes, which parse this shape directly. The MCP tools no longer get
+ * there — since ENG-2256 they wrap it in a strict schema and reject the typo outright — so this rule now
+ * backs the REST surface rather than the MCP one.
  */
 const VALUE_FIELD_BY_TYPE: Record<z.infer<typeof ZHubFieldType>, string[]> = {
   text: ["value_text"],
@@ -380,7 +384,14 @@ export const ZV3FeedbackRecordCreateBodyFields = z.object({
     .describe("Additional context (device, tags, etc.)."),
 });
 
-export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.superRefine((data, ctx) => {
+/**
+ * Every `field_type` needs a matching `value_*`. Named rather than inlined so the strict variant below
+ * applies the identical rule instead of restating it.
+ */
+const requireValueForFieldType: Parameters<typeof ZV3FeedbackRecordCreateBodyFields.superRefine>[0] = (
+  data,
+  ctx
+) => {
   const accepted = VALUE_FIELD_BY_TYPE[data.field_type];
   if (accepted.some((field) => data[field as keyof typeof data] !== undefined)) {
     return;
@@ -392,7 +403,29 @@ export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.sup
     path: [accepted[0]],
     message: `is required for field_type "${data.field_type}" (expected one of: ${accepted.join(", ")})`,
   });
-});
+};
+
+export const ZV3FeedbackRecordCreateBody =
+  ZV3FeedbackRecordCreateBodyFields.superRefine(requireValueForFieldType);
+
+/**
+ * Same contract, but rejecting unknown keys — used by the MCP batch tool (ENG-2256).
+ *
+ * A batch is the one place a misspelled field can hide: `user_id` sent as `userId` inside a record was
+ * dropped, so every record was created with no user attribution and the call reported success. The
+ * single-record MCP tool was already covered, because its schema gets `.strict()` at the MCP layer; only
+ * the array elements were not.
+ *
+ * Deliberately a separate export rather than `.strict()` on the fields object itself. Making the shared
+ * body strict would also change the **v3 REST** create/batch/update routes, where three behaviours
+ * currently depend on unknown keys being ignored rather than rejected — a `tenant_id` smuggled into a
+ * body, a `tenant_id` smuggled into a batch record, and immutable provenance fields on an update are all
+ * silently dropped today, each with a test asserting exactly that. Rejecting instead is arguably safer,
+ * but it is a v3 API decision with its own blast radius (a client that round-trips a record it read would
+ * start getting 422s), so it does not belong in an MCP migration.
+ */
+export const ZV3FeedbackRecordCreateBodyStrict =
+  ZV3FeedbackRecordCreateBodyFields.strict().superRefine(requireValueForFieldType);
 
 export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreateBody>;
 
@@ -407,7 +440,12 @@ export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreate
  *
  * At least one field is required: an empty patch is a caller mistake, not a no-op worth a round trip.
  */
-/** The plain object form first, because `inputSchema` needs a raw shape rather than a refined schema. */
+/**
+ * The plain object form first, so callers that need to extend or restrict it (the MCP tools add
+ * `workspaceId`/`datasetId` and `.strict()`) have an object schema to work from, and the refined form below
+ * is derived from it. Not a hard requirement — Zod 4 allows `refined.extend({...}).strict()` and keeps the
+ * refinement — but it keeps the mutable field list defined exactly once.
+ */
 export const ZV3FeedbackRecordUpdateBodyFields = ZV3FeedbackRecordCreateBodyFields.pick({
   value_text: true,
   value_number: true,

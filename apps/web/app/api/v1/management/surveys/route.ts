@@ -8,6 +8,10 @@ import {
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
+import {
+  addLegacyEnvironmentIdBestEffort,
+  addLegacyEnvironmentIdToList,
+} from "@/app/lib/api/legacy-environment-id";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
@@ -17,9 +21,10 @@ import {
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
@@ -47,7 +52,9 @@ export const GET = withV1ApiWrapper({
 
       return {
         response: responses.successResponse(
-          addLegacyProjectOverwritesToList(resolveStorageUrlsInObject(surveysWithQuestions))
+          await addLegacyEnvironmentIdToList(
+            addLegacyProjectOverwritesToList(resolveStorageUrlsInObject(surveysWithQuestions))
+          )
         ),
       };
     } catch (error) {
@@ -103,7 +110,11 @@ export const POST = withV1ApiWrapper({
 
       if (
         !resolved.alreadyAuthorized &&
-        !(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("POST"),
+          { type: "workspace", id: workspaceId }
+        ))
       ) {
         return { response: responses.unauthorizedResponse() };
       }
@@ -146,8 +157,13 @@ export const POST = withV1ApiWrapper({
       }
 
       return {
+        // Best-effort, not strict: the insert has committed by now, so a failed workspace lookup here
+        // would return an error for a survey that exists. `Survey` has no unique constraint to dedup
+        // on, so a client retrying that false error creates a second survey.
         response: responses.successResponse(
-          addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
+          await addLegacyEnvironmentIdBestEffort(
+            addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
+          )
         ),
       };
     } catch (error) {

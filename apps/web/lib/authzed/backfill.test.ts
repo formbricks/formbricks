@@ -4,9 +4,9 @@ import { type TAuthzedBackfillRequest, runAuthzedBackfill } from "./backfill";
 import * as source from "./backfill-source";
 import type { TAuthzedOrganizationSource } from "./backfill-source";
 import {
-  AUTHZED_BACKFILL_TARGET_CHUNK_SIZE,
   AUTHZED_MAX_RELATIONSHIP_READS,
   AUTHZED_MAX_TRACKED_ORPHAN_REFS,
+  AUTHZED_TARGET_CHUNK_SIZE,
 } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
@@ -1080,7 +1080,7 @@ describe("full-scope orphan sweep", () => {
 
 describe("chunking", () => {
   test("splits a large target list so no reconciler receives an unbounded query", async () => {
-    const memberships = Array.from({ length: AUTHZED_BACKFILL_TARGET_CHUNK_SIZE + 1 }, (_unused, index) => ({
+    const memberships = Array.from({ length: AUTHZED_TARGET_CHUNK_SIZE + 1 }, (_unused, index) => ({
       organizationId: "org-1",
       userId: `user-${index}`,
     }));
@@ -1089,9 +1089,7 @@ describe("chunking", () => {
     await runAuthzedBackfill(request(), dependencies);
 
     expect(apply.reconcileMemberships).toHaveBeenCalledTimes(2);
-    expect(apply.reconcileMemberships.mock.calls[0][0].memberships).toHaveLength(
-      AUTHZED_BACKFILL_TARGET_CHUNK_SIZE
-    );
+    expect(apply.reconcileMemberships.mock.calls[0][0].memberships).toHaveLength(AUTHZED_TARGET_CHUNK_SIZE);
     expect(apply.reconcileMemberships.mock.calls[1][0].memberships).toHaveLength(1);
   });
 
@@ -1153,10 +1151,10 @@ describe("chunking", () => {
   });
 
   test("bounds each list independently, so call count follows the longest list", async () => {
-    const teamMemberships = Array.from(
-      { length: AUTHZED_BACKFILL_TARGET_CHUNK_SIZE + 1 },
-      (_unused, index) => ({ teamId: "team-1", userId: `user-${index}` })
-    );
+    const teamMemberships = Array.from({ length: AUTHZED_TARGET_CHUNK_SIZE + 1 }, (_unused, index) => ({
+      teamId: "team-1",
+      userId: `user-${index}`,
+    }));
     vi.mocked(source.readOrganizationSource).mockResolvedValue({
       ...emptySource,
       teamIds: ["team-1"],
@@ -1169,12 +1167,12 @@ describe("chunking", () => {
     // The short list is exhausted by the first call and must not be resent.
     expect(apply.reconcileTeamWorkspace.mock.calls[0][0]).toMatchObject({
       teamIds: ["team-1"],
-      teamMemberships: teamMemberships.slice(0, AUTHZED_BACKFILL_TARGET_CHUNK_SIZE),
+      teamMemberships: teamMemberships.slice(0, AUTHZED_TARGET_CHUNK_SIZE),
     });
     // The short list is exhausted by the first call, so the second must not resend it.
     expect(apply.reconcileTeamWorkspace.mock.calls[1][0]).toMatchObject({
       teamIds: [],
-      teamMemberships: teamMemberships.slice(AUTHZED_BACKFILL_TARGET_CHUNK_SIZE),
+      teamMemberships: teamMemberships.slice(AUTHZED_TARGET_CHUNK_SIZE),
     });
   });
 });

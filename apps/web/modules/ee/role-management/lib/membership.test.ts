@@ -130,13 +130,12 @@ describe("updateMembership", () => {
     let roleUpdateCompleted = false;
 
     vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
-    vi.mocked(prisma.teamUser.updateMany).mockImplementation(async () => {
+    vi.mocked(prisma.teamUser.updateMany).mockImplementation((() => {
       roleUpdateCompleted = true;
-      return { count: 2 };
-    });
-    vi.mocked(prisma.teamUser.findMany).mockImplementation(async () =>
-      roleUpdateCompleted ? ([{ teamId: "team1" }, { teamId: "team2" }] as never) : []
-    );
+      return Promise.resolve({ count: 2 });
+    }) as never);
+    vi.mocked(prisma.teamUser.findMany).mockImplementation((() =>
+      Promise.resolve(roleUpdateCompleted ? [{ teamId: "team1" }, { teamId: "team2" }] : [])) as never);
 
     await updateMembership("user1", "org1", { role: "manager" });
 

@@ -12,8 +12,8 @@ import type { AuthorizationEvaluator } from "./evaluator";
  * `can` returns a boolean decision; `assertCan` throws an `AuthorizationError`
  * on denial. Both evaluate today's authorization rules and change nothing about
  * who can access what — they only funnel scattered checks through one boundary.
- * The evaluator is selected here; a SpiceDB-backed evaluator can replace it
- * later without touching any caller.
+ * SpiceDB is the sole evaluator. Product call sites stay independent of its SDK
+ * and receive only Formbricks-owned decisions and typed operational failures.
  */
 
 const evaluator: AuthorizationEvaluator = authorizationCoordinator;

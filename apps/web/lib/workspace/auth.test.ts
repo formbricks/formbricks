@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { can } from "@/lib/authorization";
 import { validateInputs } from "../utils/validate";
-import { canUserNavigateWorkspace, hasUserWorkspaceAccessForAction } from "./auth";
+import {
+  canUserNavigateWorkspace,
+  canUserReadWorkspaceIntegrations,
+  canUserWriteWorkspaceIntegrations,
+} from "./auth";
 
 vi.mock("@/lib/authorization", () => ({
   can: vi.fn(),
@@ -11,7 +15,7 @@ vi.mock("../utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
-describe("hasUserWorkspaceAccessForAction", () => {
+describe("workspace integration authorization", () => {
   const userId = "00000000-0000-0000-0000-000000000001";
   const workspaceId = "00000000-0000-0000-0000-000000000002";
 
@@ -21,13 +25,10 @@ describe("hasUserWorkspaceAccessForAction", () => {
   });
 
   test.each([
-    ["GET", "workspace.read"],
-    ["POST", "workspace.write"],
-    ["PUT", "workspace.write"],
-    ["PATCH", "workspace.write"],
-    ["DELETE", "workspace.manage"],
-  ] as const)("maps %s to %s", async (method, action) => {
-    await expect(hasUserWorkspaceAccessForAction(userId, workspaceId, method)).resolves.toBe(true);
+    ["read", canUserReadWorkspaceIntegrations, "workspace.read"],
+    ["write", canUserWriteWorkspaceIntegrations, "workspace.write"],
+  ] as const)("uses the semantic workspace %s action", async (_name, authorize, action) => {
+    await expect(authorize(userId, workspaceId)).resolves.toBe(true);
 
     expect(validateInputs).toHaveBeenCalledWith(
       [userId, expect.anything()],
@@ -39,16 +40,16 @@ describe("hasUserWorkspaceAccessForAction", () => {
     });
   });
 
-  test("returns the central authorization denial", async () => {
+  test("returns a central authorization denial", async () => {
     vi.mocked(can).mockResolvedValue(false);
 
-    await expect(hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).resolves.toBe(false);
+    await expect(canUserReadWorkspaceIntegrations(userId, workspaceId)).resolves.toBe(false);
   });
 
   test("propagates central evaluator failures", async () => {
     vi.mocked(can).mockRejectedValue(new Error("database unavailable"));
 
-    await expect(hasUserWorkspaceAccessForAction(userId, workspaceId, "GET")).rejects.toThrow(
+    await expect(canUserReadWorkspaceIntegrations(userId, workspaceId)).rejects.toThrow(
       "database unavailable"
     );
   });

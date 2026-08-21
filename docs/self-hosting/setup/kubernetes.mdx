@@ -107,20 +107,20 @@ If your cluster already uses an external secret manager, enable `externalSecret`
 SecretStore. Ensure the resulting app secret exposes the values your deployment needs, including `DATABASE_URL`,
 `REDIS_URL`, and `HUB_API_KEY`.
 
-### Optional AuthZed / SpiceDB
+### AuthZed / SpiceDB
 
-AuthZed is disabled by default. To deploy SpiceDB with the chart-managed PostgreSQL server:
+Formbricks v6 uses AuthZed as its authorization engine. Fresh chart installations enable a private,
+two-replica SpiceDB cluster and `fully_consistent` decisions by default. If the cluster already has a compatible
+SpiceDB operator, keep the authorization runtime enabled but disable this release's operator installation:
 
 ```yaml
 authzed:
-  enabled: true
   operator:
-    install: true
+    install: false
 ```
 
-This installs the pinned SpiceDB operator, creates a two-replica SpiceDB cluster, and bootstraps a dedicated
-`spicedb` database and login. Install only one operator in a Kubernetes cluster. If your platform already runs
-the operator and watches the Formbricks namespace, keep `authzed.operator.install: false`.
+The default `authzed.operator.install: true` installs the pinned operator, creates the cluster, and bootstraps a
+dedicated `spicedb` database and login. Install only one operator in a Kubernetes cluster.
 
 For managed PostgreSQL, create a separate SpiceDB database and login first. Store its connection URI and a
 strong API token in a Kubernetes Secret using the keys `datastore_uri` and `preshared_key`, then configure:
@@ -134,21 +134,26 @@ authzed:
     existingSecret: formbricks-authzed
 ```
 
-Use `authzed.mode: external`, `authzed.endpoint: <host>:<port>`, and `authzed.insecure: false` when connecting
+Use `authzed.mode: external`, `authzed.operator.install: false`, `authzed.endpoint: <host>:<port>`, and
+`authzed.insecure: false` when connecting
 to an externally managed AuthZed endpoint. The external endpoint must serve TLS because the preshared token is
 sent on every authenticated request. The application endpoint remains internal and uses plaintext gRPC by
 default when the chart owns SpiceDB.
 
-When AuthZed is enabled, Helm prints release-specific commands that execute the release-matched operator CLI
+Helm prints release-specific commands that execute the release-matched operator CLI
 inside a Formbricks pod. Start with:
 
 ```bash
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed health
 kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed schema check
+kubectl exec -n <namespace> deployment/<release-name> -- formbricks-authzed upgrade check
 ```
 
-The chart does not apply the Formbricks schema or repair relationships automatically. Follow
-[AuthZed Operations](/self-hosting/advanced/authzed-operations) before either action. Do not expose SpiceDB
+A fresh install runs an idempotent initialization Job, but application startup and probes remain independent
+from it. Upgrades never run relationship preparation automatically. Before the first v6 upgrade, run
+`formbricks-authzed upgrade prepare`, require `upgrade check` to exit `0`, and then set
+`authzed.migrationAcknowledged: true`. The chart refuses an unacknowledged upgrade, disabled AuthZed, or weaker
+consistency. Follow [AuthZed Operations](/self-hosting/advanced/authzed-operations) and do not expose SpiceDB
 through an Ingress.
 
 ## 3. v5-Specific Deployment Notes

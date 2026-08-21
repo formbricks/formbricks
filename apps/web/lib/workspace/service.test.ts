@@ -1,10 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { OrganizationRole, Prisma, WidgetPlacement, Workspace } from "@formbricks/database/prisma";
+import { Prisma, WidgetPlacement, Workspace } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import {
+  lookupAuthorizedOrganizationIds,
+  lookupAuthorizedWorkspaceIds,
+} from "@/lib/authorization/resource-list";
 import { ITEMS_PER_PAGE } from "../constants";
 import {
+  getOrganizationScopedWorkspacesByIdsForUser,
   getUserWorkspaces,
   getUserWorkspacesByOrganizationIds,
   getWorkspace,
@@ -27,6 +32,10 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
     },
   },
+}));
+vi.mock("@/lib/authorization/resource-list", () => ({
+  lookupAuthorizedOrganizationIds: vi.fn(),
+  lookupAuthorizedWorkspaceIds: vi.fn(),
 }));
 
 describe("Workspace Service", () => {
@@ -145,12 +154,8 @@ describe("Workspace Service", () => {
       },
     ];
 
-    vi.mocked(prisma.membership.findFirst).mockResolvedValue({
-      userId,
-      organizationId,
-      role: OrganizationRole.owner,
-      accepted: true,
-    });
+    vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue([organizationId]);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(mockWorkspaces.map(({ id }) => id));
 
     vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as unknown as Workspace[]);
 
@@ -159,6 +164,7 @@ describe("Workspace Service", () => {
     expect(result).toEqual(mockWorkspaces);
     expect(prisma.workspace.findMany).toHaveBeenCalledWith({
       where: {
+        id: { in: mockWorkspaces.map(({ id }) => id) },
         organizationId,
       },
       select: expect.any(Object),
@@ -197,12 +203,8 @@ describe("Workspace Service", () => {
       },
     ];
 
-    vi.mocked(prisma.membership.findFirst).mockResolvedValue({
-      userId,
-      organizationId,
-      role: OrganizationRole.member,
-      accepted: true,
-    });
+    vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue([organizationId]);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(mockWorkspaces.map(({ id }) => id));
 
     vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as unknown as Workspace[]);
 
@@ -211,18 +213,8 @@ describe("Workspace Service", () => {
     expect(result).toEqual(mockWorkspaces);
     expect(prisma.workspace.findMany).toHaveBeenCalledWith({
       where: {
+        id: { in: mockWorkspaces.map(({ id }) => id) },
         organizationId,
-        workspaceTeams: {
-          some: {
-            team: {
-              teamUsers: {
-                some: {
-                  userId,
-                },
-              },
-            },
-          },
-        },
       },
       select: expect.any(Object),
       take: undefined,
@@ -230,55 +222,40 @@ describe("Workspace Service", () => {
     });
   });
 
-  test("getUserWorkspacesByOrganizationIds team-scopes non-owner/manager roles (owner/manager get all)", async () => {
+  test("getUserWorkspacesByOrganizationIds resolves only authoritative workspace ids in the organizations", async () => {
     const userId = createId();
     const orgManager = createId();
     const orgBilling = createId();
 
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([
-      { userId, organizationId: orgManager, role: OrganizationRole.manager, accepted: true },
-      { userId, organizationId: orgBilling, role: OrganizationRole.billing, accepted: true },
-    ]);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["workspace-1"]);
     vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
 
     await getUserWorkspacesByOrganizationIds([orgManager, orgBilling], userId);
 
-    const teamScope = { some: { team: { teamUsers: { some: { userId } } } } };
     expect(prisma.workspace.findMany).toHaveBeenCalledWith({
       where: {
-        OR: [
-          // manager: all of the org's workspaces (no team filter)
-          { organizationId: orgManager },
-          // billing: team-scoped only (regression: previously unscoped → every workspace)
-          { organizationId: orgBilling, workspaceTeams: teamScope },
-        ],
+        id: { in: ["workspace-1"] },
+        organizationId: { in: [orgManager, orgBilling] },
       },
       select: { id: true },
     });
   });
 
-  test("getUserWorkspaces should team-scope a billing user (not return every workspace)", async () => {
+  test("getUserWorkspaces does not widen a billing user's empty SpiceDB workspace list", async () => {
     const userId = createId();
     const organizationId = createId();
 
-    vi.mocked(prisma.membership.findFirst).mockResolvedValue({
-      userId,
-      organizationId,
-      role: OrganizationRole.billing,
-      accepted: true,
-    });
+    vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue([organizationId]);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue([]);
     vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
 
     await getUserWorkspaces(userId, organizationId);
 
-    // Billing is not owner/manager, so it must be scoped to team-accessible workspaces — never the
-    // whole org (regression: `role === "member"` previously leaked all workspaces to billing users).
+    // SpiceDB's workspace.read excludes billing, so no role-name SQL branch can accidentally widen it.
     expect(prisma.workspace.findMany).toHaveBeenCalledWith({
       where: {
+        id: { in: [] },
         organizationId,
-        workspaceTeams: {
-          some: { team: { teamUsers: { some: { userId } } } },
-        },
       },
       select: expect.any(Object),
       take: undefined,
@@ -290,7 +267,8 @@ describe("Workspace Service", () => {
     const userId = createId();
     const organizationId = createId();
 
-    vi.mocked(prisma.membership.findFirst).mockResolvedValue(null);
+    vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue([]);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue([]);
 
     await expect(getUserWorkspaces(userId, organizationId)).rejects.toThrow(ValidationError);
   });
@@ -325,12 +303,8 @@ describe("Workspace Service", () => {
       },
     ];
 
-    vi.mocked(prisma.membership.findFirst).mockResolvedValue({
-      userId,
-      organizationId,
-      role: OrganizationRole.owner,
-      accepted: true,
-    });
+    vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue([organizationId]);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(mockWorkspaces.map(({ id }) => id));
 
     vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as unknown as Workspace[]);
 
@@ -340,6 +314,7 @@ describe("Workspace Service", () => {
     expect(result).toEqual(mockWorkspaces);
     expect(prisma.workspace.findMany).toHaveBeenCalledWith({
       where: {
+        id: { in: mockWorkspaces.map(({ id }) => id) },
         organizationId,
       },
       select: expect.any(Object),
@@ -493,6 +468,29 @@ describe("Workspace Service", () => {
     expect(prisma.workspace.findMany).not.toHaveBeenCalled();
   });
 
+  test("getOrganizationScopedWorkspacesByIdsForUser verifies lookup results against current tenant membership", async () => {
+    const userId = createId();
+    const workspaceIds = [createId(), createId()];
+    const mockWorkspaces = workspaceIds.map((id) => ({ id, organizationId: createId() }));
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as unknown as Workspace[]);
+
+    await expect(getOrganizationScopedWorkspacesByIdsForUser(userId, workspaceIds)).resolves.toEqual(
+      mockWorkspaces
+    );
+    expect(prisma.workspace.findMany).toHaveBeenCalledExactlyOnceWith({
+      where: {
+        id: { in: workspaceIds },
+        organization: { memberships: { some: { userId } } },
+      },
+      select: expect.any(Object),
+    });
+  });
+
+  test("getOrganizationScopedWorkspacesByIdsForUser skips PostgreSQL for an empty authoritative list", async () => {
+    await expect(getOrganizationScopedWorkspacesByIdsForUser(createId(), [])).resolves.toEqual([]);
+    expect(prisma.workspace.findMany).not.toHaveBeenCalled();
+  });
+
   describe("getWorkspaceLegacyStoragePrefixes", () => {
     test("returns both the workspace id and its legacyEnvironmentId when set", async () => {
       const workspaceId = createId();
@@ -546,7 +544,7 @@ describe("Workspace Service", () => {
 
     test("selects the members who can access the workspace: org owner/manager, or a team linked to it", async () => {
       // The filter is the behavior here — it decides who may receive a workspace's response data, so
-      // it is asserted directly. It mirrors `checkAuthorizationUpdated`'s workspace access: an
+      // it is asserted directly. It mirrors the central `workspace.read` permission: an
       // owner/manager reaches every workspace in the org, everyone else only through a linked team
       // (any `WorkspaceTeam` permission, since `read` already grants access). The organization comes
       // from the workspace itself, never from a caller-supplied id.

@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { TApiV1Authentication } from "@/app/lib/api/with-api-logging";
-import { hasUserWorkspaceAccessForAction } from "@/lib/workspace/auth";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
+import { can } from "@/lib/authorization";
 
 export const checkAuth = async (authentication: TApiV1Authentication | undefined, workspaceId: string) => {
   if (!authentication) {
@@ -9,16 +8,20 @@ export const checkAuth = async (authentication: TApiV1Authentication | undefined
   }
 
   if ("user" in authentication) {
-    const isUserAuthorized = await hasUserWorkspaceAccessForAction(
-      authentication.user.id,
-      workspaceId,
-      "POST"
-    );
+    const isUserAuthorized = await can({ type: "user", id: authentication.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
     if (!isUserAuthorized) {
       return responses.unauthorizedResponse();
     }
   } else if ("apiKeyId" in authentication) {
-    if (!(await hasApiKeyWorkspaceAccess(authentication, workspaceId, "POST"))) {
+    if (
+      !(await can({ type: "apiKey", id: authentication.apiKeyId }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
+      }))
+    ) {
       return responses.unauthorizedResponse();
     }
   } else {
