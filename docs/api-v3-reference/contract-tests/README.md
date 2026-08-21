@@ -50,9 +50,15 @@ Three things to know before reading the result:
   database, so it only matters locally: a second run without re-seeding turns those operations into
   documented 403s and quietly loses depth.
 
-- **Workflow endpoints need an enterprise license.** Eleven of the twenty-eight operations, plus
-  `contact-attribute-keys`, are entitlement-gated. Without `ENTERPRISE_LICENSE_KEY` they answer a
-  documented 403, so the run stays green but tests those operations shallowly.
+- **Workflow endpoints need an enterprise license.** Thirteen of the twenty-eight operations (every
+  `/workflows` path, the two `/workflows/runs` reads included — they all authorize through
+  `buildWorkflowApiContext`), plus `contact-attribute-keys`, are entitlement-gated. Without
+  `ENTERPRISE_LICENSE_KEY` they answer a documented 403, so the run stays green but tests those
+  operations shallowly.
+- **The four `/tags` operations are session-only** (`auth: "session"`, and the spec declares only
+  `sessionAuth`), so an API key gets a documented 401 before any handler runs. They are checked
+  against that 401, which is a real assertion that they stay session-only — but no tag fixtures
+  exist, because nothing an API key sends can reach them.
 - **Rate limiting.** Set `RATE_LIMITING_DISABLED=1`, otherwise a burst of cases can turn into
   documented-but-uninteresting 429s.
 

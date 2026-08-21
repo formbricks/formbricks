@@ -113,10 +113,21 @@ jobs:
           # A burst of cases would otherwise trip the limiter and turn most operations into
           # documented-but-uninteresting 429s.
           echo "RATE_LIMITING_DISABLED=1" >> .env
+          # Not about running Playwright: this is the flag that stops the app sending an instanceId
+          # alongside the shared licence key (license.ts — "Skip instance ID during E2E tests to avoid
+          # license key conflicts"). Without it the licence server answers 403 "bound to another
+          # instance", every entitlement falls back to DEFAULT_FEATURES, and the 13 workflow
+          # operations plus contacts are only ever checked against their documented 403.
+          echo "E2E_TESTING=1" >> .env
 
       - name: Build App
         if: steps.harness.outputs.present == 'true'
         timeout-minutes: 15
+        env:
+          # Turborepo hashes its own process environment, not the `.env` file, and next.config.mjs
+          # reads this at build time — so setting it only in `.env` would let a cached non-E2E build
+          # be replayed here. Same reason e2e.yml passes it twice.
+          E2E_TESTING: "1"
         run: pnpm build --filter=@formbricks/web...
         shell: bash
 
@@ -176,16 +187,32 @@ jobs:
             exit 1
           fi
 
+          # The list endpoint above answers 200 off the base seed alone, so it says nothing about the
+          # contract fixtures. The deepest response schema in the contract — the survey resource —
+          # only gets exercised when the read fixture exists *and* carries the languages the spec's
+          # `lang` examples ask for; without them the operation degrades to a documented 400 and the
+          # suite stays green having validated nothing.
+          survey_id=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').read.surveyId")
+          survey_status=$(curl -o /tmp/preflight-survey.json -s -w "%{http_code}" \
+            -H "x-api-key: fbk_${SEED_API_KEY}" \
+            "http://localhost:3000/api/v3/surveys/${survey_id}?lang=de-DE")
+          if [ "${survey_status}" -ne 200 ]; then
+            echo "::error::Read fixture check returned ${survey_status}, expected 200. The survey resource schema would not be validated by this run."
+            cat /tmp/preflight-survey.json
+            exit 1
+          fi
+
           # Entitlement-gated operations answer a documented 403 when the licence does not grant the
-          # feature, so the suite stays green while testing a third of the contract shallowly. Probe
-          # one of them and say so out loud, rather than leaving that to whoever reads the warnings.
-          workflows_status=$(curl -o /dev/null -s -w "%{http_code}" \
+          # feature, so the suite stays green while testing half the contract shallowly. Probe one of
+          # them and say so out loud, rather than leaving that to whoever reads the warnings.
+          workflows_status=$(curl -o /tmp/preflight-workflows.json -s -w "%{http_code}" \
             -H "x-api-key: fbk_${SEED_API_KEY}" \
             "http://localhost:3000/api/v3/workflows?workspaceId=${workspace_id}&limit=1")
           if [ "${workflows_status}" -eq 200 ]; then
-            echo "::notice::Workflows entitlement active — the 11 workflow operations run against real data."
+            echo "::notice::Workflows entitlement active — the 13 workflow operations run against real data."
           else
-            echo "::warning::Workflows entitlement inactive (GET /api/v3/workflows → ${workflows_status}). The 11 workflow operations are only checked against their documented 403."
+            echo "::warning::Workflows entitlement inactive (GET /api/v3/workflows → ${workflows_status}). The 13 workflow operations are only checked against their documented 403."
+            cat /tmp/preflight-workflows.json
           fi
 
       - name: Set up Python

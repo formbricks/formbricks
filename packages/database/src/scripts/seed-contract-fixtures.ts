@@ -46,11 +46,6 @@ const CONTRACT_IDS = {
   WORKFLOW_ARCHIVE: "clctworkflowarchive00001",
   WORKFLOW_UNARCHIVE: "clctworkflowunarchive001",
   ACTION_CLASS_READ: "clctactionclassread00001",
-  TAG_READ: "clcttagread000000000001",
-  TAG_RENAME: "clcttagrename00000000001",
-  TAG_DELETE: "clcttagdelete00000000001",
-  TAG_MERGE_SOURCE: "clcttagmergesource000001",
-  TAG_MERGE_TARGET: "clcttagmergetarget000001",
 } as const;
 
 /**
@@ -172,14 +167,6 @@ async function seedWorkflow(
   await prisma.workflow.upsert({ where: { id }, update: fields, create: { id, ...fields } });
 }
 
-async function seedTag(id: string, name: string): Promise<void> {
-  await prisma.tag.upsert({
-    where: { id },
-    update: { name, workspaceId: SEED_IDS.WORKSPACE },
-    create: { id, name, workspaceId: SEED_IDS.WORKSPACE },
-  });
-}
-
 async function main(): Promise<void> {
   const outPath = getOutPath();
 
@@ -220,12 +207,9 @@ async function main(): Promise<void> {
     },
   });
 
-  // The base seed creates no tags at all, so even the read path needs one here.
-  await seedTag(CONTRACT_IDS.TAG_READ, "contract-read");
-  await seedTag(CONTRACT_IDS.TAG_RENAME, "contract-rename");
-  await seedTag(CONTRACT_IDS.TAG_DELETE, "contract-delete");
-  await seedTag(CONTRACT_IDS.TAG_MERGE_SOURCE, "contract-merge-source");
-  await seedTag(CONTRACT_IDS.TAG_MERGE_TARGET, "contract-merge-target");
+  // No tag fixtures: every /api/v3/tags operation is `auth: "session"`, so an API key is rejected
+  // with a documented 401 before a handler ever looks for a row. Seeding them would read as coverage
+  // that does not exist. Add them here if tags ever accept an API key.
 
   const workflowRun = await prisma.workflowRun.findFirst({
     where: { workspaceId: SEED_IDS.WORKSPACE },
@@ -243,7 +227,6 @@ async function main(): Promise<void> {
     read: {
       surveyId: CONTRACT_IDS.SURVEY_READ,
       workflowId: SEED_IDS.WORKFLOW_RESPONSE_FOLLOW_UP,
-      tagId: CONTRACT_IDS.TAG_READ,
       ...(workflowRun ? { runId: workflowRun.id } : {}),
     },
     operations: {
@@ -258,12 +241,6 @@ async function main(): Promise<void> {
       disableWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_DISABLE } },
       archiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_ARCHIVE } },
       unarchiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_UNARCHIVE } },
-      renameTagV3: { path: { tagId: CONTRACT_IDS.TAG_RENAME } },
-      deleteTagV3: { path: { tagId: CONTRACT_IDS.TAG_DELETE } },
-      mergeTagsV3: {
-        path: { tagId: CONTRACT_IDS.TAG_MERGE_SOURCE },
-        body: { newTagId: CONTRACT_IDS.TAG_MERGE_TARGET },
-      },
     },
   };
 

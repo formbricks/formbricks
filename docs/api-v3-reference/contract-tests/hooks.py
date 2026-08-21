@@ -42,9 +42,11 @@ WORKSPACE_FIELD = "workspaceId"
 
 def _load_fixtures() -> dict[str, Any]:
     path = Path(os.environ.get(FIXTURES_ENV_VAR) or DEFAULT_FIXTURES_PATH)
+    # JSONDecodeError as well as OSError: a truncated or half-written map is the same problem for the
+    # reader as a missing one, and deserves the same message rather than a bare parser traceback.
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except OSError as exc:
+    except (OSError, json.JSONDecodeError) as exc:
         raise RuntimeError(
             f"Contract fixtures not found at {path}. Run "
             "`pnpm --filter=@formbricks/database db:seed:contract` first, or point "
