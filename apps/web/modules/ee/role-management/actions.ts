@@ -22,6 +22,7 @@ import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
+import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
 
 export const checkRoleManagementPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
@@ -136,6 +137,14 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
     );
     if (currentUserMembership.role !== "owner" && targetMembership?.role === "owner") {
       throw new OperationNotAllowedError("Only owners can change the role of an owner");
+    }
+
+    if (targetMembership?.role === "owner" && parsedInput.data.role !== "owner") {
+      const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
+
+      if (ownerCount <= 1) {
+        throw new ValidationError("You cannot demote the last owner of the organization");
+      }
     }
 
     await checkRoleManagementPermission(parsedInput.organizationId);
