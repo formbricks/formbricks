@@ -216,8 +216,11 @@ jobs:
           if-no-files-found: ignore
           path: schemathesis-report/
 
+      # Uploaded on success too: a green run can still be a shallow one (entitlements not resolving
+      # turns whole groups of operations into their documented 403), and the app log is where that
+      # shows up.
       - name: Upload app logs
-        if: failure() && steps.harness.outputs.present == 'true'
+        if: always() && steps.harness.outputs.present == 'true'
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: api-v3-contract-app-logs
