@@ -1,6 +1,6 @@
 # Security Policy of Formbricks
 
-This is Formbrick's security policy. Please report vulnerabilities
+This is the Formbricks security policy. Please report vulnerabilities
 privately via <security@formbricks.com> rather than in public.
 
 ## Introduction
