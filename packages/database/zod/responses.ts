@@ -117,7 +117,11 @@ export const ZResponse = z.object({
     })
     .describe("The language of the response"),
   displayId: z.string().nullable().describe("The display ID of the response"),
-}) satisfies z.ZodType<Response>;
+  // `ingestFlags` is deliberately omitted rather than described: this schema is the management API's
+  // public shape and the OpenAPI document, and the column is internal Embedded Data bookkeeping
+  // (ENG-1845) that no route selects. Documenting it would advertise a field the API never returns;
+  // exposing it belongs to the release that surfaces coercion failures in the UI.
+}) satisfies z.ZodType<Omit<Response, "ingestFlags">>;
 
 ZResponse.meta({
   id: "response",

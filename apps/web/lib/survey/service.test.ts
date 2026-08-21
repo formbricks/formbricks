@@ -15,6 +15,7 @@ import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -226,6 +227,22 @@ describe("Tests for getSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce(null);
       const survey = await getSurvey(mockId);
       expect(survey).toBeNull();
+    });
+
+    /**
+     * ENG-1845: `getSurvey` feeds all three server ingest boundaries, and the contract's allow-list
+     * is the joined rows and nothing else (ENG-2412). A select that loses the join therefore reads
+     * as a survey with no fields, and every ingested value is dropped rather than stored — so the
+     * join belongs in a test rather than only in a comment.
+     */
+    test("selects the Embedded Data join every ingest boundary resolves its allow-list from", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+
+      await getSurvey(mockId);
+
+      expect(prisma.survey.findUnique.mock.calls[0][0].select).toEqual(
+        expect.objectContaining({ embeddedDataLinks: selectSurveyEmbeddedDataLinks })
+      );
     });
   });
 

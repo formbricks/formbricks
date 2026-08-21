@@ -44,7 +44,6 @@ vi.mock("@/lib/common/utils", async (importOriginal) => {
     getStyling: vi.fn(),
     shouldDisplayBasedOnPercentage: vi.fn(),
     wrapThrowsAsync: vi.fn(),
-    handleHiddenFields: vi.fn(),
   };
 });
 
@@ -339,6 +338,66 @@ describe("widget-file", () => {
       expect.objectContaining({
         contactId: "contact_abc",
       })
+    );
+
+    vi.useRealTimers();
+  });
+
+  test("forwards the hidden-field bag to the renderer verbatim, filtering nothing itself", async () => {
+    // Pins ENG-2472: the SDK is a dumb pipe. `handleHiddenFields` used to filter this bag here, which
+    // meant every SDK shipped its own copy of the rules; the ingest contract now owns them in the
+    // renderer and re-runs on the server. Without this, someone re-adding a filter in the SDK — or
+    // deleting the pass-through — breaks nothing any test can see.
+    mockUpdateQueue.hasPendingWork.mockReturnValue(false);
+
+    const mockConfigValue = {
+      get: vi.fn().mockReturnValue({
+        appUrl: "https://fake.app",
+        workspaceId: "env_123",
+        workspace: {
+          data: {
+            settings: {
+              clickOutsideClose: true,
+              overlay: "none",
+              placement: "bottomRight",
+              inAppSurveyBranding: true,
+            },
+          },
+        },
+        user: {
+          data: {
+            userId: "user_abc",
+            contactId: "contact_abc",
+            displays: [],
+            responses: [],
+            lastDisplayAt: null,
+            language: "en",
+          },
+        },
+      }),
+      update: vi.fn(),
+    };
+
+    getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+    widget.setIsSurveyRunning(false);
+    window.formbricksSurveys = createMockFormbricksSurveys();
+    vi.useFakeTimers();
+
+    // A key the survey declares, one it does not, and one the old filter would have stripped.
+    const hiddenFields = { plan: "gold", rogue: "injected", "": "blank" };
+
+    // Through `triggerSurvey`, not `renderWidget`: the deleted filter sat on that hop, so entering
+    // lower down would leave the regression this test exists for invisible.
+    await widget.triggerSurvey(
+      { ...mockSurvey, delay: 0, displayPercentage: null } as unknown as TWorkspaceStateSurvey,
+      "testAction",
+      { hiddenFields }
+    );
+
+    vi.advanceTimersByTime(0);
+
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
+      expect.objectContaining({ hiddenFieldsRecord: hiddenFields })
     );
 
     vi.useRealTimers();
