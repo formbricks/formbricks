@@ -67,6 +67,50 @@ const validSurvey = ZV3CreateSurveyBody.parse({
 });
 
 describe("validateV3SurveyReferences", () => {
+  test("a RESERVED operand is not validated against the catalog, on either side", () => {
+    // Pinned rather than left to be inferred from the absence of an arm (ENG-2538's audit). A
+    // reserved operand names a `RESERVED_FIELD_CATALOG` entry — a static list in code, not anything
+    // declared on the survey — so there are no references to dangle against. Refusing an unknown one
+    // would also contradict `ZDynamicReservedField`, which validates the name as non-empty only so a
+    // survey authored against a newer catalog still round-trips through an older deployment.
+    // Spread over the already-parsed fixture rather than re-parsed: `validSurvey` is schema OUTPUT,
+    // whose translatable fields carry the internal `default` key the input schema refuses.
+    const withReservedOperands = {
+      ...validSurvey,
+      blocks: [
+        {
+          ...validSurvey.blocks[0],
+          logic: [
+            {
+              id: "cllog123456789012345678902",
+              conditions: {
+                id: "clgrp123456789012345678902",
+                connector: "and",
+                conditions: [
+                  {
+                    id: "clcon123456789012345678902",
+                    leftOperand: { type: "reserved", value: "notInAnyCatalog" },
+                    operator: "equals",
+                    rightOperand: { type: "reserved", value: "alsoNotInAnyCatalog" },
+                  },
+                ],
+              },
+              actions: [
+                {
+                  id: "clact123456789012345678902",
+                  objective: "jumpToEnding",
+                  target: "clend123456789012345678901",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    } as unknown as typeof validSurvey;
+
+    expect(() => validateV3SurveyReferences(withReservedOperands)).not.toThrow();
+  });
+
   test("accepts a survey with consistent stable identifiers", () => {
     expect(
       validateV3SurveyReferences({
