@@ -7,17 +7,23 @@ import {
   TEnterpriseLicenseFeatures,
 } from "@/modules/ee/license-check/types/enterprise-license";
 
-// Mock declarations must be at the top level
-vi.mock("@/lib/env", () => ({
-  env: {
+// Hoisted so the memory-cache test below can flip NODE_ENV on the very object the module under
+// test reads. getEnterpriseLicense skips its in-memory cache while NODE_ENV is "test", so license
+// state cannot bleed between tests here; dropping that key re-enables the cache silently.
+const { envMock } = vi.hoisted(() => ({
+  envMock: {
     ENTERPRISE_LICENSE_KEY: "test-license-key",
     ENVIRONMENT: "production",
 
     FORMBRICKS_COM_URL: "https://app.formbricks.com",
     HTTPS_PROXY: undefined,
     HTTP_PROXY: undefined,
+    NODE_ENV: "test",
   },
 }));
+
+// Mock declarations must be at the top level
+vi.mock("@/lib/env", () => ({ env: envMock }));
 
 const mockCache = {
   get: vi.fn(),
@@ -210,6 +216,53 @@ describe("License Core Logic", () => {
       expect(mockCache.tryLock).toHaveBeenCalled();
       expect(mockCache.set).toHaveBeenCalled();
       expect(license).toEqual(expectedActiveLicenseState);
+    });
+
+    // Tripwire for the `NODE_ENV: "test"` key in the `@/lib/env` mock at the top of this file.
+    // license.ts skips its in-memory cache only while env.NODE_ENV is "test"; drop the key and the
+    // cache goes live, letting license state bleed between tests in this file. Without this test
+    // that regression is silent — the suite just becomes order-dependent.
+    test("bypasses the in-memory cache so repeated calls re-read the license", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+
+      fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockFetchedLicenseDetails }),
+      } as any);
+
+      await getEnterpriseLicense();
+      const cacheReadsAfterFirstCall = mockCache.get.mock.calls.length;
+      await getEnterpriseLicense();
+
+      expect(mockCache.get.mock.calls.length).toBeGreaterThan(cacheReadsAfterFirstCall);
+    });
+
+    // The other side of the same guard: outside tests the in-memory cache is what keeps a busy
+    // instance from re-reading license state on every call, and only this test exercises it.
+    test("serves the in-memory cache within its TTL when not running under test", async () => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+
+      fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockFetchedLicenseDetails }),
+      } as any);
+
+      // The guard re-reads env.NODE_ENV on every call, so flipping it on the mock is enough.
+      // Resetting the module registry instead would rebuild every mock this file shares.
+      envMock.NODE_ENV = "production";
+
+      try {
+        const first = await getEnterpriseLicense();
+        const cacheReadsAfterFirstCall = mockCache.get.mock.calls.length;
+        const second = await getEnterpriseLicense();
+
+        expect(second).toEqual(first);
+        expect(mockCache.get.mock.calls.length).toBe(cacheReadsAfterFirstCall);
+      } finally {
+        envMock.NODE_ENV = "test";
+      }
     });
 
     test("should use previous result if fetch fails and previous result exists and is within grace period", async () => {
@@ -743,7 +796,6 @@ describe("License Core Logic", () => {
         },
       }));
 
-      // eslint-disable-next-line turbo/no-undeclared-env-vars -- NEXT_PHASE is a Next.js env variable
       process.env.NEXT_PHASE = "phase-production-build";
 
       const { fetchLicense } = await import("./license");

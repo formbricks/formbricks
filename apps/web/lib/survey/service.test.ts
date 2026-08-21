@@ -15,6 +15,7 @@ import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -57,12 +58,17 @@ vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
 }));
 
+// The reconciliation itself is covered in lib/feedback-source/mapping-reconciliation.test.ts; here we only pin
+// what updateSurveyInternal hands it and when.
+vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
+  scheduleFeedbackSourceReconciliation: vi.fn(),
+}));
+
 beforeEach(() => {
   prisma.survey.count.mockResolvedValue(1);
   // createSurvey now wraps its core writes in prisma.$transaction; run the callback with the same
   // mocked client so per-test prisma.survey/segment mocks still apply inside the transaction.
-  vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
-    callback(prisma)) as typeof prisma.$transaction);
+  vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
 });
 
 describe("evaluateLogic with mockSurveyWithLogic", () => {
@@ -482,8 +488,9 @@ describe("Tests for updateSurvey", () => {
     // ENG-1749/ENG-1920: the app-survey segment block connects segment.surveys by id; a survey from
     // another workspace must not be connectable (would re-point that survey's targeting).
     test("rejects connecting a survey from another workspace to the segment (app survey update)", async () => {
-      // Draft row: this exercises the skip-validation path, which the ENG-1939 guard restricts to
-      // drafts. The cross-workspace segment check under test is unaffected by the status.
+      // Draft row and draft payload: this exercises the skip-validation path, which the
+      // ENG-1939/ENG-2115 guard restricts to draft-to-draft writes. The cross-workspace segment check
+      // under test is unaffected by the status.
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" }); // getSurvey → current survey (own workspace)
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
@@ -496,6 +503,7 @@ describe("Tests for updateSurvey", () => {
         updateSurveyInternal(
           {
             ...updateSurveyInput,
+            status: "draft",
             type: "app",
             segment: {
               id: "clownsegment000000000001",
@@ -524,6 +532,47 @@ describe("Tests for updateSurvey", () => {
       await expect(updateSurveyInternal({ ...updateSurveyInput }, true)).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    describe("Feedback source reconciliation (ENG-2064)", () => {
+      // The blocks that come back from prisma.survey.update, deliberately distinguishable from the
+      // caller's payload. Reconciling against the payload deletes mappings for questions that are
+      // still stored: a partial update that omits blocks leaves them untouched in the database
+      // (see the `updatedSurvey.blocks?.length` guard above), so its empty payload must not be read
+      // as "this survey has no questions".
+      const persistedBlocks = [
+        { id: "persisted-block", name: "Persisted", elements: [{ id: "el-persisted", type: "openText" }] },
+      ];
+
+      test("reconciles against the persisted blocks, not the caller's payload", async () => {
+        // Draft + skipValidation is the survey editor's own save path, and the one that can send a
+        // payload whose blocks differ from what ends up stored. ENG-1939/ENG-2115 gate BOTH sides of
+        // the transition, so the stored survey and the payload both have to be drafts.
+        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, blocks: persistedBlocks } as any);
+
+        await updateSurveyInternal({ ...updateSurveyInput, status: "draft", blocks: [] } as any, true);
+
+        expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
+          updateSurveyInput.id,
+          mockSurveyOutput.workspaceId,
+          persistedBlocks
+        );
+      });
+
+      // Reconciliation runs after the survey row is committed, so it must not be able to turn a
+      // successful save into a user-visible error. The helper owns that guarantee (it never
+      // rejects — see reconcile.test.ts); this pins the ordering the guarantee depends on.
+      test("reconciles only after the survey row has been written", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+        await updateSurvey(updateSurveyInput);
+
+        const updateOrder = vi.mocked(prisma.survey.update).mock.invocationCallOrder[0];
+        const reconcileOrder = vi.mocked(scheduleFeedbackSourceReconciliation).mock.invocationCallOrder[0];
+        expect(reconcileOrder).toBeGreaterThan(updateOrder);
+      });
     });
   });
 });
@@ -1403,6 +1452,7 @@ describe("updateSurveyDraftAction", () => {
       // Create a survey with incomplete i18n/fields
       const incompleteSurvey = {
         ...updateSurveyInput,
+        status: "draft",
         questions: [
           {
             id: "q1",
@@ -1424,6 +1474,7 @@ describe("updateSurveyDraftAction", () => {
 
       const surveyWithInvalidImage = {
         ...updateSurveyInput,
+        status: "draft",
         questions: [
           {
             id: "q1",
@@ -1464,13 +1515,29 @@ describe("updateSurveyDraftAction", () => {
 
     // ENG-1939: the lenient draft schema does not validate elements, so skipping validation on an
     // already-published survey would let structurally invalid blocks reach the DB and silently
-    // revert the survey to draft. Gate on the PERSISTED status, not the payload's.
+    // revert the survey to draft. Gate on the PERSISTED status. The payload stays a draft here so
+    // the case isolates the persisted-status half of the guard.
     test.each(["inProgress", "paused", "completed"] as const)(
       "rejects a skip-validation update when the stored survey is %s",
       async (status) => {
         prisma.survey.findUnique.mockResolvedValue({ ...mockSurveyOutput, status });
 
-        await expect(updateSurveyInternal(updateSurveyInput as TSurvey, true)).rejects.toThrow(
+        await expect(
+          updateSurveyInternal({ ...updateSurveyInput, status: "draft" } as TSurvey, true)
+        ).rejects.toThrow(OperationNotAllowedError);
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      }
+    );
+
+    // ENG-2115: the mirror image of the case above. `status` flows straight through to the write, so
+    // a persisted draft could otherwise be published (or paused/completed) through the skip-validation
+    // path with blocks that never passed ZSurvey. Both sides of the transition must be a draft.
+    test.each(["inProgress", "paused", "completed"] as const)(
+      "rejects a skip-validation update that moves a stored draft to %s",
+      async (status) => {
+        prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+
+        await expect(updateSurveyInternal({ ...updateSurveyInput, status } as TSurvey, true)).rejects.toThrow(
           OperationNotAllowedError
         );
         expect(prisma.survey.update).not.toHaveBeenCalled();

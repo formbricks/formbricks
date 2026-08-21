@@ -30,7 +30,7 @@ packages/database/
 │   │   └── migration.sql      # Schema migration file
 │   └── [timestamp_name]/      # Data migration folder
 │       └── migration.ts       # Data migration file
-├── migrations/                # Prisma internal migrations
+├── .prisma-migrations/        # Transient Prisma scratch dir (gitignored)
 ├── schema/                    # Prisma schema folder
 │   ├── main.prisma            # Shared models, datasource, and generators
 │   └── workflows.prisma       # Workflows models and enums
@@ -51,6 +51,8 @@ packages/database/
 - **Single Type per Subdirectory**: A migration subdirectory can only contain one file type—either `migration.sql` or `migration.ts`
 - **Custom Naming Convention**: Subdirectories follow the format `timestamp_name_of_the_migration` (e.g., `20241214112456_add_users_table`)
 - **Order of Execution**: Migrations are executed sequentially based on their timestamps, enabling precise control over the execution sequence
+
+> **Why two directories?** `migration/` (singular, checked in) is the source of truth — it contains both schema and data migrations interleaved by timestamp. `.prisma-migrations/` (hidden, gitignored) is a transient scratch directory generated at runtime: the runner copies only schema migrations into it and feeds them to `prisma migrate deploy`. The hidden name prevents accidental edits; developers should only work in `migration/`.
 
 ### Database Tracking
 

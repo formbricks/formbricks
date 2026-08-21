@@ -19,6 +19,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    internalDatasetPurge: {
+      interval: 3600,
+      allowedPerInterval: 5,
+      namespace: "api:internal:feedback-datasets:purge",
+    }, // 5 per hour — irreversible and dataset-wide; nobody legitimately purges more often than that
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,
@@ -60,6 +65,13 @@ export const rateLimitConfigs = {
       allowedPerInterval: 1,
       namespace: "action:generate-example-responses",
     }, // 1 per minute per user — closes the multi-click race and bounds LLM spend
+    integrationMutation: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "action:integration-mutation",
+    }, // 30 per minute per user — one save or delete per UI interaction, so this bounds a readWrite
+    // member churning integration rows (each write hits the provider config and the audit log) without
+    // getting in the way of legitimate mapping edits
   },
 
   storage: {

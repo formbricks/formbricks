@@ -1,7 +1,7 @@
 import "server-only";
 import { type BeforeSendFn, PostHog } from "posthog-node";
 import { logger } from "@formbricks/logger";
-import { POSTHOG_KEY } from "@/lib/constants";
+import { IS_PRODUCTION, POSTHOG_KEY } from "@/lib/constants";
 
 const POSTHOG_HOST = "https://eu.i.posthog.com";
 
@@ -60,7 +60,7 @@ export const posthogTracingClient: PostHog | null =
     before_send: stripAiError,
   });
 
-if (process.env.NODE_ENV !== "production") {
+if (!IS_PRODUCTION) {
   if (posthogServerClient) globalForPostHog.posthogServerClient = posthogServerClient;
   if (posthogTracingClient) globalForPostHog.posthogTracingClient = posthogTracingClient;
 }

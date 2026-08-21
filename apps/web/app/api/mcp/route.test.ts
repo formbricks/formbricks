@@ -58,6 +58,10 @@ const { MCP_CHALLENGE_SCOPE } = await import("@/modules/auth/lib/oauth-urls");
 // The auth-params are comma-separated per RFC 9110 §11.6.1 (#8718): asserting the whole string is what
 // keeps the separator from regressing, since a strict client parser needs it to read `resource_metadata`.
 // The scope list interpolates the real constant, so this stays honest as the advertised scopes change.
+// Real tokens always carry `aud`; the resource server rejects any token not minted for it, so the
+// fixtures have to look like something the authorization server would actually issue.
+const MCP_AUDIENCE = "http://localhost/api/mcp";
+
 const EXPECTED_CHALLENGE = `Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp", scope="${MCP_CHALLENGE_SCOPE}"`;
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -144,6 +148,7 @@ describe("POST /api/mcp", () => {
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
     userFindUniqueMock.mockResolvedValue({ isActive: true });
     verifyAccessTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
       name: "Person",
@@ -154,6 +159,56 @@ describe("POST /api/mcp", () => {
     vi.mocked(listV3Surveys).mockResolvedValue(
       successListResponse([], { limit: 20, nextCursor: null, totalCount: 0 }, { requestId: "req_mcp" })
     );
+  });
+
+  /**
+   * `subscriptions/listen` exists only in 2026-07-28 and became reachable with the SDK v2 migration: under
+   * v1's `disableSse: true` there was no long-lived path at all. We register no resources and emit no
+   * list-changed notifications, so an accepted stream can never deliver anything — it would just hold a
+   * connection and a keepalive timer per caller, 1024 of them per process on the SDK's default.
+   *
+   * Driven through the real route rather than asserted on the handler options, so it also covers the option
+   * actually reaching the SDK.
+   *
+   * The request is a fully valid one — 2026 `_meta` envelope, `Mcp-Method` header, and a real
+   * `notifications` filter — so the refusal can only come from the subscription cap. That completeness is
+   * load-bearing, not tidiness: the cap is checked *before* param validation, so with a half-built payload
+   * this test passes even with the cap removed. Verified by removing `maxSubscriptions` — with a valid
+   * payload the stream is then accepted and held open, and this test fails on a timeout rather than an
+   * assertion (slower, but red either way).
+   */
+  test("refuses a subscriptions/listen stream instead of holding it open", async () => {
+    const response = await POST(
+      createMcpRequest(
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "subscriptions/listen",
+          // 2026-07-28 is sessionless, so what `initialize` used to carry once per session now rides on
+          // every request's `_meta`. The SDK rejects the call with -32602 if any part is missing.
+          params: {
+            notifications: { toolsListChanged: true },
+            _meta: {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientCapabilities": {},
+              "io.modelcontextprotocol/clientInfo": { name: "route-test", version: "1.0.0" },
+            },
+          },
+        },
+        {
+          "mcp-protocol-version": "2026-07-28",
+          // 2026-07-28 requires the method in a header as well, and rejects the call if the two disagree.
+          "mcp-method": "subscriptions/listen",
+          "x-request-id": "req_listen",
+        }
+      )
+    );
+    const body = await readMcpResponse(response);
+
+    expect(body.error).toMatchObject({
+      code: -32603,
+      message: expect.stringContaining("Subscription limit"),
+    });
   });
 
   test("returns 401 before MCP handling when authentication fails", async () => {
@@ -449,6 +504,7 @@ describe("POST /api/mcp", () => {
 
   test("blocks write tools for read-only OAuth tokens", async () => {
     verifyAccessTokenMock.mockResolvedValueOnce({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
       scope: "openid profile email surveys:read",
@@ -494,6 +550,7 @@ describe("POST /api/mcp", () => {
     // A write-capable user whose OAuth token was only granted read scopes (surveys:read + workflows:read)
     // must not be able to reach a workflow mutation — the ENG-1967 token-scope boundary.
     verifyAccessTokenMock.mockResolvedValueOnce({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
       scope: "openid profile email surveys:read workflows:read",

@@ -1,10 +1,13 @@
 # formbricks
 
-![Version: 0.0.0-dev](https://img.shields.io/badge/Version-0.0.0--dev-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 5.0.2](https://img.shields.io/badge/AppVersion-5.0.2-informational?style=flat-square)
+![Version: 5.3.4](https://img.shields.io/badge/Version-5.3.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 5.3.4](https://img.shields.io/badge/AppVersion-5.3.4-informational?style=flat-square)
 
 A Helm chart for Formbricks with PostgreSQL, Valkey
 
 **Homepage:** <https://formbricks.com/docs/self-hosting/setup/kubernetes>
+
+The version badges describe the latest published OCI chart. The source `Chart.yaml` keeps the development chart
+version at `0.0.0-dev`; the release workflow stamps the requested chart version into the packaged artifact.
 
 ## Maintainers
 
@@ -14,11 +17,12 @@ A Helm chart for Formbricks with PostgreSQL, Valkey
 
 ## Requirements
 
-| Repository                               | Name         | Version |
-| ---------------------------------------- | ------------ | ------- |
-| oci://registry-1.docker.io/bitnamicharts | postgresql   | 16.4.16 |
-| oci://docker.io/envoyproxy               | gateway-helm | v1.7.1  |
-| oci://registry-1.docker.io/bitnamicharts | envoyRedis   | 20.11.2 |
+| Repository                                      | Name         | Version |
+| ----------------------------------------------- | ------------ | ------- |
+| oci://registry-1.docker.io/bitnamicharts        | postgresql   | 16.4.16 |
+| oci://docker.io/envoyproxy                      | gateway-helm | v1.7.1  |
+| oci://registry-1.docker.io/bitnamicharts        | envoyRedis   | 20.11.2 |
+| https://vllm-project.github.io/production-stack | vllm-stack   | 0.1.11  |
 
 ## Envoy bundle modes
 
@@ -44,6 +48,13 @@ The intended defaults are:
 
 - self-hosted / single-tenant clusters: bundled controller mode
 - shared clusters with an existing platform controller: external-controller mode
+
+The chart leaves both `ingress.enabled` and `envoy.enabled` disabled because ingress and gateway choices are
+cluster-specific. Do not expose Formbricks v5 directly with those defaults: enable the chart-managed Envoy path
+or provide equivalent edge rate limiting for the documented route coverage. The default
+`autoscaling.minReplicas: 1` and `pdb.minAvailable: 1` are also a quick-start combination; raise the minimum to at
+least two for availability during voluntary disruptions, or change/disable the PDB for an intentional
+single-replica deployment.
 
 ## Cube
 
@@ -101,6 +112,47 @@ The generated Hub embedding configuration is:
 - `EMBEDDING_MODEL=<hub.embeddings.servedModelName or hub.embeddings.model>`
 - `EMBEDDING_BASE_URL=http://<release>-hub-embeddings:8080/v1`
 - `EMBEDDING_PROVIDER_API_KEY` from a dedicated embeddings Secret
+
+For sustained background throughput, enable the worker-only TEI pool. Hub API and semantic-search
+queries continue to use the foreground service; only `hub-worker` receives the background URL and
+micro-batch settings:
+
+```yaml
+hub:
+  embeddings:
+    enabled: true
+    background:
+      enabled: true
+      maxConcurrent: "24"
+      batchSize: "8"
+      batchMaxWaitMs: "25"
+      batchMaxInFlight: "3"
+      persistence:
+        storageClass: gp3
+      resources:
+        requests:
+          cpu: "8"
+          memory: 8Gi
+      autoscaling:
+        enabled: true
+        minReplicas: 1
+        maxReplicas: 6
+```
+
+The background pool is a StatefulSet with one retained RWO cache PVC per replica. Before a planned
+backfill, temporarily set both autoscaling replica bounds to the desired pre-warmed count and wait
+for every pod to become Ready. Restore the steady-state bounds after the backlog drains.
+
+Embedding backfills are opt-in and never render a Job unless `hub.embeddingBackfill.enabled=true`.
+Each deliberate run requires a new `runId`; start with `countOnly: true`, then use `tenantId` or
+`maxRecords` to limit canary waves before an unlimited run. The selected Hub image must include
+`/app/backfill-embeddings` (a release containing [formbricks/hub#121](https://github.com/formbricks/hub/pull/121));
+older images cannot run this Job.
+
+Hub exports the durable missing-record count as
+`hub_enrichment_pending_records{enrichment="taxonomy_embedding"}`. Alert when it remains above zero
+while `hub_river_queue_depth{queue="embeddings"}` remains zero for 15 minutes; that detects a
+stranded taxonomy backfill even when the UI progress bar has stopped moving.
 
 The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. For private or gated models, provide `hub.embeddings.huggingFace.token` or set `hub.embeddings.huggingFace.existingSecret`.
 
@@ -348,6 +400,8 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | deployment.containerSecurityContext.runAsNonRoot                   | bool   | `true`                                                                      |                                                           |
 | deployment.env                                                     | object | `{}`                                                                        | App container environment variables. Supports scalar values and `valueFrom` maps such as `secretKeyRef`. |
 | deployment.envFrom                                                 | string | `nil`                                                                       | Additional app container environment sources from ConfigMaps or Secrets. |
+| deployment.extraVolumeMounts                                       | list   | `[]`                                                                        | Additional app container volume mounts.                   |
+| deployment.extraVolumes                                            | list   | `[]`                                                                        | Additional app pod volumes.                               |
 | deployment.image.digest                                            | string | `""`                                                                        | When set, takes precedence over tag.                      |
 | deployment.image.pullPolicy                                        | string | `"IfNotPresent"`                                                            |                                                           |
 | deployment.image.repository                                        | string | `"ghcr.io/formbricks/formbricks"`                                           |                                                           |
@@ -389,8 +443,8 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | deployment.terminationGracePeriodSeconds                           | int    | `30`                                                                        | Time allowed for graceful Pod shutdown; must exceed any preStop drain. |
 | deployment.tolerations                                             | list   | `[]`                                                                        |                                                           |
 | deployment.topologySpreadConstraints                               | list   | `[]`                                                                        |                                                           |
-| enterprise.enabled                                                 | bool   | `false`                                                                     |                                                           |
-| enterprise.licenseKey                                              | string | `""`                                                                        |                                                           |
+| enterprise.enabled                                                 | bool   | `false`                                                                     | Deprecated compatibility value; it has no template effect. |
+| enterprise.licenseKey                                              | string | `""`                                                                        | Adds the license to the chart-generated app Secret.       |
 | externalSecret.enabled                                             | bool   | `false`                                                                     |                                                           |
 | externalSecret.files                                               | object | `{}`                                                                        |                                                           |
 | externalSecret.refreshInterval                                     | string | `"1h"`                                                                      |                                                           |
@@ -405,6 +459,21 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.auth.enabled                                        | bool   | `true`                                                                      |                                                           |
 | hub.embeddings.auth.existingSecret                                 | string | `""`                                                                        |                                                           |
 | hub.embeddings.auth.secretKey                                      | string | `"EMBEDDING_PROVIDER_API_KEY"`                                              |                                                           |
+| hub.embeddings.background.autoscaling.enabled                      | bool   | `false`                                                                     |                                                           |
+| hub.embeddings.background.autoscaling.maxReplicas                  | int    | `6`                                                                         |                                                           |
+| hub.embeddings.background.autoscaling.minReplicas                  | int    | `1`                                                                         |                                                           |
+| hub.embeddings.background.baseUrl                                  | string | `""`                                                                        | Defaults to the worker-only background TEI service URL.   |
+| hub.embeddings.background.batchMaxInFlight                         | string | `"1"`                                                                       |                                                           |
+| hub.embeddings.background.batchMaxWaitMs                           | string | `"25"`                                                                      |                                                           |
+| hub.embeddings.background.batchSize                                | string | `"1"`                                                                       |                                                           |
+| hub.embeddings.background.enabled                                  | bool   | `false`                                                                     |                                                           |
+| hub.embeddings.background.maxConcurrent                            | string | `"5"`                                                                       |                                                           |
+| hub.embeddings.background.persistence.enabled                      | bool   | `true`                                                                      |                                                           |
+| hub.embeddings.background.persistence.size                         | string | `"10Gi"`                                                                    | One retained cache volume per StatefulSet replica.        |
+| hub.embeddings.background.persistence.storageClass                 | string | `""`                                                                        |                                                           |
+| hub.embeddings.background.replicas                                 | int    | `1`                                                                         | Used when background autoscaling is disabled.             |
+| hub.embeddings.background.resources.requests.cpu                   | string | `"8"`                                                                       |                                                           |
+| hub.embeddings.background.resources.requests.memory                | string | `"8Gi"`                                                                     |                                                           |
 | hub.embeddings.autoscaling.enabled                                 | bool   | `false`                                                                     |                                                           |
 | hub.embeddings.autoscaling.maxReplicas                             | int    | `2`                                                                         |                                                           |
 | hub.embeddings.autoscaling.minReplicas                             | int    | `1`                                                                         |                                                           |
@@ -434,13 +503,19 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.service.port                                        | int    | `8080`                                                                      |                                                           |
 | hub.embeddings.service.type                                        | string | `"ClusterIP"`                                                               |                                                           |
 | hub.env                                                            | object | `{}`                                                                        |                                                           |
+| hub.embeddingBackfill.countOnly                                    | bool   | `true`                                                                      | Preview missing records without enqueueing.               |
+| hub.embeddingBackfill.enabled                                      | bool   | `false`                                                                     |                                                           |
+| hub.embeddingBackfill.maxRecords                                   | int    | `0`                                                                         | Zero means unlimited.                                     |
+| hub.embeddingBackfill.runId                                        | string | `""`                                                                        | Required unique identifier for each enabled Job run.      |
+| hub.embeddingBackfill.taxonomy                                     | bool   | `false`                                                                     | Use taxonomy-translated embedding input.                  |
+| hub.embeddingBackfill.tenantId                                     | string | `""`                                                                        | Restrict the run to one tenant.                           |
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
 | hub.extraVolumeMounts                                              | list   | `[]`                                                                        | Additional volume mounts for Hub API and worker.          |
 | hub.extraVolumes                                                   | list   | `[]`                                                                        | Additional pod volumes for Hub API and worker.            |
-| hub.image.digest                                                   | string | `"sha256:4dc0c4f26cf999b3bf4a26d7b09634fc65ae23cbb30c9ad82042da019d231458"` | When set, takes precedence over tag (immutable pin).      |
+| hub.image.digest                                                   | string | `"sha256:9f4c109e6589993ef15708f834d57241ed3a73e3246e3565620777a66a231b59"` | When set, takes precedence over tag (immutable pin).      |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                                                            |                                                           |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`                                                  |                                                           |
-| hub.image.tag                                                      | string | `"0.8.3"`                                                                   | Fallback when digest is empty.                            |
+| hub.image.tag                                                      | string | `"0.8.5"`                                                                   | Fallback when digest is empty.                            |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |

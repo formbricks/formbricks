@@ -845,7 +845,7 @@ describe("service.ts", () => {
       }));
 
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           yield {
             Contents: [{ Key: "uploads/ok-1.txt" }, { Key: "uploads/ok-2.txt" }, { Key: "uploads/fail.txt" }],
           };
@@ -893,7 +893,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return pages with files
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           yield {
             Contents: [
               { Key: "uploads/images/file1.jpg" },
@@ -953,7 +953,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return empty pages
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           yield {
             Contents: undefined, // No files found
           };
@@ -1000,7 +1000,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return empty array
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           yield {
             Contents: [], // Empty array
           };
@@ -1047,7 +1047,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return a single file
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           yield {
             Contents: [{ Key: "surveys/123/responses/response1.json" }],
           };
@@ -1113,7 +1113,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return files
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           yield {
             Contents: [{ Key: "test-file.txt" }],
           };
@@ -1163,7 +1163,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return multiple pages
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           // First page
           yield {
             Contents: [{ Key: "page1/file1.jpg" }, { Key: "page1/file2.png" }],
@@ -1228,7 +1228,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return large file set
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           yield {
             Contents: files,
           };
@@ -1318,7 +1318,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return mixed pages (one with files, one empty)
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           // First page with files
           yield {
             Contents: [{ Key: "file1.txt" }],
@@ -1370,7 +1370,7 @@ describe("service.ts", () => {
 
       // Mock paginator to return mixed valid and invalid keys
       const mockPaginator = {
-        async *[Symbol.asyncIterator]() {
+        *[Symbol.asyncIterator]() {
           yield {
             Contents: [
               { Key: "valid-file.txt" },

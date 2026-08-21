@@ -126,7 +126,7 @@ export const embedSurveyPreviewEmailHtml = `
             <tr style="width:100%">
               <td>
                 <a
-                  href="https://formbricks.com?utm_source=email_branding"
+                  href="https://formbricks.com?utm_source=formbricks-app&amp;utm_medium=email&amp;utm_campaign=powered_by_badge"
                   style="color:#4c545f !important;text-decoration-line:none;font-size:0.75rem;line-height:1.3333333333333333;color-scheme:only light;font-family:Inter, Helvetica, Arial, sans-serif"
                   target="_blank"
                   >Powered by Formbricks</a

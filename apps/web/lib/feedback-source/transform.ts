@@ -380,19 +380,30 @@ export function transformResponseToFeedbackRecords(
 
     const element = elementMap.get(mapping.elementId);
 
-    if (element?.type === TSurveyElementTypeEnum.Matrix) {
+    // ENG-2064: a mapping whose element is gone from the survey must not publish. Every branch below
+    // tolerates `element === undefined` — the type checks are optional-chained and the generic path
+    // falls through to `getHeadlineFromElement(undefined)` — so without this the row published a
+    // record labelled "Untitled" against a question that no longer exists, and
+    // `importHistoricalResponses` replayed every historical response through the same loop.
+    //
+    // This is also what makes reconciliation's hold-back honest: `resolveDeletions` keeps orphaned
+    // rows when removing them would leave a survey with none, on the stated grounds that they are
+    // inert. They were not inert until this guard existed.
+    if (!element) continue;
+
+    if (element.type === TSurveyElementTypeEnum.Matrix) {
       feedbackRecords.push(...expandMatrixToRecords(element, mapping, value, baseFields, lookupLanguage));
       continue;
     }
 
-    if (element?.type === TSurveyElementTypeEnum.Ranking) {
+    if (element.type === TSurveyElementTypeEnum.Ranking) {
       feedbackRecords.push(...expandRankingToRecords(element, mapping, value, baseFields, lookupLanguage));
       continue;
     }
 
     // Multi-select splits into one record per selected option so each keeps its own stable
     // value_id (ENG-1702). A single string answer falls through to the generic path below.
-    if (element?.type === TSurveyElementTypeEnum.MultipleChoiceMulti && Array.isArray(value)) {
+    if (element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && Array.isArray(value)) {
       feedbackRecords.push(
         ...expandMultiChoiceToRecords(element, mapping, value, baseFields, lookupLanguage)
       );

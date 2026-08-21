@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ElementError } from "@/components/general/element-error";
+import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
@@ -58,6 +58,8 @@ function NPS({
   imageUrl,
   videoUrl,
 }: Readonly<NPSProps>): React.JSX.Element {
+  const errorAria = getElementErrorAria(inputId, errorMessage);
+
   const [hoveredValue, setHoveredValue] = React.useState<number | null>(null);
 
   // Ensure value is within valid range (0-10)
@@ -74,13 +76,18 @@ function NPS({
   // decoupled from arrow-key focus moves because selecting can trigger
   // auto-progress (see useRovingRadioGroup).
   const npsValues = Array.from({ length: 11 }, (_, i) => String(i));
-  const { getRadioProps } = useRovingRadioGroup({
+  const { getRadioProps, keyboardValue } = useRovingRadioGroup({
     values: npsValues,
     selectedValue: currentValue === undefined ? undefined : String(currentValue),
     onSelect: (v) => {
       handleSelect(Number(v));
     },
   });
+
+  // Pointer hover, or the cell the respondent arrowed to — but never the card's mount autofocus,
+  // which painted 0 with the grey hover fill before the respondent had touched anything (ENG-2288).
+  // See `keyboardValue` in useRovingRadioGroup, and the same comment in rating.tsx.
+  const previewValue = hoveredValue ?? (keyboardValue === null ? null : Number(keyboardValue));
 
   // Get NPS option color for color coding
   const getNPSOptionColor = (idx: number): string => {
@@ -92,7 +99,7 @@ function NPS({
   // Render NPS option (0-10)
   const renderNPSOption = (number: number): React.JSX.Element => {
     const isSelected = currentValue === number;
-    const isHovered = hoveredValue === number;
+    const isHovered = previewValue === number;
     const isLast = number === 10; // Last option is 10
     const isFirst = number === 0; // First option is 0
 
@@ -121,14 +128,6 @@ function NPS({
           }
         }}
         onMouseLeave={() => {
-          setHoveredValue(null);
-        }}
-        onFocus={() => {
-          if (!disabled) {
-            setHoveredValue(number);
-          }
-        }}
-        onBlur={() => {
           setHoveredValue(null);
         }}>
         {colorCoding ? (
@@ -159,20 +158,33 @@ function NPS({
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader
+        headlineId={`${inputId}-headline`}
         headline={headline}
         description={description}
         required={required}
         requiredLabel={requiredLabel}
-        htmlFor={inputId}
         imageUrl={imageUrl}
         videoUrl={videoUrl}
       />
 
       {/* NPS Options */}
       <div className="relative" data-element-input>
-        <ElementError errorMessage={errorMessage} dir={dir} />
-        <fieldset className="w-full px-[2px]" dir={dir}>
-          <legend className="sr-only">NPS rating options</legend>
+        <ElementError errorMessage={errorMessage} dir={dir} id={errorAria.errorId} />
+        {/* The options are native radios sharing one `name`, so role="radiogroup" is accurate and
+            makes aria-required/aria-invalid valid on the group — ARIA 1.2 dropped aria-invalid from
+            the global attributes, and a bare <fieldset> (role="group") supports neither. A composite
+            role makes the accessible name load-bearing (screen readers announce it on entry), so the
+            group is named by the headline like every other grouping element here, rather than by an
+            untranslated <legend> that omitted the question. The roving-tabindex model lives on the
+            inputs, so the container role does not touch it. */}
+        <fieldset
+          className="w-full px-[2px]"
+          dir={dir}
+          role="radiogroup"
+          aria-labelledby={`${inputId}-headline`}
+          aria-required={required}
+          aria-invalid={errorAria.ariaInvalid}
+          aria-describedby={errorAria.ariaDescribedBy}>
           <div className="flex w-full">{npsOptions.map((number) => renderNPSOption(number))}</div>
 
           {/* Labels */}

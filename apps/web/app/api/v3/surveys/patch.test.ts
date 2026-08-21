@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
@@ -49,6 +50,12 @@ vi.mock("@/lib/survey/service", () => ({
 
 vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
+}));
+
+// The reconciliation itself is covered in lib/feedback-source/mapping-reconciliation.test.ts; here we only pin
+// that this route runs it, since it writes blocks without going through updateSurveyInternal.
+vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
+  scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
 vi.mock("./targeting", () => ({
@@ -226,8 +233,7 @@ describe("patchV3Survey", () => {
         publishOn: data.publishOn ?? currentSurvey.publishOn,
       }) as unknown as TSurveyUpdateReturn;
     });
-    vi.mocked(prisma.$transaction).mockImplementation(((callback: (tx: typeof prisma) => Promise<unknown>) =>
-      callback(prisma)) as typeof prisma.$transaction);
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     vi.mocked(normalizeSurveyScheduling).mockImplementation(({ closeOn, publishOn }) => ({
       closeOn,
       publishOn,
@@ -278,6 +284,25 @@ describe("patchV3Survey", () => {
         }),
       })
     );
+  });
+
+  // ENG-2064: this route writes blocks directly instead of going through updateSurveyInternal, so
+  // without its own call a survey edited over the v3 API would leave its feedback-source mappings
+  // stale — and the API is exactly the surface an automation changes questions from.
+  test("reconciles feedback-source mappings against the persisted blocks", async () => {
+    await patchV3Survey(currentSurvey, { name: "renamed via v3" }, "req_qa", "org_1");
+
+    // Pinned to the stored blocks rather than `expect.any(Array)`: this patch carries no `blocks` at
+    // all, so reconciling against the request payload would pass `undefined` — which `expect.any(Array)`
+    // would have caught, but so would any other array, including an empty one. The value is what
+    // matters here, because reconciling an empty block list deletes every mapping the survey has.
+    // The workspaceId is what scopes the deferred re-read of the survey to its tenant.
+    expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
+      currentSurvey.id,
+      currentSurvey.workspaceId,
+      currentSurvey.blocks
+    );
+    expect(currentSurvey.blocks.length).toBeGreaterThan(0);
   });
 
   test("patches metadata and hidden fields through v3 persistence", async () => {

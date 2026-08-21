@@ -19,16 +19,12 @@
   "files": [
     "dist"
   ],
+  "main": "./dist/index.umd.cjs",
+  "types": "./dist/index.d.ts",
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js",
-    "require": "./dist/index.umd.cjs"
-  },
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./dist/index.d.ts"
-      ]
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.umd.cjs"
     }
   },
   "scripts": {
@@ -44,8 +40,8 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@formbricks/vite-plugins": "workspace:*",
     "@types/node": "25.4.0",
     "@vitest/coverage-v8": "4.1.6",

@@ -1,5 +1,5 @@
 import { Config } from "@/lib/common/config";
-import { CONTAINER_ID } from "@/lib/common/constants";
+import { CONTAINER_ID, LIVE_REGION_ID } from "@/lib/common/constants";
 import { Logger } from "@/lib/common/logger";
 import { executeRecaptcha, loadRecaptchaScript } from "@/lib/common/recaptcha";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
@@ -274,6 +274,30 @@ export const addWidgetContainer = (): void => {
   document.body.appendChild(containerElement);
 };
 
+/**
+ * Mounts the persistent, visually hidden status region surveys announce their opening into
+ * (a no-overlay survey never takes focus, so this is the only signal assistive tech gets).
+ * Created at setup — not at survey open — because screen readers only reliably announce
+ * changes made to a live region that already existed; a region inserted together with its
+ * content is announced inconsistently. The surveys renderer writes the message
+ * (packages/surveys/src/lib/live-region.ts) and re-creates the region if an older embed
+ * script did not have this function.
+ */
+export const addLiveRegionContainer = (): void => {
+  // The SDK can be imported (not just script-tagged) and evaluated during SSR.
+  if (typeof document === "undefined") return;
+  if (document.getElementById(LIVE_REGION_ID)) return;
+
+  const liveRegion = document.createElement("div");
+  liveRegion.id = LIVE_REGION_ID;
+  liveRegion.setAttribute("role", "status");
+  liveRegion.setAttribute("aria-live", "polite");
+  liveRegion.setAttribute("aria-atomic", "true");
+  liveRegion.style.cssText =
+    "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0";
+  document.body.appendChild(liveRegion);
+};
+
 export const removeWidgetContainer = (): void => {
   document.getElementById(CONTAINER_ID)?.remove();
 };
@@ -293,7 +317,7 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
       if (globalThis.window.formbricksSurveys) {
         const storedNonce = globalThis.window.__formbricksNonce;
         if (storedNonce) {
-          globalThis.window.formbricksSurveys.setNonce(storedNonce);
+          globalThis.window.formbricksSurveys.setNonce?.(storedNonce);
         }
         resolve(globalThis.window.formbricksSurveys);
         return;

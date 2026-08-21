@@ -63,7 +63,7 @@ secrets/
 packages/lib/uploads
 apps/web/public/js
 packages/database/generated
-packages/database/migrations
+packages/database/.prisma-migrations
 branch.json
 .vercel
 

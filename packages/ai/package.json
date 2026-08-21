@@ -22,8 +22,10 @@
     "dist"
   ],
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
@@ -47,9 +49,10 @@
     "ai": "6.0.177"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.6",
+    "rimraf": "6.1.3",
     "typescript": "5.9.3",
     "vite": "8.0.16",
     "vitest": "4.1.6"

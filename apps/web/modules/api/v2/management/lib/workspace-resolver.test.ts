@@ -11,7 +11,7 @@ vi.mock("@/lib/utils/resolve-client-id", () => ({
 
 const auth = (organizationId: string, workspaceId: string, permission: ApiKeyPermission) => ({
   organizationId,
-  workspacePermissions: [{ workspaceId, permission }],
+  workspacePermissions: [{ workspaceId, workspaceName: "Test Workspace", permission }],
 });
 
 describe("resolveBodyIdsV2", () => {

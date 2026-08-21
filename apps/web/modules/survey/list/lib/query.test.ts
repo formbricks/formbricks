@@ -10,6 +10,7 @@ const surveyA = {
   type: "link" as const,
   status: "draft" as const,
   publishOn: null,
+  archivedAt: null,
   createdAt: new Date("2026-04-15T10:00:00.000Z"),
   updatedAt: new Date("2026-04-15T10:00:00.000Z"),
   responseCount: 0,
@@ -32,6 +33,7 @@ const baseData: InfiniteData<TSurveyListPage> = {
         limit: 20,
         nextCursor: "cursor-1",
         totalCount: 2,
+        hasArchived: false,
       },
     },
     {
@@ -40,6 +42,7 @@ const baseData: InfiniteData<TSurveyListPage> = {
         limit: 20,
         nextCursor: null,
         totalCount: 2,
+        hasArchived: false,
       },
     },
   ],

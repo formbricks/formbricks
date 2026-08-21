@@ -38,6 +38,22 @@ http://localhost:3000/api/mcp
 The route supports `POST` requests, runs with the Next.js Node.js runtime, and sets private no-store
 response headers. Browser-origin MCP requests must come from the configured Formbricks app origin.
 
+### Protocol revisions
+
+The server implements protocol revision **2026-07-28** and keeps serving the 2025 era from the same
+endpoint, so a client on an older revision does not need to change anything. The MCP TypeScript SDK
+answers the legacy `initialize` handshake alongside `server/discover`, and `mcp-handler` serves with
+`legacy: "stateless"`.
+
+Three parts of the revision are handled by the SDK rather than by our code: the `server/discover` RPC,
+the `resultType` field now required on every result, and the `ttlMs` / `cacheScope` cache hints (which
+default conservatively to `ttlMs: 0` and `cacheScope: "private"`).
+
+Notable removals in the revision that used to be configured here: protocol-level sessions and the
+`Mcp-Session-Id` header, the `initialize` handshake as a precondition, and the HTTP+SSE transport. The
+handler therefore takes no `sessionIdGenerator`, `disableSse`, `basePath`, or `maxDuration` option — the
+route this handler is mounted on is the only mount point.
+
 OAuth clients discover the protected resource metadata here:
 
 ```text
@@ -184,7 +200,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `create_feedback_record` | `write` or `manage` |
 | `create_feedback_records` | `write` or `manage` |
 | `update_feedback_record` | `write` or `manage` |
-| `delete_feedback_record` | `write` or `manage` |
+| `delete_feedback_record` | `manage` |
 
 Synthesized MCP scopes for an API key: `surveys:read` + `workflows:read` + `feedbackRecords:read`
 always; the matching `:write` scopes when the key has `write` or `manage` on any workspace. The scope
@@ -242,14 +258,13 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
 ```
 
 <Note>
-  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP
-  clients register with the scopes from the protected-resource metadata's `scopes_supported`
-  (`surveys:read surveys:write workflows:read workflows:write feedbackRecords:read
-  feedbackRecords:write offline_access`). Because the authorization server validates the `/authorize`
-  request against the client's **registered** scopes, a client that registers with a narrower set than
-  it later requests (e.g. it registers surveys-only but requests `offline_access`) is rejected with
-  `invalid_scope`. To smoke-test the real path, omit `scope` and let the client adopt the advertised
-  set, or pass exactly what the metadata advertises.
+  This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP clients
+  register with the scopes from the protected-resource metadata's `scopes_supported` (`surveys:read
+  surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write offline_access`).
+  Because the authorization server validates the `/authorize` request against the client's **registered**
+  scopes, a client that registers with a narrower set than it later requests (e.g. it registers surveys-only
+  but requests `offline_access`) is rejected with `invalid_scope`. To smoke-test the real path, omit `scope`
+  and let the client adopt the advertised set, or pass exactly what the metadata advertises.
 </Note>
 
 <Note>
@@ -508,6 +523,47 @@ Errors are returned as MCP error tool results with a structured v3 problem paylo
 }
 ```
 
+## Tool Arguments
+
+Every tool input schema is **strict**: an argument a tool does not declare is rejected, not ignored.
+The advertised JSON Schema carries `additionalProperties: false`, and the SDK validates the call before
+the handler runs, so an undeclared or misspelled key comes back as an input-validation error result and
+the underlying v3 operation is never reached.
+
+This matters most on filters. A dropped filter does not narrow, so the pre-strict behaviour ran the
+query wider than asked and reported success — `count_feedback_records` with a misspelled `userId`
+(the correct key is `user_id`) returned the count for every record in the dataset, which an agent has no
+way to tell from a real answer.
+
+Strictness applies at every depth, not just to the outermost object: a misspelled key inside
+`filter.status` is rejected the same way a misspelled top-level argument is. This matters because a
+dropped nested filter key does not merely lose the key — it leaves the filter object empty, so the query
+runs wider than asked.
+
+Two kinds of exception:
+
+- **Free-form by design.** `blocks`, `metadata`, `welcomeCard` and friends on `create_survey`, and the
+  `data` payload on `patch_survey` / `validate_survey`, accept any nested shape. They are validated by the
+  v3 survey document contract once the call reaches the operation.
+- **The workflow `definition`.** Everything below `definition` on `create_workflow` and `patch_workflow`
+  is still open, so a misspelled key inside a trigger, node, edge or node `config` is dropped rather than
+  rejected. That schema is shared with the v3 Workflows REST API and the workflow builder, so tightening it
+  is a v3 API change rather than an MCP one; it is tracked as ENG-2437. Treat a `create_workflow` result as
+  confirming only what it echoes back.
+
+<Note>
+  A client that adds its own keys to a tool call's `arguments` will be rejected. Nothing in the MCP spec
+  invites that, but it is a behaviour change from earlier Formbricks releases, which silently dropped
+  such keys.
+
+  Two consequences worth knowing. **Read-modify-write needs trimming:** `update_feedback_record` accepts
+  only the eight mutable fields, so echoing a record straight back from `get_feedback_record` is rejected
+  — strip the provenance (`source_*`, `field_*`, `submission_id`, `collected_at`) and the derived
+  sentiment/emotions/translation first. The error names every key to remove. And **`list_workspaces`
+  takes no arguments at all**, so a client that pads zero-argument calls with a placeholder key will fail
+  on the one tool every other workspace-scoped tool depends on for its `workspaceId`.
+</Note>
+
 ## Available Tools
 
 ### list_surveys
@@ -756,14 +812,14 @@ Input:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "limit": 20,
   "cursor": "opaque-cursor-from-previous-response",
-  "sortBy": "updatedAt",
   "filter": {
     "name": { "contains": "welcome" },
     "status": { "in": ["draft", "enabled"] }
-  }
+  },
+  "limit": 20,
+  "sortBy": "updatedAt",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -785,11 +841,11 @@ Lists workflow runs for a workspace, newest first. Read-only and idempotent.
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
+  "filter": { "isDryRun": false, "status": { "in": ["completed"] } },
   "limit": 20,
-  "workflowId": "clwf1234567890123456789012",
   "responseId": "clrs1234567890123456789012",
-  "filter": { "status": { "in": ["completed"] }, "isDryRun": false }
+  "workflowId": "clwf1234567890123456789012",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -822,20 +878,20 @@ idempotent. Takes the full v3 create payload:
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "name": "Notify on churn survey completion",
   "definition": {
-    "schemaVersion": 1,
+    "edges": [],
     "entryNodeId": "trigger",
-    "trigger": {
-      "id": "trigger",
-      "type": "trigger",
-      "triggerType": "response.completed",
-      "config": { "surveyId": "clsv1234567890123456789012", "endingCardIds": ["ending-1"] }
-    },
     "nodes": [],
-    "edges": []
-  }
+    "schemaVersion": 1,
+    "trigger": {
+      "config": { "endingCardIds": ["ending-1"], "surveyId": "clsv1234567890123456789012" },
+      "id": "trigger",
+      "triggerType": "response.completed",
+      "type": "trigger"
+    }
+  },
+  "name": "Notify on churn survey completion",
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -846,8 +902,8 @@ idempotent. `definition` edits are only accepted while the workflow is draft or 
 
 ```json
 {
-  "workflowId": "clwf1234567890123456789012",
-  "data": { "name": "Renamed workflow" }
+  "data": { "name": "Renamed workflow" },
+  "workflowId": "clwf1234567890123456789012"
 }
 ```
 
@@ -856,7 +912,7 @@ idempotent. `definition` edits are only accepted while the workflow is draft or 
 Duplicates a workflow as a new draft with empty run and version history. Writes data; not idempotent.
 
 ```json
-{ "workflowId": "clwf1234567890123456789012", "name": "Copy of workflow" }
+{ "name": "Copy of workflow", "workflowId": "clwf1234567890123456789012" }
 ```
 
 `name` is optional; if omitted the server picks a non-conflicting copy name.
@@ -873,9 +929,8 @@ each take only a workflow id:
 - `enable_workflow` — validates executability, snapshots an immutable version, and makes the workflow
   live. A non-executable definition is refused with `422 workflow_not_executable`.
 
-  <Warning>
-    Once live, the workflow runs on matching survey responses and can send emails.
-  </Warning>
+  <Warning>Once live, the workflow runs on matching survey responses and can send emails.</Warning>
+
 - `disable_workflow` — stops future runs.
 - `archive_workflow` / `unarchive_workflow` — soft archive and restore (to draft).
 - `delete_workflow` — the v3 delete returns `204 No Content`; the MCP result contains the `requestId`.
@@ -917,11 +972,15 @@ Input:
   "datasetId": "clfd1234567890123456789012",
   "field_group_id": "grp_1",
   "field_id": "q1",
-  "field_type": "text",
+  "field_type": ["text", "rating"],
+  "has_sentiment": true,
   "limit": 50,
+  "order": "desc",
+  "sentiment": ["negative", "very_negative"],
   "since": "2026-01-01T00:00:00Z",
+  "sort": "collected_at",
   "source_id": "svy_1",
-  "source_type": "survey",
+  "source_type": ["survey", "review"],
   "submission_id": "sub_1",
   "until": "2026-12-31T23:59:59Z",
   "user_id": "user_1",
@@ -930,22 +989,70 @@ Input:
 }
 ```
 
-All filters are optional, match exactly, and combine with AND. They mirror the Hub's own
-`GET /v1/feedback-records` parameters, and each is named after the record field it filters — so filtering by
-a `user_id` you just read in a response is spelled the same way. An unknown filter key is rejected with a
-422 rather than ignored, since a silently dropped filter would widen the result set without saying so.
+All filters are optional. They mirror the Hub's own `GET /v1/feedback-records` parameters, and each is
+named after the record field it filters — so filtering by a `user_id` you just read in a response is
+spelled the same way. An unknown filter key is rejected with a 422 rather than ignored, since a silently
+dropped filter would widen the result set without saying so.
 
-| Filter            | Selects                                                              |
-| ----------------- | -------------------------------------------------------------------- |
-| `source_type`     | a kind of source, e.g. `survey`, `review`, `call_notes`              |
-| `source_id`       | one survey/form/ticket                                               |
-| `field_type`      | one field type (`text`, `nps`, `rating`, …)                          |
-| `field_id`        | all answers to one question                                          |
-| `field_group_id`  | one grouped question (ranking, matrix, grid)                         |
-| `submission_id`   | the sibling answers given in one submission                          |
-| `user_id`         | everything one end user submitted                                    |
-| `value_id`        | everyone who picked one particular choice                            |
-| `since` / `until` | a `collected_at` range (must fall between 1970-01-01 and 2080-12-31) |
+**How they combine.** Every identity filter accepts one value or a list of them. Repeating one filter
+**OR**s its values; different filters are **AND**ed. So `source_type: ["survey", "review"]` with
+`sentiment: ["negative"]` reads as *"(survey OR review) AND negative"*. There is no way to OR across
+different filters.
+
+| Filter                                        | Selects                                                              |
+| --------------------------------------------- | -------------------------------------------------------------------- |
+| `source_type`                                 | a kind of source, e.g. `survey`, `review`, `call_notes`              |
+| `source_id`                                   | one survey/form/ticket                                               |
+| `source_name`                                 | one source by display name                                           |
+| `field_type`                                  | one field type (`text`, `nps`, `rating`, …)                          |
+| `field_id`                                    | all answers to one question                                          |
+| `field_group_id`                              | one grouped question (ranking, matrix, grid)                         |
+| `submission_id`                               | the sibling answers given in one submission                          |
+| `user_id`                                     | everything one end user submitted                                    |
+| `value_id`                                    | everyone who picked one particular choice                            |
+| `language`                                    | the language the feedback was given in                               |
+| `sentiment`                                   | a sentiment label; only enriched records carry one                   |
+| `emotions`                                    | **any** of the listed emotion labels, never all of them              |
+| `since` / `until`                             | a `collected_at` range (must fall between 1970-01-01 and 2080-12-31) |
+| `created_since` / `created_until`             | a `created_at` range — "what did this import bring in"               |
+| `value_date_min` / `value_date_max`           | a range over the date *answer*, not the collection time              |
+| `value_number_min` / `value_number_max`       | a range over the numeric answer                                      |
+| `sentiment_score_min` / `sentiment_score_max` | a sentiment score range, from -1 to 1                                |
+| `has_sentiment`                               | records that do (`true`) or do not (`false`) carry a sentiment        |
+| `has_emotions`                                | records that do or do not carry emotion labels                       |
+| `has_translation`                             | records that do or do not have a translation                         |
+
+Value limits mirror the Hub's: at most 100 values per filter (the enum filters cap at their own label
+count instead), 255 characters per value, and 10 for a `language` tag. Crossing either bound is a 422
+naming the filter, never a silent truncation to the first 100.
+
+An empty string is **not** the same thing here as on the Hub directly: the Hub treats `?source_type=` as
+identical to omitting the filter, but every string filter on this surface requires at least one
+character, so an empty value is rejected rather than ignored.
+
+<Warning>
+  **Every range filter excludes records whose column is empty.** `value_number_min: 0` is not
+  "everything" — it drops every text answer, because they carry no number. Likewise
+  `sentiment_score_min: -1` means "every *enriched* record", not every record. To find the records
+  enrichment has not reached, use `has_sentiment: false` rather than a score range.
+</Warning>
+
+<Warning>
+  **A backwards range is rejected, not run as an empty query.** `value_number_min: 5, value_number_max: 1`
+  is a `400` naming both bounds (e.g. `value_number_min` — "must be less than or equal to
+  value_number_max"). This applies to every range pair, including the timestamp ones; it is the Hub's own
+  check relayed as-is, not something validated here, so the message always names the Hub's parameters.
+</Warning>
+
+**Ordering.** `sort` accepts `collected_at` (the default) or `created_at`, and `order` accepts `asc` or
+`desc` (default `desc`). Neither applies to `count_feedback_records`, which rejects them. A cursor marks a
+position *within one specific ordering*, so keep `sort` and `order` identical for the whole traversal —
+presenting a cursor under a different ordering is rejected rather than silently returning a page that
+looks like a continuation.
+
+`collected_at` and `created_at` diverge whenever historical data is imported: the feedback was collected
+months ago but stored today. Use `created_since` for "what did this import bring in", and `since` for
+"what did people tell us in this period".
 
 The workspace/dataset/pagination parameters (`workspaceId`, `datasetId`, `limit`, `cursor`) stay camelCase:
 they name nothing in the record.
@@ -982,15 +1089,18 @@ records — a caller that let the dataset auto-resolve does not need a second ca
 
 Counts the feedback records matching a filter set, without fetching them — for "how many" questions that
 would otherwise mean paging through records. Read-only and idempotent. Takes the same filters as
-`list_feedback_records` (no `limit`/`cursor`), because the Hub documents its count endpoint as accepting
-the same query parameters as its list endpoint; both go through one mapper in `lib/operations.ts`, so a
-count always describes the same set as the equivalent list.
+`list_feedback_records` (no `limit`/`cursor`, and no `sort`/`order` — the Hub's count endpoint does not
+accept ordering and they are rejected here), because the Hub documents its count endpoint as accepting the
+same query parameters as its list endpoint; both go through one mapper in `lib/operations.ts`, so a count
+always describes the same set as the equivalent list.
 
 Input:
 
 ```json
 {
+  "has_sentiment": false,
   "since": "2026-01-01T00:00:00Z",
+  "source_type": ["survey", "review"],
   "user_id": "user_1",
   "workspaceId": "clxx1234567890123456789012"
 }
@@ -1121,7 +1231,13 @@ audit event — N creations are N events, not one summary.
 
 Corrects the value of an existing feedback record. Writes data, is annotated `destructiveHint: true` (it
 overwrites a stored value; the previous one survives only in the audit log), and requires
-`feedbackRecords:write`. Only the fields sent are changed; at least one is required.
+`feedbackRecords:write` (API keys need `write` or `manage`). Only the fields sent are changed; at least one is required.
+
+For API keys, the same dataset-exclusivity rule applies as for deletes: the key may update only a
+record in a dataset assigned to exactly one workspace, where its permission unambiguously covers every
+record present (ENG-2189). A shared dataset returns 403; an integration needing to update records in
+both workspaces should use a workspace-scoped key per workspace. Session, OAuth and MCP-person
+principals are unaffected and authorize through their organization role instead.
 
 Updatable — the Hub's own mutable set: `value_text`, `value_number`, `value_boolean`, `value_date`,
 `value_id`, `user_id`, `language`, `metadata`. The schema is `.pick()`ed from the create fields, so bounds
@@ -1130,7 +1246,7 @@ can't drift between creating and correcting a record.
 The `value_*` field being set must be one the record's `field_type` accepts — the same table `create` enforces
 (`text` takes `value_text`, `nps`/`rating`/`number` take `value_number`, `categorical` takes `value_text`
 and/or `value_id`, and so on). Because `field_type` is immutable it is not part of the patch, so this is
-checked against the *stored* record and therefore reported after the ownership check, as a 422 naming the
+checked against the _stored_ record and therefore reported after the ownership check, as a 422 naming the
 offending field. Without it a patch could assemble what `create` rejects: putting `value_number` on a `text`
 record would leave both a text and a number set, with nothing to say which one the record means. The Hub does
 not enforce this itself.
@@ -1173,9 +1289,15 @@ Output is the updated record.
 ### delete_feedback_record
 
 Permanently deletes one feedback record. Writes data, is not idempotent, is annotated
-`destructiveHint: true`, and requires `feedbackRecords:write` (API keys need `write` or `manage`). The
+`destructiveHint: true`, and requires `feedbackRecords:write` (API keys need `manage`). The
 record and its derived embedding are removed with no soft delete, so this cannot be undone — the audit log
 entry keeps the deleted record as its `oldObject` and is the only remaining trace.
+
+For API keys, the dataset must be assigned to exactly one workspace — the caller's — because a key's
+workspace permission can only identify whose records these are when the dataset is not shared
+(ENG-2189). A shared dataset returns 403 with an explanation; an integration needing to delete from
+both workspaces should use a workspace-scoped key per workspace. Session, OAuth and MCP-person
+principals are unaffected and authorize through their organization role instead.
 
 Ownership is verified before the delete: the record must belong to a feedback dataset assigned to the
 workspace, and a record in another tenant is refused with the same generic authorization error as an
@@ -1272,21 +1394,21 @@ defaults to 0.7, which is strict enough that a fair paraphrase often falls just 
 Like the survey tools, workflow tools run no custom database queries — each calls the shared,
 framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
 
-| MCP Tool             | REST Contract                                    |
-| -------------------- | ------------------------------------------------ |
-| `list_workflows`     | `GET /api/v3/workflows`                          |
-| `get_workflow`       | `GET /api/v3/workflows/{workflowId}`             |
-| `list_workflow_runs` | `GET /api/v3/workflows/runs`                     |
-| `get_workflow_run`   | `GET /api/v3/workflows/runs/{runId}`             |
-| `test_workflow`      | `POST /api/v3/workflows/{workflowId}/test`       |
-| `create_workflow`    | `POST /api/v3/workflows`                         |
-| `patch_workflow`     | `PATCH /api/v3/workflows/{workflowId}`           |
-| `duplicate_workflow` | `POST /api/v3/workflows/{workflowId}/duplicate`  |
-| `delete_workflow`    | `DELETE /api/v3/workflows/{workflowId}`          |
-| `enable_workflow`    | `POST /api/v3/workflows/{workflowId}/enable`     |
-| `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`    |
-| `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`    |
-| `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive`  |
+| MCP Tool             | REST Contract                                   |
+| -------------------- | ----------------------------------------------- |
+| `list_workflows`     | `GET /api/v3/workflows`                         |
+| `get_workflow`       | `GET /api/v3/workflows/{workflowId}`            |
+| `list_workflow_runs` | `GET /api/v3/workflows/runs`                    |
+| `get_workflow_run`   | `GET /api/v3/workflows/runs/{runId}`            |
+| `test_workflow`      | `POST /api/v3/workflows/{workflowId}/test`      |
+| `create_workflow`    | `POST /api/v3/workflows`                        |
+| `patch_workflow`     | `PATCH /api/v3/workflows/{workflowId}`          |
+| `duplicate_workflow` | `POST /api/v3/workflows/{workflowId}/duplicate` |
+| `delete_workflow`    | `DELETE /api/v3/workflows/{workflowId}`         |
+| `enable_workflow`    | `POST /api/v3/workflows/{workflowId}/enable`    |
+| `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`   |
+| `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`   |
+| `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive` |
 
 ## Relationship to V3 Surveys API
 
@@ -1364,6 +1486,15 @@ query, like `create_feedback_record`.
   versions, or surveys.
 - Query-string credentials are rejected; use headers for API keys.
 - Large request bodies are rejected before the MCP handler using the same body-size policy as v3 APIs.
+- Tool arguments are strict: undeclared keys are rejected rather than ignored (see [Tool
+  Arguments](#tool-arguments)).
+- Resources and prompts are not exposed — the server registers tools only, so there is no MCP resource
+  for the survey document contract yet.
+- `subscriptions/listen` is refused (`maxSubscriptions: 0`). The 2026-07-28 revision replaced the GET SSE
+  endpoint with a long-lived POST-response stream, but with no resources registered and no list-changed
+  notifications emitted, such a stream could never deliver anything — it would just hold a connection.
+  A client that opens one gets `Subscription limit reached`; the list endpoints remain the way to see
+  current tools, prompts and resources.
 
 ## Implementation Files
 

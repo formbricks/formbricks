@@ -17,6 +17,19 @@ import {
 
 export const getDismissedStorageKey = (workspaceId: string) => `${workspaceId}-dismissedFeedbackSuggestions`;
 
+/**
+ * Surveys to surface as import suggestions below the connected sources.
+ * Excludes surveys already backing a source, and drafts — a draft has never collected responses,
+ * so suggesting it for import would only offer an empty source.
+ */
+export const getSuggestedSurveys = (
+  surveys: TUnifySurvey[],
+  connectedSurveyIds: string[]
+): TUnifySurvey[] => {
+  const connectedSurveyIdSet = new Set(connectedSurveyIds);
+  return surveys.filter((survey) => !connectedSurveyIdSet.has(survey.id) && survey.status !== "draft");
+};
+
 /** Survey element ids that can be mapped to a feedback source (drops unsupported question types). */
 export const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
   survey.elements
@@ -31,8 +44,6 @@ export interface TFeedbackSourceOption {
   id: TFeedbackSourceOptionId;
   name: string;
   description: string;
-  disabled: boolean;
-  badge?: { text: string; type: "success" | "gray" | "warning" };
 }
 
 export const getFeedbackSourceOptions = (t: TFunction): TFeedbackSourceOption[] => [
@@ -40,27 +51,21 @@ export const getFeedbackSourceOptions = (t: TFunction): TFeedbackSourceOption[] 
     id: "formbricks_survey",
     name: t("workspace.unify.formbricks_surveys"),
     description: t("workspace.unify.source_connect_formbricks_description"),
-    disabled: false,
   },
   {
     id: "csv",
     name: t("workspace.unify.csv_import"),
     description: t("workspace.unify.source_connect_csv_description"),
-    disabled: false,
   },
   {
     id: "api_ingestion",
     name: t("workspace.unify.api_ingestion"),
     description: t("workspace.unify.api_ingestion_settings_description"),
-    disabled: true,
-    badge: { text: t("common.coming_soon"), type: "gray" },
   },
   {
     id: "feedback_record_mcp",
     name: t("workspace.unify.feedback_record_mcp"),
     description: t("workspace.unify.source_connect_feedback_record_mcp_description"),
-    disabled: true,
-    badge: { text: t("common.coming_soon"), type: "gray" },
   },
 ];
 

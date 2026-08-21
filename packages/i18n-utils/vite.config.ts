@@ -8,7 +8,7 @@ export default defineConfig({
       entry: resolve(__dirname, "src/index.ts"),
       name: "i18nUtils",
       formats: ["es", "cjs"],
-      fileName: (format) => `index.${format}.js`,
+      fileName: "index",
     },
     outDir: "dist",
     emptyOutDir: false,

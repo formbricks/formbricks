@@ -2217,6 +2217,233 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+  /api/v3/tags:
+    get:
+      operationId: listTagsV3
+      summary: List tags
+      description: |
+        Returns a workspace's response tags, each with the number of responses currently carrying it.
+
+        Session cookie only. Tags are managed from the Formbricks app (Workspace settings → Tags); these
+        endpoints back that screen, so they do not accept `x-api-key`.
+      tags:
+        - V3 Tags
+      parameters:
+        - in: query
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: |
+            Workspace identifier. This is the canonical container ID for v3 APIs.
+      responses:
+        '200':
+          description: Tags retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TagResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/tags/{tagId}:
+    patch:
+      operationId: renameTagV3
+      summary: Rename a tag
+      description: |
+        Renames a tag. The workspace is resolved from the tag itself, so the caller cannot choose which scope
+        it is authorized against. Requires organization owner/manager, or a workspace team membership with
+        read-write permission.
+
+        An unknown `tagId` answers `403`, not `404`, so tag ids cannot be probed for existence. A name that
+        collides with another tag in the same workspace answers `422`.
+      tags:
+        - V3 Tags
+      parameters:
+        - in: path
+          name: tagId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: New label. Trimmed; must not be empty.
+      responses:
+        '200':
+          description: Tag renamed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TagResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+    delete:
+      operationId: deleteTagV3
+      summary: Delete a tag
+      description: |
+        Deletes a tag and removes it from every response carrying it. Same authorization as rename.
+      tags:
+        - V3 Tags
+      parameters:
+        - in: path
+          name: tagId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+      responses:
+        '200':
+          description: Tag deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+                        format: cuid2
+                        description: The deleted tag's id.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+  /api/v3/tags/{tagId}/merge:
+    post:
+      operationId: mergeTagsV3
+      summary: Merge a tag into another
+      description: |
+        Moves every response tagged `{tagId}` onto `newTagId`, then deletes `{tagId}`.
+
+        Both tags must belong to the same workspace — a cross-workspace merge answers `403`, since it would
+        move responses across a tenant boundary. Same authorization as rename.
+
+        Merging a tag into itself answers `400`.
+      tags:
+        - V3 Tags
+      parameters:
+        - in: path
+          name: tagId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: The tag being merged away.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - newTagId
+              properties:
+                newTagId:
+                  type: string
+                  format: cuid2
+                  description: The surviving tag.
+      responses:
+        '200':
+          description: Tags merged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+                        format: cuid2
+                        description: The surviving tag's id.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
 components:
   securitySchemes:
     sessionAuth:
@@ -5266,6 +5493,35 @@ components:
             - number
             - date
       additionalProperties: false
+    TagResource:
+      type: object
+      required:
+        - id
+        - name
+        - workspaceId
+        - createdAt
+        - updatedAt
+        - count
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+          description: Tag label as shown in the app. Unique within a workspace.
+        workspaceId:
+          type: string
+          format: cuid2
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        count:
+          type: integer
+          minimum: 0
+          description: Responses currently carrying this tag. `0` when the tag exists but has never been applied.
   responses:
     V3BadRequest:
       description: Bad Request — malformed JSON, invalid query/body/params, duplicate name, or unsupported field.

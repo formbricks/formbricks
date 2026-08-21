@@ -116,6 +116,11 @@ jobs:
         run: |
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
           sed -i "s|DATABASE_URL=.*|DATABASE_URL=postgresql://postgres:postgres@localhost:5432/formbricks_ba_test?schema=public|" .env
+          # The password-reset integration tests call Better Auth's native endpoints
+          # directly, so the before-hook gate added in ENG-2105 would block them when
+          # PASSWORD_RESET_DISABLED=1 (the .env.example default). Override to 0 so the
+          # reset-related test coverage still runs.
+          sed -i "s|PASSWORD_RESET_DISABLED=.*|PASSWORD_RESET_DISABLED=0|" .env
         shell: bash
 
       # Build the workspace packages the tests import (@formbricks/logger, cache, types, email, …) so

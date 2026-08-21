@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import {
+  TFeedbackSourceImportMode,
   TFeedbackSourceType,
   TFeedbackSourceWithMappings,
   THubTargetField,
@@ -25,7 +26,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { TFieldMapping, TUnifySurvey, getTranslatedFeedbackSourceError } from "../types";
-import { getSelectableQuestionIds } from "../utils";
+import { getSelectableQuestionIds, getSuggestedSurveys } from "../utils";
 import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
 import { CsvImportModal } from "./csv-import-modal";
 import { EditFeedbackSourceModal } from "./edit-feedback-source-modal";
@@ -70,11 +71,11 @@ export function FeedbackSourcesSection({
       ),
     [initialFeedbackSources]
   );
-  // Surveys that aren't backing a source yet are surfaced as "Suggestions" below the table.
-  const suggestedSurveys = useMemo(() => {
-    const connectedSurveyIdSet = new Set(connectedSurveyIds);
-    return initialSurveys.filter((survey) => !connectedSurveyIdSet.has(survey.id));
-  }, [initialSurveys, connectedSurveyIds]);
+  // Surveys that aren't backing a source yet (and aren't drafts) are surfaced as "Suggestions" below the table.
+  const suggestedSurveys = useMemo(
+    () => getSuggestedSurveys(initialSurveys, connectedSurveyIds),
+    [initialSurveys, connectedSurveyIds]
+  );
   const directoryNames = directories.map((directory) => directory.name).join(", ");
   const feedbackDirectoryAccessText =
     directories.length === 1
@@ -89,6 +90,7 @@ export function FeedbackSourcesSection({
     name: string;
     type: TFeedbackSourceType;
     feedbackDirectoryId: string;
+    importMode?: TFeedbackSourceImportMode;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
@@ -98,6 +100,7 @@ export function FeedbackSourcesSection({
         name: data.name,
         type: data.type,
         feedbackDirectoryId: data.feedbackDirectoryId,
+        importMode: data.importMode,
       },
       formbricksMappings:
         data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
@@ -124,6 +127,7 @@ export function FeedbackSourcesSection({
     feedbackSourceId: string;
     workspaceId: string;
     name: string;
+    importMode?: TFeedbackSourceImportMode;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<boolean> => {
@@ -132,6 +136,7 @@ export function FeedbackSourcesSection({
       workspaceId: workspaceId,
       feedbackSourceInput: {
         name: data.name,
+        importMode: data.importMode,
       },
       formbricksMappings: data.surveyMappings?.length ? data.surveyMappings : undefined,
       fieldMappings: data.fieldMappings?.length
@@ -185,10 +190,16 @@ export function FeedbackSourcesSection({
       return;
     }
 
+    // Explicitly completedOnly rather than leaning on the column default: this path imports
+    // immediately with no chance to choose, and "all" pulls in answers respondents never submitted
+    // and sends them to the AI enrichments. A one-click action must not opt someone into that
+    // silently — picking partials is a decision, so it lives on the "Select questions for import"
+    // route beside this button, which opens the modal with the choice.
     const feedbackSourceId = await handleCreateFeedbackSource({
       name: t("workspace.unify.source_connector_name", { surveyName: survey.name }),
       type: "formbricks_survey",
       feedbackDirectoryId,
+      importMode: "completedOnly",
       surveyMappings: [{ surveyId: survey.id, elementIds }],
     });
 

@@ -162,6 +162,7 @@ const mockSurveyPrisma = {
   creator: { name: "Test User" },
   status: "draft" as any,
   publishOn: null,
+  archivedAt: null,
   singleUse: null,
   workspaceId,
 };
@@ -213,6 +214,7 @@ describe("getSurveys", () => {
     creator: s.creator,
     status: s.status,
     publishOn: s.publishOn,
+    archivedAt: s.archivedAt,
     singleUse: s.singleUse,
     workspaceId: s.workspaceId,
     // The groupBy mocks below return a single finished bucket of 10 per survey, so both counts are 10.
@@ -317,6 +319,7 @@ describe("getSurveysSortedByRelevance", () => {
     creator: mockInProgressPrisma.creator,
     status: mockInProgressPrisma.status,
     publishOn: mockInProgressPrisma.publishOn,
+    archivedAt: mockInProgressPrisma.archivedAt,
     singleUse: mockInProgressPrisma.singleUse,
     workspaceId: mockInProgressPrisma.workspaceId,
     responseCount: 3,
@@ -331,6 +334,7 @@ describe("getSurveysSortedByRelevance", () => {
     creator: mockOtherPrisma.creator,
     status: mockOtherPrisma.status,
     publishOn: mockOtherPrisma.publishOn,
+    archivedAt: mockOtherPrisma.archivedAt,
     singleUse: mockOtherPrisma.singleUse,
     workspaceId: mockOtherPrisma.workspaceId,
     responseCount: 5,

@@ -119,7 +119,7 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
   return extensionValidation.success ? extensionValidation.data : null;
 };
 
-const getSurveyFileUploadConfigs = ({
+export const getSurveyFileUploadConfigs = ({
   blocks,
   questions,
 }: {

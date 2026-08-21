@@ -672,6 +672,7 @@ describe("serializeV3SurveyListItem", () => {
     type: "link",
     status: "draft",
     publishOn: null,
+    archivedAt: null,
     createdAt: new Date("2026-04-15T10:00:00.000Z"),
     updatedAt: new Date("2026-04-16T10:00:00.000Z"),
     responseCount: 0,

@@ -6,6 +6,6 @@ export type { CacheService } from "./service";
 export { createCacheKey } from "./cache-keys";
 
 // Export types
-export type { CacheKey } from "../types/keys";
-export type { CacheError, Result } from "../types/error";
-export { ErrorCode } from "../types/error";
+export type { CacheKey } from "./types/keys";
+export type { CacheError, Result } from "./types/error";
+export { ErrorCode } from "./types/error";

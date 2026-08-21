@@ -654,6 +654,7 @@ model Workspace {
 /// @property billing - JSON field containing billing information
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
+/// @property displayTimeZone - Optional IANA time zone used for human-facing response timestamps (exports, integrations); null means UTC
 model Organization {
   id                    String               @id @default(cuid())
   createdAt             DateTime             @default(now()) @map(name: "created_at")
@@ -666,6 +667,7 @@ model Organization {
   whitelabel            Json                 @default("{}")
   invites               Invite[]
   isAISmartToolsEnabled Boolean              @default(false)
+  displayTimeZone       String?
   teams                 Team[]
   apiKeys               ApiKey[]
   feedbackDirectories   FeedbackDirectory[]
@@ -1314,6 +1316,34 @@ enum FeedbackSourceStatus {
   error
 }
 
+/// Which survey responses a Formbricks feedback source imports into Hub.
+/// completedOnly matches the live ingestion path, which only runs on responseFinished.
+/// all additionally imports partial responses — answers a respondent typed but never submitted.
+enum FeedbackSourceImportMode {
+  completedOnly
+  all
+}
+
+/// Whether a formbricks_survey source tracks every supported element of the surveys it maps, or an
+/// explicit subset the operator curated. Ignored by csv sources, which map fields instead.
+///
+/// Orthogonal to FeedbackSourceImportMode: that decides which responses are imported, this decides
+/// which questions a response is imported for.
+///
+/// This exists because a question added to a survey after the source was connected is
+/// indistinguishable, from stored state alone, from a question the operator deliberately excluded —
+/// survey elements carry no timestamps. Recording the intent at write time (where the full candidate
+/// set IS known) is the same approach webhooks take with `surveyIds: []` meaning "all surveys", and
+/// segment survey-interaction filters with `surveyScope: "any" | "specific"`.
+///
+/// Defaults to `specific` so sources that predate the column keep their current behaviour: they gain
+/// no mappings on their own until the operator next saves the source, at which point the scope is
+/// derived from the selection they submit.
+enum FeedbackSourceElementScope {
+  all
+  specific
+}
+
 enum HubFieldType {
   text
   categorical
@@ -1345,6 +1375,10 @@ model FeedbackSource {
   name                String
   type                FeedbackSourceType
   status              FeedbackSourceStatus              @default(active)
+  /// Defaults to completedOnly so a new source agrees with the live ingestion path, which only
+  /// fires on responseFinished. Existing rows take the default; nothing is re-imported.
+  importMode          FeedbackSourceImportMode          @default(completedOnly) @map(name: "import_mode")
+  elementScope        FeedbackSourceElementScope        @default(specific)
   workspaceId         String
   workspace           Workspace                         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   feedbackDirectoryId String
