@@ -54,7 +54,11 @@ import {
  * would make duplicating a grandfathered survey fail.
  */
 const assertNoReservedNewDeclaredFieldNames = (params: { existing: string[]; incoming: string[] }): void => {
-  const errors = validateNewDeclaredFieldNames(params);
+  // `declaredFieldPortable`, not the editor's rule: this function is shared by the editor's save
+  // action and `POST`/`PUT /api/v1/management/surveys`, so it cannot tell them apart — and it does not
+  // need to. The editor enforces the strict rule client-side in its own cards, where the error is
+  // inline and translated; the API only refuses names that could never receive a value (ENG-2539).
+  const errors = validateNewDeclaredFieldNames({ ...params, rule: "declaredFieldPortable" });
   if (errors.length > 0) {
     throw new InvalidInputError(describeDeclaredFieldNameErrors(errors));
   }

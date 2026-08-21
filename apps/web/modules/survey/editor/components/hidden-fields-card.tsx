@@ -209,7 +209,7 @@ export const HiddenFieldsCard = ({
                 existingVariableNames,
                 // New hidden fields follow the shared naming rule; already stored names are
                 // untouched and keep loading through the lenient survey schema.
-                { requireSafeIdentifier: true }
+                { rule: "declaredFieldStrict" }
               );
 
               if (validateIdError) {

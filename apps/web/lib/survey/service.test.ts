@@ -543,7 +543,11 @@ describe("Tests for updateSurvey", () => {
    * `country`, `url`, `source`, `browser`, and this ticket must not rename or break any of them.
    */
   describe("reserved names for newly declared fields", () => {
-    test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
+    test("rejects a save that ADDS a hidden field that could never be filled, and does not write", async () => {
+      // `lang` rather than `country` (ENG-2539): this write path is shared by the editor's save action
+      // and `PUT /api/v1/management/surveys`, so it applies the API rule — refuse only names
+      // `getHiddenFieldsFromSearchParams` could never fill. The catalog half is the editor's rule,
+      // enforced client-side in its own cards; the test below pins that the API now accepts it.
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         hiddenFields: { enabled: true, fieldIds: [] },
@@ -551,12 +555,48 @@ describe("Tests for updateSurvey", () => {
 
       await expect(
         updateSurveyInternal(
-          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["country"] } },
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["lang"] } },
           true
         )
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("ENG-2539: a save that adds a Tier-1 CATALOG name now succeeds", async () => {
+      // The regression this ticket exists for. ENG-1839's guard moved this boundary onto the write
+      // path inside the ENG-1838 back-compat milestone, and it reproduced unprompted while seeding
+      // fixtures: an app survey with `hiddenFields: ["plan", "language"]` returned 400.
+      const draft = { ...mockSurveyOutput, status: "draft" };
+      prisma.survey.findUnique.mockResolvedValueOnce(draft as any);
+      prisma.survey.update.mockResolvedValueOnce(draft as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["plan", "language"] } },
+          true
+        )
+      ).resolves.toBeDefined();
+
+      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
+      expect(updateArg?.data).toMatchObject({
+        hiddenFields: { enabled: true, fieldIds: ["plan", "language"] },
+      });
+    });
+
+    test("ENG-2539: a save that adds a camelCase name the charset rule refused now succeeds", async () => {
+      // `UserRegion` is the worst of the collateral: an ordinary camelCase name with nothing wrong
+      // with it, refused only because `requireSafeIdentifier` bundled the charset rule in.
+      const draft = { ...mockSurveyOutput, status: "draft" };
+      prisma.survey.findUnique.mockResolvedValueOnce(draft as any);
+      prisma.survey.update.mockResolvedValueOnce(draft as any);
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["UserRegion"] } },
+          true
+        )
+      ).resolves.toBeDefined();
     });
 
     test("GRANDFATHER: a save on a survey that ALREADY has `country` succeeds and keeps the field", async () => {
@@ -582,7 +622,7 @@ describe("Tests for updateSurvey", () => {
       expect(updateArg?.data).toMatchObject({ hiddenFields: { enabled: true, fieldIds: ["country"] } });
     });
 
-    test("GRANDFATHER: a grandfathered survey may still not ADD a second reserved name", async () => {
+    test("GRANDFATHER: a grandfathered survey may still not ADD an unfillable name", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         hiddenFields: { enabled: true, fieldIds: ["country"] },
@@ -590,7 +630,7 @@ describe("Tests for updateSurvey", () => {
 
       await expect(
         updateSurveyInternal(
-          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["country", "browser"] } },
+          { ...updateSurveyInput, hiddenFields: { enabled: true, fieldIds: ["country", "verify"] } },
           true
         )
       ).rejects.toThrow(InvalidInputError);
@@ -1321,26 +1361,43 @@ describe("Tests for createSurvey", () => {
     });
 
     // ENG-1839. A create authors every name fresh, so there is nothing to grandfather.
-    test("rejects a hidden field named after a reserved field, before writing anything", async () => {
+    test("rejects a hidden field that could never be filled, before writing anything", async () => {
       await expect(
         createSurvey(mockWorkspaceId, {
           ...mockCreateSurveyInput,
-          hiddenFields: { enabled: true, fieldIds: ["country"] },
+          hiddenFields: { enabled: true, fieldIds: ["lang"] },
         })
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.create).not.toHaveBeenCalled();
     });
 
-    test("rejects a variable named after a reserved field", async () => {
+    test("rejects a variable that could never be filled", async () => {
       await expect(
         createSurvey(mockWorkspaceId, {
           ...mockCreateSurveyInput,
-          variables: [{ id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "browser", type: "text", value: "" }],
+          variables: [{ id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "verify", type: "text", value: "" }],
         })
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
+    test("ENG-2539: a create with a Tier-1 catalog name and a camelCase name now succeeds", async () => {
+      // `POST /api/v1/management/surveys` reaches `createSurvey` directly, so this is the acceptance
+      // criterion at the service boundary: `hiddenFields: ["UserRegion"]` succeeds again, and so does
+      // a catalog name, which is grandfathered from birth.
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
+
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          hiddenFields: { enabled: true, fieldIds: ["UserRegion", "country"] },
+        })
+      ).resolves.toBeDefined();
+
+      expect(prisma.survey.create).toHaveBeenCalled();
     });
 
     test("accepts an ordinary new hidden field name", async () => {

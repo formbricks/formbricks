@@ -20,6 +20,30 @@ icon: "eye-slash"
 
 ![Filled Hidden Fields](/images/surveys/general-features/hidden-fields/filled-hidden-fields.webp)
 
+## Naming Hidden Fields
+
+Two rules apply, and they are deliberately not the same rule.
+
+**In the survey editor**, a new hidden field id must start with a lowercase letter and then use only
+lowercase letters, numbers and underscores — `plan_tier`, not `PlanTier` or `plan-tier`. One naming
+convention across hidden fields, variables and Embedded Data keeps every field addressable the same
+way in recall, logic and exports.
+
+**Through the management API**, only one group of names is refused: ids reserved by the link-survey
+URL contract (`lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, `suToken`, `userId`,
+`source`, `suid`, `start`, `end`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`,
+`verify`). Those query params are never written onto a response, so a field declared under one could
+never receive a value. Everything else is accepted, including mixed-case and hyphenated ids, so a
+survey exported as JSON can always be re-created as it stands.
+
+<Note>
+  An auto-captured field name — `url`, `country`, `language`, `timezone`, `pagePath`, `utmSource` and the rest
+  — can be declared as a hidden field, and then **your** field wins inside that survey. It keeps its own value
+  in recall, logic, filters and exports; the survey simply does not gain the auto-captured value under that
+  name. Ids a survey already declares are never refused, so an existing survey keeps working however it is
+  named.
+</Note>
+
 ## Set Hidden Field via URL
 
 Single Hidden Field:
@@ -37,13 +61,14 @@ https://formbricks.com/s/clin34bjy?screen=landing_page&job=Founder
 ## Set Hidden Fields via SDK
 
 <Note>
-  We are reworking how to add Hidden Fields via SDK moving away from binding them to Actions over to Context. Until then, we will **continue to support the current approach for the JS SDK**. However, we don't support Hidden Fields for the Android and iOS SDKs.
+  We are reworking how to add Hidden Fields via SDK moving away from binding them to Actions over to Context.
+  Until then, we will **continue to support the current approach for the JS SDK**. However, we don't support
+  Hidden Fields for the Android and iOS SDKs.
 </Note>
 
 ```js
-formbricks.track("action_name", {hiddenFields: {myField: "value"}})
+formbricks.track("action_name", { hiddenFields: { myField: "value" } });
 ```
-
 
 ## View Hidden Fields in Responses
 
