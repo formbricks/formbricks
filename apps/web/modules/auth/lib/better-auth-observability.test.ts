@@ -429,7 +429,7 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
   });
 
   /**
-   * The other three codes stay captured, and each for its own reason:
+   * The other four codes stay captured, and each for its own reason:
    * - `state_generation_error` — the adapter could not write the verification row: a real fault.
    * - `state_security_mismatch` — the state does not match the stored one, OR the signed state cookie
    *   fails verification. That second half is where a cross-replica `BETTER_AUTH_SECRET` divergence
@@ -491,8 +491,8 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
     );
   });
 
-  // The gate fails CLOSED: anything it cannot positively identify as one of the two suppressed codes is
-  // still captured. A wrong answer should add noise, never silence a fault.
+  // The gate fails CLOSED: anything it cannot positively identify as THE one suppressed code
+  // (`state_mismatch`) is still captured. A wrong answer should add noise, never silence a fault.
   test("captures a BetterAuthError carrying no code", () => {
     const bare = new BetterAuthError("something upstream broke");
 

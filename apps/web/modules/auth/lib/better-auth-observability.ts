@@ -193,12 +193,28 @@ export const redactEmailsInLogMessage = (message: unknown): unknown =>
  * a loss of visibility into a *failed* attempt, not of a control. The events remain in the application
  * log with their `stateErrorCode`, which is where a campaign would show up as volume.
  *
- * What suppression costs, stated narrowly: a Redis eviction, flush, or failover to an empty replica
- * drops in-flight verification records and yields `state_mismatch` for real login failures. A *hard*
- * Redis outage does not — `secondary-storage.ts` rethrows on connect failure, which is not a
- * `StateError` and still pages. The suppressed events remain at `error` in the application log carrying
- * `stateErrorCode` and the request's `authPath`, so they are greppable; note there is no log-based alert
- * rule for them today, so a burst is discoverable rather than announced.
+ * What suppression costs, stated narrowly. Two shapes produce `state_mismatch` for *real* login
+ * failures, and this gate hides both from Sentry:
+ *
+ * 1. **Runtime:** a Redis eviction, flush, or failover to an empty replica drops in-flight verification
+ *    records. Arrives as a trickle or a burst, mid-operation.
+ * 2. **Deploy-time, and the worse of the two:** replicas that do not share one Redis. The record is
+ *    written by the pod that started the flow and looked up by whichever pod serves the callback, and
+ *    that lookup is the *first* check in the database branch — before the signed-cookie check. So a
+ *    split-Redis deployment fails 100% of SSO sign-ins while the state cookie still verifies perfectly
+ *    (the secret is shared even when the store is not), which keeps it off `state_security_mismatch` and
+ *    squarely on the code we suppress. It also lands exactly when someone is watching Sentry rather than
+ *    the logs.
+ *
+ * A *hard* Redis outage is not in this class — `secondary-storage.ts` rethrows on connect failure, which
+ * is not a `StateError`, so it still pages.
+ *
+ * The suppressed events stay at `error` in the application log with `stateErrorCode` and the request's
+ * `authPath`, so they are greppable — and `stateErrorCode` is load-bearing rather than convenient here,
+ * because upstream logs every state error under the same "Failed to parse state" message. What is
+ * missing is the alert: there is no log-based rule on that field today, so a burst is discoverable
+ * rather than announced, which for shape 2 means a total outage nobody is paged for. Tracked separately;
+ * this gate cannot fix it.
  */
 const UNACTIONABLE_STATE_ERROR_CODES: ReadonlySet<string> = new Set(["state_mismatch"]);
 
