@@ -25,7 +25,7 @@ describe("validateId", () => {
   });
 
   describe("strict mode (new declared field names)", () => {
-    const strict = { requireSafeIdentifier: true };
+    const strict = { rule: "declaredFieldStrict" } as const;
 
     test("rejects legacy caps and hyphen names", () => {
       expect(validateId("Legacy-Field", ...noExistingIds, strict)).toEqual({
@@ -62,8 +62,8 @@ describe("validateId", () => {
    * to capture it, otherwise the editor accepts a field that can never receive a value. Both ends read
    * `RESERVED_DECLARED_FIELD_NAMES`, so these cases pin the two together.
    */
-  describe("reserved names in strict mode", () => {
-    const strict = { requireSafeIdentifier: true };
+  describe("reserved names under declaredFieldStrict", () => {
+    const strict = { rule: "declaredFieldStrict" } as const;
 
     test("rejects every reserved name in any casing", () => {
       for (const reserved of RESERVED_DECLARED_FIELD_NAMES) {
@@ -136,7 +136,7 @@ describe("validateId", () => {
   describe("shared checks are unchanged by the mode", () => {
     for (const [label, options] of [
       ["lenient", undefined],
-      ["strict", { requireSafeIdentifier: true }],
+      ["strict", { rule: "declaredFieldStrict" } as const],
     ] as const) {
       test(`empty input is rejected (${label})`, () => {
         expect(validateId("", ...noExistingIds, options)).toEqual({
@@ -191,5 +191,94 @@ describe("validateId", () => {
         );
       });
     }
+  });
+  /**
+   * **ENG-2539: the editor and the management API disagree on purpose.** This block is the pin the
+   * ticket asks for, so the next person does not "tidy" three rules back into one.
+   *
+   * `declaredFieldPortable` refuses exactly one thing — a name
+   * `getHiddenFieldsFromSearchParams` could never fill. `declaredFieldStrict` refuses that plus the
+   * Tier-1 catalog plus `isSafeIdentifier`. If a change makes the two agree, this goes red.
+   */
+  describe("declaredFieldPortable vs declaredFieldStrict (the API/editor asymmetry)", () => {
+    const portable = { rule: "declaredFieldPortable" } as const;
+    const strict = { rule: "declaredFieldStrict" } as const;
+
+    /** Ordinary names the bundled charset rule refused as collateral. `UserRegion` is the worst of it. */
+    const charsetCasualties = ["UserRegion", "user-region", "_internal", "1st_visit"];
+
+    /** Tier-1 catalog names. The field works and is grandfathered; refusing is hygiene, not correctness. */
+    const catalogNames = ["url", "country", "language", "timezone"];
+
+    /** Names no survey could ever fill from a URL param, under any casing. */
+    const unfillableNames = ["lang", "verify", "startat", "userId", "suToken", "VERIFIEDEMAIL"];
+
+    test("the API accepts what only the charset rule refused", () => {
+      for (const name of charsetCasualties) {
+        expect(validateId(name, ...noExistingIds, portable), name).toBeNull();
+        expect(validateId(name, ...noExistingIds, strict)?.code, name).toBe(
+          TValidateIdErrorCode.NotSafeIdentifier
+        );
+      }
+    });
+
+    test("the API accepts Tier-1 catalog names; the editor refuses them", () => {
+      for (const name of catalogNames) {
+        expect(validateId(name, ...noExistingIds, portable), name).toBeNull();
+        expect(validateId(name, ...noExistingIds, strict)?.code, name).toBe(TValidateIdErrorCode.Reserved);
+      }
+    });
+
+    test("BOTH refuse a name that could never receive a value", () => {
+      // The half that must never be relaxed: `getHiddenFieldsFromSearchParams` drops these params, so
+      // a field declared under one stays empty forever. `suToken` is a credential.
+      for (const name of unfillableNames) {
+        expect(validateId(name, ...noExistingIds, portable)?.code, name).toBe(TValidateIdErrorCode.Reserved);
+        expect(validateId(name, ...noExistingIds, strict)?.code, name).toBe(TValidateIdErrorCode.Reserved);
+      }
+    });
+
+    test("the API still refuses every RESERVED_DECLARED_FIELD_NAMES entry, in any casing", () => {
+      // Derived from the set rather than a literal list, so a name added there is covered without
+      // touching this test — and cannot be added on the strict path only.
+      for (const reserved of RESERVED_DECLARED_FIELD_NAMES) {
+        for (const candidate of [reserved, reserved.toUpperCase()]) {
+          expect(validateId(candidate, ...noExistingIds, portable)?.code, candidate).toBe(
+            TValidateIdErrorCode.Reserved
+          );
+        }
+      }
+    });
+
+    test("the API accepts every catalog name that is not also unfillable", () => {
+      // `source` is the one Tier-1 entry that is also a link-survey system param, so it stays refused
+      // for the stronger reason. Everything else in the catalog is now creatable through the API.
+      for (const reserved of RESERVED_FIELD_NAMES) {
+        const expected = RESERVED_DECLARED_FIELD_NAMES.has(reserved) ? TValidateIdErrorCode.Reserved : null;
+        expect(validateId(reserved, ...noExistingIds, portable)?.code ?? null, reserved).toBe(expected);
+      }
+    });
+
+    test("the shared checks apply to the API rule too", () => {
+      // Relaxing two rules must not relax the rest: a blank name, a duplicate, a space or a character
+      // `ZSurveyHiddenFields` itself rejects on the load path would all create a survey that cannot be
+      // read back.
+      expect(validateId("", ...noExistingIds, portable)?.code).toBe(TValidateIdErrorCode.Empty);
+      expect(validateId("Team Size", ...noExistingIds, portable)?.code).toBe(TValidateIdErrorCode.HasSpaces);
+      expect(validateId("user:name", ...noExistingIds, portable)?.code).toBe(
+        TValidateIdErrorCode.InvalidChars
+      );
+      expect(validateId("plan", [["plan"], [], [], []][0], [], [], [], portable)?.code).toBe(
+        TValidateIdErrorCode.Duplicate
+      );
+    });
+
+    test("neither declared-field rule touches the legacy id path", () => {
+      // `ZSurveyHiddenFields` parses stored surveys through `legacyId`, so a survey already declaring
+      // `country` or `lang` has to keep loading whatever either rule above decides.
+      expect(validateId("country", ...noExistingIds)).toBeNull();
+      expect(validateId("lang", ...noExistingIds)).toBeNull();
+      expect(validateId("UserRegion", ...noExistingIds)).toBeNull();
+    });
   });
 });

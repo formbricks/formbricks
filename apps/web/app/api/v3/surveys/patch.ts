@@ -202,6 +202,9 @@ export async function executeV3SurveyPatch(params: {
   const declaredFieldNameErrors = validateNewDeclaredFieldNames({
     existing: collectDeclaredFieldNames(currentSurvey),
     incoming: collectDeclaredFieldNames(document),
+    // ENG-2539: the API refuses only names that can never receive a value. Catalog names and the
+    // strict charset are the editor's rules.
+    rule: "declaredFieldPortable",
   });
   if (declaredFieldNameErrors.length > 0) {
     throw new V3SurveyReferenceValidationError(

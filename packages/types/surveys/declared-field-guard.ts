@@ -5,6 +5,7 @@ import {
   RESERVED_DECLARED_FIELD_NAMES,
   type TValidateIdError,
   TValidateIdErrorCode,
+  type TValidateIdRule,
   validateId,
 } from "./validation";
 
@@ -51,10 +52,23 @@ export const collectDeclaredFieldNames = (source: TDeclaredFieldSource): string[
  *
  * This is the create-time layer the lenient load-time schemas cannot be: `ZSurveyHiddenFields` and
  * `ZSurveyVariables` also parse surveys read back out of the database, so they must keep accepting
- * whatever is already stored. `validateId`'s strict mode is the same rule, but until now it was
- * passed from exactly one place (the hidden-fields editor card) — so
- * `PUT /api/v1/management/surveys/<id>` could still create a hidden field named `lang` or `country`
- * that `getHiddenFieldsFromSearchParams` then refuses to fill, leaving it silently empty forever.
+ * whatever is already stored. Before this guard existed, `validateId`'s declared-field rule was
+ * passed from exactly one place (the editor cards) — so `PUT /api/v1/management/surveys/<id>` could
+ * still create a hidden field named `lang` that `getHiddenFieldsFromSearchParams` then refuses to
+ * fill, leaving it silently empty forever.
+ *
+ * ## The rule is the caller's, and the two callers disagree on purpose
+ *
+ * Every server write path passes `declaredFieldPortable`, which refuses only names that can never
+ * receive a value. It does **not** refuse Tier-1 catalog names and does **not** apply
+ * `isSafeIdentifier`: ENG-2539 decided those two belong to the editor, where a human sees the error
+ * inline, and applying them at a documented API boundary inside the ENG-1838 back-compat milestone
+ * broke automation that re-creates surveys from a stored JSON export. The full reasoning, rule by
+ * rule, is on {@link validateId}.
+ *
+ * The editor does not reach this function at all — `hidden-fields-card.tsx` and
+ * `survey-variables-card-item.tsx` call `validateId` directly with `declaredFieldStrict`, which is
+ * why relaxing the server side leaves every editor message and Playwright toast untouched.
  *
  * ## Grandfathering is the whole point
  *
@@ -95,9 +109,11 @@ export const collectDeclaredFieldNames = (source: TDeclaredFieldSource): string[
 export const validateNewDeclaredFieldNames = ({
   existing,
   incoming,
+  rule,
 }: {
   existing: string[];
   incoming: string[];
+  rule: Extract<TValidateIdRule, "declaredFieldStrict" | "declaredFieldPortable">;
 }): TValidateIdError[] => {
   const grandfathered = new Set(existing.map((name) => name.toLowerCase()));
   const seen = new Set<string>();
@@ -109,11 +125,12 @@ export const validateNewDeclaredFieldNames = ({
     seen.add(lowered);
 
     // Delegated rather than reimplemented so this guard and the editor card can never drift apart:
-    // `validateId`'s strict branch is the single definition of what a new declared name may be. The
-    // id lists are empty on purpose — a collision with an existing name is a *duplicate*, which the
-    // reconcile's `assertNoDuplicateStorageKeys` and the v3 reference validation already own, and
-    // reporting it here would turn a grandfathered name into an error.
-    const error = validateId(name, [], [], [], [], { requireSafeIdentifier: true });
+    // `validateId` is the single definition of what a new declared name may be under each rule, and
+    // ENG-2539's decision that the API and the editor disagree lives there rather than being
+    // open-coded here. The id lists are empty on purpose — a collision with an existing name is a
+    // *duplicate*, which the reconcile's `assertNoDuplicateStorageKeys` and the v3 reference
+    // validation already own, and reporting it here would turn a grandfathered name into an error.
+    const error = validateId(name, [], [], [], [], { rule });
     if (error) errors.push(error);
   }
 
@@ -129,6 +146,11 @@ export const validateNewDeclaredFieldNames = ({
 const describeReservedReason = (field: string): string => {
   // Order matters: a name in BOTH lists (`source` is the one Tier-1 field that is also a link-survey
   // system param) gets the capture-refusal reason, which is the stronger and still-true statement.
+  //
+  // The catalog branch below is unreachable from today's write paths, which all pass
+  // `declaredFieldPortable` (ENG-2539). It is kept because the rule is this function's parameter, not
+  // its constant: a caller passing `declaredFieldStrict` — the editor rule — still needs a sentence
+  // to show, and deleting it would mean re-deriving one the next time the boundary moves.
   //
   // The two halves fail for genuinely different reasons, and saying "could never receive a value" for
   // the catalog half would be actively misleading: `RESERVED_FIELD_NAMES` is deliberately kept OUT of

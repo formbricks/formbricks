@@ -182,7 +182,7 @@ export const SurveyVariablesCardItem = ({
 
                   if (!isUnchangedName) {
                     const validateIdError = validateId(value, [], [], [], [], {
-                      requireSafeIdentifier: true,
+                      rule: "declaredFieldStrict",
                     });
 
                     if (validateIdError) {

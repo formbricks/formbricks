@@ -6,8 +6,41 @@ description: >
   public identifiers and may be referenced by logic, recall, quotas,
   integrations, and response data.
 
-  Use only letters, numbers, underscores, and hyphens; avoid spaces and reserved
-  ids.
+  Use only letters, numbers, underscores, and hyphens; avoid spaces.
+
+  A NEW field id is refused with `forbidden_identifier` when it is reserved by
+  the link-survey URL
+
+  contract - `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`,
+  `suToken`, `userId`,
+
+  `source`, `suid`, `start`, `end`, `welcomeCard`, `hidden`, `verifiedEmail`,
+  `multiLanguage`,
+
+  `verify` - because those query params are never captured onto a response, so
+  such a field could
+
+  never receive a value. Matching is case-insensitive.
+
+  Auto-captured field names (`url`, `country`, `language`, `timezone`,
+  `pagePath`, `utmSource`, ...)
+
+  ARE accepted. Declaring one takes precedence over the auto-captured field of
+  the same name inside
+
+  that survey: the survey keeps its own meaning, and simply does not gain that
+  auto-captured value.
+
+  Ids a survey already declares are never refused, whatever they are, so an
+  existing survey can
+
+  always be re-sent unchanged. The stricter naming rule shown in the Formbricks
+  survey editor
+
+  (lowercase start, then letters, digits and underscores) is an authoring
+  convention and is not
+
+  applied here.
 required:
   - enabled
 properties:

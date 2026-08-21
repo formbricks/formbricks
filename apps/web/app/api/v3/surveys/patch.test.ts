@@ -581,11 +581,14 @@ describe("patchV3Survey", () => {
         ...overrides,
       }) as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"];
 
-    test("rejects a patch that ADDS a hidden field named after a reserved field, and does not write", async () => {
+    test("rejects a patch that ADDS a hidden field that could never be filled, and does not write", async () => {
+      // `lang`, not `country` (ENG-2539): the API rule refuses only names
+      // `getHiddenFieldsFromSearchParams` could never fill. Catalog names are grandfathered from
+      // birth and are asserted as ACCEPTED below.
       await expect(
         executeV3SurveyPatch({
           currentSurvey: currentSurvey as TSurvey,
-          document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country"] } }),
+          document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["lang"] } }),
           languageRequests: [{ code: "en-US", default: true, enabled: true }],
           requestId: "req_1",
         })
@@ -596,26 +599,48 @@ describe("patchV3Survey", () => {
       expect(prisma.language.upsert).not.toHaveBeenCalled();
     });
 
-    test("reports the refused name as a forbidden_identifier invalid param", async () => {
+    test("reports the refused name as a forbidden_identifier invalid param, with the reason", async () => {
       const error = await executeV3SurveyPatch({
         currentSurvey: currentSurvey as TSurvey,
-        document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country"] } }),
+        document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["lang"] } }),
         languageRequests: [{ code: "en-US", default: true, enabled: true }],
         requestId: "req_1",
       }).catch((caught: unknown) => caught);
 
       expect(error).toBeInstanceOf(V3SurveyReferenceValidationError);
       expect((error as V3SurveyReferenceValidationError).invalidParams).toEqual([
-        expect.objectContaining({ name: "country", code: "forbidden_identifier", identifier: "country" }),
+        expect.objectContaining({ name: "lang", code: "forbidden_identifier", identifier: "lang" }),
       ]);
+      // The acceptance criterion asks for a message that says why "in those terms": the only reason
+      // the API can now produce is that the name can never receive a value.
+      expect((error as V3SurveyReferenceValidationError).invalidParams[0].reason).toContain(
+        "never filled from the URL"
+      );
     });
 
-    test("rejects a variable named after a reserved field", async () => {
+    test("ENG-2539: a patch that ADDS a Tier-1 catalog name or a camelCase name now succeeds", async () => {
+      await executeV3SurveyPatch({
+        currentSurvey: currentSurvey as TSurvey,
+        document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["UserRegion", "country"] } }),
+        languageRequests: [{ code: "en-US", default: true, enabled: true }],
+        requestId: "req_1",
+      });
+
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            hiddenFields: { enabled: true, fieldIds: ["UserRegion", "country"] },
+          }),
+        })
+      );
+    });
+
+    test("rejects a variable that could never be filled", async () => {
       await expect(
         executeV3SurveyPatch({
           currentSurvey: currentSurvey as TSurvey,
           document: documentFor({
-            variables: [{ id: "clvar123456789012345678901", name: "browser", type: "text", value: "" }],
+            variables: [{ id: "clvar123456789012345678901", name: "verify", type: "text", value: "" }],
           }),
           languageRequests: [{ code: "en-US", default: true, enabled: true }],
           requestId: "req_1",
@@ -648,14 +673,14 @@ describe("patchV3Survey", () => {
       );
     });
 
-    test("GRANDFATHER: a grandfathered survey may still not ADD a second reserved name", async () => {
+    test("GRANDFATHER: a grandfathered survey may still not ADD an unfillable name", async () => {
       await expect(
         executeV3SurveyPatch({
           currentSurvey: {
             ...currentSurvey,
             hiddenFields: { enabled: true, fieldIds: ["country"] },
           } as TSurvey,
-          document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country", "url"] } }),
+          document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country", "verify"] } }),
           languageRequests: [{ code: "en-US", default: true, enabled: true }],
           requestId: "req_1",
         })
