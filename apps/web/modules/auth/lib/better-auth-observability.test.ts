@@ -437,11 +437,12 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
    *   mixed and ENG-2471 defers judging it until the ENG-2259 `auth.path` tag has sized the split.
    * - `state_invalid` — cookie-branch only, so unreachable on this configuration. Kept because
    *   suppressing a code that never fires buys nothing.
-   * - `state_not_found` — no `state` on the callback at all. A real flow cannot produce this (the IdP
-   *   echoes the state it was given), so it is either a bare scanner or something upstream dropping the
-   *   parameter — an IdP regression, a proxy, or a callback rewrite mishandling the query string. The
-   *   latter is a provider-wide sign-in outage and this is its canary, so it keeps paging. None of the
-   *   reported FORMBRICKS-16G events are this code.
+   * - `state_not_found` — a defensive entry rather than a live one. Verified against 1.7.0 that the
+   *   callback route short-circuits a missing `state` before any `StateError` is thrown, and logs it
+   *   with the OAuth `error` query param rather than an `Error` — so it reaches neither this gate nor
+   *   Sentry, and the assertion below is a contract for a shape the callback route does not currently
+   *   produce. Kept captured so that if upstream ever does route it through as a real `StateError`, it
+   *   pages instead of being dropped by a stale allow-list.
    */
   test.each([
     ["state_generation_error", "Unable to create verification"],

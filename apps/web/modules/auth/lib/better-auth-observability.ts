@@ -145,21 +145,32 @@ export const redactEmailsInLogMessage = (message: unknown): unknown =>
  * | code | thrown when (database strategy) | actionable? |
  * | --- | --- | --- |
  * | `state_mismatch` | no verification record for this `state` — purged after its 10-minute TTL, already consumed, or never issued — or the parsed state is past `expiresAt` | no — **suppressed** |
- * | `state_not_found` | the callback carried no `state` parameter at all | **yes**, kept — see below |
+ * | `state_not_found` | the callback carried no `state` — **never reaches this gate on 1.7**, see below | kept |
  * | `state_security_mismatch` | the state does not match the stored one, or the signed `state` cookie fails verification ("State not persisted correctly") | **yes**, kept |
  * | `state_generation_error` | the adapter could not write the verification row | **yes**, kept — a real fault |
  * | `state_invalid` | undecryptable state — **cookie branch only, unreachable on this config** | kept; suppressing a code that never fires buys nothing |
  *
- * `state_not_found` was in the first draft of this set and was deliberately taken back out. A real
- * user-initiated flow cannot produce it: the IdP echoes the `state` it was given, so an absent `state`
- * means either a bare scanner hitting the callback path, or something upstream dropping the parameter —
- * an IdP regression, a proxy stripping the query string, or a callback-URL rewrite mishandling it (which
- * is now a live concern: ENG-2343 rewrites every SSO callback through `legacy-sso-callback.ts`). That
- * second class is a total-SSO-outage shape for the affected provider, and this code is the canary for
- * it. Nothing in FORMBRICKS-16G is this code — the reported events are all `verification not found`,
- * i.e. `state_mismatch` — so suppressing it would have traded an unmeasured amount of scanner noise for
- * the loss of that canary, on no evidence. If it does turn out to be dominated by scanners once the
- * `auth.path` tag is live, adding it then is a one-line change backed by data.
+ * `state_not_found` is kept out of the set, but on 1.7 that choice is **inert**, and the honest reason
+ * is worth recording because an earlier draft of this comment got it wrong in both directions.
+ *
+ * Verified live against 1.7.0: an OAuth callback with no `state` never produces a `StateError` at all.
+ * The callback route short-circuits before `parseGenericState` is reached
+ * (`better-auth/dist/api/routes/callback.mjs:72-76`):
+ *
+ * ```js
+ * if (!state) { c.context.logger.error("State not found", error); throw c.redirect(`…error=state_not_found`); }
+ * ```
+ *
+ * That second argument is the OAuth `error` *query parameter*, not an `Error`, so our `cause` lookup
+ * finds nothing, the Sentry gate's `cause &&` is already false, and the event is logged without a
+ * `stateErrorCode`. It was therefore never captured — this code is not part of the over-capture problem,
+ * and the `StateError` carrying it (`state.mjs:90`) is unreachable from this route. Listing it here or
+ * omitting it changes nothing today; it stays omitted so that if upstream ever routes it through the
+ * logger as a real `StateError`, it pages rather than being silently dropped by a stale allow-list.
+ *
+ * Worth knowing separately, because it is a gap this PR does not close: that makes an IdP which stops
+ * echoing `state` — a provider-wide sign-in outage — produce **no Sentry event whatsoever**, only that
+ * log line. Independent of this change, and not fixable from this gate.
  *
  * `state_security_mismatch` carries the load this gate deliberately does not take on, and it is mixed:
  *
