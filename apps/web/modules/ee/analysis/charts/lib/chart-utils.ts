@@ -155,7 +155,8 @@ export const PIVOTED_VALUE_KEY = "value";
  * band centered in the plot — a wide empty gap before the first bar. Pivoted, the measures
  * become ordinary categories that fill the x-axis from the left.
  *
- * Missing/non-numeric values become 0 so empty measures keep a visible, hoverable slot.
+ * Missing/non-numeric values stay null: the measure keeps its slot on the axis, but renders as a
+ * gap rather than as a zero-height bar labelled 0.
  * `formatLabel` supplies the translated measure label stored as `tooltipLabel` on each row.
  */
 export function pivotMeasuresToCategories(
@@ -175,8 +176,10 @@ export function pivotMeasuresToCategories(
       paletteIndex++;
     }
     return {
+      // A measure that computed to NULL stays null: recharts leaves a gap and the value label
+      // renders empty, so "not asked" no longer looks like a measured zero.
+      [PIVOTED_VALUE_KEY]: isNumericValue(row[key]) && Number.isFinite(num) ? num : null,
       [PIVOTED_MEASURE_KEY]: key,
-      [PIVOTED_VALUE_KEY]: Number.isFinite(num) ? num : 0,
       tooltipLabel: formatLabel(key),
       fill,
     };

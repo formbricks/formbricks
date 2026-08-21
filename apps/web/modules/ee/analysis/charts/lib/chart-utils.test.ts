@@ -273,16 +273,23 @@ describe("chart-utils", () => {
       expect(result.map((row) => row[PIVOTED_MEASURE_KEY])).toEqual(["a", "b"]);
     });
 
-    test("renders missing, null, and non-numeric values as 0 so empty measures keep a slot", () => {
+    test("keeps missing, null, and non-numeric values null so they never read as a measured zero", () => {
       const data = [{ a: null, b: "n/a" }];
       const result = pivotMeasuresToCategories(data, ["a", "b", "missing"], label);
-      expect(result.map((row) => row[PIVOTED_VALUE_KEY])).toEqual([0, 0, 0]);
+      // A measure Cube computed as NULL (never asked) must not render the same as a real 0.
+      expect(result.map((row) => row[PIVOTED_VALUE_KEY])).toEqual([null, null, null]);
     });
 
-    test("emits one zero-value row per measure key when data is empty", () => {
+    test("distinguishes a genuine zero from a null measure", () => {
+      const data = [{ scored: 0, notAsked: null }];
+      const result = pivotMeasuresToCategories(data, ["scored", "notAsked"], label);
+      expect(result.map((row) => row[PIVOTED_VALUE_KEY])).toEqual([0, null]);
+    });
+
+    test("emits one row per measure key when data is empty, with no value", () => {
       const result = pivotMeasuresToCategories([], ["a"], label);
       expect(result).toHaveLength(1);
-      expect(result[0][PIVOTED_VALUE_KEY]).toBe(0);
+      expect(result[0][PIVOTED_VALUE_KEY]).toBeNull();
     });
 
     test("cycles the palette when there are more measures than colors", () => {
