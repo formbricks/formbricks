@@ -145,10 +145,21 @@ export const redactEmailsInLogMessage = (message: unknown): unknown =>
  * | code | thrown when (database strategy) | actionable? |
  * | --- | --- | --- |
  * | `state_mismatch` | no verification record for this `state` — purged after its 10-minute TTL, already consumed, or never issued — or the parsed state is past `expiresAt` | no — **suppressed** |
- * | `state_not_found` | the callback carried no `state` parameter at all (bots, truncated links) | no — **suppressed** |
+ * | `state_not_found` | the callback carried no `state` parameter at all | **yes**, kept — see below |
  * | `state_security_mismatch` | the state does not match the stored one, or the signed `state` cookie fails verification ("State not persisted correctly") | **yes**, kept |
  * | `state_generation_error` | the adapter could not write the verification row | **yes**, kept — a real fault |
  * | `state_invalid` | undecryptable state — **cookie branch only, unreachable on this config** | kept; suppressing a code that never fires buys nothing |
+ *
+ * `state_not_found` was in the first draft of this set and was deliberately taken back out. A real
+ * user-initiated flow cannot produce it: the IdP echoes the `state` it was given, so an absent `state`
+ * means either a bare scanner hitting the callback path, or something upstream dropping the parameter —
+ * an IdP regression, a proxy stripping the query string, or a callback-URL rewrite mishandling it (which
+ * is now a live concern: ENG-2343 rewrites every SSO callback through `legacy-sso-callback.ts`). That
+ * second class is a total-SSO-outage shape for the affected provider, and this code is the canary for
+ * it. Nothing in FORMBRICKS-16G is this code — the reported events are all `verification not found`,
+ * i.e. `state_mismatch` — so suppressing it would have traded an unmeasured amount of scanner noise for
+ * the loss of that canary, on no evidence. If it does turn out to be dominated by scanners once the
+ * `auth.path` tag is live, adding it then is a one-line change backed by data.
  *
  * `state_security_mismatch` carries the load this gate deliberately does not take on, and it is mixed:
  *
@@ -164,6 +175,13 @@ export const redactEmailsInLogMessage = (message: unknown): unknown =>
  * tag from ENG-2259 rather than guessing. Suppressing a signal before measuring it is how ENG-2037 left
  * this shape behind in the first place.
  *
+ * One security-visible consequence, stated rather than left implicit: a *replayed* callback — the same
+ * `state` presented again after the legitimate flow consumed it — also lands on `state_mismatch`, so
+ * replay attempts stop being visible in Sentry. That is judged acceptable because the replay fails
+ * closed (the record is single-use, and the authorization code is single-use at the IdP too), so this is
+ * a loss of visibility into a *failed* attempt, not of a control. The events remain in the application
+ * log with their `stateErrorCode`, which is where a campaign would show up as volume.
+ *
  * What suppression costs, stated narrowly: a Redis eviction, flush, or failover to an empty replica
  * drops in-flight verification records and yields `state_mismatch` for real login failures. A *hard*
  * Redis outage does not — `secondary-storage.ts` rethrows on connect failure, which is not a
@@ -171,7 +189,7 @@ export const redactEmailsInLogMessage = (message: unknown): unknown =>
  * `stateErrorCode` and the request's `authPath`, so they are greppable; note there is no log-based alert
  * rule for them today, so a burst is discoverable rather than announced.
  */
-const UNACTIONABLE_STATE_ERROR_CODES: ReadonlySet<string> = new Set(["state_mismatch", "state_not_found"]);
+const UNACTIONABLE_STATE_ERROR_CODES: ReadonlySet<string> = new Set(["state_mismatch"]);
 
 /**
  * The `StateError` code carried by a logged cause, or undefined when it is not one.
@@ -190,8 +208,8 @@ const getStateErrorCode = (cause: Error | undefined): string | undefined => {
 };
 
 /**
- * Fails CLOSED on purpose: anything not positively identified as one of the two unactionable codes is
- * still captured. A wrong answer here should add noise, never silence a genuine fault.
+ * Fails CLOSED on purpose: anything not positively identified as an unactionable code is still
+ * captured. A wrong answer here should add noise, never silence a genuine fault.
  */
 const isUnactionableStateError = (code: string | undefined): boolean =>
   code !== undefined && UNACTIONABLE_STATE_ERROR_CODES.has(code);

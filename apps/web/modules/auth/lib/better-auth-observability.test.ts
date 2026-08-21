@@ -409,15 +409,14 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
     vi.clearAllMocks();
   });
 
-  // Client- or timing-caused: the state cookie expired, the verification record was purged, the request
-  // expired, or no `state` arrived at all. Nothing to act on, so these must not page.
+  // Client- or timing-caused: the verification record was purged or already consumed, or the parsed
+  // state is past its `expiresAt`. Nothing to act on, so these must not page.
   test.each([
     ["state_mismatch", "State mismatch: verification not found"],
     // Cookie-branch message, kept as a label only: the code is what the gate reads, and this variant
     // is unreachable on our database strategy.
     ["state_mismatch", "State mismatch: auth state cookie not found"],
     ["state_mismatch", "Invalid state: request expired"],
-    ["state_not_found", "State not found in OAuth callback"],
   ])("does not capture the client-caused %s (%s)", (code, message) => {
     const stateError = new StateErrorLike(message, code);
 
@@ -438,11 +437,17 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
    *   mixed and ENG-2471 defers judging it until the ENG-2259 `auth.path` tag has sized the split.
    * - `state_invalid` — cookie-branch only, so unreachable on this configuration. Kept because
    *   suppressing a code that never fires buys nothing.
+   * - `state_not_found` — no `state` on the callback at all. A real flow cannot produce this (the IdP
+   *   echoes the state it was given), so it is either a bare scanner or something upstream dropping the
+   *   parameter — an IdP regression, a proxy, or a callback rewrite mishandling the query string. The
+   *   latter is a provider-wide sign-in outage and this is its canary, so it keeps paging. None of the
+   *   reported FORMBRICKS-16G events are this code.
    */
   test.each([
     ["state_generation_error", "Unable to create verification"],
     ["state_invalid", "State invalid: Failed to decrypt or parse auth state"],
     ["state_security_mismatch", "State mismatch: OAuth state parameter does not match stored state"],
+    ["state_not_found", "State not found in OAuth callback"],
   ])("still captures %s", (code, message) => {
     const stateError = new StateErrorLike(message, code);
 
