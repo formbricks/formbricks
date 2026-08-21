@@ -47,7 +47,7 @@ def _load_fixtures() -> dict[str, Any]:
     except OSError as exc:
         raise RuntimeError(
             f"Contract fixtures not found at {path}. Run "
-            "`pnpm --filter=@formbricks/database db:seed:contract -- --out <path>` first, or point "
+            "`pnpm --filter=@formbricks/database db:seed:contract` first, or point "
             f"{FIXTURES_ENV_VAR} at the file it wrote. Running without it would test an empty "
             "workspace and report a green run that proves nothing."
         ) from exc
