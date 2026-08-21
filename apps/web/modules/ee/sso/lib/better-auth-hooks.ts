@@ -10,6 +10,7 @@ import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
+import { isUninvitedSignupAllowed, signupDisabledError } from "@/modules/auth/lib/signup-policy";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
@@ -29,9 +30,10 @@ import {
 /**
  * Resolve the SSO provider id from a Better Auth callback endpoint context, else null.
  *
- * Better Auth sets `context.path` to the ROUTE PATTERN — `/oauth2/callback/:providerId` for the
- * generic-OAuth plugin, `/callback/:id` for built-in social — and the matched provider on
- * `context.params` (`providerId` or `id`). We prefer the parsed param and fall back to parsing a
+ * Better Auth sets `context.path` to the ROUTE PATTERN — `/callback/:id` for both built-in social
+ * providers and, since Better Auth 1.7 (ENG-2343), the `genericOAuth` plugin too (it now shares the
+ * social-provider route instead of its own `/oauth2/callback/:providerId`) — and the matched provider
+ * on `context.params` (`providerId` or `id`). We prefer the parsed param and fall back to parsing a
  * resolved path. Returns null for non-callback paths (e.g. `/sign-up/email`) so the hooks below
  * only act on SSO sign-ups.
  */
@@ -81,8 +83,23 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           // invite exemption) and marks the request scope before calling signUpEmail. If that mark is
           // absent, this is a direct POST to Better Auth's native /sign-up/email — which bypasses the
           // action — so re-enforce the domain block here (no invite is carried on that raw path).
-          if (!isSignupDomainAllowed() && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
+          // One read, two guards: both re-checks below exist only for a request that skipped the action.
+          const wentThroughAction = isSignupDomainAllowed();
+          if (!wentThroughAction && (await isSignupEmailDomainBlocked(user.email, async () => false))) {
             return false;
+          }
+          // ENG-2293 BACKSTOP: closed-instance policy (SIGNUP_ENABLED / multi-org / fresh-instance).
+          // The primary gate is `signupPolicyBeforeHandler` in auth.ts's `hooks.before`, which rejects
+          // `POST /sign-up/email` before Better Auth looks the address up — deliberately NOT here,
+          // because this hook only ever runs for an address that does not yet exist (the duplicate
+          // branch returns a synthetic 200 without creating anything), so rejecting here and nowhere
+          // else would answer "does this address have an account?". See signup-policy.ts.
+          //
+          // Kept anyway because this hook covers EVERY credential user-creation path, not just the one
+          // route the before-hook names: any future Better Auth plugin that creates a user (magic link,
+          // email OTP, admin create) lands here, and on a closed instance it should not.
+          if (!wentThroughAction && !(await isUninvitedSignupAllowed())) {
+            throw signupDisabledError();
           }
           return; // otherwise keep credential-signup defaults
         }

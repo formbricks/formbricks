@@ -1,0 +1,98 @@
+name: Validate CODEOWNERS
+
+# CODEOWNERS fails silently: an unparseable line is skipped, an owner without
+# write access is dropped, and a pattern whose directory was renamed simply
+# stops matching. None of that surfaces anywhere, so it is checked here.
+#
+# This workflow is deliberately NOT part of pr.yml's `required` gate. Ownership
+# metadata going stale must never block unrelated work.
+
+on:
+  pull_request:
+    paths:
+      - ".github/CODEOWNERS"
+      - ".github/workflows/codeowners-validation.yml"
+  # The weekly run is the important one. Renaming a directory elsewhere in the
+  # repo breaks a pattern without touching CODEOWNERS, so the pull_request
+  # trigger above would never fire for it.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate CODEOWNERS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      # Runs on EVERY trigger, forks included, because it needs no credentials.
+      # The validator's `owners` checks are API-backed and are skipped on fork
+      # PRs (see below), which would otherwise let an outside contributor add a
+      # path rule or an individual owner and still show green. This step also
+      # catches what `owner_checker_owners_must_be_teams` cannot: extra rules,
+      # and extra owners on the single line.
+      - name: Enforce single-team ownership
+        run: |
+          expected='*  @formbricks/engineering'
+          rules="$(grep -vE '^[[:space:]]*(#|$)' .github/CODEOWNERS || true)"
+          count="$(printf '%s' "$rules" | grep -c . || true)"
+          # Compare on collapsed, trimmed whitespace so incidental spacing does
+          # not fail the build; nothing formats this file, so spacing drifts.
+          norm() { printf '%s' "$1" | tr -s '[:space:]' ' ' | sed 's/^ //; s/ $//'; }
+          if [ "$count" != "1" ] || [ "$(norm "$rules")" != "$(norm "$expected")" ]; then
+            echo "::error file=.github/CODEOWNERS::CODEOWNERS must contain exactly one rule -- '${expected}' -- so that GitHub assigns exactly one reviewer. Adding path rules or extra owners reverts to 3-6 reviewers per PR. Found ${count} rule(s):"
+            printf '%s\n' "$rules"
+            exit 1
+          fi
+          echo "CODEOWNERS is the expected single team rule."
+
+      - name: Note reduced check set on fork pull requests
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::notice::Fork pull request: repository secrets are not available, so the 'owners' check is skipped. The other four checks still run, and 'owners' is covered by the weekly scheduled run against the default branch."
+
+      - name: Validate CODEOWNERS
+        uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f # v0.7.4
+        with:
+          # syntax       - unparseable lines, which GitHub would skip silently
+          # duppatterns  - the same pattern declared twice
+          # files        - patterns that match nothing, i.e. a renamed directory
+          # owners       - owners who do not exist or have lost write access
+          #
+          # `owners` is dropped for pull requests from a fork. GitHub does not
+          # forward repository secrets to those runs, so the token below would
+          # resolve empty and the check would fail on authentication — a red X on
+          # an outside contributor's PR that says nothing about their change. The
+          # weekly scheduled run covers `owners` against the default branch.
+          checks: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'syntax,duppatterns,files,owners' || 'syntax,duppatterns,files' }}
+          # The guard that keeps CODEOWNERS to one reviewer. Only a TEAM owner can
+          # be thinned to a single reviewer by GitHub; naming individuals makes it
+          # request all of them, which is the bug this file was rewritten to fix.
+          # Rejecting individual owners here means a well-meant "just add an owner
+          # for this path" fails the build instead of quietly restoring 3-6
+          # reviewers per PR.
+          owner_checker_owners_must_be_teams: "true"
+          # Guards the last-matching-pattern-wins footgun if path rules are ever
+          # added back: a later broad rule would silently void the ones above it.
+          experimental_checks: "avoid-shadowing"
+          # The `owners` check reads organization membership, which the default
+          # GITHUB_TOKEN cannot do. Requires a CLASSIC PAT with `read:org` —
+          # fine-grained tokens do not send the X-OAuth-Scopes header the
+          # validator reads, so they fail with `missing scopes: "read:org"`. The
+          # token must belong to an org member, or private members are invisible
+          # and every owner is reported invalid.
+          github_access_token: ${{ secrets.CODEOWNERS_VALIDATOR_TOKEN }}

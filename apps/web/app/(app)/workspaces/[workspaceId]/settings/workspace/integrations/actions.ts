@@ -17,6 +17,8 @@ import {
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromIntegrationId,
 } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 const ZCreateOrUpdateIntegrationAction = z.object({
@@ -28,6 +30,10 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
   .inputSchema(ZCreateOrUpdateIntegrationAction)
   .action(
     withAuditLogging("createdUpdated", "integration", async ({ ctx, parsedInput }) => {
+      // Bound before any lookup: every call past this point reads the stored integration and writes the
+      // provider config plus an audit-log entry.
+      await applyRateLimit(rateLimitConfigs.actions.integrationMutation, ctx.user.id);
+
       const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
       await checkAuthorizationUpdated({
@@ -77,7 +83,11 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
         { organizationId, workspaceId: parsedInput.workspaceId }
       );
 
-      return result;
+      // ENG-2292: only the id leaves this action. `result` is the full Prisma row, including the
+      // `config.key` merged back in above — returning it would serialize the provider's access and
+      // refresh tokens into the action response, for the same audience the settings pages redact them
+      // from (readWrite workspace members). The callers only branch on success.
+      return { id: result.id };
     })
   );
 
@@ -87,6 +97,9 @@ const ZDeleteIntegrationAction = z.object({
 
 export const deleteIntegrationAction = authenticatedActionClient.inputSchema(ZDeleteIntegrationAction).action(
   withAuditLogging("deleted", "integration", async ({ ctx, parsedInput }) => {
+    // Same policy as the create/update path — a delete is the cheapest way to churn integration rows.
+    await applyRateLimit(rateLimitConfigs.actions.integrationMutation, ctx.user.id);
+
     const organizationId = await getOrganizationIdFromIntegrationId(parsedInput.integrationId);
 
     await checkAuthorizationUpdated({
@@ -109,6 +122,10 @@ export const deleteIntegrationAction = authenticatedActionClient.inputSchema(ZDe
     ctx.auditLoggingCtx.integrationId = parsedInput.integrationId;
     const result = await deleteIntegration(parsedInput.integrationId);
     ctx.auditLoggingCtx.oldObject = result;
-    return result;
+
+    // ENG-2292: the deleted row still carries the live OAuth credentials in `config.key`, so returning
+    // it would hand a readWrite member the connecting user's tokens in one call — and the integration
+    // can simply be reconnected afterwards. The callers only check that the delete succeeded.
+    return { id: result.id };
   })
 );

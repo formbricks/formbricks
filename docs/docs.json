@@ -197,7 +197,8 @@
                   "surveys/question-type/select-multiple",
                   "surveys/question-type/select-picture",
                   "surveys/question-type/select-single",
-                  "surveys/question-type/statement-cta"
+                  "surveys/question-type/statement-cta",
+                  "surveys/question-type/thank-you-card"
                 ]
               }
             ]
@@ -217,7 +218,8 @@
               "surveys/best-practices/pmf-survey",
               "surveys/best-practices/quiz-time",
               "surveys/best-practices/improve-trial-cr",
-              "surveys/best-practices/research-panel"
+              "surveys/best-practices/research-panel",
+              "surveys/best-practices/google-reviews"
             ]
           }
         ],

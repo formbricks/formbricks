@@ -83,8 +83,9 @@ x-environment: &environment
     # (Additional option for TLS (port 465) only)
     # SMTP_SECURE_ENABLED:
 
-    # If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs (default is 1).
-    # SMTP_REJECT_UNAUTHORIZED_TLS: 0
+    # Keep certificate verification enabled in production (default is 1). If your SMTP server uses a private CA,
+    # mount the CA and configure NODE_EXTRA_CA_CERTS instead of setting this to 0.
+    # SMTP_REJECT_UNAUTHORIZED_TLS: 1
 
     ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
 
@@ -253,14 +254,16 @@ services:
 
   # Redis/Valkey service for caching, rate limiting, and audit logging
   # Remove this service if you want to use an external Redis/Valkey instance
+  # No host port is published: this instance is Better Auth's session/token store and is reached
+  # only over the internal compose network (REDIS_URL=redis://redis:6379). Publishing 6379 to the
+  # host would expose every live session token unauthenticated (and Docker's port rule bypasses
+  # host firewalls like ufw). Same treatment as the postgres service above.
   redis:
     restart: always
     image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
     command: valkey-server --appendonly yes --maxmemory-policy noeviction
     volumes:
       - redis:/data
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 5s

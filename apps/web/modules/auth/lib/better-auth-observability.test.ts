@@ -13,6 +13,7 @@ import {
   redactEmailsInLogMessage,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
+import { runWithBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
@@ -88,7 +89,7 @@ describe("getSignInAuthMethod (signedIn audit allow-list)", () => {
     ["/two-factor/verify-totp", "password"],
     ["/two-factor/verify-backup-code", "password"],
     ["/callback/google", "sso"],
-    ["/oauth2/callback/azuread", "sso"],
+    ["/callback/azuread", "sso"],
   ])("audits sign-in completion %s as %s", (path, expected) => {
     expect(getSignInAuthMethod(path)).toBe(expected);
   });
@@ -344,16 +345,24 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
 
     log("error", "Better auth was unable to query your database.\nError: ", dbError);
 
-    expect(Sentry.captureException).toHaveBeenCalledWith(dbError);
+    // Outside the HTTP handler there is no request context, so the endpoint tags are absent — the
+    // capture still happens, which is what keeps `auth.api.*` faults reportable (ENG-2259).
+    expect(Sentry.captureException).toHaveBeenCalledWith(dbError, {
+      tags: { component: "better-auth" },
+    });
   });
 
   test("captures the deadlock DriverAdapterError so the ENG-2038 signal stays visible", () => {
     // A non-APIError Error must still reach Sentry — this is the signal we watch post-deploy.
     const deadlock = new Error("deadlock detected");
 
-    log("error", deadlock);
+    // Better Auth types `message` as string, but some of its sites pass the Error itself as the
+    // message (see betterAuthLogger's cause lookup) — this test exercises exactly that path.
+    log("error", deadlock as unknown as string);
 
-    expect(Sentry.captureException).toHaveBeenCalledWith(deadlock);
+    expect(Sentry.captureException).toHaveBeenCalledWith(deadlock, {
+      tags: { component: "better-auth" },
+    });
   });
 
   test("warn-level logs are never captured", () => {
@@ -368,5 +377,83 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
 
     expect(Sentry.captureException).not.toHaveBeenCalled();
     expect(contextLoggerMock.info).toHaveBeenCalledWith("some info");
+  });
+});
+
+// ENG-2259: Better Auth's router logs a non-APIError as `(e.name, e)` and drops the endpoint, so the
+// capture arrived with no transaction, URL or route and FORMBRICKS-183 could not be triaged at all.
+// The request context supplies the endpoint; these cases pin that it reaches Sentry AND the local log,
+// and that its absence degrades rather than breaking the capture.
+describe("betterAuthLogger (request-path tagging, ENG-2259)", () => {
+  const log = betterAuthLogger.log!;
+  const fault = () => new TypeError("Cannot read properties of null (reading 'id')");
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("tags the capture with the endpoint label and method", () => {
+    const cause = fault();
+
+    runWithBetterAuthRequestContext({ path: "/oauth2/userinfo", method: "GET" }, () => {
+      log("error", "TypeError", cause);
+    });
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(cause, {
+      tags: { component: "better-auth", "auth.path": "/oauth2/userinfo", "http.method": "GET" },
+    });
+  });
+
+  test("puts the endpoint in the local log context too, for self-hosters with no Sentry", () => {
+    runWithBetterAuthRequestContext({ path: "/sign-in/email", method: "POST" }, () => {
+      log("error", "TypeError", fault());
+    });
+
+    // `httpMethod`, not `authMethod`: the latter already means the authentication method
+    // (password / sso) in this very file's sign-in audit, and overloading it would mix HTTP verbs
+    // into a field self-hosters query for auth methods.
+    expect(logger.withContext).toHaveBeenCalledWith({
+      source: "better-auth",
+      authPath: "/sign-in/email",
+      httpMethod: "POST",
+    });
+  });
+
+  test("still captures, untagged, when there is no request context", () => {
+    const cause = fault();
+
+    log("error", "TypeError", cause);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(cause, {
+      tags: { component: "better-auth" },
+    });
+    // An untagged capture is itself diagnostic: it means the throw did not come through auth.handler.
+    // Array form, not `"tags.auth.path"`: vitest reads a dotted string as a property PATH, so it would
+    // look for `tags` → `auth` → `path`, a nesting that never exists, and pass whether or not the tag
+    // is set. The key is flat — `tags["auth.path"]` — and only the array form escapes the dot.
+    const [, captureContext] = vi.mocked(Sentry.captureException).mock.calls[0];
+    expect(captureContext).not.toHaveProperty(["tags", "auth.path"]);
+    expect(logger.withContext).toHaveBeenCalledWith({ source: "better-auth" });
+  });
+
+  test("never forwards the Better Auth message to Sentry, only tags", () => {
+    // `redactEmailsInLogMessage` strips emails and nothing else, so a message string is not a safe
+    // Sentry payload — a plugin logging a token in one would forward it verbatim. The capture stays
+    // `Error` + bounded tags, which is what keeps the module header's claim true.
+    runWithBetterAuthRequestContext({ path: "/sign-in/email", method: "POST" }, () => {
+      log("error", "failure for reset token faketokenfaketokenfaketoken00001", fault());
+    });
+
+    const [, captureContext] = vi.mocked(Sentry.captureException).mock.calls[0];
+    expect(captureContext).not.toHaveProperty("extra");
+    expect(JSON.stringify(captureContext)).not.toContain("faketokenfaketokenfaketoken00001");
+  });
+
+  test("does not tag a handled APIError into Sentry — the ENG-2037 gate still wins", () => {
+    runWithBetterAuthRequestContext({ path: "/sign-in/email", method: "POST" }, () => {
+      log("error", "Invalid email or password", new APIError("UNAUTHORIZED", { message: "nope" }));
+    });
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 });

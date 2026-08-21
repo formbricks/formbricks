@@ -40,6 +40,42 @@ export const getMcpProtectedResourceMetadataUrl = (): string =>
 
 export const getMcpOrigin = (): string => new URL(getMcpResourceUrl()).origin;
 
+/**
+ * The authorization server's own UserInfo endpoint, which is a legitimate second value in an access
+ * token's `aud`.
+ *
+ * The oauth-provider treats UserInfo as an implicit resource: when `openid` is in scope it appends
+ * this identifier to the audience alongside the resource the client actually requested. It is the
+ * only audience besides the MCP resource URL that a Formbricks-issued MCP token may carry, so the
+ * resource server allow-lists exactly these two and rejects anything else (see
+ * `hasAcceptedMcpAudience` in modules/mcp/auth.ts).
+ *
+ * Built off the issuer for the same reason `jwksUrl` is: Better Auth mounts its OAuth endpoints
+ * under the auth base path, so the issuer is the prefix the plugin itself uses.
+ *
+ * The assumption is that this equals Better Auth's own `ctx.context.baseURL`, which is what it stamps
+ * into the audience. It holds for both shapes an operator is actually told to configure:
+ *
+ * - a bare origin — upstream's `withPath` appends `/api/auth`, exactly as `appendPath` does here;
+ * - a subpath already ending in `/api/auth` (`https://host/custom-path/api/auth`, which is the literal
+ *   value `docs/self-hosting/configuration/custom-subpath.mdx` prescribes) — `withPath` returns it
+ *   unchanged because `checkHasPath` is true, and `appendPath` returns it unchanged because its
+ *   `basePath.endsWith(normalizedPath)` branch fires.
+ *
+ * The one shape where they diverge is a configured URL carrying a path that does NOT end in
+ * `/api/auth`: `withPath` leaves any non-empty path alone, while `appendPath` would append. Note this
+ * is narrower than it used to say here — "any subpath breaks it" is wrong, and the documented subpath
+ * is precisely the case that works. Subpath deployments cannot complete a login at all today (ENG-606),
+ * so it is still not a live gap.
+ *
+ * This matters beyond the audience now: `ssoLegacyRedirectUri` in better-auth-providers.ts builds the
+ * pinned SSO callback URL from `getAuthIssuerUrl()` (ENG-2343). Because that URL is pinned explicitly,
+ * Better Auth sends it on both the authorization and token legs regardless of its own `baseURL`, so a
+ * divergence here cannot desynchronise the handshake — it would only mean the URL names a host the
+ * operator did not intend, which is a configuration error rather than a protocol one.
+ */
+export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/userinfo`;
+
 export const MCP_OAUTH_SCOPES = [
   "openid",
   "profile",

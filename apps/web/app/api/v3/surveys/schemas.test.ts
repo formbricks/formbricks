@@ -219,6 +219,51 @@ describe("ZV3CreateSurveyBody", () => {
     });
   });
 
+  // Regression (ENG-2411): `buttonUrl` used to be validated with `z.url()`, which accepts any value
+  // `new URL()` parses — `javascript:` included — so a script-capable scheme reached the renderer, where
+  // it is handed to `window.open()`.
+  const ctaCreateBody = (buttonUrl: string) => ({
+    ...validCreateBody,
+    blocks: [
+      {
+        ...validCreateBody.blocks[0],
+        elements: [
+          {
+            id: "cta",
+            type: "cta",
+            headline: { "en-US": "Read the docs" },
+            required: false,
+            buttonExternal: true,
+            ctaButtonLabel: { "en-US": "Open" },
+            buttonUrl,
+          },
+        ],
+      },
+    ],
+  });
+
+  test.each([
+    "javascript:alert(document.domain)",
+    "JavaScript:alert(1)",
+    "java\tscript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox(1)",
+  ])("rejects a cta buttonUrl with the script-capable scheme %j", (buttonUrl) => {
+    const result = ZV3CreateSurveyBody.safeParse(ctaCreateBody(buttonUrl));
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "blocks.0.elements.0.buttonUrl"
+    );
+  });
+
+  test.each(["https://formbricks.com/docs", "http://localhost:3000/docs", "mailto:support@example.com"])(
+    "accepts a cta buttonUrl with the safe scheme %j",
+    (buttonUrl) => {
+      expect(ZV3CreateSurveyBody.safeParse(ctaCreateBody(buttonUrl)).success).toBe(true);
+    }
+  );
+
   test("rejects choice fields that do not belong to the selected element type", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,

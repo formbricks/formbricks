@@ -28,6 +28,10 @@ jobs:
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
+  typecheck:
+    name: Run Typecheck
+    uses: ./.github/workflows/typecheck.yml
+
   # NOTE: there is deliberately no standalone "build the web app" job here. It used to run
   # `pnpm build --filter=@formbricks/web...` in parallel with e2e-test, which builds the
   # very same app, and cached the output into a key nothing downstream ever read. Sharing
@@ -40,6 +44,10 @@ jobs:
     name: Validate Helm Chart
     uses: ./.github/workflows/helm-chart-validation.yml
 
+  coderabbit-config-validation:
+    name: Validate CodeRabbit Config
+    uses: ./.github/workflows/coderabbit-config-validation.yml
+
   e2e-test:
     name: Run E2E Tests
     uses: ./.github/workflows/e2e.yml
@@ -47,7 +55,7 @@ jobs:
 
   required:
     name: PR Check Summary
-    needs: [lint, test, helm-chart-validation, e2e-test]
+    needs: [lint, typecheck, test, helm-chart-validation, coderabbit-config-validation, e2e-test]
     if: always()
     runs-on: ubuntu-latest
     permissions:

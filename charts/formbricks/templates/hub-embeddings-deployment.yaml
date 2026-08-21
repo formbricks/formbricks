@@ -1,11 +1,9 @@
 {{- if and .Values.hub.enabled .Values.hub.embeddings.enabled }}
 {{- $embeddingsReplicas := int (.Values.hub.embeddings.replicas | default 1) -}}
 {{- $embeddingsMaxReplicas := int (.Values.hub.embeddings.autoscaling.maxReplicas | default 1) -}}
+{{- include "formbricks.validateHubEmbeddingsHuggingFaceSecret" . }}
 {{- if and .Values.hub.embeddings.persistence.enabled (not .Values.hub.embeddings.persistence.existingClaim) (not (has "ReadWriteMany" .Values.hub.embeddings.persistence.accessModes)) (or (gt $embeddingsReplicas 1) (and .Values.hub.embeddings.autoscaling.enabled (gt $embeddingsMaxReplicas 1))) }}
   {{- fail "hub.embeddings persistence with multiple replicas requires persistence.accessModes to include ReadWriteMany, or set hub.embeddings.persistence.enabled=false/use a ReadWriteMany existingClaim" }}
-{{- end }}
-{{- if and .Values.hub.embeddings.auth.existingSecret .Values.hub.embeddings.huggingFace.token (not .Values.hub.embeddings.huggingFace.existingSecret) }}
-  {{- fail "hub.embeddings.huggingFace.token cannot be stored when hub.embeddings.auth.existingSecret is set; put HF_TOKEN in the existing auth secret or set hub.embeddings.huggingFace.existingSecret" }}
 {{- end }}
 ---
 apiVersion: apps/v1

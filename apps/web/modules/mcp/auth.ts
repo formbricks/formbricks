@@ -1,6 +1,6 @@
 import "server-only";
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import type { AuthInfo, ServerContext } from "@modelcontextprotocol/server";
 import type { JWTPayload } from "jose";
 import type { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
@@ -25,6 +25,7 @@ import {
   getMcpOrigin,
   getMcpProtectedResourceMetadataUrl,
   getMcpResourceUrl,
+  getOAuthUserInfoUrl,
 } from "@/modules/auth/lib/oauth-urls";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -37,6 +38,12 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "token",
   "authorization",
 ]);
+
+/**
+ * RFC 9068 §2.1 media type for a JWT access token. Better Auth stamps it into the JWS header from
+ * 1.7 onwards; 1.6 emitted no `typ` at all.
+ */
+const JWT_ACCESS_TOKEN_TYPE = "at+jwt";
 
 const oauthResourceClient = oauthProviderResourceClient(auth);
 
@@ -117,6 +124,44 @@ function getOAuthScopes(payload: JWTPayload): string[] {
   return typeof payload.scope === "string" ? payload.scope.split(" ").filter(Boolean) : [];
 }
 
+/** `aud` is a single string or an array (RFC 7519 §4.1.3); normalise both to a list. */
+function toAudienceList(aud: JWTPayload["aud"]): string[] {
+  if (typeof aud === "string") {
+    return [aud];
+  }
+
+  return Array.isArray(aud) ? aud : [];
+}
+
+/**
+ * Rejects an access token that was not minted for this resource server.
+ *
+ * `verifyOptions.audience` alone does NOT do this. It is handed to jose, whose `aud` check is a
+ * *membership* test — a token carrying `aud: [".../api/mcp", "https://other.example/api"]` passes it
+ * and would be accepted here, which is exactly the cross-resource escalation GHSA-p2fr-6hmx-4528
+ * describes. RFC 9068 §4 puts the burden on the resource server: it must reject a token whose
+ * audience is not itself, so this assert is required regardless of which provider version issued the
+ * token.
+ *
+ * Written as an allow-list rather than "exactly one audience", deliberately. When `openid` is in the
+ * granted scopes the authorization server treats its own UserInfo endpoint as an implicit second
+ * resource and appends it to `aud` — that is current behaviour, not something the pending provider
+ * upgrade introduces — so a perfectly ordinary MCP token is multi-valued. Those two identifiers are
+ * the only ones a Formbricks-issued MCP token may carry; anything else means the token was minted
+ * for somebody else and must not be honoured here.
+ */
+function hasAcceptedMcpAudience(payload: JWTPayload): boolean {
+  const audiences = toAudienceList(payload.aud);
+
+  const resourceUrl = getMcpResourceUrl();
+  if (!audiences.includes(resourceUrl)) {
+    return false;
+  }
+
+  const acceptedAudiences = new Set([resourceUrl, getOAuthUserInfoUrl()]);
+  return audiences.every((audience) => acceptedAudiences.has(audience));
+}
+
 function getOAuthClientId(payload: JWTPayload): string | null {
   const azp = payload.azp;
   if (typeof azp === "string" && azp.length > 0) {
@@ -173,6 +218,25 @@ async function isOAuthUserActive(userId: string): Promise<boolean> {
   });
 
   return user?.isActive === true;
+}
+
+/**
+ * The slice of the SDK's `ServerContext` our tools actually read. Derived from it rather than
+ * hand-written, so it tracks the SDK, but narrow enough that a test can hand a handler
+ * `{ http: { authInfo } }` instead of constructing a whole context.
+ *
+ * `http` is optional because it is absent on non-HTTP transports. Ours is HTTP-only, so in practice it
+ * is always there — but the tools already handle a missing token, so nothing needs to assert it.
+ */
+export type TMcpToolContext = Pick<ServerContext, "http">;
+
+/**
+ * The single place that knows where the SDK puts verified auth on the handler context. Every tool goes
+ * through this rather than reaching into `ctx.http?.authInfo` itself, so a future SDK or adapter change
+ * to the context shape is one edit here instead of one per tool (the v1 -> v2 move was exactly that).
+ */
+export function getMcpToolAuthInfo(ctx: TMcpToolContext): AuthInfo | undefined {
+  return ctx.http?.authInfo;
 }
 
 export function getMcpAuthentication(authInfo?: AuthInfo): TV3Authentication {
@@ -255,6 +319,39 @@ async function rateLimitUnauthenticatedMcpRequest(
   }
 }
 
+/**
+ * The shared refusal for a request that failed to authenticate: charge the unauthenticated rate-limit
+ * bucket first (so a bad credential cannot be retried for free), then answer 401 with the discovery
+ * challenge.
+ *
+ * `detail` is what the caller is told and defaults to the same opaque string for every OAuth failure
+ * — expired, forged, wrong audience and inactive user are deliberately indistinguishable. The reason
+ * lives in `logMessage`/`logContext` instead, where it is useful to us and not to an attacker.
+ */
+async function rejectUnauthenticatedMcpRequest(params: {
+  requestId: string;
+  instance: string;
+  log: ReturnType<typeof logger.withContext>;
+  logMessage: string;
+  detail?: string;
+  logContext?: Record<string, unknown>;
+}): Promise<TMcpAuthenticationResult> {
+  const { requestId, instance, log, logMessage, detail = "Invalid OAuth access token", logContext } = params;
+
+  const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
+  if (rateLimitResponse) {
+    return { ok: false, requestId, response: rateLimitResponse };
+  }
+
+  // statusCode last: a caller's context must not be able to relabel the status this actually returns.
+  log.warn({ ...logContext, statusCode: 401 }, logMessage);
+  return {
+    ok: false,
+    requestId,
+    response: withOAuthChallenge(problemUnauthorized(requestId, detail, instance)),
+  };
+}
+
 async function authenticateMcpApiKey(
   request: NextRequest,
   requestId: string,
@@ -264,19 +361,13 @@ async function authenticateMcpApiKey(
   const authentication = await authenticateApiKeyFromHeaders(request.headers);
 
   if (!authentication) {
-    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-    if (rateLimitResponse) {
-      return { ok: false, requestId, response: rateLimitResponse };
-    }
-
-    log.warn({ statusCode: 401 }, "MCP API key authentication failed");
-    return {
-      ok: false,
+    return await rejectUnauthenticatedMcpRequest({
       requestId,
-      response: withOAuthChallenge(
-        problemUnauthorized(requestId, "API key or OAuth access token required", instance)
-      ),
-    };
+      instance,
+      log,
+      detail: "API key or OAuth access token required",
+      logMessage: "MCP API key authentication failed",
+    });
   }
 
   try {
@@ -310,58 +401,77 @@ async function authenticateMcpOAuthBearer(
   let payload: JWTPayload;
 
   try {
-    payload = await oauthResourceClient.getActions().verifyAccessToken(token, {
+    // Renamed from `verifyAccessToken` in Better Auth 1.7 (ENG-2343). `hasAcceptedMcpAudience` below is
+    // kept regardless of what upstream does with `verifyOptions.audience`: an earlier version of this
+    // comment asserted that 1.7 stops passing it into its own `jwtVerify`, which could not be
+    // substantiated — `verifyBearerToken` is re-exported through `better-auth/oauth2` and its body is not
+    // readable in the published dist. So the reason to keep our own check is not a claim about upstream:
+    // it is that "every `aud` resolves to a registered resource" and "this token is for ME" are different
+    // questions, and only the second is the one a resource server must answer. Ours answers it.
+    payload = await oauthResourceClient.getActions().verifyBearerToken(token, {
       verifyOptions: {
         audience: getMcpResourceUrl(),
         issuer: getAuthIssuerUrl(),
+        // RFC 9068 §4: an access token must be typed `at+jwt`, and a resource server should refuse
+        // one that is not. Enforceable only from 1.7 — 1.6 issued no `typ` header at all, so
+        // requiring it before the upgrade would have rejected every token in circulation.
+        //
+        // Kept strict through the rolling deploy, deliberately. A 1.6-minted token (no `typ`) hitting a
+        // 1.7 pod is rejected here — but this check is on the RESOURCE SERVER only, not on the refresh
+        // path, and `20260812110001_eng_2343_backfill_oauth_resource_links` backfills
+        // `oauthRefreshToken.resources` precisely so existing refresh tokens keep working. So a client
+        // takes one 401, refreshes against the 1.7 authorization server, and retries with a typed token:
+        // self-healing in a single round trip, which is the 401 handling every MCP client already
+        // implements. Relaxing this to "absent is fine" would weaken a cross-JWT-confusion defence
+        // permanently to smooth a window that closes on its own — the wrong trade in the PR whose whole
+        // purpose is binding token audiences.
+        typ: JWT_ACCESS_TOKEN_TYPE,
       },
       jwksUrl: `${getAuthIssuerUrl()}/jwks`,
     });
   } catch {
-    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-    if (rateLimitResponse) {
-      return { ok: false, requestId, response: rateLimitResponse };
-    }
-
-    log.warn({ statusCode: 401 }, "MCP OAuth authentication failed");
-    return {
-      ok: false,
+    return await rejectUnauthenticatedMcpRequest({
       requestId,
-      response: withOAuthChallenge(problemUnauthorized(requestId, "Invalid OAuth access token", instance)),
-    };
+      instance,
+      log,
+      logMessage: "MCP OAuth authentication failed",
+    });
+  }
+
+  if (!hasAcceptedMcpAudience(payload)) {
+    // Logged distinctly — a token that verifies against our own issuer and JWKS but names a
+    // different audience is a resource-confusion attempt, not the routine expired/garbage token the
+    // catch above handles.
+    return await rejectUnauthenticatedMcpRequest({
+      requestId,
+      instance,
+      log,
+      logMessage: "MCP OAuth token audience is not bound to this resource server",
+      logContext: { clientId: getOAuthClientId(payload), audience: payload.aud },
+    });
   }
 
   const authInfo = createOAuthMcpAuthInfo(payload, requestId);
 
   if (!authInfo) {
-    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-    if (rateLimitResponse) {
-      return { ok: false, requestId, response: rateLimitResponse };
-    }
-
-    log.warn({ statusCode: 401 }, "MCP OAuth token has no user subject");
-    return {
-      ok: false,
+    return await rejectUnauthenticatedMcpRequest({
       requestId,
-      response: withOAuthChallenge(
-        problemUnauthorized(requestId, "User OAuth access token required", instance)
-      ),
-    };
+      instance,
+      log,
+      detail: "User OAuth access token required",
+      logMessage: "MCP OAuth token has no user subject",
+    });
   }
 
   const sessionAuthentication = authInfo.extra.formbricksAuthentication as Session;
   if (!(await isOAuthUserActive(sessionAuthentication.user.id))) {
-    const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-    if (rateLimitResponse) {
-      return { ok: false, requestId, response: rateLimitResponse };
-    }
-
-    log.warn({ statusCode: 401, clientId: authInfo.clientId }, "MCP OAuth token user is inactive");
-    return {
-      ok: false,
+    return await rejectUnauthenticatedMcpRequest({
       requestId,
-      response: withOAuthChallenge(problemUnauthorized(requestId, "Invalid OAuth access token", instance)),
-    };
+      instance,
+      log,
+      logMessage: "MCP OAuth token user is inactive",
+      logContext: { clientId: authInfo.clientId },
+    });
   }
 
   // Minimum grant required to authenticate against the MCP server at all: at least ONE *resource*
@@ -479,19 +589,13 @@ export async function authenticateMcpRequest(request: NextRequest): Promise<TMcp
 
     const bearerToken = getBearerTokenFromHeaders(request.headers);
     if (!bearerToken) {
-      const rateLimitResponse = await rateLimitUnauthenticatedMcpRequest(requestId, log);
-      if (rateLimitResponse) {
-        return { ok: false, requestId, response: rateLimitResponse };
-      }
-
-      log.warn({ statusCode: 401 }, "MCP authentication credentials missing");
-      return {
-        ok: false,
+      return await rejectUnauthenticatedMcpRequest({
         requestId,
-        response: withOAuthChallenge(
-          problemUnauthorized(requestId, "API key or OAuth access token required", instance)
-        ),
-      };
+        instance,
+        log,
+        detail: "API key or OAuth access token required",
+        logMessage: "MCP authentication credentials missing",
+      });
     }
 
     if (parseApiKeyV2(bearerToken)) {

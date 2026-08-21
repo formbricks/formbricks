@@ -101,6 +101,149 @@ describe("executeTenantScopedQuery", () => {
     expect(typeof payload.jti).toBe("string");
   });
 
+  test("pivots with a sentinel fill value, because a null fill would still resolve to 0", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    await executeTenantScopedQuery(scopedInput);
+
+    // The client resolves a cell as `row[measure] ?? fillWithValue ?? 0`, so passing null falls
+    // through to 0. Only a non-nullish sentinel survives to be mapped back to null.
+    expect(mockTablePivot).toHaveBeenCalledWith({ fillWithValue: "__formbricks_null__" });
+  });
+
+  test("maps the sentinel back to null so an unasked measure is not reported as zero", async () => {
+    const npsQuery = {
+      measures: ["FeedbackRecords.npsScore"],
+      dimensions: ["FeedbackRecords.sourceName"],
+    };
+    mockTablePivot.mockReturnValue([
+      { "FeedbackRecords.sourceName": "Pre-match", "FeedbackRecords.npsScore": "__formbricks_null__" },
+      { "FeedbackRecords.sourceName": "After-match", "FeedbackRecords.npsScore": "72.92" },
+      { "FeedbackRecords.sourceName": "Accessibility", "FeedbackRecords.npsScore": "0.00" },
+    ]);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({ ...scopedInput, query: npsQuery });
+
+    expect(result).toEqual([
+      { "FeedbackRecords.sourceName": "Pre-match", "FeedbackRecords.npsScore": null },
+      { "FeedbackRecords.sourceName": "After-match", "FeedbackRecords.npsScore": "72.92" },
+      // A genuine zero must survive as a zero, not be swept up with the nulls.
+      { "FeedbackRecords.sourceName": "Accessibility", "FeedbackRecords.npsScore": "0.00" },
+    ]);
+  });
+
+  test("leaves a dimension that genuinely holds the sentinel string alone", async () => {
+    mockTablePivot.mockReturnValue([
+      {
+        "FeedbackRecords.valueText": "__formbricks_null__",
+        "FeedbackRecords.count": "__formbricks_null__",
+      },
+    ]);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.valueText"],
+      },
+    });
+
+    // A respondent can type anything into an open text answer, including this sentinel. Only the
+    // measure cell was filled by the pivot, so only that one may become null.
+    expect(result).toEqual([
+      { "FeedbackRecords.valueText": "__formbricks_null__", "FeedbackRecords.count": null },
+    ]);
+  });
+
+  test("leaves every column alone when the query selects no measures", async () => {
+    const rows = [{ "FeedbackRecords.valueText": "__formbricks_null__" }];
+    mockTablePivot.mockReturnValue(rows);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: { dimensions: ["FeedbackRecords.valueText"] },
+    });
+
+    expect(result).toEqual(rows);
+  });
+
+  test("keeps a synthesized empty date bucket at 0 but preserves a real null in the same result", async () => {
+    const DAY = "FeedbackRecords.collectedAt.day";
+    // The pivot invents 2026-01-03 to fill the gap; 2026-01-02 is a day Cube returned, where the
+    // measure is genuinely NULL (responses that day, none of them answering this question).
+    mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {
+      const real = [
+        { [DAY]: "2026-01-01", "FeedbackRecords.npsScore": "72.92" },
+        { [DAY]: "2026-01-02", "FeedbackRecords.npsScore": "__formbricks_null__" },
+      ];
+      if (pivotConfig?.fillMissingDates === false) return real;
+      return [...real, { [DAY]: "2026-01-03", "FeedbackRecords.npsScore": "__formbricks_null__" }];
+    });
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.npsScore"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "day" }],
+      },
+    });
+
+    expect(result).toEqual([
+      { [DAY]: "2026-01-01", "FeedbackRecords.npsScore": "72.92" },
+      // real bucket, nothing to compute → no data
+      { [DAY]: "2026-01-02", "FeedbackRecords.npsScore": null },
+      // bucket the pivot invented → a measured zero
+      { [DAY]: "2026-01-03", "FeedbackRecords.npsScore": 0 },
+    ]);
+  });
+
+  test("keeps a zero-activity day as 0 when every empty bucket was synthesized", async () => {
+    const DAY = "FeedbackRecords.collectedAt.day";
+    mockTablePivot.mockImplementation((pivotConfig?: { fillMissingDates?: boolean }) => {
+      const real = [{ [DAY]: "2026-01-01", "FeedbackRecords.count": 12 }];
+      if (pivotConfig?.fillMissingDates === false) return real;
+      return [...real, { [DAY]: "2026-01-02", "FeedbackRecords.count": "__formbricks_null__" }];
+    });
+
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "day" }],
+      },
+    });
+
+    expect(result).toEqual([
+      { [DAY]: "2026-01-01", "FeedbackRecords.count": 12 },
+      { [DAY]: "2026-01-02", "FeedbackRecords.count": 0 },
+    ]);
+  });
+
+  test("still restores nulls for a time dimension used only as a filter, with no granularity", async () => {
+    mockTablePivot.mockReturnValue([{ "FeedbackRecords.npsScore": "__formbricks_null__" }]);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.npsScore"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "last 30 days" }],
+      },
+    });
+
+    expect(mockTablePivot).toHaveBeenCalledWith({ fillWithValue: "__formbricks_null__" });
+    expect(result).toEqual([{ "FeedbackRecords.npsScore": null }]);
+  });
+
+  test("leaves rows without a sentinel exactly as the pivot returned them", async () => {
+    const rows = [{ "FeedbackRecords.count": 42 }];
+    mockTablePivot.mockReturnValue(rows);
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery(scopedInput);
+
+    expect(result).toEqual(rows);
+  });
+
   test("does not cache tenant-bearing Cube clients or tokens", async () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
 

@@ -1,12 +1,17 @@
 import { getOAuthState } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { SIGNUP_DISABLED_ERROR_CODE, SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { getIsFreshInstance } from "@/lib/instance/service";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
-import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsSamlSsoEnabled,
+  getIsSsoEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import {
   blockedSignupDomainRedirectAfter,
   getSsoProviderFromContext,
@@ -29,21 +34,22 @@ vi.mock("better-auth/api", () => ({
   getOAuthState: vi.fn(),
   // Passthrough so the wrapped hook is testable directly as its inner function.
   createAuthMiddleware: (fn: unknown) => fn,
+  // Keeps `body` like the real APIError does, so a test can assert the stable error CODE rather than
+  // the English message — dropping it would leave the message as the only assertable thing, which is
+  // display copy, not the contract callers depend on.
   APIError: class APIError extends Error {
     status: string;
-    constructor(status: string, body?: { message?: string }) {
+    body?: { message?: string; code?: string };
+    constructor(status: string, body?: { message?: string; code?: string }) {
       super(body?.message);
       this.status = status;
+      this.body = body;
     }
   },
 }));
 vi.mock("@formbricks/database", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
 vi.mock("@/lib/posthog", () => ({ identifyPostHogPerson: vi.fn() }));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn() }));
-vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsSsoEnabled: vi.fn(),
-  getIsSamlSsoEnabled: vi.fn(),
-}));
 vi.mock("./sso-provisioning", () => ({
   gateSsoProvisioning: vi.fn(),
   provisionSsoUserMemberships: vi.fn(),
@@ -52,7 +58,23 @@ vi.mock("./sso-recovery", () => ({ startSsoRecovery: vi.fn() }));
 vi.mock("@/modules/auth/lib/signup-email-domain", () => ({ isSignupEmailDomainBlocked: vi.fn() }));
 vi.mock("@/modules/auth/lib/signup-request-context", () => ({ isSignupDomainAllowed: vi.fn() }));
 
-const callbackCtx = { path: "/oauth2/callback/:providerId", params: { providerId: "openid" } };
+const constantsOverrides = vi.hoisted(() => ({ SIGNUP_ENABLED: true }));
+vi.mock("@/lib/constants", () => ({
+  WEBAPP_URL: "http://localhost:3000",
+  get SIGNUP_ENABLED() {
+    return constantsOverrides.SIGNUP_ENABLED;
+  },
+}));
+vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsMultiOrgEnabled: vi.fn(),
+  getIsSsoEnabled: vi.fn(),
+  getIsSamlSsoEnabled: vi.fn(),
+}));
+
+// Better Auth's INTERNAL endpoint path, which 1.7 serves at `/callback/:id`. Not the public SSO callback
+// URL — that stays `/api/auth/oauth2/callback/{providerId}`, pinned (ENG-2343) and mapped onto this one.
+const callbackCtx = { path: "/callback/:providerId", params: { providerId: "openid" } };
 const provisionDecision = {
   action: "provision" as const,
   organizationId: "org-1",
@@ -62,11 +84,14 @@ const provisionDecision = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  constantsOverrides.SIGNUP_ENABLED = true;
   vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
   vi.mocked(getOAuthState).mockResolvedValue({ callbackURL: "/" } as never);
   vi.mocked(gateSsoProvisioning).mockResolvedValue(provisionDecision);
   vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
   vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+  vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+  vi.mocked(getIsFreshInstance).mockResolvedValue(false);
   vi.mocked(prisma.user.findUnique).mockResolvedValue({
     id: "u1",
     email: "a@b.com",
@@ -78,7 +103,7 @@ beforeEach(() => {
 describe("getSsoProviderFromContext", () => {
   test("reads the provider from a generic-OAuth callback's params", () => {
     expect(
-      getSsoProviderFromContext({ path: "/oauth2/callback/:providerId", params: { providerId: "openid" } })
+      getSsoProviderFromContext({ path: "/callback/:providerId", params: { providerId: "openid" } })
     ).toBe("openid");
   });
 
@@ -87,7 +112,7 @@ describe("getSsoProviderFromContext", () => {
   });
 
   test("falls back to parsing a resolved callback path", () => {
-    expect(getSsoProviderFromContext({ path: "/oauth2/callback/azuread", params: {} })).toBe("azuread");
+    expect(getSsoProviderFromContext({ path: "/callback/azuread", params: {} })).toBe("azuread");
   });
 
   test.each([{ path: "/sign-up/email" }, { path: "/sign-in/email" }, {}, null, undefined])(
@@ -234,6 +259,60 @@ describe("ssoDatabaseHooks.user.create.before", () => {
     );
     expect(result).toBeUndefined();
   });
+
+  // ENG-2293: on a closed instance (SIGNUP_ENABLED=false, not fresh, multi-org disabled),
+  // a direct POST to Better Auth's native /sign-up/email must be blocked — the hook is the
+  // last line of defense, since the page and the server action both gate correctly.
+  describe("closed-instance policy", () => {
+    beforeEach(() => {
+      constantsOverrides.SIGNUP_ENABLED = false;
+      vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    });
+
+    test("blocks a raw credential sign-up on a closed instance", async () => {
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // raw endpoint, not through the action
+      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false); // self-hosted: domain block is a no-op
+      await expect(
+        before({ id: "u1", email: "intruder@example.com" } as never, { path: "/sign-up/email" } as never)
+        // The stable code is the contract callers localize against; the message is display copy, so a
+        // reworded message must not fail this test and a dropped code must.
+      ).rejects.toMatchObject({ status: "FORBIDDEN", body: { code: SIGNUP_DISABLED_ERROR_CODE } });
+      expect(gateSsoProvisioning).not.toHaveBeenCalled();
+    });
+
+    test("still allows the first administrator during fresh-instance setup", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
+      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
+      const result = await before(
+        { id: "u1", email: "admin@example.com" } as never,
+        { path: "/sign-up/email" } as never
+      );
+      expect(result).toBeUndefined();
+    });
+
+    test("still allows a credential sign-up when public signup is open", async () => {
+      constantsOverrides.SIGNUP_ENABLED = true;
+      vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
+      vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
+      const result = await before(
+        { id: "u1", email: "user@example.com" } as never,
+        { path: "/sign-up/email" } as never
+      );
+      expect(result).toBeUndefined();
+    });
+
+    test("still allows a credential sign-up via the action (domain already enforced)", async () => {
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(true); // action marked the scope
+      const result = await before(
+        { id: "u1", email: "user@example.com" } as never,
+        { path: "/sign-up/email" } as never
+      );
+      expect(result).toBeUndefined();
+    });
+  });
 });
 
 describe("ssoDatabaseHooks.user.create.after", () => {
@@ -302,7 +381,7 @@ describe("ssoDatabaseHooks.account.create.after", () => {
 });
 
 describe("ssoLicenseGateBefore", () => {
-  const samlCtx = { path: "/oauth2/callback/:providerId", params: { providerId: "saml" } };
+  const samlCtx = { path: "/callback/:providerId", params: { providerId: "saml" } };
 
   test("ignores non-callback requests without checking the license", async () => {
     await ssoLicenseGateBefore({ path: "/sign-up/email" } as never);
@@ -332,7 +411,7 @@ describe("ssoLicenseGateBefore", () => {
 describe("ssoRecoveryAfter", () => {
   const collisionLocation = "https://app.test/error?error=account_not_linked";
   const makeCtx = (overrides: Record<string, unknown> = {}) => ({
-    path: "/oauth2/callback/:providerId",
+    path: "/callback/:providerId",
     params: { providerId: "openid" },
     context: { responseHeaders: new Headers({ location: collisionLocation }) },
     redirect: vi.fn((url: string) => new Error(`redirect:${url}`)),
@@ -410,7 +489,7 @@ describe("ssoRecoveryAfter", () => {
 
 describe("blockedSignupDomainRedirectAfter", () => {
   const makeCtx = (overrides: Record<string, unknown> = {}) => ({
-    path: "/oauth2/callback/:providerId",
+    path: "/callback/:providerId",
     params: { providerId: "openid" },
     context: {
       responseHeaders: new Headers({ location: "https://app.test/auth/login?error=unable_to_create_user" }),

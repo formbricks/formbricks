@@ -38,6 +38,11 @@ export interface MeasureDefinition {
  * enum dimension values: the generated emotion-count measures, the translated
  * value-label maps (typed against these tuples, so additions fail the build until
  * every map is updated), and the ordinal sentiment axis sort all derive from them.
+ *
+ * NOTE: `ZHubSentiment` / `ZHubEmotion` in `@formbricks/types/feedback-source` carry the same two
+ * vocabularies for the feedback-record filter schemas. These stay as `as const` tuples because the
+ * build-time exhaustiveness guard above depends on the literal tuple type; keep both in sync until
+ * ENG-2373 hoists them to one source.
  */
 export const SENTIMENT_VALUE_ORDER = [
   "very_negative",
@@ -115,18 +120,18 @@ export const FEEDBACK_FIELDS = {
       description: "Type of feedback field (e.g., nps, text, rating)",
     },
     {
-      id: "FeedbackRecords.valueText",
-      label: "Value (Text)",
-      type: "string",
-      description:
-        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
-    },
-    {
       id: "FeedbackRecords.valueId",
       label: "Value (Option)",
       type: "string",
       description:
-        "Stable id of a selected choice (single/multi-select). Group by this instead of valueText to consolidate the same option across languages / after a label edit.",
+        "Recommended for single/multi-select answers: the stable option id keeps one option in one bucket across languages, after a label edit, and for free-text 'other' answers. Charts show the option's label, not the id.",
+    },
+    {
+      id: "FeedbackRecords.valueText",
+      label: "Value (Text)",
+      type: "string",
+      description:
+        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Buckets by the exact text, so a translated label, an edited label or a free-text 'other' answer each becomes its own bucket — for choice questions prefer Value (Option). Pair with a fieldType filter to keep types consistent.",
     },
     {
       id: "FeedbackRecords.valueNumber",
@@ -399,6 +404,9 @@ export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
 
 export const SENTIMENT_DIMENSION_ID = "FeedbackRecords.sentiment";
 export const EMOTIONS_DIMENSION_ID = "FeedbackRecords.emotions";
+export const LANGUAGE_DIMENSION_ID = "FeedbackRecords.language";
+export const VALUE_TEXT_DIMENSION_ID = "FeedbackRecords.valueText";
+export const VALUE_ID_DIMENSION_ID = "FeedbackRecords.valueId";
 
 export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
@@ -424,6 +432,14 @@ const isEmptyDimensionValue = (value: unknown): boolean =>
  * because the record hasn't been AI-enriched yet. Drives both the label and the gray coloring. */
 export const isNotEnrichedDimensionValue = (dimensionId: string, value: unknown): boolean =>
   isEnrichmentDimensionId(dimensionId) && isEmptyDimensionValue(value);
+
+/** Grouping by language yields an unlabelled bucket beside the explicit codes, and it has more than
+ * one cause: a survey response in its own default language stores no code (transform.ts only writes
+ * `language` when it is not "default"), and a review, support or manually entered record may never
+ * have captured one at all. It is a real group rather than missing data, so it gets a name — but a
+ * neutral one, since "default language" would assert a language those other records never had. */
+export const isUnspecifiedLanguageDimensionValue = (dimensionId: string, value: unknown): boolean =>
+  dimensionId === LANGUAGE_DIMENSION_ID && isEmptyDimensionValue(value);
 
 // The label maps are typed against the enum tuples, so extending
 // SENTIMENT_VALUE_ORDER / EMOTION_VALUES without adding the matching label is a
@@ -466,6 +482,9 @@ export function getTranslatedDimensionValueLabel(
 ): string | undefined {
   if (isNotEnrichedDimensionValue(dimensionId, value)) {
     return t("workspace.analysis.charts.not_enriched");
+  }
+  if (isUnspecifiedLanguageDimensionValue(dimensionId, value)) {
+    return t("workspace.analysis.charts.language_value_unspecified");
   }
   if (typeof value !== "string" || value.length === 0) return undefined;
   if (dimensionId === SENTIMENT_DIMENSION_ID) {
@@ -627,6 +646,23 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
 /**
  * Translate a field/measure ID. Each t() call uses a literal key so the i18n scanner can detect it.
  */
+/**
+ * Translated description for the dimensions whose copy guides a chart-building decision. The rest of
+ * the schema descriptions are still the inline English in FEEDBACK_FIELDS, so this falls back to that
+ * rather than showing a key.
+ */
+export function getTranslatedFieldDescription(
+  id: string,
+  fallback: string | undefined,
+  t: TFunction
+): string | undefined {
+  const descriptions: Record<string, string> = {
+    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_description_value_option"),
+    "FeedbackRecords.valueText": t("workspace.analysis.charts.field_description_value_text"),
+  };
+  return descriptions[id] ?? fallback;
+}
+
 export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
     "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
@@ -643,6 +679,7 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
     "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
     "FeedbackRecords.valueText": t("workspace.analysis.charts.field_label_value_text"),
+    "FeedbackRecords.valueId": t("workspace.analysis.charts.field_label_value_option"),
     "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
     "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
     "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),

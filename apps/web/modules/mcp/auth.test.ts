@@ -1,3 +1,4 @@
+import { SignJWT, generateKeyPair, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
@@ -11,15 +12,15 @@ import {
   handleAuthenticatedMcpRequest,
 } from "./auth";
 
-const { verifyAccessTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
-  verifyAccessTokenMock: vi.fn(),
+const { verifyBearerTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+  verifyBearerTokenMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
 }));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
   oauthProviderResourceClient: vi.fn(() => ({
     getActions: () => ({
-      verifyAccessToken: verifyAccessTokenMock,
+      verifyBearerToken: verifyBearerTokenMock,
     }),
   })),
 }));
@@ -28,6 +29,19 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     user: {
       findUnique: userFindUniqueMock,
+    },
+    // This file's mock replaces the global one in vitestSetup, so it needs its own no-op
+    // `oauthResource`: Better Auth 1.7 seeds resources when the oauthProvider plugin initialises,
+    // which importing ./auth triggers, and without it the adapter throws an unhandled
+    // `Model oauthResource does not exist in the database` alongside a passing suite.
+    oauthResource: {
+      findMany: () => Promise.resolve([]),
+      findFirst: () => Promise.resolve(null),
+      findUnique: () => Promise.resolve(null),
+      create: (args: { data: unknown }) => Promise.resolve(args.data),
+      createMany: () => Promise.resolve({ count: 0 }),
+      update: (args: { data: unknown }) => Promise.resolve(args.data),
+      upsert: (args: { create: unknown }) => Promise.resolve(args.create),
     },
   },
 }));
@@ -56,6 +70,7 @@ vi.mock("@/modules/auth/lib/oauth-urls", async (importOriginal) => ({
     () => "https://app.example.com/.well-known/oauth-protected-resource/api/mcp"
   ),
   getMcpResourceUrl: vi.fn(() => "https://app.example.com/api/mcp"),
+  getOAuthUserInfoUrl: vi.fn(() => "https://app.example.com/api/auth/oauth2/userinfo"),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -76,6 +91,15 @@ const { MCP_CHALLENGE_SCOPE } = await import("@/modules/auth/lib/oauth-urls");
 // have to be rewritten every time the advertised scope list changes; the exact value is pinned once, from
 // the real constant, in app/api/mcp/route.test.ts.
 const CHALLENGE_GRAMMAR = /^Bearer resource_metadata="[^"]+", scope="[^"]+"$/;
+
+// Every mocked payload below carries `aud`, because every real token does — the authorization server
+// always stamps the resource a token was minted for. A fixture without it would sail past the
+// audience binding that production tokens have to satisfy, and the suite would be asserting against a
+// token shape that cannot exist.
+const MCP_AUDIENCE = "https://app.example.com/api/mcp";
+// The AS's own UserInfo endpoint, which it adds to `aud` as an implicit second resource whenever
+// `openid` is in scope. Derived from the mocked issuer above.
+const USERINFO_AUDIENCE = "https://app.example.com/api/auth/oauth2/userinfo";
 
 const apiKeyAuth = {
   type: "apiKey" as const,
@@ -103,7 +127,7 @@ function createRequest(url = "http://localhost/api/mcp", headers: Record<string,
 describe("authenticateMcpRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    verifyAccessTokenMock.mockReset();
+    verifyBearerTokenMock.mockReset();
     userFindUniqueMock.mockResolvedValue({ isActive: true });
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
@@ -277,7 +301,8 @@ describe("authenticateMcpRequest", () => {
   });
 
   test("authenticates OAuth bearer tokens and rate limits by user and client", async () => {
-    verifyAccessTokenMock.mockResolvedValue({
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "user@example.com",
       name: "Test User",
@@ -307,10 +332,13 @@ describe("authenticateMcpRequest", () => {
       });
     }
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
-    expect(verifyAccessTokenMock).toHaveBeenCalledWith("oauth_access_token", {
+    // Exact equality on purpose: this is the canary for the verify options drifting. `typ` pins the
+    // RFC 9068 access-token type, enforceable from Better Auth 1.7 (1.6 emitted no typ header).
+    expect(verifyBearerTokenMock).toHaveBeenCalledWith("oauth_access_token", {
       verifyOptions: {
         audience: "https://app.example.com/api/mcp",
         issuer: "https://app.example.com/api/auth",
+        typ: "at+jwt",
       },
       jwksUrl: "https://app.example.com/api/auth/jwks",
     });
@@ -325,7 +353,8 @@ describe("authenticateMcpRequest", () => {
   });
 
   test("rejects OAuth bearer tokens for inactive users", async () => {
-    verifyAccessTokenMock.mockResolvedValue({
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       azp: "client_1",
       scope: "surveys:read surveys:write",
@@ -363,7 +392,8 @@ describe("authenticateMcpRequest", () => {
   });
 
   test("rejects OAuth bearer tokens holding no MCP resource scope at all", async () => {
-    verifyAccessTokenMock.mockResolvedValue({
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       client_id: "client_2",
       scope: "openid profile email",
@@ -393,7 +423,8 @@ describe("authenticateMcpRequest", () => {
   // The inverse of the challenge fix: offline_access is advertised so clients can obtain a refresh
   // token, but it grants no resource access, so it must never satisfy the baseline gate on its own.
   test("rejects an OAuth bearer token scoped only to offline_access", async () => {
-    verifyAccessTokenMock.mockResolvedValue({
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       client_id: "client_2",
       scope: "openid profile email offline_access",
@@ -417,7 +448,7 @@ describe("authenticateMcpRequest", () => {
   test.each([["feedbackRecords:read"], ["surveys:write"]])(
     "authenticates an OAuth token scoped only to %s",
     async (scope) => {
-      verifyAccessTokenMock.mockResolvedValue({ sub: "user_1", azp: "client_1", scope });
+      verifyBearerTokenMock.mockResolvedValue({ aud: MCP_AUDIENCE, sub: "user_1", azp: "client_1", scope });
 
       const result = await authenticateMcpRequest(
         createRequest("http://localhost/api/mcp", {
@@ -432,8 +463,57 @@ describe("authenticateMcpRequest", () => {
     }
   );
 
+  // Verification is stubbed here, so these two exercise the resource server's audience check on its
+  // own — with no jose `aud` enforcement upstream of it. That is not a contrived setup: the 1.7
+  // provider drops `verifyOptions.audience` from its own verification, at which point this check is
+  // the only thing standing between a foreign-audience token and the MCP tools.
+  test("rejects an OAuth token whose audience omits the MCP resource, independently of jose", async () => {
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: "https://other.example.com/api",
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+      expect(await result.response.json()).toMatchObject({ detail: "Invalid OAuth access token" });
+    }
+    expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("returns 429 when audience-rejected tokens exceed the unauthenticated MCP rate limit", async () => {
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: [MCP_AUDIENCE, "https://other.example.com/api"],
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read",
+    });
+    vi.mocked(applyIPRateLimit).mockRejectedValue(new TooManyRequestsError("Too many auth requests", 45));
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: "Bearer oauth_access_token",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(429);
+      expect(result.response.headers.get("Retry-After")).toBe("45");
+    }
+  });
+
   test("rejects OAuth bearer tokens without a user subject", async () => {
-    verifyAccessTokenMock.mockResolvedValue({
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
       azp: "client_1",
       scope: "surveys:read",
     });
@@ -455,7 +535,7 @@ describe("authenticateMcpRequest", () => {
   });
 
   test("rejects invalid OAuth bearer tokens with an OAuth challenge", async () => {
-    verifyAccessTokenMock.mockRejectedValue(new Error("Invalid token"));
+    verifyBearerTokenMock.mockRejectedValue(new Error("Invalid token"));
 
     const result = await authenticateMcpRequest(
       createRequest("http://localhost/api/mcp", {
@@ -483,7 +563,8 @@ describe("authenticateMcpRequest", () => {
   });
 
   test("returns 429 when OAuth requests are rate limited", async () => {
-    verifyAccessTokenMock.mockResolvedValue({
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
       sub: "user_1",
       azp: "client_1",
       scope: "surveys:read",
@@ -536,5 +617,119 @@ describe("handleAuthenticatedMcpRequest", () => {
     expect(response.headers.get("X-Request-Id")).toBe("req_2");
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
     expect(await response.json()).toEqual({ ok: true });
+  });
+});
+
+// GHSA-p2fr-6hmx-4528. Everywhere else in this file `verifyAccessToken` is stubbed with a payload,
+// which cannot show whether a token is really accepted — the audience rule lives in jose's semantics,
+// not in a fixture. Here the stub does what the real resource client does (hand the token to jose with
+// the production `verifyOptions`), and the tokens are genuinely signed, so these cases exercise the
+// actual verification path.
+describe("MCP OAuth access token audience binding", () => {
+  const ISSUER = "https://app.example.com/api/auth";
+  let keyPair: Awaited<ReturnType<typeof generateKeyPair>>;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    userFindUniqueMock.mockResolvedValue({ isActive: true });
+    vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+
+    keyPair = await generateKeyPair("ES256");
+    verifyBearerTokenMock.mockImplementation(
+      async (token: string, opts: { verifyOptions: { audience: string; issuer: string } }) =>
+        (await jwtVerify(token, keyPair.publicKey, opts.verifyOptions)).payload
+    );
+  });
+
+  async function signAccessToken(aud: string | string[] | undefined): Promise<string> {
+    const token = new SignJWT({ scope: "surveys:read", azp: "client_1" })
+      // `typ: at+jwt` is what Better Auth 1.7 stamps on an access token (RFC 9068 §2.1), and the
+      // resource server now requires it — so the fixtures have to carry it to stay realistic.
+      .setProtectedHeader({ alg: "ES256", typ: "at+jwt" })
+      .setIssuer(ISSUER)
+      .setSubject("user_1")
+      .setIssuedAt()
+      .setExpirationTime("15m");
+
+    if (aud !== undefined) {
+      token.setAudience(aud);
+    }
+
+    return token.sign(keyPair.privateKey);
+  }
+
+  async function authenticateWithAudience(aud: string | string[] | undefined) {
+    return authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", {
+        authorization: `Bearer ${await signAccessToken(aud)}`,
+      })
+    );
+  }
+
+  test("accepts a token minted for the MCP resource", async () => {
+    const result = await authenticateWithAudience(MCP_AUDIENCE);
+
+    expect(result.ok).toBe(true);
+  });
+
+  test("accepts a single-element audience array", async () => {
+    const result = await authenticateWithAudience([MCP_AUDIENCE]);
+
+    expect(result.ok).toBe(true);
+  });
+
+  // Not a hypothetical, and not a future shape either: the provider already appends its own UserInfo
+  // endpoint to `aud` whenever `openid` is in the granted scopes (`checkResource` does it today, and
+  // the 1.7 resource model keeps the behaviour). `openid` leads MCP_OAUTH_SCOPES and every
+  // DCR-registered client gets it, so a rule of "exactly one audience" would reject ordinary tokens
+  // right now — which is why the check is an allow-list.
+  test("accepts the MCP resource alongside the authorization server's UserInfo endpoint", async () => {
+    const result = await authenticateWithAudience([MCP_AUDIENCE, USERINFO_AUDIENCE]);
+
+    expect(result.ok).toBe(true);
+  });
+
+  test("rejects a token that also names a foreign resource server", async () => {
+    const foreignAudience = [MCP_AUDIENCE, "https://other.example.com/api"];
+
+    // The vulnerability, made explicit: handed the exact options production passes, jose accepts this
+    // token, because its `aud` check asks whether our identifier is *present*, not whether it is the
+    // only one. Nothing in the library layer stands between this token and the MCP tools.
+    await expect(
+      jwtVerify(await signAccessToken(foreignAudience), keyPair.publicKey, {
+        audience: MCP_AUDIENCE,
+        issuer: ISSUER,
+      })
+    ).resolves.toBeDefined();
+
+    const result = await authenticateWithAudience(foreignAudience);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+      // Same opaque refusal as any other bad token — the caller learns nothing about why.
+      expect(await result.response.json()).toMatchObject({ detail: "Invalid OAuth access token" });
+    }
+    expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
+    expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("rejects a token minted for a different resource server", async () => {
+    const result = await authenticateWithAudience("https://other.example.com/api");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+    }
+  });
+
+  test("rejects a token carrying no audience at all", async () => {
+    const result = await authenticateWithAudience(undefined);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+    }
   });
 });

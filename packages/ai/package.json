@@ -46,15 +46,15 @@
     "@aws-sdk/credential-providers": "3.1017.0",
     "@formbricks/logger": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "ai": "6.0.177"
+    "ai": "catalog:"
   },
   "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*",
-    "@vitest/coverage-v8": "4.1.6",
-    "rimraf": "6.1.3",
-    "typescript": "5.9.3",
-    "vite": "8.0.16",
-    "vitest": "4.1.6"
+    "@vitest/coverage-v8": "catalog:",
+    "rimraf": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

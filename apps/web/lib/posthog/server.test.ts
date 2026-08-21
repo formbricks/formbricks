@@ -7,6 +7,7 @@ describe("server - posthog clients", () => {
     posthogKey?: string;
     shutdown?: ReturnType<typeof vi.fn>;
     loggerError?: ReturnType<typeof vi.fn>;
+    isProduction?: boolean;
   }) => {
     const shutdown = opts.shutdown ?? vi.fn().mockResolvedValue(undefined);
     const loggerError = opts.loggerError ?? vi.fn();
@@ -19,7 +20,12 @@ describe("server - posthog clients", () => {
         this.shutdown = shutdown;
       }),
     }));
-    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: opts.posthogKey }));
+    // server.ts branches on IS_PRODUCTION, so the branch is chosen here rather than through
+    // NODE_ENV. Defaults to false, matching the real constant under test (NODE_ENV=test).
+    vi.doMock("@/lib/constants", () => ({
+      POSTHOG_KEY: opts.posthogKey,
+      IS_PRODUCTION: opts.isProduction ?? false,
+    }));
 
     return { shutdown, loggerError };
   };
@@ -71,8 +77,11 @@ describe("server - posthog clients", () => {
   describe("tracing client before_send", () => {
     const getBeforeSend = async () => {
       const { PostHog } = await import("posthog-node");
-      const call = vi.mocked(PostHog).mock.calls.find((args) => "before_send" in args[1]);
-      return call![1].before_send as (event: unknown) => unknown;
+      const options = vi
+        .mocked(PostHog)
+        .mock.calls.map((args) => args[1])
+        .find((opts) => opts !== undefined && "before_send" in opts);
+      return options!.before_send as (event: unknown) => unknown;
     };
 
     test("strips $ai_error but keeps $ai_is_error and other properties", async () => {
@@ -122,15 +131,19 @@ describe("server - posthog clients", () => {
   });
 
   test("caches both clients on globalThis in non-production", async () => {
-    vi.stubEnv("NODE_ENV", "development");
-
-    setupMocks({ posthogKey: "phc_test_key" });
+    setupMocks({ posthogKey: "phc_test_key", isProduction: false });
 
     const { posthogServerClient, posthogTracingClient } = await import("./server");
     expect(g.posthogServerClient).toBe(posthogServerClient);
     expect(g.posthogTracingClient).toBe(posthogTracingClient);
+  });
 
-    vi.unstubAllEnvs();
+  test("does not cache either client on globalThis in production", async () => {
+    setupMocks({ posthogKey: "phc_test_key", isProduction: true });
+
+    await import("./server");
+    expect(g.posthogServerClient).toBeUndefined();
+    expect(g.posthogTracingClient).toBeUndefined();
   });
 
   test("registers signal handlers once when NEXT_RUNTIME is nodejs", async () => {

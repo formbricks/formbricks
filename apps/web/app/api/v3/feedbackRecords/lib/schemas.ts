@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZHubFieldType } from "@formbricks/types/feedback-source";
+import { ZHubEmotion, ZHubFieldType, ZHubSentiment } from "@formbricks/types/feedback-source";
 
 /**
  * v3-owned schemas for the feedback-records surface. Kept in the v3 layer (not the MCP layer) so the
@@ -26,57 +26,192 @@ import { ZHubFieldType } from "@formbricks/types/feedback-source";
  *
  * `.strict()` so a key this surface does not have is an error rather than a silent no-op. On a *filter* the
  * silent direction is the dangerous one: a dropped `user_id` widens the result set instead of narrowing it,
- * and the caller cannot tell it happened. This guards the operation contract rather than the MCP boundary —
- * the SDK validates against its own non-strict copy of the shape and strips unknown keys before an operation
- * sees them, which is why the names above do more work here than this does.
+ * and the caller cannot tell it happened. This guards the operation contract, and since ENG-2256 the MCP
+ * boundary enforces the same rule independently: the SDK now validates the strict schema instance itself
+ * instead of a rebuilt non-strict copy, so a misspelled argument is rejected before an operation is reached
+ * rather than arriving here already stripped.
  */
 const ZFeedbackRecordFilterId = z.string().trim().min(1).max(255);
 
+/**
+ * The Hub caps every repeatable string filter at 100 values; the enum filters cap at their own label-set
+ * cardinality instead, since more entries than there are labels can only be duplicates.
+ */
+const MAX_FILTER_VALUES = 100;
+
+const ID_VALUE_HINT = "a non-empty string of at most 255 characters";
+
+/**
+ * A filter the Hub OR-s: one value, or a list of them.
+ *
+ * Accepting both keeps every existing caller working — the scalar form is what the MCP tools have always
+ * sent and what the published docs show — while `["survey", "review"]` becomes expressible. The Hub reads
+ * a repeated parameter as an OR and AND-s across different parameters.
+ *
+ * A plain union, deliberately not a transform: the MCP server converts these schemas to JSON Schema with
+ * `io: "input"`, where a union renders as a clean `anyOf` carrying the description, while a transform's
+ * input side is not reliably representable — and the failure mode is a silently degraded tool schema.
+ * Normalization to an array happens in the operations mapper, so `parsed.data` keeps the caller's shape.
+ *
+ * `.min(1)` is load-bearing rather than decorative: it is what stops an empty OR-list reaching the Hub,
+ * where a dropped filter would widen the result set instead of narrowing it.
+ *
+ * The explicit `error` covers the one case zod reports uselessly. A wrong value (or a wrong element)
+ * matches neither branch, so zod emits `invalid_union` with the message "Invalid input" — which would tell
+ * an agent nothing and would be a regression on the single-value schemas this replaces. Cap violations
+ * report as `too_big`/`too_small` with their own precise messages and are left alone.
+ */
+const oneOrMany = <T extends z.ZodType>(
+  value: T,
+  maxValues: number,
+  { valueHint, description }: { valueHint: string; description: string }
+) =>
+  z
+    .union([value, z.array(value).min(1).max(maxValues)], {
+      error: `must be ${valueHint}, or an array of 1–${maxValues} of them`,
+    })
+    .optional()
+    .describe(`${description} One value, or up to ${maxValues} values which are OR-ed.`);
+
+/**
+ * A timestamp bound, kept as an opaque non-empty string and never parsed here.
+ *
+ * The Hub validates RFC 3339 and relays a precise 400, and it is also the only side that can safely
+ * compare a pair: two ISO strings with different offsets do not compare lexicographically, so a local
+ * `min <= max` check would reject valid requests. A spurious 422 is worse than the Hub's correct 400.
+ */
+const timestampFilter = (description: string) => z.string().trim().min(1).optional().describe(description);
+
+/**
+ * A presence filter. Three states: omitted means no constraint, `true` selects records that have the
+ * value, `false` selects records that do not.
+ */
+const presenceFilter = (description: string) => z.boolean().optional().describe(description);
+
 export const ZV3FeedbackRecordFilters = z
   .object({
-    source_type: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by feedback source type, e.g. survey, review, call_notes."
+    source_type: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by feedback source type, e.g. survey, review, call_notes.",
+    }),
+    source_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by source id — the survey/form/ticket the feedback came from.",
+    }),
+    field_type: oneOrMany(ZHubFieldType, ZHubFieldType.options.length, {
+      valueHint: `one of ${ZHubFieldType.options.join(", ")}`,
+      description: "Filter by field type.",
+    }),
+    field_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by field id — all answers to one question.",
+    }),
+    field_group_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description:
+        "Filter by field group id, which groups related fields of one question (ranking, matrix, grid).",
+    }),
+    submission_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description:
+        "Filter by submission id — the sibling records of one logical submission, i.e. the rest of the answers given at the same time.",
+    }),
+    user_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by end-user identifier — everything one person submitted.",
+    }),
+    value_id: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description:
+        "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice.",
+    }),
+    source_name: oneOrMany(ZFeedbackRecordFilterId, MAX_FILTER_VALUES, {
+      valueHint: ID_VALUE_HINT,
+      description: "Filter by source display name, e.g. the survey's name.",
+    }),
+    language: oneOrMany(z.string().trim().min(1).max(10), MAX_FILTER_VALUES, {
+      valueHint: "a language tag of at most 10 characters, e.g. en or pt-BR",
+      description: "Filter by the language the feedback was given in.",
+    }),
+
+    since: timestampFilter(
+      "Only records collected at or after this ISO 8601 timestamp (bounds collected_at, inclusive). Must fall between 1970-01-01 and 2080-12-31."
     ),
-    source_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by source id — the survey/form/ticket the feedback came from."
+    until: timestampFilter(
+      "Only records collected at or before this ISO 8601 timestamp (bounds collected_at, inclusive). Must fall between 1970-01-01 and 2080-12-31."
     ),
-    field_type: ZHubFieldType.optional().describe("Filter by field type."),
-    field_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by field id — all answers to one question."
+    created_since: timestampFilter(
+      "Only records Hub stored at or after this ISO 8601 timestamp (bounds created_at, inclusive). Use this for 'what did this import bring in'; collected_at and created_at diverge when historical data is imported."
     ),
-    field_group_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by field group id, which groups related fields of one question (ranking, matrix, grid)."
+    created_until: timestampFilter(
+      "Only records Hub stored at or before this ISO 8601 timestamp (bounds created_at, inclusive)."
     ),
-    submission_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by submission id — the sibling records of one logical submission, i.e. the rest of the answers given at the same time."
+    value_date_min: timestampFilter(
+      "Only records whose date answer is at or after this ISO 8601 timestamp (inclusive). Bounds the answer itself, not when it was collected. Excludes every record that carries no date."
     ),
-    user_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by end-user identifier — everything one person submitted."
+    value_date_max: timestampFilter(
+      "Only records whose date answer is at or before this ISO 8601 timestamp (inclusive). Excludes every record that carries no date."
     ),
-    value_id: ZFeedbackRecordFilterId.optional().describe(
-      "Filter by the source system's stable option id, e.g. everyone who picked one particular survey choice."
-    ),
-    since: z
-      .string()
-      .trim()
-      .min(1)
+
+    value_number_min: z
+      .number()
       .optional()
       .describe(
-        "Only records collected at or after this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+        "Only records whose numeric answer is at least this value (inclusive). Excludes every record that carries no number, so value_number_min=0 is not 'everything' — it drops all text answers."
       ),
-    until: z
-      .string()
-      .trim()
-      .min(1)
+    value_number_max: z
+      .number()
       .optional()
       .describe(
-        "Only records collected at or before this ISO 8601 timestamp (bounds collected_at). Must fall between 1970-01-01 and 2080-12-31."
+        "Only records whose numeric answer is at most this value (inclusive). Excludes every record that carries no number."
       ),
+
+    sentiment: oneOrMany(ZHubSentiment, ZHubSentiment.options.length, {
+      valueHint: `one of ${ZHubSentiment.options.join(", ")}`,
+      description: "Filter by sentiment label. Only enriched records carry one.",
+    }),
+    emotions: oneOrMany(ZHubEmotion, ZHubEmotion.options.length, {
+      valueHint: `one of ${ZHubEmotion.options.join(", ")}`,
+      description:
+        "Filter by emotion label. Matches a record carrying ANY of the labels listed, never all of them — there is no 'must carry all' form.",
+    }),
+    sentiment_score_min: z
+      .number()
+      .min(-1)
+      .max(1)
+      .optional()
+      .describe(
+        "Only records whose sentiment score is at least this value (inclusive). Sentiment scores range from -1 to 1, but that is the validation bound, not a default to fill in — omit this filter to leave the lower end unbounded rather than passing -1. Unenriched records carry no score and are therefore never matched, so this implies 'enriched only'."
+      ),
+    sentiment_score_max: z
+      .number()
+      .min(-1)
+      .max(1)
+      .optional()
+      .describe(
+        "Only records whose sentiment score is at most this value (inclusive). Sentiment scores range from -1 to 1, but that is the validation bound, not a default to fill in — omit this filter to leave the upper end unbounded rather than passing 1."
+      ),
+
+    has_sentiment: presenceFilter(
+      "Restrict to records that do (true) or do not (false) carry a sentiment label. Use false to find records enrichment has not reached yet."
+    ),
+    has_emotions: presenceFilter(
+      "Restrict to records that do (true) or do not (false) carry emotion labels. false covers both 'not yet classified' and 'classified, no emotion detected' — the two are indistinguishable here."
+    ),
+    has_translation: presenceFilter(
+      "Restrict to records that do (true) or do not (false) have a translation."
+    ),
   })
   .strict();
 export type TV3FeedbackRecordFilters = z.infer<typeof ZV3FeedbackRecordFilters>;
 
-// Listing adds keyset pagination on top of the shared filters (the Hub's cursor/keyset contract).
+/**
+ * Listing adds keyset pagination and ordering on top of the shared filters (the Hub's cursor/keyset
+ * contract).
+ *
+ * `sort` and `order` live here rather than on the shared filter object because the Hub's count endpoint
+ * does not accept them — sending them there is a 400 on every count call.
+ */
 export const ZV3FeedbackRecordListFilters = ZV3FeedbackRecordFilters.extend({
   limit: z
     .number()
@@ -90,6 +225,18 @@ export const ZV3FeedbackRecordListFilters = ZV3FeedbackRecordFilters.extend({
     .min(1)
     .optional()
     .describe("Opaque keyset cursor from a previous response's nextCursor. Omit for the first page."),
+  sort: z
+    .enum(["collected_at", "created_at"])
+    .optional()
+    .describe(
+      "Column to order by. Defaults to collected_at. Keep this identical on every page of one traversal: a cursor is a position within one specific ordering, so presenting it with a different sort or order is rejected."
+    ),
+  order: z
+    .enum(["asc", "desc"])
+    .optional()
+    .describe(
+      "Direction to order in. Defaults to desc. Like sort, must stay identical for the whole traversal."
+    ),
 });
 export type TV3FeedbackRecordListFilters = z.infer<typeof ZV3FeedbackRecordListFilters>;
 
@@ -159,8 +306,11 @@ export type TV3FeedbackRecordSearchFilters = z.infer<typeof ZV3FeedbackRecordSea
  *
  * The Hub does NOT check that the populated `value_*` matches `field_type` (it accepts `field_type:
  * "text"` carrying only `value_number`, and even a record with no value at all), so we enforce it here.
- * Without this a mistyped field name — MCP strips unknown keys before we ever see them, so `valueText`
- * simply vanishes — would store a permanently empty record and report success.
+ * Without this a mistyped field name would store a permanently empty record and report success: this
+ * object is not strict, so `valueText` is dropped and the record arrives with no value at all. That is
+ * still reachable over the v3 REST routes, which parse this shape directly. The MCP tools no longer get
+ * there — since ENG-2256 they wrap it in a strict schema and reject the typo outright — so this rule now
+ * backs the REST surface rather than the MCP one.
  */
 const VALUE_FIELD_BY_TYPE: Record<z.infer<typeof ZHubFieldType>, string[]> = {
   text: ["value_text"],
@@ -234,7 +384,14 @@ export const ZV3FeedbackRecordCreateBodyFields = z.object({
     .describe("Additional context (device, tags, etc.)."),
 });
 
-export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.superRefine((data, ctx) => {
+/**
+ * Every `field_type` needs a matching `value_*`. Named rather than inlined so the strict variant below
+ * applies the identical rule instead of restating it.
+ */
+const requireValueForFieldType: Parameters<typeof ZV3FeedbackRecordCreateBodyFields.superRefine>[0] = (
+  data,
+  ctx
+) => {
   const accepted = VALUE_FIELD_BY_TYPE[data.field_type];
   if (accepted.some((field) => data[field as keyof typeof data] !== undefined)) {
     return;
@@ -246,7 +403,29 @@ export const ZV3FeedbackRecordCreateBody = ZV3FeedbackRecordCreateBodyFields.sup
     path: [accepted[0]],
     message: `is required for field_type "${data.field_type}" (expected one of: ${accepted.join(", ")})`,
   });
-});
+};
+
+export const ZV3FeedbackRecordCreateBody =
+  ZV3FeedbackRecordCreateBodyFields.superRefine(requireValueForFieldType);
+
+/**
+ * Same contract, but rejecting unknown keys — used by the MCP batch tool (ENG-2256).
+ *
+ * A batch is the one place a misspelled field can hide: `user_id` sent as `userId` inside a record was
+ * dropped, so every record was created with no user attribution and the call reported success. The
+ * single-record MCP tool was already covered, because its schema gets `.strict()` at the MCP layer; only
+ * the array elements were not.
+ *
+ * Deliberately a separate export rather than `.strict()` on the fields object itself. Making the shared
+ * body strict would also change the **v3 REST** create/batch/update routes, where three behaviours
+ * currently depend on unknown keys being ignored rather than rejected — a `tenant_id` smuggled into a
+ * body, a `tenant_id` smuggled into a batch record, and immutable provenance fields on an update are all
+ * silently dropped today, each with a test asserting exactly that. Rejecting instead is arguably safer,
+ * but it is a v3 API decision with its own blast radius (a client that round-trips a record it read would
+ * start getting 422s), so it does not belong in an MCP migration.
+ */
+export const ZV3FeedbackRecordCreateBodyStrict =
+  ZV3FeedbackRecordCreateBodyFields.strict().superRefine(requireValueForFieldType);
 
 export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreateBody>;
 
@@ -261,7 +440,12 @@ export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreate
  *
  * At least one field is required: an empty patch is a caller mistake, not a no-op worth a round trip.
  */
-/** The plain object form first, because `inputSchema` needs a raw shape rather than a refined schema. */
+/**
+ * The plain object form first, so callers that need to extend or restrict it (the MCP tools add
+ * `workspaceId`/`datasetId` and `.strict()`) have an object schema to work from, and the refined form below
+ * is derived from it. Not a hard requirement — Zod 4 allows `refined.extend({...}).strict()` and keeps the
+ * refinement — but it keeps the mutable field list defined exactly once.
+ */
 export const ZV3FeedbackRecordUpdateBodyFields = ZV3FeedbackRecordCreateBodyFields.pick({
   value_text: true,
   value_number: true,
