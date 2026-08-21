@@ -15,6 +15,7 @@ import {
   VALUE_LABEL_MIN_PADDING,
   buildDistributionSegments,
   formatCellValue,
+  formatPercentShare,
   formatXAxisTick,
   getCategoryAxisWidth,
   getSemanticDimensionColor,
@@ -435,5 +436,20 @@ describe("flipped bar axis sizing", () => {
 
   test("caps the value gutter so a huge number cannot eat the plot", () => {
     expect(getValueLabelPadding(["123,456,789,012,345"])).toBe(VALUE_LABEL_MAX_PADDING);
+  });
+});
+
+describe("formatPercentShare", () => {
+  test("keeps one fraction digit, so a small real share is not rounded away to 0%", () => {
+    // 2 records out of 500: the section is drawn and hoverable, so its label must not read "0%".
+    expect(formatPercentShare(0.004, "en-US")).toBe("0.4%");
+    expect(formatPercentShare(1 / 3, "en-US")).toBe("33.3%");
+    expect(formatPercentShare(1, "en-US")).toBe("100.0%");
+  });
+
+  test("follows the locale's decimal separator instead of a hardcoded period", () => {
+    const de = formatPercentShare(0.125, "de-DE");
+    expect(de).toContain("12,5");
+    expect(de).not.toContain("12.5");
   });
 });

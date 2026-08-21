@@ -5,6 +5,7 @@ import {
   type TDistributionEntry,
   buildDistributionSegments,
   formatCellValue,
+  formatPercentShare,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
@@ -14,11 +15,6 @@ import {
 } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-
-// One decimal, the precision renderPieLabel prints, so the two displays of one pie chart never
-// disagree on a share: whole percents turn a real 0.4% section into "0%" and make three equal
-// groups add up to 99%.
-const formatPercent = (percent: number): string => `${(percent * 100).toFixed(1)}%`;
 
 interface BreakdownBarsProps {
   /** Rows in the dimension's display order; sections are re-sorted by share, as the pie's are. */
@@ -50,7 +46,7 @@ export function BreakdownBars({
   xAxisKey,
   formatDimensionValue,
 }: Readonly<BreakdownBarsProps>) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   let entries: TDistributionEntry[];
   if (hasCategoryAxis) {
@@ -86,7 +82,7 @@ export function BreakdownBars({
   // the order of the two numbers.
   const formattedSegments = result.segments.map((segment) => {
     const value = formatCellValue(segment.value);
-    const percent = formatPercent(segment.percent);
+    const percent = formatPercentShare(segment.percent, i18n.language);
     return {
       ...segment,
       valueShare: t("workspace.analysis.charts.distribution_value_share", { value, percent }),

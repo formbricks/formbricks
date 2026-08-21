@@ -143,6 +143,22 @@ export const prepareMeasureSliceData = (
     tooltipLabel: labelFor(key),
   }));
 
+/**
+ * Format a 0-1 share as a percentage for display, in the app's active language. One fraction digit
+ * throughout: whole percents print a real 0.4% group as "0%" and make three equal groups add up to
+ * 99%, and the pie's slice labels and the breakdown bar's legend must agree to the digit, since
+ * they are two displays of one chart.
+ *
+ * `Intl` rather than `toFixed` so the decimal separator and the percent sign follow the locale
+ * ("12,5 %" in de-DE), which a hardcoded "%" suffix cannot do.
+ */
+export const formatPercentShare = (percent: number, locale?: string): string =>
+  new Intl.NumberFormat(locale, {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(percent);
+
 /** One section of the single-bar distribution chart (a pie chart's "Breakdown bars" display). */
 export interface TDistributionSegment {
   /** Stable react key: the dimension value or the measure id the segment came from. */
