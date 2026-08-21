@@ -101,22 +101,18 @@ jobs:
       - name: Point .env at the CI services
         if: steps.harness.outputs.present == 'true'
         shell: bash
+        # The license reaches the script through `env`, never interpolated into the command: a `${{ }}`
+        # secret pasted into a `sed` expression both breaks on its own metacharacters and is the pattern
+        # GitHub's hardening guidance tells you not to write.
+        env:
+          ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
         run: |
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
-          sed -i "s|ENTERPRISE_LICENSE_KEY=.*|ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}|" .env
+          sed -i "/^ENTERPRISE_LICENSE_KEY=/d" .env
+          printf 'ENTERPRISE_LICENSE_KEY=%s\n' "${ENTERPRISE_LICENSE_KEY}" >> .env
           # A burst of cases would otherwise trip the limiter and turn most operations into
           # documented-but-uninteresting 429s.
           echo "RATE_LIMITING_DISABLED=1" >> .env
-
-      - name: Report entitlement mode
-        if: steps.harness.outputs.present == 'true'
-        shell: bash
-        run: |
-          if [ -n "$(grep '^ENTERPRISE_LICENSE_KEY=' .env | cut -d'=' -f2-)" ]; then
-            echo "::notice::Enterprise license present — entitlement-gated operations run against real data."
-          else
-            echo "::notice::No enterprise license (fork PR?) — workflow, contacts and AI operations will answer their documented 403."
-          fi
 
       - name: Build App
         if: steps.harness.outputs.present == 'true'
@@ -151,7 +147,7 @@ jobs:
         if: steps.harness.outputs.present == 'true'
         shell: bash
         run: |
-          NODE_ENV=test pnpm start --filter=@formbricks/web | tee app.log 2>&1 &
+          NODE_ENV=test pnpm start --filter=@formbricks/web > app.log 2>&1 &
           for attempt in {1..20}; do
             if [ "$(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health)" -eq 200 ]; then
               echo "Application is ready."
@@ -178,6 +174,18 @@ jobs:
             echo "::error::Pre-flight read returned ${status}, expected 200. Seeded data or API key is broken — the contract run would be meaningless."
             cat /tmp/preflight.json
             exit 1
+          fi
+
+          # Entitlement-gated operations answer a documented 403 when the licence does not grant the
+          # feature, so the suite stays green while testing a third of the contract shallowly. Probe
+          # one of them and say so out loud, rather than leaving that to whoever reads the warnings.
+          workflows_status=$(curl -o /dev/null -s -w "%{http_code}" \
+            -H "x-api-key: fbk_${SEED_API_KEY}" \
+            "http://localhost:3000/api/v3/workflows?workspaceId=${workspace_id}&limit=1")
+          if [ "${workflows_status}" -eq 200 ]; then
+            echo "::notice::Workflows entitlement active — the 11 workflow operations run against real data."
+          else
+            echo "::warning::Workflows entitlement inactive (GET /api/v3/workflows → ${workflows_status}). The 11 workflow operations are only checked against their documented 403."
           fi
 
       - name: Set up Python
@@ -216,11 +224,10 @@ jobs:
           if-no-files-found: ignore
           path: schemathesis-report/
 
-      # Uploaded on success too: a green run can still be a shallow one (entitlements not resolving
-      # turns whole groups of operations into their documented 403), and the app log is where that
-      # shows up.
+      # Failure only. A green run's log has nothing to say that the entitlement probe above does not,
+      # and an application log is the wrong thing to ship as an artifact on every green PR.
       - name: Upload app logs
-        if: always() && steps.harness.outputs.present == 'true'
+        if: failure() && steps.harness.outputs.present == 'true'
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: api-v3-contract-app-logs

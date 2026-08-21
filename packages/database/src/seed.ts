@@ -436,16 +436,20 @@ async function seedApiKey(organizationId: string, workspaceId: string, secret: s
   const lookupHash = createHash("sha256").update(secret).digest("hex");
   const hashedKey = await bcryptjs.hash(secret, 12);
 
+  // Keyed on the fixed seed id, not on `lookupHash`: re-seeding with a different `SEED_API_KEY`
+  // produces a different lookup hash, which would miss the row and then collide on the id.
   const apiKey = await prisma.apiKey.upsert({
-    where: { lookupHash },
-    update: { hashedKey },
+    where: { id: SEED_IDS.API_KEY },
+    update: { hashedKey, lookupHash },
     create: {
       id: SEED_IDS.API_KEY,
       label: "Seed API key",
       hashedKey,
       lookupHash,
       organizationId,
-      organizationAccess: { accessControl: { read: true, write: true } },
+      // Workspace-scoped access only. The organization-level grants exist for the RBAC endpoints,
+      // which nothing driving the seeded data needs — no reason for this key to carry them.
+      organizationAccess: { accessControl: { read: false, write: false } },
     },
   });
 

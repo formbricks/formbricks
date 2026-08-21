@@ -24,6 +24,13 @@ import { SEED_IDS } from "../seed/constants";
 
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
 
+// This script writes rows and re-archives surveys by fixed id; same posture as seed.ts, which it
+// depends on anyway. Refuse to run against a production database unless someone says otherwise.
+if (process.env.NODE_ENV === "production" && process.env.ALLOW_SEED !== "true") {
+  logger.error("ERROR: Seeding blocked in production. Set ALLOW_SEED=true to override.");
+  process.exit(1);
+}
+
 /** Fixed ids so the hook map is static. Lowercase alphanumeric to satisfy the routes' `z.cuid2()`. */
 const CONTRACT_IDS = {
   SURVEY_READ: "clctsurveyread0000000001",
