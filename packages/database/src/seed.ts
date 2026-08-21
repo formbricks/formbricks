@@ -430,8 +430,10 @@ async function seedApiKey(organizationId: string, workspaceId: string, secret: s
   // `lookupHash` is a deterministic fingerprint for the indexed lookup, not the verification hash —
   // it has to be reproducible from the presented key, so it cannot be salted or slow. Verification
   // is the bcrypt hash below, which is what the auth path actually compares against. Same two-hash
-  // split as `createApiKey`; CodeQL reads the SHA-256 alone as a weak password hash.
-  const lookupHash = createHash("sha256").update(secret).digest("hex"); // codeql[js/insufficient-password-hash]
+  // split as `createApiKey`. CodeQL reads the SHA-256 alone as `js/insufficient-password-hash`; that
+  // alert is dismissed as a false positive on this repo wherever the pattern appears (crypto.ts's
+  // `hashSha256` carries the same dismissal), since code scanning ignores inline suppressions.
+  const lookupHash = createHash("sha256").update(secret).digest("hex");
   const hashedKey = await bcryptjs.hash(secret, 12);
 
   const apiKey = await prisma.apiKey.upsert({
