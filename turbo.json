@@ -9,9 +9,6 @@
     "turbo.json"
   ],
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
-  // Read by `db:seed` to mint a throwaway API key for the v3 contract tests. Pass-through rather
-  // than `globalEnv` on purpose: it is a per-run random value that no build output depends on, so
-  // hashing it would invalidate every cached task for nothing.
   "globalPassThroughEnv": ["SEED_API_KEY"],
   "tasks": {
     "@formbricks/ai#build": {

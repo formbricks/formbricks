@@ -427,7 +427,11 @@ async function seedDemoWorkflowRuns(
  * `server-only` and cannot be imported here, so the two hashing lines are inlined rather than shared.
  */
 async function seedApiKey(organizationId: string, workspaceId: string, secret: string): Promise<void> {
-  const lookupHash = createHash("sha256").update(secret).digest("hex");
+  // `lookupHash` is a deterministic fingerprint for the indexed lookup, not the verification hash —
+  // it has to be reproducible from the presented key, so it cannot be salted or slow. Verification
+  // is the bcrypt hash below, which is what the auth path actually compares against. Same two-hash
+  // split as `createApiKey`; CodeQL reads the SHA-256 alone as a weak password hash.
+  const lookupHash = createHash("sha256").update(secret).digest("hex"); // codeql[js/insufficient-password-hash]
   const hashedKey = await bcryptjs.hash(secret, 12);
 
   const apiKey = await prisma.apiKey.upsert({
@@ -831,6 +835,8 @@ async function main(): Promise<void> {
     },
   });
 
+  // Declared in turbo.json under `globalPassThroughEnv`, not `globalEnv`: it is a per-run random
+  // value that no build output depends on, so hashing it would invalidate cached tasks for nothing.
   const seedApiKeySecret = process.env.SEED_API_KEY;
   if (seedApiKeySecret) {
     await seedApiKey(organization.id, workspace.id, seedApiKeySecret);
