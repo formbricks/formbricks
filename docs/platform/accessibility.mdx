@@ -95,15 +95,30 @@ versions.
 
 **Affected criteria:** 1.2.1, 1.2.2, 1.2.3, 1.2.5
 
-Formbricks lets survey creators embed a video from YouTube, Vimeo, or Loom into a question. Formbricks does not
-provide any way to upload a transcript, add captions, or supply an audio description or text alternative for
-that video. A respondent who is deaf, hard of hearing, blind, or has low vision may not be able to access
-information that is only presented in the video.
+Formbricks lets survey creators embed a video from YouTube, Vimeo, or Loom into a question. Formbricks provides
+no way to upload a transcript, add captions, or supply an audio description or text alternative for that video.
+A respondent who is deaf, hard of hearing, blind, or has low vision may not be able to access information that
+is only presented in the video.
 
-**Workaround:** Add captions and a transcript to the video on the hosting platform itself, where those features
-are available, and repeat the essential information as text in the question headline or description. Do not put
-information in a video that a respondent needs in order to answer the question, unless that information also
-appears as text.
+Adding captions on the hosting platform does not fully close the gap either, because Formbricks reduces the
+embedded player's controls:
+
+| Platform | What the embedded player hides |
+| --- | --- |
+| YouTube | The whole control bar — so no captions button, and no visible play or pause control |
+| Vimeo | The captions button and the transcript panel |
+| Loom | The share button, the top bar, and the title. Playback controls, including captions, stay reachable |
+
+Every video carries an **Open in new tab** control in its bottom-right corner. It is reachable by keyboard and
+becomes visible when it has focus, and it opens the video in the platform's own player, where captions,
+transcripts, and full playback controls are available. For a YouTube or Vimeo video, that is currently the only
+route a respondent has to turn captions on.
+
+**Workaround:** Repeat the essential information as text in the question headline or description — that is the
+part that always works. Do not put information in a video that a respondent needs in order to answer the
+question, unless that information also appears as text. Add captions and a transcript on the hosting platform as
+well: for YouTube and Vimeo they will not be reachable from the embedded player, but they will be there for a
+respondent who opens the video in its own tab.
 
 ### Page Titles and Survey Instructions
 
