@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { TAuthzedClient, TAuthzedRelationshipUpdate } from "./client";
 import { getAuthzedClient } from "./client";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
+import { deleteOrganizationParentRelationships } from "./organization-parent";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionInvalidSourceError,
@@ -258,6 +259,11 @@ const writeSnapshot = async (
     const current = currentAssignments.get(key);
     groups.push([...assignmentUpdates(target, current !== undefined && !current.isDirectoryArchived)]);
   }
+
+  await deleteOrganizationParentRelationships(client, [
+    ...snapshot.directories.map(({ id }) => ({ resourceId: id, resourceType: "feedback_directory" })),
+    ...snapshot.workspaces.map(({ id }) => ({ resourceId: id, resourceType: "workspace" })),
+  ]);
 
   for (const batch of packRelationshipUpdateGroups(groups)) {
     await client.writeRelationships(batch);

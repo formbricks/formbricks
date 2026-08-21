@@ -11,7 +11,13 @@ import { recordAuthorizationChecksPerRequest } from "./metrics";
 const afterCallbacks = vi.hoisted(() => [] as Array<() => Promise<void> | void>);
 
 vi.mock("next/server", () => ({
-  after: vi.fn((callback: () => Promise<void> | void) => afterCallbacks.push(callback)),
+  after: vi.fn((task: unknown) => {
+    if (typeof task === "function") {
+      afterCallbacks.push(async () => {
+        await task();
+      });
+    }
+  }),
 }));
 
 vi.mock("./metrics", () => ({ recordAuthorizationChecksPerRequest: vi.fn() }));
@@ -21,7 +27,13 @@ beforeEach(() => {
   vi.mocked(recordAuthorizationChecksPerRequest).mockReset();
   vi.mocked(after)
     .mockReset()
-    .mockImplementation((callback) => afterCallbacks.push(callback));
+    .mockImplementation((task) => {
+      if (typeof task === "function") {
+        afterCallbacks.push(async () => {
+          await task();
+        });
+      }
+    });
 });
 
 describe("authorization request context", () => {

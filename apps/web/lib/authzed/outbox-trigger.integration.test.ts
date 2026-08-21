@@ -191,8 +191,8 @@ describe("AuthZed projection outbox triggers", () => {
       data: { isArchived: false, organizationId: other.id },
     });
 
-    // The parent edge is only ever touched, never re-pointed, so the old organization's administrators
-    // keep access until reconciliation. A widening that moves tenants is still a revocation.
+    // Reconciliation clears every previous parent before restoring the current one. Treat the move as
+    // a revocation so the freshness guard remains active until that exact replacement is delivered.
     expect(await outboxRows()).toEqual([
       { isRevocation: true, primaryId: directory.id, secondaryId: null, targetType: "feedback_directory" },
     ]);

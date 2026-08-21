@@ -79,7 +79,7 @@ describe("parent-id resolvers", () => {
   test.each(cases)(
     "returns the id when found, null when missing, and rethrows Prisma errors as DatabaseError",
     async ({ fn, model, row, value }) => {
-      vi.mocked(model).mockResolvedValueOnce(row);
+      vi.mocked(model).mockResolvedValueOnce(row as never);
       await expect(fn("found-id")).resolves.toBe(value);
 
       vi.mocked(model).mockResolvedValueOnce(null);
@@ -189,8 +189,14 @@ describe("getWorkspaceOrganizationReferences", () => {
 
     await expect(getWorkspaceOrganizationReferences(workspaceIds)).resolves.toEqual([]);
     expect(prisma.workspace.findMany).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(prisma.workspace.findMany).mock.calls[0][0].where.id.in).toHaveLength(500);
-    expect(vi.mocked(prisma.workspace.findMany).mock.calls[1][0].where.id.in).toHaveLength(1);
+    expect(prisma.workspace.findMany).toHaveBeenNthCalledWith(1, {
+      where: { id: { in: workspaceIds.slice(0, 500) } },
+      select: { id: true, organizationId: true },
+    });
+    expect(prisma.workspace.findMany).toHaveBeenNthCalledWith(2, {
+      where: { id: { in: workspaceIds.slice(500) } },
+      select: { id: true, organizationId: true },
+    });
 
     await expect(getWorkspaceOrganizationReferences(["workspace-error"])).rejects.toBeInstanceOf(
       DatabaseError

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { getAuthzedClient } from "./client";
+import { type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
@@ -170,6 +170,27 @@ describe("team and workspace relationship projection", () => {
     );
   });
 
+  test("removes every previous team and workspace parent before restoring the current parents", async () => {
+    await reconcileTeamWorkspaceRelationships({
+      teamIds: [TEAM_ID],
+      workspaceIds: [WORKSPACE_ID],
+    });
+
+    expect(clientMocks.deleteRelationships).toHaveBeenCalledWith({
+      relation: "organization",
+      resourceId: TEAM_ID,
+      resourceType: "team",
+    });
+    expect(clientMocks.deleteRelationships).toHaveBeenCalledWith({
+      relation: "organization",
+      resourceId: WORKSPACE_ID,
+      resourceType: "workspace",
+    });
+    expect(Math.max(...clientMocks.deleteRelationships.mock.invocationCallOrder)).toBeLessThan(
+      clientMocks.writeRelationships.mock.invocationCallOrder[0]
+    );
+  });
+
   test("projects multiple team grants independently without precomputing a user permission", async () => {
     const secondTeamId = "second-team";
     vi.mocked(prisma.team.findMany).mockResolvedValue([
@@ -296,11 +317,9 @@ describe("team and workspace relationship projection", () => {
     expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
     expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(1_000);
     expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(3);
-    expect(
-      clientMocks.writeRelationships.mock.calls[1][0].every(
-        ({ relationship }) => relationship.subject.objectType === "team"
-      )
-    ).toBe(true);
+    const finalBatch = clientMocks.writeRelationships.mock
+      .calls[1][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
+    expect(finalBatch.every(({ relationship }) => relationship.subject.objectType === "team")).toBe(true);
   });
 
   test("reconciles a complete snapshot again when source state changes concurrently", async () => {
@@ -388,6 +407,25 @@ describe("team and workspace relationship projection", () => {
     expect(serializedLog).not.toContain(USER_ID);
     expect(serializedLog).not.toContain("private-token");
     expect(serializedLog).not.toContain("raw-sdk-message");
+  });
+
+  test("does not restore a parent or report success when exact parent cleanup fails", async () => {
+    clientMocks.deleteRelationships.mockRejectedValue(
+      new AuthzedError({
+        attempts: 3,
+        code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+        operation: "delete_relationships",
+        retryable: true,
+      })
+    );
+
+    await expect(reconcileTeamWorkspaceRelationships({ teamIds: [TEAM_ID] })).resolves.toEqual({
+      attempts: 3,
+      code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+      retryable: true,
+      status: "failed",
+    });
+    expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
   });
 
   test("deletes only user-subject relationships on team resources", async () => {
