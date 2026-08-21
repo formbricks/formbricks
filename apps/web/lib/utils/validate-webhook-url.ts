@@ -1,5 +1,6 @@
 import "server-only";
 import dns from "node:dns";
+import net from "node:net";
 import { Agent } from "undici";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "../constants";
@@ -12,64 +13,89 @@ const BLOCKED_HOSTNAMES = new Set([
   "metadata.google.internal",
 ]);
 
-const PRIVATE_IPV4_PATTERNS: RegExp[] = [
-  /^127\./, // 127.0.0.0/8 – Loopback
-  /^10\./, // 10.0.0.0/8 – Class A private
-  /^172\.(1[6-9]|2\d|3[01])\./, // 172.16.0.0/12 – Class B private
-  /^192\.168\./, // 192.168.0.0/16 – Class C private
-  /^169\.254\./, // 169.254.0.0/16 – Link-local (AWS/GCP/Azure metadata)
-  /^0\./, // 0.0.0.0/8 – "This" network
-  /^100\.(6[4-9]|[7-9]\d|1[0-2]\d)\./, // 100.64.0.0/10 – Shared address space (RFC 6598)
-  /^192\.0\.0\./, // 192.0.0.0/24 – IETF protocol assignments
-  /^192\.0\.2\./, // 192.0.2.0/24 – TEST-NET-1 (documentation)
-  /^198\.51\.100\./, // 198.51.100.0/24 – TEST-NET-2 (documentation)
-  /^203\.0\.113\./, // 203.0.113.0/24 – TEST-NET-3 (documentation)
-  /^198\.1[89]\./, // 198.18.0.0/15 – Benchmarking
-  /^224\./, // 224.0.0.0/4 – Multicast
-  /^240\./, // 240.0.0.0/4 – Reserved for future use
-  /^255\.255\.255\.255$/, // Limited broadcast
+/**
+ * Private, reserved and otherwise non-routable ranges that must never be a webhook target.
+ *
+ * Matched as CIDRs via `net.BlockList` rather than by regex or string prefix. The previous
+ * regex/prefix classifier silently covered less than its own comments claimed — `/^224\./` and
+ * `/^240\./` matched a /8 each while documenting a /4, the IPv6 prefix `"fe80:"` covered only
+ * `fe80::/16` of the `fe80::/10` link-local range, and the CGNAT alternation matched second
+ * octets 100-129, wrongly rejecting the public `100.128.0.0/15`. CIDR matching makes all of
+ * those exact by construction.
+ *
+ * `BlockList` also normalizes IPv4-mapped IPv6 addresses (`::ffff:127.0.0.1`, the hex form
+ * `::ffff:7f00:1`, uppercase, and uncompressed) against the IPv4 rules below, so mapped forms of
+ * an internal address are covered without a hand-rolled unwrapping step.
+ */
+const BLOCKED_IPV4_SUBNETS: [address: string, prefix: number][] = [
+  ["0.0.0.0", 8], // "this" network
+  ["10.0.0.0", 8], // RFC 1918 private
+  ["100.64.0.0", 10], // shared address space / CGNAT (RFC 6598) — Tailscale tailnets
+  ["127.0.0.0", 8], // loopback
+  ["169.254.0.0", 16], // link-local (AWS/GCP/Azure IMDS)
+  ["172.16.0.0", 12], // RFC 1918 private
+  ["192.0.0.0", 24], // IETF protocol assignments
+  ["192.0.2.0", 24], // TEST-NET-1 (documentation)
+  ["192.168.0.0", 16], // RFC 1918 private
+  ["198.18.0.0", 15], // benchmarking (RFC 2544)
+  ["198.51.100.0", 24], // TEST-NET-2 (documentation)
+  ["203.0.113.0", 24], // TEST-NET-3 (documentation)
+  ["224.0.0.0", 4], // multicast
+  ["240.0.0.0", 4], // reserved for future use, incl. 255.255.255.255 broadcast
 ];
 
-const PRIVATE_IPV6_PREFIXES = [
-  "::1", // Loopback
-  "fe80:", // Link-local
-  "fc", // Unique local address (ULA, fc00::/7 — covers fc00:: through fdff::)
-  "fd", // Unique local address (ULA, fc00::/7 — covers fc00:: through fdff::)
+const BLOCKED_IPV4_ADDRESSES: string[] = [
+  "168.63.129.16", // Azure WireServer — platform DNS/agent channel, outside 169.254.0.0/16
 ];
 
-const isPrivateIPv4 = (ip: string): boolean => {
-  return PRIVATE_IPV4_PATTERNS.some((pattern) => pattern.test(ip));
-};
+const BLOCKED_IPV6_SUBNETS: [address: string, prefix: number][] = [
+  // ::/96 is the deprecated IPv4-compatible format and covers both ::  (unspecified) and ::1
+  // (loopback). It does NOT collide with the IPv4-mapped range ::ffff:0:0/96, whose 6th group is
+  // ffff — so mapped public addresses stay reachable while ::7f00:1 and ::a9fe:a9fe do not.
+  ["::", 96], // IPv4-compatible IPv6, deprecated (::7f00:1 == 127.0.0.1); incl. :: and ::1
+  ["64:ff9b::", 96], // NAT64 well-known (64:ff9b::a9fe:a9fe == 169.254.169.254)
+  ["64:ff9b:1::", 48], // NAT64 local-use (RFC 8215)
+  ["100::", 64], // discard-only (RFC 6666)
+  ["2001::", 32], // Teredo — tunnels IPv4 the same way 6to4 does
+  ["2001:db8::", 32], // documentation (RFC 3849)
+  ["2002::", 16], // 6to4 (2002:7f00:1::1 == 127.0.0.1)
+  ["fc00::", 7], // unique local addresses (ULA)
+  ["fe80::", 10], // link-local — the whole /10, not just fe80::/16
+  ["fec0::", 10], // site-local (deprecated)
+  ["ff00::", 8], // multicast, every scope
+];
 
-const hexMappedToIPv4 = (hexPart: string): string | null => {
-  const groups = hexPart.split(":");
-  if (groups.length !== 2) return null;
-  const high = Number.parseInt(groups[0], 16);
-  const low = Number.parseInt(groups[1], 16);
-  if (Number.isNaN(high) || Number.isNaN(low) || high > 0xffff || low > 0xffff) return null;
-  return `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`;
-};
+const buildBlockList = (): net.BlockList => {
+  const list = new net.BlockList();
 
-const isIPv4Mapped = (normalized: string): boolean => {
-  if (!normalized.startsWith("::ffff:")) return false;
-  const suffix = normalized.slice(7); // strip "::ffff:"
-
-  if (suffix.includes(".")) {
-    return isPrivateIPv4(suffix);
+  for (const [address, prefix] of BLOCKED_IPV4_SUBNETS) {
+    list.addSubnet(address, prefix, "ipv4");
   }
-  const dotted = hexMappedToIPv4(suffix);
-  return dotted !== null && isPrivateIPv4(dotted);
+  for (const address of BLOCKED_IPV4_ADDRESSES) {
+    list.addAddress(address, "ipv4");
+  }
+  for (const [address, prefix] of BLOCKED_IPV6_SUBNETS) {
+    list.addSubnet(address, prefix, "ipv6");
+  }
+
+  return list;
 };
 
-const isPrivateIPv6 = (ip: string): boolean => {
-  const normalized = ip.toLowerCase();
-  if (normalized === "::") return true;
-  if (isIPv4Mapped(normalized)) return true;
-  return PRIVATE_IPV6_PREFIXES.some((prefix) => normalized.startsWith(prefix));
-};
+const blockedAddresses = buildBlockList();
 
-const isPrivateIP = (ip: string, family: 4 | 6): boolean => {
-  return family === 4 ? isPrivateIPv4(ip) : isPrivateIPv6(ip);
+/**
+ * Returns true when `ip` must not be used as a webhook target.
+ *
+ * The family is taken from parsing `ip` rather than from the caller, so a mismatch between the two
+ * cannot pick the wrong rule set — checking an IPv4 address against the IPv6 rules would report it
+ * as allowed. Unparseable input is rejected for the same reason: `BlockList.check()` reports it as
+ * *not* blocked, so anything we cannot classify has to fail closed here.
+ */
+const isPrivateIP = (ip: string): boolean => {
+  const version = net.isIP(ip);
+  if (version === 0) return true;
+
+  return blockedAddresses.check(ip, version === 4 ? "ipv4" : "ipv6");
 };
 
 const DNS_TIMEOUT_MS = 3000;
@@ -115,8 +141,6 @@ const stripIPv6Brackets = (hostname: string): string => {
   return hostname;
 };
 
-const IPV4_LITERAL = /^\d{1,3}(?:\.\d{1,3}){3}$/;
-
 const parseWebhookUrl = (url: string): URL => {
   let parsed: URL;
   try {
@@ -130,14 +154,21 @@ const parseWebhookUrl = (url: string): URL => {
   return parsed;
 };
 
+/**
+ * Classifies an IP-literal host, or returns null when the host is a name to resolve via DNS.
+ *
+ * `net.isIP` decides the family instead of a dotted-quad regex: the URL parser has already
+ * normalized the alternative IPv4 notations (`0x7f000001`, `2130706433`, `0177.0.0.1`, `127.1` all
+ * arrive here as `127.0.0.1`) and rejected malformed ones, so this only has to tell a valid
+ * literal from a hostname.
+ */
 const validateIpLiteral = (hostname: string): ResolvedAddress | null => {
-  const isIPv4Literal = IPV4_LITERAL.test(hostname);
-  const isIPv6Literal = hostname.startsWith("[");
-  if (!isIPv4Literal && !isIPv6Literal) return null;
+  const ip = stripIPv6Brackets(hostname);
+  const version = net.isIP(ip);
+  if (version === 0) return null;
 
-  const ip = isIPv6Literal ? stripIPv6Brackets(hostname) : hostname;
-  const family: 4 | 6 = isIPv4Literal ? 4 : 6;
-  if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isPrivateIP(ip, family)) {
+  const family: 4 | 6 = version === 4 ? 4 : 6;
+  if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isPrivateIP(ip)) {
     throw new InvalidInputError("Webhook URL must not point to private or internal IP addresses");
   }
   return { ip, family };
@@ -189,7 +220,7 @@ export const validateAndResolveWebhookUrl = async (url: string): Promise<Resolve
 
   if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS) {
     for (const addr of resolved) {
-      if (isPrivateIP(addr.ip, addr.family)) {
+      if (isPrivateIP(addr.ip)) {
         throw new InvalidInputError("Webhook URL must not point to private or internal IP addresses");
       }
     }
