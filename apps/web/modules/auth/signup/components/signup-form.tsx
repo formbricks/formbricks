@@ -18,6 +18,12 @@ import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import {
+  DISCOVERY_SOURCES,
+  DISCOVERY_SOURCES_WITH_FOLLOWUP,
+  MAX_DISCOVERY_SOURCE_DETAIL_LENGTH,
+  type TDiscoverySource,
+} from "@/modules/auth/lib/discovery-source";
+import {
   buildSignupWithoutVerificationSuccessPath,
   buildVerificationRequestedPath,
 } from "@/modules/auth/lib/verification-links";
@@ -29,6 +35,13 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
@@ -36,6 +49,8 @@ const ZSignupInput = z.object({
   name: ZUserName,
   email: z.email(),
   password: ZUserPassword,
+  discoverySource: z.enum(DISCOVERY_SOURCES).optional(),
+  discoverySourceDetail: z.string().max(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH).optional(),
 });
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
@@ -123,9 +138,16 @@ export const SignupForm = ({
       name: "",
       email: emailFromSearchParams || "",
       password: "",
+      discoverySource: undefined,
+      discoverySourceDetail: "",
     },
     resolver: zodResolver(ZSignupInput),
   });
+
+  const discoverySource = form.watch("discoverySource");
+  const showDiscoverySourceFollowup = discoverySource
+    ? DISCOVERY_SOURCES_WITH_FOLLOWUP.has(discoverySource)
+    : false;
 
   /**
    * Map a failed `createUserAction` to where the user should see it: the two field-level rejections go
@@ -182,6 +204,10 @@ export const SignupForm = ({
         turnstileToken,
         subscribeToSecurityUpdates,
         subscribeToProductUpdates,
+        discoverySource: data.discoverySource,
+        discoverySourceDetail: showDiscoverySourceFollowup
+          ? data.discoverySourceDetail?.trim() || undefined
+          : undefined,
       });
 
       if (!createUserResponse?.data) {
@@ -294,6 +320,103 @@ export const SignupForm = ({
                   />
                 </div>
                 <PasswordChecks password={form.watch("password")} />
+                <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                  <FormField
+                    control={form.control}
+                    name="discoverySource"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormControl>
+                          <div className="text-left">
+                            <label
+                              htmlFor="discovery-source"
+                              className="mb-1.5 block text-xs font-medium text-slate-500">
+                              {t("auth.signup.discovery_source_label")}
+                            </label>
+                            <Select
+                              value={field.value}
+                              onValueChange={(value: TDiscoverySource) => {
+                                field.onChange(value);
+                                if (!DISCOVERY_SOURCES_WITH_FOLLOWUP.has(value)) {
+                                  form.setValue("discoverySourceDetail", "");
+                                }
+                              }}>
+                              <SelectTrigger
+                                id="discovery-source"
+                                data-testid="signup-discovery-source"
+                                className="bg-white font-normal text-slate-700">
+                                <SelectValue placeholder={t("auth.signup.discovery_source_placeholder")} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="blog">{t("auth.signup.discovery_source_blog")}</SelectItem>
+                                <SelectItem value="llm">{t("auth.signup.discovery_source_llm")}</SelectItem>
+                                <SelectItem value="powered_by_badge">
+                                  {t("auth.signup.discovery_source_powered_by_badge")}
+                                </SelectItem>
+                                <SelectItem value="saw_a_survey">
+                                  {t("auth.signup.discovery_source_saw_a_survey")}
+                                </SelectItem>
+                                <SelectItem value="search_engine">
+                                  {t("auth.signup.discovery_source_search_engine")}
+                                </SelectItem>
+                                <SelectItem value="social_media">
+                                  {t("auth.signup.discovery_source_social_media")}
+                                </SelectItem>
+                                <SelectItem value="referral">
+                                  {t("auth.signup.discovery_source_referral")}
+                                </SelectItem>
+                                <SelectItem value="event">
+                                  {t("auth.signup.discovery_source_event")}
+                                </SelectItem>
+                                <SelectItem value="other">
+                                  {t("auth.signup.discovery_source_other")}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  {showDiscoverySourceFollowup && (
+                    <FormField
+                      control={form.control}
+                      name="discoverySourceDetail"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormControl>
+                            <div className="text-left">
+                              <label
+                                htmlFor="discovery-source-detail"
+                                className="mb-1.5 block text-xs font-medium text-slate-500">
+                                {discoverySource === "blog"
+                                  ? t("auth.signup.discovery_source_blog_followup_label")
+                                  : discoverySource === "llm"
+                                    ? t("auth.signup.discovery_source_llm_followup_label")
+                                    : t("auth.signup.discovery_source_other_followup_label")}
+                              </label>
+                              <Input
+                                id="discovery-source-detail"
+                                data-testid="signup-discovery-source-detail"
+                                value={field.value}
+                                name="discoverySourceDetail"
+                                onChange={(e) => field.onChange(e.target.value)}
+                                placeholder={
+                                  discoverySource === "blog"
+                                    ? t("auth.signup.discovery_source_blog_followup_placeholder")
+                                    : discoverySource === "llm"
+                                      ? t("auth.signup.discovery_source_llm_followup_placeholder")
+                                      : t("auth.signup.discovery_source_other_followup_placeholder")
+                                }
+                                className="bg-white"
+                              />
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
               </div>
             )}
             {isTurnstileConfigured && showLogin && turnstileSiteKey && (

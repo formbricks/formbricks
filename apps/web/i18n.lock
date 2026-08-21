@@ -91,6 +91,23 @@ checksums:
     auth/saml_connection_error: 03c69c534e7eaafcb2c22b7daf9f3efc
     auth/signup/captcha_failed: 4e1ed87800585b8c1da1514fa86ab943
     auth/signup/company_email_required: 997bf11a31512cedf4ab8acb7b4f56c3
+    auth/signup/discovery_source_blog: ba63b845e5c3643152754ae6dcf8162e
+    auth/signup/discovery_source_blog_followup_label: 004ac834a3ebe8357f25620f16a9b45f
+    auth/signup/discovery_source_blog_followup_placeholder: aadfd7f75adbec812322375b5350fb5b
+    auth/signup/discovery_source_event: c50b08c7cb3e4997966a21ca750fa17c
+    auth/signup/discovery_source_label: c657a88a365c7609ed3ffd315c96d99e
+    auth/signup/discovery_source_llm: 1c6107fc878dc27e3485e8de233daf55
+    auth/signup/discovery_source_llm_followup_label: 73d2ca375db788e37ecb3572559cad38
+    auth/signup/discovery_source_llm_followup_placeholder: 351e4c8a340d414ada65cdc6f68e39dc
+    auth/signup/discovery_source_other: 79acaa6cd481262bea4e743a422529d2
+    auth/signup/discovery_source_other_followup_label: e1faa6cd085144f7339c7e74dc6fb366
+    auth/signup/discovery_source_other_followup_placeholder: 7b3f938ddf8ad9c1116fcc7da4f85a34
+    auth/signup/discovery_source_placeholder: d68a0fb9afd0817dc31b3e9cb11855cb
+    auth/signup/discovery_source_powered_by_badge: 3d61239cf1f5059d4beb23bb2e5a88e1
+    auth/signup/discovery_source_referral: c979a58c42021cad2e02d095adf2eeab
+    auth/signup/discovery_source_saw_a_survey: 8c78079fb18d7da97a9974af5e2866d2
+    auth/signup/discovery_source_search_engine: a54bb0c6970e6d9536e6ea1f00c21edd
+    auth/signup/discovery_source_social_media: 1bf4899b063ee8f02f7188576555828b
     auth/signup/have_an_account: 6f9c2d441e93cb6df9ef7dc898e80e05
     auth/signup/log_in: 9fb886eff8d1d67d8bb79f5c3f78edde
     auth/signup/password_validation_contain_at_least_1_number: 58fb33a486aa4dadfc05e3242fc7ea0b

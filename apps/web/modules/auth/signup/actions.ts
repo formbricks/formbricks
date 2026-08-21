@@ -29,6 +29,7 @@ import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
+import { DISCOVERY_SOURCES, MAX_DISCOVERY_SOURCE_DETAIL_LENGTH } from "@/modules/auth/lib/discovery-source";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { isUninvitedSignupAllowed } from "@/modules/auth/lib/signup-policy";
 import {
@@ -78,6 +79,8 @@ const ZCreateUserAction = z.object({
     ),
   subscribeToSecurityUpdates: z.boolean().optional(),
   subscribeToProductUpdates: z.boolean().optional(),
+  discoverySource: z.enum(DISCOVERY_SOURCES).optional(),
+  discoverySourceDetail: z.string().max(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH).optional(),
 });
 
 async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): Promise<void> {
@@ -434,6 +437,8 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
           email_domain: getEmailDomain(user.email),
           signup_source: inviteToken ? "invite" : "direct",
           invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
+          discovery_source: parsedInput.discoverySource ?? null,
+          discovery_source_detail: parsedInput.discoverySourceDetail ?? null,
         },
         ctx.auditLoggingCtx.organizationId
           ? { organizationId: ctx.auditLoggingCtx.organizationId }
