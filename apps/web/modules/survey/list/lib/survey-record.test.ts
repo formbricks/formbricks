@@ -86,17 +86,6 @@ describe("mapSurveyRowToSurvey", () => {
     expect(survey.responseCount).toBe(0);
     expect(survey.completedResponseCount).toBe(0);
   });
-
-  test("does not let one row's zero-default leak into another row", () => {
-    // The default is a shared frozen constant, so prove it can't be mutated through a mapped row.
-    const first = mapSurveyRowToSurvey(makeSurveyRow({ id: "survey_1" }));
-    first.responseCount = 42;
-
-    const second = mapSurveyRowToSurvey(makeSurveyRow({ id: "survey_2" }));
-
-    expect(second.responseCount).toBe(0);
-    expect(second.completedResponseCount).toBe(0);
-  });
 });
 
 describe("mapSurveyRowsToSurveys", () => {

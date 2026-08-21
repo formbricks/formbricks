@@ -2994,6 +2994,7 @@
       "archive_survey_warning": "This survey and all its responses will be permanently deleted after 30 days.",
       "archiving_survey": "Archiving survey...",
       "change_status": "Change status",
+      "completed_responses": "Completed",
       "copy_survey": "Copy survey",
       "copy_survey_description": "Choose a workspace to copy this survey to.",
       "copy_survey_error": "Failed to copy survey",

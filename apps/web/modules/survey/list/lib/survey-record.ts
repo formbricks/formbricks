@@ -64,7 +64,7 @@ export async function getResponseCountsBySurveyIds(
 }
 
 /** Shared so the default doesn't allocate a throwaway object per mapped row (Sonar S7737). */
-const NO_RESPONSES: TSurveyResponseCounts = Object.freeze({ total: 0, completed: 0 });
+const NO_RESPONSES: Readonly<TSurveyResponseCounts> = Object.freeze({ total: 0, completed: 0 });
 
 export function mapSurveyRowToSurvey(
   row: TSurveyRow,

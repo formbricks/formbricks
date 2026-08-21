@@ -145,7 +145,7 @@ test.describe("Survey overview", () => {
     await page.reload();
     await expect(page.getByText(mixedSurveyName, { exact: true })).toBeVisible({ timeout: 10000 });
 
-    const listHeader = page.locator("div.grid.grid-cols-8").first();
+    const listHeader = page.getByTestId("survey-list-header");
     await expect(listHeader.getByText("Completed", { exact: true })).toBeVisible();
     await expect(listHeader.getByText("Responses", { exact: true })).toHaveCount(0);
 
