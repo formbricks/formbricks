@@ -65,10 +65,10 @@ Everything in this table was assessed as supported in the most recent report.
 | Visible focus | The element that currently has keyboard focus is shown with a visible focus indicator. | 2.4.7 |
 | Focus order | Focus moves through the survey in an order that preserves meaning and operability. | 2.4.3 |
 | Text alternatives | Non-text content is given a text alternative. | 1.1.1 |
-| Contrast | Text and images of text meet the minimum contrast ratio. | 1.4.3 |
+| Contrast | Text and images of text in the default survey theme meet the minimum contrast ratio. A survey creator can override every colour, and Formbricks does not check the contrast of a custom theme. | 1.4.3 |
 | Resizing text | Text can be resized up to 200% without assistive technology, and without loss of content or functionality. | 1.4.4 |
 | No time limits | There is no time limit on completing a survey. | 2.2.1 |
-| No auto-playing media | Nothing plays or animates automatically for more than five seconds. The survey's opening animation is shorter than five seconds and then stops. | 2.2.2 |
+| No auto-playing media | No audio or video ever plays on its own. Nothing in a survey starts playing that the respondent did not start. | 2.2.2 |
 | Error identification | When an answer is rejected, the error is identified and described to the respondent in text. | 3.3.1 |
 | Error suggestion | Where we know how an input should be corrected, the survey suggests the correction. | 3.3.3 |
 | Labels and instructions | Every input field has a descriptive label. | 3.3.2 |
@@ -79,7 +79,9 @@ Everything in this table was assessed as supported in the most recent report.
   Website and in-app surveys have an optional **auto-close** setting that dismisses an unanswered survey
   prompt after a set number of seconds. It applies only to the first screen, and the countdown is cancelled as
   soon as the respondent interacts with the survey in any way — including with the keyboard. It does not
-  impose a time limit on answering, and it does not apply to link surveys.
+  impose a time limit on answering, and it does not apply to link surveys. While the countdown runs it is
+  shown as a shrinking progress bar, which animates for as long as the creator configured — so a survey with
+  auto-close enabled does carry one automatic animation, and it can last longer than five seconds.
 </Note>
 
 ---
@@ -198,8 +200,10 @@ whole survey in each language rather than mixing languages inside a single quest
 
 ## Compatibility
 
-The survey UI is a standard web application and runs in current versions of Chrome, Edge, Firefox, and Safari,
-on desktop and on mobile. It does not require a plugin, an extension, or a separate accessible version.
+The survey UI is built as a standard web application. It requires no plugin, no extension, and no separate
+accessible version, and it targets current versions of Chrome, Edge, Firefox, and Safari on desktop and on
+mobile. Our automated browser tests run on Chromium only, so the other engines are a design target rather than
+a tested guarantee.
 
 ### How the Assessment Was Carried Out
 
