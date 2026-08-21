@@ -17,6 +17,107 @@ allowBuilds:
   unrs-resolver: true
   "@prisma/client": true
 
+# Single source of truth for the version of every dependency used by two or more
+# workspaces. Packages reference these as `"typescript": "catalog:"` and never as a
+# literal version, so a shared dependency cannot drift between packages: bumping one
+# means editing the entry here, which changes every consumer at once.
+#
+# `scripts/check-catalog.mjs` (run by `pnpm lint`) enforces both halves of that: it
+# fails if a workspace declares a literal version for a name listed here, and if a
+# dependency is declared by 2+ workspaces without being listed here at all.
+#
+# Deps with a single consumer deliberately stay in their own package.json — a catalog
+# entry with one referent is indirection for nothing. `saveExact: true` (below) is why
+# every entry is a bare exact version; the sole exception in the workspace is
+# packages/survey-ui's react/react-dom `peerDependencies`, which are intentionally a
+# `^19.0.0` range (a published package's peer range, not a pinned install) and are
+# therefore excluded from the catalog rather than collapsed into the exact version.
+catalog:
+  # --- build & test toolchain ---
+  typescript: 5.9.3
+  # Vite stays on 7.x. Vite 8 replaces Rollup with rolldown, and @vitejs/plugin-react
+  # has no release accepting both majors (5.1.4 caps at vite 7; 6.1.0 requires ^8.0.0
+  # exclusively plus three new peers), while vite-prerender-plugin — pulled in by
+  # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
+  # is its own migration, tracked separately; see ENG-1689's follow-ups.
+  # Note: the lockfile still resolves a vite 8 for `@vitest/eslint-plugin`, which declares
+  # `vitest` as an OPTIONAL peer with range `*`; `autoInstallPeers` then materialises the
+  # newest vitest, whose own vite peer picks 8. That predates this catalog, no importer
+  # references it, and nothing builds with it — every workspace resolves 7.3.5.
+  vite: 7.3.5
+  vitest: 4.1.6
+  "@vitest/coverage-v8": 4.1.6
+  vite-plugin-dts: 4.5.4
+  vite-tsconfig-paths: 6.1.1
+  "@vitejs/plugin-react": 5.1.4
+  jsdom: 29.1.1
+  postcss: 8.5.23
+  rimraf: 6.1.3
+  tsx: 4.21.0
+  dotenv: 17.3.1
+  dotenv-cli: 11.0.0
+  cross-env: 10.1.0
+  glob: 13.0.6
+  # Read by scripts/check-catalog.mjs; also a packages/workflows dev dep.
+  js-yaml: 4.3.1
+  "@playwright/test": 1.58.2
+  "@testing-library/react": 16.3.2
+  # --- lint & format ---
+  prettier: 3.8.3
+  "@trivago/prettier-plugin-sort-imports": 6.0.2
+  prettier-plugin-sort-json: 4.2.0
+  prettier-plugin-tailwindcss: 0.7.4
+  "@eslint/js": 9.39.5
+  globals: 16.5.0
+  typescript-eslint: 8.63.0
+  eslint-plugin-react-hooks: 7.1.1
+  # --- types ---
+  "@types/js-yaml": 4.0.9
+  "@types/node": 25.4.0
+  "@types/react": 19.2.14
+  "@types/react-dom": 19.2.3
+  # --- storybook ---
+  storybook: 10.3.6
+  "@storybook/react": 10.3.6
+  "@storybook/react-vite": 10.3.6
+  # --- ui runtime shared by apps/web, survey-ui, surveys and email ---
+  react: 19.2.6
+  react-dom: 19.2.6
+  preact: 10.29.1
+  tailwindcss: 4.3.1
+  "@tailwindcss/postcss": 4.3.1
+  "@tailwindcss/vite": 4.3.1
+  clsx: 2.1.1
+  tailwind-merge: 3.5.0
+  class-variance-authority: 0.7.1
+  lucide-react: 0.577.0
+  date-fns: 4.1.0
+  isomorphic-dompurify: 3.9.0
+  "@formkit/auto-animate": 0.9.0
+  react-day-picker: 9.14.0
+  "@radix-ui/react-checkbox": 1.3.3
+  "@radix-ui/react-dropdown-menu": 2.1.16
+  "@radix-ui/react-popover": 1.1.15
+  "@radix-ui/react-radio-group": 1.3.8
+  "@radix-ui/react-slot": 1.2.4
+  i18next: 25.8.20
+  i18next-icu: 2.4.3
+  react-i18next: 16.5.8
+  # --- server runtime ---
+  zod: 4.3.6
+  zod-openapi: 5.4.6
+  "@prisma/client": 7.8.0
+  # redis 5.x. apps/web was on 4.7.1 while @formbricks/cache was on 5.11.0, and because
+  # apps/web has no nested copy its `import type { RedisClientType } from "redis"` in
+  # lib/cache/index.ts resolved to the hoisted v4 type — then used to describe the v5
+  # client that getCacheService() actually returns. Aligning here removes that crossover.
+  redis: 5.11.0
+  pino: 10.3.1
+  bcryptjs: 3.0.3
+  uuid: 14.0.0
+  "@paralleldrive/cuid2": 2.3.1
+  ai: 6.0.177
+
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
 #

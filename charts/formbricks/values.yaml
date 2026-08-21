@@ -967,10 +967,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.4.
-    digest: "sha256:5eb1e185383bcadc0fd591b9ccb475869ca2aebb81c09b493be1073f24190f10"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.5.
+    digest: "sha256:9f4c109e6589993ef15708f834d57241ed3a73e3246e3565620777a66a231b59"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.8.4"
+    tag: "0.8.5"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.

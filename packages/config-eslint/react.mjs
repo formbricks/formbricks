@@ -4,7 +4,7 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import { base, commonIgnores, unusedVarsConvention } from "./base.mjs";
+import { base, commonIgnores, reactCompilerRulesOptOut, unusedVarsConvention } from "./base.mjs";
 
 /*
  * Flat config for React component libraries — the successor of the
@@ -44,7 +44,9 @@ export const react = ({ tsconfigRootDir }) => [
   // Accessibility rules (parity with the old @vercel/style-guide/react config; eslint-config-next
   // already provides these for the app, so this brings the react-library tier in line).
   jsxA11y.flatConfigs.recommended,
-  reactHooks.configs["recommended-latest"],
+  // v7 exposes flat configs under `configs.flat.*`; the top-level `recommended-latest`
+  // is the legacy eslintrc format and crashes ESLint 9.
+  reactHooks.configs.flat.recommended,
   {
     languageOptions: {
       globals: {
@@ -57,6 +59,7 @@ export const react = ({ tsconfigRootDir }) => [
       },
     },
   },
+  reactCompilerRulesOptOut,
   ...base,
 ];
 

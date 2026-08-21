@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TChartConfig } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createChartAction,
@@ -12,6 +13,7 @@ import {
   getChartAction,
   updateChartAction,
 } from "@/modules/ee/analysis/charts/actions";
+import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import type {
@@ -49,6 +51,8 @@ export function useChartDialog({
   const [, startTransition] = useTransition();
   const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
+  // Display settings saved alongside the chart (display type, bar direction).
+  const [chartConfig, setChartConfig] = useState<TChartConfig>({});
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [chartName, setChartName] = useState("");
   // Saved name of the chart being edited; unlike chartName it stays stable while the user types.
@@ -93,6 +97,7 @@ export function useChartDialog({
       lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
+      setChartConfig({});
       setSelectedDirectoryId(directories?.[0]?.id ?? null);
       return;
     }
@@ -119,6 +124,7 @@ export function useChartDialog({
         setSavedChartName(chart.name);
         setSelectedChartType(resolveChartType(chart.type));
         setCurrentChartId(chart.id);
+        setChartConfig(chart.config ?? {});
         setSelectedDirectoryId(chart.feedbackDirectoryId);
 
         const queryResult = await executeQueryAction({
@@ -203,6 +209,7 @@ export function useChartDialog({
 
     setIsSaving(true);
     let newlyCreatedChartId: string | null = null;
+    const configToSave = sanitizeChartDisplay(chartConfig, chartData.chartType);
     try {
       let savedChartId = currentChartId;
 
@@ -214,7 +221,7 @@ export function useChartDialog({
             name: chartName.trim(),
             type: chartData.chartType,
             query: chartData.query,
-            config: {},
+            config: configToSave,
           },
         });
 
@@ -232,7 +239,7 @@ export function useChartDialog({
             name: chartName.trim(),
             type: chartData.chartType,
             query: chartData.query,
-            config: {},
+            config: configToSave,
             feedbackDirectoryId: selectedDirectoryId,
           },
         });
@@ -309,7 +316,7 @@ export function useChartDialog({
         name: chartName.trim(),
         type: data.chartType,
         query: data.query,
-        config: {},
+        config: sanitizeChartDisplay(chartConfig, data.chartType),
         feedbackDirectoryId: selectedDirectoryId,
       },
     });
@@ -386,6 +393,7 @@ export function useChartDialog({
       lastSuggestedNameRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
+      setChartConfig({});
       setChartLoadError(null);
       setSelectedDirectoryId(directories?.[0]?.id ?? null);
       onOpenChange(false);
@@ -401,6 +409,8 @@ export function useChartDialog({
 
   return {
     chartData,
+    chartConfig,
+    setChartConfig,
     chartName,
     setChartName,
     savedChartName,

@@ -373,7 +373,9 @@ function getOptionContainerClassName(isSelected: boolean, disabled: boolean): st
     "relative flex cursor-pointer flex-col border transition-colors outline-none",
     "rounded-option px-option-x py-option-y",
     isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
-    "focus-within:border-brand focus-within:bg-option-selected-bg",
+    // No focus-within fill: it repainted the option in the *selected* colors, so the card's
+    // mount autofocus made option 1 look answered (ENG-2288). Focus has its own uniform ring
+    // on the option label, from survey-ui's globals.css.
     "hover:bg-option-hover-bg",
     disabled && "cursor-not-allowed opacity-50"
   );
