@@ -1,4 +1,5 @@
-import { getIp } from "@better-auth/core/utils/ip";
+// Renamed getIp -> getIP in Better Auth 1.7 (ENG-2343).
+import { getIP } from "@better-auth/core/utils/ip";
 import * as nextHeaders from "next/headers";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
@@ -159,7 +160,7 @@ describe("Better Auth IP configuration", () => {
       ipAddressHeaders: [FORMBRICKS_CLIENT_IP_HEADER],
       ipv6Subnet: 64,
     });
-    expect(getIp(requestHeaders, { advanced: { ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG } } as never)).toBe(
+    expect(getIP(requestHeaders, { advanced: { ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG } } as never)).toBe(
       "2001:0db8:abcd:0012:0000:0000:0000:0000"
     );
   });

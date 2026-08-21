@@ -19,14 +19,18 @@ Integrating your own OIDC (OpenID Connect) instance with your Formbricks instanc
 - `OIDC_SIGNING_ALGORITHM`
 
 <Note>
-  Make sure the Redirect URI for your OIDC Client is set to `{WEBAPP_URL}/api/auth/oauth2/callback/openid`.
+  Make sure the Redirect URI for your OIDC Client is set to
+  `{WEBAPP_URL}/api/auth/oauth2/callback/openid`.
 </Note>
 
 <Warning>
-  **Upgrading from v5.1 or earlier?** This path changed in v5.2. The old URI was
-  `{WEBAPP_URL}/api/auth/callback/openid` (without `/oauth2`). Add the new one at your OIDC provider or
-  logins will fail. See the [migration guide](/self-hosting/advanced/migration) for the full list of
-  changed callback URLs.
+  **Upgrading from v5.1 or earlier?** This path changed once, at v5.2:
+
+  - v5.1 and earlier: `{WEBAPP_URL}/api/auth/callback/openid`
+  - v5.2 and later (current): `{WEBAPP_URL}/api/auth/oauth2/callback/openid`
+
+  Upgrading from v5.2 or later needs no change — the callback URL is pinned and does not move with
+  Formbricks' authentication library. See the [migration guide](/self-hosting/advanced/migration).
 </Warning>
 
 - Update these environment variables in your `docker-compose.yml` or pass it directly to the running container.

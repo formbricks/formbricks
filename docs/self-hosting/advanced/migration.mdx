@@ -11,6 +11,10 @@ Records API or the MCP server, and nothing else. It needs no environment variabl
 migrations. If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do
 for it.
 
+v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no action at all:
+every migration is additive and applies automatically, and **your SSO callback URLs do not change** — see
+below.
+
 ### Feedback Record Mutations by API Key (action required for some integrations)
 
 A feedback dataset can be assigned to more than one workspace, and the records inside it carry no workspace
@@ -72,6 +76,81 @@ an organization owner or manager instead of with a workspace-scoped key.
 This change adds no migrations and touches no schema, so rolling the application images / Helm values back
 to v5.3 undoes it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
 `manage` was always accepted wherever `write` was — so that step does not need reverting either.
+
+### Better Auth 1.7 upgrade (no action required)
+
+v5.4 upgrades the Better Auth authentication core from the 1.6 line to 1.7, which fixes
+[GHSA-p2fr-6hmx-4528](https://github.com/advisories/GHSA-p2fr-6hmx-4528): MCP OAuth access-token audiences
+are now bound to the resource a user actually approved during authorization, instead of trusting whatever
+the client requested. This is a coupled core upgrade — it touches login, sessions, 2FA, SSO and MCP OAuth —
+but for self-hosted instances it needs no manual database step. Every schema change is additive and nullable,
+and the required backfills (account identity, existing OAuth clients, refresh tokens, consents) run
+automatically on startup.
+
+The migration also adds two nullable columns, `alg` and `crv`, to the `jwks` table that holds your
+instance's JWT signing keys. Keys created before the upgrade keep working untouched — Better Auth reads a
+null `alg` as the default algorithm — so there is nothing to backfill, but the columns must exist before
+the new version mints its next key.
+
+#### SSO callback URLs are unchanged
+
+Your SSO callback URLs stay exactly as they are:
+
+| Provider | Callback URL | Action required? |
+| --- | --- | --- |
+| Azure AD / Entra ID | `https://your-domain.com/api/auth/oauth2/callback/azuread` | No |
+| Generic OIDC / Keycloak | `https://your-domain.com/api/auth/oauth2/callback/openid` | No |
+| SAML (BoxyHQ / Jackson) | `https://your-domain.com/api/auth/oauth2/callback/saml` | No |
+| Google / GitHub | `https://your-domain.com/api/auth/callback/{provider}` | No |
+
+Better Auth 1.7 rebuilds its generic-OAuth support on top of the built-in social-provider route, which
+would otherwise have moved these three callbacks to `/api/auth/callback/{providerId}` and required you to
+register a new redirect URI at your identity provider. OAuth requires redirect URIs to match exactly, so a
+path change means editing every provider configuration by hand.
+
+Formbricks pins the callback URL instead, so it no longer follows the authentication library's internal
+routing. The URLs above are the ones introduced in v5.2 and they are now a stable part of the Formbricks
+API — a future authentication-core upgrade will not move them either.
+
+<Note>
+  The table writes `your-domain.com` as your `WEBAPP_URL`, which is correct for a default install. If you
+  set `BETTER_AUTH_URL` or `NEXTAUTH_URL` to a different origin, the callback lives on **that** origin
+  instead — it is derived from the same auth base URL Better Auth itself uses, not from `WEBAPP_URL`.
+  Either way it is unchanged by this upgrade.
+</Note>
+
+<Note>
+  Nothing to do, and nothing to undo. If you added a `/api/auth/callback/{providerId}` redirect URI in
+  advance based on an earlier draft of these notes, leaving it registered is harmless — most identity
+  providers accept several redirect URIs, and Formbricks simply will not use it.
+</Note>
+
+#### MCP access tokens now end with their session
+
+An MCP access token used to stay valid until its own expiry, independently of the session that authorized
+it. In 1.7 it is bound to that session: once the session ends — the user signs out, or the session is
+revoked — the token is inactive. `/introspect` reports `active: false` for it and
+`/api/auth/oauth2/userinfo` rejects it, rather than honouring it until its TTL runs out.
+
+This is upstream hardening, and it is the stricter of the two behaviours: a token that outlives the sign-out
+which created it is exactly what a revocation is supposed to stop.
+
+It applies to **access** tokens. A refresh token granted `offline_access` deliberately survives the session
+ending, per OIDC Back-Channel Logout 1.0 §2.7, so that long-lived API access can outlive a browser session —
+which is what MCP clients rely on. Signing out is therefore not a way to cut a client off permanently.
+
+**No action is required.** MCP clients re-authorize on their own — Claude Code and MCP Inspector both do —
+so a user who signs out and back in sees nothing. It is listed here for one case only: a custom integration
+that caches a Formbricks MCP access token and reuses it across sessions will start receiving rejections
+where it previously succeeded, and should obtain a fresh token instead of treating the cached one as valid
+until its expiry.
+
+#### Rollback (Better Auth 1.7)
+
+The `Account.issuer` column and the new `oauthResource`, `oauthClientResource` and `oauthClientAssertion`
+tables are additive and nullable, and are not read by v5.3, so rolling the application images / Helm values
+back to v5.3 is safe without touching the database. SSO needs no attention in either direction: v5.3 and
+v5.4 use the same callback URLs.
 
 ## v5.3
 

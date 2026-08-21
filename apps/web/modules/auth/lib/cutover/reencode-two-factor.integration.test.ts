@@ -1,3 +1,4 @@
+import { createLocalAccountIssuer } from "@better-auth/core/db";
 import { authenticator } from "otplib";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -60,6 +61,10 @@ describe("2FA secret re-encode (real Postgres)", () => {
         provider: "credential",
         providerAccountId: user.id,
         password: user.password!,
+        // Represents an already-migrated existing account (ENG-2343): real rows carry this from either
+        // Better Auth's own sign-up path or the ENG-2343 backfill, and sign-in's findCredentialAccount
+        // filters on it.
+        issuer: createLocalAccountIssuer("credential"),
       },
     });
 
@@ -112,6 +117,10 @@ describe("2FA secret re-encode (real Postgres)", () => {
         provider: "credential",
         providerAccountId: user.id,
         password: user.password!,
+        // Represents an already-migrated existing account (ENG-2343): real rows carry this from either
+        // Better Auth's own sign-up path or the ENG-2343 backfill, and sign-in's findCredentialAccount
+        // filters on it.
+        issuer: createLocalAccountIssuer("credential"),
       },
     });
 
@@ -194,6 +203,10 @@ describe("2FA secret re-encode (real Postgres)", () => {
         provider: "credential",
         providerAccountId: user.id,
         password: user.password!,
+        // Represents an already-migrated existing account (ENG-2343): real rows carry this from either
+        // Better Auth's own sign-up path or the ENG-2343 backfill, and sign-in's findCredentialAccount
+        // filters on it.
+        issuer: createLocalAccountIssuer("credential"),
       },
     });
 
@@ -250,6 +263,10 @@ describe("2FA secret re-encode (real Postgres)", () => {
         provider: "credential",
         providerAccountId: user.id,
         password: user.password!,
+        // Represents an already-migrated existing account (ENG-2343): real rows carry this from either
+        // Better Auth's own sign-up path or the ENG-2343 backfill, and sign-in's findCredentialAccount
+        // filters on it.
+        issuer: createLocalAccountIssuer("credential"),
       },
     });
 
