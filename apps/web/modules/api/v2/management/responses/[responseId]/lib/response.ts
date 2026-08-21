@@ -114,7 +114,7 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
 
     await findAndDeleteUploadedFilesInResponse(
       deletedResponse.data,
-      surveyQuestionsResult.data.questions,
+      surveyQuestionsResult.data,
       surveyQuestionsResult.data.workspaceId
     );
 

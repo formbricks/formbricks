@@ -125,6 +125,10 @@ export const PIE_MEASURE_VALUE_KEY = "__measureValue";
  * Pivot several measures (one/few rows, N measure columns) into one row per measure, so a pie
  * chart with multiple measures and no dimension renders a slice per measure instead of only the
  * first one. Each measure is summed across the given rows.
+ *
+ * The measure label is stored a second time as `tooltipLabel` because the tooltip keys its row
+ * label off the dataKey, which here is the internal PIE_MEASURE_VALUE_KEY rather than a Cube
+ * column — without it the tooltip prettifies that key and shows "__measure Value" (ENG-2346).
  */
 export const prepareMeasureSliceData = (
   rows: TChartDataRow[],
@@ -137,6 +141,7 @@ export const prepareMeasureSliceData = (
       (sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0),
       0
     ),
+    tooltipLabel: labelFor(key),
   }));
 
 /** Category key for rows produced by {@link pivotMeasuresToCategories}. */
@@ -150,7 +155,8 @@ export const PIVOTED_VALUE_KEY = "value";
  * band centered in the plot — a wide empty gap before the first bar. Pivoted, the measures
  * become ordinary categories that fill the x-axis from the left.
  *
- * Missing/non-numeric values become 0 so empty measures keep a visible, hoverable slot.
+ * Missing/non-numeric values stay null: the measure keeps its slot on the axis, but renders as a
+ * gap rather than as a zero-height bar labelled 0.
  * `formatLabel` supplies the translated measure label stored as `tooltipLabel` on each row.
  */
 export function pivotMeasuresToCategories(
@@ -170,8 +176,10 @@ export function pivotMeasuresToCategories(
       paletteIndex++;
     }
     return {
+      // A measure that computed to NULL stays null: recharts leaves a gap and the value label
+      // renders empty, so "not asked" no longer looks like a measured zero.
+      [PIVOTED_VALUE_KEY]: isNumericValue(row[key]) && Number.isFinite(num) ? num : null,
       [PIVOTED_MEASURE_KEY]: key,
-      [PIVOTED_VALUE_KEY]: Number.isFinite(num) ? num : 0,
       tooltipLabel: formatLabel(key),
       fill,
     };

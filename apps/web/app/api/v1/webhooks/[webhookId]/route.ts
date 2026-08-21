@@ -1,5 +1,9 @@
 import { logger } from "@formbricks/logger";
 import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
+import {
+  addLegacyEnvironmentId,
+  addLegacyEnvironmentIdBestEffort,
+} from "@/app/lib/api/legacy-environment-id";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { can } from "@/lib/authorization";
@@ -31,7 +35,7 @@ export const GET = withV1ApiWrapper({
       };
     }
     return {
-      response: responses.successResponse(webhook),
+      response: responses.successResponse(await addLegacyEnvironmentId(webhook)),
     };
   },
 });
@@ -76,11 +80,9 @@ export const DELETE = withV1ApiWrapper({
     }
 
     // delete webhook from database
+    let deletedWebhook: Awaited<ReturnType<typeof deleteWebhook>>;
     try {
-      const deletedWebhook = await deleteWebhook(params.webhookId);
-      return {
-        response: responses.successResponse(deletedWebhook),
-      };
+      deletedWebhook = await deleteWebhook(params.webhookId);
     } catch (e) {
       if (auditLog) {
         auditLog.status = "failure";
@@ -90,6 +92,12 @@ export const DELETE = withV1ApiWrapper({
         response: responses.notFoundResponse("Webhook", params.webhookId),
       };
     }
+
+    // Enrich outside the delete's try/catch: the webhook is already gone, so a lookup failure here
+    // must not report a failed delete (a false 404 plus a "failure" audit entry).
+    return {
+      response: responses.successResponse(await addLegacyEnvironmentIdBestEffort(deletedWebhook)),
+    };
   },
   action: "deleted",
   targetType: "webhook",

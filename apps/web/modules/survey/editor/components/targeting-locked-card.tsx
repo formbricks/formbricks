@@ -58,7 +58,7 @@ export const TargetingLockedCard = ({
                 text: t("common.learn_more"),
                 href: isFormbricksCloud
                   ? organizationBillingPath
-                  : "https://formbricks.com/learn-more-self-hosting-license",
+                  : "https://formbricks.com/learn-more-self-hosting-license?utm_source=formbricks-app&utm_medium=webapp&utm_campaign=ee_lock_targeting",
               },
             ]}
           />

@@ -120,7 +120,7 @@ describe("withStoredIntegrationKey", () => {
       config: { key: { access_token: "", refresh_token: "" }, data: [{ surveyId: "s1" }] },
     };
 
-    const result = withStoredIntegrationKey(incoming as never, stored as never);
+    const result = withStoredIntegrationKey(incoming, stored);
 
     expect(result.config.key).toEqual(stored.config.key);
     // the non-secret payload the client legitimately owns still wins
@@ -130,17 +130,15 @@ describe("withStoredIntegrationKey", () => {
   test("keeps the stored credentials even when the client sends a different key", () => {
     const incoming = { type: "notion", config: { key: { access_token: "attacker" }, data: [] } };
 
-    expect(withStoredIntegrationKey(incoming as never, stored as never).config.key).toEqual(
-      stored.config.key
-    );
+    expect(withStoredIntegrationKey(incoming, stored).config.key).toEqual(stored.config.key);
   });
 
-  test.each([
+  test.each<[string, { config: { key?: Record<string, unknown>; data: never[] } } | null]>([
     ["no stored integration", null],
     ["stored integration without a key", { config: { data: [] } }],
   ])("passes the input through when there is %s", (_label, storedValue) => {
     const incoming = { type: "notion", config: { key: { access_token: "fresh" }, data: [] } };
 
-    expect(withStoredIntegrationKey(incoming as never, storedValue as never)).toEqual(incoming);
+    expect(withStoredIntegrationKey(incoming, storedValue)).toEqual(incoming);
   });
 });

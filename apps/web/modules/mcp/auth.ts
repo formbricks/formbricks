@@ -1,6 +1,6 @@
 import "server-only";
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import type { AuthInfo, ServerContext } from "@modelcontextprotocol/server";
 import type { JWTPayload } from "jose";
 import type { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
@@ -245,6 +245,25 @@ async function isOAuthUserActive(userId: string): Promise<boolean> {
   });
 
   return user?.isActive === true;
+}
+
+/**
+ * The slice of the SDK's `ServerContext` our tools actually read. Derived from it rather than
+ * hand-written, so it tracks the SDK, but narrow enough that a test can hand a handler
+ * `{ http: { authInfo } }` instead of constructing a whole context.
+ *
+ * `http` is optional because it is absent on non-HTTP transports. Ours is HTTP-only, so in practice it
+ * is always there — but the tools already handle a missing token, so nothing needs to assert it.
+ */
+export type TMcpToolContext = Pick<ServerContext, "http">;
+
+/**
+ * The single place that knows where the SDK puts verified auth on the handler context. Every tool goes
+ * through this rather than reaching into `ctx.http?.authInfo` itself, so a future SDK or adapter change
+ * to the context shape is one edit here instead of one per tool (the v1 -> v2 move was exactly that).
+ */
+export function getMcpToolAuthInfo(ctx: TMcpToolContext): AuthInfo | undefined {
+  return ctx.http?.authInfo;
 }
 
 export function getMcpAuthentication(authInfo?: AuthInfo): TV3Authentication {

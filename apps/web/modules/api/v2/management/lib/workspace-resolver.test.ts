@@ -17,7 +17,7 @@ const auth = (organizationId: string, workspaceId: string, permission: ApiKeyPer
   apiKeyId: "api-key-1",
   organizationId,
   organizationAccess: { accessControl: { read: false, write: false } },
-  workspacePermissions: [{ workspaceId, workspaceName: "Workspace", permission }],
+  workspacePermissions: [{ workspaceId, workspaceName: "Test Workspace", permission }],
 });
 
 describe("resolveBodyIdsV2", () => {

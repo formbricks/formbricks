@@ -789,7 +789,7 @@ EOF
       cat >> "$services_snippet_file" << EOF
   rustfs:
     restart: always
-    image: rustfs/rustfs:1.0.0-alpha.93
+    image: rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0
     depends_on:
       rustfs-perms:
         condition: service_completed_successfully

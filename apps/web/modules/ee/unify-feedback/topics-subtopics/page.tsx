@@ -53,7 +53,7 @@ export const UnifyTopicsSubtopicsPage = async (
                 text: t("common.learn_more"),
                 href: IS_FORMBRICKS_CLOUD
                   ? `/organizations/${organization.id}/settings/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
+                  : "https://formbricks.com/learn-more-self-hosting-license?utm_source=formbricks-app&utm_medium=webapp&utm_campaign=ee_lock_unify_topics",
               },
             ]}
           />

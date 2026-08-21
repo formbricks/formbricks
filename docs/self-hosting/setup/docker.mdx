@@ -498,7 +498,7 @@ services:
       - rustfs-data:/data
 
   rustfs:
-    image: rustfs/rustfs:1.0.0-alpha.93
+    image: rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0
     restart: always
     depends_on:
       rustfs-perms:
@@ -511,7 +511,8 @@ services:
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: ":9001"
       # CORS for browser uploads: set to your Formbricks origin(s), comma-separated.
-      # Unset = allow all origins; a value is treated as an allow-list. See the File Uploads guide.
+      # Unset = no CORS headers are emitted, so browser uploads fail; a value is treated as an allow-list.
+      # See the File Uploads guide.
       RUSTFS_CORS_ALLOWED_ORIGINS: "https://app.yourdomain.com"
     ports:
       - "9000:9000"

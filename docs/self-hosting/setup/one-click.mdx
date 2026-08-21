@@ -339,6 +339,13 @@ gate, and only then stops and restarts the running stack. A failed gate leaves t
   object-storage path to RustFS, while external S3-compatible storage keeps the same `S3_*` app contract. The
   v6 updater also refuses to continue until the Compose file contains the release-matched AuthZed services and
   `.env` contains `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
+
+  The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
+  file already names, a bundled `rustfs` service stays on whatever version it was installed with — `docker
+  compose pull` cannot move a pinned tag. To take a newer RustFS, edit the `image:` line of the `rustfs`
+  service in `formbricks/docker-compose.yml` to match the version in the [Docker
+  guide](/self-hosting/setup/docker), then run the update command. Your `rustfs-data` volume is reused as-is;
+  roll back by restoring the previous `image:` line.
 </Warning>
 
 ### Add SpiceDB to an Existing One-Click Installation

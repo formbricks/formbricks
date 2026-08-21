@@ -30,7 +30,7 @@ export const SurveyCompletedMessage = async ({
       </div>
       {(!workspace || workspace.linkSurveyBranding) && (
         <div>
-          <Link href="https://formbricks.com">
+          <Link href="https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=survey_completed">
             <Image src={footerLogo} alt="Brand logo" className="mx-auto w-40" />
           </Link>
         </div>

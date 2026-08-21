@@ -224,7 +224,7 @@ describe("buildSurveyInteractionRefreshMap", () => {
     surveyIds: string[] = []
   ) => ({
     id: createId(),
-    connector: null as const,
+    connector: null,
     resource: {
       id: createId(),
       root: { type: "surveyInteraction" as const },
@@ -235,7 +235,7 @@ describe("buildSurveyInteractionRefreshMap", () => {
 
   const segmentRefLeaf = (segmentId: string) => ({
     id: createId(),
-    connector: null as const,
+    connector: null,
     resource: {
       id: createId(),
       root: { type: "segment" as const, segmentId },
