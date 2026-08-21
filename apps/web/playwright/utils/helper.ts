@@ -424,14 +424,19 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
 };
 
 /**
- * Wait for React to commit and paint whatever the previous interaction changed.
+ * Wait for the previous interaction to reach the survey state, then for a frame after it.
  *
- * The survey editor's "add" handlers (`handleAddLabel`, `addChoice`, `addElement`, the "Add
- * description"/"Add “Other”" buttons) each build their payload from the `element`/`survey` prop of
- * the render they were created in. A structural click that lands before the previous edit has been
- * committed therefore writes a stale array back and silently drops that edit — which is what the
- * spec-wide `slowMo: 150` was really paying for. Two animation frames are enough to guarantee the
- * commit has painted, at ~30ms a seam instead of 150ms on every single action.
+ * `ElementFormInput` pushes edits upstream through `debounce(handleUpdate, 100)`
+ * (apps/web/modules/survey/components/element-form-input/index.tsx), and the editor's add handlers
+ * (`handleAddLabel`, `updateChoice`, `addElement`, the "Add description"/"Add “Other”" buttons) each
+ * build their payload from the `element`/`survey` prop of the render they were created in. A
+ * structural click that lands before that debounce has fired writes a stale array back and silently
+ * drops the edit — what the spec-wide `slowMo: 150` was really paying for.
+ *
+ * Order matters: the sleep clears the 100ms debounce, and the two animation frames then confirm the
+ * resulting commit has painted. Frames first would resolve at ~16/32ms — before the debounce had
+ * even run — and guarantee nothing. Cost is ~180ms at each of the ~40 structural seams, against
+ * 150ms on every one of the spec's 726 actions.
  */
 const RENDER_SETTLE_MS = 150;
 
@@ -439,11 +444,9 @@ const flushRender = async (page: Page): Promise<void> => {
   await page.evaluate(
     (settleMs) =>
       new Promise<void>((resolve) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setTimeout(resolve, settleMs);
-          });
-        });
+        setTimeout(() => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }, settleMs);
       }),
     RENDER_SETTLE_MS
   );
@@ -535,7 +538,12 @@ export const addElement = async (page: Page, elementType: string, options: { exa
   // for a timeout to expire.
   await expect(trigger).toHaveAttribute("data-state", "open");
 
-  const option = page.getByRole("button", { name: elementType, exact: options.exact ?? false });
+  // Scoped to the picker panel: the editor renders a card per existing element plus its settings, so
+  // an unscoped non-exact name ("Date", "Rating") can match several buttons late in a build and fail
+  // strict mode.
+  const option = page
+    .getByTestId("add-element-picker")
+    .getByRole("button", { name: elementType, exact: options.exact ?? false });
   await expect(option).toBeVisible();
   // The picker is a two-column grid that overflows on shorter viewports (e.g. "Matrix").
   await option.scrollIntoViewIfNeeded();
@@ -544,22 +552,6 @@ export const addElement = async (page: Page, elementType: string, options: { exa
   // The picker closes itself from `handleAddElement`, so a collapsed trigger is the signal that
   // the element was committed to the survey and the new card is rendering.
   await expect(trigger).toHaveAttribute("data-state", "closed");
-};
-
-/**
- * Fill one matrix row/column label and wait for the value to be committed.
- *
- * `handleAddLabel` and `updateMatrixLabel` in matrix-element-form.tsx both rebuild the whole label
- * array from the `element` prop of the render they were created in, so an add that lands while an
- * edit is still in flight overwrites it — the edited label reverts to "" and the new label is lost.
- * Every label is therefore added first (see `ensureMatrixLabelCount`) and only then filled.
- */
-export const fillMatrixLabel = async (page: Page, type: "row" | "column", index: number, value: string) => {
-  const field = page.locator(`#${type}-${index}`);
-  await expect(field).toBeEditable();
-  await field.fill(value);
-  await expect(field).toHaveValue(value);
-  await flushRender(page);
 };
 
 /**
@@ -605,22 +597,32 @@ const fillLabelsUntilCommitted = async (
 /**
  * Click "Add row"/"Add column" until the matrix has `total` labels.
  *
- * A retry rather than one click per label: on a survey with a dozen elements the editor
- * occasionally drops the click (same stale-array hazard as above). The `count < total` guard means
- * a retry can never overshoot, and `toHaveCount` pins the exact expected length.
+ * One click per pass, each verified by the count growing by exactly one. Waiting for the *final*
+ * count instead would burn the whole timeout on every intermediate pass, and could not keep its
+ * promise not to overshoot: if a commit outlasted the wait, the next pass would still read the
+ * pre-click count and click again, pushing the list past `total` with no way back.
  */
 export const ensureMatrixLabelCount = async (page: Page, type: "row" | "column", total: number) => {
   const labels = page.locator(`input[id^="${type}-"]`);
   const addButton = page.getByRole("button", { name: type === "row" ? "Add row" : "Add column" });
 
-  await expect(async () => {
-    if ((await labels.count()) < total) {
-      await flushRender(page);
-      await expect(addButton).toBeEnabled();
-      await addButton.click();
-    }
-    await expect(labels).toHaveCount(total, { timeout: 2000 });
-  }).toPass({ timeout: 30000 });
+  // One label per iteration, each add retried against its own target count. Driving the loop from
+  // the outside is what keeps it honest: a `toPass` that merely "added one" reports success and
+  // stops, and a `toPass` waiting for `total` burns its whole budget on every intermediate pass.
+  for (let count = await labels.count(); count < total; count++) {
+    const target = count + 1;
+
+    await expect(async () => {
+      if ((await labels.count()) < target) {
+        await flushRender(page);
+        await expect(addButton).toBeEnabled();
+        await addButton.click();
+      }
+      await expect(labels).toHaveCount(target, { timeout: 2000 });
+    }).toPass({ timeout: 20000 });
+  }
+
+  await expect(labels).toHaveCount(total);
 };
 
 /** Add every matrix label, then fill them — see fillLabelsUntilCommitted for the ordering reason. */
@@ -629,30 +631,45 @@ export const fillMatrixLabels = async (page: Page, type: "row" | "column", value
   await fillLabelsUntilCommitted(page, values, (index) => page.locator(`#${type}-${index}`));
 };
 
-/** Fill one "Option N" choice input and confirm the input accepted it. */
-export const fillChoiceOption = async (page: Page, optionNumber: number, value: string) => {
-  const field = page.getByPlaceholder(`Option ${optionNumber}`);
-  await expect(field).toBeEditable();
-  await field.fill(value);
-  await expect(field).toHaveValue(value);
-  await flushRender(page);
-};
-
-/** Click "Add option" until the choice list holds `total` inputs (same rationale as the matrix). */
+/**
+ * Click until the choice list holds `total` inputs, one added per pass.
+ *
+ * Two different controls, because the forms disagree: the ranking form renders a single "Add option"
+ * button (ranking-element-form.tsx), while the multiple-choice forms only offer the per-row
+ * "Add choice below" icon (element-option-choice.tsx). Whichever exists is used, so this works for
+ * select and ranking elements alike — with the select presets currently matching the fixtures, the
+ * select path would otherwise only be exercised the day a fixture grew an option.
+ */
 export const ensureChoiceCount = async (page: Page, total: number) => {
   // Counting by placeholder, not by `id^="choice-"`: the "Other" and "None of the above" choices
   // share that id prefix, so an id-based count would never match the number of real options.
   const choices = page.locator('input[placeholder^="Option "]');
-  const addButton = page.getByRole("button", { name: "Add option" });
+  const addOption = page.getByRole("button", { name: "Add option" });
+  const addChoiceBelow = page.getByRole("button", { name: "Add choice below" });
 
-  await expect(async () => {
-    if ((await choices.count()) < total) {
-      await flushRender(page);
-      await expect(addButton).toBeEnabled();
-      await addButton.click();
-    }
-    await expect(choices).toHaveCount(total, { timeout: 2000 });
-  }).toPass({ timeout: 30000 });
+  // One choice per iteration, each add retried against its own target count — see
+  // ensureMatrixLabelCount for why the loop lives outside the retry.
+  for (let count = await choices.count(); count < total; count++) {
+    const target = count + 1;
+
+    await expect(async () => {
+      if ((await choices.count()) < target) {
+        await flushRender(page);
+
+        if (await addOption.count()) {
+          await expect(addOption).toBeEnabled();
+          await addOption.click();
+        } else {
+          const lastRowAdd = addChoiceBelow.last();
+          await expect(lastRowAdd).toBeEnabled();
+          await lastRowAdd.click();
+        }
+      }
+      await expect(choices).toHaveCount(target, { timeout: 2000 });
+    }).toPass({ timeout: 20000 });
+  }
+
+  await expect(choices).toHaveCount(total);
 };
 
 /** Add every choice, then fill them — see fillLabelsUntilCommitted for the ordering reason. */
@@ -661,38 +678,60 @@ export const fillChoiceOptions = async (page: Page, values: string[]) => {
   await fillLabelsUntilCommitted(page, values, (index) => page.getByPlaceholder(`Option ${index + 1}`));
 };
 
+const publishButtonOf = (page: Page): Locator => page.getByRole("button", { name: "Publish", exact: true });
+
 /**
  * Publish the survey being edited and wait for the summary page.
  *
- * The editor validates client-side and reports problems only through a toast that auto-dismisses,
- * so a failed publish otherwise shows up as an opaque `waitForURL` timeout. This polls for the
- * toast alongside the navigation and fails with the message the editor actually gave.
+ * The editor validates client-side and reports problems only through a toast that auto-dismisses, so
+ * a failed publish otherwise surfaces as an opaque `waitForURL` timeout. This watches for the
+ * navigation and collects error toasts alongside it, then fails with the message the editor actually
+ * gave — or says plainly that none was shown, which points at a slow publish rather than a rejected
+ * one.
  */
 export const publishSurvey = async (page: Page): Promise<void> => {
-  const publishButton = page.getByRole("button", { name: "Publish", exact: true });
+  // Matches the per-test timeout in playwright.config.ts, and the `waitForURL` timeout every call
+  // site used before this helper existed. Publishing the 13-element survey is the slowest step in
+  // the suite; a shorter budget would turn a slow-but-passing run red.
+  const publishTimeoutMs = 120000;
   const summaryUrl = /\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/;
-  // react-hot-toast renders every toast into a role="status" container.
-  const toasts = page.locator('div[role="status"]');
+  // Scoped to react-hot-toast's own error class (set in modules/ui/components/toaster-client) rather
+  // than `role="status"`, which the shared `Alert` also uses — several of those are on screen in the
+  // editor and would be reported as publish failures.
+  const errorToasts = page.locator(".formbricks__toast__error");
 
-  await expect(publishButton).toBeEnabled();
-  await publishButton.click();
+  await expect(publishButtonOf(page)).toBeEnabled();
+  await publishButtonOf(page).click();
+
+  const navigated = page
+    .waitForURL(summaryUrl, { timeout: publishTimeoutMs })
+    .then(() => true)
+    .catch(() => false);
 
   const seen = new Set<string>();
-  const deadline = Date.now() + 60000;
 
-  while (Date.now() < deadline) {
-    if (summaryUrl.test(page.url())) return;
+  for (;;) {
+    // Racing the navigation keeps the toast reads off a destroyed execution context: once the
+    // summary page starts loading, `navigated` wins and no further query is issued.
+    const settled = await Promise.race([navigated, page.waitForTimeout(250).then(() => null)]);
 
-    for (const text of await toasts.allInnerTexts()) {
+    if (settled === true) return;
+    if (settled === false) break;
+
+    // The publish may still navigate between the race above and this read.
+    for (const text of await errorToasts.allInnerTexts().catch(() => [])) {
       const message = text.trim();
-      if (message && message !== "Formbricks") seen.add(message);
+      if (message) seen.add(message);
     }
-
-    await page.waitForTimeout(250);
   }
 
+  const reported =
+    seen.size > 0
+      ? `Editor reported: ${JSON.stringify([...seen])}`
+      : "No validation toast was shown, so this is a slow publish rather than a rejected one";
+
   throw new Error(
-    `Publish did not reach the summary page. Editor reported: ${JSON.stringify([...seen])} (url: ${page.url()})`
+    `Publish did not reach the summary page within ${publishTimeoutMs}ms. ${reported} (url: ${page.url()})`
   );
 };
 
