@@ -27,18 +27,23 @@ export const ssoAccountIssuer = (providerId: string): string =>
  * Writing `local:oauth:google` is what broke Google sign-in on 5.4-rc — the link was created, the user
  * got a session, and every subsequent sign-in bounced back through verify-before-link forever.
  *
- * This mirrors, byte for byte, the `CASE` in `migration/20260812110000_…/migration.sql` — which got
- * google right, and whose comment already warned that "getting google wrong would leave every existing
- * Google user unmatched at sign-in". Four sites must agree and cannot import each other:
+ * This mirrors the `CASE` in `migration/20260812110000_…/migration.sql` — which got google right, and
+ * whose comment already warned that "getting google wrong would leave every existing Google user
+ * unmatched at sign-in". One deliberate asymmetry: the SQL `ELSE` concatenates the raw provider id
+ * while this helper percent-encodes it. Identity for every provider id in use (all encoding-neutral,
+ * per that migration's own comment); a provider id ever needing escaping must get an explicit `CASE`
+ * arm in SQL, and `constants.test.ts` documents the divergence so it reads as known, not an
+ * oversight. Four sites must agree and cannot import each other:
  *
  * 1. Better Auth itself — `provider.accountIssuer`, else `createOAuthAccountIssuer(provider.id)`.
  * 2. `account-linking.ts` — the rows SSO recovery writes.
  * 3. `migration/20260812110000_…` — the backfill, as a SQL literal.
  * 4. `migration/20260821…_repair_account_issuer` — the repair for rows (2) got wrong.
  *
- * `constants.test.ts` pins this function against BOTH the SQL literal and upstream's own exports, so a
- * future Better Auth release that changes google's issuer — or gives github one — fails `pnpm test`
- * rather than production sign-in.
+ * `constants.test.ts` pins this function against upstream's own exports AND every SQL copy in both
+ * migrations (the backfill's one, the repair's two), so a future Better Auth release that changes
+ * google's issuer — or gives github one — or any one SQL copy drifting fails `pnpm test` rather than
+ * production sign-in.
  *
  * Keyed on `Account.provider`, NOT `IdentityProvider`: the credential row's provider is `"credential"`,
  * a value that enum does not contain.

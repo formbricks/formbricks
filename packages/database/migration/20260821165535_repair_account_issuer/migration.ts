@@ -12,9 +12,13 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  * Better Auth 1.7 keys accounts on `(issuer, accountId)`, so such a row is invisible at sign-in: the user
  * is pushed back through verify-before-link on every attempt and never converges. This rewrites them.
  *
- * The `CASE` is byte-identical to the one in 20260812110000's `migration.sql`, and
- * `apps/web/modules/ee/sso/lib/constants.test.ts` pins the TypeScript helper against both that SQL and
- * Better Auth's own exports, so the three cannot drift apart again.
+ * The `CASE` is byte-identical to the one in 20260812110000's `migration.sql` — including,
+ * deliberately, its missing percent-encoding on the `ELSE` arm: the TS helper encodes, the SQL cannot,
+ * and every provider id in use is encoding-neutral so the two coincide. Mirroring the flaw is the
+ * point; "fixing" one side is how ENG-2555 happened. `apps/web/modules/ee/sso/lib/constants.test.ts`
+ * parses every `CASE` copy in BOTH migrations (this file has two — `SET` and the self-excluding
+ * `WHERE`) and pins them against each other, the helper, and Better Auth's own exports, so no copy can
+ * drift silently.
  *
  * Safe by construction:
  * - **No-op on an empty or already-correct database.** `IS DISTINCT FROM` matches only rows that are
