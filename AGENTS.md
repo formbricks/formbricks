@@ -199,6 +199,12 @@ Do:
   evaluators, calculations, and edge cases. Keep assertions on inputs and outputs, colocate specs with
   the code they exercise (`utility.test.ts`), and mock network and storage boundaries through helpers
   from `@formbricks/*`.
+- API v3 contract tests (Schemathesis): every documented `/api/v3` operation is driven against a real
+  instance on each PR and must match the committed OpenAPI bundle — status codes, content type and
+  response schema. Nothing to register per endpoint; documenting an operation is what enrolls it. To
+  exercise a new one against real data rather than its documented 403, add the resource in
+  `packages/database/src/scripts/seed-contract-fixtures.ts`. Harness and local run:
+  `docs/api-v3-reference/contract-tests/README.md`.
 - Manual QA, especially for releases: verify on staging and file bugs. If a bug is critical, backport and
   re-test.
 - Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows.

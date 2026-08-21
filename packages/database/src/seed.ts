@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import bcryptjs from "bcryptjs";
+import { createHash } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import type {
@@ -413,6 +414,54 @@ async function seedDemoWorkflowRuns(
   }
 }
 
+/**
+ * Create a management API key with `manage` on the seeded workspace, so the seeded data can be driven
+ * over HTTP (contract tests, manual API pokes) without clicking a key out of the UI.
+ *
+ * Opt-in through `SEED_API_KEY`: nothing is created when it is unset, and the secret is never written
+ * to the repo — callers pass a throwaway value (CI generates one per run). The key sent as
+ * `x-api-key` is `fbk_${SEED_API_KEY}`.
+ *
+ * Mirrors `createApiKey` in apps/web/modules/organization/settings/api-keys/lib/api-key.ts: SHA-256
+ * `lookupHash` for the indexed lookup plus a bcrypt `hashedKey` for verification. That module is
+ * `server-only` and cannot be imported here, so the two hashing lines are inlined rather than shared.
+ */
+async function seedApiKey(organizationId: string, workspaceId: string, secret: string): Promise<void> {
+  // `lookupHash` is a deterministic fingerprint for the indexed lookup, not the verification hash —
+  // it has to be reproducible from the presented key, so it cannot be salted or slow. Verification
+  // is the bcrypt hash below, which is what the auth path actually compares against. Same two-hash
+  // split as `createApiKey`. CodeQL reads the SHA-256 alone as `js/insufficient-password-hash`; that
+  // alert is dismissed as a false positive on this repo wherever the pattern appears (crypto.ts's
+  // `hashSha256` carries the same dismissal), since code scanning ignores inline suppressions.
+  const lookupHash = createHash("sha256").update(secret).digest("hex");
+  const hashedKey = await bcryptjs.hash(secret, 12);
+
+  // Keyed on the fixed seed id, not on `lookupHash`: re-seeding with a different `SEED_API_KEY`
+  // produces a different lookup hash, which would miss the row and then collide on the id.
+  const apiKey = await prisma.apiKey.upsert({
+    where: { id: SEED_IDS.API_KEY },
+    update: { hashedKey, lookupHash },
+    create: {
+      id: SEED_IDS.API_KEY,
+      label: "Seed API key",
+      hashedKey,
+      lookupHash,
+      organizationId,
+      // Workspace-scoped access only. The organization-level grants exist for the RBAC endpoints,
+      // which nothing driving the seeded data needs — no reason for this key to carry them.
+      organizationAccess: { accessControl: { read: false, write: false } },
+    },
+  });
+
+  await prisma.apiKeyWorkspace.upsert({
+    where: { apiKeyId_workspaceId: { apiKeyId: apiKey.id, workspaceId } },
+    update: { permission: "manage" },
+    create: { apiKeyId: apiKey.id, workspaceId, permission: "manage" },
+  });
+
+  logger.info(`Seeded API key ${apiKey.id} with manage access to workspace ${workspaceId}.`);
+}
+
 async function deleteData(): Promise<void> {
   logger.info("Clearing existing data...");
 
@@ -798,6 +847,13 @@ async function main(): Promise<void> {
       organizationId: organization.id,
     },
   });
+
+  // Declared in turbo.json under `globalPassThroughEnv`, not `globalEnv`: it is a per-run random
+  // value that no build output depends on, so hashing it would invalidate cached tasks for nothing.
+  const seedApiKeySecret = process.env.SEED_API_KEY;
+  if (seedApiKeySecret) {
+    await seedApiKey(organization.id, workspace.id, seedApiKeySecret);
+  }
 
   // Keep seed defaults aligned with production v5 camelCase keys.
   // Safe-identifier migration is deferred to v5.1.
