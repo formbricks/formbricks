@@ -1,9 +1,9 @@
-import { createLocalAccountIssuer } from "@better-auth/core/db";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { hashSecret } from "@/lib/crypto";
 import { auth } from "@/modules/auth/lib/auth";
+import { canonicalAccountIssuer } from "@/modules/ee/sso/lib/constants";
 // The cutover data migration under test (auto-discovered by the migration runner at the flip).
 import { backfillCredentialAccounts } from "../../../packages/database/migration/20260619120000_eng_1054_credential_account_backfill/migration";
 
@@ -12,14 +12,28 @@ import { backfillCredentialAccounts } from "../../../packages/database/migration
  * (data and schema migrations run in strict timestamp order), always runs BEFORE the schema migration
  * that adds that column — so it genuinely cannot set it, and its rows are inserted with issuer=NULL.
  * In real deployments that's fine: ENG-2343's schema migration runs immediately after this one and
- * backfills every NULL-issuer credential row. A test calling this function standalone has to simulate
- * that follow-up step itself before asserting a real Better Auth sign-in succeeds.
+ * backfills every NULL-issuer row. A test calling this function standalone has to simulate that
+ * follow-up step itself before asserting a real Better Auth sign-in succeeds — using the same canonical
+ * mapping production uses, so the fixture cannot drift from it (ENG-2555).
  */
-const applyEng2343IssuerBackfill = (): Promise<{ count: number }> =>
-  prisma.account.updateMany({
-    where: { provider: "credential", issuer: null },
-    data: { issuer: createLocalAccountIssuer("credential") },
+const applyEng2343IssuerBackfill = async (): Promise<void> => {
+  const rows = await prisma.account.findMany({
+    where: { issuer: null },
+    select: { id: true, provider: true },
   });
+
+  // Per row, because the real backfill is a CASE over `provider` — a single `updateMany` could only
+  // reproduce one arm of it. An earlier version of this helper did exactly that (credential only), which
+  // left the google row below at issuer=NULL and quietly diverged from what production data looks like.
+  await Promise.all(
+    rows.map((row) =>
+      prisma.account.update({
+        where: { id: row.id },
+        data: { issuer: canonicalAccountIssuer(row.provider) },
+      })
+    )
+  );
+};
 
 /**
  * Integration coverage for the cutover credential-account backfill (ENG-1054) against real Postgres.
