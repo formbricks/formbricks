@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-  TooManyRequestsError,
-} from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   assertOrganizationAIConfigured,
   generateOrganizationAIObject,

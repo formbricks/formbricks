@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, memo, useCallback, useMemo, useState, useTransition } from "react";
+import { Suspense, memo, useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { ResponsiveGridLayout, useContainerWidth, verticalCompactor } from "react-grid-layout";
 import type { Layout, LayoutItem } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -27,6 +27,12 @@ import {
   type TDashboardDateFilter,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
+import {
+  DEFAULT_WIDGET_VIEW,
+  type TWidgetView,
+  readStoredWidgetView,
+  writeStoredWidgetView,
+} from "@/modules/ee/analysis/dashboards/lib/widget-view";
 import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -121,12 +127,14 @@ const applyLayoutToWidgets = (widgets: TDashboardWidget[], newLayout: Layout): T
 const MemoizedWidgetContent = memo(function WidgetContent({
   widget,
   dataPromise,
+  view,
 }: Readonly<{
   widget: TDashboardWidget;
   dataPromise?: Promise<
     | { data: TChartDataRow[]; query: TChartQuery; optionLabels?: Record<string, string> }
     | { error: TDashboardWidgetError }
   >;
+  view: TWidgetView;
 }>) {
   if (widget.chart && dataPromise) {
     return (
@@ -135,6 +143,7 @@ const MemoizedWidgetContent = memo(function WidgetContent({
           dataPromise={dataPromise}
           chartType={widget.chart.type}
           config={widget.chart.config}
+          view={view}
         />
       </Suspense>
     );
@@ -163,16 +172,35 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   onRemove?: () => void;
 }>) {
   const title = widget.chart?.name ?? "";
+  // Server and first client render must agree, so start on the default and adopt the stored view
+  // in an effect rather than reading localStorage during render.
+  const [view, setView] = useState<TWidgetView>(DEFAULT_WIDGET_VIEW);
+
+  useEffect(() => {
+    setView(readStoredWidgetView(widget.id));
+  }, [widget.id]);
+
+  const handleViewChange = useCallback(
+    (nextView: TWidgetView) => {
+      setView(nextView);
+      writeStoredWidgetView(widget.id, nextView);
+    },
+    [widget.id]
+  );
+
+  const hasData = Boolean(widget.chart && dataPromise);
 
   return (
     <DashboardWidget
       title={title}
       isEditing={isEditing}
+      view={hasData ? view : undefined}
+      onViewChange={hasData ? handleViewChange : undefined}
       onEdit={onEdit}
       onDuplicate={onDuplicate}
       onResize={onResize}
       onRemove={onRemove}>
-      <MemoizedWidgetContent widget={widget} dataPromise={dataPromise} />
+      <MemoizedWidgetContent widget={widget} dataPromise={dataPromise} view={view} />
     </DashboardWidget>
   );
 });

@@ -356,7 +356,9 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     // A non-APIError Error must still reach Sentry — this is the signal we watch post-deploy.
     const deadlock = new Error("deadlock detected");
 
-    log("error", deadlock);
+    // Better Auth types `message` as string, but some of its sites pass the Error itself as the
+    // message (see betterAuthLogger's cause lookup) — this test exercises exactly that path.
+    log("error", deadlock as unknown as string);
 
     expect(Sentry.captureException).toHaveBeenCalledWith(deadlock, {
       tags: { component: "better-auth" },

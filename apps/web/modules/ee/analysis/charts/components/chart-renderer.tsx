@@ -4,6 +4,7 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
+import { cn } from "@/lib/cn";
 import { BreakdownBars } from "@/modules/ee/analysis/charts/components/breakdown-bars";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
@@ -16,6 +17,7 @@ import {
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
   formatCellValue,
+  formatPercentShare,
   formatXAxisTick,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
@@ -49,26 +51,32 @@ interface PieLabelProps {
 // and `minAngle`-stretched slices don't end up with lines pointing at nothing.
 const PIE_LABEL_MIN_PERCENT = 0.02;
 
-const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) => {
-  if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
-  if (percent < PIE_LABEL_MIN_PERCENT) return null;
-  const RADIAN = Math.PI / 180;
-  const radius = outerRadius + 22;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  const textAnchor = x > cx ? "start" : "end";
-  return (
-    <text
-      x={x}
-      y={y}
-      className="fill-muted-foreground"
-      fontSize={11}
-      textAnchor={textAnchor}
-      dominantBaseline="central">
-      {formatCellValue(value)} ({(percent * 100).toFixed(1)}%)
-    </text>
-  );
-};
+/** Shown instead of a number when a measure had nothing to compute (an en dash, not a zero). */
+const NO_DATA_PLACEHOLDER = "\u2013";
+
+// Curried with the active language: recharts calls the renderer outside React, so the locale has
+// to be closed over rather than read from a hook inside it.
+const createPieLabelRenderer = (locale: string) =>
+  function PieSliceLabel({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) {
+    if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
+    if (percent < PIE_LABEL_MIN_PERCENT) return null;
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 22;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const textAnchor = x > cx ? "start" : "end";
+    return (
+      <text
+        x={x}
+        y={y}
+        className="fill-muted-foreground"
+        fontSize={11}
+        textAnchor={textAnchor}
+        dominantBaseline="central">
+        {formatCellValue(value)} ({formatPercentShare(percent, locale)})
+      </text>
+    );
+  };
 
 interface PieLabelLineProps {
   percent?: number;
@@ -266,7 +274,8 @@ const PieChartView = ({
   chartConfig,
   formatDimensionValue,
 }: Readonly<PieChartViewProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const renderPieLabel = createPieLabelRenderer(i18n.language);
 
   // With several measures and no dimension (e.g. the six Emotion counts), each row column is a
   // measure, not a slice — pivot the measures into one slice per measure so the pie shows them
@@ -535,15 +544,27 @@ export function ChartRenderer({
         />
       );
     case "big_number": {
-      const total =
-        data.length === 1
-          ? Number(data[0]?.[dataKey]) || 0
-          : data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
-      const formatted = total.toLocaleString();
+      // A measure with nothing to compute comes back as NULL (see restoreNullMeasures in
+      // cube-client, which maps the pivot's sentinel back to null). Summing it as 0 would print a
+      // confident "0" for "never asked", so count the numeric rows and fall back to a no-data glyph.
+      const numericValues = data
+        .map((row) => row[dataKey])
+        .filter((value) => value !== null && value !== undefined && value !== "")
+        .map(Number)
+        .filter((value) => Number.isFinite(value));
+      const hasValue = numericValues.length > 0;
+      const total = numericValues.reduce((sum, value) => sum + value, 0);
+      // formatCellValue caps at two fraction digits, so a big number and a bar label now agree on
+      // precision instead of showing 4.705 next to 4.7.
+      const formatted = hasValue ? formatCellValue(total) : NO_DATA_PLACEHOLDER;
       return (
         <div className="flex h-full items-center justify-center p-4">
           <div className="text-center">
-            <div className="text-foreground text-5xl font-semibold tracking-tight tabular-nums">
+            <div
+              className={cn(
+                "text-5xl font-semibold tracking-tight tabular-nums",
+                hasValue ? "text-foreground" : "text-muted-foreground"
+              )}>
               {formatted}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
