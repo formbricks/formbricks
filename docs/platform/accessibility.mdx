@@ -134,12 +134,25 @@ reduces the amount of navigation a respondent has to do. A fix is planned for an
 
 **Affected criterion:** 3.1.2
 
-A `lang` attribute can be set for question text, descriptions, and labels, but not for individual choice
-options. Where a single question mixes languages across its options, a screen reader may pronounce some options
-using the wrong language rules.
+Formbricks identifies the survey's language at page level, not per element. A link survey sets the `lang` and
+`dir` attributes on the page's `<html>` element from the survey's active language, and updates them when the
+respondent uses the language switcher, so assistive technology announces the survey in the right language and
+right-to-left languages read in the right direction. No `lang` attribute is set on individual questions,
+descriptions, labels, or choice options.
 
-**Workaround:** Keep all options within a question in one language, and use the multi-language feature to offer
-the whole survey in each language rather than mixing languages inside a single question.
+Where a single screen mixes languages — an English question with an untranslated choice option, or a term left
+in its original language — the part in the other language is not programmatically identified, and a screen
+reader may pronounce it using the wrong language rules.
+
+Website and in-app surveys do not get the page-level tag either. The survey renders inside a page the site
+owner controls, whose `lang` describes that page rather than the survey, and Formbricks deliberately leaves it
+alone — changing it would misdescribe the rest of the host page. So whenever an embedded survey is shown in a
+language other than the host page's, including after the respondent uses the language switcher, its content is
+a passage in a different language with no markup saying so.
+
+**Workaround:** Keep every part of a question in one language, and use the multi-language feature to offer the
+whole survey in each language rather than mixing languages inside a single question. For website and in-app
+surveys, serve the survey in the same language as the page it is embedded in wherever possible.
 
 ---
 
