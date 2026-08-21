@@ -202,6 +202,17 @@ describe("validateWebhookUrl", () => {
       // Multicast scopes no IPv6 prefix covered.
       ["IPv6 multicast, site scope", "http://[ff05::1]/"],
       ["IPv6 multicast, global scope", "http://[ff0e::1]/"],
+      // IPv4-compatible IPv6 (::/96): the same wrapper trick as NAT64/6to4, and not covered by
+      // the IPv4-mapped handling, which only applies to ::ffff:0:0/96.
+      ["IPv4-compatible ::127.0.0.1", "http://[::7f00:1]/"],
+      ["IPv4-compatible, dotted form", "http://[::127.0.0.1]/"],
+      ["IPv4-compatible ::169.254.169.254 (IMDS)", "http://[::a9fe:a9fe]/"],
+      ["IPv4-compatible ::10.0.0.1", "http://[::a00:1]/"],
+      ["Teredo — tunnels IPv4 like 6to4", "http://[2001:0:1234::1]/"],
+      ["IPv6 documentation range", "http://[2001:db8::1]/"],
+      ["IPv6 discard-only prefix", "http://[100::1]/"],
+      ["IPv6 unspecified", "http://[::]/"],
+      ["IPv6 loopback", "http://[::1]/"],
       // Already blocked before this change; kept so the CIDR rewrite is pinned to the old
       // classifier's full coverage and cannot silently drop a range.
       ["0.0.0.0/8 beyond 0.0.0.0 itself", "http://0.1.2.3/"],
@@ -242,6 +253,10 @@ describe("validateWebhookUrl", () => {
       ["64:ff9c::1", "just above NAT64 well-known"],
       ["fe7f::1", "just below link-local"],
       ["2606:2800:220:1:248:1893:25c8:1946", "public (example.com)"],
+      // 2001::/32 is Teredo; the rest of 2001::/16 is ordinary global unicast.
+      ["2001:4860:4860::8888", "public in 2001::/16 but outside Teredo"],
+      ["2001:db9::1", "just above the documentation range"],
+      ["101::1", "just above the discard prefix"],
     ])("accepts [%s] (%s)", async (ip) => {
       await expect(validateWebhookUrl(`https://[${ip}]/webhook`)).resolves.toBeUndefined();
     });
@@ -263,6 +278,7 @@ describe("validateWebhookUrl", () => {
       );
     });
 
+    // Pins that ::/96 (IPv4-compatible) does not swallow ::ffff:0:0/96 (IPv4-mapped).
     test("accepts a mapped public address", async () => {
       await expect(validateWebhookUrl("https://[::ffff:93.184.216.34]/webhook")).resolves.toBeUndefined();
     });

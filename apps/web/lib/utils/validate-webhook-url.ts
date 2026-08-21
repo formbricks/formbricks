@@ -49,10 +49,15 @@ const BLOCKED_IPV4_ADDRESSES: string[] = [
 ];
 
 const BLOCKED_IPV6_SUBNETS: [address: string, prefix: number][] = [
-  ["::", 128], // unspecified
-  ["::1", 128], // loopback
+  // ::/96 is the deprecated IPv4-compatible format and covers both ::  (unspecified) and ::1
+  // (loopback). It does NOT collide with the IPv4-mapped range ::ffff:0:0/96, whose 6th group is
+  // ffff — so mapped public addresses stay reachable while ::7f00:1 and ::a9fe:a9fe do not.
+  ["::", 96], // IPv4-compatible IPv6, deprecated (::7f00:1 == 127.0.0.1); incl. :: and ::1
   ["64:ff9b::", 96], // NAT64 well-known (64:ff9b::a9fe:a9fe == 169.254.169.254)
   ["64:ff9b:1::", 48], // NAT64 local-use (RFC 8215)
+  ["100::", 64], // discard-only (RFC 6666)
+  ["2001::", 32], // Teredo — tunnels IPv4 the same way 6to4 does
+  ["2001:db8::", 32], // documentation (RFC 3849)
   ["2002::", 16], // 6to4 (2002:7f00:1::1 == 127.0.0.1)
   ["fc00::", 7], // unique local addresses (ULA)
   ["fe80::", 10], // link-local — the whole /10, not just fe80::/16
