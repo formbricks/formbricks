@@ -3003,6 +3003,7 @@
       "archive_survey_warning": "Diese Umfrage und alle zugehörigen Antworten werden nach 30 Tagen endgültig gelöscht.",
       "archiving_survey": "Umfrage wird archiviert...",
       "change_status": "Status ändern",
+      "completed_responses": "Abgeschlossen",
       "copy_survey": "Umfrage kopieren",
       "copy_survey_description": "Wähle einen Workspace aus, in den du diese Umfrage kopieren möchtest.",
       "copy_survey_error": "Umfrage konnte nicht kopiert werden",

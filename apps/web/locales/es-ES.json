@@ -3003,6 +3003,7 @@
       "archive_survey_warning": "Esta encuesta y todas sus respuestas se eliminarán permanentemente después de 30 días.",
       "archiving_survey": "Archivando encuesta...",
       "change_status": "Cambiar estado",
+      "completed_responses": "Completadas",
       "copy_survey": "Copiar encuesta",
       "copy_survey_description": "Elige un espacio de trabajo para copiar esta encuesta.",
       "copy_survey_error": "Error al copiar la encuesta",

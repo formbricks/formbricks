@@ -3003,6 +3003,7 @@
       "archive_survey_warning": "Bu anket ve tüm yanıtları 30 gün sonra kalıcı olarak silinecek.",
       "archiving_survey": "Anket arşivleniyor...",
       "change_status": "Durumu değiştir",
+      "completed_responses": "Tamamlandı",
       "copy_survey": "Anketi kopyala",
       "copy_survey_description": "Bu anketi kopyalamak için bir çalışma alanı seç.",
       "copy_survey_error": "Anket kopyalanamadı",

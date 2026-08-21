@@ -3003,6 +3003,7 @@
       "archive_survey_warning": "このアンケートとすべての回答は30日後に完全に削除されます。",
       "archiving_survey": "アンケートをアーカイブ中...",
       "change_status": "ステータスを変更",
+      "completed_responses": "完了",
       "copy_survey": "アンケートをコピー",
       "copy_survey_description": "このアンケートをコピーするワークスペースを選択してください。",
       "copy_survey_error": "アンケートのコピーに失敗しました",

@@ -3003,6 +3003,7 @@
       "archive_survey_warning": "Ez a felmérés és az összes válasz véglegesen törlésre kerül 30 nap elteltével.",
       "archiving_survey": "Felmérés archiválása folyamatban...",
       "change_status": "Állapot módosítása",
+      "completed_responses": "Kitöltve",
       "copy_survey": "Felmérés másolása",
       "copy_survey_description": "Válasszon ki egy munkaterületet, amelyre ezt a felmérést másolni szeretné.",
       "copy_survey_error": "A felmérés másolása sikertelen volt",

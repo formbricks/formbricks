@@ -3003,6 +3003,7 @@
       "archive_survey_warning": "此调查问卷及其所有回复将在 30 天后永久删除。",
       "archiving_survey": "正在归档问卷...",
       "change_status": "更改状态",
+      "completed_responses": "已完成",
       "copy_survey": "复制问卷",
       "copy_survey_description": "选择要将此问卷复制到的工作区。",
       "copy_survey_error": "复制问卷失败",

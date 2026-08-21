@@ -188,6 +188,7 @@ model Response {
   @@index([createdAt])
   @@index([surveyId, createdAt]) // to determine monthly response count
   @@index([contactId, createdAt]) // to determine monthly identified users (persons)
+  @@index([surveyId, finished]) // survey list's (surveyId, finished) count aggregation — keeps it an index-only scan
 }
 
 /// Represents a label that can be applied to survey responses.

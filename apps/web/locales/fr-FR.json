@@ -3003,6 +3003,7 @@
       "archive_survey_warning": "Ce sondage et toutes ses réponses seront définitivement supprimés après 30 jours.",
       "archiving_survey": "Archivage du sondage...",
       "change_status": "Changer le statut",
+      "completed_responses": "Terminés",
       "copy_survey": "Copier l'enquête",
       "copy_survey_description": "Choisis un espace de travail vers lequel copier cette enquête.",
       "copy_survey_error": "Échec de la copie de l'enquête",

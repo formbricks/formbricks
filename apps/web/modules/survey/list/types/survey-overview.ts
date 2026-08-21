@@ -24,6 +24,7 @@ export const ZSurveyListItem = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   responseCount: z.number(),
+  completedResponseCount: z.number(),
   creator: z
     .object({
       name: z.string(),

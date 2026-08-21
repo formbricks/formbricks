@@ -3003,6 +3003,7 @@
       "archive_survey_warning": "Denna undersökning och alla dess svar kommer att raderas permanent efter 30 dagar.",
       "archiving_survey": "Arkiverar undersökning...",
       "change_status": "Ändra status",
+      "completed_responses": "Slutförda",
       "copy_survey": "Kopiera undersökning",
       "copy_survey_description": "Välj en arbetsyta att kopiera den här undersökningen till.",
       "copy_survey_error": "Kunde inte kopiera undersökningen",

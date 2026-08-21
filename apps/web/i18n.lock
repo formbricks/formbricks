@@ -2887,6 +2887,7 @@ checksums:
     workspace/surveys/archive_survey_warning: 02f30c8901f34d627bdab15e0f68e71a
     workspace/surveys/archiving_survey: 08e4cc73698d79dc98c70df6849c7790
     workspace/surveys/change_status: abe7acd9be0d3e77c087a5459ef41059
+    workspace/surveys/completed_responses: 0e4bbce9985f25eb673d9a054c8d5334
     workspace/surveys/copy_survey: de8142b45e7bca61f2dca0069a62b417
     workspace/surveys/copy_survey_description: 5d86af9371f45852b4d1afea4978166e
     workspace/surveys/copy_survey_error: 74cab7d84ea8b669e106d4c326cac005
