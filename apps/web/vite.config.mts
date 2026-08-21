@@ -26,6 +26,7 @@ export default defineConfig({
             ".next/**",
             "**/*.integration.test.ts",
             "**/*.test.tsx",
+            "**/*.rsc.test.ts",
           ],
         },
       },
@@ -35,6 +36,26 @@ export default defineConfig({
           name: "components",
           environment: "jsdom",
           include: ["**/*.test.tsx"],
+        },
+      },
+      {
+        // ENG-2444: the `page` authorization surface lives in a React `cache()` slot, and `cache` only
+        // does anything in the react-server build — the default build ships it as a permanent no-op,
+        // and the shared vitestSetup mocks it to identity on top of that. So the `unit` project cannot
+        // exercise this surface at all. Here React resolves the way Next.js resolves it for RSC, so
+        // the real implementation runs. `ssr.resolve.conditions` is the knob that works: Vitest loads
+        // test modules through the SSR environment, so a top-level `resolve.conditions` is ignored.
+        //
+        // Deliberately NOT `extends: true`: that merges the root `setupFiles`, which import
+        // react-dom/client (forbidden under the react-server condition) and mock `cache` away.
+        plugins: [tsconfigPaths()],
+        ssr: { resolve: { conditions: ["react-server", "node", "import", "default"] } },
+        test: {
+          name: "rsc",
+          environment: "node",
+          include: ["**/*.rsc.test.ts"],
+          env: loadEnv("", process.cwd(), ""),
+          setupFiles: ["./vitestSetup.rsc.ts"],
         },
       },
     ],

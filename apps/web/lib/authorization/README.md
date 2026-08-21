@@ -175,7 +175,7 @@ migration; resource-level relationships belong to the later sharing phase.
   `member` role by name, which admitted `billing`; `organization.manage` is what
   its own message always claimed.
 
-### Migrated by ENG-2388 and ENG-2409
+### Migrated by ENG-2388, ENG-2409 and ENG-2444
 
 ENG-2388 added the `page` surface for server-rendered routes. Until then a `can`
 call from a page or layout resolved no rollout target, so the coordinator
@@ -184,6 +184,29 @@ decisions were correct and invisible at the same time. The surface is opened at
 the choke points routes already funnel through (`getWorkspaceAuth`,
 `workspaceIdLayoutChecks`, `getWorkspaceLayoutData`) rather than at one boundary,
 because Next gives no RSC equivalent of the action-client wrapper.
+
+ENG-2444 then fixed how long that surface lasts. `AsyncLocalStorage` closes when
+the awaited callback returns, so the surface used to end with the choke-point
+helper — a page that awaited `getWorkspaceAuth()` and then authorized anything
+else did so outside any surface, back on the unconditional legacy path. That was
+not merely missing evidence: it would have bypassed enforcement invisibly, since
+a check with no surface never compares and so never mismatches. Nine routes were
+affected, two of them issuing one unscoped check _per feedback directory_ or _per
+dashboard widget_.
+
+`page` is now held in a React `cache()` slot, which is scoped to the whole render
+pass, so a layout and its page share one context and it outlives every helper.
+Every other surface keeps its `AsyncLocalStorage` boundary; outside a React
+request scope — scripts, unit tests, any non-RSC caller — `page` falls back to
+that same boundary, which is the pre-ENG-2444 behaviour.
+
+Two things follow. A navigation now records **one** checks-per-request
+observation instead of one per choke point. And **`page:user` is eligible for
+`AUTHZED_ENFORCEMENT_TARGETS`** — before ENG-2444 it had to stay shadow-only.
+
+`formbricks_authzed_authorization_unscoped_checks_total` should stay flat for
+page traffic; it is kept deliberately as the regression detector if this boundary
+is ever narrowed again.
 
 ENG-2409 then routed the organization-side gates, which a surface alone could not
 help because they never called `can` at all:
