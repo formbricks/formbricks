@@ -323,6 +323,36 @@ describe("applyIngestContract", () => {
     expect(result.dropped).toEqual([{ key: "plan", reason: "unsupported_value" }]);
   });
 
+  test("stores a __proto__ storage key instead of losing it to the prototype setter", () => {
+    // `isLegacyIdCharset` admits `__proto__`, deliberately, so a migrated legacy name keeps loading.
+    // On a plain `{}` accumulator the assignment hits `Object.prototype`'s setter and evaporates: no
+    // stored value, no drop, no flag — the one outcome this module says cannot happen.
+    const result = applyIngestContract({
+      incoming: { ["__proto__"]: "gold", plan: "silver" },
+      ingestedFields: [ingestedField({ storageKey: "__proto__" }), ingestedField({ storageKey: "plan" })],
+      elementIds: [],
+    });
+
+    expect(Object.keys(result.data)).toEqual(["__proto__", "plan"]);
+    expect(Object.prototype.hasOwnProperty.call(result.data, "__proto__")).toBe(true);
+    expect(result.data["__proto__" as keyof typeof result.data]).toBe("gold");
+    expect(result.dropped).toEqual([]);
+    // Nothing leaked onto the real prototype, and the value survives the JSON column round trip.
+    expect(Object.getPrototypeOf({})).toBe(Object.prototype);
+    expect(JSON.parse(JSON.stringify(result.data))).toEqual({ ["__proto__"]: "gold", plan: "silver" });
+  });
+
+  test("passes a __proto__ question answer through instead of dropping it", () => {
+    const result = applyIngestContract({
+      incoming: { ["__proto__"]: "answer" },
+      ingestedFields: [],
+      elementIds: ["__proto__"],
+    });
+
+    expect(Object.keys(result.data)).toEqual(["__proto__"]);
+    expect(result.dropped).toEqual([]);
+  });
+
   describe("case matching", () => {
     test("fills a declared field from a differently cased key, storing it under the declared spelling", () => {
       const result = applyIngestContract({
@@ -471,6 +501,40 @@ describe("applyIngestContract", () => {
       // No lone surrogate survived the cut.
       expect(stored).toEqual([...stored].join(""));
       expect(result.flags).toEqual([{ key: "note", reason: "truncated" }]);
+    });
+
+    test("flags an oversize value without cutting it when the caller is not the writer", () => {
+      // The renderer's case. It has to warn, but it must not hand the queue a value that already
+      // fits — the server's re-run is what produces the persisted flags, and a cut value is
+      // indistinguishable from a complete one.
+      const oversize = "a".repeat(MAX_INGESTED_VALUE_BYTES + 100);
+      const result = applyIngestContract({
+        incoming: { note: oversize },
+        ingestedFields: [ingestedField({ storageKey: "note" })],
+        elementIds: [],
+        enforceSizeLimit: false,
+      });
+
+      expect(result.data.note).toBe(oversize);
+      expect(result.flags).toEqual([{ key: "note", reason: "truncated" }]);
+    });
+
+    test("carries the truncated verdict across the renderer-then-server round trip", () => {
+      // The regression this guards: the renderer runs the contract, its output is what the queue
+      // sends, and the server re-runs the contract over that output. If the renderer cuts, the
+      // server sees a value that fits and records nothing.
+      const fields = [ingestedField({ storageKey: "note" })];
+      const client = applyIngestContract({
+        incoming: { note: "a".repeat(MAX_INGESTED_VALUE_BYTES + 500) },
+        ingestedFields: fields,
+        elementIds: [],
+        enforceSizeLimit: false,
+      });
+      const server = applyIngestContract({ incoming: client.data, ingestedFields: fields, elementIds: [] });
+
+      // The server's flags are the persisted ones, so this is the assertion that matters.
+      expect(server.flags).toEqual([{ key: "note", reason: "truncated" }]);
+      expect(server.data.note).toHaveLength(MAX_INGESTED_VALUE_BYTES);
     });
 
     test("leaves a value that exactly fits alone", () => {

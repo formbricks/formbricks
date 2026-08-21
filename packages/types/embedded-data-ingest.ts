@@ -105,6 +105,22 @@ export interface TApplyIngestContractInput {
    * or lets an ingested value overwrite one. An empty array is a claim, not a default.
    */
   elementIds: readonly string[];
+  /**
+   * Whether to actually cut a value that exceeds {@link MAX_INGESTED_VALUE_BYTES}. Defaults to
+   * `true`, so a caller that forgets is still bounded.
+   *
+   * The renderer passes `false`, and that is a correctness requirement rather than a preference.
+   * Truncation is the one rule whose enforcement destroys the evidence that it happened: every other
+   * verdict is re-derivable from the stored value — a `coercion_failed` is re-derived because the raw
+   * text was kept — but a value that has already been cut *fits* the budget, so the server's re-run
+   * produces no `truncated` flag and a cut value becomes indistinguishable from a complete one. Only
+   * the boundary that still sees the real length can both cut and record it, and that is the boundary
+   * that writes.
+   *
+   * The flag is raised either way, so the renderer still warns about a value it is not itself
+   * cutting — it is describing what the server will store.
+   */
+  enforceSizeLimit?: boolean;
 }
 
 /** What one value can arrive as and still be storable. Anything else is `unsupported_value`. */
@@ -351,8 +367,14 @@ export const applyIngestContract = ({
   incoming,
   ingestedFields,
   elementIds,
+  enforceSizeLimit = true,
 }: TApplyIngestContractInput): TIngestResult => {
-  const data: TResponseData = {};
+  // Null-prototype, because `storageKey` and element ids only have to satisfy `isLegacyIdCharset`,
+  // which admits `__proto__`. On a plain `{}` that key hits `Object.prototype`'s setter, silently
+  // discards a string, and leaves no own property — the one outcome this function promises cannot
+  // happen: no stored value, no drop, no flag. Spread back into a literal on return so callers get an
+  // ordinary object (spread copies own properties without invoking setters, so the key survives).
+  const data: TResponseData = Object.create(null);
   const flags: TIngestFlag[] = [];
   const dropped: TIngestDrop[] = [];
 
@@ -424,8 +446,9 @@ export const applyIngestContract = ({
 
     if (typeof normalized.value === "string") {
       const truncated = truncateToMaxUtf8Bytes(normalized.value, MAX_INGESTED_VALUE_BYTES);
+      // Flagged whenever it *would* be cut, but only cut where it is stored — see `enforceSizeLimit`.
       if (truncated !== normalized.value) flags.push({ key: storageKey, reason: "truncated" });
-      data[storageKey] = truncated;
+      data[storageKey] = enforceSizeLimit ? truncated : normalized.value;
       continue;
     }
 
@@ -436,7 +459,7 @@ export const applyIngestContract = ({
     if (!consumedKeys.has(key)) dropped.push({ key, reason: "unknown_key" });
   }
 
-  return { data, flags, dropped };
+  return { data: { ...data }, flags, dropped };
 };
 
 /**

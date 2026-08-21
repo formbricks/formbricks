@@ -26,6 +26,7 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { RESERVED_DECLARED_FIELD_NAMES } from "@formbricks/types/surveys/validation";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -113,6 +114,12 @@ const INGEST_FLAG_MESSAGES: Record<TIngestFlagReason, string> = {
  */
 const logIngestResult = ({ dropped, flags }: TIngestResult): void => {
   for (const { key, reason } of dropped) {
+    // A reserved name is never actionable: `FORBIDDEN_IDS` means no survey *can* declare it, and the
+    // product injects some of these itself — a link survey with email verification puts
+    // `verifiedEmail` in this bag on every load, and the server writes it from the token regardless.
+    // Warning about it once per respondent is first-party noise that teaches developers to tune the
+    // channel out, which costs us the warnings that do matter.
+    if (RESERVED_DECLARED_FIELD_NAMES.has(key.toLowerCase())) continue;
     console.warn(`Formbricks: "${key}" ${INGEST_DROP_MESSAGES[reason]}, so the value was ignored.`);
   }
   for (const { key, reason } of flags) {
@@ -361,6 +368,11 @@ export function Survey({
       incoming: hiddenFieldsRecord ?? {},
       ingestedFields: getIngestedEmbeddedFields(survey),
       elementIds,
+      // This record is what the queue sends, so cutting here would hand the server a value that
+      // already fits — and the server's re-run is what produces the persisted flags, so the
+      // `truncated` verdict would be lost on the only path the feature actually ships on. The flag is
+      // still raised below for the console; the server does the cutting.
+      enforceSizeLimit: false,
     });
     logIngestResult(result);
 
