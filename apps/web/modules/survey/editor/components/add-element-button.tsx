@@ -93,7 +93,11 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
         "group w-full overflow-hidden rounded-lg border border-slate-300 bg-white duration-200 hover:cursor-pointer hover:bg-slate-50"
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
-        <div className="inline-flex">
+        {/* data-testid: the trigger is a `div` (Radix `asChild`), so it exposes no button role for
+            tests to target. Without a stable hook, E2E had to match it by its rendered text through
+            a positional `locator("div").nth(1)`, which re-resolved to a different node on every
+            editor re-render and produced "element detached from the DOM" flakes. */}
+        <div className="inline-flex" data-testid="add-element-trigger">
           <div className="flex w-10 items-center justify-center rounded-l-[7px] bg-brand-dark group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
             <PlusIcon className="size-5 text-white" />
           </div>
