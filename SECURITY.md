@@ -27,6 +27,8 @@ To understand and bolster our security stature, Formbricks undertakes:
 
 Please do not use attacks on physical security, social engineering, distributed denial of service, spam or applications of third parties.
 
+> **Formbricks does not offer bug bounties.** We do not pay for vulnerability reports of any kind. Public credit for your finding is available on request — see [D. Bug Bounties and Credit](#d-bug-bounties-and-credit).
+
 ### **A. When to Report a Vulnerability**
 
 We invite you to report if:
@@ -64,6 +66,18 @@ In the interest of responsibly managing vulnerabilities, please adhere to the fo
 3. **Ongoing Communication**:
    - A project maintainer may engage with you for additional details or clarification.
    - We appreciate your patience as we explore the reported item, verify its authenticity, and ascertain the existence of a vulnerability.
+
+### **D. Bug Bounties and Credit**
+
+Formbricks does not run a bug bounty program, and we want to be upfront about that before you invest your time:
+
+- We do not pay bounties, rewards, gift cards, or goodwill payments for security reports. There are no exceptions, and this is not decided case by case.
+- We have offered both a bounty and one-off payments in the past. The result was a sharp increase in low-quality and automated reports rather than better ones, so we stopped. It is a settled policy rather than a question of budget.
+- Please do not attach an invoice, a payment request, or a payment condition to a report. We will still read and act on the report, but the answer on payment will be no.
+
+What we do offer is **credit**. If you would like to be named, tell us in your report or at any point before the fix ships, and we will mention you in the release notes for the fix.
+
+None of this changes how seriously we treat your report. A well-written vulnerability report is real work, and we are genuinely grateful for it — we simply pay it back in credit and a fast fix rather than in money.
 
 ---
 

@@ -201,7 +201,7 @@ Let's have a chat about your survey needs and get you started.
 
 ## 🔒 Security
 
-We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See [`SECURITY.md`](./SECURITY.md) for more information.
+We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. Please note that we do not offer bug bounties or any other payment for security reports, but we are happy to credit you in the release notes for the fix. See [`SECURITY.md`](./SECURITY.md) for more information.
 
 <a id="license"></a>
 
