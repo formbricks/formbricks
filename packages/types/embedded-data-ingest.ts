@@ -67,6 +67,16 @@ export interface TIngestFlag {
 export type TIngestDropReason = "unknown_key" | "locked_field" | "unsupported_value" | "element_id_collision";
 
 export interface TIngestDrop {
+  /**
+   * The declared `storageKey` whenever a declared field is involved, and the incoming key only for
+   * `unknown_key`, where nothing declares it and the spelling that arrived *is* the whole finding.
+   *
+   * Same convention as {@link TIngestFlag.key} on purpose, so the two lists join by key: a consumer
+   * grouping "what happened to this field" cannot do that if one side reports `Plan` and the other
+   * the `plan` that arrived. It also keeps the identity stable — matching is case-tolerant, so the
+   * incoming spelling varies per request while the declared one does not, and grepping a field's
+   * name has to find every drop against it.
+   */
   key: string;
   reason: TIngestDropReason;
 }
@@ -396,14 +406,17 @@ export const applyIngestContract = ({
     if (matchedKey === undefined) continue;
     consumedKeys.add(matchedKey);
 
+    // Both drops below report `storageKey` rather than the `matchedKey` they came in under, so a
+    // field declared `Plan` and sent as `plan` is greppable by the name the survey declares — see
+    // {@link TIngestDrop.key}.
     if (field.locked) {
-      dropped.push({ key: matchedKey, reason: "locked_field" });
+      dropped.push({ key: storageKey, reason: "locked_field" });
       continue;
     }
 
     const normalized = normalizeIngestedValue(incoming[matchedKey], field.dataType);
     if (normalized === undefined) {
-      dropped.push({ key: matchedKey, reason: "unsupported_value" });
+      dropped.push({ key: storageKey, reason: "unsupported_value" });
       continue;
     }
 

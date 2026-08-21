@@ -348,6 +348,40 @@ describe("applyIngestContract", () => {
       ).toEqual({ plan: "b" });
     });
 
+    test("reports a drop under the declared spelling, not the one that arrived", () => {
+      const result = applyIngestContract({
+        incoming: { plan: "gold", seats: { nested: true } },
+        ingestedFields: [
+          ingestedField({ storageKey: "Plan", locked: true }),
+          ingestedField({ storageKey: "Seats" }),
+        ],
+        elementIds: [],
+      });
+
+      // Grepping either field's declared name has to find its drop, whatever case the caller used.
+      expect(result.data).toEqual({});
+      expect(result.dropped).toEqual([
+        { key: "Plan", reason: "locked_field" },
+        { key: "Seats", reason: "unsupported_value" },
+      ]);
+    });
+
+    test("keys a flag and a drop the same way, so the two lists join by key", () => {
+      const result = applyIngestContract({
+        incoming: { seats: "many", plan: "gold" },
+        ingestedFields: [
+          ingestedField({ storageKey: "Seats", dataType: "number" }),
+          ingestedField({ storageKey: "Plan", locked: true }),
+        ],
+        elementIds: [],
+      });
+
+      expect(result.flags.map(({ key }) => key)).toEqual(["Seats"]);
+      expect(result.dropped.map(({ key }) => key)).toEqual(["Plan"]);
+      // Both name the declared field, so a consumer grouping by key sees one entry per field.
+      expect(Object.keys(result.data)).toEqual(["Seats"]);
+    });
+
     test("one key fills two fields that differ only by case, as the shipped URL reader does", () => {
       const result = applyIngestContract({
         incoming: { PLAN: "gold" },

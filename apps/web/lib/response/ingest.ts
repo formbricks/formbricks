@@ -62,6 +62,32 @@ export const applyIngestContractToResponseData = (
     );
   }
 
+  // Louder than the line above, on purpose. The allow-list is the joined rows and nothing else, so it
+  // fails closed: if a select drops `embeddedDataLinks`, or the legacy `fieldIds` column and the rows
+  // drift apart, then every incoming value becomes an `unknown_key` and ingestion is dead for every
+  // response on this survey. Through the generic line that reads exactly like one typo'd param, which
+  // is why this gets its own message and level.
+  //
+  // Gated on something actually having been dropped, so a survey nobody sends params to stays quiet,
+  // and `embeddedFieldCount` separates the two causes: 0 rows means the join is missing, non-zero
+  // means rows loaded but none of them are `ingested`.
+  const legacyFieldIdCount = survey.hiddenFields?.fieldIds?.length ?? 0;
+  if (
+    legacyFieldIdCount > 0 &&
+    ingestedFields.length === 0 &&
+    result.dropped.some(({ reason }) => reason === "unknown_key")
+  ) {
+    logger.warn(
+      {
+        surveyId: survey.id,
+        legacyFieldIdCount,
+        embeddedFieldCount: survey.embeddedFields?.length ?? 0,
+        dropped: capKeys(result.dropped),
+      },
+      "Embedded Data ingest resolved no ingested fields for a survey that declares hidden fields, so every incoming value was dropped"
+    );
+  }
+
   // The allow-list is the stored rows, and a row carries no `enabled` concept — so `locked` is the
   // per-field control for "stop accepting writes" and the legacy flag is not an ingest gate
   // (ENG-1845, decision 5). Three of the four readers already ignored it, and the state below is

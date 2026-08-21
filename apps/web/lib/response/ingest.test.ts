@@ -28,18 +28,19 @@ const survey = ({
   embeddedFields = [],
   hiddenFieldsEnabled = true,
   elementIds = ["q1"],
+  // Defaults to the rows, which is the consistent state. Set it explicitly to express the drifted
+  // one: legacy ids declared with no rows behind them.
+  fieldIds = embeddedFields.map(({ link }) => link.storageKey),
 }: {
   embeddedFields?: TLinkedEmbeddedField[];
   hiddenFieldsEnabled?: boolean;
   elementIds?: string[];
+  fieldIds?: string[];
 } = {}): TIngestContractSurvey =>
   ({
     id: surveyId,
     blocks: [{ id: "block_1", elements: elementIds.map((id) => ({ id })) }],
-    hiddenFields: {
-      enabled: hiddenFieldsEnabled,
-      fieldIds: embeddedFields.map(({ link }) => link.storageKey),
-    },
+    hiddenFields: { enabled: hiddenFieldsEnabled, fieldIds },
     embeddedFields,
   }) as unknown as TIngestContractSurvey;
 
@@ -85,6 +86,36 @@ describe("applyIngestContractToResponseData", () => {
 
     expect(result.data).toEqual({ q1: "answer" });
     expect(result.dropped).toEqual([{ key: "plan", reason: "unknown_key" }]);
+  });
+
+  test("warns loudly when a survey declares hidden fields but resolved no rows to ingest into", () => {
+    // The fail-closed regression: a select that omitted the join, or a drifted `fieldIds` column.
+    // Through the generic drop line this is indistinguishable from one typo'd param, so it gets its
+    // own level and message.
+    applyIngestContractToResponseData(survey({ fieldIds: ["plan"] }), { q1: "answer", plan: "gold" });
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        surveyId,
+        legacyFieldIdCount: 1,
+        // 0 rows says the join is missing; non-zero would say rows loaded but none are `ingested`.
+        embeddedFieldCount: 0,
+        dropped: { entries: [{ key: "plan", reason: "unknown_key" }], omitted: 0 },
+      }),
+      expect.stringContaining("no ingested fields")
+    );
+  });
+
+  test("does not raise the drift alarm when nothing was dropped, or when rows did resolve", () => {
+    // Same broken survey, but nobody sent a param for it — nothing was lost, so nothing to report.
+    applyIngestContractToResponseData(survey({ fieldIds: ["plan"] }), { q1: "answer" });
+    expect(logger.warn).not.toHaveBeenCalled();
+
+    // A healthy survey drops an unknown key all the time; that must never look like the regression.
+    applyIngestContractToResponseData(survey({ embeddedFields: [ingestedField({ storageKey: "plan" })] }), {
+      rogue: "injected",
+    });
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   test("logs what it dropped or flagged, and stays quiet on a clean payload", () => {
