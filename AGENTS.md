@@ -21,8 +21,8 @@ Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck`
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
 `config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
 to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
-`apps/storybook` has no unit tests by policy (UI is covered by Playwright). Keep new packages on this
-matrix or document the exception here.
+`apps/storybook` has no unit tests by policy (its components are exercised by the feature journeys in
+`apps/web/playwright`). Keep new packages on this matrix or document the exception here.
 
 ### Shared dependency versions (pnpm catalog)
 
@@ -189,33 +189,74 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 Principles:
 
 - Confidence over coverage. Test behavior and outcomes; avoid brittle implementation-detail tests.
+- Prove a behavior at the cheapest level that can fail on it. An E2E test is not a stronger unit test; it
+  has a different subject — the journey, not the logic.
+- **An E2E test is paid on every PR, by everyone, forever.** The Playwright job is the critical path of the
+  PR gate (as of Aug 2026: a ~13 min job, of which ~6 min is the Playwright step itself — the rest is
+  install, build and boot — over ~110 tests and ~30 browser-minutes), and its wall clock can never drop
+  below its slowest single test. Weigh that before adding one — sometimes the right answer is no test
+  at this level.
+
+Which level, concretely:
+
+| The change                                                                      | The level                                     |
+| ------------------------------------------------------------------------------- | --------------------------------------------- |
+| A new feature area, or a journey across several surfaces                        | One happy-path E2E + unit tests for its logic |
+| Business logic, invariants, validation, derivation, permissions — anything pure | Unit test on the `.ts`                        |
+| A route's authorization, response shape, or query scoping                       | Unit or integration test on that route        |
+| A UI detail inside a feature that already has a happy-path spec                 | Neither — verify manually, say so in the PR   |
+
+A journey across several surfaces means something like survey list → editor → public survey → response,
+where the behavior only exists once browser, survey bundle, and server are wired together.
+
+The spec filenames in `apps/web/playwright/` are the inventory of covered areas — check there before
+concluding an area has no spec.
+
+This raises a floor as well as lowering a ceiling. Every feature area ships a happy-path E2E, and an area
+with none is a gap rather than a saving (Dashboards and Workflows are the current examples — ENG-2314). A
+bug fix inside a feature that already has one almost never needs a second spec — the level still follows
+the table above: journey behavior extends that spec, logic goes to a unit test, UI detail to manual QA.
 
 Do:
 
-- E2E tests (Playwright): cover critical user flows and regression risks. Extend existing specs or add
-  focused new ones in `apps/web/playwright`, keep tests small and well-named, use descriptive filenames
-  such as `billing.spec.ts`, tag slow suites with `@slow`, and run the suite before opening a PR.
+- E2E tests (Playwright): one spec per **feature area**, not per ticket and not per component. Default to
+  adding assertions or a `test.step` to that area's existing spec in `apps/web/playwright`; a new
+  `*.spec.ts` is for a feature area that has none, and it takes the area's name (`billing.spec.ts`).
+  Follow the suite's own patterns — seed state through Prisma or `/api/v3` instead of clicking it into
+  existence (`playwright/utils/accessibility.ts`), one journey per test with `test.step` phases
+  (`settings-tags.spec.ts`), assertions at feature level (`survey-overview.spec.ts`) — and run the suite
+  before opening a PR.
 - Unit tests: cover stable, high-value logic in `.ts` files, such as validators, transformers,
   evaluators, calculations, and edge cases. Keep assertions on inputs and outputs, colocate specs with
   the code they exercise (`utility.test.ts`), and mock network and storage boundaries through helpers
   from `@formbricks/*`.
 - Manual QA, especially for releases: verify on staging and file bugs. If a bug is critical, backport and
-  re-test.
+  re-test. For UI detail below the journey level, manual verification plus a screenshot in the PR is the
+  expected answer, not a new spec.
 - Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows.
+- Merging, narrowing, or deleting an E2E spec is legitimate work — record it in the PR's Coverage table
+  like any other change.
 
 Do not:
 
-- Do not write component or UI unit tests for `.tsx` files; React components are covered by Playwright E2E
-  tests instead.
+- Do not write component or UI unit tests for `.tsx` files. **This is not an instruction to write an E2E
+  test instead**: the absence of a component unit test creates no coverage obligation. If a component holds
+  logic worth proving, lift that logic into a `.ts` module and unit-test it there; the rendering is
+  exercised incidentally by the feature journeys that already cross it.
+- Do not E2E a component. A language selector, a breadcrumb, a sidebar's link list, an ARIA attribute on
+  one widget, a keystroke inside one editor, a field's validation message, a search box filtering a list —
+  none of these justify a browser, a login, and a seeded tenant.
+- Do not build a variant matrix. Cover the one case that carries the risk; a second viewport, theme,
+  locale, role, or layout needs its own stated reason, and "the adjacent spec does it" is not one.
+  Accessibility work on the rendered survey extends the existing axe gate
+  (`survey-accessibility.spec.ts`); elsewhere it becomes an assertion in that feature area's own spec.
+  Either way, not a per-ticket a11y spec.
 - Do not add coverage-driven or low-signal tests.
-- Do not write tests that lock implementation details, markup, snapshots, or create churn.
-- Do not create mega or flaky E2E tests; avoid timing hacks and unstable dependencies.
-
-Heuristic:
-
-- User journey risk: E2E.
-- Pure logic or edge cases: unit test.
-- Release readiness: manual QA plus bug/backport loop.
+- Do not write tests that lock implementation details, markup, snapshots, or create churn — an assertion on
+  an exact list of nav labels is churn, not coverage.
+- Do not create mega or flaky E2E tests; avoid timing hacks (`waitForTimeout`, `slowMo`) and unstable
+  dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
+  tagging a spec does not make its cost go away.
 
 ## Documentation (apps/docs)
 
