@@ -318,6 +318,39 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
   // The catch branch is still live: flipping EMAIL_VERIFICATION_DISABLED / autoSignIn makes Better Auth
   // throw USER_ALREADY_EXISTS instead of answering synthetically, so both signals must classify.
+  // Guard: the sign-up form's optional "how did you find out about Formbricks" answer must reach
+  // the analytics event so it can be used for attribution — but never anything else (no DB write).
+  test("forwards discoverySource/discoverySourceDetail into the user_signed_up PostHog event", async () => {
+    await createUserAction({
+      ctx: newCtx(),
+      parsedInput: { ...baseInput, discoverySource: "blog", discoverySourceDetail: "formbricks.com/blog/x" },
+    } as never);
+
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      createdUser.id,
+      "user_signed_up",
+      expect.objectContaining({
+        discovery_source: "blog",
+        discovery_source_detail: "formbricks.com/blog/x",
+      }),
+      undefined
+    );
+  });
+
+  test("reports discoverySource/discoverySourceDetail as null when the user leaves them blank", async () => {
+    await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      createdUser.id,
+      "user_signed_up",
+      expect.objectContaining({
+        discovery_source: null,
+        discovery_source_detail: null,
+      }),
+      undefined
+    );
+  });
+
   test("treats a thrown duplicate as already-existed too", async () => {
     vi.mocked(auth.api.signUpEmail).mockRejectedValue(new Error("user already exists"));
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
