@@ -46,6 +46,13 @@ The known gaps are listed under [Known Limitations](#known-limitations) below. W
 summarising them away, because a procurement team or an individual respondent needs to know what will not work
 before they rely on it, not after.
 
+<Note>
+  Some gaps recorded in the 9 August 2026 report have since been fixed in the codebase and will ship in the
+  next release. Those entries are marked **Fixed, not yet released** below and still read as *Does Not Support*
+  in the report, which predates the fix. If you are assessing a released version, treat the report as
+  authoritative for that version.
+</Note>
+
 ---
 
 ## Accessibility Features
@@ -79,8 +86,10 @@ Everything in this table was assessed as supported in the most recent report.
 
 ## Known Limitations
 
-The following are known not to conform. Each entry states what a respondent will experience and what a survey
-creator can do about it today.
+The following were assessed as not conforming. Each entry states what a respondent experiences and what a
+survey creator can do about it. Entries marked **Fixed, not yet released** have been addressed in the codebase
+since the report was written and will ship in the next release; their workarounds still apply to released
+versions.
 
 ### Embedded Third-Party Video
 
@@ -98,61 +107,69 @@ appears as text.
 
 ### Page Titles and Survey Instructions
 
-**Affected criterion:** 2.4.2
+**Affected criterion:** 2.4.2 — **Fixed, not yet released**
 
-Surveys do not currently carry a form title, and survey instructions are not repeated on every page. A
-respondent using a screen reader may not be given a clear description of the topic or purpose of the page they
-are on.
+As assessed, surveys carried no form title and survey instructions were not repeated after the welcome card, so
+a respondent using a screen reader was not given a clear description of the page they were on.
 
-**Workaround:** Write question headlines that make sense on their own, without depending on a title or on
-instructions given earlier in the survey. A fix is planned for an upcoming release.
+A link survey now sets its document title per step, appending the respondent's position — "Page 3 of 7" — to the
+survey's own title, localized in the survey's language. Where a survey has instructions, they are kept reachable
+on every page instead of disappearing once the respondent advances past the welcome card.
+
+The per-step document title applies to link surveys, which own the page they are shown on. A website or in-app
+survey is embedded in a page belonging to the site that shows it, and does not change that page's title.
+
+**Workaround for released versions:** Write question headlines that make sense on their own, without depending
+on a title or on instructions given earlier in the survey.
 
 ### Current Language Not Identified in the Language Switcher
 
-**Affected criterion:** 3.1.1
+**Affected criterion:** 3.1.1 — **Fixed, not yet released**
 
-Multi-language surveys show a language switcher. The switcher lists the available languages, but does not
-indicate which one is currently active. A respondent cannot tell from the control alone what language the
-survey is being presented in.
+As assessed, the language switcher was an unlabelled globe: it listed the available languages but gave no
+indication of which one was active, so neither a sighted nor a screen-reader respondent could tell what
+language the survey was being presented in.
 
-**Workaround:** None within the survey UI. For link surveys, the `lang` URL parameter can be used to send a
-respondent straight to the correct language, so they do not need to use the switcher. See
-[Multi-language Surveys](/surveys/general-features/multi-language-surveys). A fix is planned for an upcoming
-release.
+The switcher now names the active language, in that language rather than in translation — "Deutsch", not
+"German" — both visibly and in its accessible name. Each option in the list carries its own language tag, so a
+screen reader pronounces every language name using that language's rules.
+
+**Workaround for released versions:** For link surveys, the `lang` URL parameter sends a respondent straight to
+the correct language, so they do not need to use the switcher. See
+[Multi-language Surveys](/surveys/general-features/multi-language-surveys).
 
 ### Semantic Headings
 
-**Affected criterion:** 2.4.6
+**Affected criterion:** 2.4.6 — **Fixed, not yet released**
 
-The survey UI does not currently use semantic heading elements. A respondent using a screen reader cannot
-navigate the survey by heading, and question headlines are not exposed as headings.
+As assessed, the survey UI used no semantic heading elements, so a respondent using a screen reader could not
+navigate the survey by heading and question headlines were not exposed as headings.
 
-**Workaround:** None within the survey UI. Keeping surveys short and putting one question on each screen
-reduces the amount of navigation a respondent has to do. A fix is planned for an upcoming release.
+The survey now has a heading structure: the survey name is its single top-level heading, and card headlines —
+the welcome card, each question prompt, and the ending — are second-level headings beneath it. A respondent can
+navigate the survey by heading and knows what they are answering.
+
+**Workaround for released versions:** Keeping surveys short and putting one question on each screen reduces the
+amount of navigation a respondent has to do.
 
 ### Language of Parts
 
 **Affected criterion:** 3.1.2
 
-Formbricks identifies the survey's language at page level, not per element. A link survey sets the `lang` and
-`dir` attributes on the page's `<html>` element from the survey's active language, and updates them when the
-respondent uses the language switcher, so assistive technology announces the survey in the right language and
-right-to-left languages read in the right direction. No `lang` attribute is set on individual questions,
-descriptions, labels, or choice options.
+Formbricks declares the survey's language, but only for the survey as a whole. The survey's root element
+carries a `lang` attribute set from the active language, and it is updated when the respondent uses the
+language switcher — so an embedded survey shown in a language other than its host page's is still announced
+correctly, without Formbricks altering the page it is embedded in. Link surveys additionally set `lang` and
+`dir` on the page's `<html>` element, so right-to-left languages read in the right direction.
 
-Where a single screen mixes languages — an English question with an untranslated choice option, or a term left
-in its original language — the part in the other language is not programmatically identified, and a screen
-reader may pronounce it using the wrong language rules.
-
-Website and in-app surveys do not get the page-level tag either. The survey renders inside a page the site
-owner controls, whose `lang` describes that page rather than the survey, and Formbricks deliberately leaves it
-alone — changing it would misdescribe the rest of the host page. So whenever an embedded survey is shown in a
-language other than the host page's, including after the respondent uses the language switcher, its content is
-a passage in a different language with no markup saying so.
+What a survey creator cannot do is mark up an individual passage. There is no way to set a language on a single
+question, description, label, or choice option, and the language switcher's own options are the only
+individually tagged text in the survey. So where one screen mixes languages — an English question with an
+untranslated choice option, or a term left in its original language — the part in the other language is not
+programmatically identified, and a screen reader may pronounce it using the wrong language rules.
 
 **Workaround:** Keep every part of a question in one language, and use the multi-language feature to offer the
-whole survey in each language rather than mixing languages inside a single question. For website and in-app
-surveys, serve the survey in the same language as the page it is embedded in wherever possible.
+whole survey in each language rather than mixing languages inside a single question.
 
 ---
 
