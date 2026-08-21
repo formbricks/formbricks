@@ -20,6 +20,7 @@ import {
   getIngestedStorageKeys,
   getLogicVariableValue,
   getSurveyEmbeddedFields,
+  listDisplayableReservedFields,
   listMidSurveyReservedEntries,
   listReadableFields,
   mergeReservedValues,
@@ -112,6 +113,7 @@ const countryEntry: TReservedFieldCatalogEntry = {
   dataType: "string",
   availability: "server",
   privacy: "drop",
+  display: "none",
   read: (r) => r.meta.country,
 };
 const browserEntry: TReservedFieldCatalogEntry = {
@@ -119,6 +121,7 @@ const browserEntry: TReservedFieldCatalogEntry = {
   dataType: "string",
   availability: "server",
   privacy: "drop",
+  display: "none",
   read: (r) => r.meta.userAgent?.browser,
 };
 const totalTimeEntry: TReservedFieldCatalogEntry = {
@@ -126,6 +129,7 @@ const totalTimeEntry: TReservedFieldCatalogEntry = {
   dataType: "number",
   availability: "server",
   privacy: "keep",
+  display: "none",
   read: (r) => r.ttc?._total,
 };
 const languageEntry: TReservedFieldCatalogEntry = {
@@ -133,6 +137,7 @@ const languageEntry: TReservedFieldCatalogEntry = {
   dataType: "string",
   availability: "both",
   privacy: "keep",
+  display: "none",
   read: (r) => r.language,
 };
 const completedEntry: TReservedFieldCatalogEntry = {
@@ -140,6 +145,7 @@ const completedEntry: TReservedFieldCatalogEntry = {
   dataType: "boolean",
   availability: "server",
   privacy: "keep",
+  display: "none",
   read: (r) => r.finished,
 };
 const startedAtEntry: TReservedFieldCatalogEntry = {
@@ -147,6 +153,7 @@ const startedAtEntry: TReservedFieldCatalogEntry = {
   dataType: "date",
   availability: "server",
   privacy: "keep",
+  display: "none",
   read: (r) => r.createdAt,
 };
 const actionEntry: TReservedFieldCatalogEntry = {
@@ -154,6 +161,7 @@ const actionEntry: TReservedFieldCatalogEntry = {
   dataType: "string",
   availability: "client",
   privacy: "keep",
+  display: "none",
   read: (r) => r.meta.action,
 };
 
@@ -248,6 +256,7 @@ describe("resolveEmbeddedValue", () => {
         dataType: "string",
         availability: "client",
         privacy: "redactQuery",
+        display: "none",
         read: (r) => new URL(r.meta.url ?? "").hostname,
       };
       // sparseResponse has no meta.url, so the accessor throws on `new URL("")` — the resolver must
@@ -583,6 +592,7 @@ describe("projectReservedValues", () => {
       dataType: "number",
       availability: "server",
       privacy: "keep",
+      display: "none",
       read: (r) => r.meta.source, // "web" — present, but not a number; projecting it would invent data
     };
     expect(projectReservedValues([miscastEntry], response)).toStrictEqual({});
@@ -594,6 +604,7 @@ describe("projectReservedValues", () => {
       dataType: "string",
       availability: "client",
       privacy: "keep",
+      display: "none",
       read: () => "",
     };
     const zeroTimeEntry: TReservedFieldCatalogEntry = {
@@ -601,6 +612,7 @@ describe("projectReservedValues", () => {
       dataType: "number",
       availability: "server",
       privacy: "keep",
+      display: "none",
       read: () => 0,
     };
 
@@ -620,6 +632,7 @@ describe("projectReservedValues", () => {
       dataType: "string",
       availability: "client",
       privacy: "redactQuery",
+      display: "none",
       read: (r) => new URL(r.meta.url ?? "").hostname,
     };
 
@@ -694,50 +707,120 @@ describe("RESERVED_FIELD_CATALOG", () => {
     return entry;
   };
 
-  test("declares exactly the Tier-1 entries, with their dataType, availability and privacy", () => {
+  test("declares exactly the Tier-1 entries, with their dataType, availability, privacy and display", () => {
     // The catalog is a product decision, so it is pinned as a table rather than probed field by
     // field: adding, removing or reclassifying an entry has to be a deliberate edit here too.
     // `status` is absent on purpose — `Response` has no status column and `finished` already carries
     // the complete/partial distinction.
+    //
+    // `display` (ENG-2540) is in the table for that reason: a new entry cannot reach the response
+    // card and the response table without someone deciding how prominent it is.
     expect(
-      RESERVED_FIELD_CATALOG.map(({ name, dataType, availability, privacy }) => ({
+      RESERVED_FIELD_CATALOG.map(({ name, dataType, availability, privacy, display }) => ({
         name,
         dataType,
         availability,
         privacy,
+        display,
       }))
     ).toStrictEqual([
-      { name: "source", dataType: "string", availability: "client", privacy: "keep" },
-      { name: "url", dataType: "string", availability: "client", privacy: "redactQuery" },
-      { name: "country", dataType: "string", availability: "server", privacy: "drop" },
-      { name: "action", dataType: "string", availability: "client", privacy: "keep" },
-      { name: "browser", dataType: "string", availability: "server", privacy: "drop" },
-      { name: "os", dataType: "string", availability: "server", privacy: "drop" },
-      { name: "deviceType", dataType: "string", availability: "server", privacy: "drop" },
-      { name: "ipAddress", dataType: "string", availability: "server", privacy: "drop" },
-      { name: "finished", dataType: "boolean", availability: "server", privacy: "keep" },
-      { name: "language", dataType: "string", availability: "both", privacy: "keep" },
-      { name: "responseId", dataType: "string", availability: "server", privacy: "keep" },
-      { name: "surveyId", dataType: "string", availability: "server", privacy: "keep" },
-      { name: "durationSeconds", dataType: "number", availability: "server", privacy: "keep" },
-      { name: "startedAt", dataType: "date", availability: "server", privacy: "keep" },
-      { name: "finishedAt", dataType: "date", availability: "server", privacy: "keep" },
+      { name: "source", dataType: "string", availability: "client", privacy: "keep", display: "primary" },
+      { name: "url", dataType: "string", availability: "client", privacy: "redactQuery", display: "primary" },
+      { name: "country", dataType: "string", availability: "server", privacy: "drop", display: "primary" },
+      { name: "action", dataType: "string", availability: "client", privacy: "keep", display: "primary" },
+      { name: "browser", dataType: "string", availability: "server", privacy: "drop", display: "primary" },
+      { name: "os", dataType: "string", availability: "server", privacy: "drop", display: "primary" },
+      { name: "deviceType", dataType: "string", availability: "server", privacy: "drop", display: "primary" },
+      {
+        name: "ipAddress",
+        dataType: "string",
+        availability: "server",
+        privacy: "drop",
+        display: "secondary",
+      },
+      { name: "finished", dataType: "boolean", availability: "server", privacy: "keep", display: "none" },
+      { name: "language", dataType: "string", availability: "both", privacy: "keep", display: "none" },
+      { name: "responseId", dataType: "string", availability: "server", privacy: "keep", display: "none" },
+      { name: "surveyId", dataType: "string", availability: "server", privacy: "keep", display: "none" },
+      {
+        name: "durationSeconds",
+        dataType: "number",
+        availability: "server",
+        privacy: "keep",
+        display: "none",
+      },
+      { name: "startedAt", dataType: "date", availability: "server", privacy: "keep", display: "none" },
+      { name: "finishedAt", dataType: "date", availability: "server", privacy: "keep", display: "none" },
       // Browser-runtime context (ENG-1841). All `client`: the renderer captures them itself, so a
       // mid-survey picker may offer them. `pageReferrer` is `redactQuery` because a URL's query
       // string is where an identifier hides; the rest carry nothing identifying on their own. There
       // is no `pageUrl` - it read the same `location.href` as `url`, so the two were identical.
-      { name: "pagePath", dataType: "string", availability: "client", privacy: "keep" },
-      { name: "pageReferrer", dataType: "string", availability: "client", privacy: "redactQuery" },
-      { name: "utmSource", dataType: "string", availability: "client", privacy: "keep" },
-      { name: "utmMedium", dataType: "string", availability: "client", privacy: "keep" },
-      { name: "utmCampaign", dataType: "string", availability: "client", privacy: "keep" },
-      { name: "utmTerm", dataType: "string", availability: "client", privacy: "keep" },
-      { name: "utmContent", dataType: "string", availability: "client", privacy: "keep" },
-      { name: "screenWidth", dataType: "number", availability: "client", privacy: "keep" },
-      { name: "screenHeight", dataType: "number", availability: "client", privacy: "keep" },
-      { name: "viewportWidth", dataType: "number", availability: "client", privacy: "keep" },
-      { name: "viewportHeight", dataType: "number", availability: "client", privacy: "keep" },
-      { name: "timezone", dataType: "string", availability: "client", privacy: "keep" },
+      { name: "pagePath", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      {
+        name: "pageReferrer",
+        dataType: "string",
+        availability: "client",
+        privacy: "redactQuery",
+        display: "secondary",
+      },
+      {
+        name: "utmSource",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "utmMedium",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "utmCampaign",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      { name: "utmTerm", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      {
+        name: "utmContent",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "screenWidth",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "screenHeight",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "viewportWidth",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "viewportHeight",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      { name: "timezone", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
     ]);
   });
 
@@ -942,6 +1025,7 @@ describe("projectClientReservedValues", () => {
           dataType: "string",
           availability: "server",
           privacy: "keep",
+          display: "none",
           read: serverRead,
         },
         {
@@ -949,9 +1033,17 @@ describe("projectClientReservedValues", () => {
           dataType: "string",
           availability: "client",
           privacy: "keep",
+          display: "none",
           read: clientRead,
         },
-        { name: "either_side", dataType: "string", availability: "both", privacy: "keep", read: bothRead },
+        {
+          name: "either_side",
+          dataType: "string",
+          availability: "both",
+          privacy: "keep",
+          display: "none",
+          read: bothRead,
+        },
       ],
       midSurvey
     );
@@ -1155,6 +1247,7 @@ describe("listReadableFields", () => {
       dataType: "string",
       availability: "server",
       privacy: "keep",
+      display: "none",
       read: () => undefined,
     };
     const fields = listReadableFields({
@@ -1575,6 +1668,136 @@ describe("getComputedFieldDataType", () => {
     // swallowed by `evaluateSingleCondition`'s try/catch into a silent `false`.
     expect(getComputedFieldDataType(fields, "deleted_variable")).toBeUndefined();
     expect(findComputedEmbeddedField(fields, "deleted_variable")).toBeUndefined();
+  });
+});
+
+describe("listDisplayableReservedFields", () => {
+  /** Every Tier-1 location captured, with IP capture on. Local rather than shared, so the display
+   * assertions below cannot be broken by an edit made for a projection test. */
+  const captured: TEmbeddedValueResponse = {
+    id: "clx0000000000000000000r9",
+    surveyId: "clx0000000000000000000s9",
+    createdAt: new Date("2026-08-01T09:00:00.000Z"),
+    updatedAt: new Date("2026-08-01T09:02:30.000Z"),
+    finished: true,
+    language: "de",
+    data: { plan: "premium" },
+    variables: {},
+    ttc: { _total: 90_400 },
+    meta: {
+      source: "link",
+      url: "https://example.com/pricing?utm_source=news&email=a@b.co",
+      userAgent: { browser: "Chrome", os: "macOS", device: "desktop" },
+      country: "DE",
+      action: "Clicked Upgrade",
+      ipAddress: "203.0.113.7",
+      pagePath: "/pricing",
+      pageReferrer: "https://news.example.org/weekly?issue=42",
+      utmSource: "news",
+      utmMedium: "email",
+      utmCampaign: "august-launch",
+      utmTerm: "pricing",
+      utmContent: "hero-cta",
+      screenWidth: 2560,
+      screenHeight: 1440,
+      viewportWidth: 1280,
+      viewportHeight: 800,
+      timezone: "Europe/Berlin",
+    },
+  };
+
+  const names = (display: "primary" | "secondary" | "none", response = captured): string[] =>
+    listDisplayableReservedFields(RESERVED_FIELD_CATALOG, response, display).map(({ entry }) => entry.name);
+
+  test("primary is exactly the seven both surfaces already showed", () => {
+    // Pinned as a literal list, unlike the availability-derived assertions elsewhere: this set is a
+    // product decision about what an existing response card and table look like, so a catalog entry
+    // that silently joined it would be a visible regression rather than a new feature.
+    expect(names("primary")).toStrictEqual([
+      "source",
+      "url",
+      "country",
+      "action",
+      "browser",
+      "os",
+      "deviceType",
+    ]);
+  });
+
+  test("secondary carries ENG-1841's browser-runtime context, plus ipAddress", () => {
+    expect(names("secondary")).toStrictEqual([
+      "ipAddress",
+      "pagePath",
+      "pageReferrer",
+      "utmSource",
+      "utmMedium",
+      "utmCampaign",
+      "utmTerm",
+      "utmContent",
+      "screenWidth",
+      "screenHeight",
+      "viewportWidth",
+      "viewportHeight",
+      "timezone",
+    ]);
+  });
+
+  test("the three groups partition the catalog — no entry is listed twice or not at all", () => {
+    expect([...names("primary"), ...names("secondary"), ...names("none")].sort()).toStrictEqual(
+      RESERVED_FIELD_CATALOG.map((entry) => entry.name).sort()
+    );
+  });
+
+  test("a response that carries nothing yields nothing — no empty rows, no placeholders", () => {
+    // The pre-ENG-1841 case, and the acceptance criterion: such a response must render exactly as it
+    // did before. Values are omitted, not blanked, so the surfaces need no rule of their own.
+    const sparse = { ...captured, meta: {} };
+
+    expect(names("secondary", sparse)).toStrictEqual([]);
+    // The primary group survives on whatever is not in `meta`: nothing here, since all seven read it.
+    expect(names("primary", sparse)).toStrictEqual([]);
+  });
+
+  test("with the drop fields anonymized away, they are absent rather than blank", () => {
+    // `anonymize.ts` removes the keys at ingest, so this needs no read-time policy of its own —
+    // duplicating that decision is how the two would drift.
+    const anonymized = {
+      ...captured,
+      meta: { source: "link", url: "https://example.com/pricing", pagePath: "/pricing" },
+    };
+
+    expect(names("primary", anonymized)).toStrictEqual(["source", "url"]);
+    expect(names("secondary", anonymized)).toStrictEqual(["pagePath"]);
+  });
+
+  test("values are rendered strings, and inherit the projection's redaction", () => {
+    const fields = listDisplayableReservedFields(RESERVED_FIELD_CATALOG, captured, "primary");
+
+    // `url` is `privacy: "redactQuery"`, so a display surface shows origin + path — the same value
+    // recall gets, from the same projection, rather than a second reading of `meta.url`.
+    expect(fields.find(({ entry }) => entry.name === "url")?.value).toBe("https://example.com/pricing");
+    for (const { value } of fields) {
+      expect(typeof value).toBe("string");
+    }
+  });
+
+  test("numbers and booleans arrive as strings a surface can render directly", () => {
+    const secondary = listDisplayableReservedFields(RESERVED_FIELD_CATALOG, captured, "secondary");
+
+    expect(secondary.find(({ entry }) => entry.name === "viewportWidth")?.value).toBe("1280");
+  });
+
+  test("it does NOT drop an entry the survey declares — a display surface shows both", () => {
+    // Unlike the value maps (ENG-2538), which must pick one meaning for a name. Here the author needs
+    // to see their own field in its own section AND what was auto-captured, so this takes no survey.
+    expect(names("primary")).toContain("country");
+  });
+
+  test("order follows the catalog, not the response", () => {
+    // So a surface rendering these gets a stable order across responses without sorting.
+    expect(names("primary")).toStrictEqual(
+      RESERVED_FIELD_CATALOG.filter((entry) => entry.display === "primary").map((entry) => entry.name)
+    );
   });
 });
 
