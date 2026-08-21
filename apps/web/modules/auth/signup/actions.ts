@@ -29,7 +29,11 @@ import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { ATTRIBUTION_COOKIE_NAME, getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
-import { DISCOVERY_SOURCES, MAX_DISCOVERY_SOURCE_DETAIL_LENGTH } from "@/modules/auth/lib/discovery-source";
+import {
+  DISCOVERY_SOURCES,
+  MAX_DISCOVERY_SOURCE_DETAIL_LENGTH,
+  normalizeDiscoverySourceDetail,
+} from "@/modules/auth/lib/discovery-source";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import { isUninvitedSignupAllowed } from "@/modules/auth/lib/signup-policy";
 import {
@@ -64,24 +68,29 @@ const ZCreatedUser = ZUser.pick({
 
 type TCreatedUser = z.infer<typeof ZCreatedUser>;
 
-const ZCreateUserAction = z.object({
-  name: ZUserName,
-  email: ZUserEmail,
-  password: ZUserPassword,
-  inviteToken: z.string().optional(),
-  userLocale: ZUserLocale.optional(),
-  turnstileToken: z
-    .string()
-    .optional()
-    .refine(
-      (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
-      "CAPTCHA verification required"
-    ),
-  subscribeToSecurityUpdates: z.boolean().optional(),
-  subscribeToProductUpdates: z.boolean().optional(),
-  discoverySource: z.enum(DISCOVERY_SOURCES).optional(),
-  discoverySourceDetail: z.string().max(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH).optional(),
-});
+const ZCreateUserAction = z
+  .object({
+    name: ZUserName,
+    email: ZUserEmail,
+    password: ZUserPassword,
+    inviteToken: z.string().optional(),
+    userLocale: ZUserLocale.optional(),
+    turnstileToken: z
+      .string()
+      .optional()
+      .refine(
+        (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
+        "CAPTCHA verification required"
+      ),
+    subscribeToSecurityUpdates: z.boolean().optional(),
+    subscribeToProductUpdates: z.boolean().optional(),
+    discoverySource: z.enum(DISCOVERY_SOURCES).optional(),
+    discoverySourceDetail: z.string().max(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH).optional(),
+  })
+  .transform((data) => ({
+    ...data,
+    discoverySourceDetail: normalizeDiscoverySourceDetail(data.discoverySource, data.discoverySourceDetail),
+  }));
 
 async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): Promise<void> {
   if (!IS_TURNSTILE_CONFIGURED) return;

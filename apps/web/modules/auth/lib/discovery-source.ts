@@ -25,3 +25,19 @@ export const DISCOVERY_SOURCES_WITH_FOLLOWUP: ReadonlySet<TDiscoverySource> = ne
 ]);
 
 export const MAX_DISCOVERY_SOURCE_DETAIL_LENGTH = 256;
+
+/**
+ * Trims the free-text follow-up and drops it unless it belongs to a source that actually takes one.
+ * `createUserAction` is unauthenticated, so a direct POST can send a detail with no `discoverySource`
+ * (or one that doesn't take a follow-up, e.g. "referral") — the sign-up form's own clearing logic
+ * doesn't run server-side, so this is the boundary that keeps an orphaned/whitespace-only detail out
+ * of the PostHog event.
+ */
+export const normalizeDiscoverySourceDetail = (
+  discoverySource: TDiscoverySource | undefined,
+  discoverySourceDetail: string | undefined
+): string | undefined => {
+  if (!discoverySource || !DISCOVERY_SOURCES_WITH_FOLLOWUP.has(discoverySource)) return undefined;
+  const trimmed = discoverySourceDetail?.trim();
+  return trimmed || undefined;
+};

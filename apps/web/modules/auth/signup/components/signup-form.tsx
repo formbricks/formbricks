@@ -55,6 +55,32 @@ const ZSignupInput = z.object({
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
 
+// discoverySource is only ever "blog" | "llm" | "other" here — DISCOVERY_SOURCES_WITH_FOLLOWUP is what
+// gates whether the follow-up field renders at all. Each `t()` call is kept literal (not built from a
+// key variable) so the i18n key scanner can still find it.
+const getDiscoverySourceFollowupCopy = (
+  t: (key: string) => string,
+  discoverySource: TDiscoverySource | undefined
+): { label: string; placeholder: string } => {
+  switch (discoverySource) {
+    case "blog":
+      return {
+        label: t("auth.signup.discovery_source_blog_followup_label"),
+        placeholder: t("auth.signup.discovery_source_blog_followup_placeholder"),
+      };
+    case "llm":
+      return {
+        label: t("auth.signup.discovery_source_llm_followup_label"),
+        placeholder: t("auth.signup.discovery_source_llm_followup_placeholder"),
+      };
+    default:
+      return {
+        label: t("auth.signup.discovery_source_other_followup_label"),
+        placeholder: t("auth.signup.discovery_source_other_followup_placeholder"),
+      };
+  }
+};
+
 interface SignupFormProps {
   webAppUrl: string;
   privacyUrl: string | undefined;
@@ -148,6 +174,7 @@ export const SignupForm = ({
   const showDiscoverySourceFollowup = discoverySource
     ? DISCOVERY_SOURCES_WITH_FOLLOWUP.has(discoverySource)
     : false;
+  const discoverySourceFollowupCopy = getDiscoverySourceFollowupCopy(t, discoverySource);
 
   /**
    * Map a failed `createUserAction` to where the user should see it: the two field-level rejections go
@@ -335,9 +362,11 @@ export const SignupForm = ({
                             </label>
                             <Select
                               value={field.value}
-                              onValueChange={(value: TDiscoverySource) => {
-                                field.onChange(value);
-                                if (!DISCOVERY_SOURCES_WITH_FOLLOWUP.has(value)) {
+                              onValueChange={(value: string) => {
+                                if (!DISCOVERY_SOURCES.includes(value as TDiscoverySource)) return;
+                                const discoverySourceValue = value as TDiscoverySource;
+                                field.onChange(discoverySourceValue);
+                                if (!DISCOVERY_SOURCES_WITH_FOLLOWUP.has(discoverySourceValue)) {
                                   form.setValue("discoverySourceDetail", "");
                                 }
                               }}>
@@ -389,11 +418,7 @@ export const SignupForm = ({
                               <label
                                 htmlFor="discovery-source-detail"
                                 className="mb-1.5 block text-xs font-medium text-slate-500">
-                                {discoverySource === "blog"
-                                  ? t("auth.signup.discovery_source_blog_followup_label")
-                                  : discoverySource === "llm"
-                                    ? t("auth.signup.discovery_source_llm_followup_label")
-                                    : t("auth.signup.discovery_source_other_followup_label")}
+                                {discoverySourceFollowupCopy.label}
                               </label>
                               <Input
                                 id="discovery-source-detail"
@@ -401,13 +426,7 @@ export const SignupForm = ({
                                 value={field.value}
                                 name="discoverySourceDetail"
                                 onChange={(e) => field.onChange(e.target.value)}
-                                placeholder={
-                                  discoverySource === "blog"
-                                    ? t("auth.signup.discovery_source_blog_followup_placeholder")
-                                    : discoverySource === "llm"
-                                      ? t("auth.signup.discovery_source_llm_followup_placeholder")
-                                      : t("auth.signup.discovery_source_other_followup_placeholder")
-                                }
+                                placeholder={discoverySourceFollowupCopy.placeholder}
                                 className="bg-white"
                               />
                             </div>
