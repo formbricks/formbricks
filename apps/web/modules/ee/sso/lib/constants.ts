@@ -2,20 +2,53 @@ export const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
 export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
 
 /**
- * The synthetic `Account.issuer` for our generic-OAuth providers (ENG-2343).
+ * The synthetic `Account.issuer` for the providers we configure ourselves (ENG-2343).
  *
- * Lives here, in a dependency-free module, because THREE places must produce byte-identical values and
- * a literal repeated three times is a silent-divergence bug waiting to happen:
+ * This is the value we PIN via `accountIssuer` on the generic-OAuth providers in
+ * `better-auth-providers.ts` (azuread / openid / saml). Because it is pinned, Better Auth stores and
+ * looks up exactly what we hand it, so upstream's own format never enters the picture — which is why
+ * this is deliberately NOT `createOAuthAccountIssuer` from `@better-auth/core/db` even though the two
+ * are currently identical. Tracking upstream here would drift us away from rows already written, and
+ * the SQL backfill could not follow.
  *
- * 1. `better-auth-providers.ts` — `accountIssuer`, what Better Auth writes and looks up.
- * 2. `account-linking.ts` — the rows SSO recovery writes itself.
- * 3. `migration/20260812110000_…` — the backfill, as a SQL literal (`'local:oauth:' || "provider"`),
- *    which cannot call TypeScript and is therefore the copy this one has to match.
- *
- * Deliberately NOT `createOAuthAccountIssuer` from `@better-auth/core/db`, even though it is public and
- * currently identical: because `accountIssuer` is set explicitly, Better Auth stores and looks up
- * whatever we hand it, so upstream's format never enters the picture — while the SQL literal in (3)
- * cannot follow an upstream change. Tracking upstream would drift us away from rows already written.
+ * It is NOT the answer to "what issuer does an existing row for provider X have" — a built-in social
+ * provider can declare its own. Use `canonicalAccountIssuer` for that (ENG-2555).
  */
 export const ssoAccountIssuer = (providerId: string): string =>
   `local:oauth:${encodeURIComponent(providerId)}`;
+
+/**
+ * The canonical `Account.issuer` for a given `Account.provider` — the value Better Auth 1.7 actually
+ * keys the row on, and therefore the only value a write may use (ENG-2555).
+ *
+ * 1.7 keys accounts on `(issuer, accountId)` and filters every lookup on it, so a row written with the
+ * wrong issuer is invisible to sign-in. Google is the trap: it is a BUILT-IN social provider that
+ * declares its own `accountIssuer` upstream, so the synthetic `local:oauth:` form is wrong for it.
+ * Writing `local:oauth:google` is what broke Google sign-in on 5.4-rc — the link was created, the user
+ * got a session, and every subsequent sign-in bounced back through verify-before-link forever.
+ *
+ * This mirrors, byte for byte, the `CASE` in `migration/20260812110000_…/migration.sql` — which got
+ * google right, and whose comment already warned that "getting google wrong would leave every existing
+ * Google user unmatched at sign-in". Four sites must agree and cannot import each other:
+ *
+ * 1. Better Auth itself — `provider.accountIssuer`, else `createOAuthAccountIssuer(provider.id)`.
+ * 2. `account-linking.ts` — the rows SSO recovery writes.
+ * 3. `migration/20260812110000_…` — the backfill, as a SQL literal.
+ * 4. `migration/20260821…_repair_account_issuer` — the repair for rows (2) got wrong.
+ *
+ * `constants.test.ts` pins this function against BOTH the SQL literal and upstream's own exports, so a
+ * future Better Auth release that changes google's issuer — or gives github one — fails `pnpm test`
+ * rather than production sign-in.
+ *
+ * Keyed on `Account.provider`, NOT `IdentityProvider`: the credential row's provider is `"credential"`,
+ * a value that enum does not contain.
+ */
+export const canonicalAccountIssuer = (provider: string): string => {
+  // Better Auth's own `createLocalAccountIssuer("credential")`. Unreachable from the SSO recovery
+  // caller (its provider is an `IdentityProvider`, which has no `credential` member) but kept so this
+  // stays a faithful mirror of the SQL, and so a future non-SSO caller cannot get it wrong.
+  if (provider === "credential") return "local:credential";
+  // Declared upstream in `@better-auth/core/dist/social-providers/google.mjs`.
+  if (provider === "google") return "https://accounts.google.com";
+  return ssoAccountIssuer(provider);
+};
