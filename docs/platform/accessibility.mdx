@@ -171,11 +171,19 @@ amount of navigation a respondent has to do.
 
 **Affected criterion:** 3.1.2
 
-Formbricks declares the survey's language, but only for the survey as a whole. The survey's root element
-carries a `lang` attribute set from the active language, and it is updated when the respondent uses the
-language switcher — so an embedded survey shown in a language other than its host page's is still announced
-correctly, without Formbricks altering the page it is embedded in. Link surveys additionally set `lang` and
-`dir` on the page's `<html>` element, so right-to-left languages read in the right direction.
+Formbricks declares the survey's language for the survey as a whole, and only when the survey has languages
+configured. Where a survey uses the multi-language feature, its root element carries a `lang` attribute
+resolved from the active language, updated when the respondent uses the language switcher — so an embedded
+survey shown in a language other than its host page's is still announced correctly, without Formbricks
+altering the page it is embedded in. Link surveys additionally set `lang` and `dir` on the page's `<html>`
+element, so right-to-left languages read in the right direction.
+
+A survey that does not use the multi-language feature has no configured language for Formbricks to resolve
+from, so it declares no language of its own. It inherits whatever the surrounding page declares — the
+respondent's app locale for a link survey, or the host site's `lang` for an embedded one. A survey written in
+one language and opened where the page declares another is then announced using the wrong pronunciation rules.
+The workaround is to enable the multi-language feature and set the survey's language explicitly, even for a
+survey that only ever needs one.
 
 What a survey creator cannot do is mark up an individual passage. There is no way to set a language on a single
 question, description, label, or choice option, and the language switcher's own options are the only
