@@ -30,7 +30,7 @@
   "devDependencies": {
     "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@types/js-yaml": "4.0.9",
+    "@types/js-yaml": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "js-yaml": "catalog:",
     "publint": "0.3.21",

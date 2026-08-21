@@ -54,6 +54,9 @@ catalogs:
     '@trivago/prettier-plugin-sort-imports':
       specifier: 6.0.2
       version: 6.0.2
+    '@types/js-yaml':
+      specifier: 4.0.9
+      version: 4.0.9
     '@types/node':
       specifier: 25.4.0
       version: 25.4.0
@@ -870,9 +873,15 @@ importers:
 
   docker:
     devDependencies:
+      '@types/js-yaml':
+        specifier: 'catalog:'
+        version: 4.0.9
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 4.1.6(vitest@4.1.6)
+      js-yaml:
+        specifier: 'catalog:'
+        version: 4.3.1
       vite:
         specifier: 'catalog:'
         version: 7.3.5(@types/node@25.4.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0)
@@ -1603,7 +1612,7 @@ importers:
         specifier: workspace:*
         version: link:../config-typescript
       '@types/js-yaml':
-        specifier: 4.0.9
+        specifier: 'catalog:'
         version: 4.0.9
       '@vitest/coverage-v8':
         specifier: 'catalog:'

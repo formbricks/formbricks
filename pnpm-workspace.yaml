@@ -72,6 +72,7 @@ catalog:
   typescript-eslint: 8.63.0
   eslint-plugin-react-hooks: 7.1.1
   # --- types ---
+  "@types/js-yaml": 4.0.9
   "@types/node": 25.4.0
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3

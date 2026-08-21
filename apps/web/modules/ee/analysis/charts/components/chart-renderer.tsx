@@ -4,6 +4,7 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { cn } from "@/lib/cn";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import {
@@ -46,6 +47,9 @@ interface PieLabelProps {
 // Tiny slices hide both label and leader line so adjacent labels don't overlap
 // and `minAngle`-stretched slices don't end up with lines pointing at nothing.
 const PIE_LABEL_MIN_PERCENT = 0.02;
+
+/** Shown instead of a number when a measure had nothing to compute (an en dash, not a zero). */
+const NO_DATA_PLACEHOLDER = "\u2013";
 
 const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) => {
   if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
@@ -501,15 +505,27 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
         />
       );
     case "big_number": {
-      const total =
-        data.length === 1
-          ? Number(data[0]?.[dataKey]) || 0
-          : data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
-      const formatted = total.toLocaleString();
+      // A measure with nothing to compute comes back as NULL (see restoreNullMeasures in
+      // cube-client, which maps the pivot's sentinel back to null). Summing it as 0 would print a
+      // confident "0" for "never asked", so count the numeric rows and fall back to a no-data glyph.
+      const numericValues = data
+        .map((row) => row[dataKey])
+        .filter((value) => value !== null && value !== undefined && value !== "")
+        .map(Number)
+        .filter((value) => Number.isFinite(value));
+      const hasValue = numericValues.length > 0;
+      const total = numericValues.reduce((sum, value) => sum + value, 0);
+      // formatCellValue caps at two fraction digits, so a big number and a bar label now agree on
+      // precision instead of showing 4.705 next to 4.7.
+      const formatted = hasValue ? formatCellValue(total) : NO_DATA_PLACEHOLDER;
       return (
         <div className="flex h-full items-center justify-center p-4">
           <div className="text-center">
-            <div className="text-foreground text-5xl font-semibold tracking-tight tabular-nums">
+            <div
+              className={cn(
+                "text-5xl font-semibold tracking-tight tabular-nums",
+                hasValue ? "text-foreground" : "text-muted-foreground"
+              )}>
               {formatted}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>

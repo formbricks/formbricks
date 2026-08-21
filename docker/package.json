@@ -6,7 +6,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@types/js-yaml": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "js-yaml": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
   }
