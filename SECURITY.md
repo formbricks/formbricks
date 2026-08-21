@@ -84,6 +84,6 @@ None of this changes how seriously we treat your report. A well-written vulnerab
 ### Please Read the below carefully
 
 If you have followed the instructions above, we will **not** take any legal action against you in regard to the report,
-We will handle your report with strict confidentiality, and not pass on your personal details to third parties without your permission, We will keep you informed of the progress towards resolving the problem, In the public information concerning the problem reported, we will give your name as the discoverer of the problem (unless you desire otherwise).
+We will handle your report with strict confidentiality, and not pass on your personal details to third parties without your permission, We will keep you informed of the progress towards resolving the problem, In the public information concerning the problem reported, we will name you as the discoverer of the problem if you have asked to be credited, and stay silent about your identity if you have not.
 
 We, at Formbricks, wish to express our gratitude towards all individuals who assist us in fortifying our security posture. Your responsible disclosure and cooperation enable us to elevate our security protocols, safeguarding our platform and data therein.
