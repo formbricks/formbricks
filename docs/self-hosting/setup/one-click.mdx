@@ -23,9 +23,11 @@ If you’re looking to quickly set up a production instance of Formbricks on an 
 </Warning>
 
 <Note>
-  When bundled RustFS is enabled, the installer stores the generated RustFS credentials in `./formbricks/.env`
-  and restricts the file to `0600`. Keep that file private, include it in your server backup plan, and avoid
-  checking it into source control or copying it to shared locations.
+  The installer stores generated PostgreSQL, Hub, and Cube credentials in `./formbricks/.env` and restricts the
+  file to `0600`. PostgreSQL has a raw password for the database plus a URL-encoded companion for connection
+  strings. When bundled RustFS is enabled, its generated credentials are stored there too. Keep that file private,
+  include it in your server backup plan, and avoid checking it into source control or copying it to shared
+  locations.
 </Note>
 
 <Note>
@@ -326,6 +328,9 @@ To update Formbricks for a minor or patch release, run:
 ```
 
 The script pulls the latest images, stops the running containers, and starts the stack again.
+
+Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
+The update command does not regenerate or rotate them.
 
 <Warning>
   `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major

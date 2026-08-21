@@ -196,6 +196,7 @@ jobs:
           printf '%s\n' \
             'WEBAPP_URL=http://localhost:3000' \
             'NEXTAUTH_URL=http://localhost:3000' \
+            'POSTGRES_PASSWORD=compose-postgres-placeholder' \
             "ENCRYPTION_KEY=$DUMMY_ENCRYPTION_KEY" \
             "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \
             'HUB_API_KEY=build-time-placeholder' \
