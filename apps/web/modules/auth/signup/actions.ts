@@ -31,7 +31,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp";
 import {
   DISCOVERY_SOURCES,
-  MAX_DISCOVERY_SOURCE_DETAIL_LENGTH,
+  ZDiscoverySourceDetail,
   normalizeDiscoverySourceDetail,
 } from "@/modules/auth/lib/discovery-source";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
@@ -85,7 +85,7 @@ const ZCreateUserAction = z
     subscribeToSecurityUpdates: z.boolean().optional(),
     subscribeToProductUpdates: z.boolean().optional(),
     discoverySource: z.enum(DISCOVERY_SOURCES).optional(),
-    discoverySourceDetail: z.string().max(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH).optional(),
+    discoverySourceDetail: ZDiscoverySourceDetail,
   })
   .transform((data) => ({
     ...data,

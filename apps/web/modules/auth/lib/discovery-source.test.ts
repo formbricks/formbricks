@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { normalizeDiscoverySourceDetail } from "./discovery-source";
+import {
+  MAX_DISCOVERY_SOURCE_DETAIL_LENGTH,
+  ZDiscoverySourceDetail,
+  normalizeDiscoverySourceDetail,
+} from "./discovery-source";
 
 describe("normalizeDiscoverySourceDetail", () => {
   test("keeps a trimmed detail for a source that takes a follow-up", () => {
@@ -20,5 +24,27 @@ describe("normalizeDiscoverySourceDetail", () => {
 
   test("returns undefined when no detail was provided", () => {
     expect(normalizeDiscoverySourceDetail("blog", undefined)).toBeUndefined();
+  });
+});
+
+describe("ZDiscoverySourceDetail", () => {
+  // Regression: the max-length check must run on the TRIMMED value, or whitespace padding could push
+  // otherwise-valid content over the limit and reject it before normalizeDiscoverySourceDetail ever
+  // gets a chance to trim it.
+  test("trims before enforcing the max length, so padding within the limit is accepted", () => {
+    const content = "a".repeat(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH);
+    const padded = `  ${content}  `;
+
+    expect(ZDiscoverySourceDetail.parse(padded)).toBe(content);
+  });
+
+  test("rejects content that still exceeds the limit after trimming", () => {
+    const tooLong = "a".repeat(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH + 1);
+
+    expect(() => ZDiscoverySourceDetail.parse(tooLong)).toThrow();
+  });
+
+  test("parses undefined as undefined", () => {
+    expect(ZDiscoverySourceDetail.parse(undefined)).toBeUndefined();
   });
 });

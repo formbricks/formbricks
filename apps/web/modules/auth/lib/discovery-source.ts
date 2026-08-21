@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * "How did you find out about Formbricks?" — a self-reported signal captured on sign-up,
  * complementing the URL/cookie-based attribution in `attribution.ts`. Entirely optional.
@@ -25,6 +27,10 @@ export const DISCOVERY_SOURCES_WITH_FOLLOWUP: ReadonlySet<TDiscoverySource> = ne
 ]);
 
 export const MAX_DISCOVERY_SOURCE_DETAIL_LENGTH = 256;
+
+// Trim before enforcing the max length, so whitespace padding can't push otherwise-valid content over
+// the limit. Shared between the client (ZSignupInput) and server (ZCreateUserAction) schemas.
+export const ZDiscoverySourceDetail = z.string().trim().max(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH).optional();
 
 /**
  * Trims the free-text follow-up and drops it unless it belongs to a source that actually takes one.

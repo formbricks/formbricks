@@ -20,8 +20,8 @@ import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import {
   DISCOVERY_SOURCES,
   DISCOVERY_SOURCES_WITH_FOLLOWUP,
-  MAX_DISCOVERY_SOURCE_DETAIL_LENGTH,
   type TDiscoverySource,
+  ZDiscoverySourceDetail,
 } from "@/modules/auth/lib/discovery-source";
 import {
   buildSignupWithoutVerificationSuccessPath,
@@ -50,7 +50,7 @@ const ZSignupInput = z.object({
   email: z.email(),
   password: ZUserPassword,
   discoverySource: z.enum(DISCOVERY_SOURCES).optional(),
-  discoverySourceDetail: z.string().max(MAX_DISCOVERY_SOURCE_DETAIL_LENGTH).optional(),
+  discoverySourceDetail: ZDiscoverySourceDetail,
 });
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
