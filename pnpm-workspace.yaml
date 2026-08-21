@@ -242,29 +242,3 @@ minimumReleaseAgeExclude:
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
   - "@formbricks/hub"
-  # === TEMPORARY (ENG-2349) — DELETE ON OR AFTER 2026-08-21 ===
-  # The Better Auth trio is pinned to 1.7.0 **stable** (published 2026-08-18T00:07Z). The advisory is
-  # closed, so the reason this block existed — no patched version the cooldown would ever let through —
-  # is gone. What keeps it here is only arithmetic: `minimumReleaseAge` above is 72h, and with
-  # `trustLockfile: false` pnpm re-checks lockfile entries on every install, so until 1.7.0 is three days
-  # old (2026-08-21T00:07Z) `pnpm install` refuses it and CI cannot build.
-  # NINE packages, not three. The three we pin move in lockstep (the plugin declares the other two as
-  # matching peers), but `better-auth` hard-depends on all five storage adapters plus telemetry at the
-  # exact same version, published in the same minute — so the install fails on those too until they are
-  # listed. Worth seeing plainly: the cooldown is lifted for the whole Better Auth surface.
-  # Note the scope, because it is wider than the reason: these entries match by NAME, not by version
-  # (a version-pinned scoped entry is not reliably matched — see the @formbricks/hub note above). So
-  # until ENG-2349 lands this exempts ANY later Better Auth release too — 1.7.1, 1.8.0 — not just the
-  # 1.7.0 that needs it. A bump landing in that window would bypass the cooldown silently, and nothing
-  # in CI would say so. That is the cost of leaving this in past the date below.
-  # On or after 2026-08-21: delete every better-auth entry below (keep @formbricks/hub) and re-run
-  # `pnpm install` to confirm the cooldown accepts 1.7.0 on its own. That is the whole of ENG-2349.
-  - "better-auth"
-  - "@better-auth/core"
-  - "@better-auth/oauth-provider"
-  - "@better-auth/prisma-adapter"
-  - "@better-auth/drizzle-adapter"
-  - "@better-auth/kysely-adapter"
-  - "@better-auth/memory-adapter"
-  - "@better-auth/mongo-adapter"
-  - "@better-auth/telemetry"
