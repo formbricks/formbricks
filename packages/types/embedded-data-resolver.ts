@@ -809,18 +809,27 @@ export const projectClientReservedValues = (
   );
 
 /**
- * **The grandfather rule, as one expression.** Reserved values go in FIRST so `responseData` spreads
- * over them and wins on every colliding key.
+ * **The grandfather rule, second half.** Reserved values go in FIRST so `responseData` spreads over
+ * them and wins on every colliding key.
  *
  * `FORBIDDEN_IDS` never guarded the reserved names, so surveys stored today legitimately declare a
  * hidden field called `country` or `url`. Its value lives at `response.data["country"]`, and
  * `#recall:country#` in such a survey must keep resolving from there — unchanged, forever.
  * `RESERVED_FIELD_NAMES` (reserved-field-names.ts) stops only *new* declarations, so the collision
- * set is frozen but non-empty, and this ordering is what keeps those surveys working.
+ * set is frozen but non-empty.
  *
- * Flipping the two spreads is the whole regression: reserved metadata would start overwriting
- * answers respondents actually gave. It lives here, called from every consumer, rather than being
- * open-coded per surface, so there is exactly one line to audit and one line to test.
+ * **This is no longer the whole rule, and on its own it was never enough (ENG-2538).** A spread only
+ * wins for keys that *exist*: an absent declared field overwrites nothing, so the reserved value
+ * survived and a survey declaring an optional `url` rendered the page's own address wherever the
+ * respondent left it blank — respondent-facing, and the normal case for a hidden field. The rule is
+ * "declared **owns the name**", not "declared wins if it has a value", so the reserved entry must be
+ * dropped from the projection before it ever reaches this merge: see
+ * {@link dropShadowedReservedEntries}, which every caller applies first.
+ *
+ * What this expression still carries is the case a filter cannot see from the survey definition
+ * alone — a key present in `responseData` that the declared-name list did not predict — and the
+ * falsy-value guarantee: `""` and `0` are answers, so a `??`-style merge would get them wrong.
+ * Flipping the two spreads remains a regression, which is why it stays one line with one test.
  */
 export const mergeReservedValues = (
   reservedValues: Record<string, string | number>,
@@ -828,29 +837,84 @@ export const mergeReservedValues = (
 ): TResponseData => ({ ...reservedValues, ...responseData });
 
 /**
- * Which reserved entries a **mid-survey** picker may offer for one survey (ENG-1840). Both filters
- * exist for a reason a reviewer should be able to check separately:
+ * **The grandfather rule, first half: a declared name owns itself.** Drops every catalog entry whose
+ * name the survey already declares, so the reserved read of that name never happens for that survey
+ * — not in a picker, and not in a value map.
+ *
+ * This used to live inside {@link listMidSurveyReservedEntries}, which meant only the *pickers*
+ * applied it. The value maps relied on {@link mergeReservedValues}'s spread instead, and a spread
+ * only loses to a key that exists — so a declared field with no value let the reserved value through
+ * to recall, logic, quotas and every display surface (ENG-2538). Pulling the filter out is what lets
+ * both kinds of consumer share one definition of "shadowed".
+ *
+ * `declaredStorageKeys` must count **all three** declaration kinds — ingested fields, variables and
+ * element ids — because all three land in the same read namespace and any of them resolves ahead of
+ * a reserved entry. Element ids matter more than they look: a question whose id is `url` is only in
+ * `response.data` once it has been answered, so without it here `#recall:url#` would render the page
+ * address until the respondent reaches that question and the author's fallback afterwards.
+ *
+ * Matching is exact, not case-insensitive. `RESERVED_FIELD_NAMES` refuses new declarations under any
+ * casing, and for the legacy names that predate it the read namespace is itself case-sensitive:
+ * `response.data["Country"]` and a reserved `country` are two different keys, so dropping the entry
+ * for a survey declaring `Country` would lose a value that resolves today.
+ */
+export const dropShadowedReservedEntries = (
+  entries: readonly TReservedFieldCatalogEntry[],
+  declaredStorageKeys: readonly string[]
+): TReservedFieldCatalogEntry[] => {
+  const declared = new Set(declaredStorageKeys);
+  return entries.filter((entry) => !declared.has(entry.name));
+};
+
+/**
+ * The `declaredStorageKeys` argument {@link dropShadowedReservedEntries} and
+ * {@link listMidSurveyReservedEntries} expect: every name a survey's own definitions already own in
+ * the read namespace.
+ *
+ * Takes resolved fields rather than a survey because the two kinds of caller legitimately read
+ * different definitions of "declared", and hiding that choice inside here would make one of them
+ * silently wrong: the **editor** must derive from the working copy
+ * ({@link getDeclaredEmbeddedFields}), whose rows are stale from the first card edit until the next
+ * save, while every **runtime** reader holds a saved survey and must use the rows
+ * ({@link getSurveyEmbeddedFields}). Passing the fields in keeps that decision at the call site,
+ * where it is visible.
+ *
+ * What is *not* the caller's choice is which kinds count. All three do, and the doc for
+ * {@link dropShadowedReservedEntries} says why element ids are the easy one to forget.
+ */
+export const listShadowingNames = (
+  embeddedFields: readonly TLinkedEmbeddedField[],
+  elementIds: readonly string[]
+): string[] => [...embeddedFields.map(({ link }) => link.storageKey), ...elementIds];
+
+/**
+ * Which reserved entries a **mid-survey** picker may offer for one survey (ENG-1840). Two filters,
+ * and a reviewer should be able to check them separately:
  *
  * 1. `availability !== "server"` — recall and logic evaluate in the browser while the respondent is
  *    answering, so offering `country` or `durationSeconds` would let an author build a condition
  *    that can never be true. Filtering on the catalog's own field (rather than a list here) means
  *    entries added later light up automatically, and none can be offered without declaring when it
  *    is knowable.
- * 2. Not shadowed by a declared field — the picker counterpart of {@link mergeReservedValues}. If a
- *    survey declares its own `country`, that name already resolves to the declared value, so listing
- *    the reserved entry too would show two identically-named rows with no way to tell them apart and
- *    the reserved one would be a lie. The declared field is already offered by its own group.
+ * 2. {@link dropShadowedReservedEntries} — if a survey declares its own `country`, that name already
+ *    resolves to the declared value, so listing the reserved entry too would show two
+ *    identically-named rows with no way to tell them apart and the reserved one would be a lie. The
+ *    declared field is already offered by its own group.
  *
- * Pass the survey's declared storage keys (hidden/ingested fields and variables) as
+ * Only the availability gate is the picker's own; the shadow gate is shared with the value maps,
+ * which is the whole point of it being a separate function.
+ *
+ * Pass the survey's declared storage keys (ingested fields, variables and element ids) as
  * `declaredStorageKeys`.
  */
 export const listMidSurveyReservedEntries = (
   entries: readonly TReservedFieldCatalogEntry[],
   declaredStorageKeys: readonly string[]
-): TReservedFieldCatalogEntry[] => {
-  const declared = new Set(declaredStorageKeys);
-  return entries.filter((entry) => entry.availability !== "server" && !declared.has(entry.name));
-};
+): TReservedFieldCatalogEntry[] =>
+  dropShadowedReservedEntries(
+    entries.filter((entry) => entry.availability !== "server"),
+    declaredStorageKeys
+  );
 
 /** One referenceable field, carrying the key a consumer must use to address it. */
 export interface TReadableField {

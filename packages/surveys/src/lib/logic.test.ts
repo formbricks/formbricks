@@ -1894,6 +1894,43 @@ describe("reserved field operands (ENG-1840)", () => {
   const evaluate = (conditions: TConditionGroup, embeddedValues: TResponseData): boolean =>
     evaluateLogic(buildSurvey(), {}, {}, conditions, "default", embeddedValues);
 
+  test("a number-typed variable compared against a NUMBER reserved right operand coerces", () => {
+    // Red before ENG-2538: the pre-switch coercion arm listed `hiddenField` only, so a reserved value
+    // — always `string | number` in the projected map — reached the comparison unconverted and a
+    // number variable could never match one. The picker filters reserved right operands by
+    // `dataType`, so this operand shape is reachable from the editor. Both engines carried the same
+    // arm; `apps/web/lib/surveyLogic/utils.test.ts` pins the server twin.
+    const numberVariableSurvey = {
+      ...buildSurvey(),
+      variables: [{ id: "var_duration", name: "duration", type: "number", value: 150 }],
+      embeddedFields: [
+        {
+          field: { name: "duration", source: "computed", dataType: "number" },
+          link: { storageKey: "var_duration" },
+        },
+      ],
+    } as unknown as TJsWorkspaceStateSurvey;
+
+    const conditions: TConditionGroup = {
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator: "equals",
+          leftOperand: { type: "variable", value: "var_duration" },
+          rightOperand: { type: "reserved", value: "durationSeconds" },
+        },
+      ],
+    };
+
+    expect(
+      evaluateLogic(numberVariableSurvey, {}, { var_duration: 150 }, conditions, "default", {
+        durationSeconds: "150",
+      })
+    ).toBe(true);
+  });
+
   test("a reserved left operand evaluates against the projected value", () => {
     const values = { country: "DE" };
 
