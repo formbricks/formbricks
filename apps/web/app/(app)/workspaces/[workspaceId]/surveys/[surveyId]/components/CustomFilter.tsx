@@ -45,16 +45,20 @@ const getFilterDropDownLabels = (t: TFunction) => ({
 // stored range is mapped back to its label — on the 30th of a 30-day month, "last 30 days" and "this
 // month" cover the same days. What each preset means lives in `@/lib/date-ranges`, shared with the
 // chart time dimension so the Summary tab and a chart over the same field agree.
-const DATE_RANGE_PRESETS: readonly { preset: TDateRangePreset; labelKey: string }[] = [
-  { preset: "last 7 days", labelKey: "workspace.surveys.summary.last_7_days" },
-  { preset: "last 30 days", labelKey: "workspace.surveys.summary.last_30_days" },
-  { preset: "this month", labelKey: "workspace.surveys.summary.this_month" },
-  { preset: "last month", labelKey: "workspace.surveys.summary.last_month" },
-  { preset: "this quarter", labelKey: "workspace.surveys.summary.this_quarter" },
-  { preset: "last quarter", labelKey: "workspace.surveys.summary.last_quarter" },
-  { preset: "last 6 months", labelKey: "workspace.surveys.summary.last_6_months" },
-  { preset: "this year", labelKey: "workspace.surveys.summary.this_year" },
-  { preset: "last year", labelKey: "workspace.surveys.summary.last_year" },
+//
+// Labels are `t()` calls rather than bare key strings on purpose: the translation-key scanner
+// (`packages/i18n-utils`) only counts keys it can see inside a literal `t("…")`, and reports the rest
+// as unused.
+const DATE_RANGE_PRESETS: readonly { preset: TDateRangePreset; getLabel: (t: TFunction) => string }[] = [
+  { preset: "last 7 days", getLabel: (t) => t("workspace.surveys.summary.last_7_days") },
+  { preset: "last 30 days", getLabel: (t) => t("workspace.surveys.summary.last_30_days") },
+  { preset: "this month", getLabel: (t) => t("workspace.surveys.summary.this_month") },
+  { preset: "last month", getLabel: (t) => t("workspace.surveys.summary.last_month") },
+  { preset: "this quarter", getLabel: (t) => t("workspace.surveys.summary.this_quarter") },
+  { preset: "last quarter", getLabel: (t) => t("workspace.surveys.summary.last_quarter") },
+  { preset: "last 6 months", getLabel: (t) => t("workspace.surveys.summary.last_6_months") },
+  { preset: "this year", getLabel: (t) => t("workspace.surveys.summary.this_year") },
+  { preset: "last year", getLabel: (t) => t("workspace.surveys.summary.last_year") },
 ];
 
 const DATE_RANGE_PRESET_NAMES = DATE_RANGE_PRESETS.map(({ preset }) => preset);
@@ -65,8 +69,8 @@ interface CustomFilterProps {
 
 const getDateRangeLabel = (from: Date, to: Date, t: TFunction) => {
   const matchedPreset = matchDateRangePreset(from, to, DATE_RANGE_PRESET_NAMES);
-  const labelKey = DATE_RANGE_PRESETS.find(({ preset }) => preset === matchedPreset)?.labelKey;
-  return labelKey ? t(labelKey) : getFilterDropDownLabels(t).CUSTOM_RANGE;
+  const matched = DATE_RANGE_PRESETS.find(({ preset }) => preset === matchedPreset);
+  return matched ? matched.getLabel(t) : getFilterDropDownLabels(t).CUSTOM_RANGE;
 };
 
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
@@ -238,14 +242,14 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
               }}>
               <p className="text-slate-700">{getFilterDropDownLabels(t).ALL_TIME}</p>
             </DropdownMenuItem>
-            {DATE_RANGE_PRESETS.map(({ preset, labelKey }) => (
+            {DATE_RANGE_PRESETS.map(({ preset, getLabel }) => (
               <DropdownMenuItem
                 key={preset}
                 onClick={() => {
-                  setFilterRange(t(labelKey));
+                  setFilterRange(getLabel(t));
                   setDateRange(resolveDateRangePresetBounds(preset));
                 }}>
-                <p className="text-slate-700">{t(labelKey)}</p>
+                <p className="text-slate-700">{getLabel(t)}</p>
               </DropdownMenuItem>
             ))}
             <DropdownMenuItem
