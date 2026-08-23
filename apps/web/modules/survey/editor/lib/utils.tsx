@@ -6,8 +6,10 @@ import {
   RESERVED_FIELD_CATALOG,
   type TReservedFieldCatalogEntry,
   getDeclaredComputedFields,
+  getDeclaredEmbeddedFields,
   getDeclaredIngestedStorageKeys,
   listMidSurveyReservedEntries,
+  listShadowingNames,
 } from "@formbricks/types/embedded-data-resolver";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -172,11 +174,15 @@ const getComputedFieldOptions = (localSurvey: TSurvey): TComputedFieldOption[] =
  * because the merged value map spreads `responseData` (which is keyed by element id) over the
  * reserved projection.
  */
-const getDeclaredFieldNames = (localSurvey: TSurvey): string[] => [
-  ...getDeclaredIngestedStorageKeys(localSurvey),
-  ...getComputedFieldOptions(localSurvey).map((variable) => variable.id),
-  ...getElementsFromBlocks(localSurvey.blocks).map((element) => element.id),
-];
+const getDeclaredFieldNames = (localSurvey: TSurvey): string[] =>
+  // `listShadowingNames` so the picker and the two value maps (the renderer's and
+  // `buildServerEmbeddedValues`) agree on what "declared" means from one definition — ENG-2538 fixed
+  // the value maps by giving them this same list. `getDeclaredEmbeddedFields` rather than the stored
+  // rows because this is the editor: its working copy is stale from the first card edit until save.
+  listShadowingNames(
+    getDeclaredEmbeddedFields(localSurvey),
+    getElementsFromBlocks(localSurvey.blocks).map((element) => element.id)
+  );
 
 /** The reserved entries this survey may offer mid-survey, already availability- and shadow-filtered. */
 const getPickerReservedEntries = (localSurvey: TSurvey): TReservedFieldCatalogEntry[] =>

@@ -65,13 +65,17 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
       return { shouldEndSurvey: false };
     }
     const isDefaultLanguage = survey.languages.find((lang) => lang.default)?.language.code === language;
+    const jsSurvey = toJsWorkspaceStateSurvey(survey);
     const result = evaluateQuotas(
-      toJsWorkspaceStateSurvey(survey),
+      jsSurvey,
       data,
       variables,
       quotas,
       isDefaultLanguage ? "default" : language,
-      response ? buildServerEmbeddedValues(response) : {}
+      // The survey is what lets a declared field of the same name shadow the reserved read
+      // (ENG-2538); without it a quota on `url` counted the page address for every response whose
+      // declared `url` was left blank.
+      response ? buildServerEmbeddedValues(response, jsSurvey) : {}
     );
 
     const quotaFull = await handleQuotas(surveyId, responseId, result, responseFinished, prismaClient);

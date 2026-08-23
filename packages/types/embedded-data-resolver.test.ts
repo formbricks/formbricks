@@ -10,6 +10,7 @@ import {
   type TReservedFieldCatalogEntry,
   coerceToEmbeddedDataType,
   deriveLegacyEmbeddedData,
+  dropShadowedReservedEntries,
   findComputedEmbeddedField,
   getComputedEmbeddedFields,
   getComputedFieldDataType,
@@ -22,6 +23,7 @@ import {
   getSurveyEmbeddedFields,
   listMidSurveyReservedEntries,
   listReadableFields,
+  listShadowingNames,
   mergeReservedValues,
   projectClientReservedValues,
   projectReservedValues,
@@ -1612,6 +1614,77 @@ describe("mergeReservedValues", () => {
 
     expect(reserved).toStrictEqual({ country: "DE" });
     expect(responseData).toStrictEqual({ q1: "answer" });
+  });
+});
+
+describe("dropShadowedReservedEntries", () => {
+  const names = (declared: string[]): string[] =>
+    dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, declared).map((entry) => entry.name);
+
+  test("THE GRANDFATHER RULE, first half: a declared name removes the entry outright", () => {
+    // The point of ENG-2538. `mergeReservedValues` only demotes a reserved value behind a key that
+    // *exists*, so the entry has to be gone from the projection for a declared-but-empty field to
+    // win. Asserting absence here, and the consequence — no key in the projected map — below.
+    expect(names(["url"])).not.toContain("url");
+    expect(names(["url"])).toContain("source");
+  });
+
+  test("unlike the picker, it keeps server-derived entries", () => {
+    // The only difference between this and `listMidSurveyReservedEntries`, and the reason they are
+    // two functions: the server value map needs `country` and `durationSeconds`, the picker must not
+    // offer them.
+    expect(names([])).toContain("country");
+    expect(names([])).toContain("durationSeconds");
+    expect(names([])).toStrictEqual(RESERVED_FIELD_CATALOG.map((entry) => entry.name));
+  });
+
+  test("shadowing is per name, not a blanket opt-out", () => {
+    const offered = names(["url", "country"]);
+
+    expect(offered).not.toContain("url");
+    expect(offered).not.toContain("country");
+    expect(offered).toContain("timezone");
+    expect(offered).toHaveLength(RESERVED_FIELD_CATALOG.length - 2);
+  });
+
+  test("matching is case-sensitive, because the read namespace is", () => {
+    // `response.data["Country"]` and a reserved `country` are different keys, so a survey holding a
+    // legacy `Country` field still resolves the reserved `country` — dropping the entry would lose a
+    // value that resolves today. New declarations are refused under any casing by
+    // RESERVED_FIELD_NAMES, so this only ever concerns names that predate that guard.
+    expect(names(["Country"])).toContain("country");
+  });
+
+  test("a name no catalog entry uses changes nothing", () => {
+    expect(names(["plan", "some_element_id"])).toStrictEqual(names([]));
+  });
+});
+
+describe("listShadowingNames", () => {
+  const link = (storageKey: string): TLinkedEmbeddedField =>
+    ({ field: { name: storageKey }, link: { storageKey } }) as unknown as TLinkedEmbeddedField;
+
+  test("counts declared field storage keys and element ids alike", () => {
+    expect(listShadowingNames([link("plan"), link("cm_var_1")], ["q1", "url"])).toStrictEqual([
+      "plan",
+      "cm_var_1",
+      "q1",
+      "url",
+    ]);
+  });
+
+  test("element ids are in the list, which is the easy half to forget", () => {
+    // A question with id `url` is absent from `response.data` until it is answered, so without this
+    // the reserved read would win for exactly as long as the respondent had not reached it.
+    expect(
+      dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, listShadowingNames([], ["url"])).map(
+        (entry) => entry.name
+      )
+    ).not.toContain("url");
+  });
+
+  test("empty inputs yield an empty list rather than undefined", () => {
+    expect(listShadowingNames([], [])).toStrictEqual([]);
   });
 });
 

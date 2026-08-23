@@ -2119,6 +2119,23 @@ const isInvalidOperatorsForQuestionType = (
   return isInvalidOperator;
 };
 
+/**
+ * Compile-time exhaustiveness guard for a left-operand chain. The parameter is `never`, so passing a
+ * still-possible operand type is a type error, and adding a member to `ZDynamicLogicFieldValue` fails
+ * the build at every chain that has not learned about it.
+ *
+ * This exists because ENG-1840 added `reserved` to that union and two validators here kept treating
+ * it as a hidden field for a whole milestone — a bare `else` commented `leftOperand.type ===
+ * "hiddenField"` accepted the new member silently, and every survey with a logic condition on a
+ * reserved field became unsaveable (ENG-2538). A type error is what that should have been.
+ *
+ * Does nothing at runtime, deliberately: a stored survey that somehow carries an unknown operand
+ * should still validate rather than throw inside a Zod refinement.
+ */
+const assertNoUnhandledLeftOperand = (_leftOperand: never): void => {
+  // Exhaustiveness is enforced entirely by the parameter type.
+};
+
 const isInvalidOperatorsForVariableType = (
   variableType: "text" | "number",
   operator: TSurveyLogicConditionsOperator
@@ -2689,7 +2706,15 @@ const validateConditions = (
           }
         }
       }
-    } else {
+    } else if (leftOperand.type === "element") {
+      // Nothing to check: `element` is the blocks-era operand and this validator resolves against
+      // `survey.questions`. It was already dropping out of this chain unvalidated — spelled out so the
+      // guard at the end can be exhaustive without changing what the validator accepts.
+    } else if (leftOperand.type === "reserved") {
+      // Same as the block-path arm below — see the comment there. The legacy validator carried the
+      // identical bare `else`, so a reserved operand on a questions-shaped survey was reported as a
+      // missing hidden field too.
+    } else if (leftOperand.type === "hiddenField") {
       const hiddenFieldId = leftOperand.value;
       const hiddenField = survey.hiddenFields.fieldIds?.find((fieldId) => fieldId === hiddenFieldId);
 
@@ -2772,6 +2797,11 @@ const validateConditions = (
           });
         }
       }
+    } else {
+      // The block-path chain's guard, on the second of the two chains that carried the ENG-2538 bug.
+      // Without it `assertNoUnhandledLeftOperand`'s own promise — a build failure at *every* chain
+      // that has not learned about a new member — held for only one of them.
+      assertNoUnhandledLeftOperand(leftOperand);
     }
   };
 
@@ -3573,8 +3603,28 @@ const validateBlockConditions = (
           });
         }
       }
-    } else {
-      // leftOperand.type === "hiddenField"
+    } else if (leftOperand.type === "reserved") {
+      // A reserved operand names a `RESERVED_FIELD_CATALOG` entry, not anything stored on the survey,
+      // so there is nothing to look up and nothing to report — and that is deliberate, not an
+      // omission (ENG-2538). `ZDynamicReservedField` validates the name as non-empty only, precisely
+      // so a survey saved against a newer catalog still parses on an older self-hosted deployment;
+      // checking it against the catalog here would reintroduce exactly the failure that schema
+      // avoids, for the whole survey rather than one condition. An operand naming an entry that does
+      // not exist resolves as unset, the same outcome a stale variable or hidden-field operand
+      // already has.
+      //
+      // The arm exists because the chain below used to end in a bare `else` commented
+      // `leftOperand.type === "hiddenField"`, which was true until ENG-1840 added this fourth type.
+      // A reserved operand fell into it, was looked up in `survey.hiddenFields.fieldIds` and reported
+      // missing — so picking any of the 16 reserved fields the picker offers made the survey
+      // unsaveable, and the "usable in logic" half of ENG-1840 did not work at all.
+      //
+      // No operator validation here, deliberately: the `hiddenField` arm's allowlist is string-only,
+      // so reusing it would reject `isGreaterThan` on `durationSeconds` — a comparison the picker
+      // legitimately offers. Operators for reserved operands stay unchecked until they can be judged
+      // against the entry's own dataType, which must also tolerate an entry an older self-hosted
+      // catalog does not know. An unknown operator evaluates to `false`, so nothing misbehaves.
+    } else if (leftOperand.type === "hiddenField") {
       const fieldId = leftOperand.value;
       const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
 
@@ -3585,6 +3635,11 @@ const validateBlockConditions = (
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
       }
+    } else {
+      // Spelled out rather than left as the `hiddenField` fallthrough so a fifth operand type is a
+      // compile error here instead of being silently validated as a hidden field, which is how the
+      // fourth one got through review.
+      assertNoUnhandledLeftOperand(leftOperand);
     }
   };
 
