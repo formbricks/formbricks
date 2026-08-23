@@ -2706,6 +2706,10 @@ const validateConditions = (
           }
         }
       }
+    } else if (leftOperand.type === "element") {
+      // Nothing to check: `element` is the blocks-era operand and this validator resolves against
+      // `survey.questions`. It was already dropping out of this chain unvalidated — spelled out so the
+      // guard at the end can be exhaustive without changing what the validator accepts.
     } else if (leftOperand.type === "reserved") {
       // Same as the block-path arm below — see the comment there. The legacy validator carried the
       // identical bare `else`, so a reserved operand on a questions-shaped survey was reported as a
@@ -2793,6 +2797,11 @@ const validateConditions = (
           });
         }
       }
+    } else {
+      // The block-path chain's guard, on the second of the two chains that carried the ENG-2538 bug.
+      // Without it `assertNoUnhandledLeftOperand`'s own promise — a build failure at *every* chain
+      // that has not learned about a new member — held for only one of them.
+      assertNoUnhandledLeftOperand(leftOperand);
     }
   };
 
@@ -3609,6 +3618,12 @@ const validateBlockConditions = (
       // A reserved operand fell into it, was looked up in `survey.hiddenFields.fieldIds` and reported
       // missing — so picking any of the 16 reserved fields the picker offers made the survey
       // unsaveable, and the "usable in logic" half of ENG-1840 did not work at all.
+      //
+      // No operator validation here, deliberately: the `hiddenField` arm's allowlist is string-only,
+      // so reusing it would reject `isGreaterThan` on `durationSeconds` — a comparison the picker
+      // legitimately offers. Operators for reserved operands stay unchecked until they can be judged
+      // against the entry's own dataType, which must also tolerate an entry an older self-hosted
+      // catalog does not know. An unknown operator evaluates to `false`, so nothing misbehaves.
     } else if (leftOperand.type === "hiddenField") {
       const fieldId = leftOperand.value;
       const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);

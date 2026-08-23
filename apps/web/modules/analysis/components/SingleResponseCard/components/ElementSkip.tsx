@@ -36,7 +36,7 @@ export const ElementSkip = ({
   recallValues,
   variables,
   locale,
-}: ElementSkipProps) => {
+}: Readonly<ElementSkipProps>) => {
   const { t } = useTranslation();
   const dateFormats = getSurveyDateFormatMap(elements);
   return (

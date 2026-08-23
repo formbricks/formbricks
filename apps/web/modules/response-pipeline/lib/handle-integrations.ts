@@ -355,6 +355,22 @@ const extractResponses = async (
 
   const ingestedStorageKeys = getIngestedStorageKeys(survey);
 
+  // Slack posts one message per response, so its labels are per-response text and recall is
+  // interpolated for real — including reserved fields, which used to render their fallback here
+  // (ENG-2538). Every other integration writes `elements` as the SHEET/TABLE HEADER, which has to
+  // read identically for every response, so the empty object stays: a header that interpolated this
+  // response's answers would rename the column on every write. Reserved values are per response too,
+  // so they belong on the Slack side only.
+  //
+  // Hoisted alongside `emptyResponseObject` because neither depends on the element: built inside the
+  // loop this re-projected the whole catalog and re-walked `survey.blocks` once per element, per
+  // response.
+  const responseDataForRecall =
+    integrationType === "slack"
+      ? buildServerEmbeddedValues(pipelineData.response, survey)
+      : emptyResponseObject;
+  const variablesForRecall = integrationType === "slack" ? pipelineData.response.variables : {};
+
   for (const elementId of elementIds) {
     // Check for ingested (hidden) field storage keys
     if (ingestedStorageKeys.includes(elementId)) {
@@ -379,18 +395,6 @@ const extractResponses = async (
 
     const responseValue = pipelineData.response.data[elementId];
     responses.push(processElementResponse(element, responseValue));
-
-    // Slack posts one message per response, so its labels are per-response text and recall is
-    // interpolated for real — including reserved fields, which used to render their fallback here
-    // (ENG-2538). Every other integration writes `elements` as the SHEET/TABLE HEADER, which has to
-    // read identically for every response, so the empty object stays: a header that interpolated
-    // this response's answers would rename the column on every write. Reserved values are per
-    // response too, so they belong on the Slack side only.
-    const responseDataForRecall =
-      integrationType === "slack"
-        ? buildServerEmbeddedValues(pipelineData.response, survey)
-        : emptyResponseObject;
-    const variablesForRecall = integrationType === "slack" ? pipelineData.response.variables : {};
 
     elements.push(
       parseRecallInfo(

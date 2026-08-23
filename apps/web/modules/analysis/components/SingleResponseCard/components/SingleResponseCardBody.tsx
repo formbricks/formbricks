@@ -36,7 +36,7 @@ export const SingleResponseCardBody = ({
   response,
   skippedQuestions,
   locale,
-}: SingleResponseCardBodyProps) => {
+}: Readonly<SingleResponseCardBodyProps>) => {
   const elements = getElementsFromBlocks(survey.blocks);
   // ENG-1837: both blocks below render the survey's Embedded Data definitions, resolved through the
   // tables with the legacy columns as fallback.

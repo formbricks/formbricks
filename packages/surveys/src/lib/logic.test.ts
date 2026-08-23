@@ -1895,11 +1895,10 @@ describe("reserved field operands (ENG-1840)", () => {
     evaluateLogic(buildSurvey(), {}, {}, conditions, "default", embeddedValues);
 
   test("a number-typed variable compared against a NUMBER reserved right operand coerces", () => {
-    // Red before ENG-2538: the pre-switch coercion arm listed `hiddenField` only, so a reserved value
-    // — always `string | number` in the projected map — reached the comparison unconverted and a
-    // number variable could never match one. The picker filters reserved right operands by
-    // `dataType`, so this operand shape is reachable from the editor. Both engines carried the same
-    // arm; `apps/web/lib/surveyLogic/utils.test.ts` pins the server twin.
+    // Pins the `reserved` coercion arm, which is defence in depth rather than a bug that was seen:
+    // the catalog read seam types `durationSeconds` as a number, so the string below is the overlay
+    // shape `mergeReservedValues` can still produce, passed directly. Both engines carry the same
+    // arm; `apps/web/lib/surveyLogic/utils.test.ts` pins the server twin and that read-seam invariant.
     const numberVariableSurvey = {
       ...buildSurvey(),
       variables: [{ id: "var_duration", name: "duration", type: "number", value: 150 }],

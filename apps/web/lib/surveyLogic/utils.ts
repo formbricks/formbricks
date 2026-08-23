@@ -356,12 +356,12 @@ const evaluateSingleCondition = (
     if (
       condition.leftOperand.type === "variable" &&
       getComputedFieldDataType(computedFields, condition.leftOperand.value) === "number" &&
-      // `reserved` alongside `hiddenField` because both sides of the comparison are strings in their
-      // stored form: a reserved value is projected as `string | number` and every number-typed entry
-      // (`durationSeconds`, `viewportWidth`, `screenHeight`) therefore reached this comparison
-      // unconverted, so a number variable measured against one could never match (ENG-2538). The
-      // picker offers reserved right operands filtered by `dataType`, so this operand shape is
-      // reachable from the editor.
+      // `reserved` alongside `hiddenField` as defence in depth. A *projected* reserved value does not
+      // need it: the catalog read seam runs `coerceToEmbeddedDataType`, so `durationSeconds` and the
+      // other number-typed entries arrive here as JS numbers and `Number()` is a no-op. What this
+      // guards is the one shape the map can still hold as a string — `mergeReservedValues` overlays
+      // `response.data` on the projection unconditionally, so a reserved key that is also a response
+      // key carries that raw string past the seam.
       (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
     ) {
       rightValue = Number(rightValue as string);
