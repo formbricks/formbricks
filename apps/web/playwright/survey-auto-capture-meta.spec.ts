@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
-import { type Fixtures, test } from "./lib/fixtures";
+import { test } from "./lib/fixtures";
 
 /**
  * **Auto-captured browser context, end to end (ENG-1841).**
@@ -105,15 +105,11 @@ const submitAnswer = async (page: Page, answer: string): Promise<void> => {
 test.describe("Auto-captured browser context on responses @slow", () => {
   let surveyUrl: string | undefined;
   let surveyId: string | undefined;
-  let workspaceId: string | undefined;
-  let owner: Awaited<ReturnType<Fixtures["users"]["create"]>> | undefined;
 
   test.beforeEach(async ({ users }) => {
     if (surveyUrl) return;
     const user = await users.create({ skipSurveySeed: true });
     if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
-    owner = user;
-    workspaceId = user.workspaceId;
     surveyId = await seedSurvey(user.workspaceId, user.id);
     surveyUrl = `/s/${surveyId}`;
   });
@@ -192,25 +188,73 @@ test.describe("Auto-captured browser context on responses @slow", () => {
   });
   test("shows the captured page, campaign and timezone in the product, without exporting", async ({
     page,
+    users,
   }) => {
     // ENG-2540. ENG-1841 captures twelve fields on every response and, until this, none of them were
-    // visible anywhere: an author could only reach them by exporting. The tests above prove the
-    // values reach Postgres; this one proves an author can see them.
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto(`${surveyUrl}?${UTM_QUERY}`);
-    await submitAnswer(page, "Seen in the product");
-    await readStoredMeta(surveyId ?? "");
+    // visible anywhere: an author could only reach them by exporting. The tests above prove the values
+    // reach Postgres; this one proves an author can see them.
+    //
+    // Owns its whole fixture rather than reusing the shared survey above, because it needs a
+    // logged-in owner: `users.create()` binds its `login()` to the page of the test that created it,
+    // so the shared user from the first `beforeEach` cannot sign in here.
+    const owner = await users.create({ skipSurveySeed: true });
+    if (!owner.workspaceId) throw new Error("users.create() did not return a workspaceId");
+    const ownSurveyId = await seedSurvey(owner.workspaceId, owner.id);
 
-    await owner?.login();
-    await page.goto(`/workspaces/${workspaceId}/surveys/${surveyId}/responses`);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(`/s/${ownSurveyId}?${UTM_QUERY}`);
+    await submitAnswer(page, "Seen in the product");
+    await readStoredMeta(ownSurveyId);
+
+    await owner.login();
+    await page.goto(`/workspaces/${owner.workspaceId}/surveys/${ownSurveyId}/responses`);
+
+    await test.step("the new reserved columns are registered, but off by default", async () => {
+      // The half that used to be impossible: the settings modal iterates the PERSISTED column order,
+      // so before `reconcileColumnOrder` a newly added column id had no toggle and no drag handle.
+      await page.getByRole("button", { name: "Table settings" }).click();
+
+      const modal = page.getByRole("dialog");
+      await expect(modal).toBeVisible();
+      await expect(modal.getByText("Page Path", { exact: true })).toBeVisible();
+      await expect(modal.getByText("Utm Source", { exact: true })).toBeVisible();
+
+      // `DataTableSettingsModalItem` puts the column id on its Switch, so this is the column's own
+      // toggle rather than a positional guess. Unchecked = the table did not silently grow thirteen
+      // columns.
+      await expect(modal.locator('[role="switch"]#METADATA_pagePath')).toHaveAttribute(
+        "data-state",
+        "unchecked"
+      );
+      // A field the table has always shown stays on.
+      await expect(modal.locator('[role="switch"]#METADATA_url')).toHaveAttribute("data-state", "checked");
+
+      await page.keyboard.press("Escape");
+      await expect(modal).toBeHidden();
+    });
+
+    // The response card lives in the response modal, and the table is the default view. Clicking any
+    // cell but `select` opens it (`ResponseTableCell.handleCellClick`); the dedicated "Expand
+    // response" button is `group-hover:flex`, so it needs a hover dance this does not.
+    await page.getByRole("cell", { name: "Anonymous" }).click();
 
     await test.step("the classic fields render exactly as before", async () => {
-      // The seven the card has always shown, now read from the catalog. `Browser` is server-derived
-      // from the request header, so it is present for every response including historical ones.
-      const deviceInfo = page.getByLabel("Device info").first();
+      // The seven the card has always shown, now looped from the catalog instead of written out as
+      // seven JSX branches. Asserted on the tooltip container rather than per row: each row renders as
+      // `{label}: {value}` across separate text nodes, so a `/^Browser:/` text locator does not match
+      // one of them.
+      const deviceInfo = page.getByRole("button", { name: "Device info" }).first();
       await expect(deviceInfo).toBeVisible({ timeout: 60000 });
       await deviceInfo.hover();
-      await expect(page.getByText(/^Browser:/)).toBeVisible();
+
+      const tooltip = page.getByRole("tooltip").filter({ hasText: "Device info" }).first();
+      await expect(tooltip).toBeVisible();
+      await expect(tooltip).toContainText("Browser:");
+      await expect(tooltip).toContainText("OS:");
+      await expect(tooltip).toContainText("Device:");
+      // `URL` proves the gating fix: the whole block used to be behind `hasUserAgent`, so with
+      // "Anonymize responses" on — which drops `meta.userAgent` — url, action and source vanished too.
+      await expect(tooltip).toContainText("URL:");
     });
 
     await test.step("the auto-captured fields sit behind a collapsed disclosure", async () => {
@@ -228,26 +272,10 @@ test.describe("Auto-captured browser context on responses @slow", () => {
       await expect(disclosure.getByText("Utm Source", { exact: true })).toBeVisible();
       await expect(disclosure.getByText("Timezone", { exact: true })).toBeVisible();
       await expect(disclosure.getByText("Viewport Width", { exact: true })).toBeVisible();
-      // The values, not just the labels.
+      // The values, not just the labels. `newsletter` is the utm_source off the link, and the page
+      // path is the survey's own public route — both unique enough to assert exactly.
       await expect(disclosure.getByText("newsletter", { exact: true })).toBeVisible();
-      await expect(disclosure.getByText("1280", { exact: true })).toBeVisible();
-    });
-
-    await test.step("the new table columns exist, listed but unchecked", async () => {
-      await page.getByRole("button", { name: "Table" }).click();
-      await page.getByRole("button", { name: "Settings" }).click();
-
-      const modal = page.getByRole("dialog");
-      await expect(modal).toBeVisible();
-
-      // Registered and toggleable — the half that used to be impossible, because the settings modal
-      // iterates the persisted column order and a newly added id was never in it.
-      const pagePathRow = modal.getByText("Page Path", { exact: true });
-      await expect(pagePathRow).toBeVisible();
-
-      // Off by default, so no author's table silently grows thirteen columns.
-      const pagePathSwitch = modal.locator("div").filter({ has: pagePathRow }).last().getByRole("switch");
-      await expect(pagePathSwitch).toHaveAttribute("data-state", "unchecked");
+      await expect(disclosure.getByText(`/s/${ownSurveyId}`, { exact: true })).toBeVisible();
     });
   });
 });
