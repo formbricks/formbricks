@@ -576,6 +576,26 @@ describe("recall utility functions", () => {
       // string or an unrendered raw token, neither of which would prove the declared field won.
       expect(result).toBe("You are in your-country");
     });
+
+    test("A DECLARED FIELD WITH NO VALUE AT ALL still owns its name (ENG-2538)", () => {
+      // The bug this ticket exists for, at the layer it was visible from. Every test above passes a
+      // key that *exists* — the asymmetry that hid it through review, unit tests and E2E. An optional
+      // hidden field the respondent never filled has no key at all, so the spread had nothing to lose
+      // to and the reserved value survived into respondent-facing copy.
+      //
+      // The fix is upstream of this call: `buildServerEmbeddedValues` / the renderer's projection now
+      // drop an entry the survey declares, so the map handed here has no `url` key. Simulated by
+      // omitting it, which is exactly what those functions now produce.
+      const withoutDeclaredUrl = { country: "DE" };
+
+      const result = parseRecallInfo(
+        "url=#recall:url/fallback:FALLBACK-HIT#",
+        mergeReservedValues(withoutDeclaredUrl, {})
+      );
+
+      expect(result).toBe("url=FALLBACK-HIT");
+      expect(result).not.toContain("app.test");
+    });
   });
 
   describe("getFallbackValues", () => {

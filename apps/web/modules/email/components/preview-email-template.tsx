@@ -287,6 +287,9 @@ export async function PreviewEmailTemplate({
   const questions = getElementsFromBlocks(survey.blocks);
   const firstQuestion = questions[0];
 
+  // No response exists for a preview, so every recall token — reserved ones included — renders its
+  // author-written fallback, which is the correct preview of an unfilled survey. ENG-2538 wired the
+  // reserved values into the surfaces that *have* a response; there is nothing to resolve here.
   const headline = parseRecallInfo(
     getLocalizedValue(firstQuestion.headline, defaultLanguageCode),
     undefined,

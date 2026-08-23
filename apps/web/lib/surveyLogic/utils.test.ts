@@ -1678,7 +1678,7 @@ describe("reserved field operands, server engine (ENG-1840)", () => {
   } as unknown as TEmbeddedValueResponse;
 
   test("the full catalog resolves server-side, including server-only fields", () => {
-    const values = buildServerEmbeddedValues(response);
+    const values = buildServerEmbeddedValues(response, survey);
 
     expect(
       evaluateLogic(
@@ -1724,7 +1724,7 @@ describe("reserved field operands, server engine (ENG-1840)", () => {
   });
 
   test("a declared field of the same name still wins server-side", () => {
-    const values = buildServerEmbeddedValues({ ...response, data: { country: "Declared answer" } });
+    const values = buildServerEmbeddedValues({ ...response, data: { country: "Declared answer" } }, survey);
 
     expect(
       evaluateLogic(
@@ -1749,12 +1749,89 @@ describe("reserved field operands, server engine (ENG-1840)", () => {
   });
 
   test("an unknown reserved name and a missing map both read as unset", () => {
-    const values = buildServerEmbeddedValues(response);
+    const values = buildServerEmbeddedValues(response, survey);
 
     expect(evaluateLogic(survey, {}, {}, reservedGroup("notACatalogEntry", "isSet"), "en", values)).toBe(
       false
     );
     // Callers with no response in hand (quota screening) pass nothing and get unset, not a throw.
     expect(evaluateLogic(survey, {}, {}, reservedGroup("country", "isSet"), "en")).toBe(false);
+  });
+
+  test("THE GRANDFATHER RULE, ENG-2538: a DECLARED but EMPTY field still owns its name", () => {
+    // Red before ENG-2538. `mergeReservedValues`' spread only demotes the reserved value behind a key
+    // that *exists*, so a survey declaring an optional `url` resolved the page address for every
+    // response where the respondent left it blank — the normal case for a hidden field. The survey
+    // parameter is what lets `dropShadowedReservedEntries` remove the entry instead.
+    const declaringSurvey = {
+      ...survey,
+      hiddenFields: { enabled: true, fieldIds: ["url"] },
+      embeddedFields: [
+        { field: { name: "url", source: "ingested", dataType: "string" }, link: { storageKey: "url" } },
+      ],
+    } as unknown as TJsWorkspaceStateSurvey;
+
+    const values = buildServerEmbeddedValues(response, declaringSurvey);
+
+    // Not merely outranked — absent. A consumer that falls back on a missing key (recall renders the
+    // author's fallback text) must see nothing here, not the reserved value.
+    expect(values).not.toHaveProperty("url");
+    expect(evaluateLogic(survey, {}, {}, reservedGroup("url", "isSet"), "en", values)).toBe(false);
+    // Everything the survey does NOT declare keeps resolving.
+    expect(values.country).toBe("DE");
+    expect(values.source).toBe("link");
+  });
+
+  test("an ELEMENT id shadows a reserved name too, before the question is answered", () => {
+    const declaringSurvey = {
+      ...survey,
+      blocks: [{ id: "block1", name: "Block 1", elements: [{ id: "url", type: "openText" }] }],
+    } as unknown as TJsWorkspaceStateSurvey;
+
+    expect(buildServerEmbeddedValues(response, declaringSurvey)).not.toHaveProperty("url");
+  });
+
+  test("a NUMBER reserved entry reaches logic already typed, so no coercion is needed", () => {
+    // The invariant that makes the `reserved` coercion arm defensive rather than load-bearing: the
+    // catalog read seam runs `coerceToEmbeddedDataType`, so a number-dataType entry is a JS number
+    // here, never a numeric string. If this goes red the seam stopped coercing and that arm became
+    // load-bearing, which is the only reason it is worth pinning separately.
+    expect(typeof buildServerEmbeddedValues(response, survey).durationSeconds).toBe("number");
+  });
+
+  test("the coercion arm converts a reserved value that arrives as a string anyway", () => {
+    // `mergeReservedValues` overlays `response.data` on the projection unconditionally, so a reserved
+    // key that is also a response key carries that raw string past the seam above. The map is passed
+    // directly because no authoring flow produces that overlap today — the reserved-name guard
+    // refuses declaring one — so this pins the arm's behaviour rather than reproducing a bug.
+    const numberVariableSurvey = {
+      ...survey,
+      variables: [{ id: "var_duration", name: "duration", type: "number", value: 150 }],
+      embeddedFields: [
+        {
+          field: { name: "duration", source: "computed", dataType: "number" },
+          link: { storageKey: "var_duration" },
+        },
+      ],
+    } as unknown as TJsWorkspaceStateSurvey;
+
+    const group: TConditionGroup = {
+      id: "group1",
+      connector: "and",
+      conditions: [
+        {
+          id: "condition1",
+          operator: "equals",
+          leftOperand: { type: "variable", value: "var_duration" },
+          rightOperand: { type: "reserved", value: "durationSeconds" },
+        },
+      ],
+    };
+
+    expect(
+      evaluateLogic(numberVariableSurvey, {}, { var_duration: 150 }, group, "en", {
+        durationSeconds: "150",
+      })
+    ).toBe(true);
   });
 });

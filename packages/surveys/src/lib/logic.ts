@@ -251,7 +251,13 @@ const evaluateSingleCondition = (
     if (
       condition.leftOperand.type === "variable" &&
       getComputedFieldDataType(computedFields, condition.leftOperand.value) === "number" &&
-      condition.rightOperand?.type === "hiddenField"
+      // `reserved` alongside `hiddenField` because both sides of the comparison are strings in their
+      // stored form: a reserved value is projected as `string | number` and every number-typed entry
+      // (`durationSeconds`, `viewportWidth`, `screenHeight`) therefore reached this comparison
+      // unconverted, so a number variable measured against one could never match (ENG-2538). The
+      // picker offers reserved right operands filtered by `dataType`, so this operand shape is
+      // reachable from the editor.
+      (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
     ) {
       rightValue = Number(rightValue as string);
     }
