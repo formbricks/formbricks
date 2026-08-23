@@ -79,6 +79,7 @@ export const SingleResponseCardBody = ({
           status={"welcomeCard"}
           isFirstElementAnswered={isFirstElementAnswered}
           recallValues={recallValues}
+          variables={response.variables}
           locale={locale}
         />
       )}
@@ -140,6 +141,7 @@ export const SingleResponseCardBody = ({
                   skippedElements={skipped}
                   elements={elements}
                   recallValues={recallValues}
+                  variables={response.variables}
                   locale={locale}
                   status={
                     response.finished ||
