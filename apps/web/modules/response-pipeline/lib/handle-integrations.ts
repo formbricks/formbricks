@@ -18,13 +18,31 @@ import { writeData as writeNotionData } from "@/lib/notion/service";
 import { processResponseData } from "@/lib/responses";
 import { writeDataToSlack } from "@/lib/slack/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { buildServerEmbeddedValues } from "@/lib/surveyLogic/utils";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
 import { resolveStorageUrlAuto } from "@/modules/storage/utils";
 
 type TIntegrationPipelineData = {
-  response: Pick<TResponse, "createdAt" | "data" | "meta" | "variables" | "contactAttributes">;
+  // Widened from five keys to cover `TEmbeddedValueResponse` (ENG-2538): the Slack path resolves
+  // reserved recall values off the response, and the caller already hands us a whole
+  // `ZResponsePipelineJobResponse`, so this pick was under-declaring what is really there rather than
+  // guarding anything.
+  response: Pick<
+    TResponse,
+    | "id"
+    | "surveyId"
+    | "createdAt"
+    | "updatedAt"
+    | "finished"
+    | "language"
+    | "data"
+    | "meta"
+    | "variables"
+    | "ttc"
+    | "contactAttributes"
+  >;
   surveyId: string;
 };
 // `hiddenFields` / `variables` stay in the pick as the resolver's fallback; `embeddedFields` carries
@@ -337,6 +355,22 @@ const extractResponses = async (
 
   const ingestedStorageKeys = getIngestedStorageKeys(survey);
 
+  // Slack posts one message per response, so its labels are per-response text and recall is
+  // interpolated for real — including reserved fields, which used to render their fallback here
+  // (ENG-2538). Every other integration writes `elements` as the SHEET/TABLE HEADER, which has to
+  // read identically for every response, so the empty object stays: a header that interpolated this
+  // response's answers would rename the column on every write. Reserved values are per response too,
+  // so they belong on the Slack side only.
+  //
+  // Hoisted alongside `emptyResponseObject` because neither depends on the element: built inside the
+  // loop this re-projected the whole catalog and re-walked `survey.blocks` once per element, per
+  // response.
+  const responseDataForRecall =
+    integrationType === "slack"
+      ? buildServerEmbeddedValues(pipelineData.response, survey)
+      : emptyResponseObject;
+  const variablesForRecall = integrationType === "slack" ? pipelineData.response.variables : {};
+
   for (const elementId of elementIds) {
     // Check for ingested (hidden) field storage keys
     if (ingestedStorageKeys.includes(elementId)) {
@@ -361,10 +395,6 @@ const extractResponses = async (
 
     const responseValue = pipelineData.response.data[elementId];
     responses.push(processElementResponse(element, responseValue));
-
-    const responseDataForRecall =
-      integrationType === "slack" ? pipelineData.response.data : emptyResponseObject;
-    const variablesForRecall = integrationType === "slack" ? pipelineData.response.variables : {};
 
     elements.push(
       parseRecallInfo(

@@ -14,6 +14,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { DEFAULT_LOCALE, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL, TERMS_URL } from "@/lib/constants";
 import { getElementResponseMapping } from "@/lib/responses";
+import { buildServerEmbeddedValues } from "@/lib/surveyLogic/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -32,14 +33,17 @@ import { resolveStorageUrl } from "@/modules/storage/utils";
  * `ul`/`ol`/`li` are on the list because `sanitize-html` drops a disallowed tag but keeps its text:
  * without them the Body editor's list buttons produced items run together on one line, unnumbered.
  */
-const sanitizeBody = (body: string, response: TResponse, locale?: TUserLocale): string =>
+const sanitizeBody = (body: string, survey: TSurvey, response: TResponse, locale?: TUserLocale): string =>
   sanitizeHtml(
     // Pass the resolved locale rather than letting it default to "en-US": recall values include date
     // answers, which parseRecallInfo formats per locale, so defaulting would render US dates in an
     // otherwise correctly localized email.
     parseRecallInfo(
       body,
-      response.data,
+      // ENG-2538: the survey's readable reserved values merged under the answers, so a body
+      // recalling `country` or `durationSeconds` resolves instead of rendering its fallback. The
+      // values are escaped as they are substituted, exactly like an answer.
+      buildServerEmbeddedValues(response, survey),
       response.variables,
       false,
       locale ?? DEFAULT_LOCALE,
@@ -165,7 +169,7 @@ export const buildSurveyResponseEmailHtml = async ({
   const t = await getTranslate(locale ?? DEFAULT_LOCALE);
 
   return renderFollowUpEmail({
-    body: sanitizeBody(body, response, locale),
+    body: sanitizeBody(body, survey, response, locale),
     responseData: buildResponseData(survey, response, attachResponseData),
     variables: buildVariables(survey, response, attachResponseData, includeVariables),
     hiddenFields: buildHiddenFields(survey, response, attachResponseData, includeHiddenFields),

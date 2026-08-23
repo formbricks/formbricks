@@ -1,11 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
   RESERVED_FIELD_CATALOG,
+  type TEmbeddedFieldsSurvey,
   type TEmbeddedValueResponse,
+  dropShadowedReservedEntries,
   findComputedEmbeddedField,
   getComputedEmbeddedFields,
   getComputedFieldDataType,
   getLogicVariableValue,
+  getSurveyEmbeddedFields,
+  listShadowingNames,
   mergeReservedValues,
   projectReservedValues,
 } from "@formbricks/types/embedded-data-resolver";
@@ -237,17 +241,48 @@ export const getUpdatedActionBody = (
   }
 };
 
+/** The survey slice {@link buildServerEmbeddedValues} needs to know what the survey declares. */
+export type TServerEmbeddedValuesSurvey = TEmbeddedFieldsSurvey & {
+  blocks: TJsWorkspaceStateSurvey["blocks"];
+};
+
 /**
- * The reserved-field lookup map for a **persisted** response: the full catalog projected, then
- * shadowed by the response's own data so a declared field of the same name still wins
- * (`mergeReservedValues` is the single expression carrying that guarantee).
+ * The reserved-field lookup map for a **persisted** response: every catalog entry the survey does
+ * not declare itself, projected, then shadowed once more by the response's own data.
  *
  * Server-side every reserved field is knowable, so this reads `RESERVED_FIELD_CATALOG` whole rather
  * than the mid-survey subset — the renderer's `projectClientReservedValues` exists precisely because
  * that is *not* true in the browser.
+ *
+ * **The survey parameter is what makes the grandfather rule work at all (ENG-2538).** This used to
+ * take only a response, so it had nothing to filter by and leaned entirely on `mergeReservedValues`'s
+ * spread — which loses only to a key that *exists*. A survey declaring an optional `url` therefore
+ * resolved the reserved page URL for every response where the respondent left it blank, in quotas,
+ * in server-side logic and (once ENG-2538 wired them up) on every display surface. Passing the survey
+ * lets {@link dropShadowedReservedEntries} apply the same rule the pickers already applied.
+ *
+ * The declared names come from the **stored rows** rather than the legacy columns: every caller here
+ * holds a saved survey, whose rows and declarations agree because every write path reconciles them in
+ * the same transaction. The editor is the one context where they can diverge, and it does not call
+ * this.
  */
-export const buildServerEmbeddedValues = (response: TEmbeddedValueResponse): TResponseData =>
-  mergeReservedValues(projectReservedValues(RESERVED_FIELD_CATALOG, response), response.data);
+export const buildServerEmbeddedValues = (
+  response: TEmbeddedValueResponse,
+  survey: TServerEmbeddedValuesSurvey
+): TResponseData =>
+  mergeReservedValues(
+    projectReservedValues(
+      dropShadowedReservedEntries(
+        RESERVED_FIELD_CATALOG,
+        listShadowingNames(
+          getSurveyEmbeddedFields(survey),
+          getElementsFromBlocks(survey.blocks).map((element) => element.id)
+        )
+      ),
+      response
+    ),
+    response.data
+  );
 
 /**
  * @param embeddedValues Reserved-field values merged UNDER `data` by `mergeReservedValues` — what a
@@ -321,7 +356,13 @@ const evaluateSingleCondition = (
     if (
       condition.leftOperand.type === "variable" &&
       getComputedFieldDataType(computedFields, condition.leftOperand.value) === "number" &&
-      condition.rightOperand?.type === "hiddenField"
+      // `reserved` alongside `hiddenField` as defence in depth. A *projected* reserved value does not
+      // need it: the catalog read seam runs `coerceToEmbeddedDataType`, so `durationSeconds` and the
+      // other number-typed entries arrive here as JS numbers and `Number()` is a no-op. What this
+      // guards is the one shape the map can still hold as a string — `mergeReservedValues` overlays
+      // `response.data` on the projection unconditionally, so a reserved key that is also a response
+      // key carries that raw string past the seam.
+      (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
     ) {
       rightValue = Number(rightValue as string);
     }

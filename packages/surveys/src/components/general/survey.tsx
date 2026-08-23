@@ -3,7 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 import {
   RESERVED_FIELD_CATALOG,
   coerceToEmbeddedDataType,
+  dropShadowedReservedEntries,
   getComputedEmbeddedFields,
+  getSurveyEmbeddedFields,
+  listShadowingNames,
   mergeReservedValues,
   projectClientReservedValues,
 } from "@formbricks/types/embedded-data-resolver";
@@ -985,6 +988,33 @@ export function Survey({
   );
 
   /**
+   * The catalog entries this survey may resolve at all — everything the survey does not declare
+   * itself (ENG-2538).
+   *
+   * Without this filter the projection below carried a reserved value for every name in the catalog,
+   * and {@link mergeReservedValues}'s spread was the only thing keeping a declared field ahead of
+   * it. A spread only wins for keys that exist, so a survey declaring an optional `url` rendered the
+   * page's own address — an internal `/edit` URL in the editor's preview, the respondent's own link
+   * in production — wherever the respondent had not supplied the field. That is the normal case for
+   * a hidden field, and it reached respondent-facing copy.
+   *
+   * Element ids count as declarations here, which is why `questions` is in the list: a question with
+   * id `url` is absent from `responseData` until it is answered, so the reserved read would win for
+   * exactly as long as the respondent had not reached it.
+   */
+  const readableReservedEntries = useMemo(
+    () =>
+      dropShadowedReservedEntries(
+        RESERVED_FIELD_CATALOG,
+        listShadowingNames(
+          getSurveyEmbeddedFields(localSurvey),
+          questions.map((question) => question.id)
+        )
+      ),
+    [localSurvey, questions]
+  );
+
+  /**
    * Reserved-field values this renderer can resolve *right now* (ENG-1840).
    *
    * `projectClientReservedValues` drops every `server` catalog entry, so the map holds only what a
@@ -999,7 +1029,7 @@ export function Survey({
    */
   const reservedValues = useMemo(
     () =>
-      projectClientReservedValues(RESERVED_FIELD_CATALOG, {
+      projectClientReservedValues(readableReservedEntries, {
         surveyId: localSurvey.id,
         language:
           selectedLanguage === "default" ? (getDefaultLanguageCode(survey) ?? null) : selectedLanguage,
@@ -1008,10 +1038,23 @@ export function Survey({
         ttc,
         meta: { ...getWebSurveyMeta(), action },
       }),
-    [localSurvey.id, selectedLanguage, survey, responseData, currentVariables, ttc, getWebSurveyMeta, action]
+    [
+      readableReservedEntries,
+      localSurvey.id,
+      selectedLanguage,
+      survey,
+      responseData,
+      currentVariables,
+      ttc,
+      getWebSurveyMeta,
+      action,
+    ]
   );
 
-  /** Recall's lookup map: reserved values first, so a declared field of the same name still wins. */
+  /**
+   * Recall's lookup map. The reserved side is already shadow-filtered, so a declared field owns its
+   * name whether or not it has a value; the merge order is what still protects a stored `""` or `0`.
+   */
   const recallValues = useMemo(
     () => mergeReservedValues(reservedValues, responseData),
     [reservedValues, responseData]
