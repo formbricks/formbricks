@@ -18,7 +18,7 @@ const handleDatabaseError = (error: unknown): never => {
 };
 
 /**
- * Every session token belonging to a user, read from Postgres.
+ * Every UNEXPIRED session token belonging to a user, read from Postgres.
  *
  * Postgres is the authoritative enumeration source here, deliberately: `session.storeSessionInDatabase`
  * is on (auth.ts), so every session has a row, whereas Better Auth's own `internalAdapter.listSessions`
@@ -35,6 +35,10 @@ export const getSessionTokensByUserId = async (
     const sessions = await getDbClient(tx).session.findMany({
       where: {
         userId,
+        // Expired rows are already unusable, and including them would inflate the revocation count that
+        // lands in the SSO-recovery audit event — the one place that number is read as "how many
+        // sessions the squatter was holding".
+        expires: { gt: new Date() },
       },
       select: {
         sessionToken: true,
