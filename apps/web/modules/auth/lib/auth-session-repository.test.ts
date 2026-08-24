@@ -17,15 +17,17 @@ describe("auth-session-repository", () => {
     vi.clearAllMocks();
   });
 
-  test("lists every session token for a user", async () => {
+  test("lists a user's unexpired session tokens", async () => {
     vi.mocked(prisma.session.findMany).mockResolvedValue([
       { sessionToken: "token-a" },
       { sessionToken: "token-b" },
     ] as never);
 
     await expect(getSessionTokensByUserId("user_1")).resolves.toEqual(["token-a", "token-b"]);
+    // Expired rows are excluded on purpose: the count feeds the SSO-recovery audit event, where it is
+    // read as "how many sessions the squatter was holding".
     expect(prisma.session.findMany).toHaveBeenCalledWith({
-      where: { userId: "user_1" },
+      where: { userId: "user_1", expires: { gt: expect.any(Date) } },
       select: { sessionToken: true },
     });
   });

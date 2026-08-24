@@ -25,14 +25,39 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
  * unwired. The surviving credential `Account` row identifies them: recovery nulls the password, it does
  * not delete the row.
  *
- * Kept as narrow as that problem, deliberately. Gating on the credential row rather than on
- * `emailVerified` means a user who has ONLY ever signed in via SSO has no such row and gains nothing here,
- * and `EMAIL_AUTH_ENABLED` switches the second arm off entirely on an SSO-only instance — where handing
- * back a password would be the "sign in around the IdP, and around whatever the IdP enforces" bypass that
- * turning `emailAndPassword.enabled` off exists to prevent.
+ * Kept as narrow as that problem, deliberately: gating on the credential row rather than on
+ * `emailVerified` means this action grants nothing to a user who has only ever signed in via SSO, and
+ * `EMAIL_AUTH_ENABLED` switches the second arm off entirely on an SSO-only instance.
+ *
+ * Both are belt-and-braces rather than the enforcement boundary, and it is worth not mistaking one for
+ * the other. Better Auth's native `POST /api/auth/request-password-reset` is mounted by the `[...all]`
+ * catch-all unconditionally — it is NOT gated on `emailAndPassword.enabled` — and its `resetPassword`
+ * CREATES a credential row when none exists. So a password can be minted for any registered address
+ * regardless of this action. What actually contains that is `/sign-in/email`, which IS gated, so a minted
+ * password is unusable on an SSO-only instance. This relaxation therefore grants no reach that was not
+ * already there; it just stops the UI lying to a recovered user.
  */
-const canResetPassword = async (user: { id: string; identityProvider: IdentityProvider }): Promise<boolean> =>
-  user.identityProvider === "email" || (EMAIL_AUTH_ENABLED && (await hasCredentialAccount(user.id)));
+const canResetPassword = async (user: {
+  id: string;
+  identityProvider: IdentityProvider;
+}): Promise<boolean> => {
+  if (user.identityProvider === "email") {
+    return true;
+  }
+  if (!EMAIL_AUTH_ENABLED) {
+    return false;
+  }
+
+  try {
+    return await hasCredentialAccount(user.id);
+  } catch (error) {
+    // Fail closed, and do not let this escape: the action's contract is an unconditional
+    // `{ success: true }` (enumeration safety), so a DB error here must not turn into a server error
+    // that answers "this address exists" by being shaped differently from the miss case.
+    logger.error({ error, userId: user.id }, "Credential-account lookup failed during password reset");
+    return false;
+  }
+};
 
 const ZForgotPasswordAction = z.object({
   email: ZUserEmail,

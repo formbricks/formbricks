@@ -89,6 +89,8 @@ describe("sso-recovery", () => {
   const txUserUpdate = vi.fn();
   const txTwoFactorDeleteMany = vi.fn();
   const txAccountUpdateMany = vi.fn();
+  const txOauthAccessUpdateMany = vi.fn();
+  const txOauthRefreshUpdateMany = vi.fn();
   // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
   // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
@@ -101,12 +103,20 @@ describe("sso-recovery", () => {
     account: {
       updateMany: txAccountUpdateMany,
     },
+    oauthAccessToken: {
+      updateMany: txOauthAccessUpdateMany,
+    },
+    oauthRefreshToken: {
+      updateMany: txOauthRefreshUpdateMany,
+    },
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     txTwoFactorDeleteMany.mockResolvedValue({ count: 1 });
     txAccountUpdateMany.mockResolvedValue({ count: 1 });
+    txOauthAccessUpdateMany.mockResolvedValue({ count: 1 });
+    txOauthRefreshUpdateMany.mockResolvedValue({ count: 2 });
     vi.mocked(revokeUserSessionsExcept).mockResolvedValue(2);
     vi.mocked(prisma.$transaction).mockImplementation(
       async (callback: (txClient: Prisma.TransactionClient) => Promise<unknown>) =>
@@ -245,6 +255,16 @@ describe("sso-recovery", () => {
       userId: "user_1",
       keepSessionToken: "current-session-token",
     });
+    // The OAuth grants the account minted while unproven: a refresh token outlives every session, so
+    // the sweep is incomplete without this.
+    expect(txOauthAccessUpdateMany).toHaveBeenCalledWith({
+      where: { userId: "user_1", revoked: null },
+      data: { revoked: expect.any(Date) },
+    });
+    expect(txOauthRefreshUpdateMany).toHaveBeenCalledWith({
+      where: { userId: "user_1", revoked: null },
+      data: { revoked: expect.any(Date) },
+    });
     expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "sso_recovery_completed",
@@ -252,6 +272,7 @@ describe("sso-recovery", () => {
         newObject: expect.objectContaining({
           credentialPasswordsCleared: 1,
           twoFactorRowsRemoved: 1,
+          oauthGrantsRevoked: 3,
           sessionsRevoked: 2,
         }),
       })
@@ -294,6 +315,8 @@ describe("sso-recovery", () => {
     expect(txUserUpdate).not.toHaveBeenCalled();
     expect(txTwoFactorDeleteMany).not.toHaveBeenCalled();
     expect(txAccountUpdateMany).not.toHaveBeenCalled();
+    expect(txOauthAccessUpdateMany).not.toHaveBeenCalled();
+    expect(txOauthRefreshUpdateMany).not.toHaveBeenCalled();
     // A proven account is a legitimate one: linking another provider to it must not sign its other
     // sessions out, and must not report a strip that did not happen.
     expect(revokeUserSessionsExcept).not.toHaveBeenCalled();
@@ -361,10 +384,19 @@ describe("sso-recovery", () => {
 
     expect(callbackUrl).toBe("http://localhost:3000/environments/env_1");
     expect(txAccountUpdateMany).toHaveBeenCalledOnce();
+    // A failed sweep must NOT be recorded as "0 sessions revoked" — same number, opposite incident.
     expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "sso_recovery_completed",
-        newObject: expect.objectContaining({ credentialPasswordsCleared: 1, sessionsRevoked: 0 }),
+        newObject: expect.objectContaining({
+          credentialPasswordsCleared: 1,
+          sessionRevocationFailed: true,
+        }),
+      })
+    );
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        newObject: expect.not.objectContaining({ sessionsRevoked: expect.anything() }),
       })
     );
   });
