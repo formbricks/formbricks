@@ -1,6 +1,7 @@
 import { auth } from "@/modules/auth/lib/auth";
 import { createAuthPathLabeller } from "@/modules/auth/lib/better-auth-path-label";
 import { runWithBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
+import { runWithEmailVerificationRequestContext } from "@/modules/auth/lib/email-verification-request-context";
 import { mapLegacySsoCallbackRequest } from "@/modules/auth/lib/legacy-sso-callback";
 import { normalizeDcrRequest } from "@/modules/auth/lib/mcp-dcr-application-type";
 import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
@@ -63,7 +64,14 @@ const handler = async (request: Request): Promise<Response> => {
   const mappedRequest = await normalizeDcrRequest(mapLegacySsoCallbackRequest(request));
   return runWithBetterAuthRequestContext(
     { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
-    () => runWithSsoRequestContext(() => auth.handler(mappedRequest))
+    () =>
+      runWithSsoRequestContext(() =>
+        // ENG-2562: carries "this request just verified an email" from Better Auth's
+        // `afterEmailVerification` hook to the `hooks.after` chain, which is where the session can
+        // actually be minted. Innermost because it is the narrowest scope of the three — one endpoint,
+        // not the whole handler.
+        runWithEmailVerificationRequestContext(() => auth.handler(mappedRequest))
+      )
   );
 };
 

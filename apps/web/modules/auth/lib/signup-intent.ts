@@ -85,7 +85,7 @@ export const createSignupIntentToken = (userId: string): string => {
  * request that must not fail on a bad cookie: a garbage cookie has to degrade to "no proof", which
  * withholds the session, not to a 500 on a link that already verified the user.
  */
-export const readSignupIntentUserId = (cookieValue: string | undefined): string | null => {
+export const readSignupIntentUserId = (cookieValue: string | null | undefined): string | null => {
   if (!cookieValue || !NEXTAUTH_SECRET || !ENCRYPTION_KEY) return null;
 
   try {

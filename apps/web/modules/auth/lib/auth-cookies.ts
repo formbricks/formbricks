@@ -10,7 +10,15 @@ import { env } from "@/lib/env";
  * cheap way out — the same reason `session-revocation.ts` reaches for `auth` dynamically.
  */
 
-/** `"__Secure-"` prefix on HTTPS; relaxed on http (local/dev). Mirrors Better Auth's own flag. */
+/**
+ * `__Secure-`/Secure cookies require HTTPS — on http://localhost the browser drops them and the session
+ * can't persist. Gate on the configured URL scheme (parity with NextAuth's URL-based useSecureCookies
+ * default) instead of hardcoding true, so local/dev over http works.
+ *
+ * WEBAPP_URL is part of the chain because all three vars are optional: a deployment that sets only
+ * WEBAPP_URL=https://… — the primary documented variable — would otherwise fall through to "" and serve
+ * the session cookie without `Secure`, letting a downgrade to plaintext HTTP leak it.
+ */
 export const USE_SECURE_COOKIES = (
   env.BETTER_AUTH_URL ??
   env.NEXTAUTH_URL ??
