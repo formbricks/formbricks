@@ -25,14 +25,11 @@ const handleDatabaseError = (error: unknown): never => {
  * reads the `active-sessions-<userId>` index out of `secondaryStorage` and returns an empty list when
  * that key is missing or evicted — which would silently revoke nothing.
  */
-export const getSessionTokensByUserId = async (
-  userId: string,
-  tx?: Prisma.TransactionClient
-): Promise<string[]> => {
+export const getSessionTokensByUserId = async (userId: string): Promise<string[]> => {
   validateInputs([userId, z.string().min(1)]);
 
   try {
-    const sessions = await getDbClient(tx).session.findMany({
+    const sessions = await getDbClient().session.findMany({
       where: {
         userId,
         // Expired rows are already unusable, and including them would inflate the revocation count that
