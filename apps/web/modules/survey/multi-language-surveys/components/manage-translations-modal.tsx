@@ -219,17 +219,10 @@ export const ManageTranslationsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {/* Closing mid-translation loses the result outright: the modal stays mounted, so the
-          translations still land in draftTranslations and the success toast still fires, but nothing
-          writes them to localSurvey and the init effect above resets the drafts on reopen. So every
-          way out — close button, backdrop, Escape, Cancel and Save — is blocked until the request
-          settles.
-          handleTranslateWithAI clears isTranslating in a finally, so this cannot latch. */}
-      <DialogContent
-        width="wide"
-        className="max-h-[85dvh]"
-        disableCloseButton={isTranslating}
-        disableCloseOnOutsideClick={isTranslating}>
+      {/* This modal holds unsaved translation drafts, so a stray backdrop click must not discard
+          them. closeOnEscape keeps Escape working, which disableCloseOnOutsideClick would otherwise
+          suppress too. */}
+      <DialogContent width="wide" className="max-h-[85dvh]" disableCloseOnOutsideClick closeOnEscape>
         <DialogHeader>
           <DialogTitle>{t("workspace.surveys.edit.manage_translations")}</DialogTitle>
           <div className="mt-2 flex items-center justify-between">
@@ -330,10 +323,10 @@ export const ManageTranslationsModal = ({
         </DialogBody>
 
         <DialogFooter>
-          <Button variant="secondary" size="sm" onClick={handleCancel} disabled={isTranslating}>
+          <Button variant="secondary" size="sm" onClick={handleCancel}>
             {t("common.cancel")}
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={isTranslating}>
+          <Button size="sm" onClick={handleSave}>
             {t("common.save")}
           </Button>
         </DialogFooter>

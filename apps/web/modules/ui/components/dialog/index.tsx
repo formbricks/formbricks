@@ -33,8 +33,6 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 interface DialogContentProps {
   hideCloseButton?: boolean;
-  /** Render the close button greyed out and unclickable, e.g. while an operation must not be interrupted. */
-  disableCloseButton?: boolean;
   disableCloseOnOutsideClick?: boolean;
   /** Keep Escape closing the dialog even when disableCloseOnOutsideClick is set. */
   closeOnEscape?: boolean;
@@ -57,14 +55,13 @@ const getDialogWidthClass = (width: "default" | "wide" | "full" | "narrow"): str
 
 const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
-  Readonly<React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps>
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps
 >(
   (
     {
       className,
       children,
       hideCloseButton,
-      disableCloseButton,
       disableCloseOnOutsideClick,
       closeOnEscape,
       width = "default",
@@ -93,9 +90,7 @@ const DialogContent = React.forwardRef<
           {...props}>
           {children}
           {!hideCloseButton && (
-            <DialogPrimitive.Close
-              disabled={disableCloseButton}
-              className="ring-offset-background focus:ring-ring absolute top-3 right-3 z-20 rounded-xs bg-transparent transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-accent data-[state=open]:text-slate-500">
+            <DialogPrimitive.Close className="ring-offset-background focus:ring-ring absolute top-3 right-3 z-20 rounded-xs bg-transparent transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-slate-500">
               <X className="size-4 text-slate-500" />
               <span className="sr-only">Close</span>
             </DialogPrimitive.Close>
