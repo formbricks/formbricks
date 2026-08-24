@@ -394,8 +394,12 @@ describe("sso-recovery", () => {
         }),
       })
     );
+    // `action` discriminator is load-bearing: `toHaveBeenCalledWith` passes when ANY call matches, so
+    // without it this would be satisfied by any other queued event lacking the key, and could go green
+    // without ever proving the completion event omits it.
     expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
+        action: "sso_recovery_completed",
         newObject: expect.not.objectContaining({ sessionsRevoked: expect.anything() }),
       })
     );

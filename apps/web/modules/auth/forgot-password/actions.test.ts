@@ -15,6 +15,13 @@ const mocks = vi.hoisted(() => ({
 }));
 
 const allowedRateLimitResponse = { allowed: true };
+
+/** Fresh audit context per call — the action writes `userId` / `suppressEvent` onto it. */
+let auditLoggingCtx: Record<string, unknown>;
+const callAction = (input: { email: string } = { email: "test@example.com" }) => {
+  auditLoggingCtx = {};
+  return forgotPasswordAction({ ctx: { auditLoggingCtx }, parsedInput: input } as any);
+};
 const RESET_REDIRECT = "http://localhost:3000/auth/forgot-password/reset";
 
 vi.mock("@/lib/constants", () => ({
@@ -29,6 +36,12 @@ vi.mock("@/lib/constants", () => ({
 // `lib/crypto`, which reads ENCRYPTION_KEY from the (fully replaced) constants mock at import time.
 vi.mock("@/lib/user/password", () => ({
   hasCredentialAccount: mocks.hasCredentialAccount,
+}));
+
+// Passthrough so the handler runs directly, matching modules/ee/billing/actions.test.ts. Importing the
+// real handler would drag the audit-log graph (and its POSTHOG_KEY constant read) into this suite.
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  withAuditLogging: vi.fn((_action, _target, fn) => fn),
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -84,7 +97,7 @@ describe("forgotPasswordAction", () => {
     test("applies rate limiting (with the right config) before looking up the user", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
 
-      await forgotPasswordAction({ parsedInput: validInput } as any);
+      await callAction(validInput);
 
       expect(applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.forgotPassword);
       expect(applyIPRateLimit).toHaveBeenCalledBefore(getUserByEmail as any);
@@ -95,7 +108,7 @@ describe("forgotPasswordAction", () => {
         new Error("Maximum number of requests reached. Please try again later.")
       );
 
-      await expect(forgotPasswordAction({ parsedInput: validInput } as any)).rejects.toThrow(
+      await expect(callAction(validInput)).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
       );
 
@@ -109,7 +122,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue(allowedRateLimitResponse);
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
 
-      const result = await forgotPasswordAction({ parsedInput: validInput } as any);
+      const result = await callAction(validInput);
 
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
       expect(auth.api.requestPasswordReset).toHaveBeenCalledWith({
@@ -123,7 +136,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue(allowedRateLimitResponse);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
-      const result = await forgotPasswordAction({ parsedInput: validInput } as any);
+      const result = await callAction(validInput);
 
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
       expect(result).toEqual({ success: true });
@@ -134,7 +147,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(getUserByEmail).mockResolvedValue({ ...mockUser, identityProvider: "google" } as any);
       mocks.hasCredentialAccount.mockResolvedValue(false);
 
-      const result = await forgotPasswordAction({ parsedInput: validInput } as any);
+      const result = await callAction(validInput);
 
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
       expect(result).toEqual({ success: true });
@@ -155,7 +168,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(getUserByEmail).mockResolvedValue({ ...mockUser, identityProvider: "google" } as any);
       mocks.hasCredentialAccount.mockResolvedValue(true);
 
-      const result = await forgotPasswordAction({ parsedInput: validInput } as any);
+      const result = await callAction(validInput);
 
       expect(mocks.hasCredentialAccount).toHaveBeenCalledWith(mockUser.id);
       expect(auth.api.requestPasswordReset).toHaveBeenCalledWith({
@@ -170,7 +183,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(getUserByEmail).mockResolvedValue({ ...mockUser, identityProvider: "google" } as any);
       mocks.hasCredentialAccount.mockResolvedValue(true);
 
-      const result = await forgotPasswordAction({ parsedInput: validInput } as any);
+      const result = await callAction(validInput);
 
       // Handing a password back where the operator disabled credential auth would be the "sign in around
       // the IdP" bypass that switching it off exists to prevent.
@@ -181,11 +194,50 @@ describe("forgotPasswordAction", () => {
     test("does not need the credential lookup for an email-identity user", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
 
-      await forgotPasswordAction({ parsedInput: validInput } as any);
+      await callAction(validInput);
 
       // Short-circuits on `identityProvider === "email"`, so the extra query never runs for the common case.
       expect(mocks.hasCredentialAccount).not.toHaveBeenCalled();
       expect(auth.api.requestPasswordReset).toHaveBeenCalledOnce();
+    });
+  });
+
+  /**
+   * The action answers `{ success: true }` whether or not a reset was actually requested, so the audit
+   * wrapper cannot tell the two apart on its own — without `suppressEvent` it would record a
+   * `passwordReset` for an address that never got one. Same false-record problem as duplicate sign-up
+   * (ENG-2091), and these pin both directions.
+   */
+  describe("Audit record", () => {
+    beforeEach(() => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue(allowedRateLimitResponse);
+    });
+
+    test("targets the audited event at the user when a reset is actually requested", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+
+      await callAction(validInput);
+
+      expect(auditLoggingCtx.userId).toBe(mockUser.id);
+      expect(auditLoggingCtx.suppressEvent).toBeUndefined();
+    });
+
+    test("suppresses the event for an address with no account", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
+      await callAction(validInput);
+
+      expect(auditLoggingCtx.suppressEvent).toBe(true);
+      expect(auditLoggingCtx.userId).toBeUndefined();
+    });
+
+    test("suppresses the event for a user with no password to reset", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue({ ...mockUser, identityProvider: "google" } as any);
+      mocks.hasCredentialAccount.mockResolvedValue(false);
+
+      await callAction(validInput);
+
+      expect(auditLoggingCtx.suppressEvent).toBe(true);
     });
   });
 
@@ -195,7 +247,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
       vi.mocked(auth.api.requestPasswordReset).mockRejectedValue(new Error("BA request failed"));
 
-      await expect(forgotPasswordAction({ parsedInput: validInput } as any)).resolves.toEqual({
+      await expect(callAction(validInput)).resolves.toEqual({
         success: true,
       });
       expect(logger.error).toHaveBeenCalledWith(
@@ -208,9 +260,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue(allowedRateLimitResponse);
       vi.mocked(getUserByEmail).mockRejectedValue(new Error("Database error"));
 
-      await expect(forgotPasswordAction({ parsedInput: validInput } as any)).rejects.toThrow(
-        "Database error"
-      );
+      await expect(callAction(validInput)).rejects.toThrow("Database error");
     });
   });
 
@@ -219,7 +269,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue(allowedRateLimitResponse);
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
-      expect(await forgotPasswordAction({ parsedInput: validInput } as any)).toEqual({ success: true });
+      expect(await callAction(validInput)).toEqual({ success: true });
     });
 
     test("always returns success for an SSO user and never requests a reset", async () => {
@@ -227,7 +277,7 @@ describe("forgotPasswordAction", () => {
       vi.mocked(getUserByEmail).mockResolvedValue({ ...mockUser, identityProvider: "github" } as any);
       mocks.hasCredentialAccount.mockResolvedValue(false);
 
-      const result = await forgotPasswordAction({ parsedInput: validInput } as any);
+      const result = await callAction(validInput);
 
       expect(result).toEqual({ success: true });
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();

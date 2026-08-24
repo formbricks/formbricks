@@ -13,6 +13,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 
 /**
  * Whether this user has a password to reset. Pure SSO users do not, and are silently skipped — Better
@@ -63,9 +64,8 @@ const ZForgotPasswordAction = z.object({
   email: ZUserEmail,
 });
 
-export const forgotPasswordAction = actionClient
-  .inputSchema(ZForgotPasswordAction)
-  .action(async ({ parsedInput }) => {
+export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordAction).action(
+  withAuditLogging("passwordReset", "user", async ({ ctx, parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.auth.forgotPassword);
 
     if (PASSWORD_RESET_DISABLED) {
@@ -75,6 +75,10 @@ export const forgotPasswordAction = actionClient
     const user = await getUserByEmail(parsedInput.email);
 
     if (user && (await canResetPassword(user))) {
+      // Target the audited event at the account the reset was requested for. The ACTOR stays
+      // `UNKNOWN_DATA` because this action is unauthenticated by design — which is the honest record:
+      // someone who knows the address asked for a reset.
+      ctx.auditLoggingCtx.userId = user.id;
       try {
         await auth.api.requestPasswordReset({
           body: { email: user.email, redirectTo: `${WEBAPP_URL}/auth/forgot-password/reset` },
@@ -83,7 +87,15 @@ export const forgotPasswordAction = actionClient
       } catch (error) {
         logger.error({ error, userId: user.id }, "Password reset request failed");
       }
+    } else {
+      // No reset was requested — unknown address, or a user with no password to reset. The action still
+      // answers `{ success: true }` to stay enumeration-safe, so without this the wrapper's fixed
+      // `passwordReset` action would record a reset that never happened (the same false-record problem
+      // `suppressEvent` was added for on duplicate sign-up, ENG-2091). A thrown failure is audited
+      // regardless, so this cannot hide one.
+      ctx.auditLoggingCtx.suppressEvent = true;
     }
 
     return { success: true };
-  });
+  })
+);
