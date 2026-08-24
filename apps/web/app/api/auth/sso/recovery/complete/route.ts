@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@formbricks/logger";
 import { verifySsoRelinkIntent } from "@/lib/jwt";
-import { deleteSessionBySessionToken } from "@/modules/auth/lib/auth-session-repository";
 import { getSession } from "@/modules/auth/lib/session";
 import {
   BETTER_AUTH_SESSION_COOKIE_NAMES,
   getSessionTokenFromCookieHeader,
 } from "@/modules/auth/lib/session-cookie";
+import { revokeSessionByToken } from "@/modules/auth/lib/session-revocation";
 import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/sso-recovery";
 
 const clearSessionCookies = (response: NextResponse) => {
@@ -31,7 +31,9 @@ const buildFailedRecoveryResponse = async (request: Request, callbackUrl?: strin
   }
 
   try {
-    await deleteSessionBySessionToken(sessionToken);
+    // Through the two-store revocation, not a raw Prisma delete: sessions live in Redis too, and a
+    // DB-only delete would leave this one resolvable by `getSession` until its TTL (ENG-2557).
+    await revokeSessionByToken(sessionToken);
   } catch (error) {
     logger.error(error, "Failed to delete SSO recovery session after recovery completion error");
   }

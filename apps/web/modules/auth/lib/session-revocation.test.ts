@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSessionTokensByUserId } from "@/modules/auth/lib/auth-session-repository";
-import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
+import { revokeSessionByToken, revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 
 const mocks = vi.hoisted(() => ({
   deleteSessions: vi.fn(),
@@ -75,5 +75,18 @@ describe("revokeUserSessionsExcept", () => {
     // Not `internalAdapter.listSessions`: under `secondaryStorage` that reads only the
     // `active-sessions-<userId>` Redis index and returns [] if it was evicted, revoking nothing.
     expect(getSessionTokensByUserId).toHaveBeenCalledWith("user_1");
+  });
+});
+
+describe("revokeSessionByToken", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.deleteSessions.mockResolvedValue(undefined);
+  });
+
+  test("revokes the one session through the adapter, so both stores are cleared", async () => {
+    await revokeSessionByToken("token-a");
+
+    expect(mocks.deleteSessions).toHaveBeenCalledWith(["token-a"]);
   });
 });

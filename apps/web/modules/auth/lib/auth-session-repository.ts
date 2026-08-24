@@ -17,25 +17,6 @@ const handleDatabaseError = (error: unknown): never => {
   throw error;
 };
 
-export const deleteSessionBySessionToken = async (
-  sessionToken: string,
-  tx?: Prisma.TransactionClient
-): Promise<number> => {
-  validateInputs([sessionToken, z.string().min(1)]);
-
-  try {
-    const result = await getDbClient(tx).session.deleteMany({
-      where: {
-        sessionToken,
-      },
-    });
-
-    return result.count;
-  } catch (error) {
-    return handleDatabaseError(error);
-  }
-};
-
 /**
  * Every session token belonging to a user, read from Postgres.
  *
