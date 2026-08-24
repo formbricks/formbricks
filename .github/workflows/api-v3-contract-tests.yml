@@ -5,17 +5,19 @@ name: API v3 Contract Tests
 # api-v3-spec.yml proves the document is well-formed and the bundle is fresh; this proves the running
 # API still matches it. Harness and local instructions: docs/api-v3-reference/contract-tests/.
 #
-# Fast profile on purpose: the `examples` phase only, which is one sampled case per documented
-# operation (~80 requests, well under a minute). The job's cost is the Next.js build, not the tests.
-# Deep fuzzing, the coverage phase and stateful suites are deliberately out of the PR gate.
+# Fast profile on purpose: the `examples` phase only, which is a sampled case per documented
+# operation (~70 requests, ~25s). The job's cost is the Next.js build, not the tests. Deep fuzzing,
+# the coverage phase and stateful suites are deliberately out of the PR gate.
 
 on:
   workflow_call:
     secrets:
       ENTERPRISE_LICENSE_KEY:
-        # Optional: without it the entitlement-gated operations (workflows, contacts, AI) answer their
-        # documented 403 instead of a real payload. The run stays honest, just shallower — which is
-        # also what happens on fork PRs, where secrets are never available.
+        # Optional: without it every entitlement-gated operation answers its documented 403 instead of
+        # a real payload — the run stays honest, just shallower, which is also the fork-PR path since
+        # secrets are never available there. With it, `contacts` resolves; `workflows` does not yet,
+        # because the CI key's feature set does not grant it (ENG-2553). The probe after boot reports
+        # which of the two you got.
         required: false
   workflow_dispatch:
 

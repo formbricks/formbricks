@@ -54,7 +54,9 @@ Three things to know before reading the result:
   `/workflows` path, the two `/workflows/runs` reads included — they all authorize through
   `buildWorkflowApiContext`), plus `contact-attribute-keys`, are entitlement-gated. Without
   `ENTERPRISE_LICENSE_KEY` they answer a documented 403, so the run stays green but tests those
-  operations shallowly.
+  operations shallowly. A licence is necessary but not sufficient: it also has to _grant_ the
+  feature. CI's key grants `contacts` and not `workflows` (ENG-2553), so the 13 workflow operations
+  are shallow there too — the job's post-boot probe says which state you are in on every run.
 - **The four `/tags` operations are session-only** (`auth: "session"`, and the spec declares only
   `sessionAuth`), so an API key gets a documented 401 before any handler runs. They are checked
   against that 401, which is a real assertion that they stay session-only — but no tag fixtures
