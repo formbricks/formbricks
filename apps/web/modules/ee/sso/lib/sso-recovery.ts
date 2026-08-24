@@ -47,7 +47,8 @@ const queueSsoRecoveryAuditEvent = ({
   callbackUrl?: string;
   failureReason?: string;
   reclaimed?: TReclaimOutcome;
-  sessionsRevoked?: number;
+  /** `null` means the sweep threw — deliberately not conflated with "there were none". */
+  sessionsRevoked?: number | null;
 }) => {
   queueAuditEventBackground({
     action,
@@ -70,7 +71,10 @@ const queueSsoRecoveryAuditEvent = ({
         ? {
             credentialPasswordsCleared: reclaimed.credentialPasswordsCleared,
             twoFactorRowsRemoved: reclaimed.twoFactorRowsRemoved,
-            sessionsRevoked: sessionsRevoked ?? 0,
+            oauthGrantsRevoked: reclaimed.oauthGrantsRevoked,
+            // `sessionsRevoked: 0` and "the sweep failed" are the same number but opposite incidents,
+            // and this is the field a responder reads to confirm the squatter was actually kicked out.
+            ...(sessionsRevoked === null ? { sessionRevocationFailed: true } : { sessionsRevoked }),
           }
         : {}),
     },
@@ -84,6 +88,7 @@ const queueSsoRecoveryAuditEvent = ({
 type TReclaimOutcome = {
   credentialPasswordsCleared: number;
   twoFactorRowsRemoved: number;
+  oauthGrantsRevoked: number;
 } | null;
 
 /**
@@ -142,7 +147,14 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
 }): Promise<TReclaimOutcome> => {
   // Keyed on `emailVerified` alone. The old guard also required `identityProvider === "email"`, but that
   // column is denormalized onto `User` by an `account.create.after` hook — resting a security control on a
-  // denormalized value means drift silently disables it. "Never proved this address" is the whole test.
+  // denormalized value means drift silently disables it.
+  //
+  // Worth being honest about the limit of this test: `emailVerified` is a one-bit latch, and it says the
+  // address was proven, NOT that the account's local factors were ever proven by their owner. Anyone who
+  // knows the account's password can have Better Auth re-send a verification mail (`sendOnSignIn`), so a
+  // single victim click flips this and the strip below stops firing. That is the pre-hijacking vector in
+  // ENG-2562, tracked separately, and closing it means invalidating the credential at verification time
+  // too — not a different guard here.
   if (user.emailVerified) {
     return null;
   }
@@ -168,9 +180,28 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
     data: { password: null },
   });
 
+  // MCP OAuth grants the account minted while its address was unproven. Without this the sweep is
+  // incomplete in the one direction that outlives it: `oauthProvider` is registered unconditionally
+  // (auth.ts) with open dynamic client registration, so a holder of a live session can bank a refresh
+  // token good for 30 days — far longer than the session revoked below, and unreachable by it because
+  // both token tables' `session` FK is `onDelete: SetNull`, which blanks the liveness check rather than
+  // failing it. `revoked` is the field both introspection paths actually honour.
+  const revokedAt = new Date();
+  const [accessRows, refreshRows] = [
+    await tx.oauthAccessToken.updateMany({
+      where: { userId: user.id, revoked: null },
+      data: { revoked: revokedAt },
+    }),
+    await tx.oauthRefreshToken.updateMany({
+      where: { userId: user.id, revoked: null },
+      data: { revoked: revokedAt },
+    }),
+  ];
+
   return {
     credentialPasswordsCleared: credentialRows.count,
     twoFactorRowsRemoved: twoFactorRows.count,
+    oauthGrantsRevoked: accessRows.count + refreshRows.count,
   };
 };
 
@@ -419,7 +450,7 @@ export const completeSsoRecovery = async ({
   // After commit, never inside the transaction: Better Auth resolves its adapter from its own
   // AsyncLocalStorage, so this would run outside `tx` and outlive a rollback. Best-effort for the same
   // reason the strip must not be undone by a revocation failure — it has already committed.
-  let sessionsRevoked = 0;
+  let sessionsRevoked: number | null = 0;
   if (reclaimed) {
     try {
       sessionsRevoked = await revokeUserSessionsExcept({
@@ -427,6 +458,7 @@ export const completeSsoRecovery = async ({
         keepSessionToken: sessionToken,
       });
     } catch (error) {
+      sessionsRevoked = null;
       logger.error(
         { error, userId: user.id },
         "Failed to revoke sessions after reclaiming unverified local auth"

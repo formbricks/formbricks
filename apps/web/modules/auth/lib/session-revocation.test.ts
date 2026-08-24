@@ -60,6 +60,33 @@ describe("revokeUserSessionsExcept", () => {
     expect(revoked).toBe(0);
   });
 
+  /**
+   * Fail-safe direction: `keepSessionToken` is only ever SUBTRACTED from the user's own token set, so an
+   * absent or foreign value can only over-revoke the caller's sessions — never under-revoke, and never
+   * reach another user. These two pin that, because the opposite would be a real hole.
+   */
+  test("sweeps the caller too when no token is supplied", async () => {
+    vi.mocked(getSessionTokensByUserId).mockResolvedValue(["token-a", "token-b"]);
+
+    const revoked = await revokeUserSessionsExcept({ userId: "user_1", keepSessionToken: undefined });
+
+    expect(mocks.deleteSessions).toHaveBeenCalledWith(["token-a", "token-b"]);
+    expect(revoked).toBe(2);
+  });
+
+  test("a token belonging to someone else spares nothing and reaches nothing", async () => {
+    vi.mocked(getSessionTokensByUserId).mockResolvedValue(["token-a", "token-b"]);
+
+    const revoked = await revokeUserSessionsExcept({
+      userId: "user_1",
+      keepSessionToken: "some-other-users-token",
+    });
+
+    // Everything of user_1's goes; the foreign token is never passed to the adapter.
+    expect(mocks.deleteSessions).toHaveBeenCalledWith(["token-a", "token-b"]);
+    expect(revoked).toBe(2);
+  });
+
   test("is a no-op for a user with no sessions", async () => {
     vi.mocked(getSessionTokensByUserId).mockResolvedValue([]);
 
