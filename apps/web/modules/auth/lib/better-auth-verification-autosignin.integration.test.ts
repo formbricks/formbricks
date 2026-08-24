@@ -37,15 +37,16 @@ const signUpAndCaptureToken = async (): Promise<{ token: string; userId: string 
 };
 
 /** Drive `/verify-email` the way the route does, optionally carrying a sign-up intent cookie. */
-const verifyEmail = async (token: string, intentCookieValue?: string): Promise<void> => {
+const verifyEmail = async (token: string, intentCookieValue?: string): Promise<Response> => {
   const headers = new Headers();
   if (intentCookieValue) {
     headers.set("cookie", `${SIGNUP_INTENT_COOKIE_NAME}=${intentCookieValue}`);
   }
 
-  await runWithEmailVerificationRequestContext(async () => {
-    // asResponse so the thrown redirect on the withheld path is returned rather than propagated.
-    await auth.api.verifyEmail({ query: { token }, headers, asResponse: true });
+  return await runWithEmailVerificationRequestContext(async () => {
+    // asResponse so the thrown redirect on the withheld path is returned rather than propagated —
+    // and so the response's status, Location and set-cookie headers can be asserted, not just DB rows.
+    return await auth.api.verifyEmail({ query: { token }, headers, asResponse: true });
   });
 };
 
@@ -60,24 +61,36 @@ describe("post-verification auto-sign-in (real Postgres)", () => {
 
     // The victim clicks the link the attacker's sign-up caused to be sent. Their browser carries no
     // sign-up intent cookie, because they never signed up.
-    await verifyEmail(token);
+    const response = await verifyEmail(token);
 
     // The address is verified — that part is correct and unchanged.
     expect((await prisma.user.findUnique({ where: { email: VICTIM } }))?.emailVerified).toBe(true);
     // But no session exists, so the victim is never signed into the attacker's account. Before this
     // fix this count was 1, and that session is the whole vulnerability.
     expect(await prisma.session.count()).toBe(0);
+    // At the HTTP layer too: no session cookie on the response, and the user is not silently bounced —
+    // they land on the login page with the "verified, now sign in" explanation.
+    expect(response.headers.get("set-cookie") ?? "").not.toContain("session_token=");
+    expect(response.status).toBeGreaterThanOrEqual(300);
+    expect(response.status).toBeLessThan(400);
+    expect(response.headers.get("location")).toContain("/auth/login?verified=1");
   });
 
   test("mints the session when the intent cookie names the just-verified user", async () => {
     const { token, userId } = await signUpAndCaptureToken();
 
     // Same browser that signed up: the ENG-1746 land-in-the-app UX this fix is careful to preserve.
-    await verifyEmail(token, createSignupIntentToken(userId));
+    const response = await verifyEmail(token, createSignupIntentToken(userId));
 
     expect(await prisma.session.count()).toBe(1);
     const session = await prisma.session.findFirst();
     expect(session?.userId).toBe(userId);
+    // The session must reach the BROWSER, not just the database — a row without a set-cookie would
+    // leave the user signed out while this table reports success.
+    const setCookie = response.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain("session_token=");
+    // And the spent intent cookie is cleared (single use), on the same response.
+    expect(setCookie).toContain(`${SIGNUP_INTENT_COOKIE_NAME}=;`);
   });
 
   test("withholds when the intent cookie names a different account", async () => {

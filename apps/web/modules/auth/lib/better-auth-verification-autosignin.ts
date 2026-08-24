@@ -79,6 +79,16 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
     const currentSession = await getSessionFromCtx(ctx);
     if (currentSession && currentSession.user?.id === verifiedUserId) return;
 
+    // If the endpoint has ALREADY attached a session cookie to this response, it made its own
+    // sign-in decision and this hook must not second-guess it. Unreachable in today's config — the
+    // only `/verify-email` branch that does this is Better Auth's `updateTo` email-change flow, and
+    // `user.changeEmail` is not enabled — but that branch also fires `afterEmailVerification`, so
+    // without this guard, enabling changeEmail later would have this hook stomp a legitimate
+    // email-change verification with the login redirect. Server-controlled header, not spoofable.
+    const sessionCookieName = ctx.context.authCookies?.sessionToken?.name;
+    const setCookieHeader = ctx.context.responseHeaders?.get("set-cookie") ?? "";
+    if (sessionCookieName && setCookieHeader.includes(`${sessionCookieName}=`)) return;
+
     const intentUserId = readSignupIntentUserId(ctx.getCookie(SIGNUP_INTENT_COOKIE_NAME));
     if (intentUserId !== verifiedUserId) {
       // No proof this browser started the sign-up. The email is verified either way — that is Better

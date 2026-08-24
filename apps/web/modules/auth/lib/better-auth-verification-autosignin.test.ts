@@ -42,7 +42,11 @@ const buildCtx = (overrides: Record<string, unknown> = {}) => {
     setCookie: vi.fn(),
     // Mirrors Better Auth: `ctx.redirect` RETURNS a value the caller throws.
     redirect: vi.fn((url: string) => new Error(`REDIRECT:${url}`)),
-    context: { internalAdapter: { findUserById, createSession } },
+    context: {
+      internalAdapter: { findUserById, createSession },
+      authCookies: { sessionToken: { name: "formbricks.session_token" } },
+      responseHeaders: new Headers(),
+    },
     ...overrides,
   } as never;
 };
@@ -139,6 +143,23 @@ describe("verificationAutoSignInAfterHandler", () => {
 
     expect(sessionOf(ctx)).not.toHaveBeenCalled();
     expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+  });
+
+  test("defers when the endpoint already attached a session cookie to the response", async () => {
+    // Better Auth's `updateTo` email-change branch mints its own session AND fires
+    // afterEmailVerification. changeEmail is not enabled today, but if it ever is, this hook must not
+    // stomp that flow's response with the login redirect.
+    const ctx = buildCtx();
+    (ctx as unknown as { context: { responseHeaders: Headers } }).context.responseHeaders.set(
+      "set-cookie",
+      "formbricks.session_token=abc; Path=/; HttpOnly"
+    );
+
+    await verificationAutoSignInAfterHandler(ctx);
+
+    expect(sessionOf(ctx)).not.toHaveBeenCalled();
+    expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+    expect(mocks.auditVerificationSessionWithheld).not.toHaveBeenCalled();
   });
 
   test("still mints when a DIFFERENT user is signed in in this browser", async () => {
