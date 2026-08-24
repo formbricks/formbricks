@@ -56,6 +56,8 @@
     "login": {
       "backup_code": "Reservkod",
       "create_an_account": "Skapa ett konto",
+      "email_verified_sign_in_description": "Din e-postadress är bekräftad. Logga in för att fortsätta. Om du inte har skapat det här kontot ska du inte logga in — återställ lösenordet i stället för att ta kontroll över det.",
+      "email_verified_sign_in_title": "E-post verifierad",
       "enter_your_backup_code": "Ange din reservkod",
       "enter_your_two_factor_authentication_code": "Ange din tvåfaktorsautentiseringskod",
       "forgot_your_password": "Glömt ditt lösenord?",
