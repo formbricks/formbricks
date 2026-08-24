@@ -79,6 +79,16 @@ const meta: Meta<StoryProps> = {
       },
       order: 1,
     },
+    disableCloseButton: {
+      control: "boolean",
+      description: "Whether to render the close button (X) greyed out and unclickable",
+      table: {
+        category: "Behavior",
+        type: { summary: "boolean" },
+        defaultValue: { summary: "false" },
+      },
+      order: 3,
+    },
 
     // Story Options - Appearance Category
     width: {
@@ -215,6 +225,7 @@ const renderModal = (args: StoryProps) => {
   // Extract component props
   const {
     hideCloseButton = false,
+    disableCloseButton = false,
     disableCloseOnOutsideClick = false,
     width = "default",
     className = "",
@@ -245,6 +256,7 @@ const renderModal = (args: StoryProps) => {
       </DialogTrigger>
       <DialogContent
         hideCloseButton={hideCloseButton}
+        disableCloseButton={disableCloseButton}
         disableCloseOnOutsideClick={disableCloseOnOutsideClick}
         width={width}
         className={className}>
@@ -429,6 +441,36 @@ export const RestrictClose: Story = {
     docs: {
       description: {
         story: "Use when you need to force user interaction with the modal content before closing.",
+      },
+    },
+  },
+};
+
+export const DisabledCloseButton: Story = {
+  render: renderModal,
+  args: {
+    triggerText: "Open Modal - Disabled Close Button",
+    showHeader: true,
+    showIcon: true,
+    title: "Modal with Disabled Close Button",
+    showDescription: true,
+    description: "The close button stays visible but greyed out while an operation is running.",
+    showFooter: true,
+    footerButtonConfiguration: "2",
+    primaryButtonText: "Save",
+    secondaryButtonText: "Cancel",
+    tertiaryButtonText: "",
+    bodyElementCount: 5,
+    hideCloseButton: false,
+    disableCloseButton: true,
+    disableCloseOnOutsideClick: true,
+    width: "default",
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Use while an in-flight operation must not be interrupted: the close button keeps its place so the layout stays stable, but it cannot be clicked.",
       },
     },
   },

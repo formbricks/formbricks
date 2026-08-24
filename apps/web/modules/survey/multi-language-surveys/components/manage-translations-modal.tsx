@@ -219,7 +219,15 @@ export const ManageTranslationsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent width="wide" className="max-h-[85dvh]">
+      {/* While AI translation is running, closing the modal would discard the incoming translations,
+          so the close button and backdrop clicks are blocked. Escape and Cancel stay live as the
+          deliberate way out. */}
+      <DialogContent
+        width="wide"
+        className="max-h-[85dvh]"
+        disableCloseButton={isTranslating}
+        disableCloseOnOutsideClick={isTranslating}
+        closeOnEscape>
         <DialogHeader>
           <DialogTitle>{t("workspace.surveys.edit.manage_translations")}</DialogTitle>
           <div className="mt-2 flex items-center justify-between">
