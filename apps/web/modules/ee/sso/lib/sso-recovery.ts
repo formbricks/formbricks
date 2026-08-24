@@ -72,6 +72,7 @@ const queueSsoRecoveryAuditEvent = ({
             credentialPasswordsCleared: reclaimed.credentialPasswordsCleared,
             twoFactorRowsRemoved: reclaimed.twoFactorRowsRemoved,
             oauthGrantsRevoked: reclaimed.oauthGrantsRevoked,
+            oauthConsentsRevoked: reclaimed.oauthConsentsRevoked,
             // `sessionsRevoked: 0` and "the sweep failed" are the same number but opposite incidents,
             // and this is the field a responder reads to confirm the squatter was actually kicked out.
             ...(sessionsRevoked === null ? { sessionRevocationFailed: true } : { sessionsRevoked }),
@@ -89,6 +90,7 @@ type TReclaimOutcome = {
   credentialPasswordsCleared: number;
   twoFactorRowsRemoved: number;
   oauthGrantsRevoked: number;
+  oauthConsentsRevoked: number;
 } | null;
 
 /**
@@ -185,23 +187,40 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // (auth.ts) with open dynamic client registration, so a holder of a live session can bank a refresh
   // token good for 30 days — far longer than the session revoked below, and unreachable by it because
   // both token tables' `session` FK is `onDelete: SetNull`, which blanks the liveness check rather than
-  // failing it. `revoked` is the field both introspection paths actually honour.
+  // failing it.
+  //
+  // The REFRESH token is the one that matters and the one this actually stops: `handleRefreshTokenGrant`
+  // reads `revoked`, so revoking it ends the 30-day persistence.
+  //
+  // ACCESS tokens are a different story, and worth stating plainly rather than implying this covers them.
+  // Our config sets `resources` and never sets `disableJwtPlugin`, so `isJwtAccessToken` is always true
+  // and every access token is a self-contained JWT: `createJwtAccessToken` signs without persisting, so
+  // there is normally no row here to update, and `/api/mcp` verifies bearers against JWKS
+  // (`modules/mcp/auth.ts`) without reading this table at all. Upstream's own revoke endpoint says as
+  // much — "JWT access tokens are self-contained and cannot be revoked server-side". The write below is
+  // therefore defence for the opaque-token configuration only; the residual is that a squatter's JWT
+  // stays valid for up to `accessTokenExpiresIn` (15 min) after recovery. Shortening that, or checking
+  // revocation at the resource server, is the only thing that would close it.
+  //
+  // Consent goes too: `/authorize` skips the consent screen when a matching `oauthConsent` row exists,
+  // so leaving it would let a still-cookie-cached session (see session-revocation.ts) silently mint a
+  // fresh 30-day refresh token and undo the revocation above.
   const revokedAt = new Date();
-  const [accessRows, refreshRows] = [
-    await tx.oauthAccessToken.updateMany({
-      where: { userId: user.id, revoked: null },
-      data: { revoked: revokedAt },
-    }),
-    await tx.oauthRefreshToken.updateMany({
-      where: { userId: user.id, revoked: null },
-      data: { revoked: revokedAt },
-    }),
-  ];
+  const accessRows = await tx.oauthAccessToken.updateMany({
+    where: { userId: user.id, revoked: null },
+    data: { revoked: revokedAt },
+  });
+  const refreshRows = await tx.oauthRefreshToken.updateMany({
+    where: { userId: user.id, revoked: null },
+    data: { revoked: revokedAt },
+  });
+  const consentRows = await tx.oauthConsent.deleteMany({ where: { userId: user.id } });
 
   return {
     credentialPasswordsCleared: credentialRows.count,
     twoFactorRowsRemoved: twoFactorRows.count,
     oauthGrantsRevoked: accessRows.count + refreshRows.count,
+    oauthConsentsRevoked: consentRows.count,
   };
 };
 

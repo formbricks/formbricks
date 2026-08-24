@@ -28,7 +28,10 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
  *
  * Kept as narrow as that problem, deliberately: gating on the credential row rather than on
  * `emailVerified` means this action grants nothing to a user who has only ever signed in via SSO, and
- * `EMAIL_AUTH_ENABLED` switches the second arm off entirely on an SSO-only instance.
+ * `EMAIL_AUTH_ENABLED` switches the second arm off entirely on an SSO-only instance. Note that gate
+ * covers only the second arm — an `identityProvider === "email"` user still receives reset mail on an
+ * SSO-only instance, which is pre-existing behaviour this change deliberately leaves alone. So the flag
+ * here is about not *widening* that surface, not about closing it.
  *
  * Both are belt-and-braces rather than the enforcement boundary, and it is worth not mistaking one for
  * the other. Better Auth's native `POST /api/auth/request-password-reset` is mounted by the `[...all]`
@@ -52,9 +55,11 @@ const canResetPassword = async (user: {
   try {
     return await hasCredentialAccount(user.id);
   } catch (error) {
-    // Fail closed, and do not let this escape: the action's contract is an unconditional
-    // `{ success: true }` (enumeration safety), so a DB error here must not turn into a server error
-    // that answers "this address exists" by being shaped differently from the miss case.
+    // Fail closed rather than letting this escape. Note the action's `{ success: true }` is not an
+    // absolute invariant — `getUserByEmail` above it is unguarded and its `DatabaseError` is not an
+    // expected error, so it surfaces as a server error. That is address-independent, so it is not an
+    // enumeration oracle; this catch just avoids adding a second, narrower failure mode on a path that
+    // only runs for non-email identity providers.
     logger.error({ error, userId: user.id }, "Credential-account lookup failed during password reset");
     return false;
   }
@@ -85,6 +90,10 @@ export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordActi
           headers: await headers(),
         });
       } catch (error) {
+        // The send failed but the action still answers `{ success: true }`, so without suppressing here
+        // the trail would claim a reset link was mailed to this user — the same false record the `else`
+        // branch guards, in the other direction. SMTP being down should not read as "we mailed them".
+        ctx.auditLoggingCtx.suppressEvent = true;
         logger.error({ error, userId: user.id }, "Password reset request failed");
       }
     } else {

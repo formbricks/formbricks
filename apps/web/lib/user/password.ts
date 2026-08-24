@@ -41,6 +41,12 @@ export const verifyUserPassword = async (userId: string, password: string): Prom
  * uses: `providerAccountId` and `issuer` are account-KEY columns, and a drifted key is a real failure mode
  * in this schema (ENG-2555). Owner-scoping still cannot reach another user's row, and it does not go blind
  * when a key column is wrong.
+ *
+ * One consequence of erring broad, since this answers a "may they?" question rather than "is there a live
+ * hash?": Better Auth's `resetPassword` locates the row via `findCredentialAccount`, which filters on
+ * `issuer` and `accountId` too. For a row whose key has drifted this returns true, the reset then takes
+ * its create-a-row branch and can collide with `@@unique([provider, providerAccountId])` — a 500 on the
+ * reset rather than a security problem, and louder than silently refusing the user a password.
  */
 export const hasCredentialAccount = reactCache(async (userId: string): Promise<boolean> => {
   const count = await prisma.account.count({
