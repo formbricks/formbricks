@@ -36,7 +36,7 @@ export const PurgeFeedbackDirectoryData = ({
   const { t } = useTranslation();
   const [isPurgeDialogOpen, setIsPurgeDialogOpen] = useState(false);
   const [confirmationName, setConfirmationName] = useState("");
-  const { mutateAsync: purgeDataset, isPending } = usePurgeFeedbackDataset();
+  const { purgeDatasetOnce, isPending } = usePurgeFeedbackDataset();
 
   const hasValidConfirmation = hasMatchingDatasetPurgeConfirmation(confirmationName, directoryName);
   // A dataset name has no length limit, so the *warning copy* shows a truncated one — the same
@@ -58,7 +58,9 @@ export const PurgeFeedbackDirectoryData = ({
     if (!hasValidConfirmation) return;
 
     try {
-      await purgeDataset({ datasetId: directoryId });
+      // Skipped because a purge is already in flight — the click that started it owns the outcome,
+      // so say nothing rather than raise a second toast for the same user action.
+      if (!(await purgeDatasetOnce(directoryId))) return;
       // "Started", not "done": the purge runs in the background, so the records are still there for
       // a moment after this resolves. Promising completion here would make the next screen look broken.
       toast.success(t("workspace.settings.feedback_directories.purge_started"));
@@ -135,9 +137,9 @@ export const PurgeFeedbackDirectoryData = ({
               // without stopPropagation, Enter here also reaches the outer form and saves the dataset
               // (toast "updated successfully", both dialogs close), regardless of what was typed.
               e.stopPropagation();
-              // Enter bypasses the footer button, which is the only thing carrying `isDeleting`, so
-              // without this a held Enter fires a second purge while the first is still in flight.
-              if (isPending) return;
+              // Enter bypasses the footer button, which is the only thing carrying `isDeleting` — a
+              // held Enter would otherwise fire a purge while the first is still in flight. The
+              // in-flight guard lives in usePurgeFeedbackDataset, which every path here goes through.
               await handlePurge();
             }}>
             <label htmlFor="purgeDatasetConfirmation">
