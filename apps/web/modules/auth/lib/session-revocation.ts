@@ -16,6 +16,11 @@ import { getSessionTokensByUserId } from "@/modules/auth/lib/auth-session-reposi
  * which under `secondaryStorage` reads only the `active-sessions-<userId>` index and returns an empty
  * list if that key was evicted — silently revoking nothing.
  *
+ * Known residual, shared with `revokeSessionsOnPasswordReset`: `cookieCache` serves a still-valid
+ * `session_data` cookie from its signature alone, so a revoked session's holder keeps a cached session
+ * for up to `cookieCache.maxAge` (5 min in auth.ts) without ever hitting either store. Stateless by
+ * design upstream; revocation here is effective at the stores and complete once the cache expires.
+ *
  * `auth` is imported dynamically on purpose: `auth.ts` → `better-auth-hooks.ts` → `sso-recovery.ts`, so a
  * static import here would close an import cycle for this module's callers. Same reason `auth.ts` reaches
  * for `await import("@/modules/email")`.
