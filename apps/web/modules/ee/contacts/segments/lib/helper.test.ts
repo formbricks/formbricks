@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import {
-  MAX_SEGMENT_FILTERS_PER_TREE,
+  MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE,
   TBaseFilters,
   TSegmentWithSurveyRefs,
 } from "@formbricks/types/segment";
@@ -390,20 +390,21 @@ describe("assertSurveyInteractionSurveyIds", () => {
     expect(mockSurveyFindMany).toHaveBeenCalledTimes(2);
   });
 
-  test("a pre-existing tree over the Zod tree cap still flows through without throwing on size", async () => {
-    // Trees persisted before MAX_SEGMENT_FILTERS_PER_TREE existed can exceed it; the write-time
-    // guard must still process their ids (batched), not reject them for size.
-    const filterCount = MAX_SEGMENT_FILTERS_PER_TREE + 100;
-    const filters = Array.from({ length: filterCount }, (_, index) => ({
-      id: `f_${index}`,
-      connector: index === 0 ? null : "and",
+  test("a parsed-tree-max payload (the tree-wide id cap) resolves in exactly five batches", async () => {
+    // Callers pass ZSegmentFilters-parsed trees, so the largest total this guard can receive is
+    // MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE ids — pin that worst case: ceil(1000/200) = 5
+    // sequential batches, no more.
+    const filterCount = MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE / 100;
+    const filters = Array.from({ length: filterCount }, (_, filterIndex) => ({
+      id: `f_${filterIndex}`,
+      connector: filterIndex === 0 ? null : "and",
       resource: {
-        id: `si_${index}`,
+        id: `si_${filterIndex}`,
         root: { type: "surveyInteraction" },
         qualifier: { operator: "haveSeen" },
         value: {
           surveyScope: "specific",
-          surveyIds: [`s_${index}`],
+          surveyIds: Array.from({ length: 100 }, (_, idIndex) => `s_${filterIndex * 100 + idIndex}`),
           within: { amount: 1, unit: "months" },
         },
       },
@@ -415,6 +416,6 @@ describe("assertSurveyInteractionSurveyIds", () => {
     await expect(assertSurveyInteractionSurveyIds(filters, "workspace-1")).resolves.toBeUndefined();
 
     const batchSizes = mockSurveyFindMany.mock.calls.map(([args]: any) => args.where.id.in.length);
-    expect(batchSizes).toEqual([200, 200, 200, 200, 200, 100]);
+    expect(batchSizes).toEqual([200, 200, 200, 200, 200]);
   });
 });

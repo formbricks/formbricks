@@ -389,41 +389,127 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 /**
  * Maximum number of filter nodes — leaf filters plus nested groups — across the WHOLE recursive
  * filter tree. The tree schema has no per-level length cap, so a per-level `.max()` alone would be
- * bypassable by nesting; only a total bound keeps N filters × the per-filter surveyIds cap (100)
- * from becoming an unbounded id payload (ENG-2305, sibling of ENG-2004). The same schema also
- * parses trees read back from the database (clone, publish validation, segment editor), so the cap
- * is deliberately generous — orders of magnitude above anything the segment editor produces — to
- * never brick a pre-existing segment on read.
+ * bypassable by nesting; only a total bound keeps the tree size itself from being an unbounded
+ * payload (ENG-2305, sibling of ENG-2004). The same schema also parses trees read back from the
+ * database (clone, publish validation, segment editor), so the cap is deliberately generous —
+ * orders of magnitude above anything the segment editor produces — to never brick a pre-existing
+ * segment on read.
  */
 export const MAX_SEGMENT_FILTERS_PER_TREE = 1000;
 
-const countSegmentFilterNodes = (filters: TBaseFilters): number => {
-  let count = 0;
-  for (const filter of filters) {
-    count += 1;
-    if (Array.isArray(filter.resource)) {
-      count += countSegmentFilterNodes(filter.resource);
-    }
+/**
+ * Maximum nesting depth of the filter tree. The recursive Zod parse (and every recursive consumer
+ * of a parsed tree) grows the JS call stack with nesting depth and overflows around depth ~1000 in
+ * practice — a RangeError that `safeParse` does NOT catch, so no post-parse `.refine` can guard
+ * against it; only a pre-parse check can (see ZSegmentFilters). The editor produces single-digit
+ * depth; 50 leaves ~20x headroom below the measured stack limit.
+ */
+export const MAX_SEGMENT_FILTER_DEPTH = 50;
+
+/**
+ * Maximum total surveyIds across every survey-interaction filter in the tree. The per-filter cap
+ * (100) times the node cap would still admit 100k ids in one request — hundreds of sequential
+ * batched lookups, each holding a pooled DB connection. 1000 total ids means at most a handful of
+ * batches at write time, and is far beyond any tree the editor produces.
+ */
+export const MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE = 1000;
+
+const countLeafSurveyInteractionIds = (resource: unknown): number => {
+  if (typeof resource !== "object" || resource === null) return 0;
+  const { root, value } = resource as { root?: unknown; value?: unknown };
+  if (typeof root !== "object" || root === null) return 0;
+  if ((root as { type?: unknown }).type !== "surveyInteraction") return 0;
+  if (typeof value !== "object" || value === null) return 0;
+  const surveyIds = (value as { surveyIds?: unknown }).surveyIds;
+  return Array.isArray(surveyIds) ? surveyIds.length : 0;
+};
+
+/**
+ * Measures the raw (untrusted, unparsed) filter tree in one linear pass: total nodes, max nesting
+ * depth, and total survey-interaction surveyIds. Iterative (explicit stack) on purpose — this walk
+ * is what protects the recursive parse from stack overflow, so it must not recurse itself. Junk
+ * shapes are simply not counted; shape errors are the schema's job.
+ */
+const measureSegmentFilterTree = (
+  raw: unknown
+): { nodes: number; depth: number; surveyInteractionIds: number } => {
+  let nodes = 0;
+  let depth = 0;
+  let surveyInteractionIds = 0;
+
+  const pending: { group: unknown[]; level: number }[] = [];
+  if (Array.isArray(raw)) {
+    pending.push({ group: raw, level: 1 });
   }
-  return count;
+
+  let entry = pending.pop();
+  while (entry) {
+    const { group, level } = entry;
+    depth = Math.max(depth, level);
+    for (const node of group) {
+      nodes += 1;
+      const resource =
+        typeof node === "object" && node !== null ? (node as { resource?: unknown }).resource : undefined;
+      if (Array.isArray(resource)) {
+        pending.push({ group: resource, level: level + 1 });
+      } else {
+        surveyInteractionIds += countLeafSurveyInteractionIds(resource);
+      }
+    }
+    entry = pending.pop();
+  }
+
+  return { nodes, depth, surveyInteractionIds };
+};
+
+/**
+ * Returns a human-readable message when the raw tree exceeds any bound, or null when it is within
+ * all of them. Shared by ZSegmentFilters (rejects at the schema boundary, before the recursive
+ * parse) and the survey draft-save path, which skips full semantic validation but must never
+ * persist an over-bounds tree.
+ */
+export const getSegmentFilterTreeBoundsViolation = (raw: unknown): string | null => {
+  const { nodes, depth, surveyInteractionIds } = measureSegmentFilterTree(raw);
+
+  if (depth > MAX_SEGMENT_FILTER_DEPTH) {
+    return `Segment filters are nested too deeply: at most ${MAX_SEGMENT_FILTER_DEPTH} levels are supported`;
+  }
+  if (nodes > MAX_SEGMENT_FILTERS_PER_TREE) {
+    return `Too many filters: a segment supports at most ${MAX_SEGMENT_FILTERS_PER_TREE} filters in total`;
+  }
+  if (surveyInteractionIds > MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE) {
+    return `Too many surveys referenced: survey-interaction filters may reference at most ${MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE} surveys in total`;
+  }
+  return null;
 };
 
 // The filters can be nested, so we need to use z.lazy to define the type
 // more on recusrsive types -> https://zod.dev/?id=recursive-types
-export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
+const ZSegmentFiltersInner: z.ZodType<TBaseFilters> = z
   .array(
     z.object({
       id: ZId,
       connector: ZSegmentConnector,
-      resource: z.union([ZSegmentFilter, z.lazy(() => ZSegmentFilters)]),
+      resource: z.union([ZSegmentFilter, z.lazy(() => ZSegmentFiltersInner)]),
     })
   )
   .refine(refineFilters, {
     error: "Invalid filters applied",
-  })
-  .refine((filters) => countSegmentFilterNodes(filters) <= MAX_SEGMENT_FILTERS_PER_TREE, {
-    error: `Too many filters: a segment supports at most ${MAX_SEGMENT_FILTERS_PER_TREE} filters in total`,
   });
+
+// Bounds gate + recursive parse. The bounds MUST run on the raw value before the recursive parse:
+// a deep enough tree overflows the call stack inside the parse itself, throwing a RangeError that
+// even safeParse does not catch — so a post-parse refine could never see it. `.pipe` short-circuits
+// on failure, so the recursive inner schema never sees a tree that failed the bounds check.
+export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
+  .unknown()
+  .superRefine((raw, ctx) => {
+    const violation = getSegmentFilterTreeBoundsViolation(raw);
+    if (violation) {
+      ctx.addIssue({ code: "custom", message: violation });
+    }
+  })
+  .pipe(ZSegmentFiltersInner);
 
 const ZRequiredSegmentFilters = ZSegmentFilters.refine((filters) => filters.length > 0, {
   error: "At least one filter is required",

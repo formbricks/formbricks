@@ -2,7 +2,10 @@ import { prisma } from "@formbricks/database";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TBaseFilters, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
-import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
+import {
+  SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
+  isResourceFilter,
+} from "@/modules/ee/contacts/segments/lib/utils";
 
 /**
  * Checks if a segment filter contains a recursive reference to itself
@@ -62,19 +65,16 @@ export const collectSurveyIdsFromSegmentFilters = (filters: TBaseFilters): strin
   return surveyIds;
 };
 
-// Upper bound on ids per `IN (...)` lookup below, mirroring SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE in
-// segments.ts (ENG-2004/ENG-2305). MAX_SEGMENT_FILTERS_PER_TREE caps what a client can submit, but
-// this guard also runs over trees persisted before that cap existed, so the query itself is bounded
-// instead of trusting the collected array's length.
-const SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE = 200;
-
 /**
  * Ensures every survey referenced by a "specific" survey-interaction filter belongs to the given
  * workspace. This is the tenancy guard for interaction filters — the runtime evaluation query is
  * already workspace-scoped, but we reject unknown/foreign ids at write time to avoid persisting
  * dead references. The deduplicated ids are looked up in bounded batches, sequentially: each batch
  * is checked before the next query runs, so the first missing id (in collection order) still
- * rejects, and no further queries are issued after a rejection.
+ * rejects, and no further queries are issued after a rejection. Callers pass ZSegmentFilters-parsed
+ * trees, so the total is already capped (MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE — a handful of
+ * batches at most); the chunking is defense in depth for each query's parameter payload and for any
+ * future caller that skips the parse.
  * @throws {InvalidInputError} When a referenced survey is not found in the workspace
  */
 export const assertSurveyInteractionSurveyIds = async (filters: TBaseFilters, workspaceId: string) => {

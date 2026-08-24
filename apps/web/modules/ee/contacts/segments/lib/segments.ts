@@ -35,7 +35,11 @@ import {
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
-import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
+import {
+  SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
+  isResourceFilter,
+  searchForAttributeKeyInSegment,
+} from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
 
@@ -171,13 +175,6 @@ export const getSurveyRefsForWorkspace = reactCache(
     }
   }
 );
-
-// Upper bound on ids per `IN (...)` survey lookup in this module. ZSegment/ZSegmentUpdateInput
-// already cap what a client can submit (MAX_SEGMENT_SURVEYS, MAX_SEGMENT_FILTERS_PER_TREE), but
-// these helpers are also reached with ids read back from the database (updateSurveyInternal's
-// skipValidation path, rows persisted before the caps existed), so they bound the query itself
-// instead of trusting the caller's array length.
-const SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE = 200;
 
 /**
  * Returns the subset of `surveyIds` that actually belong to `workspaceId`. Unlike

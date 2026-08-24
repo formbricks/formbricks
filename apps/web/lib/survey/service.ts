@@ -10,7 +10,11 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
-import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
+import {
+  TBaseFilters,
+  ZSegmentFilters,
+  getSegmentFilterTreeBoundsViolation,
+} from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
@@ -429,6 +433,15 @@ export const updateSurveyInternal = async (
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
       if (type === "app") {
+        // ENG-2305: tree bounds are enforced UNCONDITIONALLY — the draft save (skipValidation)
+        // deliberately skips full semantic validation so half-built filters can be saved, but an
+        // over-bounds tree persisted through it would break every consumer that parses the row
+        // back (publish validation, clone, evaluation).
+        const boundsViolation = getSegmentFilterTreeBoundsViolation(segment.filters);
+        if (boundsViolation) {
+          throw new InvalidInputError(boundsViolation);
+        }
+
         // parse the segment filters:
         const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
         if (!skipValidation && !parsedFilters.success) {

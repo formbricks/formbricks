@@ -11,7 +11,7 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { TBaseFilters, TSegment } from "@formbricks/types/segment";
+import { MAX_SEGMENT_FILTERS_PER_TREE, TBaseFilters, TSegment } from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -522,6 +522,90 @@ describe("Tests for updateSurvey", () => {
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.segment.update).not.toHaveBeenCalled();
+    });
+
+    // ENG-2305: the draft save (skipValidation=true) deliberately skips full semantic validation,
+    // but the filter tree BOUNDS must hold unconditionally — an over-bounds tree persisted through
+    // a draft would break every consumer that parses the row back (publish validation, clone,
+    // evaluation).
+    test("rejects an over-bounds segment filter tree even when validation is skipped (draft save)", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: updateSurveyInput.workspaceId,
+      } as any); // segment belongs to the survey's workspace (passes the segment guard)
+
+      // One node over the tree-wide cap. Junk-shaped on purpose: the bounds walk counts raw nodes
+      // without requiring valid filter shapes, exactly what an unvalidated draft can carry.
+      const overBoundsFilters = Array.from({ length: MAX_SEGMENT_FILTERS_PER_TREE + 1 }, (_, index) => ({
+        id: `f_${index}`,
+        connector: index === 0 ? null : "and",
+        resource: {},
+      }));
+
+      await expect(
+        updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            status: "draft",
+            type: "app",
+            segment: {
+              id: "clownsegment000000000001",
+              title: "seg",
+              description: null,
+              isPrivate: false,
+              filters: overBoundsFilters,
+              workspaceId: updateSurveyInput.workspaceId,
+              surveys: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          } as any,
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    // Locks the draft UX the bounds check must not regress: a half-built (semantically invalid,
+    // within-bounds) filter tree still saves when validation is skipped.
+    test("still saves a draft whose segment filters are within bounds but semantically invalid", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: updateSurveyInput.workspaceId,
+      } as any);
+      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+
+      // Fails ZSegmentFilters (junk leaf shape, non-cuid id) but is far inside every tree bound.
+      const halfBuiltFilters = [{ id: "f1", connector: null, resource: { root: { type: "attribute" } } }];
+
+      await updateSurveyInternal(
+        {
+          ...updateSurveyInput,
+          status: "draft",
+          type: "app",
+          segment: {
+            id: "clownsegment000000000001",
+            title: "seg",
+            description: null,
+            isPrivate: false,
+            filters: halfBuiltFilters,
+            workspaceId: updateSurveyInput.workspaceId,
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        } as any,
+        true
+      );
+
+      expect(prisma.segment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "clownsegment000000000001" },
+          data: expect.objectContaining({ filters: halfBuiltFilters }),
+        })
+      );
     });
 
     // Archived surveys are read-only on every write path that flows through updateSurveyInternal
