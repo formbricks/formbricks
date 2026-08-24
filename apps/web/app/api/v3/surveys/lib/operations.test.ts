@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -482,6 +482,32 @@ describe("createV3SurveyResponse", () => {
         })
       ).status
     ).toBe(500);
+  });
+
+  test("reports the reason for a service-layer ValidationError instead of an opaque 500", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(
+      new ValidationError(
+        "Validation failed: blocks.5.elements.0.choicesElement 1 in block 6 has duplicate choice labels"
+      )
+    );
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      detail: "Survey document failed validation",
+      invalid_params: [
+        {
+          name: "body",
+          reason: expect.stringContaining("duplicate choice labels"),
+        },
+      ],
+    });
   });
 });
 

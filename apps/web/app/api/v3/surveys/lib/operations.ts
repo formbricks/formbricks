@@ -1,7 +1,12 @@
 import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   createdResponse,
@@ -234,6 +239,18 @@ function mapV3SurveyCreateError(
     log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey document validation failed");
     return problemUnprocessableContent(requestId, "Survey document failed validation", {
       invalid_params: err.invalidParams,
+      instance,
+    });
+  }
+  if (err instanceof ValidationError) {
+    // `createSurvey` re-validates its input against ZSurveyCreateInput via `validateInputs`, which
+    // throws a bare ValidationError. That is the same class of failure as above — a well-formed
+    // document that breaks a semantic rule (duplicate choice labels, dangling logic targets) — so it
+    // must report the reason as a 422. Left unmapped it fell through to the catch-all 500 "An
+    // unexpected error occurred.", which told the caller nothing about what to fix (ENG-2578).
+    log.warn({ statusCode: 422, errorCode: err.name }, "Survey document validation failed");
+    return problemUnprocessableContent(requestId, "Survey document failed validation", {
+      invalid_params: [{ name: "body", reason: err.message }],
       instance,
     });
   }
@@ -588,6 +605,16 @@ function mapV3SurveyPatchError(
     );
     return problemUnprocessableContent(requestId, "Survey document failed validation", {
       invalid_params: err.invalidParams,
+      instance,
+    });
+  }
+
+  if (err instanceof ValidationError) {
+    // Same as the create path: `updateSurvey`'s own `validateInputs` throws a bare ValidationError for
+    // a semantic rule break, which would otherwise be reported as an opaque 500.
+    log.warn({ statusCode: 422, workspaceId, errorCode: err.name }, "Survey document validation failed");
+    return problemUnprocessableContent(requestId, "Survey document failed validation", {
+      invalid_params: [{ name: "body", reason: err.message }],
       instance,
     });
   }
