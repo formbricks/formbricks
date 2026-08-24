@@ -5,6 +5,7 @@ import { ENCRYPTION_KEY, WEBAPP_URL } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
 import { createSsoRelinkIntent } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
+import { getSessionTokenFromCookieHeader } from "@/modules/auth/lib/session-cookie";
 import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
 
@@ -174,6 +175,27 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
     // `getSession` reads Redis first, so this is the assertion a raw `prisma.session.deleteMany()` would
     // fail: it would clear the row and leave the session perfectly valid here.
     expect(await auth.api.getSession({ headers: { cookie: squatterCookie } })).toBeNull();
+  });
+
+  /**
+   * Binds the seam the route relies on and nothing else exercises live: `route.ts` derives
+   * `keepSessionToken` from the request cookie via `getSessionTokenFromCookieHeader`, and the sweep
+   * compares it against `Session.sessionToken` rows. Better Auth signs its cookie as
+   * `token.signature` — if the helper ever returned the signed form (or the secret resolution drifted
+   * from auth.ts's), the filter would match nothing and recovery would sign its own caller out.
+   */
+  test("the route's cookie-derived keep-token matches the stored session token", async () => {
+    const user = await seedUnprovenAccountWithPassword();
+    const cookie = sessionTokenCookie(await signIn(ATTACKER_PASSWORD));
+
+    const keepToken = getSessionTokenFromCookieHeader(cookie);
+
+    expect(keepToken).toBeTruthy();
+    const stored = await prisma.session.findMany({
+      where: { userId: user.id },
+      select: { sessionToken: true },
+    });
+    expect(stored.map((row) => row.sessionToken)).toContain(keepToken);
   });
 
   test("the recovering user's own session is spared, so the redirect stays signed in", async () => {

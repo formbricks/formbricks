@@ -48,3 +48,14 @@ export const revokeUserSessionsExcept = async ({
 
   return tokens.length;
 };
+
+/**
+ * Revoke one session by its (unsigned) token, across both stores. Same rationale as above — a raw
+ * Prisma delete leaves the Redis copy resolvable by `getSession` until its TTL — for callers that hold a
+ * token rather than a user id, like the SSO-recovery failure path killing the session its cookie names.
+ */
+export const revokeSessionByToken = async (sessionToken: string): Promise<void> => {
+  const { auth } = await import("@/modules/auth/lib/auth");
+  const ctx = await auth.$context;
+  await ctx.internalAdapter.deleteSessions([sessionToken]);
+};
