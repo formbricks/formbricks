@@ -56,6 +56,8 @@
     "login": {
       "backup_code": "Backup code",
       "create_an_account": "Create an account",
+      "email_verified_sign_in_description": "Your email address is confirmed. Sign in to continue. If you did not create this account, do not sign in — reset the password instead to take control of it.",
+      "email_verified_sign_in_title": "Email verified",
       "enter_your_backup_code": "Enter your backup code",
       "enter_your_two_factor_authentication_code": "Enter your two-factor authentication code",
       "forgot_your_password": "Forgot your password?",

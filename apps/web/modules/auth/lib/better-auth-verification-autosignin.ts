@@ -2,9 +2,21 @@ import "server-only";
 import { getSessionFromCtx } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { logger } from "@formbricks/logger";
+import { WEBAPP_URL } from "@/lib/constants";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { auditVerificationSessionWithheld } from "./better-auth-observability";
 import { getJustVerifiedUserId } from "./email-verification-request-context";
 import { SIGNUP_INTENT_COOKIE_NAME, readSignupIntentUserId } from "./signup-intent";
+
+/**
+ * Where a verification lands when no session is granted.
+ *
+ * Without this the request would follow its `callbackURL` — `/` for every sign-up link — and the user
+ * would be silently bounced to the login page by middleware, having just been told their email was
+ * verified. `?verified=1` is what lets the login form say "verified, now sign in" instead.
+ */
+const getVerifiedButSignInRequiredUrl = (): string =>
+  new URL("/auth/login?verified=1", WEBAPP_URL).toString();
 
 /**
  * ENG-2562 — hand the post-verification session only to the browser that signed up.
@@ -47,6 +59,11 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
   const verifiedUserId = getJustVerifiedUserId();
   if (!verifiedUserId) return;
 
+  // Whether the request finishes without a session, and therefore has to be sent somewhere that says
+  // so. Set inside the try; acted on OUTSIDE it, because `ctx.redirect` throws and this catch would
+  // otherwise swallow the redirect — the same trap `better-auth-recovery-signin.ts` documents.
+  let sessionWithheld = false;
+
   // Nothing below may throw. Better Auth flips `emailVerified` BEFORE this hook runs, and an uncaught
   // throw here propagates out of `runAfterHooks` as a 500 — on a link that already verified the user.
   // On retry they hit the already-verified early return, which never reaches this hook again, so a
@@ -66,30 +83,41 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
     if (intentUserId !== verifiedUserId) {
       // No proof this browser started the sign-up. The email is verified either way — that is Better
       // Auth's write and it is correct, the mailbox was proven — but the session is withheld.
+      //
+      // Logged AND audited: the audit trail is enterprise-gated, so the log line is what a self-hoster
+      // gets. Both carry the user id only — never the cookie value or the verification token.
       logger.info(
         { userId: verifiedUserId, hadIntentCookie: intentUserId !== null },
         "Withheld the post-verification session: the verifying browser did not start this sign-up"
       );
+      await auditVerificationSessionWithheld(verifiedUserId);
+      sessionWithheld = true;
+    } else {
+      const user = await ctx.context.internalAdapter.findUserById(verifiedUserId);
+      // Same shape as the SSO recovery sign-in plugin. Routing through the adapter (rather than writing
+      // the row directly) keeps the `session.create.before` database hook in play, so a deactivated user
+      // is still refused a session here — and lands in this withheld branch rather than being let in.
+      const session = user ? await ctx.context.internalAdapter.createSession(user.id, false) : null;
 
-      return;
+      if (user && session) {
+        await setSessionCookie(ctx, { session, user });
+        // Single use: the cookie has done its job, and leaving it would let a replayed verification
+        // link mint a second session for the rest of its hour.
+        ctx.setCookie(SIGNUP_INTENT_COOKIE_NAME, "", { maxAge: 0, path: "/" });
+      } else {
+        sessionWithheld = true;
+      }
     }
-
-    const user = await ctx.context.internalAdapter.findUserById(verifiedUserId);
-    if (!user) return;
-
-    // Same shape as the SSO recovery sign-in plugin. Routing through the adapter (rather than writing
-    // the row directly) keeps the `session.create.before` database hook in play, so a deactivated user
-    // is still refused a session here.
-    const session = await ctx.context.internalAdapter.createSession(user.id, false);
-    if (!session) return;
-
-    await setSessionCookie(ctx, { session, user });
-
-    // Single use: the cookie has done its job, and leaving it would let a replayed verification link
-    // mint a second session for the rest of its hour.
-    ctx.setCookie(SIGNUP_INTENT_COOKIE_NAME, "", { maxAge: 0, path: "/" });
   } catch (error) {
     // userId only — never the cookie value or the verification token.
     logger.error({ error, userId: verifiedUserId }, "Post-verification auto-sign-in failed");
+    sessionWithheld = true;
+  }
+
+  // Outside the try on purpose: `ctx.redirect` throws, so putting it inside would feed the redirect
+  // straight into the catch above and land the user on `callbackURL` with no explanation of why they
+  // are not signed in.
+  if (sessionWithheld) {
+    throw ctx.redirect(getVerifiedButSignInRequiredUrl());
   }
 };

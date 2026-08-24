@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   setSessionCookie: vi.fn(),
   getJustVerifiedUserId: vi.fn(),
   readSignupIntentUserId: vi.fn(),
+  auditVerificationSessionWithheld: vi.fn(),
 }));
 
 vi.mock("better-auth/api", () => ({ getSessionFromCtx: mocks.getSessionFromCtx }));
@@ -16,9 +17,16 @@ vi.mock("./signup-intent", () => ({
   SIGNUP_INTENT_COOKIE_NAME: "formbricks.signup_intent",
   readSignupIntentUserId: mocks.readSignupIntentUserId,
 }));
+vi.mock("./better-auth-observability", () => ({
+  auditVerificationSessionWithheld: mocks.auditVerificationSessionWithheld,
+}));
+vi.mock("@/lib/constants", () => ({ WEBAPP_URL: "https://app.formbricks.com" }));
 vi.mock("@formbricks/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
+
+/** What the handler redirects to whenever it withholds the session. */
+const LOGIN_VERIFIED = "https://app.formbricks.com/auth/login?verified=1";
 
 const { verificationAutoSignInAfterHandler } = await import("./better-auth-verification-autosignin");
 
@@ -32,6 +40,8 @@ const buildCtx = (overrides: Record<string, unknown> = {}) => {
     path: "/verify-email",
     getCookie: vi.fn().mockReturnValue("intent-cookie"),
     setCookie: vi.fn(),
+    // Mirrors Better Auth: `ctx.redirect` RETURNS a value the caller throws.
+    redirect: vi.fn((url: string) => new Error(`REDIRECT:${url}`)),
     context: { internalAdapter: { findUserById, createSession } },
     ...overrides,
   } as never;
@@ -74,10 +84,12 @@ describe("verificationAutoSignInAfterHandler", () => {
     mocks.readSignupIntentUserId.mockReturnValue(null);
     const ctx = buildCtx();
 
-    await verificationAutoSignInAfterHandler(ctx);
+    await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
 
     expect(sessionOf(ctx)).not.toHaveBeenCalled();
     expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+    // The withheld path is the observable footprint of an attempted pre-hijack, so it is recorded.
+    expect(mocks.auditVerificationSessionWithheld).toHaveBeenCalledWith(VERIFIED_USER.id);
   });
 
   test("withholds the session when the intent cookie names a different user", async () => {
@@ -86,7 +98,7 @@ describe("verificationAutoSignInAfterHandler", () => {
     mocks.readSignupIntentUserId.mockReturnValue("user_other");
     const ctx = buildCtx();
 
-    await verificationAutoSignInAfterHandler(ctx);
+    await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
 
     expect(sessionOf(ctx)).not.toHaveBeenCalled();
   });
@@ -145,7 +157,9 @@ describe("verificationAutoSignInAfterHandler", () => {
     const ctx = buildCtx();
     sessionOf(ctx).mockRejectedValue(new Error("adapter exploded"));
 
-    await expect(verificationAutoSignInAfterHandler(ctx)).resolves.toBeUndefined();
+    // The adapter error must NOT escape — it is converted into the login redirect. If it propagated,
+    // the user would get a 500 on a link that already verified them.
+    await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
     expect(mocks.setSessionCookie).not.toHaveBeenCalled();
   });
 
@@ -155,7 +169,7 @@ describe("verificationAutoSignInAfterHandler", () => {
       ctx as unknown as { context: { internalAdapter: { findUserById: ReturnType<typeof vi.fn> } } }
     ).context.internalAdapter.findUserById.mockResolvedValue(null);
 
-    await expect(verificationAutoSignInAfterHandler(ctx)).resolves.toBeUndefined();
+    await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
     expect(mocks.setSessionCookie).not.toHaveBeenCalled();
   });
 });

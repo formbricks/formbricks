@@ -238,6 +238,35 @@ export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> 
  * captured `{id,email,locale,emailVerified}` — none of which change on a reset — so the meaningful
  * signal is just "this user's password was reset", recorded via the marker.
  */
+/**
+ * ENG-2562: a verification completed, but the browser presenting it was not the one that signed up, so
+ * no session was granted. Worth a record because it is the observable footprint of an attempted account
+ * pre-hijack — someone registered this address and someone else finished the verification.
+ *
+ * Uses the `updated` + marker idiom of `auditPasswordReset` below rather than a new `ZAuditAction`
+ * value: it is the established shape for auth-internal events, and it keeps a shared enum out of a fix
+ * that has to land on two release branches as well as main. Audit logging is enterprise-gated, so the
+ * caller also logs — a self-hoster must still see this.
+ */
+export const auditVerificationSessionWithheld = async (userId: string): Promise<void> => {
+  try {
+    await queueAuditEventBackground({
+      action: "updated",
+      targetType: "user",
+      userId,
+      targetId: userId,
+      organizationId: UNKNOWN_DATA,
+      status: "success",
+      userType: "user",
+      newObject: { verificationSessionWithheldMarker: true },
+    });
+  } catch {
+    logger
+      .withContext({ source: "better-auth" })
+      .error("Failed to queue withheld-verification-session audit event");
+  }
+};
+
 export const auditPasswordReset = async (userId: string): Promise<void> => {
   try {
     await queueAuditEventBackground({
