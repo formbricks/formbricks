@@ -1,6 +1,5 @@
 import "server-only";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const CONTACTS_NOT_ENABLED_MESSAGE = "Contacts are not enabled for this organization";
@@ -25,21 +24,4 @@ export const ensureContactsEnabled = async (organizationId: string): Promise<voi
   if (!isContactsEnabled) {
     throw new OperationNotAllowedError(CONTACTS_NOT_ENABLED_MESSAGE);
   }
-};
-
-/**
- * The v2/v3-flavored variant of the same guard: returns the `forbidden` error object for
- * `handleApiError` when the entitlement is missing, `null` when the caller may proceed.
- */
-export const checkContactsEnabledApiV2 = async (
-  organizationId: string
-): Promise<ApiErrorResponseV2 | null> => {
-  const isContactsEnabled = await getIsContactsEnabled(organizationId);
-  if (isContactsEnabled) {
-    return null;
-  }
-  return {
-    type: "forbidden",
-    details: [{ field: "contacts", issue: "Contacts feature is not enabled for this organization" }],
-  };
 };

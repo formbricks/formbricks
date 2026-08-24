@@ -12,7 +12,7 @@ import {
 } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { checkContactsEnabledApiV2 } from "@/modules/ee/contacts/lib/contacts-entitlement";
+import { checkContactsEnabledApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
