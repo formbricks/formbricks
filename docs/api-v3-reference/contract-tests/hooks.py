@@ -42,13 +42,14 @@ WORKSPACE_FIELD = "workspaceId"
 
 def _load_fixtures() -> dict[str, Any]:
     path = Path(os.environ.get(FIXTURES_ENV_VAR) or DEFAULT_FIXTURES_PATH)
-    # JSONDecodeError as well as OSError: a truncated or half-written map is the same problem for the
-    # reader as a missing one, and deserves the same message rather than a bare parser traceback.
+    # `ValueError` rather than `json.JSONDecodeError` alone: a truncated write, a hand-edit, and a file
+    # that is not UTF-8 all reach the reader as the same problem as a missing one — "your fixtures are
+    # not usable, re-seed" — and `UnicodeDecodeError` is a ValueError that JSONDecodeError misses.
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
         raise RuntimeError(
-            f"Contract fixtures not found at {path}. Run "
+            f"Contract fixtures at {path} are missing or unreadable. Run "
             "`pnpm --filter=@formbricks/database db:seed:contract` first, or point "
             f"{FIXTURES_ENV_VAR} at the file it wrote. Running without it would test an empty "
             "workspace and report a green run that proves nothing."
