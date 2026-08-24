@@ -52,6 +52,8 @@ export const GET = async (request: Request) => {
     const callbackUrl = await completeSsoRecovery({
       intentToken,
       sessionUserId: session?.user.id,
+      // Spared by the post-commit session sweep, so the redirect below still lands signed in.
+      sessionToken: getSessionTokenFromCookieHeader(request.headers.get("cookie")) ?? undefined,
     });
 
     return NextResponse.redirect(callbackUrl);

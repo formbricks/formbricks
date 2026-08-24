@@ -32,3 +32,20 @@ export const verifyUserPassword = async (userId: string, password: string): Prom
 
   return await verifyPassword(password, passwordHash);
 };
+
+/**
+ * Whether the user has a Better Auth `credential` Account row at all — i.e. whether they are (or once
+ * were) a password user, independently of whether a password is currently set on it.
+ *
+ * Scoped by `userId` rather than the `(provider, providerAccountId)` key that `getCredentialPasswordHash`
+ * uses: `providerAccountId` and `issuer` are account-KEY columns, and a drifted key is a real failure mode
+ * in this schema (ENG-2555). Owner-scoping still cannot reach another user's row, and it does not go blind
+ * when a key column is wrong.
+ */
+export const hasCredentialAccount = reactCache(async (userId: string): Promise<boolean> => {
+  const count = await prisma.account.count({
+    where: { userId, provider: "credential" },
+  });
+
+  return count > 0;
+});
