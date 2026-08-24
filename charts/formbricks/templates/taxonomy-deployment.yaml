@@ -6,6 +6,31 @@
 {{- if and (eq $provider "vertex-gemini") (or (not .Values.taxonomy.llm.vertex.project) (not .Values.taxonomy.llm.vertex.location)) }}
   {{- fail "taxonomy.llm.vertex.project and taxonomy.llm.vertex.location are required when taxonomy.llm.provider is 'vertex-gemini'" }}
 {{- end }}
+{{- $structuredOutputMode := .Values.taxonomy.llm.structuredOutputMode | default "auto" -}}
+{{- if not (has $structuredOutputMode (list "auto" "prompt-only" "json-object" "json-schema")) }}
+  {{- fail "taxonomy.llm.structuredOutputMode must be 'auto', 'prompt-only', 'json-object', or 'json-schema'" }}
+{{- end }}
+{{- if ne (int .Values.taxonomy.maxClusters) 80 }}
+  {{- fail "taxonomy.maxClusters must remain 80" }}
+{{- end }}
+{{- if or (lt (int .Values.taxonomy.llm.providerMaxAttempts) 1) (gt (int .Values.taxonomy.llm.providerMaxAttempts) 3) }}
+  {{- fail "taxonomy.llm.providerMaxAttempts must be between 1 and 3" }}
+{{- end }}
+{{- if or (lt (int .Values.taxonomy.llm.maxAttempts) 1) (gt (int .Values.taxonomy.llm.maxAttempts) 4) }}
+  {{- fail "taxonomy.llm.maxAttempts must be between 1 and 4" }}
+{{- end }}
+{{- if lt (int .Values.taxonomy.terminationGracePeriodSeconds) (add (int .Values.taxonomy.runDeadlineSeconds) 30) }}
+  {{- fail "taxonomy.terminationGracePeriodSeconds must be at least runDeadlineSeconds + 30" }}
+{{- end }}
+{{- if .Values.taxonomy.llm.contextWindowTokens }}
+  {{- $minimumContext := add (int .Values.taxonomy.llm.treeMaxTokens) (int .Values.taxonomy.llm.promptTokenReserve) 37696 -}}
+  {{- if lt (int .Values.taxonomy.llm.contextWindowTokens) $minimumContext }}
+    {{- fail "taxonomy.llm.contextWindowTokens cannot fit the bounded 80-cluster hierarchy plan and safety reserve" }}
+  {{- end }}
+{{- end }}
+{{- if and (eq $provider "bedrock") .Values.taxonomy.llm.bedrock.region (hasKey .Values.taxonomy.env "AWS_REGION") }}
+  {{- fail "set either taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION, not both" }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -40,6 +65,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.taxonomy.terminationGracePeriodSeconds }}
       {{- with .Values.taxonomy.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -153,12 +179,38 @@ spec:
             {{- end }}
             - name: TAXONOMY_LLM_TEMPERATURE
               value: {{ .Values.taxonomy.llm.temperature | quote }}
+            - name: TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE
+              value: {{ $structuredOutputMode | quote }}
+            - name: TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS
+              value: {{ .Values.taxonomy.llm.contextWindowTokens | quote }}
+            - name: TAXONOMY_LLM_LABEL_MAX_TOKENS
+              value: {{ .Values.taxonomy.llm.labelMaxTokens | quote }}
+            - name: TAXONOMY_LLM_TREE_MAX_TOKENS
+              value: {{ .Values.taxonomy.llm.treeMaxTokens | quote }}
+            - name: TAXONOMY_LLM_PROMPT_TOKEN_RESERVE
+              value: {{ .Values.taxonomy.llm.promptTokenReserve | quote }}
+            - name: TAXONOMY_LLM_PROVIDER_MAX_ATTEMPTS
+              value: {{ .Values.taxonomy.llm.providerMaxAttempts | quote }}
             - name: TAXONOMY_LLM_MAX_ATTEMPTS
               value: {{ .Values.taxonomy.llm.maxAttempts | quote }}
             - name: TAXONOMY_LLM_TIMEOUT_SECONDS
               value: {{ .Values.taxonomy.llm.timeoutSeconds | quote }}
+            {{- if and (eq $provider "bedrock") .Values.taxonomy.llm.bedrock.region }}
+            - name: AWS_REGION
+              value: {{ .Values.taxonomy.llm.bedrock.region | quote }}
+            {{- end }}
+            {{- if eq $provider "vertex-gemini" }}
+            - name: TAXONOMY_VERTEX_THINKING_BUDGET
+              value: {{ .Values.taxonomy.llm.vertex.thinkingBudget | quote }}
+            {{- end }}
             - name: HUB_CLIENT_TIMEOUT_SECONDS
               value: {{ .Values.taxonomy.hubClientTimeoutSeconds | quote }}
+            - name: HUB_CLIENT_MAX_ATTEMPTS
+              value: {{ .Values.taxonomy.hubClientMaxAttempts | quote }}
+            - name: HUB_HEARTBEAT_INTERVAL_SECONDS
+              value: {{ .Values.taxonomy.heartbeatIntervalSeconds | quote }}
+            - name: TAXONOMY_RUN_TIMEOUT_SECONDS
+              value: {{ .Values.taxonomy.runDeadlineSeconds | quote }}
             - name: TAXONOMY_EMBEDDING_DIMENSION
               value: {{ .Values.taxonomy.embeddingDimension | quote }}
             - name: TAXONOMY_MIN_EMBEDDED_RECORDS

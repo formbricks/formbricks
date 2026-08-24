@@ -384,11 +384,25 @@ taxonomy:
     apiKeySecretKey: TAXONOMY_LLM_API_KEY
     apiKey: ""
     temperature: "0.1"
+    # auto: Vertex=json-schema, generic OpenAI-compatible=json-object, Bedrock=prompt-only.
+    # Set json-schema explicitly for vLLM or a Bedrock model that passes preflight.
+    structuredOutputMode: auto
+    # Must match the exact configured provider/model deployment. An empty value keeps upgrades
+    # renderable but causes /ready to fail closed until the budget is configured.
+    contextWindowTokens: ""
+    labelMaxTokens: "4096"
+    treeMaxTokens: "16384"
+    promptTokenReserve: "4096"
+    providerMaxAttempts: "3"
+    # Semantic repair attempts across branch plans, assignments, and hierarchy plans.
     maxAttempts: "4"
     timeoutSeconds: "60"
+    bedrock:
+      region: ""
     vertex:
       project: ""
       location: ""
+      thinkingBudget: "0"
       # Existing secret must contain credentialsJsonSecretKey.
       existingSecret: ""
       credentialsJsonSecretKey: TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON
@@ -396,10 +410,16 @@ taxonomy:
 
   embeddingDimension: "768"
   minEmbeddedRecords: "20"
-  maxRecords: "50000"
+  maxRecords: "10000"
   maxClusters: "80"
   randomSeed: "42"
   hubClientTimeoutSeconds: "120"
+  hubClientMaxAttempts: "3"
+  heartbeatIntervalSeconds: "30"
+  runDeadlineSeconds: "900"
+  hubStaleRunTimeoutSeconds: "300"
+  hubReaperIntervalSeconds: "60"
+  terminationGracePeriodSeconds: 930
 
   envFrom: []
   env: {}
@@ -453,7 +473,7 @@ taxonomy:
       periodSeconds: 10
       timeoutSeconds: 5
       httpGet:
-        path: /health
+        path: /ready
         port: http
     livenessProbe:
       failureThreshold: 6
