@@ -2793,6 +2793,7 @@
         "bulk_invite_warning_description": "On the free plan, all organization members are always assigned the “Owner” role.",
         "cannot_delete_only_organization": "This is your only organization, it cannot be deleted. Create a new organization first.",
         "cannot_leave_only_organization": "You cannot leave this organization as it is your only organization. Create a new organization first.",
+        "cannot_leave_organization_as_owner": "You cannot leave an organization you own. Assign the owner role to another member first.",
         "copy_invite_link_to_clipboard": "Copy invite link to clipboard",
         "create_new_organization": "Create new organization",
         "create_new_organization_description": "Create a new organization to handle a different set of workspaces.",

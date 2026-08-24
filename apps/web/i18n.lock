@@ -2688,6 +2688,7 @@ checksums:
     workspace/settings/general/bulk_invite_warning_description: e8737a2fbd5ff353db5580d17b4b5a37
     workspace/settings/general/cannot_delete_only_organization: 833cc6848b28f2694a4552b4de91a6ba
     workspace/settings/general/cannot_leave_only_organization: dd8463262e4299fef7ad73512225c55b
+    workspace/settings/general/cannot_leave_organization_as_owner: fdecef92eb84b5dd57b8d6945194e08c
     workspace/settings/general/copy_invite_link_to_clipboard: 7af7ad935428a3f9da6b96e2cd211af9
     workspace/settings/general/create_new_organization: 51dae7b33143686ee218abf5bea764a5
     workspace/settings/general/create_new_organization_description: 25d47fa089ae4ef3a963b46e903938c1

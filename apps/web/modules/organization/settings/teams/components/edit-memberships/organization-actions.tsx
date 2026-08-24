@@ -32,6 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface OrganizationActionsProps {
   role: TOrganizationRole;
@@ -74,6 +75,7 @@ export const OrganizationActions = ({
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
+  const isOrganizationOwner = role === "owner";
 
   const canInvite = isOwnerOrManager || (isAccessControlAllowed && isTeamAdmin);
 
@@ -172,11 +174,21 @@ export const OrganizationActions = ({
   return (
     <>
       <div className="mb-4 flex justify-end gap-x-2 text-right">
-        {role !== "owner" && isMultiOrgEnabled && (
-          <Button variant="destructive" size="sm" onClick={() => setIsLeaveOrganizationModalOpen(true)}>
-            {t("workspace.settings.general.leave_organization")}
-            <XIcon />
-          </Button>
+        {isMultiOrgEnabled && (
+          <TooltipRenderer
+            tooltipContent={t("workspace.settings.general.cannot_leave_organization_as_owner")}
+            shouldRender={isOrganizationOwner}>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isOrganizationOwner}
+              // a disabled button swallows hover events, which would keep the tooltip from showing
+              className={isOrganizationOwner ? "pointer-events-none" : undefined}
+              onClick={() => setIsLeaveOrganizationModalOpen(true)}>
+              {t("workspace.settings.general.leave_organization")}
+              <XIcon />
+            </Button>
+          </TooltipRenderer>
         )}
 
         {!isInviteDisabled && canInvite && !isUserManagementDisabledFromUi && (
