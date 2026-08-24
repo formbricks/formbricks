@@ -258,6 +258,18 @@ externalSecret:
 The chart can optionally deploy the standalone AI taxonomy service. It is disabled by default and remains internal
 to the cluster through a `ClusterIP` service.
 
+No cloud LLM is hardwired into the chart. `taxonomy.llm.provider` defaults to the OpenAI-compatible protocol and
+`taxonomy.llm.model` is operator-selectable. The taxonomy runtime currently provides these adapters:
+
+| Provider value | Use case | Provider-specific values |
+| --- | --- | --- |
+| `openai-compatible` | Bundled vLLM, OpenAI, or another compatible `/v1` endpoint | `baseUrl` and `existingSecret` |
+| `bedrock` | A model available through Amazon Bedrock | `bedrock.region`; AWS credentials use the standard SDK chain |
+| `vertex-gemini` | Gemini through Google Vertex AI | `vertex.project`, `vertex.location`, and `vertex.existingSecret` |
+
+Only the selected adapter's environment variables and credentials are rendered. Provider-specific blocks for the
+other adapters remain inactive. The selected model and its exact context window must satisfy `/v1/preflight`.
+
 To deploy taxonomy and reuse the bundled Qwen/vLLM runtime:
 
 ```yaml
@@ -271,17 +283,16 @@ taxonomy:
     contextWindowTokens: "65536"
 ```
 
-When applying this as a Helm override, also preserve the bundled model defaults and raise the first model's
-limit explicitly, for example with
-`--set llm.servingEngineSpec.modelSpec[0].vllmConfig.maxModelLen=65536`. Helm replaces lists supplied in a
-values file, so do not provide a partial `modelSpec` list; copy the complete model entry if the limit must be
-set in YAML.
+When applying this as a Helm override, preserve the bundled model defaults and raise the selected model's
+`vllmConfig.maxModelLen` to the same value. Helm replaces lists supplied through values or `--set`, so copy the
+complete `modelSpec` entry into the override; a partial list item discards required image and resource fields.
 
 The bounded maximum-size hierarchy request requires at least 58,176 context tokens with the default output
 and reserve budgets. This uses a conservative one-token-per-UTF-8-byte input bound instead of an average
 tokenization ratio. The chart's general-purpose bundled vLLM default remains 8,192 tokens so existing
 non-taxonomy installs do not pay the KV-cache cost; taxonomy operators must explicitly raise the exact model
-deployment limit as shown above. `/ready` fails closed when the configured budget cannot fit.
+deployment limit as shown above. Helm rejects a missing or undersized context budget and also rejects a bundled
+vLLM limit below that budget. `/ready` independently verifies the exact external provider/model preflight.
 
 When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment, Service, and Secret, then injects these
 Hub API env vars unless `taxonomy.autoConfigureHub=false`:
@@ -299,6 +310,7 @@ If `llm.enabled=true` and `taxonomy.llm.baseUrl` is empty, taxonomy uses the bun
 taxonomy:
   enabled: true
   llm:
+    provider: openai-compatible
     model: qwen3-14b-awq
     baseUrl: http://my-llm-gateway:8000/v1
     existingSecret: taxonomy-llm-secret
@@ -309,6 +321,19 @@ taxonomy:
 Generic OpenAI-compatible endpoints default to JSON-object mode; set `json-schema` only after the exact
 deployment passes preflight. Vertex selects JSON Schema automatically. Bedrock selects prompt-only mode unless
 you opt an exact supported model into schema mode.
+
+To use Amazon Bedrock instead:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    provider: bedrock
+    model: your-bedrock-model-id
+    contextWindowTokens: "200000"
+    bedrock:
+      region: us-east-1
+```
 
 The taxonomy service exposes public `/health` for liveness and `/ready` for cached Hub-auth, context-budget,
 provider, and structured-output readiness. Use authenticated `/v1/preflight` as an operator check after install:
@@ -328,12 +353,12 @@ taxonomy:
     model: gemini-2.5-flash
     contextWindowTokens: "1048576"
     vertex:
-      project: formbricks-cloud
-      location: europe-west3
-      existingSecret: taxonomy-vertex-secret
+      project: example-project-id
+      location: us-central1
+      existingSecret: taxonomy-vertex-credentials
 ```
 
-The `taxonomy-vertex-secret` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
+The `taxonomy-vertex-credentials` secret must contain `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` with service-account
 JSON that can call Vertex AI.
 
 ## Hub and Taxonomy metrics and structured logs
@@ -679,15 +704,20 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
 | taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
 | taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
+| taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Hub heartbeat interval while a run is active; must be below the stale-run timeout. |
+| taxonomy.hubClientMaxAttempts                                      | string | `"3"`                                                                       | Maximum idempotent Hub callback/fetch attempts.            |
+| taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
+| taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"300"`                                                                     | Hub stale-run timeout.                                    |
 | taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
 | taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
 | taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
-| taxonomy.llm.contextWindowTokens                                   | string | `""`                                                                        | Exact provider context window; readiness fails until configured. |
+| taxonomy.llm.bedrock.region                                        | string | `""`                                                                        | AWS region for Bedrock; alternatively set `taxonomy.env.AWS_REGION`. |
+| taxonomy.llm.contextWindowTokens                                   | string | `""`                                                                        | Exact provider context window; required when taxonomy is enabled. |
 | taxonomy.llm.existingSecret                                        | string | `""`                                                                        | Existing secret containing `TAXONOMY_LLM_API_KEY`.        |
 | taxonomy.llm.labelMaxTokens                                        | string | `"4096"`                                                                    | Maximum cluster-label output tokens.                      |
 | taxonomy.llm.maxAttempts                                           | string | `"4"`                                                                       | Maximum semantic validation/repair attempts.              |
 | taxonomy.llm.model                                                 | string | `"qwen3-14b-awq"`                                                           | LLM model used by taxonomy labeling and tree generation.  |
-| taxonomy.llm.provider                                              | string | `"openai-compatible"`                                                       | Taxonomy LLM provider.                                    |
+| taxonomy.llm.provider                                              | string | `"openai-compatible"`                                                       | Runtime adapter: `openai-compatible`, `bedrock`, or `vertex-gemini`. |
 | taxonomy.llm.providerMaxAttempts                                   | string | `"3"`                                                                       | Maximum timeout, 429, or 5xx provider attempts.            |
 | taxonomy.llm.promptTokenReserve                                    | string | `"4096"`                                                                    | Context safety reserve for bounded prompts.               |
 | taxonomy.llm.structuredOutputMode                                  | string | `"auto"`                                                                    | `auto`, `prompt-only`, `json-object`, or `json-schema`.    |
@@ -697,9 +727,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | taxonomy.llm.vertex.existingSecret                                 | string | `""`                                                                        | Existing secret containing Vertex service-account JSON.   |
 | taxonomy.llm.vertex.location                                       | string | `""`                                                                        | Vertex AI location for Gemini taxonomy calls.             |
 | taxonomy.llm.vertex.project                                        | string | `""`                                                                        | Google Cloud project for Gemini taxonomy calls.           |
-| taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Hub heartbeat interval while a run is active.             |
-| taxonomy.hubClientMaxAttempts                                      | string | `"3"`                                                                       | Maximum idempotent Hub callback/fetch attempts.            |
-| taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"300"`                                                                     | Hub stale-run timeout.                                    |
+| taxonomy.llm.vertex.thinkingBudget                                 | string | `"0"`                                                                       | Vertex Gemini thinking-token budget for taxonomy calls.   |
 | taxonomy.runDeadlineSeconds                                        | string | `"900"`                                                                     | Total taxonomy run deadline.                              |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |
 | taxonomy.terminationGracePeriodSeconds                             | int    | `930`                                                                         | Pod grace period, at least run deadline plus 30 seconds.   |

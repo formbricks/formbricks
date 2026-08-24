@@ -1,10 +1,17 @@
 {{- if .Values.taxonomy.enabled }}
 {{- $provider := .Values.taxonomy.llm.provider | default "openai-compatible" -}}
+{{- $taxonomyEnv := .Values.taxonomy.env | default dict -}}
 {{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
   {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
 {{- end }}
+{{- if not .Values.taxonomy.llm.model }}
+  {{- fail "taxonomy.llm.model is required when taxonomy.enabled=true" }}
+{{- end }}
 {{- if and (eq $provider "vertex-gemini") (or (not .Values.taxonomy.llm.vertex.project) (not .Values.taxonomy.llm.vertex.location)) }}
   {{- fail "taxonomy.llm.vertex.project and taxonomy.llm.vertex.location are required when taxonomy.llm.provider is 'vertex-gemini'" }}
+{{- end }}
+{{- if and (eq $provider "openai-compatible") (not .Values.taxonomy.llm.baseUrl) (not .Values.llm.enabled) }}
+  {{- fail "taxonomy.llm.baseUrl or llm.enabled=true is required when taxonomy.llm.provider is 'openai-compatible'" }}
 {{- end }}
 {{- $structuredOutputMode := .Values.taxonomy.llm.structuredOutputMode | default "auto" -}}
 {{- if not (has $structuredOutputMode (list "auto" "prompt-only" "json-object" "json-schema")) }}
@@ -19,17 +26,64 @@
 {{- if or (lt (int .Values.taxonomy.llm.maxAttempts) 1) (gt (int .Values.taxonomy.llm.maxAttempts) 4) }}
   {{- fail "taxonomy.llm.maxAttempts must be between 1 and 4" }}
 {{- end }}
+{{- if not .Values.taxonomy.llm.contextWindowTokens }}
+  {{- fail "taxonomy.llm.contextWindowTokens is required when taxonomy.enabled=true and must match the selected provider/model deployment" }}
+{{- end }}
 {{- if lt (int .Values.taxonomy.terminationGracePeriodSeconds) (add (int .Values.taxonomy.runDeadlineSeconds) 30) }}
   {{- fail "taxonomy.terminationGracePeriodSeconds must be at least runDeadlineSeconds + 30" }}
 {{- end }}
-{{- if .Values.taxonomy.llm.contextWindowTokens }}
-  {{- $minimumContext := add (int .Values.taxonomy.llm.treeMaxTokens) (int .Values.taxonomy.llm.promptTokenReserve) 37696 -}}
-  {{- if lt (int .Values.taxonomy.llm.contextWindowTokens) $minimumContext }}
-    {{- fail "taxonomy.llm.contextWindowTokens cannot fit the bounded 80-cluster hierarchy plan and safety reserve" }}
+{{- $boundedHierarchyPromptTokens := add 4096 (mul (int .Values.taxonomy.maxClusters) 420) -}}
+{{- $minimumContext := add (int .Values.taxonomy.llm.treeMaxTokens) (int .Values.taxonomy.llm.promptTokenReserve) $boundedHierarchyPromptTokens -}}
+{{- if lt (int .Values.taxonomy.llm.contextWindowTokens) $minimumContext }}
+  {{- fail "taxonomy.llm.contextWindowTokens cannot fit the bounded 80-cluster hierarchy plan and safety reserve" }}
+{{- end }}
+{{- if and (eq $provider "openai-compatible") .Values.llm.enabled (not .Values.taxonomy.llm.baseUrl) }}
+  {{- if eq (len .Values.llm.servingEngineSpec.modelSpec) 0 }}
+    {{- fail "llm.servingEngineSpec.modelSpec must contain a model when taxonomy uses the bundled vLLM runtime" }}
+  {{- end }}
+  {{- $bundledModel := index .Values.llm.servingEngineSpec.modelSpec 0 -}}
+  {{- $bundledMaxModelLen := int $bundledModel.vllmConfig.maxModelLen -}}
+  {{- if lt $bundledMaxModelLen (int .Values.taxonomy.llm.contextWindowTokens) }}
+    {{- fail "the bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
   {{- end }}
 {{- end }}
-{{- if and (eq $provider "bedrock") .Values.taxonomy.llm.bedrock.region (hasKey .Values.taxonomy.env "AWS_REGION") }}
+{{- if and (eq $provider "bedrock") (not .Values.taxonomy.llm.bedrock.region) (not (hasKey $taxonomyEnv "AWS_REGION")) }}
+  {{- fail "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required when taxonomy.llm.provider is 'bedrock'" }}
+{{- end }}
+{{- if and (eq $provider "bedrock") .Values.taxonomy.llm.bedrock.region (hasKey $taxonomyEnv "AWS_REGION") }}
   {{- fail "set either taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION, not both" }}
+{{- end }}
+{{- if and .Values.taxonomy.autoConfigureHub (ge (int .Values.taxonomy.heartbeatIntervalSeconds) (int .Values.taxonomy.hubStaleRunTimeoutSeconds)) }}
+  {{- fail "taxonomy.heartbeatIntervalSeconds must be less than taxonomy.hubStaleRunTimeoutSeconds when taxonomy.autoConfigureHub=true" }}
+{{- end }}
+{{- $managedTaxonomyOverrides := dict
+  "TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE" "taxonomy.llm.structuredOutputMode"
+  "TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS" "taxonomy.llm.contextWindowTokens"
+  "TAXONOMY_LLM_LABEL_MAX_TOKENS" "taxonomy.llm.labelMaxTokens"
+  "TAXONOMY_LLM_TREE_MAX_TOKENS" "taxonomy.llm.treeMaxTokens"
+  "TAXONOMY_LLM_PROMPT_TOKEN_RESERVE" "taxonomy.llm.promptTokenReserve"
+  "TAXONOMY_LLM_PROVIDER_MAX_ATTEMPTS" "taxonomy.llm.providerMaxAttempts"
+  "TAXONOMY_VERTEX_THINKING_BUDGET" "taxonomy.llm.vertex.thinkingBudget"
+  "HUB_CLIENT_MAX_ATTEMPTS" "taxonomy.hubClientMaxAttempts"
+  "HUB_HEARTBEAT_INTERVAL_SECONDS" "taxonomy.heartbeatIntervalSeconds"
+  "TAXONOMY_RUN_TIMEOUT_SECONDS" "taxonomy.runDeadlineSeconds"
+-}}
+{{- range $envName, $valueName := $managedTaxonomyOverrides }}
+  {{- if hasKey $taxonomyEnv $envName }}
+    {{- fail (printf "set %s instead of taxonomy.env.%s" $valueName $envName) }}
+  {{- end }}
+{{- end }}
+{{- if .Values.taxonomy.autoConfigureHub }}
+  {{- $hubEnv := .Values.hub.env | default dict -}}
+  {{- $managedHubOverrides := dict
+    "TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS" "taxonomy.hubStaleRunTimeoutSeconds"
+    "TAXONOMY_REAPER_INTERVAL_SECONDS" "taxonomy.hubReaperIntervalSeconds"
+  -}}
+  {{- range $envName, $valueName := $managedHubOverrides }}
+    {{- if hasKey $hubEnv $envName }}
+      {{- fail (printf "set %s instead of hub.env.%s when taxonomy.autoConfigureHub=true" $valueName $envName) }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 ---
 apiVersion: apps/v1

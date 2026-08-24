@@ -375,7 +375,11 @@ taxonomy:
     hubInternalApiToken: ""
 
   llm:
+    # Select the taxonomy runtime adapter. The chart defaults to the provider-neutral
+    # OpenAI-compatible protocol; Vertex and Bedrock settings are rendered only when selected.
+    # Supported values: openai-compatible, bedrock, vertex-gemini.
     provider: openai-compatible
+    # Provider/deployment-specific model identifier. Override this for the selected LLM.
     model: qwen3-14b-awq
     # Defaults to the bundled vLLM router URL when llm.enabled=true. Required otherwise.
     baseUrl: ""
@@ -384,11 +388,11 @@ taxonomy:
     apiKeySecretKey: TAXONOMY_LLM_API_KEY
     apiKey: ""
     temperature: "0.1"
-    # auto: Vertex=json-schema, generic OpenAI-compatible=json-object, Bedrock=prompt-only.
-    # Set json-schema explicitly for vLLM or a Bedrock model that passes preflight.
+    # auto delegates the output mode to the selected runtime adapter. Set json-schema
+    # explicitly only when the exact provider/model deployment passes preflight.
     structuredOutputMode: auto
-    # Must match the exact configured provider/model deployment. An empty value keeps upgrades
-    # renderable but causes /ready to fail closed until the budget is configured.
+    # Must match the exact configured provider/model deployment. It may remain empty while
+    # taxonomy is disabled, but is required when taxonomy.enabled=true.
     contextWindowTokens: ""
     labelMaxTokens: "4096"
     treeMaxTokens: "16384"
