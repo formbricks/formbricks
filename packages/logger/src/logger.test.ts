@@ -1,5 +1,5 @@
 // Import pino after the mock is defined
-import Pino from "pino";
+import Pino, { stdSerializers } from "pino";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { LOG_LEVELS } from "./types/logger";
 
@@ -151,6 +151,17 @@ describe("Logger", () => {
     );
 
     expect(logger).toBeDefined();
+  });
+
+  test("serializes the `error` key the same way as `err`", async () => {
+    // Nearly every call site logs a caught exception as `{ error }`. Without this the key gets no
+    // serializer, so an Error reaches the output with its prototype fields (name, message, stack)
+    // stripped and only its own enumerable properties left — the failure mode behind ENG-2578.
+    await import("./logger");
+
+    const { serializers } = vi.mocked(Pino).mock.calls[0][0] as Pino.LoggerOptions;
+
+    expect(serializers?.error).toBe(stdSerializers.err);
   });
 
   test("production OTEL endpoint does not enable OTEL log transport without OTEL_LOGS_ENABLED", async () => {

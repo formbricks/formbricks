@@ -38,6 +38,14 @@ const baseLoggerConfig: LoggerOptions = {
   level: getLogLevel(),
   serializers: {
     err: stdSerializers.err,
+    // Almost every call site in the app logs a caught exception as `{ error }`, not `{ err }`, and
+    // without a serializer for that key Pino writes the object as-is. An Error's `name`, `message`
+    // and `stack` live on the prototype and are non-enumerable, so all that survives is whatever own
+    // enumerable fields the subclass happens to add — a Prisma failure logged as
+    // `{"error":{"clientVersion":"7.8.0"}}`, with no type, message or code to act on (ENG-2578).
+    // `stdSerializers.err` returns non-error values untouched, so keys that carry something other
+    // than an Error are unaffected.
+    error: stdSerializers.err,
     req: stdSerializers.req,
     res: stdSerializers.res,
   },
