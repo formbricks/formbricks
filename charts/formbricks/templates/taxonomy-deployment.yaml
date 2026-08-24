@@ -1,6 +1,7 @@
 {{- if .Values.taxonomy.enabled }}
 {{- $provider := .Values.taxonomy.llm.provider | default "openai-compatible" -}}
 {{- $taxonomyEnv := .Values.taxonomy.env | default dict -}}
+{{- $bedrockEnvRegion := get $taxonomyEnv "AWS_REGION" | default "" -}}
 {{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
   {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
 {{- end }}
@@ -47,10 +48,10 @@
     {{- fail "the bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
   {{- end }}
 {{- end }}
-{{- if and (eq $provider "bedrock") (not .Values.taxonomy.llm.bedrock.region) (not (hasKey $taxonomyEnv "AWS_REGION")) }}
+{{- if and (eq $provider "bedrock") (not .Values.taxonomy.llm.bedrock.region) (not $bedrockEnvRegion) }}
   {{- fail "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required when taxonomy.llm.provider is 'bedrock'" }}
 {{- end }}
-{{- if and (eq $provider "bedrock") .Values.taxonomy.llm.bedrock.region (hasKey $taxonomyEnv "AWS_REGION") }}
+{{- if and (eq $provider "bedrock") .Values.taxonomy.llm.bedrock.region $bedrockEnvRegion }}
   {{- fail "set either taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION, not both" }}
 {{- end }}
 {{- if and .Values.taxonomy.autoConfigureHub (ge (int .Values.taxonomy.heartbeatIntervalSeconds) (int .Values.taxonomy.hubStaleRunTimeoutSeconds)) }}

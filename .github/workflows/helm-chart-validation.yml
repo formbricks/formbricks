@@ -384,6 +384,12 @@ jobs:
             --set taxonomy.llm.provider=bedrock
 
           expect_taxonomy_render_failure \
+            taxonomy-bedrock-region-empty \
+            "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required" \
+            --set taxonomy.llm.provider=bedrock \
+            --set-string taxonomy.env.AWS_REGION=
+
+          expect_taxonomy_render_failure \
             taxonomy-bedrock-region-conflict \
             "set either taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION" \
             --set taxonomy.llm.provider=bedrock \
