@@ -210,6 +210,55 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
   });
 
   /**
+   * The persistence that outlives every session. `oauthProvider` is registered unconditionally with open
+   * dynamic client registration and a 30-day refresh token, and both token tables' `session` FK is
+   * `onDelete: SetNull` — so sweeping sessions blanks the liveness check instead of failing it. Revoking
+   * is the only thing that actually stops them.
+   */
+  test("OAuth grants the account minted do not survive recovery", async () => {
+    const user = await seedUnprovenAccountWithPassword();
+    const client = await prisma.oauthClient.create({
+      data: {
+        clientId: "mcp-client-live-1",
+        name: "smoke client",
+        redirectUris: [`${WEBAPP_URL}/cb`],
+        disabled: false,
+      },
+    });
+    const refresh = await prisma.oauthRefreshToken.create({
+      data: {
+        token: "refresh-token-live-1",
+        clientId: client.clientId,
+        userId: user.id,
+        scopes: ["openid"],
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+    });
+    await prisma.oauthAccessToken.create({
+      data: {
+        token: "access-token-live-1",
+        clientId: client.clientId,
+        userId: user.id,
+        refreshId: refresh.id,
+        scopes: ["openid"],
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        createdAt: new Date(),
+      },
+    });
+
+    await runRecovery(user, await createRecoverySession(user.id));
+
+    // `revoked` is the column both of Better Auth's introspection paths actually honour.
+    const [access, refreshed] = await Promise.all([
+      prisma.oauthAccessToken.findFirstOrThrow({ where: { userId: user.id } }),
+      prisma.oauthRefreshToken.findFirstOrThrow({ where: { userId: user.id } }),
+    ]);
+    expect(access.revoked).not.toBeNull();
+    expect(refreshed.revoked).not.toBeNull();
+  });
+
+  /**
    * Recovery flips `identityProvider` to the SSO provider and nothing ever flips it back, so without this
    * the fix would trade a takeover for a lockout: no password, and no way to ask for one.
    */
