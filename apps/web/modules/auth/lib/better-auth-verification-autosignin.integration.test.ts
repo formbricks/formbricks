@@ -4,7 +4,15 @@ import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { runWithEmailVerificationRequestContext } from "@/modules/auth/lib/email-verification-request-context";
 import { SIGNUP_INTENT_COOKIE_NAME, createSignupIntentToken } from "@/modules/auth/lib/signup-intent";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { sendVerificationLinkEmail } from "@/modules/email";
+
+// Spy the audit queue so the signedIn trail can be asserted without the real setImmediate/headers()
+// emission (which has no request scope under vitest).
+vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>()),
+  queueAuditEventBackground: vi.fn().mockResolvedValue(undefined),
+}));
 
 /**
  * ENG-2562 against a real Postgres and a real Better Auth hook chain.
@@ -91,6 +99,16 @@ describe("post-verification auto-sign-in (real Postgres)", () => {
     expect(setCookie).toContain("session_token=");
     // And the spent intent cookie is cleared (single use), on the same response.
     expect(setCookie).toContain(`${SIGNUP_INTENT_COOKIE_NAME}=;`);
+    // The signedIn audit trail must survive the move: this session is now minted by our after-hook
+    // rather than by autoSignInAfterVerification, and losing the event would be a silent hole in the
+    // sign-in audit rather than a visible failure.
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "signedIn",
+        userId,
+        newObject: expect.objectContaining({ authMethod: "password" }),
+      })
+    );
   });
 
   test("withholds when the intent cookie names a different account", async () => {

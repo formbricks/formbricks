@@ -42,9 +42,13 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
   // onto this route before Better Auth sees it. Do not "restore" /oauth2/ here.
   if (path.includes("/callback/")) return "sso";
   if (path === "/sign-in/email") return "password";
-  // Auto-login after email verification (autoSignInAfterVerification, ENG-1746) creates a session for
-  // a credential/email-password account, so audit it as "password". Idempotent replays of an
-  // already-verified token don't create a session, so this fires once, on the genuine first verify.
+  // A session created on the verification endpoint belongs to a credential/email-password account, so
+  // audit it as "password". Since ENG-2562 the session is minted by `verificationAutoSignInAfterHandler`
+  // rather than by `autoSignInAfterVerification` (now off), and only for the browser that signed up —
+  // but it still arrives here with this path, so the signedIn trail is unchanged. A withheld
+  // verification creates no session and so produces no event here; it is recorded separately by
+  // `auditVerificationSessionWithheld`. Idempotent replays of an already-verified token create no
+  // session either, so this fires once, on the genuine first verify.
   if (path === "/verify-email") return "password";
   // The 2FA challenge completes the credentials sign-in → "password" (matches NextAuth). Deliberately
   // NOT /two-factor/verify-otp (also the first-time-enable path) nor /two-factor/disable|enable.
