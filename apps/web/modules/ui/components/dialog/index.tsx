@@ -57,7 +57,7 @@ const getDialogWidthClass = (width: "default" | "wide" | "full" | "narrow"): str
 
 const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps
+  Readonly<React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogContentProps>
 >(
   (
     {
