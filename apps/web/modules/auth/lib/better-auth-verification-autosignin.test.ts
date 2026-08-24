@@ -163,11 +163,13 @@ describe("verificationAutoSignInAfterHandler", () => {
     expect(mocks.auditVerificationSessionWithheld).not.toHaveBeenCalled();
   });
 
-  test("still mints when the session READ refreshed a cookie (not an endpoint grant)", async () => {
-    // getSessionFromCtx appends any Set-Cookie the session read produced onto responseHeaders, and
-    // getSession re-issues the session cookie once updateAge elapses. If the already-granted guard read
-    // the header AFTER that call it would mistake the refresh for a grant and withhold the session from
-    // a legitimate same-browser sign-up. Pins the snapshot-before ordering.
+  test("still mints when the session read appends a cookie (not an endpoint grant)", async () => {
+    // Pins that the guard asks what the ENDPOINT returned and is not perturbed by anything the session
+    // read adds afterwards. Note this scenario is not reachable in production: getSessionFromCtx appends
+    // to better-call's `ctx.responseHeaders`, a different Headers instance from the
+    // `ctx.context.responseHeaders` the guard reads (verified at runtime), and the two are merged only
+    // after this hook returns. Kept as a structural guard on the ordering, not as a regression test for
+    // a bug that existed.
     const ctx = buildCtx();
     mocks.getSessionFromCtx.mockImplementation(async () => {
       (ctx as unknown as { context: { responseHeaders: Headers } }).context.responseHeaders.append(

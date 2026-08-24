@@ -86,11 +86,14 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
     // enabled — but that branch also fires `afterEmailVerification`, so the guard keeps the hook correct
     // if it is ever enabled. Server-controlled header, not spoofable.
     //
-    // Snapshotted BEFORE `getSessionFromCtx`, and that ordering is the whole point: that helper appends
-    // any Set-Cookie the session read produced onto `ctx.responseHeaders`
-    // (better-auth/dist/api/routes/session.mjs), and `getSession` re-issues the session cookie whenever
-    // `updateAge` has elapsed. Reading the header afterwards would therefore mistake a routine session
-    // REFRESH for a grant, and silently withhold the session from a legitimate same-browser sign-up.
+    // Read before `getSessionFromCtx` as belt-and-braces, NOT because a live bug needs it. That helper
+    // appends any Set-Cookie the session read produced — `getSession` re-issues the cookie once
+    // `updateAge` elapses — but it appends to better-call's `ctx.responseHeaders`, which is a DIFFERENT
+    // Headers instance from Better Auth's `ctx.context.responseHeaders` read here (verified at runtime
+    // in this hook: `ctx.responseHeaders !== ctx.context.responseHeaders`; the two are merged only after
+    // the hook returns, by `mergeResponseHeaders` in dispatch.mjs). So a session refresh cannot reach
+    // this value either way. The ordering is kept so the guard's meaning stays unambiguous — it asks
+    // what the ENDPOINT returned, and nothing else.
     const sessionCookieName = ctx.context.authCookies?.sessionToken?.name;
     const setCookieBeforeSessionRead = ctx.context.responseHeaders?.get("set-cookie") ?? "";
     const endpointAlreadyGrantedSession = Boolean(
