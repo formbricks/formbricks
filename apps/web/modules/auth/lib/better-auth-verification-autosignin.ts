@@ -6,7 +6,11 @@ import { WEBAPP_URL } from "@/lib/constants";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { auditVerificationSessionWithheld } from "./better-auth-observability";
 import { getJustVerifiedUserId } from "./email-verification-request-context";
-import { SIGNUP_INTENT_COOKIE_NAME, readSignupIntentUserId } from "./signup-intent";
+import {
+  SIGNUP_INTENT_COOKIE_NAME,
+  SIGNUP_INTENT_COOKIE_OPTIONS,
+  readSignupIntentUserId,
+} from "./signup-intent";
 
 /**
  * Where a verification lands when no session is granted.
@@ -111,9 +115,12 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
 
       if (user && session) {
         await setSessionCookie(ctx, { session, user });
-        // Single use: the cookie has done its job, and leaving it would let a replayed verification
-        // link mint a second session for the rest of its hour.
-        ctx.setCookie(SIGNUP_INTENT_COOKIE_NAME, "", { maxAge: 0, path: "/" });
+        // Single use: the cookie has done its job. Replay is independently blocked (an already-verified
+        // link never fires afterEmailVerification, so the marker is absent), making this defence in
+        // depth — but it must actually land: the production name carries the `__Secure-` prefix, and a
+        // browser REJECTS any Set-Cookie for such a name without the `Secure` attribute, so clearing
+        // with bare `{ maxAge: 0 }` would silently no-op on HTTPS. Full attribute set, zero lifetime.
+        ctx.setCookie(SIGNUP_INTENT_COOKIE_NAME, "", { ...SIGNUP_INTENT_COOKIE_OPTIONS, maxAge: 0 });
       } else {
         sessionWithheld = true;
       }

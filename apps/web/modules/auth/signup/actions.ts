@@ -422,11 +422,22 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       //
       // Before the other side effects: those can fail, and a sign-up that created the account but lost
       // its intent cookie would silently degrade to "verify, then log in".
-      (await cookies()).set(
-        SIGNUP_INTENT_COOKIE_NAME,
-        createSignupIntentToken(user.id),
-        SIGNUP_INTENT_COOKIE_OPTIONS
-      );
+      //
+      // Non-fatal for the same reason: the cookie buys UX (auto-sign-in after verification), so a
+      // failure to mint it must cost exactly that UX — never the sign-up itself, which has already
+      // created the account. Concretely reachable when neither secret is set.
+      try {
+        (await cookies()).set(
+          SIGNUP_INTENT_COOKIE_NAME,
+          createSignupIntentToken(user.id),
+          SIGNUP_INTENT_COOKIE_OPTIONS
+        );
+      } catch (error) {
+        logger.error(
+          { error, userId: user.id },
+          "Failed to issue the sign-up intent cookie; verification will require a manual sign-in"
+        );
+      }
 
       await handlePostUserCreation(ctx, outcome, inviteToken);
 

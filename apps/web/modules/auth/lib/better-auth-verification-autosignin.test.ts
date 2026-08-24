@@ -15,6 +15,7 @@ vi.mock("./email-verification-request-context", () => ({
 }));
 vi.mock("./signup-intent", () => ({
   SIGNUP_INTENT_COOKIE_NAME: "formbricks.signup_intent",
+  SIGNUP_INTENT_COOKIE_OPTIONS: { httpOnly: true, secure: false, path: "/", sameSite: "lax", maxAge: 3600 },
   readSignupIntentUserId: mocks.readSignupIntentUserId,
 }));
 vi.mock("./better-auth-observability", () => ({

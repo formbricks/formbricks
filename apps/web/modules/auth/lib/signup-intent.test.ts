@@ -5,7 +5,7 @@ const NEXTAUTH_SECRET = "test-nextauth-secret";
 // 32 bytes hex — symmetricEncrypt/symmetricDecrypt expect a 64-char key.
 const ENCRYPTION_KEY = "0".repeat(64);
 
-vi.mock("@/lib/constants", () => ({ NEXTAUTH_SECRET, ENCRYPTION_KEY }));
+vi.mock("@/lib/constants", () => ({ NEXTAUTH_SECRET, ENCRYPTION_KEY, BETTER_AUTH_SECRET: undefined }));
 vi.mock("@/lib/env", () => ({ env: { WEBAPP_URL: "http://localhost:3000" } }));
 
 const { createSignupIntentToken, readSignupIntentUserId, SIGNUP_INTENT_COOKIE_NAME } =

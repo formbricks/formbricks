@@ -1,6 +1,6 @@
 import "server-only";
 import jwt from "jsonwebtoken";
-import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
+import { BETTER_AUTH_SECRET, ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cookies";
 
@@ -38,6 +38,11 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
 
 const SIGNUP_INTENT_PURPOSE = "signup_intent";
 
+// Same chain as auth.ts's Better Auth `secret`: NEXTAUTH_SECRET is `optional()` in the env schema and
+// a deployment may run on BETTER_AUTH_SECRET alone, so pinning this token to NEXTAUTH_SECRET would
+// make sign-up throw on exactly the configuration auth.ts goes out of its way to support.
+const SIGNING_SECRET = BETTER_AUTH_SECRET ?? NEXTAUTH_SECRET;
+
 /**
  * Better Auth is configured with `cookiePrefix: "formbricks"` and adds `__Secure-` under
  * `useSecureCookies`, so this mirrors both. The `signup_intent` suffix is not a name Better Auth mints,
@@ -62,8 +67,8 @@ export const SIGNUP_INTENT_COOKIE_OPTIONS = {
  * `auth.ts`'s `sendVerificationEmail` is domain-only logging — never the address, the token, or the URL.
  */
 export const createSignupIntentToken = (userId: string): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
+  if (!SIGNING_SECRET) {
+    throw new Error("Neither BETTER_AUTH_SECRET nor NEXTAUTH_SECRET is set");
   }
   if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not set");
@@ -71,7 +76,7 @@ export const createSignupIntentToken = (userId: string): string => {
 
   return jwt.sign(
     { id: symmetricEncrypt(userId, ENCRYPTION_KEY), purpose: SIGNUP_INTENT_PURPOSE },
-    NEXTAUTH_SECRET,
+    SIGNING_SECRET,
     { algorithm: "HS256", expiresIn: EMAIL_VERIFICATION_TTL_SECONDS }
   );
 };
@@ -86,12 +91,12 @@ export const createSignupIntentToken = (userId: string): string => {
  * withholds the session, not to a 500 on a link that already verified the user.
  */
 export const readSignupIntentUserId = (cookieValue: string | null | undefined): string | null => {
-  if (!cookieValue || !NEXTAUTH_SECRET || !ENCRYPTION_KEY) return null;
+  if (!cookieValue || !SIGNING_SECRET || !ENCRYPTION_KEY) return null;
 
   try {
     // `algorithms` pinned so a token cannot dictate its own verification algorithm, and `expiresIn`
     // above means `jwt.verify` rejects a stale cookie for us.
-    const payload = jwt.verify(cookieValue, NEXTAUTH_SECRET, { algorithms: ["HS256"] });
+    const payload = jwt.verify(cookieValue, SIGNING_SECRET, { algorithms: ["HS256"] });
     if (typeof payload !== "object" || payload === null) return null;
 
     const { id, purpose } = payload as { id?: unknown; purpose?: unknown };
