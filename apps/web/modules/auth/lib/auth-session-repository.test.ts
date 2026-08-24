@@ -2,12 +2,13 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
-import { deleteSessionBySessionToken } from "./auth-session-repository";
+import { deleteSessionBySessionToken, getSessionTokensByUserId } from "./auth-session-repository";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     session: {
       deleteMany: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -64,5 +65,24 @@ describe("auth-session-repository", () => {
     );
 
     await expect(deleteSessionBySessionToken(sessionToken)).rejects.toThrow(DatabaseError);
+  });
+
+  test("lists every session token for a user", async () => {
+    vi.mocked(prisma.session.findMany).mockResolvedValue([
+      { sessionToken: "token-a" },
+      { sessionToken: "token-b" },
+    ] as never);
+
+    await expect(getSessionTokensByUserId("user_1")).resolves.toEqual(["token-a", "token-b"]);
+    expect(prisma.session.findMany).toHaveBeenCalledWith({
+      where: { userId: "user_1" },
+      select: { sessionToken: true },
+    });
+  });
+
+  test("returns an empty list for a user with no sessions", async () => {
+    vi.mocked(prisma.session.findMany).mockResolvedValue([] as never);
+
+    await expect(getSessionTokensByUserId("user_1")).resolves.toEqual([]);
   });
 });
