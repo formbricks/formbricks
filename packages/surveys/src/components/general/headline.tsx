@@ -47,9 +47,7 @@ export function Headline({
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (
-          <HeadingTag
-            data-testid="fb__surveys__headline-text-test"
-            className="label-headline text-base font-semibold">
+          <HeadingTag data-testid="fb__surveys__headline-text-test" className="label-headline text-base">
             {headline}
           </HeadingTag>
         )}
