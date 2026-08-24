@@ -2793,6 +2793,7 @@
         "bulk_invite_warning_description": "Az ingyenes csomagban az összes szervezeti tag mindig a „Tulajdonos” szerephez van hozzárendelve.",
         "cannot_delete_only_organization": "Ez az egyetlen szervezete, nem lehet törölni. Először hozzon létre egy új szervezetet.",
         "cannot_leave_only_organization": "Nem hagyhatja el ezt a szervezetet, mivel ez az egyetlen szervezete. Először hozzon létre egy új szervezetet.",
+        "cannot_leave_organization_as_owner": "Nem hagyhatja el azt a szervezetet, amelynek Ön a tulajdonosa. Kérem, először rendelje hozzá a tulajdonosi szerepkört egy másik taghoz.",
         "copy_invite_link_to_clipboard": "Meghívási hivatkozás másolása a vágólapra",
         "create_new_organization": "Új szervezet létrehozása",
         "create_new_organization_description": "Új szervezet létrehozása a különböző jellegű munkaterületek kezeléséhez.",

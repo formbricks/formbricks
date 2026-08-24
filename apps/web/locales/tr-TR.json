@@ -2793,6 +2793,7 @@
         "bulk_invite_warning_description": "Ücretsiz planda, tüm organizasyon üyeleri her zaman \"Sahip\" rolüne atanır.",
         "cannot_delete_only_organization": "Bu senin tek organizasyonun, silinemez. Önce yeni bir organizasyon oluştur.",
         "cannot_leave_only_organization": "Bu organizasyondan ayrılamazsın çünkü tek organizasyonun bu. Önce yeni bir organizasyon oluştur.",
+        "cannot_leave_organization_as_owner": "Sahip olduğun bir organizasyondan ayrılamazsın. Önce başka bir üyeye sahip rolünü ata.",
         "copy_invite_link_to_clipboard": "Davet bağlantısını panoya kopyala",
         "create_new_organization": "Yeni organizasyon oluştur",
         "create_new_organization_description": "Farklı bir çalışma alanı grubunu yönetmek için yeni bir organizasyon oluştur.",

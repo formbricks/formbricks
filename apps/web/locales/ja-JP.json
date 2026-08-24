@@ -2793,6 +2793,7 @@
         "bulk_invite_warning_description": "無料プランでは、すべての組織メンバーに常に「オーナー」ロールが割り当てられます。",
         "cannot_delete_only_organization": "これはあなたの唯一の組織です。削除できません。まず新しい組織を作成してください。",
         "cannot_leave_only_organization": "これはあなたの唯一の組織であるため、離れることはできません。まず新しい組織を作成してください。",
+        "cannot_leave_organization_as_owner": "オーナー権限を持つ組織から退出することはできません。まず他のメンバーにオーナー権限を譲渡してください。",
         "copy_invite_link_to_clipboard": "招待リンクをクリップボードにコピー",
         "create_new_organization": "新しい組織を作成",
         "create_new_organization_description": "異なるワークスペースのセットを管理するために、新しい組織を作成します。",

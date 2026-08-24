@@ -2793,6 +2793,7 @@
         "bulk_invite_warning_description": "Por favor, note que no Plano Gratuito, todos os membros da organização são automaticamente atribuídos ao papel de 'Owner', independentemente do papel especificado no arquivo CSV.",
         "cannot_delete_only_organization": "Essa é sua única organização, não pode ser deletada. Crie uma nova organização primeiro.",
         "cannot_leave_only_organization": "Você não pode sair dessa organização porque é a sua única. Crie uma nova organização primeiro.",
+        "cannot_leave_organization_as_owner": "Você não pode sair de uma organização que você possui. Atribua o papel de proprietário a outro membro primeiro.",
         "copy_invite_link_to_clipboard": "Copiar link do convite para a área de transferência",
         "create_new_organization": "Criar nova organização",
         "create_new_organization_description": "Crie uma nova organização para gerenciar um conjunto diferente de workspaces.",
