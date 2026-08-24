@@ -12,6 +12,9 @@ const mocks = vi.hoisted(() => ({
   // Held in a box and exposed through a getter below so a single test can flip it: `EMAIL_AUTH_ENABLED` is
   // a const import in the action, and the getter keeps the live binding readable per call.
   emailAuthEnabled: { value: true },
+  // The wrapper is applied once at module import, so `vi.resetAllMocks()` in beforeEach would wipe the
+  // call history before any test could read it. A plain array on the hoisted object survives the reset.
+  auditWrapperArgs: [] as [string, string][],
 }));
 
 const allowedRateLimitResponse = { allowed: true };
@@ -41,7 +44,10 @@ vi.mock("@/lib/user/password", () => ({
 // Passthrough so the handler runs directly, matching modules/ee/billing/actions.test.ts. Importing the
 // real handler would drag the audit-log graph (and its POSTHOG_KEY constant read) into this suite.
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  withAuditLogging: vi.fn((_action, _target, fn) => fn),
+  withAuditLogging: vi.fn((action: string, target: string, fn: unknown) => {
+    mocks.auditWrapperArgs.push([action, target]);
+    return fn;
+  }),
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -87,6 +93,9 @@ describe("forgotPasswordAction", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.emailAuthEnabled.value = true;
+    // `vi.resetAllMocks()` does not touch this, so reset it here too: a future test that asserts on
+    // `auditLoggingCtx` without calling `callAction` would otherwise read the previous test's object.
+    auditLoggingCtx = {};
   });
 
   afterEach(() => {
@@ -231,6 +240,27 @@ describe("forgotPasswordAction", () => {
       expect(auditLoggingCtx.userId).toBeUndefined();
     });
 
+    /**
+     * Without this the whole audit story is unobserved: `withAuditLogging` is mocked as a passthrough and
+     * `actionClient.action` returns the handler, so deleting the wrapper from the action entirely would
+     * leave every other test in this file green — including the ones below. This is the only assertion
+     * that the event is emitted under the right action and target at all.
+     */
+    test("wires the wrapper with the right audit action and target", () => {
+      expect(mocks.auditWrapperArgs).toContainEqual(["passwordReset", "user"]);
+    });
+
+    test("suppresses the event when the reset email fails to send", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(auth.api.requestPasswordReset).mockRejectedValue(new Error("smtp down"));
+
+      const result = await callAction(validInput);
+
+      // The action still reports success, so an unsuppressed event would claim a link was mailed.
+      expect(result).toEqual({ success: true });
+      expect(auditLoggingCtx.suppressEvent).toBe(true);
+    });
+
     test("suppresses the event for a user with no password to reset", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue({ ...mockUser, identityProvider: "google" } as any);
       mocks.hasCredentialAccount.mockResolvedValue(false);
@@ -254,6 +284,16 @@ describe("forgotPasswordAction", () => {
         expect.objectContaining({ userId: mockUser.id }),
         "Password reset request failed"
       );
+    });
+
+    test("still reports success when the credential lookup throws", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue(allowedRateLimitResponse);
+      vi.mocked(getUserByEmail).mockResolvedValue({ ...mockUser, identityProvider: "google" } as any);
+      mocks.hasCredentialAccount.mockRejectedValue(new Error("db down"));
+
+      // The whole point of the fail-closed catch: no reset, no escaping error.
+      await expect(callAction(validInput)).resolves.toEqual({ success: true });
+      expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
     });
 
     test("propagates a user-lookup error", async () => {

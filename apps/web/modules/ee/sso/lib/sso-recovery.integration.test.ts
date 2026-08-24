@@ -215,7 +215,21 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
    * `onDelete: SetNull` — so sweeping sessions blanks the liveness check instead of failing it. Revoking
    * is the only thing that actually stops them.
    */
-  test("OAuth grants the account minted do not survive recovery", async () => {
+  /**
+   * The refresh token is the persistence that outlives every session: `oauthProvider` is registered
+   * unconditionally with open dynamic client registration and a 30-day refresh lifetime, and both token
+   * tables' `session` FK is `onDelete: SetNull`, so sweeping sessions blanks the liveness check instead
+   * of failing it. Revoking is the only thing that stops it, and `handleRefreshTokenGrant` reads
+   * `revoked`, so this asserts a value the grant path genuinely consults.
+   *
+   * Access tokens are deliberately NOT asserted here. Our config sets `resources` and never sets
+   * `disableJwtPlugin`, so every access token is a self-contained JWT that is signed and never
+   * persisted, and `/api/mcp` verifies bearers against JWKS without reading the table. Seeding a row
+   * production never writes and asserting its column would be exactly the "assert a column nothing
+   * reads" mistake this whole file exists to catch. The 15-minute JWT residual is called out in the
+   * strip's docblock and in the PR's open gaps instead.
+   */
+  test("the refresh token and consent do not survive recovery", async () => {
     const user = await seedUnprovenAccountWithPassword();
     const client = await prisma.oauthClient.create({
       data: {
@@ -225,7 +239,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
         disabled: false,
       },
     });
-    const refresh = await prisma.oauthRefreshToken.create({
+    await prisma.oauthRefreshToken.create({
       data: {
         token: "refresh-token-live-1",
         clientId: client.clientId,
@@ -235,27 +249,23 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
         createdAt: new Date(),
       },
     });
-    await prisma.oauthAccessToken.create({
+    // Consent is what lets `/authorize` skip the consent screen, so leaving it would let a
+    // still-cookie-cached session mint a replacement refresh token and undo the revocation.
+    await prisma.oauthConsent.create({
       data: {
-        token: "access-token-live-1",
         clientId: client.clientId,
         userId: user.id,
-        refreshId: refresh.id,
         scopes: ["openid"],
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
         createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 
     await runRecovery(user, await createRecoverySession(user.id));
 
-    // `revoked` is the column both of Better Auth's introspection paths actually honour.
-    const [access, refreshed] = await Promise.all([
-      prisma.oauthAccessToken.findFirstOrThrow({ where: { userId: user.id } }),
-      prisma.oauthRefreshToken.findFirstOrThrow({ where: { userId: user.id } }),
-    ]);
-    expect(access.revoked).not.toBeNull();
+    const refreshed = await prisma.oauthRefreshToken.findFirstOrThrow({ where: { userId: user.id } });
     expect(refreshed.revoked).not.toBeNull();
+    expect(await prisma.oauthConsent.count({ where: { userId: user.id } })).toBe(0);
   });
 
   /**

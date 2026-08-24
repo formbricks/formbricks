@@ -91,6 +91,7 @@ describe("sso-recovery", () => {
   const txAccountUpdateMany = vi.fn();
   const txOauthAccessUpdateMany = vi.fn();
   const txOauthRefreshUpdateMany = vi.fn();
+  const txOauthConsentDeleteMany = vi.fn();
   // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
   // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
@@ -109,6 +110,9 @@ describe("sso-recovery", () => {
     oauthRefreshToken: {
       updateMany: txOauthRefreshUpdateMany,
     },
+    oauthConsent: {
+      deleteMany: txOauthConsentDeleteMany,
+    },
   };
 
   beforeEach(() => {
@@ -117,6 +121,7 @@ describe("sso-recovery", () => {
     txAccountUpdateMany.mockResolvedValue({ count: 1 });
     txOauthAccessUpdateMany.mockResolvedValue({ count: 1 });
     txOauthRefreshUpdateMany.mockResolvedValue({ count: 2 });
+    txOauthConsentDeleteMany.mockResolvedValue({ count: 1 });
     vi.mocked(revokeUserSessionsExcept).mockResolvedValue(2);
     vi.mocked(prisma.$transaction).mockImplementation(
       async (callback: (txClient: Prisma.TransactionClient) => Promise<unknown>) =>
@@ -265,6 +270,9 @@ describe("sso-recovery", () => {
       where: { userId: "user_1", revoked: null },
       data: { revoked: expect.any(Date) },
     });
+    // Consent too: `/authorize` skips the consent screen when a row exists, so leaving it would let a
+    // still-cookie-cached session mint a replacement refresh token and undo the revocation above.
+    expect(txOauthConsentDeleteMany).toHaveBeenCalledWith({ where: { userId: "user_1" } });
     expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "sso_recovery_completed",
@@ -273,6 +281,7 @@ describe("sso-recovery", () => {
           credentialPasswordsCleared: 1,
           twoFactorRowsRemoved: 1,
           oauthGrantsRevoked: 3,
+          oauthConsentsRevoked: 1,
           sessionsRevoked: 2,
         }),
       })
@@ -317,6 +326,7 @@ describe("sso-recovery", () => {
     expect(txAccountUpdateMany).not.toHaveBeenCalled();
     expect(txOauthAccessUpdateMany).not.toHaveBeenCalled();
     expect(txOauthRefreshUpdateMany).not.toHaveBeenCalled();
+    expect(txOauthConsentDeleteMany).not.toHaveBeenCalled();
     // A proven account is a legitimate one: linking another provider to it must not sign its other
     // sessions out, and must not report a strip that did not happen.
     expect(revokeUserSessionsExcept).not.toHaveBeenCalled();
