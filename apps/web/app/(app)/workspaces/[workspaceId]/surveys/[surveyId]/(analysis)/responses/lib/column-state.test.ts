@@ -74,6 +74,21 @@ describe("reconcileColumnOrder", () => {
     expect(new Set(result).size).toBe(result.length);
   });
 
+  test("a saved Device column choice survives, because its id never changed", () => {
+    // The regression the reviewer asked for. `deviceType` is the one catalog name whose column id
+    // stays at its persisted spelling; if that ever drifts, the saved id is dropped as stale here and
+    // the author's order and visibility for Device go with it.
+    const deviceId = reservedColumnId("deviceType");
+    expect(deviceId).toBe("METADATA_device");
+
+    const saved = ["createdAt", deviceId, "tags"];
+    const defaults = ["createdAt", "METADATA_url", deviceId, "tags"];
+
+    expect(reconcileColumnOrder(saved, defaults)).toContain(deviceId);
+    // And the hidden choice is not overwritten by seeding.
+    expect(seedReservedColumnVisibility({ [deviceId]: false })[deviceId]).toBe(false);
+  });
+
   test("an empty saved order yields the defaults", () => {
     const defaults = ["createdAt", "ELEMENT_q1"];
 

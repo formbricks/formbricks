@@ -923,6 +923,11 @@ export const projectClientReservedValues = (
  * falsy-value guarantee: `""` and `0` are answers, so a `??`-style merge would get them wrong.
  * Flipping the two spreads remains a regression, which is why it stays one line with one test.
  */
+export const mergeReservedValues = (
+  reservedValues: Record<string, string | number>,
+  responseData: TResponseData
+): TResponseData => ({ ...reservedValues, ...responseData });
+
 /** One reserved field as a human-facing surface renders it: the entry, plus the value it resolved to. */
 export interface TDisplayableReservedField {
   entry: TReservedFieldCatalogEntry;
@@ -960,11 +965,6 @@ export const listDisplayableReservedFields = (
     .filter((entry) => values[entry.name] !== undefined)
     .map((entry) => ({ entry, value: String(values[entry.name]) }));
 };
-
-export const mergeReservedValues = (
-  reservedValues: Record<string, string | number>,
-  responseData: TResponseData
-): TResponseData => ({ ...reservedValues, ...responseData });
 
 /**
  * **The grandfather rule, first half: a declared name owns itself.** Drops every catalog entry whose

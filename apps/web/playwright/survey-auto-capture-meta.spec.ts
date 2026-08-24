@@ -204,7 +204,9 @@ test.describe("Auto-captured browser context on responses @slow", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(`/s/${ownSurveyId}?${UTM_QUERY}`);
     await submitAnswer(page, "Seen in the product");
-    await readStoredMeta(ownSurveyId);
+    // Kept, not discarded: the disclosure assertions below compare against what was actually stored,
+    // so a wrong value projection cannot pass on the strength of the labels alone.
+    const storedMeta = await readStoredMeta(ownSurveyId);
 
     await owner.login();
     await page.goto(`/workspaces/${owner.workspaceId}/surveys/${ownSurveyId}/responses`);
@@ -217,7 +219,7 @@ test.describe("Auto-captured browser context on responses @slow", () => {
       const modal = page.getByRole("dialog");
       await expect(modal).toBeVisible();
       await expect(modal.getByText("Page Path", { exact: true })).toBeVisible();
-      await expect(modal.getByText("Utm Source", { exact: true })).toBeVisible();
+      await expect(modal.getByText("UTM Source", { exact: true })).toBeVisible();
 
       // `DataTableSettingsModalItem` puts the column id on its Switch, so this is the column's own
       // toggle rather than a positional guess. Unchecked = the table did not silently grow thirteen
@@ -269,13 +271,18 @@ test.describe("Auto-captured browser context on responses @slow", () => {
 
       // Labels derived by `formatFieldNameToTitleCase`, so a catalog addition needs no new key.
       await expect(disclosure.getByText("Page Path", { exact: true })).toBeVisible();
-      await expect(disclosure.getByText("Utm Source", { exact: true })).toBeVisible();
+      await expect(disclosure.getByText("UTM Source", { exact: true })).toBeVisible();
       await expect(disclosure.getByText("Timezone", { exact: true })).toBeVisible();
       await expect(disclosure.getByText("Viewport Width", { exact: true })).toBeVisible();
-      // The values, not just the labels. `newsletter` is the utm_source off the link, and the page
-      // path is the survey's own public route — both unique enough to assert exactly.
+      // The values, not just the labels — and read back off the stored response rather than
+      // hard-coded, so the display is checked against what capture actually wrote.
       await expect(disclosure.getByText("newsletter", { exact: true })).toBeVisible();
       await expect(disclosure.getByText(`/s/${ownSurveyId}`, { exact: true })).toBeVisible();
+      expect(storedMeta.pagePath).toBe(`/s/${ownSurveyId}`);
+      await expect(disclosure.getByText(String(storedMeta.timezone), { exact: true })).toBeVisible();
+      await expect(
+        disclosure.getByText(String(storedMeta.viewportWidth), { exact: true }).first()
+      ).toBeVisible();
     });
   });
 });

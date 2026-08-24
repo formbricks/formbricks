@@ -34,6 +34,18 @@ describe("utils", () => {
       "common.url": "URL",
       "workspace.surveys.responses.source": "Source",
       "workspace.surveys.responses.ip_address": "IP Address",
+      "workspace.surveys.responses.page_path": "Page Path",
+      "workspace.surveys.responses.page_referrer": "Page Referrer",
+      "workspace.surveys.responses.screen_height": "Screen Height",
+      "workspace.surveys.responses.screen_width": "Screen Width",
+      "workspace.surveys.responses.timezone": "Timezone",
+      "workspace.surveys.responses.utm_campaign": "UTM Campaign",
+      "workspace.surveys.responses.utm_content": "UTM Content",
+      "workspace.surveys.responses.utm_medium": "UTM Medium",
+      "workspace.surveys.responses.utm_source": "UTM Source",
+      "workspace.surveys.responses.utm_term": "UTM Term",
+      "workspace.surveys.responses.viewport_height": "Viewport Height",
+      "workspace.surveys.responses.viewport_width": "Viewport Width",
     };
     return translations[key] || key;
   }) as unknown as TFunction;
@@ -139,13 +151,37 @@ describe("utils", () => {
       expect(mockT).toHaveBeenCalledWith("workspace.surveys.responses.device");
     });
 
-    test("derives a readable label for everything else, with no new translation key", () => {
-      // What makes a catalog addition free: ENG-1841's twelve fields, and ENG-1858's next batch, get
-      // a label from `formatFieldNameToTitleCase` — the same helper the recall and logic pickers use.
-      expect(getReservedColumnLabel("pagePath", mockT)).toBe("Page Path");
-      expect(getReservedColumnLabel("utmSource", mockT)).toBe("Utm Source");
-      expect(getReservedColumnLabel("viewportWidth", mockT)).toBe("Viewport Width");
-      expect(getReservedColumnLabel("timezone", mockT)).toBe("Timezone");
+    test("routes every field either surface displays through `t()`, so none ships as English", () => {
+      // The i18n rule, pinned. ENG-1841's twelve names used to fall through to
+      // `formatFieldNameToTitleCase`, which reads as English in all fifteen locales — and gave
+      // `Utm Source` for `UTM Source` on the way. Asserting the key, not just the label, is what
+      // makes this red if one of them goes back to being derived.
+      const expected: [name: string, key: string, label: string][] = [
+        ["pagePath", "page_path", "Page Path"],
+        ["pageReferrer", "page_referrer", "Page Referrer"],
+        ["screenHeight", "screen_height", "Screen Height"],
+        ["screenWidth", "screen_width", "Screen Width"],
+        ["timezone", "timezone", "Timezone"],
+        ["utmCampaign", "utm_campaign", "UTM Campaign"],
+        ["utmContent", "utm_content", "UTM Content"],
+        ["utmMedium", "utm_medium", "UTM Medium"],
+        ["utmSource", "utm_source", "UTM Source"],
+        ["utmTerm", "utm_term", "UTM Term"],
+        ["viewportHeight", "viewport_height", "Viewport Height"],
+        ["viewportWidth", "viewport_width", "Viewport Width"],
+      ];
+
+      for (const [name, key, label] of expected) {
+        expect(getReservedColumnLabel(name, mockT), name).toBe(label);
+        expect(mockT, name).toHaveBeenCalledWith(`workspace.surveys.responses.${key}`);
+      }
+    });
+
+    test("still derives a label for a catalog entry nobody has written a key for yet", () => {
+      // The fallback stays a real fallback rather than dead code, which is what keeps a catalog
+      // addition free: ENG-1858's next batch reaches both surfaces with no edit to the switch,
+      // reading in English until someone adds its key.
+      expect(getReservedColumnLabel("connectionType", mockT)).toBe("Connection Type");
       expect(mockT).not.toHaveBeenCalled();
     });
   });
@@ -162,6 +198,22 @@ describe("utils", () => {
 
       for (const excluded of ["responseId", "createdAt", "startedAt", "finishedAt", "finished", "language"]) {
         expect(names, excluded).not.toContain(excluded);
+      }
+    });
+
+    test("the Device column keeps its persisted id, not the catalog's spelling", () => {
+      // The id is a storage key: `${survey.id}-columnOrder` and `-columnVisibility` in localStorage
+      // hold it. The catalog calls this field `deviceType` and the column has always been
+      // `METADATA_device`; following the catalog would discard an author's saved choice for it, and
+      // because a `primary` column is left unseeded (absent = visible), an author who had HIDDEN
+      // Device would have found it back on after upgrading.
+      expect(reservedColumnId("deviceType")).toBe("METADATA_device");
+    });
+
+    test("every other reserved column takes its catalog name as its id", () => {
+      // The exception map must stay an exception: a future catalog entry needs no edit there.
+      for (const name of ["url", "country", "pagePath", "utmSource", "timezone", "ipAddress"]) {
+        expect(reservedColumnId(name), name).toBe(`METADATA_${name}`);
       }
     });
 

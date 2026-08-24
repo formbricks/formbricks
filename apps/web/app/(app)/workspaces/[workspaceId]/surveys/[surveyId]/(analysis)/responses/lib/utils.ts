@@ -62,8 +62,26 @@ export const RESERVED_COLUMN_ENTRIES = RESERVED_FIELD_CATALOG.filter((entry) => 
 /** Prefix for a reserved column's TanStack id. Unchanged, so persisted column state still matches. */
 export const METADATA_COLUMN_PREFIX = "METADATA_";
 
-/** The column id for a reserved field. */
-export const reservedColumnId = (name: string): string => `${METADATA_COLUMN_PREFIX}${name}`;
+/**
+ * Catalog names whose column id must stay at the spelling already persisted in authors' browsers.
+ *
+ * The id is a **storage key**: it is what `${survey.id}-columnOrder` and `-columnVisibility` hold in
+ * localStorage, so changing it silently discards that author's choice for the column. The catalog
+ * calls the field `deviceType`; the table column has always been `METADATA_device`. Following the
+ * catalog would have dropped the saved id on reconciliation — and because a `primary` column is left
+ * unseeded (absent means visible in TanStack), an author who had *hidden* Device would have found it
+ * back on after upgrading.
+ *
+ * Deliberately a map of exceptions rather than a rename: nothing else in the catalog diverges, and a
+ * future entry gets its name as its id with no edit here.
+ */
+const PERSISTED_RESERVED_COLUMN_NAMES: Record<string, string> = {
+  deviceType: "device",
+};
+
+/** The column id for a reserved field — its persisted spelling, which is not always its catalog name. */
+export const reservedColumnId = (name: string): string =>
+  `${METADATA_COLUMN_PREFIX}${PERSISTED_RESERVED_COLUMN_NAMES[name] ?? name}`;
 
 /**
  * Which reserved columns start visible for an author who has never touched this table's settings.

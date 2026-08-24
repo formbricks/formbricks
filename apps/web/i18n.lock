@@ -3504,16 +3504,28 @@ checksums:
     workspace/surveys/responses/more_context: bf030156c24007f2a9df863722c6c49e
     workspace/surveys/responses/not_completed: df34eab65a6291f2c5e15a0e349c4eba
     workspace/surveys/responses/os: a4c753bb2c004a58d02faeed6b4da476
+    workspace/surveys/responses/page_path: dece199ab406e984e53a32400dc85f2a
+    workspace/surveys/responses/page_referrer: d24478578c494551ad072cbebb62cc96
     workspace/surveys/responses/person_attributes: 07ae67ae73d7a2a7c67008694a83f0a3
     workspace/surveys/responses/phone: b9537ee90fc5b0116942e0af29d926cc
     workspace/surveys/responses/respondent_skipped_questions: d85daf579ade534dc7e639689156fcd5
     workspace/surveys/responses/response_deleted_successfully: 5dfadb1c0b85de2370f12abe57c888c2
+    workspace/surveys/responses/screen_height: 68d8489024884ba5da46b9aa26c41643
+    workspace/surveys/responses/screen_width: a7c4b394e31e6fcedb3e2dc9466b0438
     workspace/surveys/responses/single_use_id: 48ce6648f5162b6658ecc78d9dd01f17
     workspace/surveys/responses/source: 6e87903ef260da661b2bf6d858ba68ca
     workspace/surveys/responses/state_region: e3761ce8b4d69f2721d6257d94ca4d18
     workspace/surveys/responses/survey_closed: 70953c69c18350f936f8cdfcbed5fd69
     workspace/surveys/responses/tag_already_exists: 1337fd5cdd04311bfdca4e7538f0a4f3
     workspace/surveys/responses/this_response_is_in_progress: 7d785fcb597ea30466467084fd474904
+    workspace/surveys/responses/timezone: 370780b854bdbef55320f977a4fb9ddb
+    workspace/surveys/responses/utm_campaign: 0b2815dd885723b65bee892d23e2c319
+    workspace/surveys/responses/utm_content: d7e645b962879326a96ad2058bdfb2bb
+    workspace/surveys/responses/utm_medium: 135ff9f86ca45cf51d45c62620d28c2b
+    workspace/surveys/responses/utm_source: 5ba5e422283b0a07e7e0873810d38653
+    workspace/surveys/responses/utm_term: 863f3c0831a65aa97f8cf56e2956d031
+    workspace/surveys/responses/viewport_height: d00cf028f20d7a3ea410256cd04e0ec1
+    workspace/surveys/responses/viewport_width: f836de2f863e914eb76c16f6cea6c107
     workspace/surveys/responses/zip_post_code: ab7dc45bd5f9e37930586e2db17e4304
     workspace/surveys/restore: 91b4fad20d5f2d8e17cb62999942d2b7
     workspace/surveys/restoring_survey: ec4d4c666e0addf0b710c01034c509dc
