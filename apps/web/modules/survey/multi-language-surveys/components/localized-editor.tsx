@@ -4,17 +4,9 @@ import { useMemo, useTransition } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { isValidHTML } from "@formbricks/types/surveys/validation";
 import { md } from "@/lib/markdownIt";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Editor } from "@/modules/ui/components/editor";
-
-// Rich-text headlines shipped 2025-10-16 (#6685). Before that, headlines were always plain
-// text rendered bold via CSS, so surveys created earlier need their plain-text headline
-// wrapped in <strong> here to preserve that look now that headlines are HTML. Surveys created
-// on/after this date never depended on CSS-driven bold headlines, so their plain-text
-// headlines (e.g. built-in template defaults) must not be force-bolded.
-const RICH_TEXT_HEADLINES_LAUNCH_DATE = new Date("2025-10-16T10:52:20Z");
 
 interface LocalizedEditorProps {
   id: string;
@@ -64,17 +56,7 @@ export function LocalizedEditor({
         autoFocus={autoFocus}
         getText={() => {
           const text = value ? (value[selectedLanguageCode] ?? "") : "";
-          let html = md.render(text);
-
-          if (id === "headline" && text && !isValidHTML(text)) {
-            const isLegacySurvey =
-              new Date(localSurvey.createdAt).getTime() < RICH_TEXT_HEADLINES_LAUNCH_DATE.getTime();
-            if (isLegacySurvey) {
-              html = html.replaceAll(/<p>([\s\S]*?)<\/p>/g, "<p><strong>$1</strong></p>");
-            }
-          }
-
-          return html;
+          return md.render(text);
         }}
         key={`${elementId}-${id}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
