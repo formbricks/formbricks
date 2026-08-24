@@ -163,6 +163,26 @@ describe("verificationAutoSignInAfterHandler", () => {
     expect(mocks.auditVerificationSessionWithheld).not.toHaveBeenCalled();
   });
 
+  test("still mints when the session READ refreshed a cookie (not an endpoint grant)", async () => {
+    // getSessionFromCtx appends any Set-Cookie the session read produced onto responseHeaders, and
+    // getSession re-issues the session cookie once updateAge elapses. If the already-granted guard read
+    // the header AFTER that call it would mistake the refresh for a grant and withhold the session from
+    // a legitimate same-browser sign-up. Pins the snapshot-before ordering.
+    const ctx = buildCtx();
+    mocks.getSessionFromCtx.mockImplementation(async () => {
+      (ctx as unknown as { context: { responseHeaders: Headers } }).context.responseHeaders.append(
+        "set-cookie",
+        "formbricks.session_token=refreshed; Path=/; HttpOnly"
+      );
+      return { user: { id: "someone_else" } };
+    });
+
+    await verificationAutoSignInAfterHandler(ctx);
+
+    expect(sessionOf(ctx)).toHaveBeenCalledWith(VERIFIED_USER.id, false);
+    expect(mocks.setSessionCookie).toHaveBeenCalledOnce();
+  });
+
   test("still mints when a DIFFERENT user is signed in in this browser", async () => {
     mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "someone_else" } });
     const ctx = buildCtx();

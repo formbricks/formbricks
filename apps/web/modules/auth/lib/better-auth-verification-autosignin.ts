@@ -80,18 +80,26 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
     // `currentSession &&` is load-bearing, not defensive noise: without it an absent session compares
     // `undefined === undefined` against a missing verified-user id and reports "already signed in",
     // which would silently swallow the case rather than withhold it.
+    // Whether the ENDPOINT already attached a session cookie, meaning it made its own sign-in decision
+    // and this hook must not second-guess it. Unreachable in today's config — the only `/verify-email`
+    // branch that does this is Better Auth's `updateTo` email-change flow and `user.changeEmail` is not
+    // enabled — but that branch also fires `afterEmailVerification`, so the guard keeps the hook correct
+    // if it is ever enabled. Server-controlled header, not spoofable.
+    //
+    // Snapshotted BEFORE `getSessionFromCtx`, and that ordering is the whole point: that helper appends
+    // any Set-Cookie the session read produced onto `ctx.responseHeaders`
+    // (better-auth/dist/api/routes/session.mjs), and `getSession` re-issues the session cookie whenever
+    // `updateAge` has elapsed. Reading the header afterwards would therefore mistake a routine session
+    // REFRESH for a grant, and silently withhold the session from a legitimate same-browser sign-up.
+    const sessionCookieName = ctx.context.authCookies?.sessionToken?.name;
+    const setCookieBeforeSessionRead = ctx.context.responseHeaders?.get("set-cookie") ?? "";
+    const endpointAlreadyGrantedSession = Boolean(
+      sessionCookieName && setCookieBeforeSessionRead.includes(`${sessionCookieName}=`)
+    );
+
     const currentSession = await getSessionFromCtx(ctx);
     if (currentSession && currentSession.user?.id === verifiedUserId) return;
-
-    // If the endpoint has ALREADY attached a session cookie to this response, it made its own
-    // sign-in decision and this hook must not second-guess it. Unreachable in today's config — the
-    // only `/verify-email` branch that does this is Better Auth's `updateTo` email-change flow, and
-    // `user.changeEmail` is not enabled — but that branch also fires `afterEmailVerification`, so
-    // without this guard, enabling changeEmail later would have this hook stomp a legitimate
-    // email-change verification with the login redirect. Server-controlled header, not spoofable.
-    const sessionCookieName = ctx.context.authCookies?.sessionToken?.name;
-    const setCookieHeader = ctx.context.responseHeaders?.get("set-cookie") ?? "";
-    if (sessionCookieName && setCookieHeader.includes(`${sessionCookieName}=`)) return;
+    if (endpointAlreadyGrantedSession) return;
 
     const intentUserId = readSignupIntentUserId(ctx.getCookie(SIGNUP_INTENT_COOKIE_NAME));
     if (intentUserId !== verifiedUserId) {
