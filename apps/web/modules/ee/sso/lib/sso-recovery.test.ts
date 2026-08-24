@@ -262,10 +262,11 @@ describe("sso-recovery", () => {
     });
     // The OAuth grants the account minted while unproven: a refresh token outlives every session, so
     // the sweep is incomplete without this.
-    expect(txOauthAccessUpdateMany).toHaveBeenCalledWith({
-      where: { userId: "user_1", revoked: null },
-      data: { revoked: expect.any(Date) },
-    });
+    //
+    // Access tokens are deliberately NOT written on this release line: `oauthAccessToken` has no
+    // `revoked` column before 5.4. Pinned as an explicit non-call rather than an absent assertion, so a
+    // later backport that re-adds the write fails here instead of failing to compile.
+    expect(txOauthAccessUpdateMany).not.toHaveBeenCalled();
     expect(txOauthRefreshUpdateMany).toHaveBeenCalledWith({
       where: { userId: "user_1", revoked: null },
       data: { revoked: expect.any(Date) },
@@ -280,7 +281,7 @@ describe("sso-recovery", () => {
         newObject: expect.objectContaining({
           credentialPasswordsCleared: 1,
           twoFactorRowsRemoved: 1,
-          oauthGrantsRevoked: 3,
+          oauthGrantsRevoked: 2,
           oauthConsentsRevoked: 1,
           sessionsRevoked: 2,
         }),
