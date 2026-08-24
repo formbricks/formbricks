@@ -367,16 +367,6 @@ export interface TBaseFilter {
 
 export type TBaseFilters = TBaseFilter[];
 
-export const ZBaseFilter: z.ZodType<TBaseFilter> = z.lazy(() =>
-  z.object({
-    id: ZId,
-    connector: ZSegmentConnector,
-    resource: z.union([ZSegmentFilter, ZBaseFilters]),
-  })
-);
-
-export const ZBaseFilters: z.ZodType<TBaseFilters> = z.lazy(() => z.array(ZBaseFilter));
-
 // here again, we refine the filters to make sure that the filters are valid
 const refineFilters = (filters: TBaseFilters): boolean => {
   let result = true;
@@ -396,6 +386,28 @@ const refineFilters = (filters: TBaseFilters): boolean => {
   return result;
 };
 
+/**
+ * Maximum number of filter nodes — leaf filters plus nested groups — across the WHOLE recursive
+ * filter tree. The tree schema has no per-level length cap, so a per-level `.max()` alone would be
+ * bypassable by nesting; only a total bound keeps N filters × the per-filter surveyIds cap (100)
+ * from becoming an unbounded id payload (ENG-2305, sibling of ENG-2004). The same schema also
+ * parses trees read back from the database (clone, publish validation, segment editor), so the cap
+ * is deliberately generous — orders of magnitude above anything the segment editor produces — to
+ * never brick a pre-existing segment on read.
+ */
+export const MAX_SEGMENT_FILTERS_PER_TREE = 1000;
+
+const countSegmentFilterNodes = (filters: TBaseFilters): number => {
+  let count = 0;
+  for (const filter of filters) {
+    count += 1;
+    if (Array.isArray(filter.resource)) {
+      count += countSegmentFilterNodes(filter.resource);
+    }
+  }
+  return count;
+};
+
 // The filters can be nested, so we need to use z.lazy to define the type
 // more on recusrsive types -> https://zod.dev/?id=recursive-types
 export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
@@ -408,6 +420,9 @@ export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
   )
   .refine(refineFilters, {
     error: "Invalid filters applied",
+  })
+  .refine((filters) => countSegmentFilterNodes(filters) <= MAX_SEGMENT_FILTERS_PER_TREE, {
+    error: `Too many filters: a segment supports at most ${MAX_SEGMENT_FILTERS_PER_TREE} filters in total`,
   });
 
 const ZRequiredSegmentFilters = ZSegmentFilters.refine((filters) => filters.length > 0, {

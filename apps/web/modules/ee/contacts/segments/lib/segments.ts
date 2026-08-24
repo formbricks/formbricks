@@ -172,23 +172,40 @@ export const getSurveyRefsForWorkspace = reactCache(
   }
 );
 
+// Upper bound on ids per `IN (...)` survey lookup in this module. ZSegment/ZSegmentUpdateInput
+// already cap what a client can submit (MAX_SEGMENT_SURVEYS, MAX_SEGMENT_FILTERS_PER_TREE), but
+// these helpers are also reached with ids read back from the database (updateSurveyInternal's
+// skipValidation path, rows persisted before the caps existed), so they bound the query itself
+// instead of trusting the caller's array length.
+const SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE = 200;
+
 /**
  * Returns the subset of `surveyIds` that actually belong to `workspaceId`. Unlike
  * {@link getSurveyRefsForWorkspace} (which caps at {@link SURVEY_FILTER_REF_LIMIT} for the picker),
  * this queries by the exact ids being validated, so it stays correct for workspaces with more than
  * that many surveys — a referenced-but-valid survey outside the picker's recent window is no longer
- * wrongly rejected. Returns an empty set for an empty input without hitting the DB.
+ * wrongly rejected. Ids are deduplicated and looked up in bounded sequential batches (ENG-2305),
+ * mirroring {@link getSurveyWorkspaceIdMap}. Returns an empty set for an empty input without
+ * hitting the DB.
  */
 export const getExistingWorkspaceSurveyIds = reactCache(
   async (workspaceId: string, surveyIds: string[]): Promise<Set<string>> => {
     validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
-    if (surveyIds.length === 0) return new Set();
+    const uniqueSurveyIds = Array.from(new Set(surveyIds));
+    const existingSurveyIds = new Set<string>();
+    if (uniqueSurveyIds.length === 0) return existingSurveyIds;
     try {
-      const surveys = await prisma.survey.findMany({
-        where: { workspaceId, id: { in: surveyIds } },
-        select: { id: true },
-      });
-      return new Set(surveys.map((survey) => survey.id));
+      for (let i = 0; i < uniqueSurveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
+        const batch = uniqueSurveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
+        const surveys = await prisma.survey.findMany({
+          where: { workspaceId, id: { in: batch } },
+          select: { id: true },
+        });
+        for (const survey of surveys) {
+          existingSurveyIds.add(survey.id);
+        }
+      }
+      return existingSurveyIds;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -414,12 +431,6 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
     throw error;
   }
 };
-
-// Upper bound on ids per `IN (...)` lookup below. ZSegment/ZSegmentUpdateInput already cap what a
-// client can submit (MAX_SEGMENT_SURVEYS), but this helper is also reached with ids read back from
-// the database (updateSurveyInternal's skipValidation path, rows persisted before the cap existed),
-// so it bounds the query itself instead of trusting the caller's array length.
-const SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE = 200;
 
 /**
  * Batched lookup of the owning workspace for a set of surveys, used to keep segment↔survey links

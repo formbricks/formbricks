@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
 import {
+  MAX_SEGMENT_FILTERS_PER_TREE,
   MAX_SEGMENT_SURVEYS,
   type TBaseFilters,
   type TSurveyInteractionOperator,
@@ -123,6 +124,68 @@ describe("segment schema validation", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("segment filter tree size cap", () => {
+  const attributeLeaf = (connector: "and" | null) => ({
+    id: createId(),
+    connector,
+    resource: {
+      id: createId(),
+      root: { type: "attribute" as const, contactAttributeKey: "email" },
+      value: "user@example.com",
+      qualifier: { operator: "equals" as const },
+    },
+  });
+
+  const flatTree = (length: number) =>
+    Array.from({ length }, (_, index) => attributeLeaf(index === 0 ? null : "and"));
+
+  test("accepts a flat tree with exactly the maximum number of filters", () => {
+    const result = ZSegmentFilters.safeParse(flatTree(MAX_SEGMENT_FILTERS_PER_TREE));
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects a flat tree one filter over the cap", () => {
+    const result = ZSegmentFilters.safeParse(flatTree(MAX_SEGMENT_FILTERS_PER_TREE + 1));
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      `Too many filters: a segment supports at most ${MAX_SEGMENT_FILTERS_PER_TREE} filters in total`
+    );
+  });
+
+  test("rejects an over-cap tree hidden behind nesting (small arrays at every level)", () => {
+    // Each wrap keeps the per-level array at 10 entries (9 leaves + 1 nested group), so any
+    // per-level `.max()` would pass — only a whole-tree bound catches the total.
+    let filters: unknown[] = flatTree(10);
+    let nodeCount = 10;
+    while (nodeCount <= MAX_SEGMENT_FILTERS_PER_TREE) {
+      filters = [...flatTree(9), { id: createId(), connector: "and" as const, resource: filters }];
+      nodeCount += 10;
+    }
+
+    const result = ZSegmentFilters.safeParse(filters);
+
+    expect(result.success).toBe(false);
+  });
+
+  test("accepts a nested tree under the cap", () => {
+    const filters = [...flatTree(3), { id: createId(), connector: "and" as const, resource: flatTree(5) }];
+
+    const result = ZSegmentFilters.safeParse(filters);
+
+    expect(result.success).toBe(true);
+  });
+
+  test("rejects an over-cap tree submitted through a segment update", () => {
+    const result = ZSegmentUpdateInput.safeParse({
+      filters: flatTree(MAX_SEGMENT_FILTERS_PER_TREE + 1),
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 

@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
+import {
+  MAX_SEGMENT_FILTERS_PER_TREE,
+  TBaseFilters,
+  TSegmentWithSurveyRefs,
+} from "@formbricks/types/segment";
 import {
   assertSurveyInteractionSurveyIds,
   checkForRecursiveSegmentFilter,
@@ -335,5 +339,82 @@ describe("assertSurveyInteractionSurveyIds", () => {
     await expect(
       assertSurveyInteractionSurveyIds(buildSpecificFilter(["s1", "s2"]), "workspace-1")
     ).rejects.toThrow(new InvalidInputError("Survey not found in workspace: s2"));
+  });
+
+  test("deduplicates ids collected across filters before querying", async () => {
+    const filters = [
+      ...buildSpecificFilter(["s1", "s2"]),
+      ...buildSpecificFilter(["s2", "s1"]),
+    ] as unknown as TBaseFilters;
+    mockSurveyFindMany.mockResolvedValue([{ id: "s1" }, { id: "s2" }]);
+
+    await expect(assertSurveyInteractionSurveyIds(filters, "workspace-1")).resolves.toBeUndefined();
+
+    expect(mockSurveyFindMany).toHaveBeenCalledTimes(1);
+    expect(mockSurveyFindMany).toHaveBeenCalledWith({
+      where: { id: { in: ["s1", "s2"] }, workspaceId: "workspace-1" },
+      select: { id: true },
+    });
+  });
+
+  test("splits an oversized id list into bounded sequential batches, all workspace-scoped", async () => {
+    const surveyIds = Array.from({ length: 450 }, (_, index) => `s_${index}`);
+    mockSurveyFindMany.mockImplementation(async ({ where }: any) =>
+      where.id.in.map((id: string) => ({ id }))
+    );
+
+    await expect(
+      assertSurveyInteractionSurveyIds(buildSpecificFilter(surveyIds), "workspace-1")
+    ).resolves.toBeUndefined();
+
+    // 450 ids at a batch size of 200 -> 200 / 200 / 50, each query scoped to the workspace.
+    const batchSizes = mockSurveyFindMany.mock.calls.map(([args]: any) => args.where.id.in.length);
+    expect(batchSizes).toEqual([200, 200, 50]);
+    for (const [args] of mockSurveyFindMany.mock.calls) {
+      expect((args as any).where.workspaceId).toBe("workspace-1");
+    }
+  });
+
+  test("throws on the first missing id in collection order and stops querying further batches", async () => {
+    const surveyIds = Array.from({ length: 450 }, (_, index) => `s_${index}`);
+    // Two ids in the second batch are foreign/unknown; the earlier one must win, and the third
+    // batch must never be queried.
+    mockSurveyFindMany.mockImplementation(async ({ where }: any) =>
+      where.id.in.filter((id: string) => id !== "s_205" && id !== "s_210").map((id: string) => ({ id }))
+    );
+
+    await expect(
+      assertSurveyInteractionSurveyIds(buildSpecificFilter(surveyIds), "workspace-1")
+    ).rejects.toThrow(new InvalidInputError("Survey not found in workspace: s_205"));
+
+    expect(mockSurveyFindMany).toHaveBeenCalledTimes(2);
+  });
+
+  test("a pre-existing tree over the Zod tree cap still flows through without throwing on size", async () => {
+    // Trees persisted before MAX_SEGMENT_FILTERS_PER_TREE existed can exceed it; the write-time
+    // guard must still process their ids (batched), not reject them for size.
+    const filterCount = MAX_SEGMENT_FILTERS_PER_TREE + 100;
+    const filters = Array.from({ length: filterCount }, (_, index) => ({
+      id: `f_${index}`,
+      connector: index === 0 ? null : "and",
+      resource: {
+        id: `si_${index}`,
+        root: { type: "surveyInteraction" },
+        qualifier: { operator: "haveSeen" },
+        value: {
+          surveyScope: "specific",
+          surveyIds: [`s_${index}`],
+          within: { amount: 1, unit: "months" },
+        },
+      },
+    })) as unknown as TBaseFilters;
+    mockSurveyFindMany.mockImplementation(async ({ where }: any) =>
+      where.id.in.map((id: string) => ({ id }))
+    );
+
+    await expect(assertSurveyInteractionSurveyIds(filters, "workspace-1")).resolves.toBeUndefined();
+
+    const batchSizes = mockSurveyFindMany.mock.calls.map(([args]: any) => args.where.id.in.length);
+    expect(batchSizes).toEqual([200, 200, 200, 200, 200, 100]);
   });
 });
