@@ -210,9 +210,16 @@ jobs:
             "http://localhost:3000/api/v3/workflows?workspaceId=${workspace_id}&limit=1")
           if [ "${workflows_status}" -eq 200 ]; then
             echo "::notice::Workflows entitlement active — the 13 workflow operations run against real data."
-          else
+          elif [ "${workflows_status}" -eq 403 ]; then
             echo "::warning::Workflows entitlement inactive (GET /api/v3/workflows → ${workflows_status}). The 13 workflow operations are only checked against their documented 403."
             cat /tmp/preflight-workflows.json
+          else
+            # Anything else is a setup failure, not an entitlement answer. Treating it as "inactive"
+            # would let a 401 or 404 pass as a warning and the run go green having never exercised the
+            # workflow fixtures at all — the shallow-green outcome this whole job exists to prevent.
+            echo "::error::Workflow entitlement probe returned ${workflows_status}, expected 200 or 403."
+            cat /tmp/preflight-workflows.json
+            exit 1
           fi
 
       - name: Set up Python

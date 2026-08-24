@@ -20,7 +20,7 @@ import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
-import { SEED_IDS } from "../seed/constants";
+import { SEED_CREDENTIALS, SEED_IDS } from "../seed/constants";
 
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
 
@@ -45,6 +45,7 @@ const CONTRACT_IDS = {
   WORKFLOW_DISABLE: "clctworkflowdisable00001",
   WORKFLOW_ARCHIVE: "clctworkflowarchive00001",
   WORKFLOW_UNARCHIVE: "clctworkflowunarchive001",
+  WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
 } as const;
 
@@ -56,6 +57,13 @@ const CONTRACT_IDS = {
 function getOutPath(): string {
   const index = process.argv.indexOf("--out");
   const override = index === -1 ? undefined : process.argv[index + 1];
+
+  // A trailing `--out` with no value is otherwise indistinguishable from no `--out` at all: the map
+  // would be written to the default path — the very file the caller was redirecting away from — with no
+  // diagnostic. Easy to hit with `--out "$SOME_UNSET_VAR"`, so fail loudly instead.
+  if (index !== -1 && !override) {
+    throw new Error("--out requires a path argument.");
+  }
 
   if (override) {
     return resolve(process.cwd(), override);
@@ -143,7 +151,13 @@ async function seedWorkflow(
         actionType: "send_email",
         label: "Send email",
         config: {
-          to: "contract-fixture@example.com",
+          // Must be a workspace MEMBER, not an arbitrary address: `enable` and `testWorkflow` run the
+          // ENG-2029 recipient allowlist (`verifyRecipientsAllowed` → `getWorkspaceMemberEmails`), so a
+          // non-member recipient makes enable answer 422 `workflow_not_executable` and testWorkflow
+          // answer `{ok:false, recipient_not_allowed}`. Both are documented, so the suite would stay
+          // green while never schema-checking the success bodies these fixtures exist for. The admin is
+          // the organization owner, so it passes.
+          to: SEED_CREDENTIALS.ADMIN.email,
           from: "team@example.com",
           replyTo: [],
           subject: "Contract fixture",
@@ -191,6 +205,9 @@ async function main(): Promise<void> {
   await seedWorkflow(CONTRACT_IDS.WORKFLOW_DISABLE, "Contract fixture — disable", "enabled");
   await seedWorkflow(CONTRACT_IDS.WORKFLOW_ARCHIVE, "Contract fixture — archive", "enabled");
   await seedWorkflow(CONTRACT_IDS.WORKFLOW_UNARCHIVE, "Contract fixture — unarchive", "archived");
+  // `test` is a dry run, but it resolves the trigger and the recipient allowlist for real, so it needs
+  // a definition whose recipient is a workspace member — which the base seed's demo workflows are not.
+  await seedWorkflow(CONTRACT_IDS.WORKFLOW_TEST, "Contract fixture — test", "draft");
 
   // An empty collection response satisfies the list schema without ever validating an item, so the
   // read fixtures below exist to put at least one row in front of every list endpoint.
@@ -241,6 +258,7 @@ async function main(): Promise<void> {
       disableWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_DISABLE } },
       archiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_ARCHIVE } },
       unarchiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_UNARCHIVE } },
+      testWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST } },
     },
   };
 

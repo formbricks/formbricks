@@ -56,7 +56,17 @@ def _load_fixtures() -> dict[str, Any]:
 
 
 _FIXTURES = _load_fixtures()
-WORKSPACE_ID: str = _FIXTURES["workspaceId"]
+# Explicit rather than `_FIXTURES["workspaceId"]`: a map written by an older revision of the seed raises
+# a bare KeyError out of hook import, which reaches the developer as an opaque "failed to load
+# SCHEMATHESIS_HOOKS" instead of the one instruction that fixes it.
+if not _FIXTURES.get(WORKSPACE_FIELD):
+    raise RuntimeError(
+        f"Contract fixtures at {os.environ.get(FIXTURES_ENV_VAR) or DEFAULT_FIXTURES_PATH} carry no "
+        f"'{WORKSPACE_FIELD}'. Re-run `pnpm --filter=@formbricks/database db:seed:contract` to "
+        "regenerate them. Running without it would test an empty workspace and report a green run "
+        "that proves nothing."
+    )
+WORKSPACE_ID: str = _FIXTURES[WORKSPACE_FIELD]
 # Defaults keyed by parameter name, used by every operation without a more specific entry.
 READ_IDS: dict[str, str] = _FIXTURES.get("read", {})
 # Per-operationId overrides: {"deleteSurveyV3": {"path": {...}, "body": {...}}}. Mutating operations

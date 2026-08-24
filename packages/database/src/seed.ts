@@ -438,18 +438,25 @@ async function seedApiKey(organizationId: string, workspaceId: string, secret: s
 
   // Keyed on the fixed seed id, not on `lookupHash`: re-seeding with a different `SEED_API_KEY`
   // produces a different lookup hash, which would miss the row and then collide on the id.
+  // Workspace-scoped access only. The organization-level grants exist for the RBAC endpoints, which
+  // nothing driving the seeded data needs — no reason for this key to carry them. Shared by both
+  // branches below so they cannot drift.
+  const seedApiKeyOrgAccess = { accessControl: { read: false, write: false } };
+
   const apiKey = await prisma.apiKey.upsert({
     where: { id: SEED_IDS.API_KEY },
-    update: { hashedKey, lookupHash },
+    // Declarative on purpose: updating only the hashes would leave a row seeded by an earlier revision
+    // carrying its old organization-level grants forever, since re-seeding finds it by id and never
+    // rewrites those fields. Every field `create` sets, `update` must set too, or the two converge only
+    // on a fresh database.
+    update: { hashedKey, lookupHash, organizationId, organizationAccess: seedApiKeyOrgAccess },
     create: {
       id: SEED_IDS.API_KEY,
       label: "Seed API key",
       hashedKey,
       lookupHash,
       organizationId,
-      // Workspace-scoped access only. The organization-level grants exist for the RBAC endpoints,
-      // which nothing driving the seeded data needs — no reason for this key to carry them.
-      organizationAccess: { accessControl: { read: false, write: false } },
+      organizationAccess: seedApiKeyOrgAccess,
     },
   });
 
