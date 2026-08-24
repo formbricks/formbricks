@@ -333,6 +333,8 @@ Hub API env vars unless `taxonomy.autoConfigureHub=false`:
 TAXONOMY_SERVICE_URL: http://formbricks-taxonomy:8000
 TAXONOMY_SERVICE_TOKEN: <from taxonomy auth secret>
 HUB_INTERNAL_API_TOKEN: <from taxonomy auth secret>
+TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS: "300"
+TAXONOMY_REAPER_INTERVAL_SECONDS: "60"
 ```
 
 If `llm.enabled=true` and `taxonomy.llm.baseUrl` is empty, taxonomy uses the bundled vLLM router at
@@ -736,7 +738,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
 | taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
 | taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
-| taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Hub heartbeat interval while a run is active; must be below the stale-run timeout. |
+| taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Positive Hub heartbeat interval; at most half the stale-run timeout. |
 | taxonomy.hubClientMaxAttempts                                      | string | `"3"`                                                                       | Maximum idempotent Hub callback/fetch attempts.            |
 | taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
 | taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"300"`                                                                     | Hub stale-run timeout.                                    |

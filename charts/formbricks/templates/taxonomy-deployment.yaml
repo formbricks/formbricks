@@ -1,14 +1,19 @@
 {{- if .Values.taxonomy.enabled }}
 {{- $provider := .Values.taxonomy.llm.provider | default "openai-compatible" -}}
 {{- $taxonomyEnv := .Values.taxonomy.env | default dict -}}
+{{- $bedrock := .Values.taxonomy.llm.bedrock | default dict -}}
+{{- $bedrockRegion := get $bedrock "region" | default "" -}}
 {{- $bedrockEnvRegion := get $taxonomyEnv "AWS_REGION" | default "" -}}
+{{- $vertex := .Values.taxonomy.llm.vertex | default dict -}}
+{{- $vertexProject := get $vertex "project" | default "" -}}
+{{- $vertexLocation := get $vertex "location" | default "" -}}
 {{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
   {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
 {{- end }}
 {{- if not .Values.taxonomy.llm.model }}
   {{- fail "taxonomy.llm.model is required when taxonomy.enabled=true" }}
 {{- end }}
-{{- if and (eq $provider "vertex-gemini") (or (not .Values.taxonomy.llm.vertex.project) (not .Values.taxonomy.llm.vertex.location)) }}
+{{- if and (eq $provider "vertex-gemini") (or (not $vertexProject) (not $vertexLocation)) }}
   {{- fail "taxonomy.llm.vertex.project and taxonomy.llm.vertex.location are required when taxonomy.llm.provider is 'vertex-gemini'" }}
 {{- end }}
 {{- if and (eq $provider "openai-compatible") (not .Values.taxonomy.llm.baseUrl) (not .Values.llm.enabled) }}
@@ -48,14 +53,14 @@
     {{- fail "the bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
   {{- end }}
 {{- end }}
-{{- if and (eq $provider "bedrock") (not .Values.taxonomy.llm.bedrock.region) (not $bedrockEnvRegion) }}
+{{- if and (eq $provider "bedrock") (not $bedrockRegion) (not $bedrockEnvRegion) }}
   {{- fail "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required when taxonomy.llm.provider is 'bedrock'" }}
 {{- end }}
-{{- if and (eq $provider "bedrock") .Values.taxonomy.llm.bedrock.region $bedrockEnvRegion }}
+{{- if and (eq $provider "bedrock") $bedrockRegion $bedrockEnvRegion }}
   {{- fail "set either taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION, not both" }}
 {{- end }}
-{{- if and .Values.taxonomy.autoConfigureHub (ge (int .Values.taxonomy.heartbeatIntervalSeconds) (int .Values.taxonomy.hubStaleRunTimeoutSeconds)) }}
-  {{- fail "taxonomy.heartbeatIntervalSeconds must be less than taxonomy.hubStaleRunTimeoutSeconds when taxonomy.autoConfigureHub=true" }}
+{{- if and .Values.taxonomy.autoConfigureHub (or (le (int .Values.taxonomy.heartbeatIntervalSeconds) 0) (gt (mul (int .Values.taxonomy.heartbeatIntervalSeconds) 2) (int .Values.taxonomy.hubStaleRunTimeoutSeconds))) }}
+  {{- fail "taxonomy.heartbeatIntervalSeconds must be positive and no more than half of taxonomy.hubStaleRunTimeoutSeconds when taxonomy.autoConfigureHub=true" }}
 {{- end }}
 {{- $managedTaxonomyOverrides := dict
   "TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE" "taxonomy.llm.structuredOutputMode"
@@ -250,9 +255,9 @@ spec:
               value: {{ .Values.taxonomy.llm.maxAttempts | quote }}
             - name: TAXONOMY_LLM_TIMEOUT_SECONDS
               value: {{ .Values.taxonomy.llm.timeoutSeconds | quote }}
-            {{- if and (eq $provider "bedrock") .Values.taxonomy.llm.bedrock.region }}
+            {{- if and (eq $provider "bedrock") $bedrockRegion }}
             - name: AWS_REGION
-              value: {{ .Values.taxonomy.llm.bedrock.region | quote }}
+              value: {{ $bedrockRegion | quote }}
             {{- end }}
             {{- if eq $provider "vertex-gemini" }}
             - name: TAXONOMY_VERTEX_THINKING_BUDGET
