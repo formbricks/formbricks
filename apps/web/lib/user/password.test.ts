@@ -76,17 +76,20 @@ describe("user password helpers", () => {
     expect(mockVerifyPassword).not.toHaveBeenCalled();
   });
 
-  /**
-   * Scoped by owner, not by the `(provider, providerAccountId)` key `getCredentialPasswordHash` uses: those
-   * are account-KEY columns and a drifted key is a real failure mode here (ENG-2555), so a key-filtered
-   * existence check could report "no credential account" for a user who has one.
-   */
-  test("hasCredentialAccount counts the user's credential rows by userId, not by account key", async () => {
+  test("hasCredentialAccount uses Better Auth's own credential-account predicate", async () => {
     vi.mocked(prisma.account.count).mockResolvedValue(1);
 
     await expect(hasCredentialAccount("user-1")).resolves.toBe(true);
+    // The same four-column predicate Better Auth's `findCredentialAccount` uses. Anything broader would
+    // answer "may reset" for a row `resetPassword` cannot then find, which turns into a unique-constraint
+    // collision on its create branch rather than a reset.
     expect(prisma.account.count).toHaveBeenCalledWith({
-      where: { userId: "user-1", provider: "credential" },
+      where: {
+        userId: "user-1",
+        provider: "credential",
+        issuer: "local:credential",
+        providerAccountId: "user-1",
+      },
     });
   });
 
