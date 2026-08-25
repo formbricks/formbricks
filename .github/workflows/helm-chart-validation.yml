@@ -381,6 +381,51 @@ jobs:
             --set-string taxonomy.llm.maxAttempts=5
 
           expect_taxonomy_render_failure \
+            taxonomy-label-budget-invalid \
+            "taxonomy.llm.labelMaxTokens must be positive" \
+            --set-string taxonomy.llm.labelMaxTokens=0
+
+          expect_taxonomy_render_failure \
+            taxonomy-tree-budget-invalid \
+            "taxonomy.llm.treeMaxTokens must be positive" \
+            --set-string taxonomy.llm.treeMaxTokens=0
+
+          expect_taxonomy_render_failure \
+            taxonomy-prompt-reserve-invalid \
+            "taxonomy.llm.promptTokenReserve must be positive" \
+            --set-string taxonomy.llm.promptTokenReserve=0
+
+          expect_taxonomy_render_failure \
+            taxonomy-provider-timeout-invalid \
+            "taxonomy.llm.timeoutSeconds must be positive" \
+            --set-string taxonomy.llm.timeoutSeconds=0
+
+          expect_taxonomy_render_failure \
+            taxonomy-hub-timeout-invalid \
+            "taxonomy.hubClientTimeoutSeconds must be positive" \
+            --set-string taxonomy.hubClientTimeoutSeconds=0
+
+          expect_taxonomy_render_failure \
+            taxonomy-hub-attempts-invalid \
+            "taxonomy.hubClientMaxAttempts must be between 1 and 3" \
+            --set-string taxonomy.hubClientMaxAttempts=0
+
+          expect_taxonomy_render_failure \
+            taxonomy-hub-attempts-too-many \
+            "taxonomy.hubClientMaxAttempts must be between 1 and 3" \
+            --set-string taxonomy.hubClientMaxAttempts=4
+
+          expect_taxonomy_render_failure \
+            taxonomy-run-deadline-invalid \
+            "taxonomy.runDeadlineSeconds must be positive" \
+            --set-string taxonomy.runDeadlineSeconds=0
+
+          expect_taxonomy_render_failure \
+            taxonomy-reaper-interval-invalid \
+            "taxonomy.hubReaperIntervalSeconds must be positive" \
+            --set-string taxonomy.hubReaperIntervalSeconds=0
+
+          expect_taxonomy_render_failure \
             taxonomy-grace-invalid \
             "taxonomy.terminationGracePeriodSeconds must be at least" \
             --set taxonomy.terminationGracePeriodSeconds=929

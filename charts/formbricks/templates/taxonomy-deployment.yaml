@@ -32,6 +32,30 @@
 {{- if or (lt (int .Values.taxonomy.llm.maxAttempts) 1) (gt (int .Values.taxonomy.llm.maxAttempts) 4) }}
   {{- fail "taxonomy.llm.maxAttempts must be between 1 and 4" }}
 {{- end }}
+{{- if le (int .Values.taxonomy.llm.labelMaxTokens) 0 }}
+  {{- fail "taxonomy.llm.labelMaxTokens must be positive" }}
+{{- end }}
+{{- if le (int .Values.taxonomy.llm.treeMaxTokens) 0 }}
+  {{- fail "taxonomy.llm.treeMaxTokens must be positive" }}
+{{- end }}
+{{- if le (int .Values.taxonomy.llm.promptTokenReserve) 0 }}
+  {{- fail "taxonomy.llm.promptTokenReserve must be positive" }}
+{{- end }}
+{{- if le (int .Values.taxonomy.llm.timeoutSeconds) 0 }}
+  {{- fail "taxonomy.llm.timeoutSeconds must be positive" }}
+{{- end }}
+{{- if le (int .Values.taxonomy.hubClientTimeoutSeconds) 0 }}
+  {{- fail "taxonomy.hubClientTimeoutSeconds must be positive" }}
+{{- end }}
+{{- if or (lt (int .Values.taxonomy.hubClientMaxAttempts) 1) (gt (int .Values.taxonomy.hubClientMaxAttempts) 3) }}
+  {{- fail "taxonomy.hubClientMaxAttempts must be between 1 and 3" }}
+{{- end }}
+{{- if le (int .Values.taxonomy.runDeadlineSeconds) 0 }}
+  {{- fail "taxonomy.runDeadlineSeconds must be positive" }}
+{{- end }}
+{{- if and .Values.taxonomy.autoConfigureHub (le (int .Values.taxonomy.hubReaperIntervalSeconds) 0) }}
+  {{- fail "taxonomy.hubReaperIntervalSeconds must be positive when taxonomy.autoConfigureHub=true" }}
+{{- end }}
 {{- if not .Values.taxonomy.llm.contextWindowTokens }}
   {{- fail "taxonomy.llm.contextWindowTokens is required when taxonomy.enabled=true and must match the selected provider/model deployment" }}
 {{- end }}
