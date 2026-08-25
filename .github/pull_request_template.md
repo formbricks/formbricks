@@ -71,6 +71,12 @@ existed; `unit (mutation)` — only fails if you break the fix, because the code
 Any red-on-main or mutation row must carry the command or the mutated `file:line`, so a reviewer can
 rerun it instead of taking the claim on trust. -->
 
+<!-- Pick the cheapest level that can fail on the behaviour (AGENTS.md "Testing Guidelines"): `unit`
+for logic and invariants, a route test for authorization/response shape/scoping, `e2e` only for a
+feature's happy path or a journey across several surfaces, and `manual` — with the screenshot — for
+UI detail inside a feature that already has an e2e. A `manual` row is a complete answer; a new e2e
+spec is paid on every PR forever, so "this row had no automated test" is not a reason to add one. -->
+
 | Behaviour | How | Outcome |
 | --- | --- | --- |
 |  | unit (red on main) / unit (mutation) / unit (guard) / e2e / manual |  |
