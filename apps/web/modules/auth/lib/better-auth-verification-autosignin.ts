@@ -23,6 +23,35 @@ const getVerifiedButSignInRequiredUrl = (): string =>
   new URL("/auth/login?verified=1", WEBAPP_URL).toString();
 
 /**
+ * Mint the post-verification session for the browser that signed up, and spend the intent cookie.
+ *
+ * Split out of the handler to keep that function's branching readable; it returns whether a session was
+ * actually granted, so the caller decides where to send the user without re-deriving it.
+ */
+const grantSessionToSignupBrowser = async (
+  ctx: AuthHookContext,
+  verifiedUserId: string
+): Promise<boolean> => {
+  // Same shape as the SSO recovery sign-in plugin. Routing through the adapter rather than writing the
+  // row directly keeps the `session.create.before` database hook in play, so a deactivated user is still
+  // refused a session here — and the caller then withholds rather than letting them in.
+  const user = await ctx.context.internalAdapter.findUserById(verifiedUserId);
+  const session = user ? await ctx.context.internalAdapter.createSession(user.id, false) : null;
+  if (!user || !session) return false;
+
+  await setSessionCookie(ctx, { session, user });
+
+  // Single use: the cookie has done its job. Replay is independently blocked (an already-verified link
+  // never fires afterEmailVerification, so the marker is absent), making this defence in depth — but it
+  // must actually land: the production name carries the `__Secure-` prefix, and a browser REJECTS any
+  // Set-Cookie for such a name without the `Secure` attribute, so clearing with a bare `{ maxAge: 0 }`
+  // would silently no-op on HTTPS. Full attribute set, zero lifetime.
+  ctx.setCookie(SIGNUP_INTENT_COOKIE_NAME, "", { ...SIGNUP_INTENT_COOKIE_OPTIONS, maxAge: 0 });
+
+  return true;
+};
+
+/**
  * ENG-2562 — hand the post-verification session only to the browser that signed up.
  *
  * `emailVerification.autoSignInAfterVerification` used to be `true`, on the reasoning that "clicking
@@ -74,12 +103,6 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
   // single fault would strand them: verified, signed out, and with no route back but finding the login
   // page by hand. Any failure therefore degrades to "no session", never to an error.
   try {
-    // Read through Better Auth's own resolver rather than `ctx.context.session`, which this route does
-    // not populate — `/verify-email` carries no session middleware, which is why the upstream handler
-    // called `getSessionFromCtx` here too.
-    // `currentSession &&` is load-bearing, not defensive noise: without it an absent session compares
-    // `undefined === undefined` against a missing verified-user id and reports "already signed in",
-    // which would silently swallow the case rather than withhold it.
     // Whether the ENDPOINT already attached a session cookie, meaning it made its own sign-in decision
     // and this hook must not second-guess it. Unreachable in today's config — the only `/verify-email`
     // branch that does this is Better Auth's `updateTo` email-change flow and `user.changeEmail` is not
@@ -100,6 +123,11 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
       sessionCookieName && setCookieBeforeSessionRead.includes(`${sessionCookieName}=`)
     );
 
+    // Read through Better Auth's own resolver rather than `ctx.context.session`, which this route does
+    // not populate — `/verify-email` carries no session middleware, which is why the upstream handler
+    // calls `getSessionFromCtx` here too. `currentSession &&` is load-bearing rather than defensive
+    // noise: without it an absent session compares `undefined === undefined` against a missing
+    // verified-user id and reports "already signed in", swallowing the case instead of withholding it.
     const currentSession = await getSessionFromCtx(ctx);
     if (currentSession && currentSession.user?.id === verifiedUserId) return;
     if (endpointAlreadyGrantedSession) return;
@@ -118,23 +146,7 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
       await auditVerificationSessionWithheld(verifiedUserId);
       sessionWithheld = true;
     } else {
-      const user = await ctx.context.internalAdapter.findUserById(verifiedUserId);
-      // Same shape as the SSO recovery sign-in plugin. Routing through the adapter (rather than writing
-      // the row directly) keeps the `session.create.before` database hook in play, so a deactivated user
-      // is still refused a session here — and lands in this withheld branch rather than being let in.
-      const session = user ? await ctx.context.internalAdapter.createSession(user.id, false) : null;
-
-      if (user && session) {
-        await setSessionCookie(ctx, { session, user });
-        // Single use: the cookie has done its job. Replay is independently blocked (an already-verified
-        // link never fires afterEmailVerification, so the marker is absent), making this defence in
-        // depth — but it must actually land: the production name carries the `__Secure-` prefix, and a
-        // browser REJECTS any Set-Cookie for such a name without the `Secure` attribute, so clearing
-        // with bare `{ maxAge: 0 }` would silently no-op on HTTPS. Full attribute set, zero lifetime.
-        ctx.setCookie(SIGNUP_INTENT_COOKIE_NAME, "", { ...SIGNUP_INTENT_COOKIE_OPTIONS, maxAge: 0 });
-      } else {
-        sessionWithheld = true;
-      }
+      sessionWithheld = !(await grantSessionToSignupBrowser(ctx, verifiedUserId));
     }
   } catch (error) {
     // userId only — never the cookie value or the verification token.
