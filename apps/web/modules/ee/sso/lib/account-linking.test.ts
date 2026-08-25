@@ -31,7 +31,7 @@ describe("syncSsoIdentityForUser", () => {
     type: "oauth" as const,
     provider: "google",
     providerAccountId: "provider-account-1",
-    issuer: "local:oauth:google",
+    issuer: "https://accounts.google.com",
     access_token: "access-token",
     refresh_token: "refresh-token",
     scope: "openid email profile",
@@ -101,10 +101,11 @@ describe("syncSsoIdentityForUser", () => {
         id: "account_1",
       },
       data: {
-        // `issuer` on the token-refresh branch too (ENG-2343): the canonical row may predate the
-        // backfill window, and 1.7's account lookup filters on `(issuer, accountId)` — so leaving it
-        // NULL here would keep a recovered link invisible and re-trigger recovery on the next sign-in.
-        issuer: "local:oauth:google",
+        // `issuer` on the token-refresh branch too (ENG-2343, corrected in ENG-2555): the canonical row
+        // may predate the backfill window OR carry a wrong value written before the fix, and 1.7's
+        // account lookup filters on `(issuer, accountId)` — so leaving it alone here would keep a
+        // recovered link invisible and re-trigger recovery on the next sign-in, forever.
+        issuer: "https://accounts.google.com",
         access_token: "access-token",
         refresh_token: "refresh-token",
         scope: "openid email profile",
@@ -138,7 +139,7 @@ describe("syncSsoIdentityForUser", () => {
         type: "oauth",
         provider: "google",
         providerAccountId: "provider-account-1",
-        issuer: "local:oauth:google",
+        issuer: "https://accounts.google.com",
         access_token: "access-token",
         refresh_token: "refresh-token",
         scope: "openid email profile",
@@ -186,7 +187,10 @@ describe("syncSsoIdentityForUser", () => {
       where: {
         id: "account_1",
       },
+      // `issuer` is written here as of ENG-2555 — this branch used to update tokens only, which is what
+      // stopped a row with a wrong issuer from ever healing.
       data: {
+        issuer: "https://accounts.google.com",
         access_token: "access-token",
         refresh_token: "refresh-token",
         scope: "openid email profile",
@@ -222,7 +226,7 @@ describe("syncSsoIdentityForUser", () => {
         type: "oauth",
         provider: "google",
         providerAccountId: "provider-account-1",
-        issuer: "local:oauth:google",
+        issuer: "https://accounts.google.com",
         access_token: "access-token",
         refresh_token: "refresh-token",
         expires_at: 1234,
