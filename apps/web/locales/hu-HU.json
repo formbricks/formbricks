@@ -3056,7 +3056,7 @@
         "ai_instance_not_configured": "Az MI nincs beállítva. Vegye fel a kapcsolatot az adminisztrátorral.",
         "ai_smart_tools_disabled": "Az MI intelligens eszközei le vannak tiltva ennél a szervezetnél.",
         "ai_translate": "Fordítás MI-vel",
-        "ai_translating": "Fordítás MI-vel… Tartsa nyitva ezt a párbeszédablakot.",
+        "ai_translating": "AI fordítás folyamatban... Kérem, tartsa nyitva ezt az ablakot.",
         "ai_translation_all_fields_populated": "Az összes mező le van már fordítva",
         "ai_translation_complete": "Az MI-fordítás befejeződött",
         "ai_translation_failed": "A fordítás nem sikerült",
