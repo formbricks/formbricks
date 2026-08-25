@@ -326,8 +326,8 @@ non-taxonomy installs do not pay the KV-cache cost; taxonomy operators must expl
 deployment limit as shown above. Helm rejects a missing or undersized context budget and also rejects a bundled
 vLLM limit below that budget. `/ready` independently verifies the exact external provider/model preflight.
 
-When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment, Service, and Secret, then injects these
-Hub API env vars unless `taxonomy.autoConfigureHub=false`:
+When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment and Service, creates or uses the
+configured Secrets, then injects these Hub API env vars unless `taxonomy.autoConfigureHub=false`:
 
 ```yaml
 TAXONOMY_SERVICE_URL: http://formbricks-taxonomy:8000
