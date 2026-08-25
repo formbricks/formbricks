@@ -255,7 +255,7 @@ export const FEEDBACK_FIELDS = {
       type: "number",
       group: "count",
       description:
-        "Unique people who gave feedback, deduplicated by person — one respondent answering 3 questions counts once",
+        "Unique identified people who gave feedback, deduplicated by person — one respondent answering 3 questions counts once. Anonymous feedback (no identified respondent) isn't counted here, even though it counts as a Feedback Record.",
     },
     {
       id: "FeedbackRecords.uniqueResponses",

@@ -1719,7 +1719,7 @@
         "failed_to_save_chart": "Nem sikerült elmenteni a diagramot",
         "field": "Mező",
         "field_description_count": "A visszajelzési rekordok összesített száma",
-        "field_description_unique_respondents": "Azon egyedi személyek száma, akik visszajelzést adtak, személyenként deduplikálva — egy válaszadó, aki 3 kérdésre válaszol, egyszer számít",
+        "field_description_unique_respondents": "Egyedileg azonosított személyek, akik visszajelzést adtak, személy szerint deduplikálva — egy válaszadó, aki 3 kérdésre válaszol, egyszer számít. Az anonim visszajelzések (ahol nincs azonosított válaszadó) itt nem kerülnek beszámításra, még akkor sem, ha visszajelzési rekordként szerepelnek.",
         "field_description_unique_responses": "Egyedi felmérésbeküldések száma, beküldésenként deduplikálva — egy válaszadó, aki kétszer küld be választ, kétszer számít",
         "field_description_value_option": "Ajánlott egyválasztásos és többválasztásos válaszokhoz: a stabil opcióazonosító egy opciót egy kategóriában tart a különböző nyelveken, címkeszerkesztés után, valamint szabad szöveges „egyéb“ válaszok esetén. A diagramok az opció címkéjét jelenítik meg, nem az azonosítót.",
         "field_description_value_text": "Szöveges válaszérték (nyílt szöveg vagy többválasztásos/kategorikus válasz címkéje). A pontos szöveg alapján csoportosít, így egy lefordított címke, egy szerkesztett címke vagy egy szabad szöveges „egyéb“ válasz külön kategóriát alkot — választási kérdéseknél inkább az Érték (Opció) használata javasolt. Párosítsa fieldType szűrővel a típusok következetességének megőrzése érdekében.",

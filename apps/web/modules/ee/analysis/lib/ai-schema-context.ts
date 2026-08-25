@@ -48,6 +48,7 @@ The time field is \`${CUBE_NAME}.collectedAt\`. Supported granularities: hour, d
 Date range presets: ${datePresetsText}
 
 ### Metric aliases
+- "responses", "response count", or "feedback records" means \`${CUBE_NAME}.count\` — not \`${CUBE_NAME}.uniqueResponses\`, which counts distinct submissions rather than every record.
 - "NPS score" or "net promoter score" means \`${CUBE_NAME}.npsScore\`.
 - "NPS value", "NPS average", or "NPS average rating" means \`${CUBE_NAME}.npsAverage\`.
 - "CSAT score" means \`${CUBE_NAME}.csatScore\`; "CSAT average" means \`${CUBE_NAME}.csatAverage\`.

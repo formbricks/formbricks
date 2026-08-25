@@ -4,6 +4,10 @@ import { generateSchemaContext } from "./ai-schema-context";
 describe("AI schema context", () => {
   test.each([
     [
+      "the responses alias, distinct from the unique-submissions measure it could be confused with",
+      '"responses", "response count", or "feedback records" means `FeedbackRecords.count` — not `FeedbackRecords.uniqueResponses`',
+    ],
+    [
       "the NPS score alias for the canonical score measure",
       '"NPS score" or "net promoter score" means `FeedbackRecords.npsScore`',
     ],

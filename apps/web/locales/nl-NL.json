@@ -1719,7 +1719,7 @@
         "failed_to_save_chart": "Opslaan van diagram mislukt",
         "field": "Veld",
         "field_description_count": "Totaal aantal feedbackrecords",
-        "field_description_unique_respondents": "Unieke personen die feedback hebben gegeven, gededupliceerd per persoon — één respondent die 3 vragen beantwoordt telt als één",
+        "field_description_unique_respondents": "Unieke geïdentificeerde personen die feedback hebben gegeven, gedupliceerd per persoon — één respondent die 3 vragen beantwoordt, telt als één. Anonieme feedback (zonder geïdentificeerde respondent) wordt hier niet meegeteld, ook al telt het wel als een feedbackrecord.",
         "field_description_unique_responses": "Unieke enquête-inzendingen, gededupliceerd per inzending — één respondent die twee keer indient telt als twee",
         "field_description_value_option": "Aanbevolen voor single-select en multi-select antwoorden: de stabiele optie-id houdt één optie in één bucket over verschillende talen, na een labelwijziging en voor vrije-tekst 'andere' antwoorden. Grafieken tonen het label van de optie, niet de id.",
         "field_description_value_text": "Tekstantwoordwaarde (open tekst, of het label van een meerkeuzevraag/categorisch antwoord). Groepeert op exacte tekst, dus een vertaald label, een bewerkt label of een vrije-tekst 'andere' antwoord wordt elk een eigen bucket — bij keuzevragen gaat de voorkeur uit naar Waarde (Optie). Combineer met een fieldType-filter om types consistent te houden.",

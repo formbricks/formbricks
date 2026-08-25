@@ -1719,7 +1719,7 @@
         "failed_to_save_chart": "Échec de l'enregistrement du graphique",
         "field": "Champ",
         "field_description_count": "Nombre total d'enregistrements de feedback",
-        "field_description_unique_respondents": "Personnes uniques ayant donné un feedback, dédupliquées par personne — un répondant qui répond à 3 questions compte pour un",
+        "field_description_unique_respondents": "Personnes identifiées uniques ayant donné leur avis, dédupliquées par personne — un répondant ayant répondu à 3 questions compte pour un. Les retours anonymes (sans répondant identifié) ne sont pas comptés ici, même s'ils comptent comme un enregistrement de retour.",
         "field_description_unique_responses": "Soumissions de sondage uniques, dédupliquées par soumission — un répondant qui soumet deux fois compte pour deux",
         "field_description_value_option": "Recommandé pour les réponses à choix unique et à choix multiples : l'identifiant d'option stable maintient une option dans un même groupe à travers les langues, après une modification de libellé, et pour les réponses « autre » en texte libre. Les graphiques affichent le libellé de l'option, pas l'identifiant.",
         "field_description_value_text": "Valeur de réponse textuelle (texte libre, ou libellé d'une réponse à choix multiples/catégorielle). Regroupe par texte exact, donc un libellé traduit, un libellé modifié ou une réponse « autre » en texte libre devient chacun son propre groupe — pour les questions à choix, privilégie Valeur (Option). Associe avec un filtre fieldType pour maintenir la cohérence des types.",

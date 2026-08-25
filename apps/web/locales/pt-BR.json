@@ -1719,7 +1719,7 @@
         "failed_to_save_chart": "Falha ao salvar gráfico",
         "field": "Campo",
         "field_description_count": "Número total de registros de feedback",
-        "field_description_unique_respondents": "Pessoas únicas que deram feedback, sem duplicatas por pessoa — um respondente que responde 3 perguntas conta uma vez",
+        "field_description_unique_respondents": "Pessoas identificadas únicas que deram feedback, sem duplicatas por pessoa — um respondente que responde 3 perguntas conta uma vez. Feedbacks anônimos (sem respondente identificado) não são contados aqui, mesmo que contem como um Registro de Feedback.",
         "field_description_unique_responses": "Envios de pesquisa únicos, sem duplicatas por envio — um respondente que envia duas vezes conta duas vezes",
         "field_description_value_option": "Recomendado para respostas de seleção única e múltipla: o ID estável da opção mantém uma opção em um único grupo entre idiomas, após a edição de um rótulo e para respostas de texto livre do tipo 'outro'. Os gráficos mostram o rótulo da opção, não o ID.",
         "field_description_value_text": "Valor da resposta em texto (texto aberto ou o rótulo de uma resposta de múltipla escolha/categórica). Agrupa pelo texto exato, então um rótulo traduzido, um rótulo editado ou uma resposta de texto livre do tipo 'outro' se tornam grupos separados — para perguntas de escolha, prefira Valor (Opção). Combine com um filtro de fieldType para manter os tipos consistentes.",

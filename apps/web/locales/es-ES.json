@@ -1719,7 +1719,7 @@
         "failed_to_save_chart": "Error al guardar el gráfico",
         "field": "Campo",
         "field_description_count": "Número total de registros de comentarios",
-        "field_description_unique_respondents": "Personas únicas que dieron su opinión, deduplicadas por persona: un encuestado que responde 3 preguntas cuenta una vez",
+        "field_description_unique_respondents": "Personas identificadas únicas que dieron feedback, deduplicadas por persona: un encuestado que responde 3 preguntas cuenta una vez. El feedback anónimo (sin encuestado identificado) no se cuenta aquí, aunque sí cuenta como Registro de Feedback.",
         "field_description_unique_responses": "Envíos de encuesta únicos, deduplicados por envío: un encuestado que envía dos veces cuenta dos veces",
         "field_description_value_option": "Recomendado para respuestas de selección única y múltiple: el id de opción estable mantiene una opción en un mismo grupo en todos los idiomas, después de editar una etiqueta y para respuestas de texto libre en 'otro'. Los gráficos muestran la etiqueta de la opción, no el id.",
         "field_description_value_text": "Valor de respuesta de texto (texto abierto o la etiqueta de una respuesta de opción múltiple/categórica). Agrupa por el texto exacto, por lo que una etiqueta traducida, una etiqueta editada o una respuesta de texto libre en 'otro' se convierten cada una en su propio grupo — para preguntas de elección, prefiere Valor (Opción). Combínalo con un filtro de tipo de campo para mantener la consistencia de tipos.",

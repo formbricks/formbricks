@@ -1719,7 +1719,7 @@
         "failed_to_save_chart": "Grafik kaydedilemedi",
         "field": "Alan",
         "field_description_count": "Toplam geri bildirim kayıt sayısı",
-        "field_description_unique_respondents": "Geri bildirimde bulunan benzersiz kişi sayısı, kişiye göre tekilleştirilmiş — 3 soruyu yanıtlayan bir katılımcı bir kez sayılır",
+        "field_description_unique_respondents": "Geri bildirim veren benzersiz tanımlanmış kişiler, kişiye göre tekilleştirilmiş — 3 soruyu yanıtlayan bir katılımcı bir kez sayılır. Anonim geri bildirimler (tanımlanmış katılımcı yok) burada sayılmaz, ancak Geri Bildirim Kaydı olarak sayılır.",
         "field_description_unique_responses": "Benzersiz anket gönderimi sayısı, gönderime göre tekilleştirilmiş — iki kez gönderen bir katılımcı iki kez sayılır",
         "field_description_value_option": "Tek seçimli ve çoklu seçimli yanıtlar için önerilir: sabit seçenek kimliği, bir seçeneği diller arasında, etiket düzenlemesinden sonra ve serbest metin 'diğer' yanıtları için tek bir grupta tutar. Grafikler, seçeneğin kimliğini değil, etiketini gösterir.",
         "field_description_value_text": "Metin yanıt değeri (açık metin veya çoktan seçmeli/kategorik bir yanıtın etiketi). Tam metne göre gruplandırır, bu nedenle çevrilmiş bir etiket, düzenlenmiş bir etiket veya serbest metin 'diğer' yanıtı her biri kendi grubunu oluşturur — seçim sorularında Değer (Seçenek) tercih edilir. Türleri tutarlı tutmak için fieldType filtresiyle eşleştirin.",

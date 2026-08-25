@@ -1719,7 +1719,7 @@
         "failed_to_save_chart": "Diagramm konnte nicht gespeichert werden",
         "field": "Feld",
         "field_description_count": "Gesamtanzahl der Feedback-Einträge",
-        "field_description_unique_respondents": "Einzelne Personen, die Feedback gegeben haben, dedupliziert nach Person — eine Person, die 3 Fragen beantwortet, zählt einmal",
+        "field_description_unique_respondents": "Eindeutig identifizierte Personen, die Feedback gegeben haben, dedupliziert nach Person – ein Befragter, der 3 Fragen beantwortet, zählt einmal. Anonymes Feedback (ohne identifizierten Befragten) wird hier nicht gezählt, auch wenn es als Feedback-Datensatz zählt.",
         "field_description_unique_responses": "Einzelne Umfrage-Einsendungen, dedupliziert nach Einsendung — eine Person, die zweimal antwortet, zählt zweimal",
         "field_description_value_option": "Empfohlen für Einfach- und Mehrfachauswahl-Antworten: Die stabile Options-ID hält eine Option über Sprachen hinweg, nach einer Bearbeitung des Labels und für Freitext-'Sonstige'-Antworten in einem Bucket. Diagramme zeigen das Label der Option, nicht die ID.",
         "field_description_value_text": "Textantwortwert (offener Text oder das Label einer Multiple-Choice-/kategorialen Antwort). Gruppiert nach dem exakten Text, sodass ein übersetztes Label, ein bearbeitetes Label oder eine Freitext-'Sonstige'-Antwort jeweils einen eigenen Bucket bildet – bei Auswahlfragen bevorzuge Wert (Option). Kombiniere dies mit einem fieldType-Filter, um die Typen konsistent zu halten.",
