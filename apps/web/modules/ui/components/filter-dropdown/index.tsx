@@ -2,7 +2,6 @@
 
 import { ChevronDownIcon } from "lucide-react";
 import { Fragment } from "react";
-import type { TWorkflowStatus } from "@formbricks/workflows";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import {
   DropdownMenu,
@@ -12,31 +11,35 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 
-export interface TWorkflowStatusFilterOption {
+export interface TFilterOption<TValue extends string = string> {
   label: string;
-  value: TWorkflowStatus;
+  value: TValue;
   /** Render a divider above this option, to set it apart from the ones before it. */
   separatorBefore?: boolean;
 }
 
-interface WorkflowFilterDropdownProps {
+interface FilterDropdownProps<TValue extends string> {
   title: string;
-  options: TWorkflowStatusFilterOption[];
-  selectedOptions: TWorkflowStatus[];
-  onToggleOption: (value: TWorkflowStatus) => void;
+  options: TFilterOption<TValue>[];
+  selectedOptions: readonly TValue[];
+  onToggleOption: (value: TValue) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Extra class on the trigger, used by list pages to scope their own styling/selectors. */
+  className?: string;
 }
 
-export const WorkflowFilterDropdown = ({
+/** Multi-select checkbox filter used by the surveys and workflows list toolbars. */
+export const FilterDropdown = <TValue extends string>({
   title,
   options,
   selectedOptions,
   onToggleOption,
   isOpen,
   onOpenChange,
-}: Readonly<WorkflowFilterDropdownProps>) => {
-  const triggerClasses = `workflowFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-none
+  className = "",
+}: Readonly<FilterDropdownProps<TValue>>) => {
+  const triggerClasses = `${className} min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-hidden
     ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : "hover:bg-slate-900 hover:text-white"}`;
 
   return (

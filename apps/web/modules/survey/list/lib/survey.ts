@@ -414,19 +414,22 @@ export const getSurveyCount = reactCache(
   }
 );
 
-/** Whether the workspace has any archived (soft-deleted) surveys. Drives the "Archived" filter option. */
-export const hasArchivedSurveys = reactCache(async (workspaceId: string): Promise<boolean> => {
+/**
+ * Whether the workspace holds any survey at all, archived ones included. Filter-independent, so the
+ * list can tell an empty workspace (onboarding) from a filter that matched nothing.
+ */
+export const hasAnySurveys = reactCache(async (workspaceId: string): Promise<boolean> => {
   validateInputs([workspaceId, z.cuid2()]);
   try {
-    const archivedSurvey = await prisma.survey.findFirst({
-      where: { workspaceId, archivedAt: { not: null } },
+    const survey = await prisma.survey.findFirst({
+      where: { workspaceId },
       select: { id: true },
     });
 
-    return archivedSurvey !== null;
+    return survey !== null;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error checking for archived surveys");
+      logger.error(error, "Error checking whether the workspace has surveys");
       throw new DatabaseError(error.message);
     }
 

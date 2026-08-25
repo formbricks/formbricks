@@ -56,16 +56,26 @@ test.describe("Survey archive @slow", () => {
     await page.reload();
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible({ timeout: 10000 });
 
+    // With nothing archived yet, "Archived" is still offered and behaves like any other status:
+    // the selection sticks and the list is empty, rather than silently unticking itself.
+    await page.locator(".surveyFilterDropdown").filter({ hasText: "Status" }).click();
+    await page.getByRole("menuitem", { name: "Archived" }).click();
+    await page.keyboard.press("Escape");
+    await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
+    await page.getByRole("button", { name: "Clear filters" }).click();
+    await expect(page.getByText(surveyName, { exact: true })).toBeVisible();
+
     // Archive an in-progress survey → hard warning with "Stop and archive".
     await page.locator("[data-testid='survey-dropdown-trigger']").click();
     await page.getByTestId("archive-survey").click();
     await page.getByRole("dialog").getByRole("button", { name: "Stop and archive", exact: true }).click();
 
     await expect(page.getByText("Survey archived", { exact: true })).toBeVisible();
-    // Hidden from the default list.
+    // Hidden from the default list. The workspace now holds nothing but this archived survey, so the
+    // toolbar has to stay put instead of falling back to the "create your first survey" onboarding.
     await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
 
-    // "Archived" now appears in the Status filter; selecting it reveals the survey.
+    // "Archived" is always offered in the Status filter; selecting it reveals the survey.
     await page.locator(".surveyFilterDropdown").filter({ hasText: "Status" }).click();
     await page.getByRole("menuitem", { name: "Archived" }).click();
     await page.keyboard.press("Escape");
@@ -78,12 +88,13 @@ test.describe("Survey archive @slow", () => {
     await expect(page.getByTestId("archive-survey")).toHaveCount(0);
     await expect(page.getByTestId("duplicate-survey")).toHaveCount(0);
 
-    // Restore → survey leaves the archived view and the toast confirms.
+    // Restore → the survey stops matching the archived filter and leaves the view, exactly like a
+    // survey that leaves any other status filter. Clearing the filter brings it back.
     await page.getByTestId("restore-survey").click();
     await expect(page.getByText("Survey restored", { exact: true })).toBeVisible();
+    await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
 
-    // With no archived surveys left, the stale "archived" filter is dropped automatically and the
-    // survey returns to the default list without any manual filter clearing.
+    await page.getByRole("button", { name: "Clear filters" }).click();
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible();
 
     // Archive again, then permanently delete it from the archived view.

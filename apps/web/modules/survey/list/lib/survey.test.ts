@@ -15,7 +15,7 @@ import { buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesWorkspaceExist, getWorkspaceWithLanguages } from "@/modules/survey/list/lib/workspace";
 import { TWorkspaceWithLanguages } from "../types/surveys";
 // Import the module to be tested
-import { copySurveyToOtherWorkspace, getSurveyCount, hasArchivedSurveys } from "./survey";
+import { copySurveyToOtherWorkspace, getSurveyCount, hasAnySurveys } from "./survey";
 
 vi.mock("server-only", () => ({}));
 
@@ -575,7 +575,7 @@ describe("copySurveyToOtherWorkspace", () => {
   });
 });
 
-describe("hasArchivedSurveys", () => {
+describe("hasAnySurveys", () => {
   const workspaceId = "clq5n7p1q0000m7z0h5p6g3r3";
 
   beforeEach(() => {
@@ -583,20 +583,20 @@ describe("hasArchivedSurveys", () => {
     vi.mocked(validateInputs).mockReturnValue([] as never);
   });
 
-  test("returns true when the workspace has at least one archived survey", async () => {
+  test("counts archived surveys too, so an all-archived workspace is not empty", async () => {
     vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: "survey_1" } as never);
 
-    await expect(hasArchivedSurveys(workspaceId)).resolves.toBe(true);
+    await expect(hasAnySurveys(workspaceId)).resolves.toBe(true);
     expect(prisma.survey.findFirst).toHaveBeenCalledWith({
-      where: { workspaceId, archivedAt: { not: null } },
+      where: { workspaceId },
       select: { id: true },
     });
   });
 
-  test("returns false when the workspace has no archived surveys", async () => {
+  test("returns false when the workspace has no surveys at all", async () => {
     vi.mocked(prisma.survey.findFirst).mockResolvedValue(null as never);
 
-    await expect(hasArchivedSurveys(workspaceId)).resolves.toBe(false);
+    await expect(hasAnySurveys(workspaceId)).resolves.toBe(false);
   });
 
   test("throws DatabaseError on a Prisma known request error", async () => {
@@ -606,6 +606,6 @@ describe("hasArchivedSurveys", () => {
     });
     vi.mocked(prisma.survey.findFirst).mockRejectedValue(prismaError);
 
-    await expect(hasArchivedSurveys(workspaceId)).rejects.toThrow(DatabaseError);
+    await expect(hasAnySurveys(workspaceId)).rejects.toThrow(DatabaseError);
   });
 });

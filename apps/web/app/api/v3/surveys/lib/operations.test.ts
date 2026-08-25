@@ -4,7 +4,7 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
-import { getSurveyCount, hasArchivedSurveys } from "@/modules/survey/list/lib/survey";
+import { getSurveyCount, hasAnySurveys } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import { V3SurveyCreatePermissionError, createV3Survey } from "../create";
@@ -66,7 +66,7 @@ vi.mock("@/modules/survey/lib/surveys", () => ({
 
 vi.mock("@/modules/survey/list/lib/survey", () => ({
   getSurveyCount: vi.fn(),
-  hasArchivedSurveys: vi.fn(),
+  hasAnySurveys: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/list/lib/survey-page", () => ({
@@ -182,7 +182,7 @@ describe("listV3Surveys", () => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
     vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [survey], nextCursor: "cursor_next" } as any);
     vi.mocked(getSurveyCount).mockResolvedValue(7);
-    vi.mocked(hasArchivedSurveys).mockResolvedValue(false);
+    vi.mocked(hasAnySurveys).mockResolvedValue(true);
     vi.mocked(serializeV3SurveyListItem).mockReturnValue(serializedSurvey as any);
   });
 
@@ -210,12 +210,12 @@ describe("listV3Surveys", () => {
     });
     expect(await readJson(response)).toEqual({
       data: [serializedSurvey],
-      meta: { limit: 20, nextCursor: "cursor_next", totalCount: 7, hasArchived: false },
+      meta: { limit: 20, nextCursor: "cursor_next", totalCount: 7, hasAnySurveys: true },
     });
   });
 
-  test("reports hasArchived when the workspace has archived surveys", async () => {
-    vi.mocked(hasArchivedSurveys).mockResolvedValue(true);
+  test("reports an empty workspace when it holds no survey at all", async () => {
+    vi.mocked(hasAnySurveys).mockResolvedValue(false);
 
     const response = await listV3Surveys({
       searchParams: new URLSearchParams({ workspaceId }),
@@ -224,10 +224,10 @@ describe("listV3Surveys", () => {
       instance,
     });
 
-    expect((await readJson(response)).meta.hasArchived).toBe(true);
+    expect((await readJson(response)).meta.hasAnySurveys).toBe(false);
   });
 
-  test("skips total count and hasArchived when they are not requested", async () => {
+  test("skips total count and hasAnySurveys when they are not requested", async () => {
     mockListQuery({ includeTotalCount: false });
 
     const response = await listV3Surveys({
@@ -239,10 +239,10 @@ describe("listV3Surveys", () => {
 
     expect(response.status).toBe(200);
     expect(vi.mocked(getSurveyCount)).not.toHaveBeenCalled();
-    expect(vi.mocked(hasArchivedSurveys)).not.toHaveBeenCalled();
+    expect(vi.mocked(hasAnySurveys)).not.toHaveBeenCalled();
     const body = await readJson(response);
     expect(body.meta.totalCount).toBeNull();
-    expect(body.meta.hasArchived).toBeNull();
+    expect(body.meta.hasAnySurveys).toBeNull();
   });
 
   test("returns bad request for invalid query parameters", async () => {

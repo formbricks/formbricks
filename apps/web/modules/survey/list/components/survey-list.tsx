@@ -21,11 +21,7 @@ import { useRestoreSurvey } from "@/modules/survey/list/hooks/use-restore-survey
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
-import {
-  hasActiveSurveyFilters,
-  normalizeSurveyFilters,
-  parseStoredSurveyFilters,
-} from "@/modules/survey/list/lib/utils";
+import { normalizeSurveyFilters, parseStoredSurveyFilters } from "@/modules/survey/list/lib/utils";
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { Button } from "@/modules/ui/components/button";
@@ -195,14 +191,12 @@ export const SurveysList = ({
     fetchNextPage,
     hasNextPage,
     isError,
-    isFetching,
     isFetchingNextPage,
     isLoading,
     queryKey,
     refetch,
     surveys,
-    totalCount,
-    hasArchived,
+    hasAnySurveys,
   } = useSurveys({
     workspaceId: workspace.id,
     limit: surveysPerPage,
@@ -215,27 +209,11 @@ export const SurveysList = ({
   const archiveSurveyMutation = useArchiveSurvey({ queryKey });
   const restoreSurveyMutation = useRestoreSurvey({ queryKey });
 
-  // When the workspace no longer has archived surveys (last one restored/purged), drop a stale
-  // "archived" selection persisted in localStorage so the (now-hidden) filter can't strand the view.
-  // Guard on !isFetching so a fresh selection isn't wiped while hasArchived is still catching up
-  // during a refetch (e.g. right after archiving the last active survey).
-  useEffect(() => {
-    if (!isFetching && !hasArchived && surveyFilters.status.includes("archived")) {
-      setSurveyFilters((prev) => ({
-        ...prev,
-        status: prev.status.filter((value) => value !== "archived"),
-      }));
-    }
-  }, [hasArchived, isFetching, surveyFilters.status]);
-
-  const hasAppliedFilters = hasActiveSurveyFilters(normalizedFilters);
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
-  // Never show the "create your first survey" empty states when archived surveys exist — the user
-  // must still be able to reach the Archived filter.
-  const showTemplateEmptyState =
-    !isError && totalCount === 0 && !hasAppliedFilters && !hasArchived && !isReadOnly;
-  const showReadOnlyEmptyState =
-    !isError && totalCount === 0 && !hasAppliedFilters && !hasArchived && isReadOnly;
+  // Only a workspace without a single survey gets the onboarding empty states. Every other empty
+  // list keeps the toolbar, so the filter that emptied it stays reachable.
+  const showTemplateEmptyState = !isError && !hasAnySurveys && !isReadOnly;
+  const showReadOnlyEmptyState = !isError && !hasAnySurveys && isReadOnly;
 
   const handleDeleteSurvey = async (surveyId: string) => {
     await deleteSurveyMutation.mutateAsync({ surveyId });
@@ -384,7 +362,6 @@ export const SurveysList = ({
           surveyFilters={normalizedFilters}
           setSurveyFilters={setSurveyFilters}
           currentWorkspaceChannel={currentWorkspaceChannel}
-          hasArchived={hasArchived}
         />
         {surveyContent}
       </div>
