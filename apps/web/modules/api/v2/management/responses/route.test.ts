@@ -34,8 +34,16 @@ vi.mock("@/app/lib/pipelines", () => ({
   sendToPipeline: vi.fn(),
 }));
 
+// Not an identity stub: the success case asserts the *rewritten* value, so the test fails if the
+// route stops piping each row's data through this.
 vi.mock("@/modules/storage/utils", () => ({
-  resolveStorageUrlsInObject: (data: unknown) => data,
+  resolveStorageUrlsInObject: (data: Record<string, unknown>) =>
+    Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        value === "storage://private/file.png" ? "https://cdn.example.com/file.png" : value,
+      ])
+    ),
   validateClientFileUploads: vi.fn(),
 }));
 
@@ -72,7 +80,7 @@ describe("GET /management/responses", () => {
     mockGetResponses.mockResolvedValue({
       ok: true,
       data: {
-        data: [{ id: "res1", data: { q1: "a" } }],
+        data: [{ id: "res1", data: { q1: "a", upload: "storage://private/file.png" } }],
         meta: { total: 137, limit: 2, offset: 10 },
       },
     });
@@ -84,7 +92,7 @@ describe("GET /management/responses", () => {
     expect(mockGetResponses).toHaveBeenCalledWith(["ws123"], query);
     expect(response.status).toBe(200);
     expect(body).toEqual({
-      data: [{ id: "res1", data: { q1: "a" } }],
+      data: [{ id: "res1", data: { q1: "a", upload: "https://cdn.example.com/file.png" } }],
       meta: { total: 137, limit: 2, offset: 10 },
     });
   });
