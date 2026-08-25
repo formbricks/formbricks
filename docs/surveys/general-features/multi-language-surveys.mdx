@@ -194,8 +194,8 @@ Formbricks.setLanguage("de"); // identifier or alias of the language
 Call `setLanguage()` whenever your app's language changes — for example right after the user switches it in
 your own settings — and Formbricks will use the new value for every survey it shows from then on.
 
-`setLanguage()` accepts a language's identifier or its alias, case-insensitively — but unlike the `lang` URL
-parameter it does not fall back to a canonical match. See the warning below.
+`setLanguage()` accepts a language's identifier or its alias, case-insensitively. Unlike the `lang` URL
+parameter, it does not fall back to a canonical match — see the note below.
 
 ### What Happens When a Translation Is Missing
 
@@ -209,24 +209,14 @@ For a survey with more than one language, Formbricks resolves the user's `langua
 | Matches nothing on the survey, or a language that is not visible | **Nothing — the survey is skipped** |
 
 The last row is deliberate: a targeted survey is skipped rather than shown in a language the user did not ask
-for. Two consequences are worth planning around.
-
-Making a language invisible does not soften the rule. A user whose language is on the survey but switched to
-invisible is skipped exactly like one whose language is not on the survey at all — it does not fall back to
-the default language. So translate a language and make it visible before you point users at that survey.
-
-<Warning>
-  The value you pass to `setLanguage()` has to match the language's identifier or its alias exactly.
-  Formbricks does not widen a bare code to a region-tagged one here: with a survey language stored as
-  `ar-EG`, `setLanguage("ar")` matches nothing and the survey is silently skipped. If your app works in bare
-  codes, give each language an alias that matches what you pass (`ar` for `ar-EG`). Link surveys are more
-  forgiving — `?lang=ar` also resolves through a canonical match — so the same code can work in a link and
-  hide an app survey.
-</Warning>
+for. A survey with only one language, or with translations switched off entirely, is exempt — it ignores the
+`language` attribute and is shown to a matching user whatever their language is set to.
 
 <Note>
-  A survey with only one language, or with translations switched off entirely, ignores the `language`
-  attribute — it is shown to a matching user whatever their language is set to.
+  The value you pass has to match a language's identifier or its alias exactly — Formbricks does not widen a
+  bare code to a region-tagged one here. With a survey language stored as `ar-EG`, `setLanguage("ar")` matches
+  nothing and the survey is skipped, while `?lang=ar` on a link survey still resolves. If your app works in
+  bare codes, give each language a matching alias.
 </Note>
 
 ---
