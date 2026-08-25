@@ -151,6 +151,21 @@ fb() {
 
 die() { echo "$1" >&2; exit 1; }
 
+# Every action class in a workspace, as a JSON array. The v3 endpoint caps limit at 100 and pages by
+# cursor, so a workspace with more than 100 actions needs the loop or the name map silently loses
+# entries and live app surveys come out as drafts.
+fb_action_classes() { # <base-url> <api-key> <workspace-id>
+  local url="$1" key="$2" ws="$3" cursor="" acc='[]'
+  while :; do
+    fb GET "${url}/api/v3/action-classes?workspaceId=${ws}&limit=100${cursor:+&cursor=${cursor}}" "$key" ||
+      die "could not list action classes for ${ws} (HTTP ${FB_CODE}): ${FB_BODY}"
+    acc=$(jq -c --argjson acc "$acc" '$acc + .data' <<<"$FB_BODY")
+    cursor=$(jq -r '.meta.nextCursor // empty' <<<"$FB_BODY")
+    [ -n "$cursor" ] || break
+  done
+  printf '%s' "$acc"
+}
+
 # 1. Read the survey document from the source.
 fb GET "${SOURCE_URL}/api/v3/surveys/${SOURCE_SURVEY_ID}" "$SOURCE_API_KEY" ||
   die "could not read source survey (HTTP ${FB_CODE}): ${FB_BODY}"
@@ -161,15 +176,12 @@ echo "source: $(jq -r '.name' <<<"$survey") ($(jq -r '.type' <<<"$survey"), $(jq
 #    instance, and an app survey with no trigger cannot be live.
 trigger_map='{}'
 if [ "$(jq -r '.type' <<<"$survey")" != "link" ]; then
-  fb GET "${SOURCE_URL}/api/v3/action-classes?workspaceId=$(jq -r '.workspaceId' <<<"$survey")&limit=100" \
-    "$SOURCE_API_KEY" || die "could not list source action classes: ${FB_BODY}"
-  source_actions="$FB_BODY"
-  fb GET "${TARGET_URL}/api/v3/action-classes?workspaceId=${TARGET_WORKSPACE_ID}&limit=100" \
-    "$TARGET_API_KEY" || die "could not list target action classes: ${FB_BODY}"
-  trigger_map=$(jq -n --argjson src "$source_actions" --argjson dst "$FB_BODY" '
-    ($dst.data | map({key: .name, value: .id}) | from_entries) as $byName
-    | $src.data | map(select($byName[.name])) | map({key: .id, value: $byName[.name]}) | from_entries')
-  echo "triggers: mapped $(jq 'length' <<<"$trigger_map") of $(jq '.data | length' <<<"$source_actions") action classes by name"
+  source_actions=$(fb_action_classes "$SOURCE_URL" "$SOURCE_API_KEY" "$(jq -r '.workspaceId' <<<"$survey")")
+  target_actions=$(fb_action_classes "$TARGET_URL" "$TARGET_API_KEY" "$TARGET_WORKSPACE_ID")
+  trigger_map=$(jq -n --argjson src "$source_actions" --argjson dst "$target_actions" '
+    ($dst | map({key: .name, value: .id}) | from_entries) as $byName
+    | $src | map(select($byName[.name])) | map({key: .id, value: $byName[.name]}) | from_entries')
+  echo "triggers: mapped $(jq 'length' <<<"$trigger_map") of $(jq 'length' <<<"$source_actions") action classes by name"
 fi
 
 # 3. Translate the resource into a create document and post it.
@@ -605,6 +617,79 @@ same IDs in the target. Re-create targeting in the app after the import.
 </Warning>
 
 ## Known limitations
+
+### Renamed choices reject their older responses
+
+This is the one that costs the most responses in practice. A choice answer is stored as the choice's
+**label**, not its id — so if anyone renamed or removed a choice after responses came in, the stored
+answers no longer match the survey. The source instance keeps them either way; it never re-validates on
+read. The target does validate on create, and rejects them:
+
+```json
+{
+  "error": {
+    "code": 400,
+    "message": "Bad Request",
+    "details": [{
+      "field": "response.data.s0wo6kf11l25dotzibaptcx8",
+      "issue": "Please enter a valid format",
+      "meta": { "elementId": "s0wo6kf11l25dotzibaptcx8", "ruleId": "invalidOption" }
+    }]
+  }
+}
+```
+
+Run this against the export **before** importing, so you find out from a dump rather than from a
+half-migrated survey:
+
+```bash fb-check-choices.sh
+#!/usr/bin/env bash
+# Pre-flight: list stored answers that no longer match their element's current choices.
+set -euo pipefail
+IN_DIR="${IN_DIR:-./fb-export}"
+
+for survey in "$IN_DIR"/surveys/*.json; do
+  id=$(jq -r '.id' "$survey")
+  responses="$IN_DIR/responses/${id}.json"
+  [ -s "$responses" ] || continue
+  elements=$(jq -c '[.blocks[].elements[] | select(.choices) | {id, labels: [.choices[].label | to_entries[].value]}]' "$survey")
+  if [ "$elements" = "[]" ]; then continue; fi
+  offenders=$(jq -r --argjson els "$elements" '
+    . as $r | $els[] | . as $el
+    | ($r.data[$el.id] // empty)
+    | (if type == "array" then .[] else . end)
+    | . as $v
+    | select(($v | type) == "string" and (($el.labels | index($v)) == null))
+    | "\($el.id)\t\($v)"
+  ' "$responses" | sort | uniq -c | sort -rn)
+  if [ -n "$offenders" ]; then
+    echo "$(jq -r '.name' "$survey")  ($id)"
+    echo "$offenders" | sed 's/^/    /'
+  fi
+done
+```
+
+```
+Feedback Box  (cmr22qltt7qju01x5t3x68mbn)
+       8 s0wo6kf11l25dotzibaptcx8	Feature Request 💡
+       4 s0wo6kf11l25dotzibaptcx8	Bug report 🐞
+```
+
+Twelve of that survey's thirteen responses predate a choice rename, and all twelve would be refused.
+Your options, in order of how much they cost you:
+
+1. **Add the historical labels back as choices on the target survey**, import, then remove them again.
+   Validation only runs on create, so the imported responses stay valid afterwards. This keeps every
+   response at the price of two `PATCH` calls.
+2. **Rewrite the old label to the new one** in the export, if the mapping is unambiguous —
+   `jq -c '.data.<elementId> = "I have a problem"'`. You are editing history, so only do this when the
+   rename was cosmetic.
+3. **Accept the loss** and import the rest. The script reports each failure with its response id.
+
+<Note>
+  An element with an **Other** option will list its free-text answers here too, because they match no
+  choice label by definition. Those import fine — ignore them.
+</Note>
 
 ### File-upload answers are rejected
 
