@@ -647,7 +647,6 @@ checksums:
     s/please_try_again_with_the_original_link: ff903c908d199ae654436972dc0576f9
     s/preview_survey_questions: 2cbdd526f6652d5ee0337e23477d3396
     s/question_preview: 9d8fbc0150fc10ba851beba2d4f4d9f3
-    s/response_already_received: 8e7b1a7d6e01a1939bca95285af77a69
     s/response_submitted: d5df62e1db6012bd1283126a8dd7bad6
     s/scheduled: 0ec63111fd5efe2ac240912105c5f518
     s/survey_already_answered_heading: 4783c9c36ad0d4f8eec5dfeb14a04545
@@ -3260,8 +3259,6 @@ checksums:
     workspace/surveys/edit/please_set_a_survey_trigger: 0358142df37dd1724f629008a1db453a
     workspace/surveys/edit/please_specify: e1faa6cd085144f7339c7e74dc6fb366
     workspace/surveys/edit/present_your_survey_in_multiple_languages: 37f28b0a092d68322fedbc2e0c221ef3
-    workspace/surveys/edit/prevent_double_submission: afc502baa2da81d9c9618da1c3b5a57a
-    workspace/surveys/edit/prevent_double_submission_description: ef7d2aa22d43bdc6ccebb076c6aa9ce5
     workspace/surveys/edit/progress_saved: d7bfc189571f08bbb4d0240cb9363ffa
     workspace/surveys/edit/protect_survey_with_pin: 16d1925b6a5770f7423772d6d9a8291a
     workspace/surveys/edit/protect_survey_with_pin_description: 0e55d19b6f3578b1024e03606172a5d2
