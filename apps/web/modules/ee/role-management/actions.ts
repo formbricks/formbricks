@@ -1,6 +1,8 @@
 "use server";
 
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import {
   AuthenticationError,
@@ -139,20 +141,33 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
       throw new OperationNotAllowedError("Only owners can change the role of an owner");
     }
 
-    if (targetMembership?.role === "owner" && parsedInput.data.role !== "owner") {
-      const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
-
-      if (ownerCount <= 1) {
-        throw new ValidationError("You cannot demote the last owner of the organization");
-      }
-    }
-
     await checkRoleManagementPermission(parsedInput.organizationId);
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
     ctx.auditLoggingCtx.oldObject = targetMembership;
-    const result = await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
+
+    const isDemotingOwner = targetMembership?.role === "owner" && parsedInput.data.role !== "owner";
+
+    // The owner count and the role update must be one atomic unit: read then act, in two separate
+    // statements, lets two owners demoting each other concurrently both read "more than one owner"
+    // and both writes land, leaving zero owners. Serializable isolation makes Postgres abort one of
+    // the two transactions instead.
+    const result = isDemotingOwner
+      ? await prisma.$transaction(
+          async (tx) => {
+            const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId, tx);
+
+            if (ownerCount <= 1) {
+              throw new ValidationError("You cannot demote the last owner of the organization");
+            }
+
+            return updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data, tx);
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+        )
+      : await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
+
     ctx.auditLoggingCtx.newObject = result;
     return result;
   })

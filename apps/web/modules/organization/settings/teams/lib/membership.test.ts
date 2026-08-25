@@ -83,6 +83,13 @@ describe("getOrganizationOwnerCount", () => {
     const result = await getOrganizationOwnerCount(organizationId);
     expect(result).toBe(2);
   });
+  test("only counts active owners", async () => {
+    vi.mocked(prisma.membership.count).mockResolvedValue(1);
+    await getOrganizationOwnerCount(organizationId);
+    expect(prisma.membership.count).toHaveBeenCalledWith({
+      where: { organizationId, role: "owner", user: { isActive: true } },
+    });
+  });
   test("throws DatabaseError on prisma error", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("db", {
       code: "P2002",

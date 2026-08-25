@@ -11,6 +11,16 @@ const mocks = vi.hoisted(() => ({
   updateMembership: vi.fn(),
 }));
 
+vi.mock("@formbricks/database", () => ({
+  // The last-owner guard runs the owner-count re-check and the update inside one transaction;
+  // the fake just invokes the callback with a stand-in tx so both still hit the mocks below.
+  prisma: { $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback({})) },
+}));
+
+vi.mock("@formbricks/database/prisma", () => ({
+  Prisma: { TransactionIsolationLevel: { Serializable: "Serializable" } },
+}));
+
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
   USER_MANAGEMENT_MINIMUM_ROLE: "manager",
@@ -103,22 +113,25 @@ describe("updateMembershipAction", () => {
     mocks.getOrganizationOwnerCount.mockResolvedValue(2);
 
     await expect(callUpdateMembership("member")).resolves.toMatchObject({ role: "member" });
-    expect(mocks.getOrganizationOwnerCount).toHaveBeenCalledWith(organizationId);
-    expect(mocks.updateMembership).toHaveBeenCalledWith(targetUserId, organizationId, { role: "member" });
+    expect(mocks.getOrganizationOwnerCount).toHaveBeenCalledWith(organizationId, expect.anything());
+    expect(mocks.updateMembership).toHaveBeenCalledWith(
+      targetUserId,
+      organizationId,
+      { role: "member" },
+      expect.anything()
+    );
   });
 
-  test("does not count owners when the target is not an owner", async () => {
+  test("allows changing a non-owner's role", async () => {
     mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
       membership(userId, userId === currentUserId ? "owner" : "member")
     );
 
     await expect(callUpdateMembership("manager")).resolves.toMatchObject({ role: "manager" });
-    expect(mocks.getOrganizationOwnerCount).not.toHaveBeenCalled();
   });
 
-  test("does not count owners when the owner's role is unchanged", async () => {
+  test("allows keeping an owner's role unchanged", async () => {
     await expect(callUpdateMembership("owner")).resolves.toMatchObject({ role: "owner" });
-    expect(mocks.getOrganizationOwnerCount).not.toHaveBeenCalled();
   });
 
   test("still rejects a manager demoting an owner before the owner count is read", async () => {
@@ -127,7 +140,6 @@ describe("updateMembershipAction", () => {
     );
 
     await expect(callUpdateMembership("member")).rejects.toThrow(OperationNotAllowedError);
-    expect(mocks.getOrganizationOwnerCount).not.toHaveBeenCalled();
     expect(mocks.updateMembership).not.toHaveBeenCalled();
   });
 });

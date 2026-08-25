@@ -11,6 +11,7 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
+import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
 
 export const getUsers = async (
   organizationId: string,
@@ -198,6 +199,22 @@ export const updateUser = async (
         type: "not_found",
         details: [{ field: "user", issue: "not found" }],
       });
+    }
+
+    const currentRole = existingUser.memberships.find(
+      (membership) => membership.organizationId === organizationId
+    )?.role;
+
+    // Mirrors the last-owner guard in modules/ee/role-management/actions.ts: without it, this
+    // route can demote an organization's only owner with no UI path back into it.
+    if (currentRole === OrganizationRole.owner && role && role !== OrganizationRole.owner) {
+      const ownerCount = await getOrganizationOwnerCount(organizationId);
+      if (ownerCount <= 1) {
+        return err({
+          type: "conflict",
+          details: [{ field: "role", issue: "Cannot remove the last owner of the organization" }],
+        });
+      }
     }
 
     // Capture the existing team names for the user (within the authenticated organization).
