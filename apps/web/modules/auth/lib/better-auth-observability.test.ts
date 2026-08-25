@@ -1,4 +1,7 @@
+import { BetterAuthError } from "@better-auth/core/error";
 import * as Sentry from "@sentry/nextjs";
+import { betterAuth } from "better-auth";
+import { memoryAdapter } from "better-auth/adapters/memory";
 import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -377,6 +380,213 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
 
     expect(Sentry.captureException).not.toHaveBeenCalled();
     expect(contextLoggerMock.info).toHaveBeenCalledWith("some info");
+  });
+});
+
+/**
+ * ENG-2471: `BetterAuthError: State mismatch: verification not found` cleared the ENG-2037 gate and
+ * paged — 52 events in 14 days. It is a third shape ENG-2037 never enumerated: not a bare string code,
+ * not an `APIError`, but a `StateError extends BetterAuthError` carrying a stable `code`.
+ *
+ * Mirrors the real shape rather than importing it: `StateError` is internal to
+ * `better-auth/dist/state.mjs`, and it extends `BetterAuthError` adding only `code`/`details`/`errorURL`
+ * — so a subclass carrying `code` is exactly what the gate sees. The codes below are the five that
+ * module throws, read from its throw sites.
+ */
+class StateErrorLike extends BetterAuthError {
+  readonly code: string;
+
+  constructor(message: string, code: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
+describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
+  const log = betterAuthLogger.log!;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // Client- or timing-caused: the verification record was purged or already consumed, or the parsed
+  // state is past its `expiresAt`. Nothing to act on, so these must not page.
+  test.each([
+    ["state_mismatch", "State mismatch: verification not found"],
+    // Cookie-branch message, kept as a label only: the code is what the gate reads, and this variant
+    // is unreachable on our database strategy.
+    ["state_mismatch", "State mismatch: auth state cookie not found"],
+    ["state_mismatch", "Invalid state: request expired"],
+  ])("does not capture the client-caused %s (%s)", (code, message) => {
+    const stateError = new StateErrorLike(message, code);
+
+    log("error", message, stateError);
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    // Still visible in the application log — suppression is Sentry-only. A burst of these is how a
+    // Redis eviction would present, since verification records live in Redis only.
+    expect(contextLoggerMock.error).toHaveBeenCalledWith(message);
+  });
+
+  /**
+   * The other four codes stay captured, and each for its own reason:
+   * - `state_generation_error` — the adapter could not write the verification row: a real fault.
+   * - `state_security_mismatch` — the state does not match the stored one, OR the signed state cookie
+   *   fails verification. That second half is where a cross-replica `BETTER_AUTH_SECRET` divergence
+   *   surfaces (a real outage) and also where the benign 5–10 minute cookie-expiry case lands, so it is
+   *   mixed and ENG-2471 defers judging it until the ENG-2259 `auth.path` tag has sized the split.
+   * - `state_invalid` — cookie-branch only, so unreachable on this configuration. Kept because
+   *   suppressing a code that never fires buys nothing.
+   * - `state_not_found` — a defensive entry rather than a live one. Verified against 1.7.0 that the
+   *   callback route short-circuits a missing `state` before any `StateError` is thrown, and logs it
+   *   with the OAuth `error` query param rather than an `Error` — so it reaches neither this gate nor
+   *   Sentry, and the assertion below is a contract for a shape the callback route does not currently
+   *   produce. Kept captured so that if upstream ever does route it through as a real `StateError`, it
+   *   pages instead of being dropped by a stale allow-list.
+   */
+  test.each([
+    ["state_generation_error", "Unable to create verification"],
+    ["state_invalid", "State invalid: Failed to decrypt or parse auth state"],
+    ["state_security_mismatch", "State mismatch: OAuth state parameter does not match stored state"],
+    ["state_not_found", "State not found in OAuth callback"],
+  ])("still captures %s", (code, message) => {
+    const stateError = new StateErrorLike(message, code);
+
+    log("error", message, stateError);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(stateError, {
+      tags: { component: "better-auth" },
+    });
+  });
+
+  /**
+   * The log field is the whole justification for suppressing anything: a suppressed event survives only
+   * in the application log, so it has to be queryable by the same value that suppressed it. Without this
+   * test the field can be deleted and the suite stays green — verified, it did.
+   *
+   * Recorded for captured codes too, so one query covers the class rather than only its quiet half.
+   */
+  test.each([
+    ["state_mismatch", "suppressed"],
+    ["state_security_mismatch", "captured"],
+  ])("records %s on the log context (%s)", (code) => {
+    log("error", "State mismatch", new StateErrorLike("State mismatch", code));
+
+    expect(logger.withContext).toHaveBeenCalledWith({
+      source: "better-auth",
+      stateErrorCode: code,
+    });
+  });
+
+  // The raw `state` is a single-use credential for the in-flight flow and lives on the error's
+  // `details`. Only the code is ever read, so it cannot reach the log through this path.
+  test("never puts the raw state value on the log context", () => {
+    const stateError = new StateErrorLike("State mismatch: verification not found", "state_mismatch");
+    Object.assign(stateError, { details: { state: "super-secret-state-value" } });
+
+    log("error", "State mismatch: verification not found", stateError);
+
+    expect(JSON.stringify(vi.mocked(logger.withContext).mock.calls)).not.toContain(
+      "super-secret-state-value"
+    );
+  });
+
+  // The gate fails CLOSED: anything it cannot positively identify as THE one suppressed code
+  // (`state_mismatch`) is still captured. A wrong answer should add noise, never silence a fault.
+  test("captures a BetterAuthError carrying no code", () => {
+    const bare = new BetterAuthError("something upstream broke");
+
+    log("error", "something upstream broke", bare);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(bare, {
+      tags: { component: "better-auth" },
+    });
+  });
+
+  test("captures a look-alike that is not a BetterAuthError, even with a suppressed code", () => {
+    const impostor = Object.assign(new Error("State mismatch: verification not found"), {
+      name: "BetterAuthError",
+      code: "state_mismatch",
+    });
+
+    log("error", "State mismatch: verification not found", impostor);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(impostor, {
+      tags: { component: "better-auth" },
+    });
+  });
+});
+
+/**
+ * The contract test for the gate above, and the reason the `StateErrorLike` tests are not enough on
+ * their own: they assert against a stand-in we define here, so they would keep passing if the REAL
+ * `StateError` stopped satisfying the gate. `StateError` is internal to `better-auth/dist/state.mjs`
+ * and cannot be imported, so the only way to bind the real shape is to make Better Auth throw one.
+ *
+ * This drives a real `betterAuth` instance — configured with `betterAuthLogger` itself, so the whole
+ * production path runs — at an OAuth callback carrying a `state` with no verification record. That is
+ * exactly the reported failure (`State mismatch: verification not found`, FORMBRICKS-16G). If a future
+ * upgrade renames the code, changes the class, or stops routing it through the logger, this fails.
+ */
+describe("betterAuthLogger — the real Better Auth StateError (ENG-2471 contract)", () => {
+  const BASE_URL = "http://localhost:3000";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const provokeStateMismatch = async (): Promise<void> => {
+    const auth = betterAuth({
+      baseURL: BASE_URL,
+      secret: "eng-2471-contract-test-secret-0123456789abcdef",
+      // memoryAdapter declares its models up front; an empty `verification` table is the point — the
+      // state below resolves to no record, which is what throws.
+      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      logger: betterAuthLogger,
+      socialProviders: { google: { clientId: "contract-test", clientSecret: "contract-test" } },
+    });
+
+    await auth.handler(
+      new Request(`${BASE_URL}/api/auth/callback/google?state=no-such-state&code=irrelevant`)
+    );
+  };
+
+  test("is logged, so this suite is exercising the path at all", async () => {
+    await provokeStateMismatch();
+
+    // Anti-vacuity: if Better Auth stopped routing this through our logger, the assertion below would
+    // pass for the wrong reason — nothing captured because nothing happened.
+    expect(contextLoggerMock.error).toHaveBeenCalled();
+  });
+
+  // Pins the exact shape the gate depends on, so an upstream rename fails here loudly instead of
+  // quietly restoring the noise. Uses a capturing logger rather than `betterAuthLogger`, because the
+  // production logger deliberately forwards only the message to our logger, not the Error.
+  test("is a BetterAuthError carrying code state_mismatch", async () => {
+    const seen: unknown[] = [];
+    const auth = betterAuth({
+      baseURL: BASE_URL,
+      secret: "eng-2471-contract-test-secret-0123456789abcdef",
+      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      logger: { level: "error", log: (_level, _message, ...args) => seen.push(...args) },
+      socialProviders: { google: { clientId: "contract-test", clientSecret: "contract-test" } },
+    });
+
+    await auth.handler(
+      new Request(`${BASE_URL}/api/auth/callback/google?state=no-such-state&code=irrelevant`)
+    );
+
+    const stateError = seen.find((arg): arg is Error & { code?: unknown } => arg instanceof BetterAuthError);
+    expect(stateError).toBeDefined();
+    expect(stateError?.name).toBe("BetterAuthError");
+    expect(stateError?.code).toBe("state_mismatch");
+  });
+
+  test("is NOT captured to Sentry", async () => {
+    await provokeStateMismatch();
+
+    expect(contextLoggerMock.error).toHaveBeenCalled();
+    expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 });
 
