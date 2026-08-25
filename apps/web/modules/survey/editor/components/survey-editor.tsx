@@ -20,6 +20,7 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
+import { shouldShowFollowUpsTab } from "@/modules/survey/follow-ups/lib/deprecation";
 import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
@@ -47,6 +48,7 @@ interface SurveyEditorProps {
   mailFrom: string;
   workspaceLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
+  isWorkflowsAllowed: boolean;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
   isStorageConfigured: boolean;
@@ -78,6 +80,7 @@ export const SurveyEditor = ({
   workspacePermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
+  isWorkflowsAllowed = false,
   userEmail,
   teamMemberDetails,
   isStorageConfigured,
@@ -86,6 +89,12 @@ export const SurveyEditor = ({
   publicDomain,
   enterpriseLicenseRequestFormUrl,
 }: SurveyEditorProps) => {
+  const isFollowUpsTabVisible = shouldShowFollowUpsTab({
+    followUpCount: survey.followUps.length,
+    isSurveyFollowUpsAllowed,
+    isWorkflowsAllowed,
+  });
+
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
@@ -203,6 +212,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!workspace.styling.allowStyleOverwrite}
+            isFollowUpsTabVisible={isFollowUpsTabVisible}
             hasLanguageErrors={hasIncompleteTranslations}
           />
 
@@ -277,18 +287,17 @@ export const SurveyEditor = ({
             />
           )}
 
-          {activeView === "followUps" && (
+          {activeView === "followUps" && isFollowUpsTabVisible && (
             <FollowUpsView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
-              isFormbricksCloud={isFormbricksCloud}
+              isWorkflowsAllowed={isWorkflowsAllowed}
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
-              enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
             />
           )}
         </main>
