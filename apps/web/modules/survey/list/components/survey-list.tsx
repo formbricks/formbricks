@@ -196,7 +196,7 @@ export const SurveysList = ({
     queryKey,
     refetch,
     surveys,
-    hasAnySurveys,
+    workspaceSurveyCount,
   } = useSurveys({
     workspaceId: workspace.id,
     limit: surveysPerPage,
@@ -212,8 +212,9 @@ export const SurveysList = ({
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
   // Only a workspace without a single survey gets the onboarding empty states. Every other empty
   // list keeps the toolbar, so the filter that emptied it stays reachable.
-  const showTemplateEmptyState = !isError && !hasAnySurveys && !isReadOnly;
-  const showReadOnlyEmptyState = !isError && !hasAnySurveys && isReadOnly;
+  const isWorkspaceEmpty = !isError && workspaceSurveyCount === 0;
+  const showTemplateEmptyState = isWorkspaceEmpty && !isReadOnly;
+  const showReadOnlyEmptyState = isWorkspaceEmpty && isReadOnly;
 
   const handleDeleteSurvey = async (surveyId: string) => {
     await deleteSurveyMutation.mutateAsync({ surveyId });

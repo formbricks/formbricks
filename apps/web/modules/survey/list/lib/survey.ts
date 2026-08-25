@@ -415,21 +415,17 @@ export const getSurveyCount = reactCache(
 );
 
 /**
- * Whether the workspace holds any survey at all, archived ones included. Filter-independent, so the
- * list can tell an empty workspace (onboarding) from a filter that matched nothing.
+ * Every survey in the workspace, archived ones included. Filter-independent, so the list can tell an
+ * empty workspace (onboarding) from a filter that matched nothing — and a count rather than a flag so
+ * an optimistic delete can decrement it before the server answers.
  */
-export const hasAnySurveys = reactCache(async (workspaceId: string): Promise<boolean> => {
+export const getWorkspaceSurveyCount = reactCache(async (workspaceId: string): Promise<number> => {
   validateInputs([workspaceId, z.cuid2()]);
   try {
-    const survey = await prisma.survey.findFirst({
-      where: { workspaceId },
-      select: { id: true },
-    });
-
-    return survey !== null;
+    return await prisma.survey.count({ where: { workspaceId } });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error checking whether the workspace has surveys");
+      logger.error(error, "Error counting the workspace's surveys");
       throw new DatabaseError(error.message);
     }
 

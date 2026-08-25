@@ -33,7 +33,7 @@ const baseData: InfiniteData<TSurveyListPage> = {
         limit: 20,
         nextCursor: "cursor-1",
         totalCount: 2,
-        hasAnySurveys: true,
+        workspaceSurveyCount: 4,
       },
     },
     {
@@ -42,7 +42,7 @@ const baseData: InfiniteData<TSurveyListPage> = {
         limit: 20,
         nextCursor: null,
         totalCount: 2,
-        hasAnySurveys: true,
+        workspaceSurveyCount: 4,
       },
     },
   ],

@@ -41,13 +41,13 @@ export const useSurveys = ({
 
   const surveys = flattenSurveyPages(query.data);
   const totalCount = query.data?.pages[0]?.meta.totalCount ?? 0;
-  const hasAnySurveys = query.data?.pages[0]?.meta.hasAnySurveys ?? false;
+  const workspaceSurveyCount = query.data?.pages[0]?.meta.workspaceSurveyCount ?? null;
 
   return {
     ...query,
     queryKey,
     surveys,
     totalCount,
-    hasAnySurveys,
+    workspaceSurveyCount,
   };
 };

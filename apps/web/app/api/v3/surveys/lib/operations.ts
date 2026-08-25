@@ -17,7 +17,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
-import { getSurveyCount, hasAnySurveys } from "@/modules/survey/list/lib/survey";
+import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import { type TV3SurveyCreateOptions, V3SurveyCreatePermissionError, createV3Survey } from "../create";
@@ -177,18 +177,18 @@ export async function listV3Surveys({
       sortBy: parsed.sortBy,
       filterCriteria: parsed.filterCriteria,
     });
-    // totalCount and hasAnySurveys are only computed on the first page (same gate),
+    // totalCount and workspaceSurveyCount are only computed on the first page (same gate),
     // matching the client which reads them from pages[0].meta.
     const totalCountPromise = parsed.includeTotalCount
       ? getSurveyCount(workspaceId, parsed.filterCriteria)
       : Promise.resolve(null);
-    const hasAnySurveysPromise = parsed.includeTotalCount
-      ? hasAnySurveys(workspaceId)
+    const workspaceSurveyCountPromise = parsed.includeTotalCount
+      ? getWorkspaceSurveyCount(workspaceId)
       : Promise.resolve(null);
-    const [surveyPage, totalCount, workspaceHasSurveys] = await Promise.all([
+    const [surveyPage, totalCount, workspaceSurveyCount] = await Promise.all([
       surveyPagePromise,
       totalCountPromise,
-      hasAnySurveysPromise,
+      workspaceSurveyCountPromise,
     ]);
 
     return successListResponse(
@@ -197,7 +197,7 @@ export async function listV3Surveys({
         limit: parsed.limit,
         nextCursor: surveyPage.nextCursor,
         totalCount,
-        hasAnySurveys: workspaceHasSurveys,
+        workspaceSurveyCount,
       },
       { requestId, cache: "private, no-store" }
     );

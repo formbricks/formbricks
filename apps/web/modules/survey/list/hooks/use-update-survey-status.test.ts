@@ -58,7 +58,7 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
           limit: 20,
           nextCursor: null,
           totalCount: 2,
-          hasAnySurveys: true,
+          workspaceSurveyCount: 4,
         },
       },
     ],

@@ -43,7 +43,7 @@ function createQueryData(): { pages: TSurveyListPage[]; pageParams: (string | nu
           limit: 20,
           nextCursor: null,
           totalCount: 1,
-          hasAnySurveys: true,
+          workspaceSurveyCount: 4,
         },
       },
     ],
@@ -92,6 +92,13 @@ describe("useArchiveSurvey", () => {
     await waitFor(() =>
       expect(queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.data).toEqual([])
     );
+
+    // Archiving takes the survey out of this view, not out of the workspace: the workspace count must
+    // hold, or archiving the last live survey would flip the page to the "create your first survey"
+    // onboarding and strand the archived one behind a toolbar that is no longer rendered.
+    const meta = queryClient.getQueryData<{ pages: TSurveyListPage[] }>(queryKey)?.pages[0]?.meta;
+    expect(meta?.totalCount).toBe(0);
+    expect(meta?.workspaceSurveyCount).toBe(4);
 
     resolveFetch?.(
       new Response(JSON.stringify({ data: { id: "survey_1", status: "paused", archivedAt: "2026-04-16" } }), {
