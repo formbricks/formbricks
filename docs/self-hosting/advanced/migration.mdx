@@ -7,13 +7,42 @@ icon: "arrow-right"
 ## v5.4
 
 v5.4 carries one breaking change, and it is narrow: it affects **API keys** used against the Feedback
-Records API or the MCP server, and nothing else. It needs no environment variables and no database
-migrations. If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do
-for it.
+Records API or the MCP server, and nothing else. If you do not use Unify Feedback, or you only reach it
+through the UI, there is nothing to do for it. The release adds no new environment variables. It does ship
+**seven database migrations**, all applied automatically on startup: six are quick, additive changes, and
+one builds an index on the `Response` table that blocks response writes while it builds — see
+[Database Migrations](#database-migrations) before scheduling the upgrade.
 
 v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no action at all:
 every migration is additive and applies automatically, and **your SSO callback URLs do not change** — see
 below.
+
+### Database Migrations
+
+All seven migrations apply automatically on startup and none needs a manual step — but one of them
+deserves a scheduling decision on large instances, so here is the full list rather than a summary:
+
+| Migration | What it does | Impact |
+| --- | --- | --- |
+| `add_feedback_source_import_mode` | Adds `FeedbackSource.import_mode`, which controls whether a source's historical import includes partial responses. Existing sources keep the current behaviour (`completedOnly`). | Instant |
+| `add_organization_display_time_zone` | Adds the nullable `Organization.displayTimeZone` used for response-export timestamps. | Instant |
+| `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. Details in the Better Auth 1.7 section below. | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional |
+| `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. No-op on a fresh install. | Automatic |
+| `add_feedback_source_element_scope` | Adds `FeedbackSource.elementScope`, which controls whether a source picks up survey questions added later. Existing sources keep the current behaviour (`specific`). | Instant |
+| `add_response_survey_finished_index` | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table. | **Blocks response writes while it builds — see the warning below** |
+| `repair_account_issuer` | Data migration rewriting `Account.issuer` rows that were written with a non-canonical value, which locked the affected Google SSO users into a sign-in loop. Idempotent; a no-op when nothing is wrong. | Fast |
+
+<Warning>
+  `add_response_survey_finished_index` builds its index with a plain `CREATE INDEX`, not `CREATE INDEX
+  CONCURRENTLY` — migrations run inside a transaction, and Postgres does not allow concurrent builds
+  there. The build holds a `SHARE` lock on `Response`: reads keep working, but **survey responses cannot
+  be written until the index is built**. `Response` is usually the largest table on an instance. On small
+  instances the build takes seconds; if yours holds millions of responses, run the upgrade in a window
+  where a short pause in response collection is acceptable.
+</Warning>
+
+All seven are additive and none of them is read by v5.3, so they do not constrain a rollback: rolling the
+application images / Helm values back to v5.3 is safe without touching the database.
 
 ### Feedback Record Mutations by API Key (action required for some integrations)
 
@@ -73,8 +102,9 @@ an organization owner or manager instead of with a workspace-scoped key.
 
 #### Rollback
 
-This change adds no migrations and touches no schema, so rolling the application images / Helm values back
-to v5.3 undoes it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
+This access-rule change itself ships no migration and touches no schema (the release's migrations are
+listed [above](#database-migrations)), so rolling the application images / Helm values back to v5.3 undoes
+it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
 `manage` was always accepted wherever `write` was — so that step does not need reverting either.
 
 ### Better Auth 1.7 upgrade (no action required)
@@ -85,7 +115,8 @@ are now bound to the resource a user actually approved during authorization, ins
 the client requested. This is a coupled core upgrade — it touches login, sessions, 2FA, SSO and MCP OAuth —
 but for self-hosted instances it needs no manual database step. Every schema change is additive and nullable,
 and the required backfills (account identity, existing OAuth clients, refresh tokens, consents) run
-automatically on startup.
+automatically on startup — they are the two `eng_2343` entries in the
+[Database Migrations](#database-migrations) table above.
 
 The migration also adds two nullable columns, `alg` and `crv`, to the `jwks` table that holds your
 instance's JWT signing keys. Keys created before the upgrade keep working untouched — Better Auth reads a
