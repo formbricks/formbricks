@@ -288,7 +288,7 @@ jobs:
             --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
             --set-string taxonomy.llm.contextWindowTokens=65536 \
             --show-only templates/hub-deployment.yaml > "$render_dir/taxonomy-hub-wiring.yaml"
-          grep -A1 'name: TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS' "$render_dir/taxonomy-hub-wiring.yaml" | grep -q 'value: "300"'
+          grep -A1 'name: TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS' "$render_dir/taxonomy-hub-wiring.yaml" | grep -q 'value: "1800"'
           grep -A1 'name: TAXONOMY_REAPER_INTERVAL_SECONDS' "$render_dir/taxonomy-hub-wiring.yaml" | grep -q 'value: "60"'
 
           helm template qa "$chart" \

@@ -333,7 +333,7 @@ Hub API env vars unless `taxonomy.autoConfigureHub=false`:
 TAXONOMY_SERVICE_URL: http://formbricks-taxonomy:8000
 TAXONOMY_SERVICE_TOKEN: <from taxonomy auth secret>
 HUB_INTERNAL_API_TOKEN: <from taxonomy auth secret>
-TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS: "300"
+TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS: "1800"
 TAXONOMY_REAPER_INTERVAL_SECONDS: "60"
 ```
 
@@ -741,7 +741,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Positive Hub heartbeat interval; at most half the stale-run timeout. |
 | taxonomy.hubClientMaxAttempts                                      | string | `"3"`                                                                       | Maximum idempotent Hub callback/fetch attempts.            |
 | taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
-| taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"300"`                                                                     | Hub stale-run timeout.                                    |
+| taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"1800"`                                                                    | Hub stale-run timeout; lower only with a callback-heartbeating taxonomy image. |
 | taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
 | taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
 | taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |

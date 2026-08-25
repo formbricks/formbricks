@@ -421,7 +421,9 @@ taxonomy:
   hubClientMaxAttempts: "3"
   heartbeatIntervalSeconds: "30"
   runDeadlineSeconds: "900"
-  hubStaleRunTimeoutSeconds: "300"
+  # Keep this compatible with the default v0.1.0 image, which does not heartbeat through
+  # terminal Hub callbacks. It can be lowered after pinning a heartbeat-capable image.
+  hubStaleRunTimeoutSeconds: "1800"
   hubReaperIntervalSeconds: "60"
   terminationGracePeriodSeconds: 930
 
