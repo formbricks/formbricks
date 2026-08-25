@@ -93,7 +93,8 @@ describe("verificationAutoSignInAfterHandler", () => {
 
     expect(sessionOf(ctx)).not.toHaveBeenCalled();
     expect(mocks.setSessionCookie).not.toHaveBeenCalled();
-    // The withheld path is the observable footprint of an attempted pre-hijack, so it is recorded.
+    // Recorded with the reason: this path is mostly the ordinary cross-device click or a scanner
+    // prefetch, and only the reason distinguishes those from an actual pre-hijack (`other_user`).
     expect(mocks.auditVerificationSessionWithheld).toHaveBeenCalledWith(VERIFIED_USER.id, "absent");
   });
 

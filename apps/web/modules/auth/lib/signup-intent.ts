@@ -64,6 +64,11 @@ export const SIGNUP_INTENT_COOKIE_OPTIONS = {
   // client, i.e. cross-site. `strict` would withhold the cookie on exactly the request that needs it,
   // turning every legitimate same-browser sign-up into a withheld session.
   sameSite: "lax",
+  // Paired with the verification token's TTL — but the pairing only holds for the CURRENT link. A
+  // resent link gets a fresh hour, so the resend action re-issues this cookie alongside it when (and
+  // only when) the requesting browser already holds a valid one for the same user
+  // (verification-requested/actions.ts). A browser whose cookie has already expired cannot be told
+  // apart from one that never signed up, so a resend after expiry stays on the withheld path.
   maxAge: EMAIL_VERIFICATION_TTL_SECONDS,
 } as const;
 

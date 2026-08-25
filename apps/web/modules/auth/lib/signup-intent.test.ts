@@ -7,6 +7,9 @@ const ENCRYPTION_KEY = "0".repeat(64);
 
 vi.mock("@/lib/constants", () => ({ NEXTAUTH_SECRET, ENCRYPTION_KEY, BETTER_AUTH_SECRET: undefined }));
 vi.mock("@/lib/env", () => ({ env: { WEBAPP_URL: "http://localhost:3000" } }));
+// Imported only so the boundary test below can call the REAL `verifyToken`; its gateway-auth import
+// chain is irrelevant to that call and pulls in server env, so stub it.
+vi.mock("@/modules/gateway-auth/lib/service", () => ({ getGatewayAuthServiceTokenPurpose: vi.fn() }));
 
 const { createSignupIntentToken, readSignupIntent, classifySignupIntent, SIGNUP_INTENT_COOKIE_NAME } =
   await import("./signup-intent");
@@ -103,12 +106,21 @@ describe("signup intent token", () => {
   // in lib/jwt.ts FAILS OPEN, rewriting an unrecognised purpose to "email_verification". Staying out of
   // VERIFICATION_TOKEN_PURPOSES is therefore not protection by itself — carrying no `id` claim is, since
   // `verifyToken` bails on `if (!payload?.id)` before any purpose is considered.
-  test("is not parseable as a lib/jwt.ts verification token", () => {
-    const decoded = jwt.decode(createSignupIntentToken("user_1")) as Record<string, unknown>;
+  test("is not parseable as a lib/jwt.ts verification token", async () => {
+    const token = createSignupIntentToken("user_1");
 
+    // The claim-shape half: no `id`, no `purpose`.
+    const decoded = jwt.decode(token) as Record<string, unknown>;
     expect(decoded.id).toBeUndefined();
     expect(decoded.purpose).toBeUndefined();
     expect(decoded.kind).toBe("signup_intent");
+
+    // And the boundary itself: the REAL verifier refuses the token. The signature is genuinely valid
+    // to it (same secret on a NEXTAUTH_SECRET-only deployment), so what this binds is the
+    // `if (!payload?.id)` bail-out — the layout assertions above would keep passing if `verifyToken`
+    // ever started accepting `uid`/`kind`; this call would not.
+    const { verifyToken } = await import("@/lib/jwt");
+    await expect(verifyToken(token)).rejects.toThrow("Invalid token");
   });
 
   test("cookie name is namespaced so it cannot collide with a Better Auth cookie", () => {
