@@ -56,7 +56,9 @@ describe("GET /management/responses", () => {
             type: "apiKey",
             apiKeyId: "apiKey123",
             organizationId: "org123",
-            workspacePermissions: [{ workspaceId: "ws123", permission: "read", workspaceType: "production" }],
+            workspacePermissions: [
+              { workspaceId: "ws123", workspaceName: "Test Workspace", permission: "read" },
+            ],
             organizationAccess: { accessControl: { read: true, write: true } },
           },
           parsedInput: { query },
