@@ -116,4 +116,13 @@ describe("revokeSessionByToken", () => {
 
     expect(mocks.deleteSessions).toHaveBeenCalledWith(["token-a"]);
   });
+
+  // The guard the retired `deleteSessionBySessionToken` carried. An empty token would otherwise reach
+  // `secondaryStorage.delete("")` and a `deleteMany` on `token IN ('')` — a no-op that looks like a
+  // successful revocation, which is the worst possible failure mode for this function.
+  test.each([[""], ["   "]])("refuses a blank token (%j) instead of no-oping", async (token) => {
+    await expect(revokeSessionByToken(token)).rejects.toThrow();
+
+    expect(mocks.deleteSessions).not.toHaveBeenCalled();
+  });
 });

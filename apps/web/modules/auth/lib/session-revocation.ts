@@ -1,5 +1,7 @@
 import "server-only";
+import { z } from "zod";
 import { logger } from "@formbricks/logger";
+import { validateInputs } from "@/lib/utils/validate";
 import { getSessionTokensByUserId } from "@/modules/auth/lib/auth-session-repository";
 
 /**
@@ -65,6 +67,15 @@ export const revokeUserSessionsExcept = async ({
  * token rather than a user id, like the SSO-recovery failure path killing the session its cookie names.
  */
 export const revokeSessionByToken = async (sessionToken: string): Promise<void> => {
+  // Restores the guard the retired `deleteSessionBySessionToken` carried. Not reachable from the one
+  // caller today — the recovery-completion route returns early on a missing cookie — but this is an
+  // exported helper in an auth module, and a blank token would reach `secondaryStorage.delete("")` plus a
+  // `deleteMany` on `token IN ('')`: a no-op that reports a successful revocation, which is the worst
+  // failure mode this function has. `.trim()` before `.min(1)` is deliberately stricter than the original
+  // `min(1)`, since a whitespace-only token is exactly as meaningless as an empty one and session tokens
+  // are opaque values that never contain whitespace.
+  validateInputs([sessionToken, z.string().trim().min(1)]);
+
   const { auth } = await import("@/modules/auth/lib/auth");
   const ctx = await auth.$context;
   await ctx.internalAdapter.deleteSessions([sessionToken]);

@@ -210,12 +210,6 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
   });
 
   /**
-   * The persistence that outlives every session. `oauthProvider` is registered unconditionally with open
-   * dynamic client registration and a 30-day refresh token, and both token tables' `session` FK is
-   * `onDelete: SetNull` — so sweeping sessions blanks the liveness check instead of failing it. Revoking
-   * is the only thing that actually stops them.
-   */
-  /**
    * The refresh token is the persistence that outlives every session: `oauthProvider` is registered
    * unconditionally with open dynamic client registration and a 30-day refresh lifetime, and both token
    * tables' `session` FK is `onDelete: SetNull`, so sweeping sessions blanks the liveness check instead

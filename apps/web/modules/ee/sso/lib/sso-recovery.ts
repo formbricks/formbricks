@@ -71,7 +71,14 @@ const queueSsoRecoveryAuditEvent = ({
         ? {
             credentialPasswordsCleared: reclaimed.credentialPasswordsCleared,
             twoFactorRowsRemoved: reclaimed.twoFactorRowsRemoved,
-            oauthGrantsRevoked: reclaimed.oauthGrantsRevoked,
+            // Reported separately, not summed. In this configuration access tokens are self-contained
+            // JWTs that are never persisted (see the revocation block below), so the access count is
+            // ~always 0 and a combined "grants" total would be the refresh count wearing a plural name —
+            // unreadable for the one audience these fields exist for. Keeping both means an
+            // access-token row appearing at all is itself visible, which would mean the opaque-token
+            // configuration is in play.
+            oauthAccessTokensRevoked: reclaimed.oauthAccessTokensRevoked,
+            oauthRefreshTokensRevoked: reclaimed.oauthRefreshTokensRevoked,
             oauthConsentsRevoked: reclaimed.oauthConsentsRevoked,
             // `sessionsRevoked: 0` and "the sweep failed" are the same number but opposite incidents,
             // and this is the field a responder reads to confirm the squatter was actually kicked out.
@@ -89,7 +96,8 @@ const queueSsoRecoveryAuditEvent = ({
 type TReclaimOutcome = {
   credentialPasswordsCleared: number;
   twoFactorRowsRemoved: number;
-  oauthGrantsRevoked: number;
+  oauthAccessTokensRevoked: number;
+  oauthRefreshTokensRevoked: number;
   oauthConsentsRevoked: number;
 } | null;
 
@@ -157,6 +165,25 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // single victim click flips this and the strip below stops firing. That is the pre-hijacking vector in
   // ENG-2562, tracked separately, and closing it means invalidating the credential at verification time
   // too — not a different guard here.
+  //
+  // The INVERSE case matters just as much and is not hypothetical: `requireEmailVerification` is
+  // `!EMAIL_VERIFICATION_DISABLED` (auth.ts) and `EMAIL_VERIFICATION_DISABLED=1` ships as the default in
+  // `.env.example` and `docker/docker-compose.yml`. The verification mail still goes out but blocks
+  // nothing, so on a default self-hosted install a user has no reason to click it and `emailVerified`
+  // stays false for the life of the account. This guard's population there is not squatters — it is
+  // every credential user who never bothered.
+  //
+  // For them a first-time SSO sign-in runs recovery and permanently removes their second factor: the
+  // `TwoFactor` row goes, and the legacy `twoFactorEnabled`/`twoFactorSecret` nulls below (kept
+  // deliberately, so the backfill shim cannot re-arm an attacker's factor) are exactly what stop it
+  // being re-armed for a legitimate owner either. They can recover the password via
+  // `forgotPasswordAction`, and then hold a one-factor account where two were enrolled, without being
+  // told. Correct for a squatter, a silent downgrade for the owner.
+  //
+  // Left as-is on purpose: there is no signal here that separates the two populations, and weakening the
+  // guard would reopen the takeover. What is missing is telling the user — mail them what was removed and
+  // prompt re-enrolment. That needs a new transactional template, so it is tracked separately rather than
+  // widened into a fix that backports to two release branches.
   if (user.emailVerified) {
     return null;
   }
@@ -219,7 +246,8 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   return {
     credentialPasswordsCleared: credentialRows.count,
     twoFactorRowsRemoved: twoFactorRows.count,
-    oauthGrantsRevoked: accessRows.count + refreshRows.count,
+    oauthAccessTokensRevoked: accessRows.count,
+    oauthRefreshTokensRevoked: refreshRows.count,
     oauthConsentsRevoked: consentRows.count,
   };
 };

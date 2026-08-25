@@ -1,13 +1,9 @@
 import "server-only";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { Prisma, PrismaClient } from "@formbricks/database/prisma";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-
-type TAuthSessionDbClient = PrismaClient | Prisma.TransactionClient;
-
-const getDbClient = (tx?: Prisma.TransactionClient): TAuthSessionDbClient => tx ?? prisma;
 
 const handleDatabaseError = (error: unknown): never => {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -29,7 +25,7 @@ export const getSessionTokensByUserId = async (userId: string): Promise<string[]
   validateInputs([userId, z.string().min(1)]);
 
   try {
-    const sessions = await getDbClient().session.findMany({
+    const sessions = await prisma.session.findMany({
       where: {
         userId,
         // Expired rows are already unusable, and including them would inflate the revocation count that

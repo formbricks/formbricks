@@ -280,7 +280,10 @@ describe("sso-recovery", () => {
         newObject: expect.objectContaining({
           credentialPasswordsCleared: 1,
           twoFactorRowsRemoved: 1,
-          oauthGrantsRevoked: 3,
+          // Distinct fields, and the stub returns distinct counts (1 access / 2 refresh) on purpose: a
+          // summed field would read 3 either way and could not catch the two being swapped.
+          oauthAccessTokensRevoked: 1,
+          oauthRefreshTokensRevoked: 2,
           oauthConsentsRevoked: 1,
           sessionsRevoked: 2,
         }),
