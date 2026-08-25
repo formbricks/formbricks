@@ -60,7 +60,16 @@ export const EnrichmentStatusBanner = ({ enrichments }: Readonly<{ enrichments: 
             <div key={enrichment.kind}>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-medium text-slate-600">{label}</span>
-                <span className="text-xs text-slate-500 tabular-nums">{progressLabel}</span>
+                <div className="flex items-center gap-2">
+                  {enrichment.failedTerminal > 0 && (
+                    <span className="text-xs font-medium text-red-500 tabular-nums">
+                      {t("workspace.unify.enrichment_failed_count", {
+                        failedCount: enrichment.failedTerminal.toLocaleString(locale),
+                      })}
+                    </span>
+                  )}
+                  <span className="text-xs text-slate-500 tabular-nums">{progressLabel}</span>
+                </div>
               </div>
               <div
                 className="mt-1"

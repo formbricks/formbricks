@@ -39,7 +39,7 @@ describe("useEnrichmentStatus", () => {
     const fetchMock = vi.mocked(global.fetch);
     fetchMock.mockResolvedValue(
       jsonResponse({
-        enrichments: [{ kind: "translation", eligible: 500, done: 480, pending: 20 }],
+        enrichments: [{ kind: "translation", eligible: 500, done: 480, failedTerminal: 0, pending: 20 }],
         unavailable: false,
       })
     );
@@ -61,7 +61,7 @@ describe("useEnrichmentStatus", () => {
     const fetchMock = vi.mocked(global.fetch);
     fetchMock.mockImplementation(async () =>
       jsonResponse({
-        enrichments: [{ kind: "sentiment", eligible: 500, done: 100, pending: 400 }],
+        enrichments: [{ kind: "sentiment", eligible: 500, done: 100, failedTerminal: 0, pending: 400 }],
         unavailable: false,
       })
     );
@@ -81,7 +81,29 @@ describe("useEnrichmentStatus", () => {
     const fetchMock = vi.mocked(global.fetch);
     fetchMock.mockImplementation(async () =>
       jsonResponse({
-        enrichments: [{ kind: "sentiment", eligible: 500, done: 500, pending: 0 }],
+        enrichments: [{ kind: "sentiment", eligible: 500, done: 500, failedTerminal: 0, pending: 0 }],
+        unavailable: false,
+      })
+    );
+
+    const { result } = renderHook(() => useEnrichmentStatus({ workspaceId: "w" }), {
+      wrapper: createWrapper(createQueryClient()),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("stops polling once the only remainder is permanently-failed records", async () => {
+    // ENG-2375: before failedTerminal was subtracted, this shape (eligible=500, done=480, 20
+    // permanently failed) reported pending=20 and polled forever for work that would never complete.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = vi.mocked(global.fetch);
+    fetchMock.mockImplementation(async () =>
+      jsonResponse({
+        enrichments: [{ kind: "sentiment", eligible: 500, done: 480, failedTerminal: 20, pending: 0 }],
         unavailable: false,
       })
     );

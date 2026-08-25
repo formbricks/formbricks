@@ -3859,6 +3859,10 @@ checksums:
     workspace/unify/edit_csv_mapping: 4f3bad444664d58ffe8ace3dc9e200f9
     workspace/unify/edit_source_connection: eee85426384e6569665ac2b342ca02e4
     workspace/unify/emotions: 130553c4f824567f63931b26e7340a78
+    workspace/unify/enrichment_failed_count: 4eb35633d2e3a46fb5527c3922cfa975
+    workspace/unify/enrichment_in_progress: 66710e3dfb3ed4554250e18c2f598b56
+    workspace/unify/enrichment_pending_summary: 0cd6451a988710a50de521de9e2cb8a2
+    workspace/unify/enrichment_progress_count: d0df96d6920f7e9be23179d914c64406
     workspace/unify/enter_name_for_source: de6d02a0a8ccc99204ad831ca6dcdbd3
     workspace/unify/enum: 96fc644f35edd6b1c09d1d503f078acc
     workspace/unify/error_source_directory_not_assigned: 74aa6d4705a984b37f0ad84f1b40b6dc
@@ -4047,6 +4051,7 @@ checksums:
     workspace/unify/translated_text: aa93e50a0559cbe99aedc954d649bd34
     workspace/unify/translated_text_hint: 95276e457e89bf50e4fc1ccf9023b128
     workspace/unify/translated_to: ad58c74e181eba2101928648fa5f2457
+    workspace/unify/translation: 9276816e7bc1a6ff00f388faa0863986
     workspace/unify/unify_feedback: bdb518a1e62f51049ccc4366b909fb0a
     workspace/unify/update_mapping_description: 58d5966c0c9b406c037dff3aa8bcb396
     workspace/unify/updated_at: 8fdb85248e591254973403755dcc3724

@@ -19,7 +19,9 @@ describe("aggregateEnrichmentStatus", () => {
       status({ translation: { enabled: true, eligible: 500, done: 480 } }),
     ]);
 
-    expect(result).toEqual([{ kind: "translation", eligible: 500, done: 480, pending: 20 }]);
+    expect(result).toEqual([
+      { kind: "translation", eligible: 500, done: 480, failedTerminal: 0, pending: 20 },
+    ]);
   });
 
   test("drops enrichments that are disabled everywhere", () => {
@@ -43,7 +45,9 @@ describe("aggregateEnrichmentStatus", () => {
       status({ sentiment: { enabled: true, eligible: 200, done: 150 } }),
     ]);
 
-    expect(result).toEqual([{ kind: "sentiment", eligible: 500, done: 250, pending: 250 }]);
+    expect(result).toEqual([
+      { kind: "sentiment", eligible: 500, done: 250, failedTerminal: 0, pending: 250 },
+    ]);
   });
 
   test("ignores directories where the enrichment is switched off", () => {
@@ -54,7 +58,7 @@ describe("aggregateEnrichmentStatus", () => {
       status({ emotions: { enabled: false, eligible: 0, done: 0 } }),
     ]);
 
-    expect(result).toEqual([{ kind: "emotions", eligible: 400, done: 100, pending: 300 }]);
+    expect(result).toEqual([{ kind: "emotions", eligible: 400, done: 100, failedTerminal: 0, pending: 300 }]);
   });
 
   test("keeps an enrichment enabled on only one of several directories", () => {
@@ -63,7 +67,9 @@ describe("aggregateEnrichmentStatus", () => {
       status({ translation: { enabled: true, eligible: 120, done: 120 } }),
     ]);
 
-    expect(result).toEqual([{ kind: "translation", eligible: 120, done: 120, pending: 0 }]);
+    expect(result).toEqual([
+      { kind: "translation", eligible: 120, done: 120, failedTerminal: 0, pending: 0 },
+    ]);
   });
 
   test("never reports a negative pending count", () => {
@@ -79,10 +85,48 @@ describe("aggregateEnrichmentStatus", () => {
 
     const result = aggregateEnrichmentStatus([partial as EnrichmentStatusResponse]);
 
-    expect(result).toEqual([{ kind: "translation", eligible: 50, done: 25, pending: 25 }]);
+    expect(result).toEqual([{ kind: "translation", eligible: 50, done: 25, failedTerminal: 0, pending: 25 }]);
   });
 
   test("returns nothing when there are no directories", () => {
     expect(aggregateEnrichmentStatus([])).toEqual([]);
+  });
+
+  // ENG-2375: a record whose enrichment permanently gave up (content filter, refusal, truncation)
+  // used to be silently folded into `eligible - done` and read as "still in progress" forever.
+  test("excludes permanently-failed records from pending", () => {
+    const result = aggregateEnrichmentStatus([
+      status({ sentiment: { enabled: true, eligible: 100, done: 80, failed_terminal: 15 } }),
+    ]);
+
+    expect(result).toEqual([{ kind: "sentiment", eligible: 100, done: 80, failedTerminal: 15, pending: 5 }]);
+  });
+
+  test("sums failed_terminal across directories", () => {
+    const result = aggregateEnrichmentStatus([
+      status({ emotions: { enabled: true, eligible: 200, done: 150, failed_terminal: 10 } }),
+      status({ emotions: { enabled: true, eligible: 100, done: 60, failed_terminal: 5 } }),
+    ]);
+
+    expect(result).toEqual([{ kind: "emotions", eligible: 300, done: 210, failedTerminal: 15, pending: 75 }]);
+  });
+
+  test("never reports a negative pending count when failed_terminal alone exceeds the remainder", () => {
+    // Shouldn't happen per the Hub's own invariant (done + failed + failed_terminal <= eligible), but
+    // clamp defensively rather than surface a negative number if it ever does.
+    const result = aggregateEnrichmentStatus([
+      status({ translation: { enabled: true, eligible: 10, done: 5, failed_terminal: 8 } }),
+    ]);
+
+    expect(result[0].pending).toBe(0);
+  });
+
+  test("treats a missing failed_terminal as zero, for a Hub that predates the field", () => {
+    const result = aggregateEnrichmentStatus([
+      status({ sentiment: { enabled: true, eligible: 50, done: 30 } }),
+    ]);
+
+    expect(result[0].failedTerminal).toBe(0);
+    expect(result[0].pending).toBe(20);
   });
 });

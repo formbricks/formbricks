@@ -4019,6 +4019,7 @@
       "edit_csv_mapping": "Edit CSV mapping",
       "edit_source_connection": "Edit feedback source",
       "emotions": "Emotions",
+      "enrichment_failed_count": "{failedCount} failed",
       "enrichment_in_progress": "Enriching feedback...",
       "enrichment_pending_summary": "{pending} records pending",
       "enrichment_progress_count": "{done} / {eligible} records",

@@ -28,8 +28,16 @@ export function aggregateEnrichmentStatus(
 
     const eligible = enabledStatuses.reduce((sum, status) => sum + (status.eligible || 0), 0);
     const done = enabledStatuses.reduce((sum, status) => sum + (status.done || 0), 0);
+    // Bridged field (ENG-2375) — absent on a Hub that predates it, reads as 0 rather than NaN.
+    const failedTerminal = enabledStatuses.reduce((sum, status) => sum + (status.failed_terminal || 0), 0);
 
-    enrichments.push({ kind, eligible, done, pending: Math.max(0, eligible - done) });
+    enrichments.push({
+      kind,
+      eligible,
+      done,
+      failedTerminal,
+      pending: Math.max(0, eligible - done - failedTerminal),
+    });
   }
 
   return enrichments;

@@ -13,14 +13,21 @@ export type TEnrichmentKind = (typeof ENRICHMENT_KINDS)[number];
  * One enrichment's progress, already aggregated across the workspace's feedback directories.
  *
  * `eligible`/`done` are data-derived counts of feedback records (how many qualify for the enrichment
- * vs. how many carry it), not queue depth — so `done` never exceeds `eligible` and `pending` is simply
- * the difference. Because `eligible` covers the whole historical corpus, this reads as an "N pending"
- * count in steady state and as a real 0→100% bar during a (re)enablement backfill.
+ * vs. how many carry it), not queue depth. `pending` is `eligible - done - failedTerminal` rather than
+ * the plain difference: a record whose enrichment permanently gave up (content filter, refusal,
+ * truncation — ENG-2375) would otherwise read as "still in progress" forever, since nothing about it
+ * changes on its own. `failedTerminal` is reported separately so the UI can say so rather than count
+ * it as work still moving.
+ *
+ * This still isn't the full picture — a record whose enrichment was switched on after it already
+ * existed was never enqueued at all, and neither `done` nor `failedTerminal` accounts for it, so it
+ * remains indistinguishable from genuinely in-flight work until ENG-2376 (auto-requeue) ships.
  */
 export type TEnrichmentProgress = {
   kind: TEnrichmentKind;
   eligible: number;
   done: number;
+  failedTerminal: number;
   pending: number;
 };
 

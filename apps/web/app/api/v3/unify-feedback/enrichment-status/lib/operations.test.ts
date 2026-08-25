@@ -69,7 +69,7 @@ describe("getV3EnrichmentStatus", () => {
     expect(getEnrichmentStatus).toHaveBeenCalledWith("frd-1");
     expect(getEnrichmentStatus).toHaveBeenCalledWith("frd-2");
     await expect(readBody(response)).resolves.toEqual({
-      enrichments: [{ kind: "translation", eligible: 200, done: 80, pending: 120 }],
+      enrichments: [{ kind: "translation", eligible: 200, done: 80, failedTerminal: 0, pending: 120 }],
       unavailable: false,
     });
   });
@@ -110,7 +110,7 @@ describe("getV3EnrichmentStatus", () => {
 
     // The failed directory is left out entirely — counting it as zero-done would invent a backlog.
     await expect(readBody(response)).resolves.toEqual({
-      enrichments: [{ kind: "translation", eligible: 100, done: 25, pending: 75 }],
+      enrichments: [{ kind: "translation", eligible: 100, done: 25, failedTerminal: 0, pending: 75 }],
       unavailable: false,
     });
   });
