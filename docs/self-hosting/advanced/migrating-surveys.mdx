@@ -1,0 +1,515 @@
+---
+title: "Migrating Surveys"
+description:
+  "Copy surveys and their responses from one Formbricks instance to another with the management API."
+icon: "right-left"
+---
+
+This page is about moving **selected surveys and their response data** between two running Formbricks
+instances — a staging box to production, a self-hosted instance to Formbricks Cloud, one company's
+instance to another after a split. It uses nothing but the public management API, so the two instances
+can be on different versions, different databases, and different object storage.
+
+<Note>
+  **Moving a whole instance? Do not use this page.** If you control both machines and want everything
+  — users, organizations, workspaces, contacts, displays, tags, file uploads, webhooks — then a
+  Postgres dump plus a copy of your S3 bucket is faster, complete, and keeps every ID intact:
+
+  ```bash
+  pg_dump "$OLD_DB_URL" -Fc -f formbricks.dump
+  pg_restore -d "$NEW_DB_URL" --no-owner formbricks.dump
+  ```
+
+  Restore into an instance running the **same Formbricks version** as the source, then upgrade it
+  following the [migration guide](/self-hosting/advanced/migration). The API route below exists for
+  the cases a dump cannot serve: you only want some surveys, the target already has data you must
+  keep, or you do not own the database on one of the two ends.
+</Note>
+
+## What carries over
+
+The API route rebuilds surveys from their public survey document and replays responses onto them. That
+is enough to keep every answer readable and correctly dated, but it is not a byte-for-byte copy.
+
+**Carried over**
+
+- Survey name, type, status, metadata, languages and every translation
+- Blocks, elements, choices, logic, endings, variables, hidden fields
+- **Block, element and ending IDs, verbatim.** This is the part that matters: a response's `data` is
+  keyed by element ID and its `endingId` names an ending, so keeping those IDs is what makes a replayed
+  response land on the right question instead of being rejected
+- App-survey display settings and triggers (see [App surveys](#app-surveys))
+- Every response's `data`, `variables`, `ttc`, `meta`, `language`, `endingId` and `singleUseId`
+- Each response's `createdAt` and `updatedAt`, so your charts keep their shape
+
+**Not carried over**
+
+- **The survey ID.** Every survey gets a fresh one, so every link URL changes — see
+  [Finish by hand](#step-4-finish-by-hand)
+- Response IDs — fresh ones are assigned
+- Styling and theme overrides, follow-up emails, quotas, single-use link settings, survey PIN,
+  reCAPTCHA, custom head scripts, custom slug
+- Contact targeting (segments) on app surveys
+- Uploaded files, display records, response tags, contacts — see
+  [Known limitations](#known-limitations)
+
+<Warning>
+  **Importing responses fires the target's response pipeline.** Every `POST` to the responses endpoint
+  emits `responseCreated` and, for finished responses, `responseFinished` — which dispatches webhooks,
+  integrations (Airtable, Google Sheets, Notion, Slack), workflows, and survey follow-up emails
+  configured in the **target** workspace.
+
+  Before importing, remove or disable webhooks, integrations and workflows in the target workspace, and
+  add follow-up emails only **after** the import has finished. Otherwise a few thousand replayed
+  responses become a few thousand real emails.
+</Warning>
+
+## Before you start
+
+<Steps>
+  <Step title="Create an API key on each instance">
+    On both instances, create a key with **manage** permission on the workspace you are moving from or
+    to — see [Generate API Key](/api-reference/generate-key). Workspace access is per workspace; there
+    is no "all workspaces" option.
+  </Step>
+  <Step title="Note both workspace IDs">
+    The workspace ID is in the app URL: `https://your-instance.com/workspaces/<workspaceId>/surveys`.
+    (`GET /api/v2/me` also lists them, but only for keys that additionally have Organization read
+    access.)
+  </Step>
+  <Step title="Install curl and jq">
+    The scripts below use nothing else. `jq` 1.6 or newer.
+  </Step>
+  <Step title="Plan around the rate limit">
+    Management API requests are limited to **100 per minute per API key**. Every survey and every
+    single response is one request, so 5,000 responses take at least 50 minutes. The scripts pace
+    themselves with a `THROTTLE` sleep and retry on `429`. If you own the target instance and want it
+    to go faster, set [`RATE_LIMITING_DISABLED=1`](/self-hosting/advanced/rate-limiting#disabling-rate-limiting)
+    there for the duration of the import and restart it, then turn it back on.
+  </Step>
+</Steps>
+
+## Step 1: Export the source workspace
+
+This reads the workspace and writes a directory you can inspect, keep as a backup, and re-run the
+import from. It touches nothing on the source instance.
+
+```bash fb-export.sh
+#!/usr/bin/env bash
+# Export every survey, response and action class of one Formbricks workspace.
+set -euo pipefail
+
+SOURCE_URL="${SOURCE_URL:?e.g. https://old.formbricks.example.com}"
+SOURCE_API_KEY="${SOURCE_API_KEY:?API key with manage access on the source workspace}"
+SOURCE_WORKSPACE_ID="${SOURCE_WORKSPACE_ID:?workspace id, see the app URL}"
+OUT_DIR="${OUT_DIR:-./fb-export}"
+
+# GET with retry on 429 (100 requests/minute per API key) and on 5xx.
+fb_get() {
+  local url="$1" attempt=0 tmp code
+  tmp=$(mktemp)
+  while :; do
+    code=$(curl -sS -g -o "$tmp" -w '%{http_code}' -H "x-api-key: ${SOURCE_API_KEY}" "$url" || echo 000)
+    case "$code" in
+      429 | 000 | 5??)
+        attempt=$((attempt + 1))
+        [ "$attempt" -le 6 ] || break
+        echo "  HTTP ${code} on ${url} — retry ${attempt} in $((attempt * 10))s" >&2
+        sleep $((attempt * 10))
+        ;;
+      *) break ;;
+    esac
+  done
+  cat "$tmp"; rm -f "$tmp"
+  case "$code" in 2??) ;; *) echo "GET ${url} failed with HTTP ${code}" >&2; return 1 ;; esac
+}
+
+mkdir -p "$OUT_DIR/surveys" "$OUT_DIR/responses"
+
+# 1. All survey ids, archived ones included, via cursor pagination.
+: > "$OUT_DIR/survey-ids.txt"
+cursor=""
+while :; do
+  page=$(fb_get "${SOURCE_URL}/api/v3/surveys?workspaceId=${SOURCE_WORKSPACE_ID}&limit=100&includeTotalCount=false&filter[status][in]=draft,inProgress,paused,completed,archived${cursor:+&cursor=${cursor}}")
+  jq -r '.data[].id' <<<"$page" >> "$OUT_DIR/survey-ids.txt"
+  cursor=$(jq -r '.meta.nextCursor // empty' <<<"$page")
+  [ -n "$cursor" ] || break
+done
+
+# 2. Action classes — app-survey triggers reference these by id.
+fb_get "${SOURCE_URL}/api/v1/management/action-classes" | jq '.data' > "$OUT_DIR/action-classes.json"
+
+# 3. Full survey document + every response, one JSON Lines file per survey.
+while read -r id; do
+  [ -n "$id" ] || continue
+  fb_get "${SOURCE_URL}/api/v3/surveys/${id}" | jq '.data' > "$OUT_DIR/surveys/${id}.json"
+
+  : > "$OUT_DIR/responses/${id}.json"
+  skip=0
+  while :; do
+    batch=$(fb_get "${SOURCE_URL}/api/v2/management/responses?surveyId=${id}&limit=250&skip=${skip}&sortBy=createdAt&order=asc")
+    jq -c '.data[]' <<<"$batch" >> "$OUT_DIR/responses/${id}.json"
+    [ "$(jq '.data | length' <<<"$batch")" -eq 250 ] || break
+    skip=$((skip + 250))
+  done
+  printf '%s  %s responses  %s\n' "$id" "$(wc -l < "$OUT_DIR/responses/${id}.json" | tr -d ' ')" \
+    "$(jq -r '.name' "$OUT_DIR/surveys/${id}.json")"
+done < "$OUT_DIR/survey-ids.txt"
+
+echo "exported $(wc -l < "$OUT_DIR/survey-ids.txt" | tr -d ' ') surveys to ${OUT_DIR}"
+```
+
+```bash
+SOURCE_URL=https://old.formbricks.example.com \
+SOURCE_API_KEY=fbk_xxx \
+SOURCE_WORKSPACE_ID=cmrsx9nej0001tm061tt2pmbk \
+./fb-export.sh
+```
+
+```
+cms67qmmi000022c25w0ztniy  20 responses  Product Market Fit (Superhuman)
+cmrsxa61o0008tm067ak8vqxc  1 responses  Start from scratch
+cmrsxxwej0009tm06aq5i4lx0  2 responses  Link survey
+exported 3 surveys to ./fb-export
+```
+
+The `-g` flag on `curl` is not optional — the `filter[status][in]` parameter contains square brackets,
+which curl otherwise reads as a globbing range.
+
+## Step 2: Import into the target workspace
+
+The endpoints used to create surveys are strict: they accept a survey **document**, not the resource
+you just read. The `jq` filter in the script does the translation, and each line of it exists because
+the API rejects the request without it:
+
+- `del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt)` — read-only fields. The document
+  endpoint rejects unknown keys rather than ignoring them, so leaving them in returns
+  `400` with `invalid_params`.
+- `.languages |= map({code, default, enabled})` — `GET` returns an extra `alias` per language that
+  `POST` rejects.
+- `.type = (if .type == "link" then "link" else "app" end)` — older instances still store the legacy
+  `website` and `web` types; only `link` and `app` can be created.
+- `.metadata = (.metadata // {})` — `metadata` may be `null` on read but must be an object on write.
+- Trigger rewriting and the app-survey `status` fallback — see [App surveys](#app-surveys).
+
+Block, element and ending IDs are **not** stripped. The API accepts them, and keeping them is the whole
+trick: a replayed response's `data` is keyed by element ID and its `endingId` points at an ending, so
+carrying those IDs over is what makes the responses land on the right questions instead of being
+rejected as invalid.
+
+```bash fb-import.sh
+#!/usr/bin/env bash
+# Import a ./fb-export dump into a target Formbricks workspace. Idempotent it is not:
+# running it twice creates a second copy of everything.
+set -euo pipefail
+
+TARGET_URL="${TARGET_URL:?e.g. https://new.formbricks.example.com}"
+TARGET_API_KEY="${TARGET_API_KEY:?API key with manage access on the target workspace}"
+TARGET_WORKSPACE_ID="${TARGET_WORKSPACE_ID:?workspace id, see the app URL}"
+IN_DIR="${IN_DIR:-./fb-export}"
+THROTTLE="${THROTTLE:-0.7}" # seconds between writes; keeps you under 100 requests/minute
+
+fb_post() {
+  local url="$1" body="$2" attempt=0 tmp code
+  tmp=$(mktemp)
+  while :; do
+    code=$(curl -sS -g -o "$tmp" -w '%{http_code}' -X POST \
+      -H "x-api-key: ${TARGET_API_KEY}" -H 'content-type: application/json' \
+      --data-binary "$body" "$url" || echo 000)
+    case "$code" in
+      429 | 000 | 5??)
+        attempt=$((attempt + 1))
+        [ "$attempt" -le 6 ] || break
+        echo "  HTTP ${code} on ${url} — retry ${attempt} in $((attempt * 10))s" >&2
+        sleep $((attempt * 10))
+        ;;
+      *) break ;;
+    esac
+  done
+  FB_BODY=$(cat "$tmp"); rm -f "$tmp"; FB_CODE="$code"
+  case "$code" in 2??) return 0 ;; *) return 1 ;; esac
+}
+
+# 1. Action classes. Keyed by source id so app-survey triggers can be rewritten below.
+: > "$IN_DIR/action-class-map.tsv"
+jq -c '.[]' "$IN_DIR/action-classes.json" | while read -r ac; do
+  body=$(jq -c --arg ws "$TARGET_WORKSPACE_ID" \
+    '{workspaceId: $ws, name, description, type, key, noCodeConfig} | with_entries(select(.value != null))' <<<"$ac")
+  if fb_post "${TARGET_URL}/api/v1/management/action-classes" "$body"; then
+    printf '%s\t%s\n' "$(jq -r '.id' <<<"$ac")" "$(jq -r '.data.id' <<<"$FB_BODY")" >> "$IN_DIR/action-class-map.tsv"
+  else
+    echo "action class $(jq -r '.name' <<<"$ac") failed (HTTP ${FB_CODE}): ${FB_BODY}" >&2
+  fi
+  sleep "$THROTTLE"
+done
+
+# 2. Surveys. The target assigns fresh survey ids; block, element and ending ids are carried over
+#    verbatim, which is what keeps the imported responses readable.
+: > "$IN_DIR/survey-id-map.tsv"
+for file in "$IN_DIR"/surveys/*.json; do
+  old_id=$(jq -r '.id' "$file")
+  body=$(jq -c --arg ws "$TARGET_WORKSPACE_ID" --slurpfile acmap <(
+      jq -R 'split("\t") | {(.[0]): .[1]}' "$IN_DIR/action-class-map.tsv" | jq -s 'add // {}'
+    ) '
+    ($acmap[0] // {}) as $ac
+    | del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .targeting)
+    | .workspaceId = $ws
+    | .metadata = (.metadata // {})
+    # POST accepts only link and app; legacy website/web surveys are app surveys.
+    | .type = (if .type == "link" then "link" else "app" end)
+    # GET returns an "alias" per language that POST rejects.
+    | .languages |= map({code, default, enabled})
+    | if .type == "app" and (.distribution | type) == "object"
+      then .distribution.triggers = [.distribution.triggers[] | select($ac[.actionClassId]) | {actionClassId: $ac[.actionClassId]}]
+      else . end
+    # An app survey with no trigger cannot be live.
+    | if .type == "app" and ((.distribution.triggers // []) | length) == 0 then .status = "draft" else . end
+  ' "$file")
+
+  if ! fb_post "${TARGET_URL}/api/v3/surveys" "$body"; then
+    echo "survey ${old_id} failed (HTTP ${FB_CODE}): ${FB_BODY}" >&2
+    continue
+  fi
+  new_id=$(jq -r '.data.id' <<<"$FB_BODY")
+  printf '%s\t%s\n' "$old_id" "$new_id" >> "$IN_DIR/survey-id-map.tsv"
+  echo "survey ${old_id} -> ${new_id}"
+  sleep "$THROTTLE"
+
+  # Archived surveys are recreated active; archive them again.
+  if [ "$(jq -r '.archivedAt // "null"' "$file")" != "null" ]; then
+    fb_post "${TARGET_URL}/api/v3/surveys/${new_id}/archive" '{}' ||
+      echo "could not re-archive ${new_id} (HTTP ${FB_CODE}): ${FB_BODY}" >&2
+    sleep "$THROTTLE"
+  fi
+done
+
+# 3. Responses. createdAt/updatedAt survive; response ids do not.
+while IFS=$'\t' read -r old_id new_id; do
+  [ -s "$IN_DIR/responses/${old_id}.json" ] || continue
+  ok=0; failed=0
+  while read -r response; do
+    body=$(jq -c --arg sid "$new_id" '
+      {surveyId: $sid, createdAt, updatedAt, finished, data, variables, ttc, meta,
+       language, endingId, singleUseId, userId: (.contactAttributes.userId // null)}
+      | with_entries(select(.value != null))
+      | .finished = (.finished // false)
+    ' <<<"$response")
+    if fb_post "${TARGET_URL}/api/v2/management/responses" "$body"; then
+      ok=$((ok + 1))
+    else
+      failed=$((failed + 1))
+      echo "response $(jq -r '.id' <<<"$response") failed (HTTP ${FB_CODE}): ${FB_BODY}" >&2
+    fi
+    sleep "$THROTTLE"
+  done < "$IN_DIR/responses/${old_id}.json"
+  echo "responses ${old_id} -> ${new_id}: ${ok} imported, ${failed} failed"
+done < "$IN_DIR/survey-id-map.tsv"
+```
+
+```bash
+TARGET_URL=https://new.formbricks.example.com \
+TARGET_API_KEY=fbk_yyy \
+TARGET_WORKSPACE_ID=cmt8fp2zt00024906cy3ysb8g \
+./fb-import.sh
+```
+
+```
+survey cmrsxa61o0008tm067ak8vqxc -> cmt8onri8000uj606c2wei9ao
+survey cmrsxxwej0009tm06aq5i4lx0 -> cmt8onsvj000xj606qo8mevz6
+survey cms67qmmi000022c25w0ztniy -> cmt8ontog000yj606jpfqxpeb
+responses cmrsxa61o0008tm067ak8vqxc -> cmt8onri8000uj606c2wei9ao: 1 imported, 0 failed
+responses cmrsxxwej0009tm06aq5i4lx0 -> cmt8onsvj000xj606qo8mevz6: 1 imported, 1 failed
+responses cms67qmmi000022c25w0ztniy -> cmt8ontog000yj606jpfqxpeb: 20 imported, 0 failed
+```
+
+Two files are written next to the dump and are worth keeping: `survey-id-map.tsv` maps every old survey
+ID to its new one, and `action-class-map.tsv` does the same for actions. You need the survey map to
+update links, QR codes, embed snippets and SDK calls that referenced the old IDs.
+
+<Warning>
+  The import is **not** idempotent. There is no natural unique key on a survey or a response, so a
+  second run creates a second copy of everything rather than skipping what exists. If a run fails
+  partway, delete what it created in the target before retrying — or trim the input files down to what
+  is missing.
+</Warning>
+
+## Step 3: Verify
+
+Compare the exported count against what landed, survey by survey.
+
+```bash fb-verify.sh
+#!/usr/bin/env bash
+# Compare the exported response count with what actually landed in the target, survey by survey.
+set -euo pipefail
+TARGET_URL="${TARGET_URL:?}"
+TARGET_API_KEY="${TARGET_API_KEY:?}"
+IN_DIR="${IN_DIR:-./fb-export}"
+
+count_target() {
+  local survey_id="$1" skip=0 total=0 n
+  while :; do
+    n=$(curl -sS -g -H "x-api-key: ${TARGET_API_KEY}" \
+      "${TARGET_URL}/api/v2/management/responses?surveyId=${survey_id}&limit=250&skip=${skip}" | jq '.data | length')
+    total=$((total + n))
+    [ "$n" -eq 250 ] || break
+    skip=$((skip + 250))
+  done
+  echo "$total"
+}
+
+printf '%-26s %-26s %9s %9s %s\n' SOURCE TARGET EXPORTED IMPORTED ''
+while IFS=$'\t' read -r old_id new_id; do
+  expected=$(wc -l < "${IN_DIR}/responses/${old_id}.json" | tr -d ' ')
+  actual=$(count_target "$new_id")
+  [ "$expected" = "$actual" ] && flag=ok || flag='MISMATCH'
+  printf '%-26s %-26s %9s %9s %s\n' "$old_id" "$new_id" "$expected" "$actual" "$flag"
+done < "${IN_DIR}/survey-id-map.tsv"
+```
+
+```
+SOURCE                     TARGET                      EXPORTED  IMPORTED
+cmrsxa61o0008tm067ak8vqxc  cmt8onri8000uj606c2wei9ao          1         1 ok
+cmrsxxwej0009tm06aq5i4lx0  cmt8onsvj000xj606qo8mevz6          2         1 MISMATCH
+cms67qmmi000022c25w0ztniy  cmt8ontog000yj606jpfqxpeb         20        20 ok
+```
+
+A `MISMATCH` line points at responses the target refused. `fb-import.sh` printed the reason for each on
+stderr — the usual cause is a file upload, see below.
+
+Then open one imported survey's summary page and confirm the answers are attributed to the right
+questions. If element IDs had been lost, the responses would have been rejected outright rather than
+silently misfiled, so a summary that reads correctly is a good signal.
+
+## Step 4: Finish by hand
+
+- **Re-point everything that used the old survey ID.** Link survey URLs are
+  `https://your-instance.com/s/<surveyId>`, so every shared link, QR code, email campaign and embed
+  snippet needs the new ID from `survey-id-map.tsv`. Old links keep working on the source instance if
+  it is still running — if it is not, they break.
+- **Rebuild what the survey document does not carry**: styling, follow-up emails, quotas, single-use
+  link settings, survey PIN, reCAPTCHA, custom head scripts, custom slug.
+- **Re-create app-survey targeting** (see below), then re-enable webhooks, integrations and workflows.
+- **Update your SDK setup** if you are moving app surveys: `workspaceId` and `appUrl` in
+  `Formbricks.setup()` both still point at the old instance.
+
+## App surveys
+
+App surveys reference things that live inside a workspace and therefore cannot be copied by value.
+
+**Triggers** point at action classes by ID. `fb-import.sh` handles this: it re-creates every action
+class in the target first (`POST /api/v1/management/action-classes`, which unlike the v3 read endpoint
+also accepts a `noCodeConfig`), then rewrites `distribution.triggers[].actionClassId` through the
+resulting map. Triggers whose action class failed to create are dropped.
+
+That matters, because an app survey with no trigger cannot be live:
+
+```json
+{
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "An app survey must have at least one trigger to be set to a non-draft status."
+}
+```
+
+The script therefore forces `status: "draft"` on any app survey that ended up with an empty trigger
+list, rather than failing the whole survey.
+
+**Targeting** is dropped by the script (`del(.targeting)`). Segment filters reference contact-attribute
+keys, segments and — for `surveyInteraction` filters — other survey IDs, none of which exist under the
+same IDs in the target. Re-create targeting in the app after the import.
+
+<Warning>
+  A live app survey that loses its targeting **targets everyone**. If the source survey was scoped to a
+  segment, keep it as a draft until you have rebuilt the filters in the target.
+</Warning>
+
+## Known limitations
+
+### File-upload answers are rejected
+
+Uploaded files stay in the source instance's object storage, and their URLs encode the workspace and
+survey they belong to:
+
+```
+/storage/{workspaceId}/private/surveys/{surveyId}/elements/{elementId}/{fileName}
+```
+
+Both IDs change during the migration, so the target refuses the response:
+
+```json
+{
+  "error": {
+    "code": 400,
+    "message": "Bad Request",
+    "details": [{
+      "field": "response",
+      "issue": "Invalid file upload response: each file URL must reference a file uploaded to this survey's file-upload element"
+    }]
+  }
+}
+```
+
+To carry these responses over you have to move the files first: download each one from the source,
+upload it to the target under the new survey and element, rewrite the URL in the response's `data`, and
+only then `POST` the response. If the files are not worth that, strip the file-upload element's key
+from `data` so the rest of the answer imports — you lose the attachment, not the response:
+
+```bash
+jq -c 'del(.data["<fileUploadElementId>"])' response.json
+```
+
+### Surveys with no blocks cannot be created
+
+An untouched draft can have zero blocks. Reading it works, creating it does not:
+
+```json
+{
+  "title": "Bad Request",
+  "status": 400,
+  "invalid_params": [{ "name": "blocks", "reason": "At least one block is required" }]
+}
+```
+
+Either skip these (there is nothing in them) or recreate them in the app.
+
+### Displays are not migrated
+
+The **Displays** figure on a survey summary, and the *Starts %* / *Completed %* / drop-off numbers
+derived from it, come from display records — impressions, not responses. Those are not exposed by the
+management API, so an imported survey shows `-` for displays and 0% for the rates that divide by them.
+Response counts, completion counts and every per-question summary are correct.
+
+### Response tags and contacts
+
+Response tags are readable via `GET /api/v1/management/responses` but no create endpoint accepts them,
+so they cannot be restored through the API.
+
+Contacts are workspace-scoped and are not migrated by these scripts. Responses that were tied to a
+contact are imported unlinked. `fb-import.sh` passes the source contact's `userId` through as the
+response's `userId`: if a contact with that `userId` already exists in the target workspace, the
+response is attached to it and the target's own contact attributes are copied onto the response. If no
+such contact exists, the response is created anonymously — this is silent, not an error.
+
+### Everything outside surveys and responses
+
+Users, teams, organization settings, contacts and their attributes, segments, webhooks, integrations,
+API keys, workflows and dashboards are out of scope here. Contacts and contact-attribute keys have
+their own management endpoints (`/api/v2/management/contacts`,
+`/api/v2/management/contact-attribute-keys`) if you need them; the rest is a `pg_dump` job.
+
+## Troubleshooting
+
+| Response                                                                          | Cause                                                                       | Fix                                                                        |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `400` `invalid_params` naming a field you did not touch                            | A read-only or unknown field left in the survey document — the endpoint rejects unknown keys rather than ignoring them | Check the `jq` filter is applied. The document accepts only `workspaceId`, `name`, `type`, `status`, `metadata`, `defaultLanguage`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, `variables`, `distribution`, `targeting` |
+| `400` `unsupported_locale`                                                         | A translation uses a locale that is not declared in `languages`             | Add the locale to `languages`, or drop the translation                     |
+| `400` `invalid_reference`                                                          | Logic jumps to a block or ending ID that is not in the same request         | Import the whole survey document at once, never block by block             |
+| `400` on a response, `field: "response"`                                           | The response does not validate against the target survey — usually a file upload, or element IDs that were not carried over | See [File-upload answers](#file-upload-answers-are-rejected); confirm the survey was imported with its original element IDs |
+| `404` `display not found` on a response                                            | A `displayId` from the source instance was sent along                       | Do not send `displayId` — the script omits it                              |
+| `401`                                                                              | The key has no permission on that workspace, or has Organization access only | Add the workspace under Workspace Access with `manage`                     |
+| `429`                                                                              | 100 requests/minute per API key                                             | Raise `THROTTLE`; the scripts already back off and retry six times         |
+
+---
+
+**Need help?** Reach out in
+[GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
