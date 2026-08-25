@@ -39,7 +39,8 @@ is enough to keep every answer readable and correctly dated, but it is not a byt
   keyed by element ID and its `endingId` names an ending, so keeping those IDs is what makes a replayed
   response land on the right question instead of being rejected
 - App-survey display settings and triggers (see [App surveys](#app-surveys))
-- Every response's `data`, `variables`, `ttc`, `meta`, `language`, `endingId` and `singleUseId`
+- Every response's `data`, `variables`, `ttc`, `meta`, `language`, `endingId` and `singleUseId` — `ttc`
+  with [one caveat](#time-to-complete-needs-_total-stripped)
 - Each response's `createdAt` and `updatedAt`, so your charts keep their shape
 
 **Not carried over**
@@ -198,8 +199,11 @@ while :; do
   while read -r response; do
     [ -n "$response" ] || continue
     payload=$(jq -c --arg sid "$new_id" '
-      {surveyId: $sid, createdAt, updatedAt, finished, data, variables, ttc, meta,
-       language, endingId, singleUseId, userId: (.contactAttributes.userId // null)}
+      {surveyId: $sid, createdAt, updatedAt, finished, data, variables, meta,
+       language, endingId, singleUseId,
+       # ttc._total is recomputed on the target for finished responses; sending the stored one doubles it.
+       ttc: (.ttc | del(._total)),
+       userId: (.contactAttributes.userId // null)}
       | with_entries(select(.value != null))
       | .finished = (.finished // false)
     ' <<<"$response")
@@ -451,8 +455,11 @@ while IFS=$'\t' read -r old_id new_id; do
   ok=0; failed=0
   while read -r response; do
     body=$(jq -c --arg sid "$new_id" '
-      {surveyId: $sid, createdAt, updatedAt, finished, data, variables, ttc, meta,
-       language, endingId, singleUseId, userId: (.contactAttributes.userId // null)}
+      {surveyId: $sid, createdAt, updatedAt, finished, data, variables, meta,
+       language, endingId, singleUseId,
+       # ttc._total is recomputed on the target for finished responses; sending the stored one doubles it.
+       ttc: (.ttc | del(._total)),
+       userId: (.contactAttributes.userId // null)}
       | with_entries(select(.value != null))
       | .finished = (.finished // false)
     ' <<<"$response")
@@ -633,6 +640,22 @@ An untouched draft can have zero blocks. Reading it works, creating it does not:
 ```
 
 Either skip these (there is nothing in them) or recreate them in the app.
+
+### Time-to-complete needs `_total` stripped
+
+A finished response's `ttc` (time to complete, in milliseconds) carries a `_total` key alongside the
+per-element timings. On create, the target **recomputes** `_total` by summing the values it was given —
+and if you passed the stored `_total` along, that sum includes it, so the imported response ends up with
+exactly double the real total. Nothing errors; the number is just silently wrong.
+
+The scripts on this page therefore send `ttc` with `_total` removed and let the target recompute it:
+
+```
+ttc: (.ttc | del(._total))
+```
+
+Only finished responses carry `_total`, and stripping it is safe either way. If you wrote your own
+importer, check one finished response's `ttc._total` against the source before trusting the rest.
 
 ### Displays are not migrated
 
