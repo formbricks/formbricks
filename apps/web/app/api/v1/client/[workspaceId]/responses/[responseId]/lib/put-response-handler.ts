@@ -1,3 +1,4 @@
+import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { RESPONSE_ALREADY_FINISHED_ERROR_CODE, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -6,6 +7,7 @@ import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-er
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { applyIngestContractToResponseData } from "@/lib/response/ingest";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
@@ -155,10 +157,15 @@ const validateUpdateRequest = (
 
 const getUpdatedResponse = async (
   responseId: string,
-  responseUpdateInput: TResponseUpdateInput
+  responseUpdateInput: TResponseUpdateInput,
+  ingestFlags: readonly TIngestFlag[]
 ): Promise<TUpdatedResponseResult> => {
   try {
-    const updatedResponse = await updateResponseWithQuotaEvaluation(responseId, responseUpdateInput);
+    const updatedResponse = await updateResponseWithQuotaEvaluation(
+      responseId,
+      responseUpdateInput,
+      ingestFlags
+    );
     return { updatedResponse };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
@@ -231,12 +238,22 @@ export const putResponseHandler = async ({
     delete responseUpdateInput.data[VERIFIED_EMAIL_RESPONSE_KEY];
   }
 
+  // The Embedded Data ingest contract (ENG-1845). This boundary matters as much as the POST one and
+  // is easier to miss: `validateResponseData` below only validates keys matching element ids, so
+  // everything else passes through — which is how a crafted PUT could write a locked key, an unknown
+  // key or an oversize value straight into `response.data`, where exports read it. Ahead of
+  // validation and quota evaluation so both see the values that will be stored.
+  const ingestResult = applyIngestContractToResponseData(survey, responseUpdateInput.data);
+  if (responseUpdateInput.data) {
+    responseUpdateInput.data = ingestResult.data;
+  }
+
   const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput, workspaceId);
   if (validationResult) {
     return validationResult;
   }
 
-  const updatedResponseResult = await getUpdatedResponse(responseId, responseUpdateInput);
+  const updatedResponseResult = await getUpdatedResponse(responseId, responseUpdateInput, ingestResult.flags);
   if ("response" in updatedResponseResult) {
     return updatedResponseResult;
   }

@@ -7,7 +7,6 @@ import {
   filterSurveys,
   getLanguageCode,
   getStyling,
-  handleHiddenFields,
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
@@ -70,12 +69,11 @@ export const triggerSurvey = async (
     }
   }
 
-  const hiddenFieldsObject: TTrackProperties["hiddenFields"] = handleHiddenFields(
-    survey.hiddenFields,
-    properties?.hiddenFields
-  );
-
-  await renderWidget(survey, action, hiddenFieldsObject);
+  // Passed straight through, unfiltered: the Embedded Data ingest contract lives in the renderer now
+  // (ENG-1845/2472), so the SDK is a dumb pipe and the four mobile SDKs inherit the same rules
+  // without each shipping a copy. The renderer drops unknown and locked keys, coerces the rest, and
+  // logs what it refused — and the server re-runs all of it on ingest.
+  await renderWidget(survey, action, properties?.hiddenFields);
 };
 
 export const renderWidget = async (

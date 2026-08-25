@@ -173,6 +173,13 @@ model Response {
   ttc               Json                @default("{}")
   /// [ResponseMeta]
   meta              Json                @default("{}")
+  /// Why a value in `data` will not read back as its declared Embedded Data type — a failed coercion
+  /// or a truncated oversize value (ENG-1845). Server-computed on every ingest and never accepted
+  /// from the client. Null means no ingest boundary has written it, which is not the same claim as
+  /// an empty list: without this column a wrong-typed value is indistinguishable from an absent one,
+  /// and surfacing that in the UI (v2) would have nothing to read.
+  /// [ResponseIngestFlags]
+  ingestFlags       Json?               @map(name: "ingest_flags")
   tags              TagsOnResponses[]
   quotaLinks        ResponseQuotaLink[]
   /// [ResponseContactAttributes]

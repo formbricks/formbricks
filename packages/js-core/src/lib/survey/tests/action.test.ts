@@ -33,7 +33,6 @@ vi.mock("@/lib/common/logger", () => ({
 
 vi.mock("@/lib/common/utils", () => ({
   shouldDisplayBasedOnPercentage: vi.fn(),
-  handleHiddenFields: vi.fn(),
 }));
 
 vi.mock("@/lib/survey/widget", () => ({

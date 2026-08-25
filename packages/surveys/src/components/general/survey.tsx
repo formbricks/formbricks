@@ -1,10 +1,17 @@
 import { type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import {
+  type TIngestDropReason,
+  type TIngestFlagReason,
+  type TIngestResult,
+  applyIngestContract,
+} from "@formbricks/types/embedded-data-ingest";
+import {
   RESERVED_FIELD_CATALOG,
   coerceToEmbeddedDataType,
   dropShadowedReservedEntries,
   getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
   getSurveyEmbeddedFields,
   listShadowingNames,
   mergeReservedValues,
@@ -22,6 +29,7 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { RESERVED_DECLARED_FIELD_NAMES } from "@formbricks/types/surveys/validation";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -80,6 +88,47 @@ interface VariableStackEntry {
   questionId: string;
   variables: TResponseVariables;
 }
+
+/**
+ * What the renderer says about each verdict. Phrased as what happened to the *incoming value*, never
+ * as a claim about the response: a host surface can legitimately hand this component a key the survey
+ * does not declare — the link page passes the verified email address alongside the URL params — and
+ * the server writes that one itself, so "ignored here" is the honest report and "not stored" would
+ * not be.
+ */
+const INGEST_DROP_MESSAGES: Record<TIngestDropReason, string> = {
+  unknown_key: "is not an ingested Embedded Data field on this survey",
+  locked_field: "is locked and ignores values set from outside",
+  unsupported_value: "arrived as a value no Embedded Data field can hold",
+  element_id_collision: "is a question's id, so that question's answer owns the key",
+};
+
+const INGEST_FLAG_MESSAGES: Record<TIngestFlagReason, string> = {
+  coercion_failed: "did not match its declared type and was kept as text",
+  truncated: "was longer than the 16 KB limit and was truncated",
+};
+
+/**
+ * Surfaces the ingest contract's verdicts, so a developer wiring up Embedded Data sees why a value
+ * did not show up instead of guessing. Warnings, never errors: nothing here blocks a response.
+ *
+ * Advisory only. The stored flags are the server's, recomputed on ingest from the same contract,
+ * because a client-sent flag list could claim there was nothing to report.
+ */
+const logIngestResult = ({ dropped, flags }: TIngestResult): void => {
+  for (const { key, reason } of dropped) {
+    // A reserved name is never actionable: `FORBIDDEN_IDS` means no survey *can* declare it, and the
+    // product injects some of these itself — a link survey with email verification puts
+    // `verifiedEmail` in this bag on every load, and the server writes it from the token regardless.
+    // Warning about it once per respondent is first-party noise that teaches developers to tune the
+    // channel out, which costs us the warnings that do matter.
+    if (RESERVED_DECLARED_FIELD_NAMES.has(key.toLowerCase())) continue;
+    console.warn(`Formbricks: "${key}" ${INGEST_DROP_MESSAGES[reason]}, so the value was ignored.`);
+  }
+  for (const { key, reason } of flags) {
+    console.warn(`Formbricks: the value for "${key}" ${INGEST_FLAG_MESSAGES[reason]}.`);
+  }
+};
 
 export function Survey({
   appUrl,
@@ -303,7 +352,50 @@ export function Survey({
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const isNavigatingBackRef = useRef(false);
-  const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
+  /**
+   * The Embedded Data ingest contract (ENG-1845) applied to whatever the host handed us — URL params
+   * for a link survey, `track({ hiddenFields })` or `setEmbeddedData` for an app one. Every caller
+   * passes a raw bag and this is the one place it is filtered and coerced, so the SDKs stay dumb
+   * pipes and the four mobile ones inherit the rules without shipping a copy (ENG-2472).
+   *
+   * In a lazy initialiser because it belongs to the display-time snapshot: the bag is read once, at
+   * mount, like the browser-runtime context beside it. The values it produces are the ones the
+   * respondent's logic and recall see, so they must not change under them mid-survey.
+   *
+   * Client-side enforcement is for immediate correctness and developer feedback only — the server
+   * re-runs the same contract on ingest and recomputes the flags, because it cannot trust this.
+   */
+  const [ingestedFieldsRecord] = useState<TResponseData>(() => {
+    const elementIds = getElementsFromSurveyBlocks(survey.blocks).map((element) => element.id);
+    const result = applyIngestContract({
+      incoming: hiddenFieldsRecord ?? {},
+      ingestedFields: getIngestedEmbeddedFields(survey),
+      elementIds,
+      // This record is what the queue sends, so cutting here would hand the server a value that
+      // already fits — and the server's re-run is what produces the persisted flags, so the
+      // `truncated` verdict would be lost on the only path the feature actually ships on. The flag is
+      // still raised below for the console; the server does the cutting.
+      enforceSizeLimit: false,
+    });
+    logIngestResult(result);
+
+    // The contract passes question answers through because at a server boundary `incoming` IS
+    // `response.data`. Here it is only the host's bag, so a key naming a question is not an answer —
+    // and keeping it would be worse than useless: `ResponseQueue` merges this record OVER `data` on
+    // every submit, so a hidden field named after a question id would re-apply its display-time
+    // value on top of whatever the respondent actually answered. Prefilling has its own prop.
+    const elementIdSet = new Set(elementIds);
+    return Object.fromEntries(
+      Object.entries(result.data).filter(([key]) => {
+        if (!elementIdSet.has(key)) return true;
+        console.warn(
+          `Formbricks: "${key}" ${INGEST_DROP_MESSAGES.element_id_collision}, so the value was ignored.`
+        );
+        return false;
+      })
+    );
+  });
+  const [responseData, setResponseData] = useState<TResponseData>(ingestedFieldsRecord);
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
@@ -964,7 +1056,10 @@ export function Survey({
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
           endingId: responseUpdate.endingId,
-          hiddenFields: hiddenFieldsRecord,
+          // The filtered record, not the raw prop: `ResponseQueue` merges `hiddenFields` over `data`
+          // on every submit, so sending the raw bag here would put the dropped and uncoerced values
+          // straight back.
+          hiddenFields: ingestedFieldsRecord,
         });
 
         triggerResponseCreatedOnce();
@@ -982,7 +1077,7 @@ export function Survey({
       userId,
       survey,
       action,
-      hiddenFieldsRecord,
+      ingestedFieldsRecord,
       getWebSurveyMeta,
     ]
   );

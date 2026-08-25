@@ -17,6 +17,7 @@ export const responseInput: Omit<Response, "id"> = {
   endingId: "lowzqpqnmjbmjowvth1u87wp",
   contactAttributes: {},
   contactId: null,
+  ingestFlags: null,
 };
 
 export const responseInputNotFinished: Omit<Response, "id"> = {
@@ -34,6 +35,7 @@ export const responseInputNotFinished: Omit<Response, "id"> = {
   endingId: "lowzqpqnmjbmjowvth1u87wp",
   contactAttributes: {},
   contactId: null,
+  ingestFlags: null,
 };
 
 export const responseInputWithoutTtc: Omit<Response, "id"> = {
@@ -51,6 +53,7 @@ export const responseInputWithoutTtc: Omit<Response, "id"> = {
   endingId: "lowzqpqnmjbmjowvth1u87wp",
   contactAttributes: {},
   contactId: null,
+  ingestFlags: null,
 };
 
 export const responseInputWithoutDisplay: Omit<Response, "id"> = {
@@ -68,6 +71,7 @@ export const responseInputWithoutDisplay: Omit<Response, "id"> = {
   endingId: "lowzqpqnmjbmjowvth1u87wp",
   contactAttributes: {},
   contactId: null,
+  ingestFlags: null,
 };
 
 export const response: Response = {
