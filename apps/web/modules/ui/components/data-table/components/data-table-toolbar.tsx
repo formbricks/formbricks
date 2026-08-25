@@ -67,8 +67,11 @@ export const DataTableToolbar = <T,>({
         ) : null}
 
         <TooltipRenderer tooltipContent={t("common.table_settings")} shouldRender={true}>
+          {/* Icon-only, so it needs an accessible name of its own: the tooltip is not one, and this is
+              the only way to reach the column-visibility settings. */}
           <button
             type="button"
+            aria-label={t("common.table_settings")}
             onClick={() => setIsTableSettingsModalOpen(true)}
             className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
             <SettingsIcon strokeWidth={1.5} className="m-1 size-6 p-0.5" />
