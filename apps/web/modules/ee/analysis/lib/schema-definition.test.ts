@@ -70,7 +70,7 @@ describe("schema-definition", () => {
     test("returns measure by id", () => {
       const field = getFieldById("FeedbackRecords.count");
       expect(field).toBeDefined();
-      expect(field?.label).toBe("Responses");
+      expect(field?.label).toBe("Feedback Records");
     });
 
     test("returns undefined for unknown id", () => {
@@ -86,7 +86,7 @@ describe("schema-definition", () => {
 
     test("returns field label for known dimension/measure", () => {
       expect(formatCubeColumnHeader("FeedbackRecords.sourceType")).toBe("Source Type");
-      expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Responses");
+      expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Feedback Records");
     });
 
     test("converts last segment to title case for unknown keys", () => {

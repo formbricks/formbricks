@@ -11,7 +11,7 @@ describe("chart-types", () => {
     const result = getChartTypes(t);
 
     expect(result).toHaveLength(5);
-    expect(result.map((r) => r.id)).toEqual(["area", "bar", "line", "pie", "big_number"]);
+    expect(result.map((r) => r.id)).toEqual(["area", "line", "bar", "pie", "big_number"]);
     expect(t).toHaveBeenCalledWith("workspace.analysis.charts.chart_type_area");
     expect(result[0].label).toBe("workspace.analysis.charts.chart_type_area");
   });

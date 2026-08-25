@@ -244,24 +244,26 @@ export const FEEDBACK_FIELDS = {
   measures: [
     {
       id: "FeedbackRecords.count",
-      label: "Responses",
+      label: "Feedback Records",
       type: "count",
       group: "count",
-      description: "Total number of feedback responses",
+      description: "Total number of feedback records",
     },
     {
       id: "FeedbackRecords.uniqueRespondents",
       label: "Unique respondents",
       type: "number",
       group: "count",
-      description: "Number of unique users who provided feedback",
+      description:
+        "Unique people who gave feedback, deduplicated by person — one respondent answering 3 questions counts once",
     },
     {
       id: "FeedbackRecords.uniqueResponses",
       label: "Unique responses",
       type: "number",
       group: "count",
-      description: "Number of unique survey submissions",
+      description:
+        "Unique survey submissions, deduplicated by submission — one respondent submitting twice counts twice",
     },
     {
       id: "FeedbackRecords.npsScore",

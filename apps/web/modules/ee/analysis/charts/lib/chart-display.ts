@@ -14,6 +14,15 @@ export const supportsBarOrientation = (chartType: TChartType | undefined): boole
 export const supportsPieDisplay = (chartType: TChartType | undefined): boolean => chartType === "pie";
 
 /**
+ * Big Number shows a single snapshot value and Pie shows composition at a point in time — bucketing
+ * either by date range/granularity produces a chart that no longer answers the question its type
+ * implies, which is what ENG-2541 flagged as confusing. Bar and Line/Area keep it: a trend over time
+ * is exactly what those types are for.
+ */
+export const supportsTimeDimension = (chartType: TChartType | undefined): boolean =>
+  chartType !== "big_number" && chartType !== "pie";
+
+/**
  * Resolves the display settings a chart renders with. Charts saved before these settings
  * existed have an empty config, so every field falls back to the previous behavior.
  */
