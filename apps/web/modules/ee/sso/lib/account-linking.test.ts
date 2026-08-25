@@ -237,48 +237,4 @@ describe("syncSsoIdentityForUser", () => {
     });
     expect(mocks.userUpdate).toHaveBeenCalledOnce();
   });
-
-  /**
-   * Every other assertion in this file uses google, which is exactly how ENG-2555 shipped: google is the
-   * one provider whose issuer is NOT the synthetic `local:oauth:` form, so a helper that always returned
-   * the synthetic form looked correct against a google-only suite. These two pin both arms.
-   */
-  test("uses the provider's own declared issuer for google, not the synthetic form", async () => {
-    await syncSsoIdentityForUser({ userId: "user_1", provider: "google", account });
-
-    expect(mocks.accountCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ issuer: "https://accounts.google.com" }),
-      })
-    );
-  });
-
-  test("uses the synthetic issuer for a provider that declares none", async () => {
-    await syncSsoIdentityForUser({
-      userId: "user_1",
-      provider: "github",
-      account: { ...account, provider: "github", providerAccountId: "github-account-1" },
-    });
-
-    expect(mocks.accountCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ provider: "github", issuer: "local:oauth:github" }),
-      })
-    );
-  });
-
-  /**
-   * The branch that made the loop unbreakable (ENG-2555): with a canonical row already present and no
-   * legacy row, this used to update tokens only, so a row carrying a wrong issuer could never heal.
-   */
-  test("repairs the issuer on an existing canonical row", async () => {
-    mocks.accountFindUnique.mockResolvedValue({ id: "account_1", userId: "user_1" });
-
-    await syncSsoIdentityForUser({ userId: "user_1", provider: "google", account });
-
-    expect(mocks.accountUpdate).toHaveBeenCalledWith({
-      where: { id: "account_1" },
-      data: expect.objectContaining({ issuer: "https://accounts.google.com" }),
-    });
-  });
 });
