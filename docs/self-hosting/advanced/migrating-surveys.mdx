@@ -70,8 +70,10 @@ is enough to keep every answer readable and correctly dated, but it is not a byt
 <Steps>
   <Step title="Create an API key on each instance">
     On both instances, create a key with **manage** permission on the workspace you are moving from or
-    to — see [Generate API Key](/api-reference/generate-key). Workspace access is per workspace; there
-    is no "all workspaces" option.
+    to — see [Generate API Key](/api-reference/generate-key). Workspace access is granted per
+    workspace and there is no "all workspaces" option, so a key cannot reach a workspace that was
+    created after it: add the new workspace to the key's Workspace Access list explicitly, or every
+    write returns `403`. Read access is enough on the source; the target needs write or manage.
   </Step>
   <Step title="Note both workspace IDs">
     The workspace ID is in the app URL: `https://your-instance.com/workspaces/<workspaceId>/surveys`.
@@ -302,8 +304,12 @@ while :; do
   [ -n "$cursor" ] || break
 done
 
-# 2. Action classes — app-survey triggers reference these by id.
-fb_get "${SOURCE_URL}/api/v1/management/action-classes" | jq '.data' > "$OUT_DIR/action-classes.json"
+# 2. Action classes — app-survey triggers reference these by id. This v1 endpoint returns action
+#    classes for EVERY workspace the key can reach, so filter to the one being exported; otherwise
+#    the import recreates another workspace's actions in the target.
+fb_get "${SOURCE_URL}/api/v1/management/action-classes" \
+  | jq --arg ws "$SOURCE_WORKSPACE_ID" '[.data[] | select(.workspaceId == $ws)]' \
+  > "$OUT_DIR/action-classes.json"
 
 # 3. Full survey document + every response, one JSON Lines file per survey.
 while read -r id; do
@@ -691,7 +697,8 @@ their own management endpoints (`/api/v2/management/contacts`,
 | `400` `invalid_reference`                                                          | Logic jumps to a block or ending ID that is not in the same request         | Import the whole survey document at once, never block by block             |
 | `400` on a response, `field: "response"`                                           | The response does not validate against the target survey — usually a file upload, or element IDs that were not carried over | See [File-upload answers](#file-upload-answers-are-rejected); confirm the survey was imported with its original element IDs |
 | `404` `display not found` on a response                                            | A `displayId` from the source instance was sent along                       | Do not send `displayId` — the script omits it                              |
-| `401`                                                                              | The key has no permission on that workspace, or has Organization access only | Add the workspace under Workspace Access with `manage`                     |
+| `403` on a create, after the same key read the source fine                          | The key has read but not write on the **target** workspace, or the target was created after the key and never added to its Workspace Access list | Edit the key and give it `write`/`manage` on the target workspace |
+| `401`                                                                              | The key is revoked, or the endpoint needs Organization access the key lacks (`/api/v2/me`) | Check the key still exists; add the workspace under Workspace Access with `manage` |
 | `429`                                                                              | 100 requests/minute per API key                                             | Raise `THROTTLE`; the scripts already back off and retry six times         |
 
 ---
