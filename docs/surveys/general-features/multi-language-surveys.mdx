@@ -1,74 +1,238 @@
 ---
 title: "Multi-language Surveys"
-description: "Create surveys that support multiple languages using translations. This helps you reach a diverse audience without making separate surveys for each language. It also simplifies survey creation, delivery, and analysis for multilingual audiences."
+description: "Run one survey in many languages: translate it once — by hand or with one click — and every response lands in the same dataset with the language it was answered in."
 icon: "language"
 ---
 
-How to deliver a specific language depends on the survey type (app or link survey):
+A multi-language survey is one survey with one set of questions, logic and results, carrying a translation
+for every language you support. You do not duplicate the survey per language, and you do not split your
+results across several summaries.
 
-- App & Website survey: Set a `language` attribute for the user. [Read this guide for App Surveys](#app-surveys-configuration)
+How a respondent ends up in a given language depends on the survey type:
 
-- Link survey: Add a `lang` parameter in the survey URL. [Read this guide for Link Surveys](#link-surveys-configuration)
+| Survey type | How the language is chosen | If the translation is missing |
+| --- | --- | --- |
+| Link survey | The `lang` URL parameter, or the respondent picks it in the language switch | Falls back to the survey's default language |
+| App & website survey | The `language` attribute you set through the SDK with `setLanguage()` | The survey is **not shown** to that user |
+
+That difference is deliberate: a link is a public URL that must always render something, while an app survey
+is targeted at a known user, and showing them a survey in a language they did not ask for is worse than not
+showing it at all. See [App & Website Surveys](#app-and-website-surveys) for the full rule.
 
 ---
 
-## Creating a Multi-language Survey
+## Add Languages to Your Workspace
+
+Languages live on the workspace, so every survey in it can use the same list.
 
 <Steps>
-  <Step title="Configure Survey Languages">
-    Go to Configuration and open the **Survey Languages tab**:
+  <Step title="Open the Survey Languages settings">
+    Go to your workspace settings and open **Survey Languages**:
 
-    ![Survey Configuration](/images/surveys/general-features/multi-language-surveys/workspace-configuration.webp)
-
-    Click on the **Edit languages** button to add a new language to your survey.
-
-    Select the preferred language from the dropdown and assign an identifier Alias. Click the **Add language** button to add the language to your Workspace:
-
-    ![Add Multiple Languages to your Workspace](/images/surveys/general-features/multi-language-surveys/add-languages.webp)
-
-    You can come back to this page anytime to add more languages or remove existing ones.
+    ![Survey Languages settings in the workspace](/images/surveys/general-features/multi-language-surveys/survey-languages-settings.webp)
   </Step>
 
-  <Step title="Create or Edit Your Survey">
-    Return to the dashboard to create a new survey or edit an existing one:
+  <Step title="Add a language">
+    Click **Edit languages**, then **Add language**, and pick the language from the dropdown. The
+    **Identifier** is filled in for you — it is the language's BCP-47 tag, such as `de-DE` or `ar-EG`.
 
-    ![Survey Overview](/images/surveys/general-features/multi-language-surveys/surveys-home.webp)
-  </Step>
+    ![Adding a language to the workspace](/images/surveys/general-features/multi-language-surveys/add-languages.webp)
 
-  <Step title="Enable Multi-language Support">
-    In the survey editor, scroll down to the **Multiple Languages** section at the bottom and enable the toggle next to it:
-
-    ![Enable Multi-language for a survey](/images/surveys/general-features/multi-language-surveys/enable-multi-lang.webp)
-
-    Choose a **Default Language** for your survey.
-
-    <Note>Changing the default language will reset all the translations you have made for the survey.</Note>
-  </Step>
-
-  <Step title="Add Supported Languages">
-    Add the languages from the dropdown that you want to support in your survey:
-
-    ![Add Supported Languages](/images/surveys/general-features/multi-language-surveys/add-language-in-survey.webp)
-  </Step>
-
-  <Step title="Preview and Translate Content">
-
-    You can now see the survey in the selected language by clicking on the language dropdown in any of the questions.
-    
-    Now you can translate all survey content, including questions, options, and button placeholders, into the selected language.
-
-  </Step>
-
-  <Step title="Publish Your Survey">
-    Once you are done, click on the **Publish** button to save the survey.
+    Optionally set an **Alias**: a short alternate name you can use instead of the identifier in link survey
+    URLs and in the SDK, for example `de` instead of `de-DE`. Click **Save changes** when you are done.
   </Step>
 </Steps>
+
+<Note>
+  The language itself and its identifier are fixed once the language is created — only the alias stays
+  editable. A language that is still used by a survey cannot be removed; Formbricks lists the surveys that
+  hold it so you can remove it there first.
+</Note>
+
+---
+
+## Activate Translations for a Survey
+
+<Steps>
+  <Step title="Open the Language tab">
+    Open the survey editor and switch to the **Language** tab.
+  </Step>
+
+  <Step title="Turn on Activate translations">
+    Enable **Activate translations** and pick the survey's **default language**. The default language is the
+    one your existing content is already written in.
+
+    ![The Language tab of the survey editor](/images/surveys/general-features/multi-language-surveys/language-tab.webp)
+
+    <Note>
+      Choosing the default language is a one-way decision. To change it later you have to switch
+      **Activate translations** off, which deletes every translation on the survey.
+    </Note>
+  </Step>
+
+  <Step title="Make languages visible">
+    Every workspace language shows up as a row with its **Code**, a **Translated** progress bar, and a
+    **Visible** toggle. Turn **Visible** on for each language respondents should be able to answer in.
+
+    A visible language must carry a translation for every required field before the survey can be saved or
+    published. If you need to save halfway through translating, switch that language back to invisible —
+    the translations you already entered are kept.
+  </Step>
+</Steps>
+
+The **Translated** bar counts every translatable string on the survey — headlines, descriptions, choices,
+placeholders, button labels and ending cards. While a visible language is incomplete, the **Language** tab
+carries an amber warning icon so you can see it from any other tab.
+
+---
+
+## Translate Your Survey Content
+
+Once a language is switched on, click its row — or **⋮ → Manage translations** — to open the translations
+editor for that language. It lists every translatable string side by side: the default language on the left,
+the target language on the right.
+
+![The Manage translations modal with the Translate with AI button](/images/surveys/general-features/multi-language-surveys/manage-translations.webp)
+
+### Translate Everything in One Click
+
+**Translate with AI** fills in every empty field for the language you have open, in one pass — headlines,
+descriptions, choices, button labels and all. Strings you have already translated are left untouched, so you
+can run it again after adding a question and it will only fill the gap.
+
+<Steps>
+  <Step title="Open the language you want to fill">
+    Open **Manage translations** for that language. The button is active as long as there is at least one
+    empty field left to fill.
+  </Step>
+
+  <Step title="Click Translate with AI">
+    The translations appear in the right-hand column, formatting and rich text included.
+  </Step>
+
+  <Step title="Review, then save">
+    Read the result before you keep it — tone and product terms are the two things worth a second look — edit
+    anything you want to change, and click **Save**. Nothing is stored until you save.
+  </Step>
+</Steps>
+
+<Note>
+  **Translate with AI** is an [Enterprise feature](/self-hosting/advanced/license). It needs **Smart
+  functionality (AI)** enabled for your organization and a configured AI instance — see
+  [AI Features](/platform/features/ai-features). Without it, the button is disabled and its tooltip says
+  which of the two is missing.
+</Note>
+
+### Translate by Hand
+
+Type your translations straight into the right-hand column of the same editor. Two things help on a long
+survey:
+
+- **Missing first** re-sorts the list so untranslated strings come first. **Show in order** puts it back into
+  survey order.
+- The **ID** column tells you where a string lives — `1.1` is the first element of the first block, `W` is the
+  welcome card — so you can find it again in the editor.
+
+---
+
+## Let Respondents Switch Language
+
+Turn on **Show language switch** in the Language tab to put a language picker in the survey itself, on every
+card, so respondents can change language at any point instead of only at the start. It needs at least two
+visible languages.
+
+![The language switch in a running survey](/images/surveys/general-features/multi-language-surveys/language-switch.webp)
+
+Languages are listed by their own name — *Deutsch*, *العربية* — rather than translated into the current
+language, so a respondent can find their own language even if they cannot read the one on screen.
+
+---
+
+## Link Surveys
+
+A link survey renders in whatever language the `lang` URL parameter asks for:
+
+```
+https://app.formbricks.com/s/<survey-id>?lang=de
+```
+
+You do not have to build that URL by hand. Open **Share survey** and use the language picker next to the
+survey URL — Formbricks appends the parameter for you, so you can copy one link per language:
+
+![Choosing a language for the survey link in the share modal](/images/surveys/general-features/multi-language-surveys/share-link-language.webp)
+
+`lang` accepts either the language's identifier (`de-DE`) or its alias (`de`), and matching is
+case-insensitive. Formbricks resolves it in a fixed order: an exact identifier first, then an alias, then a
+canonical match — which is why an older link like `?lang=pt` still works after the language was stored as
+`pt-BR`.
+
+Without a `lang` parameter — or with one that names a language the survey does not have, or one that is not
+visible — the survey opens in its default language.
+
+<Note>
+  In **Share survey → Link settings** you can also set the link preview title, description and image per
+  language, so a survey shared in a German-speaking channel previews in German.
+</Note>
+
+---
+
+## App and Website Surveys
+
+For app and website surveys, the language comes from the user's `language` attribute, which you set through
+the SDK:
+
+```js
+Formbricks.setup({
+  workspaceId: "<workspace-id>",
+  appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
+});
+
+Formbricks.setLanguage("de"); // identifier or alias of the language
+```
+
+Call `setLanguage()` whenever your app's language changes — for example right after the user switches it in
+your own settings — and Formbricks will use the new value for every survey it shows from then on.
+
+`setLanguage()` accepts the identifier or the alias, case-insensitively, exactly like the `lang` parameter.
+
+### What Happens When a Translation Is Missing
+
+For a survey with more than one language, Formbricks resolves the user's `language` attribute like this:
+
+| The user's `language` attribute | What the user sees |
+| --- | --- |
+| Not set | The survey in its default language |
+| Matches the survey's default language | The survey in its default language |
+| Matches a visible language on the survey | The survey in that language |
+| Matches nothing on the survey, or a language that is not visible | **Nothing — the survey is skipped** |
+
+The last row is an intentional product decision, not a bug: a targeted survey is skipped rather than shown
+in a language the user did not ask for. It also means adding a language to your app before adding it to a
+survey silently narrows that survey's audience, so add the language to the survey — even untranslated but
+invisible — before you start sending users its way.
+
+<Note>
+  A survey with only one language, or with translations switched off entirely, ignores the `language`
+  attribute — it is shown to a matching user whatever their language is set to.
+</Note>
+
+---
+
+## Right-to-left Languages
+
+Right-to-left languages need no configuration. When the active language is an RTL one — Arabic, Hebrew,
+Persian or Urdu — the whole survey mirrors itself: text alignment, progress bar, rating scales, button
+placement and the language switch.
+
+![A survey rendered in Arabic, right to left](/images/surveys/general-features/multi-language-surveys/rtl-support.webp)
 
 ---
 
 ## Built-in Interface Translations
 
-Beyond the content you translate yourself, every survey ships with a set of built-in interface strings that Formbricks localizes automatically — so respondents see them in their own language without any extra work from you. These include:
+Beyond the content you translate yourself, every survey ships with a set of built-in interface strings that
+Formbricks localizes automatically — so respondents see them in their own language without any extra work
+from you. These include:
 
 - Default navigation and action buttons (**Back**, **Next**, **Finish**)
 - Form validation messages (e.g. "Please fill out this field", "Please enter a valid email address")
@@ -93,124 +257,30 @@ These built-in strings are currently provided in **23 languages**:
 | Hungarian | `hu-HU` | Vietnamese | `vi-VN` |
 | Indonesian | `id-ID` | | |
 
-Formbricks matches the survey's active language to the closest available bundle — for example, `de-AT` and `de` both use the German bundle, and `pt-PT` uses `pt-BR`. Writing script is preserved when matching, so `zh-Hant` and `zh-TW` resolve to the Traditional Chinese bundle rather than the Simplified one. If a language has no matching bundle, your translated survey content is still shown as usual, but these built-in interface strings fall back to English.
+Formbricks matches the survey's active language to the closest available bundle — for example, `de-AT` and
+`de` both use the German bundle, and `pt-PT` uses `pt-BR`. Writing script is preserved when matching, so
+`zh-Hant` and `zh-TW` resolve to the Traditional Chinese bundle rather than the Simplified one. If a language
+has no matching bundle, your translated survey content is still shown as usual, but these built-in interface
+strings fall back to English.
 
 <Note>
-  Don't see your language? These interface translations live in the open-source `@formbricks/surveys` package. You can add a new one by contributing a locale file on [GitHub](https://github.com/formbricks/formbricks).
+  Don't see your language? These interface translations live in the open-source `@formbricks/surveys` package.
+  You can add a new one by contributing a locale file on
+  [GitHub](https://github.com/formbricks/formbricks).
 </Note>
 
 ---
 
-## App Surveys Configuration
+## Analyzing Multi-language Responses
 
-<Steps>
-  <Step title="Set Up Language for Users">
-    After you setup the Formbricks SDK for your user, you can call the `setLanguage` function with the language code. This can be either the ISO identifier or the Alias you set when creating the language. The `language` attribute makes sure that this user only sees surveys with a translation in this specific language available.
+Every response records the language it was answered in, so you can:
 
-    ```js
-    Formbricks.setup({
-      workspaceId: "<workspace-id>",
-      appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
-    });
+- Filter responses by **Language** on the summary and responses pages
+- See the language of a single response on its response card
 
-    Formbricks.setLanguage("de"); // ISO identifier or Alias set when creating language
-    ```
-
-    <Note>
-      If a user has a language assigned, a survey has multi-language activated and it is missing a translation in
-      the language of the user, the survey will not be displayed.
-    </Note>
-  </Step>
-
-  <Step title="Start Collecting Responses">
-    That's it! Now, users with the language attribute set will see the survey in their preferred language. You can start collecting responses in multiple languages and filter them by language on the summary page.
-  </Step>
-</Steps>
-
----
-
-## Link Surveys Configuration
-
-For link surveys, the translation delivery is dependent on the `lang` URL parameter.
-
-<Steps>
-  <Step title="Publish Your Survey">
-    After publishing the survey, just copy the survey link and append the `lang` query parameter with the language alias you have set.
-  </Step>
-
-  <Step title="Create Language-Specific URLs">
-    For example, if you have set the alias for French as `fr`, you can share the survey link as
-
-    [`https://your-survey-url.com?lang=fr`](https://your-survey-url.com?lang=fr)
-
-    Here are two examples:
-
-    - English: [https://app.Formbricks.com/s/clptfos2i1pj516pvhxqyu3bn?lang=en](https://app.Formbricks.com/s/clptfos2i1pj516pvhxqyu3bn?lang=en)
-
-    - German: [https://app.Formbricks.com/s/clptfos2i1pj516pvhxqyu3bn?lang=de](https://app.Formbricks.com/s/clptfos2i1pj516pvhxqyu3bn?lang=de)
-
-    Without the `lang` parameter, Formbricks will show the survey in the default language you have set.
-  </Step>
-
-  <Step title="Start Collecting Responses">
-    You can now start collecting responses in multiple languages!
-  </Step>
-</Steps>
-
----
-
-## Translate with AI
-
-Translating every question, option, and label by hand can take a while. If your organization has AI enabled, you can fill in missing translations in one click.
-
-<Steps>
-  <Step title="Open the Manage Translations modal">
-    Inside the survey editor, switch to the language you want to translate into and open the **Manage Translations** modal.
-  </Step>
-
-  <Step title="Click 'Translate with AI'">
-    The button is enabled when there are empty fields in the selected target language. Formbricks translates all empty headlines, descriptions, choices, and button labels from the default language into the target language.
-  </Step>
-
-  <Step title="Review and edit">
-    AI-translated strings are filled into the editor like manual translations. Review them before publishing and tweak anything that needs a different tone or wording.
-  </Step>
-</Steps>
-
-<Note>
-  AI translation is an [Enterprise feature](/self-hosting/advanced/license) and requires **Smart functionality (AI)** to be enabled at the organization level. See [AI Features](/platform/features/ai-features).
-</Note>
-
----
-
-## RTL Language Support
-
-Formbricks fully supports Right-to-Left (RTL) languages such as Arabic, Hebrew, Persian, and Urdu. When you add an RTL language to your survey, the survey interface automatically adjusts to display content from right to left.
-
-### How RTL Support Works
-
-- Text alignment automatically switches to right-to-left
-- Survey layout and UI elements adjust to RTL orientation
-- Button placement and navigation flow adapt to RTL reading direction
-- Form elements maintain proper RTL formatting
-
-### Setting Up RTL Languages
-
-<Steps>
-  <Step title="Add RTL Language">
-    Add an RTL language (like Arabic or Hebrew) in the **Survey Languages** settings
-  </Step>
-
-  <Step title="Create Translations">
-    Create translations for your survey content in the RTL language
-  </Step>
-
-  <Step title="Automatic RTL Display">
-    The survey will automatically display in RTL format when that language is selected
-
-    ![RTL Language Support](/images/surveys/general-features/multi-language-surveys/rtl-support.webp)
-  </Step>
-</Steps>
+Choice answers are stored in the language the respondent used, and the summary maps them back to the
+default-language choice — so one bar per choice, counted across all languages, rather than one bar per
+language.
 
 ---
 
