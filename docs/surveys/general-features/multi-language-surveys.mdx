@@ -94,7 +94,7 @@ the target language on the right.
 
 ![The Manage translations modal with the Translate with AI button](/images/surveys/general-features/multi-language-surveys/manage-translations.webp)
 
-### Translate Everything in One Click
+### Translate with AI
 
 **Translate with AI** fills in every empty field for the language you have open, in one pass — headlines,
 descriptions, choices, button labels and all. Strings you have already translated are left untouched, so you
@@ -170,8 +170,9 @@ Without a `lang` parameter — or with one that names a language the survey does
 visible — the survey opens in its default language.
 
 <Note>
-  In **Share survey → Link settings** you can also set the link preview title, description and image per
-  language, so a survey shared in a German-speaking channel previews in German.
+  In **Share survey → Link settings** you can also set the link preview title and description per language,
+  so a survey shared in a German-speaking channel previews in German. The preview image is one image for the
+  whole survey — it is not per-language.
 </Note>
 
 ---
@@ -193,7 +194,8 @@ Formbricks.setLanguage("de"); // identifier or alias of the language
 Call `setLanguage()` whenever your app's language changes — for example right after the user switches it in
 your own settings — and Formbricks will use the new value for every survey it shows from then on.
 
-`setLanguage()` accepts the identifier or the alias, case-insensitively, exactly like the `lang` parameter.
+`setLanguage()` accepts a language's identifier or its alias, case-insensitively — but unlike the `lang` URL
+parameter it does not fall back to a canonical match. See the warning below.
 
 ### What Happens When a Translation Is Missing
 
@@ -206,10 +208,21 @@ For a survey with more than one language, Formbricks resolves the user's `langua
 | Matches a visible language on the survey | The survey in that language |
 | Matches nothing on the survey, or a language that is not visible | **Nothing — the survey is skipped** |
 
-The last row is an intentional product decision, not a bug: a targeted survey is skipped rather than shown
-in a language the user did not ask for. It also means adding a language to your app before adding it to a
-survey silently narrows that survey's audience, so add the language to the survey — even untranslated but
-invisible — before you start sending users its way.
+The last row is deliberate: a targeted survey is skipped rather than shown in a language the user did not ask
+for. Two consequences are worth planning around.
+
+Making a language invisible does not soften the rule. A user whose language is on the survey but switched to
+invisible is skipped exactly like one whose language is not on the survey at all — it does not fall back to
+the default language. So translate a language and make it visible before you point users at that survey.
+
+<Warning>
+  The value you pass to `setLanguage()` has to match the language's identifier or its alias exactly.
+  Formbricks does not widen a bare code to a region-tagged one here: with a survey language stored as
+  `ar-EG`, `setLanguage("ar")` matches nothing and the survey is silently skipped. If your app works in bare
+  codes, give each language an alias that matches what you pass (`ar` for `ar-EG`). Link surveys are more
+  forgiving — `?lang=ar` also resolves through a canonical match — so the same code can work in a link and
+  hide an app survey.
+</Warning>
 
 <Note>
   A survey with only one language, or with translations switched off entirely, ignores the `language`
