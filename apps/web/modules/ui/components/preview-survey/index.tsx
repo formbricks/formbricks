@@ -12,6 +12,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
+import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import {
@@ -25,6 +26,7 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { TabOption } from "./components/tab-option";
+import { mirrorPlacementForDir } from "./lib/utils";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -69,7 +71,14 @@ export const PreviewSurvey = ({
   const { overlay: surveyOverlay } = workspaceOverwrites || {};
   const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
 
-  const placement = surveyPlacement || workspace.placement;
+  // Placement mirrors with the previewed language, exactly as the shipped widget does — see
+  // `mirrorPlacementForDir`. The check runs on the preview's own language selection rather than the
+  // survey's default, so switching the preview to Arabic moves the popup the same way a respondent
+  // reading it in Arabic will see it.
+  const placement = mirrorPlacementForDir(
+    surveyPlacement || workspace.placement,
+    isRTLLanguage(toJsWorkspaceStateSurvey(survey), languageCode) ? "rtl" : "ltr"
+  );
   const overlay = surveyOverlay ?? workspace.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
 
