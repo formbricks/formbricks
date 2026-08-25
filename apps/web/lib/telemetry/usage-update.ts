@@ -1,4 +1,4 @@
-import { createCacheKey, getCacheService } from "@formbricks/cache";
+import { type CacheService, createCacheKey, getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { IntegrationType } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
@@ -43,6 +43,51 @@ const isTelemetryDisabledForCE = async (): Promise<boolean> => {
   if (!TELEMETRY_DISABLED) return false;
   const license = await getEnterpriseLicense();
   return !license.active;
+};
+
+/**
+ * Runs the actual send once every check has passed and the lock is held. Pulled out of
+ * `sendTelemetryEvents` so its try/catch/finally isn't nested inside that function's own try block —
+ * nesting is what pushed the caller over the cognitive-complexity threshold, not the branch count.
+ */
+const executeTelemetrySend = async (cache: CacheService, lastSent: number, now: number): Promise<void> => {
+  try {
+    const sent = await sendTelemetry(lastSent);
+
+    if (!sent) {
+      // Nothing was reported (no organization exists yet), so the 24h window must not be consumed:
+      // recording it here would delay the instance's *first* usage update by a day. Retry in 1h.
+      logger.info(
+        { hashedLicenseKey },
+        "Telemetry skipped - no organization to report on yet, applying 1h cooldown"
+      );
+      nextTelemetryCheck = now + 60 * 60 * 1000;
+      return;
+    }
+
+    // Success: Update Redis with current timestamp so other instances know telemetry was sent.
+    // No TTL - persists indefinitely to support low-volume instances (responses every few days/weeks).
+    await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString());
+
+    // Update in-memory check to prevent this instance from checking again for 24h.
+    nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
+  } catch (e) {
+    // Log as warning since telemetry is non-essential
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    logger.warn(
+      { error: e, message: errorMessage, lastSent, now, hashedLicenseKey },
+      "Failed to send telemetry - applying 1h cooldown"
+    );
+
+    // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
+    // Wait 1 hour before allowing this instance to try again.
+    // Note: Other instances can still try (they'll hit the lock or Redis check).
+    nextTelemetryCheck = now + 60 * 60 * 1000;
+  } finally {
+    // Always release the lock, even if telemetry failed.
+    // This allows other instances to retry if this one failed.
+    await cache.del([TELEMETRY_LOCK_KEY]);
+  }
 };
 
 export const sendTelemetryEvents = async () => {
@@ -128,43 +173,7 @@ export const sendTelemetryEvents = async () => {
     // EXECUTION: Send Telemetry
     // ============================================================
     // We've passed all checks and acquired the lock. Now execute telemetry.
-    try {
-      const sent = await sendTelemetry(lastSent);
-
-      if (!sent) {
-        // Nothing was reported (no organization exists yet), so the 24h window must not be consumed:
-        // recording it here would delay the instance's *first* usage update by a day. Retry in 1h.
-        logger.info(
-          { hashedLicenseKey },
-          "Telemetry skipped - no organization to report on yet, applying 1h cooldown"
-        );
-        nextTelemetryCheck = now + 60 * 60 * 1000;
-        return;
-      }
-
-      // Success: Update Redis with current timestamp so other instances know telemetry was sent.
-      // No TTL - persists indefinitely to support low-volume instances (responses every few days/weeks).
-      await cache.set(TELEMETRY_LAST_SENT_KEY, now.toString());
-
-      // Update in-memory check to prevent this instance from checking again for 24h.
-      nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
-    } catch (e) {
-      // Log as warning since telemetry is non-essential
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      logger.warn(
-        { error: e, message: errorMessage, lastSent, now, hashedLicenseKey },
-        "Failed to send telemetry - applying 1h cooldown"
-      );
-
-      // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
-      // Wait 1 hour before allowing this instance to try again.
-      // Note: Other instances can still try (they'll hit the lock or Redis check).
-      nextTelemetryCheck = now + 60 * 60 * 1000;
-    } finally {
-      // Always release the lock, even if telemetry failed.
-      // This allows other instances to retry if this one failed.
-      await cache.del([TELEMETRY_LOCK_KEY]);
-    }
+    await executeTelemetrySend(cache, lastSent, now);
   } catch (error) {
     // Catch-all for any unexpected errors in the wrapper logic (cache failures, lock issues, etc.)
     // Log as warning since telemetry is non-essential functionality
