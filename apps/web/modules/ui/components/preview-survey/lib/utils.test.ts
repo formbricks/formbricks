@@ -52,4 +52,11 @@ describe("mirrorPlacementForDir", () => {
     expect(mirrorPlacementForDir("topLeft", "ltr")).toBe("topLeft");
     expect(mirrorPlacementForDir("bottomRight", "auto")).toBe("bottomRight");
   });
+
+  test("is its own inverse, so switching the preview back to an LTR language restores the corner", () => {
+    const placements = ["bottomRight", "bottomLeft", "topRight", "topLeft", "center"] as const;
+    for (const placement of placements) {
+      expect(mirrorPlacementForDir(mirrorPlacementForDir(placement, "rtl"), "rtl")).toBe(placement);
+    }
+  });
 });
