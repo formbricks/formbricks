@@ -160,13 +160,17 @@ export const createUser = async (
   }
 };
 
+// Thrown inside updateUser's transaction to carry the last-owner conflict out through the
+// generic catch block below without it being reported as an internal_server_error.
+class LastOwnerConflictError extends Error {}
+
 export const updateUser = async (
   userInput: TUserInputPatch,
   organizationId: string
 ): Promise<Result<TUser, ApiErrorResponseV2>> => {
   const { name, email, role, teams, isActive } = userInput;
   let existingTeams: string[] = [];
-  let newTeams;
+  let newTeams: Awaited<ReturnType<typeof getExistingTeamsFromInput>>;
 
   try {
     // Restrict the lookup to a user with a membership in the authenticated organization,
@@ -206,16 +210,14 @@ export const updateUser = async (
     )?.role;
 
     // Mirrors the last-owner guard in modules/ee/role-management/actions.ts: without it, this
-    // route can demote an organization's only owner with no UI path back into it.
-    if (currentRole === OrganizationRole.owner && role && role !== OrganizationRole.owner) {
-      const ownerCount = await getOrganizationOwnerCount(organizationId);
-      if (ownerCount <= 1) {
-        return err({
-          type: "conflict",
-          details: [{ field: "role", issue: "Cannot remove the last owner of the organization" }],
-        });
-      }
-    }
+    // route can demote an organization's only owner with no UI path back into it. Gated on
+    // existingUser.isActive because getOrganizationOwnerCount only counts active owners — demoting
+    // an already-inactive owner doesn't change that count, so guarding it would block a no-op change.
+    const isDemotingOwner =
+      currentRole === OrganizationRole.owner &&
+      existingUser.isActive &&
+      role &&
+      role !== OrganizationRole.owner;
 
     // Capture the existing team names for the user (within the authenticated organization).
     existingTeams = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
@@ -291,26 +293,83 @@ export const updateUser = async (
       },
     };
 
-    // Update by id so the mutation is bound to the org-scoped lookup above. Email is
-    // a global unique key and using it here would defeat the membership check.
-    const updateUserOp = prisma.user.update({
-      where: { id: existingUser.id },
-      data: prismaData,
-      include: {
-        memberships: {
-          select: { role: true, organizationId: true },
+    // Matches the pre-existing looseness of `results: any[]` from the array-style transaction
+    // below rather than introducing a stricter type here that the rest of this function's
+    // (already loosely-typed) User <-> TUser mapping isn't written to satisfy.
+    let updatedUser: any;
+
+    if (isDemotingOwner) {
+      // The owner-count re-check and the role write must be one atomic unit: read then act in two
+      // separate statements lets two callers demoting different owners at once both read "more
+      // than one owner" and both writes land, leaving none. Serializable isolation makes Postgres
+      // abort one side of that race instead, surfaced here as a thrown LastOwnerConflictError.
+      updatedUser = await prisma.$transaction(
+        async (tx) => {
+          const ownerCount = await getOrganizationOwnerCount(organizationId, tx);
+          if (ownerCount <= 1) {
+            throw new LastOwnerConflictError();
+          }
+
+          // Re-run against `tx` rather than reusing deleteTeamOps/createTeamOps below: those are
+          // built against the root client, so awaiting them here would run them as separate
+          // queries outside this transaction instead of as part of it.
+          for (const teamUser of existingUser.teamUsers) {
+            if (teams && !teams.includes(teamUser.team.name)) {
+              await tx.teamUser.delete({
+                where: {
+                  teamId_userId: { teamId: teamUser.team.id, userId: existingUser.id },
+                },
+              });
+            }
+          }
+          for (const team of newTeams ?? []) {
+            if (!existingUserTeamNames.includes(team.name)) {
+              await tx.teamUser.create({
+                data: {
+                  role: TeamUserRole.contributor,
+                  user: { connect: { id: existingUser.id } },
+                  team: { connect: { id: team.id } },
+                },
+              });
+            }
+          }
+
+          // Update by id so the mutation is bound to the org-scoped lookup above. Email is
+          // a global unique key and using it here would defeat the membership check.
+          return tx.user.update({
+            where: { id: existingUser.id },
+            data: prismaData,
+            include: {
+              memberships: {
+                select: { role: true, organizationId: true },
+              },
+            },
+          });
         },
-      },
-    });
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+      );
+    } else {
+      // Update by id so the mutation is bound to the org-scoped lookup above. Email is
+      // a global unique key and using it here would defeat the membership check.
+      const updateUserOp = prisma.user.update({
+        where: { id: existingUser.id },
+        data: prismaData,
+        include: {
+          memberships: {
+            select: { role: true, organizationId: true },
+          },
+        },
+      });
 
-    // Combine all operations into one transaction.
-    const operations = [...deleteTeamOps, ...createTeamOps, updateUserOp];
+      // Combine all operations into one transaction.
+      const operations = [...deleteTeamOps, ...createTeamOps, updateUserOp];
 
-    // Execute the transaction. The result will be an array with the results in the same order.
-    const results = await prisma.$transaction(operations);
+      // Execute the transaction. The result will be an array with the results in the same order.
+      const results = await prisma.$transaction(operations);
 
-    // Retrieve the updated user result. Since the update was the last operation, it is the last item.
-    const updatedUser = results[results.length - 1];
+      // Retrieve the updated user result. Since the update was the last operation, it is the last item.
+      updatedUser = results[results.length - 1];
+    }
 
     const returnedUser = {
       id: updatedUser.id,
@@ -328,6 +387,13 @@ export const updateUser = async (
 
     return ok(returnedUser);
   } catch (error) {
+    if (error instanceof LastOwnerConflictError) {
+      return err({
+        type: "conflict",
+        details: [{ field: "role", issue: "Cannot remove the last owner of the organization" }],
+      });
+    }
+
     return err({
       type: "internal_server_error",
       details: [{ field: "user", issue: error instanceof Error ? error.message : "Unknown error occurred" }],

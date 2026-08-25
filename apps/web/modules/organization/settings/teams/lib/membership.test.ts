@@ -85,7 +85,8 @@ describe("getOrganizationOwnerCount", () => {
   });
   test("only counts active owners", async () => {
     vi.mocked(prisma.membership.count).mockResolvedValue(1);
-    await getOrganizationOwnerCount(organizationId);
+    const result = await getOrganizationOwnerCount(organizationId);
+    expect(result).toBe(1);
     expect(prisma.membership.count).toHaveBeenCalledWith({
       where: { organizationId, role: "owner", user: { isActive: true } },
     });
