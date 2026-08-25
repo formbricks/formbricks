@@ -9,7 +9,7 @@ import type { TEnrichmentStatusResponse } from "../lib/enrichment";
 import { useEnrichmentStatus } from "./use-enrichment-status";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseEnrichmentStatusTestWrapper";
   return Wrapper;

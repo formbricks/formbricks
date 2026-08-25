@@ -55,17 +55,24 @@ export type SimilarRecordsResultItem =
 // Note: `eligible - done - failed - failed_terminal` is not always 0 — a record whose enrichment was
 // enabled after it already existed was never enqueued at all, and neither done nor failed accounts for
 // it (ENG-2376 tracks auto-requeueing that residual; out of scope here).
+//
+// `failed` is intentionally not read by the aggregator: a transient failure is still going to be
+// retried by River, so it stays folded into `pending` the same way it always did — only
+// `failed_terminal` (which will never resolve on its own) is pulled out and shown separately.
 export type EnrichmentTypeStatus = FormbricksHub.TypeStatus & {
   failed?: number;
   failed_terminal?: number;
 };
+// The three per-enrichment keys are re-declared optional (the SDK types them as always-present)
+// because the aggregator treats an absent key as "disabled" rather than assuming the Hub always
+// answers with all three — matching the `status?.enabled` optional-chaining it already does.
 export type EnrichmentStatusResponse = Omit<
   FormbricksHub.EnrichmentStatusRetrieveResponse,
   "translation" | "sentiment" | "emotions"
 > & {
-  translation: EnrichmentTypeStatus;
-  sentiment: EnrichmentTypeStatus;
-  emotions: EnrichmentTypeStatus;
+  translation?: EnrichmentTypeStatus;
+  sentiment?: EnrichmentTypeStatus;
+  emotions?: EnrichmentTypeStatus;
 };
 
 export type TaxonomyScope = {

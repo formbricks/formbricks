@@ -2,7 +2,7 @@ import {
   ENRICHMENT_KINDS,
   type TEnrichmentProgress,
 } from "@/modules/ee/unify-feedback/enrichment-status/lib/enrichment";
-import type { EnrichmentStatusResponse } from "@/modules/hub/types";
+import type { EnrichmentStatusResponse, EnrichmentTypeStatus } from "@/modules/hub/types";
 
 /**
  * Fold the per-directory Hub responses into one progress row per enrichment.
@@ -14,7 +14,10 @@ import type { EnrichmentStatusResponse } from "@/modules/hub/types";
  *
  * Only directories where the enrichment is switched on contribute: a disabled directory reports zeros,
  * and folding those in would drag a shared progress bar toward a denominator that can never grow. An
- * enrichment disabled everywhere is dropped entirely.
+ * enrichment disabled everywhere is dropped entirely — and so is one that's enabled but has no eligible
+ * records anywhere (e.g. translation on, but every record already in the target language), for the
+ * same reason: a 0/0 bar can never move, whether the zero comes from being off or from having nothing
+ * to do.
  */
 export function aggregateEnrichmentStatus(
   statuses: readonly EnrichmentStatusResponse[]
@@ -23,10 +26,14 @@ export function aggregateEnrichmentStatus(
 
   for (const kind of ENRICHMENT_KINDS) {
     // Tolerate a Hub that predates a given enrichment: an absent key reads as disabled, not as NaN.
-    const enabledStatuses = statuses.map((status) => status[kind]).filter((status) => status?.enabled);
+    const enabledStatuses = statuses
+      .map((status) => status[kind])
+      .filter((status): status is EnrichmentTypeStatus => Boolean(status?.enabled));
     if (enabledStatuses.length === 0) continue;
 
     const eligible = enabledStatuses.reduce((sum, status) => sum + (status.eligible || 0), 0);
+    if (eligible === 0) continue;
+
     const done = enabledStatuses.reduce((sum, status) => sum + (status.done || 0), 0);
     // Bridged field (ENG-2375) — absent on a Hub that predates it, reads as 0 rather than NaN.
     const failedTerminal = enabledStatuses.reduce((sum, status) => sum + (status.failed_terminal || 0), 0);

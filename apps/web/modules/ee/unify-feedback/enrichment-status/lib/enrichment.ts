@@ -47,3 +47,12 @@ export const ENRICHMENT_POLL_INTERVAL_MS = 5000;
 
 export const totalPendingEnrichments = (enrichments: TEnrichmentProgress[]): number =>
   enrichments.reduce((sum, enrichment) => sum + enrichment.pending, 0);
+
+/**
+ * Total permanently-failed records across all enrichments. Kept separate from
+ * `totalPendingEnrichments` so the banner can stay up to report failures even once nothing is left
+ * that could still complete — otherwise the one moment a permanent failure becomes the final answer
+ * (pending hits 0) is exactly when it would disappear.
+ */
+export const totalFailedTerminalEnrichments = (enrichments: TEnrichmentProgress[]): number =>
+  enrichments.reduce((sum, enrichment) => sum + enrichment.failedTerminal, 0);

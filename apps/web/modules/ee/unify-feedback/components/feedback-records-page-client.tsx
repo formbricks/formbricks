@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import { EnrichmentStatus } from "@/modules/ee/unify-feedback/enrichment-status/components/enrichment-status";
+import { EnrichmentStatusQueryClientProvider } from "@/modules/ee/unify-feedback/enrichment-status/query-client-provider";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -38,18 +39,23 @@ export function FeedbackRecordsPageClient({
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="feedback-records" />
       </PageHeader>
 
-      <EnrichmentStatus workspaceId={workspaceId} />
+      {/* Lifted above the table (rather than owned by EnrichmentStatus itself) so the CSV import
+          flow inside FeedbackRecordsTable can invalidate this same query client when it creates new
+          pending work — see EnrichmentStatus's doc comment. */}
+      <EnrichmentStatusQueryClientProvider>
+        <EnrichmentStatus workspaceId={workspaceId} />
 
-      <FeedbackRecordsTable
-        workspaceId={workspaceId}
-        initialRecords={initialRecords}
-        initialCursors={initialCursors}
-        initialContactIdByUserId={initialContactIdByUserId}
-        frdMap={frdMap}
-        csvSources={csvSources}
-        canWrite={canWrite}
-        canDeleteRecords={canDeleteRecords}
-      />
+        <FeedbackRecordsTable
+          workspaceId={workspaceId}
+          initialRecords={initialRecords}
+          initialCursors={initialCursors}
+          initialContactIdByUserId={initialContactIdByUserId}
+          frdMap={frdMap}
+          csvSources={csvSources}
+          canWrite={canWrite}
+          canDeleteRecords={canDeleteRecords}
+        />
+      </EnrichmentStatusQueryClientProvider>
     </PageContentWrapper>
   );
 }

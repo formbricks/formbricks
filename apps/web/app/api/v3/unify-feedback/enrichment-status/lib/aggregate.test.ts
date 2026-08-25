@@ -39,6 +39,16 @@ describe("aggregateEnrichmentStatus", () => {
     expect(aggregateEnrichmentStatus([status({})])).toEqual([]);
   });
 
+  test("drops an enrichment that's enabled but has no eligible records anywhere", () => {
+    // e.g. translation on, but every record is already in the target language — a 0/0 bar can never
+    // move, the same reason a fully-disabled enrichment is dropped.
+    const result = aggregateEnrichmentStatus([
+      status({ translation: { enabled: true, eligible: 0, done: 0 } }),
+    ]);
+
+    expect(result).toEqual([]);
+  });
+
   test("sums the counts across directories", () => {
     const result = aggregateEnrichmentStatus([
       status({ sentiment: { enabled: true, eligible: 300, done: 100 } }),
@@ -81,9 +91,14 @@ describe("aggregateEnrichmentStatus", () => {
   });
 
   test("treats an enrichment missing from the Hub response as disabled", () => {
-    const partial = { tenant_id: "frd-1", translation: { enabled: true, eligible: 50, done: 25 } };
+    // sentiment/emotions genuinely absent, not just zeroed — legal per the response type, which
+    // types all three keys as optional for exactly this case.
+    const partial: EnrichmentStatusResponse = {
+      tenant_id: "frd-1",
+      translation: { enabled: true, eligible: 50, done: 25 },
+    };
 
-    const result = aggregateEnrichmentStatus([partial as EnrichmentStatusResponse]);
+    const result = aggregateEnrichmentStatus([partial]);
 
     expect(result).toEqual([{ kind: "translation", eligible: 50, done: 25, failedTerminal: 0, pending: 25 }]);
   });

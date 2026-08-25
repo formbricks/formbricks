@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { TFunction } from "i18next";
 import { ChevronDownIcon, MessageSquareTextIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-sou
 import { getFeedbackRecordContactsAction, listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { enrichmentStatusKeys } from "@/modules/ee/unify-feedback/enrichment-status/lib/query";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -83,6 +85,10 @@ export const FeedbackRecordsTable = ({
   canDeleteRecords,
 }: Readonly<FeedbackRecordsTableProps>) => {
   const { t, i18n } = useTranslation();
+  // Reaches the same query client as the enrichment-status banner (provided above this table by
+  // `feedback-records-page-client.tsx`), so a CSV import here can invalidate that read instead of
+  // leaving it stale until a manual reload — see EnrichmentStatus's doc comment.
+  const queryClient = useQueryClient();
   const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
   const [cursors, setCursors] = useState<Record<string, string>>(initialCursors);
   const [contactIdByUserId, setContactIdByUserId] =
@@ -233,6 +239,15 @@ export const FeedbackRecordsTable = ({
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
     void resolveContactsForRecords(mergedRecords);
+  };
+
+  // A CSV import creates records this list and the enrichment-status banner above it don't know
+  // about yet — neither refetches on its own. Refresh the list the same way the manual Refresh
+  // button does, and invalidate the banner's read so its next poll (or mount) picks up the new
+  // backlog instead of staying dark until someone reloads the page.
+  const handleImportComplete = () => {
+    void handleRefresh();
+    void queryClient.invalidateQueries({ queryKey: enrichmentStatusKeys.all });
   };
 
   const handleLoadMore = async () => {
@@ -494,6 +509,7 @@ export const FeedbackRecordsTable = ({
           feedbackSourceId={csvImportSource.id}
           workspaceId={workspaceId}
           fieldMappings={csvImportSource.fieldMappings}
+          onImportComplete={handleImportComplete}
         />
       )}
     </>
