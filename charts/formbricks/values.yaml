@@ -479,7 +479,9 @@ taxonomy:
       periodSeconds: 10
       timeoutSeconds: 5
       httpGet:
-        path: /ready
+        # The default v0.1.0 image exposes /health. Override this to /ready only
+        # when using a taxonomy image that implements the readiness contract.
+        path: /health
         port: http
     livenessProbe:
       failureThreshold: 6

@@ -270,7 +270,7 @@ jobs:
             --set-string taxonomy.llm.contextWindowTokens=65536 \
             --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-openai-compatible.yaml"
           grep -q 'terminationGracePeriodSeconds: 930' "$render_dir/taxonomy-openai-compatible.yaml"
-          grep -A4 'readinessProbe:' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'path: /ready'
+          grep -A4 'readinessProbe:' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'path: /health'
           grep -A1 'name: TAXONOMY_LLM_PROVIDER' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "openai-compatible"'
           grep -A1 'name: TAXONOMY_LLM_MODEL' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "operator-selected-model"'
           grep -A1 'name: TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE' "$render_dir/taxonomy-openai-compatible.yaml" | grep -q 'value: "auto"'

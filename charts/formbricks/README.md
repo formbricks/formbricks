@@ -324,7 +324,8 @@ and reserve budgets. This uses a conservative one-token-per-UTF-8-byte input bou
 tokenization ratio. The chart's general-purpose bundled vLLM default remains 8,192 tokens so existing
 non-taxonomy installs do not pay the KV-cache cost; taxonomy operators must explicitly raise the exact model
 deployment limit as shown above. Helm rejects a missing or undersized context budget and also rejects a bundled
-vLLM limit below that budget. `/ready` independently verifies the exact external provider/model preflight.
+vLLM limit below that budget. Taxonomy images that implement `/ready` independently verify the exact external
+provider/model preflight.
 
 When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment and Service, creates or uses the
 configured Secrets, then injects these Hub API env vars unless `taxonomy.autoConfigureHub=false`:
@@ -369,8 +370,10 @@ taxonomy:
       region: us-east-1
 ```
 
-The taxonomy service exposes public `/health` for liveness and `/ready` for cached Hub-auth, context-budget,
-provider, and structured-output readiness. Use authenticated `/v1/preflight` as an operator check after install:
+The default `v0.1.0` taxonomy image exposes public `/health`, so the chart uses it for both liveness and readiness
+probes. Taxonomy images that implement the newer readiness contract also expose `/ready` for cached Hub-auth,
+context-budget, provider, and structured-output readiness; set `taxonomy.probes.readinessProbe.httpGet.path` to
+`/ready` only with such an image. Use authenticated `/v1/preflight` as an operator check after install:
 
 ```sh
 kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
