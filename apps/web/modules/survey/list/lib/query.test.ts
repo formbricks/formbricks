@@ -38,11 +38,12 @@ const baseData: InfiniteData<TSurveyListPage> = {
     },
     {
       data: [surveyB],
+      // Cursor requests are sent with includeTotalCount=false, so both counts come back null.
       meta: {
         limit: 20,
         nextCursor: null,
-        totalCount: 2,
-        workspaceSurveyCount: 4,
+        totalCount: null,
+        workspaceSurveyCount: null,
       },
     },
   ],
@@ -56,38 +57,32 @@ describe("flattenSurveyPages", () => {
 });
 
 describe("removeSurveyFromInfiniteData", () => {
-  test("removes the survey from cached pages and decrements each page total", () => {
+  test("drops the survey and decrements only the filtered total by default", () => {
     const nextData = removeSurveyFromInfiniteData(baseData, "survey_a");
 
     expect(nextData?.pages[0]?.data).toEqual([]);
     expect(nextData?.pages[1]?.data).toEqual([surveyB]);
     expect(nextData?.pages[0]?.meta.totalCount).toBe(1);
-    expect(nextData?.pages[1]?.meta.totalCount).toBe(1);
+    // Archiving and restoring take a survey out of this view but leave it in the workspace.
+    expect(nextData?.pages[0]?.meta.workspaceSurveyCount).toBe(4);
+  });
+
+  test("decrements the workspace count too when the survey leaves the workspace", () => {
+    const nextData = removeSurveyFromInfiniteData(baseData, "survey_a", { removesFromWorkspace: true });
+
+    expect(nextData?.pages[0]?.meta.totalCount).toBe(1);
+    expect(nextData?.pages[0]?.meta.workspaceSurveyCount).toBe(3);
   });
 
   test("returns the original cache when the survey is not present", () => {
     expect(removeSurveyFromInfiniteData(baseData, "missing_survey")).toBe(baseData);
   });
 
-  test("preserves null totalCount for pages that skipped the count query", () => {
-    const dataWithNullTotalCount: InfiniteData<TSurveyListPage> = {
-      ...baseData,
-      pages: [
-        baseData.pages[0],
-        {
-          ...baseData.pages[1],
-          meta: {
-            ...baseData.pages[1].meta,
-            totalCount: null,
-          },
-        },
-      ],
-    };
+  test("leaves the null counts of pages that skipped the count query alone", () => {
+    const nextData = removeSurveyFromInfiniteData(baseData, "survey_a", { removesFromWorkspace: true });
 
-    const nextData = removeSurveyFromInfiniteData(dataWithNullTotalCount, "survey_a");
-
-    expect(nextData?.pages[0]?.meta.totalCount).toBe(1);
     expect(nextData?.pages[1]?.meta.totalCount).toBeNull();
+    expect(nextData?.pages[1]?.meta.workspaceSurveyCount).toBeNull();
   });
 });
 

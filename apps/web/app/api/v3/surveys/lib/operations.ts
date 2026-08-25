@@ -177,8 +177,8 @@ export async function listV3Surveys({
       sortBy: parsed.sortBy,
       filterCriteria: parsed.filterCriteria,
     });
-    // totalCount and workspaceSurveyCount are only computed on the first page (same gate),
-    // matching the client which reads them from pages[0].meta.
+    // Both counts are gated on includeTotalCount alone. The list client sends it only on the first
+    // page and reads them from pages[0].meta, but any caller can ask for them on a cursor request.
     const totalCountPromise = parsed.includeTotalCount
       ? getSurveyCount(workspaceId, parsed.filterCriteria)
       : Promise.resolve(null);

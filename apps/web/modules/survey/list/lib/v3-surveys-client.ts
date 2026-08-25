@@ -64,8 +64,9 @@ export type TSurveyListPage = {
     // Surveys matching the current filter.
     totalCount: number | null;
     // Every survey in the workspace, archived ones included — filter-independent, so the list can
-    // tell an empty workspace from an empty result. Both are only computed on the first page (when
-    // includeTotalCount is not false); null on subsequent pages.
+    // tell an empty workspace from an empty result.
+    // Both counts are null when the request sets includeTotalCount=false, which this client does for
+    // every page after the first.
     workspaceSurveyCount: number | null;
   };
 };
