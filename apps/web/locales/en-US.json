@@ -1718,6 +1718,9 @@
         "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Failed to save chart",
         "field": "Field",
+        "field_description_count": "Total number of feedback records",
+        "field_description_unique_respondents": "Unique people who gave feedback, deduplicated by person — one respondent answering 3 questions counts once",
+        "field_description_unique_responses": "Unique survey submissions, deduplicated by submission — one respondent submitting twice counts twice",
         "field_description_value_option": "Recommended for single-select and multi-select answers: the stable option id keeps one option in one bucket across languages, after a label edit, and for free-text 'other' answers. Charts show the option's label, not the id.",
         "field_description_value_text": "Text answer value (open text, or the label of a multiple-choice/categorical answer). Buckets by the exact text, so a translated label, an edited label or a free-text 'other' answer each becomes its own bucket — for choice questions prefer Value (Option). Pair with a fieldType filter to keep types consistent.",
         "field_label_anger_count": "Emotion: Anger",
@@ -1847,7 +1850,9 @@
         "start_date": "Start date",
         "time_dimension": "Time Dimension",
         "time_dimension_title": "Add time-based grouping",
+        "time_dimension_title_range_only": "Add a date range filter",
         "time_dimension_toggle_description": "Monitor trends over time.",
+        "time_dimension_toggle_description_range_only": "Scope this chart to a date range, without grouping by time.",
         "vertical_bars": "Vertical bars"
       },
       "dashboards": {

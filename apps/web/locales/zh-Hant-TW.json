@@ -1718,6 +1718,9 @@
         "failed_to_load_dashboards": "載入儀表板失敗",
         "failed_to_save_chart": "儲存圖表失敗",
         "field": "欄位",
+        "field_description_count": "意見回饋記錄總數",
+        "field_description_unique_respondents": "提供意見回饋的不重複人數，依人員去重 — 一位受訪者回答 3 個問題僅計算一次",
+        "field_description_unique_responses": "不重複的問卷提交數，依提交去重 — 一位受訪者提交兩次計算兩次",
         "field_description_value_option": "建議用於單選和多選答案：穩定的選項 ID 可確保一個選項在不同語言、標籤編輯後以及自由文字「其他」答案中都保持在同一個分組。圖表顯示選項的標籤，而非 ID。",
         "field_description_value_text": "文字答案值（開放式文字，或多選/分類答案的標籤）。按確切文字分組，因此翻譯後的標籤、編輯後的標籤或自由文字「其他」答案都會成為各自的分組 — 對於選擇題，建議使用「值（選項）」。搭配 fieldType 篩選器以保持類型一致。",
         "field_label_anger_count": "情緒：憤怒",
@@ -1847,7 +1850,9 @@
         "start_date": "開始日期",
         "time_dimension": "時間維度",
         "time_dimension_title": "新增基於時間的分組",
+        "time_dimension_title_range_only": "新增日期範圍篩選條件",
         "time_dimension_toggle_description": "監控隨時間變化的趨勢。",
+        "time_dimension_toggle_description_range_only": "將此圖表限定在特定日期範圍內，不依時間分組。",
         "vertical_bars": "垂直長條"
       },
       "dashboards": {

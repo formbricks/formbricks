@@ -4,7 +4,7 @@ import {
   sanitizeChartDisplay,
   supportsBarOrientation,
   supportsPieDisplay,
-  supportsTimeDimension,
+  supportsTimeGrouping,
 } from "./chart-display";
 
 describe("resolveChartDisplay", () => {
@@ -98,19 +98,19 @@ describe("pie display", () => {
   });
 });
 
-describe("supportsTimeDimension", () => {
+describe("supportsTimeGrouping", () => {
   test("big number and pie are point-in-time snapshots, not trends", () => {
-    expect(supportsTimeDimension("big_number")).toBe(false);
-    expect(supportsTimeDimension("pie")).toBe(false);
+    expect(supportsTimeGrouping("big_number")).toBe(false);
+    expect(supportsTimeGrouping("pie")).toBe(false);
   });
 
   test("bar, line, and area can show a trend over time", () => {
-    expect(supportsTimeDimension("bar")).toBe(true);
-    expect(supportsTimeDimension("line")).toBe(true);
-    expect(supportsTimeDimension("area")).toBe(true);
+    expect(supportsTimeGrouping("bar")).toBe(true);
+    expect(supportsTimeGrouping("line")).toBe(true);
+    expect(supportsTimeGrouping("area")).toBe(true);
   });
 
   test("defaults to supported when the chart type is unknown", () => {
-    expect(supportsTimeDimension(undefined)).toBe(true);
+    expect(supportsTimeGrouping(undefined)).toBe(true);
   });
 });

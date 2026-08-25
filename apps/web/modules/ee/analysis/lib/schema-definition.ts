@@ -661,6 +661,9 @@ export function getTranslatedFieldDescription(
   const descriptions: Record<string, string> = {
     "FeedbackRecords.valueId": t("workspace.analysis.charts.field_description_value_option"),
     "FeedbackRecords.valueText": t("workspace.analysis.charts.field_description_value_text"),
+    "FeedbackRecords.count": t("workspace.analysis.charts.field_description_count"),
+    "FeedbackRecords.uniqueRespondents": t("workspace.analysis.charts.field_description_unique_respondents"),
+    "FeedbackRecords.uniqueResponses": t("workspace.analysis.charts.field_description_unique_responses"),
   };
   return descriptions[id] ?? fallback;
 }

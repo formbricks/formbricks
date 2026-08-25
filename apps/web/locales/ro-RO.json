@@ -1718,6 +1718,9 @@
         "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Nu s-a putut salva graficul",
         "field": "Câmp",
+        "field_description_count": "Numărul total de înregistrări de feedback",
+        "field_description_unique_respondents": "Persoane unice care au oferit feedback, deduplicate după persoană — un respondent care răspunde la 3 întrebări este numărat o singură dată",
+        "field_description_unique_responses": "Trimiteri unice de chestionare, deduplicate după trimitere — un respondent care trimite de două ori este numărat de două ori",
         "field_description_value_option": "Recomandat pentru răspunsuri cu selecție unică și selecție multiplă: id-ul stabil al opțiunii menține o opțiune într-o categorie unică în toate limbile, după editarea unei etichete și pentru răspunsuri libere de tip „altele“. Graficele afișează eticheta opțiunii, nu id-ul.",
         "field_description_value_text": "Valoarea textului răspunsului (text liber sau eticheta unui răspuns cu alegere multiplă/categoric). Grupează după textul exact, astfel încât o etichetă tradusă, o etichetă editată sau un răspuns liber de tip „altele“ devin fiecare propriul grup — pentru întrebări cu opțiuni, preferă Valoare (Opțiune). Asociază cu un filtru fieldType pentru a menține consistența tipurilor.",
         "field_label_anger_count": "Emoție: Furie",
@@ -1847,7 +1850,9 @@
         "start_date": "Data de început",
         "time_dimension": "Dimensiune temporală",
         "time_dimension_title": "Adaugă grupare pe bază de timp",
+        "time_dimension_title_range_only": "Adaugă un filtru de interval de date",
         "time_dimension_toggle_description": "Monitorizează tendințele în timp.",
+        "time_dimension_toggle_description_range_only": "Limitează acest grafic la un interval de date, fără grupare după timp.",
         "vertical_bars": "bare verticale"
       },
       "dashboards": {

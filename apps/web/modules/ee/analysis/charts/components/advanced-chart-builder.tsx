@@ -8,7 +8,7 @@ import { FiltersPanel } from "@/modules/ee/analysis/charts/components/filters-pa
 import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-panel";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
-import { supportsTimeDimension } from "@/modules/ee/analysis/charts/lib/chart-display";
+import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   type ChartBuilderState,
   type FilterRow,
@@ -117,16 +117,19 @@ export function AdvancedChartBuilder({
   );
   const timeDimensionOpen = state.timeDimension != null;
   const filtersOpen = state.filters.length > 0;
-  const timeDimensionSupported = supportsTimeDimension(chartType);
+  const timeGroupingSupported = supportsTimeGrouping(chartType);
 
-  // Switching to a chart type that doesn't support time grouping (Big Number, Pie) drops any
-  // grouping left over from a previous type, matching how sanitizeChartDisplay drops other
-  // per-type display settings rather than saving them as dead values.
+  // Switching to a chart type that doesn't support time grouping (Big Number, Pie) drops the
+  // granularity left over from a previous type, matching how sanitizeChartDisplay drops other
+  // per-type display settings rather than saving them as dead values. The time dimension itself is
+  // kept: with no granularity it is the chart's date-range filter (see TimeDimensionConfig), not a
+  // grouping, and stripping it would silently widen the chart to all-time.
   useEffect(() => {
-    if (!timeDimensionSupported && state.timeDimension) {
-      dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: null });
+    if (!timeGroupingSupported && state.timeDimension?.granularity) {
+      const { granularity: _granularity, ...rest } = state.timeDimension;
+      dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: rest });
     }
-  }, [timeDimensionSupported, state.timeDimension]);
+  }, [timeGroupingSupported, state.timeDimension]);
 
   const currentQuery = useMemo(() => buildCubeQuery(state), [state]);
   const currentQueryJson = JSON.stringify(currentQuery);
@@ -250,34 +253,41 @@ export function AdvancedChartBuilder({
         />
       </AdvancedOptionToggle>
 
-      {timeDimensionSupported && (
-        <AdvancedOptionToggle
-          isChecked={timeDimensionOpen}
-          onToggle={() => {
-            if (timeDimensionOpen) dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: null });
-            else if (!state.timeDimension) {
-              dispatch({
-                type: ACTION.SET_TIME_DIMENSION,
-                payload: {
-                  dimension: "FeedbackRecords.collectedAt",
-                  dateRange: "last 30 days",
-                },
-              });
-            }
-          }}
-          htmlId="chart-time-dimension-toggle"
-          title={t("workspace.analysis.charts.time_dimension_title")}
-          description={t("workspace.analysis.charts.time_dimension_toggle_description")}
-          customContainerClass="mt-2 px-0"
-          childrenContainerClass="flex-col gap-3 p-4"
-          childBorder>
-          <TimeDimensionPanel
-            hideTitle
-            timeDimension={state.timeDimension}
-            onTimeDimensionChange={(config) => dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: config })}
-          />
-        </AdvancedOptionToggle>
-      )}
+      <AdvancedOptionToggle
+        isChecked={timeDimensionOpen}
+        onToggle={() => {
+          if (timeDimensionOpen) dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: null });
+          else if (!state.timeDimension) {
+            dispatch({
+              type: ACTION.SET_TIME_DIMENSION,
+              payload: {
+                dimension: "FeedbackRecords.collectedAt",
+                dateRange: "last 30 days",
+              },
+            });
+          }
+        }}
+        htmlId="chart-time-dimension-toggle"
+        title={
+          timeGroupingSupported
+            ? t("workspace.analysis.charts.time_dimension_title")
+            : t("workspace.analysis.charts.time_dimension_title_range_only")
+        }
+        description={
+          timeGroupingSupported
+            ? t("workspace.analysis.charts.time_dimension_toggle_description")
+            : t("workspace.analysis.charts.time_dimension_toggle_description_range_only")
+        }
+        customContainerClass="mt-2 px-0"
+        childrenContainerClass="flex-col gap-3 p-4"
+        childBorder>
+        <TimeDimensionPanel
+          hideTitle
+          hideGranularity={!timeGroupingSupported}
+          timeDimension={state.timeDimension}
+          onTimeDimensionChange={(config) => dispatch({ type: ACTION.SET_TIME_DIMENSION, payload: config })}
+        />
+      </AdvancedOptionToggle>
     </div>
   );
 }

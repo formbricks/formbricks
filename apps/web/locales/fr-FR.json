@@ -1718,6 +1718,9 @@
         "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Échec de l'enregistrement du graphique",
         "field": "Champ",
+        "field_description_count": "Nombre total d'enregistrements de feedback",
+        "field_description_unique_respondents": "Personnes uniques ayant donné un feedback, dédupliquées par personne — un répondant qui répond à 3 questions compte pour un",
+        "field_description_unique_responses": "Soumissions de sondage uniques, dédupliquées par soumission — un répondant qui soumet deux fois compte pour deux",
         "field_description_value_option": "Recommandé pour les réponses à choix unique et à choix multiples : l'identifiant d'option stable maintient une option dans un même groupe à travers les langues, après une modification de libellé, et pour les réponses « autre » en texte libre. Les graphiques affichent le libellé de l'option, pas l'identifiant.",
         "field_description_value_text": "Valeur de réponse textuelle (texte libre, ou libellé d'une réponse à choix multiples/catégorielle). Regroupe par texte exact, donc un libellé traduit, un libellé modifié ou une réponse « autre » en texte libre devient chacun son propre groupe — pour les questions à choix, privilégie Valeur (Option). Associe avec un filtre fieldType pour maintenir la cohérence des types.",
         "field_label_anger_count": "Émotion : Colère",
@@ -1847,7 +1850,9 @@
         "start_date": "Date de début",
         "time_dimension": "Dimension temporelle",
         "time_dimension_title": "Ajouter un groupement temporel",
+        "time_dimension_title_range_only": "Ajouter un filtre de plage de dates",
         "time_dimension_toggle_description": "Surveille les tendances dans le temps.",
+        "time_dimension_toggle_description_range_only": "Limiter ce graphique à une plage de dates, sans regroupement par période.",
         "vertical_bars": "Barres verticales"
       },
       "dashboards": {

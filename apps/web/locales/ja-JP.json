@@ -1718,6 +1718,9 @@
         "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "チャートの保存に失敗しました",
         "field": "フィールド",
+        "field_description_count": "フィードバック記録の総数",
+        "field_description_unique_respondents": "フィードバックを提供したユニークな人数。人物で重複排除 — 1人の回答者が3つの質問に回答した場合は1回とカウント",
+        "field_description_unique_responses": "ユニークな調査送信数。送信で重複排除 — 1人の回答者が2回送信した場合は2回とカウント",
         "field_description_value_option": "単一選択および複数選択の回答に推奨：安定したオプションIDにより、言語間、ラベル編集後、および自由記述の「その他」回答において、1つのオプションを1つのバケットに保ちます。グラフにはIDではなく、オプションのラベルが表示されます。",
         "field_description_value_text": "テキスト回答の値（自由記述、または選択式/カテゴリ式回答のラベル）。正確なテキストでバケット化されるため、翻訳されたラベル、編集されたラベル、または自由記述の「その他」回答はそれぞれ独自のバケットになります。選択式の質問には「値（オプション）」を優先してください。タイプの一貫性を保つため、fieldTypeフィルターと組み合わせて使用してください。",
         "field_label_anger_count": "感情：怒り",
@@ -1847,7 +1850,9 @@
         "start_date": "開始日",
         "time_dimension": "時間ディメンション",
         "time_dimension_title": "時間ベースのグループ化を追加",
+        "time_dimension_title_range_only": "日付範囲フィルターを追加",
         "time_dimension_toggle_description": "時間の経過に伴うトレンドを監視します。",
+        "time_dimension_toggle_description_range_only": "時間軸でグループ化せず、このチャートを日付範囲に絞り込みます。",
         "vertical_bars": "縦棒"
       },
       "dashboards": {

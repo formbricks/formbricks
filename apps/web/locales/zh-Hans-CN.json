@@ -1718,6 +1718,9 @@
         "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "图表保存失败",
         "field": "字段",
+        "field_description_count": "反馈记录总数",
+        "field_description_unique_respondents": "提供反馈的唯一用户数（按用户去重 — 一位受访者回答 3 个问题计为 1 次）",
+        "field_description_unique_responses": "唯一问卷提交数（按提交去重 — 一位受访者提交 2 次计为 2 次）",
         "field_description_value_option": "推荐用于单选和多选答题：稳定的选项 ID 可以在跨语言、标签编辑后以及自由文本\"其他\"答案的情况下，将一个选项保持在一个数据桶中。图表显示选项的标签，而非 ID。",
         "field_description_value_text": "文本答案值（开放文本，或多选/分类答案的标签）。按精确文本分桶，因此翻译后的标签、编辑后的标签或自由文本\"其他\"答案各自成为独立的数据桶——对于选择类问题，建议使用值（选项）。与 fieldType 筛选器配合使用以保持类型一致。",
         "field_label_anger_count": "情绪：愤怒",
@@ -1847,7 +1850,9 @@
         "start_date": "开始日期",
         "time_dimension": "时间维度",
         "time_dimension_title": "添加基于时间的分组",
+        "time_dimension_title_range_only": "添加日期范围筛选",
         "time_dimension_toggle_description": "监控随时间变化的趋势。",
+        "time_dimension_toggle_description_range_only": "为此图表设置日期范围，不按时间分组。",
         "vertical_bars": "纵向条形图"
       },
       "dashboards": {

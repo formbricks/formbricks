@@ -1718,6 +1718,9 @@
         "failed_to_load_dashboards": "Nem sikerült betölteni a vezérlőpultokat",
         "failed_to_save_chart": "Nem sikerült elmenteni a diagramot",
         "field": "Mező",
+        "field_description_count": "A visszajelzési rekordok összesített száma",
+        "field_description_unique_respondents": "Azon egyedi személyek száma, akik visszajelzést adtak, személyenként deduplikálva — egy válaszadó, aki 3 kérdésre válaszol, egyszer számít",
+        "field_description_unique_responses": "Egyedi felmérésbeküldések száma, beküldésenként deduplikálva — egy válaszadó, aki kétszer küld be választ, kétszer számít",
         "field_description_value_option": "Ajánlott egyválasztásos és többválasztásos válaszokhoz: a stabil opcióazonosító egy opciót egy kategóriában tart a különböző nyelveken, címkeszerkesztés után, valamint szabad szöveges „egyéb“ válaszok esetén. A diagramok az opció címkéjét jelenítik meg, nem az azonosítót.",
         "field_description_value_text": "Szöveges válaszérték (nyílt szöveg vagy többválasztásos/kategorikus válasz címkéje). A pontos szöveg alapján csoportosít, így egy lefordított címke, egy szerkesztett címke vagy egy szabad szöveges „egyéb“ válasz külön kategóriát alkot — választási kérdéseknél inkább az Érték (Opció) használata javasolt. Párosítsa fieldType szűrővel a típusok következetességének megőrzése érdekében.",
         "field_label_anger_count": "Érzelem: Harag",
@@ -1847,7 +1850,9 @@
         "start_date": "Kezdési dátum",
         "time_dimension": "Idődimenzió",
         "time_dimension_title": "Időalapú csoportosítás hozzáadása",
+        "time_dimension_title_range_only": "Dátumtartomány-szűrő hozzáadása",
         "time_dimension_toggle_description": "Időbeni trendek megfigyelése.",
+        "time_dimension_toggle_description_range_only": "A diagram korlátozása egy dátumtartományra, idő szerinti csoportosítás nélkül.",
         "vertical_bars": "Függőleges oszlopok"
       },
       "dashboards": {

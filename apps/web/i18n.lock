@@ -1655,6 +1655,9 @@ checksums:
     workspace/analysis/charts/failed_to_load_dashboards: 876c54d9cc69ceda6f808231e2557eb2
     workspace/analysis/charts/failed_to_save_chart: e237cf1a56a8f9ee30067fdb0757f7c5
     workspace/analysis/charts/field: cfd632297d7809a3539e90c9cd4728d9
+    workspace/analysis/charts/field_description_count: 2b6f5cbf709a37078e593b4d872b62e5
+    workspace/analysis/charts/field_description_unique_respondents: 22a56f3d4c51c75e1bc708210b5fef30
+    workspace/analysis/charts/field_description_unique_responses: 15960fdaa5d1051115ad21c0773e29a4
     workspace/analysis/charts/field_description_value_option: 2ecc1ce47d49fde628db9dc222c3d326
     workspace/analysis/charts/field_description_value_text: 25fe1780ca3a8a8edbe8b3e6a08f933a
     workspace/analysis/charts/field_label_anger_count: f9ecf779605526904e029876a47f119d
@@ -1784,7 +1787,9 @@ checksums:
     workspace/analysis/charts/start_date: 881de78c79b56f5ceb9b7103bf23cb2c
     workspace/analysis/charts/time_dimension: 5c967f2a6a875b00825068df5cb2ef84
     workspace/analysis/charts/time_dimension_title: 9353ce9a075a0cc8c3ba7dfa9ef19a8d
+    workspace/analysis/charts/time_dimension_title_range_only: c5ddaa8d2cc006c57f027b7d3b87854d
     workspace/analysis/charts/time_dimension_toggle_description: 77251d8b3b564390bad8b76f56905190
+    workspace/analysis/charts/time_dimension_toggle_description_range_only: 76ad3bd3bdbf049a2083d0cee5cab8e0
     workspace/analysis/charts/vertical_bars: 408174fe449ea6f5457988dd218183be
     workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
     workspace/analysis/dashboards/chart_duplicate_failed: 90d7166c85188b52f821c9d9f53ff8c4

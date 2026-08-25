@@ -15,11 +15,16 @@ export const supportsPieDisplay = (chartType: TChartType | undefined): boolean =
 
 /**
  * Big Number shows a single snapshot value and Pie shows composition at a point in time — bucketing
- * either by date range/granularity produces a chart that no longer answers the question its type
- * implies, which is what ENG-2541 flagged as confusing. Bar and Line/Area keep it: a trend over time
- * is exactly what those types are for.
+ * either into time series by granularity produces a chart that no longer answers the question its
+ * type implies, which is what ENG-2541 flagged as confusing. Bar and Line/Area keep it: a trend over
+ * time is exactly what those types are for.
+ *
+ * Only gates *grouping* (the granularity control). A time dimension with no granularity is a
+ * date-range filter, not grouping — see `TimeDimensionConfig` — and stays available on every chart
+ * type, including Big Number and Pie, since that's the only way to scope those to a rolling window
+ * (the filters panel only supports absolute dates).
  */
-export const supportsTimeDimension = (chartType: TChartType | undefined): boolean =>
+export const supportsTimeGrouping = (chartType: TChartType | undefined): boolean =>
   chartType !== "big_number" && chartType !== "pie";
 
 /**
