@@ -410,12 +410,19 @@ reviews:
             "Open gaps".
           - A row names a behaviour with no verification method, or a method with no observed
             outcome.
-          - A `unit` or `e2e` row does not name the test or spec it rests on. A `manual` row has no
-            test to name and passes without one.
-          - A row claims `red on main` or `mutation` without a command or a mutated `file:line` a
-            reviewer could rerun.
+          - A `unit` or `e2e` row rests on no named test or spec, in the row itself or in the
+            `Rerun:` line above the table — that line names the command once for every row, so a row
+            repeating it is not required. A `manual` row has no test to name and passes without one.
+          - A row claims `red on main` or `mutation` and neither the `Rerun:` line nor the row gives
+            a reviewer something to rerun. A row whose command differs from `Rerun:`, or whose
+            mutation targets a particular line, names that command or `file:line` itself.
           - The diff changes rendered UI and the description attaches no screenshot or screencast.
           - The "Open gaps" subsection is absent. An explicit "none" passes.
+
+          Content inside a `<details>` fold counts as present. The template caps the description at
+          350 words outside folds and requires the overflow — long media, command logs, extra rows —
+          to be folded rather than dropped, so a collapsed section is evidence, not a gap. Do not ask
+          for a longer description; ask for the missing behaviour.
 
           PASS if every behaviour the diff changes is either covered by a row stating how it was
           verified and what was observed, or listed under "Open gaps" with a reason.
