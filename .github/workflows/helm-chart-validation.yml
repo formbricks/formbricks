@@ -388,7 +388,7 @@ jobs:
           expect_taxonomy_render_failure \
             taxonomy-heartbeat-invalid \
             "taxonomy.heartbeatIntervalSeconds must be positive and no more than half" \
-            --set-string taxonomy.heartbeatIntervalSeconds=151
+            --set-string taxonomy.heartbeatIntervalSeconds=901
 
           expect_taxonomy_render_failure \
             taxonomy-heartbeat-disabled \
