@@ -236,23 +236,20 @@ export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> 
 };
 
 /**
- * Audit a completed password reset — parity with the retired `completePasswordReset` action audit
- * (`updated`/`user`). Wired into Better Auth's `emailAndPassword.onPasswordReset` callback (auth.ts),
- * which fires once per successful reset with the user. The prior audit's old/new snapshots only
- * captured `{id,email,locale,emailVerified}` — none of which change on a reset — so the meaningful
- * signal is just "this user's password was reset", recorded via the marker.
- */
-/**
- * ENG-2562: a verification completed, but the browser presenting it was not the one that signed up, so
- * no session was granted. Worth a record because it is the observable footprint of an attempted account
- * pre-hijack — someone registered this address and someone else finished the verification.
+ * ENG-2562: a verification completed but no session was granted.
+ *
+ * `reason` is the point of the record, not a detail. This fires on the ordinary cross-device click and on
+ * a mail-scanner prefetch (`absent`) as readily as on a genuine pre-hijack (`other_user`), so the event
+ * alone means "nobody was signed in", NOT "an attack happened". Only `other_user` — a valid intent cookie
+ * naming a different account — is inherently suspicious; `invalid` is worth a look; `grant_failed` is our
+ * own fault rather than the caller's.
  *
  * Uses the `updated` + marker idiom of `auditPasswordReset` below rather than a new `ZAuditAction`
  * value: it is the established shape for auth-internal events, and it keeps a shared enum out of a fix
  * that has to land on two release branches as well as main. Audit logging is enterprise-gated, so the
  * caller also logs — a self-hoster must still see this.
  */
-export const auditVerificationSessionWithheld = async (userId: string): Promise<void> => {
+export const auditVerificationSessionWithheld = async (userId: string, reason: string): Promise<void> => {
   try {
     await queueAuditEventBackground({
       action: "updated",
@@ -262,7 +259,7 @@ export const auditVerificationSessionWithheld = async (userId: string): Promise<
       organizationId: UNKNOWN_DATA,
       status: "success",
       userType: "user",
-      newObject: { verificationSessionWithheldMarker: true },
+      newObject: { verificationSessionWithheldMarker: true, reason },
     });
   } catch {
     logger
@@ -271,6 +268,13 @@ export const auditVerificationSessionWithheld = async (userId: string): Promise<
   }
 };
 
+/**
+ * Audit a completed password reset — parity with the retired `completePasswordReset` action audit
+ * (`updated`/`user`). Wired into Better Auth's `emailAndPassword.onPasswordReset` callback (auth.ts),
+ * which fires once per successful reset with the user. The prior audit's old/new snapshots only
+ * captured `{id,email,locale,emailVerified}` — none of which change on a reset — so the meaningful
+ * signal is just "this user's password was reset", recorded via the marker.
+ */
 export const auditPasswordReset = async (userId: string): Promise<void> => {
   try {
     await queueAuditEventBackground({

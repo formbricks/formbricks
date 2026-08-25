@@ -9,7 +9,8 @@ import { getJustVerifiedUserId } from "./email-verification-request-context";
 import {
   SIGNUP_INTENT_COOKIE_NAME,
   SIGNUP_INTENT_COOKIE_OPTIONS,
-  readSignupIntentUserId,
+  type TWithheldReason,
+  classifySignupIntent,
 } from "./signup-intent";
 
 /**
@@ -132,21 +133,30 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
     if (currentSession && currentSession.user?.id === verifiedUserId) return;
     if (endpointAlreadyGrantedSession) return;
 
-    const intentUserId = readSignupIntentUserId(ctx.getCookie(SIGNUP_INTENT_COOKIE_NAME));
-    if (intentUserId !== verifiedUserId) {
-      // No proof this browser started the sign-up. The email is verified either way — that is Better
-      // Auth's write and it is correct, the mailbox was proven — but the session is withheld.
-      //
-      // Logged AND audited: the audit trail is enterprise-gated, so the log line is what a self-hoster
-      // gets. Both carry the user id only — never the cookie value or the verification token.
+    const intent = classifySignupIntent(ctx.getCookie(SIGNUP_INTENT_COOKIE_NAME), verifiedUserId);
+
+    // `withheldReason` doubles as the decision: non-null means no session. Carrying the REASON rather
+    // than a boolean is what makes this diagnosable — this branch is reached by the ordinary
+    // cross-device click and by a mail-scanner prefetch (`absent`) just as much as by a genuine
+    // pre-hijack (`other_user`), and only the latter is worth anyone's attention. Logged AND audited
+    // because the audit trail is enterprise-gated, so the log line is what a self-hoster gets; both
+    // carry the user id and the reason only, never the cookie value or the verification token.
+    let withheldReason: TWithheldReason | null = intent === "valid" ? null : intent;
+
+    if (intent === "valid" && !(await grantSessionToSignupBrowser(ctx, verifiedUserId))) {
+      // The proof was good but the mint failed — a missing user row or a refused session (the
+      // `session.create.before` inactive-user gate lands here). Recorded like any other withheld
+      // outcome: without this the one path that is our own fault would be the only silent one.
+      withheldReason = "grant_failed";
+    }
+
+    if (withheldReason) {
       logger.info(
-        { userId: verifiedUserId, hadIntentCookie: intentUserId !== null },
-        "Withheld the post-verification session: the verifying browser did not start this sign-up"
+        { userId: verifiedUserId, reason: withheldReason },
+        "Withheld the post-verification session"
       );
-      await auditVerificationSessionWithheld(verifiedUserId);
+      await auditVerificationSessionWithheld(verifiedUserId, withheldReason);
       sessionWithheld = true;
-    } else {
-      sessionWithheld = !(await grantSessionToSignupBrowser(ctx, verifiedUserId));
     }
   } catch (error) {
     // userId only — never the cookie value or the verification token.

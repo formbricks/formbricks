@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   getSessionFromCtx: vi.fn(),
   setSessionCookie: vi.fn(),
   getJustVerifiedUserId: vi.fn(),
-  readSignupIntentUserId: vi.fn(),
+  classifySignupIntent: vi.fn(),
   auditVerificationSessionWithheld: vi.fn(),
 }));
 
@@ -16,7 +16,7 @@ vi.mock("./email-verification-request-context", () => ({
 vi.mock("./signup-intent", () => ({
   SIGNUP_INTENT_COOKIE_NAME: "formbricks.signup_intent",
   SIGNUP_INTENT_COOKIE_OPTIONS: { httpOnly: true, secure: false, path: "/", sameSite: "lax", maxAge: 3600 },
-  readSignupIntentUserId: mocks.readSignupIntentUserId,
+  classifySignupIntent: mocks.classifySignupIntent,
 }));
 vi.mock("./better-auth-observability", () => ({
   auditVerificationSessionWithheld: mocks.auditVerificationSessionWithheld,
@@ -60,7 +60,7 @@ describe("verificationAutoSignInAfterHandler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getJustVerifiedUserId.mockReturnValue(VERIFIED_USER.id);
-    mocks.readSignupIntentUserId.mockReturnValue(VERIFIED_USER.id);
+    mocks.classifySignupIntent.mockReturnValue("valid");
     mocks.getSessionFromCtx.mockResolvedValue(null);
   });
 
@@ -86,7 +86,7 @@ describe("verificationAutoSignInAfterHandler", () => {
   });
 
   test("withholds the session when there is no intent cookie", async () => {
-    mocks.readSignupIntentUserId.mockReturnValue(null);
+    mocks.classifySignupIntent.mockReturnValue("absent");
     const ctx = buildCtx();
 
     await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
@@ -94,13 +94,13 @@ describe("verificationAutoSignInAfterHandler", () => {
     expect(sessionOf(ctx)).not.toHaveBeenCalled();
     expect(mocks.setSessionCookie).not.toHaveBeenCalled();
     // The withheld path is the observable footprint of an attempted pre-hijack, so it is recorded.
-    expect(mocks.auditVerificationSessionWithheld).toHaveBeenCalledWith(VERIFIED_USER.id);
+    expect(mocks.auditVerificationSessionWithheld).toHaveBeenCalledWith(VERIFIED_USER.id, "absent");
   });
 
   test("withholds the session when the intent cookie names a different user", async () => {
     // The pre-hijacking case with a stale cookie in the mix: proof of signing up for account A must not
     // buy a session on account B.
-    mocks.readSignupIntentUserId.mockReturnValue("user_other");
+    mocks.classifySignupIntent.mockReturnValue("other_user");
     const ctx = buildCtx();
 
     await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
@@ -117,7 +117,7 @@ describe("verificationAutoSignInAfterHandler", () => {
     await verificationAutoSignInAfterHandler(ctx);
 
     expect(sessionOf(ctx)).not.toHaveBeenCalled();
-    expect(mocks.readSignupIntentUserId).not.toHaveBeenCalled();
+    expect(mocks.classifySignupIntent).not.toHaveBeenCalled();
     // Asserts the marker guard specifically, by pinning that the handler returns before it does any
     // work at all. Without this the row passed even with the guard deleted, because an absent session
     // and an absent marker both read as `undefined` further down and matched each other.
@@ -205,6 +205,10 @@ describe("verificationAutoSignInAfterHandler", () => {
     // the user would get a 500 on a link that already verified them.
     await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
     expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+    // Deliberately NOT audited: this is the catch-all safety net, and an audit write there could throw
+    // on its own and escape the very guard that exists to stop a 500 on an already-verified link. The
+    // error log is the record for this path. The refused-mint case below is the one that gets audited.
+    expect(mocks.auditVerificationSessionWithheld).not.toHaveBeenCalled();
   });
 
   test("withholds rather than throwing when the verified user cannot be loaded", async () => {
@@ -215,5 +219,19 @@ describe("verificationAutoSignInAfterHandler", () => {
 
     await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
     expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+    // The proof was good and we still granted nothing — the one withheld outcome that is our own fault,
+    // so it must not be the only silent one.
+    expect(mocks.auditVerificationSessionWithheld).toHaveBeenCalledWith(VERIFIED_USER.id, "grant_failed");
+  });
+
+  test("audits the refused session when the inactive-user gate blocks the mint", async () => {
+    // `session.create.before` (rejectInactiveUserOnSessionCreate) returns no session for a deactivated
+    // user rather than throwing, so this arrives as a falsy createSession, not an exception.
+    const ctx = buildCtx();
+    sessionOf(ctx).mockResolvedValue(null);
+
+    await expect(verificationAutoSignInAfterHandler(ctx)).rejects.toThrow(`REDIRECT:${LOGIN_VERIFIED}`);
+    expect(mocks.setSessionCookie).not.toHaveBeenCalled();
+    expect(mocks.auditVerificationSessionWithheld).toHaveBeenCalledWith(VERIFIED_USER.id, "grant_failed");
   });
 });

@@ -12,7 +12,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
 import { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
 import { auth } from "@/modules/auth/lib/auth";
-import { readSignupIntentUserId } from "@/modules/auth/lib/signup-intent";
+import { readSignupIntent } from "@/modules/auth/lib/signup-intent";
 import { updateUser } from "@/modules/auth/lib/user";
 import { getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -293,7 +293,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     const intent = setCookies.find((c) => c.name === "formbricks.signup_intent");
     expect(intent).toBeDefined();
     // Bound to this account and not readable as plaintext: assert through the reader, not the shape.
-    expect(readSignupIntentUserId(intent?.value)).toBe(createdUser.id);
+    expect(readSignupIntent(intent?.value)).toEqual({ userId: createdUser.id, reason: "valid" });
   });
 
   // Regression: signup/page.tsx requires a valid invite once public sign-up is closed, but the action

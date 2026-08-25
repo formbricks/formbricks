@@ -23,20 +23,25 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
  * Two reasons, both found in the security review of the ENG-2562 plan:
  *
  * 1. `getVerificationTokenPurpose` there **fails open** — an absent or unrecognised `purpose` claim is
- *    silently rewritten to `"email_verification"` and returned as if it had been asserted. That makes
- *    `VERIFICATION_TOKEN_PURPOSES` a rewriting allowlist rather than a rejecting one, so `signup_intent`
- *    is deliberately NOT added to it: kept out of that shared keyspace, no lenient consumer can ever
- *    resolve one of these tokens into a purpose it was not issued for.
+ *    silently rewritten to `"email_verification"` and returned as if it had been asserted. Staying out of
+ *    `VERIFICATION_TOKEN_PURPOSES` is therefore NOT protection on its own; it is precisely what would make
+ *    `verifyToken` rewrite one of these tokens into a purpose it was never issued for. What actually keeps
+ *    the two keyspaces apart is the claim names used below — `uid`/`kind` rather than `id`/`purpose` — so a
+ *    token minted here cannot be parsed by `verifyToken` at all: it bails on `if (!payload?.id)` before any
+ *    purpose is considered. Not exploitable either way today, since that helper's only caller demands
+ *    `sso_recovery` — but a future consumer trusting a returned `email_verification` would otherwise have
+ *    accepted this cookie, because both sign with the same secret on a deployment that sets only
+ *    `NEXTAUTH_SECRET`.
  * 2. `verifyToken` falls back, on signature failure, to looking the user up by token and re-verifying
  *    with `NEXTAUTH_SECRET + userEmail`. That would put one or two database queries behind every
  *    malformed cookie on an unauthenticated GET — including every mail-scanner prefetch of a
  *    verification link — which is the exact amplification the new rate limits exist to prevent.
  *
- * So: HS256 pinned, strict purpose equality, expiry enforced by `jwt.verify`, no legacy fallback, and no
+ * So: HS256 pinned, strict `kind` equality, expiry enforced by `jwt.verify`, no legacy fallback, and no
  * database access. The user id is compared against the already-loaded verified user by the caller.
  */
 
-const SIGNUP_INTENT_PURPOSE = "signup_intent";
+const SIGNUP_INTENT_KIND = "signup_intent";
 
 // Same chain as auth.ts's Better Auth `secret`: NEXTAUTH_SECRET is `optional()` in the env schema and
 // a deployment may run on BETTER_AUTH_SECRET alone, so pinning this token to NEXTAUTH_SECRET would
@@ -74,41 +79,73 @@ export const createSignupIntentToken = (userId: string): string => {
     throw new Error("ENCRYPTION_KEY is not set");
   }
 
+  // `uid`/`kind`, not `id`/`purpose` — see the header. Sharing `createToken`'s claim shape is what would
+  // let `verifyToken` resolve this cookie as an `email_verification` token.
   return jwt.sign(
-    { id: symmetricEncrypt(userId, ENCRYPTION_KEY), purpose: SIGNUP_INTENT_PURPOSE },
+    { uid: symmetricEncrypt(userId, ENCRYPTION_KEY), kind: SIGNUP_INTENT_KIND },
     SIGNING_SECRET,
     { algorithm: "HS256", expiresIn: EMAIL_VERIFICATION_TTL_SECONDS }
   );
 };
 
 /**
- * The user id this cookie was issued for, or `null` for anything that is not a currently-valid
- * sign-up intent — absent, malformed, expired, wrong signature, wrong algorithm, or carrying any
- * purpose other than `signup_intent`.
+ * What a sign-up intent cookie says, and — when it says nothing usable — why.
+ *
+ * The reason is not decoration. The withheld path is reached by the ordinary cross-device click and by a
+ * mail-scanner prefetch as well as by a genuine pre-hijack, so collapsing all of them into one boolean
+ * throws away the only distinction the record exists to make: `absent` is the common, boring case, while
+ * `invalid` and `other_user` are the ones worth looking at. It cannot be recovered after the fact.
+ */
+export type TSignupIntentRead =
+  | { userId: string; reason: "valid" }
+  | { userId: null; reason: "absent" | "invalid" };
+
+/**
+ * Read the cookie. `absent` is no cookie at all (or no secrets configured); `invalid` covers malformed,
+ * expired, wrong signature, wrong algorithm, and the wrong `kind`.
  *
  * Returns rather than throws, and never logs the token, because the caller runs inside a verification
  * request that must not fail on a bad cookie: a garbage cookie has to degrade to "no proof", which
  * withholds the session, not to a 500 on a link that already verified the user.
  */
-export const readSignupIntentUserId = (cookieValue: string | null | undefined): string | null => {
-  if (!cookieValue || !SIGNING_SECRET || !ENCRYPTION_KEY) return null;
+export const readSignupIntent = (cookieValue: string | null | undefined): TSignupIntentRead => {
+  if (!cookieValue || !SIGNING_SECRET || !ENCRYPTION_KEY) return { userId: null, reason: "absent" };
 
   try {
     // `algorithms` pinned so a token cannot dictate its own verification algorithm, and `expiresIn`
     // above means `jwt.verify` rejects a stale cookie for us.
     const payload = jwt.verify(cookieValue, SIGNING_SECRET, { algorithms: ["HS256"] });
-    if (typeof payload !== "object" || payload === null) return null;
+    if (typeof payload !== "object" || payload === null) return { userId: null, reason: "invalid" };
 
-    const { id, purpose } = payload as { id?: unknown; purpose?: unknown };
+    const { uid, kind } = payload as { uid?: unknown; kind?: unknown };
     // Strict equality, no defaulting. This is the check that keeps a token minted for another flow
-    // (`email_verification`, `sso_recovery`, a gateway token) from being spent here.
-    if (purpose !== SIGNUP_INTENT_PURPOSE) return null;
-    if (typeof id !== "string" || id.length === 0) return null;
+    // from being spent here, on top of the claim names that stop it parsing as one at all.
+    if (kind !== SIGNUP_INTENT_KIND) return { userId: null, reason: "invalid" };
+    if (typeof uid !== "string" || uid.length === 0) return { userId: null, reason: "invalid" };
 
-    const userId = symmetricDecrypt(id, ENCRYPTION_KEY);
+    const userId = symmetricDecrypt(uid, ENCRYPTION_KEY);
 
-    return userId.length > 0 ? userId : null;
+    return userId.length > 0 ? { userId, reason: "valid" } : { userId: null, reason: "invalid" };
   } catch {
-    return null;
+    return { userId: null, reason: "invalid" };
   }
+};
+
+/**
+ * Why the post-verification session was withheld, for the log line and the audit row.
+ *
+ * `other_user` is the genuinely suspicious one — a valid cookie for a different account. `grant_failed`
+ * is an internal fault, not a judgement about the caller.
+ */
+export type TWithheldReason = "absent" | "invalid" | "other_user" | "grant_failed";
+
+/** Classify the cookie against the user this request just verified. */
+export const classifySignupIntent = (
+  cookieValue: string | null | undefined,
+  verifiedUserId: string
+): "valid" | Exclude<TWithheldReason, "grant_failed"> => {
+  const intent = readSignupIntent(cookieValue);
+  if (intent.reason !== "valid") return intent.reason;
+
+  return intent.userId === verifiedUserId ? "valid" : "other_user";
 };
