@@ -7,10 +7,10 @@ import { WorkflowCanvas } from "@/modules/ee/workflows/components/canvas/workflo
 import { WorkflowInspectorPanel } from "@/modules/ee/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowEmailAuthoringProvider } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useReconcileTriggerEndingCards } from "@/modules/ee/workflows/hooks/use-reconcile-trigger-ending-cards";
+import { useWorkflowSurveyOptions } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { useWorkflowNodeUrlSync } from "@/modules/ee/workflows/hooks/use-workflow-node-url-sync";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
-import { useWorkflowSurveyOptions } from "@/modules/ee/workflows/list/hooks/use-trigger-survey-picker";
 import { WorkflowBuilderBodyLoading } from "@/modules/ee/workflows/loading";
 import { hasBoundTriggerSurveyAtom } from "@/modules/ee/workflows/state/editor";
 import type { TWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/types/email-authoring-context";
