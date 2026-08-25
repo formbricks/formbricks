@@ -89,10 +89,172 @@ is enough to keep every answer readable and correctly dated, but it is not a byt
   </Step>
 </Steps>
 
+## Copying a single survey
+
+If you only need one survey moved, this is the whole job: one script, one command, no intermediate
+directory. It reads the survey and its responses straight from the source and writes them to the
+target as it goes. The workspace-wide workflow starts at [Step 1](#step-1-export-the-source-workspace)
+below.
+
+Everything on this page still applies — the same fields are dropped, the same file-upload answers are
+refused, the same response pipeline fires on the target. The one difference is app-survey triggers:
+with no export directory to build an ID map from, this script matches the source's action classes to
+the target's **by name** and drops any trigger with no counterpart, falling back to `status: draft` so
+the survey cannot go live half-configured. Create the missing actions in the target first if you want
+the trigger to survive.
+
+```bash fb-copy-survey.sh
+#!/usr/bin/env bash
+# Copy one survey and all of its responses from one Formbricks instance to another.
+set -euo pipefail
+
+SOURCE_URL="${SOURCE_URL:?e.g. https://old.formbricks.example.com}"
+SOURCE_API_KEY="${SOURCE_API_KEY:?read access on the source workspace is enough}"
+SOURCE_SURVEY_ID="${SOURCE_SURVEY_ID:?survey id, see the survey URL in the app}"
+TARGET_URL="${TARGET_URL:?e.g. https://new.formbricks.example.com}"
+TARGET_API_KEY="${TARGET_API_KEY:?needs manage access on the target workspace}"
+TARGET_WORKSPACE_ID="${TARGET_WORKSPACE_ID:?workspace id, see the app URL}"
+THROTTLE="${THROTTLE:-0.7}" # seconds between requests; keeps you under 100/minute
+
+# fb <method> <url> <api-key> [json-body] -> sets FB_BODY and FB_CODE, retries 429/5xx.
+fb() {
+  local method="$1" url="$2" key="$3" body="${4:-}" attempt=0 tmp code
+  local -a args
+  tmp=$(mktemp)
+  while :; do
+    args=(-sS -g -o "$tmp" -w '%{http_code}' -X "$method"
+      -H "x-api-key: ${key}" -H 'content-type: application/json')
+    if [ -n "$body" ]; then args+=(--data-binary "$body"); fi
+    code=$(curl "${args[@]}" "$url" || echo 000)
+    case "$code" in
+      429 | 000 | 5??)
+        attempt=$((attempt + 1))
+        [ "$attempt" -le 6 ] || break
+        echo "  HTTP ${code} on ${method} ${url} — retry ${attempt} in $((attempt * 10))s" >&2
+        sleep $((attempt * 10))
+        ;;
+      *) break ;;
+    esac
+  done
+  FB_BODY=$(cat "$tmp"); rm -f "$tmp"; FB_CODE="$code"
+  case "$code" in 2??) return 0 ;; *) return 1 ;; esac
+}
+
+die() { echo "$1" >&2; exit 1; }
+
+# 1. Read the survey document from the source.
+fb GET "${SOURCE_URL}/api/v3/surveys/${SOURCE_SURVEY_ID}" "$SOURCE_API_KEY" ||
+  die "could not read source survey (HTTP ${FB_CODE}): ${FB_BODY}"
+survey=$(jq '.data' <<<"$FB_BODY")
+echo "source: $(jq -r '.name' <<<"$survey") ($(jq -r '.type' <<<"$survey"), $(jq -r '.status' <<<"$survey"))"
+
+# 2. App surveys only: match the source triggers to target action classes by NAME. Ids differ per
+#    instance, and an app survey with no trigger cannot be live.
+trigger_map='{}'
+if [ "$(jq -r '.type' <<<"$survey")" != "link" ]; then
+  fb GET "${SOURCE_URL}/api/v3/action-classes?workspaceId=$(jq -r '.workspaceId' <<<"$survey")&limit=100" \
+    "$SOURCE_API_KEY" || die "could not list source action classes: ${FB_BODY}"
+  source_actions="$FB_BODY"
+  fb GET "${TARGET_URL}/api/v3/action-classes?workspaceId=${TARGET_WORKSPACE_ID}&limit=100" \
+    "$TARGET_API_KEY" || die "could not list target action classes: ${FB_BODY}"
+  trigger_map=$(jq -n --argjson src "$source_actions" --argjson dst "$FB_BODY" '
+    ($dst.data | map({key: .name, value: .id}) | from_entries) as $byName
+    | $src.data | map(select($byName[.name])) | map({key: .id, value: $byName[.name]}) | from_entries')
+  echo "triggers: mapped $(jq 'length' <<<"$trigger_map") of $(jq '.data | length' <<<"$source_actions") action classes by name"
+fi
+
+# 3. Translate the resource into a create document and post it.
+body=$(jq -c --arg ws "$TARGET_WORKSPACE_ID" --argjson ac "$trigger_map" '
+  del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .targeting)
+  | .workspaceId = $ws
+  | .metadata = (.metadata // {})
+  | .type = (if .type == "link" then "link" else "app" end)
+  | .languages |= map({code, default, enabled})
+  | if .type == "app" and (.distribution | type) == "object"
+    then .distribution.triggers = [.distribution.triggers[] | select($ac[.actionClassId]) | {actionClassId: $ac[.actionClassId]}]
+    else . end
+  | if .type == "app" and ((.distribution.triggers // []) | length) == 0 then .status = "draft" else . end
+' <<<"$survey")
+
+fb POST "${TARGET_URL}/api/v3/surveys" "$TARGET_API_KEY" "$body" ||
+  die "creating the survey failed (HTTP ${FB_CODE}): ${FB_BODY}"
+new_id=$(jq -r '.data.id' <<<"$FB_BODY")
+echo "target: ${new_id}"
+sleep "$THROTTLE"
+
+if [ "$(jq -r '.archivedAt // "null"' <<<"$survey")" != "null" ]; then
+  fb POST "${TARGET_URL}/api/v3/surveys/${new_id}/archive" "$TARGET_API_KEY" '{}' ||
+    echo "could not re-archive ${new_id} (HTTP ${FB_CODE}): ${FB_BODY}" >&2
+  sleep "$THROTTLE"
+fi
+
+# 4. Replay the responses, oldest first, 250 at a time.
+ok=0; failed=0; skip=0
+while :; do
+  fb GET "${SOURCE_URL}/api/v2/management/responses?surveyId=${SOURCE_SURVEY_ID}&limit=250&skip=${skip}&sortBy=createdAt&order=asc" \
+    "$SOURCE_API_KEY" || die "reading responses failed (HTTP ${FB_CODE}): ${FB_BODY}"
+  batch="$FB_BODY"
+  count=$(jq '.data | length' <<<"$batch")
+  while read -r response; do
+    [ -n "$response" ] || continue
+    payload=$(jq -c --arg sid "$new_id" '
+      {surveyId: $sid, createdAt, updatedAt, finished, data, variables, ttc, meta,
+       language, endingId, singleUseId, userId: (.contactAttributes.userId // null)}
+      | with_entries(select(.value != null))
+      | .finished = (.finished // false)
+    ' <<<"$response")
+    if fb POST "${TARGET_URL}/api/v2/management/responses" "$TARGET_API_KEY" "$payload"; then
+      ok=$((ok + 1))
+    else
+      failed=$((failed + 1))
+      echo "response $(jq -r '.id' <<<"$response") failed (HTTP ${FB_CODE}): ${FB_BODY}" >&2
+    fi
+    sleep "$THROTTLE"
+  done < <(jq -c '.data[]' <<<"$batch")
+  [ "$count" -eq 250 ] || break
+  skip=$((skip + 250))
+done
+
+echo "responses: ${ok} imported, ${failed} failed"
+echo "link:      ${TARGET_URL}/s/${new_id}"
+```
+
+The survey ID is the last path segment of the survey's URL in the app,
+`/workspaces/<workspaceId>/surveys/<surveyId>/edit`.
+
+```bash
+SOURCE_URL=https://old.formbricks.example.com \
+SOURCE_API_KEY=fbk_xxx \
+SOURCE_SURVEY_ID=cmrsxxwej0009tm06aq5i4lx0 \
+TARGET_URL=https://new.formbricks.example.com \
+TARGET_API_KEY=fbk_yyy \
+TARGET_WORKSPACE_ID=cmt8fp2zt00024906cy3ysb8g \
+./fb-copy-survey.sh
+```
+
+```
+source: Link survey (link, inProgress)
+target: cmt8wewit0008s706rsqaqtf1
+response cmrszt8n7000btm06nbo0evhh failed (HTTP 400): {"error":{"code":400,"message":"Bad Request", …
+responses: 1 imported, 1 failed
+link:      https://new.formbricks.example.com/s/cmt8wewit0008s706rsqaqtf1
+```
+
+Failures are printed per response on stderr and counted, but they do not stop the run — redirect
+stderr to a file if you are moving enough responses that you will want to read them afterwards. For
+an app survey, the trigger line tells you whether the survey came out live or as a draft:
+
+```
+source: Start from scratch (app, inProgress)
+triggers: mapped 0 of 4 action classes by name
+target: cmt8we5b20000s706bn4yzoyz     ← created as a draft, no trigger matched
+```
+
 ## Step 1: Export the source workspace
 
-This reads the workspace and writes a directory you can inspect, keep as a backup, and re-run the
-import from. It touches nothing on the source instance.
+Steps 1 to 4 are the workspace-wide path: every survey at once, with the export kept on disk so you
+can inspect it, hold it as a backup, and re-run the import from it. This step touches nothing on the
+source instance.
 
 ```bash fb-export.sh
 #!/usr/bin/env bash
