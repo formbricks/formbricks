@@ -286,7 +286,10 @@ Do not:
 
 - Keep code DRY and small; remove dead code and unused imports.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`.
+- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`. This is enforced:
+  `@typescript-eslint/no-explicit-any` is an error in `packages/*` and a warning in `apps/web`, where the
+  typescript-eslint baseline is being ratcheted to error rule by rule (ENG-2264). Never add new `any`s —
+  a warning today becomes an error once its rule's backlog is cleared.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 
 ## Commit & Pull Request Guidelines
