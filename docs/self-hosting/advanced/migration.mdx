@@ -9,9 +9,10 @@ icon: "arrow-right"
 v5.4 carries one breaking change, and it is narrow: it affects **API keys** used against the Feedback
 Records API or the MCP server, and nothing else. If you do not use Unify Feedback, or you only reach it
 through the UI, there is nothing to do for it. The release adds no new environment variables. It does ship
-**seven database migrations**, applied automatically during the upgrade: six are quick — new columns and
-tables, two of them data migrations that run on their own — and the seventh builds an index on the
-`Response` table that blocks response writes while it builds — see
+**seven database migrations**, applied automatically during the upgrade. Six are quick — new columns and
+tables, two of them data migrations that run on their own. The seventh builds an index on the `Response`
+table, and it is the one that needs scheduling: it blocks response writes while it builds. Other
+migrations add indexes too, but only on new or small tables. See
 [Database Migrations](#database-migrations) before scheduling the upgrade.
 
 v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no manual database
@@ -30,7 +31,7 @@ is the full list rather than a summary:
 | Migration | What it does | Impact |
 | --- | --- | --- |
 | `add_feedback_source_import_mode` | Adds `FeedbackSource.import_mode`, which controls whether a source's historical import includes partial responses. Existing sources take the `completedOnly` default, which aligns the historical import with the live ingestion path — that path only ever ran on finished responses, while the import used to pull partials too. Records already in Hub are left alone, so this shows up the next time you run an import: set a source to `all` if it should keep importing partial responses. | Instant |
-| `add_organization_display_time_zone` | Adds the nullable `Organization.displayTimeZone`, which formats response timestamps both in file exports and in the payloads pushed to third-party integrations. | Instant |
+| `add_organization_display_time_zone` | Adds the nullable `Organization.displayTimeZone`, which formats response timestamps in file exports and in the payloads pushed to Google Sheets, Slack and Airtable (Notion is passed a raw date and is unaffected). | Instant |
 | `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. Details in the Better Auth 1.7 section below. | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional |
 | `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. It is a no-op only when the instance has no OAuth client at all, which in practice means a fresh install. | **Set `WEBAPP_URL` before upgrading if you use MCP OAuth.** The resource identifier is derived from it, so on an instance that has OAuth clients an unset or unparseable `WEBAPP_URL` fails this migration and stops the upgrade — set it and re-run |
 | `add_feedback_source_element_scope` | Adds `FeedbackSource.elementScope`, which controls whether a source picks up survey questions added later. Existing sources keep the current behaviour (`specific`). | Instant |
@@ -65,8 +66,9 @@ without one — and both issuer backfills are already recorded as applied, so ro
 re-run them. Better Auth 1.7 keys accounts on `(issuer, accountId)`, which makes those rows invisible to
 password sign-in and password reset. SSO accounts repair themselves on the next successful sign-in;
 password accounts have no such path. If anyone signed up during the rollback window, re-run the repair
-after rolling forward — this is the same statement the `repair_account_issuer` migration runs, and it is
-idempotent:
+after rolling forward. This is the statement the `repair_account_issuer` migration runs, and it is
+idempotent — it matches the providers v5.4 ships, so if you have since enabled one that is not listed
+here, take the current mapping from that migration rather than this copy:
 
 ```sql
 UPDATE "Account"
@@ -147,7 +149,7 @@ listed [above](#database-migrations)), so rolling the application images / Helm 
 it with nothing to restore. An API key raised to `manage` in step 2 keeps working on v5.3 —
 `manage` was always accepted wherever `write` was — so that step does not need reverting either.
 
-### Better Auth 1.7 upgrade (no action required)
+### Better Auth 1.7 upgrade (no action required for most instances)
 
 v5.4 upgrades the Better Auth authentication core from the 1.6 line to 1.7, which fixes
 [GHSA-p2fr-6hmx-4528](https://github.com/advisories/GHSA-p2fr-6hmx-4528): MCP OAuth access-token audiences
@@ -155,7 +157,7 @@ are now bound to the resource a user actually approved during authorization, ins
 the client requested. This is a coupled core upgrade — it touches login, sessions, 2FA, SSO and MCP OAuth —
 but for self-hosted instances it needs no manual database step. Every schema change is additive and nullable,
 and the required backfills (account identity, existing OAuth clients, refresh tokens, consents) run
-automatically on startup — they are the two `eng_2343` entries in the
+automatically during the upgrade — they are the two `eng_2343` entries in the
 [Database Migrations](#database-migrations) table above.
 
 The migration also adds two nullable columns, `alg` and `crv`, to the `jwks` table that holds your
