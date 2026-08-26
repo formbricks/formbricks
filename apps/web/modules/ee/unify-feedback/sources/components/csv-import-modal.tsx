@@ -34,6 +34,9 @@ interface CsvImportModalProps {
   workspaceId: string;
   fieldMappings: TFeedbackSourceFieldMapping[];
   onOpenEditFeedbackSource?: () => void;
+  /** Called after a successful import, in addition to closing the dialog — e.g. so a caller rendered
+   * next to a stale records list or enrichment-status read can refresh/invalidate it. */
+  onImportComplete?: () => void;
 }
 
 export function CsvImportModal({
@@ -43,6 +46,7 @@ export function CsvImportModal({
   workspaceId,
   fieldMappings,
   onOpenEditFeedbackSource,
+  onImportComplete,
 }: CsvImportModalProps) {
   const { t } = useTranslation();
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -122,6 +126,7 @@ export function CsvImportModal({
       setParsedData([]);
       setRowCount(0);
       onOpenChange(false);
+      onImportComplete?.();
     } else {
       toast.error(
         getTranslatedFeedbackSourceError(result.error.error, t, {
