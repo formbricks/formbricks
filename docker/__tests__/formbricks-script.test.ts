@@ -8,6 +8,10 @@ import { afterEach, describe, expect, test } from "vitest";
 
 const formbricksScriptPath = fileURLToPath(new URL("../formbricks.sh", import.meta.url));
 const dockerComposeTemplatePath = fileURLToPath(new URL("../docker-compose.yml", import.meta.url));
+const legacyValkeyImage =
+  "valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d";
+const multiArchValkeyImage =
+  "valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84";
 
 const tempDirs: string[] = [];
 
@@ -44,6 +48,34 @@ const writeDockerComposeTemplate = (): string => {
   writeFileSync(composePath, readFileSync(dockerComposeTemplatePath, "utf8"));
 
   return composePath;
+};
+
+const migrateLegacyValkeyImage = (composePath: string, validationResult: "success" | "failure"): void => {
+  const validationLogPath = join(createTempDir(), "validation.log");
+
+  execFileSync(
+    "bash",
+    [
+      "-lc",
+      `source "$1"
+sudo() {
+  printf '%s\\n' "$*" >> "$VALIDATION_LOG_PATH"
+  [[ "$VALIDATION_RESULT" == "success" ]]
+}
+migrate_legacy_valkey_image "$2"`,
+      "bash",
+      formbricksScriptPath,
+      composePath,
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        VALIDATION_LOG_PATH: validationLogPath,
+        VALIDATION_RESULT: validationResult,
+      },
+    }
+  );
 };
 
 const getServiceBlock = (composeContents: string, serviceName: string): string => {
@@ -90,6 +122,47 @@ describe("docker/docker-compose.yml Redis/Valkey exposure (ENG-2184)", () => {
       redis?.ports ?? [],
       "the redis (Valkey) service must not publish any host port — it is reachable only on the internal compose network (ENG-2184)"
     ).toEqual([]);
+  });
+});
+
+describe("docker/formbricks.sh Valkey image migration", () => {
+  test("updates the known amd64-only pin and keeps a backup", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+
+    expect(originalCompose).toContain(multiArchValkeyImage);
+    writeFileSync(composePath, originalCompose.replace(multiArchValkeyImage, legacyValkeyImage));
+
+    migrateLegacyValkeyImage(composePath, "success");
+
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+  });
+
+  test.each([multiArchValkeyImage, "example.com/custom-valkey@sha256:custom"])(
+    "leaves the %s reference untouched",
+    (image) => {
+      const composePath = writeDockerComposeTemplate();
+      const originalCompose = readFileSync(composePath, "utf8").replace(multiArchValkeyImage, image);
+      writeFileSync(composePath, originalCompose);
+
+      migrateLegacyValkeyImage(composePath, "failure");
+
+      expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+      expect(existsSync(`${composePath}.before-valkey-8.1.9`)).toBe(false);
+    }
+  );
+
+  test("restores the original Compose file when validation fails", () => {
+    const composePath = writeDockerComposeTemplate();
+    const legacyCompose = readFileSync(composePath, "utf8").replace(multiArchValkeyImage, legacyValkeyImage);
+    writeFileSync(composePath, legacyCompose);
+
+    expect(() => migrateLegacyValkeyImage(composePath, "failure")).toThrow();
+
+    expect(readFileSync(composePath, "utf8")).toBe(legacyCompose);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toBe(legacyCompose);
+    expect(existsSync(`${composePath}.tmp`)).toBe(false);
   });
 });
 

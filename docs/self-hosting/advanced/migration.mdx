@@ -6,14 +6,80 @@ icon: "arrow-right"
 
 ## v5.4
 
-v5.4 carries one breaking change, and it is narrow: it affects **API keys** used against the Feedback
-Records API or the MCP server, and nothing else. It needs no environment variables and no database
-migrations. If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do
-for it.
+v5.4 carries one application-level breaking change, and it is narrow: it affects **API keys** used against
+the Feedback Records API or the MCP server. It needs no environment variables and no database migrations.
+If you do not use Unify Feedback, or you only reach it through the UI, there is nothing to do for it.
 
 v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no action at all:
 every migration is additive and applies automatically, and **your SSO callback URLs do not change** — see
 below.
+
+The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd64/arm64 Valkey 8.1.9 Alpine
+image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
+older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
+
+### Bundled Valkey 8.1.9 upgrade (action required for some self-hosted deployments)
+
+The old bundled digest selects only `linux/amd64`. The new digest selects the matching native image on
+`linux/amd64` and `linux/arm64`, without requiring QEMU or `binfmt`. Valkey 8.1.9 also contains upstream
+security fixes that are not present in 8.1.1.
+
+<Warning>
+  Valkey stores sessions, queues, cache entries and rate-limit state in the named `redis` volume with AOF
+  enabled. Do not run `docker compose down -v`, delete the volume, or use `FLUSHDB` during this upgrade.
+  Recreating only the container preserves the volume. Expect a brief interruption while Valkey restarts.
+</Warning>
+
+<Tabs>
+  <Tab title="One-Click">
+    Download the current stable updater so it can migrate the exact old Valkey pin in your existing Compose
+    file. It creates `formbricks/docker-compose.yml.before-valkey-8.1.9`, validates the updated Compose file,
+    and restores the backup if validation fails. Custom Valkey images are left unchanged.
+
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh \
+      -o formbricks.sh
+    chmod +x formbricks.sh
+    ./formbricks.sh update
+    ```
+  </Tab>
+  <Tab title="Docker Compose">
+    Back up your Compose file and replace the `redis` service's old image with the new multi-architecture
+    index:
+
+    ```yaml
+    image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+    ```
+
+    Validate the file, then pull and recreate only Valkey:
+
+    ```bash
+    cp docker-compose.yml docker-compose.yml.before-valkey-8.1.9
+    docker compose config >/dev/null
+    docker compose pull redis
+    docker compose up -d --no-deps --force-recreate redis
+    docker compose exec redis valkey-cli ping
+    docker compose exec redis valkey-server --version
+    redis_image_id=$(docker inspect --format '{{.Image}}' "$(docker compose ps -q redis)")
+    docker image inspect --format '{{.Architecture}}' "$redis_image_id"
+    ```
+  </Tab>
+  <Tab title="Helm">
+    A normal upgrade with the current chart uses the new default digest. If you explicitly set
+    `redis.image.digest`, pass a complete older values file, or use `--reuse-values`, override it during the
+    upgrade:
+
+    ```bash
+    helm upgrade formbricks formbricks/formbricks \
+      --reuse-values \
+      --set-string redis.image.repository=valkey/valkey \
+      --set-string redis.image.digest=sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+    ```
+
+    The Valkey StatefulSet rolls while its existing PVC remains attached. Check the rendered image and
+    `valkey-cli ping` after the rollout.
+  </Tab>
+</Tabs>
 
 ### Feedback Record Mutations by API Key (action required for some integrations)
 
