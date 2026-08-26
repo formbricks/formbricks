@@ -11,14 +11,14 @@
   `area` charts keep an absent `areaDisplay`: the app defaults it to "filled", so their rendering
   is unchanged and no row without a `line` type needs touching.
 */
+-- AlterEnum. The backfill shares the transaction with the swap so a failure in either leaves the
+-- column and the enum consistent, rather than rows already rewritten against the old type.
+BEGIN;
 -- Backfill: every line chart becomes an area chart displayed as a line.
 UPDATE "public"."Chart"
 SET "type"   = 'area',
     "config" = "config" || '{"areaDisplay": "line"}'::jsonb
 WHERE "type" = 'line';
-
--- AlterEnum
-BEGIN;
 CREATE TYPE "public"."ChartType_new" AS ENUM ('area', 'bar', 'pie', 'big_number');
 ALTER TABLE "public"."Chart" ALTER COLUMN "type" TYPE "public"."ChartType_new" USING ("type"::text::"public"."ChartType_new");
 ALTER TYPE "public"."ChartType" RENAME TO "ChartType_old";
