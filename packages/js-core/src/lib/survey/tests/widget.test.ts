@@ -858,6 +858,73 @@ describe("widget-file", () => {
     vi.useRealTimers();
   });
 
+  describe("lifecycle events to the host page (ENG-1846)", () => {
+    const renderAndGetEventCallbacks = async (): Promise<{
+      onDisplayCreated: () => void;
+      onResponseCreated: (responseId?: string) => void;
+      onFinished: (responseId?: string) => void;
+    }> => {
+      const mockConfigValue = {
+        get: vi.fn().mockReturnValue({
+          appUrl: "https://fake.app",
+          workspaceId: "env_123",
+          workspace: {
+            data: {
+              settings: { clickOutsideClose: true, overlay: "none", placement: "bottomRight" },
+            },
+          },
+          user: {
+            data: {
+              userId: null,
+              contactId: "contact_abc",
+              displays: [],
+              responses: [],
+              lastDisplayAt: null,
+            },
+          },
+        }),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+      (filterSurveys as Mock).mockReturnValue([]);
+      widget.setIsSurveyRunning(false);
+      window.formbricksSurveys = createMockFormbricksSurveys();
+
+      vi.useFakeTimers();
+      await widget.renderWidget({ ...mockSurvey, delay: 0 } as unknown as TWorkspaceStateSurvey);
+      vi.advanceTimersByTime(0);
+      vi.useRealTimers();
+
+      return (getFormbricksSurveys().renderSurvey as Mock).mock.calls[0][0] as {
+        onDisplayCreated: () => void;
+        onResponseCreated: (responseId?: string) => void;
+        onFinished: (responseId?: string) => void;
+      };
+    };
+
+    test("survey_shown on display; response_submitted with the acked responseId on create and finish", async () => {
+      delete (window as { dataLayer?: unknown }).dataLayer;
+      const callbacks = await renderAndGetEventCallbacks();
+
+      callbacks.onDisplayCreated();
+      callbacks.onResponseCreated("resp_123");
+      callbacks.onFinished("resp_123");
+
+      expect(window.dataLayer).toEqual([
+        { event: "formbricks_survey_shown", formbricks: { surveyId: mockSurvey.id } },
+        {
+          event: "formbricks_response_submitted",
+          formbricks: { surveyId: mockSurvey.id, responseId: "resp_123", finished: false },
+        },
+        {
+          event: "formbricks_response_submitted",
+          formbricks: { surveyId: mockSurvey.id, responseId: "resp_123", finished: true },
+        },
+      ]);
+    });
+  });
+
   describe("post-interaction segment refresh", () => {
     // Renders the widget and returns the interaction callbacks handed to renderSurvey, so each test can
     // trigger onDisplayCreated / onResponseCreated / onFinished directly and assert whether a refresh

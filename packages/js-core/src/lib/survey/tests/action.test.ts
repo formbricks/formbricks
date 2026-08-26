@@ -106,6 +106,20 @@ describe("survey/action.ts", () => {
       expect(triggerSurvey).toHaveBeenCalledWith(mockSurvey, "testAction", undefined);
     });
 
+    test("emits formbricks_action_tracked for every tracked action, even without a matching survey", async () => {
+      // ENG-1846: funnel analytics wants the misses too — the emit sits on the shared trackAction
+      // path, above the survey-matching loop.
+      delete (window as { dataLayer?: unknown }).dataLayer;
+      mockConfig.get.mockReturnValue({ filteredSurveys: [] });
+
+      const result = await trackAction("testAction", "aliasedCode");
+
+      expect(result.ok).toBe(true);
+      expect(window.dataLayer).toEqual([
+        { event: "formbricks_action_tracked", formbricks: { action: "aliasedCode" } },
+      ]);
+    });
+
     test("handles multiple matching surveys", async () => {
       const mockSurveys = [
         {

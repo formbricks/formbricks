@@ -1,5 +1,6 @@
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID } from "@/lib/common/constants";
+import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { executeRecaptcha, loadRecaptchaScript } from "@/lib/common/recaptcha";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
@@ -185,6 +186,8 @@ export const renderWidget = async (
       isSpamProtectionEnabled,
       getRecaptchaToken,
       onDisplayCreated: () => {
+        emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
+
         const existingDisplays = config.get().user.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };
         const displays = existingDisplays.length ? [...existingDisplays, newDisplay] : [newDisplay];
@@ -214,7 +217,16 @@ export const renderWidget = async (
         // trigger evaluates. The display is already persisted (fires after createDisplay).
         refreshSegmentsAfterInteraction(previousConfig.user.data.userId, survey, "onDisplay");
       },
-      onResponseCreated: () => {
+      onResponseCreated: (responseId?: string) => {
+        // finished: false — completion gets its own emit in onFinished below. `responseId` arrives
+        // from the renderer's server-ack seam (ENG-1846 widened the callback), so it is real, not
+        // client-minted; it is what lets the host link a session replay to this response.
+        emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, {
+          surveyId: survey.id,
+          responseId,
+          finished: false,
+        });
+
         const responses = config.get().user.data.responses;
         const newPersonState: TUserState = {
           ...config.get().user,
@@ -238,7 +250,13 @@ export const renderWidget = async (
         // a single refresh covering "started". The "completed X" case is handled in onFinished below.
         refreshSegmentsAfterInteraction(config.get().user.data.userId, survey, "onResponse");
       },
-      onFinished: () => {
+      onFinished: (responseId?: string) => {
+        emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, {
+          surveyId: survey.id,
+          responseId,
+          finished: true,
+        });
+
         // Survey completion flips "have completed X" (and clears "have not completed X") segments.
         // onFinished only fires after the finished response has been sent to the backend (it is gated
         // on isResponseSendingFinished), so the server recompute sees finished=true — no race. Without

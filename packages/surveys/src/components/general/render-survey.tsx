@@ -67,8 +67,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
         {...props}
         clickOutside={hasOverlay ? props.clickOutside : true}
         onClose={close}
-        onFinished={() => {
-          props.onFinished?.();
+        onFinished={(responseId?: string) => {
+          props.onFinished?.(responseId);
 
           if (props.mode !== "inline") {
             onFinishedTimeoutRef.current = setTimeout(

@@ -235,6 +235,24 @@ export function Survey({
     [offlinePersistEnabled, survey.id]
   );
 
+  // `onResponseCreateOrUpdate` runs on every question submit, but a response is only *created* on the
+  // first submit — later submits update it. `onResponseCreated` must therefore fire once, not per
+  // question, otherwise a 5-question survey triggers 5 downstream `/user` refreshes in js-core.
+  //
+  // Fired from the queue's server-ack seam below (not at enqueue time) so it can carry the persisted
+  // `responseId` — the id is minted by the server, so an event that carries it can only fire after
+  // the ack (ENG-1846). Same post-ack semantics as `onDisplayCreated`, which fires after
+  // createDisplay. Preview mode never reaches the queue and fires this without an id at submit time.
+  const responseCreatedRef = useRef(false);
+  const triggerResponseCreatedOnce = useCallback(
+    (responseId?: string) => {
+      if (responseCreatedRef.current) return;
+      responseCreatedRef.current = true;
+      void onResponseCreated?.(responseId);
+    },
+    [onResponseCreated]
+  );
+
   const responseQueue = useMemo(() => {
     if (appUrl && workspaceId && surveyState) {
       return new ResponseQueue(
@@ -270,6 +288,7 @@ export function Survey({
           },
           onResponseCreated: (responseId) => {
             void persistSurveyStateSnapshot({ responseId });
+            triggerResponseCreatedOnce(responseId);
           },
         },
         surveyState
@@ -285,6 +304,7 @@ export function Survey({
     surveyState,
     offlinePersistEnabled,
     persistSurveyStateSnapshot,
+    triggerResponseCreatedOnce,
     survey.id,
   ]);
 
@@ -520,11 +540,6 @@ export function Survey({
   // Create display on mount. When offline persistence is enabled, wait for progress
   // restoration so we can skip creating a new display if a session was restored.
   const displayCreatedRef = useRef(false);
-
-  // `onResponseCreateOrUpdate` runs on every question submit, but a response is only *created* on the
-  // first submit — later submits update it. `onResponseCreated` must therefore fire once, not per
-  // question, otherwise a 5-question survey triggers 5 downstream `/user` refreshes in js-core.
-  const responseCreatedRef = useRef(false);
 
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
@@ -1005,14 +1020,6 @@ export function Survey({
 
   const getWebSurveyMeta = useCallback((): TWebSurveyMeta => webSurveyMetaRef.current?.() ?? {}, []);
 
-  // Fire onResponseCreated exactly once per survey lifecycle. The queue creates the response on the
-  // first add and updates it on later submits, so a multi-question survey must not re-trigger it.
-  const triggerResponseCreatedOnce = useCallback(() => {
-    if (responseCreatedRef.current) return;
-    responseCreatedRef.current = true;
-    onResponseCreated?.();
-  }, [onResponseCreated]);
-
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
@@ -1067,8 +1074,7 @@ export function Survey({
           // straight back.
           hiddenFields: ingestedFieldsRecord,
         });
-
-        triggerResponseCreatedOnce();
+        // No trigger here: the queue's onResponseCreated ack fires it with the persisted responseId.
       }
     },
     [
@@ -1184,7 +1190,9 @@ export function Survey({
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
-      onFinished?.();
+      // Gated on isResponseSendingFinished, so outside preview/offline the ack has landed and the
+      // queue has stamped the persisted responseId onto surveyState (ENG-1846).
+      onFinished?.(surveyState?.responseId ?? undefined);
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
