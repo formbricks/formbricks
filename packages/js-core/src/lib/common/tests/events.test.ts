@@ -34,11 +34,19 @@ describe("emitFormbricksEvent", () => {
     });
 
     // Nested under `formbricks`, never spread flat: GTM merges pushes, so a flat `finished` or
-    // `action` would collide with the host's own dataLayer keys.
+    // `action` would collide with the host's own dataLayer keys. And the FULL key set every time,
+    // nulls included: GTM merges recursively, so an omitted key would leave a previous event's
+    // value readable under this event's trigger.
     expect(window.dataLayer).toEqual([
       {
         event: "formbricks_response_submitted",
-        formbricks: { surveyId: "survey_1", responseId: "response_1", finished: true },
+        formbricks: {
+          workspaceId: null,
+          action: null,
+          surveyId: "survey_1",
+          responseId: "response_1",
+          finished: true,
+        },
       },
     ]);
   });
@@ -53,7 +61,13 @@ describe("emitFormbricksEvent", () => {
     expect(window.dataLayer).toHaveLength(2);
     expect(window.dataLayer[1]).toEqual({
       event: "formbricks_action_tracked",
-      formbricks: { action: "clicked_demo" },
+      formbricks: {
+        workspaceId: null,
+        surveyId: null,
+        responseId: null,
+        finished: null,
+        action: "clicked_demo",
+      },
     });
   });
 
@@ -64,7 +78,51 @@ describe("emitFormbricksEvent", () => {
     expect(event.detail).toEqual({ workspaceId: "ws_1" });
     expect(window.dataLayer?.[0]).toEqual({
       event: "formbricks_setup_successful",
-      formbricks: { workspaceId: "ws_1" },
+      formbricks: {
+        workspaceId: "ws_1",
+        surveyId: null,
+        responseId: null,
+        finished: null,
+        action: null,
+      },
     });
+  });
+
+  test("a non-array dataLayer (a host shim) is replaced instead of throwing on .push", () => {
+    (window as { dataLayer?: unknown }).dataLayer = {};
+
+    expect(() => {
+      emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
+    }).not.toThrow();
+
+    expect(Array.isArray(window.dataLayer)).toBe(true);
+    expect(window.dataLayer).toHaveLength(1);
+  });
+
+  test("a throwing event listener cannot silence the dataLayer transport", () => {
+    dispatchEventMock.mockImplementationOnce(() => {
+      throw new Error("host listener exploded");
+    });
+
+    expect(() => {
+      emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
+    }).not.toThrow();
+
+    expect(window.dataLayer).toHaveLength(1);
+  });
+
+  test("a throwing dataLayer.push (GTM replaces it with host-owned code) never escapes into SDK flow", () => {
+    const poisoned: Record<string, unknown>[] = [];
+    poisoned.push = () => {
+      throw new Error("host push exploded");
+    };
+    window.dataLayer = poisoned;
+
+    expect(() => {
+      emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: "survey_1" });
+    }).not.toThrow();
+
+    // The CustomEvent transport still fired: the two are isolated separately.
+    expect(dispatchEventMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -192,7 +192,16 @@ describe("setup.ts", () => {
       // ENG-1846: the readiness signal fires exactly once, at the tail every fresh setup converges
       // on, carrying the resolved workspace id.
       expect(window.dataLayer).toEqual([
-        { event: "formbricks_setup_successful", formbricks: { workspaceId: "ws_123" } },
+        {
+          event: "formbricks_setup_successful",
+          formbricks: {
+            workspaceId: "ws_123",
+            surveyId: null,
+            responseId: null,
+            finished: null,
+            action: null,
+          },
+        },
       ]);
     });
 

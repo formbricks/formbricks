@@ -911,15 +911,16 @@ describe("widget-file", () => {
       callbacks.onResponseCreated("resp_123");
       callbacks.onFinished("resp_123");
 
+      const base = { workspaceId: null, surveyId: null, responseId: null, finished: null, action: null };
       expect(window.dataLayer).toEqual([
-        { event: "formbricks_survey_shown", formbricks: { surveyId: mockSurvey.id } },
+        { event: "formbricks_survey_shown", formbricks: { ...base, surveyId: mockSurvey.id } },
         {
           event: "formbricks_response_submitted",
-          formbricks: { surveyId: mockSurvey.id, responseId: "resp_123", finished: false },
+          formbricks: { ...base, surveyId: mockSurvey.id, responseId: "resp_123", finished: false },
         },
         {
           event: "formbricks_response_submitted",
-          formbricks: { surveyId: mockSurvey.id, responseId: "resp_123", finished: true },
+          formbricks: { ...base, surveyId: mockSurvey.id, responseId: "resp_123", finished: true },
         },
       ]);
     });

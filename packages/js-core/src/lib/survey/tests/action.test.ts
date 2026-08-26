@@ -116,7 +116,16 @@ describe("survey/action.ts", () => {
 
       expect(result.ok).toBe(true);
       expect(window.dataLayer).toEqual([
-        { event: "formbricks_action_tracked", formbricks: { action: "aliasedCode" } },
+        {
+          event: "formbricks_action_tracked",
+          formbricks: {
+            workspaceId: null,
+            surveyId: null,
+            responseId: null,
+            finished: null,
+            action: "aliasedCode",
+          },
+        },
       ]);
     });
 

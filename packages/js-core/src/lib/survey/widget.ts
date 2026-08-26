@@ -182,8 +182,6 @@ export const renderWidget = async (
       isSpamProtectionEnabled,
       getRecaptchaToken,
       onDisplayCreated: () => {
-        emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
-
         const existingDisplays = config.get().user.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };
         const displays = existingDisplays.length ? [...existingDisplays, newDisplay] : [newDisplay];
@@ -212,17 +210,14 @@ export const renderWidget = async (
         // coalesced) so interaction targeting is current by the time this survey closes and the next
         // trigger evaluates. The display is already persisted (fires after createDisplay).
         refreshSegmentsAfterInteraction(previousConfig.user.data.userId, survey, "onDisplay");
+
+        // Emitted LAST, after the SDK's own bookkeeping: the caller swallows throws, so anything the
+        // emitter reaches on the host page must never be able to skip the display update above —
+        // that would leave display caps evaluating stale state and the survey re-showing. The
+        // emitter guards its transports too; this ordering is the second wall.
+        emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
       },
       onResponseCreated: (responseId?: string) => {
-        // finished: false — completion gets its own emit in onFinished below. `responseId` arrives
-        // from the renderer's server-ack seam (ENG-1846 widened the callback), so it is real, not
-        // client-minted; it is what lets the host link a session replay to this response.
-        emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, {
-          surveyId: survey.id,
-          responseId,
-          finished: false,
-        });
-
         const responses = config.get().user.data.responses;
         const newPersonState: TUserState = {
           ...config.get().user,
@@ -245,20 +240,31 @@ export const renderWidget = async (
         // once, on the first answer (not on subsequent question submits — see survey.tsx), so this is
         // a single refresh covering "started". The "completed X" case is handled in onFinished below.
         refreshSegmentsAfterInteraction(config.get().user.data.userId, survey, "onResponse");
-      },
-      onFinished: (responseId?: string) => {
+
+        // finished: false — completion gets its own emit in onFinished below. `responseId` comes
+        // from the renderer's server-ack seam (ENG-1846 widened the callback), so it is real, not
+        // client-minted — it is what lets the host link a session replay to this response. Emitted
+        // last for the same reason as in onDisplayCreated: this callback runs inside the response
+        // queue's try block, and a host-page throw here would mark a persisted response as failed.
         emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, {
           surveyId: survey.id,
           responseId,
-          finished: true,
+          finished: false,
         });
-
+      },
+      onFinished: (responseId?: string) => {
         // Survey completion flips "have completed X" (and clears "have not completed X") segments.
         // onFinished only fires after the finished response has been sent to the backend (it is gated
         // on isResponseSendingFinished), so the server recompute sees finished=true — no race. Without
         // this, a multi-question survey would only refresh at onResponseCreated (finished=false), so
         // "completed X → show Y" targeting would never fire until the person-state TTL expired.
         refreshSegmentsAfterInteraction(config.get().user.data.userId, survey, "onFinished");
+
+        emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, {
+          surveyId: survey.id,
+          responseId,
+          finished: true,
+        });
       },
       onClose: closeSurvey,
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,

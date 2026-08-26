@@ -288,7 +288,15 @@ export function Survey({
           },
           onResponseCreated: (responseId) => {
             void persistSurveyStateSnapshot({ responseId });
-            triggerResponseCreatedOnce(responseId);
+            try {
+              triggerResponseCreatedOnce(responseId);
+            } catch (error) {
+              // This runs inside ResponseQueue.sendResponse's try block, and the callback reaches
+              // host-supplied code (js-core's event bus → the host page). A throw here would be
+              // caught as a SEND failure — the respondent shown an error and a retry for a response
+              // the server already created. Never let a host page do that.
+              console.error("Formbricks: onResponseCreated handler threw", error);
+            }
           },
         },
         surveyState
