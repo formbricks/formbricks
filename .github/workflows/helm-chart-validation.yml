@@ -192,6 +192,7 @@ jobs:
             --set hub.embeddings.enabled=true \
             --set hub.embeddings.background.enabled=true \
             --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --set-string hub.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES=true \
             --set-string hub.worker.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES=false \
             --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-background-worker-override.yaml"
           test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker-override.yaml")" -eq 1

@@ -86,7 +86,7 @@ spec:
                 name: {{ include "formbricks.hubSecretName" . }}
           {{- if or .Values.hub.embeddings.enabled (gt (len .Values.hub.env) 0) (gt (len .Values.hub.worker.env) 0) }}
           env:
-            {{- $workerEnv := merge (dict) .Values.hub.env .Values.hub.worker.env }}
+            {{- $workerEnv := mergeOverwrite (dict) .Values.hub.env .Values.hub.worker.env }}
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" $workerEnv "worker" true) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
             {{- if and (not (hasKey $.Values.hub.worker.env $key)) (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) }}
