@@ -1137,6 +1137,7 @@ hub:
       batchSize: "1"
       batchMaxWaitMs: "25"
       batchMaxInFlight: "1"
+      httpDisableKeepAlives: "false"
       replicas: 1
 
       service:

@@ -123,10 +123,11 @@ hub:
     enabled: true
     background:
       enabled: true
-      maxConcurrent: "24"
+      maxConcurrent: "48"
       batchSize: "8"
-      batchMaxWaitMs: "25"
-      batchMaxInFlight: "3"
+      batchMaxWaitMs: "100"
+      batchMaxInFlight: "12"
+      httpDisableKeepAlives: "true"
       persistence:
         storageClass: gp3
       resources:
@@ -142,6 +143,8 @@ hub:
 The background pool is a StatefulSet with one retained RWO cache PVC per replica. Before a planned
 backfill, temporarily set both autoscaling replica bounds to the desired pre-warmed count and wait
 for every pod to become Ready. Restore the steady-state bounds after the backlog drains.
+An existing `hub.worker.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES` override remains supported and takes
+precedence over `hub.embeddings.background.httpDisableKeepAlives` during chart upgrades.
 
 Embedding backfills are opt-in and never render a Job unless `hub.embeddingBackfill.enabled=true`.
 Each deliberate run requires a new `runId`; start with `countOnly: true`, then use `tenantId` or
@@ -467,6 +470,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.background.batchMaxWaitMs                           | string | `"25"`                                                                      |                                                           |
 | hub.embeddings.background.batchSize                                | string | `"1"`                                                                       |                                                           |
 | hub.embeddings.background.enabled                                  | bool   | `false`                                                                     |                                                           |
+| hub.embeddings.background.httpDisableKeepAlives                    | string | `"false"`                                                                 | Opens a new worker provider connection per request. Existing `hub.worker.env` override wins. |
 | hub.embeddings.background.maxConcurrent                            | string | `"5"`                                                                       |                                                           |
 | hub.embeddings.background.persistence.enabled                      | bool   | `true`                                                                      |                                                           |
 | hub.embeddings.background.persistence.size                         | string | `"10Gi"`                                                                    | One retained cache volume per StatefulSet replica.        |

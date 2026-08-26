@@ -487,6 +487,7 @@ self-hosted runtime is enabled so Hub API and Hub worker cannot drift.
 {{- define "formbricks.hubEmbeddingEnv" -}}
 {{- $root := .root -}}
 {{- $worker := .worker | default false -}}
+{{- $env := .env | default (dict) -}}
 {{- if $root.Values.hub.embeddings.enabled }}
 - name: EMBEDDING_PROVIDER
   value: "openai"
@@ -518,6 +519,12 @@ self-hosted runtime is enabled so Hub API and Hub worker cannot drift.
   value: {{ ternary $root.Values.hub.embeddings.background.batchMaxWaitMs "25" $root.Values.hub.embeddings.background.enabled | quote }}
 - name: EMBEDDING_BATCH_MAX_IN_FLIGHT
   value: {{ ternary $root.Values.hub.embeddings.background.batchMaxInFlight "1" $root.Values.hub.embeddings.background.enabled | quote }}
+- name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES
+  {{- if hasKey $env "EMBEDDING_HTTP_DISABLE_KEEP_ALIVES" }}
+  value: {{ index $env "EMBEDDING_HTTP_DISABLE_KEEP_ALIVES" | quote }}
+  {{- else }}
+  value: {{ ternary $root.Values.hub.embeddings.background.httpDisableKeepAlives "false" $root.Values.hub.embeddings.background.enabled | quote }}
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -527,7 +534,7 @@ Returns true when an env var is managed by hub.embeddings and should not be rend
 */}}
 {{- define "formbricks.hubEmbeddingEnvManaged" -}}
 {{- $key := .key -}}
-{{- if has $key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_NORMALIZE" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT") -}}
+{{- if has $key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_NORMALIZE" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT" "EMBEDDING_HTTP_DISABLE_KEEP_ALIVES") -}}
 true
 {{- end -}}
 {{- end }}

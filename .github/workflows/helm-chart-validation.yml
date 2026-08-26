@@ -132,11 +132,24 @@ jobs:
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.embeddings.enabled=true \
+            --show-only templates/hub-deployment.yaml > "$render_dir/hub-embeddings-legacy-api.yaml"
+          ! grep -q 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-legacy-api.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-legacy-worker.yaml"
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-legacy-worker.yaml" | grep -q 'value: "false"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
             --set hub.embeddings.background.enabled=true \
             --set-string hub.embeddings.background.maxConcurrent=24 \
             --set-string hub.embeddings.background.batchSize=8 \
             --set-string hub.embeddings.background.batchMaxWaitMs=25 \
             --set-string hub.embeddings.background.batchMaxInFlight=3 \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
             --set hub.embeddings.background.persistence.storageClass=gp3 \
             --set hub.embeddings.background.autoscaling.enabled=true \
             --show-only templates/hub-deployment.yaml \
@@ -157,6 +170,33 @@ jobs:
           grep -q '^  minReplicas: 1$' "$render_dir/hub-embeddings-background.yaml"
           grep -q '^  maxReplicas: 6$' "$render_dir/hub-embeddings-background.yaml"
           grep -q 'stabilizationWindowSeconds: 900' "$render_dir/hub-embeddings-background.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --show-only templates/hub-deployment.yaml > "$render_dir/hub-embeddings-background-api.yaml"
+          ! grep -q 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-api.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-background-worker.yaml"
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker.yaml" | grep -q 'value: "true"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --set-string hub.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES=true \
+            --set-string hub.worker.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES=false \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embeddings-background-worker-override.yaml"
+          test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker-override.yaml" | grep -q 'value: "false"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -187,6 +227,7 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.embeddings.enabled=true \
             --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
             --set hub.embeddingBackfill.enabled=true \
             --set hub.embeddingBackfill.runId=eu-canary-001 \
             --set hub.embeddingBackfill.taxonomy=true \
@@ -199,6 +240,8 @@ jobs:
           grep -q -- '- --taxonomy' "$render_dir/hub-embedding-backfill.yaml"
           grep -A1 -- '- --tenant-id' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "tenant-a"'
           grep -A1 -- '- --max-records' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "500"'
+          test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embedding-backfill.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embedding-backfill.yaml" | grep -q 'value: "true"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
