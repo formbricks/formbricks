@@ -10,6 +10,7 @@ import {
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
+import { EmbeddedDataStore } from "@/lib/survey/embedded-data";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
@@ -171,7 +172,15 @@ export const renderWidget = async (
       languageCode,
       placement,
       styling: getStyling(settings, survey),
-      hiddenFieldsRecord: hiddenFieldsObject,
+      // The ambient Embedded Data bag (ENG-1844) under the per-trigger `track({ hiddenFields })`
+      // values, so an explicit per-trigger write wins on a shared key. Snapshotted here — inside the
+      // delay timeout, at the moment the survey actually shows — and `getSnapshot` returns a copy, so
+      // a later `setEmbeddedData` affects the next response, never this one. The renderer's ingest
+      // contract accepts boolean/Date scalars the narrower legacy type cannot spell, hence the cast.
+      hiddenFieldsRecord: {
+        ...EmbeddedDataStore.getInstance().getSnapshot(),
+        ...hiddenFieldsObject,
+      } as TTrackProperties["hiddenFields"],
       recaptchaSiteKey,
       isSpamProtectionEnabled,
       getRecaptchaToken,

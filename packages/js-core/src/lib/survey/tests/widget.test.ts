@@ -3,6 +3,7 @@ import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import type * as CommonUtils from "@/lib/common/utils";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
+import { EmbeddedDataStore } from "@/lib/survey/embedded-data";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
 import { type TWorkspaceStateSurvey } from "@/types/config";
@@ -400,6 +401,70 @@ describe("widget-file", () => {
       expect.objectContaining({ hiddenFieldsRecord: hiddenFields })
     );
 
+    vi.useRealTimers();
+  });
+
+  test("merges the Embedded Data bag under the per-trigger hidden fields, snapshotted at display", async () => {
+    // ENG-1844: the ambient bag rides along on every display, an explicit `track({ hiddenFields })`
+    // value wins a shared key, and the record is frozen at render — a later `setEmbeddedData` must
+    // not reach a survey already on screen.
+    mockUpdateQueue.hasPendingWork.mockReturnValue(false);
+
+    const mockConfigValue = {
+      get: vi.fn().mockReturnValue({
+        appUrl: "https://fake.app",
+        workspaceId: "env_123",
+        workspace: {
+          data: {
+            settings: {
+              clickOutsideClose: true,
+              overlay: "none",
+              placement: "bottomRight",
+              inAppSurveyBranding: true,
+            },
+          },
+        },
+        user: {
+          data: {
+            userId: "user_abc",
+            contactId: "contact_abc",
+            displays: [],
+            responses: [],
+            lastDisplayAt: null,
+            language: "en",
+          },
+        },
+      }),
+      update: vi.fn(),
+    };
+
+    getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+    widget.setIsSurveyRunning(false);
+    window.formbricksSurveys = createMockFormbricksSurveys();
+    vi.useFakeTimers();
+
+    const store = EmbeddedDataStore.getInstance();
+    store.clearEmbeddedData();
+    store.setEmbeddedData({ pageType: "product", plan: "from-bag" });
+
+    await widget.triggerSurvey(
+      { ...mockSurvey, delay: 0, displayPercentage: null } as unknown as TWorkspaceStateSurvey,
+      "testAction",
+      { hiddenFields: { plan: "from-track" } }
+    );
+
+    vi.advanceTimersByTime(0);
+
+    // A write after render: must not appear on the record already handed to the renderer.
+    store.setEmbeddedData({ pageType: "changed-later" });
+
+    expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hiddenFieldsRecord: { pageType: "product", plan: "from-track" },
+      })
+    );
+
+    store.clearEmbeddedData();
     vi.useRealTimers();
   });
 
