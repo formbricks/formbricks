@@ -17,6 +17,7 @@ import {
   parseRuleValue,
   shouldResetInputTypeToText,
 } from "./validation-rules-helpers";
+import { createRuleParams } from "./validation-rules-utils";
 
 // Mock translation function
 const mockT = (key: string): string => key;
@@ -354,5 +355,44 @@ describe("applyRuleDeletion", () => {
     const rules = [rule("a"), rule("b")];
     applyRuleDeletion(rules, "a", TSurveyElementTypeEnum.OpenText, "number");
     expect(rules.map((r) => r.id)).toEqual(["a", "b"]);
+  });
+});
+
+// `parseRuleValue` returning 0 is not the end of the story: `handleRuleValueChange` feeds it into
+// `createRuleParams`, whose `createMinParams`/`createMaxParams` are `Number(value) || defaultValue`
+// — and 0 is falsy, so for every rule type with a non-zero default the rejected paste lands on that
+// default instead of on 0. Asserting the pair together so the value that actually reaches the rule
+// is visible, rather than only what the parser hands back.
+describe("parseRuleValue composed with createRuleParams", () => {
+  test.each([
+    ["isLessThan", "1e3", { max: 100 }],
+    ["maxLength", "1e5", { max: 100 }],
+    ["maxValue", "1e5", { max: 100 }],
+    ["maxSelections", "1e5", { max: 3 }],
+    ["minSelections", "1e5", { min: 1 }],
+    ["minRanked", "1e5", { min: 1 }],
+    ["minRowsAnswered", "1e5", { min: 1 }],
+    ["minLength", "1e5", { min: 0 }],
+    ["minValue", "1e5", { min: 0 }],
+    ["isGreaterThan", "1e5", { min: 0 }],
+  ] as const)("%s rejects %j and stores %j", (ruleType, input, expected) => {
+    const parsed = parseRuleValue(ruleType, input, RULE_TYPE_CONFIG[ruleType]);
+    expect(parsed).toBe(0);
+    expect(createRuleParams(ruleType, parsed)).toEqual(expected);
+  });
+
+  // The guarantee ENG-2419 actually asked for: whatever the fallback resolves to, the pasted
+  // magnitude never survives into the rule.
+  test("the pasted magnitude never reaches the stored rule", () => {
+    const parsed = parseRuleValue("isLessThan", "1e5", RULE_TYPE_CONFIG.isLessThan);
+    expect(createRuleParams("isLessThan", parsed)).not.toEqual({ max: 100000 });
+  });
+
+  // Pre-existing and independent of this PR — a literal 0 hits the same falsy fallback, so a
+  // user typing 0 into maxLength already gets 100 on main. Pinned so that fixing the fallback
+  // (see the ENG-2419 review thread) shows up here as a deliberate diff rather than a surprise.
+  test("a literal 0 is replaced by the rule default too (pre-existing behaviour)", () => {
+    expect(parseRuleValue("maxLength", "0", RULE_TYPE_CONFIG.maxLength)).toBe(0);
+    expect(createRuleParams("maxLength", 0)).toEqual({ max: 100 });
   });
 });

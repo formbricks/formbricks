@@ -132,7 +132,10 @@ export const ValidationRuleValueInput = ({
       // Browsers accept scientific notation in a number field, so `1e5` would silently store
       // 100000 and a bare `e` would store 0 while the field still shows the typed text. `.` and
       // `-` stay allowed: decimal and negative thresholds are valid per the rule schemas.
+      // Modifier chords are let through — Ctrl/Cmd+E moves the caret in Chrome/Safari text fields
+      // and Ctrl/Cmd++ zooms, and swallowing those while this field has focus is not the intent.
       onKeyDown={(e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
         if (config.valueType === "number" && ["e", "E", "+"].includes(e.key)) e.preventDefault();
       }}
       placeholder={config.valuePlaceholder}
