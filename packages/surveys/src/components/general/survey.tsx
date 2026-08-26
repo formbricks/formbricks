@@ -29,7 +29,6 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
-import { RESERVED_DECLARED_FIELD_NAMES } from "@formbricks/types/surveys/validation";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -109,6 +108,18 @@ const INGEST_FLAG_MESSAGES: Record<TIngestFlagReason, string> = {
 };
 
 /**
+ * Keys the **product itself** puts into the incoming bag, so warning about them would fire once per
+ * respondent and tell a developer nothing. The link survey wrapper adds `verifiedEmail` on every load
+ * of an email-verified survey, and `FORBIDDEN_IDS` guarantees no survey can declare it — so it is
+ * always dropped as an unknown key. The server writes the real value from the token regardless.
+ *
+ * Deliberately **not** the whole of `RESERVED_DECLARED_FIELD_NAMES` (ENG-1843). That muted sixteen
+ * further names, every one of which a host can genuinely send by mistake — and those are exactly the
+ * ones worth reporting. Add to this set only when the product starts injecting another key itself.
+ */
+const SELF_INJECTED_KEYS = new Set(["verifiedemail"]);
+
+/**
  * Surfaces the ingest contract's verdicts, so a developer wiring up Embedded Data sees why a value
  * did not show up instead of guessing. Warnings, never errors: nothing here blocks a response.
  *
@@ -117,12 +128,7 @@ const INGEST_FLAG_MESSAGES: Record<TIngestFlagReason, string> = {
  */
 const logIngestResult = ({ dropped, flags }: TIngestResult): void => {
   for (const { key, reason } of dropped) {
-    // A reserved name is never actionable: `FORBIDDEN_IDS` means no survey *can* declare it, and the
-    // product injects some of these itself — a link survey with email verification puts
-    // `verifiedEmail` in this bag on every load, and the server writes it from the token regardless.
-    // Warning about it once per respondent is first-party noise that teaches developers to tune the
-    // channel out, which costs us the warnings that do matter.
-    if (RESERVED_DECLARED_FIELD_NAMES.has(key.toLowerCase())) continue;
+    if (SELF_INJECTED_KEYS.has(key.toLowerCase())) continue;
     console.warn(`Formbricks: "${key}" ${INGEST_DROP_MESSAGES[reason]}, so the value was ignored.`);
   }
   for (const { key, reason } of flags) {

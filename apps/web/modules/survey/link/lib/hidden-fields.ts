@@ -29,7 +29,19 @@ export const getHiddenFieldsFromSearchParams = (
     // `?verify=<jwt>`, the email-verification credential read by `verify-email-gate.ts`, which would
     // then be written to the response and every export.
     // Checked on the resolved param key so no casing on either side gets through.
-    if (RESERVED_DECLARED_FIELD_NAMES.has(matchedParamKey.toLowerCase())) continue;
+    if (RESERVED_DECLARED_FIELD_NAMES.has(matchedParamKey.toLowerCase())) {
+      // Says so out loud rather than dropping in silence. `ZSurveyHiddenFields` only guards
+      // `FORBIDDEN_IDS`, and case-sensitively, so the six link-survey system params (`lang`,
+      // `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, `suToken`) load fine as declared
+      // field names in any casing - `lang` in particular is a name someone would plausibly pick.
+      // Such a field is permanently empty from the URL, and without this line its owner has nothing
+      // to go on. Only reachable when the survey declares the name AND the param is present, so it
+      // is per-author actionable rather than per-respondent noise.
+      console.warn(
+        `Formbricks: "${declaredFieldId}" is reserved by the link survey URL contract, so "?${matchedParamKey}=" can never fill it. Rename the field to collect this value.`
+      );
+      continue;
+    }
 
     const answer = searchParams.get(matchedParamKey);
     if (answer) fieldsRecord[declaredFieldId] = answer;

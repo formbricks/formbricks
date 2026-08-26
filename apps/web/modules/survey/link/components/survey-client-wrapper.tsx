@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -123,11 +124,17 @@ export const SurveyClientWrapper = ({
     }
   }, []);
 
-  // Extract hidden fields from URL parameters
+  // Extract ingestible Embedded Data from URL parameters.
+  //
+  // The allow-list is the survey's linked `ingested` rows, not the legacy `hiddenFields.fieldIds`
+  // column (ENG-1843). `locked` fields are deliberately included: the renderer's ingest contract
+  // drops their incoming values and logs why, and filtering them out here would silence that
+  // diagnostic while duplicating a rule that already has one home.
+  const ingestedStorageKeys = getIngestedStorageKeys(survey);
   const hiddenFieldsRecord = useMemo(() => {
-    return getHiddenFieldsFromSearchParams(survey.hiddenFields.fieldIds || [], searchParams);
+    return getHiddenFieldsFromSearchParams(ingestedStorageKeys, searchParams);
     // eslint-disable-next-line react-hooks/use-memo -- migration ENG-1677
-  }, [searchParams, JSON.stringify(survey.hiddenFields.fieldIds || [])]);
+  }, [searchParams, JSON.stringify(ingestedStorageKeys)]);
 
   // Include verified email in hidden fields if available
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
