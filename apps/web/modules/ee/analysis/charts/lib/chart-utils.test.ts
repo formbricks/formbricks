@@ -75,9 +75,12 @@ describe("chart-utils", () => {
     test("returns valid chart types", () => {
       expect(resolveChartType("area")).toBe("area");
       expect(resolveChartType("bar")).toBe("bar");
-      expect(resolveChartType("line")).toBe("line");
       expect(resolveChartType("pie")).toBe("pie");
       expect(resolveChartType("big_number")).toBe("big_number");
+    });
+
+    test("maps the retired line type onto area rather than the bar fallback", () => {
+      expect(resolveChartType("line")).toBe("area");
     });
 
     test("defaults to bar for invalid type", () => {
