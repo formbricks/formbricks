@@ -336,6 +336,7 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/migration",
+              "self-hosting/advanced/migrating-surveys",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
               {
