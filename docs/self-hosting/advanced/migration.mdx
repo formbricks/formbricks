@@ -13,7 +13,7 @@ the UI, there is nothing to do for it. The release adds no new environment varia
 tables, two of them data migrations that run on their own. The seventh builds an index on the `Response`
 table, and it is the one that needs scheduling: it blocks response writes while it builds. Other
 migrations add indexes too, but only on new or small tables. See
-[Database Migrations](#database-migrations) before scheduling the upgrade.
+[Database migrations](#database-migrations) before scheduling the upgrade.
 
 v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no manual database
 step — every migration is additive and applies automatically, including the backfills over existing rows —
@@ -26,7 +26,7 @@ The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd6
 image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
 older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
 
-### Database Migrations
+### Database migrations
 
 All seven migrations apply automatically during the upgrade. Two want something from you first: one needs
 `WEBAPP_URL` set if you use MCP OAuth, and one deserves a scheduling decision on large instances. So here
@@ -229,7 +229,7 @@ the client requested. This is a coupled core upgrade — it touches login, sessi
 but for self-hosted instances it needs no manual database step. Every schema change is additive and nullable,
 and the required backfills (account identity, existing OAuth clients, refresh tokens, consents) run
 automatically during the upgrade — they are the two `eng_2343` entries in the
-[Database Migrations](#database-migrations) table above.
+[Database migrations](#database-migrations) table above.
 
 The migration also adds two nullable columns, `alg` and `crv`, to the `jwks` table that holds your
 instance's JWT signing keys. Keys created before the upgrade keep working untouched — Better Auth reads a
