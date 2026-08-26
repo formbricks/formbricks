@@ -9,9 +9,10 @@ icon: "arrow-right"
 v5.4 carries one breaking change, and it is narrow: it affects **API keys** used against the Feedback
 Records API or the MCP server, and nothing else. If you do not use Unify Feedback, or you only reach it
 through the UI, there is nothing to do for it. The release adds no new environment variables. It does ship
-**seven database migrations**, all applied automatically on startup: six are quick, additive changes, and
-one builds an index on the `Response` table that blocks response writes while it builds — see
-[Database Migrations](#database-migrations) before scheduling the upgrade.
+**seven database migrations**, all applied automatically on startup: six are quick — new columns and
+tables, plus two data migrations that run on their own — and one builds an index on the `Response` table
+that blocks response writes while it builds — see [Database Migrations](#database-migrations) before
+scheduling the upgrade.
 
 v5.4 also upgrades the **Better Auth** authentication core to 1.7. That upgrade needs no action at all:
 every migration is additive and applies automatically, and **your SSO callback URLs do not change** — see
@@ -24,7 +25,7 @@ deserves a scheduling decision on large instances, so here is the full list rath
 
 | Migration | What it does | Impact |
 | --- | --- | --- |
-| `add_feedback_source_import_mode` | Adds `FeedbackSource.import_mode`, which controls whether a source's historical import includes partial responses. Existing sources keep the current behaviour (`completedOnly`). | Instant |
+| `add_feedback_source_import_mode` | Adds `FeedbackSource.import_mode`, which controls whether a source's historical import includes partial responses. Existing sources take the `completedOnly` default, which aligns the historical import with the live ingestion path — that path only ever ran on finished responses, while the import used to pull partials too. Records already in Hub are left alone, so this shows up the next time you run an import: set a source to `all` if it should keep importing partial responses. | Instant |
 | `add_organization_display_time_zone` | Adds the nullable `Organization.displayTimeZone` used for response-export timestamps. | Instant |
 | `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. Details in the Better Auth 1.7 section below. | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional |
 | `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. No-op on a fresh install. | Automatic |
@@ -39,10 +40,18 @@ deserves a scheduling decision on large instances, so here is the full list rath
   be written until the index is built**. `Response` is usually the largest table on an instance. On small
   instances the build takes seconds; if yours holds millions of responses, run the upgrade in a window
   where a short pause in response collection is acceptable.
+
+  How much this costs you depends on how you deploy. On Kubernetes the chart runs migrations in their own
+  job while the pods already running keep serving traffic, so responses arriving during the build are the
+  ones that block. On Docker Compose the `formbricks-migrate` service has to finish before the app starts,
+  and the documented upgrade stops the app first — nothing is serving, so the same build shows up as a
+  longer restart rather than blocked writes.
 </Warning>
 
-All seven are additive and none of them is read by v5.3, so they do not constrain a rollback: rolling the
-application images / Helm values back to v5.3 is safe without touching the database.
+None of the seven constrains a rollback. v5.3 reads none of the new columns and tables, and the two
+`NOT NULL` columns added to existing tables both carry a database default, so a v5.3 instance keeps
+writing to those tables exactly as before. Rolling the application images / Helm values back to v5.3 is
+safe without touching the database.
 
 ### Feedback Record Mutations by API Key (action required for some integrations)
 
