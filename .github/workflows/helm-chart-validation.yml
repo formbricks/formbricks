@@ -227,6 +227,7 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.embeddings.enabled=true \
             --set hub.embeddings.background.enabled=true \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
             --set hub.embeddingBackfill.enabled=true \
             --set hub.embeddingBackfill.runId=eu-canary-001 \
             --set hub.embeddingBackfill.taxonomy=true \
@@ -239,6 +240,8 @@ jobs:
           grep -q -- '- --taxonomy' "$render_dir/hub-embedding-backfill.yaml"
           grep -A1 -- '- --tenant-id' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "tenant-a"'
           grep -A1 -- '- --max-records' "$render_dir/hub-embedding-backfill.yaml" | grep -q -- '- "500"'
+          test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embedding-backfill.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embedding-backfill.yaml" | grep -q 'value: "true"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
