@@ -42,11 +42,6 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "action:send-link-survey-email",
     }, // 10 per hour
-    isSurveyResponsePresent: {
-      interval: 60,
-      allowedPerInterval: 10,
-      namespace: "action:survey-response-present",
-    }, // 10 per minute — prevents email-enumeration oracle
     validateSurveyPin: {
       interval: 60,
       allowedPerInterval: 10,

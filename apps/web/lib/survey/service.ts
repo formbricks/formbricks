@@ -64,7 +64,6 @@ export const selectSurvey = {
   closeOn: true,
   archivedAt: true,
   isVerifyEmailEnabled: true,
-  isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
   isCaptureIpEnabled: true,

@@ -45,7 +45,6 @@ const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
     languages,
     displayPercentage: null,
     isVerifyEmailEnabled: false,
-    isSingleResponsePerEmailEnabled: false,
     singleUse: null,
     pin: null,
     workspaceOverwrites: null,

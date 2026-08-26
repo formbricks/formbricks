@@ -52,9 +52,6 @@ export const ResponseOptionsCard = ({
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
   const [recaptchaToggle, setRecaptchaToggle] = useState(localSurvey.recaptcha?.enabled ?? false);
-  const [singleResponsePerEmailToggle, setSingleResponsePerEmailToggle] = useState(
-    localSurvey.isSingleResponsePerEmailEnabled
-  );
   const [captureIpToggle, setCaptureIpToggle] = useState(localSurvey.isCaptureIpEnabled);
 
   const [surveyClosedMessage, setSurveyClosedMessage] = useState({
@@ -125,14 +122,6 @@ export const ResponseOptionsCard = ({
   const handleVerifyEmailToogle = () => {
     setVerifyEmailToggle(!verifyEmailToggle);
     setLocalSurvey({ ...localSurvey, isVerifyEmailEnabled: !localSurvey.isVerifyEmailEnabled });
-  };
-
-  const handleSingleResponsePerEmailToggle = () => {
-    setSingleResponsePerEmailToggle(!singleResponsePerEmailToggle);
-    setLocalSurvey({
-      ...localSurvey,
-      isSingleResponsePerEmailEnabled: !localSurvey.isSingleResponsePerEmailEnabled,
-    });
   };
 
   const handleClosedSurveyMessageChange = ({
@@ -522,17 +511,7 @@ export const ResponseOptionsCard = ({
                 onToggle={handleVerifyEmailToogle}
                 title={t("workspace.surveys.edit.verify_email_before_submission")}
                 description={t("workspace.surveys.edit.verify_email_before_submission_description")}
-                childBorder={true}>
-                <div className="m-1">
-                  <AdvancedOptionToggle
-                    htmlId="preventDoubleSubmission"
-                    isChecked={singleResponsePerEmailToggle}
-                    onToggle={handleSingleResponsePerEmailToggle}
-                    title={t("workspace.surveys.edit.prevent_double_submission")}
-                    description={t("workspace.surveys.edit.prevent_double_submission_description")}
-                  />
-                </div>
-              </AdvancedOptionToggle>
+              />
 
               {/* Protect Survey with Pin */}
               <AdvancedOptionToggle
