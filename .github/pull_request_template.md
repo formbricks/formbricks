@@ -4,7 +4,7 @@
 one idea each; the Coverage table is ≤6 rows. Short sentences, plain words, present tense, written
 for a colleague who has not read the ticket: user-visible effect first, mechanism second. Overflow
 folds rather than being dropped. Coverage, Open gaps and Breaking changes stay visible; only long
-media and Coverage rows past the sixth fold. -->
+media, command logs and Coverage rows past the sixth fold. -->
 
 <!-- NEVER WRITE — each of these reads as diligence and costs the reviewer a paragraph: blame
 archaeology (which commit introduced it, who touched what); a defence of a choice nobody questioned,
@@ -103,7 +103,7 @@ account, plan or flag state where it matters. `How` is one of `unit (red on main
 cheapest level that can fail. Every `unit` and `e2e` row names the test or spec it rests on, in the
 row or in a `Rerun:` line that names it. A `red on main` row names its own command where that
 differs from `Rerun:`; a `mutation` row names the mutated `file:line`. The table stays visible —
-fold long media, and rows past the sixth. -->
+fold long media and command logs, and rows past the sixth. -->
 
 | Behaviour | How | Outcome |
 | --- | --- | --- |
