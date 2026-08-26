@@ -13,7 +13,10 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
-import { getHiddenFieldsFromSearchParams } from "@/modules/survey/link/lib/hidden-fields";
+import {
+  getHiddenFieldsFromSearchParams,
+  warnOnMissingIngestRows,
+} from "@/modules/survey/link/lib/hidden-fields";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
 import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
 import { getSurveyLanguageTag, getWebAppLocale, isRTLLanguage } from "@/modules/survey/link/lib/utils";
@@ -132,6 +135,7 @@ export const SurveyClientWrapper = ({
   // diagnostic while duplicating a rule that already has one home.
   const ingestedStorageKeys = getIngestedStorageKeys(survey);
   const hiddenFieldsRecord = useMemo(() => {
+    warnOnMissingIngestRows(ingestedStorageKeys, survey.hiddenFields.fieldIds ?? []);
     return getHiddenFieldsFromSearchParams(ingestedStorageKeys, searchParams);
     // eslint-disable-next-line react-hooks/use-memo -- migration ENG-1677
   }, [searchParams, JSON.stringify(ingestedStorageKeys)]);
