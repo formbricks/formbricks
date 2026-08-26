@@ -192,11 +192,13 @@ jobs:
           formbricks:
             webappUrl: https://qa.example.com
 
-          llm:
-            enabled: true
-
           taxonomy:
             enabled: true
+            llm:
+              provider: openai-compatible
+              model: operator-selected-model
+              baseUrl: https://llm.example.com/v1
+              contextWindowTokens: "65536"
           YAML
 
           rendered="$(helm template qa charts/formbricks \
@@ -213,8 +215,12 @@ jobs:
             "value: \"http://formbricks-taxonomy:8000\"" \
             "name: HUB_INTERNAL_API_URL" \
             "value: \"http://formbricks-hub:8080\"" \
+            "name: TAXONOMY_LLM_PROVIDER" \
+            "value: \"openai-compatible\"" \
+            "name: TAXONOMY_LLM_MODEL" \
+            "value: \"operator-selected-model\"" \
             "name: TAXONOMY_LLM_BASE_URL" \
-            "value: \"http://qa-router-service:8000/v1\"" \
+            "value: \"https://llm.example.com/v1\"" \
             "key: TAXONOMY_SERVICE_TOKEN" \
             "key: HUB_INTERNAL_API_TOKEN"; do
             if ! grep -F "$expected" <<< "$rendered" >/dev/null; then
