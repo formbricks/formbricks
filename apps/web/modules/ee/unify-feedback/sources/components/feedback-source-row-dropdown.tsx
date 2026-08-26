@@ -57,6 +57,12 @@ export function FeedbackSourceRowDropdown({
     feedbackSource.type === "formbricks_survey" ? feedbackSource.formbricksMappings[0]?.surveyId : undefined;
 
   const handleReimport = async () => {
+    // The confirm button is already disabled while the import runs (Button applies
+    // `disabled={loading || disabled}` to `buttonLoading`), so a second run cannot be started from
+    // the dialog today. Guarding here as well keeps that invariant in this component instead of
+    // resting on the shared Button's loading behaviour.
+    if (isReimporting) return;
+
     setIsReimporting(true);
     try {
       await onReimport();
