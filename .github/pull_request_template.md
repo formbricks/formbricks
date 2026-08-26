@@ -1,9 +1,10 @@
 <!-- Title: Conventional Commits — https://www.conventionalcommits.org/en/v1.0.0/#summary -->
 
-<!-- BUDGET: ≤350 words outside `<details>` folds, fitting on one screen. Lists are ≤3 bullets of
-≤20 words, one idea each. Short sentences, plain words, present tense — write for a colleague who
-has not read the ticket: user-visible effect first, mechanism second. Anything longer goes in a
-fold, so nothing is lost. Never fold Coverage, Open gaps or Breaking changes. -->
+<!-- BUDGET: ≤350 words outside `<details>` folds — one screen. Lists are ≤3 bullets of ≤20 words,
+one idea each; the Coverage table is ≤6 rows. Short sentences, plain words, present tense, written
+for a colleague who has not read the ticket: user-visible effect first, mechanism second. Overflow
+folds rather than being dropped. Coverage, Open gaps and Breaking changes stay visible; only long
+media and Coverage rows past the sixth fold. -->
 
 <!-- NEVER WRITE — each of these reads as diligence and costs the reviewer a paragraph: blame
 archaeology (which commit introduced it, who touched what); a defence of a choice nobody questioned,
@@ -13,9 +14,9 @@ line already carries; bold on more than a phrase or two per section. No promotio
 advertising of yourself or any tool — the agent note at the bottom is the one exception. -->
 
 <!-- Complete the line below: `Fixes ENG-<id>`, or `Ref ENG-<id>` if this PR only partly addresses
-the ticket, so merging doesn't close it. The magic word has to come first — a bare URL links
-nothing — and this is the only line it may sit on: `Fixes ENG-…` anywhere else, backticks included,
-closes that ticket too. No ticket? Delete the line and say why. GitHub issue? `Fixes #<number>`.
+the ticket, so merging doesn't close it. The magic word comes first; a bare URL links nothing.
+This is the only line it may sit on — `Fixes ENG-…` anywhere else, backticks included, closes that
+ticket too. No ticket? Delete the line and say why. GitHub issue? `Fixes #<number>`.
 More: https://linear.app/docs/github -->
 
 Fixes ENG-
@@ -25,9 +26,9 @@ Fixes ENG-
 <!-- One sentence each, read off the diff rather than the commit titles. Up to 3 bullets after
 them, only for what they cannot carry. -->
 
-**Was:** <what was broken, or how it behaved before>
+**Was:** `<what was broken, or how it behaved before>`
 
-**Now:** <what happens after this PR>
+**Now:** `<what happens after this PR>`
 
 ## Where to look
 
@@ -99,9 +100,9 @@ Rerun: `<one command covering the table below>`
 <!-- ≤6 rows, one per behaviour the diff changes; Outcome ≤15 words of what you observed, naming the
 account, plan or flag state where it matters. `How` is one of `unit (red on main)`,
 `unit (mutation)`, `unit (guard)`, `e2e`, `manual` — AGENTS.md defines them and says how to pick the
-cheapest level that can fail. Give a `file:line` only where a row differs from `Rerun:`. UI work
-attaches the screenshot or clip, folded if long. More behaviours than rows? Group and fold the
-rest. -->
+cheapest level that can fail. Every `unit` and `e2e` row names the test or spec it rests on, in the
+row or in a `Rerun:` line that names it; add a `file:line` where the row differs from `Rerun:`. The
+table stays visible — fold long media, and rows past the sixth. -->
 
 | Behaviour | How | Outcome |
 | --- | --- | --- |
