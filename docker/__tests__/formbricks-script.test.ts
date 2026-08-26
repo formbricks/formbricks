@@ -1,6 +1,6 @@
 import { load } from "js-yaml";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -134,11 +134,14 @@ describe("docker/formbricks.sh Valkey image migration", () => {
 
     expect(originalCompose).toContain(multiArchValkeyImage);
     writeFileSync(composePath, originalCompose.replace(multiArchValkeyImage, legacyValkeyImage));
+    chmodSync(composePath, 0o600);
 
     const validationLogPath = migrateLegacyValkeyImage(composePath, "success");
 
     expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+    expect(statSync(composePath).mode & 0o777).toBe(0o600);
+    expect(statSync(`${composePath}.before-valkey-8.1.9`).mode & 0o777).toBe(0o600);
     expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
   });
 

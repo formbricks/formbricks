@@ -1015,6 +1015,7 @@ migrate_legacy_valkey_image() {
   fi
 
   cp -p "$compose_file" "$backup_file"
+  cp -p "$compose_file" "$temp_file"
 
   if ! awk -v legacy_image="$legacy_valkey_image" -v replacement_image="$multi_arch_valkey_image" '
     function indentation(line) {
