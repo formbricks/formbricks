@@ -305,6 +305,7 @@ export class CacheService {
 
     const fresh = await fn();
     // Guard against type-erased callers resolving undefined.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- types exclude undefined; this guards against type-erasure bugs
     if (fresh !== undefined) {
       const box: NullableCacheBox<T> = { [NULLABLE_BOX_MARKER]: true, value: fresh };
       await this.trySetCache(key, box, ttlMs);

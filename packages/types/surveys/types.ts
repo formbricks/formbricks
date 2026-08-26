@@ -1918,6 +1918,7 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
           }
 
           if (followUp.trigger.type === "endings") {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- endingIds is always defined
             if (!followUp.trigger.properties?.endingIds?.length) {
               ctx.addIssue({
                 code: "custom",

@@ -137,7 +137,11 @@ export const validateQuestionLabels = (
   // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
   for (const language of languages) {
-    if (!language.default && fieldLabel[language.language.code] === undefined) {
+    if (
+      !language.default &&
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- could be undefined
+      fieldLabel[language.language.code] === undefined
+    ) {
       return {
         code: "custom",
         input: fieldLabel,
@@ -197,7 +201,11 @@ export const validateCardFieldsForAllLanguages = (
   // even if one of the keys is an empty string, its okay but it shouldn't be undefined
 
   for (const language of languages) {
-    if (!language.default && fieldLabel[language.language.code] === undefined) {
+    if (
+      !language.default &&
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- could be undefined
+      fieldLabel[language.language.code] === undefined
+    ) {
       return {
         code: "custom",
         input: fieldLabel,
