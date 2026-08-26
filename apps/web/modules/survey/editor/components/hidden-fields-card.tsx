@@ -34,7 +34,7 @@ export const HiddenFieldsCard = ({
   setActiveElementId,
   setLocalSurvey,
   quotas,
-}: HiddenFieldsCardProps) => {
+}: Readonly<HiddenFieldsCardProps>) => {
   const open = activeElementId == "hidden";
   const [hiddenField, setHiddenField] = useState<string>("");
   const { t } = useTranslation();
@@ -207,8 +207,11 @@ export const HiddenFieldsCard = ({
                 existingEndingCardIds,
                 existingHiddenFieldIds,
                 existingVariableNames,
-                // New hidden fields follow the shared naming rule; already stored names are
-                // untouched and keep loading through the lenient survey schema.
+                // The editor's own strict rule, not a copy of the server's: since ENG-2539 the write
+                // path runs the weaker `declaredFieldPortable`, so this card is the boundary. Applies
+                // to new names only; already stored ones are untouched and keep loading through the
+                // lenient survey schema. Same call shape as `survey-variables-card-item.tsx`, so the
+                // two cards cannot drift.
                 { rule: "declaredFieldStrict" }
               );
 

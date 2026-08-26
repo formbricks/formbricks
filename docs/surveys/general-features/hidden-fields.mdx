@@ -31,17 +31,23 @@ way in recall, logic and exports.
 
 **Through the management API**, only one group of names is refused: ids reserved by the link-survey
 URL contract (`lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, `suToken`, `userId`,
-`source`, `suid`, `start`, `end`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`,
-`verify`). Those query params are never written onto a response, so a field declared under one could
-never receive a value. Everything else is accepted, including mixed-case and hyphenated ids, so a
-survey exported as JSON can always be re-created as it stands.
+`source`, `suid`, `start`, `end`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`,
+`verify`), matched case-insensitively. Those query params are never written onto a response, so a
+field declared under one could never receive a value.
+
+Any other id is accepted as long as it matches `[a-zA-Z0-9_-]+` — the same character rule the survey
+schema applies when a survey is read back, so an id it refuses could be created and then fail to
+load. Within that rule mixed-case, hyphenated and underscore-prefixed ids all pass, which is what
+lets a survey exported as JSON be re-created as it stands.
 
 <Note>
   An auto-captured field name — `url`, `country`, `language`, `timezone`, `pagePath`, `utmSource` and the rest
   — can be declared as a hidden field, and then **your** field wins inside that survey. It keeps its own value
   in recall, logic, filters and exports; the survey simply does not gain the auto-captured value under that
   name. Ids a survey already declares are never refused, so an existing survey keeps working however it is
-  named.
+  named. Precedence needs the **exact** name, unlike the refusal list above: `utmSource` wins over the
+  auto-captured `utmSource`, while `utmsource` is simply a different field and the survey carries both — so
+  copy the spelling above if you mean to override one.
 </Note>
 
 ## Set Hidden Field via URL

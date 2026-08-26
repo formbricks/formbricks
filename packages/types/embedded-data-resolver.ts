@@ -853,10 +853,17 @@ export const mergeReservedValues = (
  * `response.data` once it has been answered, so without it here `#recall:url#` would render the page
  * address until the respondent reaches that question and the author's fallback afterwards.
  *
- * Matching is exact, not case-insensitive. `RESERVED_FIELD_NAMES` refuses new declarations under any
- * casing, and for the legacy names that predate it the read namespace is itself case-sensitive:
+ * Matching is exact, not case-insensitive, because the read namespace is itself case-sensitive:
  * `response.data["Country"]` and a reserved `country` are two different keys, so dropping the entry
  * for a survey declaring `Country` would lose a value that resolves today.
+ *
+ * That used to be reinforced by `RESERVED_FIELD_NAMES` refusing every new declaration under any
+ * casing, and this doc used to lean on it. ENG-2539 ended that: the management API runs
+ * `declaredFieldPortable`, which skips the catalog check, so a survey can now be created declaring
+ * `utmsource` and will carry both its own field and the auto-captured `utmSource`. Deliberate — it
+ * is the state legacy surveys declaring `Country` are already in, and the alternative was a 400 on
+ * exactly the re-import ENG-2539 exists to unblock. Only the exact spelling shadows, and both docs
+ * surfaces say so rather than promising precedence for every casing.
  */
 export const dropShadowedReservedEntries = (
   entries: readonly TReservedFieldCatalogEntry[],

@@ -15,7 +15,7 @@ description: >
   `suToken`, `userId`,
 
   `source`, `suid`, `start`, `end`, `welcomeCard`, `hidden`, `verifiedEmail`,
-  `multiLanguage`,
+  `multiLanguage`, `embed`,
 
   `verify` - because those query params are never captured onto a response, so
   such a field could
@@ -30,6 +30,12 @@ description: >
 
   that survey: the survey keeps its own meaning, and simply does not gain that
   auto-captured value.
+
+  That precedence is matched EXACTLY, unlike the refusal list above: `utmSource`
+  overrides the
+
+  auto-captured `utmSource`, while `utmsource` is a different field and the
+  survey carries both.
 
   Ids a survey already declares are never refused, whatever they are, so an
   existing survey can

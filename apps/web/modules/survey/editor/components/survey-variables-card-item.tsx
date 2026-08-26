@@ -38,7 +38,7 @@ export const SurveyVariablesCardItem = ({
   setLocalSurvey,
   mode,
   quotas,
-}: SurveyVariablesCardItemProps) => {
+}: Readonly<SurveyVariablesCardItemProps>) => {
   const { t } = useTranslation();
   const form = useForm<TSurveyVariable>({
     defaultValues: variable ?? {
@@ -163,8 +163,11 @@ export const SurveyVariablesCardItem = ({
               rules={{
                 validate: (value) => {
                   /*
-                   * The same strict gate the server applies (ENG-1839), so an author learns here rather
-                   * than from an untranslated save error. `isSafeIdentifier` alone was not enough:
+                   * The editor's own strict gate, and since ENG-2539 the only place it applies: the
+                   * write path deliberately runs the weaker `declaredFieldPortable` rule, so this is
+                   * the boundary rather than an early copy of a server backstop. Refusing here is what
+                   * gets the author an inline translated message instead of an untranslated save
+                   * error. `isSafeIdentifier` alone was not enough:
                    * `country` satisfies it, so a variable named after an auto-captured system field was
                    * accepted by the editor and only refused by `validateNewDeclaredFieldNames` at save
                    * time. Same call shape as `hidden-fields-card.tsx`, so the two cards cannot drift.

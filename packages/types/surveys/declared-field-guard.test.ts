@@ -144,6 +144,7 @@ describe("validateNewDeclaredFieldNames", () => {
       // Relaxing the charset rule must not relax the shared checks: `ZSurveyHiddenFields` rejects a
       // space on the load path, so such a survey could be created and then fail to read back.
       expect(refusedNames({ existing: [], incoming: ["Team Size"] })).toEqual(["Team Size"]);
+      expect(refusedNamesStrict({ existing: [], incoming: ["Team Size"] })).toEqual(["Team Size"]);
     });
 
     test("allows an ordinary new name", () => {

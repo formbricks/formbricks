@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { RESERVED_FIELD_CATALOG, dropShadowedReservedEntries } from "../embedded-data-resolver";
 import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
 import {
   LINK_SURVEY_SYSTEM_PARAMS,
@@ -268,9 +269,44 @@ describe("validateId", () => {
       expect(validateId("user:name", ...noExistingIds, portable)?.code).toBe(
         TValidateIdErrorCode.InvalidChars
       );
-      expect(validateId("plan", [["plan"], [], [], []][0], [], [], [], portable)?.code).toBe(
-        TValidateIdErrorCode.Duplicate
-      );
+      expect(validateId("plan", ["plan"], [], [], [], portable)?.code).toBe(TValidateIdErrorCode.Duplicate);
+    });
+
+    test("a catalog name is accepted under any casing, and only the exact spelling shadows", () => {
+      // The API skips the catalog check entirely, so every casing of a catalog name is creatable.
+      // `dropShadowedReservedEntries` matches EXACTLY, so only the catalog's own spelling takes
+      // precedence; any other casing is simply a different field and the survey carries both. That
+      // pair is the decision, not an oversight (ENG-2539), and the docs state it in those terms - so
+      // this asserts both halves together. Deriving the casings from the catalog rather than listing
+      // them means an entry added later is covered without touching this test.
+      for (const entry of RESERVED_FIELD_CATALOG) {
+        // `source` is in both catalogs: unfillable wins, and no casing of it is creatable at all.
+        if (RESERVED_DECLARED_FIELD_NAMES.has(entry.name.toLowerCase())) continue;
+
+        const variants = [...new Set([entry.name.toUpperCase(), entry.name.toLowerCase()])].filter(
+          (variant) => variant !== entry.name
+        );
+
+        // The exact spelling: accepted, and it drops its own catalog entry.
+        expect(validateId(entry.name, ...noExistingIds, portable), entry.name).toBeNull();
+        expect(
+          dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, [entry.name]).map(({ name }) => name),
+          entry.name
+        ).not.toContain(entry.name);
+
+        for (const variant of variants) {
+          // Any other casing: also accepted, but it does NOT drop the entry.
+          expect(validateId(variant, ...noExistingIds, portable), variant).toBeNull();
+          expect(
+            dropShadowedReservedEntries(RESERVED_FIELD_CATALOG, [variant]).map(({ name }) => name),
+            variant
+          ).toContain(entry.name);
+          // ...and the editor refuses it outright, whatever the casing.
+          expect(validateId(variant, ...noExistingIds, strict)?.code, variant).toBe(
+            TValidateIdErrorCode.Reserved
+          );
+        }
+      }
     });
 
     test("neither declared-field rule touches the legacy id path", () => {
