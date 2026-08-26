@@ -264,7 +264,7 @@ No cloud LLM is hardwired into the chart. `taxonomy.llm.provider` defaults to th
 | Provider value | Use case | Provider-specific values |
 | --- | --- | --- |
 | `openai-compatible` | Bundled vLLM, OpenAI, or another compatible `/v1` endpoint | `baseUrl` and `existingSecret` |
-| `bedrock` | A model available through Amazon Bedrock | `bedrock.region`; AWS credentials use the standard SDK chain |
+| `bedrock` | A model available through Amazon Bedrock | `bedrock.region`; AWS credentials use the standard SDK chain and must be supplied through workload identity or a Secret |
 | `vertex-gemini` | Gemini through Google Vertex AI | `vertex.project`, `vertex.location`, and `vertex.existingSecret` |
 
 Only the selected adapter's environment variables and credentials are rendered. Provider-specific blocks for the
@@ -311,21 +311,30 @@ llm:
 taxonomy:
   enabled: true
   llm:
+    bundledModelSpecName: qwen
     structuredOutputMode: json-schema
     contextWindowTokens: "65536"
 ```
 
 When applying this as a Helm override, preserve the bundled model defaults and raise the selected model's
-`vllmConfig.maxModelLen` to the same value. Helm replaces lists supplied through values or `--set`, so copy the
-complete `modelSpec` entry into the override; a partial list item discards required image and resource fields.
+`vllmConfig.maxModelLen` to the same value. `taxonomy.llm.bundledModelSpecName` selects the enabled `modelSpec`
+entry whose deployment limit the chart checks. It may be omitted when exactly one model is enabled, but is
+required when multiple bundled models are enabled. Helm replaces lists supplied through values or `--set`, so
+copy the complete `modelSpec` entry into the override; a partial list item discards required image and resource
+fields.
 
 The bounded maximum-size hierarchy request requires at least 58,176 context tokens with the default output
 and reserve budgets. This uses a conservative one-token-per-UTF-8-byte input bound instead of an average
 tokenization ratio. The chart's general-purpose bundled vLLM default remains 8,192 tokens so existing
-non-taxonomy installs do not pay the KV-cache cost; taxonomy operators must explicitly raise the exact model
-deployment limit as shown above. Helm rejects a missing or undersized context budget and also rejects a bundled
-vLLM limit below that budget. Taxonomy images that implement `/ready` independently verify the exact external
-provider/model preflight.
+non-taxonomy installs do not pay the KV-cache cost; taxonomy operators must explicitly raise the selected model
+deployment limit as shown above. The chart requires the configured context window and, for a bundled model,
+checks it against that selected deployment's `maxModelLen`. Taxonomy startup and `/ready` remain authoritative
+for the full prompt, output, and reserve calculation and for external provider/model preflight.
+
+`taxonomy.maxClusters` remains configurable for upgrade compatibility, but production Taxonomy images enforce
+the 80-cluster quality invariant at startup. The Taxonomy and Hub runtimes likewise validate retry, timeout,
+heartbeat, stale-run, and total-run settings. Keep the default 30-second heartbeat well below the 1,800-second
+stale-run timeout; a heartbeat value of `0` intentionally disables heartbeats in supporting Taxonomy images.
 
 When `taxonomy.enabled=true`, the chart creates the taxonomy Deployment and Service, creates or uses the
 configured Secrets, then injects these Hub API env vars unless `taxonomy.autoConfigureHub=false`:
@@ -369,6 +378,21 @@ taxonomy:
     bedrock:
       region: us-east-1
 ```
+
+Prefer an IAM role delivered to the pod through EKS Pod Identity, IRSA, or the equivalent workload-identity
+mechanism for your cluster. Configure that association for the Kubernetes service account used by the Taxonomy
+pod. If role-based credentials are unavailable, create a Kubernetes Secret outside the values file and load it
+through `taxonomy.envFrom` so the AWS SDK can read `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and, when
+required, `AWS_SESSION_TOKEN`:
+
+```yaml
+taxonomy:
+  envFrom:
+    - secretRef:
+        name: taxonomy-aws-credentials
+```
+
+Never put AWS credentials in `taxonomy.env`, a committed values file, or `--set` arguments.
 
 The default `v0.1.0` taxonomy image exposes public `/health`, so the chart uses it for both liveness and readiness
 probes. Taxonomy images that implement the newer readiness contract also expose `/ready` for cached Hub-auth,
@@ -741,7 +765,8 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                                                                 |                                                           |
 | taxonomy.autoConfigureHub                                          | bool   | `true`                                                                      | Inject taxonomy service env vars into Hub API when taxonomy is enabled. |
 | taxonomy.enabled                                                   | bool   | `false`                                                                     | Deploy the optional standalone taxonomy service.          |
-| taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Positive Hub heartbeat interval; at most half the stale-run timeout. |
+| taxonomy.envFrom                                                   | list   | `[]`                                                                          | Secret or ConfigMap sources for Taxonomy runtime environment variables. |
+| taxonomy.heartbeatIntervalSeconds                                  | string | `"30"`                                                                      | Hub heartbeat interval; `0` intentionally disables heartbeats in supporting images. |
 | taxonomy.hubClientMaxAttempts                                      | string | `"3"`                                                                       | Maximum idempotent Hub callback/fetch attempts.            |
 | taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
 | taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"1800"`                                                                    | Hub stale-run timeout; lower only with a callback-heartbeating taxonomy image. |
@@ -749,6 +774,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
 | taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
 | taxonomy.llm.bedrock.region                                        | string | `""`                                                                        | AWS region for Bedrock; alternatively set `taxonomy.env.AWS_REGION`. |
+| taxonomy.llm.bundledModelSpecName                                  | string | `""`                                                                        | Enabled bundled `modelSpec` used by Taxonomy; required when multiple bundled models are enabled. |
 | taxonomy.llm.contextWindowTokens                                   | string | `""`                                                                        | Exact provider context window; required when taxonomy is enabled. |
 | taxonomy.llm.existingSecret                                        | string | `""`                                                                        | Existing secret containing `TAXONOMY_LLM_API_KEY`.        |
 | taxonomy.llm.labelMaxTokens                                        | string | `"4096"`                                                                    | Maximum cluster-label output tokens.                      |
@@ -765,6 +791,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | taxonomy.llm.vertex.location                                       | string | `""`                                                                        | Vertex AI location for Gemini taxonomy calls.             |
 | taxonomy.llm.vertex.project                                        | string | `""`                                                                        | Google Cloud project for Gemini taxonomy calls.           |
 | taxonomy.llm.vertex.thinkingBudget                                 | string | `"0"`                                                                       | Vertex Gemini thinking-token budget for taxonomy calls.   |
+| taxonomy.maxClusters                                               | string | `"80"`                                                                      | Compatibility value; production Taxonomy images enforce 80 at startup. |
 | taxonomy.runDeadlineSeconds                                        | string | `"900"`                                                                     | Total taxonomy run deadline.                              |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |
-| taxonomy.terminationGracePeriodSeconds                             | int    | `930`                                                                         | Pod grace period, at least run deadline plus 30 seconds.   |
+| taxonomy.terminationGracePeriodSeconds                             | int    | `930`                                                                         | Recommended pod grace period for the default 900-second run deadline. |

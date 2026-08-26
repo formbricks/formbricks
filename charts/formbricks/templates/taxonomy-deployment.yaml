@@ -23,58 +23,48 @@
 {{- if not (has $structuredOutputMode (list "auto" "prompt-only" "json-object" "json-schema")) }}
   {{- fail "taxonomy.llm.structuredOutputMode must be 'auto', 'prompt-only', 'json-object', or 'json-schema'" }}
 {{- end }}
-{{- if ne (int .Values.taxonomy.maxClusters) 80 }}
-  {{- fail "taxonomy.maxClusters must remain 80" }}
-{{- end }}
-{{- if or (lt (int .Values.taxonomy.llm.providerMaxAttempts) 1) (gt (int .Values.taxonomy.llm.providerMaxAttempts) 3) }}
-  {{- fail "taxonomy.llm.providerMaxAttempts must be between 1 and 3" }}
-{{- end }}
-{{- if or (lt (int .Values.taxonomy.llm.maxAttempts) 1) (gt (int .Values.taxonomy.llm.maxAttempts) 4) }}
-  {{- fail "taxonomy.llm.maxAttempts must be between 1 and 4" }}
-{{- end }}
-{{- if le (int .Values.taxonomy.llm.labelMaxTokens) 0 }}
-  {{- fail "taxonomy.llm.labelMaxTokens must be positive" }}
-{{- end }}
-{{- if le (int .Values.taxonomy.llm.treeMaxTokens) 0 }}
-  {{- fail "taxonomy.llm.treeMaxTokens must be positive" }}
-{{- end }}
-{{- if le (int .Values.taxonomy.llm.promptTokenReserve) 0 }}
-  {{- fail "taxonomy.llm.promptTokenReserve must be positive" }}
-{{- end }}
-{{- if le (int .Values.taxonomy.llm.timeoutSeconds) 0 }}
-  {{- fail "taxonomy.llm.timeoutSeconds must be positive" }}
-{{- end }}
-{{- if le (int .Values.taxonomy.hubClientTimeoutSeconds) 0 }}
-  {{- fail "taxonomy.hubClientTimeoutSeconds must be positive" }}
-{{- end }}
-{{- if or (lt (int .Values.taxonomy.hubClientMaxAttempts) 1) (gt (int .Values.taxonomy.hubClientMaxAttempts) 3) }}
-  {{- fail "taxonomy.hubClientMaxAttempts must be between 1 and 3" }}
-{{- end }}
-{{- if le (int .Values.taxonomy.runDeadlineSeconds) 0 }}
-  {{- fail "taxonomy.runDeadlineSeconds must be positive" }}
-{{- end }}
-{{- if and .Values.taxonomy.autoConfigureHub (le (int .Values.taxonomy.hubReaperIntervalSeconds) 0) }}
-  {{- fail "taxonomy.hubReaperIntervalSeconds must be positive when taxonomy.autoConfigureHub=true" }}
-{{- end }}
 {{- if not .Values.taxonomy.llm.contextWindowTokens }}
   {{- fail "taxonomy.llm.contextWindowTokens is required when taxonomy.enabled=true and must match the selected provider/model deployment" }}
 {{- end }}
-{{- if lt (int .Values.taxonomy.terminationGracePeriodSeconds) (add (int .Values.taxonomy.runDeadlineSeconds) 30) }}
-  {{- fail "taxonomy.terminationGracePeriodSeconds must be at least runDeadlineSeconds + 30" }}
-{{- end }}
-{{- $boundedHierarchyPromptTokens := add 4096 (mul (int .Values.taxonomy.maxClusters) 420) -}}
-{{- $minimumContext := add (int .Values.taxonomy.llm.treeMaxTokens) (int .Values.taxonomy.llm.promptTokenReserve) $boundedHierarchyPromptTokens -}}
-{{- if lt (int .Values.taxonomy.llm.contextWindowTokens) $minimumContext }}
-  {{- fail "taxonomy.llm.contextWindowTokens cannot fit the bounded 80-cluster hierarchy plan and safety reserve" }}
-{{- end }}
 {{- if and (eq $provider "openai-compatible") .Values.llm.enabled (not .Values.taxonomy.llm.baseUrl) }}
-  {{- if eq (len .Values.llm.servingEngineSpec.modelSpec) 0 }}
-    {{- fail "llm.servingEngineSpec.modelSpec must contain a model when taxonomy uses the bundled vLLM runtime" }}
+  {{- $enabledBundledModels := list -}}
+  {{- range $modelSpec := .Values.llm.servingEngineSpec.modelSpec }}
+    {{- if ne $modelSpec.enabled false }}
+      {{- $enabledBundledModels = append $enabledBundledModels $modelSpec -}}
+    {{- end }}
   {{- end }}
-  {{- $bundledModel := index .Values.llm.servingEngineSpec.modelSpec 0 -}}
-  {{- $bundledMaxModelLen := int $bundledModel.vllmConfig.maxModelLen -}}
+  {{- if eq (len $enabledBundledModels) 0 }}
+    {{- fail "llm.servingEngineSpec.modelSpec must contain an enabled model when taxonomy uses the bundled vLLM runtime" }}
+  {{- end }}
+  {{- $bundledModelSpecName := .Values.taxonomy.llm.bundledModelSpecName | default "" -}}
+  {{- $matchingBundledModels := list -}}
+  {{- if $bundledModelSpecName }}
+    {{- range $modelSpec := $enabledBundledModels }}
+      {{- if eq (get $modelSpec "name") $bundledModelSpecName }}
+        {{- $matchingBundledModels = append $matchingBundledModels $modelSpec -}}
+      {{- end }}
+    {{- end }}
+    {{- if ne (len $matchingBundledModels) 1 }}
+      {{- fail "taxonomy.llm.bundledModelSpecName must identify exactly one enabled llm.servingEngineSpec.modelSpec entry" }}
+    {{- end }}
+  {{- else }}
+    {{- if ne (len $enabledBundledModels) 1 }}
+      {{- fail "taxonomy.llm.bundledModelSpecName is required when more than one bundled model is enabled" }}
+    {{- end }}
+    {{- $matchingBundledModels = $enabledBundledModels -}}
+  {{- end }}
+  {{- $bundledModel := index $matchingBundledModels 0 -}}
+  {{- $bundledVllmConfig := get $bundledModel "vllmConfig" | default dict -}}
+  {{- $bundledMaxModelLenValue := get $bundledVllmConfig "maxModelLen" -}}
+  {{- if not (regexMatch "^[1-9][0-9]*$" (toString .Values.taxonomy.llm.contextWindowTokens)) }}
+    {{- fail "taxonomy.llm.contextWindowTokens must be a positive integer when taxonomy uses the bundled vLLM runtime" }}
+  {{- end }}
+  {{- if not (regexMatch "^[1-9][0-9]*$" (toString $bundledMaxModelLenValue)) }}
+    {{- fail "the selected bundled vLLM model vllmConfig.maxModelLen must be a positive integer" }}
+  {{- end }}
+  {{- $bundledMaxModelLen := int $bundledMaxModelLenValue -}}
   {{- if lt $bundledMaxModelLen (int .Values.taxonomy.llm.contextWindowTokens) }}
-    {{- fail "the bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
+    {{- fail "the selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
   {{- end }}
 {{- end }}
 {{- if and (eq $provider "bedrock") (not $bedrockRegion) (not $bedrockEnvRegion) }}
@@ -82,9 +72,6 @@
 {{- end }}
 {{- if and (eq $provider "bedrock") $bedrockRegion $bedrockEnvRegion }}
   {{- fail "set either taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION, not both" }}
-{{- end }}
-{{- if and .Values.taxonomy.autoConfigureHub (or (le (int .Values.taxonomy.heartbeatIntervalSeconds) 0) (gt (mul (int .Values.taxonomy.heartbeatIntervalSeconds) 2) (int .Values.taxonomy.hubStaleRunTimeoutSeconds))) }}
-  {{- fail "taxonomy.heartbeatIntervalSeconds must be positive and no more than half of taxonomy.hubStaleRunTimeoutSeconds when taxonomy.autoConfigureHub=true" }}
 {{- end }}
 {{- $managedTaxonomyOverrides := dict
   "TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE" "taxonomy.llm.structuredOutputMode"

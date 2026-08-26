@@ -34,6 +34,12 @@ jobs:
           chart="charts/formbricks"
           render_dir="$(mktemp -d)"
           trap 'rm -rf "$render_dir"' EXIT
+          bundled_model_spec='{"name":"qwen","enabled":true,"repository":"vllm/vllm-openai","tag":"v0.14.0","modelURL":"Qwen/Qwen3-14B-AWQ","replicaCount":1,"requestCPU":4,"requestMemory":"24Gi","limitCPU":8,"limitMemory":"32Gi","requestGPU":1,"requestGPUType":"nvidia.com/gpu","pvcStorage":"100Gi","runtimeClassName":"","shmSize":"8Gi","vllmConfig":{"maxModelLen":65536,"dtype":"float16","tensorParallelSize":1,"maxNumSeqs":8,"gpuMemoryUtilization":0.9,"extraArgs":[]},"lmcacheConfig":{"enabled":false},"keda":{"enabled":false}}'
+          single_bundled_model_spec="[$bundled_model_spec]"
+          multi_bundled_model_spec="$(jq -cn --argjson model "$bundled_model_spec" \
+            '[($model | .name = "small" | .vllmConfig.maxModelLen = 32768), ($model | .name = "large")]')"
+          disabled_bundled_model_spec="$(jq -cn --argjson model "$bundled_model_spec" \
+            '[($model | .name = "disabled-small" | .enabled = false | .vllmConfig.maxModelLen = 8192), ($model | .name = "large")]')"
 
           expect_taxonomy_render_failure() {
             local name="$1"
@@ -294,13 +300,32 @@ jobs:
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
             --set llm.enabled=true \
-            --set-json 'llm.servingEngineSpec.modelSpec=[{"name":"qwen","enabled":true,"repository":"vllm/vllm-openai","tag":"v0.14.0","modelURL":"Qwen/Qwen3-14B-AWQ","replicaCount":1,"requestCPU":4,"requestMemory":"24Gi","limitCPU":8,"limitMemory":"32Gi","requestGPU":1,"requestGPUType":"nvidia.com/gpu","pvcStorage":"100Gi","runtimeClassName":"","shmSize":"8Gi","vllmConfig":{"maxModelLen":65536,"dtype":"float16","tensorParallelSize":1,"maxNumSeqs":8,"gpuMemoryUtilization":0.9,"extraArgs":[]},"lmcacheConfig":{"enabled":false},"keda":{"enabled":false}}]' \
+            --set-json "llm.servingEngineSpec.modelSpec=$single_bundled_model_spec" \
             --set taxonomy.enabled=true \
             --set taxonomy.llm.structuredOutputMode=json-schema \
             --set-string taxonomy.llm.contextWindowTokens=65536 \
             --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-vllm.yaml"
           grep -A1 'name: TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE' "$render_dir/taxonomy-vllm.yaml" | grep -q 'value: "json-schema"'
           grep -q 'router-service:8000/v1' "$render_dir/taxonomy-vllm.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set llm.enabled=true \
+            --set-json "llm.servingEngineSpec.modelSpec=$multi_bundled_model_spec" \
+            --set taxonomy.enabled=true \
+            --set taxonomy.llm.bundledModelSpecName=large \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-vllm-selected-model.yaml"
+          grep -q 'router-service:8000/v1' "$render_dir/taxonomy-vllm-selected-model.yaml"
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set llm.enabled=true \
+            --set-json "llm.servingEngineSpec.modelSpec=$disabled_bundled_model_spec" \
+            --set taxonomy.enabled=true \
+            --set-string taxonomy.llm.contextWindowTokens=65536 \
+            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-vllm-disabled-model.yaml"
+          grep -q 'router-service:8000/v1' "$render_dir/taxonomy-vllm-disabled-model.yaml"
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -371,76 +396,6 @@ jobs:
             --set taxonomy.llm.structuredOutputMode=unsupported-mode
 
           expect_taxonomy_render_failure \
-            taxonomy-provider-attempts-invalid \
-            "taxonomy.llm.providerMaxAttempts must be between 1 and 3" \
-            --set-string taxonomy.llm.providerMaxAttempts=4
-
-          expect_taxonomy_render_failure \
-            taxonomy-semantic-attempts-invalid \
-            "taxonomy.llm.maxAttempts must be between 1 and 4" \
-            --set-string taxonomy.llm.maxAttempts=5
-
-          expect_taxonomy_render_failure \
-            taxonomy-label-budget-invalid \
-            "taxonomy.llm.labelMaxTokens must be positive" \
-            --set-string taxonomy.llm.labelMaxTokens=0
-
-          expect_taxonomy_render_failure \
-            taxonomy-tree-budget-invalid \
-            "taxonomy.llm.treeMaxTokens must be positive" \
-            --set-string taxonomy.llm.treeMaxTokens=0
-
-          expect_taxonomy_render_failure \
-            taxonomy-prompt-reserve-invalid \
-            "taxonomy.llm.promptTokenReserve must be positive" \
-            --set-string taxonomy.llm.promptTokenReserve=0
-
-          expect_taxonomy_render_failure \
-            taxonomy-provider-timeout-invalid \
-            "taxonomy.llm.timeoutSeconds must be positive" \
-            --set-string taxonomy.llm.timeoutSeconds=0
-
-          expect_taxonomy_render_failure \
-            taxonomy-hub-timeout-invalid \
-            "taxonomy.hubClientTimeoutSeconds must be positive" \
-            --set-string taxonomy.hubClientTimeoutSeconds=0
-
-          expect_taxonomy_render_failure \
-            taxonomy-hub-attempts-invalid \
-            "taxonomy.hubClientMaxAttempts must be between 1 and 3" \
-            --set-string taxonomy.hubClientMaxAttempts=0
-
-          expect_taxonomy_render_failure \
-            taxonomy-hub-attempts-too-many \
-            "taxonomy.hubClientMaxAttempts must be between 1 and 3" \
-            --set-string taxonomy.hubClientMaxAttempts=4
-
-          expect_taxonomy_render_failure \
-            taxonomy-run-deadline-invalid \
-            "taxonomy.runDeadlineSeconds must be positive" \
-            --set-string taxonomy.runDeadlineSeconds=0
-
-          expect_taxonomy_render_failure \
-            taxonomy-reaper-interval-invalid \
-            "taxonomy.hubReaperIntervalSeconds must be positive" \
-            --set-string taxonomy.hubReaperIntervalSeconds=0
-
-          expect_taxonomy_render_failure \
-            taxonomy-grace-invalid \
-            "taxonomy.terminationGracePeriodSeconds must be at least" \
-            --set taxonomy.terminationGracePeriodSeconds=929
-
-          expect_taxonomy_render_failure \
-            taxonomy-heartbeat-invalid \
-            "taxonomy.heartbeatIntervalSeconds must be positive and no more than half" \
-            --set-string taxonomy.heartbeatIntervalSeconds=901
-
-          expect_taxonomy_render_failure \
-            taxonomy-heartbeat-disabled \
-            "taxonomy.heartbeatIntervalSeconds must be positive and no more than half" \
-            --set-string taxonomy.heartbeatIntervalSeconds=0
-
-          expect_taxonomy_render_failure \
             taxonomy-bedrock-region-missing \
             "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required" \
             --set taxonomy.llm.provider=bedrock
@@ -468,6 +423,37 @@ jobs:
             "set taxonomy.hubReaperIntervalSeconds instead of hub.env.TAXONOMY_REAPER_INTERVAL_SECONDS" \
             --set-string hub.env.TAXONOMY_REAPER_INTERVAL_SECONDS=30
 
+          expect_taxonomy_render_failure \
+            taxonomy-vllm-model-selector-required \
+            "taxonomy.llm.bundledModelSpecName is required when more than one bundled model is enabled" \
+            --set llm.enabled=true \
+            --set-string taxonomy.llm.baseUrl= \
+            --set-json "llm.servingEngineSpec.modelSpec=$multi_bundled_model_spec"
+
+          expect_taxonomy_render_failure \
+            taxonomy-vllm-model-selector-missing \
+            "taxonomy.llm.bundledModelSpecName must identify exactly one enabled" \
+            --set llm.enabled=true \
+            --set-string taxonomy.llm.baseUrl= \
+            --set taxonomy.llm.bundledModelSpecName=missing \
+            --set-json "llm.servingEngineSpec.modelSpec=$multi_bundled_model_spec"
+
+          expect_taxonomy_render_failure \
+            taxonomy-vllm-selected-context-invalid \
+            "selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" \
+            --set llm.enabled=true \
+            --set-string taxonomy.llm.baseUrl= \
+            --set taxonomy.llm.bundledModelSpecName=small \
+            --set-json "llm.servingEngineSpec.modelSpec=$multi_bundled_model_spec"
+
+          expect_taxonomy_render_failure \
+            taxonomy-vllm-context-not-numeric \
+            "taxonomy.llm.contextWindowTokens must be a positive integer when taxonomy uses the bundled vLLM runtime" \
+            --set llm.enabled=true \
+            --set-string taxonomy.llm.baseUrl= \
+            --set-string taxonomy.llm.contextWindowTokens=not-a-number \
+            --set-json "llm.servingEngineSpec.modelSpec=$single_bundled_model_spec"
+
           if helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
             --set llm.enabled=true \
@@ -478,7 +464,7 @@ jobs:
             echo "Expected bundled vLLM context above maxModelLen to fail" >&2
             exit 1
           fi
-          grep -q 'bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens' \
+          grep -q 'selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens' \
             "$render_dir/taxonomy-vllm-context-invalid.yaml"
 
           helm template qa "$chart" \
@@ -491,28 +477,6 @@ jobs:
             --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-upgrade.yaml"
           grep -A1 'name: TAXONOMY_MAX_RECORDS' "$render_dir/taxonomy-upgrade.yaml" | grep -q 'value: "50000"'
           grep -A1 'name: TAXONOMY_LLM_SUBTREE_MAX_CLUSTERS' "$render_dir/taxonomy-upgrade.yaml" | grep -q 'value: "30"'
-
-          if helm template qa "$chart" \
-            --set formbricks.webappUrl=https://qa.example.com \
-            --set taxonomy.enabled=true \
-            --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
-            --set-string taxonomy.llm.contextWindowTokens=32768 \
-            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-context-invalid.yaml" 2>&1; then
-            echo "Expected an impossible taxonomy context budget to fail" >&2
-            exit 1
-          fi
-          grep -q 'cannot fit the bounded 80-cluster hierarchy plan' "$render_dir/taxonomy-context-invalid.yaml"
-
-          if helm template qa "$chart" \
-            --set formbricks.webappUrl=https://qa.example.com \
-            --set taxonomy.enabled=true \
-            --set taxonomy.llm.baseUrl=https://llm.example.com/v1 \
-            --set-string taxonomy.maxClusters=79 \
-            --show-only templates/taxonomy-deployment.yaml > "$render_dir/taxonomy-clusters-invalid.yaml" 2>&1; then
-            echo "Expected taxonomy.maxClusters below 80 to fail" >&2
-            exit 1
-          fi
-          grep -q 'taxonomy.maxClusters must remain 80' "$render_dir/taxonomy-clusters-invalid.yaml"
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

@@ -383,6 +383,9 @@ taxonomy:
     model: qwen3-14b-awq
     # Defaults to the bundled vLLM router URL when llm.enabled=true. Required otherwise.
     baseUrl: ""
+    # Selects the enabled llm.servingEngineSpec.modelSpec entry used by taxonomy. It may
+    # remain empty only when exactly one bundled model is enabled.
+    bundledModelSpecName: ""
     # Existing secret must contain apiKeySecretKey. When unset, the chart creates a non-empty dummy key.
     existingSecret: ""
     apiKeySecretKey: TAXONOMY_LLM_API_KEY
@@ -391,7 +394,8 @@ taxonomy:
     # auto delegates the output mode to the selected runtime adapter. Set json-schema
     # explicitly only when the exact provider/model deployment passes preflight.
     structuredOutputMode: auto
-    # Must match the exact configured provider/model deployment. It may remain empty while
+    # Must match the exact configured provider/model deployment. Taxonomy validates its
+    # complete prompt/output budget during startup and readiness. It may remain empty while
     # taxonomy is disabled, but is required when taxonomy.enabled=true.
     contextWindowTokens: ""
     labelMaxTokens: "4096"
@@ -415,10 +419,14 @@ taxonomy:
   embeddingDimension: "768"
   minEmbeddedRecords: "20"
   maxRecords: "10000"
+  # Kept as a chart value for configuration compatibility. Production Taxonomy images
+  # enforce the 80-cluster quality invariant at startup.
   maxClusters: "80"
   randomSeed: "42"
   hubClientTimeoutSeconds: "120"
   hubClientMaxAttempts: "3"
+  # Set to 0 only when intentionally disabling Taxonomy heartbeats. Keep the default well
+  # below hubStaleRunTimeoutSeconds for normal production operation.
   heartbeatIntervalSeconds: "30"
   runDeadlineSeconds: "900"
   # Keep this compatible with the default v0.1.0 image, which does not heartbeat through
