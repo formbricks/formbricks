@@ -4095,7 +4095,7 @@
       "refresh_feedback_records": "Actualizar los registros de comentarios",
       "refreshing_feedback_records": "Actualizando registros de comentarios...",
       "reimport_historic_data": "Reimportar datos históricos",
-      "reimport_historic_data_confirmation": "Esto lee cada respuesta que la encuesta vinculada ha recopilado y la vuelve a escribir en esta fuente. Los registros cuyas respuestas han cambiado se actualizan y los que faltan se añaden — nada se duplica, y la configuración de importación de la fuente sigue decidiendo si se incluyen las respuestas parciales. Las encuestas grandes pueden tardar un rato.",
+      "reimport_historic_data_confirmation": "Esto lee cada respuesta que la encuesta vinculada ha recopilado y la escribe de nuevo en esta fuente. Las respuestas que han cambiado se actualizan y se añaden los registros que faltan; nada se duplica, y la configuración de importación de la fuente sigue decidiendo si se incluyen las respuestas parciales. Las etiquetas y tipos de preguntas no se reescriben en los registros que ya fueron importados. Las encuestas grandes pueden tardar un rato.",
       "reimport_historic_data_cta": "Reimportar",
       "reimport_historic_data_description": "Esto se puede ejecutar de nuevo en cualquier momento.",
       "reimport_no_survey_mapped": "Esta fuente no tiene ninguna encuesta asignada, así que no hay nada que reimportar.",

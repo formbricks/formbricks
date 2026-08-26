@@ -4095,7 +4095,7 @@
       "refresh_feedback_records": "Reîmprospătează înregistrările de feedback",
       "refreshing_feedback_records": "Se actualizează înregistrările de feedback...",
       "reimport_historic_data": "Reimportă datele istorice",
-      "reimport_historic_data_confirmation": "Aceasta citește fiecare răspuns colectat de sondajul conectat și îl scrie din nou în această sursă. Înregistrările ale căror răspunsuri s-au modificat sunt actualizate, iar cele lipsă sunt adăugate — nimic nu este duplicat, iar setarea de import a sursei decide în continuare dacă răspunsurile parțiale sunt incluse. Sondajele mari pot dura ceva timp.",
+      "reimport_historic_data_confirmation": "Aceasta citește fiecare răspuns colectat de chestionarul conectat și îl scrie din nou în această sursă. Răspunsurile care s-au modificat sunt actualizate, iar înregistrările lipsă sunt adăugate — nimic nu este duplicat, iar setarea de import a sursei decide în continuare dacă răspunsurile parțiale sunt incluse. Etichetele și tipurile de întrebări nu sunt rescrise pe înregistrările deja importate. Chestionarele mari pot dura ceva timp.",
       "reimport_historic_data_cta": "Reimportă",
       "reimport_historic_data_description": "Acest lucru poate fi executat din nou oricând.",
       "reimport_no_survey_mapped": "Această sursă nu are niciun sondaj asociat, așa că nu există nimic de reimportat.",

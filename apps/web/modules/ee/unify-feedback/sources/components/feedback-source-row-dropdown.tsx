@@ -115,9 +115,13 @@ export function FeedbackSourceRowDropdown({
 
             {canReimport && (
               <>
-                <DropdownMenuItem>
+                {/* Disabled while a run is in flight: re-opening the dialog would show a spinning,
+                    disabled Re-import button with nothing explaining why, and the in-flight run's
+                    `finally` would then close the dialog the user had just re-opened. */}
+                <DropdownMenuItem disabled={isReimporting}>
                   <button
                     type="button"
+                    disabled={isReimporting}
                     className="flex w-full items-center"
                     onClick={(e) => {
                       e.preventDefault();
@@ -210,6 +214,10 @@ export function FeedbackSourceRowDropdown({
         buttonText={t("workspace.unify.reimport_historic_data_cta")}
         buttonVariant="default"
         buttonLoading={isReimporting}
+        // A long import is exactly when a stray outside click is most costly: it would drop the
+        // dialog while the request is in flight. Cancel and the X stay live — leaving on purpose is
+        // fine, losing the dialog by accident is not.
+        closeOnOutsideClick={!isReimporting}
         onConfirm={handleReimport}
         Icon={RefreshCwIcon}
       />

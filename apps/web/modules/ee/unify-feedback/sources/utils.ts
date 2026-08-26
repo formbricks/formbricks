@@ -54,12 +54,22 @@ export const getMappedSurveyIds = (feedbackSource: TFeedbackSourceWithMappings):
 ];
 
 /**
- * Whether "Re-import historic data" applies to a source. Only Formbricks sources replay responses
- * (`importHistoricalResponses` rejects every other type), and only one that names a survey has
- * anything to replay from.
+ * Whether "Re-import historic data" applies to a source.
+ *
+ * Only Formbricks sources replay responses (`importHistoricalResponses` rejects every other type),
+ * and only one that names a survey has anything to replay from.
+ *
+ * `status` is part of the gate because pausing a source is the user's switch for stopping it
+ * writing into its feedback directory — the live pipeline honours it (`getFeedbackSourcesBySurveyId`
+ * filters `status: "active"`). Neither the action nor the import re-checks status, so without this
+ * the menu would offer to replay a whole response history into a directory the user had just
+ * paused the source to keep out of. Create-time import could never reach that case: a source is
+ * active the moment it is created.
  */
 export const canReimportHistoricalData = (feedbackSource: TFeedbackSourceWithMappings): boolean =>
-  feedbackSource.type === "formbricks_survey" && getMappedSurveyIds(feedbackSource).length > 0;
+  feedbackSource.type === "formbricks_survey" &&
+  feedbackSource.status === "active" &&
+  getMappedSurveyIds(feedbackSource).length > 0;
 
 /**
  * Counts from a historical import. Structurally identical to `TImportResult` in

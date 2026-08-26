@@ -627,6 +627,7 @@ describe("re-import historic data", () => {
     ({
       id: "fs1",
       type: "formbricks_survey",
+      status: "active",
       formbricksMappings: [],
       ...overrides,
     }) as TFeedbackSourceWithMappings;
@@ -671,6 +672,18 @@ describe("re-import historic data", () => {
       const csvSource = buildSource({ type: "csv", formbricksMappings: [mapping("survey1", "q1")] });
 
       expect(canReimportHistoricalData(csvSource)).toBe(false);
+    });
+
+    test("does not apply to a paused source, whose owner switched off writes to the directory", () => {
+      const paused = buildSource({ status: "paused", formbricksMappings: [mapping("survey1", "q1")] });
+
+      expect(canReimportHistoricalData(paused)).toBe(false);
+    });
+
+    test("does not apply to an errored source, which the live pipeline also skips", () => {
+      const errored = buildSource({ status: "error", formbricksMappings: [mapping("survey1", "q1")] });
+
+      expect(canReimportHistoricalData(errored)).toBe(false);
     });
   });
 

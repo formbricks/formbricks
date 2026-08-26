@@ -4095,7 +4095,7 @@
       "refresh_feedback_records": "Atualizar registos de feedback",
       "refreshing_feedback_records": "A atualizar registos de feedback...",
       "reimport_historic_data": "Reimportar dados históricos",
-      "reimport_historic_data_confirmation": "Isto lê todas as respostas que o questionário associado recolheu e volta a escrevê-las nesta fonte. Os registos cujas respostas mudaram são atualizados e os que estão em falta são adicionados — nada é duplicado, e a definição de importação da fonte continua a decidir se as respostas parciais são incluídas. Questionários grandes podem demorar algum tempo.",
+      "reimport_historic_data_confirmation": "Isto lê todas as respostas que o inquérito associado recolheu e volta a escrevê-las nesta fonte. As respostas que foram alteradas são atualizadas e os registos em falta são adicionados — nada é duplicado, e a definição de importação da fonte continua a decidir se as respostas parciais são incluídas. Os rótulos e tipos de perguntas não são reescritos nos registos que já foram importados. Inquéritos grandes podem demorar algum tempo.",
       "reimport_historic_data_cta": "Reimportar",
       "reimport_historic_data_description": "Isto pode ser executado novamente a qualquer momento.",
       "reimport_no_survey_mapped": "Esta fonte não tem nenhum questionário associado, portanto não há nada para reimportar.",

@@ -4095,7 +4095,7 @@
       "refresh_feedback_records": "Visszajelzési rekordok frissítése",
       "refreshing_feedback_records": "Visszajelzési rekordok frissítése…",
       "reimport_historic_data": "Történeti adatok újraimportálása",
-      "reimport_historic_data_confirmation": "Ez a művelet beolvassa a kapcsolt felmérés által gyűjtött összes választ, és újra beírja őket ebbe a forrásba. Azok a rekordok, amelyek válaszai megváltoztak, frissülnek, és a hiányzó rekordok hozzáadásra kerülnek – semmi sem duplikálódik, és a forrás importálási beállítása továbbra is meghatározza, hogy a részleges válaszok szerepeljenek-e. A nagy felmérések feldolgozása hosszabb időt vehet igénybe.",
+      "reimport_historic_data_confirmation": "Ez beolvassa a kapcsolt felmérés által összegyűjtött minden választ, és újra beírja azokat ebbe a forrásba. A megváltozott válaszok frissítésre kerülnek, a hiányzó rekordok hozzáadásra kerülnek — semmi sem duplikálódik, és a forrás importálási beállítása továbbra is meghatározza, hogy a részleges válaszok bekerülnek-e. A kérdések címkéi és típusai nem kerülnek újraírásra azokon a rekordokon, amelyek már importálásra kerültek. A nagy felmérések feldolgozása hosszabb időt vehet igénybe.",
       "reimport_historic_data_cta": "Újraimportálás",
       "reimport_historic_data_description": "Ez bármikor újrafuttatható.",
       "reimport_no_survey_mapped": "Ehhez a forráshoz nincs hozzárendelve felmérés, így nincs mit újraimportálni.",

@@ -4095,7 +4095,7 @@
       "refresh_feedback_records": "Feedbackrecords verversen",
       "refreshing_feedback_records": "Feedbackrecords vernieuwen...",
       "reimport_historic_data": "Historische gegevens opnieuw importeren",
-      "reimport_historic_data_confirmation": "Dit leest elke respons die de gekoppelde enquête heeft verzameld en schrijft deze opnieuw naar deze bron. Records waarvan de antwoorden zijn gewijzigd worden bijgewerkt en ontbrekende records worden toegevoegd — niets wordt gedupliceerd, en de importinstelling van de bron bepaalt nog steeds of gedeeltelijke reacties worden meegenomen. Grote enquêtes kunnen even duren.",
+      "reimport_historic_data_confirmation": "Dit leest elke respons die de gekoppelde enquête heeft verzameld en schrijft deze opnieuw naar deze bron. Gewijzigde antwoorden worden bijgewerkt en ontbrekende records worden toegevoegd — er wordt niets gedupliceerd, en de importinstelling van de bron bepaalt nog steeds of gedeeltelijke responsen worden opgenomen. Vraagbenamingen en -typen worden niet herschreven voor records die al zijn geïmporteerd. Grote enquêtes kunnen even duren.",
       "reimport_historic_data_cta": "Opnieuw importeren",
       "reimport_historic_data_description": "Dit kan op elk moment opnieuw worden uitgevoerd.",
       "reimport_no_survey_mapped": "Deze bron heeft geen gekoppelde enquête, dus er is niets om opnieuw te importeren.",

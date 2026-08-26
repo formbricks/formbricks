@@ -4095,7 +4095,7 @@
       "refresh_feedback_records": "Refresh feedback records",
       "refreshing_feedback_records": "Refreshing feedback records...",
       "reimport_historic_data": "Re-import historic data",
-      "reimport_historic_data_confirmation": "This reads every response the linked survey has collected and writes it into this source again. Records whose answers changed are updated and any that are missing are added — nothing is duplicated, and the source's import setting still decides whether partial responses are included. Large surveys can take a while.",
+      "reimport_historic_data_confirmation": "This reads every response the linked survey has collected and writes it into this source again. Answers that changed are updated and missing records are added — nothing is duplicated, and the source's import setting still decides whether partial responses are included. Question labels and types are not rewritten on records that were already imported. Large surveys can take a while.",
       "reimport_historic_data_cta": "Re-import",
       "reimport_historic_data_description": "This can be run again at any time.",
       "reimport_no_survey_mapped": "This source has no survey mapped, so there is nothing to re-import.",

@@ -221,13 +221,7 @@ export function FeedbackSourcesSection({
       });
 
       if (importResult?.data) {
-        toast.success(
-          t("workspace.unify.historical_import_complete", {
-            successes: importResult.data.successes,
-            failures: importResult.data.failures,
-            skipped: importResult.data.skipped,
-          })
-        );
+        notifyImportResult(importResult.data);
       } else {
         // The source was created; only the historical import failed.
         toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
@@ -240,16 +234,41 @@ export function FeedbackSourcesSection({
   };
 
   /**
-   * Replays the linked survey's historic responses into this source again, so a mapping fixed after
-   * the first import no longer needs the source deleted and rebuilt (ENG-1889).
+   * A failed import does not throw: `reconcileFeedbackRecords` folds per-record errors into
+   * `failures` and the action resolves normally, so a Hub outage returns
+   * `{ successes: 0, failures: N }`. Reporting that as a green toast made a run that wrote nothing
+   * look identical to the happy path.
+   */
+  const notifyImportResult = ({ successes, failures, skipped }: TFeedbackImportTotals): void => {
+    const message = t("workspace.unify.historical_import_complete", { successes, failures, skipped });
+
+    if (failures > 0) {
+      toast.error(message);
+      return;
+    }
+
+    toast.success(message);
+  };
+
+  /**
+   * Replays the linked survey's historic responses into this source again, so questions added to the
+   * mapping after the first import no longer need the source deleted and rebuilt (ENG-1889).
    *
    * Safe to run repeatedly: `importHistoricalResponses` reconciles rather than inserts, and carries
    * a `snapshotAt` so a record the live pipeline has since corrected is not reverted to this older
    * copy. It also honours the source's saved `importMode`, so a re-import never widens a
    * completed-only source to partials.
+   *
+   * What it does NOT repair: a question whose mapped `hubFieldType` changed. `field_type` and
+   * `field_label` identify a record on create and are absent from Hub's update request (see
+   * `UPDATE_FIELD_KEYS` in `lib/feedback-source/reconcile.ts`), so an already-imported record keeps
+   * its original type and only gains the new value column. Fixing that belongs in `reconcile.ts`.
    */
   const handleReimportHistoricalData = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
     const surveyIds = getMappedSurveyIds(feedbackSource);
+    // Unreachable from the menu, which renders the item only under `canReimportHistoricalData` —
+    // itself this same predicate. Kept so a future caller of `onReimport` that does not gate fails
+    // loudly instead of running an import that reports "0 succeeded".
     if (surveyIds.length === 0) {
       toast.error(t("workspace.unify.reimport_no_survey_mapped"));
       return;
@@ -275,10 +294,7 @@ export function FeedbackSourcesSection({
         totals.push(importResult.data);
       }
 
-      const { successes, failures, skipped } = sumImportTotals(totals);
-      // Spelled out rather than spread: t()'s options parameter is typed against i18next's
-      // $Dictionary, which an interface does not satisfy.
-      toast.success(t("workspace.unify.historical_import_complete", { successes, failures, skipped }));
+      notifyImportResult(sumImportTotals(totals));
     } catch {
       toast.error(t("common.something_went_wrong"));
       return;

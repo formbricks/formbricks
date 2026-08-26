@@ -4095,7 +4095,7 @@
       "refresh_feedback_records": "重新整理回饋紀錄",
       "refreshing_feedback_records": "正在更新回饋紀錄…",
       "reimport_historic_data": "重新匯入歷史資料",
-      "reimport_historic_data_confirmation": "這將讀取已連結問卷所收集的每一筆回應，並重新寫入此資料來源。答案有變更的記錄會被更新，遺漏的記錄會被新增——不會產生重複資料，且資料來源的匯入設定仍會決定是否包含部分回應。大型問卷可能需要較長時間。",
+      "reimport_historic_data_confirmation": "這會讀取已連結問卷收集到的每一個回應，並再次寫入此資料來源。變更的答案會更新，遺漏的記錄會新增——不會產生重複資料，而且資料來源的匯入設定仍會決定是否包含部分回應。問題標籤和類型不會在已匯入的記錄上重新寫入。大型問卷可能需要一些時間。",
       "reimport_historic_data_cta": "重新匯入",
       "reimport_historic_data_description": "你可以隨時再次執行此操作。",
       "reimport_no_survey_mapped": "此資料來源尚未對應問卷，因此無法重新匯入。",

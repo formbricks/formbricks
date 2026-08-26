@@ -4095,7 +4095,7 @@
       "refresh_feedback_records": "Geri bildirim kayıtlarını yenile",
       "refreshing_feedback_records": "Geri bildirim kayıtları yenileniyor...",
       "reimport_historic_data": "Geçmiş verileri yeniden içe aktar",
-      "reimport_historic_data_confirmation": "Bu işlem, bağlı anketin topladığı her yanıtı okur ve bu kaynağa tekrar yazar. Yanıtları değişen kayıtlar güncellenir ve eksik olanlar eklenir — hiçbir şey kopyalanmaz ve kaynağın içe aktarma ayarı, kısmi yanıtların dahil edilip edilmeyeceğine karar verir. Büyük anketler biraz zaman alabilir.",
+      "reimport_historic_data_confirmation": "Bu işlem, bağlı anketin topladığı tüm yanıtları okur ve bu kaynağa yeniden yazar. Değişen yanıtlar güncellenir ve eksik kayıtlar eklenir — hiçbir şey kopyalanmaz ve kaynağın içe aktarma ayarı kısmi yanıtların dahil edilip edilmeyeceğine hâlâ karar verir. Soru etiketleri ve türleri, önceden içe aktarılmış kayıtlarda yeniden yazılmaz. Büyük anketler biraz zaman alabilir.",
       "reimport_historic_data_cta": "Yeniden içe aktar",
       "reimport_historic_data_description": "Bu işlem istediğin zaman tekrar çalıştırılabilir.",
       "reimport_no_survey_mapped": "Bu kaynakla eşleştirilmiş bir anket yok, bu yüzden yeniden içe aktarılacak bir şey yok.",
