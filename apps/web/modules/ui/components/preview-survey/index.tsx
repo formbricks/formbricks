@@ -72,12 +72,28 @@ export const PreviewSurvey = ({
   const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
 
   // Placement mirrors with the previewed language, exactly as the shipped widget does — see
-  // `mirrorPlacementForDir`. The check runs on the preview's own language selection rather than the
-  // survey's default, so switching the preview to Arabic moves the popup the same way a respondent
-  // reading it in Arabic will see it.
+  // `mirrorPlacementForDir`.
+  //
+  // The input is the language the RENDERED SURVEY is actually on, not the `languageCode` prop. The
+  // previewed survey carries its own language switch (`getShowLanguageSwitch` in survey.tsx gates only
+  // on `showLanguageSwitch` and the enabled-language count, so it is present in preview mode too), and
+  // an author who uses it changes the survey's direction without touching this prop. Keying the mirror
+  // on the prop alone left an LTR survey sitting in the RTL corner on exactly that path — the
+  // contradiction between preview and shipped widget this is here to remove.
+  //
+  // Tracked in local state rather than reported up through `setLanguageCode`: that state is the
+  // editor's *editing* language and also drives the question pane (`survey-editor.tsx`), so a language
+  // switch inside the preview must not retarget what the author is typing into.
+  const [activeLanguageCode, setActiveLanguageCode] = useState(languageCode);
+
+  // The chrome's own language dropdown still wins — it moves the prop, and the survey re-renders on it.
+  useEffect(() => {
+    setActiveLanguageCode(languageCode);
+  }, [languageCode]);
+
   const placement = mirrorPlacementForDir(
     surveyPlacement || workspace.placement,
-    isRTLLanguage(toJsWorkspaceStateSurvey(survey), languageCode) ? "rtl" : "ltr"
+    isRTLLanguage(toJsWorkspaceStateSurvey(survey), activeLanguageCode) ? "rtl" : "ltr"
   );
   const overlay = surveyOverlay ?? workspace.overlay;
   const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
@@ -295,6 +311,7 @@ export const PreviewSurvey = ({
                         setBlockId = f;
                       }}
                       onFinished={onFinished}
+                      onLanguageChange={setActiveLanguageCode}
                       placement={placement}
                       isSpamProtectionEnabled={isSpamProtectionEnabled}
                     />
@@ -429,6 +446,7 @@ export const PreviewSurvey = ({
                       setBlockId = f;
                     }}
                     onFinished={onFinished}
+                    onLanguageChange={setActiveLanguageCode}
                     isSpamProtectionEnabled={isSpamProtectionEnabled}
                     placement={placement}
                   />
