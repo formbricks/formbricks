@@ -1,3 +1,6 @@
+import { Logger } from "@/lib/common/logger";
+import { type TTrackProperties } from "@/types/survey";
+
 /** What a host page may hand to `setEmbeddedData`. `null` removes the key; `undefined` is a no-op. */
 export type TEmbeddedDataInput = Record<string, string | number | boolean | Date | null | undefined>;
 
@@ -43,6 +46,18 @@ export class EmbeddedDataStore {
    * type arrives as `undefined` and must not clear the value a previous page set.
    */
   public setEmbeddedData(data: TEmbeddedDataInput): void {
+    // Guarded rather than thrown: this is the one SDK entry point outside the command queue's
+    // `wrapThrowsAsync` shield (it is deliberately synchronous), and the GTM pattern this feature
+    // targets can hand over an absent object — `setEmbeddedData(dataLayerObj)` on a page type where
+    // that object is undefined. A broken tag is a worse failure than a skipped write. A primitive is
+    // refused too: `Object.entries("plan")` would spread into junk keys ({0: "p", 1: "l", …}).
+    if (typeof data !== "object" || data === null) {
+      Logger.getInstance().error(
+        `setEmbeddedData: expected an object, got ${data === null ? "null" : typeof data} — nothing was set`
+      );
+      return;
+    }
+
     for (const [key, value] of Object.entries(data)) {
       if (value === undefined) continue;
       if (value === null) {
@@ -53,12 +68,29 @@ export class EmbeddedDataStore {
     }
   }
 
-  /** Remove one key, or everything when called without one (logout / hard context switch). */
-  public clearEmbeddedData(key?: string): void {
-    if (key === undefined) {
+  /**
+   * Remove one key, or everything when called with no argument (logout / hard context switch).
+   *
+   * "No argument" and "an argument that evaluated to `undefined`" are deliberately different:
+   * `setEmbeddedData` treats `undefined` as a no-op because GTM reads values off the data layer
+   * unconditionally, and this method reads from the same dynamic source — so
+   * `clearEmbeddedData(dataLayer.fieldToClear)` with the key absent must skip, not wipe the whole
+   * bag. Only a literal zero-argument call clears everything.
+   */
+  public clearEmbeddedData(...args: [] | [key: string]): void {
+    if (args.length === 0) {
       this.data.clear();
       return;
     }
+
+    const [key] = args;
+    if (typeof key !== "string") {
+      Logger.getInstance().error(
+        "clearEmbeddedData: expected a field name — nothing was cleared (call with no argument to clear everything)"
+      );
+      return;
+    }
+
     this.data.delete(key);
   }
 
@@ -71,3 +103,27 @@ export class EmbeddedDataStore {
     return Object.fromEntries(this.data);
   }
 }
+
+/**
+ * The display-time merge: the ambient bag under the explicit per-trigger `track({ hiddenFields })`
+ * values, so an explicit write wins a shared key.
+ *
+ * Bag keys are folded case-INsensitively against the explicit ones, because the ingest contract
+ * matches declared names case-insensitively with exact-match-first: with a field declared `Plan`, a
+ * bag entry `Plan` and a track entry `plan` would otherwise both survive a plain spread, and the
+ * contract would then pick the bag's exact match — the ambient value silently beating the explicit
+ * one. Folding here keeps "explicit beats ambient" true under every casing.
+ *
+ * The cast at the end: the renderer's contract accepts boolean/Date scalars the narrower legacy
+ * `hiddenFields` type cannot spell, and normalizes them before anything is stored.
+ */
+export const buildDisplayHiddenFields = (
+  explicit?: TTrackProperties["hiddenFields"]
+): TTrackProperties["hiddenFields"] => {
+  const explicitKeysFolded = new Set(Object.keys(explicit ?? {}).map((key) => key.toLowerCase()));
+  const ambient = Object.entries(EmbeddedDataStore.getInstance().getSnapshot()).filter(
+    ([key]) => !explicitKeysFolded.has(key.toLowerCase())
+  );
+
+  return { ...Object.fromEntries(ambient), ...explicit } as TTrackProperties["hiddenFields"];
+};

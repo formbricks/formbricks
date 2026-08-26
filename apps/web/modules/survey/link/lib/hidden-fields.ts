@@ -35,8 +35,11 @@ export const getHiddenFieldsFromSearchParams = (
       // `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, `suToken`) load fine as declared
       // field names in any casing - `lang` in particular is a name someone would plausibly pick.
       // Such a field is permanently empty from the URL, and without this line its owner has nothing
-      // to go on. Only reachable when the survey declares the name AND the param is present, so it
-      // is per-author actionable rather than per-respondent noise.
+      // to go on. Rare across surveys (needs the survey to declare the name AND the param to
+      // arrive) - but on an affected survey it does print for every visitor whose URL carries the
+      // param, e.g. a grandfathered `source` field reached by an ordinary `?source=newsletter`.
+      // Accepted: the console is the only channel that reaches someone who can fix the survey, and
+      // the alternative is silence.
       console.warn(
         `Formbricks: "${declaredFieldId}" is reserved by the link survey URL contract, so "?${matchedParamKey}=" can never fill it. Rename the field to collect this value.`
       );
@@ -48,4 +51,24 @@ export const getHiddenFieldsFromSearchParams = (
   }
 
   return fieldsRecord;
+};
+
+/**
+ * The client-side canary for a survey whose legacy hidden-field column is populated while its
+ * Embedded Data rows are missing — a dropped `embeddedDataLinks` join, or column/row drift. No
+ * production write path creates that state (ENG-2412 reconciles both in one transaction), which is
+ * exactly why it deserves a loud line when it appears anyway.
+ *
+ * This is the ONLY signal on the link path. ENG-1845's server-side missing-rows warning cannot fire
+ * here: the renderer submits the contract-filtered record, so with zero ingested rows the unknown
+ * keys never reach the server — and with an empty allow-list nothing reaches the client contract
+ * either, so its per-key console lines are silent too. Without this, such a survey simply stops
+ * capturing with no output anywhere.
+ */
+export const warnOnMissingIngestRows = (ingestedStorageKeys: string[], legacyFieldIds: string[]): void => {
+  if (ingestedStorageKeys.length === 0 && legacyFieldIds.length > 0) {
+    console.warn(
+      "Formbricks: this survey declares hidden fields but has no ingested Embedded Data rows, so no URL parameter can fill them."
+    );
+  }
 };

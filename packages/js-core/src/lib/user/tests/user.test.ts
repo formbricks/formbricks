@@ -2,6 +2,7 @@ import { type MockInstance, beforeEach, describe, expect, test, vi } from "vites
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { tearDown } from "@/lib/common/setup";
+import { EmbeddedDataStore } from "@/lib/survey/embedded-data";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { logout, setUserId } from "@/lib/user/user";
 
@@ -251,6 +252,51 @@ describe("user.ts", () => {
       expect(mockLogger.debug).toHaveBeenCalledWith("Logging out and cleaning user state");
       expect(tearDown).toHaveBeenCalled();
       expect(result.ok).toBe(true);
+    });
+
+    test("clears the Embedded Data bag — the previous user's context must not leak (ENG-1844)", () => {
+      const mockLogger = { debug: vi.fn(), error: vi.fn() };
+      getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
+
+      const store = EmbeddedDataStore.getInstance();
+      store.setEmbeddedData({ hashed_email: "abc123", pageType: "product" });
+
+      const result = logout();
+
+      expect(result.ok).toBe(true);
+      expect(store.getSnapshot()).toEqual({});
+    });
+  });
+
+  describe("Embedded Data bag on identity switch (ENG-1844)", () => {
+    const mockLogger = { debug: vi.fn(), error: vi.fn() };
+    const mockUpdateQueue = { updateUserId: vi.fn(), processUpdates: vi.fn().mockResolvedValue(undefined) };
+
+    const configWithUser = (userId: string | null): Config =>
+      ({ get: vi.fn().mockReturnValue({ user: { data: { userId } } }) }) as unknown as Config;
+
+    beforeEach(() => {
+      getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
+      getInstanceUpdateQueueMock.mockReturnValue(mockUpdateQueue as unknown as UpdateQueue);
+      EmbeddedDataStore.getInstance().clearEmbeddedData();
+    });
+
+    test("switching to a different userId clears the bag", async () => {
+      getInstanceConfigMock.mockReturnValue(configWithUser("user-a"));
+      EmbeddedDataStore.getInstance().setEmbeddedData({ hashed_email: "user-a-hash" });
+
+      await setUserId("user-b");
+
+      expect(EmbeddedDataStore.getInstance().getSnapshot()).toEqual({});
+    });
+
+    test("first-time identification keeps the bag — context pushed before identifying is legitimate", async () => {
+      getInstanceConfigMock.mockReturnValue(configWithUser(null));
+      EmbeddedDataStore.getInstance().setEmbeddedData({ pageType: "product" });
+
+      await setUserId("user-a");
+
+      expect(EmbeddedDataStore.getInstance().getSnapshot()).toEqual({ pageType: "product" });
     });
   });
 });

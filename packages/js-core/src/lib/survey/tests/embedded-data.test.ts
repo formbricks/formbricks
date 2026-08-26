@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { EmbeddedDataStore } from "@/lib/survey/embedded-data";
+import { EmbeddedDataStore, buildDisplayHiddenFields } from "@/lib/survey/embedded-data";
+
+// The guards log through Logger; mocked so refused inputs don't spray the test output.
+vi.mock("@/lib/common/logger", () => ({
+  Logger: { getInstance: vi.fn(() => ({ error: vi.fn(), debug: vi.fn() })) },
+}));
 
 describe("EmbeddedDataStore", () => {
   let store: EmbeddedDataStore;
@@ -85,5 +90,61 @@ describe("EmbeddedDataStore", () => {
     expect(fetchMock).not.toHaveBeenCalled();
     // Deliberately no unstubAllGlobals: that would also strip the window/document/localStorage stubs
     // vitest.setup.ts installs for the whole file. The fetch stub is inert for the remaining tests.
+  });
+});
+
+describe("input guards (never fatal)", () => {
+  let store: EmbeddedDataStore;
+
+  beforeEach(() => {
+    store = EmbeddedDataStore.getInstance();
+    store.clearEmbeddedData();
+  });
+
+  test("setEmbeddedData(null) and (undefined) do not throw into host code and set nothing", () => {
+    store.setEmbeddedData({ plan: "pro" });
+
+    expect(() => {
+      store.setEmbeddedData(null as unknown as Parameters<typeof store.setEmbeddedData>[0]);
+      store.setEmbeddedData(undefined as unknown as Parameters<typeof store.setEmbeddedData>[0]);
+    }).not.toThrow();
+
+    expect(store.getSnapshot()).toEqual({ plan: "pro" });
+  });
+
+  test("a primitive argument is refused instead of spreading into junk keys", () => {
+    store.setEmbeddedData("plan" as unknown as Parameters<typeof store.setEmbeddedData>[0]);
+
+    expect(store.getSnapshot()).toEqual({});
+  });
+
+  test("clearEmbeddedData(undefined) is a no-op, NOT a full clear — one keystroke from the no-arg overload", () => {
+    store.setEmbeddedData({ plan: "pro", pageType: "product" });
+
+    // The GTM shape: `clearEmbeddedData(dataLayer.fieldToClear)` where the key is absent this page.
+    store.clearEmbeddedData(undefined as unknown as string);
+
+    expect(store.getSnapshot()).toEqual({ plan: "pro", pageType: "product" });
+  });
+});
+
+describe("buildDisplayHiddenFields", () => {
+  beforeEach(() => {
+    EmbeddedDataStore.getInstance().clearEmbeddedData();
+  });
+
+  test("explicit per-trigger values beat the bag across casings — declared-name matching is case-insensitive downstream", () => {
+    EmbeddedDataStore.getInstance().setEmbeddedData({ Plan: "ambient", pageType: "product" });
+
+    expect(buildDisplayHiddenFields({ plan: "explicit" })).toEqual({
+      plan: "explicit",
+      pageType: "product",
+    });
+  });
+
+  test("no explicit values: the bag passes through as-is", () => {
+    EmbeddedDataStore.getInstance().setEmbeddedData({ plan: "pro" });
+
+    expect(buildDisplayHiddenFields(undefined)).toEqual({ plan: "pro" });
   });
 });

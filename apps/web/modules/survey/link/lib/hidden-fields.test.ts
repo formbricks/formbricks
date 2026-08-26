@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { FORBIDDEN_IDS, RESERVED_DECLARED_FIELD_NAMES } from "@formbricks/types/surveys/validation";
-import { getHiddenFieldsFromSearchParams } from "./hidden-fields";
+import { getHiddenFieldsFromSearchParams, warnOnMissingIngestRows } from "./hidden-fields";
 
 describe("getHiddenFieldsFromSearchParams", () => {
   test("reads params that match a declared field exactly", () => {
@@ -168,5 +168,36 @@ describe("getHiddenFieldsFromSearchParams", () => {
         CustomerRef: "abc",
       });
     });
+  });
+});
+
+describe("warnOnMissingIngestRows", () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  test("warns when the legacy column declares fields but no ingested rows exist — the dropped-join canary", () => {
+    warnOnMissingIngestRows([], ["plan", "language"]);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0][0]).toContain("no ingested Embedded Data rows");
+  });
+
+  test("stays quiet on a healthy survey (rows present)", () => {
+    warnOnMissingIngestRows(["plan"], ["plan"]);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("stays quiet on a survey that declares nothing at all", () => {
+    warnOnMissingIngestRows([], []);
+
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
