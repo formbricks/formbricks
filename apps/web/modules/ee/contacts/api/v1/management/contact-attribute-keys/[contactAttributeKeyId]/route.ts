@@ -4,6 +4,8 @@ import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { CONTACTS_API_V1_NOT_ENABLED_MESSAGE } from "@/modules/ee/contacts/lib/contacts-entitlement";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import {
   deleteContactAttributeKey,
@@ -14,15 +16,22 @@ import { ZContactAttributeKeyUpdateInput } from "./types/contact-attribute-keys"
 
 async function fetchAndAuthorizeContactAttributeKey(
   attributeKeyId: string,
-  workspacePermissions: NonNullable<TApiKeyAuthentication>["workspacePermissions"],
+  authentication: NonNullable<TApiKeyAuthentication>,
   requiredPermission: "GET" | "PUT" | "DELETE"
 ) {
+  // Entitlement first, matching the plural route: without the contacts feature the caller may
+  // not interact with attribute keys at all, regardless of workspace permissions.
+  const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
+  if (!isContactsEnabled) {
+    return { error: responses.forbiddenResponse(CONTACTS_API_V1_NOT_ENABLED_MESSAGE) };
+  }
+
   const attributeKey = await getContactAttributeKey(attributeKeyId);
   if (!attributeKey) {
     return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
   }
 
-  if (!hasPermission(workspacePermissions, attributeKey.workspaceId, requiredPermission)) {
+  if (!hasPermission(authentication.workspacePermissions, attributeKey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -42,7 +51,7 @@ export const GET = withV1ApiWrapper({
 
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication.workspacePermissions,
+        authentication,
         "GET"
       );
       if (result.error) {
@@ -55,14 +64,6 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(result.attributeKey),
       };
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "Contacts are only enabled for Enterprise Edition, please upgrade."
-      ) {
-        return {
-          response: responses.forbiddenResponse(error.message),
-        };
-      }
       return handleErrorResponse(error);
     }
   },
@@ -85,7 +86,7 @@ export const DELETE = withV1ApiWrapper({
     try {
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication.workspacePermissions,
+        authentication,
         "DELETE"
       );
 
@@ -132,7 +133,7 @@ export const PUT = withV1ApiWrapper({
     try {
       const result = await fetchAndAuthorizeContactAttributeKey(
         params.contactAttributeKeyId,
-        authentication.workspacePermissions,
+        authentication,
         "PUT"
       );
       if (result.error) {
