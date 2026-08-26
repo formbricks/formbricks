@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "Survey" DROP COLUMN "isSingleResponsePerEmailEnabled";
+ALTER TABLE "Survey" DROP COLUMN IF EXISTS "isSingleResponsePerEmailEnabled";
