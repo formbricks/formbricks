@@ -267,10 +267,37 @@ describe("describeDeclaredFieldNameError", () => {
   });
 
   test("a name that is merely not a safe identifier keeps the naming-rule reason", () => {
-    const reason = reasonFor("Team Size");
+    // `UserRegion`, not `Team Size`: a space is refused by the shared `HasSpaces` check before
+    // `isSafeIdentifier` is ever consulted, so it does not exercise this reason at all.
+    const reason = reasonFor("UserRegion");
 
     expect(reason).toContain("lowercase letter");
     expect(reason).not.toContain("reserved");
+  });
+
+  test("an API refusal names the check that actually fired, not the editor's rule", () => {
+    // The API does not apply `isSafeIdentifier`, so describing any non-reserved refusal in its terms
+    // sends the integrator after the wrong thing: `Team-Size` is accepted, and lowercasing `Team Size`
+    // as instructed still returns 400 because the space is the problem. Both docs surfaces publish the
+    // looser charset, so this is the message keeping the 400 consistent with them.
+    expect(apiReasonFor("Team Size")).toContain("must not contain spaces");
+    expect(apiReasonFor("user:name")).toContain("letters, numbers, underscores and hyphens");
+    expect(apiReasonFor("")).toContain("must not be empty");
+
+    for (const refused of ["Team Size", "user:name", ""]) {
+      expect(apiReasonFor(refused), refused).not.toContain("lowercase letter");
+    }
+  });
+
+  test("a name the API accepts but the editor refuses is never described by the API", () => {
+    // The charset casualties ENG-2539 handed back to the editor. Reaching a message for one of these
+    // would mean the write path had started applying the editor's rule again.
+    for (const name of ["UserRegion", "user-region", "_internal", "1st_visit"]) {
+      expect(
+        validateNewDeclaredFieldNames({ existing: [], incoming: [name], rule: "declaredFieldPortable" }),
+        name
+      ).toEqual([]);
+    }
   });
 });
 

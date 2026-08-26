@@ -170,11 +170,45 @@ const describeReservedReason = (field: string): string => {
   return "it is a reserved name";
 };
 
+/**
+ * Why a name that is refused for a reason other than {@link TValidateIdErrorCode.Reserved} was
+ * refused, one clause per code.
+ *
+ * Per code rather than one sentence for "not reserved", because the two rules no longer agree on
+ * what a name may look like (ENG-2539) and only the code says which check actually fired. Every
+ * write path passes `declaredFieldPortable`, so the sentence this used to return for *anything*
+ * non-reserved — the `NotSafeIdentifier` one below — described a rule the API deliberately does not
+ * apply: it told a caller sending `Team Size` to use only lowercase letters, numbers and
+ * underscores, when `Team-Size` is accepted and the space is the whole problem. Following the
+ * caller's advice there still yields a 400, and both docs surfaces promise the looser charset.
+ *
+ * `NotSafeIdentifier` keeps that wording because it is the one code that really does mean it, and
+ * `declaredFieldStrict` is the only rule that can produce it.
+ */
+const DECLARED_FIELD_NAME_REASONS: Record<Exclude<TValidateIdErrorCode, "reserved">, string> = {
+  [TValidateIdErrorCode.Empty]: "it must not be empty",
+  [TValidateIdErrorCode.HasSpaces]: "it must not contain spaces",
+  [TValidateIdErrorCode.InvalidChars]: "it may contain only letters, numbers, underscores and hyphens",
+  [TValidateIdErrorCode.NotSafeIdentifier]:
+    "it must start with a lowercase letter and contain only lowercase letters, numbers and underscores",
+  // Unreachable from `validateNewDeclaredFieldNames`, which passes empty id lists so a collision is
+  // never reported here. Spelled out anyway: the map is exhaustive over the enum, so a caller that
+  // does pass id lists gets a true sentence instead of falling through to a wrong one.
+  [TValidateIdErrorCode.Duplicate]: "another field in this survey already uses that name",
+};
+
+/**
+ * The client-facing sentence for one refused name — `Field name "x" cannot be used: <reason>.`
+ *
+ * Server-side and non-localized, like the rest of this layer. The editor never reaches it: its two
+ * cards call `validateId` directly and render a translated message, which is why the reasons here
+ * can describe the API's rule without touching an author-facing string.
+ */
 export const describeDeclaredFieldNameError = (error: TValidateIdError): string => {
   const reason =
     error.code === TValidateIdErrorCode.Reserved
       ? describeReservedReason(error.field)
-      : "it must start with a lowercase letter and contain only lowercase letters, numbers and underscores";
+      : DECLARED_FIELD_NAME_REASONS[error.code];
 
   return `Field name "${error.field}" cannot be used: ${reason}.`;
 };
