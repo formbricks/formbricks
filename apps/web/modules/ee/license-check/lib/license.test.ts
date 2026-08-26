@@ -332,7 +332,7 @@ describe("License Core Logic", () => {
           active: false,
           features: {
             isMultiOrgEnabled: false,
-            workspaces: 3,
+            workspaces: 1,
             twoFactorAuth: false,
             sso: false,
             whitelabel: false,
@@ -356,7 +356,7 @@ describe("License Core Logic", () => {
         active: false,
         features: {
           isMultiOrgEnabled: false,
-          workspaces: 3,
+          workspaces: 1,
           twoFactorAuth: false,
           sso: false,
           whitelabel: false,
@@ -389,7 +389,7 @@ describe("License Core Logic", () => {
       const license = await getEnterpriseLicense();
       const expectedFeatures: TEnterpriseLicenseFeatures = {
         isMultiOrgEnabled: false,
-        workspaces: 3,
+        workspaces: 1,
         twoFactorAuth: false,
         sso: false,
         whitelabel: false,
@@ -489,7 +489,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          workspaces: 3,
+          workspaces: 1,
           removeBranding: false,
         }),
         lastChecked: expect.any(Date),
@@ -522,7 +522,7 @@ describe("License Core Logic", () => {
 
       expect(license).toEqual({
         active: false,
-        features: expect.objectContaining({ workspaces: 3 }),
+        features: expect.objectContaining({ workspaces: 1 }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
@@ -553,7 +553,7 @@ describe("License Core Logic", () => {
 
       expect(license).toEqual({
         active: false,
-        features: expect.objectContaining({ workspaces: 3 }),
+        features: expect.objectContaining({ workspaces: 1 }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
@@ -1304,7 +1304,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          workspaces: 3,
+          workspaces: 1,
         }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -1328,7 +1328,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          workspaces: 3,
+          workspaces: 1,
         }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,

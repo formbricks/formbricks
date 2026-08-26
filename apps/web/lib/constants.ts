@@ -109,6 +109,19 @@ export const TEXT_RESPONSES_PER_PAGE = 5;
 export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 export const MAX_OTHER_OPTION_LENGTH = 250;
 
+/**
+ * Workspaces an organization gets on a self-hosted instance with no active enterprise license
+ * (Community Edition). Mirrors docs/self-hosting/advanced/license.mdx.
+ */
+export const COMMUNITY_WORKSPACE_LIMIT = 1;
+
+/**
+ * Cloud fallback when the license server cannot confirm the instance license (expired,
+ * invalid_license, instance_mismatch, unreachable). Deliberately NOT the community limit: cutting
+ * paying cloud customers down to one workspace during a license-server outage would be an incident.
+ */
+export const CLOUD_LICENSE_FALLBACK_WORKSPACE_LIMIT = 3;
+
 export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
 export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
 
