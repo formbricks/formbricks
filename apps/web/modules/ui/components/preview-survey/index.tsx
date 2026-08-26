@@ -91,6 +91,14 @@ export const PreviewSurvey = ({
     setActiveLanguageCode(languageCode);
   }, [languageCode]);
 
+  // Both modal previews are rendered behind a `previewMode === …` gate, so switching between the phone
+  // and browser frames unmounts one and mounts the other — and a fresh RenderSurvey seeds its language
+  // from whatever `languageCode` prop it is handed. Handing it the prop would reset the survey to the
+  // editing language while `placement` still reflected the language the author had switched to, sliding
+  // an Arabic card across the viewport to the LTR corner before the remounted survey reported its own
+  // language back and moved it again. Seeding from the active language keeps content and corner in step
+  // by construction, and carries the author's in-survey choice across the frame toggle.
+
   const placement = mirrorPlacementForDir(
     surveyPlacement || workspace.placement,
     isRTLLanguage(toJsWorkspaceStateSurvey(survey), activeLanguageCode) ? "rtl" : "ltr"
@@ -303,7 +311,7 @@ export const PreviewSurvey = ({
                       survey={toJsWorkspaceStateSurvey(survey)}
                       isBrandingEnabled={workspace.inAppSurveyBranding}
                       isRedirectDisabled={true}
-                      languageCode={languageCode}
+                      languageCode={activeLanguageCode}
                       styling={styling}
                       isCardBorderVisible={!styling.highlightBorderColor?.light}
                       onClose={handlePreviewModalClose}
@@ -438,7 +446,7 @@ export const PreviewSurvey = ({
                     survey={toJsWorkspaceStateSurvey(survey)}
                     isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
-                    languageCode={languageCode}
+                    languageCode={activeLanguageCode}
                     styling={styling}
                     isCardBorderVisible={!styling.highlightBorderColor?.light}
                     onClose={handlePreviewModalClose}
