@@ -6,6 +6,7 @@ import {
   MoreVertical,
   PauseIcon,
   PlayIcon,
+  RefreshCwIcon,
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
@@ -13,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -22,11 +24,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { canReimportHistoricalData } from "../utils";
 
 interface FeedbackSourceRowDropdownProps {
   feedbackSource: TFeedbackSourceWithMappings;
   onEdit: () => void;
   onCsvImport?: () => void;
+  onReimport: () => Promise<void>;
   onToggleStatus: () => Promise<void>;
   onDelete: () => Promise<void>;
 }
@@ -35,18 +39,32 @@ export function FeedbackSourceRowDropdown({
   feedbackSource,
   onEdit,
   onCsvImport,
+  onReimport,
   onToggleStatus,
   onDelete,
 }: Readonly<FeedbackSourceRowDropdownProps>) {
   const router = useRouter();
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isReimportDialogOpen, setIsReimportDialogOpen] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReimporting, setIsReimporting] = useState(false);
 
   const isActive = feedbackSource.status === "active";
+  const canReimport = canReimportHistoricalData(feedbackSource);
   const linkedSurveyId =
     feedbackSource.type === "formbricks_survey" ? feedbackSource.formbricksMappings[0]?.surveyId : undefined;
+
+  const handleReimport = async () => {
+    setIsReimporting(true);
+    try {
+      await onReimport();
+    } finally {
+      setIsReimporting(false);
+      setIsReimportDialogOpen(false);
+    }
+  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -83,6 +101,25 @@ export function FeedbackSourceRowDropdown({
                     }}>
                     <FileSpreadsheetIcon className="mr-2 size-4" />
                     {t("workspace.unify.import_csv_data")}
+                  </button>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
+            {canReimport && (
+              <>
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      setIsReimportDialogOpen(true);
+                    }}>
+                    <RefreshCwIcon className="mr-2 size-4" />
+                    {t("workspace.unify.reimport_historic_data")}
                   </button>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -154,6 +191,22 @@ export function FeedbackSourceRowDropdown({
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ConfirmationModal
+        open={isReimportDialogOpen}
+        setOpen={setIsReimportDialogOpen}
+        title={t("workspace.unify.reimport_historic_data")}
+        // ConfirmationModal falls back to "This action cannot be undone." when given no
+        // description, which is the opposite of what a re-import does: it reconciles, so running
+        // it again is the remedy rather than the risk.
+        description={t("workspace.unify.reimport_historic_data_description")}
+        body={t("workspace.unify.reimport_historic_data_confirmation")}
+        buttonText={t("workspace.unify.reimport_historic_data_cta")}
+        buttonVariant="default"
+        buttonLoading={isReimporting}
+        onConfirm={handleReimport}
+        Icon={RefreshCwIcon}
+      />
 
       <DeleteDialog
         deleteWhat={t("workspace.unify.source")}

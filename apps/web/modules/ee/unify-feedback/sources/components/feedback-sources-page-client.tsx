@@ -26,7 +26,13 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { TFieldMapping, TUnifySurvey, getTranslatedFeedbackSourceError } from "../types";
-import { getSelectableQuestionIds, getSuggestedSurveys } from "../utils";
+import {
+  type TFeedbackImportTotals,
+  getMappedSurveyIds,
+  getSelectableQuestionIds,
+  getSuggestedSurveys,
+  sumImportTotals,
+} from "../utils";
 import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
 import { CsvImportModal } from "./csv-import-modal";
 import { EditFeedbackSourceModal } from "./edit-feedback-source-modal";
@@ -233,6 +239,54 @@ export function FeedbackSourcesSection({
     router.refresh();
   };
 
+  /**
+   * Replays the linked survey's historic responses into this source again, so a mapping fixed after
+   * the first import no longer needs the source deleted and rebuilt (ENG-1889).
+   *
+   * Safe to run repeatedly: `importHistoricalResponses` reconciles rather than inserts, and carries
+   * a `snapshotAt` so a record the live pipeline has since corrected is not reverted to this older
+   * copy. It also honours the source's saved `importMode`, so a re-import never widens a
+   * completed-only source to partials.
+   */
+  const handleReimportHistoricalData = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
+    const surveyIds = getMappedSurveyIds(feedbackSource);
+    if (surveyIds.length === 0) {
+      toast.error(t("workspace.unify.reimport_no_survey_mapped"));
+      return;
+    }
+
+    try {
+      const totals: TFeedbackImportTotals[] = [];
+      // Sequential rather than concurrent: each import walks every response of a survey in batches
+      // and writes them into the same feedback directory, so running them in parallel would only
+      // multiply the load on one directory. Normally there is a single survey anyway.
+      for (const surveyId of surveyIds) {
+        const importResult = await importHistoricalResponsesAction({
+          feedbackSourceId: feedbackSource.id,
+          workspaceId,
+          surveyId,
+        });
+
+        if (!importResult?.data) {
+          toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
+          return;
+        }
+
+        totals.push(importResult.data);
+      }
+
+      const { successes, failures, skipped } = sumImportTotals(totals);
+      // Spelled out rather than spread: t()'s options parameter is typed against i18next's
+      // $Dictionary, which an interface does not satisfy.
+      toast.success(t("workspace.unify.historical_import_complete", { successes, failures, skipped }));
+    } catch {
+      toast.error(t("common.something_went_wrong"));
+      return;
+    }
+
+    router.refresh();
+  };
+
   const handleToggleStatus = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
     const newStatus = feedbackSource.status === "active" ? "paused" : "active";
     const result = await updateFeedbackSourceWithMappingsAction({
@@ -272,6 +326,7 @@ export function FeedbackSourcesSection({
         workspaceId={workspaceId}
         onFeedbackSourceClick={setEditingFeedbackSource}
         onCsvImport={setCsvImportFeedbackSource}
+        onReimport={handleReimportHistoricalData}
         onToggleStatus={handleToggleStatus}
         onDelete={handleDeleteFeedbackSource}
         onImportResponses={handleImportResponses}

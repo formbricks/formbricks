@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
   MAX_CSV_VALUES,
@@ -9,13 +10,16 @@ import {
 import {
   areAllRequiredCsvFieldsMapped,
   autoMapCsvSourceFields,
+  canReimportHistoricalData,
   getCsvIdentityMappingAlert,
   getFeedbackSourceOptions,
+  getMappedSurveyIds,
   getSuggestedSurveys,
   inferFieldType,
   isCsvUserDefinedStaticValueMapping,
   isFeedbackSourceNameValid,
   parseCSVColumnsToFields,
+  sumImportTotals,
   titleizeFromFileName,
   toggleQuestionId,
   validateCsvFile,
@@ -615,5 +619,81 @@ describe("toggleQuestionId", () => {
 
   test("removes only the matching id when duplicates exist", () => {
     expect(toggleQuestionId(["a", "b", "a"], "a")).toEqual(["b"]);
+  });
+});
+
+describe("re-import historic data", () => {
+  const buildSource = (overrides: Partial<TFeedbackSourceWithMappings> = {}): TFeedbackSourceWithMappings =>
+    ({
+      id: "fs1",
+      type: "formbricks_survey",
+      formbricksMappings: [],
+      ...overrides,
+    }) as TFeedbackSourceWithMappings;
+
+  const mapping = (surveyId: string, elementId: string) =>
+    ({ surveyId, elementId }) as TFeedbackSourceWithMappings["formbricksMappings"][number];
+
+  describe("getMappedSurveyIds", () => {
+    test("collapses the one-row-per-question mappings to a single survey", () => {
+      const source = buildSource({
+        formbricksMappings: [mapping("survey1", "q1"), mapping("survey1", "q2"), mapping("survey1", "q3")],
+      });
+
+      expect(getMappedSurveyIds(source)).toEqual(["survey1"]);
+    });
+
+    test("returns every distinct survey rather than only the first", () => {
+      const source = buildSource({
+        formbricksMappings: [mapping("survey1", "q1"), mapping("survey2", "q1"), mapping("survey1", "q2")],
+      });
+
+      expect(getMappedSurveyIds(source)).toEqual(["survey1", "survey2"]);
+    });
+
+    test("returns nothing when the source has no mappings", () => {
+      expect(getMappedSurveyIds(buildSource())).toEqual([]);
+    });
+  });
+
+  describe("canReimportHistoricalData", () => {
+    test("applies to a Formbricks source with a mapped survey", () => {
+      expect(canReimportHistoricalData(buildSource({ formbricksMappings: [mapping("survey1", "q1")] }))).toBe(
+        true
+      );
+    });
+
+    test("does not apply to a Formbricks source with nothing mapped", () => {
+      expect(canReimportHistoricalData(buildSource())).toBe(false);
+    });
+
+    test("does not apply to a CSV source, which importHistoricalResponses rejects", () => {
+      const csvSource = buildSource({ type: "csv", formbricksMappings: [mapping("survey1", "q1")] });
+
+      expect(canReimportHistoricalData(csvSource)).toBe(false);
+    });
+  });
+
+  describe("sumImportTotals", () => {
+    test("adds each count across surveys", () => {
+      expect(
+        sumImportTotals([
+          { successes: 12, failures: 1, skipped: 3 },
+          { successes: 5, failures: 0, skipped: 2 },
+        ])
+      ).toEqual({ successes: 17, failures: 1, skipped: 5 });
+    });
+
+    test("passes a single result through unchanged", () => {
+      expect(sumImportTotals([{ successes: 7, failures: 2, skipped: 1 }])).toEqual({
+        successes: 7,
+        failures: 2,
+        skipped: 1,
+      });
+    });
+
+    test("is zero for no results", () => {
+      expect(sumImportTotals([])).toEqual({ successes: 0, failures: 0, skipped: 0 });
+    });
   });
 });
