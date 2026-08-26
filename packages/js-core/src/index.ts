@@ -98,11 +98,12 @@ const setEmbeddedData = (data: TEmbeddedDataInput): void => {
 };
 
 /**
- * Remove one Embedded Data key, or clear the whole bag when called without one — logout, or a hard
- * context switch. Synchronous, no network.
+ * Remove one Embedded Data key, or clear the whole bag when called with no argument — logout, or a
+ * hard context switch. Synchronous, no network. A key that evaluated to `undefined` is a no-op, not
+ * a full clear: the arity is forwarded, so only a literal zero-argument call wipes everything.
  */
-const clearEmbeddedData = (key?: string): void => {
-  EmbeddedDataStore.getInstance().clearEmbeddedData(key);
+const clearEmbeddedData = (...args: [] | [key: string]): void => {
+  EmbeddedDataStore.getInstance().clearEmbeddedData(...args);
 };
 
 /**
