@@ -7,6 +7,8 @@ import { describe, expect, test } from "vitest";
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const valkeyIndexDigest = "sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84";
 const valkeyImage = `valkey/valkey@${valkeyIndexDigest}`;
+const legacyValkeyImage =
+  "valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d";
 
 const sharedDirectPinFiles = [
   ".github/workflows/docker-build-validation.yml",
@@ -14,6 +16,7 @@ const sharedDirectPinFiles = [
   ".github/workflows/integration-tests.yml",
   "docker-compose.dev.yml",
   "docker/docker-compose.yml",
+  "docker/formbricks.sh",
   "docker/migrate-to-v4.sh",
 ];
 const mainOnlyDirectPinFile = ".github/workflows/api-v3-contract-tests.yml";
@@ -38,5 +41,12 @@ describe("bundled Valkey image", () => {
     expect(readFileSync(join(repositoryRoot, "charts/formbricks/README.md"), "utf8")).toContain(
       `\`"${valkeyIndexDigest}"\``
     );
+  });
+
+  test("keeps the updater's current and legacy migration pins explicit", () => {
+    const updater = readFileSync(join(repositoryRoot, "docker/formbricks.sh"), "utf8");
+
+    expect(updater).toContain(`legacy_valkey_image="${legacyValkeyImage}"`);
+    expect(updater).toContain(`multi_arch_valkey_image="${valkeyImage}"`);
   });
 });
