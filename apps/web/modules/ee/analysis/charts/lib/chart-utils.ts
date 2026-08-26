@@ -80,13 +80,13 @@ export const getSentimentMeasureColor = (measureId: string): string | undefined 
  * response, a cached payload — lands on the merged type instead of the "bar" fallback. The
  * display style is not recovered here; the migration is what carries it for stored charts.
  */
-const LEGACY_CHART_TYPE_ALIASES: Record<string, TChartType> = { line: "area" };
+const LEGACY_CHART_TYPE_ALIASES = new Map<string, TChartType>([["line", "area"]]);
 
 /** Validate a chart type string, mapping retired types forward and defaulting to "bar". */
 export const resolveChartType = (raw: string): TChartType => {
   const parsed = ZChartType.safeParse(raw);
   if (parsed.success) return parsed.data;
-  return LEGACY_CHART_TYPE_ALIASES[raw] ?? "bar";
+  return LEGACY_CHART_TYPE_ALIASES.get(raw) ?? "bar";
 };
 
 const isNumericValue = (val: unknown): boolean => {

@@ -86,6 +86,8 @@ describe("chart-utils", () => {
     test("defaults to bar for invalid type", () => {
       expect(resolveChartType("invalid")).toBe("bar");
       expect(resolveChartType("")).toBe("bar");
+      // An inherited Object key must not resolve through the legacy alias lookup.
+      expect(resolveChartType("constructor")).toBe("bar");
     });
   });
 
