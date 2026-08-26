@@ -24,9 +24,28 @@ to grasp without opening files. -->
 ## Breaking changes
 
 <!-- REQUIRED. Tick the box below if — and only if — this PR breaks something for API/SDK consumers or
-self-hosters. It is breaking if it changes an API/SDK shape or emitted value (e.g. `EN` → `en-US`),
-removes or renames an endpoint, route, env var or config key, changes a default or webhook payload, or
-needs manual migration action.
+self-hosters. The test is whether someone outside this repo has to change something to keep working.
+
+**Breaking:** renaming, removing or retyping a field in a public API request or response shape,
+requiring one that was optional, or changing an emitted value (e.g. `EN` → `en-US`); removing or
+renaming an endpoint, route, env var or config key; changing a default, a webhook payload, or the
+HTTP status code returned for an existing case; adding an env var or config key that is required, or
+whose default does not keep existing installs working; changing an exported signature of the SDK
+shipped from `packages/js-core`, `packages/survey-ui`, or `packages/surveys`; or needing manual
+action on upgrade, including a migration that drops or renames a column or table.
+
+**Not breaking:** anything purely additive, and anything internal. Adding an optional field to a
+request or response, a new endpoint or route, or an env var whose default keeps existing installs
+working leaves every existing consumer working unchanged. So does any change to internal code —
+functions, modules, types, workspace-package exports other than the SDK surface above — that no
+external consumer reaches, additive or not: "internal API" means internal to this repo, and this
+section is not about it.
+
+Uncertain? That means the change isn't clearly one of the bullets above — leave it unticked and say
+why below. If it does match a bullet, tick it regardless of how you feel about it: the tick is the
+only thing that writes a migration entry, so ticking it "to be safe" when nothing above applies
+invents an upgrade step for self-hosters that does not exist; a reviewer who disagrees can still ask
+for it.
 
 The checkbox alone drives the label: ticking it applies `breaking-change`, which feeds the release notes
 and the self-hoster migration guide. Leave its wording alone — `pr-label-sync.yml` finds it by that text,
