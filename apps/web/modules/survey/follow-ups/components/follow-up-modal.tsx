@@ -20,7 +20,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
   TFollowUpEmailToUser,
@@ -287,18 +286,18 @@ export const FollowUpModal = ({
 
   useEffect(() => {
     if (open && defaultValues) {
-      form.reset({
-        followUpName: defaultValues?.followUpName ?? "",
-        triggerType: defaultValues?.triggerType ?? "response",
-        endingIds: defaultValues?.endingIds || null,
-        emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
-        replyTo: defaultValues?.replyTo ?? [userEmail],
-        subject: defaultValues?.subject ?? "Thanks for your answers!",
-        body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
-        attachResponseData: defaultValues?.attachResponseData ?? false,
-        includeVariables: defaultValues?.includeVariables ?? false,
-        includeHiddenFields: defaultValues?.includeHiddenFields ?? false,
-      });
+      // Same builder as the initial `defaultValues` above: two hand-maintained copies of this object
+      // is what shipped #7218, and this one had already drifted — its `subject` fallback was a
+      // hardcoded English string, so a non-English author editing a follow-up with no stored subject
+      // got untranslated copy.
+      form.reset(
+        buildFollowUpFormDefaultValues({
+          defaultValues,
+          firstEmailSendToOptionId: emailSendToOptions[0]?.id,
+          userEmail,
+          t,
+        })
+      );
     }
   }, [open, defaultValues, emailSendToOptions, form, userEmail, locale, t]);
 

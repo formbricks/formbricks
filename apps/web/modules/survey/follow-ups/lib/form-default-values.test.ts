@@ -80,6 +80,16 @@ describe("buildFollowUpFormDefaultValues", () => {
     expect(ZCreateSurveyFollowUpFormSchema.safeParse(values).success).toBe(true);
   });
 
+  test("falls back to translated copy, never a hardcoded string", () => {
+    // The modal's reset path used to build its own defaults with a hardcoded English subject, so a
+    // non-English author editing a follow-up with no stored subject got untranslated copy. Both
+    // paths go through this builder now.
+    const values = build();
+
+    expect(values.subject).toBe("translated:workspace.surveys.edit.follow_ups_modal_action_subject");
+    expect(values.body).toMatch(/^translated:/);
+  });
+
   test("falls back to the first recipient option and the current user's email", () => {
     const values = build();
 
