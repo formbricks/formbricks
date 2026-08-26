@@ -54,6 +54,12 @@ export const ResponsePage = ({
     [survey, selectedFilter, dateRange]
   );
 
+  // The fetch effect below is keyed on the filter *value*, not on `filters`' identity: `survey` is an
+  // RSC prop, so every `router.refresh()` (survey status dropdown, share modal, reset survey) hands
+  // down a freshly deserialized object. Re-running on identity alone would call setPage(1) and
+  // collapse the infinite-scroll list back to the first page on an unrelated refresh.
+  const filtersKey = JSON.stringify(filters);
+
   const searchParams = useSearchParams();
 
   const fetchNextPage = useCallback(async () => {
@@ -163,8 +169,8 @@ export const ResponsePage = ({
     fetchFilteredResponses();
     // page is intentionally omitted to avoid refetching after the initial page setup.
     // hasFilters is derived from selectedFilter/dateRange which are already deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- effect must run only on filter changes, not on page updates it sets internally
-  }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- effect must run only when the filter value changes, not on page updates it sets internally nor on a new `filters` identity from an RSC refresh
+  }, [filtersKey, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
     <>

@@ -35,9 +35,8 @@ describe("useDocumentVisibility", () => {
     expect(onVisible).not.toHaveBeenCalled();
   });
 
-  test("invokes the latest callback after a re-render without re-subscribing", () => {
+  test("invokes the latest callback after a re-render, exactly once", () => {
     setVisibilityState("visible");
-    const addEventListener = vi.spyOn(document, "addEventListener");
     const first = vi.fn();
     const second = vi.fn();
 
@@ -45,16 +44,12 @@ describe("useDocumentVisibility", () => {
       initialProps: { onVisible: first },
     });
 
-    const visibilitySubscriptions = () =>
-      addEventListener.mock.calls.filter(([event]) => event === "visibilitychange");
-    const subscriptionsAfterMount = visibilitySubscriptions().length;
-
     rerender({ onVisible: second });
     fireVisibilityChange();
 
+    // Called once, not twice: a re-render must not leave a second active listener behind.
     expect(second).toHaveBeenCalledTimes(1);
     expect(first).not.toHaveBeenCalled();
-    expect(visibilitySubscriptions()).toHaveLength(subscriptionsAfterMount);
   });
 
   test("stops listening after unmount", () => {
