@@ -1005,6 +1005,12 @@ hub:
   #   TRANSLATION_DEFAULT_LANGUAGE: en-US
   env: {}
 
+  # Scheduling constraints shared by the Hub API and its migration Job.
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
   # Optional autoscaling for the Hub API deployment.
   autoscaling:
     enabled: false
