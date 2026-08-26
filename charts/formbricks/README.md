@@ -123,10 +123,11 @@ hub:
     enabled: true
     background:
       enabled: true
-      maxConcurrent: "24"
+      maxConcurrent: "48"
       batchSize: "8"
-      batchMaxWaitMs: "25"
-      batchMaxInFlight: "3"
+      batchMaxWaitMs: "100"
+      batchMaxInFlight: "12"
+      httpDisableKeepAlives: "true"
       persistence:
         storageClass: gp3
       resources:
@@ -467,6 +468,7 @@ tokens, provider response bodies, and collector URLs are never telemetry fields.
 | hub.embeddings.background.batchMaxWaitMs                           | string | `"25"`                                                                      |                                                           |
 | hub.embeddings.background.batchSize                                | string | `"1"`                                                                       |                                                           |
 | hub.embeddings.background.enabled                                  | bool   | `false`                                                                     |                                                           |
+| hub.embeddings.background.httpDisableKeepAlives                    | string | `"false"`                                                                 | Opens a new worker provider connection per request.       |
 | hub.embeddings.background.maxConcurrent                            | string | `"5"`                                                                       |                                                           |
 | hub.embeddings.background.persistence.enabled                      | bool   | `true`                                                                      |                                                           |
 | hub.embeddings.background.persistence.size                         | string | `"10Gi"`                                                                    | One retained cache volume per StatefulSet replica.        |

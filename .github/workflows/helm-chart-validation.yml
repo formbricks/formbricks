@@ -128,6 +128,8 @@ jobs:
           ! grep -q 'hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-legacy.yaml"
           grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "1"'
           grep -A1 'name: EMBEDDING_BATCH_MAX_WAIT_MS' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "25"'
+          test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-legacy.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-legacy.yaml" | grep -q 'value: "false"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -137,6 +139,8 @@ jobs:
             --set-string hub.embeddings.background.batchSize=8 \
             --set-string hub.embeddings.background.batchMaxWaitMs=25 \
             --set-string hub.embeddings.background.batchMaxInFlight=3 \
+            --set-string hub.embeddings.background.httpDisableKeepAlives=true \
+            --set-string hub.worker.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES=false \
             --set hub.embeddings.background.persistence.storageClass=gp3 \
             --set hub.embeddings.background.autoscaling.enabled=true \
             --show-only templates/hub-deployment.yaml \
@@ -148,6 +152,8 @@ jobs:
           test "$(grep -c 'http://formbricks-hub-embeddings-background:8080/v1' "$render_dir/hub-embeddings-background.yaml")" -eq 1
           grep -A1 'name: EMBEDDING_MAX_CONCURRENT' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "24"'
           grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "8"'
+          test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background.yaml" | grep -q 'value: "true"'
           grep -q '^kind: StatefulSet$' "$render_dir/hub-embeddings-background.yaml"
           grep -q 'podManagementPolicy: Parallel' "$render_dir/hub-embeddings-background.yaml"
           test "$(grep -c 'whenScaled: Retain' "$render_dir/hub-embeddings-background.yaml")" -eq 1
