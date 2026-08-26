@@ -101,8 +101,9 @@ Rerun: `<one command covering the table below>`
 account, plan or flag state where it matters. `How` is one of `unit (red on main)`,
 `unit (mutation)`, `unit (guard)`, `e2e`, `manual` — AGENTS.md defines them and says how to pick the
 cheapest level that can fail. Every `unit` and `e2e` row names the test or spec it rests on, in the
-row or in a `Rerun:` line that names it; add a `file:line` where the row differs from `Rerun:`. The
-table stays visible — fold long media, and rows past the sixth. -->
+row or in a `Rerun:` line that names it. A `red on main` row names its own command where that
+differs from `Rerun:`; a `mutation` row names the mutated `file:line`. The table stays visible —
+fold long media, and rows past the sixth. -->
 
 | Behaviour | How | Outcome |
 | --- | --- | --- |

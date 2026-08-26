@@ -217,8 +217,9 @@ reviewer can check: `unit (red on main)` fails against the old code, so it prove
 `unit (mutation)` only fails if you break the fix, because the code under test is new; `unit (guard)`
 passes either way, protecting against a future regression; `e2e` and `manual` say where the check ran. Every
 `unit` and `e2e` row names the test or spec it rests on, in the row or in a `Rerun:` line that names
-it — a bare `pnpm test` names nothing. A red-on-main or mutation row also has to be reproducible: the
-`Rerun:` command above the table, plus the mutated `file:line` where that row differs from it.
+it — a bare `pnpm test` names nothing. A `unit (red on main)` row is rerunnable from the
+`Rerun:` command, or names its own where that differs; a `unit (mutation)` row names the mutated
+`file:line` a reviewer edits to turn it red.
 
 This raises a floor as well as lowering a ceiling. Every feature area ships a happy-path E2E, and an area
 with none is a gap rather than a saving (Dashboards and Workflows are the current examples — ENG-2314). A

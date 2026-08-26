@@ -425,9 +425,10 @@ reviews:
             `Rerun:` line above the table, which carries it once for every row — but a bare suite
             command such as `pnpm test` names nothing, so those rows name their own. A `manual` row
             has no test to name and passes without one.
-          - A row claims `red on main` or `mutation` and neither the `Rerun:` line nor the row gives
-            a reviewer something to rerun. A row whose command differs from `Rerun:`, or whose
-            mutation targets a particular line, names that command or `file:line` itself.
+          - A row claims `red on main` and gives nothing to rerun: neither the `Rerun:` line nor a
+            command of its own where that differs.
+          - A row claims `mutation` and does not name the mutated `file:line` a reviewer would edit
+            to turn it red.
           - The diff changes rendered UI and the description attaches no screenshot or screencast.
           - The "Open gaps" subsection is absent. An explicit "none" passes.
 
