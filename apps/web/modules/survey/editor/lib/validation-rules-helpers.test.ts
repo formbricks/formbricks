@@ -5,14 +5,17 @@ import type {
   TSurveyMultipleChoiceElement,
   TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
+import type { TValidationRule } from "@formbricks/types/surveys/validation-rules";
 import { RULE_TYPE_CONFIG } from "./validation-rules-config";
 import {
+  applyRuleDeletion,
   getAddressFields,
   getContactInfoFields,
   getDefaultRuleValue,
   getRuleLabels,
   normalizeFileExtension,
   parseRuleValue,
+  shouldResetInputTypeToText,
 } from "./validation-rules-helpers";
 
 // Mock translation function
@@ -233,5 +236,123 @@ describe("parseRuleValue", () => {
     const config = RULE_TYPE_CONFIG.equals;
     const value = parseRuleValue("equals", "test-value", config);
     expect(value).toBe("test-value");
+  });
+
+  // Scientific notation reaches the field by paste (onKeyDown only blocks typing), and `Number()`
+  // reads "1e5" as 100000 — a value the user never entered and cannot read back from the input.
+  describe("number value type rejects scientific notation", () => {
+    const config = RULE_TYPE_CONFIG.isGreaterThan;
+
+    test.each([
+      ["1e5", 0],
+      ["1E5", 0],
+      ["e", 0],
+      ["-1e5", 0],
+      ["1e-5", 0],
+      ["0x10", 0],
+      ["Infinity", 0],
+    ])("parses %j as %i", (input, expected) => {
+      expect(parseRuleValue("isGreaterThan", input, config)).toBe(expected);
+    });
+
+    test.each([
+      ["10", 10],
+      ["2.5", 2.5],
+      [".5", 0.5],
+      // minValue/maxValue/isGreaterThan/isLessThan are bare z.number(), so a negative threshold
+      // is legitimate and must survive the guard.
+      ["-3", -3],
+      ["-2.5", -2.5],
+      [" 7 ", 7],
+    ])("still parses %j as %d", (input, expected) => {
+      expect(parseRuleValue("isGreaterThan", input, config)).toBe(expected);
+    });
+  });
+});
+
+// The editor derives "validation is on" from the rule count, so every path that empties the list
+// must reset inputType — otherwise the section reads as off while the element still carries
+// inputType: "number" | "email" | "url" | "phone", the Long answer toggle stays disabled, and the
+// rendered input keeps enforcing browser-native format validation for respondents.
+describe("shouldResetInputTypeToText", () => {
+  test.each(["number", "email", "url", "phone"] as const)(
+    "resets when the last rule is removed from an OpenText element with inputType %s",
+    (inputType) => {
+      expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, 0, inputType)).toBe(true);
+    }
+  );
+
+  test.each([1, 2, 5])("leaves inputType alone while %i rule(s) remain", (remaining) => {
+    expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, remaining, "number")).toBe(false);
+  });
+
+  test("is a no-op when inputType is already text", () => {
+    expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, 0, "text")).toBe(false);
+  });
+
+  test("is a no-op when the element has no inputType", () => {
+    expect(shouldResetInputTypeToText(TSurveyElementTypeEnum.OpenText, 0, undefined)).toBe(false);
+  });
+
+  test.each([TSurveyElementTypeEnum.Address, TSurveyElementTypeEnum.ContactInfo] as const)(
+    "does not apply to %s elements, which have no inputType to reset",
+    (elementType) => {
+      expect(shouldResetInputTypeToText(elementType, 0, "number")).toBe(false);
+    }
+  );
+});
+
+describe("applyRuleDeletion", () => {
+  const rule = (id: string): TValidationRule =>
+    ({ id, type: "minLength", params: { min: 1 } }) as TValidationRule;
+
+  test("removes only the named rule", () => {
+    const result = applyRuleDeletion(
+      [rule("a"), rule("b"), rule("c")],
+      "b",
+      TSurveyElementTypeEnum.OpenText,
+      "number"
+    );
+    expect(result.rules.map((r) => r.id)).toEqual(["a", "c"]);
+  });
+
+  test("deleting the last rule asks the caller to reset inputType", () => {
+    const result = applyRuleDeletion([rule("a")], "a", TSurveyElementTypeEnum.OpenText, "number");
+    expect(result.rules).toEqual([]);
+    expect(result.resetInputTypeToText).toBe(true);
+  });
+
+  test("deleting one of several rules leaves inputType alone", () => {
+    const result = applyRuleDeletion([rule("a"), rule("b")], "a", TSurveyElementTypeEnum.OpenText, "number");
+    expect(result.rules.map((r) => r.id)).toEqual(["b"]);
+    expect(result.resetInputTypeToText).toBe(false);
+  });
+
+  test.each(["email", "url", "phone"] as const)(
+    "asks for the reset on inputType %s too, not just number",
+    (inputType) => {
+      expect(
+        applyRuleDeletion([rule("a")], "a", TSurveyElementTypeEnum.OpenText, inputType).resetInputTypeToText
+      ).toBe(true);
+    }
+  );
+
+  test("does not ask for a reset when inputType is already text", () => {
+    expect(
+      applyRuleDeletion([rule("a")], "a", TSurveyElementTypeEnum.OpenText, "text").resetInputTypeToText
+    ).toBe(false);
+  });
+
+  test("deleting an id that is not present is a no-op", () => {
+    const rules = [rule("a"), rule("b")];
+    const result = applyRuleDeletion(rules, "missing", TSurveyElementTypeEnum.OpenText, "number");
+    expect(result.rules.map((r) => r.id)).toEqual(["a", "b"]);
+    expect(result.resetInputTypeToText).toBe(false);
+  });
+
+  test("does not mutate the rules it was given", () => {
+    const rules = [rule("a"), rule("b")];
+    applyRuleDeletion(rules, "a", TSurveyElementTypeEnum.OpenText, "number");
+    expect(rules.map((r) => r.id)).toEqual(["a", "b"]);
   });
 });

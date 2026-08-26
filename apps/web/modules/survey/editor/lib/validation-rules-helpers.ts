@@ -1,10 +1,58 @@
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+  TSurveyOpenTextElementInputType,
+} from "@formbricks/types/surveys/elements";
 import {
   TAddressField,
   TContactInfoField,
+  TValidationRule,
   TValidationRuleType,
 } from "@formbricks/types/surveys/validation-rules";
 import { RULE_TYPE_CONFIG } from "./validation-rules-config";
+
+/**
+ * The OpenText invariant: no validation rules means `inputType` must be `"text"`.
+ *
+ * The editor derives "validation is on" from the rule count, so any path that empties the rule list
+ * has to reset `inputType` too — otherwise the section reads as off while the element still carries
+ * `inputType: "number" | "email" | "url" | "phone"`, the Long answer toggle stays disabled, and the
+ * rendered input keeps enforcing browser-native format validation for respondents.
+ *
+ * `remainingRuleCount` is the count *after* the change, so deleting one of several rules leaves
+ * `inputType` alone.
+ */
+export const shouldResetInputTypeToText = (
+  elementType: TSurveyElementTypeEnum,
+  remainingRuleCount: number,
+  inputType?: TSurveyOpenTextElementInputType
+): boolean =>
+  elementType === TSurveyElementTypeEnum.OpenText &&
+  remainingRuleCount === 0 &&
+  inputType !== undefined &&
+  inputType !== "text";
+
+/**
+ * The full state transition for deleting one validation rule: the remaining rules plus whether the
+ * caller must also reset `inputType` to `"text"`.
+ *
+ * Returning both together is the point. Deleting the last rule and switching the section off used to
+ * be two code paths and only the latter reset `inputType`, so the editor could leave an OpenText
+ * element with zero rules and `inputType: "number"`. Computing the new rule list without being
+ * handed that decision is now impossible.
+ */
+export const applyRuleDeletion = (
+  rules: TValidationRule[],
+  ruleId: string,
+  elementType: TSurveyElementTypeEnum,
+  inputType?: TSurveyOpenTextElementInputType
+): { rules: TValidationRule[]; resetInputTypeToText: boolean } => {
+  const remaining = rules.filter((rule) => rule.id !== ruleId);
+  return {
+    rules: remaining,
+    resetInputTypeToText: shouldResetInputTypeToText(elementType, remaining.length, inputType),
+  };
+};
 
 // Field options for address elements
 export const getAddressFields = (t: (key: string) => string): { value: TAddressField; label: string }[] => [
@@ -110,6 +158,10 @@ export const parseRuleValue = (
   }
 
   if (config.valueType === "number") {
+    // `onKeyDown` blocks the exponent keys but not paste, and `Number()` happily reads `1e5` as
+    // 100000. Accept only a plain decimal — optionally signed, since the numeric rule params are
+    // bare `z.number()` and a negative threshold is legitimate — and treat anything else as 0.
+    if (!/^-?\d*\.?\d*$/.test(value.trim())) return 0;
     return Number(value) || 0;
   }
 

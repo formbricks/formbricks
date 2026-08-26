@@ -129,6 +129,12 @@ export const ValidationRuleValueInput = ({
       type={htmlInputType}
       value={currentValue ?? ""}
       onChange={(e) => onChange(e.target.value)}
+      // Browsers accept scientific notation in a number field, so `1e5` would silently store
+      // 100000 and a bare `e` would store 0 while the field still shows the typed text. `.` and
+      // `-` stay allowed: decimal and negative thresholds are valid per the rule schemas.
+      onKeyDown={(e) => {
+        if (config.valueType === "number" && ["e", "E", "+"].includes(e.key)) e.preventDefault();
+      }}
       placeholder={config.valuePlaceholder}
       className="h-9 min-w-[80px] bg-white"
       min={config.valueType === "number" ? 0 : ""}
