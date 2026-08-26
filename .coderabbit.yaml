@@ -358,16 +358,27 @@ reviews:
           table under the checkbox is the explanation and does not change the declaration.
 
           Treat a change as breaking if the diff does any of the following:
-          - Renames, removes, or retypes a field in an API request or response shape, or changes
-            an emitted value (for example `EN` becoming `en-US`).
-          - Removes or renames an endpoint or route, or changes a webhook payload.
+          - Renames, removes, or retypes a field in an API request or response shape, requires a
+            field that was optional, or changes an emitted value (for example `EN` becoming
+            `en-US`).
+          - Removes or renames an endpoint or route, changes a webhook payload, or changes the
+            HTTP status code returned for an existing request/response case.
           - Changes a default value, or removes or renames an environment variable or config key —
             including keys in `charts/formbricks/values.yaml` and `.env.example`. Adding one counts
             only when it is required, or has no default that keeps existing installs working.
           - Adds a database migration that needs manual action, drops or renames a column or
             table, or adds a NOT NULL column with no default and no backfill.
-          - Changes an exported signature of the public SDK surface in `packages/js-core` or
-            `packages/surveys`.
+          - Changes an exported signature of the public SDK surface in `packages/js-core`,
+            `packages/survey-ui`, or `packages/surveys`.
+
+          Nothing else is breaking. In particular, a purely additive change — a new optional request
+          or response field, a new endpoint or route, an env var whose default keeps existing installs
+          working — is not, and neither is any change to code no external consumer reaches: internal
+          functions, modules, types, and workspace-package exports other than the SDK surface above,
+          however they change. "Internal API" means internal to this repo, and it is outside this
+          check. A change that matches one of the bullets above is breaking regardless of how
+          confident the author is; genuine uncertainty about which bullet applies is what the
+          inconclusive case below is for.
 
           FAIL if the diff contains at least one of the above and the checkbox is unticked, or the
           section is empty or still holds the unedited template comment. Name the specific file and

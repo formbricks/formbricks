@@ -38,18 +38,47 @@ reading all of it: link plus ≤10 words, no prose. Nothing risky? Say so in a l
 
 ## Breaking changes
 
-<!-- REQUIRED. Tick the box if — and only if — this PR breaks something for API/SDK consumers or
-self-hosters: an API/SDK shape or emitted value (`EN` → `en-US`), a removed or renamed endpoint,
-route, env var or config key, a changed default or webhook payload, or a manual migration step.
-The tick alone drives the `breaking-change` label, which feeds the release notes and the
-self-hoster migration guide, so leave its wording alone — `pr-label-sync.yml` matches that text and
-never reads the prose. Ticked → replace "None" with one row per change, written for an external
-integrator: `| Change | Before | After | Who's affected | Action required |`. Not ticked → keep
-"None" and say why in a line. -->
+<!-- REQUIRED. Tick the box below if — and only if — this PR breaks something for API/SDK consumers or
+self-hosters. The test is whether someone outside this repo has to change something to keep working.
+
+**Breaking:** renaming, removing or retyping a field in a public API request or response shape,
+requiring one that was optional, or changing an emitted value (e.g. `EN` → `en-US`); removing or
+renaming an endpoint, route, env var or config key; changing a default, a webhook payload, or the
+HTTP status code returned for an existing case; adding an env var or config key that is required, or
+whose default does not keep existing installs working; changing an exported signature of the SDK
+shipped from `packages/js-core`, `packages/survey-ui`, or `packages/surveys`; or needing manual
+action on upgrade, including a migration that drops or renames a column or table.
+
+**Not breaking:** anything purely additive, and anything internal. Adding an optional field to a
+request or response, a new endpoint or route, or an env var whose default keeps existing installs
+working leaves every existing consumer working unchanged. So does any change to internal code —
+functions, modules, types, workspace-package exports other than the SDK surface above — that no
+external consumer reaches, additive or not: "internal API" means internal to this repo, and this
+section is not about it.
+
+Uncertain? That means the change isn't clearly one of the bullets above — leave it unticked and say
+why below. If it does match a bullet, tick it regardless of how you feel about it: the tick is the
+only thing that writes a migration entry, so ticking it "to be safe" when nothing above applies
+invents an upgrade step for self-hosters that does not exist; a reviewer who disagrees can still ask
+for it.
+
+The checkbox alone drives the label: ticking it applies `breaking-change`, which feeds the release notes
+and the self-hoster migration guide. Leave its wording alone — `pr-label-sync.yml` finds it by that text,
+ignores every other checkbox in this section, and never reads the prose. What you write underneath is
+still read: by reviewers, and by the CodeRabbit "Breaking changes match the diff" check, which compares
+the tick against the diff and expects a ticked box to be explained. Ticked → replace "None" with the
+table below, one row per change, written for an external integrator; not ticked → keep "None" and say in
+a line why. -->
 
 - [ ] This PR contains breaking changes
 
 None
+
+<!-- Delete "None" above and use this table when the box IS ticked:
+| Change | Before | After | Who's affected | Action required |
+| --- | --- | --- | --- | --- |
+| `language` field on responses | `EN`, `DE` | `en-US`, `de-DE` | API v1 consumers | Map the new BCP-47 locale codes in your integration |
+-->
 
 ## Migrations & env
 

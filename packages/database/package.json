@@ -55,6 +55,7 @@
     "db:push": "prisma db push --accept-data-loss --config ./prisma.config.ts",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed.ts",
     "db:seed:clear": "dotenv -e ../../.env -- tsx src/seed.ts --clear",
+    "db:seed:contract": "dotenv -e ../../.env -- tsx src/scripts/seed-contract-fixtures.ts",
     "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
     "db:start": "pnpm db:setup",
     "format": "prisma format --config ./prisma.config.ts",

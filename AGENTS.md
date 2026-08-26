@@ -237,6 +237,12 @@ Do:
   evaluators, calculations, and edge cases. Keep assertions on inputs and outputs, colocate specs with
   the code they exercise (`utility.test.ts`), and mock network and storage boundaries through helpers
   from `@formbricks/*`.
+- API v3 contract tests (Schemathesis): every documented `/api/v3` operation is driven against a real
+  instance on each PR and must match the committed OpenAPI bundle — status codes, content type and
+  response schema. Nothing to register per endpoint; documenting an operation is what enrolls it. To
+  exercise a new one against real data rather than its documented 403, add the resource in
+  `packages/database/src/scripts/seed-contract-fixtures.ts`. Harness and local run:
+  `docs/api-v3-reference/contract-tests/README.md`.
 - Manual QA, especially for releases: verify on staging and file bugs. If a bug is critical, backport and
   re-test. For UI detail below the journey level, manual verification plus a screenshot in the PR is the
   expected answer, not a new spec.
@@ -287,7 +293,10 @@ Do not:
 
 - Keep code DRY and small; remove dead code and unused imports.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`.
+- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`. This is enforced:
+  `@typescript-eslint/no-explicit-any` is an error in `packages/*` and a warning in `apps/web`, where the
+  typescript-eslint baseline is being ratcheted to error rule by rule (ENG-2264). Never add new `any`s —
+  a warning today becomes an error once its rule's backlog is cleared.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 
 ## Commit & Pull Request Guidelines
@@ -300,7 +309,7 @@ Every PR must use `.github/pull_request_template.md` and follow its inline guida
 
 The agent note at the bottom names the exact model id the vendor serves — `claude-opus-5`, `gpt-5.1-codex` — not the product it runs in: Claude Code, Codex CLI and Cursor are harnesses, not models, so name the harness in parentheses only when it adds something (`claude-opus-5 (Claude Code 2.1.237)`). The reasoning level is whatever knob that vendor exposes, in that vendor's own units: an effort level (`max`, `high`), a thinking budget (`32k tokens`), or `n/a` where there is no such setting. Read both out of the tool rather than from memory — Claude Code reports them in `/status`, or as the session's `model` and `effort_level`; Codex CLI in `/model` or the line it prints at startup. A value you cannot look up is `unknown`, never a plausible-looking guess and never the harness name standing in for the model.
 
-The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. `pr-label-sync.yml` reads nothing but the tick, so the prose below the checkbox cannot change the label — but it is not free-form either: the CodeRabbit `Breaking changes match the diff` check compares the tick against the diff and expects a ticked box to document each breaking change, so explain your answer there in whatever shape fits (table or prose).
+The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. The template also lists what is **not** breaking — purely additive changes, and anything internal to this repo that no external consumer reaches — and an uncertain call is an unticked box with a line of reasoning, never a defensive tick. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. `pr-label-sync.yml` reads nothing but the tick, so the prose below the checkbox cannot change the label — but it is not free-form either: the CodeRabbit `Breaking changes match the diff` check compares the tick against the diff and expects a ticked box to document each breaking change, so explain your answer there in whatever shape fits (table or prose).
 
 ## Next.js Documentation
 
