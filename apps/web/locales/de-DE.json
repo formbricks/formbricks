@@ -56,7 +56,7 @@
     "login": {
       "backup_code": "Backup-Code",
       "create_an_account": "Konto erstellen",
-      "email_verified_sign_in_description": "Deine E-Mail-Adresse ist bestätigt. Melde dich an, um fortzufahren. Falls du dieses Konto nicht erstellt hast, melde dich nicht an — setze stattdessen das Passwort zurück, um die Kontrolle darüber zu übernehmen.",
+      "email_verified_sign_in_description": "Deine E-Mail-Adresse ist bestätigt. Melde dich an, um fortzufahren. Falls du dieses Konto nicht erstellt hast, setze stattdessen das Passwort zurück.",
       "email_verified_sign_in_title": "E-Mail bestätigt",
       "enter_your_backup_code": "Gib deinen Backup-Code ein",
       "enter_your_two_factor_authentication_code": "Gib deinen Zwei-Faktor-Authentifizierungscode ein",

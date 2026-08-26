@@ -56,7 +56,7 @@
     "login": {
       "backup_code": "備份碼",
       "create_an_account": "建立帳戶",
-      "email_verified_sign_in_description": "您的電子郵件地址已確認。請登入以繼續。如果這個帳戶不是您建立的，請勿登入，而是重設密碼以取得該帳戶的控制權。",
+      "email_verified_sign_in_description": "您的電子郵件地址已確認。請登入以繼續。如果這個帳戶不是您建立的，請改為重設密碼。",
       "email_verified_sign_in_title": "電子郵件已驗證",
       "enter_your_backup_code": "輸入您的備份碼",
       "enter_your_two_factor_authentication_code": "輸入您的雙重驗證碼",

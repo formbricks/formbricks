@@ -56,7 +56,7 @@
     "login": {
       "backup_code": "バックアップコード",
       "create_an_account": "アカウントを作成",
-      "email_verified_sign_in_description": "メールアドレスが確認されました。続行するにはログインしてください。このアカウントに心当たりがない場合はログインせず、パスワードをリセットしてアカウントを管理下に置いてください。",
+      "email_verified_sign_in_description": "メールアドレスが確認されました。続行するにはログインしてください。このアカウントに心当たりがない場合は、代わりにパスワードをリセットしてください。",
       "email_verified_sign_in_title": "メールアドレスを確認しました",
       "enter_your_backup_code": "バックアップコードを入力してください",
       "enter_your_two_factor_authentication_code": "二段階認証コードを入力してください",

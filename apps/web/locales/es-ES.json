@@ -56,7 +56,7 @@
     "login": {
       "backup_code": "Código de respaldo",
       "create_an_account": "Crear una cuenta",
-      "email_verified_sign_in_description": "Tu dirección de correo electrónico está confirmada. Inicia sesión para continuar. Si no has creado esta cuenta, no inicies sesión: restablece la contraseña para tomar el control de ella.",
+      "email_verified_sign_in_description": "Tu dirección de correo electrónico está confirmada. Inicia sesión para continuar. Si no has creado esta cuenta, restablece la contraseña en su lugar.",
       "email_verified_sign_in_title": "Correo electrónico verificado",
       "enter_your_backup_code": "Introduce tu código de respaldo",
       "enter_your_two_factor_authentication_code": "Introduce tu código de autenticación de dos factores",

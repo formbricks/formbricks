@@ -56,7 +56,7 @@
     "login": {
       "backup_code": "备用代码",
       "create_an_account": "创建一个帐户",
-      "email_verified_sign_in_description": "您的电子邮件地址已确认。请登录以继续。如果这个账户不是您创建的，请不要登录，而是重置密码以取得该账户的控制权。",
+      "email_verified_sign_in_description": "您的电子邮件地址已确认。请登录以继续。如果这个账户不是您创建的，请改为重置密码。",
       "email_verified_sign_in_title": "邮箱已验证",
       "enter_your_backup_code": "输入 你的 备用代码",
       "enter_your_two_factor_authentication_code": "输入 你的 双因素 认证 代码",
