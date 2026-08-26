@@ -124,8 +124,8 @@ so "none" is a claim rather than a formality. -->
 
 ---
 
-<!-- Delete if no agent was involved. Read both values out of the tool, never from memory — AGENTS.md
-says where each tool reports them. -->
+<!-- Delete if no agent was involved. Read both values out of the tool, never from memory; a value the
+tool does not expose is `unknown`, never a guess. AGENTS.md says where each tool reports them. -->
 
 > [!NOTE]
 > **AI model used** — `<model>`, reasoning effort `<level>`.
