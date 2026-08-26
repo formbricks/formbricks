@@ -53,6 +53,12 @@ const BLOCKED_IPV6_SUBNETS: [address: string, prefix: number][] = [
   // (loopback). It does NOT collide with the IPv4-mapped range ::ffff:0:0/96, whose 6th group is
   // ffff — so mapped public addresses stay reachable while ::7f00:1 and ::a9fe:a9fe do not.
   ["::", 96], // IPv4-compatible IPv6, deprecated (::7f00:1 == 127.0.0.1); incl. :: and ::1
+  // IPv4-translated (RFC 2765 / SIIT) is the sixth IPv4-wrapper format, alongside IPv4-mapped,
+  // IPv4-compatible, NAT64, 6to4 and Teredo. Deprecated by RFC 4966 and absent from the IANA
+  // special-purpose registry, so neither Node nor Go special-cases it. Its 5th group is ffff and
+  // 6th is 0 — the mirror of IPv4-mapped — so it overlaps neither ::/96 nor ::ffff:0:0/96, and
+  // mapped public addresses stay reachable.
+  ["::ffff:0:0:0", 96], // IPv4-translated IPv6, deprecated (::ffff:0:7f00:1 == 127.0.0.1)
   ["64:ff9b::", 96], // NAT64 well-known (64:ff9b::a9fe:a9fe == 169.254.169.254)
   ["64:ff9b:1::", 48], // NAT64 local-use (RFC 8215)
   ["100::", 64], // discard-only (RFC 6666)

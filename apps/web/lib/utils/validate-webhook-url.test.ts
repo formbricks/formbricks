@@ -208,6 +208,11 @@ describe("validateWebhookUrl", () => {
       ["IPv4-compatible, dotted form", "http://[::127.0.0.1]/"],
       ["IPv4-compatible ::169.254.169.254 (IMDS)", "http://[::a9fe:a9fe]/"],
       ["IPv4-compatible ::10.0.0.1", "http://[::a00:1]/"],
+      // IPv4-translated (::ffff:0:0:0/96, RFC 2765/SIIT) — the one IPv4 wrapper BlockList does
+      // NOT fold onto the IPv4 rules, since only ::ffff:0:0/96 gets that treatment.
+      ["IPv4-translated ::127.0.0.1", "http://[::ffff:0:7f00:1]/"],
+      ["IPv4-translated ::169.254.169.254 (IMDS)", "http://[::ffff:0:a9fe:a9fe]/"],
+      ["IPv4-translated ::10.0.0.1", "http://[::ffff:0:a00:1]/"],
       ["Teredo — tunnels IPv4 like 6to4", "http://[2001:0:1234::1]/"],
       ["IPv6 documentation range", "http://[2001:db8::1]/"],
       ["IPv6 discard-only prefix", "http://[100::1]/"],
@@ -278,7 +283,9 @@ describe("validateWebhookUrl", () => {
       );
     });
 
-    // Pins that ::/96 (IPv4-compatible) does not swallow ::ffff:0:0/96 (IPv4-mapped).
+    // Pins that neither ::/96 (IPv4-compatible) nor ::ffff:0:0:0/96 (IPv4-translated) swallows
+    // ::ffff:0:0/96 (IPv4-mapped) — BlockList checks a mapped address against the IPv6 rules as
+    // well as the IPv4 ones, so an overlapping prefix here would silently block public endpoints.
     test("accepts a mapped public address", async () => {
       await expect(validateWebhookUrl("https://[::ffff:93.184.216.34]/webhook")).resolves.toBeUndefined();
     });
