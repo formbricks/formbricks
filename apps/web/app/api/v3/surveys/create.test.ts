@@ -5,7 +5,7 @@ import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey, getSurvey } from "@/lib/survey/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { V3SurveyCreatePermissionError, createV3Survey } from "./create";
+import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "./create";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import { resolveV3ContactsEntitlement } from "./targeting";
@@ -304,6 +304,67 @@ describe("createV3Survey", () => {
 
     await expect(createV3Survey(body, null, "req_3")).rejects.toThrow(V3SurveyCreatePermissionError);
     expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  // ENG-2587. Driven through the real `ZSurveyCreateInput`/`surveyRefinement` rather than a
+  // synthetic schema, so it also fails if the refinement's issue path moves, or if the CTA branch
+  // stops firing (it is gated on `buttonExternal`). `createSurvey` is mocked, so no DB is involved.
+  test("rejects a CTA buttonUrl scheme the request schema admits but the write schema does not", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              id: "tel_cta",
+              type: "cta",
+              headline: { "en-US": "Call us", "de-DE": "Ruf uns an" },
+              required: false,
+              buttonExternal: true,
+              buttonUrl: "tel:+123456789",
+              ctaButtonLabel: { "en-US": "Call", "de-DE": "Anrufen" },
+            },
+          ],
+        },
+      ],
+    });
+
+    const error = await createV3Survey(body, null, "req_eng2587").catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(V3SurveyInputValidationError);
+    expect((error as V3SurveyInputValidationError).invalidParams).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "blocks.0.elements.0.buttonUrl" })])
+    );
+    // The whole point of pre-write validation: nothing was written.
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  test("accepts an https CTA buttonUrl through the same path", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              id: "https_cta",
+              type: "cta",
+              headline: { "en-US": "Continue", "de-DE": "Weiter" },
+              required: false,
+              buttonExternal: true,
+              buttonUrl: "https://example.com",
+              ctaButtonLabel: { "en-US": "Open", "de-DE": "\u00d6ffnen" },
+            },
+          ],
+        },
+      ],
+    });
+
+    await expect(createV3Survey(body, null, "req_eng2587_ok")).resolves.toBeDefined();
+    expect(createSurvey).toHaveBeenCalled();
   });
 
   test("rejects external CTA buttons for API-key creates without external URL permission", async () => {

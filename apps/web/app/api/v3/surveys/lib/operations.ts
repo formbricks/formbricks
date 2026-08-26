@@ -1,15 +1,9 @@
 import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import {
-  DatabaseError,
-  InvalidInputError,
-  ResourceNotFoundError,
-  ValidationError,
-} from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
-  type InvalidParam,
   createdResponse,
   noContentResponse,
   problemBadRequest,
@@ -26,7 +20,12 @@ import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib
 import { getSurveyCount, hasArchivedSurveys } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
-import { type TV3SurveyCreateOptions, V3SurveyCreatePermissionError, createV3Survey } from "../create";
+import {
+  type TV3SurveyCreateOptions,
+  V3SurveyCreatePermissionError,
+  V3SurveyInputValidationError,
+  createV3Survey,
+} from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import { patchV3Survey } from "../patch";
 import {
@@ -222,18 +221,6 @@ export async function listV3Surveys({
 }
 
 /**
- * `validateInputs` attaches the underlying ZodError to the `ValidationError` it throws, so the
- * response can itemize the offending field paths. Falls back to the flattened message when the
- * `ValidationError` was raised by hand without a cause.
- */
-function getValidationErrorInvalidParams(err: ValidationError): InvalidParam[] {
-  if (err.cause instanceof z.ZodError) {
-    return formatV3ZodInvalidParams(err.cause, "body");
-  }
-  return [{ name: "body", reason: err.message }];
-}
-
-/**
  * Map an error thrown during survey creation to its problem+json Response. Extracted from
  * createV3SurveyResponse to keep that handler's cognitive complexity within bounds.
  */
@@ -277,16 +264,16 @@ function mapV3SurveyCreateError(
       instance,
     });
   }
-  if (err instanceof ValidationError) {
-    // Raised by `validateInputs` below the route's own schema layer — the request body passed
-    // `ZV3CreateSurveyBody` but failed the stricter service-level schema (e.g. a CTA `buttonUrl`
-    // scheme the element schema allows but `surveyRefinement` rejects). Semantic, not malformed →
-    // 422, in line with the reference-validation branch above. Without this branch it fell through
-    // to the generic 500 below.
-    const invalidParams = getValidationErrorInvalidParams(err);
-    log.warn({ statusCode: 422, invalidParams }, "Survey input validation failed");
+  if (err instanceof V3SurveyInputValidationError) {
+    // The document passed `ZV3CreateSurveyBody` but failed the survey service's stricter write
+    // schema, caught by an explicit pre-write parse in `executeV3SurveyCreate`. Semantic, not
+    // malformed → 422, in line with the reference-validation branch above. Deliberately keyed on
+    // this typed error rather than on `ValidationError`: the latter is also thrown from work
+    // `createSurvey` does *after* its transaction commits, where a 4xx would wrongly tell the
+    // caller nothing was written. Those keep the 500 below.
+    log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey input validation failed");
     return problemUnprocessableContent(requestId, "Survey document failed validation", {
-      invalid_params: invalidParams,
+      invalid_params: err.invalidParams,
       instance,
     });
   }
