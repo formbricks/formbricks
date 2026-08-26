@@ -45,18 +45,16 @@ describe("useDocumentVisibility", () => {
       initialProps: { onVisible: first },
     });
 
-    const subscriptionsAfterMount = addEventListener.mock.calls.filter(
-      ([event]) => event === "visibilitychange"
-    ).length;
+    const visibilitySubscriptions = () =>
+      addEventListener.mock.calls.filter(([event]) => event === "visibilitychange");
+    const subscriptionsAfterMount = visibilitySubscriptions().length;
 
     rerender({ onVisible: second });
     fireVisibilityChange();
 
     expect(second).toHaveBeenCalledTimes(1);
     expect(first).not.toHaveBeenCalled();
-    expect(addEventListener.mock.calls.filter(([event]) => event === "visibilitychange").length).toBe(
-      subscriptionsAfterMount
-    );
+    expect(visibilitySubscriptions()).toHaveLength(subscriptionsAfterMount);
   });
 
   test("stops listening after unmount", () => {
