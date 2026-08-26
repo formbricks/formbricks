@@ -990,8 +990,24 @@ migrate_legacy_valkey_image() {
   fi
 
   if ! awk -v legacy_image="$legacy_valkey_image" '
-    /^  redis:[[:space:]]*$/ { in_redis=1 }
-    in_redis && /^  [A-Za-z0-9_-]+:[[:space:]]*$/ && !/^  redis:[[:space:]]*$/ { in_redis=0 }
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    /^services:[[:space:]]*$/ {
+      in_services=1
+      service_indent=-1
+      next
+    }
+    in_services && /^[^[:space:]#]/ {
+      in_services=0
+      in_redis=0
+    }
+    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*$/ {
+      line_indent=indentation($0)
+      if (service_indent < 0) service_indent=line_indent
+      if (line_indent == service_indent) in_redis=($0 ~ /^[ ]+redis:[[:space:]]*$/)
+    }
     in_redis && /^[[:space:]]+image:[[:space:]]*/ && index($0, legacy_image) { found=1 }
     END { exit(found ? 0 : 1) }
   ' "$compose_file"; then
@@ -1001,8 +1017,23 @@ migrate_legacy_valkey_image() {
   cp -p "$compose_file" "$backup_file"
 
   if ! awk -v legacy_image="$legacy_valkey_image" -v replacement_image="$multi_arch_valkey_image" '
-    /^  redis:[[:space:]]*$/ { in_redis=1 }
-    in_redis && /^  [A-Za-z0-9_-]+:[[:space:]]*$/ && !/^  redis:[[:space:]]*$/ { in_redis=0 }
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    /^services:[[:space:]]*$/ {
+      in_services=1
+      service_indent=-1
+    }
+    in_services && /^[^[:space:]#]/ && !/^services:[[:space:]]*$/ {
+      in_services=0
+      in_redis=0
+    }
+    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*$/ {
+      line_indent=indentation($0)
+      if (service_indent < 0) service_indent=line_indent
+      if (line_indent == service_indent) in_redis=($0 ~ /^[ ]+redis:[[:space:]]*$/)
+    }
     in_redis && /^[[:space:]]+image:[[:space:]]*/ && index($0, legacy_image) {
       sub(legacy_image, replacement_image)
       replacements++

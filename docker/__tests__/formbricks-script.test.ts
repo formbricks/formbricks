@@ -50,7 +50,7 @@ const writeDockerComposeTemplate = (): string => {
   return composePath;
 };
 
-const migrateLegacyValkeyImage = (composePath: string, validationResult: "success" | "failure"): void => {
+const migrateLegacyValkeyImage = (composePath: string, validationResult: "success" | "failure"): string => {
   const validationLogPath = join(createTempDir(), "validation.log");
 
   execFileSync(
@@ -76,6 +76,8 @@ migrate_legacy_valkey_image "$2"`,
       },
     }
   );
+
+  return validationLogPath;
 };
 
 const getServiceBlock = (composeContents: string, serviceName: string): string => {
@@ -133,10 +135,34 @@ describe("docker/formbricks.sh Valkey image migration", () => {
     expect(originalCompose).toContain(multiArchValkeyImage);
     writeFileSync(composePath, originalCompose.replace(multiArchValkeyImage, legacyValkeyImage));
 
-    migrateLegacyValkeyImage(composePath, "success");
+    const validationLogPath = migrateLegacyValkeyImage(composePath, "success");
 
     expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+  });
+
+  test("updates the live redis service when Compose uses four-space indentation", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+    redis:
+        image: ${legacyValkeyImage}
+        volumes:
+            - redis:/data
+
+volumes:
+    redis:
+`
+    );
+
+    const validationLogPath = migrateLegacyValkeyImage(composePath, "success");
+
+    expect(readFileSync(composePath, "utf8")).toContain(multiArchValkeyImage);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
   });
 
   test.each([multiArchValkeyImage, "example.com/custom-valkey@sha256:custom"])(
