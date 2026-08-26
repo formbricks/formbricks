@@ -35,7 +35,7 @@ jobs:
           --health-retries 5
 
       redis:
-        image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+        image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
         ports:
           - 6379:6379
 
@@ -52,6 +52,20 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Verify Valkey Image Platforms
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          valkey_image="$(docker compose -f docker/docker-compose.yml config --format json | jq -r '.services.redis.image')"
+          manifest="$(docker buildx imagetools inspect --raw "$valkey_image")"
+
+          jq -e '
+            .mediaType == "application/vnd.oci.image.index.v1+json" and
+            any(.manifests[]; .platform.os == "linux" and .platform.architecture == "amd64") and
+            any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")
+          ' <<<"$manifest"
 
       # NOTE: deliberately no `cache-from`/`cache-to: type=gha`. Measured over four runs, exporting
       # the cache cost 222-407s per run while the layers it could restore add up to 12s of work: the

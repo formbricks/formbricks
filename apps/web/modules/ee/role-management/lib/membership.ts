@@ -10,12 +10,14 @@ import { validateInputs } from "@/lib/utils/validate";
 export const updateMembership = async (
   userId: string,
   organizationId: string,
-  data: TMembershipUpdateInput
+  data: TMembershipUpdateInput,
+  tx?: Prisma.TransactionClient
 ): Promise<TMembership> => {
   validateInputs([userId, ZString], [organizationId, ZString], [data, ZMembershipUpdateInput]);
+  const client = tx ?? prisma;
 
   try {
-    const membership = await prisma.membership.update({
+    const membership = await client.membership.update({
       where: {
         userId_organizationId: {
           userId,
@@ -25,7 +27,7 @@ export const updateMembership = async (
       data,
     });
 
-    await prisma.teamUser.findMany({
+    await client.teamUser.findMany({
       where: {
         userId,
         team: {
@@ -38,7 +40,7 @@ export const updateMembership = async (
     });
 
     if (data.role === "owner" || data.role === "manager") {
-      await prisma.teamUser.updateMany({
+      await client.teamUser.updateMany({
         where: {
           userId,
           team: {
@@ -51,7 +53,7 @@ export const updateMembership = async (
       });
     }
 
-    await prisma.membership.findMany({
+    await client.membership.findMany({
       where: {
         organizationId,
       },
