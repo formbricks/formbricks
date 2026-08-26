@@ -2,6 +2,8 @@
 
 set -e
 ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
+legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
+multi_arch_valkey_image="valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"
 
 write_rustfs_init_script() {
   local target_path="${1:-rustfs-init.sh}"
@@ -977,9 +979,89 @@ stop_formbricks() {
   echo "🎉 Formbricks instance stopped successfully!"
 }
 
+migrate_legacy_valkey_image() {
+  local compose_file="${1:-docker-compose.yml}"
+  local backup_file="${compose_file}.before-valkey-8.1.9"
+  local temp_file="${compose_file}.tmp"
+
+  if [[ ! -f "$compose_file" ]]; then
+    echo "❌ Cannot update Valkey because $compose_file does not exist."
+    return 1
+  fi
+
+  if ! awk -v legacy_image="$legacy_valkey_image" '
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    /^services:[[:space:]]*$/ {
+      in_services=1
+      service_indent=-1
+      next
+    }
+    in_services && /^[^[:space:]#]/ {
+      in_services=0
+      in_redis=0
+    }
+    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*$/ {
+      line_indent=indentation($0)
+      if (service_indent < 0) service_indent=line_indent
+      if (line_indent == service_indent) in_redis=($0 ~ /^[ ]+redis:[[:space:]]*$/)
+    }
+    in_redis && /^[[:space:]]+image:[[:space:]]*/ && index($0, legacy_image) { found=1 }
+    END { exit(found ? 0 : 1) }
+  ' "$compose_file"; then
+    return 0
+  fi
+
+  cp -p "$compose_file" "$backup_file"
+  cp -p "$compose_file" "$temp_file"
+
+  if ! awk -v legacy_image="$legacy_valkey_image" -v replacement_image="$multi_arch_valkey_image" '
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    /^services:[[:space:]]*$/ {
+      in_services=1
+      service_indent=-1
+    }
+    in_services && /^[^[:space:]#]/ && !/^services:[[:space:]]*$/ {
+      in_services=0
+      in_redis=0
+    }
+    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*$/ {
+      line_indent=indentation($0)
+      if (service_indent < 0) service_indent=line_indent
+      if (line_indent == service_indent) in_redis=($0 ~ /^[ ]+redis:[[:space:]]*$/)
+    }
+    in_redis && /^[[:space:]]+image:[[:space:]]*/ && index($0, legacy_image) {
+      sub(legacy_image, replacement_image)
+      replacements++
+    }
+    { print }
+    END { exit(replacements == 1 ? 0 : 1) }
+  ' "$compose_file" >"$temp_file"; then
+    rm -f "$temp_file"
+    echo "❌ Could not update the bundled Valkey image. The original Compose file is unchanged."
+    return 1
+  fi
+
+  mv "$temp_file" "$compose_file"
+
+  if ! sudo docker compose -f "$compose_file" config >/dev/null; then
+    cp -p "$backup_file" "$compose_file"
+    echo "❌ The updated Compose file is invalid. Restored $compose_file from $backup_file."
+    return 1
+  fi
+
+  echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
+}
+
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
+  migrate_legacy_valkey_image docker-compose.yml
   sudo docker compose pull
   sudo docker compose down
   sudo docker compose up -d
