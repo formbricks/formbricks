@@ -30,7 +30,7 @@ function formatDimension(d: FieldDefinition): string {
  */
 function formatChartTypes(): string {
   const ids = CHART_TYPE_IDS.map((id) => `\`${id}\``);
-  return `${ids.slice(0, -1).join(", ")}, or ${ids[ids.length - 1]}`;
+  return `${ids.slice(0, -1).join(", ")}, or ${ids.at(-1)}`;
 }
 
 function formatOperators(): string {
