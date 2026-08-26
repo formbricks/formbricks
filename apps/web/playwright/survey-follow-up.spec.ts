@@ -57,7 +57,9 @@ test.describe("Survey Follow-Up deprecation", async () => {
       await page.getByText("Follow-ups").click();
 
       await expect(page.getByText("Follow-ups are being replaced by Workflows")).toBeVisible();
-      await expect(page.getByText(/Follow-ups stop working on/)).toBeVisible();
+      // The date itself, not just the sentence: it is rendered from an instant, so a missing
+      // `timeZone` would silently shift it a day west of UTC.
+      await expect(page.getByText("Follow-ups stop working on Dec 1, 2026")).toBeVisible();
 
       // The seeded follow-up is listed with its trigger and action.
       await expect(page.getByText("Test Follow-Up")).toBeVisible();

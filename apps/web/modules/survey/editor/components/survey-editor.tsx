@@ -88,7 +88,7 @@ export const SurveyEditor = ({
   isExternalUrlsAllowed,
   publicDomain,
   enterpriseLicenseRequestFormUrl,
-}: SurveyEditorProps) => {
+}: Readonly<SurveyEditorProps>) => {
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
     isSurveyFollowUpsAllowed,
@@ -102,6 +102,16 @@ export const SurveyEditor = ({
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
+
+  // `isFollowUpsTabVisible` tracks the server `survey` prop, which a save refreshes
+  // (`survey-menu-bar` calls `router.refresh()`). Deleting the last follow-up therefore hides the
+  // tab while `activeView` — client state — still points at it, leaving an empty main pane with no
+  // tab selected. Fall back to the elements view so the deletion flow cannot dead-end.
+  useEffect(() => {
+    if (!isFollowUpsTabVisible && activeView === "followUps") {
+      setActiveView("elements");
+    }
+  }, [isFollowUpsTabVisible, activeView]);
   const surveyEditorRef = useRef(null);
   const [localWorkspace, setLocalWorkspace] = useState<Workspace>(workspace);
   const [localWorkspaceLanguages, setLocalWorkspaceLanguages] = useState<Language[]>(workspaceLanguages);

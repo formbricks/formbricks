@@ -38,7 +38,7 @@ export const SurveyEditorTabs = ({
   isFollowUpsTabVisible,
   isCxMode,
   hasLanguageErrors,
-}: SurveyEditorTabsProps) => {
+}: Readonly<SurveyEditorTabsProps>) => {
   const { t } = useTranslation();
   const tabsComputed = useMemo(() => {
     const tabs: Tab[] = [

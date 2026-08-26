@@ -31,6 +31,7 @@ import {
   type EmailSendToOption,
   buildEmailSendToOptions,
 } from "@/modules/survey/follow-ups/lib/email-send-to-options";
+import { buildFollowUpFormDefaultValues } from "@/modules/survey/follow-ups/lib/form-default-values";
 import { sanitizeFollowUpBody } from "@/modules/survey/follow-ups/lib/sanitize-follow-up-body";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -111,18 +112,12 @@ export const FollowUpModal = ({
   );
 
   const form = useForm<TCreateSurveyFollowUpForm>({
-    defaultValues: {
-      followUpName: defaultValues?.followUpName ?? "",
-      triggerType: defaultValues?.triggerType ?? "response",
-      endingIds: defaultValues?.endingIds || null,
-      emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
-      replyTo: defaultValues?.replyTo ?? [userEmail],
-      subject: defaultValues?.subject ?? t("workspace.surveys.edit.follow_ups_modal_action_subject"),
-      body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
-      attachResponseData: defaultValues?.attachResponseData ?? false,
-      includeVariables: defaultValues?.includeVariables ?? false,
-      includeHiddenFields: defaultValues?.includeHiddenFields ?? false,
-    },
+    defaultValues: buildFollowUpFormDefaultValues({
+      defaultValues,
+      firstEmailSendToOptionId: emailSendToOptions[0]?.id,
+      userEmail,
+      t,
+    }),
     resolver: zodResolver(ZCreateSurveyFollowUpFormSchema),
     mode: "onChange",
   });
