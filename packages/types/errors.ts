@@ -25,9 +25,14 @@ class InvalidInputError extends Error {
 
 class ValidationError extends Error {
   statusCode = 400;
-  constructor(message: string) {
+  // Carries the underlying failure (e.g. the ZodError from `validateInputs`) so callers can report
+  // the offending field paths instead of only the flattened message. Assigned here rather than
+  // forwarded to `super`: this package targets ES2021, where `Error` takes no options argument.
+  cause?: unknown;
+  constructor(message: string, options?: { cause?: unknown }) {
     super(message);
     this.name = "ValidationError";
+    this.cause = options?.cause;
   }
 }
 

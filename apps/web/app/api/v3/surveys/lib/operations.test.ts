@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { z } from "zod";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { validateInputs } from "@/lib/utils/validate";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, hasArchivedSurveys } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -35,6 +37,9 @@ import {
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    // `error` is used directly by `validateInputs`, which one test calls to build a real
+    // ValidationError; `withContext` is what the operations themselves use.
+    error: vi.fn(),
     withContext: vi.fn(() => ({
       warn: vi.fn(),
       error: vi.fn(),
@@ -482,6 +487,60 @@ describe("createV3SurveyResponse", () => {
         })
       ).status
     ).toBe(500);
+  });
+
+  // ENG-2587: `createSurvey` runs `validateInputs([surveyBody, ZSurveyCreateInput])`, whose stricter
+  // refinement rejects payloads the route's own `ZV3CreateSurveyBody` accepts (a CTA `buttonUrl` of
+  // `tel:…` was the case QA hit). That ValidationError had no branch here and surfaced as a 500.
+  test("maps a ValidationError raised below the schema layer to 422 naming the offending path", async () => {
+    // Built through the real validateInputs so the test breaks if the cause stops being attached.
+    let validationError: unknown;
+    try {
+      validateInputs([
+        { blocks: [{ elements: [{ buttonUrl: "tel:+123456789" }] }] },
+        z.object({
+          blocks: z.array(
+            z.object({ elements: z.array(z.object({ buttonUrl: z.string().startsWith("https://") })) })
+          ),
+        }),
+      ]);
+    } catch (err) {
+      validationError = err;
+    }
+    expect(validationError).toBeInstanceOf(ValidationError);
+
+    vi.mocked(createV3Survey).mockRejectedValueOnce(validationError);
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    expect(await readJson(response)).toMatchObject({
+      invalid_params: [
+        expect.objectContaining({
+          name: "blocks.0.elements.0.buttonUrl",
+        }),
+      ],
+    });
+  });
+
+  test("maps a causeless ValidationError to 422 attributed to the body", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(new ValidationError("Close date must be after publish"));
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    expect(await readJson(response)).toMatchObject({
+      invalid_params: [{ name: "body", reason: "Close date must be after publish" }],
+    });
   });
 });
 

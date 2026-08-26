@@ -40,6 +40,22 @@ describe("validateInputs", () => {
     );
   });
 
+  test("attaches the ZodError as cause so callers can report the offending paths", () => {
+    const schema = z.object({ blocks: z.array(z.object({ buttonUrl: z.string().startsWith("https://") })) });
+
+    let thrown: unknown;
+    try {
+      validateInputs([{ blocks: [{ buttonUrl: "tel:+123456789" }] }, schema]);
+    } catch (err) {
+      thrown = err;
+    }
+
+    expect(thrown).toBeInstanceOf(ValidationError);
+    const cause = (thrown as ValidationError).cause;
+    expect(cause).toBeInstanceOf(z.ZodError);
+    expect((cause as z.ZodError).issues[0].path.join(".")).toBe("blocks.0.buttonUrl");
+  });
+
   test("validates multiple inputs successfully", () => {
     const stringSchema = z.string();
     const numberSchema = z.number();

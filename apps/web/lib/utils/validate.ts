@@ -40,7 +40,9 @@ export function validateInputs<T extends ValidationPair<any>[]>(
         },
         "Input validation failed"
       );
-      throw new ValidationError(`Validation failed: ${zodDetails}`);
+      // Attach the ZodError as `cause` so callers (e.g. the v3 API error mappers) can report the
+      // offending field paths rather than only this flattened message.
+      throw new ValidationError(`Validation failed: ${zodDetails}`, { cause: inputValidation.error });
     }
     parsedData.push(inputValidation.data);
   }
