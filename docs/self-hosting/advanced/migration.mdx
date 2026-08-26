@@ -18,7 +18,7 @@ The bundled Valkey image moves from an amd64-only 8.1.1 image to the native amd6
 image. Fresh Docker and Helm installations receive it automatically. Existing installations that retain an
 older Compose file or explicitly reuse the previous Helm digest need the one-time update below.
 
-### Bundled Valkey 8.1.9 upgrade (action required for some self-hosted deployments)
+### Bundled Valkey 8.1.9 Upgrade (action required for some self-hosted deployments)
 
 The old bundled digest selects only `linux/amd64`. The new digest selects the matching native image on
 `linux/amd64` and `linux/arm64`, without requiring QEMU or `binfmt`. Valkey 8.1.9 also contains upstream
@@ -44,8 +44,13 @@ security fixes that are not present in 8.1.1.
     ```
   </Tab>
   <Tab title="Docker Compose">
-    Back up your Compose file and replace the `redis` service's old image with the new multi-architecture
-    index:
+    Back up your Compose file before changing it:
+
+    ```bash
+    cp docker-compose.yml docker-compose.yml.before-valkey-8.1.9
+    ```
+
+    Then replace the `redis` service's old image with the new multi-architecture index:
 
     ```yaml
     image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
@@ -54,7 +59,6 @@ security fixes that are not present in 8.1.1.
     Validate the file, then pull and recreate only Valkey:
 
     ```bash
-    cp docker-compose.yml docker-compose.yml.before-valkey-8.1.9
     docker compose config >/dev/null
     docker compose pull redis
     docker compose up -d --no-deps --force-recreate redis
