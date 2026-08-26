@@ -477,7 +477,11 @@ export const ZResponseUpdate = z.object({
     source: z.string().optional(),
     action: z.string().optional(),
   }).optional(),
-  hiddenFields: ZResponseHiddenFieldValue.optional(),
+  // `ZResponseData`, not the narrower `ZResponseHiddenFieldValue`: `ResponseQueue` merges this map
+  // over `data` on every submit, so `data`'s value shape is literally its type. The renderer now
+  // sends the record the ingest contract produced (ENG-1845), which — like `data` — can carry a
+  // question answer's shape for a key that collided with an element id.
+  hiddenFields: ZResponseData.optional(),
   displayId: z.string().nullish(),
   endingId: z.string().nullish(),
 });
@@ -497,6 +501,14 @@ export const ZResponseTableData = z.object({
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
   meta: ZResponseMeta,
+  /**
+   * Reserved-field values already resolved and rendered, keyed by column id (ENG-2540). Precomputed
+   * on the row like `variables` and `responseData`, rather than read out of `meta` by a per-column
+   * switch: resolution belongs to the catalog's own accessors, which apply the `redactQuery` policy
+   * and the dataType coercion, and `meta` alone cannot express a field that is not stored under its
+   * own name (`deviceType` lives at `meta.userAgent.device`).
+   */
+  reservedValues: z.record(z.string(), z.string()),
   quotas: z.array(z.string()).optional(),
 });
 

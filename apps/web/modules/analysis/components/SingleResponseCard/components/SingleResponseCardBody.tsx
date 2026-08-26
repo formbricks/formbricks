@@ -18,6 +18,7 @@ import { parseRecallInfo } from "@/lib/utils/recall";
 import { ResponseCardQuotas } from "@/modules/ee/quotas/components/single-response-card-quotas";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { isValidValue } from "../util";
+import { AutoCapturedFields } from "./AutoCapturedFields";
 import { ElementSkip } from "./ElementSkip";
 import { HiddenFields } from "./HiddenFields";
 import { RenderResponse } from "./RenderResponse";
@@ -36,7 +37,7 @@ export const SingleResponseCardBody = ({
   response,
   skippedQuestions,
   locale,
-}: SingleResponseCardBodyProps) => {
+}: Readonly<SingleResponseCardBodyProps>) => {
   const elements = getElementsFromBlocks(survey.blocks);
   // ENG-1837: both blocks below render the survey's Embedded Data definitions, resolved through the
   // tables with the legacy columns as fallback.
@@ -79,6 +80,7 @@ export const SingleResponseCardBody = ({
           status={"welcomeCard"}
           isFirstElementAnswered={isFirstElementAnswered}
           recallValues={recallValues}
+          variables={response.variables}
           locale={locale}
         />
       )}
@@ -140,6 +142,7 @@ export const SingleResponseCardBody = ({
                   skippedElements={skipped}
                   elements={elements}
                   recallValues={recallValues}
+                  variables={response.variables}
                   locale={locale}
                   status={
                     response.finished ||
@@ -160,6 +163,10 @@ export const SingleResponseCardBody = ({
       {ingestedFields.length > 0 && (
         <HiddenFields hiddenFields={ingestedFields} responseData={response.data} />
       )}
+      {/* After the survey's own declared fields: what the author defined, then what was captured for
+          free. A declared field and a same-named reserved one both appear, deliberately — the author
+          needs to see both, where recall and logic have to pick one. */}
+      <AutoCapturedFields response={response} />
 
       <ResponseCardQuotas quotas={response.quotas} />
 

@@ -108,7 +108,13 @@ describe("validateV3SurveyReferences", () => {
       ],
     } as unknown as typeof validSurvey;
 
-    expect(() => validateV3SurveyReferences(withReservedOperands)).not.toThrow();
+    // Asserted on the returned value, not with `.not.toThrow()`: this function returns a result and
+    // never throws (`assertValidV3SurveyReferences` is the throwing wrapper), so the old form could
+    // not fail even if every reserved operand were rejected.
+    const result = validateV3SurveyReferences(withReservedOperands);
+
+    expect(result.ok).toBe(true);
+    expect(result.invalidParams).toStrictEqual([]);
   });
 
   test("accepts a survey with consistent stable identifiers", () => {

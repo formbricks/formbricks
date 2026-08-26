@@ -65,7 +65,13 @@ export const getElementResponseMapping = (
 
     elementResponseMapping.push({
       element: getTextContent(
-        parseRecallInfo(getLocalizedValue(element.headline, responseLanguageCode ?? "default"), recallValues)
+        parseRecallInfo(
+          getLocalizedValue(element.headline, responseLanguageCode ?? "default"),
+          recallValues,
+          // Variables live outside `response.data`, so the map above cannot carry them and a headline
+          // recalling one rendered its fallback while the same token resolved in the email body.
+          response.variables
+        )
       ),
       response: convertResponseValue(answer, element),
       type: element.type,

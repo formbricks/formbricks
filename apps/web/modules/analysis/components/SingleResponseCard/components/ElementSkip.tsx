@@ -2,7 +2,7 @@
 
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TUserLocale } from "@formbricks/types/user";
@@ -23,6 +23,8 @@ interface ElementSkipProps {
    * falling back. Used for nothing else in this component.
    */
   recallValues: TResponseData;
+  /** Recall resolves variables ahead of `recallValues`, and they are not in it — see `parseRecallInfo`. */
+  variables: TResponseVariables;
   locale: TUserLocale;
 }
 
@@ -32,8 +34,9 @@ export const ElementSkip = ({
   elements,
   isFirstElementAnswered,
   recallValues,
+  variables,
   locale,
-}: ElementSkipProps) => {
+}: Readonly<ElementSkipProps>) => {
   const { t } = useTranslation();
   const dateFormats = getSurveyDateFormatMap(elements);
   return (
@@ -93,7 +96,7 @@ export const ElementSkip = ({
                             "default"
                           ),
                           recallValues,
-                          undefined,
+                          variables,
                           false,
                           locale,
                           dateFormats
@@ -136,7 +139,7 @@ export const ElementSkip = ({
                               "default"
                             ),
                             recallValues,
-                            undefined,
+                            variables,
                             false,
                             locale,
                             dateFormats

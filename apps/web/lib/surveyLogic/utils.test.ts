@@ -1791,10 +1791,19 @@ describe("reserved field operands, server engine (ENG-1840)", () => {
     expect(buildServerEmbeddedValues(response, declaringSurvey)).not.toHaveProperty("url");
   });
 
-  test("a number-typed variable compared against a NUMBER reserved right operand coerces", () => {
-    // Red before ENG-2538: the coercion arm listed only `hiddenField`, so a reserved value — always a
-    // string or number in the projected map — was compared against a number variable unconverted and
-    // the condition could never match. `durationSeconds` is 150 for this response.
+  test("a NUMBER reserved entry reaches logic already typed, so no coercion is needed", () => {
+    // The invariant that makes the `reserved` coercion arm defensive rather than load-bearing: the
+    // catalog read seam runs `coerceToEmbeddedDataType`, so a number-dataType entry is a JS number
+    // here, never a numeric string. If this goes red the seam stopped coercing and that arm became
+    // load-bearing, which is the only reason it is worth pinning separately.
+    expect(typeof buildServerEmbeddedValues(response, survey).durationSeconds).toBe("number");
+  });
+
+  test("the coercion arm converts a reserved value that arrives as a string anyway", () => {
+    // `mergeReservedValues` overlays `response.data` on the projection unconditionally, so a reserved
+    // key that is also a response key carries that raw string past the seam above. The map is passed
+    // directly because no authoring flow produces that overlap today — the reserved-name guard
+    // refuses declaring one — so this pins the arm's behaviour rather than reproducing a bug.
     const numberVariableSurvey = {
       ...survey,
       variables: [{ id: "var_duration", name: "duration", type: "number", value: 150 }],
@@ -1806,7 +1815,6 @@ describe("reserved field operands, server engine (ENG-1840)", () => {
       ],
     } as unknown as TJsWorkspaceStateSurvey;
 
-    const values = buildServerEmbeddedValues(response, numberVariableSurvey);
     const group: TConditionGroup = {
       id: "group1",
       connector: "and",
@@ -1820,6 +1828,10 @@ describe("reserved field operands, server engine (ENG-1840)", () => {
       ],
     };
 
-    expect(evaluateLogic(numberVariableSurvey, {}, { var_duration: 150 }, group, "en", values)).toBe(true);
+    expect(
+      evaluateLogic(numberVariableSurvey, {}, { var_duration: 150 }, group, "en", {
+        durationSeconds: "150",
+      })
+    ).toBe(true);
   });
 });

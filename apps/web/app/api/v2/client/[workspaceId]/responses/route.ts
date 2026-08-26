@@ -1,4 +1,5 @@
 import { UAParser } from "ua-parser-js";
+import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
@@ -8,6 +9,7 @@ import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-
 import { responses } from "@/app/lib/api/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { applyIngestContractToResponseData } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -141,11 +143,13 @@ const createResponseForRequest = async ({
   survey,
   responseInputData,
   country,
+  ingestFlags,
 }: {
   request: Request;
   survey: TResponseSurvey;
   responseInputData: TResponseInputV2;
   country: string | undefined;
+  ingestFlags: readonly TIngestFlag[];
 }): Promise<TResponseWithQuotaFull | Response> => {
   const userAgent = request.headers.get("user-agent") || undefined;
   const agent = new UAParser(userAgent);
@@ -174,10 +178,13 @@ const createResponseForRequest = async ({
 
     const metaToStore = applyAnonymizePolicy(meta, survey.isAnonymizeResponsesEnabled);
 
-    return await createResponseWithQuotaEvaluation({
-      ...responseInputData,
-      meta: metaToStore,
-    });
+    return await createResponseWithQuotaEvaluation(
+      {
+        ...responseInputData,
+        meta: metaToStore,
+      },
+      ingestFlags
+    );
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message, undefined, true);
@@ -239,6 +246,15 @@ export const POST = async (request: Request, context: Context): Promise<Response
       return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
     }
 
+    // The Embedded Data ingest contract (ENG-1845), re-run server-side because this endpoint is
+    // public and the renderer's filtering is never trusted. It has to precede
+    // `validateResponseSubmission` on both counts: `validateResponseData` should see the values that
+    // will be stored, and `checkSurveyValidity` stamps `verifiedEmail` from the verification token —
+    // a forbidden field name no survey declares, so the contract has to run before that write rather
+    // than after it.
+    const ingestResult = applyIngestContractToResponseData(survey, responseInputData.data);
+    responseInputData.data = ingestResult.data;
+
     const validationResponse = await validateResponseSubmission(workspaceId, responseInputData, survey);
     if (validationResponse) {
       return validationResponse;
@@ -249,6 +265,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       survey,
       responseInputData,
       country,
+      ingestFlags: ingestResult.flags,
     });
     if (createdResponse instanceof Response) {
       return createdResponse;

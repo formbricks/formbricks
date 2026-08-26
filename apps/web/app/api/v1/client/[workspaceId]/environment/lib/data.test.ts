@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
@@ -136,6 +137,23 @@ describe("getWorkspaceStateData", () => {
         surveys: expect.any(Object),
       }),
     });
+  });
+
+  /**
+   * ENG-1845: this payload is the renderer's allow-list for app surveys. `getSurveyEmbeddedFields`
+   * fails closed, so a select that loses the join is indistinguishable from a survey with no fields
+   * — and every value passed through `setEmbeddedData` or `track({ hiddenFields })` would be silently
+   * dropped instead of ingested. This is where that has to fail.
+   */
+  test("carries the Embedded Data join, which is the renderer's ingest allow-list", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspaceData as never);
+
+    await getWorkspaceStateData(workspaceId);
+
+    const [{ select }] = vi.mocked(prisma.workspace.findUnique).mock.calls[0] as [
+      { select: { surveys: { select: Record<string, unknown> } } },
+    ];
+    expect(select.surveys.select.embeddedDataLinks).toEqual(selectSurveyEmbeddedDataLinks);
   });
 
   test("should throw ResourceNotFoundError when workspace is not found", async () => {

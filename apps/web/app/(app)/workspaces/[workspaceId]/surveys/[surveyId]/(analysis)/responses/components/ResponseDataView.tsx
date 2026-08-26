@@ -10,6 +10,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { ResponseTable } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
+import { getReservedColumnValues } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 interface ResponseDataViewProps {
@@ -107,6 +108,8 @@ const mapResponsesToTableData = (
     person: response.contact,
     contactAttributes: response.contactAttributes,
     meta: response.meta,
+    // Resolved here, where the whole response is in hand, so the cells stay dumb lookups.
+    reservedValues: getReservedColumnValues(response),
     quotas: response.quotas?.map((quota) => quota.name),
   }));
 };

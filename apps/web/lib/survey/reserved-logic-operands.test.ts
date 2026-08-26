@@ -118,7 +118,6 @@ describe("a logic condition on a reserved field saves", () => {
 
   test("QUESTIONS path: the legacy validator carried the identical bug", () => {
     const questions = [...mockSurvey.questions] as Record<string, unknown>[];
-    const lastQuestionId = questions[questions.length - 1].id as string;
     questions[0] = {
       ...questions[0],
       logic: [
@@ -135,13 +134,27 @@ describe("a logic condition on a reserved field saves", () => {
               },
             ],
           },
-          actions: [{ id: "cd0000000000000000000004", objective: "jumpToQuestion", target: lastQuestionId }],
+          // Targets the ending, not a question: `mockSurvey` has exactly one question, so the previous
+          // `questions[questions.length - 1]` target was the rule's OWN question and the survey failed
+          // the cyclic-logic refinement — which the message-only assertion below could not see. The
+          // legacy path has no `jumpToEnding`, but it accepts an ending id as a `jumpToQuestion`
+          // target. Same reason `withBlockLogic` adds a second block.
+          actions: [
+            {
+              id: "cd0000000000000000000004",
+              objective: "jumpToQuestion",
+              target: "gt1yoaeb5a3istszxqbl08mk",
+            },
+          ],
         },
       ],
     };
 
     const result = ZSurvey.safeParse({ ...mockSurvey, followUps: [], questions });
 
+    // Asserted on `success` too, matching the BLOCKS test above: without it an unrelated refinement
+    // rejecting this fixture would leave the test green while the survey stays unsaveable.
     expect(JSON.stringify(result.error?.issues ?? [])).not.toContain("Hidden field ID timezone");
+    expect(result.success).toBe(true);
   });
 });
