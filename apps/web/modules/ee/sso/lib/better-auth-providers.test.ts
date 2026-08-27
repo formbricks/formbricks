@@ -369,6 +369,26 @@ describe("better-auth SSO providers", () => {
     );
 
     /**
+     * The warning must not describe this as "treating it like unset". Unset resolves to `common`,
+     * which accepts personal accounts, so an operator who chose `organizations` to allow only
+     * work/school accounts would read that as having silently lost the restriction — while in fact
+     * only id_token verification is given up and the authority still applies at the authorize
+     * endpoint. Pinned because it is a deliberate wording decision, not incidental phrasing.
+     */
+    test("the tenant warning says the configured authority still applies, not that it is ignored", async () => {
+      await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        AZUREAD_TENANT_ID: "organizations",
+      });
+
+      expect(loggerWarn).toHaveBeenCalledTimes(1);
+      const message = loggerWarn.mock.calls[0][0] as string;
+      expect(message).toContain("still applies");
+      expect(message).not.toMatch(/like unset|treated as unset/i);
+    });
+
+    /**
      * Every tenant whose discovery document carries a real issuer keeps the stronger discovery path.
      * `consumers` is the one that is easy to get wrong: it looks like a sibling of `common` and
      * `organizations`, but all personal Microsoft accounts live in one well-known MSA tenant, so its

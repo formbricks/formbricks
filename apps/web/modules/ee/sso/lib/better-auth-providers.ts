@@ -220,6 +220,10 @@ const azureAuthority = isAzureTemplateIssuerTenant ? azureTenant.toLowerCase() :
 // Only worth saying when Azure SSO is actually registered — which needs BOTH gates below, mirroring
 // `ssoGenericOAuthConfig`'s own conditions — and only when the operator set the value themselves, since
 // an unset var takes this same path by design and needs no warning.
+//
+// The wording deliberately avoids "treating it like unset": an operator who set `organizations` would
+// read that as having lost their work/school-only restriction, which still applies at the authorize
+// endpoint. Only id_token verification is given up.
 if (
   ENTERPRISE_LICENSE_KEY &&
   AZURE_OAUTH_ENABLED &&
@@ -227,7 +231,7 @@ if (
   isAzureTemplateIssuerTenant
 ) {
   logger.warn(
-    `AZUREAD_TENANT_ID="${azureTenant}" names a Microsoft multi-tenant authority whose discovery document advertises a placeholder issuer, so id_tokens cannot be verified against it. Treating it like unset: sign-in identity comes from the userinfo endpoint. Set a Directory (tenant) ID for full id_token verification.`
+    `AZUREAD_TENANT_ID="${azureTenant}" names a Microsoft multi-tenant authority whose discovery document advertises a placeholder issuer, so id_tokens cannot be verified against it. Skipping discovery for this provider and taking identity from the userinfo endpoint; the authority you configured still applies at sign-in. Set a Directory (tenant) ID for full id_token verification.`
   );
 }
 const azureEndpoints = isAzureTemplateIssuerTenant
