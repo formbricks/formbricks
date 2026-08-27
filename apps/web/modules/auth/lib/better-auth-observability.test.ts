@@ -525,6 +525,9 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
 
     log("error", "State mismatch: verification not found", stateError);
 
+    // Anchor the negative: an empty `mock.calls` stringifies to "[]", which contains no secret, so
+    // without this the assertion would hold even if nothing were ever logged.
+    expect(logger.withContext).toHaveBeenCalled();
     expect(JSON.stringify(vi.mocked(logger.withContext).mock.calls)).not.toContain(
       "super-secret-state-value"
     );
