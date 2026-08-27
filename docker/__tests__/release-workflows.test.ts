@@ -8,6 +8,8 @@ const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const workflowsDirectory = ".github/workflows";
 const linearSyncWorkflow = `${workflowsDirectory}/linear-release.yml`;
 const formbricksReleaseWorkflow = `${workflowsDirectory}/formbricks-release.yml`;
+const linearSmokeWorkflow = `${workflowsDirectory}/linear-release-smoke.yml`;
+const releaseWorkflows = [linearSyncWorkflow, formbricksReleaseWorkflow, linearSmokeWorkflow];
 
 const linearAction = "linear/linear-release-action";
 const linearActionSha = "17b8c24f8ceb2b98cabaf1965ff83c55dd596fac";
@@ -42,19 +44,20 @@ const linearSteps = (workflow: Workflow, jobId: string): WorkflowStep[] =>
   (workflow.jobs?.[jobId]?.steps ?? []).filter((step) => step.uses?.startsWith(`${linearAction}@`));
 
 describe("release workflows", () => {
-  test.each([linearSyncWorkflow, formbricksReleaseWorkflow])(
-    "%s parses as YAML and declares jobs",
-    (path) => {
-      expect(Object.keys(readWorkflow(path).jobs ?? {})).not.toHaveLength(0);
-    }
-  );
+  test.each(releaseWorkflows)("%s parses as YAML and declares jobs", (path) => {
+    expect(Object.keys(readWorkflow(path).jobs ?? {})).not.toHaveLength(0);
+  });
 
-  test.each([linearSyncWorkflow, formbricksReleaseWorkflow])(
-    "pins the Linear release action by commit SHA in %s",
-    (path) => {
-      expect(readText(path)).toContain(`${linearAction}@${linearActionSha} # ${linearActionVersion}`);
-    }
-  );
+  test.each(releaseWorkflows)("pins the Linear release action by commit SHA in %s", (path) => {
+    expect(readText(path)).toContain(`${linearAction}@${linearActionSha}`);
+  });
+
+  // Separate from the pin above so a drifted annotation and a drifted pin fail distinguishably.
+  // The annotation is worth asserting: this repo shipped a comment describing v0.15.1 behaviour
+  // next to a v0.7.0 pin for months, which is what hid the bug this test guards.
+  test.each(releaseWorkflows)("annotates that pin with its release tag in %s", (path) => {
+    expect(readText(path)).toContain(`${linearAction}@${linearActionSha} # ${linearActionVersion}`);
+  });
 
   test("uses no other ref of the Linear release action across the workflows", () => {
     const directory = join(repositoryRoot, workflowsDirectory);
