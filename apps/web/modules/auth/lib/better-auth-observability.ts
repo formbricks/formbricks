@@ -425,6 +425,32 @@ export const auditPasswordReset = async (userId: string): Promise<void> => {
 const SSO_CALLBACK_PROVIDER_IDS = new Set(["google", "github", "azuread", "openid", "saml"]);
 
 /**
+ * A callback path, capturing the provider id.
+ *
+ * Answers two questions: which provider a request is for, and — applied to a *redirect target* —
+ * whether Better Auth is bouncing a `form_post` callback to its GET twin rather than concluding.
+ */
+const SSO_CALLBACK_PATH = /\/callback\/([^/?#]+)\/?$/;
+
+/**
+ * `success` and `failure` are the two an alert divides; `incomplete` is deliberately neither.
+ *
+ * A ratio of `failure / (success + failure)` stays meaningful only while both sides really are
+ * completed sign-ins or broken ones. Verify-before-link recovery is neither — it ends on the "check
+ * your inbox" page by design — so it gets its own value rather than being forced into one, and an
+ * alert should exclude it explicitly.
+ */
+type SsoCallbackRecord = { outcome: "success" | "failure" | "incomplete"; reason?: string };
+
+/**
+ * Better Auth mints the session cookie only on a completed sign-in, which is why this is the success
+ * signal rather than the redirect target: the success destination is the caller's `callbackURL` and
+ * the failure destination its `errorCallbackURL`, and both are ordinary app pages here.
+ */
+const hasSessionCookie = (response: Response): boolean =>
+  response.headers.getSetCookie().some((cookie) => cookie.includes("session_token"));
+
+/**
  * Callback failure reasons that may be recorded verbatim (ENG-2551).
  *
  * This has to be an allow-list for the same reason the provider id does, and the reason is easy to
@@ -508,39 +534,59 @@ const SSO_CALLBACK_REASONS = new Set([
  * Never throws: observability must not be able to fail a sign-in that otherwise succeeded.
  */
 export const recordSsoCallbackOutcome = (requestUrl: string, response: Response): void => {
-  emitSsoCallbackRecord(requestUrl, (): { outcome: "success" | "failure"; reason?: string } => {
+  emitSsoCallbackRecord(requestUrl, (): SsoCallbackRecord | null => {
     // A 4xx/5xx on the callback is a failed sign-in too — this is how the SSO licence gate's 403
     // and any unhandled 500 present, and neither redirects.
     if (response.status >= 400) return { outcome: "failure", reason: `http_${response.status}` };
+
     if (response.status >= 300) {
       // A redirect the browser cannot follow is a failed sign-in, not a quiet success. Both shapes
-      // below would otherwise corrupt the ratio the alert keys on rather than merely lose detail: a
-      // missing `Location` counted as success inflates the healthy side, and a malformed one threw
-      // into the outer catch, dropping the callback from both sides.
+      // below would otherwise corrupt the ratio rather than merely lose detail: a missing `Location`
+      // counted as success inflates the healthy side, and a malformed one threw into the outer catch,
+      // dropping the callback from both sides.
       const location = response.headers.get("location");
       if (!location) return { outcome: "failure", reason: "missing_location" };
 
-      let error: string | null;
+      let target: URL;
       try {
-        error = new URL(location, requestUrl).searchParams.get("error");
+        target = new URL(location, requestUrl);
       } catch {
         return { outcome: "failure", reason: "malformed_location" };
       }
 
-      // `null` means no `error` parameter at all, which is the only shape that is a success. `?error=`
-      // and a bare `?error` both read back as `""`, and a truthiness check counted those as a clean
-      // sign-in — an error parameter that is present but empty says something went wrong without
-      // saying what, and the success side is the half the ratio has to be able to trust.
-      //
-      // The inverse costs accuracy in one case worth knowing about: a `callbackURL` that itself
-      // carries an `error` parameter makes a genuine success look like a failure. Nothing in this app
-      // passes one (the SSO buttons send `callbackURL: "/"`), and the alternative — inspecting the
-      // redirect target to decide whether the parameter is "ours" — trades a rare false positive for
-      // a guessing game.
-      if (error === null) return { outcome: "success" };
-      return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
+      // `response_mode=form_post`: Better Auth 1.7 turns a POST callback into a 302 to the GET
+      // callback *before* it validates state or exchanges the code (`api/routes/callback.mjs`), and
+      // `legacy-sso-callback.ts` deliberately preserves that flow. Recording the hop would score every
+      // form_post sign-in as one extra outcome, and — because the hop carries no `error` — it would
+      // score it as a success, capping a totally broken form_post flow at a 50% failure ratio. The GET
+      // that follows is the one that knows what happened, so say nothing here.
+      if (SSO_CALLBACK_PATH.test(target.pathname)) return null;
+
+      // A completed sign-in is the one thing that mints a session, and it is decided by Better Auth
+      // rather than inferred from where the browser is sent next. That matters because the success
+      // destination is the caller's `callbackURL` — `getSsoReturnToUrl` preserves its query string, so
+      // a legitimate target like `/page?error=retry` exists — while the failure destination is the
+      // caller's `errorCallbackURL` (`/auth/login` for every button here). Reading the `error` key off
+      // whichever URL came back cannot tell those apart; the session cookie can.
+      if (hasSessionCookie(response)) return { outcome: "success" };
+
+      const error = target.searchParams.get("error");
+      // `?error=` and a bare `?error` both read back as `""`. An error parameter that is present but
+      // empty says something went wrong without saying what, so it belongs on the failure side.
+      if (error !== null) {
+        return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
+      }
+
+      // No session and no error is neither: verify-before-link recovery ends exactly here, redirecting
+      // to the "check your inbox" page on purpose (`ssoRecoveryAfterHandler`). Counting it as a failure
+      // would inflate the ratio during a perfectly healthy flow, and as a success would claim a sign-in
+      // that did not happen — so it is named and left out of both sides.
+      return { outcome: "incomplete", reason: "no_session" };
     }
-    return { outcome: "success" };
+
+    return hasSessionCookie(response)
+      ? { outcome: "success" }
+      : { outcome: "incomplete", reason: "no_session" };
   });
 };
 
@@ -560,22 +606,22 @@ export const recordSsoCallbackThrow = (requestUrl: string): void => {
  * observability must not be able to fail a sign-in that otherwise succeeded, nor mask the original
  * error on the throwing path.
  */
-const emitSsoCallbackRecord = (
-  requestUrl: string,
-  resolveOutcome: () => { outcome: "success" | "failure"; reason?: string }
-): void => {
+const emitSsoCallbackRecord = (requestUrl: string, resolveOutcome: () => SsoCallbackRecord | null): void => {
   try {
     const path = new URL(requestUrl).pathname;
     // The internal path Better Auth actually serves. `mapLegacySsoCallbackRequest` has already
     // rewritten the pinned `/oauth2/callback/:id` form by the time a response exists, so matching the
     // internal shape covers both.
-    const providerSegment = /\/callback\/([^/]+)\/?$/.exec(path)?.[1];
+    const providerSegment = SSO_CALLBACK_PATH.exec(path)?.[1];
     if (!providerSegment) return;
 
     const provider = SSO_CALLBACK_PROVIDER_IDS.has(providerSegment.toLowerCase())
       ? providerSegment.toLowerCase()
       : "unknown";
-    const { outcome, reason } = resolveOutcome();
+    // `null` means "this request is not the one that decides the outcome" — see the form_post hop.
+    const record = resolveOutcome();
+    if (!record) return;
+    const { outcome, reason } = record;
 
     const contextLogger = logger.withContext({
       source: "sso-callback",
@@ -585,6 +631,7 @@ const emitSsoCallbackRecord = (
     });
 
     if (outcome === "failure") contextLogger.warn("SSO callback failed");
+    else if (outcome === "incomplete") contextLogger.info("SSO callback did not complete a sign-in");
     else contextLogger.info("SSO callback succeeded");
   } catch {
     // A malformed URL is not worth failing or logging a sign-in over.

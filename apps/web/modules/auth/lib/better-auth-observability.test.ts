@@ -722,6 +722,17 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
 
   const redirect = (location: string, status = 302) => new Response(null, { status, headers: { location } });
 
+  /**
+   * A completed sign-in, which Better Auth marks by minting the session cookie. Success is asserted
+   * through that rather than through the redirect target: `getSsoReturnToUrl` preserves the caller's
+   * query string, so a legitimate `callbackURL` can carry `?error=…` of its own.
+   */
+  const signedInRedirect = (location: string) => {
+    const response = new Response(null, { status: 302, headers: { location } });
+    response.headers.append("set-cookie", "__Secure-formbricks.session_token=abc; Path=/; HttpOnly");
+    return response;
+  };
+
   const contextOf = () => vi.mocked(logger.withContext).mock.calls[0]?.[0];
 
   test.each([
@@ -741,7 +752,7 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
   });
 
   test("records a successful callback, so the alert can key on a ratio", () => {
-    recordSsoCallbackOutcome("https://app.test/api/auth/callback/openid", redirect("/"));
+    recordSsoCallbackOutcome("https://app.test/api/auth/callback/openid", signedInRedirect("/"));
 
     expect(contextOf()).toEqual({
       source: "sso-callback",
@@ -872,10 +883,84 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
   test("still records a redirect with no error parameter as a success", () => {
     recordSsoCallbackOutcome(
       "https://app.test/api/auth/callback/azuread",
-      redirect("https://app.test/?welcome=1")
+      signedInRedirect("https://app.test/?welcome=1")
     );
 
     expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "success" });
+  });
+
+  /**
+   * #9026 review, P1. With `response_mode=form_post` Better Auth turns the POST callback into a 302 to
+   * its own GET twin *before* validating state or exchanging the code, and `legacy-sso-callback.ts`
+   * preserves that flow deliberately. Recording the hop adds a second outcome per sign-in, and since
+   * the hop carries no `error` it lands on the success side — so a form_post flow failing 100% of the
+   * time would still read as only 50% failures, under any threshold the alert picks.
+   */
+  test.each([
+    ["the Better Auth twin", "https://app.test/api/auth/callback/azuread?code=abc&state=xyz"],
+    ["a relative twin", "/api/auth/callback/azuread?code=abc&state=xyz"],
+  ])("says nothing for the form_post hop to %s", (_label, location) => {
+    recordSsoCallbackOutcome("https://app.test/api/auth/callback/azuread", redirect(location));
+
+    expect(logger.withContext).not.toHaveBeenCalled();
+  });
+
+  test("the GET that follows the hop still records the real outcome", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      redirect("https://app.test/auth/login?error=state_mismatch")
+    );
+
+    expect(contextOf()).toMatchObject({
+      ssoCallbackOutcome: "failure",
+      ssoCallbackReason: "state_mismatch",
+    });
+  });
+
+  /**
+   * #9026 review, P2. The success destination is the caller's `callbackURL`, and `getSsoReturnToUrl`
+   * keeps its query string — so `/page?error=retry` is a supported target. Reading `error` off the
+   * redirect cannot tell that apart from Better Auth's own error redirect, which goes to the caller's
+   * `errorCallbackURL` (`/auth/login` for every button here). The session cookie can.
+   */
+  test("a completed sign-in whose callbackURL carries its own error parameter is a success", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      signedInRedirect("https://app.test/some-page?error=retry")
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "success" });
+    expect(contextLoggerMock.warn).not.toHaveBeenCalled();
+  });
+
+  test("a failure redirect to errorCallbackURL is still a failure", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      redirect("https://app.test/auth/login?error=account_not_linked")
+    );
+
+    expect(contextOf()).toMatchObject({
+      ssoCallbackOutcome: "failure",
+      ssoCallbackReason: "account_not_linked",
+    });
+  });
+
+  /**
+   * Verify-before-link recovery ends here on purpose: no session, no error, an inbox-verification
+   * page. Counting it either way corrupts the ratio, so it is named and excluded from both sides.
+   */
+  test("recovery, with no session and no error, is neither a success nor a failure", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/openid",
+      redirect("https://app.test/auth/verification-requested")
+    );
+
+    expect(contextOf()).toMatchObject({
+      ssoCallbackOutcome: "incomplete",
+      ssoCallbackReason: "no_session",
+    });
+    expect(contextLoggerMock.warn).not.toHaveBeenCalled();
+    expect(contextLoggerMock.info).toHaveBeenCalledWith("SSO callback did not complete a sign-in");
   });
 
   test.each([
