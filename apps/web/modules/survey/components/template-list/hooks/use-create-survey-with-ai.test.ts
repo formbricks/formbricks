@@ -1,47 +1,74 @@
 /**
  * @vitest-environment jsdom
  */
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { type ReactNode, createElement } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { TSurveyGenerationStreamEvent } from "@/app/api/internal/surveys/generate/lib/events";
 import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import {
-  type TV3CreateSurveyValidationResponse,
-  createV3Survey,
-  generateSurveyCreatePayload,
-  validateSurveyCreatePayload,
-} from "@/modules/survey/list/lib/v3-surveys-client";
+import { streamSurveyGeneration } from "@/modules/survey/components/template-list/lib/ai-generate-stream-client";
+import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useCreateSurveyWithAI } from "./use-create-survey-with-ai";
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
+  useTranslation: () => ({ t: (key: string) => key }),
 }));
 
 vi.mock("@/modules/survey/list/lib/v3-surveys-client", () => ({
   createV3Survey: vi.fn(),
-  generateSurveyCreatePayload: vi.fn(),
-  validateSurveyCreatePayload: vi.fn(),
+}));
+
+vi.mock("@/modules/survey/components/template-list/lib/ai-generate-stream-client", () => ({
+  streamSurveyGeneration: vi.fn(),
 }));
 
 const submitEvent = {
   preventDefault: vi.fn(),
 } as unknown as Parameters<ReturnType<typeof useCreateSurveyWithAI>["handleGenerate"]>[0];
+
 const payload = { name: "Generated survey" } as unknown as TV3CreateSurveyBody;
-const validGeneratedSurvey = {
-  language: "en-US",
-  payload,
-  validation: {
-    valid: true,
-    invalid_params: [],
-    languages: [],
-  },
+
+const questionSnapshot = (headline: string) => ({
+  name: "Onboarding",
+  blocks: [{ name: "Block", questions: [{ type: "openText", headline }] }],
+});
+
+/** Drive the hook with a scripted event sequence, as the real stream would. */
+const emitEvents = (events: TSurveyGenerationStreamEvent[]) => {
+  vi.mocked(streamSurveyGeneration).mockImplementation(async (_body, { onEvent }) => {
+    events.forEach(onEvent);
+  });
 };
-const validCreateValidation: TV3CreateSurveyValidationResponse = {
-  valid: true,
-  operation: "create",
-  invalid_params: [],
+
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createElement(
+    QueryClientProvider,
+    { client: new QueryClient({ defaultOptions: { mutations: { retry: false } } }) },
+    children
+  );
+
+const renderAiHook = (overrides: { isAIAvailable?: boolean; onSuccess?: () => void } = {}) =>
+  renderHook(
+    () =>
+      useCreateSurveyWithAI({
+        workspaceId: "workspace1",
+        language: "en-US",
+        isAIAvailable: overrides.isAIAvailable ?? true,
+        onSuccess: overrides.onSuccess ?? vi.fn(),
+      }),
+    { wrapper }
+  );
+
+const submitWithPrompt = async (
+  result: { current: ReturnType<typeof useCreateSurveyWithAI> },
+  prompt = "  create an onboarding survey  "
+) => {
+  act(() => result.current.setPrompt(prompt));
+  await act(async () => {
+    result.current.handleGenerate(submitEvent);
+  });
 };
 
 describe("useCreateSurveyWithAI", () => {
@@ -49,152 +76,122 @@ describe("useCreateSurveyWithAI", () => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
       true;
     vi.clearAllMocks();
-    vi.mocked(generateSurveyCreatePayload).mockResolvedValue(validGeneratedSurvey);
-    vi.mocked(validateSurveyCreatePayload).mockResolvedValue(validCreateValidation);
     vi.mocked(createV3Survey).mockResolvedValue({ id: "survey1" });
+    emitEvents([]);
+    // Snapshots are dispatched on the next frame; run them immediately under test.
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      callback(0);
+      return 0;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => undefined);
   });
 
   test("does not submit when AI is unavailable or the prompt is too short", async () => {
-    const onSuccess = vi.fn();
-    const { result } = renderHook(() =>
-      useCreateSurveyWithAI({
-        workspaceId: "workspace1",
-        language: "en-US",
-        isAIAvailable: false,
-        onSuccess,
-      })
-    );
+    const { result } = renderAiHook({ isAIAvailable: false });
 
     expect(result.current.canCreate).toBe(false);
+    await submitWithPrompt(result);
+    expect(streamSurveyGeneration).not.toHaveBeenCalled();
 
-    await act(async () => {
-      await result.current.handleGenerate(submitEvent);
-    });
-
-    expect(generateSurveyCreatePayload).not.toHaveBeenCalled();
-
-    act(() => {
-      result.current.setPrompt("abc");
-    });
-
+    act(() => result.current.setPrompt("abc"));
     expect(result.current.canCreate).toBe(false);
   });
 
-  test("generates, validates, creates, and opens the generated survey", async () => {
-    const onSuccess = vi.fn();
-    const { result } = renderHook(() =>
-      useCreateSurveyWithAI({
-        workspaceId: "workspace1",
-        language: "en-US",
-        isAIAvailable: true,
-        onSuccess,
-      })
+  test("sends the trimmed prompt to the stream", async () => {
+    const { result } = renderAiHook();
+
+    await submitWithPrompt(result);
+
+    expect(streamSurveyGeneration).toHaveBeenCalledWith(
+      { workspaceId: "workspace1", prompt: "create an onboarding survey", type: "link", language: "en-US" },
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
-
-    act(() => {
-      result.current.setPrompt("  create an onboarding survey  ");
-    });
-
-    await act(async () => {
-      await result.current.handleGenerate(submitEvent);
-    });
-
-    expect(generateSurveyCreatePayload).toHaveBeenCalledWith({
-      workspaceId: "workspace1",
-      prompt: "create an onboarding survey",
-      type: "link",
-      language: "en-US",
-    });
-    expect(validateSurveyCreatePayload).toHaveBeenCalledWith(payload);
-    expect(createV3Survey).toHaveBeenCalledWith(payload, "ai");
-    expect(onSuccess).toHaveBeenCalledWith("survey1");
-    expect(result.current.submitLabel).toBe("workspace.surveys.ai_create.opening_editor");
   });
 
-  test("shows an error when the generated survey payload is invalid", async () => {
-    vi.mocked(generateSurveyCreatePayload).mockResolvedValueOnce({
-      ...validGeneratedSurvey,
-      validation: { ...validGeneratedSurvey.validation, valid: false },
-    });
+  test("builds the draft from partial events and lands on review", async () => {
+    emitEvents([
+      { type: "start", requestId: "req_1" },
+      { type: "partial", seq: 1, draft: questionSnapshot("How was onboarding?") as never },
+      {
+        type: "done",
+        language: "en",
+        payload,
+        validation: { valid: true, invalid_params: [], languages: [] },
+      },
+    ]);
+    const { result } = renderAiHook();
 
-    const { result } = renderHook(() =>
-      useCreateSurveyWithAI({
-        workspaceId: "workspace1",
-        language: "en-US",
-        isAIAvailable: true,
-        onSuccess: vi.fn(),
-      })
-    );
+    await submitWithPrompt(result);
 
-    act(() => {
-      result.current.setPrompt("create an onboarding survey");
-    });
-
-    await act(async () => {
-      await result.current.handleGenerate(submitEvent);
-    });
-
-    expect(result.current.errorMessage).toBe("workspace.surveys.ai_create.generated_payload_invalid");
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    expect(result.current.draft.name).toBe("Onboarding");
+    expect(result.current.draft.questions[0].headline).toBe("How was onboarding?");
+    // Nothing is written until the user asks for it.
     expect(createV3Survey).not.toHaveBeenCalled();
-
-    act(() => {
-      result.current.clearError();
-    });
-
-    expect(result.current.errorMessage).toBeNull();
   });
 
-  test.each([
-    ["ai_features_not_enabled", "workspace.surveys.ai_create.ai_not_in_plan"],
-    ["ai_smart_tools_disabled", "workspace.surveys.ai_create.ai_not_enabled"],
-    ["ai_instance_not_configured", "workspace.surveys.ai_create.ai_instance_not_configured"],
-    ["ai_generated_payload_invalid", "workspace.surveys.ai_create.generated_payload_invalid"],
-    ["ai_output_too_long", "workspace.surveys.ai_create.ai_output_too_long"],
-  ])("maps %s errors to the matching message", async (code, expectedMessage) => {
-    vi.mocked(generateSurveyCreatePayload).mockRejectedValueOnce(
-      new V3ApiError({ status: 403, detail: "API error", code })
-    );
+  test("writes the survey only when the user opens it in the editor", async () => {
+    const onSuccess = vi.fn();
+    emitEvents([
+      { type: "partial", seq: 1, draft: questionSnapshot("How was onboarding?") as never },
+      {
+        type: "done",
+        language: "en",
+        payload,
+        validation: { valid: true, invalid_params: [], languages: [] },
+      },
+    ]);
+    const { result } = renderAiHook({ onSuccess });
 
-    const { result } = renderHook(() =>
-      useCreateSurveyWithAI({
-        workspaceId: "workspace1",
-        language: "en-US",
-        isAIAvailable: true,
-        onSuccess: vi.fn(),
-      })
-    );
-
-    act(() => {
-      result.current.setPrompt("create an onboarding survey");
-    });
+    await submitWithPrompt(result);
+    await waitFor(() => expect(result.current.status).toBe("review"));
 
     await act(async () => {
-      await result.current.handleGenerate(submitEvent);
+      result.current.handleOpenInEditor();
     });
 
-    await waitFor(() => expect(result.current.errorMessage).toBe(expectedMessage));
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledWith("survey1"));
+    expect(createV3Survey).toHaveBeenCalledWith(payload, "ai");
   });
 
-  test("uses the generic API error message for unexpected errors", async () => {
-    vi.mocked(generateSurveyCreatePayload).mockRejectedValueOnce(new Error("Network failed"));
+  test("surfaces an in-band error event and discards the partial draft", async () => {
+    emitEvents([
+      { type: "partial", seq: 1, draft: questionSnapshot("Half written") as never },
+      { type: "error", code: "ai_output_too_long", detail: "too long" },
+    ]);
+    const { result } = renderAiHook();
 
-    const { result } = renderHook(() =>
-      useCreateSurveyWithAI({
-        workspaceId: "workspace1",
-        language: "en-US",
-        isAIAvailable: true,
-        onSuccess: vi.fn(),
-      })
+    await submitWithPrompt(result);
+
+    await waitFor(() =>
+      expect(result.current.errorMessage).toBe("workspace.surveys.ai_create.ai_output_too_long")
     );
+    expect(result.current.status).toBe("idle");
+    expect(result.current.draft.questions).toHaveLength(0);
+  });
 
-    act(() => {
-      result.current.setPrompt("create an onboarding survey");
-    });
+  test("keeps the prompt after a failure so the user can retry without retyping", async () => {
+    vi.mocked(streamSurveyGeneration).mockRejectedValueOnce(
+      new V3ApiError({ status: 503, detail: "unavailable", code: "ai_smart_tools_disabled" })
+    );
+    const { result } = renderAiHook();
 
-    await act(async () => {
-      await result.current.handleGenerate(submitEvent);
-    });
+    await submitWithPrompt(result);
 
-    expect(result.current.errorMessage).toBe("Network failed");
+    await waitFor(() =>
+      expect(result.current.errorMessage).toBe("workspace.surveys.ai_create.ai_not_enabled")
+    );
+    expect(result.current.prompt).toBe("  create an onboarding survey  ");
+  });
+
+  test("stop keeps a partial draft so it can still be opened", async () => {
+    emitEvents([{ type: "partial", seq: 1, draft: questionSnapshot("How was onboarding?") as never }]);
+    const { result } = renderAiHook();
+
+    await submitWithPrompt(result);
+    act(() => result.current.handleStop());
+
+    expect(result.current.status).toBe("review");
+    expect(result.current.draft.questions).toHaveLength(1);
   });
 });

@@ -4,10 +4,13 @@ import {
   type AIResolvedLanguageModel,
   type TGenerateObjectOptions,
   type TGenerateObjectResult,
+  type TStreamObjectOptions,
+  type TStreamObjectResult,
   classifyAIProviderError,
   generateObject,
   generateText,
   isAiConfigured,
+  streamObject,
 } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
 import {
@@ -161,5 +164,66 @@ export const generateOrganizationAIObject = async <T = unknown>({
       throw new TooManyRequestsError(AI_ERROR_CODES.QUOTA_EXCEEDED, providerError.retryAfterSeconds);
     }
     throw error;
+  }
+};
+
+type TStreamOrganizationAIObjectInput<T = unknown> = {
+  organizationId: string;
+  aiTracing?: Omit<AITracingContext, "organizationId">;
+} & TStreamObjectOptions<T>;
+
+/**
+ * Streaming counterpart to `generateOrganizationAIObject`, with the same entitlement, tracing and
+ * quota-classification contract.
+ *
+ * Note the two catch surfaces. `streamObject` returns before the provider has been called, so the
+ * try/catch below only ever sees the synchronous `AIConfigurationError` from model resolution;
+ * everything the blocking sibling's catch handles — provider failures, 429s — arrives later on
+ * `completion` and needs its own handler. Collapsing these into one means the quota mapping never
+ * fires for a streamed generation.
+ */
+export const streamOrganizationAIObject = async <T = unknown>({
+  organizationId,
+  aiTracing,
+  ...options
+}: TStreamOrganizationAIObjectInput<T>): Promise<TStreamObjectResult<T>> => {
+  const aiConfig = await assertOrganizationAIConfigured(organizationId);
+
+  const wrapModel = aiTracing
+    ? (model: AIResolvedLanguageModel) => wrapAiModelWithTracing(model, { organizationId, ...aiTracing })
+    : undefined;
+
+  const classify = (error: unknown): never => {
+    const providerError = classifyAIProviderError(error);
+    logger.error(
+      {
+        organizationId,
+        isInstanceConfigured: aiConfig.isInstanceConfigured,
+        errorCode: error instanceof AIConfigurationError ? error.code : undefined,
+        statusCode: providerError?.statusCode,
+        isQuotaExhausted: providerError?.isQuotaExhausted,
+        isRetryable: providerError?.isRetryable,
+        err: error,
+      },
+      "Failed to stream organization AI object"
+    );
+    if (providerError?.isQuotaExhausted) {
+      throw new TooManyRequestsError(AI_ERROR_CODES.QUOTA_EXCEEDED, providerError.retryAfterSeconds);
+    }
+    throw error;
+  };
+
+  try {
+    const result = streamObject<T>(options, env, wrapModel);
+    const completion = result.completion.catch(classify);
+    // The caller may only consume the partial stream (client aborted); keep the classified
+    // rejection from surfacing as an unhandled one.
+    completion.catch(() => undefined);
+
+    // Enumerated rather than spread: a future lazy getter on the result would be evaluated by a
+    // spread, draining the base stream as a side effect.
+    return { partialObjectStream: result.partialObjectStream, completion };
+  } catch (error) {
+    return classify(error);
   }
 };

@@ -16,6 +16,13 @@
   --color-brand-light: #00e6ca;
   --color-brand-dark: #00c4b8;
 
+  /* AI — the mark for generative features. A token of its own rather than a reuse of
+     --color-brand-dark, which means "you are here" (active nav, active tab): the two carry different
+     meanings and will diverge. Icon and hairline only; never a button surface or a card background,
+     which would break the Quiet Primary Rule. Darkened from the logo's teal family to clear 4.5:1
+     against white. */
+  --color-ai: #0d9488;
+
   --color-focus: var(--formbricks-focus, #1982fc);
   --color-brandnew: var(--formbricks-brand, #038178);
 
@@ -83,6 +90,11 @@
   --animate-surveyLoading: surveyLoadingAnimation 0.5s ease-out forwards;
   --animate-surveyExit: surveyExitAnimation 0.5s ease-out forwards;
   --animate-logo-scroll: logo-scroll 20s linear infinite;
+  /* AI activity. Both rest at their start/end frame so the prefers-reduced-motion kill-switch below
+     — which collapses duration to 0.01ms rather than removing the animation — lands on a correct
+     static appearance instead of a stranded mid-animation pose. */
+  --animate-ai-twinkle: ai-twinkle 1.4s ease-in-out infinite;
+  --animate-ai-sweep: ai-sweep 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
   @keyframes fadeIn {
     0% {
@@ -177,6 +189,30 @@
     }
     100% {
       transform: translateX(-50%);
+    }
+  }
+  /* Transform-dominant rather than an opacity pulse: the skeleton rows that sit beside this while a
+     draft streams are already animate-pulse, and two elements pulsing the same property beat against
+     each other. Scaling a 16px svg is GPU-composited and reflows nothing. */
+  @keyframes ai-twinkle {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.75;
+      transform: scale(1.12);
+    }
+  }
+  /* The bar is w-1/3, so -100% puts its right edge at the container's left edge and 300% puts its
+     left edge at the right edge — it enters and exits fully. */
+  @keyframes ai-sweep {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(300%);
     }
   }
 }

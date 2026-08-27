@@ -1,13 +1,12 @@
 "use client";
 
-import { SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { CreateWithAIForm } from "@/modules/survey/components/template-list/components/create-with-ai-form";
-import { Button } from "@/modules/ui/components/button";
+import { AiIcon } from "@/modules/ui/components/ai";
 import {
   Dialog,
   DialogBody,
@@ -46,10 +45,9 @@ export const CreateWithAIDialog = ({
 
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
-  const isBusy = isNavigating;
 
   const setDialogOpen = (nextOpen: boolean) => {
-    if (isBusy && !nextOpen) return;
+    if (isNavigating && !nextOpen) return;
 
     if (!isControlled) {
       setInternalOpen(nextOpen);
@@ -65,7 +63,7 @@ export const CreateWithAIDialog = ({
   };
 
   const handleOpenAutoFocus = (event: Event) => {
-    if (!isAIAvailable || isBusy) return;
+    if (!isAIAvailable) return;
 
     event.preventDefault();
     globalThis.requestAnimationFrame(() => {
@@ -77,17 +75,26 @@ export const CreateWithAIDialog = ({
     <Dialog open={isOpen} onOpenChange={setDialogOpen}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent
-        width="narrow"
+        // One width for every state. A centred modal that grows when you press Create is the most
+        // obvious jank available, and the generating view needs the room.
+        width="default"
         className="overflow-hidden"
         onOpenAutoFocus={handleOpenAutoFocus}
-        disableCloseOnOutsideClick={isBusy}>
+        // A stray click outside must not kill a twenty-second generation, but Escape should still
+        // work — disableCloseOnOutsideClick swallows it unless closeOnEscape opts back in.
+        disableCloseOnOutsideClick
+        closeOnEscape>
         <DialogHeader>
-          <SparklesIcon aria-hidden="true" />
+          <AiIcon aria-hidden="true" />
           <DialogTitle>{t("workspace.surveys.ai_create.dialog_title")}</DialogTitle>
           <DialogDescription>{t("workspace.surveys.ai_create.dialog_description")}</DialogDescription>
         </DialogHeader>
 
-        <DialogBody className="-mx-1 -mt-1 space-y-4 px-1 pt-1 pb-1">
+        {/* Fixed height, not min-height: the modal reaches its final geometry on first paint and
+            never moves again — not on submit, not as questions append, not on completion.
+            flex-none is load-bearing: DialogBody is flex-1 by default, which makes it size to its
+            content and the height a no-op. */}
+        <DialogBody unconstrained className="-mx-1 -mt-1 flex h-[26rem] flex-none flex-col px-1 pt-1 pb-1">
           <CreateWithAIForm
             workspaceId={workspaceId}
             language={language}
@@ -95,22 +102,10 @@ export const CreateWithAIDialog = ({
             aiUnavailableReason={aiUnavailableReason}
             onSuccess={handleSuccess}
             promptInputRef={promptInputRef}
-            showCancel={false}
-            renderFooter={({ isBusy: isFormBusy, canCreate, submitLabel }) => (
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isFormBusy || isBusy}
-                  onClick={() => setDialogOpen(false)}>
-                  {t("common.cancel")}
-                </Button>
-                <Button type="submit" loading={isFormBusy || isBusy} disabled={!canCreate}>
-                  {!isFormBusy && !isBusy && <SparklesIcon />}
-                  {submitLabel}
-                </Button>
-              </DialogFooter>
-            )}
+            showCancel
+            isHostNavigating={isNavigating}
+            onCancel={() => setDialogOpen(false)}
+            renderFooter={(footer) => <DialogFooter>{footer}</DialogFooter>}
           />
         </DialogBody>
       </DialogContent>

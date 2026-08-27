@@ -1,0 +1,101 @@
+import { describe, expect, test } from "vitest";
+import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/generate/lib/events";
+import { EMPTY_AI_DRAFT, mergeAiDraftSnapshot } from "./ai-draft-reducer";
+
+const snapshot = (questions: unknown[], name?: string): TSurveyGenerationDraftSnapshot =>
+  ({ name, blocks: [{ name: "Block", questions }] }) as TSurveyGenerationDraftSnapshot;
+
+describe("mergeAiDraftSnapshot", () => {
+  test("adds a row as soon as the model commits to a type", () => {
+    const state = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, snapshot([{ type: "openText" }]));
+
+    expect(state.questions).toHaveLength(1);
+    expect(state.questions[0]).toMatchObject({ key: "0:0", type: "openText" });
+  });
+
+  test("ignores a question with neither type nor headline", () => {
+    // Nothing to show yet; a placeholder row would appear and then jump.
+    expect(mergeAiDraftSnapshot(EMPTY_AI_DRAFT, snapshot([{}])).questions).toHaveLength(0);
+  });
+
+  test("fills in a headline as it streams", () => {
+    const first = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, snapshot([{ type: "openText", headline: "How " }]));
+    const second = mergeAiDraftSnapshot(first, snapshot([{ type: "openText", headline: "How was it?" }]));
+
+    expect(second.questions[0].headline).toBe("How was it?");
+  });
+
+  test("records the option count once choices arrive", () => {
+    const state = mergeAiDraftSnapshot(
+      EMPTY_AI_DRAFT,
+      snapshot([{ type: "multipleChoiceSingle", headline: "Pick", choices: ["a", "b", "c"] }])
+    );
+
+    expect(state.questions[0].choiceCount).toBe(3);
+  });
+
+  test("never shrinks when a snapshot arrives with fewer questions", () => {
+    const two = mergeAiDraftSnapshot(
+      EMPTY_AI_DRAFT,
+      snapshot([
+        { type: "openText", headline: "One" },
+        { type: "openText", headline: "Two" },
+      ])
+    );
+
+    const after = mergeAiDraftSnapshot(two, snapshot([{ type: "openText", headline: "One" }]));
+
+    expect(after.questions).toHaveLength(2);
+    expect(after.questions[1].headline).toBe("Two");
+  });
+
+  test("never clears a field that a later snapshot blanked", () => {
+    const withHeadline = mergeAiDraftSnapshot(
+      EMPTY_AI_DRAFT,
+      snapshot([{ type: "openText", headline: "How was it?" }])
+    );
+
+    const after = mergeAiDraftSnapshot(withHeadline, snapshot([{ type: "openText" }]));
+
+    expect(after.questions[0].headline).toBe("How was it?");
+  });
+
+  test("returns the identical object reference for an unchanged question", () => {
+    // The memo contract. Losing this makes every row re-render several times a second.
+    const first = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, snapshot([{ type: "openText", headline: "One" }]));
+    const second = mergeAiDraftSnapshot(
+      first,
+      snapshot([
+        { type: "openText", headline: "One" },
+        { type: "rating", headline: "Two" },
+      ])
+    );
+
+    expect(second.questions[0]).toBe(first.questions[0]);
+    expect(second.questions[1]).not.toBe(first.questions[0]);
+  });
+
+  test("returns the identical state when the snapshot changed nothing", () => {
+    const first = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, snapshot([{ type: "openText", headline: "One" }]));
+    const second = mergeAiDraftSnapshot(first, snapshot([{ type: "openText", headline: "One" }]));
+
+    expect(second).toBe(first);
+  });
+
+  test("keeps keys stable across blocks so rows never re-mount", () => {
+    const state = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, {
+      blocks: [
+        { name: "A", questions: [{ type: "openText", headline: "One" }] },
+        { name: "B", questions: [{ type: "rating", headline: "Two" }] },
+      ],
+    } as TSurveyGenerationDraftSnapshot);
+
+    expect(state.questions.map((question) => question.key)).toEqual(["0:0", "1:0"]);
+  });
+
+  test("picks up the survey name once it lands", () => {
+    const state = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, snapshot([{ type: "openText" }], "Onboarding"));
+
+    expect(state.name).toBe("Onboarding");
+  });
+});
