@@ -1,0 +1,173 @@
+---
+title: "Screen Reader Pass"
+description: "The manual screen-reader and keyboard walkthrough of a rendered survey, and how to record what it finds."
+icon: "ear-listen"
+---
+
+Automated accessibility rules catch roughly a third of WCAG failures. Per Deque, axe-core detects
+about 30–40% of issues on a page; the rest — whether alt text says anything useful, whether a
+heading structure reflects the real hierarchy, whether a status change is announced at all, where
+focus actually lands after an interaction — needs a person with a screen reader.
+
+That gap is not theoretical here. The survey validation errors that were rendered but never
+announced (WCAG 4.1.3) passed the axe gate cleanly for months and were found by a manual pass. This
+page is the walkthrough that found it, written down so it can be repeated by someone who has not
+done it before.
+
+<Note>
+  This is a procedure, not a CI gate. Run it when the survey renderer's structure, focus handling,
+  or status messaging changes, and before a release that carries such a change. A single UI detail
+  inside an already-covered flow does not need a full pass.
+</Note>
+
+---
+
+## What The Automated Gate Already Covers
+
+Do not spend the pass re-checking these. They run on every pull request, and if one regresses the
+Playwright job fails before a human ever looks:
+
+| Already asserted in CI                                                      | Where                          |
+| --------------------------------------------------------------------------- | ------------------------------ |
+| Zero WCAG 2.1/2.2 AA axe violations on every card, in 10 variants           | `survey-accessibility.spec.ts` |
+| One `h1` naming the survey, card headlines as `h2`, no skipped level        | `survey-accessibility.spec.ts` |
+| Validation errors reach a resolvable live region; failed submit moves focus | `survey-keyboard.spec.ts`      |
+| Progress is a determinate `progressbar` matching the painted width          | `survey-progress-a11y.spec.ts` |
+| Arrow keys browse without selecting; Space selects and advances once        | `survey-keyboard.spec.ts`      |
+
+What is left for a human is everything above that involves judgement or hearing: whether the
+announcement that fires is the *right* one, whether the focus stop that exists is the *expected*
+one, and whether the text a screen reader reads out means anything.
+
+---
+
+## Before You Start
+
+<Steps>
+  <Step title="Get a survey with every question type in it">
+    The accessibility suite already seeds exactly this. Run any one of its tests against your local
+    stack and the fixtures are left behind in your dev database — an "A11y Kitchen Sink" survey
+    covering every renderable question type, and an "A11y Answered States" survey carrying the date
+    picker, an external CTA, a required file upload and the Cal.com scheduler:
+
+    ```bash
+    pnpm test:e2e survey-accessibility -g "heading structure"
+    psql "$DATABASE_URL" -c "select name, id from \"Survey\" where name like 'A11y%' limit 3;"
+    ```
+
+    They are published link surveys, so `http://localhost:3000/s/<id>` opens one with no login. Use
+    the kitchen sink for the walkthrough below and the answered-states survey for the composite
+    controls step.
+  </Step>
+  <Step title="Pick one screen reader and browser pair">
+    NVDA with Firefox or Chrome on Windows, or VoiceOver with Safari on macOS. Use one pair for the
+    whole pass and write down which — a finding is only reproducible if the pair is known, and the
+    same markup can behave differently in another one.
+  </Step>
+  <Step title="Turn the screen off, or turn the display curtain on">
+    VoiceOver has one built in (`Ctrl+Option+Shift+F11`). The point is to stop yourself from
+    resolving an ambiguity with your eyes, which is the failure mode of every sighted screen-reader
+    pass.
+  </Step>
+</Steps>
+
+---
+
+## The Pass
+
+Walk the survey from the link to the end screen. Each step below names what to do and what a pass
+looks like; anything else is a finding.
+
+<Steps>
+  <Step title="Read the page before touching it">
+    Ask the screen reader for the page title and the heading list (NVDA: `Insert+F7`; VoiceOver:
+    `Ctrl+Option+U`).
+
+    **Pass:** the title identifies the survey and your position in it. The heading list has one
+    level-1 heading — the survey's name — and the current card's prompt as a level 2. You can tell
+    what you are being asked without reading the body.
+  </Step>
+  <Step title="Tab through every card">
+    On each card, `Tab` from the top to the last stop, then `Shift+Tab` back.
+
+    **Pass:** every stop is announced with a name that matches its visible text, and its focus
+    indicator is visible. The order matches the visual order. Nothing off-screen takes focus — the
+    stacked layout keeps neighbouring cards mounted, so a focus stop inside a card you cannot see is
+    a finding. You never get stuck.
+  </Step>
+  <Step title="Submit a required card empty">
+    Leave the first required question blank and activate the submit control.
+
+    **Pass:** you hear the error without moving focus yourself, focus lands on the control that
+    caused it, and you are still on the same card. The error text says which field and what to do.
+  </Step>
+  <Step title="Advance a card and listen">
+    Answer the card and submit.
+
+    **Pass:** something tells you the card changed — the new prompt, the progress, or both — without
+    you having to go looking. Silence here is the highest-value finding this pass produces.
+  </Step>
+  <Step title="Go back">
+    Activate the back control.
+
+    **Pass:** you are told you moved back, your previous answer is still there and is announced as
+    selected, and focus is somewhere useful rather than back at the top of the document.
+  </Step>
+  <Step title="Exercise the composite controls">
+    The date picker, the file upload, the ranking list and the matrix are the four that do not
+    reduce to a single native input.
+
+    **Pass:** the date picker announces the selected day as selected and is operable from the
+    keyboard alone. The file upload announces the upload starting, the file that was attached, and
+    the control that removes it. Ranking announces an item's new position after it moves. Each
+    matrix row announces which row it belongs to, not just the column.
+  </Step>
+  <Step title="Reach the end screen">
+    Complete the survey.
+
+    **Pass:** you hear that the survey is finished. Nothing is left focusable behind the end screen.
+  </Step>
+  <Step title="Re-read anything carrying meaning through colour or an image">
+    Required markers, selected states, error states, images used as choices.
+
+    **Pass:** each one is also carried by text or by an accessible name. Turn the screen back on and
+    squint: if a state is only a colour, it is a finding regardless of its contrast ratio.
+  </Step>
+</Steps>
+
+---
+
+## Known Third-Party Gaps
+
+These are already known and do not need re-filing. Both live inside a cross-origin iframe that
+Formbricks embeds but does not control:
+
+- **Cal.com scheduler.** Only the wrapper around it — the headline, description and container — is
+  ours, and that is the part the axe gate scans. Barriers inside the booker itself belong upstream.
+- **Embedded video** (YouTube, Vimeo, Loom). Formbricks provides no route to captions, a transcript
+  or an audio description, and it reduces the embedded player's controls. The gap and its workaround
+  are published under [Known Limitations](/platform/accessibility#known-limitations).
+
+---
+
+## Recording What You Find
+
+One finding per barrier, in the accessibility findings log, then a ticket for each one worth fixing.
+A finding that someone else can act on carries five things:
+
+1. The screen reader and browser pair, and the platform.
+2. The survey link and the card, by its prompt text.
+3. The keystrokes, in order, from opening the link.
+4. What was announced — quoted, as heard — or "nothing".
+5. What should have been announced instead, and the WCAG criterion it maps to.
+
+Barriers reported from outside the team arrive through the
+[accessibility issue template](https://github.com/formbricks/formbricks/issues/new?labels=accessibility&template=accessibility.yml);
+use the same shape for what you find here.
+
+<Note>
+  When a pass produces a finding that automation could have caught, fix the gate too: an assertion
+  in the relevant spec is cheaper than remembering to look next time. Where that assertion belongs
+  is decided the same way as any other test — see [Testing
+  Methodology](/development/standards/qa/testing-methodology).
+</Note>

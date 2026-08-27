@@ -3,8 +3,15 @@ import { type Locator, type Page, expect } from "@playwright/test";
 import { logger } from "@formbricks/logger";
 import { test } from "./lib/fixtures";
 import {
+  A11Y_ANSWERED_STATES_SURVEY_NAME,
   A11Y_SURVEY_NAME,
+  CAL_EMBED_ORIGIN,
+  CAL_HEADLINE,
+  CTA_EXTERNAL_BUTTON_LABEL,
+  CTA_EXTERNAL_HEADLINE,
+  DATE_HEADLINE,
   ENDING_CARD_HEADLINE,
+  FILE_UPLOAD_HEADLINE,
   OPEN_TEXT_HEADLINE,
   SINGLE_SELECT_HEADLINE,
   type SeededAccessibilitySurveys,
@@ -21,6 +28,11 @@ import { mockStorageUploads } from "./utils/helper";
  * empty-submit, back-nav, and a multi-language RTL pass) and asserts zero WCAG 2.1
  * / 2.2 AA violations. A silent stall fails the test rather than passing as "clean":
  * the walker proves it advanced and reached the ending card.
+ *
+ * A tenth variant scans the second, "answered states" fixture (ENG-1298): the cards
+ * whose DOM only exists after an interaction, which the walker — which scans each card
+ * once, before answering it — structurally cannot reach, plus the Cal.com scheduler
+ * wrapper, which cannot live in the kitchen sink at all.
  *
  * Tagged @slow — it provisions surveys and walks them across many variants. It runs
  * in the standard `pnpm test:e2e` job (testMatch **\/*.spec.ts); the tag is metadata
@@ -55,8 +67,10 @@ interface AllowlistEntry {
 }
 
 // Currently empty: every violation the suite found was fixed at the source instead
-// (file-upload dropzone restructure, branding contrast) and the Cal.com third-party
-// iframe was removed from the fixture. Add entries only for justified wontfixes.
+// (file-upload dropzone restructure, branding contrast), and the Cal.com third-party
+// iframe needs no entry because it never renders — the answered-states walk blocks the
+// embed origin and asserts the container stayed empty, so only our own wrapper is
+// graded. Add entries only for justified wontfixes.
 const ALLOWLIST: AllowlistEntry[] = [];
 
 type ViolationRow = {
@@ -72,6 +86,18 @@ type ViolationRow = {
 const CARD_TIMEOUT = 15_000;
 const ACTION_TIMEOUT = 8_000;
 const MAX_STEPS = 25;
+
+// The file the answered-states walk attaches to the (required) file-upload card. Built in
+// memory rather than read from disk so the spec owns its own fixture, and kept to an SVG the
+// storage mock already serves for unknown names (see `mockStorageUploads`). The stem is
+// asserted against the delete control's accessible name, which the app derives from the stored
+// file name — so it must survive the upload round-trip.
+const UPLOAD_FIXTURE_STEM = "a11y-answered-states";
+const UPLOAD_FIXTURE_FILE_NAME = `${UPLOAD_FIXTURE_STEM}.svg`;
+const UPLOAD_FIXTURE_BODY = Buffer.from(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#0f172a"/></svg>',
+  "utf8"
+);
 
 const isAllowlisted = (ruleId: string, target: string): boolean =>
   ALLOWLIST.some(
@@ -480,6 +506,39 @@ const openFirstQuestionCard = async (page: Page, surveyUrl: string): Promise<str
   return firstCardId ?? "";
 };
 
+/**
+ * Aborts every request to the Cal.com embed origin, so the scheduler's third-party snippet
+ * (packages/surveys cal-embed.tsx loads it from `https://cal.com/embed.js`) never runs and
+ * never injects its cross-origin iframe.
+ *
+ * This is what makes a `cal` card scannable unattended at all. Left unblocked, the card's
+ * axe result would depend on external network and on markup Formbricks neither owns nor can
+ * fix — the reason the kitchen-sink fixture excludes the type outright. Blocked, what renders
+ * is exactly the wrapper that IS ours: headline, subheader, and the embed container. The test
+ * asserts the container stayed iframe-free, so the scan cannot silently grade Cal.com's DOM.
+ */
+const blockCalEmbedRequests = (page: Page): Promise<void> =>
+  page.route(
+    (url) => url.hostname === CAL_EMBED_ORIGIN || url.hostname.endsWith(`.${CAL_EMBED_ORIGIN}`),
+    (route) => route.abort()
+  );
+
+/**
+ * Clicks the current card's advance button and waits for a stable next card, asserting that
+ * one arrived. Used by the answered-states walk, which needs the next card's id to scope its
+ * assertions — unlike `walkAndScan`, which only needs to know it moved.
+ */
+const advanceToNextCard = async (page: Page, fromCardId: string): Promise<string> => {
+  const advance = advanceButton(page.locator(`[id="${fromCardId}"]`)).first();
+  await expect(advance, `advance button should be present on ${fromCardId}`).toBeVisible({
+    timeout: ACTION_TIMEOUT,
+  });
+  await advance.click({ timeout: ACTION_TIMEOUT });
+  const nextCardId = await waitForCardTransition(page, fromCardId);
+  expect(nextCardId, `advancing past ${fromCardId} should land on the next card`).toBeTruthy();
+  return nextCardId ?? "";
+};
+
 const reportAndAssert = (variant: string, failSink: ViolationRow[]): void => {
   if (failSink.length > 0) {
     logger.error(`\n=== ${failSink.length} WCAG AA violation(s) for variant "${variant}" ===`);
@@ -562,6 +621,134 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     await waitForCardSettled(page, firstCardId);
     await scan(page, "desktop-back-nav", "first-card-after-back", violations);
     reportAndAssert("desktop-back-nav", violations);
+  });
+
+  /**
+   * Answered-state coverage (ENG-1298).
+   *
+   * The walks above scan each card exactly once, BEFORE answering it, and deliberately never
+   * answer the file input — so the markup a card renders only AFTER an interaction has never
+   * reached axe. This scans that markup on the second fixture, one card per state:
+   *
+   * - the SELECTED day cell, whose `bg-brand` + `text-primary-foreground` pairing is chosen for
+   *   contrast in packages/survey-ui but has never been measured by axe;
+   * - the external CTA's in-card link button, a branch the kitchen sink never renders because it
+   *   sets `buttonExternal: false`;
+   * - the uploaded-file chip and its delete control, with the dropzone gone (single-file mode
+   *   hides the uploader once a file is attached);
+   * - the Cal.com scheduler wrapper, which cannot live in the kitchen sink at all.
+   *
+   * Every state is asserted BEFORE it is scanned, so a click that silently did nothing fails
+   * here instead of being reported as clean — the same rule the walker's stall detection applies.
+   *
+   * One test, desktop only. These are card-local DOM states, so a second viewport, theme or
+   * direction would re-scan the same nodes for the price of another full walk.
+   */
+  test("answered states: selected date, external CTA, uploaded file and scheduler wrapper have no WCAG AA violations", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    await blockCalEmbedRequests(page);
+
+    const variant = "answered-states";
+    const violations: ViolationRow[] = [];
+
+    // 1. Date — scan the card once a day is actually selected.
+    const dateCardId = await openFirstQuestionCard(page, seeded.answeredStatesSurveyUrl);
+    const dateCard = page.locator(`[id="${dateCardId}"]`);
+    await expect(
+      dateCard.getByRole("heading", { level: 2, name: DATE_HEADLINE }),
+      "the answered-states walk should open on the date card"
+    ).toBeVisible({ timeout: CARD_TIMEOUT });
+
+    // The single-h1 contract (ENG-2336) is asserted on the kitchen sink further down, but it is a
+    // per-survey property of the renderer, so hold the second fixture to it here too.
+    await expect(
+      page.locator("#fbjs").getByRole("heading", { level: 1 }),
+      "the answered-states survey should expose its name as the page's one h1"
+    ).toHaveText(A11Y_ANSWERED_STATES_SURVEY_NAME);
+
+    await answerCurrentCard(page, dateCard);
+    await expect(
+      dateCard.locator('button[data-selected-single="true"]'),
+      "a day must be selected before the selected-day state can be scanned"
+    ).toHaveCount(1);
+    await waitForCardSettled(page, dateCardId);
+    await scan(page, variant, "date-day-selected", violations);
+
+    // 2. External CTA — the extra in-card button is the whole point of this card, so assert it
+    //    rendered. It is never clicked: it opens a new tab.
+    const ctaCardId = await advanceToNextCard(page, dateCardId);
+    const ctaCard = page.locator(`[id="${ctaCardId}"]`);
+    await expect(
+      ctaCard.getByRole("heading", { level: 2, name: CTA_EXTERNAL_HEADLINE }),
+      "the date card should advance to the external CTA card"
+    ).toBeVisible({ timeout: CARD_TIMEOUT });
+    await expect(
+      ctaCard.getByRole("button", { name: CTA_EXTERNAL_BUTTON_LABEL }),
+      "the external CTA button should render, named by its ctaButtonLabel"
+    ).toBeVisible({ timeout: ACTION_TIMEOUT });
+    await waitForCardSettled(page, ctaCardId);
+    await scan(page, variant, "cta-external-button", violations);
+
+    // 3. File upload — attach a file through the mocked storage boundary, then scan the state
+    //    the walker skips. The card is REQUIRED, so advancing past it (step 4) is only possible
+    //    if the upload really produced a response value.
+    const uploadCardId = await advanceToNextCard(page, ctaCardId);
+    const uploadCard = page.locator(`[id="${uploadCardId}"]`);
+    await expect(
+      uploadCard.getByRole("heading", { level: 2, name: FILE_UPLOAD_HEADLINE }),
+      "the CTA card should advance to the file upload card"
+    ).toBeVisible({ timeout: CARD_TIMEOUT });
+
+    await uploadCard.locator('input[type="file"]').setInputFiles({
+      name: UPLOAD_FIXTURE_FILE_NAME,
+      mimeType: "image/svg+xml",
+      buffer: UPLOAD_FIXTURE_BODY,
+    });
+
+    const deleteControl = uploadCard.getByRole("button", { name: /^Delete / });
+    await expect(
+      deleteControl,
+      "the uploaded file should render exactly one delete control, named after the file"
+    ).toHaveCount(1);
+    await expect(deleteControl).toHaveAccessibleName(new RegExp(`^Delete .*${UPLOAD_FIXTURE_STEM}`));
+    await expect(
+      uploadCard.locator('input[type="file"]'),
+      "single-file upload hides the dropzone once a file is attached — that is the state under scan"
+    ).toHaveCount(0);
+    await waitForCardSettled(page, uploadCardId);
+    await scan(page, variant, "file-upload-attached", violations);
+
+    // 4. Cal.com scheduler — our wrapper only. The embed origin is aborted, so the container
+    //    must be empty; assert that, or this scan would be grading third-party markup.
+    const calCardId = await advanceToNextCard(page, uploadCardId);
+    const calCard = page.locator(`[id="${calCardId}"]`);
+    await expect(
+      calCard.getByRole("heading", { level: 2, name: CAL_HEADLINE }),
+      "a required file upload must accept the mocked upload and advance to the scheduler card"
+    ).toBeVisible({ timeout: CARD_TIMEOUT });
+
+    const calContainer = calCard.locator('[id^="cal-embed-"]');
+    await expect(calContainer, "the scheduler wrapper should render").toHaveCount(1);
+    await expect(
+      calContainer.locator("iframe"),
+      "the third-party Cal.com embed must stay blocked: this scan covers our wrapper only"
+    ).toHaveCount(0);
+    await waitForCardSettled(page, calCardId);
+    await scan(page, variant, "cal-scheduler-wrapper", violations);
+
+    // Prove the whole walk completed rather than stalling on a card we could not answer.
+    // `advanceToNextCard` is not reused here: the next state is the ending card, which has no
+    // card id of its own, so it would fail that helper's "landed on the next card" assertion.
+    await advanceButton(calCard).first().click({ timeout: ACTION_TIMEOUT });
+    await waitForCardTransition(page, calCardId);
+    await expect(
+      endingCardLocator(page).first(),
+      "the answered-states walk should reach the ending card"
+    ).toBeVisible({ timeout: CARD_TIMEOUT });
+
+    reportAndAssert(variant, violations);
   });
 
   test("mobile: full walk has no WCAG AA violations", async ({ page }) => {
