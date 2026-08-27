@@ -11,6 +11,7 @@ import {
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   UnknownError,
 } from "@formbricks/types/errors";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
@@ -184,7 +185,7 @@ async function handleInviteAcceptance(
   ctx: ActionClientCtx,
   inviteToken: string,
   user: TCreatedUser
-): Promise<void> {
+): Promise<TOrganizationRole> {
   // An invite grants a specific address a specific role in a specific organization. Verifying the
   // signature and loading the row is not enough: without matching the token's email against the account
   // being created, anyone holding an invite link — they get forwarded, pasted into tickets, and land in
@@ -252,11 +253,16 @@ async function handleInviteAcceptance(
     invite.creator.locale
   );
   await deleteInvite(invite.id);
+
+  return invite.role;
 }
 
-async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUser): Promise<void> {
+async function handleOrganizationCreation(
+  ctx: ActionClientCtx,
+  user: TCreatedUser
+): Promise<TOrganizationRole | undefined> {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  if (!isMultiOrgEnabled) return;
+  if (!isMultiOrgEnabled) return undefined;
 
   const organization = await createOrganization({ name: `${user.name}'s Organization` });
   ctx.auditLoggingCtx.organizationId = organization.id;
@@ -317,6 +323,8 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
       ),
     },
   });
+
+  return "owner";
 }
 
 /**
@@ -327,15 +335,11 @@ async function handlePostUserCreation(
   ctx: ActionClientCtx,
   { user }: Extract<TSignUpOutcome, { status: "created" }>,
   inviteToken: string | undefined
-): Promise<void> {
-  if (inviteToken) {
-    await handleInviteAcceptance(ctx, inviteToken, user);
-  } else {
-    await handleOrganizationCreation(ctx, user);
-  }
+): Promise<TOrganizationRole | undefined> {
   // Better Auth sends the verification email itself during signUpEmail (sendOnSignUp) — no manual
   // send here. The legacy EMAIL_VERIFICATION_DISABLED branch (ENG-1527) is folded into auth.ts'
   // requireEmailVerification config and the callbackURL chosen in signUpUserSafely.
+  return inviteToken ? handleInviteAcceptance(ctx, inviteToken, user) : handleOrganizationCreation(ctx, user);
 }
 
 /**
@@ -406,7 +410,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // so the caller has proven nothing about an account that already exists (ENG-2091).
     if (outcome.status === "created") {
       const { user } = outcome;
-      await handlePostUserCreation(ctx, outcome, inviteToken);
+      const organizationRole = await handlePostUserCreation(ctx, outcome, inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
@@ -423,6 +427,9 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
         email: user.email,
         name: user.name,
         email_domain: getEmailDomain(user.email),
+        // undefined when signup didn't create/join an organization (e.g. multi-org disabled with
+        // no invite) — omit rather than send a misleading role.
+        ...(organizationRole ? { organization_role: organizationRole } : {}),
       });
       capturePostHogEvent(
         user.id,

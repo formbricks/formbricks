@@ -7,7 +7,12 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog } from "@/lib/posthog";
+import {
+  capturePostHogEvent,
+  getEmailDomain,
+  groupIdentifyPostHog,
+  identifyPostHogPerson,
+} from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -61,6 +66,11 @@ export const createOrganizationAction = authenticatedActionClient
         email_domain: getEmailDomain(ctx.user.email),
       });
       groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
+
+      // Person-level role: the creator is always the org owner. Set immediately
+      // (rather than waiting for the client-side PostHogGroupIdentify effect) so
+      // the role is correct even if the user never lands on a workspace page.
+      identifyPostHogPerson(ctx.user.id, { organization_role: "owner" });
 
       capturePostHogEvent(
         ctx.user.id,
