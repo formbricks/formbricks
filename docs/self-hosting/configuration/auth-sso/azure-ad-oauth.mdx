@@ -68,6 +68,14 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
       - Copy the entry for **Application (client) ID** to populate the `AZUREAD_CLIENT_ID` variable.
       - Copy the entry for **Directory (tenant) ID** to populate the `AZUREAD_TENANT_ID` variable.
 
+    <Note>
+      Use the **Directory (tenant) ID** GUID (or a verified domain) — with it set, Formbricks fully
+      verifies Microsoft id_tokens against your tenant's issuer. For a multi-tenant app registration,
+      leave `AZUREAD_TENANT_ID` unset instead: the pseudo-tenants `common`, `organizations` and
+      `consumers` have no single issuer, so Formbricks treats those values like unset and reads the
+      signed-in identity from Microsoft's userinfo endpoint.
+    </Note>
+
     ![sixth](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738250876/image_dj2vi5.jpg)
   </Step>
 
