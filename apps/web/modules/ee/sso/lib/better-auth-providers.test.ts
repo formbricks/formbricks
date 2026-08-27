@@ -546,3 +546,117 @@ describe("better-auth SSO providers", () => {
     });
   });
 });
+
+/**
+ * Raised in review on #9017: setting `userInfoUrl` does not guarantee Better Auth calls it.
+ *
+ * `fetchUserInfo` opens with `decodeJwt(tokens.idToken)` — decode, not verify — and returns those
+ * claims whenever the token carries `sub` and `email`, never touching the userinfo endpoint. The
+ * explicit-endpoint branch deliberately has no `idToken` config, so nothing validates that token's
+ * signature, issuer or nonce, and we request the `email` scope, so a real Microsoft token takes the
+ * shortcut every time.
+ *
+ * These tests drive the provider Better Auth actually initialises rather than the config object,
+ * because the config object cannot show which of the two paths runs — asserting `userInfoUrl` is
+ * exactly the check that passed while the shortcut was live.
+ */
+describe("Azure identity comes from Graph, not an unverified id_token (#9017 review)", () => {
+  // An UNSIGNED token carrying the claims the shortcut looks for. If it is ever accepted, an
+  // attacker-supplied token would be too.
+  const forgedIdToken = `${Buffer.from(JSON.stringify({ alg: "none" })).toString("base64url")}.${Buffer.from(
+    JSON.stringify({ sub: "forged-subject", email: "attacker@evil.test", name: "Forged" })
+  ).toString("base64url")}.`;
+
+  const initializedAzureProvider = async (tenant?: string) => {
+    const m = await loadProviders({
+      ENTERPRISE_LICENSE_KEY: "lic",
+      AZURE_OAUTH_ENABLED: true,
+      AZUREAD_CLIENT_ID: "az-id",
+      AZUREAD_CLIENT_SECRET: "az-secret",
+      AZUREAD_TENANT_ID: tenant,
+    });
+    const { betterAuth } = await import("better-auth");
+    const { memoryAdapter } = await import("better-auth/adapters/memory");
+    const { genericOAuth } = await import("better-auth/plugins");
+    const auth = betterAuth({
+      baseURL: "https://app.formbricks.test",
+      secret: "sso-provider-contract-secret-0123456789",
+      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      plugins: [genericOAuth({ config: m.ssoGenericOAuthConfig })],
+    });
+    const ctx = await auth.$context;
+    return ctx.socialProviders.find((p) => p.id === "azuread");
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test.each([["common"], ["organizations"], [undefined]])(
+    "tenant %s: a forged id_token is never accepted as the identity",
+    async (tenant) => {
+      // Graph is unreachable, so the ONLY way to produce a profile is the unverified shortcut.
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new Error("graph unreachable");
+        })
+      );
+
+      const provider = await initializedAzureProvider(tenant);
+      const result = await provider?.getUserInfo?.({
+        accessToken: "access-token",
+        idToken: forgedIdToken,
+      } as never);
+
+      expect(result).toBeNull();
+    }
+  );
+
+  test("the identity is the Graph response, and Graph is actually called", async () => {
+    const graph = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ sub: "graph-subject", email: "real@corp.test", name: "Real User" }),
+    }));
+    vi.stubGlobal("fetch", graph);
+
+    const provider = await initializedAzureProvider("common");
+    const result = await provider?.getUserInfo?.({
+      accessToken: "access-token",
+      idToken: forgedIdToken,
+    } as never);
+
+    expect(graph).toHaveBeenCalledWith(
+      "https://graph.microsoft.com/oidc/userinfo",
+      expect.objectContaining({ headers: { Authorization: "Bearer access-token" } })
+    );
+    // The forged subject must not appear anywhere in the resolved identity.
+    expect(result?.user).toMatchObject({ email: "real@corp.test" });
+    expect(JSON.stringify(result)).not.toContain("forged-subject");
+    expect(JSON.stringify(result)).not.toContain("attacker@evil.test");
+  });
+
+  test("a Graph error fails the sign-in closed rather than falling back to the token", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false, status: 401, json: async () => ({}) }))
+    );
+
+    const provider = await initializedAzureProvider("common");
+    expect(await provider?.getUserInfo?.({ accessToken: "t", idToken: forgedIdToken } as never)).toBeNull();
+  });
+
+  // The concrete-tenant branch keeps discovery, where Better Auth verifies the id_token before any
+  // profile is resolved — so it is intentionally left on the default path.
+  test("a concrete tenant still uses discovery, not the Graph override", async () => {
+    const m = await loadProviders({
+      ENTERPRISE_LICENSE_KEY: "lic",
+      AZURE_OAUTH_ENABLED: true,
+      AZUREAD_TENANT_ID: "00000000-1111-2222-3333-444444444444",
+    });
+    const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+
+    expect(azure?.getUserInfo).toBeUndefined();
+    expect(azure?.discoveryUrl).toBeDefined();
+  });
+});

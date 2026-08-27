@@ -211,6 +211,62 @@ const ssoAccountSubject =
  * and take Azure sign-in down, which is the outcome this split exists to avoid.
  */
 const AZURE_TEMPLATE_ISSUER_TENANTS = new Set(["common", "organizations"]);
+
+const MICROSOFT_GRAPH_USERINFO_URL = "https://graph.microsoft.com/oidc/userinfo";
+
+/**
+ * Resolve the signed-in identity from Microsoft Graph, always (raised in review on #9017).
+ *
+ * Setting `userInfoUrl` is NOT enough to guarantee Graph is called. Better Auth's default
+ * `fetchUserInfo` opens with an unverified shortcut
+ * (`better-auth/dist/plugins/generic-oauth/index.mjs`):
+ *
+ * ```js
+ * if (tokens.idToken) try {
+ *   const decoded = decodeJwt(tokens.idToken);          // decode, NOT verify
+ *   if (decoded?.sub && decoded?.email) return { id: decoded.sub, ...decoded };
+ * } catch {}
+ * if (!userInfoUrl) return null;                        // only reached when the shortcut misses
+ * ```
+ *
+ * On the explicit-endpoint branch no `idToken` config exists — that is the whole point of skipping
+ * discovery — so the verification step in `getUserInfo` is a no-op and nothing checks that token's
+ * signature, issuer or nonce. We request the `email` scope, so a real Microsoft id_token carries both
+ * `sub` and `email` and takes the shortcut every time. Identity would come from an unverified JWT
+ * while the comments, the startup warning and the docs all promised it came from Graph.
+ *
+ * `c.getUserInfo` takes precedence over `fetchUserInfo` in that same file, so supplying it is how the
+ * promise is kept. The access token authenticates the call, and it reached us over the
+ * client-authenticated token exchange.
+ *
+ * Fails CLOSED: a non-OK response, an unparseable body, or a missing `sub` returns null, which Better
+ * Auth turns into a failed sign-in rather than a partially-trusted identity. `sub` specifically,
+ * because `accountSubject` pins the account key to it — inventing a fallback is how the wrong account
+ * gets linked.
+ */
+const microsoftGraphUserInfo = async (tokens: {
+  accessToken?: string;
+}): Promise<GenericOAuthUserInfo | null> => {
+  if (!tokens.accessToken) return null;
+  try {
+    const response = await fetch(MICROSOFT_GRAPH_USERINFO_URL, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${tokens.accessToken}` },
+    });
+    if (!response.ok) return null;
+    const profile = (await response.json()) as GenericOAuthUserInfo;
+    if (!profile?.sub) return null;
+    return {
+      ...profile,
+      // Strictly `=== true`, not Better Auth's `?? false`: this flag is a claim from the provider that
+      // feeds provisioning, so anything that is not an explicit boolean true is treated as unverified.
+      emailVerified: profile.email_verified === true,
+      image: typeof profile.picture === "string" ? profile.picture : undefined,
+    };
+  } catch {
+    return null;
+  }
+};
 // Unset behaves exactly like `common`: Microsoft's multi-tenant authority, and the documented default.
 const azureTenant = AZUREAD_TENANT_ID?.trim() || "common";
 const isAzureTemplateIssuerTenant = AZURE_TEMPLATE_ISSUER_TENANTS.has(azureTenant.toLowerCase());
@@ -238,7 +294,10 @@ const azureEndpoints = isAzureTemplateIssuerTenant
   ? {
       authorizationUrl: `https://login.microsoftonline.com/${azureAuthority}/oauth2/v2.0/authorize`,
       tokenUrl: `https://login.microsoftonline.com/${azureAuthority}/oauth2/v2.0/token`,
-      userInfoUrl: "https://graph.microsoft.com/oidc/userinfo",
+      userInfoUrl: MICROSOFT_GRAPH_USERINFO_URL,
+      // Not redundant with `userInfoUrl` — see microsoftGraphUserInfo. The URL alone leaves Better
+      // Auth's unverified-id_token shortcut in play; this is what actually forces the Graph call.
+      getUserInfo: microsoftGraphUserInfo,
     }
   : {
       discoveryUrl: `https://login.microsoftonline.com/${azureAuthority}/v2.0/.well-known/openid-configuration`,
