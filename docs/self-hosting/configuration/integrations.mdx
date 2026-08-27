@@ -1,0 +1,96 @@
+---
+title: "Third-party Integrations (On Premise)"
+sidebarTitle: "Overview"
+description: "Configure third-party integrations on a self-hosted Formbricks instance."
+icon: "bridge"
+---
+
+Formbricks connects to third-party tools such as Slack, Notion, or Google Sheets on behalf of your users. On
+Formbricks Cloud we register and operate the OAuth apps behind those connections, so they work out of the
+box. A self-hosted instance talks to those services under your own identity instead, which means you
+register the OAuth app yourself and hand its credentials to your instance.
+
+<Note>
+  Using Formbricks Cloud? You do not need any of this. Head to the [Cloud integration
+  guides](/platform/features/integrations/overview) instead.
+</Note>
+
+## Before you configure an integration
+
+<Steps>
+  <Step title="Know your public-facing URL">
+    Every OAuth app needs a redirect URL that points back at your instance, built from your own
+    `https://<your-public-facing-url>` rather than `app.formbricks.com`. The callback path differs per
+    service, so take it from the guide you are following.
+  </Step>
+
+  <Step title="Serve Formbricks over HTTPS">
+    Slack refuses to talk to an instance without a valid certificate, and the other providers expect HTTPS in
+    production too. See [Custom SSL](/self-hosting/configuration/custom-ssl) if you have not set this up yet.
+  </Step>
+
+  <Step title="Restart after changing environment variables">
+    Credentials go into the same place as every other setting — see [Environment
+    Variables](/self-hosting/configuration/environment-variables). Restart your containers for new values to
+    take effect.
+  </Step>
+</Steps>
+
+## What each integration needs
+
+The integrations fall into two groups. The first four need credentials from an OAuth app you register with
+the third-party service. The last three connect from the other side — through a Formbricks API key or your
+instance URL — and need no server configuration at all.
+
+| Integration                                                             | What you register                                      | Environment variables                                                                  |
+| ----------------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| [Airtable](/self-hosting/configuration/integrations/airtable)           | An OAuth integration in the Airtable Developer hub     | `AIRTABLE_CLIENT_ID`                                                                   |
+| [Google Sheets](/self-hosting/configuration/integrations/google-sheets) | An OAuth client in a Google Cloud project              | `GOOGLE_SHEETS_CLIENT_ID`, `GOOGLE_SHEETS_CLIENT_SECRET`, `GOOGLE_SHEETS_REDIRECT_URL` |
+| [Notion](/self-hosting/configuration/integrations/notion)               | A public Notion integration                            | `NOTION_OAUTH_CLIENT_ID`, `NOTION_OAUTH_CLIENT_SECRET`                                 |
+| [Slack](/self-hosting/configuration/integrations/slack)                 | A Slack app with bot scopes and public distribution    | `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`                                               |
+| [n8n](/self-hosting/configuration/integrations/n8n)                     | Nothing — n8n authenticates with a Formbricks API key  | None                                                                                   |
+| [Zapier](/self-hosting/configuration/integrations/zapier)               | Nothing — Zapier authenticates with a Formbricks API key | None                                                                                 |
+| [ActivePieces](/self-hosting/configuration/integrations/activepieces)   | Nothing — point the connection at your instance URL    | None                                                                                   |
+
+## Configuration guides
+
+<CardGroup cols={2}>
+  <Card title="Airtable" icon="table" href="/self-hosting/configuration/integrations/airtable">
+    Send responses to an Airtable base.
+  </Card>
+
+  <Card title="Google Sheets" icon="file-spreadsheet" href="/self-hosting/configuration/integrations/google-sheets">
+    Send responses to a Google Sheet.
+  </Card>
+
+  <Card title="Notion" icon="book" href="/self-hosting/configuration/integrations/notion">
+    Send responses to a Notion database.
+  </Card>
+
+  <Card title="Slack" icon="slack" href="/self-hosting/configuration/integrations/slack">
+    Post responses to a Slack channel.
+  </Card>
+
+  <Card title="n8n" icon="diagram-project" href="/self-hosting/configuration/integrations/n8n">
+    Build automations on survey events with n8n.
+  </Card>
+
+  <Card title="Zapier" icon="bolt" href="/self-hosting/configuration/integrations/zapier">
+    Connect Formbricks to thousands of apps on Zapier.
+  </Card>
+
+  <Card title="ActivePieces" icon="puzzle-piece" href="/self-hosting/configuration/integrations/activepieces">
+    Build automations on survey events with ActivePieces.
+  </Card>
+</CardGroup>
+
+Once an integration is enabled on your instance, connecting it to a survey works exactly as it does on
+Formbricks Cloud. Follow the matching [Cloud guide](/platform/features/integrations/overview) from there.
+
+<Note>
+  For automations that stay inside Formbricks — without a third-party tool — use
+  [Workflows](/workflows/overview) to trigger actions such as sending an email when a response is completed.
+</Note>
+
+Still struggling or something not working as expected? [Join our Github
+Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!

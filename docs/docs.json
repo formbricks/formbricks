@@ -321,6 +321,7 @@
                 "group": "Integrations",
                 "icon": "bridge",
                 "pages": [
+                  "self-hosting/configuration/integrations",
                   "self-hosting/configuration/integrations/airtable",
                   "self-hosting/configuration/integrations/google-sheets",
                   "self-hosting/configuration/integrations/n8n",
