@@ -705,7 +705,7 @@ describe("widget-file", () => {
 
     const linkEl = createElementSpy.mock.results[0].value as Record<string, string>;
     expect(linkEl.rel).toBe("prefetch");
-    expect(linkEl.as).toBe("script");
+    expect(linkEl.as).toBeUndefined();
     expect(linkEl.href).toBe("https://fake.app/js/surveys.umd.cjs");
 
     // Second call should be a no-op (deduplication)

@@ -376,9 +376,9 @@ let isPrefetched = false;
  *
  * `prefetch`, not `preload`: preload claims the page needs the file now, so Chrome fetches it at high
  * priority and warns when it goes unused. Most page views never trigger a survey, so we were outbidding
- * the host page's own critical resources for a ~260 KB bundle we usually never run. Keep `as="script"` —
- * it puts the hint and the later <script> on the same cache entry, which is what makes the reuse work.
- * Safari ignores prefetch entirely; there the fetch just happens when a survey triggers.
+ * the host page's own critical resources for a ~260 KB bundle we usually never run. The later <script>
+ * reuses this fetch out of the plain HTTP cache — `/js/*` is served `public, max-age=3600` — so no `as`
+ * is needed; Chrome ignores it on prefetch. Safari ignores prefetch itself, and fetches on trigger.
  */
 export const prefetchSurveysScript = (appUrl: string): void => {
   // Don't prefetch if already loaded or already prefetching
@@ -388,7 +388,6 @@ export const prefetchSurveysScript = (appUrl: string): void => {
   isPrefetched = true;
   const link = document.createElement("link");
   link.rel = "prefetch";
-  link.as = "script";
   link.href = `${appUrl}/js/surveys.umd.cjs`;
   document.head.appendChild(link);
 };
