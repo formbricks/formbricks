@@ -22,6 +22,6 @@ export const AiActivityBar = ({ className }: Readonly<{ className?: string }>) =
       edge, reading as "33% done". A full-width static hairline says "this surface is active" with
       no progress implication, which is the honest resting state.
     */}
-    <div className="h-px w-1/3 animate-ai-sweep bg-ai motion-reduce:w-full" />
+    <div className="h-px w-1/3 animate-ai-sweep bg-ai-dark motion-reduce:w-full" />
   </div>
 );

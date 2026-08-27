@@ -166,7 +166,7 @@ export const CreateWithAIForm = ({
           </Button>
         )}
         <Button type="submit" disabled={!canCreate}>
-          <AiIcon tone="inherit" />
+          <AiIcon tone="ai-light" />
           {t("workspace.surveys.ai_create.create")}
         </Button>
       </>

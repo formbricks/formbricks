@@ -16,14 +16,13 @@
   --color-brand-light: #00e6ca;
   --color-brand-dark: #00c4b8;
 
-  /* AI — the mark for generative features. A token of its own rather than a reuse of
-     --color-brand-dark, which means "you are here" (active nav, active tab): the two carry different
-     meanings and will diverge. Icon and hairline only; never a button surface or a card background,
-     which would break the Quiet Primary Rule.
-     5.47:1 on white, so it is safe as text as well as an icon. It is for light surfaces only — on a
-     filled dark button it drops to 3.3:1 and reads as muddy next to a white label, so the mark
-     inherits the button's foreground there instead (see AiIcon's `tone`). */
-  --color-ai: #0f766e;
+  /* AI — the mark for generative features. Indigo rather than the brand teal on purpose: AI is a
+     distinct modality, not brand chrome, and the brand tokens cannot carry it accessibly
+     (brand-dark is 2.19:1 on white, under the 3:1 WCAG 1.4.11 floor for non-text). Indigo also
+     already reads as "AI generated" in the auto-mapped pill under unify-feedback.
+     Two tokens because one value cannot serve both grounds — pick with AiIcon's `tone`. */
+  --color-ai-dark: var(--color-indigo-700); /* on light surfaces — 8.09:1 on white */
+  --color-ai: var(--color-indigo-100); /* on dark surfaces — 14.49:1 on slate-900 */
 
   --color-focus: var(--formbricks-focus, #1982fc);
   --color-brandnew: var(--formbricks-brand, #038178);

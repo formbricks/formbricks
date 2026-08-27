@@ -113,7 +113,7 @@ export const CreateWithAIDialog = ({
           {/* DialogHeader colours its icon through [&>svg]:text-primary, an arbitrary variant that
               sorts after plain utilities and so beats the kit's own text-ai. The mark has to keep
               its colour here of all places, so assert it. */}
-          <AiIcon aria-hidden="true" className="text-ai!" />
+          <AiIcon aria-hidden="true" className="text-ai-dark!" />
           <DialogTitle>{t("workspace.surveys.ai_create.dialog_title")}</DialogTitle>
           <DialogDescription>{t("workspace.surveys.ai_create.dialog_description")}</DialogDescription>
         </DialogHeader>

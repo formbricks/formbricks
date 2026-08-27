@@ -24,11 +24,11 @@ export type AiIconProps = Omit<LucideProps, "size"> & {
   /** Twinkles while a generation is in flight. Decorative — the status text carries the meaning. */
   animated?: boolean;
   /**
-   * `ai` paints the mark in the AI token, which is tuned for light surfaces. Use `inherit` inside a
-   * filled button or any coloured surface, where the token drops to ~3.3:1 and looks muddy beside a
-   * white label — there the mark should read like every other icon in that button.
+   * Which ground the mark sits on. `ai-dark` is the default and is for light surfaces (white cards,
+   * menus); `ai-light` is for dark ones (a filled primary button); `inherit` hands the colour back
+   * to the parent for cases where the mark should read like any other icon beside it.
    */
-  tone?: "ai" | "inherit";
+  tone?: "ai-dark" | "ai-light" | "inherit";
 };
 
 /**
@@ -37,7 +37,7 @@ export type AiIconProps = Omit<LucideProps, "size"> & {
  * silently break both.
  */
 export const AiIcon = forwardRef<SVGSVGElement, Readonly<AiIconProps>>(
-  ({ size = "sm", animated = false, tone = "ai", className, ...props }, ref) => (
+  ({ size = "sm", animated = false, tone = "ai-dark", className, ...props }, ref) => (
     <AiGlyph
       ref={ref}
       aria-hidden="true"
@@ -47,7 +47,8 @@ export const AiIcon = forwardRef<SVGSVGElement, Readonly<AiIconProps>>(
       {...(size === "sm" ? {} : { strokeWidth: 1.5, absoluteStrokeWidth: true })}
       className={cn(
         AI_ICON_SIZE[size],
-        tone === "ai" && "text-ai",
+        tone === "ai-dark" && "text-ai-dark",
+        tone === "ai-light" && "text-ai",
         animated && "animate-ai-twinkle",
         className
       )}
