@@ -581,7 +581,7 @@
     "yes": "Ja",
     "you_are_downgraded_to_the_community_edition": "Du wurdest auf die Community Edition herabgestuft.",
     "you_are_not_authorized_to_perform_this_action": "Du bist nicht berechtigt, diese Aktion durchzuführen.",
-    "you_have_reached_your_limit_of_workspace_limit": "Du hast dein Limit von {workspaceLimit} Workspaces erreicht.",
+    "you_have_reached_your_limit_of_workspace_limit": "Du hast dein Workspace-Limit ({workspaceLimit}) erreicht.",
     "you_have_reached_your_monthly_response_limit_of_count": "Du hast dein monatliches Antwortlimit von {count} erreicht.",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Du wirst am {date} auf die Community Edition herabgestuft.",
     "your_license_has_expired_please_renew": "Deine Enterprise-Lizenz ist abgelaufen. Bitte erneuere sie, um weiterhin Enterprise-Funktionen nutzen zu können.",

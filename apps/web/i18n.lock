@@ -552,7 +552,7 @@ checksums:
     common/yes: ec580fd11a45779b039466f1e35eed2a
     common/you_are_downgraded_to_the_community_edition: e3ae56502ff787109cae0997519f628e
     common/you_are_not_authorized_to_perform_this_action: 1b3255ab740582ddff016a399f8bf302
-    common/you_have_reached_your_limit_of_workspace_limit: 506a6ee315d9754da7ea26929bc40f52
+    common/you_have_reached_your_limit_of_workspace_limit: 444293496a4029ea608ec12266bb2e94
     common/you_have_reached_your_monthly_response_limit_of_count: d1e427dbc5ce704bd6b9e188d8407e07
     common/you_will_be_downgraded_to_the_community_edition_on_date: bff35b54c13e2c205dc4c19056261cc0
     common/your_license_has_expired_please_renew: 3f21ae4a7deab351b143b407ece58254

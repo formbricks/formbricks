@@ -581,7 +581,7 @@
     "yes": "Evet",
     "you_are_downgraded_to_the_community_edition": "Topluluk Sürümüne düşürüldünüz.",
     "you_are_not_authorized_to_perform_this_action": "Bu işlemi gerçekleştirme yetkiniz yok.",
-    "you_have_reached_your_limit_of_workspace_limit": "{workspaceLimit} çalışma alanı limitine ulaştınız.",
+    "you_have_reached_your_limit_of_workspace_limit": "Çalışma alanı limitine ulaştın ({workspaceLimit}).",
     "you_have_reached_your_monthly_response_limit_of_count": "Aylık {count} yanıt limitinize ulaştınız.",
     "you_will_be_downgraded_to_the_community_edition_on_date": "{date} tarihinde Topluluk Sürümüne düşürüleceksiniz.",
     "your_license_has_expired_please_renew": "Kurumsal lisansınızın süresi doldu. Kurumsal özellikleri kullanmaya devam etmek için lütfen yenileyin.",

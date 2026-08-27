@@ -581,7 +581,7 @@
     "yes": "Ja",
     "you_are_downgraded_to_the_community_edition": "Du har nedgraderats till Community Edition.",
     "you_are_not_authorized_to_perform_this_action": "Du har inte behörighet att utföra denna åtgärd.",
-    "you_have_reached_your_limit_of_workspace_limit": "Du har nått din gräns på {workspaceLimit} arbetsytor.",
+    "you_have_reached_your_limit_of_workspace_limit": "Du har nått din gräns för arbetsytor ({workspaceLimit}).",
     "you_have_reached_your_monthly_response_limit_of_count": "Du har nått din månatliga svarsgräns på {count}.",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Du kommer att nedgraderas till Community Edition den {date}.",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features.",
