@@ -640,7 +640,7 @@ script-src 'self' https://app.formbricks.com;
 connect-src 'self' https://app.formbricks.com;
 ```
 
-The SDK does not put a nonce on the script tags it creates, so allowlisting the host is what makes them load. If you use `'strict-dynamic'` instead of a host allowlist, both scripts are inserted programmatically by already-trusted code, so they inherit trust from the script that loaded the SDK.
+The SDK does not put a nonce on the script tags it creates, so allowlisting the host is what makes them load. `'strict-dynamic'` works instead of a host allowlist, but only if the script that loads the SDK carries a matching nonce or hash of its own — both bundles are inserted programmatically, so they inherit trust from that root. Without a trusted root, `'strict-dynamic'` blocks the SDK before it ever reaches `surveys.umd.cjs`.
 
 ### Passing a nonce for survey styles
 
@@ -657,7 +657,7 @@ formbricks.setup({
 });
 ```
 
-Pass the raw value only — not the `nonce-` prefix that appears in the header. Passing `undefined` clears it.
+Pass the raw value only — not the `nonce-` prefix that appears in the header. If your policy also sets `style-src-elem`, list the nonce there too: that directive takes precedence over `style-src` for `<style>` elements. Passing `undefined` stops the SDK nonce-ing style elements it creates from then on; elements already in the page keep the attribute they were given.
 
 <Note>
   **Note**: call `setNonce` before `setup`. The SDK stores the nonce and applies it when the survey
