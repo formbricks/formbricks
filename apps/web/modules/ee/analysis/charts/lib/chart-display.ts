@@ -3,15 +3,19 @@ import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 
 export type TBarOrientation = NonNullable<TChartConfig["barOrientation"]>;
 export type TPieDisplay = NonNullable<TChartConfig["pieDisplay"]>;
+export type TAreaDisplay = NonNullable<TChartConfig["areaDisplay"]>;
 
 /** Charts render with vertical bars unless the saved config says otherwise. */
 export const DEFAULT_BAR_ORIENTATION: TBarOrientation = "vertical";
 /** A pie chart renders as a pie unless the saved config says otherwise. */
 export const DEFAULT_PIE_DISPLAY: TPieDisplay = "pie";
+/** An area chart renders as a filled band unless the saved config says otherwise. */
+export const DEFAULT_AREA_DISPLAY: TAreaDisplay = "filled";
 
 /** Each setting so far belongs to exactly one chart type. */
 export const supportsBarOrientation = (chartType: TChartType | undefined): boolean => chartType === "bar";
 export const supportsPieDisplay = (chartType: TChartType | undefined): boolean => chartType === "pie";
+export const supportsAreaDisplay = (chartType: TChartType | undefined): boolean => chartType === "area";
 
 /**
  * Big Number shows a single snapshot value and Pie shows composition at a point in time — bucketing
@@ -33,9 +37,10 @@ export const supportsTimeGrouping = (chartType: TChartType | undefined): boolean
  */
 export const resolveChartDisplay = (
   config: TChartConfig | null | undefined
-): { barOrientation: TBarOrientation; pieDisplay: TPieDisplay } => ({
+): { barOrientation: TBarOrientation; pieDisplay: TPieDisplay; areaDisplay: TAreaDisplay } => ({
   barOrientation: config?.barOrientation ?? DEFAULT_BAR_ORIENTATION,
   pieDisplay: config?.pieDisplay ?? DEFAULT_PIE_DISPLAY,
+  areaDisplay: config?.areaDisplay ?? DEFAULT_AREA_DISPLAY,
 });
 
 /**
@@ -47,11 +52,12 @@ export const sanitizeChartDisplay = (
   config: TChartConfig | null | undefined,
   chartType: TChartType | undefined
 ): TChartConfig => {
-  const { barOrientation, pieDisplay, ...rest } = config ?? {};
+  const { barOrientation, pieDisplay, areaDisplay, ...rest } = config ?? {};
 
   return {
     ...rest,
     ...(supportsBarOrientation(chartType) && barOrientation ? { barOrientation } : {}),
     ...(supportsPieDisplay(chartType) && pieDisplay ? { pieDisplay } : {}),
+    ...(supportsAreaDisplay(chartType) && areaDisplay ? { areaDisplay } : {}),
   };
 };

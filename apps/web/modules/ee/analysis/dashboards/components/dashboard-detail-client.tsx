@@ -12,6 +12,7 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
+import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
 import { DashboardDateFilter } from "@/modules/ee/analysis/dashboards/components/dashboard-date-filter";
 import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components/dashboard-page-header";
@@ -141,7 +142,9 @@ const MemoizedWidgetContent = memo(function WidgetContent({
       <Suspense fallback={<DashboardWidgetSkeleton />}>
         <DashboardWidgetData
           dataPromise={dataPromise}
-          chartType={widget.chart.type}
+          // Through resolveChartType like every other read of a stored type, so a row still
+          // carrying a retired value renders as its replacement instead of "not yet supported".
+          chartType={resolveChartType(widget.chart.type)}
           config={widget.chart.config}
           view={view}
         />

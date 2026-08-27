@@ -75,14 +75,19 @@ describe("chart-utils", () => {
     test("returns valid chart types", () => {
       expect(resolveChartType("area")).toBe("area");
       expect(resolveChartType("bar")).toBe("bar");
-      expect(resolveChartType("line")).toBe("line");
       expect(resolveChartType("pie")).toBe("pie");
       expect(resolveChartType("big_number")).toBe("big_number");
+    });
+
+    test("maps the retired line type onto area rather than the bar fallback", () => {
+      expect(resolveChartType("line")).toBe("area");
     });
 
     test("defaults to bar for invalid type", () => {
       expect(resolveChartType("invalid")).toBe("bar");
       expect(resolveChartType("")).toBe("bar");
+      // An inherited Object key must not resolve through the legacy alias lookup.
+      expect(resolveChartType("constructor")).toBe("bar");
     });
   });
 
