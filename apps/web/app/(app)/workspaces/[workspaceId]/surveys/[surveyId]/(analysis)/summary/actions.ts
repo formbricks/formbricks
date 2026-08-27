@@ -139,75 +139,88 @@ const ZGenerateExampleResponsesAction = z.object({
 // noise into a live survey).
 export const generateExampleResponsesAction = authenticatedActionClient
   .inputSchema(ZGenerateExampleResponsesAction)
-  .action(async ({ ctx, parsedInput }) => {
-    // Per-user limit (1 per minute). Closes the multi-click race window where
-    // two clicks fired before the first LLM call returns could both pass the
-    // responseCount === 0 check, and bounds a single user's overall LLM spend.
-    await applyRateLimit(rateLimitConfigs.actions.generateExampleResponses, ctx.user.id);
+  .action(
+    withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
+      // Per-user limit (1 per minute). Closes the multi-click race window where
+      // two clicks fired before the first LLM call returns could both pass the
+      // responseCount === 0 check, and bounds a single user's overall LLM spend.
+      await applyRateLimit(rateLimitConfigs.actions.generateExampleResponses, ctx.user.id);
 
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId,
-        },
-      ],
-    });
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            minPermission: "readWrite",
+            workspaceId,
+          },
+        ],
+      });
 
-    // Throws OperationNotAllowedError if AI is unentitled, disabled, or
-    // the instance isn't configured (env vars). Same gating helper that the
-    // existing AI text endpoint uses.
-    await assertOrganizationAIConfigured(organizationId);
+      // Set before the gates below so a rejected or failed attempt is still attributed to the right
+      // organization and survey — the wrapper audits failures too, which is how a rolled-back batch
+      // leaves a trace now that the write is all-or-nothing.
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+      ctx.auditLoggingCtx.oldObject = null;
 
-    const survey = await getSurvey(parsedInput.surveyId);
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-    }
+      // Throws OperationNotAllowedError if AI is unentitled, disabled, or
+      // the instance isn't configured (env vars). Same gating helper that the
+      // existing AI text endpoint uses.
+      await assertOrganizationAIConfigured(organizationId);
 
-    // Same stale-tab defense as the responseCount check below: generating examples is hidden while
-    // archived, but a direct call would still write responses/displays/a tag into an archived survey.
-    if (survey.archivedAt) {
-      throw new OperationNotAllowedError("Cannot generate example responses for an archived survey.");
-    }
+      const survey = await getSurvey(parsedInput.surveyId);
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+      }
 
-    const existingCount = await getResponseCountBySurveyId(parsedInput.surveyId);
-    if (existingCount > 0) {
-      throw new OperationNotAllowedError(
-        "Example responses can only be generated for a survey that has no responses yet."
-      );
-    }
+      // Same stale-tab defense as the responseCount check below: generating examples is hidden while
+      // archived, but a direct call would still write responses/displays/a tag into an archived survey.
+      if (survey.archivedAt) {
+        throw new OperationNotAllowedError("Cannot generate example responses for an archived survey.");
+      }
 
-    const generatedDataset = await generateExampleResponseDataset({
-      survey,
-      organizationId,
-      workspaceId,
-      userId: ctx.user.id,
-    });
-    if (generatedDataset.responses.length === 0) {
-      throw new InvalidInputError(
-        "This survey doesn't contain any question types we can synthesize answers for yet."
-      );
-    }
+      const existingCount = await getResponseCountBySurveyId(parsedInput.surveyId);
+      if (existingCount > 0) {
+        throw new OperationNotAllowedError(
+          "Example responses can only be generated for a survey that has no responses yet."
+        );
+      }
 
-    // Single all-or-nothing write: a failure part-way through the batch leaves no synthetic rows
-    // behind, so the survey stays eligible for another attempt instead of tripping the zero-response
-    // guard above on a partial batch.
-    return await persistExampleResponseDataset({
-      surveyId: survey.id,
-      workspaceId,
-      dataset: generatedDataset,
-    });
-  });
+      const generatedDataset = await generateExampleResponseDataset({
+        survey,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+      });
+      if (generatedDataset.responses.length === 0) {
+        throw new InvalidInputError(
+          "This survey doesn't contain any question types we can synthesize answers for yet."
+        );
+      }
+
+      // Single all-or-nothing write: a failure part-way through the batch leaves no synthetic rows
+      // behind, so the survey stays eligible for another attempt instead of tripping the zero-response
+      // guard above on a partial batch.
+      const result = await persistExampleResponseDataset({
+        surveyId: survey.id,
+        workspaceId,
+        dataset: generatedDataset,
+      });
+
+      ctx.auditLoggingCtx.newObject = { createdCount: result.createdCount };
+
+      return result;
+    })
+  );
 
 const ZGetEmailHtmlAction = z.object({
   surveyId: ZId,
