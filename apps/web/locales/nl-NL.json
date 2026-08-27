@@ -579,7 +579,7 @@
     "yes": "Ja",
     "you_are_downgraded_to_the_community_edition": "Je bent gedowngraded naar de Community-editie.",
     "you_are_not_authorized_to_perform_this_action": "U bent niet geautoriseerd om deze actie uit te voeren.",
-    "you_have_reached_your_limit_of_workspace_limit": "Je hebt je limiet van {workspaceLimit} workspaces bereikt.",
+    "you_have_reached_your_limit_of_workspace_limit": "Je hebt je limiet van werkruimtes bereikt ({workspaceLimit}).",
     "you_have_reached_your_monthly_response_limit_of_count": "Je hebt je maandelijkse responslimiet van {count} bereikt.",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Je wordt gedowngraded naar de Community-editie op {date}.",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features.",

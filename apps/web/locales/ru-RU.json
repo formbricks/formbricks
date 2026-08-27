@@ -579,7 +579,7 @@
     "yes": "Да",
     "you_are_downgraded_to_the_community_edition": "Ваша версия понижена до Community Edition.",
     "you_are_not_authorized_to_perform_this_action": "У вас нет прав для выполнения этого действия.",
-    "you_have_reached_your_limit_of_workspace_limit": "Вы достигли лимита в {workspaceLimit} рабочих пространств.",
+    "you_have_reached_your_limit_of_workspace_limit": "Вы достигли лимита рабочих пространств ({workspaceLimit}).",
     "you_have_reached_your_monthly_response_limit_of_count": "Вы достигли месячного лимита ответов: {count}.",
     "you_will_be_downgraded_to_the_community_edition_on_date": "Ваша версия будет понижена до Community Edition {date}.",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features.",

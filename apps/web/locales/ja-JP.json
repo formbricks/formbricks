@@ -579,7 +579,7 @@
     "yes": "はい",
     "you_are_downgraded_to_the_community_edition": "コミュニティ版にダウングレードされました。",
     "you_are_not_authorized_to_perform_this_action": "このアクションを実行する権限がありません。",
-    "you_have_reached_your_limit_of_workspace_limit": "ワークスペースの上限である{workspaceLimit}件に達しました。",
+    "you_have_reached_your_limit_of_workspace_limit": "ワークスペースの上限（{workspaceLimit}）に達しました。",
     "you_have_reached_your_monthly_response_limit_of_count": "月間の回答制限{count}件に達しました。",
     "you_will_be_downgraded_to_the_community_edition_on_date": "コミュニティ版へのダウングレードは {date} に行われます。",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features.",

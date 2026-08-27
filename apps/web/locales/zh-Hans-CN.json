@@ -579,7 +579,7 @@
     "yes": "是",
     "you_are_downgraded_to_the_community_edition": "您已降级到社区版。",
     "you_are_not_authorized_to_perform_this_action": "您无权执行此操作。",
-    "you_have_reached_your_limit_of_workspace_limit": "您已达到 {workspaceLimit} 个工作区的上限。",
+    "you_have_reached_your_limit_of_workspace_limit": "你已达到工作区限制 ({workspaceLimit})。",
     "you_have_reached_your_monthly_response_limit_of_count": "您已达到每月响应限制 {count} 次。",
     "you_will_be_downgraded_to_the_community_edition_on_date": "您将在 {date} 降级到社区版。",
     "your_license_has_expired_please_renew": "Your enterprise license has expired. Please renew it to continue using enterprise features.",
