@@ -26,8 +26,15 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * private copies of that list drifted from it.
  */
 
-/** Metadata values are scalars only, which keeps sanitation total — no recursion, no nested JSON. */
-type TMetadataValue = string | number | boolean | undefined;
+/**
+ * Metadata values are scalars only, which keeps sanitation total — no recursion, no nested JSON.
+ *
+ * `null` is in the union because `Response.meta` is a Prisma `Json` column: its Zod type describes
+ * what the API writes, not what the table holds, and stored rows are never re-validated on read. A
+ * reader can therefore surface a `null` — or a value of the wrong type entirely — where the type
+ * says `string | undefined`.
+ */
+type TMetadataValue = string | number | boolean | null | undefined;
 
 export type TResponseMetadata = Record<string, string | number | boolean>;
 
@@ -107,7 +114,7 @@ export const METADATA_FIELDS: readonly TMetadataFieldSpec[] = [
     maxLength: MAX_METADATA_URL_LENGTH,
     read: ({ response }) => {
       const url = response.meta?.url;
-      return url ? stripUrlQuery(url) : undefined;
+      return typeof url === "string" ? stripUrlQuery(url) : undefined;
     },
   },
   { key: "browser", enabled: true, read: ({ response }) => response.meta?.userAgent?.browser },
@@ -124,10 +131,22 @@ export const METADATA_FIELDS: readonly TMetadataFieldSpec[] = [
   { key: "survey_type", enabled: true, read: ({ survey }) => survey.type },
 ];
 
-const sanitizeValue = (value: TMetadataValue, maxLength: number): TMetadataValue => {
+/**
+ * Narrow one read value to something Hub can store, or drop it.
+ *
+ * Takes `unknown` rather than TMetadataValue on purpose: the readers are typed against
+ * `TResponseMeta`, which describes what the API writes into a `Json` column rather than what the
+ * column holds. A throw here is not a local failure — it aborts the whole transform, and the
+ * caller's catch turns that into a response whose records are silently never published.
+ */
+const sanitizeValue = (value: unknown, maxLength: number): string | number | boolean | undefined => {
   if (value === undefined || typeof value === "boolean") return value;
 
   if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+
+  // Catches a stored null (typeof null === "object") as well as an object or array, neither of
+  // which the scalar-only metadata contract can carry.
+  if (typeof value !== "string") return undefined;
 
   // NUL bytes are the one input Hub cannot store: its validator skips non-string kinds, so the
   // jsonb insert reaches Postgres and fails as a 500 rather than a rejected field.

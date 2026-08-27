@@ -129,6 +129,38 @@ describe("buildResponseMetadata", () => {
     expect(result).toEqual({});
   });
 
+  describe("values the column can hold but the type does not describe", () => {
+    // Response.meta is a Prisma `Json` column and stored rows are never re-validated on read, so
+    // these shapes are reachable in production even though TResponseMeta forbids them. A throw here
+    // aborts the whole transform and the caller's catch drops the response's records silently.
+    test("treats a null value as absent", () => {
+      const result = buildResponseMetadata(
+        buildResponse({ meta: { source: "link", action: null } as never }),
+        linkSurvey
+      );
+
+      expect(result).not.toHaveProperty("action");
+      expect(result.source).toBe("link");
+    });
+
+    test("drops a value that is not a scalar, and passes a stray scalar through", () => {
+      const result = buildResponseMetadata(
+        buildResponse({ meta: { source: 42, url: { nested: true }, country: ["PT"] } as never }),
+        linkSurvey
+      );
+
+      // A number is a legal JSONB scalar, so publishing it loses nothing; an object or array is
+      // what the metadata contract cannot carry.
+      expect(result.source).toBe(42);
+      expect(result).not.toHaveProperty("url");
+      expect(result).not.toHaveProperty("country");
+    });
+
+    test("survives a meta object that is null outright", () => {
+      expect(() => buildResponseMetadata(buildResponse({ meta: null as never }), linkSurvey)).not.toThrow();
+    });
+  });
+
   describe("bounds", () => {
     test("truncates oversized values so an inflated meta cannot fail the Hub create", () => {
       const result = buildResponseMetadata(
