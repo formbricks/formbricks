@@ -248,8 +248,8 @@ real tokens against it fails every Microsoft sign-in with `?error=unable_to_get_
 therefore treats those two values exactly like an unset `AZUREAD_TENANT_ID`: sign-in identity comes from
 Microsoft's userinfo endpoint over a client-authenticated call (the v5.3 behavior) and id_tokens are not
 verified, while the configured value still restricts which account types Microsoft accepts. Formbricks
-logs a warning at startup when either is set. To get full id_token verification, set your Directory
-(tenant) ID instead.
+logs a warning at startup when either is set and Microsoft SSO is enabled. To get full id_token
+verification, set your Directory (tenant) ID instead.
 
 `consumers` needs no action and is not affected: every personal Microsoft account lives in one
 well-known tenant, so that authority advertises a real issuer and keeps full id_token verification.

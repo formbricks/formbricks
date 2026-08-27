@@ -409,14 +409,17 @@ describe("better-auth SSO providers", () => {
       expect(loggerWarn).not.toHaveBeenCalled();
     });
 
-    // The warning describes how Azure sign-in will behave, so it is pointless — and misleading — on an
-    // instance that registers no Azure provider at all. A leftover env value must stay quiet.
-    test("Azure does not warn about a template-issuer authority when Azure SSO is disabled", async () => {
-      const m = await loadProviders({
-        ENTERPRISE_LICENSE_KEY: "lic",
-        AZURE_OAUTH_ENABLED: false,
-        AZUREAD_TENANT_ID: "common",
-      });
+    /**
+     * The warning describes how Azure sign-in will behave, so it is pointless — and misleading — on an
+     * instance that registers no Azure provider. Both cases below reach that state, and registration
+     * needs BOTH gates, so the warning has to check both too: an unlicensed instance with Azure
+     * credentials configured is just as provider-less as a licensed one with none.
+     */
+    test.each([
+      ["Azure SSO is disabled", { ENTERPRISE_LICENSE_KEY: "lic", AZURE_OAUTH_ENABLED: false }],
+      ["the instance is unlicensed", { ENTERPRISE_LICENSE_KEY: undefined, AZURE_OAUTH_ENABLED: true }],
+    ])("Azure does not warn about a template-issuer authority when %s", async (_label, overrides) => {
+      const m = await loadProviders({ ...overrides, AZUREAD_TENANT_ID: "common" });
 
       expect(m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread")).toBeUndefined();
       expect(loggerWarn).not.toHaveBeenCalled();

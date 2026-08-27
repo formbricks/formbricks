@@ -217,9 +217,15 @@ const isAzureTemplateIssuerTenant = AZURE_TEMPLATE_ISSUER_TENANTS.has(azureTenan
 // A template-issuer authority is one of two known literals, so emit its canonical lower-case form; a
 // concrete tenant is passed through exactly as the operator configured it.
 const azureAuthority = isAzureTemplateIssuerTenant ? azureTenant.toLowerCase() : azureTenant;
-// Only worth saying when Azure SSO is actually registered, and only when the operator set the value
-// themselves — an unset var takes this same path by design and needs no warning.
-if (AZURE_OAUTH_ENABLED && AZUREAD_TENANT_ID?.trim() && isAzureTemplateIssuerTenant) {
+// Only worth saying when Azure SSO is actually registered — which needs BOTH gates below, mirroring
+// `ssoGenericOAuthConfig`'s own conditions — and only when the operator set the value themselves, since
+// an unset var takes this same path by design and needs no warning.
+if (
+  ENTERPRISE_LICENSE_KEY &&
+  AZURE_OAUTH_ENABLED &&
+  AZUREAD_TENANT_ID?.trim() &&
+  isAzureTemplateIssuerTenant
+) {
   logger.warn(
     `AZUREAD_TENANT_ID="${azureTenant}" names a Microsoft multi-tenant authority whose discovery document advertises a placeholder issuer, so id_tokens cannot be verified against it. Treating it like unset: sign-in identity comes from the userinfo endpoint. Set a Directory (tenant) ID for full id_token verification.`
   );
