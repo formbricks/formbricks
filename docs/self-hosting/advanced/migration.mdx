@@ -242,14 +242,17 @@ Better Auth 1.7 verifies Microsoft id_tokens against the issuer advertised by th
 discovery document whenever `AZUREAD_TENANT_ID` names a concrete tenant — a Directory (tenant) ID GUID or
 a verified domain. That is strictly stronger than v5.3 and needs no action.
 
-Microsoft's multi-tenant pseudo-tenants — `common`, `organizations`, `consumers` — are different: their
-discovery documents advertise the literal placeholder `https://login.microsoftonline.com/{tenantid}/v2.0`
-as the issuer, so verifying real tokens against it fails every Microsoft sign-in with
-`?error=unable_to_get_user_info`. Formbricks therefore treats these three values exactly like an unset
-`AZUREAD_TENANT_ID`: sign-in identity comes from Microsoft's userinfo endpoint over a
-client-authenticated call (the v5.3 behavior) and id_tokens are not verified, while the configured value
-still restricts which account types Microsoft accepts. A warning is logged at startup when one of these
-values is set. To get full id_token verification, set your Directory (tenant) ID instead.
+Two of Microsoft's multi-tenant authorities are different. `common` and `organizations` advertise the
+literal placeholder `https://login.microsoftonline.com/{tenantid}/v2.0` as their issuer, so verifying
+real tokens against it fails every Microsoft sign-in with `?error=unable_to_get_user_info`. Formbricks
+therefore treats those two values exactly like an unset `AZUREAD_TENANT_ID`: sign-in identity comes from
+Microsoft's userinfo endpoint over a client-authenticated call (the v5.3 behavior) and id_tokens are not
+verified, while the configured value still restricts which account types Microsoft accepts. Formbricks
+logs a warning at startup when either is set. To get full id_token verification, set your Directory
+(tenant) ID instead.
+
+`consumers` needs no action and is not affected: every personal Microsoft account lives in one
+well-known tenant, so that authority advertises a real issuer and keeps full id_token verification.
 
 #### SSO callback URLs are unchanged
 

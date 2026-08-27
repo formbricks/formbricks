@@ -329,22 +329,25 @@ describe("better-auth SSO providers", () => {
     });
 
     /**
-     * ENG-2750: the multi-tenant pseudo-tenants must NOT take the discovery branch. Their discovery
-     * documents advertise the literal `{tenantid}` template as `issuer`, which 1.7's literal `iss`
+     * ENG-2750: `common` and `organizations` must NOT take the discovery branch. Their discovery
+     * documents advertise the literal `{tenantid}` placeholder as `issuer`, which 1.7's literal `iss`
      * comparison can never match — with `AZUREAD_TENANT_ID=common` in the env (Cloud prod's config),
      * every Microsoft sign-in failed verification and landed on `?error=unable_to_get_user_info`.
-     * The pseudo-tenant is preserved in the endpoint URLs: `organizations`/`consumers` still restrict
-     * which account types Microsoft accepts at the authorize endpoint.
+     * The authority is preserved in the endpoint URLs: `organizations` still restricts which account
+     * types Microsoft accepts at the authorize endpoint.
+     *
+     * `consumers` is deliberately absent — it advertises a real issuer, so it belongs with the
+     * discovery cases below.
      */
     test.each([
       ["common", "common"],
       ["organizations", "organizations"],
-      ["consumers", "consumers"],
-      // Case-insensitive and trimmed: the value is an operator-typed env var.
-      ["Common", "Common"],
+      // Case-insensitive and trimmed (an operator-typed env var), and emitted in canonical lower case.
+      ["Common", "common"],
       [" common ", "common"],
+      ["ORGANIZATIONS", "organizations"],
     ])(
-      "Azure treats the pseudo-tenant %j like unset: explicit endpoints, no discovery",
+      "Azure treats the template-issuer authority %j like unset: explicit endpoints, no discovery",
       async (value, inUrl) => {
         const m = await loadProviders({
           ENTERPRISE_LICENSE_KEY: "lic",
@@ -361,29 +364,41 @@ describe("better-auth SSO providers", () => {
         expect(azure?.userInfoUrl).toBe("https://graph.microsoft.com/oidc/userinfo");
         // The operator set a value and is getting the weaker multi-tenant mode — that must be visible.
         expect(loggerWarn).toHaveBeenCalledTimes(1);
-        expect(loggerWarn.mock.calls[0][0]).toContain("pseudo-tenant");
+        expect(loggerWarn.mock.calls[0][0]).toContain("placeholder issuer");
       }
     );
 
-    // A verified-domain tenant is concrete: its discovery document carries a real issuer, so it keeps
-    // the stronger discovery path exactly like a GUID.
-    test("Azure uses discovery for a domain-style tenant", async () => {
+    /**
+     * Every tenant whose discovery document carries a real issuer keeps the stronger discovery path.
+     * `consumers` is the one that is easy to get wrong: it looks like a sibling of `common` and
+     * `organizations`, but all personal Microsoft accounts live in one well-known MSA tenant, so its
+     * discovery document names that tenant as the issuer and its id_tokens verify. Treating it as a
+     * placeholder authority would silently drop a check that works today.
+     */
+    test.each([
+      ["a verified domain", "contoso.onmicrosoft.com", "contoso.onmicrosoft.com"],
+      ["the personal-accounts authority", "consumers", "consumers"],
+      ["a mixed-case value, passed through unchanged", "Contoso.OnMicrosoft.com", "Contoso.OnMicrosoft.com"],
+    ])("Azure uses discovery for %s", async (_label, value, inUrl) => {
       const m = await loadProviders({
         ENTERPRISE_LICENSE_KEY: "lic",
         AZURE_OAUTH_ENABLED: true,
-        AZUREAD_TENANT_ID: "contoso.onmicrosoft.com",
+        AZUREAD_TENANT_ID: value,
       });
       const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
 
       expect(azure?.discoveryUrl).toBe(
-        "https://login.microsoftonline.com/contoso.onmicrosoft.com/v2.0/.well-known/openid-configuration"
+        `https://login.microsoftonline.com/${inUrl}/v2.0/.well-known/openid-configuration`
       );
       expect(azure?.authorizationUrl).toBeUndefined();
+      expect(azure?.tokenUrl).toBeUndefined();
     });
 
     test.each([
       ["unset", undefined],
+      ["whitespace only", "   "],
       ["a concrete tenant", "00000000-1111-2222-3333-444444444444"],
+      ["the personal-accounts authority", "consumers"],
     ])("Azure does not warn when the tenant is %s", async (_label, value) => {
       await loadProviders({
         ENTERPRISE_LICENSE_KEY: "lic",
@@ -391,6 +406,19 @@ describe("better-auth SSO providers", () => {
         AZUREAD_TENANT_ID: value,
       });
 
+      expect(loggerWarn).not.toHaveBeenCalled();
+    });
+
+    // The warning describes how Azure sign-in will behave, so it is pointless — and misleading — on an
+    // instance that registers no Azure provider at all. A leftover env value must stay quiet.
+    test("Azure does not warn about a template-issuer authority when Azure SSO is disabled", async () => {
+      const m = await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: false,
+        AZUREAD_TENANT_ID: "common",
+      });
+
+      expect(m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread")).toBeUndefined();
       expect(loggerWarn).not.toHaveBeenCalled();
     });
 

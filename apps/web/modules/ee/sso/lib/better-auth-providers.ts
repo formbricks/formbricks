@@ -175,44 +175,63 @@ const ssoAccountSubject =
  * has not set it, and drop support for genuinely multi-tenant app registrations, which have no single
  * issuer by construction — the tenant decides the mechanism:
  *
- * - **Concrete tenant** (a directory GUID, or a verified domain like `contoso.onmicrosoft.com`): keep
- *   `discoveryUrl`. The discovered issuer is a real value, so the id_token is fully verified. Strictly
- *   stronger than 1.6.
- * - **Unset, or a multi-tenant pseudo-tenant (`common` / `organizations` / `consumers`, ENG-2750)**:
- *   configure the endpoints explicitly and skip discovery, so no `idTokenConfig` is built
+ * - **A tenant whose discovery document carries a real issuer** — a directory GUID, a verified domain
+ *   like `contoso.onmicrosoft.com`, **or `consumers`** (see the table below): keep `discoveryUrl`. The
+ *   discovered issuer is a real value, so the id_token is fully verified. Strictly stronger than 1.6.
+ * - **Unset, or a template-issuer authority (`common` / `organizations`, ENG-2750)**: configure the
+ *   endpoints explicitly and skip discovery, so no `idTokenConfig` is built
  *   (`generic-oauth/index.mjs` only constructs it inside the discovery branch) and identity comes from
  *   UserInfo — the 1.6 behaviour, over a client-authenticated back-channel call to Microsoft. Note this
  *   is not where the code flow's security lives: that is `state` + PKCE and the authenticated code
  *   exchange, and RFC 9207 mix-up defence still applies via `iss` on the authorization response when a
  *   provider sends one.
  *
- * The pseudo-tenants must not take the discovery branch because their discovery documents advertise the
- * literal `{tenantid}` template as `issuer` — Microsoft's guidance is to substitute the token's `tid`,
- * which a literal comparison can never satisfy — so every sign-in would fail verification and land on
- * `?error=unable_to_get_user_info`. That is exactly how ENG-2750 took Microsoft SSO down on Cloud: prod
- * had `AZUREAD_TENANT_ID=common`, harmless on 1.6, a full outage on 1.7. The pseudo-tenant is still kept
- * in the endpoint URLs, because `organizations` / `consumers` meaningfully restrict which account types
- * Microsoft accepts at the authorize endpoint.
+ * Which of Microsoft's three multi-tenant authorities can be verified is NOT uniform, and guessing it
+ * wrong costs either an outage or a silently weakened check. Read live from each
+ * `/{authority}/v2.0/.well-known/openid-configuration`:
+ *
+ * | authority | advertised `issuer` | verifiable? |
+ * | --- | --- | --- |
+ * | `common` | `https://login.microsoftonline.com/{tenantid}/v2.0` | no — placeholder |
+ * | `organizations` | `https://login.microsoftonline.com/{tenantid}/v2.0` | no — placeholder |
+ * | `consumers` | `https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0` | **yes** |
+ *
+ * `consumers` is the odd one out: personal Microsoft accounts all live in that one well-known MSA tenant,
+ * so its discovery document names a real issuer and every id_token it mints matches. It therefore stays
+ * on the discovery branch and keeps full verification — moving it here would drop a check that works.
+ *
+ * `common` and `organizations` must not take the discovery branch: Microsoft's guidance is to substitute
+ * the token's `tid` into that placeholder, which a literal `iss` comparison can never satisfy, so every
+ * sign-in fails verification and lands on `?error=unable_to_get_user_info`. That is exactly how ENG-2750
+ * took Microsoft SSO down on Cloud — prod had `AZUREAD_TENANT_ID=common`, harmless on 1.6, a full outage
+ * on 1.7. The authority is still kept in the endpoint URLs, because `organizations` meaningfully
+ * restricts which account types Microsoft accepts at the authorize endpoint.
  *
  * Deliberately NOT setting `requireIdTokenVerification`: on the multi-tenant path it would throw at init
  * and take Azure sign-in down, which is the outcome this split exists to avoid.
  */
-const AZURE_PSEUDO_TENANTS = new Set(["common", "organizations", "consumers"]);
+const AZURE_TEMPLATE_ISSUER_TENANTS = new Set(["common", "organizations"]);
+// Unset behaves exactly like `common`: Microsoft's multi-tenant authority, and the documented default.
 const azureTenant = AZUREAD_TENANT_ID?.trim() || "common";
-const isConcreteAzureTenant = !AZURE_PSEUDO_TENANTS.has(azureTenant.toLowerCase());
-if (AZUREAD_TENANT_ID?.trim() && !isConcreteAzureTenant) {
+const isAzureTemplateIssuerTenant = AZURE_TEMPLATE_ISSUER_TENANTS.has(azureTenant.toLowerCase());
+// A template-issuer authority is one of two known literals, so emit its canonical lower-case form; a
+// concrete tenant is passed through exactly as the operator configured it.
+const azureAuthority = isAzureTemplateIssuerTenant ? azureTenant.toLowerCase() : azureTenant;
+// Only worth saying when Azure SSO is actually registered, and only when the operator set the value
+// themselves — an unset var takes this same path by design and needs no warning.
+if (AZURE_OAUTH_ENABLED && AZUREAD_TENANT_ID?.trim() && isAzureTemplateIssuerTenant) {
   logger.warn(
-    `AZUREAD_TENANT_ID="${azureTenant}" is a multi-tenant pseudo-tenant; treating it like unset — identity comes from the userinfo endpoint and id_tokens are not verified. Set a Directory (tenant) ID for full id_token verification.`
+    `AZUREAD_TENANT_ID="${azureTenant}" names a Microsoft multi-tenant authority whose discovery document advertises a placeholder issuer, so id_tokens cannot be verified against it. Treating it like unset: sign-in identity comes from the userinfo endpoint. Set a Directory (tenant) ID for full id_token verification.`
   );
 }
-const azureEndpoints = isConcreteAzureTenant
+const azureEndpoints = isAzureTemplateIssuerTenant
   ? {
-      discoveryUrl: `https://login.microsoftonline.com/${azureTenant}/v2.0/.well-known/openid-configuration`,
+      authorizationUrl: `https://login.microsoftonline.com/${azureAuthority}/oauth2/v2.0/authorize`,
+      tokenUrl: `https://login.microsoftonline.com/${azureAuthority}/oauth2/v2.0/token`,
+      userInfoUrl: "https://graph.microsoft.com/oidc/userinfo",
     }
   : {
-      authorizationUrl: `https://login.microsoftonline.com/${azureTenant}/oauth2/v2.0/authorize`,
-      tokenUrl: `https://login.microsoftonline.com/${azureTenant}/oauth2/v2.0/token`,
-      userInfoUrl: "https://graph.microsoft.com/oidc/userinfo",
+      discoveryUrl: `https://login.microsoftonline.com/${azureAuthority}/v2.0/.well-known/openid-configuration`,
     };
 
 export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KEY
