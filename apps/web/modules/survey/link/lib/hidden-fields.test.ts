@@ -64,11 +64,28 @@ describe("getHiddenFieldsFromSearchParams", () => {
     let warnSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
+      // This suite runs in the node environment (no window); the warns are browser-gated so they
+      // stay out of the operator's SSR log, so the browser is simulated here.
+      vi.stubGlobal("window", {});
       warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     });
 
     afterEach(() => {
       warnSpy.mockRestore();
+      vi.unstubAllGlobals();
+    });
+
+    test("stays quiet during SSR — the refusal must not land in the operator's server log", () => {
+      vi.unstubAllGlobals();
+
+      const record = getHiddenFieldsFromSearchParams(
+        ["Lang", "customerref"],
+        new URLSearchParams("lang=de&customerref=abc")
+      );
+
+      // Capture behavior is identical on the server pass; only the console line is gated.
+      expect(record).toEqual({ customerref: "abc" });
+      expect(warnSpy).not.toHaveBeenCalled();
     });
 
     test("explains the refusal, naming the declared field and the param spelling that arrived", () => {
@@ -175,11 +192,21 @@ describe("warnOnMissingIngestRows", () => {
   let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    vi.stubGlobal("window", {});
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     warnSpy.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  test("stays quiet during SSR", () => {
+    vi.unstubAllGlobals();
+
+    warnOnMissingIngestRows([], ["plan"]);
+
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   test("warns when the legacy column declares fields but no ingested rows exist — the dropped-join canary", () => {
