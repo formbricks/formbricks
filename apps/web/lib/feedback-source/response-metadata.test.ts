@@ -177,6 +177,26 @@ describe("buildResponseMetadata", () => {
       expect(result.url).toHaveLength(512);
     });
 
+    test("never cuts a surrogate pair in half", () => {
+      // 255 single-unit characters plus one emoji is 257 UTF-16 code units, so the 256 cap lands
+      // between the emoji's two halves.
+      const result = buildResponseMetadata(
+        buildResponse({ meta: { source: `${"a".repeat(255)}\u{1F600}` } }),
+        linkSurvey
+      );
+
+      expect(result.source).toHaveLength(255);
+      // A lone surrogate is rejected on the jsonb insert just like a NUL byte, so the whole
+      // submission's records would never be published.
+      expect(String(result.source)).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/);
+    });
+
+    test("keeps a multi-byte character that fits within the cap", () => {
+      expect(
+        buildResponseMetadata(buildResponse({ meta: { source: "feedback \u{1F600}" } }), linkSurvey).source
+      ).toBe("feedback \u{1F600}");
+    });
+
     test("strips NUL bytes, which Hub cannot store", () => {
       expect(
         buildResponseMetadata(buildResponse({ meta: { source: "li\u0000nk" } }), linkSurvey).source

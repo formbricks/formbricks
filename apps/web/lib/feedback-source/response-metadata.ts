@@ -152,8 +152,17 @@ const sanitizeValue = (value: unknown, maxLength: number): string | number | boo
   // jsonb insert reaches Postgres and fails as a 500 rather than a rejected field.
   const cleaned = value.replaceAll("\u0000", "").trim();
   if (!cleaned) return undefined;
+  if (cleaned.length <= maxLength) return cleaned;
 
-  return cleaned.length > maxLength ? cleaned.slice(0, maxLength) : cleaned;
+  // maxLength counts UTF-16 code units, so the cut can land between the halves of a surrogate
+  // pair — and a lone surrogate is rejected on the jsonb insert exactly like a NUL byte, with the
+  // same silently-dropped-records outcome. The caller picks the offset by choosing the value's
+  // length, so this is reachable on purpose and not only by accident.
+  const truncated = cleaned.slice(0, maxLength);
+  const lastUnit = truncated.charCodeAt(truncated.length - 1);
+  const endsOnHighSurrogate = lastUnit >= 0xd800 && lastUnit <= 0xdbff;
+
+  return endsOnHighSurrogate ? truncated.slice(0, -1) : truncated;
 };
 
 /**
