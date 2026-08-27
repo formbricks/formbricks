@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import { WorkspaceLayout as WorkspaceLayoutComponent } from "@/app/(app)/workspaces/[workspaceId]/components/WorkspaceLayout";
 import { WorkspaceContextWrapper } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { PostHogGroupIdentify } from "@/app/posthog/PostHogGroupIdentify";
@@ -23,10 +24,17 @@ const WorkspaceLayout = async (props: {
   const layoutData = await getWorkspaceLayoutData(params.workspaceId, session.user.id);
 
   // Full role snapshot across every org the person belongs to, not just this workspace's org —
-  // see lib/posthog/organization-roles.ts.
-  const organizationRoleProperties = POSTHOG_KEY
-    ? await getOrganizationRolePersonProperties(session.user.id)
-    : null;
+  // see lib/posthog/organization-roles.ts. Best-effort: this is read-only analytics enrichment and
+  // must never fail the workspace page render if the lookup errors.
+  let organizationRoleProperties: Awaited<ReturnType<typeof getOrganizationRolePersonProperties>> | null =
+    null;
+  if (POSTHOG_KEY) {
+    try {
+      organizationRoleProperties = await getOrganizationRolePersonProperties(session.user.id);
+    } catch (error) {
+      logger.warn({ error }, "Failed to load organization role properties for PostHog");
+    }
+  }
 
   return (
     <>

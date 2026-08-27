@@ -423,12 +423,20 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       // Read back fresh rather than threading a role value through handlePostUserCreation's return:
       // this is a full snapshot across every org the user belongs to, not just the one they just
       // joined/created (see lib/posthog/organization-roles.ts). Empty when signup didn't create or
-      // join an organization (e.g. multi-org disabled with no invite).
+      // join an organization (e.g. multi-org disabled with no invite). Best-effort: this is read-only
+      // analytics enrichment and must never fail an otherwise-successful signup.
+      let organizationRoleProperties: Awaited<ReturnType<typeof getOrganizationRolePersonProperties>> | null =
+        null;
+      try {
+        organizationRoleProperties = await getOrganizationRolePersonProperties(user.id);
+      } catch (error) {
+        logger.warn({ error }, "Failed to load organization role properties for PostHog");
+      }
       identifyPostHogPerson(user.id, {
         email: user.email,
         name: user.name,
         email_domain: getEmailDomain(user.email),
-        ...(await getOrganizationRolePersonProperties(user.id)),
+        ...organizationRoleProperties,
       });
       capturePostHogEvent(
         user.id,
