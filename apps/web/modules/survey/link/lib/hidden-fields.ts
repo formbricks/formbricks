@@ -4,6 +4,14 @@ import { RESERVED_DECLARED_FIELD_NAMES } from "@formbricks/types/surveys/validat
 type TSearchParamsWithKeys = Pick<URLSearchParams, "keys" | "get">;
 
 /**
+ * Both diagnostics below are for the survey author's browser console. This module also runs during
+ * SSR (the client component is server-rendered), where the same lines would land in the operator's
+ * Next log once per respondent — an audience that can do nothing with them. Capture behavior itself
+ * must stay identical on both passes; only the console output is browser-gated.
+ */
+const isBrowser = (): boolean => globalThis.window !== undefined;
+
+/**
  * Reads the survey's declared hidden fields out of the URL, tolerating case drift in the query
  * string: a survey declaring `CustomerRef` is filled by `?customerref=x` as well as `?CustomerRef=x`.
  *
@@ -40,9 +48,11 @@ export const getHiddenFieldsFromSearchParams = (
       // param, e.g. a grandfathered `source` field reached by an ordinary `?source=newsletter`.
       // Accepted: the console is the only channel that reaches someone who can fix the survey, and
       // the alternative is silence.
-      console.warn(
-        `Formbricks: "${declaredFieldId}" is reserved by the link survey URL contract, so "?${matchedParamKey}=" can never fill it. Rename the field to collect this value.`
-      );
+      if (isBrowser()) {
+        console.warn(
+          `Formbricks: "${declaredFieldId}" is reserved by the link survey URL contract, so "?${matchedParamKey}=" can never fill it. Rename the field to collect this value.`
+        );
+      }
       continue;
     }
 
@@ -66,7 +76,7 @@ export const getHiddenFieldsFromSearchParams = (
  * capturing with no output anywhere.
  */
 export const warnOnMissingIngestRows = (ingestedStorageKeys: string[], legacyFieldIds: string[]): void => {
-  if (ingestedStorageKeys.length === 0 && legacyFieldIds.length > 0) {
+  if (isBrowser() && ingestedStorageKeys.length === 0 && legacyFieldIds.length > 0) {
     console.warn(
       "Formbricks: this survey declares hidden fields but has no ingested Embedded Data rows, so no URL parameter can fill them."
     );
