@@ -135,10 +135,19 @@ export const SurveyClientWrapper = ({
   // diagnostic while duplicating a rule that already has one home.
   const ingestedStorageKeys = getIngestedStorageKeys(survey);
   const hiddenFieldsRecord = useMemo(() => {
-    warnOnMissingIngestRows(ingestedStorageKeys, survey.hiddenFields.fieldIds ?? []);
     return getHiddenFieldsFromSearchParams(ingestedStorageKeys, searchParams);
     // eslint-disable-next-line react-hooks/use-memo -- migration ENG-1677
   }, [searchParams, JSON.stringify(ingestedStorageKeys)]);
+
+  // The diagnostic is a side effect, so it belongs in an effect rather than in the memo above: a memo
+  // body runs twice per mount under StrictMode, so this warning printed twice on every dev page load,
+  // and it would re-run on any `searchParams` change even though what it reports depends only on the
+  // survey. Keyed on content rather than array identity, like the memo above.
+  const legacyFieldIds = survey.hiddenFields.fieldIds ?? [];
+  useEffect(() => {
+    warnOnMissingIngestRows(ingestedStorageKeys, legacyFieldIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on content, not array identity
+  }, [JSON.stringify(ingestedStorageKeys), JSON.stringify(legacyFieldIds)]);
 
   // Include verified email in hidden fields if available
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
