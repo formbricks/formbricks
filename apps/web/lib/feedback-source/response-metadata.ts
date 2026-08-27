@@ -106,7 +106,7 @@ const readDurationSeconds = (ttc: TResponse["ttc"]): number | undefined => {
  * the module comment. Readers are optional-chained throughout: stored rows predate several of these
  * fields, and `meta` defaults to `{}` in Prisma.
  */
-export const METADATA_FIELDS: readonly TMetadataFieldSpec[] = [
+export const HUB_METADATA_FIELDS: readonly TMetadataFieldSpec[] = [
   { key: "source", enabled: true, read: ({ response }) => response.meta?.source },
   {
     key: "url",
@@ -197,4 +197,4 @@ export const projectMetadataFields = (
 export const buildResponseMetadata = (
   response: TMetadataContext["response"],
   survey: TMetadataContext["survey"]
-): TResponseMetadata => projectMetadataFields(METADATA_FIELDS, { response, survey });
+): TResponseMetadata => projectMetadataFields(HUB_METADATA_FIELDS, { response, survey });

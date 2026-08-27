@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
-  METADATA_FIELDS,
+  HUB_METADATA_FIELDS,
   type TMetadataContext,
   buildResponseMetadata,
   projectMetadataFields,
@@ -237,11 +237,11 @@ describe("buildResponseMetadata", () => {
   });
 });
 
-describe("METADATA_FIELDS", () => {
+describe("HUB_METADATA_FIELDS", () => {
   test("publishes exactly the reviewed allowlist", () => {
     // Adding a field to the catalog is a privacy decision (see the module comment), so it has to be
     // made here too. `ipAddress` is absent by construction and must stay absent.
-    expect(METADATA_FIELDS.filter((field) => field.enabled).map((field) => field.key)).toEqual([
+    expect(HUB_METADATA_FIELDS.filter((field) => field.enabled).map((field) => field.key)).toEqual([
       "source",
       "url",
       "browser",
@@ -256,14 +256,14 @@ describe("METADATA_FIELDS", () => {
   });
 
   test("names every field in snake_case, as Hub metadata keys are conventionally written", () => {
-    const offenders = METADATA_FIELDS.filter((field) => !/^[a-z][a-z0-9_]*$/.test(field.key));
+    const offenders = HUB_METADATA_FIELDS.filter((field) => !/^[a-z][a-z0-9_]*$/.test(field.key));
     expect(offenders.map((field) => field.key)).toEqual([]);
   });
 });
 
 describe("projectMetadataFields", () => {
   test("skips a field that has been withdrawn", () => {
-    // Driven through an ad-hoc table rather than by mutating METADATA_FIELDS, which other callers
+    // Driven through an ad-hoc table rather than by mutating HUB_METADATA_FIELDS, which other callers
     // share: the point is that flipping `enabled` is all it takes to stop publishing a field.
     const result = projectMetadataFields(
       [
