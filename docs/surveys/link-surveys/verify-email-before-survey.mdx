@@ -5,64 +5,39 @@ description:
 icon: "envelope"
 ---
 
-To ensure the credibility of your survey participants and maintain high-quality data, you can require respondents to verify their email before they can view and respond to your Formbricks link surveys. This verification process helps confirm that only participants with valid email addresses can access the survey, enhancing data integrity.
+Requiring a verified email address before someone can answer keeps anonymous and throwaway responses out of your data, and attaches a real address to every response you do collect.
 
-## **Enabling Email Verification**
+## Enabling email verification
 
-This feature, designed for link surveys, can be enabled or disabled directly from the survey editor. Here’s how to activate it:
+Open the survey editor, go to the **Settings** tab, and expand **Response Options**. Switch on **Verify email before submission**.
 
-### **Steps to Enable Email Verification**
+![The email verification row of Response Options](/images/surveys/link-surveys/verify-email-before-survey/response-option.webp)
 
-1. **Open Survey Editor**: Navigate to your link survey in the survey editor where you wish to enable email verification.
-2. **Access Settings**: Click on the **`Settings`** tab next to the Questions & Styling tab.
-3. **Select Response Options**: Find and select **`Response Options`** to access settings related to survey responses.
+<Note>
+  This is a link survey feature. App surveys already know who the respondent is.
+</Note>
 
-   ![Choose a link survey template](/images/surveys/link-surveys/verify-email-before-survey/step-one.webp)
+## What the respondent sees
 
-4. **Activate Email Verification**: Find the "Verify Email Before Accessing Survey" option and use the toggle to activate email verification. Specify what details should be visible to the public when they access the survey.
+Opening the link asks for an address first. Formbricks sends a link to that address, and the survey opens once it is followed.
 
-   ![Choose a link survey template](/images/surveys/link-surveys/verify-email-before-survey/step-two.webp)
+![The email gate a respondent sees](/images/surveys/link-surveys/verify-email-before-survey/email-gate.webp)
 
-### **User Experience Upon Accessing the Survey**
+**Preview survey questions** lets someone read the survey without verifying anything. They cannot answer — it is there so a cautious respondent can see what they are being asked before handing over an address.
 
-When email verification is enabled, the following process unfolds for the user:
+## Where the verified address shows up
 
-1. **Email Entry Prompt**: Upon accessing the survey link, the user is prompted to verify their email before they can proceed.
+Each response carries the address it was verified against, visible on the response in the Responses tab and included in exports.
 
-   ![Choose a link survey template](/images/surveys/link-surveys/verify-email-before-survey/step-three.webp)
+## When to use it
 
-2. **Preview Option**: A "Preview survey questions" option is available for those who are just browsing or curious about the survey content without completing it. This allows a non-interactive view of the survey.
+- Market research that has to come from a known population.
 
-   ![Choose a link survey template](/images/surveys/link-surveys/verify-email-before-survey/step-four.webp)
+- Surveys behind gated content, where the audience is a list you already hold.
 
-3. **Verification Process**: After entering their email, respondents receive an email containing a survey link, which they can use to access the survey.
+- Academic or professional studies where a response has to be attributable.
 
-   ![Choose a link survey template](/images/surveys/link-surveys/verify-email-before-survey/step-five.webp)
-
-4. **Survey Access**: After verifying their email, respondents can access and respond to the survey.
-
-![Choose a link survey template](/images/surveys/link-surveys/verify-email-before-survey/step-six.webp)
-
-### **Benefits of Email Verification**
-
-- **Authenticity of Respondents**: Ensures that each respondent is verified, adding an extra layer of authenticity to your data collection.
-- **Reduction in Spam and Fraudulent Responses**: Helps reduce unwanted or spam entries by confirming the legitimacy of each respondent’s email address.
-- **Enhanced Data Quality**: Increases the reliability and quality of the data collected by confirming the identity of participants.
-
-### **Visibility of Verified Emails**
-
-In the Formbricks dashboard, the survey response card displays the verified email along with the responses attached to it, ensuring traceability and authenticity of the data collected.
-
-![Choose a link survey template](/images/surveys/link-surveys/verify-email-before-survey/step-seven.webp)
-
-## **Use Cases**
-
-Email verification is particularly beneficial in scenarios where:
-
-- Market research requires verified responses from specific demographics.
-- Surveys are intended for a selected audience with gated content.
-- Academic or professional studies necessitate authenticated data for accuracy.
-
-## **Conclusion**
-
-Implementing the Email Verification feature is an effective strategy to ensure the authenticity of your survey respondents. By requiring email verification before survey access, you safeguard the integrity of your survey data and ensure that only verified individuals can contribute responses.
+<Note>
+  Verification needs a working SMTP configuration. On a self-hosted instance, see [SMTP
+  Configuration](/self-hosting/configuration/smtp).
+</Note>
