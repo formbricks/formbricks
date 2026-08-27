@@ -24,6 +24,17 @@ export const isResourceFilter = (resource: TSegmentFilter | TBaseFilters): resou
   return (resource as TSegmentFilter).root !== undefined;
 };
 
+/**
+ * Upper bound on ids per `IN (...)` survey lookup in the segment write path (segments.ts and
+ * helper.ts). The Zod boundary already bounds what a client can submit (MAX_SEGMENT_SURVEYS,
+ * MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE), so batching is defense in depth: it keeps each
+ * query's SQL parameter payload flat for within-cap totals (a handful of batches at most) and
+ * holds for callers whose arrays never went through those schemas (the survey editor's draft-save
+ * path). Batches run sequentially — the point is to cap per-query and concurrent database work,
+ * not to fan it out.
+ */
+export const SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE = 200;
+
 export const convertOperatorToText = (operator: TAllOperators, t: TFunction) => {
   switch (operator) {
     case "equals":
