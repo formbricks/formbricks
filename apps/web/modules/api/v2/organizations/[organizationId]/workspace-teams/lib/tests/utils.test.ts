@@ -103,6 +103,17 @@ describe("checkAuthenticationAndAccess", () => {
     }
   });
 
+  test("returns internal_server_error when the creator role lookup fails", async () => {
+    apiKeyFindUnique.mockRejectedValue(new Error("DB error"));
+
+    const result = await checkAuthenticationAndAccess("team123", "workspace123", authentication);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.type).toBe("internal_server_error");
+    }
+  });
+
   // A refused caller must not learn which ids exist: running the lookup first would answer with
   // not_found for a made-up team and forbidden for a real one, turning the error into an id oracle.
   test("does not look up the team or workspace when the creator role check fails", async () => {
