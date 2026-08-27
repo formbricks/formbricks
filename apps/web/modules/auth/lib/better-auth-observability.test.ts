@@ -15,6 +15,7 @@ import {
   betterAuthLogger,
   getSignInAuthMethod,
   recordSsoCallbackOutcome,
+  recordSsoCallbackThrow,
   redactEmailsInLogMessage,
   signInAuditDatabaseHook,
 } from "./better-auth-observability";
@@ -776,15 +777,64 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
     expect(contextOf()).toMatchObject({ ssoProvider: "unknown" });
   });
 
-  // Same reasoning for the reason field: the `error` parameter arrives from a redirect target and
-  // must not become a free-text log field.
-  test("buckets an error code that is not one of Better Auth's shapes", () => {
+  /**
+   * The reason needs the same protection as the provider, and the reason is easy to miss: Better Auth
+   * **echoes the inbound `error` query parameter** into its redirect (`callback.mjs`,
+   * `if (error) redirectOnError(error, error_description)`). Anyone can get a parseable `state` by
+   * starting a sign-in, then call the callback with `&error=<anything>` — so without an allow-list an
+   * outsider both inflates this field's cardinality and can forge a specific reason to disguise a
+   * real outage. A charset regex would not help: it bounds the shape, not the number of values.
+   */
+  test.each([
+    ["a plausible but unknown code", "totally_made_up_code"],
+    ["a forged real-looking code", "state_mismatch_2"],
+    ["markup", "%3Cscript%3E+injected"],
+  ])("buckets %s to other", (_label, injected) => {
     recordSsoCallbackOutcome(
       "https://app.test/api/auth/callback/google",
-      redirect("https://app.test/auth/login?error=%3Cscript%3E+injected+%3D+true")
+      redirect(`https://app.test/auth/login?error=${injected}`)
     );
 
-    expect(contextOf()).toMatchObject({ ssoCallbackReason: "unrecognised" });
+    expect(contextOf()).toMatchObject({ ssoCallbackReason: "other" });
+  });
+
+  test.each([
+    ["Better Auth's own callback code", "unable_to_get_user_info"],
+    ["a StateError code", "state_mismatch"],
+    ["a code this app emits", "account_not_linked"],
+    // What a database outage mid-callback actually produces — verified by stopping Postgres against a
+    // live instance. Bucketing this one would hide the clearest infrastructure signal there is.
+    ["the code an infrastructure fault produces", "internal_server_error"],
+  ])("records %s verbatim", (_label, code) => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      redirect(`https://app.test/auth/login?error=${code}`)
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackReason: code });
+  });
+
+  /**
+   * The worst callback failure is the one that never produces a response at all: the request throws,
+   * Next answers 500, nobody signs in. Recording only responses would have left precisely that case
+   * invisible to the alert.
+   */
+  test("records a callback that threw", () => {
+    recordSsoCallbackThrow("https://app.test/api/auth/callback/azuread");
+
+    expect(contextOf()).toEqual({
+      source: "sso-callback",
+      ssoCallbackOutcome: "failure",
+      ssoProvider: "azuread",
+      ssoCallbackReason: "exception",
+    });
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith("SSO callback failed");
+  });
+
+  test("stays silent when a non-callback endpoint throws", () => {
+    recordSsoCallbackThrow("https://app.test/api/auth/sign-in/email");
+
+    expect(logger.withContext).not.toHaveBeenCalled();
   });
 
   test.each([

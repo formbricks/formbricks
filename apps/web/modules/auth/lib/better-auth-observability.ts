@@ -424,8 +424,63 @@ export const auditPasswordReset = async (userId: string): Promise<void> => {
  */
 const SSO_CALLBACK_PROVIDER_IDS = new Set(["google", "github", "azuread", "openid", "saml"]);
 
-/** Better Auth's callback error codes are lower-snake-case; anything else is not one of ours. */
-const SSO_CALLBACK_ERROR_CODE = /^[a-z0-9_]{1,64}$/;
+/**
+ * Callback failure reasons that may be recorded verbatim (ENG-2551).
+ *
+ * This has to be an allow-list for the same reason the provider id does, and the reason is easy to
+ * miss: Better Auth **echoes the inbound `error` query parameter** into its own redirect
+ * (`api/routes/callback.mjs`, `if (error) redirectOnError(error, error_description)`). Any caller can
+ * obtain a parseable `state` by starting a sign-in and then request
+ * `/api/auth/callback/<id>?state=…&error=<anything>`, so the value that lands here is outside
+ * attacker control only if we bound it to a known set. A charset regex would bound the *shape* of the
+ * value but not the *number of distinct values*, which is the property an alert needs.
+ *
+ * Two consequences of that echo, both closed by bucketing to `other`: an outsider cannot inflate the
+ * cardinality of this field, and cannot forge a specific reason to make a real outage look like
+ * something else.
+ *
+ * Read from `better-auth/dist/oauth2/errors.mjs` (OAUTH_CALLBACK_ERROR_CODES), the two route-level
+ * codes in `api/routes/callback.mjs`, the five `StateError` codes in `state.mjs`, and the codes this
+ * app redirects with itself. A code that disappears upstream simply stops occurring; a new one
+ * buckets to `other` until it is added, which is the safe direction.
+ */
+const SSO_CALLBACK_REASONS = new Set([
+  // Better Auth OAUTH_CALLBACK_ERROR_CODES
+  "account_already_linked_to_different_user",
+  "email_does_not_match",
+  "email_not_found",
+  "email_not_verified",
+  "invalid_code",
+  "issuer_mismatch",
+  "issuer_missing",
+  "no_callback_url",
+  "no_code",
+  "nonce_binding_missing",
+  "oauth_provider_not_found",
+  "unable_to_get_user_info",
+  "unable_to_link_account",
+  // Better Auth callback route, and the codes its redirectOnError call sites pass. `internal_server_error`
+  // is the important one and was found by smoke-testing rather than by reading the enum: stopping the
+  // database mid-callback produces it, so it is the code an infrastructure outage actually arrives as.
+  "invalid_callback_request",
+  "internal_server_error",
+  "invalid_payload",
+  "invalid_profile",
+  "missing_profile",
+  "payload_expired",
+  "user_creation_failed",
+  // Better Auth StateError codes
+  "state_generation_error",
+  "state_invalid",
+  "state_mismatch",
+  "state_not_found",
+  "state_security_mismatch",
+  // Emitted by this app
+  "OAuthAccountNotLinked",
+  "account_not_linked",
+  "invalid_scope",
+  "unable_to_create_user",
+]);
 
 /**
  * Record the outcome of an SSO callback, so a total sign-in outage announces itself (ENG-2551).
@@ -453,6 +508,40 @@ const SSO_CALLBACK_ERROR_CODE = /^[a-z0-9_]{1,64}$/;
  * Never throws: observability must not be able to fail a sign-in that otherwise succeeded.
  */
 export const recordSsoCallbackOutcome = (requestUrl: string, response: Response): void => {
+  emitSsoCallbackRecord(requestUrl, (): { outcome: "success" | "failure"; reason?: string } => {
+    // A 4xx/5xx on the callback is a failed sign-in too — this is how the SSO licence gate's 403
+    // and any unhandled 500 present, and neither redirects.
+    if (response.status >= 400) return { outcome: "failure", reason: `http_${response.status}` };
+    if (response.status >= 300) {
+      const location = response.headers.get("location");
+      const error = location ? new URL(location, requestUrl).searchParams.get("error") : null;
+      if (!error) return { outcome: "success" };
+      return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
+    }
+    return { outcome: "success" };
+  });
+};
+
+/**
+ * Record an SSO callback that threw rather than returning a response (ENG-2551).
+ *
+ * The most severe callback failure there is: the request never produces a redirect, Next answers 500,
+ * and the user simply cannot sign in. Recording only responses would have left exactly that case
+ * invisible to the alert this signal exists to feed.
+ */
+export const recordSsoCallbackThrow = (requestUrl: string): void => {
+  emitSsoCallbackRecord(requestUrl, () => ({ outcome: "failure", reason: "exception" }));
+};
+
+/**
+ * Shared emitter: resolves the provider from the path, applies the outcome, logs once. Never throws —
+ * observability must not be able to fail a sign-in that otherwise succeeded, nor mask the original
+ * error on the throwing path.
+ */
+const emitSsoCallbackRecord = (
+  requestUrl: string,
+  resolveOutcome: () => { outcome: "success" | "failure"; reason?: string }
+): void => {
   try {
     const path = new URL(requestUrl).pathname;
     // The internal path Better Auth actually serves. `mapLegacySsoCallbackRequest` has already
@@ -464,22 +553,7 @@ export const recordSsoCallbackOutcome = (requestUrl: string, response: Response)
     const provider = SSO_CALLBACK_PROVIDER_IDS.has(providerSegment.toLowerCase())
       ? providerSegment.toLowerCase()
       : "unknown";
-
-    const { outcome, reason } = ((): { outcome: "success" | "failure"; reason?: string } => {
-      // A 4xx/5xx on the callback is a failed sign-in too — this is how the SSO licence gate's 403
-      // and any unhandled 500 present, and neither redirects.
-      if (response.status >= 400) return { outcome: "failure", reason: `http_${response.status}` };
-      if (response.status >= 300) {
-        const location = response.headers.get("location");
-        const error = location ? new URL(location, requestUrl).searchParams.get("error") : null;
-        if (!error) return { outcome: "success" };
-        return {
-          outcome: "failure",
-          reason: SSO_CALLBACK_ERROR_CODE.test(error) ? error : "unrecognised",
-        };
-      }
-      return { outcome: "success" };
-    })();
+    const { outcome, reason } = resolveOutcome();
 
     const contextLogger = logger.withContext({
       source: "sso-callback",
