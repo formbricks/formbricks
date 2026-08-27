@@ -184,8 +184,10 @@
                 "icon": "question",
                 "pages": [
                   "surveys/question-type/address",
+                  "surveys/question-type/ces",
                   "surveys/question-type/consent",
                   "surveys/question-type/contact-info",
+                  "surveys/question-type/csat",
                   "surveys/question-type/date",
                   "surveys/question-type/file-upload",
                   "surveys/question-type/free-text",
