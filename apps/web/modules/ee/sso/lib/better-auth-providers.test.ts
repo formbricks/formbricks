@@ -800,6 +800,10 @@ describe("OIDC identity comes from Graph when pointed at Microsoft (#9023 review
     } as never);
 
     expect(graph).toHaveBeenCalledWith("https://graph.microsoft.com/oidc/userinfo", expect.anything());
+    // Assert the Graph identity positively first: on its own, `not.toContain` passes for a `null`
+    // result, so the two negatives below would hold even if the provider resolved nothing at all.
+    expect(result?.user).toMatchObject({ email: "real@corp.test" });
+    expect(result?.data).toMatchObject({ sub: "graph-subject", email: "real@corp.test" });
     expect(JSON.stringify(result)).not.toContain("forged-subject");
     expect(JSON.stringify(result)).not.toContain("attacker@evil.test");
   });
