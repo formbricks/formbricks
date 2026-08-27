@@ -50,8 +50,9 @@ export class EmbeddedDataStore {
     // `wrapThrowsAsync` shield (it is deliberately synchronous), and the GTM pattern this feature
     // targets can hand over an absent object — `setEmbeddedData(dataLayerObj)` on a page type where
     // that object is undefined. A broken tag is a worse failure than a skipped write. A primitive is
-    // refused too: `Object.entries("plan")` would spread into junk keys ({0: "p", 1: "l", …}).
-    if (typeof data !== "object" || data === null) {
+    // refused too, and so is an array (`typeof [] === "object"`): either would spread into junk
+    // numeric keys ({0: "p", 1: "l", …} / {0: "a", 1: "b"}) — `ecommerce.items` is the common array case.
+    if (typeof data !== "object" || data === null || Array.isArray(data)) {
       Logger.getInstance().error(
         `setEmbeddedData: expected an object, got ${data === null ? "null" : typeof data} — nothing was set`
       );
@@ -120,10 +121,18 @@ export class EmbeddedDataStore {
 export const buildDisplayHiddenFields = (
   explicit?: TTrackProperties["hiddenFields"]
 ): TTrackProperties["hiddenFields"] => {
-  const explicitKeysFolded = new Set(Object.keys(explicit ?? {}).map((key) => key.toLowerCase()));
+  // A key present with value `undefined` is treated as absent, the same promise `setEmbeddedData`
+  // makes: `track("evt", { hiddenFields: { plan: dataLayer.plan } })` on a page where `plan` is
+  // missing must not evict the ambient value — counting the key as "present" would drop the bag's
+  // entry in the fold and then spread `undefined` over it, losing the value entirely.
+  const explicitEntries = Object.entries(explicit ?? {}).filter(([, value]) => value !== undefined);
+  const explicitKeysFolded = new Set(explicitEntries.map(([key]) => key.toLowerCase()));
   const ambient = Object.entries(EmbeddedDataStore.getInstance().getSnapshot()).filter(
     ([key]) => !explicitKeysFolded.has(key.toLowerCase())
   );
 
-  return { ...Object.fromEntries(ambient), ...explicit } as TTrackProperties["hiddenFields"];
+  return {
+    ...Object.fromEntries(ambient),
+    ...Object.fromEntries(explicitEntries),
+  } as TTrackProperties["hiddenFields"];
 };

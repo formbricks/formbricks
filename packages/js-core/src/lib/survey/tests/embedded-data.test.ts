@@ -118,6 +118,13 @@ describe("input guards (never fatal)", () => {
     expect(store.getSnapshot()).toEqual({});
   });
 
+  test('an array is refused too — typeof [] is "object", but it would spread into numeric junk keys', () => {
+    // The common host mistake: forwarding an array-valued data-layer key like `ecommerce.items`.
+    store.setEmbeddedData(["a", "b"] as unknown as Parameters<typeof store.setEmbeddedData>[0]);
+
+    expect(store.getSnapshot()).toEqual({});
+  });
+
   test("clearEmbeddedData(undefined) is a no-op, NOT a full clear — one keystroke from the no-arg overload", () => {
     store.setEmbeddedData({ plan: "pro", pageType: "product" });
 
@@ -146,5 +153,18 @@ describe("buildDisplayHiddenFields", () => {
     EmbeddedDataStore.getInstance().setEmbeddedData({ plan: "pro" });
 
     expect(buildDisplayHiddenFields(undefined)).toEqual({ plan: "pro" });
+  });
+
+  test("an explicit key whose value is undefined does NOT evict the ambient value", () => {
+    // The GTM shape: track("evt", { hiddenFields: { plan: dataLayer.plan } }) on a page where
+    // `plan` is absent. Same promise as setEmbeddedData's undefined no-op — a missing data-layer
+    // key must never cost the bag its value.
+    EmbeddedDataStore.getInstance().setEmbeddedData({ plan: "ambient-pro" });
+
+    expect(
+      buildDisplayHiddenFields({ plan: undefined } as unknown as Parameters<
+        typeof buildDisplayHiddenFields
+      >[0])
+    ).toEqual({ plan: "ambient-pro" });
   });
 });
