@@ -148,11 +148,34 @@ const describeReservedReason = (field: string): string => {
   return "it is a reserved name";
 };
 
+/**
+ * Why a name refused for a reason other than {@link TValidateIdErrorCode.Reserved} was refused, one
+ * clause per code.
+ *
+ * Per code rather than one sentence for "not reserved": the old fallback returned the
+ * `NotSafeIdentifier` sentence for every non-reserved code, so a caller sending `Team Size` was told
+ * about lowercase letters when the space was the whole problem, and `""` produced the same sentence
+ * as a charset violation. Each code now states the check that actually fired — so following the
+ * message always moves the caller forward one check instead of around in a circle.
+ */
+const DECLARED_FIELD_NAME_REASONS: Record<Exclude<TValidateIdErrorCode, "reserved">, string> = {
+  [TValidateIdErrorCode.Empty]: "it must not be empty",
+  [TValidateIdErrorCode.HasSpaces]: "it must not contain spaces",
+  [TValidateIdErrorCode.InvalidChars]: "it may contain only letters, numbers, underscores and hyphens",
+  [TValidateIdErrorCode.NotSafeIdentifier]:
+    "it must start with a lowercase letter and contain only lowercase letters, numbers and underscores",
+  // Unreachable from `validateNewDeclaredFieldNames`, which passes empty id lists so a collision is
+  // never reported here. Spelled out anyway: the map is exhaustive over the enum, so a caller that
+  // does pass id lists gets a true sentence instead of falling through to a wrong one.
+  [TValidateIdErrorCode.Duplicate]: "another field in this survey already uses that name",
+};
+
+/** The client-facing sentence for one refused name: `Field name "x" cannot be used: <reason>.` */
 export const describeDeclaredFieldNameError = (error: TValidateIdError): string => {
   const reason =
     error.code === TValidateIdErrorCode.Reserved
       ? describeReservedReason(error.field)
-      : "it must start with a lowercase letter and contain only lowercase letters, numbers and underscores";
+      : DECLARED_FIELD_NAME_REASONS[error.code];
 
   return `Field name "${error.field}" cannot be used: ${reason}.`;
 };
