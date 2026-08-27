@@ -72,7 +72,14 @@ export const emitFormbricksEvent = (event: TFormbricksEventName, payload: TFormb
     // `.push`. GTM's own snippet only ever creates an array, and its loaded state keeps the array
     // and swaps the `push` method, so `Array.isArray` stays true on every real GTM page.
     if (!Array.isArray(window.dataLayer)) window.dataLayer = [];
-    window.dataLayer.push({ event, formbricks: { ...EMPTY_DATALAYER_PAYLOAD, ...payload } });
+    // Undefined-valued keys are stripped before the merge: `TFormbricksEventPayload` admits
+    // `undefined` (the widened callbacks type `responseId` optional), and a key PRESENT with value
+    // `undefined` would replace the `null` sentinel in the spread — re-opening the recursive-merge
+    // bleed the sentinel exists to stop.
+    const definedPayload = Object.fromEntries(
+      Object.entries(payload).filter(([, value]) => value !== undefined)
+    );
+    window.dataLayer.push({ event, formbricks: { ...EMPTY_DATALAYER_PAYLOAD, ...definedPayload } });
   } catch (error) {
     console.error(`Formbricks: failed to push "${event}" to the dataLayer`, error);
   }

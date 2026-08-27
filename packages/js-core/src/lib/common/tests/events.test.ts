@@ -88,6 +88,28 @@ describe("emitFormbricksEvent", () => {
     });
   });
 
+  test("a payload key present with value undefined falls back to the null sentinel, not undefined", () => {
+    // `responseId` is typed optional by the widened callbacks, so an emit can carry it as an
+    // explicit undefined. If that survived the merge it would replace the null sentinel — and GTM's
+    // recursive merge would keep an EARLIER event's responseId readable under this event's trigger.
+    emitFormbricksEvent(FORMBRICKS_EVENTS.responseSubmitted, {
+      surveyId: "survey_1",
+      responseId: undefined,
+      finished: true,
+    });
+
+    expect(window.dataLayer?.[0]).toEqual({
+      event: "formbricks_response_submitted",
+      formbricks: {
+        workspaceId: null,
+        action: null,
+        surveyId: "survey_1",
+        responseId: null,
+        finished: true,
+      },
+    });
+  });
+
   test("a non-array dataLayer (a host shim) is replaced instead of throwing on .push", () => {
     (window as { dataLayer?: unknown }).dataLayer = {};
 
