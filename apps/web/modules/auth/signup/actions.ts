@@ -11,7 +11,6 @@ import {
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   UnknownError,
 } from "@formbricks/types/errors";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
@@ -23,6 +22,7 @@ import {
   groupIdentifyPostHog,
   identifyPostHogPerson,
 } from "@/lib/posthog";
+import { getOrganizationRolePersonProperties } from "@/lib/posthog/organization-roles";
 import { getUserByEmail } from "@/lib/user/service";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -185,7 +185,7 @@ async function handleInviteAcceptance(
   ctx: ActionClientCtx,
   inviteToken: string,
   user: TCreatedUser
-): Promise<TOrganizationRole> {
+): Promise<void> {
   // An invite grants a specific address a specific role in a specific organization. Verifying the
   // signature and loading the row is not enough: without matching the token's email against the account
   // being created, anyone holding an invite link — they get forwarded, pasted into tickets, and land in
@@ -253,16 +253,11 @@ async function handleInviteAcceptance(
     invite.creator.locale
   );
   await deleteInvite(invite.id);
-
-  return invite.role;
 }
 
-async function handleOrganizationCreation(
-  ctx: ActionClientCtx,
-  user: TCreatedUser
-): Promise<TOrganizationRole | undefined> {
+async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUser): Promise<void> {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  if (!isMultiOrgEnabled) return undefined;
+  if (!isMultiOrgEnabled) return;
 
   const organization = await createOrganization({ name: `${user.name}'s Organization` });
   ctx.auditLoggingCtx.organizationId = organization.id;
@@ -323,8 +318,6 @@ async function handleOrganizationCreation(
       ),
     },
   });
-
-  return "owner";
 }
 
 /**
@@ -335,11 +328,15 @@ async function handlePostUserCreation(
   ctx: ActionClientCtx,
   { user }: Extract<TSignUpOutcome, { status: "created" }>,
   inviteToken: string | undefined
-): Promise<TOrganizationRole | undefined> {
+): Promise<void> {
+  if (inviteToken) {
+    await handleInviteAcceptance(ctx, inviteToken, user);
+  } else {
+    await handleOrganizationCreation(ctx, user);
+  }
   // Better Auth sends the verification email itself during signUpEmail (sendOnSignUp) — no manual
   // send here. The legacy EMAIL_VERIFICATION_DISABLED branch (ENG-1527) is folded into auth.ts'
   // requireEmailVerification config and the callbackURL chosen in signUpUserSafely.
-  return inviteToken ? handleInviteAcceptance(ctx, inviteToken, user) : handleOrganizationCreation(ctx, user);
 }
 
 /**
@@ -410,7 +407,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // so the caller has proven nothing about an account that already exists (ENG-2091).
     if (outcome.status === "created") {
       const { user } = outcome;
-      const organizationRole = await handlePostUserCreation(ctx, outcome, inviteToken);
+      await handlePostUserCreation(ctx, outcome, inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
@@ -423,13 +420,15 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
       const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
       const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
 
+      // Read back fresh rather than threading a role value through handlePostUserCreation's return:
+      // this is a full snapshot across every org the user belongs to, not just the one they just
+      // joined/created (see lib/posthog/organization-roles.ts). Empty when signup didn't create or
+      // join an organization (e.g. multi-org disabled with no invite).
       identifyPostHogPerson(user.id, {
         email: user.email,
         name: user.name,
         email_domain: getEmailDomain(user.email),
-        // undefined when signup didn't create/join an organization (e.g. multi-org disabled with
-        // no invite) — omit rather than send a misleading role.
-        ...(organizationRole ? { organization_role: organizationRole } : {}),
+        ...(await getOrganizationRolePersonProperties(user.id)),
       });
       capturePostHogEvent(
         user.id,

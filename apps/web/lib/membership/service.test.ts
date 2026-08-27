@@ -3,12 +3,13 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
-import { createMembership, getMembershipByUserIdOrganizationId } from "./service";
+import { createMembership, getMembershipByUserIdOrganizationId, getMembershipsByUserId } from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     membership: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -94,6 +95,48 @@ describe("Membership Service", () => {
         },
       });
       expect(prisma.membership.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getMembershipsByUserId", () => {
+    const mockUserId = "user123";
+
+    test("returns every membership for the user", async () => {
+      const mockMemberships: TMembership[] = [
+        { organizationId: "org1", userId: mockUserId, accepted: true, role: "owner" },
+        { organizationId: "org2", userId: mockUserId, accepted: true, role: "member" },
+      ];
+
+      vi.mocked(prisma.membership.findMany).mockResolvedValue(mockMemberships);
+
+      const result = await getMembershipsByUserId(mockUserId);
+      expect(result).toEqual(mockMemberships);
+      expect(prisma.membership.findMany).toHaveBeenCalledWith({
+        where: { userId: mockUserId },
+      });
+    });
+
+    test("returns an empty array when the user has no memberships", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
+
+      const result = await getMembershipsByUserId(mockUserId);
+      expect(result).toEqual([]);
+    });
+
+    test("throws DatabaseError on Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Database error", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+      });
+      vi.mocked(prisma.membership.findMany).mockRejectedValue(prismaError);
+
+      await expect(getMembershipsByUserId(mockUserId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("throws UnknownError on unknown error", async () => {
+      vi.mocked(prisma.membership.findMany).mockRejectedValue(new Error("Unknown error"));
+
+      await expect(getMembershipsByUserId(mockUserId)).rejects.toThrow(UnknownError);
     });
   });
 

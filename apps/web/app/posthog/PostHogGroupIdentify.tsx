@@ -2,20 +2,18 @@
 
 import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
-import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 interface PostHogGroupIdentifyProps {
   organizationId: string;
   organizationName: string;
   workspaceId: string;
   workspaceName: string;
-  // Role of the current user within the organization and (optionally) the
-  // active workspace. Set as person-level properties so PostHog analytics
-  // can segment people by role, not just by the org/workspace group they
-  // belong to.
-  organizationRole: TOrganizationRole;
-  workspacePermission: TTeamPermission | null;
+  // Full role snapshot across every organization the person belongs to (not just this one) — see
+  // lib/posthog/organization-roles.ts for why a single "current org" role isn't enough. Recomputed
+  // server-side on every workspace load, so this call is idempotent and self-healing regardless of
+  // which org/workspace the person is currently viewing.
+  organizationRoles: { organization_id: string; role: string }[];
+  organizationCount: number;
 }
 
 export const PostHogGroupIdentify = ({
@@ -23,8 +21,8 @@ export const PostHogGroupIdentify = ({
   organizationName,
   workspaceId,
   workspaceName,
-  organizationRole,
-  workspacePermission,
+  organizationRoles,
+  organizationCount,
 }: PostHogGroupIdentifyProps) => {
   const cancelledRef = useRef(false);
 
@@ -35,12 +33,12 @@ export const PostHogGroupIdentify = ({
       posthog.group("organization", organizationId, { name: organizationName });
       posthog.group("workspace", workspaceId, { name: workspaceName });
 
-      // Person-level role properties. These live on the person profile (not
-      // the group), so a person's role shows up in cohorts, funnels, and
-      // person filters without joining through group analytics.
+      // Person-level role properties. These live on the person profile (not the group), so a
+      // person's role shows up in cohorts, funnels, and person filters without joining through
+      // group analytics. Filter on organization_roles via HogQL for per-org queries (e.g. owners).
       posthog.setPersonProperties({
-        organization_role: organizationRole,
-        workspace_permission: workspacePermission,
+        organization_roles: organizationRoles,
+        organization_count: organizationCount,
       });
     };
 
@@ -69,7 +67,7 @@ export const PostHogGroupIdentify = ({
       clearInterval(intervalId);
       clearTimeout(timeoutId);
     };
-  }, [organizationId, organizationName, workspaceId, workspaceName, organizationRole, workspacePermission]);
+  }, [organizationId, organizationName, workspaceId, workspaceName, organizationRoles, organizationCount]);
 
   return null;
 };

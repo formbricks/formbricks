@@ -4,6 +4,14 @@ import { posthogServerClient } from "./server";
 
 type PostHogEventProperties = Record<string, string | number | boolean | null | undefined>;
 
+// Wider than PostHogEventProperties: identify calls occasionally carry a structured snapshot (e.g.
+// organization_roles, see lib/posthog/organization-roles.ts) rather than flat scalars. Event
+// properties stay scalar-only — see the event-tracking guide for why.
+type PostHogPersonProperties = Record<
+  string,
+  string | number | boolean | null | undefined | Record<string, unknown>[]
+>;
+
 export type PostHogGroupContext = {
   organizationId?: string;
   workspaceId?: string;
@@ -41,7 +49,7 @@ export function capturePostHogEvent(
   }
 }
 
-export function identifyPostHogPerson(distinctId: string, properties?: PostHogEventProperties): void {
+export function identifyPostHogPerson(distinctId: string, properties?: PostHogPersonProperties): void {
   if (!posthogServerClient) return;
 
   try {

@@ -58,6 +58,32 @@ export const getMembershipByUserIdOrganizationId = async (
   return getMembershipByUserIdOrganizationIdCached(userId, organizationId);
 };
 
+const getMembershipsByUserIdUncached = async (userId: string): Promise<TMembership[]> => {
+  validateInputs([userId, ZString]);
+
+  try {
+    return await prisma.membership.findMany({
+      where: { userId },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      logger.error(error, "Error getting memberships by user id");
+      throw new DatabaseError(error.message);
+    }
+
+    throw new UnknownError("Error while fetching memberships");
+  }
+};
+
+/**
+ * Every organization membership a user holds, across all organizations. Used to build a complete,
+ * source-of-truth snapshot of a person's roles for analytics (see lib/posthog/organization-roles.ts) —
+ * a single org's role isn't enough for a user who belongs to more than one organization.
+ */
+export const getMembershipsByUserId = reactCache(async (userId: string) =>
+  getMembershipsByUserIdUncached(userId)
+);
+
 export const createMembership = async (
   organizationId: string,
   userId: string,

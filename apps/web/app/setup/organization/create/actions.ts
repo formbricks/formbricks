@@ -13,6 +13,7 @@ import {
   groupIdentifyPostHog,
   identifyPostHogPerson,
 } from "@/lib/posthog";
+import { getOrganizationRolePersonProperties } from "@/lib/posthog/organization-roles";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -67,10 +68,11 @@ export const createOrganizationAction = authenticatedActionClient
       });
       groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
 
-      // Person-level role: the creator is always the org owner. Set immediately
-      // (rather than waiting for the client-side PostHogGroupIdentify effect) so
-      // the role is correct even if the user never lands on a workspace page.
-      identifyPostHogPerson(ctx.user.id, { organization_role: "owner" });
+      // Person-level role snapshot across every org the user belongs to (not just this one — see
+      // lib/posthog/organization-roles.ts). Set immediately, rather than waiting for the
+      // client-side PostHogGroupIdentify effect, so it's correct even if the user never lands on
+      // a workspace page.
+      identifyPostHogPerson(ctx.user.id, await getOrganizationRolePersonProperties(ctx.user.id));
 
       capturePostHogEvent(
         ctx.user.id,

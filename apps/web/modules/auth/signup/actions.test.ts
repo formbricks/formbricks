@@ -66,6 +66,12 @@ vi.mock("@/lib/posthog", () => ({
   identifyPostHogPerson: vi.fn(),
   getEmailDomain: (email: string) => email.split("@")[1]?.toLowerCase() || undefined,
 }));
+vi.mock("@/lib/posthog/organization-roles", () => ({
+  getOrganizationRolePersonProperties: vi.fn().mockResolvedValue({
+    organization_roles: [],
+    organization_count: 0,
+  }),
+}));
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   ensureCloudStripeSetupForOrganization: vi.fn(),
 }));
