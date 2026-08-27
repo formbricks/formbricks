@@ -238,7 +238,14 @@
               "unify-feedback/feedback-sources",
               "unify-feedback/feedback-records",
               "unify-feedback/enrichment",
-              "unify-feedback/dashboards-charts",
+              {
+                "group": "Dashboards & Charts",
+                "icon": "chart-line",
+                "pages": [
+                  "unify-feedback/dashboards-charts",
+                  "unify-feedback/dashboards-charts/creating-your-first-charts"
+                ]
+              },
               "unify-feedback/topics-subtopics"
             ]
           },
