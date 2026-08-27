@@ -854,6 +854,30 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
    * The earlier test here asserted only that it did not throw, which is the weaker property and is
    * why the suite stayed green.
    */
+  /**
+   * `URLSearchParams.get` reads both `?error=` and a bare `?error` back as `""`, so a truthiness
+   * check counted an ambiguous error parameter as a clean sign-in. Only a genuinely absent parameter
+   * (`null`) is a success — same reasoning as the two cases below: anything the browser cannot
+   * usefully follow belongs on the failure side, because success is the half the ratio must trust.
+   */
+  test.each([
+    ["an empty error value", "https://app.test/auth/login?error="],
+    ["a valueless error parameter", "https://app.test/auth/login?error"],
+  ])("records %s as a failure, not a success", (_label, location) => {
+    recordSsoCallbackOutcome("https://app.test/api/auth/callback/azuread", redirect(location));
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "failure", ssoCallbackReason: "other" });
+  });
+
+  test("still records a redirect with no error parameter as a success", () => {
+    recordSsoCallbackOutcome(
+      "https://app.test/api/auth/callback/azuread",
+      redirect("https://app.test/?welcome=1")
+    );
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "success" });
+  });
+
   test.each([
     ["a redirect with no Location", undefined, "missing_location"],
     ["a malformed Location", "http://[", "malformed_location"],

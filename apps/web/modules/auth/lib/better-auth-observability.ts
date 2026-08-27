@@ -527,7 +527,11 @@ export const recordSsoCallbackOutcome = (requestUrl: string, response: Response)
         return { outcome: "failure", reason: "malformed_location" };
       }
 
-      if (!error) return { outcome: "success" };
+      // `null` means no `error` parameter at all — the only shape that is a success. `?error=` and a
+      // bare `?error` both read back as `""`, which a truthiness check would have counted as a clean
+      // sign-in; an ambiguous error parameter belongs on the failure side, like every other redirect
+      // the browser cannot usefully follow.
+      if (error === null) return { outcome: "success" };
       return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
     }
     return { outcome: "success" };
