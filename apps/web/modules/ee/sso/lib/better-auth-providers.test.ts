@@ -831,7 +831,12 @@ describe("OIDC identity comes from Graph when pointed at Microsoft (#9023 review
     const m = await loadProviders({ ENTERPRISE_LICENSE_KEY: "lic", SAML_OAUTH_ENABLED: true });
     const saml = m.ssoGenericOAuthConfig.find((c) => c.providerId === "saml");
 
-    expect(saml?.scopes ?? []).not.toContain("openid");
-    expect(saml?.discoveryUrl).toBeUndefined();
+    // Anchor the negatives: without this, an unregistered `saml` makes `saml?.scopes ?? []` an empty
+    // array and `saml?.discoveryUrl` undefined, so both assertions below would hold while proving
+    // nothing about the provider they are supposed to be describing.
+    if (!saml) throw new Error("saml provider not registered");
+
+    expect(saml.scopes ?? []).not.toContain("openid");
+    expect(saml.discoveryUrl).toBeUndefined();
   });
 });
