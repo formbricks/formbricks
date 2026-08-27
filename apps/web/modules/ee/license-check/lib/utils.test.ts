@@ -574,6 +574,7 @@ describe("License Utils", () => {
         source: "self_hosted_license",
         licenseStatus: "active",
         licenseFeatures: { ...defaultFeatures, workspaces: 5 },
+        limits: { ...defaultEntitlementsContext.limits, workspaces: 5 },
       });
 
       const result = await getOrganizationWorkspacesLimit("org_1");
@@ -588,6 +589,7 @@ describe("License Utils", () => {
         source: "self_hosted_license",
         licenseStatus: "active",
         licenseFeatures: { ...defaultFeatures, workspaces: null },
+        limits: { ...defaultEntitlementsContext.limits, workspaces: null },
       });
 
       const result = await getOrganizationWorkspacesLimit("org_1");
@@ -602,6 +604,7 @@ describe("License Utils", () => {
         source: "self_hosted_license",
         licenseStatus: "expired",
         licenseFeatures: { ...defaultFeatures, workspaces: null },
+        limits: { ...defaultEntitlementsContext.limits, workspaces: 1 },
       });
 
       const result = await getOrganizationWorkspacesLimit("org_1");
@@ -616,11 +619,29 @@ describe("License Utils", () => {
         source: "self_hosted_license",
         licenseStatus: "active",
         licenseFeatures: null,
+        limits: { ...defaultEntitlementsContext.limits, workspaces: 1 },
       });
 
       const result = await getOrganizationWorkspacesLimit("org_1");
 
       expect(result).toBe(1);
+    });
+
+    test("keeps the licensed limit for self-hosted during the license-server grace period", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
+        ...defaultEntitlementsContext,
+        source: "self_hosted_license",
+        // In grace the cached license is still active, but the live check could not complete, so the
+        // status reads "unreachable" while the provider still resolves the licensed allowance.
+        licenseStatus: "unreachable",
+        licenseFeatures: { ...defaultFeatures, workspaces: 5 },
+        limits: { ...defaultEntitlementsContext.limits, workspaces: 5 },
+      });
+
+      const result = await getOrganizationWorkspacesLimit("org_1");
+
+      expect(result).toBe(5);
     });
 
     test("returns the community limit for self-hosted with no license key at all", async () => {
@@ -630,6 +651,7 @@ describe("License Utils", () => {
         source: "self_hosted_license",
         licenseStatus: "no-license",
         licenseFeatures: null,
+        limits: { ...defaultEntitlementsContext.limits, workspaces: 1 },
       });
 
       const result = await getOrganizationWorkspacesLimit("org_1");

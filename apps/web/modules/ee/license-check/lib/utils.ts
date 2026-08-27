@@ -2,7 +2,6 @@ import "server-only";
 import {
   AUDIT_LOG_ENABLED,
   CLOUD_HOBBY_WORKSPACE_LIMIT,
-  COMMUNITY_WORKSPACE_LIMIT,
   IS_FORMBRICKS_CLOUD,
   IS_RECAPTCHA_CONFIGURED,
 } from "@/lib/constants";
@@ -199,11 +198,12 @@ export const getOrganizationWorkspacesLimit = async (organizationId: string): Pr
     return entitlementsContext.limits.workspaces ?? Infinity;
   }
 
-  // `workspaces: null` on an active license means unlimited, mirroring the cloud branch above.
-  if (entitlementsContext.licenseStatus === "active" && entitlementsContext.licenseFeatures) {
-    return entitlementsContext.licenseFeatures.workspaces ?? Infinity;
-  }
-
-  // No active license (no-license / expired / invalid / unreachable) — Community Edition.
-  return COMMUNITY_WORKSPACE_LIMIT;
+  // Self-hosted limits are already resolved by the entitlements provider, which reads the license's
+  // cached `active` flag rather than the narrower live status string. That distinction is the whole
+  // point: during the grace period documented in `docs/self-hosting/advanced/license-activation.mdx`
+  // a licensed instance is still active on its cached license, but the status reads "unreachable"
+  // because the check could not complete. Deriving the limit from the status here would drop that
+  // instance to the Community Edition cap for the whole grace window. `null` means unlimited, and an
+  // instance with no usable license is resolved to the community cap by the provider.
+  return entitlementsContext.limits.workspaces ?? Infinity;
 };
