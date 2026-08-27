@@ -526,7 +526,9 @@ export const MAX_SEGMENT_SURVEYS = 500;
 
 // `ZId` (cuid2) also keeps non-id junk from reaching the database. Ownership is still enforced at
 // write time — every id must resolve to a survey in the segment's workspace (ENG-1749/ENG-1920).
-const ZSegmentSurveyIds = z.array(ZId).max(MAX_SEGMENT_SURVEYS);
+// Exported so the survey draft-save path (which skips the segment schemas) can enforce the exact
+// same rule before the ids drive its batched workspace lookup (ENG-2305).
+export const ZSegmentSurveyIds = z.array(ZId).max(MAX_SEGMENT_SURVEYS);
 
 export const ZSegment = z.object({
   id: z.string(),

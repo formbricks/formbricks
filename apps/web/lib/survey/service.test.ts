@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/__mocks__/database";
+import { createId } from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { ActionClass, Prisma, Survey } from "@formbricks/database/prisma";
@@ -11,7 +12,12 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { MAX_SEGMENT_FILTERS_PER_TREE, TBaseFilters, TSegment } from "@formbricks/types/segment";
+import {
+  MAX_SEGMENT_FILTERS_PER_TREE,
+  MAX_SEGMENT_SURVEYS,
+  TBaseFilters,
+  TSegment,
+} from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -604,6 +610,126 @@ describe("Tests for updateSurvey", () => {
         expect.objectContaining({
           where: { id: "clownsegment000000000001" },
           data: expect.objectContaining({ filters: halfBuiltFilters }),
+        })
+      );
+    });
+
+    // ENG-2305 sibling of the filter-tree gate: on the draft path segment.surveys is just as
+    // unvalidated as the filter tree (ZSurveyDraft.segment is an untyped record), so the id-format
+    // rule and MAX_SEGMENT_SURVEYS cap must hold unconditionally — BEFORE the ids drive the batched
+    // workspace lookup. An over-limit or junk draft must perform no survey queries at all.
+    test("rejects an over-cap segment.surveys list on the draft path without any survey lookup", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: updateSurveyInput.workspaceId,
+      } as any);
+
+      // Every id is a valid cuid2 — only the cap can reject this list.
+      const overCapSurveys = Array.from({ length: MAX_SEGMENT_SURVEYS + 1 }, () => createId());
+
+      await expect(
+        updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            status: "draft",
+            type: "app",
+            segment: {
+              id: "clownsegment000000000001",
+              title: "seg",
+              description: null,
+              isPrivate: false,
+              filters: [],
+              workspaceId: updateSurveyInput.workspaceId,
+              surveys: overCapSurveys,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          } as any,
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("rejects a non-id junk string in segment.surveys on the draft path without any survey lookup", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: updateSurveyInput.workspaceId,
+      } as any);
+
+      await expect(
+        updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            status: "draft",
+            type: "app",
+            segment: {
+              id: "clownsegment000000000001",
+              title: "seg",
+              description: null,
+              isPrivate: false,
+              filters: [],
+              workspaceId: updateSurveyInput.workspaceId,
+              surveys: ["not-a-survey-id"],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          } as any,
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    // Guard test locking the happy path: a within-cap, well-formed surveys list still flows into
+    // the ownership lookup and connects exactly as before.
+    test("still runs the ownership lookup for a within-cap segment.surveys list on the draft path", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: updateSurveyInput.workspaceId,
+      } as any);
+      const connectedSurveyId = createId();
+      prisma.survey.findMany.mockResolvedValueOnce([
+        { id: connectedSurveyId, workspaceId: updateSurveyInput.workspaceId },
+      ] as any);
+      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+
+      await updateSurveyInternal(
+        {
+          ...updateSurveyInput,
+          status: "draft",
+          type: "app",
+          segment: {
+            id: "clownsegment000000000001",
+            title: "seg",
+            description: null,
+            isPrivate: false,
+            filters: [],
+            workspaceId: updateSurveyInput.workspaceId,
+            surveys: [connectedSurveyId],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        } as any,
+        true
+      );
+
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: { id: { in: [connectedSurveyId] } },
+        select: { id: true, workspaceId: true },
+      });
+      expect(prisma.segment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "clownsegment000000000001" },
+          data: expect.objectContaining({
+            surveys: { connect: [{ id: connectedSurveyId }] },
+          }),
         })
       );
     });
