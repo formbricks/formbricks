@@ -13,9 +13,10 @@ name: Linear Release Smoke
 # only exercised by a real published release.
 #
 # TRIGGERS ARE DELIBERATELY TRUSTED-ONLY. This job holds a Linear key that can mutate the
-# pipeline, so it must never run code from a pull request branch: `pull_request` runs the PR's
-# own copy of this file, so anyone who can push a branch could drop dry_run or add an
-# exfiltration step. main and manual dispatch are the only events allowed to hold the key.
+# pipeline, so it must never run code from outside main. `pull_request` would run the PR's own
+# copy of this file, and `workflow_dispatch` runs the copy on whichever ref the caller picks,
+# so either would let a pushed branch drop dry_run or add an exfiltration step. Hence: no
+# pull_request trigger, push restricted to main, and the ref check on the job below.
 on:
   workflow_dispatch:
     inputs:
@@ -39,6 +40,9 @@ jobs:
     name: Dry-run the Linear release flow
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Belt to the trigger's braces: a workflow_dispatch runs the file as it exists on the ref
+    # the caller chose, so the key must not be handed to a branch's copy of these steps.
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0

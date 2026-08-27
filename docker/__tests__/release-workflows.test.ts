@@ -94,6 +94,9 @@ describe("release workflows", () => {
     expect(needs).toEqual(
       expect.arrayContaining(["docker-build-community", "docker-build-cloud", "helm-chart-release"])
     );
+    // Exactly three, so a future non-publishing dependency cannot slip in and reintroduce the
+    // bug from a direction the named exclusions below do not anticipate.
+    expect(needs).toHaveLength(3);
     // Neither of these publishes anything for the released tag, and a skipped or failed
     // dependency skips this job, so either one gates Linear completion on unrelated work:
     // update-helm-app-version opens a follow-up PR against main and fails without its
@@ -103,16 +106,19 @@ describe("release workflows", () => {
     expect(needs).not.toContain("move-stable-tag");
   });
 
-  // The smoke job holds a pipeline-mutating Linear key, so it must not run a pull request
-  // branch's own copy of itself: that would let anyone who can push a branch drop dry_run or
-  // add an exfiltration step. Only main and manual dispatch may carry the key.
-  test("keeps the credentialed smoke dry-run off pull request branches", () => {
+  // The smoke job holds a pipeline-mutating Linear key, so it must only ever run main's copy of
+  // itself. Any path that executes a branch's copy - a pull request, or a dispatch aimed at that
+  // ref - would let whoever pushed it drop dry_run or add an exfiltration step.
+  test("only ever runs the credentialed smoke dry-run from main", () => {
     const workflow = readWorkflow(linearSmokeWorkflow);
     const triggers = workflow.on ?? workflow.true;
 
     expect(triggers).not.toHaveProperty("pull_request");
     expect(triggers).not.toHaveProperty("pull_request_target");
     expect(triggers?.push?.branches).toEqual(["main"]);
+    // workflow_dispatch runs the file as it exists on the caller's chosen ref, so the trigger
+    // list alone is not enough - the job itself has to refuse any ref but main.
+    expect(workflow.jobs?.["linear-release-smoke"]?.if).toBe("github.ref == 'refs/heads/main'");
   });
 
   test("stamps the released version on Linear before completing the release", () => {
