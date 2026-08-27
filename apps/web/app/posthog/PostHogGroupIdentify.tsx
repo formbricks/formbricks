@@ -23,7 +23,7 @@ export const PostHogGroupIdentify = ({
   workspaceName,
   organizationRoles,
   organizationCount,
-}: PostHogGroupIdentifyProps) => {
+}: Readonly<PostHogGroupIdentifyProps>) => {
   const cancelledRef = useRef(false);
 
   useEffect(() => {
