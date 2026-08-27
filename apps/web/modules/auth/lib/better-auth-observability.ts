@@ -527,10 +527,16 @@ export const recordSsoCallbackOutcome = (requestUrl: string, response: Response)
         return { outcome: "failure", reason: "malformed_location" };
       }
 
-      // `null` means no `error` parameter at all — the only shape that is a success. `?error=` and a
-      // bare `?error` both read back as `""`, which a truthiness check would have counted as a clean
-      // sign-in; an ambiguous error parameter belongs on the failure side, like every other redirect
-      // the browser cannot usefully follow.
+      // `null` means no `error` parameter at all, which is the only shape that is a success. `?error=`
+      // and a bare `?error` both read back as `""`, and a truthiness check counted those as a clean
+      // sign-in — an error parameter that is present but empty says something went wrong without
+      // saying what, and the success side is the half the ratio has to be able to trust.
+      //
+      // The inverse costs accuracy in one case worth knowing about: a `callbackURL` that itself
+      // carries an `error` parameter makes a genuine success look like a failure. Nothing in this app
+      // passes one (the SSO buttons send `callbackURL: "/"`), and the alternative — inspecting the
+      // redirect target to decide whether the parameter is "ours" — trades a rare false positive for
+      // a guessing game.
       if (error === null) return { outcome: "success" };
       return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
     }
