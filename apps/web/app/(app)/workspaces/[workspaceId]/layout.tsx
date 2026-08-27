@@ -30,6 +30,8 @@ const WorkspaceLayout = async (props: {
           organizationName={layoutData.organization.name}
           workspaceId={layoutData.workspace.id}
           workspaceName={layoutData.workspace.name}
+          organizationRole={layoutData.membership.role}
+          workspacePermission={layoutData.workspacePermission}
         />
       )}
       <WorkspaceContextWrapper workspace={layoutData.workspace} organization={layoutData.organization}>
