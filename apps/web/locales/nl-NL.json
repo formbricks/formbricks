@@ -56,6 +56,8 @@
     "login": {
       "backup_code": "Back-upcode",
       "create_an_account": "Maak een account aan",
+      "email_verified_sign_in_description": "Uw e-mailadres is bevestigd. Log in om door te gaan. Als u dit account niet hebt aangemaakt, stel dan in plaats daarvan het wachtwoord opnieuw in.",
+      "email_verified_sign_in_title": "E-mail geverifieerd",
       "enter_your_backup_code": "Voer uw back-upcode in",
       "enter_your_two_factor_authentication_code": "Voer uw tweefactorauthenticatiecode in",
       "forgot_your_password": "Wachtwoord vergeten?",

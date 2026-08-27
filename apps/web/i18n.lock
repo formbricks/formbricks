@@ -44,6 +44,8 @@ checksums:
     auth/last_used: 9049bf77c57c92b7a5a760ba2a40128c
     auth/login/backup_code: 870711a6df11ae55366d018255b466cf
     auth/login/create_an_account: bc53a57281d2701563f94f3169518028
+    auth/login/email_verified_sign_in_description: 91d4c968d2e1a8e576755bc4a4724054
+    auth/login/email_verified_sign_in_title: f960899104c4e22c27ab699272b2bbc1
     auth/login/enter_your_backup_code: f2a6905ea0e8d2b4093b5773d72df88b
     auth/login/enter_your_two_factor_authentication_code: 07a020191cd54ee4a0aa1aa4ddc166bf
     auth/login/forgot_your_password: 0baf970b4598f1af36623b714410dfae

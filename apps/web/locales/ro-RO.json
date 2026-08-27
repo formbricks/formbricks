@@ -56,6 +56,8 @@
     "login": {
       "backup_code": "Cod de rezervă",
       "create_an_account": "Creează un cont",
+      "email_verified_sign_in_description": "Adresa ta de e-mail este confirmată. Autentifică-te pentru a continua. Dacă nu tu ai creat acest cont, resetează parola în schimb.",
+      "email_verified_sign_in_title": "E-mail verificat",
       "enter_your_backup_code": "Introduceți codul de rezervă",
       "enter_your_two_factor_authentication_code": "Introduceți codul dvs. de autentificare în doi pași",
       "forgot_your_password": "Ai uitat parola?",

@@ -56,6 +56,8 @@
     "login": {
       "backup_code": "Yedek kod",
       "create_an_account": "Hesap oluştur",
+      "email_verified_sign_in_description": "E-posta adresiniz doğrulandı. Devam etmek için giriş yapın. Bu hesabı siz oluşturmadıysanız bunun yerine şifreyi sıfırlayın.",
+      "email_verified_sign_in_title": "E-posta doğrulandı",
       "enter_your_backup_code": "Yedek kodunuzu girin",
       "enter_your_two_factor_authentication_code": "İki faktörlü doğrulama kodunuzu girin",
       "forgot_your_password": "Şifrenizi mi unuttunuz?",
