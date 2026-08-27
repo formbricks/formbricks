@@ -1,3 +1,5 @@
+"use client";
+
 import { useTranslation } from "react-i18next";
 import {
   FEEDBACK_FIELDS,
@@ -10,8 +12,6 @@ import { AiIcon } from "@/modules/ui/components/ai";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
-
-("use client");
 
 interface DimensionsPanelProps {
   selectedDimensions: string[];

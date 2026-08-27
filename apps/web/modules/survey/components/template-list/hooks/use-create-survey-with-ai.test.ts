@@ -203,3 +203,54 @@ describe("useCreateSurveyWithAI", () => {
     expect(result.current.draft.questions).toHaveLength(1);
   });
 });
+
+describe("unsaved work", () => {
+  test("is flagged through every state a reload would destroy", async () => {
+    emitEvents([
+      { type: "partial", seq: 1, draft: questionSnapshot("How was onboarding?") as never },
+      {
+        type: "done",
+        language: "en",
+        payload,
+        validation: { valid: true, invalid_params: [], languages: [] },
+      },
+    ]);
+    const { result } = renderAiHook();
+
+    // Nothing generated yet: a typed prompt is cheap to retype, so no prompt.
+    act(() => result.current.setPrompt("  create an onboarding survey  "));
+    expect(result.current.hasUnsavedWork).toBe(false);
+
+    await submitWithPrompt(result);
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    expect(result.current.hasUnsavedWork).toBe(true);
+
+    // Stepping back to the prompt keeps the draft, so it is still losable.
+    act(() => result.current.handleEditPrompt());
+    expect(result.current.hasKeptDraft).toBe(true);
+    expect(result.current.hasUnsavedWork).toBe(true);
+  });
+
+  test("stays flagged while the survey is being written", async () => {
+    // Reloading here loses the survey and the redirect that follows it.
+    emitEvents([
+      { type: "partial", seq: 1, draft: questionSnapshot("How was onboarding?") as never },
+      {
+        type: "done",
+        language: "en",
+        payload,
+        validation: { valid: true, invalid_params: [], languages: [] },
+      },
+    ]);
+    vi.mocked(createV3Survey).mockReturnValue(new Promise(() => undefined) as never);
+    const { result } = renderAiHook();
+
+    await submitWithPrompt(result);
+    await waitFor(() => expect(result.current.status).toBe("review"));
+
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(result.current.status).toBe("creating"));
+    expect(result.current.hasUnsavedWork).toBe(true);
+  });
+});

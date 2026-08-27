@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type ReactNode, useRef, useState, useTransition } from "react";
+import { type ReactNode, useCallback, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { CreateWithAIForm } from "@/modules/survey/components/template-list/components/create-with-ai-form";
 import { AiIcon } from "@/modules/ui/components/ai";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   Dialog,
   DialogBody,
@@ -41,19 +42,36 @@ export const CreateWithAIDialog = ({
   const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
   const [isNavigating, startEditorNavigationTransition] = useTransition();
+  const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
+  const [isConfirmingDiscard, setIsConfirmingDiscard] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
 
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
 
+  const commitOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(nextOpen);
+      }
+
+      onOpenChange?.(nextOpen);
+    },
+    [isControlled, onOpenChange]
+  );
+
   const setDialogOpen = (nextOpen: boolean) => {
     if (isNavigating && !nextOpen) return;
 
-    if (!isControlled) {
-      setInternalOpen(nextOpen);
+    // Reloading the page already warns; closing the dialog throws away the same work, so it asks
+    // too rather than silently discarding a generation the user waited for.
+    if (!nextOpen && hasUnsavedWork) {
+      setIsConfirmingDiscard(true);
+      return;
     }
 
-    onOpenChange?.(nextOpen);
+    commitOpenChange(nextOpen);
   };
 
   const handleSuccess = (surveyId: string) => {
@@ -70,6 +88,13 @@ export const CreateWithAIDialog = ({
       promptInputRef.current?.focus();
     });
   };
+
+  // Read as plain calls rather than inside the ternary below: the translation scanner only sees
+  // `t("literal")`, so a key passed through a conditional expression reads as unused and is pruned.
+  const discardGenerationTitle = t("workspace.surveys.ai_create.discard_generation_title");
+  const discardDraftTitle = t("workspace.surveys.ai_create.discard_draft_title");
+  const discardGenerationBody = t("workspace.surveys.ai_create.discard_generation_body");
+  const discardDraftBody = t("workspace.surveys.ai_create.discard_draft_body");
 
   return (
     <Dialog open={isOpen} onOpenChange={setDialogOpen}>
@@ -107,11 +132,30 @@ export const CreateWithAIDialog = ({
             promptInputRef={promptInputRef}
             showCancel
             isHostNavigating={isNavigating}
+            onUnsavedWorkChange={(unsaved) => {
+              setHasUnsavedWork(unsaved);
+            }}
+            onGeneratingChange={setIsGenerating}
             onCancel={() => setDialogOpen(false)}
             renderFooter={(footer) => <DialogFooter>{footer}</DialogFooter>}
           />
         </DialogBody>
       </DialogContent>
+
+      <ConfirmationModal
+        open={isConfirmingDiscard}
+        setOpen={setIsConfirmingDiscard}
+        title={isGenerating ? discardGenerationTitle : discardDraftTitle}
+        body={isGenerating ? discardGenerationBody : discardDraftBody}
+        buttonText={t("workspace.surveys.ai_create.discard")}
+        buttonVariant="destructive"
+        cancelButtonText={t("workspace.surveys.ai_create.keep_editing")}
+        onConfirm={() => {
+          setIsConfirmingDiscard(false);
+          setHasUnsavedWork(false);
+          commitOpenChange(false);
+        }}
+      />
     </Dialog>
   );
 };

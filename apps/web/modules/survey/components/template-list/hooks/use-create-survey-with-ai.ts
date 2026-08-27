@@ -41,10 +41,15 @@ export const useCreateSurveyWithAI = ({
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // A reload during generation loses a request the user cannot cheaply recreate. In review it costs
-  // one click on Regenerate, so it is not worth a prompt. The hook re-reads this closure at event
-  // time, so plain state is current without a ref of our own.
-  useBeforeUnloadPrompt(() => state.status === "generating");
+  /**
+   * Anything a reload would destroy: a generation in flight, the write behind "Open in editor"
+   * (which would lose both the survey and the redirect), and a finished draft nobody has opened.
+   * The hook re-reads this closure at event time, so plain state is current without a ref.
+   */
+  const hasUnsavedWork =
+    state.status === "generating" || state.status === "creating" || state.payload !== null;
+
+  useBeforeUnloadPrompt(() => hasUnsavedWork);
 
   // Snapshots land far faster than the screen can usefully change, so buffer the newest one and
   // dispatch at most once per frame.
@@ -184,6 +189,8 @@ export const useCreateSurveyWithAI = ({
     createSurveyMutation.mutate(state.payload);
   }, [createSurveyMutation, state.payload, state.status]);
 
+  const handleBackToDraft = useCallback(() => dispatch({ type: "BACK_TO_DRAFT" }), []);
+
   const clearError = useCallback(() => dispatch({ type: "RESET" }), []);
 
   const errorMessage = useMemo(
@@ -236,7 +243,12 @@ export const useCreateSurveyWithAI = ({
     handleStop,
     handleRegenerate,
     handleEditPrompt,
+    handleBackToDraft,
     handleOpenInEditor,
     clearError,
+    /** A finished draft the user stepped away from, and can still return to. */
+    hasKeptDraft: state.payload !== null && state.status === "idle",
+    /** Closing or reloading now would throw away work: a generation, a write, or a kept draft. */
+    hasUnsavedWork,
   };
 };

@@ -118,3 +118,31 @@ describe("aiCreateReducer", () => {
     expect(aiCreateReducer(generatingWithOneQuestion(), { type: "CREATE" }).status).toBe("generating");
   });
 });
+
+describe("editing the prompt without losing a finished draft", () => {
+  const reviewing = () => aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
+
+  test("EDIT_PROMPT keeps a finished draft so the user can come back to it", () => {
+    const state = aiCreateReducer(reviewing(), { type: "EDIT_PROMPT" });
+
+    expect(state.status).toBe("idle");
+    expect(state.draft.questions).toHaveLength(1);
+    expect(state.payload).toBe(payload);
+  });
+
+  test("BACK_TO_DRAFT returns to the kept draft", () => {
+    const edited = aiCreateReducer(reviewing(), { type: "EDIT_PROMPT" });
+
+    const state = aiCreateReducer(edited, { type: "BACK_TO_DRAFT" });
+
+    expect(state.status).toBe("review");
+    expect(state.draft.questions).toHaveLength(1);
+  });
+
+  test("EDIT_PROMPT drops a half-written draft, which there is no going back to", () => {
+    const state = aiCreateReducer(generatingWithOneQuestion(), { type: "EDIT_PROMPT" });
+
+    expect(state.draft.questions).toHaveLength(0);
+    expect(aiCreateReducer(state, { type: "BACK_TO_DRAFT" }).status).toBe("idle");
+  });
+});

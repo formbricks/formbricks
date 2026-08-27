@@ -35,6 +35,10 @@ type CreateWithAIFormProps = {
   promptInputRef?: React.Ref<HTMLTextAreaElement>;
   /** True while the host is navigating away, so the review primary can stay in its loading state. */
   isHostNavigating?: boolean;
+  /** Reports whether closing now would discard an in-flight generation or an unopened draft. */
+  onUnsavedWorkChange?: (hasUnsavedWork: boolean) => void;
+  /** Reports whether a generation is in flight, so the host can word its confirmation. */
+  onGeneratingChange?: (isGenerating: boolean) => void;
 };
 
 export const CreateWithAIForm = ({
@@ -48,6 +52,8 @@ export const CreateWithAIForm = ({
   renderFooter,
   promptInputRef,
   isHostNavigating = false,
+  onUnsavedWorkChange,
+  onGeneratingChange,
 }: Readonly<CreateWithAIFormProps>) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
@@ -66,8 +72,11 @@ export const CreateWithAIForm = ({
     handleStop,
     handleRegenerate,
     handleEditPrompt,
+    handleBackToDraft,
     handleOpenInEditor,
     clearError,
+    hasKeptDraft,
+    hasUnsavedWork,
   } = useCreateSurveyWithAI({ workspaceId, language, isAIAvailable, onSuccess });
 
   const stopButtonRef = useRef<HTMLButtonElement>(null);
@@ -83,6 +92,14 @@ export const CreateWithAIForm = ({
       stopButtonRef.current?.focus();
     }
   }, [isGenerating]);
+
+  useEffect(() => {
+    onUnsavedWorkChange?.(hasUnsavedWork);
+  }, [hasUnsavedWork, onUnsavedWorkChange]);
+
+  useEffect(() => {
+    onGeneratingChange?.(isGenerating);
+  }, [isGenerating, onGeneratingChange]);
 
   // On completion focus the draft rather than "Open in editor": the card is scrollable, and a user
   // pressing Space to read further would otherwise navigate by accident.
@@ -141,6 +158,11 @@ export const CreateWithAIForm = ({
         {showCancel && onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel}>
             {t("common.cancel")}
+          </Button>
+        )}
+        {hasKeptDraft && (
+          <Button type="button" variant="secondary" onClick={handleBackToDraft}>
+            {t("workspace.surveys.ai_create.back_to_draft")}
           </Button>
         )}
         <Button type="submit" disabled={!canCreate}>

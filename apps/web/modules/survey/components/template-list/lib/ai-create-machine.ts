@@ -21,6 +21,7 @@ export type TAiCreateAction =
   | { type: "FAIL"; errorCode: string }
   | { type: "CREATE_FAILED"; errorCode: string }
   | { type: "EDIT_PROMPT" }
+  | { type: "BACK_TO_DRAFT" }
   | { type: "REGENERATE" }
   | { type: "CREATE" }
   | { type: "RESET" };
@@ -74,7 +75,13 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
       return { ...INITIAL_AI_CREATE_STATE, errorCode: action.errorCode };
 
     case "EDIT_PROMPT":
-      return { ...INITIAL_AI_CREATE_STATE };
+      // Non-destructive: a finished draft is kept so the user can tweak the prompt, change their
+      // mind, and go back to it. A half-written one is dropped — there is nothing to return to.
+      return state.payload ? { ...state, status: "idle", errorCode: null } : { ...INITIAL_AI_CREATE_STATE };
+
+    case "BACK_TO_DRAFT":
+      if (!state.payload) return state;
+      return { ...state, status: "review", errorCode: null };
 
     case "REGENERATE":
       // Clear before re-entering so the previous list does not sit under the new stream.

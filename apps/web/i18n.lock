@@ -2868,6 +2868,7 @@ checksums:
     workspace/surveys/ai_create/ai_not_in_plan: a059bf0be5d6ef524c1a4212b32a0c8b
     workspace/surveys/ai_create/ai_output_too_long: 3be34ddb7af610421d806827ae04f3d7
     workspace/surveys/ai_create/ai_rate_limited: fb5875814003cb27c15bbc30a20b9ec2
+    workspace/surveys/ai_create/back_to_draft: 48e47c5d07a719e015da6ebeb903b195
     workspace/surveys/ai_create/card_description: 3917eefc745d2bfec15d25ac343bbb64
     workspace/surveys/ai_create/card_title: 5d8c659f559f1343bb23fd191a6556ad
     workspace/surveys/ai_create/characters: 94b5a8b5c869a7e9bc031f59de56de44
@@ -2877,11 +2878,17 @@ checksums:
     workspace/surveys/ai_create/create_with_ai_description: 7aa3fe0237ead1066e01f3e1abd7c0ad
     workspace/surveys/ai_create/dialog_description: 2c93d5a3152989234ed3819308037a53
     workspace/surveys/ai_create/dialog_title: eefbf4e47f6df699e89f4996a5f925f8
+    workspace/surveys/ai_create/discard: de83a114a79d086e372c43dbfe9f47b4
+    workspace/surveys/ai_create/discard_draft_body: cb8f35c84717a502c223feee3dec0921
+    workspace/surveys/ai_create/discard_draft_title: 8802ab9afc55d4ac30bc98eaad960847
+    workspace/surveys/ai_create/discard_generation_body: 5a02c35831f3ce740aa9a266ac8998a1
+    workspace/surveys/ai_create/discard_generation_title: 8c5317fdbafda4715e2eb4f983ec0b9c
     workspace/surveys/ai_create/draft_survey: 20b562d5ee77ae9d1958e15d135c7130
     workspace/surveys/ai_create/edit_prompt: 789b263b56057a0c820437035e038990
     workspace/surveys/ai_create/enable_ai_in_settings: f994107b44e64d8202446acb723740ac
     workspace/surveys/ai_create/generated_payload_invalid: 6b15c376fafd72298cb460107e82d4f2
     workspace/surveys/ai_create/generation_failed: cf68e9399104ba1ed48bd88a91d06270
+    workspace/surveys/ai_create/keep_editing: 9778ce7d47a83d1d43b204fc177d2c4a
     workspace/surveys/ai_create/nothing_generated: 4df9bd9e49c3b63cddd2cb4336e00420
     workspace/surveys/ai_create/open_in_editor: 58990d6212eaf0d93509fb28a2cb2f88
     workspace/surveys/ai_create/option_count: d80b988a57d3119484c140b046e91a8c
