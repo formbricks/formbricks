@@ -12,6 +12,7 @@ import {
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 
 const ZGeneratePersonalSurveyLinkAction = z.object({
@@ -41,6 +42,8 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
         },
       ],
     });
+
+    await ensureContactsEnabled(organizationId);
 
     // Cross-tenant guard: the survey must belong to the same workspace as the
     // contact the caller was authorized against. Authorization above is derived

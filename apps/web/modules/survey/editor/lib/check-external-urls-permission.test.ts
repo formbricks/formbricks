@@ -41,7 +41,6 @@ describe("checkExternalUrlsPermission", () => {
     singleUse: null,
     isVerifyEmailEnabled: false,
     recaptcha: null,
-    isSingleResponsePerEmailEnabled: false,
     isBackButtonHidden: false,
     pin: null,
     displayPercentage: null,

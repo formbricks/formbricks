@@ -398,21 +398,20 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  isVerifyEmailEnabled            Boolean                           @default(false)
-  isSingleResponsePerEmailEnabled Boolean                           @default(false)
-  isBackButtonHidden              Boolean                           @default(false)
-  isAutoProgressingEnabled        Boolean                           @default(false)
-  isCaptureIpEnabled              Boolean                           @default(false)
-  pin                             String?
-  displayPercentage               Decimal?
-  languages                       SurveyLanguage[]
-  showLanguageSwitch              Boolean?
-  followUps                       SurveyFollowUp[]
+  isVerifyEmailEnabled     Boolean                           @default(false)
+  isBackButtonHidden       Boolean                           @default(false)
+  isAutoProgressingEnabled Boolean                           @default(false)
+  isCaptureIpEnabled       Boolean                           @default(false)
+  pin                      String?
+  displayPercentage        Decimal?
+  languages                SurveyLanguage[]
+  showLanguageSwitch       Boolean?
+  followUps                SurveyFollowUp[]
   /// [SurveyRecaptcha]
-  recaptcha                       Json?                             @default("{\"enabled\": false, \"threshold\":0.1}")
+  recaptcha                Json?                             @default("{\"enabled\": false, \"threshold\":0.1}")
   /// [SurveyLinkMetadata]
-  metadata                        Json                              @default("{}")
-  feedbackSourceMappings          FeedbackSourceFormbricksMapping[]
+  metadata                 Json                              @default("{}")
+  feedbackSourceMappings   FeedbackSourceFormbricksMapping[]
 
   slug String? @unique
 

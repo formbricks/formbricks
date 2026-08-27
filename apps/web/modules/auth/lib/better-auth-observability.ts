@@ -43,9 +43,13 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
   // onto this route before Better Auth sees it. Do not "restore" /oauth2/ here.
   if (path.includes("/callback/")) return "sso";
   if (path === "/sign-in/email") return "password";
-  // Auto-login after email verification (autoSignInAfterVerification, ENG-1746) creates a session for
-  // a credential/email-password account, so audit it as "password". Idempotent replays of an
-  // already-verified token don't create a session, so this fires once, on the genuine first verify.
+  // A session created on the verification endpoint belongs to a credential/email-password account, so
+  // audit it as "password". Since ENG-2562 the session is minted by `verificationAutoSignInAfterHandler`
+  // rather than by `autoSignInAfterVerification` (now off), and only for the browser that signed up —
+  // but it still arrives here with this path, so the signedIn trail is unchanged. A withheld
+  // verification creates no session and so produces no event here; it is recorded separately by
+  // `auditVerificationSessionWithheld`. Idempotent replays of an already-verified token create no
+  // session either, so this fires once, on the genuine first verify.
   if (path === "/verify-email") return "password";
   // The 2FA challenge completes the credentials sign-in → "password" (matches NextAuth). Deliberately
   // NOT /two-factor/verify-otp (also the first-time-enable path) nor /two-factor/disable|enable.
@@ -346,6 +350,39 @@ export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> 
   const code = (returned.body as { code?: unknown } | undefined)?.code;
   const failureReason = (typeof code === "string" ? code : String(returned.status)).toLowerCase();
   logAuthAttempt(failureReason, "credentials", "password", UNKNOWN_DATA, email);
+};
+
+/**
+ * ENG-2562: a verification completed but no session was granted.
+ *
+ * `reason` is the point of the record, not a detail. This fires on the ordinary cross-device click and on
+ * a mail-scanner prefetch (`absent`) as readily as on a genuine pre-hijack (`other_user`), so the event
+ * alone means "nobody was signed in", NOT "an attack happened". Only `other_user` — a valid intent cookie
+ * naming a different account — is inherently suspicious; `invalid` is worth a look; `grant_failed` is our
+ * own fault rather than the caller's.
+ *
+ * Uses the `updated` + marker idiom of `auditPasswordReset` below rather than a new `ZAuditAction`
+ * value: it is the established shape for auth-internal events, and it keeps a shared enum out of a fix
+ * that has to land on two release branches as well as main. Audit logging is enterprise-gated, so the
+ * caller also logs — a self-hoster must still see this.
+ */
+export const auditVerificationSessionWithheld = async (userId: string, reason: string): Promise<void> => {
+  try {
+    await queueAuditEventBackground({
+      action: "updated",
+      targetType: "user",
+      userId,
+      targetId: userId,
+      organizationId: UNKNOWN_DATA,
+      status: "success",
+      userType: "user",
+      newObject: { verificationSessionWithheldMarker: true, reason },
+    });
+  } catch {
+    logger
+      .withContext({ source: "better-auth" })
+      .error("Failed to queue withheld-verification-session audit event");
+  }
 };
 
 /**

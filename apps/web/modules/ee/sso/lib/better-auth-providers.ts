@@ -1,6 +1,7 @@
 import "server-only";
 import type { BetterAuthOptions } from "better-auth";
 import type { GenericOAuthConfig, GenericOAuthUserInfo } from "better-auth/plugins";
+import { logger } from "@formbricks/logger";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,
@@ -174,27 +175,132 @@ const ssoAccountSubject =
  * has not set it, and drop support for genuinely multi-tenant app registrations, which have no single
  * issuer by construction — the tenant decides the mechanism:
  *
- * - **Concrete tenant**: keep `discoveryUrl`. The discovered issuer is a real value, so the id_token is
- *   fully verified. Strictly stronger than 1.6.
- * - **`common`**: configure the endpoints explicitly and skip discovery, so no `idTokenConfig` is built
+ * - **A tenant whose discovery document carries a real issuer** — a directory GUID, a verified domain
+ *   like `contoso.onmicrosoft.com`, **or `consumers`** (see the table below): keep `discoveryUrl`. The
+ *   discovered issuer is a real value, so the id_token is fully verified. Strictly stronger than 1.6.
+ * - **Unset, or a template-issuer authority (`common` / `organizations`, ENG-2750)**: configure the
+ *   endpoints explicitly and skip discovery, so no `idTokenConfig` is built
  *   (`generic-oauth/index.mjs` only constructs it inside the discovery branch) and identity comes from
  *   UserInfo — the 1.6 behaviour, over a client-authenticated back-channel call to Microsoft. Note this
  *   is not where the code flow's security lives: that is `state` + PKCE and the authenticated code
  *   exchange, and RFC 9207 mix-up defence still applies via `iss` on the authorization response when a
  *   provider sends one.
  *
- * Deliberately NOT setting `requireIdTokenVerification`: on the `common` path it would throw at init and
- * take Azure sign-in down, which is the outcome this split exists to avoid.
+ * Which of Microsoft's three multi-tenant authorities can be verified is NOT uniform, and guessing it
+ * wrong costs either an outage or a silently weakened check. Read live from each
+ * `/{authority}/v2.0/.well-known/openid-configuration`:
+ *
+ * | authority | advertised `issuer` | verifiable? |
+ * | --- | --- | --- |
+ * | `common` | `https://login.microsoftonline.com/{tenantid}/v2.0` | no — placeholder |
+ * | `organizations` | `https://login.microsoftonline.com/{tenantid}/v2.0` | no — placeholder |
+ * | `consumers` | `https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0` | **yes** |
+ *
+ * `consumers` is the odd one out: personal Microsoft accounts all live in that one well-known MSA tenant,
+ * so its discovery document names a real issuer and every id_token it mints matches. It therefore stays
+ * on the discovery branch and keeps full verification — moving it here would drop a check that works.
+ *
+ * `common` and `organizations` must not take the discovery branch: Microsoft's guidance is to substitute
+ * the token's `tid` into that placeholder, which a literal `iss` comparison can never satisfy, so every
+ * sign-in fails verification and lands on `?error=unable_to_get_user_info`. That is exactly how ENG-2750
+ * took Microsoft SSO down on Cloud — prod had `AZUREAD_TENANT_ID=common`, harmless on 1.6, a full outage
+ * on 1.7. The authority is still kept in the endpoint URLs, because `organizations` meaningfully
+ * restricts which account types Microsoft accepts at the authorize endpoint.
+ *
+ * Deliberately NOT setting `requireIdTokenVerification`: on the multi-tenant path it would throw at init
+ * and take Azure sign-in down, which is the outcome this split exists to avoid.
  */
-const azureTenant = AZUREAD_TENANT_ID || "common";
-const azureEndpoints = AZUREAD_TENANT_ID
+const AZURE_TEMPLATE_ISSUER_TENANTS = new Set(["common", "organizations"]);
+
+const MICROSOFT_GRAPH_USERINFO_URL = "https://graph.microsoft.com/oidc/userinfo";
+
+/**
+ * Resolve the signed-in identity from Microsoft Graph, always (raised in review on #9017).
+ *
+ * Setting `userInfoUrl` is NOT enough to guarantee Graph is called. Better Auth's default
+ * `fetchUserInfo` opens with an unverified shortcut
+ * (`better-auth/dist/plugins/generic-oauth/index.mjs`):
+ *
+ * ```js
+ * if (tokens.idToken) try {
+ *   const decoded = decodeJwt(tokens.idToken);          // decode, NOT verify
+ *   if (decoded?.sub && decoded?.email) return { id: decoded.sub, ...decoded };
+ * } catch {}
+ * if (!userInfoUrl) return null;                        // only reached when the shortcut misses
+ * ```
+ *
+ * On the explicit-endpoint branch no `idToken` config exists — that is the whole point of skipping
+ * discovery — so the verification step in `getUserInfo` is a no-op and nothing checks that token's
+ * signature, issuer or nonce. We request the `email` scope, so a real Microsoft id_token carries both
+ * `sub` and `email` and takes the shortcut every time. Identity would come from an unverified JWT
+ * while the comments, the startup warning and the docs all promised it came from Graph.
+ *
+ * `c.getUserInfo` takes precedence over `fetchUserInfo` in that same file, so supplying it is how the
+ * promise is kept. The access token authenticates the call, and it reached us over the
+ * client-authenticated token exchange.
+ *
+ * Fails CLOSED: a non-OK response, an unparseable body, or a missing `sub` returns null, which Better
+ * Auth turns into a failed sign-in rather than a partially-trusted identity. `sub` specifically,
+ * because `accountSubject` pins the account key to it — inventing a fallback is how the wrong account
+ * gets linked.
+ */
+const microsoftGraphUserInfo = async (tokens: {
+  accessToken?: string;
+}): Promise<GenericOAuthUserInfo | null> => {
+  if (!tokens.accessToken) return null;
+  try {
+    const response = await fetch(MICROSOFT_GRAPH_USERINFO_URL, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${tokens.accessToken}` },
+    });
+    if (!response.ok) return null;
+    const profile = (await response.json()) as GenericOAuthUserInfo;
+    if (!profile?.sub) return null;
+    return {
+      ...profile,
+      // Strictly `=== true`, not Better Auth's `?? false`: this flag is a claim from the provider that
+      // feeds provisioning, so anything that is not an explicit boolean true is treated as unverified.
+      emailVerified: profile.email_verified === true,
+      image: typeof profile.picture === "string" ? profile.picture : undefined,
+    };
+  } catch {
+    return null;
+  }
+};
+// Unset behaves exactly like `common`: Microsoft's multi-tenant authority, and the documented default.
+const azureTenant = AZUREAD_TENANT_ID?.trim() || "common";
+const isAzureTemplateIssuerTenant = AZURE_TEMPLATE_ISSUER_TENANTS.has(azureTenant.toLowerCase());
+// A template-issuer authority is one of two known literals, so emit its canonical lower-case form; a
+// concrete tenant is passed through exactly as the operator configured it.
+const azureAuthority = isAzureTemplateIssuerTenant ? azureTenant.toLowerCase() : azureTenant;
+// Only worth saying when Azure SSO is actually registered — which needs BOTH gates below, mirroring
+// `ssoGenericOAuthConfig`'s own conditions — and only when the operator set the value themselves, since
+// an unset var takes this same path by design and needs no warning.
+//
+// The wording deliberately avoids "treating it like unset": an operator who set `organizations` would
+// read that as having lost their work/school-only restriction, which still applies at the authorize
+// endpoint. Only id_token verification is given up.
+if (
+  ENTERPRISE_LICENSE_KEY &&
+  AZURE_OAUTH_ENABLED &&
+  AZUREAD_TENANT_ID?.trim() &&
+  isAzureTemplateIssuerTenant
+) {
+  logger.warn(
+    `AZUREAD_TENANT_ID="${azureTenant}" names a Microsoft multi-tenant authority whose discovery document advertises a placeholder issuer, so id_tokens cannot be verified against it. Skipping discovery for this provider and taking identity from the userinfo endpoint; the authority you configured still applies at sign-in. Set a Directory (tenant) ID for full id_token verification.`
+  );
+}
+const azureEndpoints = isAzureTemplateIssuerTenant
   ? {
-      discoveryUrl: `https://login.microsoftonline.com/${azureTenant}/v2.0/.well-known/openid-configuration`,
+      authorizationUrl: `https://login.microsoftonline.com/${azureAuthority}/oauth2/v2.0/authorize`,
+      tokenUrl: `https://login.microsoftonline.com/${azureAuthority}/oauth2/v2.0/token`,
+      userInfoUrl: MICROSOFT_GRAPH_USERINFO_URL,
+      // Not redundant with `userInfoUrl` — see microsoftGraphUserInfo. The URL alone leaves Better
+      // Auth's unverified-id_token shortcut in play; this is what actually forces the Graph call.
+      getUserInfo: microsoftGraphUserInfo,
     }
   : {
-      authorizationUrl: `https://login.microsoftonline.com/${azureTenant}/oauth2/v2.0/authorize`,
-      tokenUrl: `https://login.microsoftonline.com/${azureTenant}/oauth2/v2.0/token`,
-      userInfoUrl: "https://graph.microsoft.com/oidc/userinfo",
+      discoveryUrl: `https://login.microsoftonline.com/${azureAuthority}/v2.0/.well-known/openid-configuration`,
     };
 
 export const ssoGenericOAuthConfig: GenericOAuthConfig[] = ENTERPRISE_LICENSE_KEY

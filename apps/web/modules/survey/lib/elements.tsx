@@ -368,6 +368,33 @@ export const getCXElementTypes = (t: TFunction) =>
     ].includes(elementType.id as TSurveyElementTypeEnum);
   });
 
+export type TElementCategoryGroup = {
+  category: TElementCategoryMeta;
+  elements: TElement[];
+};
+
+/**
+ * Groups the available element types by category, in the same category order and
+ * within-category order as the "Add Block" picker, omitting categories with no elements.
+ * Lets other element-type pickers (e.g. "Add question to block", "Change question type")
+ * reuse the same sections/ordering instead of rendering a flat list.
+ */
+export const getGroupedElementTypes = (t: TFunction, isCxMode = false): TElementCategoryGroup[] => {
+  const availableElementTypes = isCxMode ? getCXElementTypes(t) : getElementTypes(t);
+  const categories = getElementCategories(t);
+
+  const elementsByCategory = new Map<TElementCategory, TElement[]>();
+  for (const elementType of availableElementTypes) {
+    const group = elementsByCategory.get(elementType.category) ?? [];
+    group.push(elementType);
+    elementsByCategory.set(elementType.category, group);
+  }
+
+  return categories
+    .map((category) => ({ category, elements: elementsByCategory.get(category.id) ?? [] }))
+    .filter((group) => group.elements.length > 0);
+};
+
 export const getElementIconMap = (t: TFunction): Record<TSurveyElementTypeEnum, JSX.Element> =>
   getElementTypes(t).reduce(
     (prev, curr) => ({

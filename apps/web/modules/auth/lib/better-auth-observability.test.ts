@@ -11,6 +11,7 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   auditFailedAuthAfter,
   auditPasswordReset,
+  auditVerificationSessionWithheld,
   betterAuthLogger,
   getSignInAuthMethod,
   redactEmailsInLogMessage,
@@ -306,6 +307,42 @@ describe("auditPasswordReset (onPasswordReset audit)", () => {
     vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("redis down"));
 
     await expect(auditPasswordReset("user-1")).resolves.toBeUndefined();
+  });
+});
+
+describe("auditVerificationSessionWithheld (ENG-2562)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // The reason is the payload's reason for existing: `absent` is the ordinary cross-device click or a
+  // mail-scanner prefetch, while `other_user` is a valid intent cookie naming a different account. Both
+  // reach this event, and without the reason recorded the distinction cannot be recovered afterwards.
+  test.each(["absent", "invalid", "other_user", "grant_failed"])(
+    "queues an updated/user audit carrying the withheld marker and the reason %s",
+    async (reason) => {
+      await auditVerificationSessionWithheld("user-1", reason);
+
+      expect(queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "updated",
+          targetType: "user",
+          userId: "user-1",
+          targetId: "user-1",
+          status: "success",
+          userType: "user",
+          newObject: { verificationSessionWithheldMarker: true, reason },
+        })
+      );
+    }
+  );
+
+  // The caller runs inside a verification request that has already flipped `emailVerified`, so a throw
+  // out of the audit would 500 a link that verified the user.
+  test("never throws when the audit queue fails", async () => {
+    vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("redis down"));
+
+    await expect(auditVerificationSessionWithheld("user-1", "absent")).resolves.toBeUndefined();
   });
 });
 
