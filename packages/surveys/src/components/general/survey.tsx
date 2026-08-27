@@ -1,11 +1,6 @@
 import { type JSX } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import {
-  type TIngestDropReason,
-  type TIngestFlagReason,
-  type TIngestResult,
-  applyIngestContract,
-} from "@formbricks/types/embedded-data-ingest";
+import { applyIngestContract } from "@formbricks/types/embedded-data-ingest";
 import {
   RESERVED_FIELD_CATALOG,
   coerceToEmbeddedDataType,
@@ -29,7 +24,6 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
-import { RESERVED_DECLARED_FIELD_NAMES } from "@formbricks/types/surveys/validation";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -45,6 +39,7 @@ import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layo
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
 import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
+import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
 import { evaluateLogic, performActions } from "@/lib/logic";
 import {
   type SerializedSurveyState,
@@ -88,47 +83,6 @@ interface VariableStackEntry {
   questionId: string;
   variables: TResponseVariables;
 }
-
-/**
- * What the renderer says about each verdict. Phrased as what happened to the *incoming value*, never
- * as a claim about the response: a host surface can legitimately hand this component a key the survey
- * does not declare — the link page passes the verified email address alongside the URL params — and
- * the server writes that one itself, so "ignored here" is the honest report and "not stored" would
- * not be.
- */
-const INGEST_DROP_MESSAGES: Record<TIngestDropReason, string> = {
-  unknown_key: "is not an ingested Embedded Data field on this survey",
-  locked_field: "is locked and ignores values set from outside",
-  unsupported_value: "arrived as a value no Embedded Data field can hold",
-  element_id_collision: "is a question's id, so that question's answer owns the key",
-};
-
-const INGEST_FLAG_MESSAGES: Record<TIngestFlagReason, string> = {
-  coercion_failed: "did not match its declared type and was kept as text",
-  truncated: "was longer than the 16 KB limit and was truncated",
-};
-
-/**
- * Surfaces the ingest contract's verdicts, so a developer wiring up Embedded Data sees why a value
- * did not show up instead of guessing. Warnings, never errors: nothing here blocks a response.
- *
- * Advisory only. The stored flags are the server's, recomputed on ingest from the same contract,
- * because a client-sent flag list could claim there was nothing to report.
- */
-const logIngestResult = ({ dropped, flags }: TIngestResult): void => {
-  for (const { key, reason } of dropped) {
-    // A reserved name is never actionable: `FORBIDDEN_IDS` means no survey *can* declare it, and the
-    // product injects some of these itself — a link survey with email verification puts
-    // `verifiedEmail` in this bag on every load, and the server writes it from the token regardless.
-    // Warning about it once per respondent is first-party noise that teaches developers to tune the
-    // channel out, which costs us the warnings that do matter.
-    if (RESERVED_DECLARED_FIELD_NAMES.has(key.toLowerCase())) continue;
-    console.warn(`Formbricks: "${key}" ${INGEST_DROP_MESSAGES[reason]}, so the value was ignored.`);
-  }
-  for (const { key, reason } of flags) {
-    console.warn(`Formbricks: the value for "${key}" ${INGEST_FLAG_MESSAGES[reason]}.`);
-  }
-};
 
 export function Survey({
   appUrl,
@@ -229,6 +183,24 @@ export function Survey({
     [offlinePersistEnabled, survey.id]
   );
 
+  // `onResponseCreateOrUpdate` runs on every question submit, but a response is only *created* on the
+  // first submit — later submits update it. `onResponseCreated` must therefore fire once, not per
+  // question, otherwise a 5-question survey triggers 5 downstream `/user` refreshes in js-core.
+  //
+  // Fired from the queue's server-ack seam below (not at enqueue time) so it can carry the persisted
+  // `responseId` — the id is minted by the server, so an event that carries it can only fire after
+  // the ack (ENG-1846). Same post-ack semantics as `onDisplayCreated`, which fires after
+  // createDisplay. Preview mode never reaches the queue and fires this without an id at submit time.
+  const responseCreatedRef = useRef(false);
+  const triggerResponseCreatedOnce = useCallback(
+    (responseId?: string) => {
+      if (responseCreatedRef.current) return;
+      responseCreatedRef.current = true;
+      void onResponseCreated?.(responseId);
+    },
+    [onResponseCreated]
+  );
+
   const responseQueue = useMemo(() => {
     if (appUrl && workspaceId && surveyState) {
       return new ResponseQueue(
@@ -264,6 +236,15 @@ export function Survey({
           },
           onResponseCreated: (responseId) => {
             void persistSurveyStateSnapshot({ responseId });
+            try {
+              triggerResponseCreatedOnce(responseId);
+            } catch (error) {
+              // This runs inside ResponseQueue.sendResponse's try block, and the callback reaches
+              // host-supplied code (js-core's event bus → the host page). A throw here would be
+              // caught as a SEND failure — the respondent shown an error and a retry for a response
+              // the server already created. Never let a host page do that.
+              console.error("Formbricks: onResponseCreated handler threw", error);
+            }
           },
         },
         surveyState
@@ -279,6 +260,7 @@ export function Survey({
     surveyState,
     offlinePersistEnabled,
     persistSurveyStateSnapshot,
+    triggerResponseCreatedOnce,
     survey.id,
   ]);
 
@@ -514,11 +496,6 @@ export function Survey({
   // Create display on mount. When offline persistence is enabled, wait for progress
   // restoration so we can skip creating a new display if a session was restored.
   const displayCreatedRef = useRef(false);
-
-  // `onResponseCreateOrUpdate` runs on every question submit, but a response is only *created* on the
-  // first submit — later submits update it. `onResponseCreated` must therefore fire once, not per
-  // question, otherwise a 5-question survey triggers 5 downstream `/user` refreshes in js-core.
-  const responseCreatedRef = useRef(false);
 
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
@@ -999,14 +976,6 @@ export function Survey({
 
   const getWebSurveyMeta = useCallback((): TWebSurveyMeta => webSurveyMetaRef.current?.() ?? {}, []);
 
-  // Fire onResponseCreated exactly once per survey lifecycle. The queue creates the response on the
-  // first add and updates it on later submits, so a multi-question survey must not re-trigger it.
-  const triggerResponseCreatedOnce = useCallback(() => {
-    if (responseCreatedRef.current) return;
-    responseCreatedRef.current = true;
-    onResponseCreated?.();
-  }, [onResponseCreated]);
-
   const onResponseCreateOrUpdate = useCallback(
     async (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
@@ -1061,8 +1030,7 @@ export function Survey({
           // straight back.
           hiddenFields: ingestedFieldsRecord,
         });
-
-        triggerResponseCreatedOnce();
+        // No trigger here: the queue's onResponseCreated ack fires it with the persisted responseId.
       }
     },
     [
@@ -1178,7 +1146,9 @@ export function Survey({
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
-      onFinished?.();
+      // Gated on isResponseSendingFinished, so outside preview/offline the ack has landed and the
+      // queue has stamped the persisted responseId onto surveyState (ENG-1846).
+      onFinished?.(surveyState?.responseId ?? undefined);
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 

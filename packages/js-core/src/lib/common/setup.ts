@@ -1,6 +1,7 @@
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
+import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
@@ -335,6 +336,16 @@ export const setup = async (
 
   setIsSetup(true);
   logger.debug("Set up complete");
+
+  // The readiness signal (ENG-1846): a consent-gated setup means `window.formbricks` may not exist
+  // at page load, so a GTM tag firing `setEmbeddedData` on page load silently drops its value — the
+  // host triggers on this event instead. Emitted here, at the single point every *fresh* setup
+  // converges on, and nowhere else: the "already set up" and missing-config early returns above
+  // return `okVoid()` without reaching this line, so a repeated `setup()` call cannot double-fire
+  // the host's tags.
+  // `effectiveId`, not `config.get().workspaceId`: the input is what this setup just ran with, and
+  // it is already resolved through the legacy `environmentId` shim above.
+  emitFormbricksEvent(FORMBRICKS_EVENTS.setupSuccessful, { workspaceId: effectiveId });
 
   return okVoid();
 };

@@ -14,7 +14,11 @@ export interface SurveyBaseProps {
   getSetResponseData?: (getSetResponseData: (value: TResponseData) => void) => void;
   onDisplay?: () => Promise<void>;
   onResponse?: (response: TResponseUpdate) => void;
-  onFinished?: () => void;
+  /**
+   * Fires when the finished response has been sent. `responseId` is the persisted id when one exists
+   * (it always does outside preview/offline, since this is gated on the send completing) — ENG-1846.
+   */
+  onFinished?: (responseId?: string) => void;
   onClose?: () => void;
   onRetry?: () => void;
   autoFocus?: boolean;
@@ -57,7 +61,12 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   userId?: string;
   contactId?: string;
   onDisplayCreated?: () => void | Promise<void>;
-  onResponseCreated?: () => void | Promise<void>;
+  /**
+   * Fires once per survey lifecycle when the response exists. Outside preview mode that is the
+   * server's creation ack, so `responseId` is the persisted id (ENG-1846 — the host uses it to link
+   * session replays); in preview mode it fires at submit time with no id, since nothing is stored.
+   */
+  onResponseCreated?: (responseId?: string) => void | Promise<void>;
   onFileUpload?: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   mode?: "modal" | "inline";

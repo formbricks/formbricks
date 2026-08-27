@@ -1,10 +1,19 @@
 import { expect } from "@playwright/test";
 import http from "http";
+import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
 import { useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
+  <script type="text/javascript">
+    // Registered before the SDK loads, which is the load order the event bus is designed for
+    // (ENG-1846): a host page must be able to subscribe without knowing when the SDK arrives.
+    window.formbricksEvents = [];
+    window.addEventListener("formbricks_response_submitted", function (e) {
+      window.formbricksEvents.push(e.detail);
+    });
+  </script>
   <script type="text/javascript">
     !(function () {
       var t = document.createElement("script");
@@ -101,6 +110,9 @@ test.describe("JS Package Test", async () => {
       page.getByRole("button", { name: "Publish", exact: true }).click(),
     ]);
 
+    const surveyId = /\/surveys\/([^/]+)\/summary/.exec(page.url())?.[1];
+    if (!surveyId) throw new Error(`Unable to parse surveyId from ${page.url()}`);
+
     await page.goto("http://localhost:3004");
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
     await expect(
@@ -126,6 +138,32 @@ test.describe("JS Package Test", async () => {
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(5000);
+
+    // The `responseId` on the bus is the PERSISTED id (ENG-1846). This is the only level that can
+    // prove it: the id is minted by the server, so `onResponseCreated`/`onFinished` can only carry it
+    // by firing from the response queue's creation ack — and the renderer that passes it lives in a
+    // .tsx, which the repo does not unit-test. Asserted against the stored row rather than for
+    // self-consistency, so a client-minted or dropped id fails here.
+    await test.step("the submitted event carries the persisted responseId", async () => {
+      const events = await page.evaluate(
+        () =>
+          (window as unknown as { formbricksEvents: { responseId?: string; finished?: boolean }[] })
+            .formbricksEvents
+      );
+
+      const storedResponse = await prisma.response.findFirst({
+        where: { surveyId },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      });
+      expect(storedResponse).not.toBeNull();
+
+      expect(events.length).toBeGreaterThan(0);
+      expect(events.some((event) => event.finished === true)).toBe(true);
+      for (const event of events) {
+        expect(event.responseId).toBe(storedResponse?.id);
+      }
+    });
 
     // Validate displays and response
     await page.goto("/");

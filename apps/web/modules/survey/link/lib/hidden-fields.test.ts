@@ -1,6 +1,6 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { FORBIDDEN_IDS, RESERVED_DECLARED_FIELD_NAMES } from "@formbricks/types/surveys/validation";
-import { getHiddenFieldsFromSearchParams } from "./hidden-fields";
+import { getHiddenFieldsFromSearchParams, warnOnMissingIngestRows } from "./hidden-fields";
 
 describe("getHiddenFieldsFromSearchParams", () => {
   test("reads params that match a declared field exactly", () => {
@@ -59,6 +59,59 @@ describe("getHiddenFieldsFromSearchParams", () => {
   });
 
   describe("reserved params are never captured", () => {
+    // Stubbed for the whole block: the set-wide loops below each hit the refusal branch dozens of
+    // times, and the point of those tests is the empty record, not the console.
+    let warnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      // This suite runs in the node environment (no window); the warns are browser-gated so they
+      // stay out of the operator's SSR log, so the browser is simulated here.
+      vi.stubGlobal("window", {});
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+      vi.unstubAllGlobals();
+    });
+
+    test("stays quiet during SSR — the refusal must not land in the operator's server log", () => {
+      vi.unstubAllGlobals();
+
+      const record = getHiddenFieldsFromSearchParams(
+        ["Lang", "customerref"],
+        new URLSearchParams("lang=de&customerref=abc")
+      );
+
+      // Capture behavior is identical on the server pass; only the console line is gated.
+      expect(record).toEqual({ customerref: "abc" });
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    test("explains the refusal, naming the declared field and the param spelling that arrived", () => {
+      // The two spellings differ on purpose: a survey declaring `Lang` is matched by `?lang=`, and an
+      // author grepping their own survey for the name needs to see the one they typed.
+      const params = new URLSearchParams("lang=de");
+
+      expect(getHiddenFieldsFromSearchParams(["Lang"], params)).toEqual({});
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toContain('"Lang"');
+      expect(warnSpy.mock.calls[0][0]).toContain('"?lang="');
+      expect(warnSpy.mock.calls[0][0]).toContain("can never fill it");
+    });
+
+    test("stays quiet when the reserved param is absent, so an unused declaration is not nagged about", () => {
+      expect(getHiddenFieldsFromSearchParams(["lang"], new URLSearchParams("customerref=abc"))).toEqual({});
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    test("stays quiet for a field it fills normally", () => {
+      expect(
+        getHiddenFieldsFromSearchParams(["customerref"], new URLSearchParams("customerref=abc"))
+      ).toEqual({ customerref: "abc" });
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
     // `ZSurveyHiddenFields` rejects reserved names case-sensitively, so `Verify` and `UserId` are
     // names an already-stored survey can hold (the editor now refuses to create them).
     // Case-insensitive matching must not let them harvest the real reserved params - `?verify=<jwt>`
@@ -132,5 +185,46 @@ describe("getHiddenFieldsFromSearchParams", () => {
         CustomerRef: "abc",
       });
     });
+  });
+});
+
+describe("warnOnMissingIngestRows", () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.stubGlobal("window", {});
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  test("stays quiet during SSR", () => {
+    vi.unstubAllGlobals();
+
+    warnOnMissingIngestRows([], ["plan"]);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("warns when the legacy column declares fields but no ingested rows exist — the dropped-join canary", () => {
+    warnOnMissingIngestRows([], ["plan", "language"]);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0][0]).toContain("no ingested Embedded Data rows");
+  });
+
+  test("stays quiet on a healthy survey (rows present)", () => {
+    warnOnMissingIngestRows(["plan"], ["plan"]);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("stays quiet on a survey that declares nothing at all", () => {
+    warnOnMissingIngestRows([], []);
+
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
