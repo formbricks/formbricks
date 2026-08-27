@@ -297,6 +297,7 @@
           {
             "group": "Configuration",
             "pages": [
+              "self-hosting/configuration",
               "self-hosting/configuration/custom-ssl",
               "self-hosting/configuration/environment-variables",
               "self-hosting/configuration/job-runner",
