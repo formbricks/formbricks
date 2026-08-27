@@ -533,60 +533,71 @@ const SSO_CALLBACK_REASONS = new Set([
  *
  * Never throws: observability must not be able to fail a sign-in that otherwise succeeded.
  */
+/** A response that minted no session: either a named failure, or a flow that never claimed to sign in. */
+const sessionlessOutcome = (target: URL): SsoCallbackRecord => {
+  const error = target.searchParams.get("error");
+
+  // `?error=` and a bare `?error` both read back as `""`. An error parameter that is present but
+  // empty says something went wrong without saying what, so it belongs on the failure side.
+  if (error !== null) {
+    return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
+  }
+
+  // No session and no error is neither: verify-before-link recovery ends exactly here, redirecting to
+  // the "check your inbox" page on purpose (`ssoRecoveryAfterHandler`). Counting it as a failure would
+  // inflate the ratio during a perfectly healthy flow, and as a success would claim a sign-in that did
+  // not happen — so it is named and left out of both sides.
+  return { outcome: "incomplete", reason: "no_session" };
+};
+
+/** The outcome carried by a redirect, or `null` when this redirect decides nothing. */
+const redirectOutcome = (target: URL, response: Response): SsoCallbackRecord | null => {
+  // `response_mode=form_post`: Better Auth 1.7 turns a POST callback into a 302 to the GET callback
+  // *before* it validates state or exchanges the code (`api/routes/callback.mjs`), and
+  // `legacy-sso-callback.ts` deliberately preserves that flow. Recording the hop would score every
+  // form_post sign-in as one extra outcome, and — because the hop carries no `error` — it would score
+  // it as a success, capping a totally broken form_post flow at a 50% failure ratio. The GET that
+  // follows is the one that knows what happened, so say nothing here.
+  if (SSO_CALLBACK_PATH.test(target.pathname)) return null;
+
+  // A completed sign-in is the one thing that mints a session, and Better Auth decides that rather
+  // than it being inferred from where the browser is sent next. That matters because the success
+  // destination is the caller's `callbackURL` — `getSsoReturnToUrl` preserves its query string, so a
+  // legitimate target like `/page?error=retry` exists — while the failure destination is the caller's
+  // `errorCallbackURL` (`/auth/login` for every button here). Reading the `error` key off whichever
+  // URL came back cannot tell those apart; the session cookie can.
+  return hasSessionCookie(response) ? { outcome: "success" } : sessionlessOutcome(target);
+};
+
 export const recordSsoCallbackOutcome = (requestUrl: string, response: Response): void => {
   emitSsoCallbackRecord(requestUrl, (): SsoCallbackRecord | null => {
-    // A 4xx/5xx on the callback is a failed sign-in too — this is how the SSO licence gate's 403
-    // and any unhandled 500 present, and neither redirects.
+    // A 4xx/5xx on the callback is a failed sign-in too — this is how the SSO licence gate's 403 and
+    // any unhandled 500 present, and neither redirects.
     if (response.status >= 400) return { outcome: "failure", reason: `http_${response.status}` };
 
-    if (response.status >= 300) {
-      // A redirect the browser cannot follow is a failed sign-in, not a quiet success. Both shapes
-      // below would otherwise corrupt the ratio rather than merely lose detail: a missing `Location`
-      // counted as success inflates the healthy side, and a malformed one threw into the outer catch,
-      // dropping the callback from both sides.
-      const location = response.headers.get("location");
-      if (!location) return { outcome: "failure", reason: "missing_location" };
-
-      let target: URL;
-      try {
-        target = new URL(location, requestUrl);
-      } catch {
-        return { outcome: "failure", reason: "malformed_location" };
-      }
-
-      // `response_mode=form_post`: Better Auth 1.7 turns a POST callback into a 302 to the GET
-      // callback *before* it validates state or exchanges the code (`api/routes/callback.mjs`), and
-      // `legacy-sso-callback.ts` deliberately preserves that flow. Recording the hop would score every
-      // form_post sign-in as one extra outcome, and — because the hop carries no `error` — it would
-      // score it as a success, capping a totally broken form_post flow at a 50% failure ratio. The GET
-      // that follows is the one that knows what happened, so say nothing here.
-      if (SSO_CALLBACK_PATH.test(target.pathname)) return null;
-
-      // A completed sign-in is the one thing that mints a session, and it is decided by Better Auth
-      // rather than inferred from where the browser is sent next. That matters because the success
-      // destination is the caller's `callbackURL` — `getSsoReturnToUrl` preserves its query string, so
-      // a legitimate target like `/page?error=retry` exists — while the failure destination is the
-      // caller's `errorCallbackURL` (`/auth/login` for every button here). Reading the `error` key off
-      // whichever URL came back cannot tell those apart; the session cookie can.
-      if (hasSessionCookie(response)) return { outcome: "success" };
-
-      const error = target.searchParams.get("error");
-      // `?error=` and a bare `?error` both read back as `""`. An error parameter that is present but
-      // empty says something went wrong without saying what, so it belongs on the failure side.
-      if (error !== null) {
-        return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
-      }
-
-      // No session and no error is neither: verify-before-link recovery ends exactly here, redirecting
-      // to the "check your inbox" page on purpose (`ssoRecoveryAfterHandler`). Counting it as a failure
-      // would inflate the ratio during a perfectly healthy flow, and as a success would claim a sign-in
-      // that did not happen — so it is named and left out of both sides.
-      return { outcome: "incomplete", reason: "no_session" };
+    if (response.status < 300) {
+      return hasSessionCookie(response)
+        ? { outcome: "success" }
+        : { outcome: "incomplete", reason: "no_session" };
     }
 
-    return hasSessionCookie(response)
-      ? { outcome: "success" }
-      : { outcome: "incomplete", reason: "no_session" };
+    // A redirect the browser cannot follow is a failed sign-in, not a quiet success. Both shapes below
+    // would otherwise corrupt the ratio rather than merely lose detail: a missing `Location` counted as
+    // success inflates the healthy side, and a malformed one threw into the outer catch, dropping the
+    // callback from both sides.
+    const location = response.headers.get("location");
+    if (!location) return { outcome: "failure", reason: "missing_location" };
+
+    // The catch guards the parse and nothing else: wrapping the classification too would relabel any
+    // fault inside it as a malformed `Location`, which is a different and misleading claim.
+    let target: URL;
+    try {
+      target = new URL(location, requestUrl);
+    } catch {
+      return { outcome: "failure", reason: "malformed_location" };
+    }
+
+    return redirectOutcome(target, response);
   });
 };
 
