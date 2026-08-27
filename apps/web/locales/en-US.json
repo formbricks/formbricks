@@ -2999,6 +2999,7 @@
         "generation_failed": "The draft could not be finished. Try again, or add a bit more detail.",
         "nothing_generated": "No questions came back. Try describing the survey in a bit more detail.",
         "open_in_editor": "Open in editor",
+        "option_count": "{count, plural, one {# option} other {# options}}",
         "prompt_helper_churn": "Understand why active customers may churn and what would keep them engaged",
         "prompt_helper_churn_label": "Churn risk",
         "prompt_helper_onboarding": "Find out why new users stop during onboarding and what would help them finish setup",

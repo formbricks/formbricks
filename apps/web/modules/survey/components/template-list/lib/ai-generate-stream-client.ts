@@ -44,17 +44,32 @@ export async function streamSurveyGeneration(
   // pure string function that can be unit-tested without constructing a stream.
   const decoder = new TextDecoder();
   const parser = new NdjsonParser<TSurveyGenerationStreamEvent>();
+  let sawTerminalEvent = false;
+
+  const handle = (event: TSurveyGenerationStreamEvent) => {
+    if (event.type === "done" || event.type === "error") {
+      sawTerminalEvent = true;
+    }
+    onEvent(event);
+  };
 
   try {
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      parser.push(decoder.decode(value, { stream: true })).forEach(onEvent);
+      parser.push(decoder.decode(value, { stream: true })).forEach(handle);
     }
 
-    parser.flush().forEach(onEvent);
+    parser.flush().forEach(handle);
   } finally {
     reader.releaseLock();
+  }
+
+  // A body that ends after only partials — a dropped connection, a proxy cutting the response, or a
+  // terminal frame mangled past parsing — would otherwise leave the caller waiting on an event that
+  // is never coming, stuck in its generating state with the unload guard still armed.
+  if (!sawTerminalEvent) {
+    throw new Error("The survey generation stream ended without a result.");
   }
 }

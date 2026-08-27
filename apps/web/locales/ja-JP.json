@@ -2999,6 +2999,7 @@
         "generation_failed": "下書きを完成できませんでした。もう一度試すか、詳細を少し追加してください。",
         "nothing_generated": "質問が生成されませんでした。フォームについてもう少し詳しく説明してみてください。",
         "open_in_editor": "エディターで開く",
+        "option_count": "{count, plural, other {#個のオプション}}",
         "prompt_helper_churn": "アクティブな顧客が離脱する理由と、顧客のエンゲージメントを維持するために必要なことを理解する",
         "prompt_helper_churn_label": "解約リスク",
         "prompt_helper_onboarding": "新規ユーザーがオンボーディング中に離脱する理由と、セットアップを完了するために必要なサポートを調査",

@@ -2884,6 +2884,7 @@ checksums:
     workspace/surveys/ai_create/generation_failed: cf68e9399104ba1ed48bd88a91d06270
     workspace/surveys/ai_create/nothing_generated: 4df9bd9e49c3b63cddd2cb4336e00420
     workspace/surveys/ai_create/open_in_editor: 58990d6212eaf0d93509fb28a2cb2f88
+    workspace/surveys/ai_create/option_count: d80b988a57d3119484c140b046e91a8c
     workspace/surveys/ai_create/prompt_helper_churn: 0a12f5fcab212aaa357c4ebc32b81124
     workspace/surveys/ai_create/prompt_helper_churn_label: be67c423d132ffdcf7447efe1602ee52
     workspace/surveys/ai_create/prompt_helper_onboarding: 1a1918de97443b88b5aff9b4c4144421

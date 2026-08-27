@@ -2999,6 +2999,7 @@
         "generation_failed": "Het concept kon niet worden afgemaakt. Probeer het opnieuw of voeg wat meer details toe.",
         "nothing_generated": "Er zijn geen vragen teruggekomen. Probeer de enquête wat gedetailleerder te beschrijven.",
         "open_in_editor": "Openen in editor",
+        "option_count": "{count, plural, one {# optie} other {# opties}}",
         "prompt_helper_churn": "Begrijp waarom actieve klanten mogelijk afhaken en wat hen betrokken zou houden",
         "prompt_helper_churn_label": "Klantverloop risico",
         "prompt_helper_onboarding": "Ontdek waarom nieuwe gebruikers afhaken tijdens onboarding en wat hen zou helpen om de setup af te ronden",

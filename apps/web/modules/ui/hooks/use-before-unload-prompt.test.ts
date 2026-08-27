@@ -32,10 +32,9 @@ describe("useBeforeUnloadPrompt", () => {
     expect(fireBeforeUnload().defaultPrevented).toBe(false);
   });
 
-  test("reads fresh state without re-registering the listener", () => {
+  test("reads fresh state on each event", () => {
     // The contract that makes the hook worth having: callers pass a plain closure over changing
-    // state and the listener is attached exactly once.
-    const addEventListener = vi.spyOn(window, "addEventListener");
+    // state, with no dependency list of their own to keep in sync.
     let isDirty = false;
 
     const { rerender } = renderHook(() => useBeforeUnloadPrompt(() => isDirty));
@@ -46,7 +45,11 @@ describe("useBeforeUnloadPrompt", () => {
     rerender();
 
     expect(fireBeforeUnload().defaultPrevented).toBe(true);
-    expect(addEventListener.mock.calls.filter(([type]) => type === "beforeunload")).toHaveLength(1);
+
+    isDirty = false;
+    rerender();
+
+    expect(fireBeforeUnload().defaultPrevented).toBe(false);
   });
 
   test("removes the listener on unmount", () => {

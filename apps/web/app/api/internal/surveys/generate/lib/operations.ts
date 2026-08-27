@@ -75,6 +75,12 @@ export async function streamV3SurveyGeneration({
     return mapV3SurveyGenerateError(error, { requestId, instance, workspaceId, organizationId });
   }
 
+  // Chained to req.signal (Next aborts that on client disconnect) but abortable by cancel() too,
+  // which can fire first and would otherwise leave the provider running to its 45s timeout.
+  const generationAbort = new AbortController();
+  const abortGeneration = () => generationAbort.abort();
+  req.signal.addEventListener("abort", abortGeneration, { once: true });
+
   let generation: TStreamObjectResult<z.infer<typeof ZGeneratedSurveyDraftForAI>>;
   try {
     generation = await streamOrganizationAIObject({
@@ -83,15 +89,16 @@ export async function streamV3SurveyGeneration({
       ...buildV3SurveyGenerationRequest(body),
       // Next derives this from the client socket closing, so pressing Stop aborts the provider call
       // itself rather than just detaching the reader — this is what stops the spend.
-      abortSignal: req.signal,
+      abortSignal: generationAbort.signal,
     });
   } catch (error) {
     return mapV3SurveyGenerateError(error, { requestId, instance, workspaceId, organizationId });
   }
 
+  let closed = false;
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      let closed = false;
       const emit = (event: TSurveyGenerationStreamEvent) => {
         if (closed) return;
         controller.enqueue(encodeStreamEvent(event));
@@ -140,7 +147,7 @@ export async function streamV3SurveyGeneration({
           );
         }
       } catch (error) {
-        if (isClientAbort(error, req.signal)) {
+        if (isClientAbort(error, generationAbort.signal)) {
           // A user pressing Stop is not an incident and must not page anyone. The socket is already
           // gone, so there is nothing to tell them either.
           log.info("AI survey generation aborted by the client");
@@ -151,13 +158,20 @@ export async function streamV3SurveyGeneration({
           emit(toStreamErrorEvent(error));
         }
       } finally {
-        closed = true;
-        controller.close();
+        req.signal.removeEventListener("abort", abortGeneration);
+        // close() throws on a stream the consumer already cancelled, and there is nobody left to
+        // tell either way.
+        if (!closed) {
+          closed = true;
+          controller.close();
+        }
       }
     },
     cancel() {
       // Next aborts its pipeTo on disconnect, which lands here — sometimes before the loop above
-      // observes req.signal.
+      // observes req.signal. Mark the stream closed first so no in-flight emit enqueues into it.
+      closed = true;
+      abortGeneration();
       log.info("AI survey generation stream cancelled by the client");
     },
   });

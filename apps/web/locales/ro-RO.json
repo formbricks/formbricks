@@ -2999,6 +2999,7 @@
         "generation_failed": "Schița nu a putut fi finalizată. Încearcă din nou sau adaugă mai multe detalii.",
         "nothing_generated": "Nu s-a generat nicio întrebare. Încearcă să descrii chestionarul mai detaliat.",
         "open_in_editor": "Deschide în editor",
+        "option_count": "{count, plural, one {# opțiune} few {# opțiuni} other {# de opțiuni}}",
         "prompt_helper_churn": "Înțelege de ce clienții activi ar putea pleca și ce i-ar menține implicați",
         "prompt_helper_churn_label": "Risc de abandon",
         "prompt_helper_onboarding": "Află de ce utilizatorii noi renunță în timpul procesului de onboarding și ce i-ar ajuta să finalizeze configurarea",

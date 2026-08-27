@@ -2999,6 +2999,7 @@
         "generation_failed": "草稿未能完成。请重试，或添加更多详细信息。",
         "nothing_generated": "未生成任何问题。请尝试更详细地描述调查。",
         "open_in_editor": "在编辑器中打开",
+        "option_count": "{count, plural, other {# 个选项}}",
         "prompt_helper_churn": "了解活跃客户可能流失的原因以及什么能让他们保持参与",
         "prompt_helper_churn_label": "流失风险",
         "prompt_helper_onboarding": "了解新用户为什么在引导过程中流失，以及哪些帮助能让他们完成设置",

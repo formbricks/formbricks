@@ -86,15 +86,23 @@ describe("useCreateSurveyWithAI", () => {
     vi.stubGlobal("cancelAnimationFrame", () => undefined);
   });
 
-  test("does not submit when AI is unavailable or the prompt is too short", async () => {
+  test("does not submit when AI is unavailable", async () => {
     const { result } = renderAiHook({ isAIAvailable: false });
 
     expect(result.current.canCreate).toBe(false);
     await submitWithPrompt(result);
-    expect(streamSurveyGeneration).not.toHaveBeenCalled();
 
-    act(() => result.current.setPrompt("abc"));
+    expect(streamSurveyGeneration).not.toHaveBeenCalled();
+  });
+
+  test("does not submit a prompt that is too short, with AI available", async () => {
+    // Asserted with AI on, so the length guard is what fails rather than the availability check.
+    const { result } = renderAiHook();
+
+    await submitWithPrompt(result, "abc");
+
     expect(result.current.canCreate).toBe(false);
+    expect(streamSurveyGeneration).not.toHaveBeenCalled();
   });
 
   test("sends the trimmed prompt to the stream", async () => {

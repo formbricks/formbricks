@@ -2999,6 +2999,7 @@
         "generation_failed": "Le brouillon n'a pas pu être terminé. Réessaie ou ajoute un peu plus de détails.",
         "nothing_generated": "Aucune question n'a été générée. Essaie de décrire le sondage avec un peu plus de détails.",
         "open_in_editor": "Ouvrir dans l'éditeur",
+        "option_count": "{count, plural, one {# option} other {# options}}",
         "prompt_helper_churn": "Comprendre pourquoi les clients actifs pourraient partir et ce qui les maintiendrait engagés",
         "prompt_helper_churn_label": "Risque d'attrition",
         "prompt_helper_onboarding": "Découvre pourquoi les nouveaux utilisateurs abandonnent pendant l'onboarding et ce qui les aiderait à terminer la configuration",

@@ -2999,6 +2999,7 @@
         "generation_failed": "Taslak tamamlanamadı. Tekrar dene veya biraz daha detay ekle.",
         "nothing_generated": "Hiçbir soru gelmedi. Anketi biraz daha detaylı açıklamayı dene.",
         "open_in_editor": "Editörde aç",
+        "option_count": "{count, plural, one {# seçenek} other {# seçenek}}",
         "prompt_helper_churn": "Aktif müşterilerin neden kaybedilebileceğini ve onları bağlı tutacak şeylerin neler olduğunu anla",
         "prompt_helper_churn_label": "Kayıp riski",
         "prompt_helper_onboarding": "Yeni kullanıcıların onboarding sırasında neden ayrıldığını ve kurulumu tamamlamalarına neyin yardımcı olacağını öğrenin",

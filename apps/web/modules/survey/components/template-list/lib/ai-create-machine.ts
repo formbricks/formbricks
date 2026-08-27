@@ -19,6 +19,7 @@ export type TAiCreateAction =
   | { type: "DONE"; payload: TV3CreateSurveyBody }
   | { type: "STOP" }
   | { type: "FAIL"; errorCode: string }
+  | { type: "CREATE_FAILED"; errorCode: string }
   | { type: "EDIT_PROMPT" }
   | { type: "REGENERATE" }
   | { type: "CREATE" }
@@ -82,6 +83,11 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
     case "CREATE":
       if (state.status !== "review" || !state.payload) return state;
       return { ...state, status: "creating", errorCode: null };
+
+    case "CREATE_FAILED":
+      // Unlike FAIL, this keeps the draft: the generation succeeded and the user already accepted
+      // it, so a transient write failure should cost a retry, not ten seconds of regeneration.
+      return { ...state, status: "review", errorCode: action.errorCode };
 
     case "RESET":
       return INITIAL_AI_CREATE_STATE;

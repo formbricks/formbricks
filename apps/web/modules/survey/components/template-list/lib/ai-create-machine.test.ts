@@ -95,6 +95,22 @@ describe("aiCreateReducer", () => {
     expect(state.payload).toBeNull();
   });
 
+  test("CREATE_FAILED keeps the reviewed draft so the write can be retried", () => {
+    // Unlike FAIL: the generation succeeded and the user accepted it, so a transient write failure
+    // must not cost them ten seconds of regeneration.
+    const creating = aiCreateReducer(
+      aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload }),
+      { type: "CREATE" }
+    );
+
+    const state = aiCreateReducer(creating, { type: "CREATE_FAILED", errorCode: "ai_unknown" });
+
+    expect(state.status).toBe("review");
+    expect(state.draft.questions).toHaveLength(1);
+    expect(state.payload).toBe(payload);
+    expect(state.errorCode).toBe("ai_unknown");
+  });
+
   test("CREATE only advances from review with a payload", () => {
     const reviewing = aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
 

@@ -2999,6 +2999,7 @@
         "generation_failed": "Não foi possível concluir o rascunho. Tente novamente ou adicione mais detalhes.",
         "nothing_generated": "Nenhuma pergunta foi gerada. Tente descrever a pesquisa com mais detalhes.",
         "open_in_editor": "Abrir no editor",
+        "option_count": "{count, plural, one {# opção} other {# opções}}",
         "prompt_helper_churn": "Entenda por que clientes ativos podem cancelar e o que os manteria engajados",
         "prompt_helper_churn_label": "Risco de cancelamento",
         "prompt_helper_onboarding": "Descubra por que novos usuários abandonam durante a integração e o que os ajudaria a concluir a configuração",

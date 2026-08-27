@@ -2999,6 +2999,7 @@
         "generation_failed": "Não foi possível concluir o rascunho. Tenta novamente ou adiciona mais alguns detalhes.",
         "nothing_generated": "Não foram geradas perguntas. Tenta descrever o inquérito com um pouco mais de detalhe.",
         "open_in_editor": "Abrir no editor",
+        "option_count": "{count, plural, one {# opção} other {# opções}}",
         "prompt_helper_churn": "Compreende porque é que os clientes ativos podem abandonar e o que os manteria envolvidos",
         "prompt_helper_churn_label": "Risco de abandono",
         "prompt_helper_onboarding": "Descobre porque é que os novos utilizadores desistem durante o onboarding e o que os ajudaria a concluir a configuração",

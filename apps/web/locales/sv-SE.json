@@ -2999,6 +2999,7 @@
         "generation_failed": "Utkastet kunde inte färdigställas. Försök igen eller lägg till lite mer detaljer.",
         "nothing_generated": "Inga frågor genererades. Försök beskriva enkäten lite mer detaljerat.",
         "open_in_editor": "Öppna i redigeraren",
+        "option_count": "{count, plural, one {# alternativ} other {# alternativ}",
         "prompt_helper_churn": "Förstå varför aktiva kunder kan försvinna och vad som skulle hålla dem engagerade",
         "prompt_helper_churn_label": "Churnrisk",
         "prompt_helper_onboarding": "Ta reda på varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra installationen",

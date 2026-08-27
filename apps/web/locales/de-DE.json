@@ -2999,6 +2999,7 @@
         "generation_failed": "Der Entwurf konnte nicht fertiggestellt werden. Versuch es nochmal oder füge etwas mehr Details hinzu.",
         "nothing_generated": "Es wurden keine Fragen erstellt. Versuch die Umfrage etwas detaillierter zu beschreiben.",
         "open_in_editor": "Im Editor öffnen",
+        "option_count": "{count, plural, one {# Option} other {# Optionen}}",
         "prompt_helper_churn": "Verstehe, warum aktive Kunden abwandern könnten und was sie bei der Stange halten würde",
         "prompt_helper_churn_label": "Abwanderungsrisiko",
         "prompt_helper_onboarding": "Finde heraus, warum neue Nutzer während des Onboardings abbrechen und was ihnen helfen würde, die Einrichtung abzuschließen",

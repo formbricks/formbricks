@@ -99,3 +99,47 @@ describe("mergeAiDraftSnapshot", () => {
     expect(state.name).toBe("Onboarding");
   });
 });
+
+describe("mergeAiDraftSnapshot — keyed matching", () => {
+  test("a question filled in later does not duplicate a key", () => {
+    // The model can leave question 0 untouched while writing question 1, so the flattened array
+    // shifts. Matching by index would align "0:1" with "0:0" and emit "0:1" twice, which React
+    // renders as duplicate keys and a shuffled list.
+    const secondOnly = mergeAiDraftSnapshot(
+      EMPTY_AI_DRAFT,
+      snapshot([{}, { type: "rating", headline: "Second" }])
+    );
+    expect(secondOnly.questions.map((question) => question.key)).toEqual(["0:1"]);
+
+    const bothPresent = mergeAiDraftSnapshot(
+      secondOnly,
+      snapshot([
+        { type: "openText", headline: "First" },
+        { type: "rating", headline: "Second" },
+      ])
+    );
+
+    const keys = bothPresent.questions.map((question) => question.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys).toContain("0:0");
+    expect(keys).toContain("0:1");
+    expect(bothPresent.questions.find((q) => q.key === "0:0")?.headline).toBe("First");
+    expect(bothPresent.questions.find((q) => q.key === "0:1")?.headline).toBe("Second");
+  });
+
+  test("keeps identity for an untouched question when another one fills in", () => {
+    const first = mergeAiDraftSnapshot(
+      EMPTY_AI_DRAFT,
+      snapshot([{}, { type: "rating", headline: "Second" }])
+    );
+    const second = mergeAiDraftSnapshot(
+      first,
+      snapshot([
+        { type: "openText", headline: "First" },
+        { type: "rating", headline: "Second" },
+      ])
+    );
+
+    expect(second.questions.find((q) => q.key === "0:1")).toBe(first.questions[0]);
+  });
+});

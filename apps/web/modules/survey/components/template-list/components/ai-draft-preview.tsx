@@ -21,13 +21,14 @@ type AiDraftRowProps = {
   question: TAiDraftQuestion;
   icon?: ReactNode;
   typeName?: string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 };
 
 /**
  * Memoised, and the reducer guarantees an unchanged question keeps its object identity — together
  * that is what stops every row re-rendering on each snapshot.
  */
-const AiDraftRow = memo(({ question, icon, typeName }: Readonly<AiDraftRowProps>) => {
+const AiDraftRow = memo(({ question, icon, typeName, t }: Readonly<AiDraftRowProps>) => {
   const showsOptionCount = question.type ? CHOICE_ELEMENT_TYPES.has(question.type) : false;
 
   return (
@@ -46,7 +47,9 @@ const AiDraftRow = memo(({ question, icon, typeName }: Readonly<AiDraftRowProps>
         {/* Reserved as soon as the type lands, filled when the choices do, so it never jumps. */}
         {showsOptionCount ? (
           <p className="mt-0.5 text-xs text-slate-400">
-            {question.choiceCount ? `${question.choiceCount} options` : " "}
+            {question.choiceCount
+              ? t("workspace.surveys.ai_create.option_count", { count: question.choiceCount })
+              : " "}
           </p>
         ) : null}
       </div>
@@ -98,7 +101,7 @@ export const AiDraftPreview = ({ draft, isGenerating, className }: Readonly<AiDr
       aria-label={t("workspace.surveys.ai_create.draft_survey")}
       aria-busy={isGenerating}
       className={cn(
-        "focus-visible:ring-ring relative overflow-hidden rounded-lg border border-slate-200 bg-white focus-visible:ring-1 focus-visible:outline-hidden",
+        "focus-visible:ring-ring relative flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white focus-visible:ring-1 focus-visible:outline-hidden",
         className
       )}>
       {isGenerating ? <AiActivityBar /> : null}
@@ -119,6 +122,7 @@ export const AiDraftPreview = ({ draft, isGenerating, className }: Readonly<AiDr
               question={question}
               icon={iconMap[question.type as TSurveyElementTypeEnum]}
               typeName={nameMap[question.type as TSurveyElementTypeEnum]}
+              t={t}
             />
           ))}
 

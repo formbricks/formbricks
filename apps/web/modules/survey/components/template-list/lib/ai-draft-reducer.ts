@@ -22,9 +22,11 @@ export const EMPTY_AI_DRAFT: TAiDraftState = { questions: [] };
  * Two properties carry the whole feel of the streaming UI, and both are load-bearing rather than
  * defensive:
  *
- * 1. **Append-only.** A snapshot that arrives with fewer questions, or with a field blanked out,
- *    loses to what is already there. Snapshots are unvalidated and parsed from a growing prefix, so
- *    without this a malformed frame can unmount rows the user is in the middle of reading.
+ * 1. **Append-only, keyed by position in the draft.** A snapshot that arrives with fewer questions,
+ *    or with a field blanked out, loses to what is already there. Matching is by `key` rather than by
+ *    index because a question the model has not started writing is skipped entirely, so the flattened
+ *    array shifts under you: a later snapshot that fills in question 0 would otherwise align it with
+ *    question 1 and emit the same key twice.
  *
  * 2. **Referential stability.** Any question whose fields did not change comes back as the *same
  *    object*, and the whole state object comes back unchanged when nothing moved. Paired with a
@@ -37,22 +39,16 @@ export function mergeAiDraftSnapshot(
   snapshot: TSurveyGenerationDraftSnapshot
 ): TAiDraftState {
   const incoming = flattenSnapshotQuestions(snapshot);
-  const questions: TAiDraftQuestion[] = [];
+  const byKey = new Map(previous.questions.map((question) => [question.key, question]));
+  const questions: TAiDraftQuestion[] = [...previous.questions];
   let changed = false;
 
-  const length = Math.max(previous.questions.length, incoming.length);
-  for (let index = 0; index < length; index++) {
-    const previousQuestion = previous.questions[index];
-    const incomingQuestion = incoming[index];
-
-    if (!incomingQuestion) {
-      // Shorter snapshot: keep what we already showed.
-      questions.push(previousQuestion);
-      continue;
-    }
+  for (const incomingQuestion of incoming) {
+    const previousQuestion = byKey.get(incomingQuestion.key);
 
     if (!previousQuestion) {
       questions.push(incomingQuestion);
+      byKey.set(incomingQuestion.key, incomingQuestion);
       changed = true;
       continue;
     }
@@ -64,12 +60,10 @@ export function mergeAiDraftSnapshot(
       choiceCount: incomingQuestion.choiceCount ?? previousQuestion.choiceCount,
     };
 
-    if (isSameQuestion(previousQuestion, merged)) {
-      questions.push(previousQuestion);
-      continue;
-    }
+    if (isSameQuestion(previousQuestion, merged)) continue;
 
-    questions.push(merged);
+    questions[questions.indexOf(previousQuestion)] = merged;
+    byKey.set(merged.key, merged);
     changed = true;
   }
 

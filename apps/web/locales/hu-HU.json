@@ -2999,6 +2999,7 @@
         "generation_failed": "A piszkozat nem fejeződhetett be. Próbálja újra, vagy adjon meg valamivel több részletet.",
         "nothing_generated": "Nem érkezett vissza egyetlen kérdés sem. Próbálja meg valamivel részletesebben leírni a kérdőívet.",
         "open_in_editor": "Megnyitás a szerkesztőben",
+        "option_count": "{count, plural, one {# lehetőség} other {# lehetőség}}",
         "prompt_helper_churn": "Értse meg, hogy az aktív ügyfelek miért hagyhatják el a szolgáltatást, és mi tartaná meg őket elkötelezetten",
         "prompt_helper_churn_label": "Lemorzsolódási kockázat",
         "prompt_helper_onboarding": "Derítsd ki, miért hagyják abba az új felhasználók a regisztrációt, és mi segítené őket a beállítás befejezésében",

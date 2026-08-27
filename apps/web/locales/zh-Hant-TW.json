@@ -2999,6 +2999,7 @@
         "generation_failed": "無法完成草稿。請再試一次，或新增更多細節。",
         "nothing_generated": "沒有產生任何問題。請試著更詳細地描述問卷內容。",
         "open_in_editor": "在編輯器中開啟",
+        "option_count": "{count, plural, other {# 個選項}}",
         "prompt_helper_churn": "了解活躍客戶可能流失的原因,以及如何讓他們保持參與度",
         "prompt_helper_churn_label": "流失風險",
         "prompt_helper_onboarding": "了解新用戶為何在引導過程中停止，以及什麼能幫助他們完成設定",

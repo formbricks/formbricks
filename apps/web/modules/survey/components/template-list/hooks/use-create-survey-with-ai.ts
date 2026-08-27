@@ -51,6 +51,19 @@ export const useCreateSurveyWithAI = ({
   const pendingSnapshotRef = useRef<TSurveyGenerationDraftSnapshot | null>(null);
   const frameRef = useRef<number | null>(null);
 
+  /**
+   * Drop anything the previous generation had queued. A snapshot buffered for the next frame can
+   * otherwise land after Stop and Regenerate have already started a new run, and the append-only
+   * reducer would happily merge the abandoned questions into the new draft.
+   */
+  const discardQueuedSnapshot = useCallback(() => {
+    pendingSnapshotRef.current = null;
+    if (frameRef.current !== null) {
+      globalThis.cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
+  }, []);
+
   const flushSnapshot = useCallback(() => {
     frameRef.current = null;
     const snapshot = pendingSnapshotRef.current;
@@ -86,7 +99,7 @@ export const useCreateSurveyWithAI = ({
       onSuccess(survey.id);
     },
     onError: (error) => {
-      dispatch({ type: "FAIL", errorCode: getAiErrorCode(error) });
+      dispatch({ type: "CREATE_FAILED", errorCode: getAiErrorCode(error) });
     },
   });
 
@@ -102,7 +115,10 @@ export const useCreateSurveyWithAI = ({
           onEvent: (event) => {
             switch (event.type) {
               case "partial":
-                queueSnapshot(event.draft);
+                // A late chunk from a run the user already abandoned must not reach the reducer.
+                if (abortControllerRef.current === controller) {
+                  queueSnapshot(event.draft);
+                }
                 break;
               case "done":
                 flushSnapshot();
@@ -145,18 +161,21 @@ export const useCreateSurveyWithAI = ({
 
   const handleStop = useCallback(() => {
     abortControllerRef.current?.abort();
+    discardQueuedSnapshot();
     dispatch({ type: "STOP" });
-  }, []);
+  }, [discardQueuedSnapshot]);
 
   const handleRegenerate = useCallback(() => {
+    discardQueuedSnapshot();
     dispatch({ type: "REGENERATE" });
     void runGeneration();
-  }, [runGeneration]);
+  }, [discardQueuedSnapshot, runGeneration]);
 
   const handleEditPrompt = useCallback(() => {
     abortControllerRef.current?.abort();
+    discardQueuedSnapshot();
     dispatch({ type: "EDIT_PROMPT" });
-  }, []);
+  }, [discardQueuedSnapshot]);
 
   const handleOpenInEditor = useCallback(() => {
     if (state.status !== "review" || !state.payload) return;
