@@ -513,8 +513,20 @@ export const recordSsoCallbackOutcome = (requestUrl: string, response: Response)
     // and any unhandled 500 present, and neither redirects.
     if (response.status >= 400) return { outcome: "failure", reason: `http_${response.status}` };
     if (response.status >= 300) {
+      // A redirect the browser cannot follow is a failed sign-in, not a quiet success. Both shapes
+      // below would otherwise corrupt the ratio the alert keys on rather than merely lose detail: a
+      // missing `Location` counted as success inflates the healthy side, and a malformed one threw
+      // into the outer catch, dropping the callback from both sides.
       const location = response.headers.get("location");
-      const error = location ? new URL(location, requestUrl).searchParams.get("error") : null;
+      if (!location) return { outcome: "failure", reason: "missing_location" };
+
+      let error: string | null;
+      try {
+        error = new URL(location, requestUrl).searchParams.get("error");
+      } catch {
+        return { outcome: "failure", reason: "malformed_location" };
+      }
+
       if (!error) return { outcome: "success" };
       return { outcome: "failure", reason: SSO_CALLBACK_REASONS.has(error) ? error : "other" };
     }

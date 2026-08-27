@@ -847,13 +847,25 @@ describe("recordSsoCallbackOutcome (ENG-2551)", () => {
     expect(logger.withContext).not.toHaveBeenCalled();
   });
 
-  // Observability must never be able to fail a sign-in that otherwise worked.
-  test("never throws, even on a malformed Location header", () => {
+  /**
+   * A redirect the browser cannot follow is a failed sign-in. Both of these previously corrupted the
+   * ratio rather than merely losing detail — a missing `Location` was recorded as a *success*, and a
+   * malformed one threw into the outer catch so the callback vanished from both sides of the ratio.
+   * The earlier test here asserted only that it did not throw, which is the weaker property and is
+   * why the suite stayed green.
+   */
+  test.each([
+    ["a redirect with no Location", undefined, "missing_location"],
+    ["a malformed Location", "http://[", "malformed_location"],
+  ])("records %s as a failure", (_label, location, reason) => {
     expect(() =>
       recordSsoCallbackOutcome(
         "https://app.test/api/auth/callback/azuread",
-        new Response(null, { status: 302, headers: { location: "http://[" } })
+        new Response(null, { status: 302, ...(location ? { headers: { location } } : {}) })
       )
     ).not.toThrow();
+
+    expect(contextOf()).toMatchObject({ ssoCallbackOutcome: "failure", ssoCallbackReason: reason });
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith("SSO callback failed");
   });
 });
