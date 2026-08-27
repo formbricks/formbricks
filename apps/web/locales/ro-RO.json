@@ -2965,6 +2965,7 @@
     "surveys": {
       "ai_create": {
         "ai_output_too_long": "Acest prompt solicită mai mult decât poate genera AI-ul dintr-o dată. Simplifică-l sau împarte-l în sondaje mai mici.",
+        "ai_survey_creation": "Creare chestionar cu AI",
         "card_description": "Descrie ce vrei să afli și creează o ciornă de chestionar.",
         "card_title": "Creează cu AI",
         "characters": "{count}/{max}",

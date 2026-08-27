@@ -2965,6 +2965,7 @@
     "surveys": {
       "ai_create": {
         "ai_output_too_long": "Cette instruction demande plus que ce que l'IA peut générer en une seule fois. Simplifie-la ou divise-la en plusieurs questionnaires.",
+        "ai_survey_creation": "Création de sondage par IA",
         "card_description": "Décris ce que tu veux apprendre et crée un brouillon de questionnaire.",
         "card_title": "Créer avec l'IA",
         "characters": "{count}/{max}",

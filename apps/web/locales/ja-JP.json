@@ -2965,6 +2965,7 @@
     "surveys": {
       "ai_create": {
         "ai_output_too_long": "このプロンプトは、AIが一度に生成できる量を超えています。プロンプトを簡潔にするか、複数のアンケートに分割してください。",
+        "ai_survey_creation": "AIアンケート作成",
         "card_description": "知りたいことを説明するだけで、アンケートの下書きを作成できます。",
         "card_title": "AIで作成",
         "characters": "{count}/{max}",

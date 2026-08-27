@@ -2965,6 +2965,7 @@
     "surveys": {
       "ai_create": {
         "ai_output_too_long": "此提示要求生成的内容超出了 AI 一次性生成的能力。请简化提示或将其拆分为多个较小的调查问卷。",
+        "ai_survey_creation": "AI 问卷创建",
         "card_description": "描述你想了解的内容,创建问卷草稿。",
         "card_title": "使用 AI 创建",
         "characters": "{count}/{max}",

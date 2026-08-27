@@ -2965,6 +2965,7 @@
     "surveys": {
       "ai_create": {
         "ai_output_too_long": "Este prompt solicita más de lo que la IA puede generar de una sola vez. Simplifícalo o divídelo en encuestas más pequeñas.",
+        "ai_survey_creation": "Creación de encuestas con IA",
         "card_description": "Describe lo que quieres aprender y crea un borrador de encuesta.",
         "card_title": "Crear con IA",
         "characters": "{count}/{max}",

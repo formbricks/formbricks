@@ -2965,6 +2965,7 @@
     "surveys": {
       "ai_create": {
         "ai_output_too_long": "Bu istem, yapay zekanın tek seferde üretebileceğinden daha fazlasını istiyor. Daha basit hale getir veya daha küçük anketlere böl.",
+        "ai_survey_creation": "Yapay zeka anket oluşturma",
         "card_description": "Ne öğrenmek istediğini anlat ve bir taslak anket oluştur.",
         "card_title": "AI ile Oluştur",
         "characters": "{count}/{max}",

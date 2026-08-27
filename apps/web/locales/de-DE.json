@@ -2965,6 +2965,7 @@
     "surveys": {
       "ai_create": {
         "ai_output_too_long": "Diese Eingabe fordert mehr an, als die KI auf einmal generieren kann. Vereinfache sie oder teile sie in kleinere Umfragen auf.",
+        "ai_survey_creation": "KI-Umfrageerstellung",
         "card_description": "Beschreibe, was du herausfinden möchtest, und erstelle einen Umfrage-Entwurf.",
         "card_title": "Mit KI erstellen",
         "characters": "{count}/{max}",

@@ -2965,6 +2965,7 @@
     "surveys": {
       "ai_create": {
         "ai_output_too_long": "Deze prompt vraagt om meer dan de AI in één keer kan genereren. Vereenvoudig het of splits het op in kleinere enquêtes.",
+        "ai_survey_creation": "AI-enquête maken",
         "card_description": "Beschrijf wat je wilt leren en maak een conceptenquête.",
         "card_title": "Maak met AI",
         "characters": "{count}/{max}",
