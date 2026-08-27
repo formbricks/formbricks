@@ -135,7 +135,7 @@ export function AIQuerySection({
           variant="default"
           className="w-full"
           disabled={!userQuery.trim() || isGenerating}>
-          <AiIcon animated={isGenerating} />
+          <AiIcon tone="inherit" animated={isGenerating} />
           {t("workspace.analysis.charts.create_chart_with_ai")}
         </Button>
         {/*

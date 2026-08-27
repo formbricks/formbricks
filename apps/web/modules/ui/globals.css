@@ -19,9 +19,11 @@
   /* AI — the mark for generative features. A token of its own rather than a reuse of
      --color-brand-dark, which means "you are here" (active nav, active tab): the two carry different
      meanings and will diverge. Icon and hairline only; never a button surface or a card background,
-     which would break the Quiet Primary Rule. Darkened from the logo's teal family to clear 4.5:1
-     against white. */
-  --color-ai: #0d9488;
+     which would break the Quiet Primary Rule.
+     5.47:1 on white, so it is safe as text as well as an icon. It is for light surfaces only — on a
+     filled dark button it drops to 3.3:1 and reads as muddy next to a white label, so the mark
+     inherits the button's foreground there instead (see AiIcon's `tone`). */
+  --color-ai: #0f766e;
 
   --color-focus: var(--formbricks-focus, #1982fc);
   --color-brandnew: var(--formbricks-brand, #038178);

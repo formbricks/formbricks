@@ -23,6 +23,12 @@ export type AiIconProps = Omit<LucideProps, "size"> & {
   size?: keyof typeof AI_ICON_SIZE;
   /** Twinkles while a generation is in flight. Decorative — the status text carries the meaning. */
   animated?: boolean;
+  /**
+   * `ai` paints the mark in the AI token, which is tuned for light surfaces. Use `inherit` inside a
+   * filled button or any coloured surface, where the token drops to ~3.3:1 and looks muddy beside a
+   * white label — there the mark should read like every other icon in that button.
+   */
+  tone?: "ai" | "inherit";
 };
 
 /**
@@ -31,7 +37,7 @@ export type AiIconProps = Omit<LucideProps, "size"> & {
  * silently break both.
  */
 export const AiIcon = forwardRef<SVGSVGElement, Readonly<AiIconProps>>(
-  ({ size = "sm", animated = false, className, ...props }, ref) => (
+  ({ size = "sm", animated = false, tone = "ai", className, ...props }, ref) => (
     <AiGlyph
       ref={ref}
       aria-hidden="true"
@@ -39,7 +45,12 @@ export const AiIcon = forwardRef<SVGSVGElement, Readonly<AiIconProps>>(
       // hand-set strokeWidth today. At sm we keep the default so the mark matches the other inline
       // icons sitting next to it.
       {...(size === "sm" ? {} : { strokeWidth: 1.5, absoluteStrokeWidth: true })}
-      className={cn(AI_ICON_SIZE[size], "text-ai", animated && "animate-ai-twinkle", className)}
+      className={cn(
+        AI_ICON_SIZE[size],
+        tone === "ai" && "text-ai",
+        animated && "animate-ai-twinkle",
+        className
+      )}
       {...props}
     />
   )
