@@ -6,6 +6,10 @@ import { PINNED_SSO_PROVIDER_IDS } from "@/modules/auth/lib/legacy-sso-callback"
 const { captureSsoIdentity } = vi.hoisted(() => ({ captureSsoIdentity: vi.fn() }));
 vi.mock("./sso-request-context", () => ({ captureSsoIdentity }));
 
+// The module warns at import time when a pseudo-tenant is configured (ENG-2750); capture it.
+const { loggerWarn } = vi.hoisted(() => ({ loggerWarn: vi.fn() }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: loggerWarn } }));
+
 // The pinned SSO callback URL is built from `getAuthIssuerUrl()`, which reads `@/lib/env` directly rather
 // than the constants mocked below — it has to, because that helper encodes Better Auth's own base-URL
 // precedence (`BETTER_AUTH_URL ?? NEXTAUTH_URL ?? WEBAPP_URL`). Spread the real env so `@/lib/constants`
@@ -85,6 +89,7 @@ const callMapper = (mapper: unknown, profile: Record<string, unknown>): { email?
 
 beforeEach(() => {
   captureSsoIdentity.mockClear();
+  loggerWarn.mockClear();
 });
 
 afterEach(() => {
@@ -321,6 +326,72 @@ describe("better-auth SSO providers", () => {
       );
       expect(azure?.authorizationUrl).toBeUndefined();
       expect(azure?.tokenUrl).toBeUndefined();
+    });
+
+    /**
+     * ENG-2750: the multi-tenant pseudo-tenants must NOT take the discovery branch. Their discovery
+     * documents advertise the literal `{tenantid}` template as `issuer`, which 1.7's literal `iss`
+     * comparison can never match — with `AZUREAD_TENANT_ID=common` in the env (Cloud prod's config),
+     * every Microsoft sign-in failed verification and landed on `?error=unable_to_get_user_info`.
+     * The pseudo-tenant is preserved in the endpoint URLs: `organizations`/`consumers` still restrict
+     * which account types Microsoft accepts at the authorize endpoint.
+     */
+    test.each([
+      ["common", "common"],
+      ["organizations", "organizations"],
+      ["consumers", "consumers"],
+      // Case-insensitive and trimmed: the value is an operator-typed env var.
+      ["Common", "Common"],
+      [" common ", "common"],
+    ])(
+      "Azure treats the pseudo-tenant %j like unset: explicit endpoints, no discovery",
+      async (value, inUrl) => {
+        const m = await loadProviders({
+          ENTERPRISE_LICENSE_KEY: "lic",
+          AZURE_OAUTH_ENABLED: true,
+          AZUREAD_TENANT_ID: value,
+        });
+        const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+
+        expect(azure?.discoveryUrl).toBeUndefined();
+        expect(azure?.authorizationUrl).toBe(
+          `https://login.microsoftonline.com/${inUrl}/oauth2/v2.0/authorize`
+        );
+        expect(azure?.tokenUrl).toBe(`https://login.microsoftonline.com/${inUrl}/oauth2/v2.0/token`);
+        expect(azure?.userInfoUrl).toBe("https://graph.microsoft.com/oidc/userinfo");
+        // The operator set a value and is getting the weaker multi-tenant mode — that must be visible.
+        expect(loggerWarn).toHaveBeenCalledTimes(1);
+        expect(loggerWarn.mock.calls[0][0]).toContain("pseudo-tenant");
+      }
+    );
+
+    // A verified-domain tenant is concrete: its discovery document carries a real issuer, so it keeps
+    // the stronger discovery path exactly like a GUID.
+    test("Azure uses discovery for a domain-style tenant", async () => {
+      const m = await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        AZUREAD_TENANT_ID: "contoso.onmicrosoft.com",
+      });
+      const azure = m.ssoGenericOAuthConfig.find((c) => c.providerId === "azuread");
+
+      expect(azure?.discoveryUrl).toBe(
+        "https://login.microsoftonline.com/contoso.onmicrosoft.com/v2.0/.well-known/openid-configuration"
+      );
+      expect(azure?.authorizationUrl).toBeUndefined();
+    });
+
+    test.each([
+      ["unset", undefined],
+      ["a concrete tenant", "00000000-1111-2222-3333-444444444444"],
+    ])("Azure does not warn when the tenant is %s", async (_label, value) => {
+      await loadProviders({
+        ENTERPRISE_LICENSE_KEY: "lic",
+        AZURE_OAUTH_ENABLED: true,
+        AZUREAD_TENANT_ID: value,
+      });
+
+      expect(loggerWarn).not.toHaveBeenCalled();
     });
 
     test("Azure mapProfileToUser resolves the display name through its fallback chain", async () => {

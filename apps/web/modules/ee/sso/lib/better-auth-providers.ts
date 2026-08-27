@@ -1,6 +1,7 @@
 import "server-only";
 import type { BetterAuthOptions } from "better-auth";
 import type { GenericOAuthConfig, GenericOAuthUserInfo } from "better-auth/plugins";
+import { logger } from "@formbricks/logger";
 import {
   AZUREAD_CLIENT_ID,
   AZUREAD_CLIENT_SECRET,
@@ -174,20 +175,37 @@ const ssoAccountSubject =
  * has not set it, and drop support for genuinely multi-tenant app registrations, which have no single
  * issuer by construction — the tenant decides the mechanism:
  *
- * - **Concrete tenant**: keep `discoveryUrl`. The discovered issuer is a real value, so the id_token is
- *   fully verified. Strictly stronger than 1.6.
- * - **`common`**: configure the endpoints explicitly and skip discovery, so no `idTokenConfig` is built
+ * - **Concrete tenant** (a directory GUID, or a verified domain like `contoso.onmicrosoft.com`): keep
+ *   `discoveryUrl`. The discovered issuer is a real value, so the id_token is fully verified. Strictly
+ *   stronger than 1.6.
+ * - **Unset, or a multi-tenant pseudo-tenant (`common` / `organizations` / `consumers`, ENG-2750)**:
+ *   configure the endpoints explicitly and skip discovery, so no `idTokenConfig` is built
  *   (`generic-oauth/index.mjs` only constructs it inside the discovery branch) and identity comes from
  *   UserInfo — the 1.6 behaviour, over a client-authenticated back-channel call to Microsoft. Note this
  *   is not where the code flow's security lives: that is `state` + PKCE and the authenticated code
  *   exchange, and RFC 9207 mix-up defence still applies via `iss` on the authorization response when a
  *   provider sends one.
  *
- * Deliberately NOT setting `requireIdTokenVerification`: on the `common` path it would throw at init and
- * take Azure sign-in down, which is the outcome this split exists to avoid.
+ * The pseudo-tenants must not take the discovery branch because their discovery documents advertise the
+ * literal `{tenantid}` template as `issuer` — Microsoft's guidance is to substitute the token's `tid`,
+ * which a literal comparison can never satisfy — so every sign-in would fail verification and land on
+ * `?error=unable_to_get_user_info`. That is exactly how ENG-2750 took Microsoft SSO down on Cloud: prod
+ * had `AZUREAD_TENANT_ID=common`, harmless on 1.6, a full outage on 1.7. The pseudo-tenant is still kept
+ * in the endpoint URLs, because `organizations` / `consumers` meaningfully restrict which account types
+ * Microsoft accepts at the authorize endpoint.
+ *
+ * Deliberately NOT setting `requireIdTokenVerification`: on the multi-tenant path it would throw at init
+ * and take Azure sign-in down, which is the outcome this split exists to avoid.
  */
-const azureTenant = AZUREAD_TENANT_ID || "common";
-const azureEndpoints = AZUREAD_TENANT_ID
+const AZURE_PSEUDO_TENANTS = new Set(["common", "organizations", "consumers"]);
+const azureTenant = AZUREAD_TENANT_ID?.trim() || "common";
+const isConcreteAzureTenant = !AZURE_PSEUDO_TENANTS.has(azureTenant.toLowerCase());
+if (AZUREAD_TENANT_ID?.trim() && !isConcreteAzureTenant) {
+  logger.warn(
+    `AZUREAD_TENANT_ID="${azureTenant}" is a multi-tenant pseudo-tenant; treating it like unset — identity comes from the userinfo endpoint and id_tokens are not verified. Set a Directory (tenant) ID for full id_token verification.`
+  );
+}
+const azureEndpoints = isConcreteAzureTenant
   ? {
       discoveryUrl: `https://login.microsoftonline.com/${azureTenant}/v2.0/.well-known/openid-configuration`,
     }
