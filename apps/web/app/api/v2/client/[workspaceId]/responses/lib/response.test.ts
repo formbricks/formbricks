@@ -49,7 +49,7 @@ vi.mock("@/lib/constants", () => ({
   SMTP_PORT: "mock-smtp-port",
   STRIPE_API_VERSION: "2026-01-28.clover",
   COMMUNITY_WORKSPACE_LIMIT: 1,
-  CLOUD_LICENSE_FALLBACK_WORKSPACE_LIMIT: 3,
+  CLOUD_HOBBY_WORKSPACE_LIMIT: 1,
 }));
 
 vi.mock("@/lib/organization/service");

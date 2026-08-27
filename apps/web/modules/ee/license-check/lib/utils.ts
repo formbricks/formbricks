@@ -1,7 +1,7 @@
 import "server-only";
 import {
   AUDIT_LOG_ENABLED,
-  CLOUD_LICENSE_FALLBACK_WORKSPACE_LIMIT,
+  CLOUD_HOBBY_WORKSPACE_LIMIT,
   COMMUNITY_WORKSPACE_LIMIT,
   IS_FORMBRICKS_CLOUD,
   IS_RECAPTCHA_CONFIGURED,
@@ -195,7 +195,7 @@ export const getOrganizationWorkspacesLimit = async (organizationId: string): Pr
   if (IS_FORMBRICKS_CLOUD) {
     const cloudLicenseAllowsLimits =
       entitlementsContext.licenseStatus === "active" || entitlementsContext.licenseStatus === "no-license";
-    if (!cloudLicenseAllowsLimits) return CLOUD_LICENSE_FALLBACK_WORKSPACE_LIMIT;
+    if (!cloudLicenseAllowsLimits) return CLOUD_HOBBY_WORKSPACE_LIMIT;
     return entitlementsContext.limits.workspaces ?? Infinity;
   }
 

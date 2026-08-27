@@ -552,7 +552,7 @@ describe("License Utils", () => {
       expect(result).toBe(Infinity);
     });
 
-    test("returns the cloud license-server fallback when cloud license status does not allow usage", async () => {
+    test("falls back to the cloud Hobby limit when the license status does not allow usage", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
@@ -562,7 +562,9 @@ describe("License Utils", () => {
 
       const result = await getOrganizationWorkspacesLimit("org_1");
 
-      expect(result).toBe(3);
+      // The org's own entitlement (10) is deliberately ignored: an entitlement we cannot verify is
+      // treated as no entitlement, so the free-tier allowance applies until the license resolves.
+      expect(result).toBe(1);
     });
 
     test("returns self-hosted workspace limit from active license feature", async () => {
