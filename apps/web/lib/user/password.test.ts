@@ -2,12 +2,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { verifyPassword } from "@/modules/auth/lib/utils";
-import { getCredentialPasswordHash, verifyUserPassword } from "./password";
+import { getCredentialPasswordHash, hasCredentialAccount, verifyUserPassword } from "./password";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     account: {
       findUnique: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -73,5 +74,27 @@ describe("user password helpers", () => {
     await expect(verifyUserPassword("sso-user", "plain-password")).rejects.toThrow(InvalidInputError);
 
     expect(mockVerifyPassword).not.toHaveBeenCalled();
+  });
+
+  test("hasCredentialAccount uses Better Auth's own credential-account predicate", async () => {
+    vi.mocked(prisma.account.count).mockResolvedValue(1);
+
+    await expect(hasCredentialAccount("user-1")).resolves.toBe(true);
+    // The same four-column predicate Better Auth's `findCredentialAccount` uses. Anything broader would
+    // answer "may reset" for a row `resetPassword` cannot then find, which turns into a unique-constraint
+    // collision on its create branch rather than a reset.
+    expect(prisma.account.count).toHaveBeenCalledWith({
+      where: {
+        userId: "user-1",
+        provider: "credential",
+        providerAccountId: "user-1",
+      },
+    });
+  });
+
+  test("hasCredentialAccount is false for an SSO-only user", async () => {
+    vi.mocked(prisma.account.count).mockResolvedValue(0);
+
+    await expect(hasCredentialAccount("user-2")).resolves.toBe(false);
   });
 });
