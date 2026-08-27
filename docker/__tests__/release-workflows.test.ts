@@ -29,6 +29,7 @@ type WorkflowStep = {
 
 type WorkflowTriggers = {
   push?: { branches?: string[] };
+  workflow_dispatch?: unknown;
   pull_request?: unknown;
   pull_request_target?: unknown;
 };
@@ -116,6 +117,9 @@ describe("release workflows", () => {
     expect(triggers).not.toHaveProperty("pull_request");
     expect(triggers).not.toHaveProperty("pull_request_target");
     expect(triggers?.push?.branches).toEqual(["main"]);
+    // Required, not incidental: dispatch is the only way to check the pipeline between release
+    // flow changes, and dropping it would quietly remove that without failing anything else.
+    expect(triggers).toHaveProperty("workflow_dispatch");
     // workflow_dispatch runs the file as it exists on the caller's chosen ref, so the trigger
     // list alone is not enough - the job itself has to refuse any ref but main.
     expect(workflow.jobs?.["linear-release-smoke"]?.if).toBe("github.ref == 'refs/heads/main'");
