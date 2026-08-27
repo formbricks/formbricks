@@ -27,7 +27,11 @@ type WorkflowStep = {
   };
 };
 
-type WorkflowTriggers = { push?: { branches?: string[] } };
+type WorkflowTriggers = {
+  push?: { branches?: string[] };
+  pull_request?: unknown;
+  pull_request_target?: unknown;
+};
 
 type Workflow = {
   jobs?: Record<string, { if?: string; needs?: string[]; steps?: WorkflowStep[] } | undefined>;
@@ -84,19 +88,31 @@ describe("release workflows", () => {
     expect([...new Set(refs)]).toEqual([linearActionSha]);
   });
 
-  test("completes the Linear release once the shipped artifacts are published", () => {
+  test("completes the Linear release once the published artifacts are out", () => {
     const needs = readWorkflow(formbricksReleaseWorkflow).jobs?.["linear-release-complete"]?.needs;
 
     expect(needs).toEqual(
-      expect.arrayContaining([
-        "docker-build-community",
-        "docker-build-cloud",
-        "helm-chart-release",
-        "move-stable-tag",
-      ])
+      expect.arrayContaining(["docker-build-community", "docker-build-cloud", "helm-chart-release"])
     );
-    // The Helm appVersion PR targets main, not the released tag, so it must not gate Linear completion.
+    // Neither of these publishes anything for the released tag, and a skipped or failed
+    // dependency skips this job, so either one gates Linear completion on unrelated work:
+    // update-helm-app-version opens a follow-up PR against main and fails without its
+    // credentials, and move-stable-tag is skipped by design for any stable release that is
+    // not the latest - i.e. every patch on an older line.
     expect(needs).not.toContain("update-helm-app-version");
+    expect(needs).not.toContain("move-stable-tag");
+  });
+
+  // The smoke job holds a pipeline-mutating Linear key, so it must not run a pull request
+  // branch's own copy of itself: that would let anyone who can push a branch drop dry_run or
+  // add an exfiltration step. Only main and manual dispatch may carry the key.
+  test("keeps the credentialed smoke dry-run off pull request branches", () => {
+    const workflow = readWorkflow(linearSmokeWorkflow);
+    const triggers = workflow.on ?? workflow.true;
+
+    expect(triggers).not.toHaveProperty("pull_request");
+    expect(triggers).not.toHaveProperty("pull_request_target");
+    expect(triggers?.push?.branches).toEqual(["main"]);
   });
 
   test("stamps the released version on Linear before completing the release", () => {

@@ -269,14 +269,20 @@ jobs:
     name: Mark Linear release as complete
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Shipped artifacts only. update-helm-app-version opens a follow-up PR against main
-    # rather than publishing anything for this tag, so gating completion on it left Linear
-    # stuck on every stable release the appVersion PR job failed.
+    # Published artifacts only, and only jobs that always run for a stable release.
+    #
+    # update-helm-app-version opens a follow-up PR against main rather than publishing
+    # anything for this tag, so gating completion on it left Linear stuck on every stable
+    # release its appVersion PR job failed.
+    #
+    # move-stable-tag is excluded for a subtler reason: its called job is gated on
+    # `!is_prerelease && make_latest`, so it is legitimately skipped for any stable release
+    # that is not the latest - every patch on an older line. A skipped dependency skips this
+    # job too, so depending on it would keep Linear stuck on exactly those releases.
     needs:
       - docker-build-community
       - docker-build-cloud
       - helm-chart-release
-      - move-stable-tag
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Harden the runner

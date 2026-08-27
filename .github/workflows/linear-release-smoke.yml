@@ -1,14 +1,21 @@
 name: Linear Release Smoke
 
-# Dry-run of the Linear release flow. Nothing here mutates the pipeline: dry_run makes the
-# action scan commits and call read-only Linear APIs, then log the action it would have taken.
+# Dry-run canary for the Linear release flow. dry_run makes the action scan commits and call
+# read-only Linear APIs, then log the action it would have taken; it never mutates the pipeline.
 #
-# It exists because the real flow only runs on a published release, so a broken job graph or
-# a stale action pin stayed invisible until release day - which is how stable-release
-# completion silently skipped three releases in a row.
+# It exists because the real flow only runs on a published release, so a stale action pin or a
+# broken install stayed invisible until release day.
 #
-# So it runs on any pull request that touches the release flow, giving that PR a dry run of
-# the change it is making. Dispatch it by hand to check the pipeline at any other time.
+# WHAT THIS DOES NOT PROVE. The pinned CLI returns from its complete command before resolving a
+# release when dry_run is set, so a green run here says nothing about whether an exact version
+# resolves or completes - a nonexistent version passes too. Treat it as "the action installs,
+# authenticates and scans", not as validation of the release flow. Exact-version completion is
+# only exercised by a real published release.
+#
+# TRIGGERS ARE DELIBERATELY TRUSTED-ONLY. This job holds a Linear key that can mutate the
+# pipeline, so it must never run code from a pull request branch: `pull_request` runs the PR's
+# own copy of this file, so anyone who can push a branch could drop dry_run or add an
+# exfiltration step. main and manual dispatch are the only events allowed to hold the key.
 on:
   workflow_dispatch:
     inputs:
@@ -16,7 +23,9 @@ on:
         description: "Version to target (blank targets the active started release)"
         required: false
         type: string
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
       - .github/workflows/linear-release.yml
       - .github/workflows/formbricks-release.yml
@@ -30,11 +39,6 @@ jobs:
     name: Dry-run the Linear release flow
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Fork pull requests get no access to LINEAR_ACCESS_KEY, so the dry run would fail on an
-    # empty key rather than tell anyone anything.
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
