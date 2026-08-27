@@ -161,7 +161,10 @@ export const parseRuleValue = (
     // `onKeyDown` blocks the exponent keys but not paste, and `Number()` happily reads `1e5` as
     // 100000. Accept only a plain decimal — optionally signed, since the numeric rule params are
     // bare `z.number()` and a negative threshold is legitimate — and treat anything else as 0.
-    if (!/^-?\d*\.?\d*$/.test(value.trim())) return 0;
+    // The fractional part is one group starting with the literal `.` rather than `\.?\d*`: the
+    // latter lets a digit run be split between two `\d*`, so a long non-numeric paste backtracks
+    // quadratically (Sonar S8786). Same accepted strings, linear time.
+    if (!/^-?\d*(\.\d*)?$/.test(value.trim())) return 0;
     return Number(value) || 0;
   }
 
