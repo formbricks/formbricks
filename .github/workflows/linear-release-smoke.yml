@@ -7,9 +7,8 @@ name: Linear Release Smoke
 # a stale action pin stayed invisible until release day - which is how stable-release
 # completion silently skipped three releases in a row.
 #
-# The paths trigger is deliberate: workflow_dispatch only becomes available once a workflow is
-# on the default branch, so the push filter is what lets the commit introducing a change here
-# prove itself on a PR branch. After merge, dispatch it by hand whenever the flow changes.
+# So it runs on any pull request that touches the release flow, giving that PR a dry run of
+# the change it is making. Dispatch it by hand to check the pipeline at any other time.
 on:
   workflow_dispatch:
     inputs:
@@ -17,8 +16,10 @@ on:
         description: "Version to target (blank targets the active started release)"
         required: false
         type: string
-  push:
+  pull_request:
     paths:
+      - .github/workflows/linear-release.yml
+      - .github/workflows/formbricks-release.yml
       - .github/workflows/linear-release-smoke.yml
 
 permissions:
@@ -29,6 +30,11 @@ jobs:
     name: Dry-run the Linear release flow
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # Fork pull requests get no access to LINEAR_ACCESS_KEY, so the dry run would fail on an
+    # empty key rather than tell anyone anything.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
