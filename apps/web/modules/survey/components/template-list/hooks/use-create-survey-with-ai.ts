@@ -3,6 +3,7 @@
 import { type SyntheticEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
+import { getAIUnavailableMessageForErrorCode } from "@/lib/ai/availability";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { AI_SURVEY_PROMPT_MIN_LENGTH } from "@/modules/survey/components/template-list/lib/ai-create-utils";
 import {
@@ -36,16 +37,9 @@ export const useCreateSurveyWithAI = ({
   const getErrorMessage = useCallback(
     (error: unknown) => {
       if (error instanceof V3ApiError) {
-        if (error.code === "ai_features_not_enabled") {
-          return t("workspace.surveys.ai_create.ai_not_in_plan");
-        }
-
-        if (error.code === "ai_smart_tools_disabled") {
-          return t("workspace.surveys.ai_create.ai_not_enabled");
-        }
-
-        if (error.code === "ai_instance_not_configured") {
-          return t("workspace.surveys.ai_create.ai_instance_not_configured");
+        const aiUnavailableMessage = getAIUnavailableMessageForErrorCode(error.code, t);
+        if (aiUnavailableMessage) {
+          return aiUnavailableMessage;
         }
 
         if (error.code === "ai_generated_payload_invalid") {

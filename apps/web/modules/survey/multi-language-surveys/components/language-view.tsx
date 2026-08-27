@@ -8,6 +8,7 @@ import { Language } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { checkAITranslationAvailableAction } from "@/modules/ee/ai-translation/lib/actions";
@@ -68,7 +69,7 @@ export const LanguageView = ({
 
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
   const [isAIAvailable, setIsAIAvailable] = useState(false);
-  const [aiUnavailableReason, setAiUnavailableReason] = useState<string | undefined>();
+  const [aiUnavailableReason, setAiUnavailableReason] = useState<TAIUnavailableReason | undefined>();
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalInfo>({
     title: "",
     open: false,

@@ -4,25 +4,12 @@ import {
   AI_SURVEY_PROMPT_MAX_LENGTH,
   AI_SURVEY_PROMPT_MIN_LENGTH,
   getHelperPrompts,
-  getUnavailableMessageKey,
 } from "./ai-create-utils";
 
 describe("ai-create-utils", () => {
   test("defines prompt limits", () => {
     expect(AI_SURVEY_PROMPT_MIN_LENGTH).toBe(4);
     expect(AI_SURVEY_PROMPT_MAX_LENGTH).toBe(1200);
-  });
-
-  test("returns the unavailable message key for each AI reason", () => {
-    expect(getUnavailableMessageKey("read_only")).toBe(
-      "workspace.surveys.read_only_user_not_allowed_to_create_survey_warning"
-    );
-    expect(getUnavailableMessageKey("not_in_plan")).toBe("workspace.surveys.ai_create.ai_not_in_plan");
-    expect(getUnavailableMessageKey("not_enabled")).toBe("workspace.surveys.ai_create.ai_not_enabled");
-    expect(getUnavailableMessageKey("instance_not_configured")).toBe(
-      "workspace.surveys.ai_create.ai_instance_not_configured"
-    );
-    expect(getUnavailableMessageKey()).toBe("workspace.surveys.ai_create.ai_not_available");
   });
 
   test("builds helper prompts with translated labels and prompts", () => {

@@ -1,20 +1,17 @@
 "use client";
 
 import { SparklesIcon } from "lucide-react";
-import Link from "next/link";
 import { type KeyboardEvent, type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { getAIUnavailableAction } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
+import { AIDisabledPrompt } from "@/modules/ai/components/ai-disabled-prompt";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
 import {
   AI_SURVEY_PROMPT_MAX_LENGTH,
   getHelperPrompts,
-  getUnavailableMessageKey,
 } from "@/modules/survey/components/template-list/lib/ai-create-utils";
-import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 
 export type TCreateWithAIFormFooterProps = {
@@ -47,7 +44,6 @@ export const CreateWithAIForm = ({
   promptInputRef,
 }: Readonly<CreateWithAIFormProps>) => {
   const { t } = useTranslation();
-  const { workspace } = useWorkspace();
 
   const { prompt, setPrompt, isBusy, canCreate, errorMessage, handleGenerate, clearError, submitLabel } =
     useCreateSurveyWithAI({
@@ -57,16 +53,6 @@ export const CreateWithAIForm = ({
       onSuccess,
     });
 
-  const unavailableAction = workspace?.organizationId
-    ? getAIUnavailableAction(aiUnavailableReason, workspace.organizationId)
-    : undefined;
-  let unavailableActionLabel: string | undefined;
-  if (unavailableAction?.type === "enable_ai") {
-    unavailableActionLabel = t("workspace.surveys.ai_create.enable_ai_in_settings");
-  } else if (unavailableAction?.type === "upgrade_plan") {
-    unavailableActionLabel = t("workspace.surveys.ai_create.upgrade_plan");
-  }
-
   const helperPrompts = useMemo(() => getHelperPrompts(t), [t]);
 
   const handlePromptKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -75,6 +61,18 @@ export const CreateWithAIForm = ({
       event.currentTarget.form?.requestSubmit();
     }
   };
+
+  // Nothing on this form can be submitted without AI, so the prompt replaces it outright rather than
+  // sitting above a disabled textarea and an unusable Create button.
+  if (!isAIAvailable) {
+    return (
+      <AIDisabledPrompt
+        title={t("workspace.surveys.ai_create.ai_survey_creation")}
+        reason={aiUnavailableReason}
+        feature="ai_survey_creation"
+      />
+    );
+  }
 
   const defaultFooter = (
     <div className="flex justify-end gap-2">
@@ -94,18 +92,6 @@ export const CreateWithAIForm = ({
 
   return (
     <form className="flex w-full flex-col space-y-4" onSubmit={handleGenerate}>
-      {!isAIAvailable && (
-        <Alert variant="info" role="status">
-          <AlertTitle>{t("workspace.surveys.ai_create.ai_not_available")}</AlertTitle>
-          <AlertDescription>{t(getUnavailableMessageKey(aiUnavailableReason))}</AlertDescription>
-          {unavailableAction && unavailableActionLabel && (
-            <AlertButton asChild>
-              <Link href={unavailableAction.href}>{unavailableActionLabel}</Link>
-            </AlertButton>
-          )}
-        </Alert>
-      )}
-
       {errorMessage && (
         <Alert variant="error">
           <AlertTitle>{t("common.error")}</AlertTitle>
@@ -121,7 +107,7 @@ export const CreateWithAIForm = ({
           maxLength={AI_SURVEY_PROMPT_MAX_LENGTH}
           placeholder={t("workspace.surveys.ai_create.prompt_placeholder")}
           value={prompt}
-          disabled={isBusy || !isAIAvailable}
+          disabled={isBusy}
           onChange={(event) => setPrompt(event.target.value)}
           onKeyDown={handlePromptKeyDown}
           aria-label={t("workspace.surveys.ai_create.prompt_label")}
@@ -137,31 +123,29 @@ export const CreateWithAIForm = ({
         </div>
       </div>
 
-      {isAIAvailable && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-700">{t("workspace.surveys.ai_create.try_prompt")}</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {helperPrompts.map((helperPrompt) => (
-              <Button
-                key={helperPrompt.label}
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="group w-full min-w-0 justify-start text-left"
-                disabled={isBusy}
-                title={helperPrompt.prompt}
-                aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
-                onClick={() => {
-                  setPrompt(helperPrompt.prompt);
-                  clearError();
-                }}>
-                <helperPrompt.Icon className="size-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-primary" />
-                <span className="min-w-0 truncate">{helperPrompt.label}</span>
-              </Button>
-            ))}
-          </div>
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-slate-700">{t("workspace.surveys.ai_create.try_prompt")}</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {helperPrompts.map((helperPrompt) => (
+            <Button
+              key={helperPrompt.label}
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="group w-full min-w-0 justify-start text-left"
+              disabled={isBusy}
+              title={helperPrompt.prompt}
+              aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
+              onClick={() => {
+                setPrompt(helperPrompt.prompt);
+                clearError();
+              }}>
+              <helperPrompt.Icon className="size-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-primary" />
+              <span className="min-w-0 truncate">{helperPrompt.label}</span>
+            </Button>
+          ))}
         </div>
-      )}
+      </div>
 
       {footerContent}
     </form>

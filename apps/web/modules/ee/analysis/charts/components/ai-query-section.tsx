@@ -1,21 +1,15 @@
 "use client";
 
 import { ActivityIcon, WandSparklesIcon } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { AIDisabledPrompt } from "@/modules/ai/components/ai-disabled-prompt";
 import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
-import {
-  type TAIUnavailableActionType,
-  type TAIUnavailableReason,
-  getAIUnavailableAction,
-} from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { getTranslatedAIChartError } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
-import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 
@@ -34,51 +28,17 @@ export function AIQuerySection({
   isAIAvailable = true,
   aiUnavailableReason,
 }: Readonly<AIQuerySectionProps>) {
-  const { workspace } = useWorkspace();
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { t } = useTranslation();
 
-  const translateAIUnavailableMessage = (reason: TAIUnavailableReason | undefined): string => {
-    switch (reason) {
-      case "not_in_plan":
-        return t("workspace.analysis.charts.ai_not_in_plan");
-      case "not_enabled":
-        return t("workspace.analysis.charts.ai_not_enabled");
-      case "instance_not_configured":
-        return t("workspace.analysis.charts.ai_instance_not_configured");
-      default:
-        return t("workspace.analysis.charts.ai_not_available");
-    }
-  };
-
-  const translateAIUnavailableAction = (actionType: TAIUnavailableActionType): string => {
-    switch (actionType) {
-      case "enable_ai":
-        return t("workspace.analysis.charts.ai_enable_in_settings");
-      case "upgrade_plan":
-        return t("workspace.analysis.charts.ai_upgrade_plan");
-    }
-  };
-
-  const aiUnavailableMessage = translateAIUnavailableMessage(aiUnavailableReason);
-  const aiUnavailableAction = workspace?.organizationId
-    ? getAIUnavailableAction(aiUnavailableReason, workspace.organizationId)
-    : undefined;
-
   if (!isAIAvailable) {
     return (
-      <Alert role="status">
-        <AlertTitle>{t("workspace.analysis.charts.ai_chart_generation")}</AlertTitle>
-        <AlertDescription>{aiUnavailableMessage}</AlertDescription>
-        {aiUnavailableAction && (
-          <AlertButton asChild>
-            <Link href={aiUnavailableAction.href}>
-              {translateAIUnavailableAction(aiUnavailableAction.type)}
-            </Link>
-          </AlertButton>
-        )}
-      </Alert>
+      <AIDisabledPrompt
+        title={t("workspace.analysis.charts.ai_chart_generation")}
+        reason={aiUnavailableReason}
+        feature="ai_chart_generation"
+      />
     );
   }
 
