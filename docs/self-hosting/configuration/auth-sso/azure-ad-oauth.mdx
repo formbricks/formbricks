@@ -70,11 +70,16 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 
     <Note>
       Use the **Directory (tenant) ID** GUID (or a verified domain) — with it set, Formbricks fully
-      verifies Microsoft id_tokens against your tenant's issuer. For a multi-tenant app registration,
-      leave `AZUREAD_TENANT_ID` unset instead: `common` and `organizations` advertise a placeholder
-      issuer rather than a real one, so Formbricks treats those two values like unset and reads the
-      signed-in identity from Microsoft's userinfo endpoint. `consumers` is unaffected — personal
-      Microsoft accounts share one well-known tenant, so its id_tokens are verified normally.
+      verifies Microsoft id_tokens against your tenant's issuer.
+
+      For a multi-tenant app registration, either leave `AZUREAD_TENANT_ID` unset, which is equivalent
+      to `common` and accepts both work/school and personal accounts, or set it to `organizations` to
+      accept work/school accounts only. Those two authorities advertise a placeholder issuer rather
+      than a real one, so Formbricks skips id_token verification for them and takes the signed-in
+      identity from Microsoft's userinfo endpoint — the authority you configure still applies at
+      sign-in, so `organizations` keeps restricting which accounts Microsoft will accept. `consumers`
+      is unaffected: personal Microsoft accounts share one well-known tenant, so its id_tokens are
+      verified normally.
     </Note>
 
     ![sixth](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738250876/image_dj2vi5.jpg)
