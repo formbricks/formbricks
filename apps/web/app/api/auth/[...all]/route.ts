@@ -1,4 +1,5 @@
 import { auth } from "@/modules/auth/lib/auth";
+import { recordSsoCallbackOutcome } from "@/modules/auth/lib/better-auth-observability";
 import { createAuthPathLabeller } from "@/modules/auth/lib/better-auth-path-label";
 import { runWithBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
 import { runWithEmailVerificationRequestContext } from "@/modules/auth/lib/email-verification-request-context";
@@ -62,7 +63,7 @@ const handler = async (request: Request): Promise<Response> => {
   // neither is ours to change: the pinned SSO callback path, and `application_type` on dynamic client
   // registration (see each module). Both no-op for every other request.
   const mappedRequest = await normalizeDcrRequest(mapLegacySsoCallbackRequest(request));
-  return runWithBetterAuthRequestContext(
+  const response = await runWithBetterAuthRequestContext(
     { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
     () =>
       runWithSsoRequestContext(() =>
@@ -73,6 +74,12 @@ const handler = async (request: Request): Promise<Response> => {
         runWithEmailVerificationRequestContext(() => auth.handler(mappedRequest))
       )
   );
+  // ENG-2551: the one place that sees the outcome of every SSO callback, whatever went wrong and
+  // whichever provider it was — a failed callback is a redirect carrying `?error=`, or a 4xx/5xx.
+  // Emitted here rather than from a hook because the failures that matter most are the ones Better
+  // Auth returns as a response rather than throwing, so no error-path hook observes them.
+  recordSsoCallbackOutcome(mappedRequest.url, response);
+  return response;
 };
 
 export { handler as GET, handler as POST };

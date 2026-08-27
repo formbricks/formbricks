@@ -408,3 +408,89 @@ export const auditPasswordReset = async (userId: string): Promise<void> => {
     logger.withContext({ source: "better-auth" }).error("Failed to queue password-reset audit event");
   }
 };
+
+/**
+ * Providers whose id may appear in an SSO callback outcome record (ENG-2551).
+ *
+ * An allow-list rather than a sanitising regex, because the provider id comes from the request path
+ * and anyone can call `/api/auth/callback/<anything>`. A regex would bound the *shape* of the value
+ * but not the number of distinct values, so it would hand a caller unbounded control over a log
+ * field's cardinality — the thing that makes a log-based alert unusable. Anything unrecognised
+ * buckets to `unknown`.
+ *
+ * Deliberately not imported from the SSO provider config: this module must not depend on the EE
+ * surface, and the list answers a different question anyway ("what may we label") rather than "what
+ * is registered on this instance".
+ */
+const SSO_CALLBACK_PROVIDER_IDS = new Set(["google", "github", "azuread", "openid", "saml"]);
+
+/** Better Auth's callback error codes are lower-snake-case; anything else is not one of ours. */
+const SSO_CALLBACK_ERROR_CODE = /^[a-z0-9_]{1,64}$/;
+
+/**
+ * Record the outcome of an SSO callback, so a total sign-in outage announces itself (ENG-2551).
+ *
+ * The problem this solves is that every SSO outage so far has had a *novel cause* and an *identical
+ * symptom*. ENG-1800 (RFC 9207 `iss`), ENG-2555 (wrong `Account.issuer`), ENG-2750 (placeholder
+ * issuer) and the suppressed `state_mismatch` class each needed their own diagnosis, and each ended
+ * with the callback redirecting to `?error=…` instead of to the callbackURL. Alerting on causes means
+ * adding a rule after every incident; alerting on the outcome covers the next one for free.
+ *
+ * ENG-2750 is why this exists at all: it failed 100% of Cloud Microsoft sign-ins for ~18 hours and
+ * produced **no Sentry event**, because Better Auth logs that failure as a bare message with no
+ * `Error` argument, so the capture gate above never has anything to capture. A log line keyed on a
+ * stable field is what an alert can actually watch.
+ *
+ * Emits on success too: the useful alert threshold is a *ratio* ("failures exceed N% of callbacks
+ * over 15 minutes"), which survives traffic swings, campaigns and quiet weekends in a way an
+ * absolute count does not.
+ *
+ * Failures log at `warn`, not `error`. A single failed callback is routinely the user's own doing — a
+ * stale tab, an expired state, a declined consent — and promoting each one to `error` would degrade
+ * the signal this is meant to create. The alert keys on `ssoCallbackOutcome`, so the level is
+ * presentation, not meaning.
+ *
+ * Never throws: observability must not be able to fail a sign-in that otherwise succeeded.
+ */
+export const recordSsoCallbackOutcome = (requestUrl: string, response: Response): void => {
+  try {
+    const path = new URL(requestUrl).pathname;
+    // The internal path Better Auth actually serves. `mapLegacySsoCallbackRequest` has already
+    // rewritten the pinned `/oauth2/callback/:id` form by the time a response exists, so matching the
+    // internal shape covers both.
+    const providerSegment = /\/callback\/([^/]+)\/?$/.exec(path)?.[1];
+    if (!providerSegment) return;
+
+    const provider = SSO_CALLBACK_PROVIDER_IDS.has(providerSegment.toLowerCase())
+      ? providerSegment.toLowerCase()
+      : "unknown";
+
+    const { outcome, reason } = ((): { outcome: "success" | "failure"; reason?: string } => {
+      // A 4xx/5xx on the callback is a failed sign-in too — this is how the SSO licence gate's 403
+      // and any unhandled 500 present, and neither redirects.
+      if (response.status >= 400) return { outcome: "failure", reason: `http_${response.status}` };
+      if (response.status >= 300) {
+        const location = response.headers.get("location");
+        const error = location ? new URL(location, requestUrl).searchParams.get("error") : null;
+        if (!error) return { outcome: "success" };
+        return {
+          outcome: "failure",
+          reason: SSO_CALLBACK_ERROR_CODE.test(error) ? error : "unrecognised",
+        };
+      }
+      return { outcome: "success" };
+    })();
+
+    const contextLogger = logger.withContext({
+      source: "sso-callback",
+      ssoCallbackOutcome: outcome,
+      ssoProvider: provider,
+      ...(reason ? { ssoCallbackReason: reason } : {}),
+    });
+
+    if (outcome === "failure") contextLogger.warn("SSO callback failed");
+    else contextLogger.info("SSO callback succeeded");
+  } catch {
+    // A malformed URL is not worth failing or logging a sign-in over.
+  }
+};
