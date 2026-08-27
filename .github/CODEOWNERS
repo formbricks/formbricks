@@ -49,12 +49,27 @@
 #  sidebar ("Suggested reviewers are based on git blame data"), but those must be
 #  clicked and are never assigned automatically.
 #
-#  REQUESTING IS UNCONDITIONAL
+#  REQUESTING IS UNCONDITIONAL, AND BRANCH-BLIND
 #
 #  Simply having this file causes review requests; there is no setting to turn
 #  that off. The separate "Require review from Code Owners" rule is currently
 #  OFF — it would make the review required to merge, and would not change who
 #  gets requested. Draft pull requests are exempt until marked ready for review.
+#
+#  Nor does the rule below know which branch a pull request targets. GitHub reads
+#  this file from the pull request's BASE branch and applies every rule in it, so
+#  the rotation fires into `epic/dashboards` exactly as it does into `main`, and
+#  there is no CODEOWNERS syntax for "only on main". Because that assigns the
+#  rotation to work-in-progress branches nobody outside the epic reviews, the
+#  request is withdrawn again for every base except `main` and `release/*` by
+#  .github/workflows/codeowners-scope.yml — patch-release backports are shipped
+#  production code and keep their reviewer.
+#
+#  DO NOT ENCODE THAT SCOPE HERE. The rule below has to stay branch-agnostic:
+#  the only per-branch lever CODEOWNERS has is a different copy of this file on
+#  each branch, and keeping an epic branch's copy empty fights every
+#  `main` -> epic merge, conflicts on the way back, and fails the single-rule
+#  check in codeowners-validation.yml.
 #
 #  Reference:
 #  https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners

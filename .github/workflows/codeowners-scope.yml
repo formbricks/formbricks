@@ -1,0 +1,148 @@
+name: Scope CODEOWNERS review requests
+
+# Withdraws the automatic engineering-rotation review request from pull requests whose base branch
+# is not one we gate on: epic branches, and any feature branch used as the base of a stacked PR.
+#
+# WHY THIS IS A WORKFLOW AND NOT A CODEOWNERS RULE
+#
+# CODEOWNERS has no notion of the base branch. GitHub reads the file from the *base branch* of the
+# pull request and applies every rule in it to that pull request, so `*  @formbricks/engineering`
+# fires the same way whether the base is `main` or `epic/dashboards`. The only native lever is a
+# *different* CODEOWNERS on each branch ("Each CODEOWNERS file assigns the code owners for a single
+# branch in the repository"), which for an epic branch means deleting .github/CODEOWNERS there and
+# keeping it deleted through every `main` -> epic merge. That fights the merge, conflicts on the way
+# back to `main`, and fails codeowners-validation.yml, which requires exactly one rule. So the
+# request is made and then withdrawn here instead.
+#
+# WHICH BASES KEEP THE REVIEWER
+#
+#   main         the default branch; the gate that matters
+#   release/*    patch-release backports are shipped production code and get the same review
+#
+# Everything else has the request withdrawn. The allow-list is the `if:` on the job below.
+#
+# KNOWN TRADE-OFFS
+#
+#  1. The reviewer is still notified. GitHub sends the review-request notification when the pull
+#     request opens; this workflow starts seconds later. It clears the assignment off their review
+#     queue, it does not un-ring the bell. Nothing short of not having CODEOWNERS on the base branch
+#     can, for the reasons above.
+#  2. A reviewer the author requested by hand at open time is withdrawn too. The automatic request
+#     and a hand-picked one are indistinguishable through the API — GitHub replaces the team with an
+#     individual member ("the team is removed as a reviewer and a specified subset of team members
+#     are assigned in the team's place"), so what lands on the pull request is a plain user either
+#     way. This runs only on `opened`, `ready_for_review` and a base change, so requesting a review
+#     on an epic pull request works: ask after it is open, or ask again, and it stays.
+#
+# Uses pull_request_target because removing a review request needs a write-scoped token. Safe here:
+# the job reads the pull request's requested reviewers (data) and never checks out or runs its code.
+# Note that pull_request_target always runs the workflow definition from the *base* branch, which is
+# the same branch whose CODEOWNERS caused the request — so an epic branch picks this up the next time
+# `main` is merged into it, and until then behaves as it does today.
+#
+# See .github/CODEOWNERS for the one-reviewer policy this scopes, and codeowners-validation.yml for
+# the check that keeps that file to a single team rule.
+
+on:
+  pull_request_target:
+    types: [opened, ready_for_review, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Not cancel-in-progress: a second event on the same pull request (a title edit right after it
+# opened) would otherwise abort the settle loop below part-way through, and a request that landed in
+# the seconds after would stay for good. The work is idempotent and takes under half a minute, so
+# runs queue behind each other instead.
+concurrency:
+  group: codeowners-scope-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  withdraw-request:
+    name: Withdraw review request off the gated branches
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # `edited` fires for the title and body too, and neither changes who CODEOWNERS requests; only a
+    # base change does, because it swaps in a different branch's CODEOWNERS. GitHub sends only the
+    # keys that changed, so `changes.base` is absent -- and therefore null -- for every other edit.
+    #
+    # Drafts get no code-owner request until they are marked ready, which arrives as
+    # `ready_for_review` with `draft: false`. Skipping them keeps a no-op run off every draft push.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.base.ref != github.event.repository.default_branch &&
+      !startsWith(github.event.pull_request.base.ref, 'release/') &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Withdraw the automatic review request
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Two server-side steps put a reviewer on a pull request, and this workflow races both:
+            // CODEOWNERS requests @formbricks/engineering, then the team's auto-assignment replaces
+            // it with one member. Either can land after the job starts, and a request that arrives
+            // a second after a single read would stay for the life of the pull request. So read,
+            // remove, and read again until a pass comes back empty.
+            const MAX_PASSES = 3;
+            const SETTLE_MS = 8000;
+
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const withdrawn = new Set();
+
+            for (let pass = 1; pass <= MAX_PASSES; pass++) {
+              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+              const reviewers = (pr.requested_reviewers || []).map((u) => u.login);
+              const team_reviewers = (pr.requested_teams || []).map((t) => t.slug);
+
+              if (reviewers.length === 0 && team_reviewers.length === 0) {
+                // Pass 1 finding nothing means the request has not landed yet, not that there is
+                // none — that is the race above, so keep waiting. A later empty pass has settled.
+                if (pass > 1) {
+                  core.info(`Pass ${pass}: no pending review request. Settled.`);
+                  break;
+                }
+                core.info("Pass 1: no pending review request yet; it may still be in flight.");
+              } else {
+                const pending = [...reviewers, ...team_reviewers.map((s) => `${owner}/${s}`)];
+                try {
+                  await github.rest.pulls.removeRequestedReviewers({
+                    owner,
+                    repo,
+                    pull_number,
+                    reviewers,
+                    team_reviewers,
+                  });
+                  pending.forEach((name) => withdrawn.add(name));
+                  core.info(`Pass ${pass}: withdrew ${pending.join(", ")}.`);
+                } catch (error) {
+                  // 422 is GitHub reporting a reviewer that is no longer requested — someone
+                  // removed it by hand between the read and the write. The end state is the one we
+                  // wanted, so it is not a failure. Anything else is.
+                  if (error.status !== 422) throw error;
+                  core.info(`Pass ${pass}: ${pending.join(", ")} already removed by hand.`);
+                }
+              }
+
+              if (pass < MAX_PASSES) await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
+            }
+
+            const base = context.payload.pull_request.base.ref;
+            if (withdrawn.size > 0) {
+              core.notice(
+                `Withdrew the automatic review request (${[...withdrawn].join(", ")}) because this ` +
+                  `pull request targets \`${base}\`, not the default branch or a release/* branch. ` +
+                  "Request a reviewer if you want one — a request made from here on stays."
+              );
+            } else {
+              // Also the path where a human removed the request first: the end state is the same.
+              core.info(`No review request is pending on this pull request into \`${base}\`.`);
+            }
