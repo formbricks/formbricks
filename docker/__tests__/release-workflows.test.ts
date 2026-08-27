@@ -43,20 +43,34 @@ const readWorkflow = (relativePath: string): Workflow => load(readText(relativeP
 const linearSteps = (workflow: Workflow, jobId: string): WorkflowStep[] =>
   (workflow.jobs?.[jobId]?.steps ?? []).filter((step) => step.uses?.startsWith(`${linearAction}@`));
 
+const linearUses = (workflow: Workflow): string[] =>
+  Object.values(workflow.jobs ?? {})
+    .flatMap((job) => job?.steps ?? [])
+    .map((step) => step.uses)
+    .filter((uses): uses is string => uses?.startsWith(`${linearAction}@`) ?? false);
+
 describe("release workflows", () => {
   test.each(releaseWorkflows)("%s parses as YAML and declares jobs", (path) => {
     expect(Object.keys(readWorkflow(path).jobs ?? {})).not.toHaveLength(0);
   });
 
-  test.each(releaseWorkflows)("pins the Linear release action by commit SHA in %s", (path) => {
-    expect(readText(path)).toContain(`${linearAction}@${linearActionSha}`);
+  // Every use is checked, not just the first: formbricks-release.yml calls the action twice, so a
+  // `toContain` on the file text would let one correct use mask a second that had drifted.
+  test.each(releaseWorkflows)("pins every Linear release action use by commit SHA in %s", (path) => {
+    const uses = linearUses(readWorkflow(path));
+
+    expect(uses).not.toHaveLength(0);
+    expect(uses).toEqual(uses.map(() => `${linearAction}@${linearActionSha}`));
   });
 
-  // Separate from the pin above so a drifted annotation and a drifted pin fail distinguishably.
-  // The annotation is worth asserting: this repo shipped a comment describing v0.15.1 behaviour
-  // next to a v0.7.0 pin for months, which is what hid the bug this test guards.
-  test.each(releaseWorkflows)("annotates that pin with its release tag in %s", (path) => {
-    expect(readText(path)).toContain(`${linearAction}@${linearActionSha} # ${linearActionVersion}`);
+  // Separate from the pin above so a drifted annotation and a drifted pin fail distinguishably, and
+  // counted so one annotated line cannot vouch for an unannotated sibling. The annotation is worth
+  // asserting at all because this repo ran a v0.7.0 pin under a comment describing v0.15.1
+  // behaviour for months, which is the drift that hid the bug these tests guard.
+  test.each(releaseWorkflows)("annotates every pin with its release tag in %s", (path) => {
+    const annotated = readText(path).split(`${linearAction}@${linearActionSha} # ${linearActionVersion}`);
+
+    expect(annotated).toHaveLength(linearUses(readWorkflow(path)).length + 1);
   });
 
   test("uses no other ref of the Linear release action across the workflows", () => {
