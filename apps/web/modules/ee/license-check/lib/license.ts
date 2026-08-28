@@ -34,9 +34,10 @@ const CONFIG = {
   },
   API: {
     ENDPOINT:
-      env.ENVIRONMENT === "staging"
+      env.ENTERPRISE_LICENSE_API_URL ??
+      (env.ENVIRONMENT === "staging"
         ? "https://staging.ee.formbricks.com/api/licenses/check"
-        : "https://ee.formbricks.com/api/licenses/check",
+        : "https://ee.formbricks.com/api/licenses/check"),
     TIMEOUT_MS: 5000,
   },
 } as const;

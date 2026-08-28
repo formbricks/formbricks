@@ -12,6 +12,7 @@ import {
 // state cannot bleed between tests here; dropping that key re-enables the cache silently.
 const { envMock } = vi.hoisted(() => ({
   envMock: {
+    ENTERPRISE_LICENSE_API_URL: undefined,
     ENTERPRISE_LICENSE_KEY: "test-license-key",
     ENVIRONMENT: "production",
 
@@ -1431,6 +1432,59 @@ describe("License Core Logic", () => {
   });
 
   describe("Environment-based endpoint selection", () => {
+    test("should use the configured enterprise license API endpoint", async () => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: {
+          ENTERPRISE_LICENSE_API_URL: "http://license-server.example.test/api/licenses/check",
+          ENTERPRISE_LICENSE_KEY: "test-license-key",
+          ENVIRONMENT: "staging",
+          HTTPS_PROXY: undefined,
+          HTTP_PROXY: undefined,
+        },
+      }));
+
+      const fetch = global.fetch as Mock;
+
+      mockCache.get.mockResolvedValue({ ok: true, data: null });
+      mockCache.exists.mockResolvedValue({ ok: true, data: false });
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            status: "active",
+            features: {
+              isMultiOrgEnabled: true,
+              workspaces: 5,
+              twoFactorAuth: true,
+              sso: true,
+              whitelabel: true,
+              removeBranding: true,
+              contacts: true,
+              aiSmartTools: true,
+              saml: true,
+              spamProtection: true,
+              auditLogs: true,
+              accessControl: true,
+              quotas: true,
+            },
+          },
+        }),
+      } as Response);
+
+      const { fetchLicense } = await import("./license");
+      await fetchLicense();
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://license-server.example.test/api/licenses/check",
+        expect.objectContaining({
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+    });
+
     test("should use staging endpoint when ENVIRONMENT is staging", async () => {
       vi.resetModules();
       vi.doMock("@/lib/env", () => ({
