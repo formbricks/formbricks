@@ -427,7 +427,8 @@
                 "icon": "shield",
                 "pages": [
                   "development/standards/qa/code-reviews",
-                  "development/standards/qa/testing-methodology"
+                  "development/standards/qa/testing-methodology",
+                  "development/standards/qa/screen-reader-pass"
                 ]
               }
             ]
