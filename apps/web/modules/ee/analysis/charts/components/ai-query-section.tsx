@@ -132,7 +132,7 @@ export function AIQuerySection({
         />
         <Button
           type="submit"
-          variant="default"
+          variant="ai-primary"
           className="w-full"
           disabled={!userQuery.trim() || isGenerating}>
           <AiIcon tone="ai-light" animated={isGenerating} />

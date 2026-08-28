@@ -23,6 +23,8 @@
      Two tokens because one value cannot serve both grounds — pick with AiIcon's `tone`. */
   --color-ai-dark: var(--color-indigo-700); /* on light surfaces — 8.09:1 on white */
   --color-ai: var(--color-indigo-100); /* on dark surfaces — 14.49:1 on slate-900 */
+  --color-ai-strong: var(--color-indigo-700); /* filled AI button — white on it is 8.02:1 */
+  --color-ai-subtle: var(--color-indigo-100); /* soft AI button — ai-dark on it is 6.57:1 */
 
   --color-focus: var(--formbricks-focus, #1982fc);
   --color-brandnew: var(--formbricks-brand, #038178);
@@ -94,8 +96,10 @@
   /* AI activity. Both rest at their start/end frame so the prefers-reduced-motion kill-switch below
      — which collapses duration to 0.01ms rather than removing the animation — lands on a correct
      static appearance instead of a stranded mid-animation pose. */
-  --animate-ai-twinkle: ai-twinkle 1.4s ease-in-out infinite;
+  --animate-ai-twinkle: ai-twinkle 1.1s ease-in-out infinite;
   --animate-ai-sweep: ai-sweep 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-ai-phase-in: ai-phase-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-ai-shimmer: ai-shimmer 1.8s linear infinite;
 
   @keyframes fadeIn {
     0% {
@@ -202,12 +206,35 @@
       transform: scale(1);
     }
     50% {
-      opacity: 0.75;
-      transform: scale(1.12);
+      opacity: 0.6;
+      transform: scale(1.28);
     }
   }
   /* The bar is w-1/3, so -100% puts its right edge at the container's left edge and 300% puts its
      left edge at the right edge — it enters and exits fully. */
+  /* Each new status phase arrives with a short fade and a hair of upward travel, so the line reads
+     as progressing rather than as text being swapped underneath the reader. */
+  @keyframes ai-phase-in {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  /* A light band travelling across the status text. Chosen over an opacity pulse because dimming
+     slate-500 puts it under 4.5:1 at the trough; the gradient's lightest stop is slate-500 itself,
+     so the text never drops below its normal contrast. */
+  @keyframes ai-shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
   @keyframes ai-sweep {
     0% {
       transform: translateX(-100%);
@@ -215,6 +242,30 @@
     100% {
       transform: translateX(300%);
     }
+  }
+}
+
+/* AI status text shimmer. The colour is set unconditionally; only where background-clip: text is
+   supported does the text become transparent so the moving gradient shows through. */
+.ai-shimmer-text {
+  color: var(--color-slate-500);
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .ai-shimmer-text {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-slate-500) 0%,
+      var(--color-slate-500) 35%,
+      var(--color-slate-900) 50%,
+      var(--color-slate-500) 65%,
+      var(--color-slate-500) 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: var(--animate-ai-shimmer);
   }
 }
 

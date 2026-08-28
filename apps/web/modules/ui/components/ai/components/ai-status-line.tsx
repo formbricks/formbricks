@@ -64,15 +64,22 @@ export const AiStatusLine = ({
   const message = resolveStatusMessage({ messages, activeIndex, elapsedMs, cadenceMs });
 
   return (
-    <div className={cn("flex items-center gap-2 text-sm text-slate-500", className)}>
+    <div className={cn("flex items-center gap-2 text-sm", className)}>
       <AiIcon animated />
       {/*
         The live region is the message alone. The timer is deliberately outside it and aria-hidden:
         an aria-atomic region wrapping a counter re-announces the whole line every second, which
         makes the component unusable with a screen reader.
+
+        `key` on the message makes React remount the span each time the phase changes, so the new
+        text fades in. Deliberately a fade on change rather than a continuous pulse: the icon is
+        already breathing, and two elements pulsing opacity at once beat against each other — and
+        text that never settles is harder to read, which is the opposite of the point.
       */}
       <span role="status" aria-live="polite" aria-atomic="true">
-        {message}
+        <span key={message} className="ai-shimmer-text inline-block animate-ai-phase-in">
+          {message}
+        </span>
       </span>
       {showTimer ? (
         <span aria-hidden="true" className="text-slate-400 tabular-nums">

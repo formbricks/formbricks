@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,7 @@ import {
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 type CreateWithAIFormProps = {
   workspaceId: string;
@@ -142,9 +143,16 @@ export const CreateWithAIForm = ({
     if (isReviewing) {
       return (
         <>
-          <Button type="button" variant="secondary" disabled={isCreatingSurvey} onClick={handleRegenerate}>
-            {/* inherit, not the AI token: on a secondary surface the mark should sit with the label
-                rather than colour-shout next to it. */}
+          {showCancel && onCancel && (
+            // Closing from review discards a draft nobody has opened, so this routes through the
+            // same confirmation the dialog's X and Escape do.
+            <Button type="button" variant="secondary" disabled={isCreatingSurvey} onClick={onCancel}>
+              {t("common.cancel")}
+            </Button>
+          )}
+          <Button type="button" variant="ai-secondary" disabled={isCreatingSurvey} onClick={handleRegenerate}>
+            {/* inherit: the button already carries the AI colour, so the mark sits with the label
+                instead of colour-shouting next to it. */}
             <AiIcon tone="inherit" />
             {t("workspace.surveys.ai_create.regenerate")}
           </Button>
@@ -170,7 +178,7 @@ export const CreateWithAIForm = ({
             {t("workspace.surveys.ai_create.back_to_draft")}
           </Button>
         )}
-        <Button type="submit" disabled={!canCreate}>
+        <Button type="submit" variant="ai-primary" disabled={!canCreate}>
           <AiIcon tone="ai-light" />
           {t("workspace.surveys.ai_create.create")}
         </Button>
@@ -187,14 +195,27 @@ export const CreateWithAIForm = ({
     <div className="mt-auto flex justify-end gap-2">{footer}</div>
   );
 
+  const editPromptLabel = t("workspace.surveys.ai_create.edit_prompt");
   const promptChip = (
     <div className="flex items-center gap-2 text-xs text-slate-500">
-      <span className="min-w-0 flex-1 truncate">
+      <span id="ai-prompt-echo" className="min-w-0 flex-1 truncate">
         {t("workspace.surveys.ai_create.your_prompt")}: {prompt}
       </span>
-      <Button type="button" variant="ghost" size="sm" disabled={isCreatingSurvey} onClick={handleEditPrompt}>
-        {t("workspace.surveys.ai_create.edit_prompt")}
-      </Button>
+      <TooltipRenderer tooltipContent={editPromptLabel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 shrink-0"
+          disabled={isCreatingSurvey}
+          // The button shows only a pencil, so it needs its own name, and pointing at the prompt it
+          // edits tells a screen-reader user which text this acts on.
+          aria-label={editPromptLabel}
+          aria-describedby="ai-prompt-echo"
+          onClick={handleEditPrompt}>
+          <PencilIcon aria-hidden="true" />
+        </Button>
+      </TooltipRenderer>
     </div>
   );
 
