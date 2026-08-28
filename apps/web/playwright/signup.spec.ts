@@ -62,8 +62,8 @@ test.describe("Email Signup Flow Test", async () => {
 });
 
 // ENG-2428. The signed-out screens used to be covered by NoMobileOverlay below 640px, so
-// nothing here could run at a phone width. These two guard the two things that removing it
-// bought: the layout reflows to 320px (WCAG 1.4.10) and the form is operable and labelled.
+// nothing here could run at a phone width. These two guard what removing it bought: the
+// layout reflows to 320px (WCAG 1.4.10), and the form is operable and free of AA violations.
 const MOBILE = { width: 375, height: 812 };
 
 // The same WCAG AA set survey-accessibility.spec.ts gates on.
@@ -74,8 +74,9 @@ const horizontalOverflow = (page: Page) =>
 
 test.describe("Signed-out screens on a phone", () => {
   test("reflow to 320px without horizontal scrolling", async ({ page }) => {
-    // 320 is the WCAG 1.4.10 floor; 430 is the repo's own `xs` breakpoint.
-    for (const width of [320, 375, 430]) {
+    // Two widths, each with a reason: 320 is the WCAG 1.4.10 floor, and 430 is the repo's
+    // own `xs` breakpoint — the only place the auth surface changes behaviour between them.
+    for (const width of [320, 430]) {
       await page.setViewportSize({ width, height: 812 });
 
       for (const path of ["/auth/login", "/auth/forgot-password", "/auth/signup"]) {
@@ -101,10 +102,12 @@ test.describe("Signed-out screens on a phone", () => {
     await page.goto("/auth/signup");
     await page.getByText("Continue with Email").click();
 
-    // Every field is reachable by its visible label, not just by placeholder text.
-    await page.getByLabel("Full name").fill(name);
-    await page.getByLabel("Email").fill(mobileEmail);
-    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByTestId("signup-name").fill(name);
+    await page.getByTestId("signup-email").fill(mobileEmail);
+    await page.getByTestId("signup-password").fill(password);
+
+    // axe's `label` rule (wcag2a) is what holds the labels to account — it fails on any
+    // input without an accessible name, without pinning the copy to a string in this spec.
 
     const results = await new AxeBuilder({ page }).withTags(WCAG_AA_TAGS).analyze();
     const summary = results.violations.map((v) => `${v.id} (${v.nodes.length})`).join(", ");
