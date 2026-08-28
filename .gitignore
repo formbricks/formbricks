@@ -90,3 +90,6 @@ stats.html
 docs/api-v3-reference/contract-tests/fixtures.json
 .schemathesis/
 __pycache__/
+
+# Playwright storage state written by the docs capture script — contains live session cookies
+scripts/docs-capture/.auth.json
