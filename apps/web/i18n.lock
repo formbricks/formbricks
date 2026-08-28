@@ -68,6 +68,7 @@ checksums:
     auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
     auth/oauth/consent_revoked: f1c243aaacd7c466b9986e484b93247b
     auth/oauth/deny_access: ba3ac7dc12f362da277df5c9ba21e752
+    auth/oauth/formbricks_website: 95c2f69c6b6428e1aa6c26f4dd427e22
     auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900
     auth/oauth/invalid_oauth_request_description: 39322e962c0c20c766ae82d0b8917ebb
     auth/oauth/localhost_redirect_warning: e0368262d25dc98ea02158eebd0066c1

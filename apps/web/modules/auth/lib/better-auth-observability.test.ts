@@ -414,6 +414,25 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     expect(contextLoggerMock.warn).toHaveBeenCalledWith("account isn't linked");
   });
 
+  test("preserves only an allowlisted warn-level error summary in application logs", () => {
+    const dbError = Object.assign(new Error("Connection for admin@example.com included token-secret"), {
+      code: "P1001",
+      databaseUrl: "postgres://user:password-secret@db.example.com/formbricks",
+    });
+    dbError.stack = "Error: stack-secret";
+
+    log("warn", "OAuth resource seed for admin@example.com failed", dbError);
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith(
+      { errorType: "Error", errorCode: "P1001" },
+      "OAuth resource seed for [redacted]@example.com failed"
+    );
+    expect(JSON.stringify(contextLoggerMock.warn.mock.calls)).not.toMatch(
+      /token-secret|password-secret|stack-secret/
+    );
+  });
+
   test("info/debug-level logs go to info and are never captured", () => {
     log("info", "some info");
 

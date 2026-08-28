@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import type { Response } from "@formbricks/database/prisma";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
@@ -36,17 +35,15 @@ export const GET = async (request: NextRequest) =>
 
       const workspaceIds = await getAuthorizedApiKeyWorkspaceIds(authentication);
 
-      const workspaceResponses: Response[] = [];
       const res = await getResponses(workspaceIds, query);
 
       if (!res.ok) {
         return handleApiError(request, res.error);
       }
 
-      workspaceResponses.push(...res.data.data);
-
       return responses.successResponse({
-        data: workspaceResponses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) })),
+        data: res.data.data.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) })),
+        meta: res.data.meta,
       });
     },
   });
