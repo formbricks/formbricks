@@ -325,7 +325,8 @@
                   "self-hosting/configuration/auth-sso/keycloak-oidc",
                   "self-hosting/configuration/auth-sso/azure-ad-oauth",
                   "self-hosting/configuration/auth-sso/google-oauth",
-                  "self-hosting/configuration/auth-sso/saml-sso"
+                  "self-hosting/configuration/auth-sso/saml-sso",
+                  "self-hosting/configuration/auth-sso/setup-saml-with-identity-providers"
                 ]
               },
               {
@@ -381,16 +382,6 @@
             "pages": ["development/overview"]
           },
           {
-            "group": "Local Setup",
-            "pages": [
-              "development/local-setup/linux",
-              "development/local-setup/mac",
-              "development/local-setup/windows",
-              "development/local-setup/gitpod",
-              "development/local-setup/github-codespaces"
-            ]
-          },
-          {
             "group": "Technical Handbook",
             "pages": [
               "development/technical-handbook/overview",
@@ -439,24 +430,6 @@
                 ]
               }
             ]
-          },
-          {
-            "group": "Contributions",
-            "pages": ["development/contribution/contribution"]
-          },
-          {
-            "group": "Guides",
-            "pages": [
-              {
-                "group": "Auth & Provision",
-                "icon": "user-shield",
-                "pages": ["development/guides/auth-and-provision/setup-saml-with-identity-providers"]
-              }
-            ]
-          },
-          {
-            "group": "Support",
-            "pages": ["development/support/troubleshooting"]
           }
         ],
         "tab": "Development"
@@ -499,6 +472,38 @@
     ]
   },
   "redirects": [
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/linux"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/mac"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/windows"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/gitpod"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/github-codespaces"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/contribution/contribution"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/support/troubleshooting"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/auth-sso/setup-saml-with-identity-providers",
+      "source": "/docs/development/guides/auth-and-provision/setup-saml-with-identity-providers"
+    },
     {
       "destination": "/docs/unify-feedback/feedback-datasets",
       "source": "/docs/unify-feedback/feedback-directories"
@@ -1268,7 +1273,7 @@
       "source": "/docs/developer-docs/rest-api"
     },
     {
-      "destination": "/docs/development/contribution/contribution",
+      "destination": "/docs/development/overview",
       "source": "/docs/developer-docs/contributing/get-started"
     },
     {
@@ -1276,7 +1281,7 @@
       "source": "/docs/api-docs"
     },
     {
-      "destination": "/docs/development/support/troubleshooting",
+      "destination": "/docs/development/overview",
       "source": "/docs/developer-docs/contributing/troubleshooting"
     }
   ],

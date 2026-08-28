@@ -1,9 +1,10 @@
 ---
-title: "Setup SAML with Identity Providers"
+title: "SAML with Identity Providers"
 description: "This guide explains the settings you need to use to configure SAML with your Identity Provider. Once configured, obtain an XML metadata file and use it to configure SAML in Formbricks."
+icon: "building-lock"
 ---
 
-### SAML Registration with Identity Providers
+## SAML registration with identity providers
 
 This guide explains the settings you need to use to configure SAML with your Identity Provider. Once configured, obtain an XML metadata file and use it to configure SAML in Formbricks.
 
@@ -59,52 +60,52 @@ This guide explains the settings you need to use to configure SAML with your Ide
 
   Above provided claims may differ based on your configuration and the IdP you are using. Please refer to the documentation of your IdP for the correct claims.
 
-### SAML With Okta
+## SAML with Okta
 
 <Steps>
   <Step title="Create an application with your SAML provider">
     For example, in Okta, once you create an account, you can click on Applications on the sidebar menu:
 
-    <img src="/images/development/guides/auth-and-provision/okta/okta-applications.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/okta-applications.webp" />
 
   </Step>
   <Step title="Click on Create App Integration">
-  <img src="/images/development/guides/auth-and-provision/okta/create-app-integration.webp" />
+  <img src="/images/self-hosting/configuration/auth-sso/okta/create-app-integration.webp" />
   </Step>
   <Step title="Select SAML 2.0 in the modal form, and click Next">
-    <img src="/images/development/guides/auth-and-provision/okta/select-saml-2.0.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/select-saml-2.0.webp" />
   </Step>
   <Step title="Fill the general settings as shown and click Next">
-    <img src="/images/development/guides/auth-and-provision/okta/general-settings.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/general-settings.webp" />
   </Step>
   <Step title="Enter the SAML Integration Settings as shown and click Next">
     - **Single Sign-On URL**: `https://<your-formbricks-instance>/api/auth/saml/callback` or `http://localhost:3000/api/auth/saml/callback` (if you are running Formbricks locally)
     - **Audience URI (SP Entity ID)**: `https://saml.formbricks.com` (hardcoded; do not replace with your instance URL)
-    <img src="/images/development/guides/auth-and-provision/okta/saml-integration-settings.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/saml-integration-settings.webp" />
   </Step>
   <Step title="Fill the fields mapping as shown and click Next">
-    <img src="/images/development/guides/auth-and-provision/okta/fields-mapping.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/fields-mapping.webp" />
   </Step>
   <Step title="Check the internal app checkbox and click Finish">
-    <img src="/images/development/guides/auth-and-provision/okta/internal-app.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/internal-app.webp" />
   </Step>
   <Step title="Check that the app is created successfully">
-    <img src="/images/development/guides/auth-and-provision/okta/app-created.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/app-created.webp" />
   </Step>
   <Step title="Click on the app and head over to the Assignments tab">
-    <img src="/images/development/guides/auth-and-provision/okta/assignments-tab.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/assignments-tab.webp" />
   </Step>
   <Step title="Click on Assign button and select Assign to People">
-    <img src="/images/development/guides/auth-and-provision/okta/assign-to-people.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/assign-to-people.webp" />
   </Step>
   <Step title="Select the users you want to assign the app to and click Assign">
-    <img src="/images/development/guides/auth-and-provision/okta/select-users.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/select-users.webp" />
   </Step>
   <Step title="Head over to the Sign On tab and click on the 'view SAML setup instructions' button">
-    <img src="/images/development/guides/auth-and-provision/okta/view-saml-instructions.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/view-saml-instructions.webp" />
   </Step>
   <Step title="Scroll to the bottom and copy the IDP metadata">
-    <img src="/images/development/guides/auth-and-provision/okta/idp-metadata.webp" />
+    <img src="/images/self-hosting/configuration/auth-sso/okta/idp-metadata.webp" />
   </Step>
   <Step title="Copy the IDP metadata and paste it in the `connection.xml` file in the `formbricks/saml-connection` (use `formbricks/apps/web/saml-connection` for development) directory" />
 </Steps>
