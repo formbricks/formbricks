@@ -201,7 +201,7 @@ HAVING COUNT(w."workspaceId") > 1;
 Most instances return no rows: a workspace is normally assigned a single dataset, so sharing only exists
 where an administrator deliberately assigned a second workspace. For any row that does come back, an
 integration that mutates records in that dataset has two ways forward — assign the dataset to a single
-workspace under **Settings → Organization → Feedback Datasets**, or have the integration authenticate as
+workspace under **Settings → Organization → Datasets**, or have the integration authenticate as
 an organization owner or manager instead of with a workspace-scoped key.
 
 #### What to do before upgrading
