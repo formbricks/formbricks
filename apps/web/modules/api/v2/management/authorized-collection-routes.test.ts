@@ -33,6 +33,9 @@ vi.mock("@/modules/api/v2/lib/response", () => ({
   responses: { successResponse: mockSuccessResponse },
 }));
 vi.mock("@/modules/api/v2/lib/utils", () => ({ handleApiError: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/contacts-api-guard", () => ({
+  checkContactsEnabledApiV2: vi.fn(),
+}));
 vi.mock("@/modules/api/v2/management/lib/helper", () => ({
   getWorkspaceId: vi.fn(),
   getWorkspaceIdFromSurveyIds: vi.fn(),
