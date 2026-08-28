@@ -311,6 +311,8 @@ jobs:
             "BETTER_AUTH_SECRET=$DUMMY_ENCRYPTION_KEY" \
             'HUB_API_KEY=build-time-placeholder' \
             'CUBEJS_API_SECRET=build-time-placeholder' \
+            'AUTHZED_TOKEN=compose-authzed-token-placeholder' \
+            'AUTHZED_DATABASE_PASSWORD=compose-authzed-database-placeholder' \
             'AI_PROVIDER=compose-provider-secret-sentinel' \
             > docker/.env
 
