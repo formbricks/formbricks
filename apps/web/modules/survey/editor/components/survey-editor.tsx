@@ -305,6 +305,7 @@ export const SurveyEditor = ({
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
               isWorkflowsAllowed={isWorkflowsAllowed}
+              workspaceId={workspace.id}
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}

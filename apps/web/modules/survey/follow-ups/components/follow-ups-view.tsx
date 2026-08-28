@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
@@ -25,6 +24,12 @@ interface FollowUpsViewProps {
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
   isWorkflowsAllowed: boolean;
+  /**
+   * Passed down rather than read from `useWorkspace()`: the editor lives in the `(survey-editor)`
+   * route group, whose layout does not mount `WorkspaceContextWrapper`, so the hook returns a null
+   * workspace here and any link built from it would never render.
+   */
+  workspaceId: string;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
   locale: TUserLocale;
@@ -37,11 +42,11 @@ export const FollowUpsView = ({
   mailFrom,
   isSurveyFollowUpsAllowed,
   isWorkflowsAllowed,
+  workspaceId,
   userEmail,
   teamMemberDetails,
   locale,
 }: Readonly<FollowUpsViewProps>) => {
-  const { workspace } = useWorkspace();
   const { t } = useTranslation();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
 
@@ -78,12 +83,12 @@ export const FollowUpsView = ({
       )}
 
       <div className="flex justify-end">
-        {isWorkflowsAllowed && workspace ? (
+        {isWorkflowsAllowed ? (
           <Button size="sm" asChild>
             {/* New tab on purpose: the editor only autosaves drafts
                 (`AutoSaveIndicator isDraft`), so on a published survey navigating away here would
                 drop whatever the author has not saved yet. */}
-            <Link href={`/workspaces/${workspace.id}/workflows`} target="_blank" rel="noopener noreferrer">
+            <Link href={`/workspaces/${workspaceId}/workflows`} target="_blank" rel="noopener noreferrer">
               {t("common.new_workflow")}
             </Link>
           </Button>
