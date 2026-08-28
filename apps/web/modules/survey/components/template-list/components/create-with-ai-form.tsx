@@ -196,20 +196,27 @@ export const CreateWithAIForm = ({
   );
 
   const editPromptLabel = t("workspace.surveys.ai_create.edit_prompt");
+
+  /**
+   * The prompt, settled. It is the same content the textarea held, so it borrows that component's
+   * shape — same radius and text size — with a lighter border and a filled ground to say it is no
+   * longer the thing you are editing. The pencil lives inside that frame: pinned to the dialog edge
+   * instead, it read as an unrelated control floating in whitespace.
+   */
   const promptChip = (
-    <div className="flex items-center gap-2 text-xs text-slate-500">
-      <span id="ai-prompt-echo" className="min-w-0 flex-1 truncate">
-        {t("workspace.surveys.ai_create.your_prompt")}: {prompt}
-      </span>
+    <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 py-1 pr-1 pl-3">
+      <p id="ai-prompt-echo" className="min-w-0 flex-1 truncate text-sm text-slate-700">
+        <span className="sr-only">{t("workspace.surveys.ai_create.your_prompt")}: </span>
+        {prompt}
+      </p>
       <TooltipRenderer tooltipContent={editPromptLabel}>
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-7 shrink-0"
+          className="size-7 shrink-0 text-slate-500 hover:text-slate-800"
           disabled={isCreatingSurvey}
-          // The button shows only a pencil, so it needs its own name, and pointing at the prompt it
-          // edits tells a screen-reader user which text this acts on.
+          // Icon-only, so it needs its own name; describedby points at the prompt it acts on.
           aria-label={editPromptLabel}
           aria-describedby="ai-prompt-echo"
           onClick={handleEditPrompt}>
