@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { type ReactNode, memo, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
@@ -71,9 +72,16 @@ type AiDraftPreviewProps = {
   draft: TAiDraftState;
   isGenerating: boolean;
   className?: string;
+  /** The scroll container, exposed so a finished generation can land focus where scrolling works. */
+  scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
 };
 
-export const AiDraftPreview = ({ draft, isGenerating, className }: Readonly<AiDraftPreviewProps>) => {
+export const AiDraftPreview = ({
+  draft,
+  isGenerating,
+  className,
+  scrollContainerRef,
+}: Readonly<AiDraftPreviewProps>) => {
   const { t } = useTranslation();
   // The same glyphs and labels the editor uses two seconds later, so the draft reads as the product
   // rather than as a bespoke preview.
@@ -104,14 +112,8 @@ export const AiDraftPreview = ({ draft, isGenerating, className }: Readonly<AiDr
 
   return (
     <div
-      // tabIndex makes the scroll region keyboard-operable (WCAG 2.1.1 — only Firefox does this for
-      // overflow containers by default) and gives the completed generation somewhere to land focus.
-      tabIndex={0}
-      role="group"
-      aria-label={t("workspace.surveys.ai_create.draft_survey")}
-      aria-busy={isGenerating}
       className={cn(
-        "focus-visible:ring-ring relative flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white focus-visible:ring-1 focus-visible:outline-hidden",
+        "relative flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white",
         className
       )}>
       {isGenerating ? <AiActivityBar /> : null}
@@ -124,7 +126,23 @@ export const AiDraftPreview = ({ draft, isGenerating, className }: Readonly<AiDr
         )}
       </div>
 
-      <div ref={scrollRef} onScroll={handleScroll} className="min-h-0 flex-1 overflow-y-auto">
+      {/*
+        The focus target is the scroll container itself, not the card around it: a tabIndex on a
+        non-scrolling ancestor gives a keyboard user a tab stop that cannot scroll anything (WCAG
+        2.1.1 — only Firefox makes overflow containers focusable on its own). One stop, on the
+        element that moves, which is also where the finished generation lands focus.
+      */}
+      <div
+        ref={(node) => {
+          scrollRef.current = node;
+          if (scrollContainerRef) scrollContainerRef.current = node;
+        }}
+        onScroll={handleScroll}
+        tabIndex={0}
+        role="group"
+        aria-label={t("workspace.surveys.ai_create.draft_survey")}
+        aria-busy={isGenerating}
+        className="focus-visible:ring-ring min-h-0 flex-1 overflow-y-auto focus-visible:ring-1 focus-visible:outline-hidden">
         {blocks.map((block) => (
           <section key={block.key} className="-mt-px first:mt-0">
             {/*

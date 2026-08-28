@@ -119,6 +119,29 @@ describe("aiCreateReducer", () => {
   });
 });
 
+describe("terminal events from an abandoned generation", () => {
+  test("DONE after Stop does not pair the restored draft with the new payload", () => {
+    const stopped = aiCreateReducer(generatingWithOneQuestion(), { type: "STOP" });
+    expect(stopped.status).toBe("review");
+
+    const late = aiCreateReducer(stopped, {
+      type: "DONE",
+      payload: { name: "Other" } as TV3CreateSurveyBody,
+    });
+
+    expect(late).toBe(stopped);
+  });
+
+  test("FAIL after Stop does not tear down what the user went back to", () => {
+    const stopped = aiCreateReducer(generatingWithOneQuestion(), { type: "STOP" });
+
+    const late = aiCreateReducer(stopped, { type: "FAIL", errorCode: "ai_generation_failed" });
+
+    expect(late).toBe(stopped);
+    expect(late.errorCode).toBeNull();
+  });
+});
+
 describe("editing the prompt without losing a finished draft", () => {
   const reviewing = () => aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
 

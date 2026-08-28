@@ -35,9 +35,9 @@ const body: TV3SurveyGenerateBody = {
   type: "link",
 };
 
-const call = () =>
+const call = (signal?: AbortSignal) =>
   streamV3SurveyGeneration({
-    req: new Request("http://localhost/api/internal/surveys/generate/stream", { method: "POST" }),
+    req: new Request("http://localhost/api/internal/surveys/generate/stream", { method: "POST", signal }),
     authentication: { type: "session", session: { user: { id: "user1" } } } as never,
     body,
     requestId: "req_1",
@@ -124,6 +124,23 @@ describe("streamV3SurveyGeneration", () => {
       expect.objectContaining({ streamed: true }),
       expect.anything()
     );
+  });
+
+  test("a request that was already aborted starts the generation cancelled", async () => {
+    // An abort that has already fired is never replayed to a listener registered afterwards, so a
+    // client that disconnected during the entitlement checks would be billed for a full generation.
+    mocks.streamOrganizationAIObject.mockResolvedValue({
+      partialObjectStream: asyncIterable([]),
+      completion: Promise.resolve({ name: "Onboarding", blocks: [] }),
+    });
+
+    const controller = new AbortController();
+    controller.abort();
+
+    await call(controller.signal);
+
+    const passedSignal = mocks.streamOrganizationAIObject.mock.calls.at(-1)?.[0]?.abortSignal;
+    expect(passedSignal?.aborted).toBe(true);
   });
 
   test("reports a mid-generation failure in band and still closes cleanly", async () => {

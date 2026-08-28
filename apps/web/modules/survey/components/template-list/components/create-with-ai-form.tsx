@@ -103,8 +103,8 @@ export const CreateWithAIForm = ({
     onGeneratingChange?.(isGenerating);
   }, [isGenerating, onGeneratingChange]);
 
-  // On completion focus the draft rather than "Open in editor": the card is scrollable, and a user
-  // pressing Space to read further would otherwise navigate by accident.
+  // On completion focus the draft's scroll container rather than "Open in editor": it is the element
+  // that scrolls, and a user pressing Space to read further would otherwise navigate by accident.
   useEffect(() => {
     if (status === "review") {
       draftRef.current?.focus();
@@ -250,11 +250,13 @@ export const CreateWithAIForm = ({
       {isGenerating || isReviewing ? (
         <>
           <div className="shrink-0">{promptChip}</div>
-          <div
-            ref={draftRef}
-            tabIndex={-1}
-            className="flex min-h-0 flex-1 flex-col focus-visible:outline-hidden">
-            <AiDraftPreview draft={draft} isGenerating={isGenerating} className="flex-1" />
+          <div className="flex min-h-0 flex-1 flex-col">
+            <AiDraftPreview
+              draft={draft}
+              isGenerating={isGenerating}
+              className="flex-1"
+              scrollContainerRef={draftRef}
+            />
           </div>
           <AiStatusLine isActive={isGenerating} messages={generatingMessages} activeIndex={statusIndex} />
         </>

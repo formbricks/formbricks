@@ -79,7 +79,10 @@ export async function streamV3SurveyGeneration({
   // which can fire first and would otherwise leave the provider running to its 45s timeout.
   const generationAbort = new AbortController();
   const abortGeneration = () => generationAbort.abort();
-  req.signal.addEventListener("abort", abortGeneration, { once: true });
+  // An abort that already happened is never replayed to a listener added afterwards, so a client
+  // that disconnected during the guards above would otherwise get a full generation billed to it.
+  if (req.signal.aborted) abortGeneration();
+  else req.signal.addEventListener("abort", abortGeneration, { once: true });
 
   let generation: TStreamObjectResult<z.infer<typeof ZGeneratedSurveyDraftForAI>>;
   try {

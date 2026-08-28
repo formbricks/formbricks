@@ -41,6 +41,17 @@ export interface TOrganizationAIConfig {
 
 export const isInstanceAIConfigured = (): boolean => isAiConfigured(env);
 
+/**
+ * A cancelled generation, as it reaches us: the fetch the provider is holding rejects with an
+ * `AbortError`, and the SDK sometimes hands it back wrapped one level down as the `cause`.
+ */
+const isAbortError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  if (error.name === "AbortError") return true;
+
+  return error.cause instanceof Error && error.cause.name === "AbortError";
+};
+
 export const getOrganizationAIConfig = async (organizationId: string): Promise<TOrganizationAIConfig> => {
   const organization = await getOrganization(organizationId);
 
@@ -194,6 +205,10 @@ export const streamOrganizationAIObject = async <T = unknown>({
     : undefined;
 
   const classify = (error: unknown): never => {
+    // A cancelled generation is the user pressing Stop or closing the tab, not an incident: it must
+    // not be logged at error level (it pages someone) and it carries no provider status to map.
+    if (isAbortError(error)) throw error;
+
     const providerError = classifyAIProviderError(error);
     logger.error(
       {

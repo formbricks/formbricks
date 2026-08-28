@@ -2,7 +2,7 @@ import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/
 
 /** One question row as the preview renders it, flattened out of the block structure. */
 export interface TAiDraftQuestion {
-  /** Stable for the row's whole life: the model appends, so a question never changes position. */
+  /** `block:question`, and the row's position in the draft — stable for its whole life. */
   key: string;
   /** Which block it belongs to. Kept so the preview can show the structure the model wrote. */
   blockKey: string;
@@ -73,12 +73,27 @@ export function mergeAiDraftSnapshot(
     changed = true;
   }
 
+  // Ordered by position, not by arrival. A question is only flattened once it has a type or a
+  // headline, so one that is still empty is skipped and lands in a later snapshot — appending it
+  // would render question 2 above question 1, and that wrong order would survive into review.
+  if (changed) {
+    questions.sort((a, b) => comparePosition(a.key, b.key));
+  }
+
   const name = typeof snapshot.name === "string" && snapshot.name.length > 0 ? snapshot.name : previous.name;
   if (name !== previous.name) {
     changed = true;
   }
 
   return changed ? { name, questions } : previous;
+}
+
+/** `block:question` keys, compared numerically — "10:0" sorts after "9:0", which strings do not. */
+function comparePosition(a: string, b: string): number {
+  const [aBlock = 0, aQuestion = 0] = a.split(":").map(Number);
+  const [bBlock = 0, bQuestion = 0] = b.split(":").map(Number);
+
+  return aBlock - bBlock || aQuestion - bQuestion;
 }
 
 /** Rows currently worth rendering: a question exists once the model has committed to its type. */

@@ -118,12 +118,13 @@ export const useCreateSurveyWithAI = ({
         {
           signal: controller.signal,
           onEvent: (event) => {
+            // Nothing from a run the user already abandoned reaches the reducer — terminal events
+            // included, since a late `done` would hand the restored draft the wrong payload.
+            if (abortControllerRef.current !== controller) return;
+
             switch (event.type) {
               case "partial":
-                // A late chunk from a run the user already abandoned must not reach the reducer.
-                if (abortControllerRef.current === controller) {
-                  queueSnapshot(event.draft);
-                }
+                queueSnapshot(event.draft);
                 break;
               case "done":
                 flushSnapshot();

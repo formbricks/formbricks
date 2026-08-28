@@ -100,6 +100,41 @@ describe("mergeAiDraftSnapshot", () => {
   });
 });
 
+describe("row order follows the draft, not the stream", () => {
+  test("a question that fills in late still renders in its own position", () => {
+    // The model committed to question 2 while question 1 was still empty, so the first snapshot
+    // carries only 0:1. Appending 0:0 afterwards would render the second question above the first.
+    const late = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, snapshot([{}, { type: "rating", headline: "Second" }]));
+    expect(late.questions.map((question) => question.key)).toEqual(["0:1"]);
+
+    const filled = mergeAiDraftSnapshot(
+      late,
+      snapshot([
+        { type: "openText", headline: "First" },
+        { type: "rating", headline: "Second" },
+      ])
+    );
+
+    expect(filled.questions.map((question) => question.key)).toEqual(["0:0", "0:1"]);
+    expect(filled.questions.map((question) => question.headline)).toEqual(["First", "Second"]);
+  });
+
+  test("orders blocks numerically rather than as strings", () => {
+    const blocks = (count: number): TSurveyGenerationDraftSnapshot =>
+      ({
+        blocks: Array.from({ length: count }, (_, index) => ({
+          name: `Block ${index}`,
+          questions: [{ type: "openText", headline: `Q${index}` }],
+        })),
+      }) as TSurveyGenerationDraftSnapshot;
+
+    const state = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, blocks(11));
+
+    // "10:0" sorts before "9:0" as a string; the row for block 10 belongs last.
+    expect(state.questions.at(-1)?.key).toBe("10:0");
+  });
+});
+
 describe("mergeAiDraftSnapshot — keyed matching", () => {
   test("a question filled in later does not duplicate a key", () => {
     // The model can leave question 0 untouched while writing question 1, so the flattened array

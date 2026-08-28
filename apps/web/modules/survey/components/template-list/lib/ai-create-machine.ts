@@ -77,6 +77,11 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
     }
 
     case "DONE": {
+      // Same guard as SNAPSHOT, for the same reason: a terminal event from a run the user already
+      // stopped would otherwise pair the restored draft with the abandoned run's payload — what you
+      // see would no longer be what saving writes.
+      if (state.status !== "generating") return state;
+
       // An empty draft is a failure wearing a success hat.
       if (state.draft.questions.length === 0) {
         return { ...INITIAL_AI_CREATE_STATE, errorCode: AI_NOTHING_GENERATED_CODE };
@@ -97,6 +102,9 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
         : { ...INITIAL_AI_CREATE_STATE };
 
     case "FAIL":
+      // A failure belonging to an abandoned run must not tear down what the user went back to.
+      if (state.status !== "generating") return state;
+
       // Discard the partial draft — a generation that died mid-write is not a trustworthy artifact
       // — but a failed regeneration still hands back the draft it was replacing.
       return restorePrevious(state, action.errorCode);
