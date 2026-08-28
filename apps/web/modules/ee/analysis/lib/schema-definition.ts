@@ -396,6 +396,19 @@ export const FEEDBACK_MEASURE_IDS: string[] = FEEDBACK_FIELDS.measures.map((m) =
 export const getMeasureAxisMaxCandidates = (measureId: string): readonly number[] | undefined =>
   FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.axisMaxCandidates;
 
+/**
+ * True for a measure computed *over* the responses in a group — a score or an average — rather
+ * than by counting them. The distinction decides what an empty group means: a count genuinely
+ * counted zero there, while a ratio has nothing to divide, so it has no value at all. It also
+ * decides whether per-group values can be folded into one, since ratios cannot be added.
+ *
+ * False for anything not in the schema, so an unrecognized column keeps the additive treatment.
+ */
+export const isRatioMeasure = (measureId: string): boolean => {
+  const group = FEEDBACK_FIELDS.measures.find((m) => m.id === measureId)?.group;
+  return group === "score" || group === "average";
+};
+
 export const FEEDBACK_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
 
 export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
