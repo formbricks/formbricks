@@ -1,4 +1,4 @@
-{{- if and .Values.authzed.enabled (or .Release.IsInstall (and .Release.IsUpgrade .Values.authzed.migrationAcknowledged)) }}
+{{- if and .Values.authzed.enabled .Values.authzed.initialization.enabled (or .Release.IsInstall (and .Release.IsUpgrade .Values.authzed.migrationAcknowledged)) }}
 ---
 apiVersion: batch/v1
 kind: Job

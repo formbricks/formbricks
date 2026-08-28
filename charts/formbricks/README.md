@@ -231,6 +231,12 @@ relationships before replacement; see the repository `authzed/README.md` for exi
 The public [AuthZed operations guide](../../docs/self-hosting/advanced/authzed-operations.mdx) covers backups,
 restoration, schema lifecycle, relationship repair, and monitoring.
 
+Cloud operators that run the same guarded schema, outbox drain, reconciliation, and audit sequence outside Helm
+may set `authzed.initialization.enabled=false` together with `authzed.migrationAcknowledged=true`. This suppresses
+the initialization hook so a GitOps sync cannot mutate the authorization graph outside the controlled cutover
+window. The acknowledgement must be set only after the external preparation succeeds. Fresh self-hosted installs
+should keep the default initialization Job enabled.
+
 ## Cube
 
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default

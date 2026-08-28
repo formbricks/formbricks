@@ -635,6 +635,12 @@ authzed:
   # first v6 Helm upgrade. Fresh installs do not need to set this value.
   migrationAcknowledged: false
 
+  initialization:
+    # Fresh self-hosted installs run the release-matched schema and relationship preparation Job.
+    # Set this to false only when an operator performs the same guarded cutover externally, and set
+    # migrationAcknowledged=true only after that preparation has completed successfully.
+    enabled: true
+
   # selfHosted creates a SpiceDBCluster. external only configures the app client.
   mode: selfHosted
 
