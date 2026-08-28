@@ -146,3 +146,74 @@ describe("editing the prompt without losing a finished draft", () => {
     expect(aiCreateReducer(state, { type: "BACK_TO_DRAFT" }).status).toBe("idle");
   });
 });
+
+describe("regenerating does not cost you the draft you had", () => {
+  const finished = () => aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
+  const regenerating = () => aiCreateReducer(finished(), { type: "REGENERATE" });
+
+  test("the finished draft is held aside, not destroyed", () => {
+    const state = regenerating();
+
+    expect(state.status).toBe("generating");
+    expect(state.draft.questions).toHaveLength(0); // cleared from view
+    expect(state.previous?.payload).toBe(payload); // but kept
+  });
+
+  test("Stop puts the previous draft back, payload and all", () => {
+    // The case that bit: stopping mid-regeneration used to leave a partial with no payload, so
+    // "Save and continue" had nothing to save.
+    const state = aiCreateReducer(regenerating(), { type: "STOP" });
+
+    expect(state.status).toBe("review");
+    expect(state.draft.questions).toHaveLength(1);
+    expect(state.payload).toBe(payload);
+    expect(state.previous).toBeNull();
+  });
+
+  test("Stop restores the previous draft even when the new one had already streamed rows", () => {
+    // The partial has no payload and cannot be saved, so the finished draft always wins.
+    const partway = aiCreateReducer(regenerating(), {
+      type: "SNAPSHOT",
+      snapshot: snapshot("A different question"),
+    });
+    expect(partway.draft.questions).toHaveLength(1);
+
+    const state = aiCreateReducer(partway, { type: "STOP" });
+
+    expect(state.draft.questions[0].headline).toBe("How was it?");
+    expect(state.payload).toBe(payload);
+  });
+
+  test("a failed regeneration hands the draft back with the error", () => {
+    const state = aiCreateReducer(regenerating(), { type: "FAIL", errorCode: "ai_generation_failed" });
+
+    expect(state.status).toBe("review");
+    expect(state.payload).toBe(payload);
+    expect(state.errorCode).toBe("ai_generation_failed");
+  });
+
+  test("a finished regeneration supersedes what was held aside", () => {
+    const nextPayload = { name: "Second" } as TV3CreateSurveyBody;
+    const streamed = aiCreateReducer(regenerating(), { type: "SNAPSHOT", snapshot: snapshot("New") });
+
+    const state = aiCreateReducer(streamed, { type: "DONE", payload: nextPayload });
+
+    expect(state.payload).toBe(nextPayload);
+    expect(state.previous).toBeNull();
+  });
+
+  test("editing the prompt mid-regeneration still leaves a draft to come back to", () => {
+    const state = aiCreateReducer(regenerating(), { type: "EDIT_PROMPT" });
+
+    expect(state.status).toBe("idle");
+    expect(state.payload).toBe(payload);
+    expect(aiCreateReducer(state, { type: "BACK_TO_DRAFT" }).draft.questions).toHaveLength(1);
+  });
+
+  test("stopping a first generation is unaffected — there is nothing to restore", () => {
+    const state = aiCreateReducer(generatingWithOneQuestion(), { type: "STOP" });
+
+    expect(state.status).toBe("review");
+    expect(state.draft.questions).toHaveLength(1);
+  });
+});

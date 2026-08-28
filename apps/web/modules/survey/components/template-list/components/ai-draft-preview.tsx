@@ -131,9 +131,12 @@ export const AiDraftPreview = ({ draft, isGenerating, className }: Readonly<AiDr
               The model is asked to name every block, so show that structure rather than flattening
               it into one list — but only when there is more than one, since a lone header over the
               whole draft is chrome that says nothing.
+
+              Sticky so the section you are reading stays named while you scroll through it. The
+              band is opaque, so rows pass cleanly behind it rather than showing through.
             */}
             {showsBlockNames && (
-              <h4 className="border-y border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-medium text-slate-500">
+              <h4 className="sticky top-0 z-10 border-y border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-medium text-slate-500">
                 {block.name ?? <Skeleton className="my-0.5 inline-block h-3 w-24 rounded-md align-middle" />}
               </h4>
             )}

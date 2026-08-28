@@ -11,6 +11,11 @@ export interface TAiCreateState {
   payload: TV3CreateSurveyBody | null;
   /** An error code, not a message, so the reducer stays free of `t`. */
   errorCode: string | null;
+  /**
+   * The last finished draft, held aside while a regeneration runs. Regenerating is a gamble on a
+   * better result: abandoning it, or having it fail, must not cost the one the user already had.
+   */
+  previous: { draft: TAiDraftState; payload: TV3CreateSurveyBody } | null;
 }
 
 export type TAiCreateAction =
@@ -31,7 +36,23 @@ export const INITIAL_AI_CREATE_STATE: TAiCreateState = {
   draft: EMPTY_AI_DRAFT,
   payload: null,
   errorCode: null,
+  previous: null,
 };
+
+/** Put a held-aside draft back on screen, or fall back to a clean slate when there is none. */
+function restorePrevious(state: TAiCreateState, errorCode: string | null = null): TAiCreateState {
+  if (!state.previous) {
+    return { ...INITIAL_AI_CREATE_STATE, errorCode };
+  }
+
+  return {
+    status: "review",
+    draft: state.previous.draft,
+    payload: state.previous.payload,
+    errorCode,
+    previous: null,
+  };
+}
 
 /** Raised locally rather than by the server: the stream succeeded but produced nothing usable. */
 export const AI_NOTHING_GENERATED_CODE = "ai_nothing_generated";
@@ -44,7 +65,8 @@ export const AI_NOTHING_GENERATED_CODE = "ai_nothing_generated";
 export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction): TAiCreateState {
   switch (action.type) {
     case "SUBMIT":
-      return { status: "generating", draft: EMPTY_AI_DRAFT, payload: null, errorCode: null };
+      // A fresh prompt, so there is nothing worth holding on to.
+      return { status: "generating", draft: EMPTY_AI_DRAFT, payload: null, errorCode: null, previous: null };
 
     case "SNAPSHOT": {
       // A chunk that lands after Stop must not resurrect the generating view.
@@ -60,32 +82,47 @@ export function aiCreateReducer(state: TAiCreateState, action: TAiCreateAction):
         return { ...INITIAL_AI_CREATE_STATE, errorCode: AI_NOTHING_GENERATED_CODE };
       }
 
-      return { ...state, status: "review", payload: action.payload, errorCode: null };
+      // The new draft supersedes whatever was held aside.
+      return { ...state, status: "review", payload: action.payload, errorCode: null, previous: null };
     }
 
     case "STOP":
-      // Keep a partial draft the user can still act on; with nothing to show, go back to the prompt.
+      // Stopping a regeneration restores the draft it was trying to replace. The partial that was
+      // streaming has no payload and could not be saved anyway, so the finished one always wins.
+      if (state.previous) return restorePrevious(state);
+
+      // First generation: keep whatever arrived so it is still actionable, or go back to the prompt.
       return state.draft.questions.length > 0
         ? { ...state, status: "review" }
         : { ...INITIAL_AI_CREATE_STATE };
 
     case "FAIL":
-      // Discard the partial draft: a generation that died mid-write is not a trustworthy artifact,
-      // and a review footer over a broken draft is a lie about what the user has.
-      return { ...INITIAL_AI_CREATE_STATE, errorCode: action.errorCode };
+      // Discard the partial draft — a generation that died mid-write is not a trustworthy artifact
+      // — but a failed regeneration still hands back the draft it was replacing.
+      return restorePrevious(state, action.errorCode);
 
     case "EDIT_PROMPT":
       // Non-destructive: a finished draft is kept so the user can tweak the prompt, change their
       // mind, and go back to it. A half-written one is dropped — there is nothing to return to.
-      return state.payload ? { ...state, status: "idle", errorCode: null } : { ...INITIAL_AI_CREATE_STATE };
+      if (state.payload) return { ...state, status: "idle", errorCode: null };
+      // Mid-regeneration: drop the half-written draft but keep the finished one behind it.
+      if (state.previous) return { ...restorePrevious(state), status: "idle" };
+      return { ...INITIAL_AI_CREATE_STATE };
 
     case "BACK_TO_DRAFT":
       if (!state.payload) return state;
       return { ...state, status: "review", errorCode: null };
 
     case "REGENERATE":
-      // Clear before re-entering so the previous list does not sit under the new stream.
-      return { status: "generating", draft: EMPTY_AI_DRAFT, payload: null, errorCode: null };
+      // Clear the visible list so the old one does not sit under the new stream, but hold it aside
+      // rather than destroying it: Stop, or a failure, puts it straight back.
+      return {
+        status: "generating",
+        draft: EMPTY_AI_DRAFT,
+        payload: null,
+        errorCode: null,
+        previous: state.payload ? { draft: state.draft, payload: state.payload } : state.previous,
+      };
 
     case "CREATE":
       if (state.status !== "review" || !state.payload) return state;
