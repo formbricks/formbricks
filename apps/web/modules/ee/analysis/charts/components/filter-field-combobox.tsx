@@ -1,8 +1,9 @@
 "use client";
 
-import { CheckIcon, ChevronDownIcon, SparklesIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AiIcon } from "@/modules/ui/components/ai";
 import {
   Command,
   CommandEmpty,
@@ -124,9 +125,7 @@ export function FilterFieldCombobox({ options, value, onChange }: Readonly<Filte
                           onChange(option.value);
                           setOpen(false);
                         }}>
-                        {option.isGenerated && (
-                          <SparklesIcon className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
-                        )}
+                        {option.isGenerated && <AiIcon className="shrink-0" />}
                         <span
                           className={cn("flex-1 truncate", isSelected && "font-medium text-slate-900")}
                           title={option.label}>

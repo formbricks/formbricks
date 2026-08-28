@@ -1,6 +1,5 @@
 "use client";
 
-import { SparklesIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   FEEDBACK_FIELDS,
@@ -9,6 +8,7 @@ import {
   getTranslatedFieldDescription,
   getTranslatedFieldLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
+import { AiIcon } from "@/modules/ui/components/ai";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
@@ -38,7 +38,7 @@ export function DimensionsPanel({
     value: d.id,
     label: getTranslatedFieldLabel(d.id, t),
     description: getTranslatedFieldDescription(d.id, d.description, t),
-    icon: d.isGenerated ? <SparklesIcon className="size-4 text-slate-500" aria-hidden="true" /> : undefined,
+    icon: d.isGenerated ? <AiIcon /> : undefined,
   }));
 
   return (
