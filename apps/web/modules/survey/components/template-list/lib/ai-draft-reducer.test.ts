@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/generate/lib/events";
-import { EMPTY_AI_DRAFT, mergeAiDraftSnapshot } from "./ai-draft-reducer";
+import { EMPTY_AI_DRAFT, groupAiDraftByBlock, mergeAiDraftSnapshot } from "./ai-draft-reducer";
 
 const snapshot = (questions: unknown[], name?: string): TSurveyGenerationDraftSnapshot =>
   ({ name, blocks: [{ name: "Block", questions }] }) as TSurveyGenerationDraftSnapshot;
@@ -141,5 +141,56 @@ describe("mergeAiDraftSnapshot — keyed matching", () => {
     );
 
     expect(second.questions.find((q) => q.key === "0:1")).toBe(first.questions[0]);
+  });
+});
+
+describe("block structure", () => {
+  const twoBlocks = {
+    name: "Onboarding",
+    blocks: [
+      { name: "Signup", questions: [{ type: "openText", headline: "How was signup?" }] },
+      {
+        name: "Setup",
+        questions: [
+          { type: "rating", headline: "Rate setup" },
+          { type: "openText", headline: "Anything else?" },
+        ],
+      },
+    ],
+  } as TSurveyGenerationDraftSnapshot;
+
+  test("keeps the name the model gave each block", () => {
+    // The prompt asks for "a short, meaningful name" per block; flattening threw that away.
+    const state = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, twoBlocks);
+
+    expect(state.questions.map((q) => q.blockName)).toEqual(["Signup", "Setup", "Setup"]);
+  });
+
+  test("groups the flat rows back into the blocks, in order", () => {
+    const state = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, twoBlocks);
+
+    const blocks = groupAiDraftByBlock(state.questions);
+
+    expect(blocks.map((b) => [b.name, b.questions.length])).toEqual([
+      ["Signup", 1],
+      ["Setup", 2],
+    ]);
+  });
+
+  test("a block name that streams in later still lands on its questions", () => {
+    const unnamed = mergeAiDraftSnapshot(EMPTY_AI_DRAFT, {
+      blocks: [{ questions: [{ type: "openText", headline: "How was signup?" }] }],
+    } as TSurveyGenerationDraftSnapshot);
+    expect(unnamed.questions[0].blockName).toBeUndefined();
+
+    const named = mergeAiDraftSnapshot(unnamed, {
+      blocks: [{ name: "Signup", questions: [{ type: "openText", headline: "How was signup?" }] }],
+    } as TSurveyGenerationDraftSnapshot);
+
+    expect(named.questions[0].blockName).toBe("Signup");
+  });
+
+  test("survives an empty draft", () => {
+    expect(groupAiDraftByBlock([])).toEqual([]);
   });
 });

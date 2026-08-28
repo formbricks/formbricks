@@ -4,6 +4,10 @@ import type { TSurveyGenerationDraftSnapshot } from "@/app/api/internal/surveys/
 export interface TAiDraftQuestion {
   /** Stable for the row's whole life: the model appends, so a question never changes position. */
   key: string;
+  /** Which block it belongs to. Kept so the preview can show the structure the model wrote. */
+  blockKey: string;
+  /** The model is asked to give every block a short, meaningful name; this is that name. */
+  blockName?: string;
   type?: string;
   headline?: string;
   choiceCount?: number;
@@ -55,6 +59,8 @@ export function mergeAiDraftSnapshot(
 
     const merged: TAiDraftQuestion = {
       key: previousQuestion.key,
+      blockKey: previousQuestion.blockKey,
+      blockName: incomingQuestion.blockName ?? previousQuestion.blockName,
       type: incomingQuestion.type ?? previousQuestion.type,
       headline: incomingQuestion.headline ?? previousQuestion.headline,
       choiceCount: incomingQuestion.choiceCount ?? previousQuestion.choiceCount,
@@ -95,6 +101,8 @@ function flattenSnapshotQuestions(snapshot: TSurveyGenerationDraftSnapshot): TAi
 
       questions.push({
         key: `${blockIndex}:${questionIndex}`,
+        blockKey: String(blockIndex),
+        blockName: typeof block?.name === "string" && block.name.length > 0 ? block.name : undefined,
         type,
         headline,
         choiceCount: Array.isArray(question.choices) ? question.choices.length : undefined,
@@ -106,5 +114,30 @@ function flattenSnapshotQuestions(snapshot: TSurveyGenerationDraftSnapshot): TAi
 }
 
 function isSameQuestion(a: TAiDraftQuestion, b: TAiDraftQuestion): boolean {
-  return a.type === b.type && a.headline === b.headline && a.choiceCount === b.choiceCount;
+  return (
+    a.type === b.type &&
+    a.headline === b.headline &&
+    a.choiceCount === b.choiceCount &&
+    a.blockName === b.blockName
+  );
+}
+
+/** Group the flat rows back into the blocks the model wrote, preserving order. */
+export function groupAiDraftByBlock(
+  questions: readonly TAiDraftQuestion[]
+): { key: string; name?: string; questions: TAiDraftQuestion[] }[] {
+  const blocks: { key: string; name?: string; questions: TAiDraftQuestion[] }[] = [];
+
+  for (const question of questions) {
+    const current = blocks.at(-1);
+    if (current?.key === question.blockKey) {
+      current.questions.push(question);
+      current.name ??= question.blockName;
+      continue;
+    }
+
+    blocks.push({ key: question.blockKey, name: question.blockName, questions: [question] });
+  }
+
+  return blocks;
 }

@@ -4,12 +4,14 @@ import { type ReactNode, memo, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { cn } from "@/lib/cn";
-import type {
-  TAiDraftQuestion,
-  TAiDraftState,
+import {
+  type TAiDraftQuestion,
+  type TAiDraftState,
+  groupAiDraftByBlock,
 } from "@/modules/survey/components/template-list/lib/ai-draft-reducer";
 import { getElementIconMap, getElementNameMap } from "@/modules/survey/lib/elements";
 import { AiActivityBar } from "@/modules/ui/components/ai";
+import { Badge } from "@/modules/ui/components/badge";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
 /** How close to the bottom still counts as "following along", in px. */
@@ -30,6 +32,10 @@ type AiDraftRowProps = {
  */
 const AiDraftRow = memo(({ question, icon, typeName, t }: Readonly<AiDraftRowProps>) => {
   const showsOptionCount = question.type ? CHOICE_ELEMENT_TYPES.has(question.type) : false;
+  const optionCount =
+    showsOptionCount && question.choiceCount
+      ? t("workspace.surveys.ai_create.option_count", { count: question.choiceCount })
+      : undefined;
 
   return (
     <li className="flex animate-fadeIn items-start gap-3 px-4 py-2.5">
@@ -44,16 +50,23 @@ const AiDraftRow = memo(({ question, icon, typeName, t }: Readonly<AiDraftRowPro
           // keystroke-sized update is exactly what reads as flicker.
           <Skeleton className="my-1 h-3 w-48 rounded-md" />
         )}
-        {/* Reserved as soon as the type lands, filled when the choices do, so it never jumps. */}
-        {showsOptionCount ? (
-          <p className="mt-0.5 text-xs text-slate-400">
-            {question.choiceCount
-              ? t("workspace.surveys.ai_create.option_count", { count: question.choiceCount })
-              : " "}
-          </p>
-        ) : null}
+        {/*
+          The type in words, because a 16px glyph alone does not tell an open text from a rating. A
+          pill rather than a line of text: set below the headline as plain prose it reads like an
+          answer to the question. The row always reserves the line — the type is the first field the
+          model writes — so the option count fills in later without anything jumping.
+        */}
+        <div className="mt-1 flex h-5 items-center">
+          {typeName ? (
+            <Badge
+              type="gray"
+              size="tiny"
+              className="font-normal"
+              text={optionCount ? `${typeName} · ${optionCount}` : typeName}
+            />
+          ) : null}
+        </div>
       </div>
-      {typeName ? <span className="sr-only">{typeName}</span> : null}
     </li>
   );
 });
@@ -72,6 +85,9 @@ export const AiDraftPreview = ({ draft, isGenerating, className }: Readonly<AiDr
   // rather than as a bespoke preview.
   const iconMap = useMemo(() => getElementIconMap(t), [t]);
   const nameMap = useMemo(() => getElementNameMap(t), [t]);
+
+  const blocks = useMemo(() => groupAiDraftByBlock(draft.questions), [draft.questions]);
+  const showsBlockNames = blocks.length > 1;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const isPinnedRef = useRef(true);
@@ -115,26 +131,45 @@ export const AiDraftPreview = ({ draft, isGenerating, className }: Readonly<AiDr
       </div>
 
       <div ref={scrollRef} onScroll={handleScroll} className="min-h-0 flex-1 overflow-y-auto">
-        <ul className="divide-y divide-slate-100">
-          {draft.questions.map((question) => (
-            <AiDraftRow
-              key={question.key}
-              question={question}
-              icon={iconMap[question.type as TSurveyElementTypeEnum]}
-              typeName={nameMap[question.type as TSurveyElementTypeEnum]}
-              t={t}
-            />
-          ))}
+        {blocks.map((block) => (
+          <section key={block.key}>
+            {/*
+              The model is asked to name every block, so show that structure rather than flattening
+              it into one list — but only when there is more than one, since a lone header over the
+              whole draft is chrome that says nothing.
+            */}
+            {showsBlockNames && (
+              <h4 className="sticky top-0 z-10 bg-slate-50/95 px-4 py-1.5 text-xs font-medium text-slate-500">
+                {block.name ?? <Skeleton className="my-0.5 inline-block h-3 w-24 rounded-md align-middle" />}
+              </h4>
+            )}
+            <ul className="divide-y divide-slate-100">
+              {block.questions.map((question) => (
+                <AiDraftRow
+                  key={question.key}
+                  question={question}
+                  icon={iconMap[question.type as TSurveyElementTypeEnum]}
+                  typeName={nameMap[question.type as TSurveyElementTypeEnum]}
+                  t={t}
+                />
+              ))}
+            </ul>
+          </section>
+        ))}
 
-          {isGenerating
-            ? Array.from({ length: PENDING_ROW_COUNT }, (_, index) => (
-                <li key={`pending-${index}`} className="flex items-start gap-3 px-4 py-2.5">
-                  <Skeleton className="mt-0.5 size-4 shrink-0 rounded-md" />
-                  <Skeleton className="my-1 h-3 w-40 rounded-md" />
-                </li>
-              ))
-            : null}
-        </ul>
+        {isGenerating ? (
+          <ul className="divide-y divide-slate-100">
+            {Array.from({ length: PENDING_ROW_COUNT }, (_, index) => (
+              <li key={`pending-${index}`} className="flex items-start gap-3 px-4 py-2.5">
+                <Skeleton className="mt-0.5 size-4 shrink-0 rounded-md" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3 w-40 rounded-md" />
+                  <Skeleton className="h-2 w-16 rounded-md" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </div>
   );

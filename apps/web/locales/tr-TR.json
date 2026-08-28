@@ -3005,7 +3005,7 @@
         "generation_failed": "Taslak tamamlanamadı. Tekrar dene veya biraz daha detay ekle.",
         "keep_editing": "Düzenlemeye devam et",
         "nothing_generated": "Hiçbir soru gelmedi. Anketi biraz daha detaylı açıklamayı dene.",
-        "open_in_editor": "Editörde aç",
+        "open_in_editor": "Kaydet ve devam et",
         "option_count": "{count, plural, one {# seçenek} other {# seçenek}}",
         "prompt_helper_churn": "Aktif müşterilerin neden kaybedilebileceğini ve onları bağlı tutacak şeylerin neler olduğunu anla",
         "prompt_helper_churn_label": "Kayıp riski",

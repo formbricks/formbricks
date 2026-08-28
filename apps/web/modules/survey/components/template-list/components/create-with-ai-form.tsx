@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -142,6 +143,9 @@ export const CreateWithAIForm = ({
       return (
         <>
           <Button type="button" variant="secondary" disabled={isCreatingSurvey} onClick={handleRegenerate}>
+            {/* inherit, not the AI token: on a secondary surface the mark should sit with the label
+                rather than colour-shout next to it. */}
+            <AiIcon tone="inherit" />
             {t("workspace.surveys.ai_create.regenerate")}
           </Button>
           {/* `loading` is right here and wrong while generating: this is an ordinary save, and a
@@ -162,6 +166,7 @@ export const CreateWithAIForm = ({
         )}
         {hasKeptDraft && (
           <Button type="button" variant="secondary" onClick={handleBackToDraft}>
+            <ArrowLeftIcon />
             {t("workspace.surveys.ai_create.back_to_draft")}
           </Button>
         )}

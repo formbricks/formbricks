@@ -2873,7 +2873,7 @@ checksums:
     workspace/surveys/ai_create/card_title: 5d8c659f559f1343bb23fd191a6556ad
     workspace/surveys/ai_create/characters: 94b5a8b5c869a7e9bc031f59de56de44
     workspace/surveys/ai_create/choose_template: dc3f22a8178d5aef8bdac9d3fc7cc268
-    workspace/surveys/ai_create/create: 757ccd28dd533ff3a933355273c1e32a
+    workspace/surveys/ai_create/create: 0345bf322c191e70d01fd6607ec5c2f8
     workspace/surveys/ai_create/create_with_ai: 5d8c659f559f1343bb23fd191a6556ad
     workspace/surveys/ai_create/create_with_ai_description: 7aa3fe0237ead1066e01f3e1abd7c0ad
     workspace/surveys/ai_create/dialog_description: 2c93d5a3152989234ed3819308037a53
@@ -2890,7 +2890,7 @@ checksums:
     workspace/surveys/ai_create/generation_failed: cf68e9399104ba1ed48bd88a91d06270
     workspace/surveys/ai_create/keep_editing: 9778ce7d47a83d1d43b204fc177d2c4a
     workspace/surveys/ai_create/nothing_generated: 4df9bd9e49c3b63cddd2cb4336e00420
-    workspace/surveys/ai_create/open_in_editor: 58990d6212eaf0d93509fb28a2cb2f88
+    workspace/surveys/ai_create/open_in_editor: fa60853b0e075c7c134e4bb3c7c59d82
     workspace/surveys/ai_create/option_count: d80b988a57d3119484c140b046e91a8c
     workspace/surveys/ai_create/prompt_helper_churn: 0a12f5fcab212aaa357c4ebc32b81124
     workspace/surveys/ai_create/prompt_helper_churn_label: be67c423d132ffdcf7447efe1602ee52
@@ -2903,7 +2903,7 @@ checksums:
     workspace/surveys/ai_create/prompt_label: 7d6d9969f13a0fb453cd63e239dec385
     workspace/surveys/ai_create/prompt_placeholder: 75155ac1c57f46766b8e9c8531a9b25f
     workspace/surveys/ai_create/regenerate: 79bc737effc16d0546c048c6aa2ec415
-    workspace/surveys/ai_create/shortcut_hint: f5a8984cb659c299fe1c93b2d40599ae
+    workspace/surveys/ai_create/shortcut_hint: 9e726671a699dbd62e0adb05ec2d0c40
     workspace/surveys/ai_create/start_from_scratch: 6fc756927ca9ea22c26368cccd64a67e
     workspace/surveys/ai_create/status_planning: 692a7d090d72bea6debefc9e338e508f
     workspace/surveys/ai_create/status_starting: db56f1a17081bd84efe020ed9e2c1b49
