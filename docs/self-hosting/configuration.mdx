@@ -59,6 +59,11 @@ Where Formbricks lives on the network, and how browsers get to it.
 
 Out of the box people sign in with an email address and a password. Point the instance at your own identity provider instead and sign-in follows the rules you already enforce there.
 
+<Note>
+  Single Sign-On is part of the [Enterprise Edition](/self-hosting/advanced/license) — every provider
+  below, not only SAML. SAML additionally needs the `saml` entitlement on the licence.
+</Note>
+
 <CardGroup cols={2}>
   <Card title="Authentication Behavior" icon="user" href="/self-hosting/auth-behavior">
     Who may sign up, and whether an invitation is required.
@@ -81,14 +86,12 @@ Out of the box people sign in with an email address and a password. Point the in
   </Card>
 
   <Card title="SAML SSO" icon="building-lock" href="/self-hosting/configuration/auth-sso/saml-sso">
-    SAML 2.0, for providers that do not speak OIDC. Enterprise Edition.
+    SAML 2.0, for providers that do not speak OIDC.
   </Card>
 </CardGroup>
 
 ## Connecting third-party tools
 
-<Card title="Integrations" icon="bridge" href="/self-hosting/configuration/integrations">
-  Register the OAuth apps that Slack, Notion, Airtable and Google Sheets need.
-</Card>
+[Airtable](/self-hosting/configuration/integrations/airtable), [Google Sheets](/self-hosting/configuration/integrations/google-sheets), [Notion](/self-hosting/configuration/integrations/notion) and [Slack](/self-hosting/configuration/integrations/slack) each need an OAuth app you register with the service, and its credentials as environment variables. [n8n](/self-hosting/configuration/integrations/n8n), [Zapier](/self-hosting/configuration/integrations/zapier) and [ActivePieces](/self-hosting/configuration/integrations/activepieces) connect the other way round, through a Formbricks API key, and need no server configuration at all.
 
 Still struggling or something not working as expected? [Join our GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!
