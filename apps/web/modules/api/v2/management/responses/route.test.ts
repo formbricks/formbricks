@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
+import { GET } from "./route";
 
 const {
   mockAuthenticatedApiClient,
@@ -95,7 +96,6 @@ describe("GET /management/responses", () => {
       },
     });
 
-    const { GET } = await import("./route");
     const response = await GET(buildRequest() as any);
     const body = await response.json();
 
@@ -116,7 +116,6 @@ describe("GET /management/responses", () => {
       error: { type: "internal_server_error", details: [{ field: "responses", issue: "boom" }] },
     });
 
-    const { GET } = await import("./route");
     const response = await GET(buildRequest() as any);
 
     expect(mockSuccessResponse).not.toHaveBeenCalled();
