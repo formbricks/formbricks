@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { can } from "@/lib/authorization";
 import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "@/lib/authorization/context";
-import { getSurveys } from "@/modules/survey/list/lib/survey";
+import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 
 /**
  * ENG-1739 — the ticket's central claim, proven rather than argued.
@@ -14,9 +14,9 @@ import { getSurveys } from "@/modules/survey/list/lib/survey";
  * can see that, which is what `getIssuedAuthorizationCheckCount` exists for.
  *
  * The real list path is exactly what a workspace's survey list page uses: one `workspace.read`
- * decision (what `getWorkspaceAuth` asks), then `getSurveys` to fetch the rows. `getSurveys` runs no
- * authorization of its own — access was already established by the workspace check — so the claim
- * under test is that fetching many rows costs the same ONE check as fetching few.
+ * decision (what `getWorkspaceAuth` asks), then `getSurveyListPage` to fetch the rows. The list query
+ * runs no authorization of its own — access was already established by the workspace check — so the
+ * claim under test is that fetching many rows costs the same ONE check as fetching few.
  *
  * ENG-2388: these declare the `page` surface. They previously declared `server_action`, which was a
  * stand-in — the scenario is a page render, but no page surface existed to name. That substitution is
@@ -71,8 +71,12 @@ describe("survey list authorization amplification, against a real database", () 
         });
         expect(canRead).toBe(true);
 
-        const rows = await getSurveys(scenario.workspaceId);
-        return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: rows.length };
+        const page = await getSurveyListPage(scenario.workspaceId, {
+          limit: surveyCount,
+          cursor: null,
+          sortBy: "updatedAt",
+        });
+        return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: page.surveys.length };
       });
 
       expect(surveys.rowCount).toBe(surveyCount);
@@ -98,7 +102,11 @@ describe("survey list authorization amplification, against a real database", () 
           type: "workspace",
           id: scenario.workspaceId,
         });
-        await getSurveys(scenario.workspaceId);
+        await getSurveyListPage(scenario.workspaceId, {
+          limit: surveyCount,
+          cursor: null,
+          sortBy: "updatedAt",
+        });
         return getIssuedAuthorizationCheckCount() ?? -1;
       });
     };
@@ -167,8 +175,12 @@ describe("survey list authorization amplification (member, not owner), against a
       });
       expect(canRead).toBe(true);
 
-      const rows = await getSurveys(scenario.workspaceId);
-      return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: rows.length };
+      const page = await getSurveyListPage(scenario.workspaceId, {
+        limit: 100,
+        cursor: null,
+        sortBy: "updatedAt",
+      });
+      return { checksIssued: getIssuedAuthorizationCheckCount(), rowCount: page.surveys.length };
     });
 
     expect(result.rowCount).toBe(100);

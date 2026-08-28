@@ -27,6 +27,11 @@ export interface SurveyBaseProps {
   /** Notifies the host of the survey's active language code (e.g. "default", "en-AU", "he").
    *  Link surveys use it to keep the page lang/dir in sync; embedded widgets omit it. */
   onLanguageChange?: (languageCode: string) => void;
+  /** Notifies the host which card the respondent is on (initial position + every navigation), so a
+   *  link survey can title the document per step (WCAG 2.4.2). `label` is pre-localized in the
+   *  SURVEY's active language, which the host does not track — its own i18n is in the viewer's UI
+   *  locale. Embedded widgets omit the callback, so a host page is never touched. */
+  onPageChange?: (page: { index: number; total: number; label: string }) => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;

@@ -35,6 +35,7 @@ const result = (overrides: Partial<TAuthzedBackfillResult> = {}): TAuthzedBackfi
     reconciled: 1,
     scanned: 1,
     skipped: 0,
+    unmanaged: 0,
   },
   failures: [],
   lastOrganizationId: ORGANIZATION_ID,

@@ -1,8 +1,13 @@
 "use client";
 
-import { type ElementType, type ReactNode } from "react";
+import { type ElementType, type ReactNode, useMemo } from "react";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
-import { formatXAxisTick } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import {
+  formatCellValue,
+  formatXAxisTick,
+  getCategoryAxisWidth,
+  getValueLabelPadding,
+} from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
@@ -39,6 +44,10 @@ export interface CartesianChartProps {
    * boundary. Anchors the edge x-axis labels inward so they aren't clipped by the plot edge.
    * Leave false for band-scale charts (bars), whose edge categories are already inset. */
   pointScale?: boolean;
+  /** Flips the chart onto its side: categories run down the y-axis and values across the x-axis.
+   * Bar charts only — the category labels move into a gutter on the left, sized to the labels
+   * present and wrapped inside it (see `getCategoryAxisWidth`). */
+  horizontal?: boolean;
 }
 
 /** Upper bound (px) on a single x-axis label before wrapping. The per-category band clamp below
@@ -141,6 +150,62 @@ function WrappingXAxisTick({
   );
 }
 
+/** Category tick for a flipped (horizontal) chart. Same `foreignObject` wrapping trick as
+ * `WrappingXAxisTick`, but the box hangs to the left of the axis line and is centred on its
+ * category band, since here the labels stack down the y-axis.
+ *
+ * The box height is clamped to the band the same way `WrappingXAxisTick` clamps its width: the
+ * chart's height comes from its container, not from the row count, so the band shrinks as categories
+ * are added. A fixed three-line box overlaps its neighbours as soon as the band falls below it, so
+ * the label sheds lines instead — down to a single line, with the full text still on hover. */
+function WrappingYAxisTick({
+  x,
+  y,
+  payload,
+  formatter,
+  axisWidth,
+  height,
+  visibleTicksCount,
+}: Readonly<{
+  x?: number;
+  y?: number;
+  payload?: { value?: unknown };
+  formatter: (value: unknown) => string;
+  /** Gutter the axis reserved, so the label box matches it instead of a fixed maximum. */
+  axisWidth: number;
+  height?: number;
+  visibleTicksCount?: number;
+}>) {
+  const label = formatter(payload?.value);
+  const boxWidth = Math.max(1, axisWidth - X_AXIS_TICK_GAP);
+
+  const band = height && visibleTicksCount ? height / visibleTicksCount : X_AXIS_LABEL_BOX_HEIGHT;
+  const boxHeight = Math.max(
+    X_AXIS_LABEL_LINE_HEIGHT,
+    Math.min(X_AXIS_LABEL_BOX_HEIGHT, band - X_AXIS_TICK_GAP)
+  );
+  // Whole lines only — a box sized to 2.5 lines would clip the third mid-glyph rather than drop it.
+  const lineClamp = Math.max(1, Math.floor(boxHeight / X_AXIS_LABEL_LINE_HEIGHT));
+
+  return (
+    <foreignObject
+      x={(x ?? 0) - boxWidth - X_AXIS_TICK_GAP}
+      y={(y ?? 0) - boxHeight / 2}
+      width={boxWidth}
+      height={boxHeight}
+      style={{ overflow: "visible" }}>
+      <div
+        title={label}
+        className="text-muted-foreground flex h-full items-center justify-end text-xs leading-tight"
+        style={{ textWrap: "pretty" }}>
+        <span className="line-clamp-3 text-right" style={{ WebkitLineClamp: lineClamp }}>
+          {label}
+        </span>
+      </div>
+    </foreignObject>
+  );
+}
+
 export function CartesianChart({
   data,
   xAxisKey,
@@ -157,43 +222,91 @@ export function CartesianChart({
   tooltipHideLabel,
   yAxisScale,
   pointScale = false,
+  horizontal = false,
 }: Readonly<CartesianChartProps>) {
   const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
   const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
+  const categoryAxisWidth = useMemo(() => {
+    if (!horizontal || !hasCategoryAxis) return 0;
+    return getCategoryAxisWidth(data.map((row) => tickFormatter(row[xAxisKey])));
+  }, [horizontal, hasCategoryAxis, data, xAxisKey, tickFormatter]);
+
+  // Flipped, a bar's value label sits past its end with nothing reserving room for it, so the
+  // longest bar loses its label whenever the data max lands on the axis bound. The vertical axis
+  // solves the same problem with `padding.top`; this is that padding, sized to the widest label.
+  const valueLabelPadding = useMemo(() => {
+    if (!horizontal) return 0;
+    const labels = data.flatMap((row) => dataKeys.map((key) => formatCellValue(row[key])));
+    return getValueLabelPadding(labels);
+  }, [horizontal, data, dataKeys]);
 
   return (
     <div className="h-full min-h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
-        <Chart data={data} {...chartProps}>
+        <Chart data={data} {...(horizontal ? { layout: "vertical" as const } : {})} {...chartProps}>
           {/* syncWithTicks: draw a gridline only at each tick. Without it Recharts adds
               extra lines at the plot-area top/bottom edges (revealed by the YAxis padding),
-              which showed up as unlabelled boundary lines above 80 and below 0. */}
-          <CartesianGrid strokeDasharray="2 4" vertical={false} syncWithTicks />
-          <XAxis
-            dataKey={xAxisKey}
-            tickLine={false}
-            tickMargin={10}
-            axisLine={false}
-            // Label every data point (default recharts hides overlapping ticks, which dropped
-            // long question labels on area/line charts) and wrap each label within a max-width.
-            interval={hasCategoryAxis ? 0 : undefined}
-            height={hasCategoryAxis ? X_AXIS_RESERVED_HEIGHT : undefined}
-            tick={
-              hasCategoryAxis ? (
-                <WrappingXAxisTick formatter={tickFormatter} pointScale={pointScale} />
-              ) : (
-                false
-              )
-            }
-          />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            padding={{ top: 16, bottom: 4 }}
-            domain={yScale?.domain}
-            ticks={yScale?.ticks}
-            interval={0}
-          />
+              which showed up as unlabelled boundary lines above 80 and below 0. The gridlines
+              always run across the value axis, which flips with the layout. */}
+          <CartesianGrid strokeDasharray="2 4" vertical={horizontal} horizontal={!horizontal} syncWithTicks />
+          {/* Flipped charts swap the axis roles: values run along the x-axis and the categories
+              stack down the y-axis. */}
+          {horizontal ? (
+            <XAxis
+              type="number"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              padding={{ left: 4, right: valueLabelPadding }}
+              domain={yScale?.domain}
+              ticks={yScale?.ticks}
+              interval={0}
+            />
+          ) : (
+            <XAxis
+              dataKey={xAxisKey}
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              // Label every data point (default recharts hides overlapping ticks, which dropped
+              // long question labels on area/line charts) and wrap each label within a max-width.
+              interval={hasCategoryAxis ? 0 : undefined}
+              height={hasCategoryAxis ? X_AXIS_RESERVED_HEIGHT : undefined}
+              tick={
+                hasCategoryAxis ? (
+                  <WrappingXAxisTick formatter={tickFormatter} pointScale={pointScale} />
+                ) : (
+                  false
+                )
+              }
+            />
+          )}
+          {horizontal ? (
+            <YAxis
+              type="category"
+              dataKey={xAxisKey}
+              tickLine={false}
+              axisLine={false}
+              width={categoryAxisWidth}
+              interval={0}
+              tick={
+                hasCategoryAxis ? (
+                  <WrappingYAxisTick formatter={tickFormatter} axisWidth={categoryAxisWidth} />
+                ) : (
+                  false
+                )
+              }
+            />
+          ) : (
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              padding={{ top: 16, bottom: 4 }}
+              domain={yScale?.domain}
+              ticks={yScale?.ticks}
+              interval={0}
+            />
+          )}
           <ChartTooltip
             content={
               <PolishedChartTooltip

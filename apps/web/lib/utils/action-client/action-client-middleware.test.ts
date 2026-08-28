@@ -136,11 +136,32 @@ describe("action-client-middleware", () => {
       });
     });
 
+    test("refuses an unrecognized workspace minimum permission", async () => {
+      vi.mocked(can).mockResolvedValue(true);
+
+      await expect(
+        checkAuthorizationUpdated({
+          userId,
+          organizationId,
+          access: [
+            {
+              type: "workspaceTeam",
+              workspaceId,
+              // Runtime callers can bypass the compile-time enum through untrusted input.
+              minPermission: "write" as never,
+            },
+          ],
+        })
+      ).rejects.toThrow(new AuthorizationError("Not authorized"));
+
+      expect(can).toHaveBeenCalledTimes(1);
+    });
+
     test("preserves ordered OR evaluation across multiple workspace alternatives", async () => {
       const otherWorkspaceId = "workspace-2";
       vi.mocked(can).mockImplementation(async (_actor, action, resource) => {
         if (action === "organization.read") return true;
-        return resource.id === otherWorkspaceId;
+        return "id" in resource && resource.id === otherWorkspaceId;
       });
 
       await expect(

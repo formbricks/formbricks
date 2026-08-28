@@ -1,0 +1,29 @@
+type: object
+required:
+  - id
+  - name
+  - workspaceId
+  - createdAt
+  - updatedAt
+  - count
+properties:
+  id:
+    type: string
+    format: cuid2
+  name:
+    type: string
+    description: Tag label as shown in the app. Unique within a workspace.
+  workspaceId:
+    type: string
+    format: cuid2
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  count:
+    type: integer
+    minimum: 0
+    description: >-
+      Responses currently carrying this tag. `0` when the tag exists but has never been applied.

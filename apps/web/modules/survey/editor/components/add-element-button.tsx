@@ -92,7 +92,12 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
         open ? "shadow-lg" : "shadow-md",
         "group w-full overflow-hidden rounded-lg border border-slate-300 bg-white duration-200 hover:cursor-pointer hover:bg-slate-50"
       )}>
-      <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
+      {/* Not `asChild` with a `div`: Radix forwards the click handler and aria state to the child but
+          adds no role and no tabIndex, so the control was unreachable by keyboard — a user could not
+          open the element picker at all. Letting Radix render its own `<button>` fixes that and
+          gives tests a real button role; the data-testid keeps them off the rendered copy, which
+          also appears in the live preview. */}
+      <Collapsible.CollapsibleTrigger className="group h-full w-full" data-testid="add-element-trigger">
         <div className="inline-flex">
           <div className="flex w-10 items-center justify-center rounded-l-[7px] bg-brand-dark group-aria-expanded:rounded-br group-aria-expanded:rounded-bl-none">
             <PlusIcon className="size-5 text-white" />
@@ -105,7 +110,9 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+      <Collapsible.CollapsibleContent
+        data-testid="add-element-picker"
+        className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         <div className="grid grid-cols-1 gap-x-6 px-3 pb-3 sm:grid-cols-2">
           <div>{visibleCategories.filter((category) => category.column === 1).map(renderCategory)}</div>
           <div>{visibleCategories.filter((category) => category.column === 2).map(renderCategory)}</div>

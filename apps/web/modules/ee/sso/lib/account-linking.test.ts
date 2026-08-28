@@ -31,6 +31,7 @@ describe("syncSsoIdentityForUser", () => {
     type: "oauth" as const,
     provider: "google",
     providerAccountId: "provider-account-1",
+    issuer: "https://accounts.google.com",
     access_token: "access-token",
     refresh_token: "refresh-token",
     scope: "openid email profile",
@@ -100,6 +101,11 @@ describe("syncSsoIdentityForUser", () => {
         id: "account_1",
       },
       data: {
+        // `issuer` on the token-refresh branch too (ENG-2343, corrected in ENG-2555): the canonical row
+        // may predate the backfill window OR carry a wrong value written before the fix, and 1.7's
+        // account lookup filters on `(issuer, accountId)` — so leaving it alone here would keep a
+        // recovered link invisible and re-trigger recovery on the next sign-in, forever.
+        issuer: "https://accounts.google.com",
         access_token: "access-token",
         refresh_token: "refresh-token",
         scope: "openid email profile",
@@ -133,6 +139,7 @@ describe("syncSsoIdentityForUser", () => {
         type: "oauth",
         provider: "google",
         providerAccountId: "provider-account-1",
+        issuer: "https://accounts.google.com",
         access_token: "access-token",
         refresh_token: "refresh-token",
         scope: "openid email profile",
@@ -180,7 +187,10 @@ describe("syncSsoIdentityForUser", () => {
       where: {
         id: "account_1",
       },
+      // `issuer` is written here as of ENG-2555 — this branch used to update tokens only, which is what
+      // stopped a row with a wrong issuer from ever healing.
       data: {
+        issuer: "https://accounts.google.com",
         access_token: "access-token",
         refresh_token: "refresh-token",
         scope: "openid email profile",
@@ -216,6 +226,7 @@ describe("syncSsoIdentityForUser", () => {
         type: "oauth",
         provider: "google",
         providerAccountId: "provider-account-1",
+        issuer: "https://accounts.google.com",
         access_token: "access-token",
         refresh_token: "refresh-token",
         expires_at: 1234,
@@ -225,5 +236,49 @@ describe("syncSsoIdentityForUser", () => {
       },
     });
     expect(mocks.userUpdate).toHaveBeenCalledOnce();
+  });
+
+  /**
+   * Every other assertion in this file uses google, which is exactly how ENG-2555 shipped: google is the
+   * one provider whose issuer is NOT the synthetic `local:oauth:` form, so a helper that always returned
+   * the synthetic form looked correct against a google-only suite. These two pin both arms.
+   */
+  test("uses the provider's own declared issuer for google, not the synthetic form", async () => {
+    await syncSsoIdentityForUser({ userId: "user_1", provider: "google", account });
+
+    expect(mocks.accountCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ issuer: "https://accounts.google.com" }),
+      })
+    );
+  });
+
+  test("uses the synthetic issuer for a provider that declares none", async () => {
+    await syncSsoIdentityForUser({
+      userId: "user_1",
+      provider: "github",
+      account: { ...account, provider: "github", providerAccountId: "github-account-1" },
+    });
+
+    expect(mocks.accountCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ provider: "github", issuer: "local:oauth:github" }),
+      })
+    );
+  });
+
+  /**
+   * The branch that made the loop unbreakable (ENG-2555): with a canonical row already present and no
+   * legacy row, this used to update tokens only, so a row carrying a wrong issuer could never heal.
+   */
+  test("repairs the issuer on an existing canonical row", async () => {
+    mocks.accountFindUnique.mockResolvedValue({ id: "account_1", userId: "user_1" });
+
+    await syncSsoIdentityForUser({ userId: "user_1", provider: "google", account });
+
+    expect(mocks.accountUpdate).toHaveBeenCalledWith({
+      where: { id: "account_1" },
+      data: expect.objectContaining({ issuer: "https://accounts.google.com" }),
+    });
   });
 });

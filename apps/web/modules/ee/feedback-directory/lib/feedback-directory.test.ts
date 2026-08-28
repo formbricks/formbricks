@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import {
@@ -73,7 +73,7 @@ const mockDirectoryDetailsDbRow = {
 
 // Mirrors the real P2003 `meta` produced by Prisma 7 with the @prisma/adapter-pg driver: the
 // constraint name is nested under driverAdapterError.cause, not at the top level.
-const makeForeignKeyError = (constraintName: string): Prisma.PrismaClientKnownRequestError =>
+const makeForeignKeyError = (constraintName: string): PrismaClientKnownRequestError =>
   new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
     code: "P2003",
     clientVersion: "7.8.0",

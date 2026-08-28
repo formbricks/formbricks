@@ -11,15 +11,15 @@
     "./react-hooks": "./react-hooks.mjs"
   },
   "dependencies": {
-    "@eslint/js": "9.39.5",
+    "@eslint/js": "catalog:",
     "@vitest/eslint-plugin": "1.6.17",
     "eslint-config-next": "16.2.10",
     "eslint-config-prettier": "10.1.8",
     "eslint-config-turbo": "2.8.21",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
-    "eslint-plugin-react-hooks": "5.2.0",
-    "globals": "16.5.0",
-    "typescript-eslint": "8.63.0"
+    "eslint-plugin-react-hooks": "catalog:",
+    "globals": "catalog:",
+    "typescript-eslint": "catalog:"
   }
 }

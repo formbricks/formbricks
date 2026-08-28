@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { getAuthzedClient } from "./client";
+import { type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
@@ -296,11 +296,9 @@ describe("team and workspace relationship projection", () => {
     expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
     expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(1_000);
     expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(3);
-    expect(
-      clientMocks.writeRelationships.mock.calls[1][0].every(
-        ({ relationship }) => relationship.subject.objectType === "team"
-      )
-    ).toBe(true);
+    const finalBatch = clientMocks.writeRelationships.mock
+      .calls[1][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
+    expect(finalBatch.every(({ relationship }) => relationship.subject.objectType === "team")).toBe(true);
   });
 
   test("reconciles a complete snapshot again when source state changes concurrently", async () => {

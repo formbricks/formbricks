@@ -20,6 +20,7 @@ import {
   getContactAttributeKeyById,
   updateContactAttributeKey,
 } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 
 const ZCreateContactAttributeKeyAction = z.object({
   workspaceId: ZId,
@@ -59,6 +60,8 @@ export const createContactAttributeKeyAction = authenticatedActionClient
           },
         ],
       });
+
+      await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
 
@@ -122,6 +125,8 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
         ],
       });
 
+      await ensureContactsEnabled(organizationId);
+
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.oldObject = existingKey;
 
@@ -168,6 +173,8 @@ export const deleteContactAttributeKeyAction = authenticatedActionClient
           },
         ],
       });
+
+      await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.oldObject = existingKey;

@@ -17,6 +17,107 @@ allowBuilds:
   unrs-resolver: true
   "@prisma/client": true
 
+# Single source of truth for the version of every dependency used by two or more
+# workspaces. Packages reference these as `"typescript": "catalog:"` and never as a
+# literal version, so a shared dependency cannot drift between packages: bumping one
+# means editing the entry here, which changes every consumer at once.
+#
+# `scripts/check-catalog.mjs` (run by `pnpm lint`) enforces both halves of that: it
+# fails if a workspace declares a literal version for a name listed here, and if a
+# dependency is declared by 2+ workspaces without being listed here at all.
+#
+# Deps with a single consumer deliberately stay in their own package.json — a catalog
+# entry with one referent is indirection for nothing. `saveExact: true` (below) is why
+# every entry is a bare exact version; the sole exception in the workspace is
+# packages/survey-ui's react/react-dom `peerDependencies`, which are intentionally a
+# `^19.0.0` range (a published package's peer range, not a pinned install) and are
+# therefore excluded from the catalog rather than collapsed into the exact version.
+catalog:
+  # --- build & test toolchain ---
+  typescript: 5.9.3
+  # Vite stays on 7.x. Vite 8 replaces Rollup with rolldown, and @vitejs/plugin-react
+  # has no release accepting both majors (5.1.4 caps at vite 7; 6.1.0 requires ^8.0.0
+  # exclusively plus three new peers), while vite-prerender-plugin — pulled in by
+  # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
+  # is its own migration, tracked separately; see ENG-1689's follow-ups.
+  # Note: the lockfile still resolves a vite 8 for `@vitest/eslint-plugin`, which declares
+  # `vitest` as an OPTIONAL peer with range `*`; `autoInstallPeers` then materialises the
+  # newest vitest, whose own vite peer picks 8. That predates this catalog, no importer
+  # references it, and nothing builds with it — every workspace resolves 7.3.5.
+  vite: 7.3.5
+  vitest: 4.1.6
+  "@vitest/coverage-v8": 4.1.6
+  vite-plugin-dts: 4.5.4
+  vite-tsconfig-paths: 6.1.1
+  "@vitejs/plugin-react": 5.1.4
+  jsdom: 29.1.1
+  postcss: 8.5.23
+  rimraf: 6.1.3
+  tsx: 4.21.0
+  dotenv: 17.3.1
+  dotenv-cli: 11.0.0
+  cross-env: 10.1.0
+  glob: 13.0.6
+  # Read by scripts/check-catalog.mjs; also a packages/workflows dev dep.
+  js-yaml: 4.3.1
+  "@playwright/test": 1.58.2
+  "@testing-library/react": 16.3.2
+  # --- lint & format ---
+  prettier: 3.8.3
+  "@trivago/prettier-plugin-sort-imports": 6.0.2
+  prettier-plugin-sort-json: 4.2.0
+  prettier-plugin-tailwindcss: 0.7.4
+  "@eslint/js": 9.39.5
+  globals: 16.5.0
+  typescript-eslint: 8.63.0
+  eslint-plugin-react-hooks: 7.1.1
+  # --- types ---
+  "@types/js-yaml": 4.0.9
+  "@types/node": 25.4.0
+  "@types/react": 19.2.14
+  "@types/react-dom": 19.2.3
+  # --- storybook ---
+  storybook: 10.3.6
+  "@storybook/react": 10.3.6
+  "@storybook/react-vite": 10.3.6
+  # --- ui runtime shared by apps/web, survey-ui, surveys and email ---
+  react: 19.2.6
+  react-dom: 19.2.6
+  preact: 10.29.1
+  tailwindcss: 4.3.1
+  "@tailwindcss/postcss": 4.3.1
+  "@tailwindcss/vite": 4.3.1
+  clsx: 2.1.1
+  tailwind-merge: 3.5.0
+  class-variance-authority: 0.7.1
+  lucide-react: 0.577.0
+  date-fns: 4.1.0
+  isomorphic-dompurify: 3.9.0
+  "@formkit/auto-animate": 0.9.0
+  react-day-picker: 9.14.0
+  "@radix-ui/react-checkbox": 1.3.3
+  "@radix-ui/react-dropdown-menu": 2.1.16
+  "@radix-ui/react-popover": 1.1.15
+  "@radix-ui/react-radio-group": 1.3.8
+  "@radix-ui/react-slot": 1.2.4
+  i18next: 25.8.20
+  i18next-icu: 2.4.3
+  react-i18next: 16.5.8
+  # --- server runtime ---
+  zod: 4.3.6
+  zod-openapi: 5.4.6
+  "@prisma/client": 7.8.0
+  # redis 5.x. apps/web was on 4.7.1 while @formbricks/cache was on 5.11.0, and because
+  # apps/web has no nested copy its `import type { RedisClientType } from "redis"` in
+  # lib/cache/index.ts resolved to the hoisted v4 type — then used to describe the v5
+  # client that getCacheService() actually returns. Aligning here removes that crossover.
+  redis: 5.11.0
+  pino: 10.3.1
+  bcryptjs: 3.0.3
+  uuid: 14.0.0
+  "@paralleldrive/cuid2": 2.3.1
+  ai: 6.0.177
+
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.
 #
@@ -151,6 +252,23 @@ overrides:
   # backslash authority introducer; patched in 3.1.5. Previously self-resolved, reopened by the new
   # advisory. load-bearing: @redocly/ajv and ajv pull 3.1.4 (dev-only, API-docs tooling).
   fast-uri@3: 3.1.5
+  # ENG-2433 / ENG-2430 / GHSA-ggr8-5vv4-36mx (CVE-2026-40345): deepmerge-ts <8.0.0 has no cycle
+  # detection in its recursive record-merge routine, so two recursive object graphs sharing a
+  # property path exhaust the call stack (DoS); patched in 8.0.0. Pinned to 8.0.1 (lowest patched
+  # release, past the `minimumReleaseAge` cooldown as of 2026-08-19). This is a cross-major coercion
+  # of two consumers, both of which declare a 7.x dependency — verified safe: @prisma/config only
+  # merges developer-authored prisma.config.ts contents at CLI time, and next-safe-action merges
+  # middleware context (plain objects, 2-3 levels, no Map/Set) via `deepmerge`, so none of 8.0.0's
+  # breaking changes apply: the deepmergeInto mutation fix and the renamed mergeInfo/
+  # DeepMergeIntoUtils types are out of scope, the mergeMaps collision change needs a Map, and the
+  # new maxDepth defaults to 1000. `prisma generate` / `prisma migrate` still resolve config
+  # correctly under 8.0.1.
+  # load-bearing (runtime): apps/web > next-safe-action (direct, ^7.1.5) merges server-action
+  # middleware ctx (ActionClientCtx — ipAddress/oldObject/newObject can carry request-derived data)
+  # on every invocation.
+  # load-bearing (dev-only, Prisma CLI): apps/web > @better-auth/oauth-provider > better-auth >
+  # @better-auth/prisma-adapter > @prisma/client > prisma > @prisma/config resolves 7.1.5.
+  deepmerge-ts@7: 8.0.1
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
   # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
@@ -182,54 +300,19 @@ overrides:
   # What makes it tolerable is the input, not the dependency type: every one of these call sites expands
   # glob patterns supplied by library code or developer config (gaxios' cache cleanup, typeorm's entity
   # discovery, build and lint globs), never by request data.
-  # === Accepted risk, no override possible yet (pnpm audit will keep flagging this) ===
-  # ENG-1703 / GHSA-p2fr-6hmx-4528 (Dependabot alerts #612 and #613, both dismissed as tolerable risk;
-  # the ticket is closed Done with the same conclusion as here). Re-verified 2026-08-05.
-  # @better-auth/oauth-provider 1.6.23 (used for the MCP OAuth flow, ENG-1055) fails to bind
-  # access-token audiences to their authorization grant (RFC 8707 resource-indicator confusion) — a
-  # client can complete a normal authorization flow and then request a JWT scoped to a resource server
-  # the authorization never covered. No pin can close it: the whole 1.6.x stable line is in range, and the
-  # patch ships only from 1.7.0-beta.4 — a line still in pre-release. (Deliberately version-agnostic: the
-  # `latest` and `rc` tags move about weekly, so naming them here just guarantees this note rots. The
-  # rc-specific claims below are pinned to 1.7.0-rc.4, the release actually inspected.)
-  # Why this deployment isn't exposed to the escalation — and what that rests on. Note the advisory is
-  # explicit that a single-audience deployment still does not bind the resource to the authorization
-  # grant, so the spec-compliance gap remains regardless of the below; this is "not exploitable here",
-  # not "compliant":
-  # - apps/web/modules/auth/lib/mcp-oauth-provider-options.ts sets a single-entry validAudiences (the
-  #   MCP resource URL), so there is no second audience for a client to escalate into. This is the
-  #   load-bearing mitigation, and it holds only while that array stays single-entry.
-  # - apps/web/modules/mcp/auth.ts pins `audience: getMcpResourceUrl()` on the resource server's own
-  #   verify call AND, since ENG-2339, asserts the verified payload's `aud` itself. The pin alone was
-  #   never sufficient: it flows straight into jose's jwtVerify, whose `aud` check is a membership
-  #   test, so a token whose `aud` array also lists other audiences passes it. The advisory's own
-  #   workaround requires *rejecting* multi-audience tokens, which verifyOptions.audience cannot
-  #   express. The explicit assert is that rejection — an allow-list of {MCP resource, the AS's
-  #   UserInfo endpoint, which `openid` implies}, everything else refused.
-  # - What that does and does not buy: our MCP endpoint can no longer be reached with a token minted
-  #   for somebody else, which is the exploitable half. It does NOT make the AS compliant — 1.6.x
-  #   still never persists the approved resource, so there is nothing to bind the token request to.
-  #   That is unfixable from our side and is what the 1.7 upgrade (ENG-2343) is for. If a second
-  #   audience were ever added the party at risk is that other resource server, and nothing here
-  #   protects it.
-  # - Test coverage. Single-entry validAudiences is pinned twice, deliberately: in
-  #   apps/web/modules/auth/lib/mcp-oauth-dcr.test.ts (added by #8828) and in
-  #   apps/web/modules/auth/lib/mcp-oauth-provider-options.test.ts (ENG-2339), which also covers the
-  #   advertised-vs-registration scope agreement and the write-scope step-up expiry. Redundant on
-  #   purpose — it is the invariant this entire acceptance rests on. Separately,
-  #   apps/web/modules/mcp/auth.test.ts mints real signed JWTs and proves a multi-audience token is
-  #   refused (and that jose on its own accepts it).
-  # Upgrade cost, for whoever picks up 1.7.0: the renames the 1.7 upgrade guide warns about do not apply
-  # to us (migration 20260702093000_add_better_auth_oauth_provider already created `oauthClient`, not
-  # `oauthApplication`, with an `oauthAccessToken.token` column, not `.accessToken`, plus the `sessionId`
-  # that session-bound token validity needs — and we have no SCIM), and customAccessTokenClaims.resource
-  # does not apply either (ours only returns email/name). But there is still real DDL to write: as
-  # inspected at 1.7.0-rc.4, the line replaces `validAudiences` with a resources model and declares three
-  # tables we do not have — `oauthResource`, `oauthClientResource` and `oauthClientAssertion`. The bigger
-  # blocker is that the same release declares `better-auth` and `@better-auth/core` as matching
-  # `^1.7.0-rc.x` peers, making this a coupled auth-core upgrade touching login/2FA/SSO/sessions rather
-  # than a plugin-only bump. That needs its own reviewed PR once Better Auth ships 1.7.0 stable, not an
-  # audit sweep or an unattended dependency-only bump.
+  # === Closed by ENG-2343 (kept as a record, like the section above) ===
+  # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried
+  # here as an accepted risk for as long as the only patched line was a pre-release. It is fixed as of
+  # better-auth 1.7.0 stable, which this workspace now pins, so `pnpm audit` no longer reports it and
+  # the ~50 lines of justification that used to sit here are gone with it. What replaced them is real
+  # enforcement: the AS binds each token to the resources the authorization actually approved.
+  #
+  # One thing that did NOT go away: the resource server in apps/web/modules/mcp/auth.ts still asserts
+  # the verified `aud` against its own allow-list (ENG-2339). That is not leftover scaffolding from this
+  # acceptance — `hasAcceptedMcpAudience` answers "is this token for ME", which is a different
+  # question from "does each `aud` resolve to a registered resource"; only the first is the one a
+  # resource server must answer. (An earlier note here claimed 1.7 drops `verifyOptions.audience`
+  # from its own jwtVerify. That could not be substantiated and is retracted — see mcp/auth.ts.)
 
 autoInstallPeers: true
 linkWorkspacePackages: true

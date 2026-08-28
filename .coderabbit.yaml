@@ -86,15 +86,22 @@ reviews:
   path_instructions:
     - path: "**/*.test.tsx"
       instructions: |
-        AGENTS.md forbids React component unit tests in this repo — components are covered by
-        Playwright specs in `apps/web/playwright/`. If this file is newly added, say so and ask for
-        the coverage to move to a Playwright `.spec.ts` instead. Do not raise this on edits to the
-        handful of `.test.tsx` files that already exist.
+        AGENTS.md forbids React component unit tests in this repo. If this file is newly added, say
+        so and ask for the logic under test to move into a `.ts` module with a unit test. Do not ask
+        for a Playwright spec instead: deleting a `.test.tsx` creates no E2E obligation, and a
+        component is not an E2E subject. Do not raise this on edits to the handful of `.test.tsx`
+        files that already exist.
 
     - path: "**/*.tsx"
       instructions: |
-        - Never suggest adding unit tests for `.tsx` files. AGENTS.md forbids them; UI behaviour is
-          covered by Playwright specs in `apps/web/playwright/`. Suggesting an E2E spec is fine.
+        - Never suggest adding unit tests for `.tsx` files — AGENTS.md forbids them, and their
+          absence is not a coverage gap to fill somewhere else. Ask for a Playwright spec only when
+          the diff changes a feature's happy path or a journey across several surfaces, and then ask
+          for it in that feature's existing spec — or, if the diff opens a feature area the suite does
+          not cover yet, for one happy-path spec named for that area. Never ask for one to cover
+          component detail (a
+          label, a breadcrumb, an ARIA attribute, a keystroke inside one widget, a field's
+          validation message) — that belongs in a `.ts` unit test or in manual QA.
         - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
           Action. Server data lives in the query cache only — flag it being mirrored into
           `useState` or Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
@@ -122,9 +129,27 @@ reviews:
 
     - path: "apps/web/playwright/**/*.spec.ts"
       instructions: |
-        - Flag timing hacks (`waitForTimeout`, arbitrary sleeps) and dependencies on data another
-          spec created — these are the repo's main source of flake.
-        - Specs must stay small and single-purpose; flag mega-specs. Slow suites need a `@slow` tag.
+        This suite is the critical path of every PR and every test is paid on every PR forever, so
+        cost is a review dimension here rather than a nit (AGENTS.md "Testing Guidelines"):
+        - A new spec file is a finding unless it opens a feature area the suite does not cover yet
+          (the spec filenames in `apps/web/playwright/` are the inventory — check before claiming an
+          area is uncovered); the default is assertions or a `test.step` added to that feature's
+          existing spec. A spec
+          that asserts component-level detail (a label, a breadcrumb, a sidebar's link list, an ARIA
+          attribute, a keystroke inside one widget, a field's validation message) is a finding
+          whatever file it lands in: ask for a `.ts` unit test or manual QA instead.
+        - Flag variant matrices. A second viewport, theme, locale, role or layout needs its own
+          stated reason; "the adjacent spec does it" is not one. A11y coverage for the rendered
+          survey extends `survey-accessibility.spec.ts`; elsewhere it belongs in that feature area's
+          own spec. Neither case is a per-ticket a11y spec.
+        - Flag state clicked into existence through the UI where Prisma or `/api/v3` could seed it
+          (`playwright/utils/accessibility.ts` is the pattern), and a per-test `users.create()` plus
+          login where a worker-scoped fixture would do.
+        - Flag timing hacks (`waitForTimeout`, arbitrary sleeps, `slowMo`) and dependencies on data
+          another spec created — these are the repo's main source of flake.
+        - Specs stay single-purpose per feature area: flag a spec that walks several unrelated
+          features, and a spec that exists for one detail of a covered one. `@slow` is metadata that
+          nothing reads, so a tag is not an answer to a cost finding.
 
     - path: "**/actions.ts"
       instructions: |
@@ -320,36 +345,50 @@ reviews:
       mode: warning
     issue_assessment:
       mode: warning
-    # `pr-label-sync.yml` reads what the Breaking changes section says; these check whether
-    # what it says is true of the diff, and whether the PR's own QA covers every behaviour it
-    # changes. Both are advisory — nothing here blocks a merge.
+    # `pr-label-sync.yml` reads the checkbox in the Breaking changes section; these check whether
+    # what the author ticked is true of the diff, and whether the PR's own QA covers every behaviour
+    # it changes. Both are advisory — nothing here blocks a merge.
     custom_checks:
       - name: Breaking changes match the diff
         mode: warning
         instructions: |
-          Compare the PR description's "## Breaking changes" section against the actual diff.
+          Compare the checkbox in the PR description's "## Breaking changes" section against the
+          actual diff. A ticked box (`- [x] This PR contains breaking changes`) is the author's
+          declaration that the PR has one; an unticked box declares that it has none. The prose or
+          table under the checkbox is the explanation and does not change the declaration.
 
           Treat a change as breaking if the diff does any of the following:
-          - Renames, removes, or retypes a field in an API request or response shape, or changes
-            an emitted value (for example `EN` becoming `en-US`).
-          - Removes or renames an endpoint or route, or changes a webhook payload.
+          - Renames, removes, or retypes a field in an API request or response shape, requires a
+            field that was optional, or changes an emitted value (for example `EN` becoming
+            `en-US`).
+          - Removes or renames an endpoint or route, changes a webhook payload, or changes the
+            HTTP status code returned for an existing request/response case.
           - Changes a default value, or removes or renames an environment variable or config key —
             including keys in `charts/formbricks/values.yaml` and `.env.example`. Adding one counts
             only when it is required, or has no default that keeps existing installs working.
           - Adds a database migration that needs manual action, drops or renames a column or
             table, or adds a NOT NULL column with no default and no backfill.
-          - Changes an exported signature of the public SDK surface in `packages/js-core` or
-            `packages/surveys`.
+          - Changes an exported signature of the public SDK surface in `packages/js-core`,
+            `packages/survey-ui`, or `packages/surveys`.
 
-          FAIL if the diff contains at least one of the above and the "Breaking changes" section
-          says "None", is empty, or still holds the unedited template comment. Name the specific
-          file and line that is breaking.
+          Nothing else is breaking. In particular, a purely additive change — a new optional request
+          or response field, a new endpoint or route, an env var whose default keeps existing installs
+          working — is not, and neither is any change to code no external consumer reaches: internal
+          functions, modules, types, and workspace-package exports other than the SDK surface above,
+          however they change. "Internal API" means internal to this repo, and it is outside this
+          check. A change that matches one of the bullets above is breaking regardless of how
+          confident the author is; genuine uncertainty about which bullet applies is what the
+          inconclusive case below is for.
 
-          FAIL if the section claims a breaking change that has no corresponding change in the diff.
+          FAIL if the diff contains at least one of the above and the checkbox is unticked, or the
+          section is empty or still holds the unedited template comment. Name the specific file and
+          line that is breaking, and ask the author to tick the box.
 
-          PASS if the section describes, in a table or in prose, each breaking change present in
-          the diff — `.github/pull_request_template.md` accepts either shape — or if the diff
-          contains none of the above and the section says "None".
+          FAIL if the checkbox is ticked but no change in the diff matches the list above.
+
+          PASS if the checkbox is ticked and the section documents each breaking change present in
+          the diff, in a table or in prose, or if the checkbox is unticked and the diff contains
+          none of the above — however the author words the explanation underneath.
 
           Return inconclusive rather than failing when the diff alone does not let you determine
           an API response shape — for example when the shape comes from a serializer or type that
@@ -382,12 +421,22 @@ reviews:
             "Open gaps".
           - A row names a behaviour with no verification method, or a method with no observed
             outcome.
-          - A `unit` or `e2e` row does not name the test or spec it rests on. A `manual` row has no
-            test to name and passes without one.
-          - A row claims `red on main` or `mutation` without a command or a mutated `file:line` a
-            reviewer could rerun.
+          - A `unit` or `e2e` row names no test or spec. The name may sit in the row or in the
+            `Rerun:` line above the table, which carries it once for every row — but a bare suite
+            command such as `pnpm test` names nothing, so those rows name their own. A `manual` row
+            has no test to name and passes without one.
+          - A row claims `red on main` and gives nothing to rerun: neither the `Rerun:` line nor a
+            command of its own where that differs.
+          - A row claims `mutation` and does not name the mutated `file:line` a reviewer would edit
+            to turn it red.
           - The diff changes rendered UI and the description attaches no screenshot or screencast.
           - The "Open gaps" subsection is absent. An explicit "none" passes.
+
+          Content inside a `<details>` fold counts as present. The template caps the description at
+          350 words outside folds and folds the overflow rather than dropping it — long media,
+          command logs, and Coverage rows past the sixth — while the Coverage table, Open gaps and
+          Breaking changes stay visible themselves. A collapsed fold is evidence, not a gap: do not
+          ask for a longer description, ask for the missing behaviour.
 
           PASS if every behaviour the diff changes is either covered by a row stating how it was
           verified and what was observed, or listed under "Open gaps" with a reason.

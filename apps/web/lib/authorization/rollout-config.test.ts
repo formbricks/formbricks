@@ -13,7 +13,15 @@ vi.mock("@/lib/env", () => ({
   },
 }));
 
-const rolloutEnv = env as typeof env & Record<string, string | undefined>;
+const rolloutEnv = env as unknown as Record<
+  | "AUTHZED_AUTHORIZATION_COHORT"
+  | "AUTHZED_AUTHORIZATION_ENABLED"
+  | "AUTHZED_ENFORCEMENT_ORGANIZATION_IDS"
+  | "AUTHZED_ENFORCEMENT_TARGETS"
+  | "AUTHZED_SHADOW_ORGANIZATION_IDS"
+  | "AUTHZED_SHADOW_TARGETS",
+  string | undefined
+>;
 
 beforeEach(() => {
   rolloutEnv.AUTHZED_AUTHORIZATION_COHORT = undefined;

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { OrganizationRole } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { getAuthzedClient } from "./client";
+import { type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 import {
@@ -68,7 +68,8 @@ describe("organization membership projection", () => {
         status: "projected",
       });
 
-      const updates = clientMocks.writeRelationships.mock.calls[0][0];
+      const updates = clientMocks.writeRelationships.mock
+        .calls[0][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
       expect(updates).toHaveLength(4);
       expect(updates).toEqual(
         expect.arrayContaining([
@@ -243,7 +244,8 @@ describe("organization membership projection", () => {
         ],
       });
 
-      const updates = clientMocks.writeRelationships.mock.calls[0][0];
+      const updates = clientMocks.writeRelationships.mock
+        .calls[0][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
       const ghostUpdates = updates.filter(
         ({ relationship }) => relationship.subject.objectId === "ghost-user"
       );

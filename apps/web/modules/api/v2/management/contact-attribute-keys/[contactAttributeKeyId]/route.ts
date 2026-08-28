@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { can } from "@/lib/authorization";
+import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
@@ -13,7 +15,7 @@ import {
   ZContactAttributeKeyUpdateSchema,
 } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasApiKeyWorkspaceAccess } from "@/modules/organization/settings/api-keys/lib/utils";
+import { checkContactsEnabledApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 
 export const GET = async (
   request: NextRequest,
@@ -28,13 +30,24 @@ export const GET = async (
     handler: async ({ authentication, parsedInput }) => {
       const { params } = parsedInput;
 
+      const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
+      if (contactsNotEnabledError) {
+        return handleApiError(request, contactsNotEnabledError);
+      }
+
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
         return handleApiError(request, res.error as ApiErrorResponseV2);
       }
 
-      if (!(await hasApiKeyWorkspaceAccess(authentication, res.data.workspaceId, "GET"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("GET"),
+          { type: "workspace", id: res.data.workspaceId }
+        ))
+      ) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "environment", issue: "unauthorized" }],
@@ -63,12 +76,23 @@ export const PUT = async (
         auditLog.targetId = params.contactAttributeKeyId;
       }
 
+      const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
+      if (contactsNotEnabledError) {
+        return handleApiError(request, contactsNotEnabledError, auditLog);
+      }
+
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
         return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
-      if (!(await hasApiKeyWorkspaceAccess(authentication, res.data.workspaceId, "PUT"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("PUT"),
+          { type: "workspace", id: res.data.workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {
@@ -135,13 +159,24 @@ export const DELETE = async (
         auditLog.targetId = params.contactAttributeKeyId;
       }
 
+      const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
+      if (contactsNotEnabledError) {
+        return handleApiError(request, contactsNotEnabledError, auditLog);
+      }
+
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
       if (!res.ok) {
         return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!(await hasApiKeyWorkspaceAccess(authentication, res.data.workspaceId, "DELETE"))) {
+      if (
+        !(await can(
+          { type: "apiKey", id: authentication.apiKeyId },
+          getWorkspaceAuthorizationActionForMethod("DELETE"),
+          { type: "workspace", id: res.data.workspaceId }
+        ))
+      ) {
         return handleApiError(
           request,
           {

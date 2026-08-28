@@ -389,6 +389,14 @@ files and run `docker compose up -d`. Do not delete or replace the PostgreSQL vo
    docker compose up -d
    ```
 
+<Warning>
+  **Security (existing installs):** these steps — and the [one-click setup script](/self-hosting/setup/one-click)
+  updater, which runs the same `pull` / `down` / `up -d` — do **not** rewrite your existing
+  `docker-compose.yml`. If your bundled `redis` (Valkey) service still publishes `ports: - "6379:6379"`, it
+  stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
+  was reachable from an untrusted network, invalidate existing sessions.
+</Warning>
+
 ## Optional: Add RustFS for File Storage
 
 RustFS provides S3-compatible object storage for file uploads in Formbricks. It is not required for the
@@ -483,7 +491,7 @@ services:
       - rustfs-data:/data
 
   rustfs:
-    image: rustfs/rustfs:1.0.0-alpha.93
+    image: rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0
     restart: always
     depends_on:
       rustfs-perms:
@@ -496,7 +504,8 @@ services:
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_CONSOLE_ADDRESS: ":9001"
       # CORS for browser uploads: set to your Formbricks origin(s), comma-separated.
-      # Unset = allow all origins; a value is treated as an allow-list. See the File Uploads guide.
+      # Unset = no CORS headers are emitted, so browser uploads fail; a value is treated as an allow-list.
+      # See the File Uploads guide.
       RUSTFS_CORS_ALLOWED_ORIGINS: "https://app.yourdomain.com"
     ports:
       - "9000:9000"
@@ -667,10 +676,41 @@ Common checks:
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub
   service.
-- **Port conflicts**: Confirm ports `3000`, `6379`, and any optional service ports you enabled are not already
-  in use on the host.
+- **Port conflicts**: Confirm port `3000` and any optional service ports you enabled are not already in use on
+  the host. The current template does not publish the bundled Valkey (`redis` service) to the host — it is
+  reachable only on the internal compose network — so a fresh install does not need port `6379` free on the
+  host.
 - **Optional Qwen/vLLM issues**: Check GPU availability, NVIDIA Container Toolkit installation, and
   `docker compose --profile qwen logs --tail=200 vllm`.
+
+<Warning>
+  **Existing installs: remove the bundled Valkey host port.** Older templates published the `redis`
+  (Valkey) service on `0.0.0.0:6379` with no password. That instance stores Better Auth sessions and
+  verification tokens, so an exposed port lets anyone who can reach it read live sessions and take over
+  accounts. Updating Formbricks (`docker compose pull` / `up -d`) does **not** rewrite your existing
+  `docker-compose.yml`, so the mapping stays until you remove it. Open your `docker-compose.yml`, delete the
+  ```yaml
+  ports:
+    - "6379:6379"
+  ```
+  lines from the `redis:` service, then run `docker compose up -d`. The app reaches Valkey over the internal
+  compose network, so no other configuration change is needed. Only keep a publish if an external tool
+  genuinely needs it, and then bind it to loopback (`127.0.0.1:6379:6379`) rather than all interfaces.
+
+  **If the port was reachable from an untrusted network, also invalidate existing sessions.** Valkey persists
+  to its `redis` volume, so removing the port does not clear session or token state an attacker may already
+  have written — a forged session can remain valid afterward. After closing the port, set a new
+  `NEXTAUTH_SECRET` in your `.env`, then recreate the app container so it picks up the change:
+  ```bash
+  docker compose up -d --force-recreate formbricks
+  ```
+  A plain `docker compose restart` keeps the container's original environment, so the rotated secret would not
+  take effect. Recreating invalidates every session cookie, so all users must sign in again, while stored
+  data, the job queue, and the cache stay intact. (If you added `BETTER_AUTH_SECRET` to the `formbricks`
+  service environment yourself, rotate that instead — Better Auth prefers it over `NEXTAUTH_SECRET`; the
+  bundled compose ships only `NEXTAUTH_SECRET`.) Leave `ENCRYPTION_KEY` unchanged, and do **not** run a blanket
+  `FLUSHDB` — the same Valkey also holds BullMQ job queues and the application cache.
+</Warning>
 
 <Note>
   To edit any of the available environment variables, check out our

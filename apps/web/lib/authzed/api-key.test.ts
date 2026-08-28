@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { reconcileApiKeyRelationships } from "./api-key";
-import { getAuthzedClient } from "./client";
+import { type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
@@ -257,7 +257,8 @@ describe("API key relationship projection", () => {
       status: "projected",
     });
 
-    const secondPassUpdates = clientMocks.writeRelationships.mock.calls[1][0];
+    const secondPassUpdates = clientMocks.writeRelationships.mock
+      .calls[1][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
     const workspaceUpdates = secondPassUpdates.filter(
       ({ relationship }) => relationship.resource.objectType === "workspace"
     );
@@ -374,11 +375,11 @@ describe("API key relationship projection", () => {
     expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
     expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(1_000);
     expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(2);
-    expect(
-      clientMocks.writeRelationships.mock.calls[1][0].every(
-        ({ relationship }) => relationship.resource.objectType === "organization"
-      )
-    ).toBe(true);
+    const finalBatch = clientMocks.writeRelationships.mock
+      .calls[1][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
+    expect(finalBatch.every(({ relationship }) => relationship.resource.objectType === "organization")).toBe(
+      true
+    );
   });
 
   test("cleans every resource and subject relationship for a missing API key", async () => {

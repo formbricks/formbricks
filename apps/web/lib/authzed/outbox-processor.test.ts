@@ -20,6 +20,7 @@ import {
   markAuthzedOutboxEventsFailed,
 } from "./outbox-repository";
 import type { TAuthzedOutboxEvent, TAuthzedOutboxTargetType } from "./outbox-types";
+import type { TAuthzedProjectionResult } from "./projection";
 import { deleteUserTeamRelationships, reconcileTeamWorkspaceRelationships } from "./team-workspace";
 
 vi.mock("@formbricks/database", () => ({
@@ -56,8 +57,14 @@ vi.mock("./team-workspace", () => ({
 
 const projected = { passes: 1, status: "projected" } as const;
 
-const failed = (code: string, retryable: boolean) =>
-  ({ attempts: 3, code, retryable, status: "failed" }) as const;
+type TFailedProjectionResult = Extract<TAuthzedProjectionResult, { status: "failed" }>;
+
+const failed = (code: TFailedProjectionResult["code"], retryable: boolean): TFailedProjectionResult => ({
+  attempts: 3,
+  code,
+  retryable,
+  status: "failed",
+});
 
 const event = (
   targetType: TAuthzedOutboxTargetType,
@@ -226,7 +233,11 @@ describe("AuthZed projection outbox processor", () => {
     // event" is nearly always true and says nothing about fault. If size alone drove attribution, a
     // rotated SpiceDB credential would dead-letter whichever revocations happened to be travelling
     // alone — and a dead-lettered revocation denies the whole deployment until something replays it.
-    for (const code of ["authzed_unauthenticated", "authzed_internal", "authzed_permission_denied"]) {
+    for (const code of [
+      "authzed_unauthenticated",
+      "authzed_internal",
+      "authzed_permission_denied",
+    ] as const) {
       vi.clearAllMocks();
       vi.mocked(markAuthzedOutboxEventsFailed).mockResolvedValue(0);
       vi.mocked(claimAuthzedOutboxEvents).mockResolvedValue([event("membership", "org", "user")]);

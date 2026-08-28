@@ -1,6 +1,6 @@
 import "server-only";
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import type { AuthInfo, ServerContext } from "@modelcontextprotocol/server";
 import type { JWTPayload } from "jose";
 import type { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
@@ -40,6 +40,12 @@ const QUERY_CREDENTIAL_PARAMS = new Set([
   "token",
   "authorization",
 ]);
+
+/**
+ * RFC 9068 §2.1 media type for a JWT access token. Better Auth stamps it into the JWS header from
+ * 1.7 onwards; 1.6 emitted no `typ` at all.
+ */
+const JWT_ACCESS_TOKEN_TYPE = "at+jwt";
 
 const oauthResourceClient = oauthProviderResourceClient(auth);
 
@@ -247,6 +253,25 @@ async function isOAuthUserActive(userId: string): Promise<boolean> {
   return user?.isActive === true;
 }
 
+/**
+ * The slice of the SDK's `ServerContext` our tools actually read. Derived from it rather than
+ * hand-written, so it tracks the SDK, but narrow enough that a test can hand a handler
+ * `{ http: { authInfo } }` instead of constructing a whole context.
+ *
+ * `http` is optional because it is absent on non-HTTP transports. Ours is HTTP-only, so in practice it
+ * is always there — but the tools already handle a missing token, so nothing needs to assert it.
+ */
+export type TMcpToolContext = Pick<ServerContext, "http">;
+
+/**
+ * The single place that knows where the SDK puts verified auth on the handler context. Every tool goes
+ * through this rather than reaching into `ctx.http?.authInfo` itself, so a future SDK or adapter change
+ * to the context shape is one edit here instead of one per tool (the v1 -> v2 move was exactly that).
+ */
+export function getMcpToolAuthInfo(ctx: TMcpToolContext): AuthInfo | undefined {
+  return ctx.http?.authInfo;
+}
+
 export function getMcpAuthentication(authInfo?: AuthInfo): TV3Authentication {
   const authentication = authInfo?.extra?.formbricksAuthentication;
   if (!authentication || typeof authentication !== "object") {
@@ -409,10 +434,31 @@ async function authenticateMcpOAuthBearer(
   let payload: JWTPayload;
 
   try {
-    payload = await oauthResourceClient.getActions().verifyAccessToken(token, {
+    // Renamed from `verifyAccessToken` in Better Auth 1.7 (ENG-2343). `hasAcceptedMcpAudience` below is
+    // kept regardless of what upstream does with `verifyOptions.audience`: an earlier version of this
+    // comment asserted that 1.7 stops passing it into its own `jwtVerify`, which could not be
+    // substantiated — `verifyBearerToken` is re-exported through `better-auth/oauth2` and its body is not
+    // readable in the published dist. So the reason to keep our own check is not a claim about upstream:
+    // it is that "every `aud` resolves to a registered resource" and "this token is for ME" are different
+    // questions, and only the second is the one a resource server must answer. Ours answers it.
+    payload = await oauthResourceClient.getActions().verifyBearerToken(token, {
       verifyOptions: {
         audience: getMcpResourceUrl(),
         issuer: getAuthIssuerUrl(),
+        // RFC 9068 §4: an access token must be typed `at+jwt`, and a resource server should refuse
+        // one that is not. Enforceable only from 1.7 — 1.6 issued no `typ` header at all, so
+        // requiring it before the upgrade would have rejected every token in circulation.
+        //
+        // Kept strict through the rolling deploy, deliberately. A 1.6-minted token (no `typ`) hitting a
+        // 1.7 pod is rejected here — but this check is on the RESOURCE SERVER only, not on the refresh
+        // path, and `20260812110001_eng_2343_backfill_oauth_resource_links` backfills
+        // `oauthRefreshToken.resources` precisely so existing refresh tokens keep working. So a client
+        // takes one 401, refreshes against the 1.7 authorization server, and retries with a typed token:
+        // self-healing in a single round trip, which is the 401 handling every MCP client already
+        // implements. Relaxing this to "absent is fine" would weaken a cross-JWT-confusion defence
+        // permanently to smooth a window that closes on its own — the wrong trade in the PR whose whole
+        // purpose is binding token audiences.
+        typ: JWT_ACCESS_TOKEN_TYPE,
       },
       jwksUrl: getMcpOAuthJwksUrl(),
     });

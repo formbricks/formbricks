@@ -434,6 +434,10 @@ Hub env managed by taxonomy when the optional taxonomy service is enabled.
     secretKeyRef:
       name: {{ include "formbricks.taxonomyAuthSecretName" $root }}
       key: {{ $root.Values.taxonomy.auth.hubInternalApiTokenKey | default "HUB_INTERNAL_API_TOKEN" }}
+- name: TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS
+  value: {{ $root.Values.taxonomy.hubStaleRunTimeoutSeconds | quote }}
+- name: TAXONOMY_REAPER_INTERVAL_SECONDS
+  value: {{ $root.Values.taxonomy.hubReaperIntervalSeconds | quote }}
 {{- end }}
 {{- end }}
 
@@ -442,7 +446,7 @@ Returns true when an env var is managed by taxonomy auto-configuration and shoul
 */}}
 {{- define "formbricks.taxonomyHubEnvManaged" -}}
 {{- $key := .key -}}
-{{- if has $key (list "TAXONOMY_SERVICE_URL" "TAXONOMY_SERVICE_TOKEN" "HUB_INTERNAL_API_TOKEN") -}}
+{{- if has $key (list "TAXONOMY_SERVICE_URL" "TAXONOMY_SERVICE_TOKEN" "HUB_INTERNAL_API_TOKEN" "TAXONOMY_STUCK_RUN_TIMEOUT_SECONDS" "TAXONOMY_REAPER_INTERVAL_SECONDS") -}}
 true
 {{- end -}}
 {{- end }}
@@ -452,7 +456,7 @@ Returns true when an env var is managed by the taxonomy deployment and should no
 */}}
 {{- define "formbricks.taxonomyEnvManaged" -}}
 {{- $key := .key -}}
-{{- if has $key (list "APP_ENV" "HUB_INTERNAL_API_URL" "HUB_INTERNAL_API_TOKEN" "TAXONOMY_SERVICE_TOKEN" "TAXONOMY_LLM_PROVIDER" "TAXONOMY_LLM_MODEL" "TAXONOMY_LLM_BASE_URL" "TAXONOMY_LLM_API_KEY" "TAXONOMY_VERTEX_PROJECT" "TAXONOMY_VERTEX_LOCATION" "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" "TAXONOMY_LLM_TEMPERATURE" "TAXONOMY_LLM_MAX_ATTEMPTS" "TAXONOMY_LLM_TIMEOUT_SECONDS" "HUB_CLIENT_TIMEOUT_SECONDS" "TAXONOMY_EMBEDDING_DIMENSION" "TAXONOMY_MIN_EMBEDDED_RECORDS" "TAXONOMY_MAX_RECORDS" "TAXONOMY_MAX_CLUSTERS" "TAXONOMY_RANDOM_SEED") -}}
+{{- if has $key (list "APP_ENV" "HUB_INTERNAL_API_URL" "HUB_INTERNAL_API_TOKEN" "TAXONOMY_SERVICE_TOKEN" "TAXONOMY_LLM_PROVIDER" "TAXONOMY_LLM_MODEL" "TAXONOMY_LLM_BASE_URL" "TAXONOMY_LLM_API_KEY" "TAXONOMY_VERTEX_PROJECT" "TAXONOMY_VERTEX_LOCATION" "TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON" "TAXONOMY_VERTEX_THINKING_BUDGET" "TAXONOMY_LLM_TEMPERATURE" "TAXONOMY_LLM_STRUCTURED_OUTPUT_MODE" "TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS" "TAXONOMY_LLM_LABEL_MAX_TOKENS" "TAXONOMY_LLM_TREE_MAX_TOKENS" "TAXONOMY_LLM_PROMPT_TOKEN_RESERVE" "TAXONOMY_LLM_PROVIDER_MAX_ATTEMPTS" "TAXONOMY_LLM_MAX_ATTEMPTS" "TAXONOMY_LLM_TIMEOUT_SECONDS" "HUB_CLIENT_TIMEOUT_SECONDS" "HUB_CLIENT_MAX_ATTEMPTS" "HUB_HEARTBEAT_INTERVAL_SECONDS" "TAXONOMY_RUN_TIMEOUT_SECONDS" "TAXONOMY_EMBEDDING_DIMENSION" "TAXONOMY_MIN_EMBEDDED_RECORDS" "TAXONOMY_MAX_RECORDS" "TAXONOMY_MAX_CLUSTERS" "TAXONOMY_RANDOM_SEED") -}}
 true
 {{- end -}}
 {{- end }}
@@ -548,6 +552,7 @@ self-hosted runtime is enabled so Hub API and Hub worker cannot drift.
 {{- define "formbricks.hubEmbeddingEnv" -}}
 {{- $root := .root -}}
 {{- $worker := .worker | default false -}}
+{{- $env := .env | default (dict) -}}
 {{- if $root.Values.hub.embeddings.enabled }}
 - name: EMBEDDING_PROVIDER
   value: "openai"
@@ -579,6 +584,12 @@ self-hosted runtime is enabled so Hub API and Hub worker cannot drift.
   value: {{ ternary $root.Values.hub.embeddings.background.batchMaxWaitMs "25" $root.Values.hub.embeddings.background.enabled | quote }}
 - name: EMBEDDING_BATCH_MAX_IN_FLIGHT
   value: {{ ternary $root.Values.hub.embeddings.background.batchMaxInFlight "1" $root.Values.hub.embeddings.background.enabled | quote }}
+- name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES
+  {{- if hasKey $env "EMBEDDING_HTTP_DISABLE_KEEP_ALIVES" }}
+  value: {{ index $env "EMBEDDING_HTTP_DISABLE_KEEP_ALIVES" | quote }}
+  {{- else }}
+  value: {{ ternary $root.Values.hub.embeddings.background.httpDisableKeepAlives "false" $root.Values.hub.embeddings.background.enabled | quote }}
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -588,7 +599,7 @@ Returns true when an env var is managed by hub.embeddings and should not be rend
 */}}
 {{- define "formbricks.hubEmbeddingEnvManaged" -}}
 {{- $key := .key -}}
-{{- if has $key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_NORMALIZE" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT") -}}
+{{- if has $key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_NORMALIZE" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT" "EMBEDDING_HTTP_DISABLE_KEEP_ALIVES") -}}
 true
 {{- end -}}
 {{- end }}

@@ -85,7 +85,7 @@ describe("authorizationCoordinator", () => {
   test.each([
     [true, "rollout enabled"],
     [false, "rollout disabled"],
-  ] as const)("counts an unscoped check when the surface is unresolvable (%s)", async (enabled) => {
+  ] as const)("counts an unscoped check when the surface is unresolvable (%s)", async (enabled, _label) => {
     vi.mocked(getAuthorizationRolloutConfig).mockReturnValue(config({ enabled }));
     vi.mocked(getAuthorizationRolloutTarget).mockReturnValue(null);
 

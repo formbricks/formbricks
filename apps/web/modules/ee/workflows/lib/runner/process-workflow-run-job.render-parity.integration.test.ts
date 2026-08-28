@@ -102,6 +102,19 @@ vi.mock("@formbricks/database", () => ({
       updateMany: mockWorkflowRunLogUpdateMany,
       findFirst: mockWorkflowRunLogFindFirst,
     },
+    // Better Auth 1.7's oauthProvider seeds its resources at plugin init (ENG-2343), and this module's
+    // import graph reaches auth.ts. Seeding against a mock that does not declare `oauthResource` throws
+    // an unhandled BetterAuthError which fails the run even though every test passes — same stub as the
+    // unit sibling in process-workflow-run-job.test.ts.
+    oauthResource: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findFirst: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args: { data: unknown }) => Promise.resolve(args.data)),
+      createMany: vi.fn().mockResolvedValue({ count: 0 }),
+      update: vi.fn().mockImplementation((args: { data: unknown }) => Promise.resolve(args.data)),
+      upsert: vi.fn().mockImplementation((args: { create: unknown }) => Promise.resolve(args.create)),
+    },
   },
 }));
 
@@ -112,14 +125,20 @@ vi.mock("@/lib/organization/service", () => ({
 }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMemberEmails: mockGetWorkspaceMemberEmails }));
 
-vi.mock("@formbricks/logger", () => ({
-  logger: {
+vi.mock("@formbricks/logger", () => {
+  const mockLogger = {
     debug: vi.fn(),
     error: mockLoggerError,
     info: mockLoggerInfo,
     warn: mockLoggerWarn,
-  },
-}));
+    // Better Auth 1.7 warns during init() — through our betterAuthLogger, which routes via
+    // logger.withContext (ENG-2343). `silenceWarnings` used to suppress that warning and was removed
+    // upstream, so the call is now unavoidable: mirror the real logger's child-logger shape or it
+    // crashes as an unhandled rejection.
+    withContext: vi.fn(() => mockLogger),
+  };
+  return { logger: mockLogger };
+});
 
 // ---------------------------------------------------------------------------
 // Fixtures — a real survey block/element + a completing response with answers,

@@ -19,6 +19,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    internalDatasetPurge: {
+      interval: 3600,
+      allowedPerInterval: 5,
+      namespace: "api:internal:feedback-datasets:purge",
+    }, // 5 per hour — irreversible and dataset-wide; nobody legitimately purges more often than that
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,
@@ -37,11 +42,6 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "action:send-link-survey-email",
     }, // 10 per hour
-    isSurveyResponsePresent: {
-      interval: 60,
-      allowedPerInterval: 10,
-      namespace: "action:survey-response-present",
-    }, // 10 per minute — prevents email-enumeration oracle
     validateSurveyPin: {
       interval: 60,
       allowedPerInterval: 10,

@@ -73,8 +73,11 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   jwks: "authentication_or_application",
   oauthAccessToken: "authentication_or_application",
   oauthClient: "authentication_or_application",
+  oauthClientAssertion: "authentication_or_application",
+  oauthClientResource: "authentication_or_application",
   oauthConsent: "authentication_or_application",
   oauthRefreshToken: "authentication_or_application",
+  oauthResource: "authentication_or_application",
 } as const satisfies Readonly<Record<string, TResourceCategory>>;
 
 /** Audit-only targets use a separate namespace so each target and each Prisma model is classified once. */

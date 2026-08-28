@@ -114,6 +114,13 @@ const checkAccessItem = async <T extends z.ZodRawShape>(
     return action ? can(actor, action, organization) : false;
   }
 
+  if (
+    accessItem.minPermission !== undefined &&
+    !(["read", "readWrite", "manage"] as const).includes(accessItem.minPermission)
+  ) {
+    return false;
+  }
+
   const action = getWorkspaceActionForPermission(accessItem.minPermission);
   return can(actor, action, { type: "workspace", id: accessItem.workspaceId });
 };

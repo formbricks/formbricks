@@ -1,5 +1,15 @@
-import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { load } from "js-yaml";
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,6 +17,10 @@ import { afterEach, describe, expect, test } from "vitest";
 
 const formbricksScriptPath = fileURLToPath(new URL("../formbricks.sh", import.meta.url));
 const dockerComposeTemplatePath = fileURLToPath(new URL("../docker-compose.yml", import.meta.url));
+const legacyValkeyImage =
+  "valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d";
+const multiArchValkeyImage =
+  "valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84";
 
 const tempDirs: string[] = [];
 
@@ -54,6 +68,36 @@ const writeDockerComposeTemplate = (): string => {
   writeFileSync(composePath, readFileSync(dockerComposeTemplatePath, "utf8"));
 
   return composePath;
+};
+
+const migrateLegacyValkeyImage = (composePath: string, validationResult: "success" | "failure"): string => {
+  const validationLogPath = join(createTempDir(), "validation.log");
+
+  execFileSync(
+    "bash",
+    [
+      "-lc",
+      `source "$1"
+sudo() {
+  printf '%s\\n' "$*" >> "$VALIDATION_LOG_PATH"
+  [[ "$VALIDATION_RESULT" == "success" ]]
+}
+migrate_legacy_valkey_image "$2"`,
+      "bash",
+      formbricksScriptPath,
+      composePath,
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        VALIDATION_LOG_PATH: validationLogPath,
+        VALIDATION_RESULT: validationResult,
+      },
+    }
+  );
+
+  return validationLogPath;
 };
 
 const getServiceBlock = (composeContents: string, serviceName: string): string => {
@@ -109,7 +153,70 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(output).not.toContain(authzedDatabasePassword);
     expect(env.get("AUTHZED_TOKEN")).toBe(authzedToken);
     expect(env.get("AUTHZED_DATABASE_PASSWORD")).toBe(authzedDatabasePassword);
+    expect(env.get("AUTHZED_ENABLED")).toBe("true");
+    expect(env.get("AUTHZED_CONSISTENCY")).toBe("fully_consistent");
+    expect(env.get("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED")).toBe("true");
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
+  });
+
+  test("blocks customized updates until the AuthZed v6 contract is present and acknowledged", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const updateFunction = script.slice(
+      script.indexOf("update_formbricks()"),
+      script.indexOf("restart_formbricks()")
+    );
+
+    expect(updateFunction).toContain(
+      "This installation does not yet contain the AuthZed v6 Compose services"
+    );
+    expect(updateFunction).toContain("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true");
+    expect(updateFunction).toContain("authzed-ops upgrade prepare");
+    expect(updateFunction).toContain("authzed-ops upgrade check");
+    expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
+  });
+
+  test("runs the upgrade gates before stopping an existing installation", () => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(join(installationDir, "docker-compose.yml"), "services:\n  authzed-ops:\n  spicedb:\n");
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(join(binDir, "sudo"), '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n', {
+      mode: 0o700,
+    });
+
+    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
+    });
+
+    expect(result.status).toBe(0);
+    const commands = readFileSync(commandLog, "utf8").trim().split("\n");
+    expect(commands).toEqual([
+      "docker compose pull",
+      "docker compose run --rm formbricks-migrate",
+      "docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare",
+      "docker compose --profile authzed-ops run --rm authzed-ops upgrade check",
+      "docker compose down",
+      "docker compose up -d",
+    ]);
+  });
+
+  test("waits for the source migration before preparing a fresh AuthZed graph", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const setupStart = script.indexOf(
+      "docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate"
+    );
+    const migrationWait = script.indexOf("docker compose wait formbricks-migrate", setupStart);
+    const upgradePrepare = script.indexOf("authzed-ops upgrade prepare", setupStart);
+
+    expect(setupStart).toBeGreaterThanOrEqual(0);
+    expect(migrationWait).toBeGreaterThan(setupStart);
+    expect(upgradePrepare).toBeGreaterThan(migrationWait);
   });
 
   test("pins and verifies the downloaded bootstrap helper before making it executable", () => {
@@ -132,6 +239,95 @@ describe("docker/formbricks.sh AuthZed setup", () => {
   });
 });
 
+describe("docker/docker-compose.yml Redis/Valkey exposure (ENG-2184)", () => {
+  // The bundled Valkey is Better Auth's session/token store (secondaryStorage). Publishing it to
+  // the host binds 0.0.0.0:6379 with no password, exposing every live session token — and Docker's
+  // port rule bypasses host firewalls like ufw. The app reaches it over the internal compose
+  // network (REDIS_URL=redis://redis:6379), so no host publish is needed. Assert on the *resolved*
+  // compose model — js-yaml expands anchors and merge keys — so a port smuggled in via an alias or
+  // a `<<` merge cannot slip past a raw-text check.
+  test("the redis service publishes no host port", () => {
+    const doc = load(readFileSync(dockerComposeTemplatePath, "utf8")) as {
+      services?: Record<string, { ports?: unknown }>;
+    };
+    const redis = doc.services?.redis;
+
+    expect(redis, "the redis service is missing from docker-compose.yml").toBeTypeOf("object");
+    expect(
+      redis?.ports ?? [],
+      "the redis (Valkey) service must not publish any host port — it is reachable only on the internal compose network (ENG-2184)"
+    ).toEqual([]);
+  });
+});
+
+describe("docker/formbricks.sh Valkey image migration", () => {
+  test("updates the known amd64-only pin and keeps a backup", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+
+    expect(originalCompose).toContain(multiArchValkeyImage);
+    writeFileSync(composePath, originalCompose.replace(multiArchValkeyImage, legacyValkeyImage));
+    chmodSync(composePath, 0o600);
+
+    const validationLogPath = migrateLegacyValkeyImage(composePath, "success");
+
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+    expect(statSync(composePath).mode & 0o777).toBe(0o600);
+    expect(statSync(`${composePath}.before-valkey-8.1.9`).mode & 0o777).toBe(0o600);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+  });
+
+  test("updates the live redis service when Compose uses four-space indentation", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+    redis:
+        image: ${legacyValkeyImage}
+        volumes:
+            - redis:/data
+
+volumes:
+    redis:
+`
+    );
+
+    const validationLogPath = migrateLegacyValkeyImage(composePath, "success");
+
+    expect(readFileSync(composePath, "utf8")).toContain(multiArchValkeyImage);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+  });
+
+  test.each([multiArchValkeyImage, "example.com/custom-valkey@sha256:custom"])(
+    "leaves the %s reference untouched",
+    (image) => {
+      const composePath = writeDockerComposeTemplate();
+      const originalCompose = readFileSync(composePath, "utf8").replace(multiArchValkeyImage, image);
+      writeFileSync(composePath, originalCompose);
+
+      migrateLegacyValkeyImage(composePath, "failure");
+
+      expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+      expect(existsSync(`${composePath}.before-valkey-8.1.9`)).toBe(false);
+    }
+  );
+
+  test("restores the original Compose file when validation fails", () => {
+    const composePath = writeDockerComposeTemplate();
+    const legacyCompose = readFileSync(composePath, "utf8").replace(multiArchValkeyImage, legacyValkeyImage);
+    writeFileSync(composePath, legacyCompose);
+
+    expect(() => migrateLegacyValkeyImage(composePath, "failure")).toThrow();
+
+    expect(readFileSync(composePath, "utf8")).toBe(legacyCompose);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toBe(legacyCompose);
+    expect(existsSync(`${composePath}.tmp`)).toBe(false);
+  });
+});
+
 describe("docker/formbricks.sh Traefik label injection", () => {
   test("adds HTTPS Traefik labels to the formbricks service only", () => {
     const composePath = writeDockerComposeTemplate();
@@ -143,6 +339,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     const formbricksBlock = getServiceBlock(composeContents, "formbricks");
     const authzedBootstrapBlock = getServiceBlock(composeContents, "authzed-db-bootstrap");
     const authzedOpsBlock = getServiceBlock(composeContents, "authzed-ops");
+    const authzedInitializeBlock = getServiceBlock(composeContents, "authzed-initialize");
     const spicedbBlock = getServiceBlock(composeContents, "spicedb");
 
     expect(formbricksMigrateBlock).not.toContain("    labels:");
@@ -153,6 +350,8 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(spicedbBlock).not.toContain("traefik.enable=true");
     expect(authzedOpsBlock).toContain('profiles: ["authzed-ops"]');
     expect(authzedOpsBlock).not.toContain("traefik.enable=true");
+    expect(authzedInitializeBlock).toContain('command: ["upgrade", "prepare"]');
+    expect(authzedInitializeBlock).not.toContain("traefik.enable=true");
     expect(formbricksBlock).toContain("    labels:");
     expect(formbricksBlock.indexOf("    labels:")).toBeLessThan(formbricksBlock.indexOf("    environment:"));
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.rule=Host(`example.com`)");

@@ -80,7 +80,10 @@ function RankingItem({
       className={cn(
         "rounded-option flex h-12 cursor-pointer items-center border px-3 transition-all",
         "bg-option-bg border-option-border",
-        "hover:bg-option-hover-bg focus-within:border-brand focus-within:bg-option-selected-bg focus-within:shadow-sm",
+        // No focus-within fill: it repainted the item in the *ranked* colors, so the card's mount
+        // autofocus made the first item look already ranked (ENG-2288). Focus has its own uniform
+        // ring, painted on the item's button by survey-ui's globals.css.
+        "hover:bg-option-hover-bg",
         isRanked && "bg-option-selected-bg border-brand",
         disabled && "cursor-not-allowed opacity-50"
       )}>

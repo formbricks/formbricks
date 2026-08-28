@@ -82,6 +82,7 @@ describe("rateLimitConfigs", () => {
         "v3",
         "mcpAuth",
         "v3SurveyGenerate",
+        "internalDatasetPurge",
         "client",
         "clientEnvironment",
       ]);
@@ -94,7 +95,6 @@ describe("rateLimitConfigs", () => {
         "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",
-        "isSurveyResponsePresent",
         "validateSurveyPin",
         "licenseRecheck",
         "unsplash",

@@ -60,7 +60,7 @@ describe("checkAuth", () => {
       },
     };
 
-    vi.mocked(hasApiKeyWorkspaceAccess).mockReturnValue(false);
+    vi.mocked(hasApiKeyWorkspaceAccess).mockResolvedValue(false);
 
     const result = await checkAuth(mockAuthentication, workspaceId);
 
@@ -86,7 +86,7 @@ describe("checkAuth", () => {
       },
     };
 
-    vi.mocked(hasApiKeyWorkspaceAccess).mockReturnValue(true);
+    vi.mocked(hasApiKeyWorkspaceAccess).mockResolvedValue(true);
 
     const result = await checkAuth(mockAuthentication, workspaceId);
 

@@ -305,14 +305,16 @@ services:
 
   # Redis/Valkey service for caching, rate limiting, and audit logging
   # Remove this service if you want to use an external Redis/Valkey instance
+  # No host port is published: this instance is Better Auth's session/token store and is reached
+  # only over the internal compose network (REDIS_URL=redis://redis:6379). Publishing 6379 to the
+  # host would expose every live session token unauthenticated (and Docker's port rule bypasses
+  # host firewalls like ufw). Same treatment as the postgres service above.
   redis:
     restart: always
-    image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+    image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
     command: valkey-server --appendonly yes --maxmemory-policy noeviction
     volumes:
       - redis:/data
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 5s

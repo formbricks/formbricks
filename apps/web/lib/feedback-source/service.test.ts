@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   createFeedbackSourceWithMappings,
@@ -91,7 +91,7 @@ const mockFeedbackSourceWithMappings = {
 // Mirrors the real P2003 `meta` produced by Prisma 7 with the @prisma/adapter-pg driver: the
 // constraint name is nested under driverAdapterError.cause, NOT at the top level. Tests must use
 // this shape so the FK-mapping logic is exercised against what the DB layer actually emits.
-const makeForeignKeyError = (constraintName: string): Prisma.PrismaClientKnownRequestError =>
+const makeForeignKeyError = (constraintName: string): PrismaClientKnownRequestError =>
   new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
     code: "P2003",
     clientVersion: "7.8.0",
@@ -774,7 +774,6 @@ describe("updateFeedbackSourceWithMappings", () => {
 
   test("updates feedbackSource name without changing mappings", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
     const result = await updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "Updated" });
@@ -792,7 +791,6 @@ describe("updateFeedbackSourceWithMappings", () => {
 
   test("replaces formbricks mappings when provided", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
     tx.feedbackSourceFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
@@ -825,7 +823,6 @@ describe("updateFeedbackSourceWithMappings", () => {
   // dark forever, reachable only through the unrelated pause/resume toggle.
   const seedUpdateTransaction = () => {
     const tx = setupTransaction();
-    tx.feedbackSource.update.mockResolvedValue(undefined);
     tx.feedbackSourceFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
@@ -881,7 +878,6 @@ describe("updateFeedbackSourceWithMappings", () => {
   test("replaces field mappings when provided", async () => {
     // Starts errored: a csv save must not clear a flag only the formbricks reconciler can set.
     const tx = setupTransaction("error");
-    tx.feedbackSource.update.mockResolvedValue(undefined);
     tx.feedbackSourceFieldMapping.deleteMany.mockResolvedValue({ count: 1 });
     tx.feedbackSourceFieldMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue({

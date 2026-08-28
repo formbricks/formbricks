@@ -88,8 +88,19 @@ export const ResponseCardModal = ({
     }
   };
 
-  // If no response is selected or currentIndex is null or invalid, do not render the modal
-  if (selectedResponseId === null || currentIndex === null || currentIndex === -1) return null;
+  // If no response is selected or currentIndex is null or invalid, do not render the modal.
+  // `currentIndex` is only reset in the effect above, so on the render that follows a delete it can
+  // still point past the end of the shortened `responses` array — deleting the survey's only response
+  // leaves it at `0` while `responses` is empty. `responses[currentIndex]` is then `undefined` and
+  // `SingleResponseCard` throws reading `response.finished`, replacing the page with the error screen
+  // instead of the empty state (ENG-2130). Bounds-check rather than testing for `-1` alone.
+  if (
+    selectedResponseId === null ||
+    currentIndex === null ||
+    currentIndex < 0 ||
+    currentIndex >= responses.length
+  )
+    return null;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

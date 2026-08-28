@@ -55,7 +55,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
       valkey:
-        image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
+        image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
         ports:
           - 6379:6379
     steps:
@@ -160,7 +160,7 @@ jobs:
             -e RUSTFS_ADDRESS=:9000 \
             -e RUSTFS_CONSOLE_ENABLE=true \
             -e RUSTFS_CONSOLE_ADDRESS=:9001 \
-            rustfs/rustfs:1.0.0-alpha.93 \
+            rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0 \
             /data
 
           echo "RustFS server started"
