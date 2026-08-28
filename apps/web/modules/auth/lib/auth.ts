@@ -375,7 +375,9 @@ export const auth = betterAuth({
     }),
     // Seed the persisted MCP resource with one conflict-safe PostgreSQL statement before the upstream
     // oauth-provider plugin runs. This prevents concurrent pods from racing on a fresh database.
-    mcpOauthResourceSeedPlugin,
+    // Unit suites use partial Prisma mocks and test the seed plugin directly, so Better Auth must not
+    // execute this database bootstrap while NODE_ENV is test.
+    ...(env.NODE_ENV === "test" ? [] : [mcpOauthResourceSeedPlugin]),
     // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
     // integration-testable against a throwaway Better Auth instance.
     oauthProvider(getMcpOauthProviderOptions()),
