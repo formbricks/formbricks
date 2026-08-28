@@ -200,10 +200,13 @@ export const getOrganizationWorkspacesLimit = async (organizationId: string): Pr
 
   // Self-hosted limits are already resolved by the entitlements provider, which reads the license's
   // cached `active` flag rather than the narrower live status string. That distinction is the whole
-  // point: during the grace period documented in `docs/self-hosting/advanced/license-activation.mdx`
-  // a licensed instance is still active on its cached license, but the status reads "unreachable"
-  // because the check could not complete. Deriving the limit from the status here would drop that
-  // instance to the Community Edition cap for the whole grace window. `null` means unlimited, and an
-  // instance with no usable license is resolved to the community cap by the provider.
+  // point: `getFallbackLevel` (license.ts) enters the grace period documented in
+  // `docs/self-hosting/advanced/license-activation.mdx` whenever the live check returns anything but
+  // "active" while the cached license is still active and under three days old. So the status can
+  // read "unreachable" (the check never completed) or "expired" (it completed and the key has
+  // lapsed) while the instance is still active on its cached license. Deriving the limit from the
+  // status here would drop that instance to the Community Edition cap for the whole grace window.
+  // `null` means unlimited, and an instance with no usable license is resolved to the community cap
+  // by the provider.
   return entitlementsContext.limits.workspaces ?? Infinity;
 };

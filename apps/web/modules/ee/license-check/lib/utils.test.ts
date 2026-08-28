@@ -632,9 +632,26 @@ describe("License Utils", () => {
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
         source: "self_hosted_license",
-        // In grace the cached license is still active, but the live check could not complete, so the
+        // In grace the cached license is still active. Here the live check never completed, so the
         // status reads "unreachable" while the provider still resolves the licensed allowance.
         licenseStatus: "unreachable",
+        licenseFeatures: { ...defaultFeatures, workspaces: 5 },
+        limits: { ...defaultEntitlementsContext.limits, workspaces: 5 },
+      });
+
+      const result = await getOrganizationWorkspacesLimit("org_1");
+
+      expect(result).toBe(5);
+    });
+
+    test("keeps the licensed limit for self-hosted when a lapsed license is still inside grace", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
+        ...defaultEntitlementsContext,
+        source: "self_hosted_license",
+        // Grace is not limited to an unreachable server: a completed check that reports "expired"
+        // also keeps the cached license active for the window, so the licensed allowance holds.
+        licenseStatus: "expired",
         licenseFeatures: { ...defaultFeatures, workspaces: 5 },
         limits: { ...defaultEntitlementsContext.limits, workspaces: 5 },
       });
