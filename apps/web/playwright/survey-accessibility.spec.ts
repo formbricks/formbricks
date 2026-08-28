@@ -89,11 +89,10 @@ const MAX_STEPS = 25;
 
 // The file the answered-states walk attaches to the (required) file-upload card. Built in
 // memory rather than read from disk so the spec owns its own fixture, and kept to an SVG the
-// storage mock already serves for unknown names (see `mockStorageUploads`). The stem is
-// asserted against the delete control's accessible name, which the app derives from the stored
-// file name — so it must survive the upload round-trip.
-const UPLOAD_FIXTURE_STEM = "a11y-answered-states";
-const UPLOAD_FIXTURE_FILE_NAME = `${UPLOAD_FIXTURE_STEM}.svg`;
+// storage mock already serves for unknown names (see `mockStorageUploads`). The name is asserted
+// exactly against the delete control's accessible name, which the app derives from the stored file
+// name — so it must survive the upload round-trip unchanged.
+const UPLOAD_FIXTURE_FILE_NAME = "a11y-answered-states.svg";
 const UPLOAD_FIXTURE_BODY = Buffer.from(
   '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#0f172a"/></svg>',
   "utf8"
@@ -652,101 +651,109 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
 
     const variant = "answered-states";
     const violations: ViolationRow[] = [];
+    let cardId = "";
 
-    // 1. Date — scan the card once a day is actually selected.
-    const dateCardId = await openFirstQuestionCard(page, seeded.answeredStatesSurveyUrl);
-    const dateCard = page.locator(`[id="${dateCardId}"]`);
-    await expect(
-      dateCard.getByRole("heading", { level: 2, name: DATE_HEADLINE }),
-      "the answered-states walk should open on the date card"
-    ).toBeVisible({ timeout: CARD_TIMEOUT });
+    await test.step("selected day cell", async () => {
+      cardId = await openFirstQuestionCard(page, seeded.answeredStatesSurveyUrl);
+      const card = page.locator(`[id="${cardId}"]`);
+      await expect(
+        card.getByRole("heading", { level: 2, name: DATE_HEADLINE }),
+        "the answered-states walk should open on the date card"
+      ).toBeVisible({ timeout: CARD_TIMEOUT });
 
-    // The single-h1 contract (ENG-2336) is asserted on the kitchen sink further down, but it is a
-    // per-survey property of the renderer, so hold the second fixture to it here too.
-    await expect(
-      page.locator("#fbjs").getByRole("heading", { level: 1 }),
-      "the answered-states survey should expose its name as the page's one h1"
-    ).toHaveText(A11Y_ANSWERED_STATES_SURVEY_NAME);
+      // The single-h1 contract (ENG-2336) is asserted on the kitchen sink further down, but it is
+      // a per-survey property of the renderer, so hold the second fixture to it here too.
+      await expect(
+        page.locator("#fbjs").getByRole("heading", { level: 1 }),
+        "the answered-states survey should expose its name as the page's one h1"
+      ).toHaveText(A11Y_ANSWERED_STATES_SURVEY_NAME);
 
-    await answerCurrentCard(page, dateCard);
-    await expect(
-      dateCard.locator('button[data-selected-single="true"]'),
-      "a day must be selected before the selected-day state can be scanned"
-    ).toHaveCount(1);
-    await waitForCardSettled(page, dateCardId);
-    await scan(page, variant, "date-day-selected", violations);
-
-    // 2. External CTA — the extra in-card button is the whole point of this card, so assert it
-    //    rendered. It is never clicked: it opens a new tab.
-    const ctaCardId = await advanceToNextCard(page, dateCardId);
-    const ctaCard = page.locator(`[id="${ctaCardId}"]`);
-    await expect(
-      ctaCard.getByRole("heading", { level: 2, name: CTA_EXTERNAL_HEADLINE }),
-      "the date card should advance to the external CTA card"
-    ).toBeVisible({ timeout: CARD_TIMEOUT });
-    await expect(
-      ctaCard.getByRole("button", { name: CTA_EXTERNAL_BUTTON_LABEL }),
-      "the external CTA button should render, named by its ctaButtonLabel"
-    ).toBeVisible({ timeout: ACTION_TIMEOUT });
-    await waitForCardSettled(page, ctaCardId);
-    await scan(page, variant, "cta-external-button", violations);
-
-    // 3. File upload — attach a file through the mocked storage boundary, then scan the state
-    //    the walker skips. The card is REQUIRED, so advancing past it (step 4) is only possible
-    //    if the upload really produced a response value.
-    const uploadCardId = await advanceToNextCard(page, ctaCardId);
-    const uploadCard = page.locator(`[id="${uploadCardId}"]`);
-    await expect(
-      uploadCard.getByRole("heading", { level: 2, name: FILE_UPLOAD_HEADLINE }),
-      "the CTA card should advance to the file upload card"
-    ).toBeVisible({ timeout: CARD_TIMEOUT });
-
-    await uploadCard.locator('input[type="file"]').setInputFiles({
-      name: UPLOAD_FIXTURE_FILE_NAME,
-      mimeType: "image/svg+xml",
-      buffer: UPLOAD_FIXTURE_BODY,
+      await answerCurrentCard(page, card);
+      // Asserted through `aria-selected` rather than the styling hook: it is what a screen reader
+      // consumes, and it is the state whose brand-on-brand contrast this scan exists to measure.
+      await expect(
+        card.getByRole("gridcell", { selected: true }),
+        "a day must be exposed as selected before the selected-day state can be scanned"
+      ).toHaveCount(1);
+      await waitForCardSettled(page, cardId);
+      await scan(page, variant, "date-day-selected", violations);
     });
 
-    const deleteControl = uploadCard.getByRole("button", { name: /^Delete / });
-    await expect(
-      deleteControl,
-      "the uploaded file should render exactly one delete control, named after the file"
-    ).toHaveCount(1);
-    await expect(deleteControl).toHaveAccessibleName(new RegExp(`^Delete .*${UPLOAD_FIXTURE_STEM}`));
-    await expect(
-      uploadCard.locator('input[type="file"]'),
-      "single-file upload hides the dropzone once a file is attached — that is the state under scan"
-    ).toHaveCount(0);
-    await waitForCardSettled(page, uploadCardId);
-    await scan(page, variant, "file-upload-attached", violations);
+    await test.step("external CTA button", async () => {
+      cardId = await advanceToNextCard(page, cardId);
+      const card = page.locator(`[id="${cardId}"]`);
+      await expect(
+        card.getByRole("heading", { level: 2, name: CTA_EXTERNAL_HEADLINE }),
+        "the date card should advance to the external CTA card"
+      ).toBeVisible({ timeout: CARD_TIMEOUT });
+      // The extra in-card button is the whole point of this card, so assert it rendered. It is
+      // never clicked: it opens a new tab.
+      await expect(
+        card.getByRole("button", { name: CTA_EXTERNAL_BUTTON_LABEL }),
+        "the external CTA button should render, named by its ctaButtonLabel"
+      ).toBeVisible({ timeout: ACTION_TIMEOUT });
+      await waitForCardSettled(page, cardId);
+      await scan(page, variant, "cta-external-button", violations);
+    });
 
-    // 4. Cal.com scheduler — our wrapper only. The embed origin is aborted, so the container
-    //    must be empty; assert that, or this scan would be grading third-party markup.
-    const calCardId = await advanceToNextCard(page, uploadCardId);
-    const calCard = page.locator(`[id="${calCardId}"]`);
-    await expect(
-      calCard.getByRole("heading", { level: 2, name: CAL_HEADLINE }),
-      "a required file upload must accept the mocked upload and advance to the scheduler card"
-    ).toBeVisible({ timeout: CARD_TIMEOUT });
+    await test.step("attached file", async () => {
+      cardId = await advanceToNextCard(page, cardId);
+      const card = page.locator(`[id="${cardId}"]`);
+      await expect(
+        card.getByRole("heading", { level: 2, name: FILE_UPLOAD_HEADLINE }),
+        "the CTA card should advance to the file upload card"
+      ).toBeVisible({ timeout: CARD_TIMEOUT });
 
-    const calContainer = calCard.locator('[id^="cal-embed-"]');
-    await expect(calContainer, "the scheduler wrapper should render").toHaveCount(1);
-    await expect(
-      calContainer.locator("iframe"),
-      "the third-party Cal.com embed must stay blocked: this scan covers our wrapper only"
-    ).toHaveCount(0);
-    await waitForCardSettled(page, calCardId);
-    await scan(page, variant, "cal-scheduler-wrapper", violations);
+      await card.locator('input[type="file"]').setInputFiles({
+        name: UPLOAD_FIXTURE_FILE_NAME,
+        mimeType: "image/svg+xml",
+        buffer: UPLOAD_FIXTURE_BODY,
+      });
 
-    // Prove the whole walk completed rather than stalling on a card we could not answer.
-    // `advanceToNextCard` is not reused here: the next state is the ending card, which has no
-    // card id of its own, so it would fail that helper's "landed on the next card" assertion.
-    await advanceButton(calCard).first().click({ timeout: ACTION_TIMEOUT });
-    await waitForCardTransition(page, calCardId);
-    await expect(
-      endingCardLocator(page).first(),
-      "the answered-states walk should reach the ending card"
-    ).toBeVisible({ timeout: CARD_TIMEOUT });
+      // The delete control only exists once a file is attached, and its accessible name IS the
+      // stored file name — so one assertion proves both that the mocked upload landed and that the
+      // control a respondent needs in order to undo it says which file it removes.
+      await expect(
+        card.getByRole("button", { name: `Delete ${UPLOAD_FIXTURE_FILE_NAME}`, exact: true }),
+        "the attached file should render one delete control named after it"
+      ).toHaveCount(1);
+      await waitForCardSettled(page, cardId);
+      await scan(page, variant, "file-upload-attached", violations);
+    });
+
+    await test.step("scheduler wrapper", async () => {
+      // The upload card is REQUIRED, so landing here at all proves the upload produced a response.
+      cardId = await advanceToNextCard(page, cardId);
+      const card = page.locator(`[id="${cardId}"]`);
+      await expect(
+        card.getByRole("heading", { level: 2, name: CAL_HEADLINE }),
+        "a required file upload must accept the mocked upload and advance to the scheduler card"
+      ).toBeVisible({ timeout: CARD_TIMEOUT });
+
+      // Not a markup check but a scope check: if the embed ever loads, this scan silently starts
+      // grading Cal.com's DOM, which nobody here can fix. Fail loudly instead.
+      const calContainer = card.locator('[id^="cal-embed-"]');
+      await expect(calContainer, "the scheduler wrapper should render").toHaveCount(1);
+      await expect(
+        calContainer.locator("iframe"),
+        "the third-party Cal.com embed must stay blocked: this scan covers our wrapper only"
+      ).toHaveCount(0);
+      await waitForCardSettled(page, cardId);
+      await scan(page, variant, "cal-scheduler-wrapper", violations);
+    });
+
+    await test.step("reaches the ending card", async () => {
+      // `advanceToNextCard` is not reused here: the next state is the ending card, which has no
+      // card id of its own, so it would fail that helper's "landed on the next card" assertion.
+      await advanceButton(page.locator(`[id="${cardId}"]`))
+        .first()
+        .click({ timeout: ACTION_TIMEOUT });
+      await waitForCardTransition(page, cardId);
+      await expect(
+        endingCardLocator(page).first(),
+        "the answered-states walk should reach the ending card"
+      ).toBeVisible({ timeout: CARD_TIMEOUT });
+    });
 
     reportAndAssert(variant, violations);
   });
