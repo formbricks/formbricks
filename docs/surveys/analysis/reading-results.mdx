@@ -1,0 +1,54 @@
+---
+title: "Reading Survey Results"
+description: "Every published survey has two views: a Summary that aggregates answers question by question, and a Responses table with one row per submission."
+icon: "chart-simple"
+---
+
+Open any survey and you land on its results. There are two tabs, and they answer different questions.
+
+- **Summary** — what did people say, in aggregate?
+- **Responses** — what did *this* person say?
+
+## Summary
+
+The Summary tab opens with five figures for the survey as a whole, then a card per question.
+
+![The survey summary, with completion stats and per-question breakdowns](/images/surveys/analysis/summary.webp)
+
+The headline figures:
+
+| Figure | What it counts |
+| --- | --- |
+| **Impressions** | How many times the survey was displayed. |
+| **Starts** | How many people began answering, with the share of impressions. |
+| **Completed** | How many reached the end. |
+| **Drop-Offs** | How many started but did not finish, with the share of starts. |
+| **Time to Complete** | How long a completed response takes, once there are enough to average. |
+
+Below them, each question gets its own card in survey order. What the card shows depends on the question: open text lists individual answers, choice questions show each option with its share, and rating-style questions show the distribution.
+
+## Responses
+
+The Responses tab is one row per submission, with a column per question.
+
+![The response table, one row per submission](/images/surveys/analysis/responses.webp)
+
+The table also carries columns you did not ask for directly:
+
+- **Status** — whether the response was completed or abandoned part-way.
+- **Person** — the [contact](/platform/features/contacts) who answered, or *Anonymous*.
+- **Tags** — any [tags](/surveys/general-features/tags) applied to the response.
+- **[Hidden fields](/surveys/general-features/hidden-fields)** — values passed in with the survey rather than answered.
+- **[Metadata](/surveys/general-features/metadata)** — source, URL, browser, OS, device and country.
+
+The table is wide, so scroll horizontally to reach the later columns, or use the column settings to hide the ones you do not need.
+
+## Filtering and exporting
+
+Both tabs share the same **Filter** and time-range controls at the top, so a filter you set on the Summary carries to the Responses table. Filter on any answer, tag, hidden field or metadata value.
+
+**Download** offers three scopes, each as CSV or Excel:
+
+- **All responses** — everything, ignoring the current filter.
+- **Filtered responses** — only what the current filter matches.
+- **Selected responses** — only the rows you ticked in the table.
