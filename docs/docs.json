@@ -116,6 +116,7 @@
                   "surveys/general-features/overwrite-styling",
                   "surveys/general-features/hidden-fields",
                   "surveys/general-features/limit-submissions",
+                  "surveys/general-features/survey-scheduling",
                   "surveys/general-features/multi-language-surveys",
                   "surveys/general-features/partial-submissions",
                   "surveys/general-features/recall",
