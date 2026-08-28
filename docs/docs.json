@@ -374,16 +374,6 @@
             "pages": ["development/overview"]
           },
           {
-            "group": "Local Setup",
-            "pages": [
-              "development/local-setup/linux",
-              "development/local-setup/mac",
-              "development/local-setup/windows",
-              "development/local-setup/gitpod",
-              "development/local-setup/github-codespaces"
-            ]
-          },
-          {
             "group": "Technical Handbook",
             "pages": [
               "development/technical-handbook/overview",
@@ -432,14 +422,6 @@
                 ]
               }
             ]
-          },
-          {
-            "group": "Contributions",
-            "pages": ["development/contribution/contribution"]
-          },
-          {
-            "group": "Support",
-            "pages": ["development/support/troubleshooting"]
           }
         ],
         "tab": "Development"
@@ -482,6 +464,34 @@
     ]
   },
   "redirects": [
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/linux"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/mac"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/windows"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/gitpod"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/github-codespaces"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/contribution/contribution"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/support/troubleshooting"
+    },
     {
       "destination": "/docs/self-hosting/configuration/auth-sso/setup-saml-with-identity-providers",
       "source": "/docs/development/guides/auth-and-provision/setup-saml-with-identity-providers"
@@ -1255,7 +1265,7 @@
       "source": "/docs/developer-docs/rest-api"
     },
     {
-      "destination": "/docs/development/contribution/contribution",
+      "destination": "/docs/development/overview",
       "source": "/docs/developer-docs/contributing/get-started"
     },
     {
@@ -1263,7 +1273,7 @@
       "source": "/docs/api-docs"
     },
     {
-      "destination": "/docs/development/support/troubleshooting",
+      "destination": "/docs/development/overview",
       "source": "/docs/developer-docs/contributing/troubleshooting"
     }
   ],
