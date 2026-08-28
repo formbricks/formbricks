@@ -1,4 +1,8 @@
 import { auth } from "@/modules/auth/lib/auth";
+import {
+  recordSsoCallbackOutcome,
+  recordSsoCallbackThrow,
+} from "@/modules/auth/lib/better-auth-observability";
 import { createAuthPathLabeller } from "@/modules/auth/lib/better-auth-path-label";
 import { runWithBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
 import { mapLegacySsoCallbackRequest } from "@/modules/auth/lib/legacy-sso-callback";
@@ -61,10 +65,24 @@ const handler = async (request: Request): Promise<Response> => {
   // neither is ours to change: the pinned SSO callback path, and `application_type` on dynamic client
   // registration (see each module). Both no-op for every other request.
   const mappedRequest = await normalizeDcrRequest(mapLegacySsoCallbackRequest(request));
-  return runWithBetterAuthRequestContext(
-    { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
-    () => runWithSsoRequestContext(() => auth.handler(mappedRequest))
-  );
+  try {
+    const response = await runWithBetterAuthRequestContext(
+      { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
+      () => runWithSsoRequestContext(() => auth.handler(mappedRequest))
+    );
+    // ENG-2551: the one place that sees the outcome of every SSO callback, whatever went wrong and
+    // whichever provider it was — a failed callback is a redirect carrying `?error=`, or a 4xx/5xx.
+    // Emitted here rather than from a hook because the failures that matter most are the ones Better
+    // Auth returns as a response rather than throwing, so no error-path hook observes them.
+    recordSsoCallbackOutcome(mappedRequest.url, response);
+    return response;
+  } catch (error) {
+    // A throw is the most severe callback failure there is — Next answers 500 and the user cannot sign
+    // in — so it must not be the one case the signal misses. Recorded, then rethrown unchanged so the
+    // existing error handling (and the Sentry capture in this module) behaves exactly as before.
+    recordSsoCallbackThrow(mappedRequest.url);
+    throw error;
+  }
 };
 
 export { handler as GET, handler as POST };
