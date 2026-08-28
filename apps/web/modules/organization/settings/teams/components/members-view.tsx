@@ -67,7 +67,6 @@ export const MembersView = async ({
           <OrganizationActions
             organization={organization}
             membershipRole={membershipRole}
-            role={membershipRole}
             isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
             isInviteDisabled={INVITE_DISABLED}
             isAccessControlAllowed={isAccessControlAllowed}

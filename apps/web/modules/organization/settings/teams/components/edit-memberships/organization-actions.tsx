@@ -35,7 +35,6 @@ import {
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface OrganizationActionsProps {
-  role: TOrganizationRole;
   membershipRole?: TOrganizationRole;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
@@ -52,7 +51,6 @@ interface OrganizationActionsProps {
 }
 
 export const OrganizationActions = ({
-  role,
   organization,
   membershipRole,
   teams,
@@ -75,7 +73,6 @@ export const OrganizationActions = ({
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
-  const isOrganizationOwner = role === "owner";
 
   const canInvite = isOwnerOrManager || (isAccessControlAllowed && isTeamAdmin);
 
@@ -176,14 +173,19 @@ export const OrganizationActions = ({
       <div className="mb-4 flex justify-end gap-x-2 text-right">
         {isMultiOrgEnabled && (
           <TooltipRenderer
-            tooltipContent={t("workspace.settings.general.cannot_leave_organization_as_owner")}
-            shouldRender={isOrganizationOwner}>
+            tooltipContent={
+              isAccessControlAllowed
+                ? t("workspace.settings.general.cannot_leave_organization_as_owner")
+                : t("workspace.settings.general.cannot_leave_organization_as_owner_no_access_control")
+            }
+            shouldRender={isOwner}
+            triggerClass={isOwner ? "cursor-not-allowed" : undefined}>
             <Button
               variant="destructive"
               size="sm"
-              disabled={isOrganizationOwner}
+              disabled={isOwner}
               // a disabled button swallows hover events, which would keep the tooltip from showing
-              className={isOrganizationOwner ? "pointer-events-none" : undefined}
+              className={isOwner ? "pointer-events-none" : undefined}
               onClick={() => setIsLeaveOrganizationModalOpen(true)}>
               {t("workspace.settings.general.leave_organization")}
               <XIcon />
