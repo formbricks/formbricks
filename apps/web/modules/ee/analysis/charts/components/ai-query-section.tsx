@@ -1,6 +1,6 @@
 "use client";
 
-import { ActivityIcon } from "lucide-react";
+import { ActivityIcon, WandSparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -15,7 +15,6 @@ import {
 } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { getTranslatedAIChartError } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
-import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -132,25 +131,13 @@ export function AIQuerySection({
         />
         <Button
           type="submit"
-          variant="ai-primary"
+          variant="default"
           className="w-full"
-          disabled={!userQuery.trim() || isGenerating}>
-          <AiIcon tone="ai-light" animated={isGenerating} />
+          disabled={!userQuery.trim() || isGenerating}
+          loading={isGenerating}>
+          <WandSparklesIcon className="size-4" />
           {t("workspace.analysis.charts.create_chart_with_ai")}
         </Button>
-        {/*
-          The kit's status line in uncontrolled mode. Chart generation runs through a server action
-          that reports no progress, so it hands over a list of phases and lets the component walk
-          them on its own — the case that shows the component needs no bespoke UI per surface.
-        */}
-        <AiStatusLine
-          isActive={isGenerating}
-          messages={[
-            t("workspace.analysis.charts.ai_status_reading"),
-            t("workspace.analysis.charts.ai_status_choosing"),
-            t("workspace.analysis.charts.ai_status_querying"),
-          ]}
-        />
       </form>
     </div>
   );
