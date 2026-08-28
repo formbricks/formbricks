@@ -2,8 +2,6 @@ import type { TFunction } from "i18next";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 
-export const AI_FEATURES_DOCS_URL = "https://formbricks.com/docs/platform/features/ai-features";
-
 export type TAIUnavailableActionType = "enable_ai" | "upgrade_plan" | "request_license";
 
 export type TAIUnavailableAction = {

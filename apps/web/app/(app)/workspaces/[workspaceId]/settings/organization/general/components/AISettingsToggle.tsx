@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { updateOrganizationAISettingsAction } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
-import { AI_FEATURES_DOCS_URL } from "@/lib/ai/availability";
 import { getDisplayedOrganizationAISettingValue, getOrganizationAIEnablementState } from "@/lib/ai/utils";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -84,7 +83,7 @@ export const AISettingsToggle = ({
     },
     {
       text: t("common.learn_more"),
-      href: AI_FEATURES_DOCS_URL,
+      href: "https://formbricks.com/docs/platform/features/ai-features",
     },
   ];
 

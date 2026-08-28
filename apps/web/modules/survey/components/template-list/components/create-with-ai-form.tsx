@@ -5,7 +5,7 @@ import { type KeyboardEvent, type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { AIDisabledPrompt } from "@/modules/ai/components/ai-disabled-prompt";
+import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
 import {
   AI_SURVEY_PROMPT_MAX_LENGTH,
@@ -62,11 +62,11 @@ export const CreateWithAIForm = ({
     }
   };
 
-  // Nothing on this form can be submitted without AI, so the prompt replaces it outright rather than
+  // Nothing on this form can be submitted without AI, so the alert stands on its own rather than
   // sitting above a disabled textarea and an unusable Create button.
   if (!isAIAvailable) {
     return (
-      <AIDisabledPrompt
+      <AIUnavailableAlert
         title={t("workspace.surveys.ai_create.ai_survey_creation")}
         reason={aiUnavailableReason}
         feature="ai_survey_creation"

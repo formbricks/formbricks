@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { AIDisabledPrompt } from "@/modules/ai/components/ai-disabled-prompt";
+import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
 import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
 import { getTranslatedAIChartError } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
@@ -34,7 +34,7 @@ export function AIQuerySection({
 
   if (!isAIAvailable) {
     return (
-      <AIDisabledPrompt
+      <AIUnavailableAlert
         title={t("workspace.analysis.charts.ai_chart_generation")}
         reason={aiUnavailableReason}
         feature="ai_chart_generation"
