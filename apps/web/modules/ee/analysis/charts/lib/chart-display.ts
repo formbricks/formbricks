@@ -32,6 +32,13 @@ export const supportsTimeGrouping = (chartType: TChartType | undefined): boolean
   chartType !== "big_number" && chartType !== "pie";
 
 /**
+ * Whether a chart type has any display setting at all. The settings strip is only rendered when
+ * it would hold something, so the preview never grows an empty footer band.
+ */
+export const hasChartDisplaySettings = (chartType: TChartType | undefined): boolean =>
+  supportsBarOrientation(chartType) || supportsPieDisplay(chartType);
+
+/**
  * Resolves the display settings a chart renders with. Charts saved before these settings
  * existed have an empty config, so every field falls back to the previous behavior.
  */

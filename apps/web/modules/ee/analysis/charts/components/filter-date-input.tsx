@@ -25,7 +25,7 @@ export function FilterDateInput({ value, onChange }: Readonly<FilterDateInputPro
     <DatePicker
       value={selectedDate}
       locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
-      triggerClassName="w-[200px]"
+      triggerClassName="min-w-0 flex-1 basis-36"
       onChange={(date) => onChange(formatLocalDay(date))}
     />
   );

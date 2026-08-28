@@ -9,7 +9,7 @@ import {
   getTranslatedFieldLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { AiIcon } from "@/modules/ui/components/ai";
-import { Alert, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 
@@ -54,12 +54,15 @@ export function DimensionsPanel({
           onChange={onDimensionsChange}
           placeholder={t("workspace.analysis.charts.select_dimensions")}
         />
-        <Alert variant="info" size="small" role="status">
-          <AlertTitle>{t("workspace.analysis.charts.group_by_description")}</AlertTitle>
-        </Alert>
+        {/*
+          Helper text, not an alert: it explains the field rather than warning about it, and a
+          small Alert truncates to one line — which in a narrow column loses the half that matters.
+        */}
+        <p className="text-xs text-slate-500">{t("workspace.analysis.charts.group_by_description")}</p>
         {suggestsOptionGrouping && (
-          <Alert variant="warning" size="small" role="status">
-            <AlertTitle>{t("workspace.analysis.charts.prefer_option_grouping")}</AlertTitle>
+          // Full size so it wraps: this one is several sentences, and truncated it says nothing.
+          <Alert variant="warning" role="status">
+            <AlertDescription>{t("workspace.analysis.charts.prefer_option_grouping")}</AlertDescription>
           </Alert>
         )}
       </div>

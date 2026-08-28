@@ -1,22 +1,13 @@
 "use client";
 
-import {
-  AreaChartIcon,
-  ChartBarIcon,
-  ChartColumnIcon,
-  ChartPieIcon,
-  LineChartIcon,
-  RectangleHorizontalIcon,
-} from "lucide-react";
+import { ChartBarIcon, ChartColumnIcon, ChartPieIcon, RectangleHorizontalIcon } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import {
-  type TAreaDisplay,
   type TBarOrientation,
   type TPieDisplay,
   resolveChartDisplay,
-  supportsAreaDisplay,
   supportsBarOrientation,
   supportsPieDisplay,
 } from "@/modules/ee/analysis/charts/lib/chart-display";
@@ -34,53 +25,31 @@ interface ChartDisplaySettingsProps {
  * Display settings saved with the chart, so they apply wherever it renders (preview, chart
  * list, dashboard widget) rather than only to the preview. Settings that the current chart
  * type doesn't support are hidden instead of shown inert.
+ *
+ * Rendered as a strip under the chart rather than as a card of its own: these only change how the
+ * chart looks, so their effect is visible in the same glance, and a third card below the preview
+ * was the one thing in this dialog nobody found without scrolling.
  */
 export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<ChartDisplaySettingsProps>) {
   const { t } = useTranslation();
-  const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
+  const { barOrientation, pieDisplay } = resolveChartDisplay(config);
   const showBarOrientation = supportsBarOrientation(chartType);
   const showPieDisplay = supportsPieDisplay(chartType);
-  const showAreaDisplay = supportsAreaDisplay(chartType);
   // Generated rather than hardcoded: two of these panels on one page would otherwise share ids.
   const barOrientationLabelId = useId();
   const pieDisplayLabelId = useId();
-  const areaDisplayLabelId = useId();
 
-  // For a chart type with no applicable setting the section would be a heading with nothing under it.
-  if (!showBarOrientation && !showPieDisplay && !showAreaDisplay) return null;
+  // For a chart type with no applicable setting the strip would be an empty band.
+  if (!showBarOrientation && !showPieDisplay) return null;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-xs">
-      <h3 className="mb-4 font-semibold text-gray-900">
-        {t("workspace.analysis.charts.chart_display_settings")}
-      </h3>
-
-      <div className="flex flex-col gap-4">
-        {showAreaDisplay && (
-          <div className="flex flex-col gap-2">
-            <Label id={areaDisplayLabelId}>{t("workspace.analysis.charts.area_display")}</Label>
-            <OptionsSwitch
-              aria-labelledby={areaDisplayLabelId}
-              options={[
-                {
-                  value: "filled",
-                  label: t("workspace.analysis.charts.area_display_filled"),
-                  icon: <AreaChartIcon className="size-4" />,
-                },
-                {
-                  value: "line",
-                  label: t("workspace.analysis.charts.area_display_line"),
-                  icon: <LineChartIcon className="size-4" />,
-                },
-              ]}
-              currentOption={areaDisplay}
-              handleOptionChange={(value) => onChange({ ...config, areaDisplay: value as TAreaDisplay })}
-            />
-          </div>
-        )}
-        {showPieDisplay && (
-          <div className="flex flex-col gap-2">
-            <Label id={pieDisplayLabelId}>{t("workspace.analysis.charts.pie_display")}</Label>
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      {showPieDisplay && (
+        <div className="flex min-w-0 items-center gap-3">
+          <Label id={pieDisplayLabelId} className="shrink-0 text-xs text-slate-500">
+            {t("workspace.analysis.charts.pie_display")}
+          </Label>
+          <div className="min-w-0">
             <OptionsSwitch
               aria-labelledby={pieDisplayLabelId}
               options={[
@@ -99,10 +68,14 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
               handleOptionChange={(value) => onChange({ ...config, pieDisplay: value as TPieDisplay })}
             />
           </div>
-        )}
-        {showBarOrientation && (
-          <div className="flex flex-col gap-2">
-            <Label id={barOrientationLabelId}>{t("workspace.analysis.charts.bar_direction")}</Label>
+        </div>
+      )}
+      {showBarOrientation && (
+        <div className="flex min-w-0 items-center gap-3">
+          <Label id={barOrientationLabelId} className="shrink-0 text-xs text-slate-500">
+            {t("workspace.analysis.charts.bar_direction")}
+          </Label>
+          <div className="min-w-0">
             <OptionsSwitch
               aria-labelledby={barOrientationLabelId}
               options={[
@@ -123,8 +96,8 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
               }
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

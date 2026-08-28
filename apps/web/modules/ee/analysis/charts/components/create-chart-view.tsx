@@ -14,8 +14,9 @@ import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart
 import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
 import { ChartDisplaySettings } from "@/modules/ee/analysis/charts/components/chart-display-settings";
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
-import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
+import { ChartTypeSwitch } from "@/modules/ee/analysis/charts/components/chart-type-switch";
 import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
+import { hasChartDisplaySettings } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { AnalyticsResponse, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { AiIcon } from "@/modules/ui/components/ai";
@@ -48,6 +49,8 @@ interface CreateChartViewProps {
   isAIAvailable?: boolean;
 }
 
+const CREATE_CHART_FORM_ID = "create-chart-form";
+
 export function CreateChartView({
   open,
   onOpenChange,
@@ -74,7 +77,6 @@ export function CreateChartView({
     chartLoadError,
     chartName,
     setChartName,
-    savedChartName,
     selectedChartType,
     handleChartTypeChange,
     handleChartGenerated,
@@ -153,7 +155,6 @@ export function CreateChartView({
 
   const requestClose = () => confirmDiscard(handleClose);
 
-  const CREATE_CHART_FORM_ID = "create-chart-form";
   const [chartNameError, setChartNameError] = useState<string | null>(null);
   const [queryState, setQueryState] = useState<ChartQueryState>({
     isLoading: false,
@@ -186,13 +187,13 @@ export function CreateChartView({
     );
   }
 
-  const chartType = selectedChartType ?? (isEditing ? (initialChart?.type ?? DEFAULT_CHART_TYPE) : undefined);
+  // Every chart is drawn some way, so the builder is never gated behind picking one: the switch on
+  // the preview starts at the default and the user changes it whenever they like.
+  const chartType = selectedChartType ?? (isEditing ? initialChart?.type : undefined) ?? DEFAULT_CHART_TYPE;
   const hasSelectedDirectory = !!selectedDirectoryId;
   const isAIQueryAvailable = isAIAvailable !== false;
   const showAIAction = !isEditing && isAIQueryAvailable && Boolean(onRequestAIDialog);
-  const editChartTitle = savedChartName
-    ? t("workspace.analysis.charts.edit_chart_title_named", { name: savedChartName })
-    : t("workspace.analysis.charts.edit_chart_title");
+  const canSave = Boolean(chartData) && !queryState.error;
 
   return (
     <>
@@ -204,7 +205,9 @@ export function CreateChartView({
           onOpenAutoFocus={(event) => event.preventDefault()}>
           <DialogHeader>
             <DialogTitle>
-              {isEditing ? editChartTitle : t("workspace.analysis.charts.create_chart")}
+              {isEditing
+                ? t("workspace.analysis.charts.edit_chart_title")
+                : t("workspace.analysis.charts.create_chart")}
             </DialogTitle>
             <DialogDescription>
               {isEditing
@@ -212,129 +215,136 @@ export function CreateChartView({
                 : t("workspace.analysis.charts.create_chart_description")}
             </DialogDescription>
           </DialogHeader>
-          <DialogBody className="min-h-0">
-            <div className="grid gap-4">
-              {hasSelectedDirectory ? (
-                <div className="grid items-start gap-6 lg:grid-cols-2">
-                  <div className="flex min-w-0 flex-col gap-4">
-                    <ManualChartBuilder
+
+          {/*
+            Two regions that each mean one thing: a rail of everything you set, and a stage showing
+            what that produces. Only the rail scrolls, so the chart, its type and its display
+            settings are all on screen at once however long the configuration gets.
+          */}
+          <DialogBody
+            unconstrained
+            // Fixed height, with DialogBody's own `flex-1` neutralised (`basis-auto grow-0`): a 0%
+            // flex basis wins over `height` on the main axis, which had the dialog resizing itself
+            // every time the preview swapped between empty, loading and rendered. `shrink` keeps it
+            // clamped on a short viewport.
+            className="flex h-[34rem] min-h-0 shrink grow-0 basis-auto flex-col overflow-y-auto lg:overflow-hidden">
+            {hasSelectedDirectory ? (
+              <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+                <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto px-1 pb-1 lg:pr-3">
+                  {/*
+                    The name leads the rail: it is what gates saving, it is the one field the AI
+                    path arrives with already filled in, and it reads as the first thing you set
+                    rather than as chrome bolted onto the header. The form wraps only this field —
+                    the footer's Save reaches it through the `form` attribute.
+                  */}
+                  <form
+                    id={CREATE_CHART_FORM_ID}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setChartNameError(null);
+                      return handleSaveChart();
+                    }}
+                    className="flex flex-col gap-2">
+                    <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
+                      {t("workspace.analysis.charts.chart_name")}
+                    </Label>
+                    <Input
+                      id="create-chart-name"
+                      value={chartName}
+                      onChange={(event) => {
+                        if (chartNameError) setChartNameError(null);
+                        setChartName(event.target.value);
+                      }}
+                      onInvalid={(event) => {
+                        // Suppress the browser tooltip and render our inline message instead.
+                        event.preventDefault();
+                        event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+                        event.currentTarget.focus();
+                        setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
+                      }}
+                      placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
+                      maxLength={255}
+                      required
+                      isInvalid={!!chartNameError}
+                    />
+                    {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
+                  </form>
+
+                  <AdvancedChartBuilder
+                    workspaceId={workspaceId}
+                    chartType={chartType}
+                    initialQuery={chartData?.query ?? initialQuery}
+                    onChartGenerated={handleChartGenerated}
+                    onQueryStateChange={setQueryState}
+                    feedbackDirectoryId={selectedDirectoryId}
+                  />
+                </div>
+
+                <ChartPreview
+                  className="min-h-0 min-w-0"
+                  chartData={chartData}
+                  config={chartConfig}
+                  isLoading={isLoadingChart || queryState.isLoading}
+                  error={chartLoadError ?? queryState.error}
+                  emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
+                  typeControl={
+                    <ChartTypeSwitch
                       selectedChartType={chartType}
                       onChartTypeSelect={handleChartTypeChange}
                     />
-
-                    {chartType && (
-                      <AdvancedChartBuilder
-                        workspaceId={workspaceId}
-                        chartType={chartType}
-                        initialQuery={chartData?.query ?? initialQuery}
-                        onChartGenerated={handleChartGenerated}
-                        onQueryStateChange={setQueryState}
-                        feedbackDirectoryId={selectedDirectoryId}
-                      />
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="flex flex-col gap-4 lg:sticky lg:top-0">
-                      {/*
-                        The name comes first. It is what gates saving, and at the bottom of a column
-                        that scrolls it was the easiest thing in the dialog to miss. It also sits in
-                        a card like everything else here, so all three labels share one left inset —
-                        previously it was the only block outside a padded container.
-                      */}
-                      <form
-                        id={CREATE_CHART_FORM_ID}
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          setChartNameError(null);
-                          return handleSaveChart();
-                        }}
-                        className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-xs">
-                        <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
-                          {t("workspace.analysis.charts.chart_name")}
-                        </Label>
-                        <Input
-                          id="create-chart-name"
-                          value={chartName}
-                          onChange={(event) => {
-                            if (chartNameError) setChartNameError(null);
-                            setChartName(event.target.value);
-                          }}
-                          onInvalid={(event) => {
-                            // Suppress the browser tooltip and render our inline message instead.
-                            event.preventDefault();
-                            event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-                            event.currentTarget.focus();
-                            setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
-                          }}
-                          placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
-                          maxLength={255}
-                          required
-                          isInvalid={!!chartNameError}
-                        />
-                        {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
-                      </form>
-
-                      <ChartPreview
-                        chartData={chartData}
+                  }
+                  displaySettings={
+                    chartData && hasChartDisplaySettings(chartData.chartType) ? (
+                      <ChartDisplaySettings
+                        chartType={chartData.chartType}
                         config={chartConfig}
-                        isLoading={isLoadingChart || queryState.isLoading}
-                        error={chartLoadError ?? queryState.error}
-                        emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
+                        onChange={setChartConfig}
                       />
-
-                      {chartData && (
-                        <ChartDisplaySettings
-                          chartType={chartData.chartType}
-                          config={chartConfig}
-                          onChange={setChartConfig}
-                        />
-                      )}
-                    </div>
-                  </div>
+                    ) : undefined
+                  }
+                />
+              </div>
+            ) : (
+              <Alert variant="error" size="small" role="status">
+                <div>
+                  <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
+                  {workspace?.organizationId && (
+                    <Link
+                      className="mt-1 inline-block font-medium underline"
+                      href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
+                      {t("workspace.analysis.charts.go_to_feedback_directories")}
+                    </Link>
+                  )}
                 </div>
-              ) : (
-                <Alert variant="error" size="small" role="status">
-                  <div>
-                    <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
-                    {workspace?.organizationId && (
-                      <Link
-                        className="mt-1 inline-block font-medium underline"
-                        href={`/organizations/${workspace.organizationId}/settings/feedback-directories`}>
-                        {t("workspace.analysis.charts.go_to_feedback_directories")}
-                      </Link>
-                    )}
-                  </div>
-                </Alert>
-              )}
-            </div>
+              </Alert>
+            )}
           </DialogBody>
 
-          {(showAIAction || (chartData && !queryState.error)) && (
-            <ChartDialogFooter
-              formId={CREATE_CHART_FORM_ID}
-              isSaving={isSaving}
-              isDisabled={queryState.isPending}
-              showAddToDashboard={false}
-              showSave={Boolean(chartData) && !queryState.error}
-              leadingAction={
-                showAIAction ? (
-                  <Button
-                    type="button"
-                    variant="ai-secondary"
-                    onClick={() => confirmDiscard(() => onRequestAIDialog?.())}>
-                    <AiIcon tone="inherit" />
-                    {t("workspace.analysis.charts.ai_create.generate_with_ai")}
-                  </Button>
-                ) : undefined
-              }
-              saveLabel={
-                autoAddToDashboardId
-                  ? t("workspace.analysis.charts.save_and_add_to_dashboard")
-                  : t("workspace.analysis.charts.save_chart")
-              }
-            />
-          )}
+          <ChartDialogFooter
+            formId={CREATE_CHART_FORM_ID}
+            isSaving={isSaving}
+            isDisabled={queryState.isPending}
+            showAddToDashboard={false}
+            canSave={canSave}
+            saveHint={t("workspace.analysis.charts.save_requires_chart")}
+            onCancelClick={requestClose}
+            leadingAction={
+              showAIAction ? (
+                <Button
+                  type="button"
+                  variant="ai-secondary"
+                  onClick={() => confirmDiscard(() => onRequestAIDialog?.())}>
+                  <AiIcon tone="inherit" />
+                  {t("workspace.analysis.charts.ai_create.generate_with_ai")}
+                </Button>
+              ) : undefined
+            }
+            saveLabel={
+              autoAddToDashboardId
+                ? t("workspace.analysis.charts.save_and_add_to_dashboard")
+                : t("workspace.analysis.charts.save_chart")
+            }
+          />
         </DialogContent>
       </Dialog>
 

@@ -5,17 +5,25 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { DialogFooter } from "@/modules/ui/components/dialog";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ChartDialogFooterProps {
   onSaveClick?: () => void;
   formId?: string;
   onAddToDashboardClick?: () => void;
+  onCancelClick?: () => void;
   isSaving: boolean;
   isDisabled?: boolean;
   saveLabel?: string;
   showAddToDashboard?: boolean;
-  /** Whether there is anything to save yet; the footer still renders without it. */
-  showSave?: boolean;
+  /**
+   * Whether there is anything to save yet. Save is disabled rather than removed: a footer that
+   * grows a button halfway through configuring reads as broken, and a button that is there but
+   * unavailable is what tells you the chart is not finished.
+   */
+  canSave?: boolean;
+  /** Why Save is unavailable, on hover. */
+  saveHint?: string;
   /**
    * An alternate route rather than a step in this one — pinned left, away from the save cluster,
    * so it never reads as the next thing to press.
@@ -27,11 +35,13 @@ export function ChartDialogFooter({
   onSaveClick,
   formId,
   onAddToDashboardClick,
+  onCancelClick,
   isSaving,
   isDisabled = false,
   saveLabel,
   showAddToDashboard = true,
-  showSave = true,
+  canSave = true,
+  saveHint,
   leadingAction,
 }: Readonly<ChartDialogFooterProps>) {
   const { t } = useTranslation();
@@ -44,20 +54,25 @@ export function ChartDialogFooter({
           type="button"
           onClick={onAddToDashboardClick}
           disabled={isSaving || isDisabled}>
-          <PlusIcon className="mr-2 size-4" />
+          <PlusIcon />
           {t("workspace.analysis.charts.add_to_dashboard")}
         </Button>
       )}
-      {showSave && (
+      {onCancelClick && (
+        <Button variant="secondary" type="button" onClick={onCancelClick} disabled={isSaving}>
+          {t("common.cancel")}
+        </Button>
+      )}
+      <TooltipRenderer shouldRender={!canSave && Boolean(saveHint)} tooltipContent={saveHint}>
         <Button
           type={formId ? "submit" : "button"}
           form={formId}
           onClick={formId ? undefined : onSaveClick}
-          disabled={isSaving || isDisabled}>
-          <SaveIcon className="mr-2 size-4" />
+          disabled={isSaving || isDisabled || !canSave}>
+          <SaveIcon />
           {saveLabel ?? t("workspace.analysis.charts.save_chart")}
         </Button>
-      )}
+      </TooltipRenderer>
     </DialogFooter>
   );
 }
