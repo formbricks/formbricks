@@ -1,7 +1,6 @@
 "use client";
 
 import { PlusIcon, SaveIcon } from "lucide-react";
-import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { DialogFooter } from "@/modules/ui/components/dialog";
@@ -24,11 +23,6 @@ interface ChartDialogFooterProps {
   canSave?: boolean;
   /** Why Save is unavailable, on hover. */
   saveHint?: string;
-  /**
-   * An alternate route rather than a step in this one — pinned left, away from the save cluster,
-   * so it never reads as the next thing to press.
-   */
-  leadingAction?: ReactNode;
 }
 
 export function ChartDialogFooter({
@@ -42,12 +36,10 @@ export function ChartDialogFooter({
   showAddToDashboard = true,
   canSave = true,
   saveHint,
-  leadingAction,
 }: Readonly<ChartDialogFooterProps>) {
   const { t } = useTranslation();
   return (
     <DialogFooter>
-      {leadingAction && <div className="mr-auto">{leadingAction}</div>}
       {showAddToDashboard && onAddToDashboardClick && (
         <Button
           variant="outline"

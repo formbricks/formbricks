@@ -19,6 +19,13 @@ interface ChartPreviewProps {
   isLoading?: boolean;
   error?: string | null;
   emptyMessage?: string;
+  /**
+   * Offered inside the empty stage, where someone who does not know where to start is already
+   * looking. It is an alternate way to build this chart, not an action on it, so it does not belong
+   * in the footer beside Save — and once there is a chart to look at, the offer has served its
+   * purpose and goes away rather than sitting next to work it would discard.
+   */
+  emptyAction?: ReactNode;
   /** Chart type picker. It rides in the header because it changes this preview, nothing else. */
   typeControl?: ReactNode;
   /** Rendered as a strip under the chart, where its effect is visible without scrolling. */
@@ -37,6 +44,7 @@ export function ChartPreview({
   isLoading = false,
   error,
   emptyMessage,
+  emptyAction,
   typeControl,
   displaySettings,
   className,
@@ -72,8 +80,11 @@ export function ChartPreview({
 
     if (!chartData) {
       return (
-        <div className="flex h-full min-h-48 items-center justify-center px-6 text-center text-sm text-slate-500">
-          {emptyMessage ?? t("workspace.analysis.charts.no_data_available")}
+        <div className="flex h-full min-h-48 flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-sm text-slate-500">
+            {emptyMessage ?? t("workspace.analysis.charts.no_data_available")}
+          </p>
+          {emptyAction}
         </div>
       );
     }

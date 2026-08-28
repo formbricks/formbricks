@@ -287,6 +287,17 @@ export function CreateChartView({
                   isLoading={isLoadingChart || queryState.isLoading}
                   error={chartLoadError ?? queryState.error}
                   emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
+                  emptyAction={
+                    showAIAction ? (
+                      <Button
+                        type="button"
+                        variant="ai-secondary"
+                        onClick={() => confirmDiscard(() => onRequestAIDialog?.())}>
+                        <AiIcon tone="inherit" />
+                        {t("workspace.analysis.charts.ai_create.generate_with_ai")}
+                      </Button>
+                    ) : undefined
+                  }
                   typeControl={
                     <ChartTypeSwitch
                       selectedChartType={chartType}
@@ -328,17 +339,6 @@ export function CreateChartView({
             canSave={canSave}
             saveHint={t("workspace.analysis.charts.save_requires_chart")}
             onCancelClick={requestClose}
-            leadingAction={
-              showAIAction ? (
-                <Button
-                  type="button"
-                  variant="ai-secondary"
-                  onClick={() => confirmDiscard(() => onRequestAIDialog?.())}>
-                  <AiIcon tone="inherit" />
-                  {t("workspace.analysis.charts.ai_create.generate_with_ai")}
-                </Button>
-              ) : undefined
-            }
             saveLabel={
               autoAddToDashboardId
                 ? t("workspace.analysis.charts.save_and_add_to_dashboard")
