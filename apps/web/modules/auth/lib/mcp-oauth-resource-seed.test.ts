@@ -1,7 +1,81 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, test } from "vitest";
-import { MCP_OAUTH_SCOPES } from "./oauth-urls";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
+import { isDeferredMcpOauthResourceSeedError, mcpOauthResourceSeedPlugin } from "./mcp-oauth-resource-seed";
+import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
+
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    $executeRaw: vi.fn(),
+  },
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    debug: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/env", () => ({
+  env: {
+    WEBAPP_URL: "http://localhost:3000",
+    BETTER_AUTH_URL: undefined,
+    NEXTAUTH_URL: undefined,
+    PUBLIC_URL: undefined,
+  },
+}));
+
+const executeRawMock = vi.mocked(prisma.$executeRaw);
+
+describe("mcpOauthResourceSeedPlugin", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    executeRawMock.mockResolvedValue(1);
+  });
+
+  test("uses one conflict-safe statement with the production resource and scope set", async () => {
+    await mcpOauthResourceSeedPlugin.init?.();
+
+    expect(executeRawMock).toHaveBeenCalledOnce();
+    const [query, ...parameters] = executeRawMock.mock.calls[0];
+    expect(Array.isArray(query)).toBe(true);
+    if (!Array.isArray(query)) {
+      throw new Error("Expected a tagged-template SQL query");
+    }
+    expect(query.join(" ")).toContain('ON CONFLICT ("identifier") DO NOTHING');
+    expect(parameters).toContain(getMcpResourceUrl());
+    expect(parameters).toContainEqual([...MCP_OAUTH_SCOPES]);
+  });
+
+  test.each([
+    { code: "P1003" },
+    { code: "P2021" },
+    { meta: { driverAdapterError: { cause: { originalCode: "3D000" } } } },
+    { meta: { driverAdapterError: { cause: { originalCode: "42P01" } } } },
+    { message: 'relation "oauthResource" does not exist' },
+  ])("defers when the database schema is not ready", async (error) => {
+    executeRawMock.mockRejectedValueOnce(error);
+
+    await expect(mcpOauthResourceSeedPlugin.init?.()).resolves.toBeUndefined();
+  });
+
+  test("propagates connectivity and permission failures", async () => {
+    const error = Object.assign(new Error("connection refused"), { code: "P1001" });
+    executeRawMock.mockRejectedValueOnce(error);
+
+    await expect(mcpOauthResourceSeedPlugin.init?.()).rejects.toBe(error);
+  });
+});
+
+describe("isDeferredMcpOauthResourceSeedError", () => {
+  test.each([undefined, null, "P1003", { code: "P1001" }, new Error("permission denied")])(
+    "does not hide unrelated errors",
+    (error) => {
+      expect(isDeferredMcpOauthResourceSeedError(error)).toBe(false);
+    }
+  );
+});
 
 /**
  * ENG-2343. The data migration seeds the `oauthResource` row for instances that already have MCP clients,

@@ -35,6 +35,7 @@ import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
+import { mcpOauthResourceSeedPlugin } from "./mcp-oauth-resource-seed";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -372,6 +373,9 @@ export const auth = betterAuth({
         audience: getMcpResourceUrl(),
       },
     }),
+    // Seed the persisted MCP resource with one conflict-safe PostgreSQL statement before the upstream
+    // oauth-provider plugin runs. This prevents concurrent pods from racing on a fresh database.
+    mcpOauthResourceSeedPlugin,
     // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
     // integration-testable against a throwaway Better Auth instance.
     oauthProvider(getMcpOauthProviderOptions()),
