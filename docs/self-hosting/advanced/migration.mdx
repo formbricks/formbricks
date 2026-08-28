@@ -255,6 +255,18 @@ verification, set your Directory (tenant) ID instead.
 `consumers` needs no action and is not affected: every personal Microsoft account lives in one
 well-known tenant, so that authority advertises a real issuer and keeps full id_token verification.
 
+<Warning>
+  That handling arrived in **5.4.1**. On **5.4.0**, `common` and `organizations` still take the
+  verification path, so every Microsoft sign-in fails with `?error=unable_to_get_user_info` and no
+  configuration of those two authorities works.
+
+  If you are on 5.4.0 and cannot upgrade yet, **unset `AZUREAD_TENANT_ID`** to restore sign-in: an
+  unset value skips verification on 5.4.0 as well. It needs no reverting after the upgrade, because
+  5.4.1 treats unset and `common` identically. Note that unset behaves as `common`, so an instance
+  that had `organizations` set will accept personal Microsoft accounts until it upgrades and can set
+  `organizations` again.
+</Warning>
+
 #### SSO callback URLs are unchanged
 
 Your SSO callback URLs stay exactly as they are:
