@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Det gick inte att duplicera instrumentpanelen",
         "duplicate_success": "Instrumentpanelen har duplicerats!",
         "failed_to_load_chart_data": "Det gick inte att ladda diagramdata",
+        "new_dashboard": "Ny instrumentpanel",
         "no_dashboards_found": "Inga instrumentpaneler ännu",
         "no_dashboards_found_description": "Skapa din första instrumentpanel för att organisera diagram och övervaka dina feedbackinsikter på ett ställe.",
         "no_data_message": "Ingen data. Det finns för närvarande ingen information att visa. Lägg till diagram för att bygga din instrumentpanel.",

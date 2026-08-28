@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Duplicarea tabloului de bord a eșuat",
         "duplicate_success": "Tablou de bord duplicat cu succes!",
         "failed_to_load_chart_data": "Încărcarea datelor graficului a eșuat",
+        "new_dashboard": "Tablou de bord nou",
         "no_dashboards_found": "Încă nu există panouri",
         "no_dashboards_found_description": "Creează primul tău panou pentru a organiza graficele și a monitoriza informațiile despre feedback într-un singur loc.",
         "no_data_message": "Fără date. În prezent nu există informații de afișat. Adaugă grafice pentru a-ți construi tabloul de bord.",

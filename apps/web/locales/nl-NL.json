@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Dashboard dupliceren mislukt",
         "duplicate_success": "Dashboard succesvol gedupliceerd!",
         "failed_to_load_chart_data": "Grafiekgegevens laden mislukt",
+        "new_dashboard": "Nieuw dashboard",
         "no_dashboards_found": "Nog geen dashboards",
         "no_dashboards_found_description": "Maak je eerste dashboard om grafieken te organiseren en je feedback-inzichten op één plek te monitoren.",
         "no_data_message": "Geen gegevens. Er is momenteel geen informatie om weer te geven. Voeg grafieken toe om je dashboard op te bouwen.",

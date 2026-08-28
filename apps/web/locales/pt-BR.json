@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Falha ao duplicar painel",
         "duplicate_success": "Painel duplicado com sucesso!",
         "failed_to_load_chart_data": "Falha ao carregar os dados do gráfico",
+        "new_dashboard": "Novo painel",
         "no_dashboards_found": "Nenhum painel ainda",
         "no_dashboards_found_description": "Crie seu primeiro painel para organizar gráficos e monitorar seus insights de feedback em um só lugar.",
         "no_data_message": "Sem Dados. Não há informações para exibir no momento. Adicione gráficos para construir seu painel.",

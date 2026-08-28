@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Nem sikerült kettőzni a vezérlőpultot",
         "duplicate_success": "A vezérlőpult sikeresen megkettőzve!",
         "failed_to_load_chart_data": "Nem sikerült betölteni a diagram adatait",
+        "new_dashboard": "Új irányítópult",
         "no_dashboards_found": "Még nincsenek vezérlőpultok",
         "no_dashboards_found_description": "Hozza létre az első vezérlőpultját, hogy egy helyen rendszerezhesse a diagramokat és figyelhesse meg a visszajelzésekből nyert tapasztalatokat.",
         "no_data_message": "Nincsenek adatok. Jelenleg nincsenek megjelenítendő információk. Adjon hozzá diagramokat a vezérlőpultja összeállításához.",

@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Failed to duplicate dashboard",
         "duplicate_success": "Dashboard duplicated successfully!",
         "failed_to_load_chart_data": "Failed to load chart data",
+        "new_dashboard": "New dashboard",
         "no_dashboards_found": "No dashboards yet",
         "no_dashboards_found_description": "Create your first dashboard to organize charts and monitor your feedback insights in one place.",
         "no_data_message": "No Data. There is currently no information to display. Add charts to build your dashboard.",

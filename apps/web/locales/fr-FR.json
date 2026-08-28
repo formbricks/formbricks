@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Échec de la duplication du tableau de bord",
         "duplicate_success": "Tableau de bord dupliqué avec succès !",
         "failed_to_load_chart_data": "Échec du chargement des données du graphique",
+        "new_dashboard": "Nouveau tableau de bord",
         "no_dashboards_found": "Aucun tableau de bord pour le moment",
         "no_dashboards_found_description": "Crée ton premier tableau de bord pour organiser tes graphiques et suivre tes insights de retours en un seul endroit.",
         "no_data_message": "Aucune donnée. Il n'y a actuellement aucune information à afficher. Ajoute des graphiques pour construire ton tableau de bord.",

@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Dashboard konnte nicht dupliziert werden",
         "duplicate_success": "Dashboard erfolgreich dupliziert!",
         "failed_to_load_chart_data": "Diagrammdaten konnten nicht geladen werden",
+        "new_dashboard": "Neues Dashboard",
         "no_dashboards_found": "Noch keine Dashboards",
         "no_dashboards_found_description": "Erstelle dein erstes Dashboard, um Diagramme zu organisieren und deine Feedback-Insights an einem Ort zu überwachen.",
         "no_data_message": "Keine Daten. Es gibt derzeit keine Informationen zum Anzeigen. Füge Diagramme hinzu, um dein Dashboard zu erstellen.",

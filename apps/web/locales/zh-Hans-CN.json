@@ -1932,6 +1932,7 @@
         "duplicate_failed": "复制 Dashboard 失败",
         "duplicate_success": "Dashboard 复制成功！",
         "failed_to_load_chart_data": "加载图表数据失败",
+        "new_dashboard": "新建仪表板",
         "no_dashboards_found": "还没有仪表板",
         "no_dashboards_found_description": "创建你的第一个仪表板，将图表整理在一起，集中监控反馈洞察。",
         "no_data_message": "暂无数据。当前没有可显示的信息。请添加图表来构建你的仪表板。",

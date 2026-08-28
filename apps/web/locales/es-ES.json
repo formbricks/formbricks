@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Error al duplicar el panel de control",
         "duplicate_success": "Panel de control duplicado correctamente",
         "failed_to_load_chart_data": "Error al cargar los datos del gráfico",
+        "new_dashboard": "Nuevo panel",
         "no_dashboards_found": "Aún no hay paneles",
         "no_dashboards_found_description": "Crea tu primer panel para organizar gráficos y supervisar tus insights de comentarios en un solo lugar.",
         "no_data_message": "Sin datos. Actualmente no hay información que mostrar. Añade gráficos para crear tu panel.",

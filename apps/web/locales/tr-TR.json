@@ -1932,6 +1932,7 @@
         "duplicate_failed": "Gösterge paneli kopyalanamadı",
         "duplicate_success": "Gösterge paneli başarıyla kopyalandı!",
         "failed_to_load_chart_data": "Grafik verileri yüklenemedi",
+        "new_dashboard": "Yeni gösterge paneli",
         "no_dashboards_found": "Henüz pano yok",
         "no_dashboards_found_description": "Grafikleri düzenlemek ve geri bildirim içgörülerini tek bir yerde izlemek için ilk panonu oluştur.",
         "no_data_message": "Veri Yok. Şu anda görüntülenecek bilgi bulunmuyor. Gösterge panelini oluşturmak için grafik ekle.",

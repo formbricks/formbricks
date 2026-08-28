@@ -1865,6 +1865,7 @@ checksums:
     workspace/analysis/dashboards/duplicate_failed: 6ebaf8ad373b156f88f1ed79a5efd441
     workspace/analysis/dashboards/duplicate_success: 37cbb14143776d4c215432673e32ebd9
     workspace/analysis/dashboards/failed_to_load_chart_data: ea980a6d12b1b1efed90d991dd0dd0fd
+    workspace/analysis/dashboards/new_dashboard: 994b8a982af4c22385861d26e373a949
     workspace/analysis/dashboards/no_dashboards_found: b4d9dce52bf5f83d074306980b505477
     workspace/analysis/dashboards/no_dashboards_found_description: d5b83ba325d50cf69d8f0258981357ce
     workspace/analysis/dashboards/no_data_message: 464d50cf30281a5b6af2726846eb14b4

@@ -1932,6 +1932,7 @@
         "duplicate_failed": "ダッシュボードの複製に失敗しました",
         "duplicate_success": "ダッシュボードを正常に複製しました！",
         "failed_to_load_chart_data": "チャートデータの読み込みに失敗しました",
+        "new_dashboard": "新しいダッシュボード",
         "no_dashboards_found": "ダッシュボードがまだありません",
         "no_dashboards_found_description": "最初のダッシュボードを作成して、チャートを整理し、フィードバックインサイトを一箇所で監視しましょう。",
         "no_data_message": "データがありません。現在表示する情報がありません。ダッシュボードを構築するにはチャートを追加してください。",
