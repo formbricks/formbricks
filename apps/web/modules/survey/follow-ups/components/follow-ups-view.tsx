@@ -80,8 +80,9 @@ export const FollowUpsView = ({
       <div className="flex justify-end">
         {isWorkflowsAllowed && workspace ? (
           <Button size="sm" asChild>
-            {/* New tab on purpose: the survey editor has no autosave, so navigating away here
-                would drop whatever the author has not saved yet. */}
+            {/* New tab on purpose: the editor only autosaves drafts
+                (`AutoSaveIndicator isDraft`), so on a published survey navigating away here would
+                drop whatever the author has not saved yet. */}
             <Link href={`/workspaces/${workspace.id}/workflows`} target="_blank" rel="noopener noreferrer">
               {t("common.new_workflow")}
             </Link>
