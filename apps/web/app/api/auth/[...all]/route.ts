@@ -1,6 +1,13 @@
 import { auth } from "@/modules/auth/lib/auth";
+import {
+  recordSsoCallbackOutcome,
+  recordSsoCallbackThrow,
+} from "@/modules/auth/lib/better-auth-observability";
 import { createAuthPathLabeller } from "@/modules/auth/lib/better-auth-path-label";
 import { runWithBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
+import { runWithEmailVerificationRequestContext } from "@/modules/auth/lib/email-verification-request-context";
+import { mapLegacySsoCallbackRequest } from "@/modules/auth/lib/legacy-sso-callback";
+import { normalizeDcrRequest } from "@/modules/auth/lib/mcp-dcr-application-type";
 import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 
 // Force-no-store so Better Auth's outbound SSO fetches (token exchange, userinfo, JWKS) are never
@@ -25,6 +32,13 @@ const labelAuthPath = createAuthPathLabeller(Object.values(auth.api).map((endpoi
  * two cannot coexist: both own `/api/auth/*`). More specific `/api/auth/*` routes (the SAML bridge,
  * SSO-recovery completion) still take precedence over this catch-all.
  *
+ * It also serves the pinned SSO callback path via `mapLegacySsoCallbackRequest` (ENG-2343), which is
+ * why no separate `/api/auth/oauth2/callback/[providerId]` route exists: nothing else claims that path,
+ * so the catch-all already receives it. The mapping runs FIRST, and everything below reads the mapped
+ * request — the label especially. `/api/auth/oauth2/callback/{providerId}` is not a path Better Auth
+ * declares, so labelling the raw URL would bucket an SSO callback under `/oauth2/*`, which is the MCP
+ * OAuth authorization-server facet: the one place a reader must not confuse it with.
+ *
  * `auth.handler` is wrapped in `runWithSsoRequestContext` so the SSO database hooks can carry state
  * across the request via AsyncLocalStorage — the provisioning decision (`user.create.before` →
  * `user.create.after`) and the pending identity (`mapProfileToUser` → the collision-recovery
@@ -44,9 +58,39 @@ const labelAuthPath = createAuthPathLabeller(Object.values(auth.api).map((endpoi
  * calls it and `return`s (`better-auth/dist/api/index.mjs:194-197`), skipping the logger path
  * entirely — wiring it would silence the very capture that surfaces genuine internal faults.
  */
-const handler = (request: Request): Promise<Response> =>
-  runWithBetterAuthRequestContext({ path: labelAuthPath(request.url), method: request.method }, () =>
-    runWithSsoRequestContext(() => auth.handler(request))
-  );
+const handler = async (request: Request): Promise<Response> => {
+  // Before anything else reads the path: this catch-all serves the pinned v5.2 SSO callback URL, which no
+  // Better Auth version mounts a handler on any more. Everything downstream — the endpoint label, the SSO
+  // hooks, the audits — reads the MAPPED request, so each sees the endpoint that actually ran.
+  // Two normalisations, both because 1.7 changed a contract that clients and IdPs already depend on and
+  // neither is ours to change: the pinned SSO callback path, and `application_type` on dynamic client
+  // registration (see each module). Both no-op for every other request.
+  const mappedRequest = await normalizeDcrRequest(mapLegacySsoCallbackRequest(request));
+  try {
+    const response = await runWithBetterAuthRequestContext(
+      { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
+      () =>
+        runWithSsoRequestContext(() =>
+          // ENG-2562: carries "this request just verified an email" from Better Auth's
+          // `afterEmailVerification` hook to the `hooks.after` chain, which is where the session can
+          // actually be minted. Innermost because it is the narrowest scope of the three — one endpoint,
+          // not the whole handler.
+          runWithEmailVerificationRequestContext(() => auth.handler(mappedRequest))
+        )
+    );
+    // ENG-2551: the one place that sees the outcome of every SSO callback, whatever went wrong and
+    // whichever provider it was — a failed callback is a redirect carrying `?error=`, or a 4xx/5xx.
+    // Emitted here rather than from a hook because the failures that matter most are the ones Better
+    // Auth returns as a response rather than throwing, so no error-path hook observes them.
+    recordSsoCallbackOutcome(mappedRequest.url, response);
+    return response;
+  } catch (error) {
+    // A throw is the most severe callback failure there is — Next answers 500 and the user cannot sign
+    // in — so it must not be the one case the signal misses. Recorded, then rethrown unchanged so the
+    // existing error handling (and the Sentry capture in this module) behaves exactly as before.
+    recordSsoCallbackThrow(mappedRequest.url);
+    throw error;
+  }
+};
 
 export { handler as GET, handler as POST };

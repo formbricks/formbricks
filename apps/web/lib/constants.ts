@@ -109,6 +109,21 @@ export const TEXT_RESPONSES_PER_PAGE = 5;
 export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 export const MAX_OTHER_OPTION_LENGTH = 250;
 
+/**
+ * Workspaces an organization gets on a self-hosted instance with no active enterprise license
+ * (Community Edition). Mirrors docs/self-hosting/advanced/license.mdx.
+ */
+export const COMMUNITY_WORKSPACE_LIMIT = 1;
+
+/**
+ * Workspaces a cloud organization falls back to when the license server cannot confirm the instance
+ * license (expired, invalid_license, instance_mismatch, unreachable). Deliberately the Hobby (free
+ * tier) allowance: an entitlement we cannot verify is treated as no entitlement. The create gate is
+ * `count >= limit`, so an org already above it keeps every workspace it has and only pauses creating
+ * new ones until the license resolves.
+ */
+export const CLOUD_HOBBY_WORKSPACE_LIMIT = 1;
+
 export const SKIP_INVITE_FOR_SSO = env.AUTH_SKIP_INVITE_FOR_SSO === "1";
 export const DEFAULT_TEAM_ID = env.AUTH_DEFAULT_TEAM_ID;
 

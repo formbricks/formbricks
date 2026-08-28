@@ -88,14 +88,21 @@ export const getMembershipByOrganizationId = reactCache(
   }
 );
 
-export const getOrganizationOwnerCount = reactCache(async (organizationId: string): Promise<number> => {
+const getOrganizationOwnerCountUncached = async (
+  organizationId: string,
+  tx?: Prisma.TransactionClient
+): Promise<number> => {
   validateInputs([organizationId, ZString]);
 
   try {
-    const ownersCount = await prisma.membership.count({
+    const ownersCount = await (tx ?? prisma).membership.count({
       where: {
         organizationId,
         role: "owner",
+        // A deactivated user can never sign in again (see modules/auth/lib/session.ts and
+        // better-auth-active-user-gate.ts), so counting them as "another owner" would let a
+        // guard pass while leaving the organization with no owner who can actually log in.
+        user: { isActive: true },
       },
     });
 
@@ -107,7 +114,27 @@ export const getOrganizationOwnerCount = reactCache(async (organizationId: strin
 
     throw error;
   }
-});
+};
+
+const getOrganizationOwnerCountCached = reactCache((organizationId: string) =>
+  getOrganizationOwnerCountUncached(organizationId)
+);
+
+/**
+ * Pass `tx` when this must be read inside the same transaction as the mutation it's guarding
+ * (see updateMembershipAction) so a Serializable transaction can catch concurrent demotions;
+ * without `tx` the result is request-cached like the rest of this module's reads.
+ */
+export const getOrganizationOwnerCount = async (
+  organizationId: string,
+  tx?: Prisma.TransactionClient
+): Promise<number> => {
+  if (tx) {
+    return getOrganizationOwnerCountUncached(organizationId, tx);
+  }
+
+  return getOrganizationOwnerCountCached(organizationId);
+};
 
 export const deleteMembership = async (
   userId: string,

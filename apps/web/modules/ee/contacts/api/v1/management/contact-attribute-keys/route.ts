@@ -7,6 +7,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { CONTACTS_API_V1_NOT_ENABLED_MESSAGE } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
@@ -21,9 +22,7 @@ export const GET = withV1ApiWrapper({
       const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
-          response: responses.forbiddenResponse(
-            "Contacts are only enabled for Enterprise Edition, please upgrade."
-          ),
+          response: responses.forbiddenResponse(CONTACTS_API_V1_NOT_ENABLED_MESSAGE),
         };
       }
 
@@ -57,9 +56,7 @@ export const POST = withV1ApiWrapper({
       const isContactsEnabled = await getIsContactsEnabled(authentication.organizationId);
       if (!isContactsEnabled) {
         return {
-          response: responses.forbiddenResponse(
-            "Contacts are only enabled for Enterprise Edition, please upgrade."
-          ),
+          response: responses.forbiddenResponse(CONTACTS_API_V1_NOT_ENABLED_MESSAGE),
         };
       }
 

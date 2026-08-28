@@ -15,6 +15,7 @@ import {
   ZContactAttributeKeyUpdateSchema,
 } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { checkContactsEnabledApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 
 export const GET = async (
   request: NextRequest,
@@ -28,6 +29,11 @@ export const GET = async (
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
       const { params } = parsedInput;
+
+      const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
+      if (contactsNotEnabledError) {
+        return handleApiError(request, contactsNotEnabledError);
+      }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
 
@@ -68,6 +74,11 @@ export const PUT = async (
 
       if (auditLog) {
         auditLog.targetId = params.contactAttributeKeyId;
+      }
+
+      const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
+      if (contactsNotEnabledError) {
+        return handleApiError(request, contactsNotEnabledError, auditLog);
       }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);
@@ -146,6 +157,11 @@ export const DELETE = async (
 
       if (auditLog) {
         auditLog.targetId = params.contactAttributeKeyId;
+      }
+
+      const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
+      if (contactsNotEnabledError) {
+        return handleApiError(request, contactsNotEnabledError, auditLog);
       }
 
       const res = await getContactAttributeKey(params.contactAttributeKeyId);

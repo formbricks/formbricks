@@ -3,10 +3,12 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { cn } from "@/lib/cn";
+import { BreakdownBars } from "@/modules/ee/analysis/charts/components/breakdown-bars";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
+import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
@@ -15,6 +17,7 @@ import {
   PIVOTED_MEASURE_KEY,
   PIVOTED_VALUE_KEY,
   formatCellValue,
+  formatPercentShare,
   formatXAxisTick,
   getSemanticDimensionColor,
   getSentimentMeasureColor,
@@ -51,26 +54,29 @@ const PIE_LABEL_MIN_PERCENT = 0.02;
 /** Shown instead of a number when a measure had nothing to compute (an en dash, not a zero). */
 const NO_DATA_PLACEHOLDER = "\u2013";
 
-const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) => {
-  if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
-  if (percent < PIE_LABEL_MIN_PERCENT) return null;
-  const RADIAN = Math.PI / 180;
-  const radius = outerRadius + 22;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  const textAnchor = x > cx ? "start" : "end";
-  return (
-    <text
-      x={x}
-      y={y}
-      className="fill-muted-foreground"
-      fontSize={11}
-      textAnchor={textAnchor}
-      dominantBaseline="central">
-      {formatCellValue(value)} ({(percent * 100).toFixed(1)}%)
-    </text>
-  );
-};
+// Curried with the active language: recharts calls the renderer outside React, so the locale has
+// to be closed over rather than read from a hook inside it.
+const createPieLabelRenderer = (locale: string) =>
+  function PieSliceLabel({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) {
+    if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
+    if (percent < PIE_LABEL_MIN_PERCENT) return null;
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 22;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const textAnchor = x > cx ? "start" : "end";
+    return (
+      <text
+        x={x}
+        y={y}
+        className="fill-muted-foreground"
+        fontSize={11}
+        textAnchor={textAnchor}
+        dominantBaseline="central">
+        {formatCellValue(value)} ({formatPercentShare(percent, locale)})
+      </text>
+    );
+  };
 
 interface PieLabelLineProps {
   percent?: number;
@@ -136,6 +142,7 @@ interface BarChartViewProps {
   xAxisKey: string;
   chartConfig: ChartConfig;
   formatDimensionValue: (value: unknown) => string;
+  isHorizontal?: boolean;
 }
 
 const BarChartView = ({
@@ -146,8 +153,12 @@ const BarChartView = ({
   xAxisKey,
   chartConfig,
   formatDimensionValue,
+  isHorizontal = false,
 }: Readonly<BarChartViewProps>) => {
   const { t } = useTranslation();
+  // Value labels sit past the end of the bar, which is the top of a vertical bar and the
+  // right-hand end of a horizontal one.
+  const valueLabelPosition = isHorizontal ? "right" : "top";
 
   // Measure-only queries (no dimension or time grouping) return a single row with one
   // column per measure. Rendered as N bar series that row forms a single category band
@@ -183,11 +194,12 @@ const BarChartView = ({
         tooltipCursor={false}
         zeroBaseline
         tooltipHideLabel
+        horizontal={isHorizontal}
         xAxisTickFormatter={formatMeasureLabel}>
         <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
           <LabelList
             dataKey={PIVOTED_VALUE_KEY}
-            position="top"
+            position={valueLabelPosition}
             className="fill-foreground"
             fontSize={11}
             formatter={(value: unknown) => formatCellValue(value)}
@@ -219,6 +231,7 @@ const BarChartView = ({
       tooltipCursor={false}
       zeroBaseline
       hasCategoryAxis={hasCategoryAxis}
+      horizontal={isHorizontal}
       xAxisTickFormatter={formatDimensionValue}
       chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
       {dataKeys.map((key) => (
@@ -226,7 +239,7 @@ const BarChartView = ({
           {!isMultiMeasure && (
             <LabelList
               dataKey={key}
-              position="top"
+              position={valueLabelPosition}
               className="fill-foreground"
               fontSize={11}
               formatter={(value: unknown) => formatCellValue(value)}
@@ -261,7 +274,8 @@ const PieChartView = ({
   chartConfig,
   formatDimensionValue,
 }: Readonly<PieChartViewProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const renderPieLabel = createPieLabelRenderer(i18n.language);
 
   // With several measures and no dimension (e.g. the six Emotion counts), each row column is a
   // measure, not a slice — pivot the measures into one slice per measure so the pie shows them
@@ -337,10 +351,20 @@ interface ChartRendererProps {
   query: TChartQuery;
   /** value_id → default-language label map, present when the query groups by valueId. */
   optionLabels?: Record<string, string>;
+  /** Saved display settings. Charts saved before these existed have an empty config and keep
+   * the previous behavior (vertical bars). */
+  config?: TChartConfig;
 }
 
-export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly<ChartRendererProps>) {
+export function ChartRenderer({
+  chartType,
+  data,
+  query,
+  optionLabels,
+  config,
+}: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
+  const { barOrientation, pieDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
 
@@ -419,6 +443,7 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
           xAxisKey={xAxisKey}
           chartConfig={chartConfig}
           formatDimensionValue={formatDimensionValue}
+          isHorizontal={barOrientation === "horizontal"}
         />
       );
     case "line":
@@ -491,6 +516,20 @@ export function ChartRenderer({ chartType, data, query, optionLabels }: Readonly
         </CartesianChart>
       );
     case "pie":
+      // A pie and a breakdown bar answer the same question — the share each group takes of the
+      // whole — so they are two renderings of one chart type rather than two chart types.
+      if (pieDisplay === "breakdown") {
+        return (
+          <BreakdownBars
+            sortedData={sortedData}
+            dataKeys={dataKeys}
+            dataKey={dataKey}
+            hasCategoryAxis={hasCategoryAxis}
+            xAxisKey={xAxisKey}
+            formatDimensionValue={formatDimensionValue}
+          />
+        );
+      }
       return (
         <PieChartView
           sortedData={sortedData}

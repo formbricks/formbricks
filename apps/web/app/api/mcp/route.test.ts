@@ -18,15 +18,15 @@ import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { POST } from "./route";
 
-const { verifyAccessTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
-  verifyAccessTokenMock: vi.fn(),
+const { verifyBearerTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+  verifyBearerTokenMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
 }));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
   oauthProviderResourceClient: vi.fn(() => ({
     getActions: () => ({
-      verifyAccessToken: verifyAccessTokenMock,
+      verifyBearerToken: verifyBearerTokenMock,
     }),
   })),
 }));
@@ -148,7 +148,7 @@ describe("POST /api/mcp", () => {
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
     userFindUniqueMock.mockResolvedValue({ isActive: true });
-    verifyAccessTokenMock.mockResolvedValue({
+    verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
@@ -416,7 +416,7 @@ describe("POST /api/mcp", () => {
     expect(response.status).toBe(200);
     await readMcpResponse(response);
     expect(authenticateApiKeyFromHeaders).toHaveBeenCalledTimes(1);
-    expect(verifyAccessTokenMock).not.toHaveBeenCalled();
+    expect(verifyBearerTokenMock).not.toHaveBeenCalled();
     expect(listV3Surveys).toHaveBeenCalledWith(
       expect.objectContaining({
         authentication: apiKeyAuth,
@@ -451,7 +451,7 @@ describe("POST /api/mcp", () => {
 
     expect(response.status).toBe(200);
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
-    expect(verifyAccessTokenMock).toHaveBeenCalledWith(
+    expect(verifyBearerTokenMock).toHaveBeenCalledWith(
       "eyJhbGciOiJFZERTQSJ9.payload.signature",
       expect.objectContaining({
         jwksUrl: "http://formbricks:3000/api/auth/jwks",
@@ -480,7 +480,7 @@ describe("POST /api/mcp", () => {
   });
 
   test("rejects invalid OAuth bearer tokens with an OAuth challenge", async () => {
-    verifyAccessTokenMock.mockRejectedValueOnce(new Error("invalid token"));
+    verifyBearerTokenMock.mockRejectedValueOnce(new Error("invalid token"));
 
     const response = await POST(
       createMcpRequest(
@@ -505,7 +505,7 @@ describe("POST /api/mcp", () => {
   });
 
   test("blocks write tools for read-only OAuth tokens", async () => {
-    verifyAccessTokenMock.mockResolvedValueOnce({
+    verifyBearerTokenMock.mockResolvedValueOnce({
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
@@ -551,7 +551,7 @@ describe("POST /api/mcp", () => {
   test("blocks workflow write tools for tokens without workflows:write", async () => {
     // A write-capable user whose OAuth token was only granted read scopes (surveys:read + workflows:read)
     // must not be able to reach a workflow mutation — the ENG-1967 token-scope boundary.
-    verifyAccessTokenMock.mockResolvedValueOnce({
+    verifyBearerTokenMock.mockResolvedValueOnce({
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",

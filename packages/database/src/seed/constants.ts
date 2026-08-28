@@ -4,6 +4,7 @@ export const SEED_IDS = {
   USER_MEMBER: "clseedmember00000000000",
   ORGANIZATION: "clseedorg0000000000000",
   WORKSPACE: "clseedworkspace000000000",
+  API_KEY: "clseedapikey000000000",
   ENV_PROD: "clseedenvprod000000000",
   SURVEY_KITCHEN_SINK: "clseedsurveykitchen00",
   SURVEY_CSAT: "clseedsurveycsat000000",

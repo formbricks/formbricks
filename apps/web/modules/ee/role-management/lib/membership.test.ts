@@ -12,6 +12,7 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     membership: {
       update: vi.fn(),
+      findMany: vi.fn(),
     },
     teamUser: {
       findMany: vi.fn(),
@@ -145,5 +146,33 @@ describe("updateMembership", () => {
         { teamId: "team2", userId: "user1" },
       ],
     });
+  });
+
+  test("uses a transaction client without projecting before the outer transaction commits", async () => {
+    const mockMembership = {
+      id: "1",
+      userId: "user1",
+      organizationId: "org1",
+      role: "member" as TOrganizationRole,
+      accepted: true,
+      deprecatedRole: null,
+    };
+    const tx = {
+      membership: {
+        update: vi.fn().mockResolvedValue(mockMembership),
+        findMany: vi.fn().mockResolvedValue([{ userId: "user1" }]),
+      },
+      teamUser: {
+        findMany: vi.fn().mockResolvedValue([{ teamId: "team1" }]),
+        updateMany: vi.fn(),
+      },
+    } as unknown as Prisma.TransactionClient;
+
+    await expect(updateMembership("user1", "org1", { role: "member" }, tx)).resolves.toEqual(mockMembership);
+
+    expect(tx.membership.update).toHaveBeenCalled();
+    expect(prisma.membership.update).not.toHaveBeenCalled();
+    expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+    expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
   });
 });

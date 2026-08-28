@@ -219,7 +219,7 @@ export const ManageTranslationsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent width="wide" className="max-h-[85dvh]">
+      <DialogContent width="wide" className="max-h-[85dvh]" disableCloseOnOutsideClick>
         <DialogHeader>
           <DialogTitle>{t("workspace.surveys.edit.manage_translations")}</DialogTitle>
           <div className="mt-2 flex items-center justify-between">

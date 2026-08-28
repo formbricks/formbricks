@@ -68,6 +68,10 @@ export const LoginPage = async ({
           isSsoEnabled={isSsoEnabled}
           samlSsoEnabled={samlSsoEnabled}
           oauthError={oauthError}
+          // ENG-2562: set when a verification succeeded but the session was withheld, because the
+          // browser presenting the link was not the one that signed up. Without it the user is bounced
+          // here with no explanation right after being told their address was verified.
+          emailJustVerified={getSearchParamString(searchParams.verified) === "1"}
           prefilledEmail={getSearchParamString(searchParams.email)}
           inviteToken={inviteToken}
           resolvedCallbackPath={resolvedCallbackPath}

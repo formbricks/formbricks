@@ -3,6 +3,7 @@
 import { BarChart, DatabaseIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TChartConfig } from "@formbricks/types/analysis";
 import { ChartErrorBoundary } from "@/modules/ee/analysis/charts/components/chart-error-boundary";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
@@ -12,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/component
 
 interface ChartPreviewProps {
   chartData: AnalyticsResponse | null;
+  /** Display settings being edited, so the preview renders what will be saved. */
+  config?: TChartConfig;
   isLoading?: boolean;
   error?: string | null;
   emptyMessage?: string;
@@ -19,6 +22,7 @@ interface ChartPreviewProps {
 
 export function ChartPreview({
   chartData,
+  config,
   isLoading = false,
   error,
   emptyMessage,
@@ -87,6 +91,7 @@ export function ChartPreview({
               data={data}
               query={chartData.query}
               optionLabels={chartData.optionLabels}
+              config={config}
             />
           </ChartErrorBoundary>
         </TabsContent>

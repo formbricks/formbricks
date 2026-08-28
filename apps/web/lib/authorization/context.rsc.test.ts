@@ -47,7 +47,15 @@ const leaveRequestScope = (): void => {
 const afterCallbacks = vi.hoisted(() => [] as Array<() => Promise<void> | void>);
 
 vi.mock("next/server", () => ({
-  after: vi.fn((callback: () => Promise<void> | void) => afterCallbacks.push(callback)),
+  after: vi.fn((task: Promise<unknown> | (() => unknown | Promise<unknown>)) =>
+    afterCallbacks.push(async () => {
+      if (typeof task === "function") {
+        await task();
+      } else {
+        await task;
+      }
+    })
+  ),
 }));
 vi.mock("./metrics", () => ({ recordAuthorizationChecksPerRequest: vi.fn() }));
 
@@ -57,7 +65,15 @@ beforeEach(() => {
   vi.mocked(recordAuthorizationChecksPerRequest).mockReset();
   vi.mocked(after)
     .mockReset()
-    .mockImplementation((callback) => afterCallbacks.push(callback));
+    .mockImplementation((task) =>
+      afterCallbacks.push(async () => {
+        if (typeof task === "function") {
+          await task();
+        } else {
+          await task;
+        }
+      })
+    );
 });
 
 describe("the react-server build is what makes this testable", () => {

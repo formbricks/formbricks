@@ -21,8 +21,29 @@ Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck`
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
 `config-*` packages hold only config files (no scripts beyond `clean`); `types` has no runtime logic
 to test; `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`;
-`apps/storybook` has no unit tests by policy (UI is covered by Playwright). Keep new packages on this
-matrix or document the exception here.
+`apps/storybook` has no unit tests by policy (its components are exercised by the feature journeys in
+`apps/web/playwright`). Keep new packages on this matrix or document the exception here.
+
+### Shared dependency versions (pnpm catalog)
+
+Every dependency used by **two or more** workspaces is pinned once in the `catalog:` block of
+`pnpm-workspace.yaml`, and each `package.json` references it as `"catalog:"` instead of a version:
+
+```json
+"devDependencies": { "typescript": "catalog:", "vitest": "catalog:" }
+```
+
+So bumping a shared dependency means editing the catalog entry — never a `package.json`. That is the
+whole point: `nodeLinker: hoisted` hides a version split until it breaks, so `apps/web` was typing a
+redis 5 client with redis 4's `RedisClientType` and one package was building on a different Vite major
+than the other fourteen. Deps with a single consumer deliberately stay in their own `package.json`.
+
+`pnpm lint` runs `scripts/check-catalog.mjs`, which fails if a workspace declares a literal version for
+a catalogued name, or if a dependency is declared by 2+ workspaces without being catalogued. A peer
+dependency *range* is exempt — it is a compatibility declaration for consumers, not an install pin, so
+it may legitimately be looser than the catalog (`packages/survey-ui` declares react `^19.0.0` while
+pinning 19.2.6 to build against). Adding a new package needs no wiring: the check resolves the
+workspace globs from `pnpm-workspace.yaml` itself.
 
 ### Survey Packages Build & Cache
 
@@ -168,33 +189,89 @@ Always mark React component props as `Readonly<>` (e.g., `({ children }: Readonl
 Principles:
 
 - Confidence over coverage. Test behavior and outcomes; avoid brittle implementation-detail tests.
+- Prove a behavior at the cheapest level that can fail on it. An E2E test is not a stronger unit test; it
+  has a different subject — the journey, not the logic.
+- **An E2E test is paid on every PR, by everyone, forever.** The Playwright job is the critical path of the
+  PR gate (as of Aug 2026: a ~13 min job, of which ~6 min is the Playwright step itself — the rest is
+  install, build and boot — over ~110 tests and ~30 browser-minutes), and its wall clock can never drop
+  below its slowest single test. Weigh that before adding one — sometimes the right answer is no test
+  at this level.
+
+Which level, concretely:
+
+| The change                                                                      | The level                                     |
+| ------------------------------------------------------------------------------- | --------------------------------------------- |
+| A new feature area, or a journey across several surfaces                        | One happy-path E2E + unit tests for its logic |
+| Business logic, invariants, validation, derivation, permissions — anything pure | Unit test on the `.ts`                        |
+| A route's authorization, response shape, or query scoping                       | Unit or integration test on that route        |
+| A UI detail inside a feature that already has a happy-path spec                 | Neither — verify manually, say so in the PR   |
+
+A journey across several surfaces means something like survey list → editor → public survey → response,
+where the behavior only exists once browser, survey bundle, and server are wired together.
+
+The spec filenames in `apps/web/playwright/` are the inventory of covered areas — check there before
+concluding an area has no spec.
+
+The PR's Coverage table names each row's level with one of five words, and the first three are claims a
+reviewer can check: `unit (red on main)` fails against the old code, so it proves the bug existed;
+`unit (mutation)` only fails if you break the fix, because the code under test is new; `unit (guard)`
+passes either way, protecting against a future regression; `e2e` and `manual` say where the check ran. Every
+`unit` and `e2e` row names the test or spec it rests on, in the row or in a `Rerun:` line that names
+it — a bare `pnpm test` names nothing. A `unit (red on main)` row is rerunnable from the
+`Rerun:` command, or names its own where that differs; a `unit (mutation)` row names the mutated
+`file:line` a reviewer edits to turn it red.
+
+This raises a floor as well as lowering a ceiling. Every feature area ships a happy-path E2E, and an area
+with none is a gap rather than a saving (Dashboards and Workflows are the current examples — ENG-2314). A
+bug fix inside a feature that already has one almost never needs a second spec — the level still follows
+the table above: journey behavior extends that spec, logic goes to a unit test, UI detail to manual QA.
 
 Do:
 
-- E2E tests (Playwright): cover critical user flows and regression risks. Extend existing specs or add
-  focused new ones in `apps/web/playwright`, keep tests small and well-named, use descriptive filenames
-  such as `billing.spec.ts`, tag slow suites with `@slow`, and run the suite before opening a PR.
+- E2E tests (Playwright): one spec per **feature area**, not per ticket and not per component. Default to
+  adding assertions or a `test.step` to that area's existing spec in `apps/web/playwright`; a new
+  `*.spec.ts` is for a feature area that has none, and it takes the area's name (`billing.spec.ts`).
+  Follow the suite's own patterns — seed state through Prisma or `/api/v3` instead of clicking it into
+  existence (`playwright/utils/accessibility.ts`), one journey per test with `test.step` phases
+  (`settings-tags.spec.ts`), assertions at feature level (`survey-overview.spec.ts`) — and run the suite
+  before opening a PR.
 - Unit tests: cover stable, high-value logic in `.ts` files, such as validators, transformers,
   evaluators, calculations, and edge cases. Keep assertions on inputs and outputs, colocate specs with
   the code they exercise (`utility.test.ts`), and mock network and storage boundaries through helpers
   from `@formbricks/*`.
+- API v3 contract tests (Schemathesis): every documented `/api/v3` operation is driven against a real
+  instance on each PR and must match the committed OpenAPI bundle — status codes, content type and
+  response schema. Nothing to register per endpoint; documenting an operation is what enrolls it. To
+  exercise a new one against real data rather than its documented 403, add the resource in
+  `packages/database/src/scripts/seed-contract-fixtures.ts`. Harness and local run:
+  `docs/api-v3-reference/contract-tests/README.md`.
 - Manual QA, especially for releases: verify on staging and file bugs. If a bug is critical, backport and
-  re-test.
+  re-test. For UI detail below the journey level, manual verification plus a screenshot in the PR is the
+  expected answer, not a new spec.
 - Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows.
+- Merging, narrowing, or deleting an E2E spec is legitimate work — record it in the PR's Coverage table
+  like any other change.
 
 Do not:
 
-- Do not write component or UI unit tests for `.tsx` files; React components are covered by Playwright E2E
-  tests instead.
+- Do not write component or UI unit tests for `.tsx` files. **This is not an instruction to write an E2E
+  test instead**: the absence of a component unit test creates no coverage obligation. If a component holds
+  logic worth proving, lift that logic into a `.ts` module and unit-test it there; the rendering is
+  exercised incidentally by the feature journeys that already cross it.
+- Do not E2E a component. A language selector, a breadcrumb, a sidebar's link list, an ARIA attribute on
+  one widget, a keystroke inside one editor, a field's validation message, a search box filtering a list —
+  none of these justify a browser, a login, and a seeded tenant.
+- Do not build a variant matrix. Cover the one case that carries the risk; a second viewport, theme,
+  locale, role, or layout needs its own stated reason, and "the adjacent spec does it" is not one.
+  Accessibility work on the rendered survey extends the existing axe gate
+  (`survey-accessibility.spec.ts`); elsewhere it becomes an assertion in that feature area's own spec.
+  Either way, not a per-ticket a11y spec.
 - Do not add coverage-driven or low-signal tests.
-- Do not write tests that lock implementation details, markup, snapshots, or create churn.
-- Do not create mega or flaky E2E tests; avoid timing hacks and unstable dependencies.
-
-Heuristic:
-
-- User journey risk: E2E.
-- Pure logic or edge cases: unit test.
-- Release readiness: manual QA plus bug/backport loop.
+- Do not write tests that lock implementation details, markup, snapshots, or create churn — an assertion on
+  an exact list of nav labels is churn, not coverage.
+- Do not create mega or flaky E2E tests; avoid timing hacks (`waitForTimeout`, `slowMo`) and unstable
+  dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
+  tagging a spec does not make its cost go away.
 
 ## Documentation (apps/docs)
 
@@ -218,7 +295,10 @@ Heuristic:
 
 - Keep code DRY and small; remove dead code and unused imports.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`.
+- Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`. This is enforced:
+  `@typescript-eslint/no-explicit-any` is an error in `packages/*` and a warning in `apps/web`, where the
+  typescript-eslint baseline is being ratcheted to error rule by rule (ENG-2264). Never add new `any`s —
+  a warning today becomes an error once its rule's backlog is cleared.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 
 ## Commit & Pull Request Guidelines
@@ -227,7 +307,11 @@ Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat
 
 Every PR must use `.github/pull_request_template.md` and follow its inline guidance — the template is the source of truth for PR structure. The ticket line at the top is the only place a magic word (`Fixes`, `Ref`, `Closes`) may sit next to a ticket id: Linear and GitHub scan the whole body, so the same pair written in prose — inside backticks too — links and closes that ticket as well. When you need to name the convention in prose, write it without a resolvable id. All QA for a change happens on its own PR before review: the creator shows that every behaviour the diff changes is covered, and lists what is not under `Open gaps`; the reviewer challenges that list and asks for the missing coverage. There is no separate release QA pass per PR — release review only looks for problems arising from the interplay of several changes. Fill every section from the actual diff on PR open, and re-update it in the same turn on every change (new commits, scope or review fixes) so it never drifts — treat a stale section as a bug.
 
-The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. `pr-label-sync.yml` reads nothing but the tick, so the prose below the checkbox cannot change the label — but it is not free-form either: the CodeRabbit `Breaking changes match the diff` check compares the tick against the diff and expects a ticked box to document each breaking change, so explain your answer there in whatever shape fits (table or prose).
+**A PR description is read, not filed.** Keep the whole thing under 350 words outside `<details>` folds — one screen — with lists of at most three bullets of at most twenty words and a Coverage table of at most six rows. Open `## What & why` with a `**Was:**` / `**Now:**` pair: one plain sentence for how it behaved before, one for what happens now. User-visible effect first, mechanism second, written for a colleague who has not read the ticket. Under `## Where to look`, link the one to three places that carry the risk so a reviewer can spot-check the code without reading all of it. Detail that does not fit goes into a fold rather than being dropped — the evidence stays in the PR, out of the reviewer's way. Four things never belong at any length: blame archaeology, a defence of a choice nobody questioned or of what you deliberately did not do, commentary on how strong your own tests are, and anything the `Rerun:` line already carries.
+
+The agent note names the exact model id the vendor serves — `claude-opus-5`, `gpt-5.1-codex` — not the harness it runs in; Claude Code, Codex CLI and Cursor are harnesses, so name one in parentheses only when it adds something (`claude-opus-5 (Claude Code 2.1.237)`). The reasoning level is whatever knob that vendor exposes, in its own units: an effort level (`max`, `high`), a thinking budget (`32k tokens`), or `n/a`. Read both out of the tool, never from memory — Claude Code reports them in `/status` or as the session's `model` and `effort_level`, Codex CLI in `/model` or its startup line. A value you cannot look up is `unknown`, never a guess and never the harness name standing in for the model.
+
+The checkbox under `## Breaking changes` is a decision you own, not a formality: judge the diff against the template's list of breaking changes and tick it (`- [x]`) when one applies, leave it unticked when none does. The template also lists what is **not** breaking — purely additive changes, and anything internal to this repo that no external consumer reaches — and an uncertain call is an unticked box with a line of reasoning, never a defensive tick. It is the only input to the `breaking-change` label, which feeds the release notes and the self-hoster migration guide, so a wrong answer either invents a migration entry or hides one. Re-check it whenever the diff grows. `pr-label-sync.yml` reads nothing but the tick, so the prose below the checkbox cannot change the label — but it is not free-form either: the CodeRabbit `Breaking changes match the diff` check compares the tick against the diff and expects a ticked box to document each breaking change, so explain your answer there in whatever shape fits (table or prose).
 
 ## Next.js Documentation
 

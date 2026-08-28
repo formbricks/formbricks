@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -22,13 +22,7 @@ import {
   getContactAttributeKeyById,
   updateContactAttributeKey,
 } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-
-const assertContactsEnabled = async (organizationId: string) => {
-  if (!(await getIsContactsEnabled(organizationId))) {
-    throw new OperationNotAllowedError("Contacts are not enabled for this organization");
-  }
-};
+import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 
 const ZCreateContactAttributeKeyAction = z.object({
   workspaceId: ZId,
@@ -57,8 +51,9 @@ export const createContactAttributeKeyAction = authenticatedActionClient
         type: "workspace",
         id: workspaceId,
       });
-      await assertContactsEnabled(organizationId);
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+      await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
 
@@ -110,8 +105,9 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
         type: "workspace",
         id: workspaceId,
       });
-      await assertContactsEnabled(organizationId);
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+      await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.oldObject = existingKey;
@@ -148,8 +144,9 @@ export const deleteContactAttributeKeyAction = authenticatedActionClient
         type: "workspace",
         id: workspaceId,
       });
-      await assertContactsEnabled(organizationId);
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+      await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.oldObject = existingKey;

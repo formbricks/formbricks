@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useTranslation } from "react-i18next";
-import { TChartQuery } from "@formbricks/types/analysis";
+import { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
 import { DEFAULT_WIDGET_VIEW, type TWidgetView } from "@/modules/ee/analysis/dashboards/lib/widget-view";
@@ -15,12 +15,15 @@ interface DashboardWidgetDataProps {
     | { error: TDashboardWidgetError }
   >;
   chartType: TChartType;
+  /** Saved display settings of the chart behind this widget. */
+  config?: TChartConfig;
   view?: TWidgetView;
 }
 
 export function DashboardWidgetData({
   dataPromise,
   chartType,
+  config,
   view = DEFAULT_WIDGET_VIEW,
 }: Readonly<DashboardWidgetDataProps>) {
   const { t } = useTranslation();
@@ -49,6 +52,7 @@ export function DashboardWidgetData({
       data={result.data}
       query={result.query}
       optionLabels={result.optionLabels}
+      config={config}
     />
   );
 }

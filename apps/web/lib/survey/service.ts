@@ -10,7 +10,13 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
-import { TBaseFilters, ZSegmentFilters } from "@formbricks/types/segment";
+import {
+  MAX_SEGMENT_SURVEYS,
+  TBaseFilters,
+  ZSegmentFilters,
+  ZSegmentSurveyIds,
+  getSegmentFilterTreeBoundsViolation,
+} from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
@@ -64,7 +70,6 @@ export const selectSurvey = {
   closeOn: true,
   archivedAt: true,
   isVerifyEmailEnabled: true,
-  isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
   isCaptureIpEnabled: true,
@@ -429,10 +434,30 @@ export const updateSurveyInternal = async (
     // if the survey body has type other than "app" but has a private segment, we delete that segment, and if it has a public segment, we disconnect from to the survey
     if (segment) {
       if (type === "app") {
+        // ENG-2305: tree bounds are enforced UNCONDITIONALLY — the draft save (skipValidation)
+        // deliberately skips full semantic validation so half-built filters can be saved, but an
+        // over-bounds tree persisted through it would break every consumer that parses the row
+        // back (publish validation, clone, evaluation).
+        const boundsViolation = getSegmentFilterTreeBoundsViolation(segment.filters);
+        if (boundsViolation) {
+          throw new InvalidInputError(boundsViolation);
+        }
+
         // parse the segment filters:
         const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
         if (!skipValidation && !parsedFilters.success) {
           throw new InvalidInputError("Invalid user segment filters");
+        }
+
+        // ENG-2305 sibling of the filter-tree gate above: on the draft path (skipValidation)
+        // segment.surveys reaches this point unvalidated — ZSurveyDraft.segment is an untyped
+        // record, so neither the ZId format rule nor the MAX_SEGMENT_SURVEYS cap has applied. Both
+        // must hold unconditionally BEFORE the ids drive the batched workspace lookup below; the
+        // validated (non-draft) path re-checks the same schema it already passed, a no-op.
+        if (segment.surveys && !ZSegmentSurveyIds.safeParse(segment.surveys).success) {
+          throw new InvalidInputError(
+            `Invalid segment surveys: at most ${MAX_SEGMENT_SURVEYS} valid survey ids are allowed`
+          );
         }
 
         // ENG-1749/ENG-1920: the connected survey ids are client-supplied; ensure each belongs to

@@ -95,7 +95,6 @@ describe("rateLimitConfigs", () => {
         "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",
-        "isSurveyResponsePresent",
         "validateSurveyPin",
         "licenseRecheck",
         "unsplash",

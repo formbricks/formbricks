@@ -88,3 +88,9 @@ authzed/*.perf.jsonl
 .claude/skills/*
 !.claude/skills/nextjs-docs
 .agents/formbricks-context
+
+# v3 API contract tests: generated fixture id map, Schemathesis' local replay cache, and the
+# bytecode cache Python leaves next to hooks.py
+docs/api-v3-reference/contract-tests/fixtures.json
+.schemathesis/
+__pycache__/
