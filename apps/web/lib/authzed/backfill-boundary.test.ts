@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, test } from "vitest";
 
@@ -35,19 +35,21 @@ const SEARCH_ROOTS = [".", "app", "integration", "lib", "modules", "scripts"];
 const collectSourceFiles = (directory: string, recurse: boolean): ReadonlyArray<string> => {
   const entries: string[] = [];
 
-  for (const entry of readdirSync(directory)) {
-    if (entry === "node_modules" || entry === ".next") {
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const entryName = entry.name;
+
+    if (entryName === "node_modules" || entryName === ".next") {
       continue;
     }
 
-    const absolute = join(directory, entry);
-    if (statSync(absolute).isDirectory()) {
+    const absolute = join(directory, entryName);
+    if (entry.isDirectory()) {
       if (recurse) {
         entries.push(...collectSourceFiles(absolute, true));
       }
       continue;
     }
-    if (/\.tsx?$/.test(entry) && !/\.test\.tsx?$/.test(entry)) {
+    if (/\.tsx?$/.test(entryName) && !/\.test\.tsx?$/.test(entryName)) {
       entries.push(absolute);
     }
   }
