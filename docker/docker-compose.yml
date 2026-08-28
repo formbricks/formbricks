@@ -364,7 +364,7 @@ services:
       AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
       AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
       AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
-      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-minimize_latency}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-fully_consistent}
 
   # Opt-in AuthZed health, schema, and relationship-repair commands. This profile never starts with
   # the normal stack. Example: docker compose --profile authzed-ops run --rm authzed-ops health
@@ -389,10 +389,39 @@ services:
       AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
       AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
       AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
-      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-minimize_latency}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-fully_consistent}
     depends_on:
       postgres:
         condition: service_healthy
+      spicedb:
+        condition: service_healthy
+
+  # Idempotently prepares a fresh authorization datastore without making Formbricks startup, health,
+  # readiness, or liveness depend on SpiceDB. Existing installations are gated by formbricks.sh and
+  # the explicit v6 migration acknowledgement before this release is started.
+  authzed-initialize:
+    image: ghcr.io/formbricks/formbricks:latest
+    restart: "no"
+    entrypoint: ["formbricks-authzed"]
+    command: ["upgrade", "prepare"]
+    environment:
+      <<: *formbricks-database
+      ENCRYPTION_KEY: authzed-initialize-unused
+      CUBEJS_API_SECRET: authzed-initialize-unused
+      CUBEJS_API_URL: http://localhost
+      HUB_API_KEY: authzed-initialize-unused
+      HUB_API_URL: http://localhost
+      REDIS_URL: redis://localhost
+      LOG_LEVEL: fatal
+      AUTHZED_ENABLED: ${AUTHZED_ENABLED:-true}
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_TOKEN: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
+      AUTHZED_INSECURE: ${AUTHZED_INSECURE:-true}
+      AUTHZED_CONSISTENCY: ${AUTHZED_CONSISTENCY:-fully_consistent}
+    depends_on:
+      formbricks-migrate:
+        condition: service_completed_successfully
       spicedb:
         condition: service_healthy
 

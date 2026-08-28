@@ -19,6 +19,14 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    env:
+      DATABASE_URL: postgresql://test:test@127.0.0.1:5432/formbricks
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      REDIS_URL: redis://127.0.0.1:6379
+      CUBEJS_API_URL: http://127.0.0.1:4000
+      CUBEJS_API_SECRET: build-time-placeholder
+      HUB_API_URL: http://127.0.0.1:4000
+      HUB_API_KEY: build-time-placeholder
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -99,6 +107,9 @@ jobs:
 
       - name: Verify Valkey Image Platforms
         shell: bash
+        env:
+          AUTHZED_DATABASE_PASSWORD: 0000000000000000000000000000000000000000000000000000000000000002
+          AUTHZED_TOKEN: 0000000000000000000000000000000000000000000000000000000000000001
         run: |
           set -euo pipefail
 
