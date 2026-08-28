@@ -18,10 +18,11 @@ The Contacts tab lists everyone in the workspace.
 
 ![The Contacts tab, listing contacts with their default attributes](/images/platform/features/contacts/contacts-list.webp)
 
-Contacts arrive in two ways:
+Contacts arrive in three ways:
 
 - **From your app**, when the SDK identifies someone. See [User Identification](/surveys/website-app-surveys/user-identification) for `setUserId`, `setAttribute` and friends.
 - **From a CSV**, using **Upload CSV**. Useful for a list you already hold outside your product.
+- **From the API** — `POST /api/v2/management/contacts` for one, `PUT /api/v2/management/contacts/bulk` for many. Both need every attribute key to exist already. See the [API v2 reference](/api-v2-reference/introduction).
 
 Contacts are scoped to a **workspace**. A person known in one workspace is not automatically known in another.
 
@@ -52,7 +53,7 @@ Filters combine attributes, devices and previous survey interaction, and can be 
 
 Segments are what [attribute-based targeting](/surveys/website-app-surveys/attribute-based-targeting) uses to decide who sees an app survey.
 
-## What contacts change about a response
+## What Contacts change about a response
 
 Once a response is linked to a contact, it stops being anonymous:
 
