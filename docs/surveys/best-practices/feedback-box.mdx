@@ -12,7 +12,7 @@ A low-friction channel catches the small frustrations that never make it into a 
 
 ## What you will build
 
-A survey that opens whenever someone clicks your Feedback button, and that keeps working every time they click it — not once per person.
+A survey that opens whenever someone clicks your Feedback button, and that keeps working every time they click it — not once per person. Two settings get you there, and both are needed: the recontact option, and an exemption from the workspace cooldown.
 
 <Note>
   This is an app survey, so it needs the Formbricks widget running in your product. If you have not
@@ -63,11 +63,14 @@ Still on **Settings**, open **Visibility & Recontact** and choose **Keep showing
 
 ![Recontact options, set to keep showing while conditions match](/images/surveys/best-practices/feedback-box/recontact.webp)
 
+Then, in the same section, choose **Ignore Cooldown Period**.
+
+This second setting is not optional if you want the box to open on every click. Recontact Options and the [Cooldown Period](/surveys/website-app-surveys/cooldown-period) are two separate gates and a survey has to pass both: Recontact Options are evaluated first, then the workspace-wide cooldown. So a box set to "keep showing" but left on **Use Cooldown Period** still goes quiet for a week after any other survey has appeared — which looks exactly like the feature being broken.
+
 <Note>
-  The workspace-wide [Cooldown Period](/surveys/website-app-surveys/cooldown-period) still applies on top
-  of this. If your instance is set to one survey per week, that gate runs first. **Ignore Cooldown
-  Period**, in the same section, exempts this survey — which is usually what you want for a box the user
-  opened deliberately.
+  Ignoring the cooldown is the right call here and not in general. It is defensible because the user
+  opened this survey deliberately; a survey that interrupts them uninvited should stay inside the
+  workspace budget.
 </Note>
 
 ## 5. Publish
