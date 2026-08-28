@@ -970,7 +970,6 @@ export const ZSurveyBase = z.object({
   singleUse: ZSurveySingleUse.nullable(),
   isVerifyEmailEnabled: z.boolean(),
   recaptcha: ZSurveyRecaptcha.nullable(),
-  isSingleResponsePerEmailEnabled: z.boolean(),
   isBackButtonHidden: z.boolean(),
   isAutoProgressingEnabled: z.boolean().optional().prefault(false),
   isCaptureIpEnabled: z.boolean(),

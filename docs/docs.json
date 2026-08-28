@@ -62,6 +62,7 @@
             "group": "Platform Features",
             "pages": [
               "platform/features/ai-features",
+              "platform/features/contacts",
               {
                 "group": "Integrations",
                 "icon": "bridge",
@@ -102,7 +103,7 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["surveys/overview"]
+            "pages": ["surveys/overview", "surveys/analysis/reading-results"]
           },
           {
             "group": "Survey Features",
@@ -116,6 +117,7 @@
                   "surveys/general-features/overwrite-styling",
                   "surveys/general-features/hidden-fields",
                   "surveys/general-features/limit-submissions",
+                  "surveys/general-features/survey-scheduling",
                   "surveys/general-features/multi-language-surveys",
                   "surveys/general-features/partial-submissions",
                   "surveys/general-features/recall",
@@ -184,8 +186,10 @@
                 "icon": "question",
                 "pages": [
                   "surveys/question-type/address",
+                  "surveys/question-type/ces",
                   "surveys/question-type/consent",
                   "surveys/question-type/contact-info",
+                  "surveys/question-type/csat",
                   "surveys/question-type/date",
                   "surveys/question-type/file-upload",
                   "surveys/question-type/free-text",
@@ -238,7 +242,14 @@
               "unify-feedback/feedback-sources",
               "unify-feedback/feedback-records",
               "unify-feedback/enrichment",
-              "unify-feedback/dashboards-charts",
+              {
+                "group": "Dashboards & Charts",
+                "icon": "chart-line",
+                "pages": [
+                  "unify-feedback/dashboards-charts",
+                  "unify-feedback/dashboards-charts/creating-your-first-charts"
+                ]
+              },
               "unify-feedback/topics-subtopics"
             ]
           },
@@ -314,13 +325,15 @@
                   "self-hosting/configuration/auth-sso/keycloak-oidc",
                   "self-hosting/configuration/auth-sso/azure-ad-oauth",
                   "self-hosting/configuration/auth-sso/google-oauth",
-                  "self-hosting/configuration/auth-sso/saml-sso"
+                  "self-hosting/configuration/auth-sso/saml-sso",
+                  "self-hosting/configuration/auth-sso/setup-saml-with-identity-providers"
                 ]
               },
               {
                 "group": "Integrations",
                 "icon": "bridge",
                 "pages": [
+                  "self-hosting/configuration/integrations",
                   "self-hosting/configuration/integrations/airtable",
                   "self-hosting/configuration/integrations/google-sheets",
                   "self-hosting/configuration/integrations/n8n",
@@ -336,6 +349,7 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/migration",
+              "self-hosting/advanced/migrating-surveys",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
               {
@@ -366,16 +380,6 @@
           {
             "group": "Development",
             "pages": ["development/overview"]
-          },
-          {
-            "group": "Local Setup",
-            "pages": [
-              "development/local-setup/linux",
-              "development/local-setup/mac",
-              "development/local-setup/windows",
-              "development/local-setup/gitpod",
-              "development/local-setup/github-codespaces"
-            ]
           },
           {
             "group": "Technical Handbook",
@@ -426,24 +430,6 @@
                 ]
               }
             ]
-          },
-          {
-            "group": "Contributions",
-            "pages": ["development/contribution/contribution"]
-          },
-          {
-            "group": "Guides",
-            "pages": [
-              {
-                "group": "Auth & Provision",
-                "icon": "user-shield",
-                "pages": ["development/guides/auth-and-provision/setup-saml-with-identity-providers"]
-              }
-            ]
-          },
-          {
-            "group": "Support",
-            "pages": ["development/support/troubleshooting"]
           }
         ],
         "tab": "Development"
@@ -486,6 +472,38 @@
     ]
   },
   "redirects": [
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/linux"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/mac"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/windows"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/gitpod"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/local-setup/github-codespaces"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/contribution/contribution"
+    },
+    {
+      "destination": "/docs/development/overview",
+      "source": "/docs/development/support/troubleshooting"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/auth-sso/setup-saml-with-identity-providers",
+      "source": "/docs/development/guides/auth-and-provision/setup-saml-with-identity-providers"
+    },
     {
       "destination": "/docs/unify-feedback/feedback-datasets",
       "source": "/docs/unify-feedback/feedback-directories"
@@ -1255,7 +1273,7 @@
       "source": "/docs/developer-docs/rest-api"
     },
     {
-      "destination": "/docs/development/contribution/contribution",
+      "destination": "/docs/development/overview",
       "source": "/docs/developer-docs/contributing/get-started"
     },
     {
@@ -1263,7 +1281,7 @@
       "source": "/docs/api-docs"
     },
     {
-      "destination": "/docs/development/support/troubleshooting",
+      "destination": "/docs/development/overview",
       "source": "/docs/developer-docs/contributing/troubleshooting"
     }
   ],

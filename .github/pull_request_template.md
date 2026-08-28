@@ -1,32 +1,67 @@
-<!-- PR title must follow Conventional Commits: https://www.conventionalcommits.org/en/v1.0.0/#summary -->
+<!-- Title: Conventional Commits — https://www.conventionalcommits.org/en/v1.0.0/#summary -->
 
-<!-- Keep it skimmable: bullets over paragraphs, and `<details>` folds for anything a reviewer only
-opens on demand (background, file audits, setup steps). Never fold the Coverage table, Open gaps or
-Breaking changes — long media inside Coverage may still be folded. -->
+<!-- BUDGET: ≤350 words outside `<details>` folds — one screen. Lists are ≤3 bullets of ≤20 words,
+one idea each; the Coverage table is ≤6 rows. Short sentences, plain words, present tense, written
+for a colleague who has not read the ticket: user-visible effect first, mechanism second. Overflow
+folds rather than being dropped. Coverage, Open gaps and Breaking changes stay visible; only long
+media, command logs and Coverage rows past the sixth fold. -->
 
-<!-- AI agents: no promotional footers, don't advertise yourself or any tool/service (e.g. "Generated
-by …"). The agent note at the bottom is the one exception. -->
+<!-- NEVER WRITE — each of these reads as diligence and costs the reviewer a paragraph: blame
+archaeology (which commit introduced it, who touched what); a defence of a choice nobody questioned,
+or of what you deliberately did not do; commentary on how strong your own tests are; a restatement
+of the ticket, or of what CI reports (lint, typecheck, tests, build, Sonar); a path the `Rerun:`
+line already carries; bold on more than a phrase or two per section. No promotional footers and no
+advertising of yourself or any tool — the agent note at the bottom is the one exception. -->
 
-<!-- Complete the line below: `Fixes ENG-<id>`. A bare URL does NOT link the PR — the magic word has
-to come first. Use `Ref ENG-<id>` instead if this PR only partly addresses the ticket, so merging
-doesn't close it. No ticket? Delete the line and say why. Closing a GitHub issue? Add `Fixes #<number>`.
-This line is the only place a magic word belongs: `Fixes ENG-…` written anywhere else in the
-description links and closes that ticket too, backticks included.
+<!-- Complete the line below: `Fixes ENG-<id>`, or `Ref ENG-<id>` if this PR only partly addresses
+the ticket, so merging doesn't close it. The magic word comes first; a bare URL links nothing.
+This is the only line it may sit on — `Fixes ENG-…` anywhere else, backticks included, closes that
+ticket too. No ticket? Delete the line and say why. GitHub issue? `Fixes #<number>`.
 More: https://linear.app/docs/github -->
 
 Fixes ENG-
 
 ## What & why
 
-<!-- Problem first, then the solution, grounded in the diff rather than commit titles. Short enough
-to grasp without opening files. -->
+<!-- One sentence each, read off the diff rather than the commit titles. Up to 3 bullets after
+them, only for what they cannot carry. -->
+
+**Was:** `<what was broken, or how it behaved before>`
+
+**Now:** `<what happens after this PR>`
+
+## Where to look
+
+<!-- 1–3 links to the lines carrying the risk, so a reviewer can spot-check the code without
+reading all of it: link plus ≤10 words, no prose. Nothing risky? Say so in a line. -->
+
+-
 
 ## Breaking changes
 
 <!-- REQUIRED. Tick the box below if — and only if — this PR breaks something for API/SDK consumers or
-self-hosters. It is breaking if it changes an API/SDK shape or emitted value (e.g. `EN` → `en-US`),
-removes or renames an endpoint, route, env var or config key, changes a default or webhook payload, or
-needs manual migration action.
+self-hosters. The test is whether someone outside this repo has to change something to keep working.
+
+**Breaking:** renaming, removing or retyping a field in a public API request or response shape,
+requiring one that was optional, or changing an emitted value (e.g. `EN` → `en-US`); removing or
+renaming an endpoint, route, env var or config key; changing a default, a webhook payload, or the
+HTTP status code returned for an existing case; adding an env var or config key that is required, or
+whose default does not keep existing installs working; changing an exported signature of the SDK
+shipped from `packages/js-core`, `packages/survey-ui`, or `packages/surveys`; or needing manual
+action on upgrade, including a migration that drops or renames a column or table.
+
+**Not breaking:** anything purely additive, and anything internal. Adding an optional field to a
+request or response, a new endpoint or route, or an env var whose default keeps existing installs
+working leaves every existing consumer working unchanged. So does any change to internal code —
+functions, modules, types, workspace-package exports other than the SDK surface above — that no
+external consumer reaches, additive or not: "internal API" means internal to this repo, and this
+section is not about it.
+
+Uncertain? That means the change isn't clearly one of the bullets above — leave it unticked and say
+why below. If it does match a bullet, tick it regardless of how you feel about it: the tick is the
+only thing that writes a migration entry, so ticking it "to be safe" when nothing above applies
+invents an upgrade step for self-hosters that does not exist; a reviewer who disagrees can still ask
+for it.
 
 The checkbox alone drives the label: ticking it applies `breaking-change`, which feeds the release notes
 and the self-hoster migration guide. Leave its wording alone — `pr-label-sync.yml` finds it by that text,
@@ -48,68 +83,49 @@ None
 
 ## Migrations & env
 
-<!-- New or changed env vars, DB migrations and cutover steps — including non-breaking ones, since
-this is what a deployer or self-hoster acts on. Write "none". -->
+<!-- New or changed env vars, DB migrations, cutover steps — including non-breaking ones, since a
+deployer acts on them. Write "none". -->
 
 - none
 
 ## How this was tested
 
 <!-- REQUIRED. All QA for this change happens here, before review — there is no separate release QA
-pass. Don't restate the checks below (lint, typecheck, unit tests, build, Sonar); give the reviewer
-what those cannot show. -->
+pass. `Rerun:` carries the command once, so no row below repeats it. -->
+
+Rerun: `<one command covering the table below>`
 
 **Coverage**
 
-<!-- One row per behaviour the diff changes: for an automated row name the test or spec (not a count),
-how strong that check is, and what you observed. Name the account, plan or flag state where an outcome
-depends on it. For UI work, attach the screenshot or screencast that proves it — fold it if long. -->
-
-<!-- "How" uses one of: `unit (red on main)` — fails against the old code, so it proves the bug
-existed; `unit (mutation)` — only fails if you break the fix, because the code under test is new;
-`unit (guard)` — passes either way, protecting against future regressions; plus `e2e` and `manual`.
-Any red-on-main or mutation row must carry the command or the mutated `file:line`, so a reviewer can
-rerun it instead of taking the claim on trust. -->
-
-<!-- Pick the cheapest level that can fail on the behaviour (AGENTS.md "Testing Guidelines"): `unit`
-for logic and invariants, a route test for authorization/response shape/scoping, `e2e` only for a
-feature's happy path or a journey across several surfaces, and `manual` — with the screenshot — for
-UI detail inside a feature that already has an e2e. A `manual` row is a complete answer; a new e2e
-spec is paid on every PR forever, so "this row had no automated test" is not a reason to add one. -->
+<!-- ≤6 rows, one per behaviour the diff changes; Outcome ≤15 words of what you observed, naming the
+account, plan or flag state where it matters. `How` is one of `unit (red on main)`,
+`unit (mutation)`, `unit (guard)`, `e2e`, `manual` — AGENTS.md defines them and says how to pick the
+cheapest level that can fail. Every `unit` and `e2e` row names the test or spec it rests on, in the
+row or in a `Rerun:` line that names it. A `red on main` row names its own command where that
+differs from `Rerun:`; a `mutation` row names the mutated `file:line`. The table stays visible —
+fold long media and command logs, and rows past the sixth. -->
 
 | Behaviour | How | Outcome |
 | --- | --- | --- |
-|  | unit (red on main) / unit (mutation) / unit (guard) / e2e / manual |  |
+|  |  |  |
 
 **Open gaps**
 
-<!-- Anything you could not verify, and why. Write "none" if there are none — the reviewer's job is
-to challenge this list, so an empty one is a claim rather than a formality. -->
+<!-- ≤3 bullets: what you could not verify, and why. The reviewer's job is to challenge this list,
+so "none" is a claim rather than a formality. -->
 
 - none
 
 **Risks**
 
-<!-- What nearby behaviour could break, and what to re-check if it does. -->
+<!-- ≤3 bullets: what nearby behaviour could break, and what to re-check if it does. -->
 
 - none
 
 ---
 
-<!-- Fill in if an AI agent wrote code or this description; delete the note if none did.
-
-`<model>` is the exact model id the vendor serves — `claude-opus-5`, `gpt-5.1-codex` — not the
-product it runs in: Claude Code, Codex CLI and Cursor are harnesses, not models. Name the harness
-and its version in parentheses when it adds something: `claude-opus-5 (Claude Code 2.1.237)`.
-
-`<level>` is whatever reasoning knob that vendor exposes, in that vendor's own units: an effort
-level (`max`, `high`), a thinking budget (`32k tokens`), or `n/a` where there is no such setting.
-
-Read both values out of the tool rather than from memory. Claude Code reports them in `/status`,
-or as the session's `model` and `effort_level`; Codex CLI in `/model` or the line it prints at
-startup; other tools, whatever they report about themselves. A value you cannot look up is
-`unknown` — never a plausible-looking guess, and never the harness name standing in for the
-model. -->
+<!-- Delete if no agent was involved. Read both values out of the tool, never from memory; a value the
+tool does not expose is `unknown`, never a guess. AGENTS.md says where each tool reports them. -->
 
 > [!NOTE]
 > **AI model used** — `<model>`, reasoning effort `<level>`.

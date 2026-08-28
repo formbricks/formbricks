@@ -4991,7 +4991,6 @@ export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
     displayPercentage: null,
     autoComplete: 50,
     isVerifyEmailEnabled: false,
-    isSingleResponsePerEmailEnabled: false,
     workspaceOverwrites: null,
     surveyClosedMessage: null,
     singleUse: {

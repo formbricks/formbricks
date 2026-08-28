@@ -344,9 +344,11 @@ const ZGetDistinctAttributeValuesAction = z.object({
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromContactAttributeKeyId(parsedInput.attributeKeyId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromContactAttributeKeyId(parsedInput.attributeKeyId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -359,6 +361,8 @@ export const getDistinctAttributeValuesAction = authenticatedActionClient
         },
       ],
     });
+
+    await checkAdvancedTargetingPermission(organizationId);
 
     return await getDistinctAttributeValues(parsedInput.attributeKeyId);
   });
