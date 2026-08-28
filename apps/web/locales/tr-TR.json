@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "Kullanıcılar nasıl tanımlanır",
         "ip_address": "IP Adresi",
         "last_name": "Soyadı",
+        "locale": "Cihaz Dili",
         "more_context": "Daha fazla bağlam",
         "not_completed": "Tamamlanmadı ⏳",
         "os": "İşletim Sistemi",

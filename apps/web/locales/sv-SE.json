@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "Hur man identifierar användare",
         "ip_address": "IP-adress",
         "last_name": "Efternamn",
+        "locale": "Enhetsspråk",
         "more_context": "Mer sammanhang",
         "not_completed": "Inte slutförd ⏳",
         "os": "OS",

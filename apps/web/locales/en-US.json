@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "How to identify users",
         "ip_address": "IP Address",
         "last_name": "Last Name",
+        "locale": "Device Locale",
         "more_context": "More context",
         "not_completed": "Not Completed ⏳",
         "os": "OS",

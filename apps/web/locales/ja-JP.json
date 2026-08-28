@@ -3628,6 +3628,7 @@
         "how_to_identify_users": "ユーザーを識別する方法",
         "ip_address": "IPアドレス",
         "last_name": "姓",
+        "locale": "デバイスのロケール",
         "more_context": "詳細情報",
         "not_completed": "未完了 ⏳",
         "os": "OS",

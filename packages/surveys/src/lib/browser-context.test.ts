@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { createWebSurveyMetaSnapshot, readBrowserContextMeta } from "./browser-context";
+import { createWebSurveyMetaSnapshot, readDeviceContextMeta, readPageContextMeta } from "./browser-context";
 
 /**
  * A real DOM environment, so these exercise the accessors rather than a mock of them. Each test sets
@@ -31,47 +31,54 @@ const setReferrer = (value: string): void => {
   Object.defineProperty(document, "referrer", { value, configurable: true });
 };
 
+const setLanguage = (value: unknown): void => {
+  Object.defineProperty(navigator, "language", { value, configurable: true });
+};
+
 let originalScreen: PropertyDescriptor | undefined;
+let originalLanguage: PropertyDescriptor | undefined;
 let originalIntl: typeof Intl;
 
 beforeEach(() => {
   originalScreen = Object.getOwnPropertyDescriptor(window, "screen");
+  originalLanguage = Object.getOwnPropertyDescriptor(navigator, "language");
   originalIntl = globalThis.Intl;
   setLocation("/pricing");
   setScreen(2560, 1440);
   setDimension("innerWidth", 1280);
   setDimension("innerHeight", 800);
   setReferrer("");
+  setLanguage("en-GB");
 });
 
 afterEach(() => {
   if (originalScreen) Object.defineProperty(window, "screen", originalScreen);
+  // `language` is a prototype getter until a test shadows it, so putting the descriptor back is
+  // not enough — the own property has to go, or the next test inherits this one's value.
+  if (originalLanguage) Object.defineProperty(navigator, "language", originalLanguage);
+  else Reflect.deleteProperty(navigator, "language");
   globalThis.Intl = originalIntl;
   vi.restoreAllMocks();
 });
 
-describe("readBrowserContextMeta", () => {
-  test("reads the page, viewport and screen the survey was displayed in", () => {
-    setLocation("/pricing?plan=team");
+describe("readPageContextMeta", () => {
+  test("reads the page the survey was displayed on", () => {
+    setLocation("/pricing?plan=team&source=cta");
     setReferrer("https://news.example.org/weekly");
 
-    const meta = readBrowserContextMeta();
+    const meta = readPageContextMeta();
 
-    expect(meta.url).toBe(`${ORIGIN}/pricing?plan=team`);
+    // `url` and `source` predate this snapshot and must keep behaving exactly as before.
+    expect(meta.url).toBe(`${ORIGIN}/pricing?plan=team&source=cta`);
+    expect(meta.source).toBe("cta");
     expect(meta.pagePath).toBe("/pricing");
     expect(meta.pageReferrer).toBe("https://news.example.org/weekly");
-    expect(meta.screenWidth).toBe(2560);
-    expect(meta.screenHeight).toBe(1440);
-    expect(meta.viewportWidth).toBe(1280);
-    expect(meta.viewportHeight).toBe(800);
-    // `url` and `source` predate this snapshot and must keep behaving exactly as before.
-    expect(meta.url).toBe(`${ORIGIN}/pricing?plan=team`);
   });
 
   test("parses every utm_* param from the page's own query string", () => {
     setLocation("/p?utm_source=news&utm_medium=email&utm_campaign=august&utm_term=pricing&utm_content=hero");
 
-    expect(readBrowserContextMeta()).toMatchObject({
+    expect(readPageContextMeta()).toMatchObject({
       utmSource: "news",
       utmMedium: "email",
       utmCampaign: "august",
@@ -85,7 +92,7 @@ describe("readBrowserContextMeta", () => {
     // string would show up in exports and filters as a campaign whose name happens to be blank.
     setLocation("/p?utm_source=news&utm_medium=&utm_term=%20");
 
-    const meta = readBrowserContextMeta();
+    const meta = readPageContextMeta();
 
     expect(meta.utmSource).toBe("news");
     expect(meta).not.toHaveProperty("utmMedium");
@@ -97,7 +104,60 @@ describe("readBrowserContextMeta", () => {
   test("omits pageReferrer when the respondent arrived directly", () => {
     setReferrer("");
 
-    expect(readBrowserContextMeta()).not.toHaveProperty("pageReferrer");
+    expect(readPageContextMeta()).not.toHaveProperty("pageReferrer");
+  });
+
+  test("reads no device field, so the two groups can be gated apart", () => {
+    // The split this whole file turns on (ENG-2472): a caller that wants only the page group must
+    // not receive a screen measurement it did not ask for.
+    const meta = readPageContextMeta();
+
+    for (const key of [
+      "screenWidth",
+      "screenHeight",
+      "viewportWidth",
+      "viewportHeight",
+      "timezone",
+      "locale",
+    ]) {
+      expect(meta).not.toHaveProperty(key);
+    }
+  });
+});
+
+describe("readDeviceContextMeta", () => {
+  test("reads the screen and the viewport the survey was rendered into", () => {
+    const meta = readDeviceContextMeta();
+
+    expect(meta.screenWidth).toBe(2560);
+    expect(meta.screenHeight).toBe(1440);
+    expect(meta.viewportWidth).toBe(1280);
+    expect(meta.viewportHeight).toBe(800);
+  });
+
+  test("reads no page field, so the two groups can be gated apart", () => {
+    setLocation("/pricing?utm_source=news&source=cta");
+    setReferrer("https://news.example.org/weekly");
+
+    const meta = readDeviceContextMeta();
+
+    for (const key of ["url", "source", "pagePath", "pageReferrer", "utmSource"]) {
+      expect(meta).not.toHaveProperty(key);
+    }
+  });
+
+  test("reads the device locale, which is not the language the respondent answered in", () => {
+    setLanguage("de-AT");
+
+    expect(readDeviceContextMeta().locale).toBe("de-AT");
+  });
+
+  test("omits the locale when the runtime reports none", () => {
+    // Some embedded engines expose `navigator` without `language`. An absent key reads as "could
+    // not observe", which is the truth; `""` would read as a locale that is blank.
+    setLanguage(undefined);
+
+    expect(readDeviceContextMeta()).not.toHaveProperty("locale");
   });
 
   test("omits the timezone rather than throwing when the runtime has no Intl API", () => {
@@ -106,12 +166,12 @@ describe("readBrowserContextMeta", () => {
     // @ts-expect-error -- deliberately modelling a runtime that does not provide Intl.
     globalThis.Intl = undefined;
 
-    const meta = readBrowserContextMeta();
+    const meta = readDeviceContextMeta();
 
     expect(meta).not.toHaveProperty("timezone");
     // Everything either side of the failed read still made it through.
-    expect(meta.pagePath).toBe("/pricing");
     expect(meta.viewportWidth).toBe(1280);
+    expect(meta.locale).toBe("en-GB");
   });
 
   test("omits the timezone when Intl exists but resolves no zone", () => {
@@ -119,7 +179,7 @@ describe("readBrowserContextMeta", () => {
       resolvedOptions: () => ({}) as Intl.ResolvedDateTimeFormatOptions,
     } as Intl.DateTimeFormat);
 
-    expect(readBrowserContextMeta()).not.toHaveProperty("timezone");
+    expect(readDeviceContextMeta()).not.toHaveProperty("timezone");
   });
 
   test("omits dimensions that are missing, zero or not finite", () => {
@@ -130,19 +190,19 @@ describe("readBrowserContextMeta", () => {
     // @ts-expect-error -- modelling a runtime without `screen`.
     delete window.screen;
 
-    const meta = readBrowserContextMeta();
+    const meta = readDeviceContextMeta();
 
     expect(meta).not.toHaveProperty("viewportWidth");
     expect(meta).not.toHaveProperty("viewportHeight");
     expect(meta).not.toHaveProperty("screenWidth");
     expect(meta).not.toHaveProperty("screenHeight");
-    expect(meta.pagePath).toBe("/pricing");
+    expect(meta.locale).toBe("en-GB");
   });
 
   test("rounds fractional dimensions, which a zoomed browser reports", () => {
     setDimension("innerWidth", 1279.6);
 
-    expect(readBrowserContextMeta().viewportWidth).toBe(1280);
+    expect(readDeviceContextMeta().viewportWidth).toBe(1280);
   });
 });
 
@@ -191,8 +251,43 @@ describe("createWebSurveyMetaSnapshot", () => {
     expect(getMeta().url).toBe(`${ORIGIN}/pricing`);
   });
 
-  test("captures nothing off the web, where there is no runtime to read", () => {
-    // React Native and SSR: `isWebEnvironment` is false and no accessor may run at all.
-    expect(createWebSurveyMetaSnapshot(false)()).toStrictEqual({});
+  test("off the web, keeps the device group and drops every page field", () => {
+    // A mobile SDK's WebView (ENG-2472). It loads its HTML with a null base URL, so `location.href`
+    // is `about:blank` and `document.referrer` is `""` — reporting the renderer's own address as
+    // the page the survey was shown on would look valid and mean nothing. But the same WebView has
+    // a real screen, a real viewport, a real `Intl` zone and a real configured locale, and those
+    // are honest measurements of the device the respondent answered on.
+    setLocation("/pricing?utm_source=news&source=cta");
+    setReferrer("https://news.example.org/weekly");
+
+    const meta = createWebSurveyMetaSnapshot(false)();
+
+    expect(meta).toStrictEqual({
+      screenWidth: 2560,
+      screenHeight: 1440,
+      viewportWidth: 1280,
+      viewportHeight: 800,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      locale: "en-GB",
+    });
+    // Every page-group key, absent — including the two that predate ENG-1841 and were already
+    // absent on mobile for the same reason.
+    for (const key of ["url", "source", "pagePath", "pageReferrer", "utmSource"]) {
+      expect(meta).not.toHaveProperty(key);
+    }
+  });
+
+  test("on the web, keeps both groups", () => {
+    // The other half of the split: the same runtime with the flag true captures everything, so the
+    // test above is the gate working rather than the device reads being unavailable here too.
+    setLocation("/pricing?utm_source=news&source=cta");
+
+    const meta = createWebSurveyMetaSnapshot(true)();
+
+    expect(meta.pagePath).toBe("/pricing");
+    expect(meta.utmSource).toBe("news");
+    expect(meta.source).toBe("cta");
+    expect(meta.viewportWidth).toBe(1280);
+    expect(meta.locale).toBe("en-GB");
   });
 });

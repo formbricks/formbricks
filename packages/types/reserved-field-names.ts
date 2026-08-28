@@ -59,4 +59,5 @@ export const RESERVED_FIELD_NAMES: ReadonlySet<string> = new Set([
   "viewportwidth",
   "viewportheight",
   "timezone",
+  "locale",
 ]);

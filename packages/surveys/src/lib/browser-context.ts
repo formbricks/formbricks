@@ -57,13 +57,13 @@ const UTM_PARAMS = [
 ] as const;
 
 /**
- * Reads the browser-runtime context **once**, at the moment it is called.
+ * The **page** group: everything whose meaning comes from `location` describing a host page the
+ * respondent navigated to. Gated on `isWebEnvironment` — see {@link createWebSurveyMetaSnapshot}.
  *
- * Callers must call this exactly once per survey display and reuse the result — see
- * `createWebSurveyMetaSnapshot`, which is the only intended entry point. Nothing here caches, so
- * calling it twice really does re-measure, which is precisely the bug the snapshot exists to prevent.
+ * Reads the runtime **once**, at the moment it is called. Nothing here caches, so calling it twice
+ * really does re-measure, which is precisely the bug the snapshot exists to prevent.
  */
-export const readBrowserContextMeta = (): TWebSurveyMeta => {
+export const readPageContextMeta = (): TWebSurveyMeta => {
   const searchParams = (() => {
     try {
       return new URL(window.location.href).searchParams;
@@ -86,30 +86,58 @@ export const readBrowserContextMeta = (): TWebSurveyMeta => {
     pagePath: readString(() => window.location.pathname),
     pageReferrer: readString(() => document.referrer),
     ...utm,
+  });
+};
+
+/**
+ * The **device** group: measurements of the machine and of the area the survey was rendered into,
+ * plus how that machine is configured. Read in every runtime, on and off the web — see
+ * {@link createWebSurveyMetaSnapshot} for why the two groups are gated differently.
+ *
+ * Same single-read rule as {@link readPageContextMeta}.
+ */
+export const readDeviceContextMeta = (): TWebSurveyMeta =>
+  compact({
     screenWidth: readDimension(() => window.screen.width),
     screenHeight: readDimension(() => window.screen.height),
     viewportWidth: readDimension(() => window.innerWidth),
     viewportHeight: readDimension(() => window.innerHeight),
     timezone: readString(() => Intl.DateTimeFormat().resolvedOptions().timeZone),
+    // The device's configured locale (`de-AT`), not the language the respondent is *answering* in —
+    // that is `language`, resolved from the survey's own language switch. A German speaker taking an
+    // English-only survey has `locale: "de-DE"` and `language: "en"`, and the pair is the finding.
+    locale: readString(() => navigator.language),
   });
-};
 
 /**
  * **Snapshot at display, then freeze.**
  *
- * Takes one reading of the browser runtime and hands back a getter that returns that same reading
- * for the rest of the survey's life. A respondent who rotates a phone, opens a devtools panel, or
- * resizes the window between question three and submit must not retroactively rewrite the viewport
- * the response was answered at; whatever the first card was rendered into is what the response
- * records.
+ * Takes one reading of the runtime and hands back a getter that returns that same reading for the
+ * rest of the survey's life. A respondent who rotates a phone, opens a devtools panel, or resizes
+ * the window between question three and submit must not retroactively rewrite the viewport the
+ * response was answered at; whatever the first card was rendered into is what the response records.
  *
  * The getter returns the very same object every time, so the freeze is observable by identity as
  * well as by value — see browser-context.test.ts, which mutates `window.innerWidth` between two
  * calls and asserts the second reading is unchanged.
  *
- * Off the web (React Native, SSR) there is no runtime to read and the snapshot is simply empty.
+ * **`isWebEnvironment` gates the page group only, and that is the whole meaning of the flag.** It
+ * asks "does this runtime's `location` describe a host page?", not "is this a browser". A mobile
+ * SDK's WebView answers no — all four load their HTML with a null base URL, so `location.href` is
+ * `about:blank` and `document.referrer` is `""`; reporting the renderer's own address as the page
+ * the survey was shown on would be an answer that looks valid and means nothing. But that same
+ * WebView has a real screen, a real viewport and a real `Intl` zone, so the device group is read
+ * everywhere. That is what gives app surveys the honest half of Tier-1 capture with no SDK release
+ * and no customer app rebuild (ENG-2472) — the renderer is loaded un-pinned from
+ * `{appUrl}/js/surveys.umd.cjs` by every installed app.
+ *
+ * Off the runtime entirely (SSR, a test harness with no `window`) every individual read is guarded
+ * and yields an absent key, so the snapshot degrades to `{}` rather than throwing.
  */
 export const createWebSurveyMetaSnapshot = (isWebEnvironment: boolean): (() => TWebSurveyMeta) => {
-  const snapshot: TWebSurveyMeta = isWebEnvironment ? readBrowserContextMeta() : {};
+  const snapshot: TWebSurveyMeta = {
+    ...(isWebEnvironment ? readPageContextMeta() : {}),
+    ...readDeviceContextMeta(),
+  };
   return () => snapshot;
 };
