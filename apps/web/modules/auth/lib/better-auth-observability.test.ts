@@ -414,6 +414,17 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     expect(contextLoggerMock.warn).toHaveBeenCalledWith("account isn't linked");
   });
 
+  test("preserves warn-level errors as structured application-log context", () => {
+    const dbError = Object.assign(new Error("Connection terminated due to connection timeout"), {
+      code: "P1001",
+    });
+
+    log("warn", "OAuth resource seed failed", dbError);
+
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+    expect(contextLoggerMock.warn).toHaveBeenCalledWith({ err: dbError }, "OAuth resource seed failed");
+  });
+
   test("info/debug-level logs go to info and are never captured", () => {
     log("info", "some info");
 

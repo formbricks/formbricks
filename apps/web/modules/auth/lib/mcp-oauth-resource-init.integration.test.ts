@@ -1,8 +1,8 @@
 import { oauthProvider } from "@better-auth/oauth-provider";
-import { betterAuth } from "better-auth";
+import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { jwt } from "better-auth/plugins";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
@@ -10,11 +10,15 @@ import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 
 const BASE_URL = "http://localhost:3000";
 
-const createAuthInstance = (database = prismaAdapter(prisma, { provider: "postgresql" })) =>
+const createAuthInstance = (
+  database = prismaAdapter(prisma, { provider: "postgresql" }),
+  logger?: BetterAuthOptions["logger"]
+) =>
   betterAuth({
     baseURL: BASE_URL,
     secret: "mcp-oauth-resource-init-test-secret-0123456789abcdef",
     database,
+    logger,
     plugins: [
       jwt({
         disableSettingJwtHeader: true,
@@ -49,6 +53,8 @@ beforeEach(async () => {
 describe("MCP OAuth resource initialization (real Postgres)", () => {
   test("does not poison auth after an eager seed failure and retries on first resource access", async () => {
     const createAdapter = prismaAdapter(prisma, { provider: "postgresql" });
+    const seedError = Object.assign(new Error("simulated transient database timeout"), { code: "P1001" });
+    const log = vi.fn();
     let rejectNextResourceLookup = true;
     const database: typeof createAdapter = (options) => {
       const adapter = createAdapter(options);
@@ -60,17 +66,22 @@ describe("MCP OAuth resource initialization (real Postgres)", () => {
             const [query] = args;
             if (rejectNextResourceLookup && query.model === "oauthResource") {
               rejectNextResourceLookup = false;
-              throw Object.assign(new Error("simulated transient database timeout"), { code: "P1001" });
+              throw seedError;
             }
             return target.findOne(...args);
           };
         },
       });
     };
-    const auth = createAuthInstance(database);
+    const auth = createAuthInstance(database, { level: "warn", log });
 
     await expect(auth.$context).resolves.toBeDefined();
     expect(await prisma.oauthResource.count()).toBe(0);
+    expect(log).toHaveBeenCalledWith(
+      "warn",
+      "oauth-provider: resource seed failed during init; deferring to first resource access.",
+      seedError
+    );
 
     const response = await registerMcpClient(auth);
 

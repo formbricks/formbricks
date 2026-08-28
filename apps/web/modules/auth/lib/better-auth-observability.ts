@@ -312,7 +312,11 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
         }
       }
     } else if (level === "warn") {
-      contextLogger.warn(safeMessage);
+      if (cause) {
+        contextLogger.warn({ err: cause }, String(safeMessage));
+      } else {
+        contextLogger.warn(safeMessage);
+      }
     } else {
       contextLogger.info(safeMessage);
     }
