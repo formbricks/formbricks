@@ -1,15 +1,9 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { isDeferredMcpOauthResourceSeedError, mcpOauthResourceSeedPlugin } from "./mcp-oauth-resource-seed";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
-
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    $executeRaw: vi.fn(),
-  },
-}));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
