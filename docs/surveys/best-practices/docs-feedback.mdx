@@ -25,35 +25,33 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 ## 1. Setting up Formbricks Cloud
 
-- Create a [Formbricks Cloud](https://app.formbricks.com/auth/signup) account.
+Create a [Formbricks Cloud](https://app.formbricks.com/auth/signup) account, then a survey from the **Docs Feedback** template — **New Survey → Choose a template**, then search for it.
 
-- Then, create a survey using the template [Docs Feedback](https://formbricks.com/survey-templates/docs-feedback):
+### Make it a link survey
 
-![select docs template](/images/surveys/best-practices/docs-feedback/docs-template.webp)
+Under **Settings → Survey Type**, leave it as a **Link survey**.
 
-- Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉
+This matters more than it looks. You are going to post responses to the client API from your own frontend, so nothing here uses the Formbricks widget. An **app** survey cannot be published without a trigger — `survey-menu-bar.tsx` refuses to save one with no triggers — which is why older versions of this guide told you to invent an action that never fires. A link survey has no such requirement, so the workaround is unnecessary.
 
-![change id](/images/surveys/best-practices/docs-feedback/change-id.webp)
+### Set the question IDs
 
-- Similarly, you can change the Internal Question ID of the *Please elaborate* question to **“additionalFeedback”** and the one of the *Page URL* question to **“pageUrl”**.
+The frontend below refers to questions by ID, so give them names you will recognise. Open a question, click **Show Question settings** at the foot of its card, and set the **Question ID**:
+
+| Question | ID |
+| --- | --- |
+| Is this page helpful? | `isHelpful` |
+| Please elaborate | `additionalFeedback` |
+| Page URL | `pageUrl` |
 
 <Note>
- The answers must be identical. If you want different options than "Yes 👍" and "No 👎", you need to update the choices accordingly. They must match the frontend we’re building in the next step.
+  The **answers** must match the frontend too. If you replace "Yes 👍" and "No 👎" with your own wording, change the choices in the code below to match — they are compared as strings.
 </Note>
 
-- Click on “Continue to Settings or select the audience tab manually. Scroll down to “Survey Trigger” and create a new Action:
+<Warning>
+  Question IDs can only be changed **before** a survey is published. Afterwards they are fixed, because the responses already collected refer to them. Set them now.
+</Warning>
 
-![set up when to ask card](/images/surveys/best-practices/docs-feedback/survey-trigger.webp)
-
-- Our goal is to create an event that never triggers. This might seem odd, but it's a necessary workaround. Fill out the action as shown in the screenshot:
-
-![add action](/images/surveys/best-practices/docs-feedback/add-action.webp)
-
-- Select the Non-Event in the dropdown. Now you see that the “Publish survey” button is active. Publish your survey 🤝
-
-![select nonevent](/images/surveys/best-practices/docs-feedback/select-action.webp)
-
-**You’re all setup in Formbricks Cloud for now 👍**
+Publish the survey.
 
 ## 2. Build the frontend
 
@@ -333,13 +331,14 @@ We're almosr there! 🤸
 
 Before you roll it out in production, you want to test it. To do so, you need two things:
 
-- Workspace ID (1) of the workspace on app.formbricks.com
+- the **workspace ID**
+- the **survey ID** of your test survey
 
-- Survey ID (2) of your test survey
+Open the survey and read both out of the address bar — they are the two path segments:
 
-When you are on the survey detail page, you’ll find both of them in the URL:
-
-![copy IDs](/images/surveys/best-practices/docs-feedback/copy-ids.webp)
+```
+https://app.formbricks.com/workspaces/<workspaceId>/surveys/<surveyId>/summary
+```
 
 Now, you have to replace the IDs and the API host accordingly in your `handleFeedbackSubmit`:
 
