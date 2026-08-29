@@ -29,7 +29,9 @@ Create a [Formbricks Cloud](https://app.formbricks.com/auth/signup) account, the
 
 ### Make it a link survey
 
-Under **Settings → Survey Type**, leave it as a **Link survey**.
+Open **Settings → Survey Type** and make sure **Link survey** is selected. A new survey inherits its type
+from the workspace channel chosen during onboarding, so a workspace set up for a website or app creates
+**app** surveys by default — check it rather than assuming it.
 
 This matters more than it looks. You are going to post responses to the client API from your own frontend, so nothing here uses the Formbricks widget. An **app** survey cannot be published without a trigger — `survey-menu-bar.tsx` refuses to save one with no triggers — which is why older versions of this guide told you to invent an action that never fires. A link survey has no such requirement, so the workaround is unnecessary.
 
@@ -298,7 +300,7 @@ export const updateFeedback = async (freeText, responseId) => {
   const payload = {
     response: {
       data: {
-        additionalInfo: freeText,
+        additionalFeedback: freeText,
       },
       finished: true, // Lets Formbricks calculate Completion Rate
     },
