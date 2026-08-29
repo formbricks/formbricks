@@ -320,14 +320,19 @@ async function seedResponses(surveyId: string, finishedCount: number, partialCou
   const ordered = ACME_ELEMENTS.map((e) => e.id);
 
   const total = finishedCount + partialCount;
+  // Interleave rather than writing all the finished ones first. The response table sorts newest
+  // first, so a contiguous block of partials at the end lands at the *top* of the screenshot and
+  // makes the product look like nothing ever completes. Spreading them by rank rather than by a
+  // fixed modulus is what keeps the counts equal to the arguments for any pair of them.
+  const partialRows = new Set<number>();
+  for (let k = 0; k < partialCount; k++) {
+    partialRows.add(Math.floor(((k + 0.5) * total) / partialCount));
+  }
+
   for (let i = 0; i < total; i++) {
-    // Interleave rather than writing all the finished ones first. The response table sorts newest
-    // first, so a contiguous block of partials at the end lands at the *top* of the screenshot and
-    // makes the product look like nothing ever completes.
-    const finished = i % 4 !== 3 || i >= partialCount * 4;
+    const finished = !partialRows.has(i);
     // A partial stops somewhere in the first half, which is what makes the drop-off curve a curve.
     const answeredUpTo = finished ? ordered.length : 2 + (i % 5);
-    void total;
 
     const data: Record<string, unknown> = {};
     for (const id of ordered.slice(0, answeredUpTo)) {

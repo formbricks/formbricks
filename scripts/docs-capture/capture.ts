@@ -646,6 +646,12 @@ const shots: Shot[] = [
       await page.waitForTimeout(3000);
       // The logo upload steps cannot be shown from an empty dropzone, so upload one first. The file
       // is a generated wordmark for the fictional bank, not any real company's mark.
+      if (!LOGO_FILE) {
+        throw new Error(
+          "DOCS_CAPTURE_LOGO is not set. This shot uploads a logo, so it needs a path to an image file: " +
+            "DOCS_CAPTURE_LOGO=/path/to/wordmark.png pnpm docs:capture look-and-feel/logo-upload"
+        );
+      }
       await page.locator('input[type="file"]').first().setInputFiles(LOGO_FILE);
       // Wait for the upload to finish, not just to start: at 9s the logo was still fading in behind
       // a spinner, which reads as a rendering glitch rather than an uploaded logo.
@@ -1293,7 +1299,7 @@ const shots: Shot[] = [
   },
   ...RESPONSE_OPTION_PAGES.map(({ page: docsPage, label }) => ({
     name: docsPage,
-    out: `${docsPage.replace("surveys/", "surveys/")}/response-option.webp`,
+    out: `${docsPage}/response-option.webp`,
     take: async (page: Page) => {
       await openSettingsSection(page, "Response Options", label);
       return enabledSettingRow(page, label);
@@ -1332,12 +1338,17 @@ const login = async (browser: Browser): Promise<string> => {
 
 const main = async (): Promise<void> => {
   const wanted = process.argv.slice(2);
-  const selected = wanted.length > 0 ? shots.filter((s) => wanted.includes(s.name)) : shots;
-
-  if (selected.length === 0) {
-    console.error(`No shots matched. Known: ${shots.map((s) => s.name).join(", ")}`);
+  const known = new Set(shots.map((s) => s.name));
+  // A typo has to be loud. This is the single-page iteration loop, so `capture.ts a b` where only `a`
+  // matches would otherwise print one tick and exit 0 — the reader concludes both shots were retaken.
+  const unknown = wanted.filter((name) => !known.has(name));
+  if (unknown.length > 0) {
+    console.error(`Unknown shot name(s): ${unknown.join(", ")}`);
+    console.error(`Known: ${shots.map((s) => s.name).join(", ")}`);
     process.exit(1);
   }
+
+  const selected = wanted.length > 0 ? shots.filter((s) => wanted.includes(s.name)) : shots;
 
   const browser = await chromium.launch();
   const statePath = await login(browser);
