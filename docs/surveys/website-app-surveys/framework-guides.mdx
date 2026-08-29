@@ -657,7 +657,16 @@ formbricks.setup({
 });
 ```
 
-Pass the raw value only — not the `nonce-` prefix that appears in the header. If your policy also sets `style-src-elem`, list the nonce there too: that directive takes precedence over `style-src` for `<style>` elements. Passing `undefined` stops the SDK nonce-ing style elements it creates from then on; elements already in the page keep the attribute they were given.
+The matching header side, with the nonce in both style directives:
+
+```text
+style-src 'self' 'nonce-<your-request-nonce>';
+style-src-elem 'self' 'nonce-<your-request-nonce>';
+```
+
+`style-src-elem` is what the browser consults for `<style>` elements whenever it is present, and it does not fall back to `style-src` — so a nonce listed only under `style-src` leaves surveys unstyled on any policy that sets both. If your policy has no `style-src-elem`, the first line alone is enough.
+
+Pass the raw value only — not the `nonce-` prefix that appears in the header. Passing `undefined` stops the SDK nonce-ing style elements it creates from then on; elements already in the page keep the attribute they were given.
 
 <Note>
   **Note**: call `setNonce` before `setup`. The SDK stores the nonce and applies it when the survey
